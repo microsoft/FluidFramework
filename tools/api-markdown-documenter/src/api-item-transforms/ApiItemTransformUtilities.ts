@@ -14,8 +14,8 @@ import {
 	getFilteredParent,
 	getFileSafeNameForApiItem,
 	getReleaseTag,
-	getValueOrDerived,
 	type ValidApiItemKind,
+	getValueOrDerived,
 } from "../utilities/index.js";
 
 import {
@@ -26,6 +26,7 @@ import {
 	type FolderHierarchyConfiguration,
 	type DocumentationHierarchyConfiguration,
 	type HierarchyConfiguration,
+	type DocumentationSuiteConfiguration,
 } from "./configuration/index.js";
 
 /**
@@ -83,7 +84,7 @@ function getLinkUrlForApiItem(
 	config: ApiItemTransformationConfiguration,
 ): string {
 	const uriBase = config.getUriBaseOverrideForItem(apiItem) ?? config.uriRoot;
-	let documentPath = getDocumentPathForApiItem(apiItem, config.hierarchy);
+	let documentPath = getDocumentPathForApiItem(apiItem, config);
 
 	// Omit "index" file name from path generated in links.
 	// This can be considered an optimization in most cases, but some documentation systems also special-case
@@ -137,7 +138,7 @@ function findInHierarchy(
  */
 function getFirstAncestorWithOwnDocument(
 	apiItem: ApiItem,
-	hierarchyConfig: Required<HierarchyConfiguration>,
+	hierarchyConfig: HierarchyConfiguration,
 ): ApiItemWithHierarchy<DocumentHierarchyConfiguration | FolderHierarchyConfiguration> {
 	// Walk parentage until we reach an item kind that gets rendered to its own document.
 	// That is the document we will target with the generated link.
@@ -172,15 +173,14 @@ function getFirstAncestorWithOwnDocument(
  * The generated path is relative to {@link ApiItemTransformationConfiguration.uriRoot}.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param hierarchyConfig - See {@link HierarchyConfiguration}.
+ * @param config - See {@link ApiItemTransformationConfiguration}
  */
 export function getDocumentPathForApiItem(
 	apiItem: ApiItem,
-	hierarchyConfig: HierarchyConfiguration,
+	config: DocumentationSuiteConfiguration,
 ): string {
-	const targetDocument = getFirstAncestorWithOwnDocument(apiItem, hierarchyConfig);
-
-	const documentName = getDocumentNameForItem(targetDocument, hierarchyConfig);
+	const targetDocument = getFirstAncestorWithOwnDocument(apiItem, config.hierarchy);
+	const targetDocumentName = getDocumentNameForItem(targetDocument, config);
 
 	const pathSegments: string[] = [];
 
@@ -191,23 +191,23 @@ export function getDocumentPathForApiItem(
 		targetDocument.hierarchy.documentPlacement === FolderDocumentPlacement.Inside
 	) {
 		const folderName = getFolderNameForItem(
-			targetDocument as ApiItemWithHierarchy<FolderHierarchyConfiguration>,
-			hierarchyConfig,
+			{ apiItem: targetDocument.apiItem, hierarchy: targetDocument.hierarchy },
+			config,
 		);
-		pathSegments.push(`${folderName}/${documentName}`);
+		pathSegments.push(`${folderName}/${targetDocumentName}`);
 	} else {
-		pathSegments.push(documentName);
+		pathSegments.push(targetDocumentName);
 	}
 
 	let currentItem: ApiItem | undefined = getFilteredParent(targetDocument.apiItem);
 	while (currentItem !== undefined) {
 		const currentItemKind = getApiItemKind(currentItem);
-		const currentItemHierarchy = hierarchyConfig[currentItemKind];
+		const currentItemHierarchy = config.hierarchy[currentItemKind];
 		// Push path segments for all folders in the hierarchy
 		if (currentItemHierarchy.kind === HierarchyKind.Folder) {
 			const folderName = getFolderNameForItem(
 				{ apiItem: currentItem, hierarchy: currentItemHierarchy },
-				hierarchyConfig,
+				config,
 			);
 			pathSegments.push(folderName);
 		}
@@ -222,27 +222,53 @@ export function getDocumentPathForApiItem(
 
 function getDocumentNameForItem(
 	item: ApiItemWithHierarchy<DocumentHierarchyConfiguration | FolderHierarchyConfiguration>,
-	hierarchyConfig: HierarchyConfiguration,
+	config: DocumentationSuiteConfiguration,
 ): string {
-	return getValueOrDerived(item.hierarchy.documentName, item.apiItem, hierarchyConfig);
+	// If the hierarchy config specifies a document name, use that. Otherwise, fall back to the suite configuration.
+	if (item.hierarchy.documentName !== undefined) {
+		const documentName = getValueOrDerived(
+			item.hierarchy.documentName,
+			item.apiItem,
+			config.hierarchy,
+		);
+		if (documentName !== undefined) {
+			return documentName;
+		}
+	}
+
+	return config.getDocumentNameForItem(item.apiItem);
 }
 
 function getFolderNameForItem(
 	item: ApiItemWithHierarchy<FolderHierarchyConfiguration>,
-	hierarchyConfig: HierarchyConfiguration,
+	config: DocumentationSuiteConfiguration,
 ): string {
-	return getValueOrDerived(item.hierarchy.folderName, item.apiItem, hierarchyConfig);
+	// If the hierarchy config specifies a document name, use that. Otherwise, fall back to the suite configuration.
+	if (item.hierarchy.folderName !== undefined) {
+		const folderName = getValueOrDerived(
+			item.hierarchy.folderName,
+			item.apiItem,
+			config.hierarchy,
+		);
+		if (folderName !== undefined) {
+			return folderName;
+		}
+	}
+
+	return config.getFolderNameForItem(item.apiItem);
 }
 
 /**
  * Generates a qualified document name for the specified API item aimed at preventing name collisions, accounting for folder hierarchy.
  *
  * @param apiItem - The API item for which we are generating a qualified name
- * @param hierarchyConfig - See {@link HierarchyConfiguration}.
+ * @param config - See {@link DocumentationSuiteConfiguration}
+ *
+ * @public
  */
 export function createQualifiedDocumentNameForApiItem(
 	apiItem: ApiItem,
-	hierarchyConfig: HierarchyConfiguration,
+	config: DocumentationSuiteConfiguration,
 ): string {
 	const apiItemKind = getApiItemKind(apiItem);
 	let documentName = getFileSafeNameForApiItem(apiItem);
@@ -262,7 +288,7 @@ export function createQualifiedDocumentNameForApiItem(
 	while (
 		currentItem !== undefined &&
 		currentItem.kind !== "Model" &&
-		hierarchyConfig[getApiItemKind(currentItem)].kind !== HierarchyKind.Folder
+		config.hierarchy[getApiItemKind(currentItem)].kind !== HierarchyKind.Folder
 	) {
 		documentName = `${getFileSafeNameForApiItem(currentItem)}-${documentName}`;
 		currentItem = getFilteredParent(currentItem);

@@ -14,8 +14,8 @@ import { compare } from "dir-compare";
 import {
 	FolderDocumentPlacement,
 	HierarchyKind,
-	type HierarchyOptions,
 	type FolderHierarchyOptions,
+	type HierarchyOptions,
 } from "../index.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));
@@ -81,7 +81,7 @@ export namespace HierarchyConfigurations {
 	};
 
 	/**
-	 * "Sparse" hierarchy: Packages yield folder hierarchy, and all descendent items get their own document under that folder.
+	 * "Sparse" hierarchy: Packages yield folder hierarchy, and each descendent item gets its own document under that folder.
 	 * @remarks Leads to many documents, but each document is likely to be relatively small.
 	 */
 	export const sparse: HierarchyOptions = {

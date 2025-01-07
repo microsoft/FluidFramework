@@ -8,6 +8,7 @@
  */
 
 export {
+	createQualifiedDocumentNameForApiItem,
 	doesItemRequireOwnDocument,
 	doesItemKindRequireOwnDocument,
 	filterItems,

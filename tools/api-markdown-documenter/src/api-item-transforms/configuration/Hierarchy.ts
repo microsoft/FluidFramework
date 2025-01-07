@@ -3,16 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type ApiItem, ApiItemKind, type ApiPackage } from "@microsoft/api-extractor-model";
+import { type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
-import {
-	getApiItemKind,
-	type ValidApiItemKind,
-	type Mutable,
-	getFileSafeNameForApiItemName,
-	getUnscopedPackageName,
-} from "../../utilities/index.js";
-import { createQualifiedDocumentNameForApiItem } from "../ApiItemTransformUtilities.js";
+import type { ValidApiItemKind, Mutable } from "../../utilities/index.js";
 
 /**
  * Kind of documentation suite hierarchy.
@@ -76,11 +69,13 @@ export type SectionHierarchyOptions =
 export interface DocumentHierarchyProperties {
 	/**
 	 * Document name to use for the API item.
-	 * @remarks `undefined` indicates that the system default should be used.
+	 *
+	 * @defaultValue {@link DocumentationSuiteConfiguration.getFolderNameForItem}
 	 */
 	readonly documentName:
 		| string
-		| ((apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration) => string);
+		| undefined
+		| ((apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration) => string | undefined);
 }
 
 /**
@@ -133,11 +128,13 @@ export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
 
 	/**
 	 * Folder name to use for the API item.
-	 * @remarks `undefined` indicates that the system default should be used.
+	 *
+	 * @defaultValue {@link DocumentationSuiteConfiguration.getFolderNameForItem}
 	 */
 	readonly folderName:
 		| string
-		| ((apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration) => string);
+		| undefined
+		| ((apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration) => string | undefined);
 }
 
 /**
@@ -188,68 +185,21 @@ export const defaultSectionHierarchyConfig: SectionHierarchyConfiguration = {
 };
 
 /**
- * Default {@link DocumentHierarchyProperties.documentName} for non-folder hierarchy documents.
- *
- * @remarks
- * Uses the item's scoped and qualified API name, but is handled differently for the following items:
- *
- * - Model: "index"
- *
- * - Package: Use the unscoped package name.
- */
-function defaultDocumentName(apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration): string {
-	const kind = getApiItemKind(apiItem);
-	switch (kind) {
-		case ApiItemKind.Model: {
-			return "index";
-		}
-		case ApiItemKind.Package: {
-			return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
-		}
-		default: {
-			return createQualifiedDocumentNameForApiItem(apiItem, hierarchyConfig);
-		}
-	}
-}
-
-/**
  * Default {@link DocumentHierarchyConfiguration} used by the system.
  */
 export const defaultDocumentHierarchyConfig: DocumentHierarchyConfiguration = {
 	kind: HierarchyKind.Document,
-	documentName: defaultDocumentName,
+	documentName: undefined, // Use suite configuration default.
 };
-
-/**
- * Default {@link DocumentHierarchyProperties.documentName} for non-folder hierarchy documents.
- *
- * @remarks
- * Uses the item's scoped and qualified API name, but is handled differently for the following items:
- *
- * - Package: Use the unscoped package name.
- */
-function defaultFolderName(apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration): string {
-	const kind = getApiItemKind(apiItem);
-	switch (kind) {
-		case ApiItemKind.Package: {
-			return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
-		}
-		default: {
-			// Let the system generate a unique name that accounts for folder hierarchy.
-			return createQualifiedDocumentNameForApiItem(apiItem, hierarchyConfig);
-		}
-	}
-}
 
 /**
  * Default {@link FolderHierarchyConfiguration} used by the system.
  */
 export const defaultFolderHierarchyConfig: FolderHierarchyConfiguration = {
 	kind: HierarchyKind.Folder,
-	documentName: defaultDocumentName,
+	documentName: undefined, // Use suite configuration default.
 	documentPlacement: FolderDocumentPlacement.Outside, // TODO
-	// documentName: "index", // Documents for items that get their own folder are always named "index" by default.
-	folderName: defaultFolderName,
+	folderName: undefined, // Use suite configuration default.
 };
 
 /**
