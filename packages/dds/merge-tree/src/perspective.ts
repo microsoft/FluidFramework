@@ -7,6 +7,15 @@ import { UnassignedSequenceNumber } from "./constants.js";
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
 import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import {
+	isInserted,
+	isMoved,
+	isRemoved,
+	type IInsertionInfo,
+	type IMoveInfo,
+	type IRemovalInfo,
+	type SegmentWithInfo,
+} from "./segmentInfos.js";
 
 /**
  * Provides a view of a MergeTree from the perspective of a specific client at a specific sequence number.
@@ -77,7 +86,10 @@ export class PerspectiveImpl implements Perspective {
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was removed in the given perspective.
  */
-export function wasRemovedBefore(seg: ISegmentLeaf, { refSeq, localSeq }: SeqTime): boolean {
+export function wasRemovedBefore(
+	seg: SegmentWithInfo<IInsertionInfo & IRemovalInfo>,
+	{ refSeq, localSeq }: SeqTime,
+): boolean {
 	if (
 		seg.removedSeq === UnassignedSequenceNumber &&
 		localSeq !== undefined &&
@@ -95,7 +107,10 @@ export function wasRemovedBefore(seg: ISegmentLeaf, { refSeq, localSeq }: SeqTim
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was moved (aka obliterated) in the given perspective.
  */
-export function wasMovedBefore(seg: ISegmentLeaf, { refSeq, localSeq }: SeqTime): boolean {
+export function wasMovedBefore(
+	seg: SegmentWithInfo<IInsertionInfo & IMoveInfo>,
+	{ refSeq, localSeq }: SeqTime,
+): boolean {
 	if (
 		seg.movedSeq === UnassignedSequenceNumber &&
 		localSeq !== undefined &&
@@ -110,7 +125,11 @@ export function wasMovedBefore(seg: ISegmentLeaf, { refSeq, localSeq }: SeqTime)
  * See {@link wasRemovedBefore} and {@link wasMovedBefore}.
  */
 export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
-	return wasRemovedBefore(seg, seqTime) || wasMovedBefore(seg, seqTime);
+	return (
+		isInserted(seg) &&
+		((isRemoved(seg) && wasRemovedBefore(seg, seqTime)) ||
+			(isMoved(seg) && wasMovedBefore(seg, seqTime)))
+	);
 }
 
 /**
@@ -124,7 +143,7 @@ export function isSegmentPresent(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
 	const { refSeq, localSeq } = seqTime;
 	// If seg.seq is undefined, then this segment has existed since minSeq.
 	// It may have been moved or removed since.
-	if (seg.seq !== undefined) {
+	if (isInserted(seg)) {
 		if (seg.seq !== UnassignedSequenceNumber) {
 			if (!seqLTE(seg.seq, refSeq)) {
 				return false;

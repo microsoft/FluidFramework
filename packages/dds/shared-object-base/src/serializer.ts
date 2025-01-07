@@ -125,7 +125,7 @@ export class FluidSerializer implements IFluidSerializer {
 	private readonly encodeValue = (value: unknown, bind?: IFluidHandleInternal): unknown => {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
-			assert(bind !== undefined, "Cannot encode a handle without a bind context");
+			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
 			return this.serializeHandle(toFluidHandleInternal(value), bind);
 		}
 		return value;

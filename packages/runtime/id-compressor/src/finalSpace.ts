@@ -33,7 +33,6 @@ export class FinalSpace {
 		const lastCluster = this.getLastCluster();
 		assert(
 			lastCluster === undefined ||
-				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
 				newCluster.baseFinalId === lastCluster.baseFinalId + lastCluster.capacity,
 			0x753 /* Cluster insert to final_space is out of order. */,
 		);
