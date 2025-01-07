@@ -41,6 +41,7 @@ import {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 	type GraphCommit,
+	findCommonAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -612,6 +613,17 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
 				const forkedCheckout = getCheckout(forkedBranch);
+
+				// Check if the original branch and forked branch have a common ancestor.
+				const originalBranchHead = this.#transaction.activeBranch.getHead();
+				const forkedBranchHead = forkedCheckout.#transaction.activeBranch.getHead();
+
+				if (findCommonAncestor(originalBranchHead, forkedBranchHead) === undefined) {
+					throw new UsageError(
+						"Cannot clone revertible: branch A and branch B must be related",
+					);
+				}
+
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				assert(
 					revertibleBranch !== undefined,
