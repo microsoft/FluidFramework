@@ -611,6 +611,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
 				}
 
+				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
 				const forkedCheckout = getCheckout(forkedBranch);
 
 				// Check if the original branch and forked branch have a common ancestor.
