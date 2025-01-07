@@ -160,7 +160,6 @@ export type DocumentationSuiteOptions = Omit<
 	 */
 	readonly hierarchy?: HierarchyOptions;
 
-	// TODO: rename these
 	/**
 	 * Generate the desired document name for the provided `ApiItem`.
 	 *
