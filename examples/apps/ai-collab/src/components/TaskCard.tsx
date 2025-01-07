@@ -7,8 +7,7 @@
 
 import {
 	aiCollab,
-	type AiCollabErrorResponse,
-	type AiCollabSuccessResponse,
+	type GenerateTreeEditsResponse,
 	type Difference,
 	type DifferenceChange,
 	type DifferenceMove,
@@ -166,7 +165,7 @@ export function TaskCard(props: {
 			console.log("ai-collab Branch Task BEFORE:", { ...newBranchTask });
 
 			// 2. execute the ai collaboration
-			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
+			const response: GenerateTreeEditsResponse = await aiCollab({
 				openAI: {
 					client: getOpenAiClient(),
 					modelName: "gpt-4o",
