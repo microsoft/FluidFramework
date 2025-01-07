@@ -68,8 +68,35 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 
 	protected defaultSelection = undefined;
 
-	// TODO: just use per package config and default (inherited) filtering logic.
-	protected async selectAndFilterPackages(): Promise<void> {
+	// TODO:
+	// Refactor regex based filtering logic.
+	// Consider doing one the below instead of applying this filtering here:
+	// a. Add regex filter CLI option to PackageCommand.
+	// b. Have packages which want to opt out do so in their own configuration.
+	// c. Refactor TagAssertsCommand so it doesn't have to rely on this override and undocumented implementation details to do this filtering
+	// (Ex: move the logic into an early continue in processPackages)
+	// d. Refactor PackageCommand so having subclasses customize filtering is well supported
+	// (ex: allow the subclass to provide a filtering predicate, perhaps via the constructor or an a method explicitly documented to be used for overriding which normally just returns true).
+	//
+	// The current approach isn't ideal from a readability or maintainability perspective.
+	// 1. selectAndFilterPackages is undocumented had relies on side effects.
+	// To override it correctly the the subclass must know and depend on many undocumented details of the base class (like that this method sets filteredPackages, that its ok for it to modify filteredPackages).
+	// This makes the base class fragile: refactoring it to work slightly differently (like cache data derived from the set of filteredPackages after they are computed) could break things.
+	// 2. Data flow is hard to follow. This method does not have inputs or outputs declared in its signature, and the values it reads from the class arn't readonly so its hard to know what is initialized when
+	// and which values are functions of which other values.
+	// 3. The division of responsibility here is odd. Generally the user of a PackageCommand selects which packages to apply it to on the command line.
+	// Currently this is done by passing --all (as specified in the script that invokes this command),
+	// and a separate regex in a config.
+	// This extra config even more confusing since typically this kind of configuration is per package,
+	// but in this case the config from one package is applying to multiple release groups based on the working directory the command is run in.
+	// Normally configuration in a package applies to the package, and sometimes configuration for a release group lives at its root.
+	// In this case configuration spanning multiple release groups lives in the root of one of them but uses the same file we would use for per package configuration which makes it hard to understand.
+	// It seems like it would be more consistent with the design, and more useful generally, that if additional package filtering functionality is needed (ex: regex based filtering) that it
+	// be added to PackageCommand's package filtering CLI options so all PackageCommands could use it.
+	// This would remove the need to expose so many internals (like this method, filteredPackages, etc) of PackageCommand as "protected"
+	// improved testability (since this logic could reside in the more testable selectAndFilterPackages free function) and keep the per package configuration files actually per package
+	// while putting the cross release group configuration (--all and the regex) in the same place.
+	protected override async selectAndFilterPackages(): Promise<void> {
 		await super.selectAndFilterPackages();
 
 		const context = await this.getContext();
@@ -111,7 +138,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		}
 	}
 
-	// This should not be used due to processPackages being overridden instead.
+	// This should not be called due to processPackages being overridden instead.
 	protected override async processPackage<TPkg extends Package>(
 		pkg: TPkg,
 		kind: PackageKind,
@@ -350,13 +377,6 @@ function getCallsiteString(msg: Node): string {
 }
 
 /**
- * Map from assertion function name to the index of its message argument.
- *
- * TODO:
- * This should be moved into a configuration file.
- */
-
-/**
  * Given a source file, this function will look for all assert functions contained in it and return the message parameters.
  * This includes both functions named "assert" and ones named "fail"
  * all the functions which is the message parameter
@@ -394,7 +414,7 @@ function writeShortCodeMappingFile(codeToMsgMap: Map<string, string>): void {
 			return accum;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		}, {} as any);
-	// TODO: this should come from config.
+	// TODO: this should prabably come from configuration (if each package can have their own) or a CLI argument.
 	const targetFolder = "packages/runtime/test-runtime-utils/src";
 
 	if (!fs.existsSync(targetFolder)) {
