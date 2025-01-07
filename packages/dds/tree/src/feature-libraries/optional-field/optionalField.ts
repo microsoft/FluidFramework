@@ -11,6 +11,7 @@ import {
 	type ChangesetLocalId,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
+	type DeltaDetachedNodeRename,
 	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionTag,
@@ -657,8 +658,14 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): DeltaFieldChanges {
-	const delta: Mutable<DeltaFieldChanges> = {};
+): {
+	fieldChanges: DeltaFieldChanges;
+	global?: DeltaDetachedNodeChanges[];
+	rename?: DeltaDetachedNodeRename[];
+} {
+	let fieldChanges: DeltaFieldChanges = [];
+	let global: DeltaDetachedNodeChanges[] | undefined;
+	let rename: DeltaDetachedNodeRename[] | undefined;
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
@@ -674,7 +681,7 @@ export function optionalFieldIntoDelta(
 	}
 
 	if (change.moves.length > 0) {
-		delta.rename = change.moves.map(([src, dst]) => ({
+		rename = change.moves.map(([src, dst]) => ({
 			count: 1,
 			oldId: nodeIdFromChangeAtom(src),
 			newId: nodeIdFromChangeAtom(dst),
@@ -698,15 +705,15 @@ export function optionalFieldIntoDelta(
 		}
 
 		if (globals.length > 0) {
-			delta.global = globals;
+			global = globals;
 		}
 	}
 
 	if (!markIsANoop) {
-		delta.local = [mark];
+		fieldChanges = [mark];
 	}
 
-	return delta;
+	return { fieldChanges, global, rename };
 }
 
 export const optionalChangeHandler: FieldChangeHandler<

@@ -40,6 +40,8 @@ import {
 	areEqualChangeAtomIdOpts,
 	tagChange,
 	makeAnonChange,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeRename,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -1998,6 +2000,8 @@ export function updateRefreshers(
 }
 
 /**
+ * Converts a change into the delta format.
+ *
  * @param change - The change to convert into a delta.
  * @param fieldKinds - The field kinds to delegate to.
  */
@@ -2011,7 +2015,7 @@ export function intoDelta(
 
 	if (!hasConflicts(change)) {
 		// If there are no constraint violations, then tree changes apply.
-		const fieldDeltas = intoDeltaImpl(
+		const [fieldDeltas, global, rename] = intoDeltaImpl(
 			change.fieldChanges,
 			change.nodeChanges,
 			idAllocator,
@@ -2019,6 +2023,12 @@ export function intoDelta(
 		);
 		if (fieldDeltas.size > 0) {
 			rootDelta.fields = fieldDeltas;
+		}
+		if (global.length > 0) {
+			rootDelta.global = global;
+		}
+		if (rename.length > 0) {
+			rootDelta.rename = rename;
 		}
 	}
 
@@ -2068,22 +2078,34 @@ function intoDeltaImpl(
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): Map<FieldKey, DeltaFieldChanges> {
+): [Map<FieldKey, DeltaFieldChanges>, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] {
 	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
+	const global: DeltaDetachedNodeChanges[] = [];
+	const rename: DeltaDetachedNodeRename[] = [];
+
 	for (const [field, fieldChange] of change) {
-		const deltaField = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
+		const [fieldChanges, fieldGlobal, fieldRename] = getChangeHandler(
+			fieldKinds,
+			fieldChange.fieldKind,
+		).intoDelta(
 			fieldChange.change,
-			(childChange): DeltaFieldMap => {
+			(childChange) => {
 				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
 				return deltaFromNodeChange(nodeChange, nodeChanges, idAllocator, fieldKinds);
 			},
 			idAllocator,
 		);
-		if (!isEmptyFieldChanges(deltaField)) {
-			delta.set(field, deltaField);
+		if (!isEmptyFieldChanges(fieldChanges)) {
+			delta.set(field, fieldChanges);
+		}
+		if (fieldGlobal.length > 0) {
+			fieldGlobal.forEach((c) => global.push(c));
+		}
+		if (fieldRename.length > 0) {
+			fieldRename.forEach((r) => rename.push(r));
 		}
 	}
-	return delta;
+	return [delta, global, rename];
 }
 
 function deltaFromNodeChange(
@@ -2091,12 +2113,12 @@ function deltaFromNodeChange(
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): DeltaFieldMap {
+): [DeltaFieldMap, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] | undefined {
 	if (change.fieldChanges !== undefined) {
 		return intoDeltaImpl(change.fieldChanges, nodeChanges, idAllocator, fieldKinds);
 	}
 	// TODO: update the API to allow undefined to be returned here
-	return new Map();
+	return undefined;
 }
 
 /**

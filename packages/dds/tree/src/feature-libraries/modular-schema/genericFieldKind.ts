@@ -5,7 +5,6 @@
 
 import {
 	type DeltaDetachedNodeId,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionMetadataSource,
 	Multiplicity,
@@ -47,7 +46,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return newGenericChangeset([[index, change]]);
 		},
 	},
-	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): DeltaFieldChanges => {
+	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta) => {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const [index, nodeChange] of change.entries()) {
@@ -56,10 +55,15 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				markList.push({ count: offset });
 				nodeIndex = index;
 			}
-			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
+			const childDelta = deltaFromChild(nodeChange);
+			if (childDelta !== undefined) {
+				// TODO accumulate the child global and rename
+				const [fields, _childGlobal, _childRename] = childDelta;
+				markList.push({ count: 1, fields });
+			}
 			nodeIndex += 1;
 		}
-		return { local: markList };
+		return [markList, [], []];
 	},
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,

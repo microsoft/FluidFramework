@@ -6,7 +6,9 @@
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
+	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	EncodedRevisionTag,
@@ -49,7 +51,7 @@ export interface FieldChangeHandler<
 		change: TChangeset,
 		deltaFromChild: ToDelta,
 		idAllocator: MemoizedIdRangeAllocator,
-	): DeltaFieldChanges;
+	): [DeltaFieldChanges, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]];
 	/**
 	 * Returns the set of removed roots that should be in memory for the given change to be applied.
 	 * A removed root is relevant if any of the following is true:
@@ -195,7 +197,9 @@ export interface FieldEditor<TChangeset> {
  * The `index` represents the index of the child node in the input context.
  * The `index` should be `undefined` iff the child node does not exist in the input context (e.g., an inserted node).
  */
-export type ToDelta = (child: NodeId) => DeltaFieldMap;
+export type ToDelta = (
+	child: NodeId,
+) => [DeltaFieldMap, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] | undefined;
 
 /**
  */
