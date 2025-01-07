@@ -199,7 +199,7 @@ export interface FieldEditor<TChangeset> {
  */
 export type ToDelta = (
 	child: NodeId,
-) => [DeltaFieldMap, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] | undefined;
+) => DeltaFieldMap | undefined;
 
 /**
  */

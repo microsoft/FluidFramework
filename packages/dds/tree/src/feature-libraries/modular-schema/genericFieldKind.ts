@@ -57,9 +57,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			const childDelta = deltaFromChild(nodeChange);
 			if (childDelta !== undefined) {
-				// TODO accumulate the child global and rename
-				const [fields, _childGlobal, _childRename] = childDelta;
-				markList.push({ count: 1, fields });
+				markList.push({ count: 1, fields: childDelta });
 			}
 			nodeIndex += 1;
 		}

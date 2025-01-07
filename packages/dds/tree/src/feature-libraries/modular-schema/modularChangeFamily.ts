@@ -2091,7 +2091,17 @@ function intoDeltaImpl(
 			fieldChange.change,
 			(childChange) => {
 				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
-				return deltaFromNodeChange(nodeChange, nodeChanges, idAllocator, fieldKinds);
+				const nodeChangeDelta = deltaFromNodeChange(nodeChange, nodeChanges, idAllocator, fieldKinds);
+				if (nodeChangeDelta !== undefined) {
+					const [nodeFieldChanges, nodeGlobals, nodeRenames] = nodeChangeDelta;
+					if (nodeGlobals.length > 0) {
+						nodeGlobals.forEach((c) => global.push(c));
+					}
+					if (nodeRenames.length > 0) {
+						nodeRenames.forEach((r) => rename.push(r));
+					}
+					return nodeFieldChanges;
+				}
 			},
 			idAllocator,
 		);
