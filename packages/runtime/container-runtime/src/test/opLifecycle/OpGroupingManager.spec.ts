@@ -57,17 +57,14 @@ describe("OpGroupingManager", () => {
 		const options: ConfigOption[] = [
 			{ enabled: false, expectedResult: false },
 			{ enabled: true, tooSmall: true, expectedResult: false },
-			{ enabled: true, reentrant: true, expectedResult: false },
-			{ enabled: true, reentrant: true, reentryEnabled: true, expectedResult: true },
+			{ enabled: true, reentrant: true, expectedResult: true },
 			{ enabled: true, expectedResult: true },
 		];
 
 		options.forEach((option) => {
 			it(`shouldGroup: groupedBatchingEnabled [${option.enabled}] tooSmall [${
 				option.tooSmall === true
-			}] reentrant [${option.reentrant === true}] reentryEnabled [${
-				option.reentryEnabled === true
-			}]`, () => {
+			}] reentrant [${option.reentrant === true}]`, () => {
 				assert.strictEqual(
 					new OpGroupingManager(
 						{
