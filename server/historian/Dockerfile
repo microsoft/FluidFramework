@@ -31,10 +31,11 @@ COPY packages/historian-base/package.json packages/historian-base/
 
 RUN corepack enable
 
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
+# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
-RUN pnpm install --unsafe-perm
+# TODO: AB#26779: This Workaround (passing --no-frozen-lockfile) should be removed when possible.
+RUN pnpm install --unsafe-perm --no-frozen-lockfile
 
 COPY . .
 RUN npm run build
