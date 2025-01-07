@@ -5,6 +5,8 @@
 "section": legacy
 ---
 
-Grouped batching is enabled by default and IContainerRuntimeOptions.enableGroupedBatching has been removed
+Grouped batching is enabled by default and cannot be disabled
 
-This option allowed an application to disable grouped batching. But now we no longer want users to be able to turn it on or off, so this option can be removed and it will always be enabled by default.
+The Grouped Batching feature in the container runtime has stabilized and is now enabled by default.
+
+The `IContainerRuntimeOptions.enableGroupedBatching` option, which allowed an application to disable grouped batching, has been removed. Grouped Batching is now considered a core part of the container runtime, and as such can no longer be disabled.
