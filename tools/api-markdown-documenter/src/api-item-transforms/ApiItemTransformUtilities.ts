@@ -84,7 +84,7 @@ function getLinkUrlForApiItem(
 	config: ApiItemTransformationConfiguration,
 ): string {
 	const uriBase = config.getUriBaseOverrideForItem(apiItem) ?? config.uriRoot;
-	let documentPath = getDocumentPathForApiItem(apiItem, config);
+	let documentPath = getDocumentPathForApiItem(apiItem, config.hierarchy);
 
 	// Omit "index" file name from path generated in links.
 	// This can be considered an optimization in most cases, but some documentation systems also special-case
@@ -173,14 +173,14 @@ function getFirstAncestorWithOwnDocument(
  * The generated path is relative to {@link ApiItemTransformationConfiguration.uriRoot}.
  *
  * @param apiItem - The API item for which we are generating a file path.
- * @param config - See {@link ApiItemTransformationConfiguration}
+ * @param hierarchyConfig - See {@link HierarchyConfiguration}
  */
 export function getDocumentPathForApiItem(
 	apiItem: ApiItem,
-	config: DocumentationSuiteConfiguration,
+	hierarchyConfig: HierarchyConfiguration,
 ): string {
-	const targetDocument = getFirstAncestorWithOwnDocument(apiItem, config.hierarchy);
-	const targetDocumentName = getDocumentNameForItem(targetDocument, config);
+	const targetDocument = getFirstAncestorWithOwnDocument(apiItem, hierarchyConfig);
+	const targetDocumentName = getDocumentNameForItem(targetDocument);
 
 	const pathSegments: string[] = [];
 
@@ -190,10 +190,10 @@ export function getDocumentPathForApiItem(
 		targetDocument.hierarchy.kind === HierarchyKind.Folder &&
 		targetDocument.hierarchy.documentPlacement === FolderDocumentPlacement.Inside
 	) {
-		const folderName = getFolderNameForItem(
-			{ apiItem: targetDocument.apiItem, hierarchy: targetDocument.hierarchy },
-			config,
-		);
+		const folderName = getFolderNameForItem({
+			apiItem: targetDocument.apiItem,
+			hierarchy: targetDocument.hierarchy,
+		});
 		pathSegments.push(`${folderName}/${targetDocumentName}`);
 	} else {
 		pathSegments.push(targetDocumentName);
@@ -202,13 +202,13 @@ export function getDocumentPathForApiItem(
 	let currentItem: ApiItem | undefined = getFilteredParent(targetDocument.apiItem);
 	while (currentItem !== undefined) {
 		const currentItemKind = getApiItemKind(currentItem);
-		const currentItemHierarchy = config.hierarchy[currentItemKind];
+		const currentItemHierarchy = hierarchyConfig[currentItemKind];
 		// Push path segments for all folders in the hierarchy
 		if (currentItemHierarchy.kind === HierarchyKind.Folder) {
-			const folderName = getFolderNameForItem(
-				{ apiItem: currentItem, hierarchy: currentItemHierarchy },
-				config,
-			);
+			const folderName = getFolderNameForItem({
+				apiItem: currentItem,
+				hierarchy: currentItemHierarchy,
+			});
 			pathSegments.push(folderName);
 		}
 		currentItem = getFilteredParent(currentItem);
@@ -222,40 +222,12 @@ export function getDocumentPathForApiItem(
 
 function getDocumentNameForItem(
 	item: ApiItemWithHierarchy<DocumentHierarchyConfiguration | FolderHierarchyConfiguration>,
-	config: DocumentationSuiteConfiguration,
 ): string {
-	// If the hierarchy config specifies a document name, use that. Otherwise, fall back to the suite configuration.
-	if (item.hierarchy.documentName !== undefined) {
-		const documentName = getValueOrDerived(
-			item.hierarchy.documentName,
-			item.apiItem,
-			config.hierarchy,
-		);
-		if (documentName !== undefined) {
-			return documentName;
-		}
-	}
-
-	return config.getDocumentNameForItem(item.apiItem);
+	return getValueOrDerived(item.hierarchy.documentName, item.apiItem);
 }
 
-function getFolderNameForItem(
-	item: ApiItemWithHierarchy<FolderHierarchyConfiguration>,
-	config: DocumentationSuiteConfiguration,
-): string {
-	// If the hierarchy config specifies a document name, use that. Otherwise, fall back to the suite configuration.
-	if (item.hierarchy.folderName !== undefined) {
-		const folderName = getValueOrDerived(
-			item.hierarchy.folderName,
-			item.apiItem,
-			config.hierarchy,
-		);
-		if (folderName !== undefined) {
-			return folderName;
-		}
-	}
-
-	return config.getFolderNameForItem(item.apiItem);
+function getFolderNameForItem(item: ApiItemWithHierarchy<FolderHierarchyConfiguration>): string {
+	return getValueOrDerived(item.hierarchy.folderName, item.apiItem);
 }
 
 /**

@@ -321,8 +321,6 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 // @public
 export interface DocumentationSuiteConfiguration {
     readonly getAlertsForItem: (apiItem: ApiItem) => string[];
-    readonly getDocumentNameForItem: (apiItem: ApiItem) => string;
-    readonly getFolderNameForItem: (apiItem: ApiItem) => string;
     readonly getHeadingTextForItem: (apiItem: ApiItem) => string;
     readonly getLinkTextForItem: (apiItem: ApiItem) => string;
     readonly getUriBaseOverrideForItem: (apiItem: ApiItem) => string | undefined;
@@ -336,6 +334,8 @@ export interface DocumentationSuiteConfiguration {
 // @public
 export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfiguration>, "hierarchy"> & {
     readonly hierarchy?: HierarchyOptions;
+    readonly getDocumentNameForItem?: (apiItem: ApiItem) => string;
+    readonly getFolderNameForItem?: (apiItem: ApiItem) => string;
 };
 
 // @public
@@ -346,7 +346,7 @@ export type DocumentHierarchyOptions = DocumentationHierarchyConfigurationBase<H
 
 // @public
 export interface DocumentHierarchyProperties {
-    readonly documentName: string | undefined | ((apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration) => string | undefined);
+    readonly documentName: string | ((apiItem: ApiItem) => string);
 }
 
 // @public
@@ -422,7 +422,7 @@ export type FolderHierarchyOptions = DocumentationHierarchyConfigurationBase<Hie
 // @public @sealed
 export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
     readonly documentPlacement: FolderDocumentPlacement;
-    readonly folderName: string | undefined | ((apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration) => string | undefined);
+    readonly folderName: string | ((apiItem: ApiItem) => string);
 }
 
 // @public
