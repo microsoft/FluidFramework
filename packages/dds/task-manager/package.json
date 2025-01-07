@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/task-manager",
-	"version": "2.14.0",
+	"version": "2.20.0",
 	"description": "Distributed data structure for queueing exclusive tasks",
 	"homepage": "https://fluidframework.com",
 	"repository": {

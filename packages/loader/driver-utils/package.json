@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-utils",
-	"version": "2.14.0",
+	"version": "2.20.0",
 	"description": "Collection of utility functions for Fluid drivers",
 	"homepage": "https://fluidframework.com",
 	"repository": {
