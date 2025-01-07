@@ -22,7 +22,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small
+  default: Small-eastus2
 
 - name: publishFlags
   type: string

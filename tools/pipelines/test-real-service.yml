@@ -41,7 +41,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: Small-eastus2
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:local:report
@@ -55,7 +55,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: Small-eastus2
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:tinylicious:report
@@ -72,7 +72,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: Small-eastus2
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         testCommand: test:realsvc:routerlicious:report
@@ -101,7 +101,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: Small-eastus2
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 360
@@ -132,7 +132,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Small
+        poolBuild: Small-eastus2
         testPackage: "@fluidframework/test-end-to-end-tests"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 360

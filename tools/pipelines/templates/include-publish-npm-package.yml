@@ -16,7 +16,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small
+  default: Small-eastus2
 
 stages:
 - stage: publish_npm_internal_test

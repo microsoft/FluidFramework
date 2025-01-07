@@ -46,7 +46,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Large
+        poolBuild: Large-eastus2
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 120
@@ -68,7 +68,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Large
+        poolBuild: Large-eastus2
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 120
@@ -85,7 +85,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Large
+        poolBuild: Large-eastus2
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 120
@@ -103,7 +103,7 @@ stages:
     jobs:
     - template: templates/include-test-real-service.yml
       parameters:
-        poolBuild: Large
+        poolBuild: Large-eastus2
         testPackage: "@fluid-internal/test-service-load"
         testWorkspace: ${{ variables.testWorkspace }}
         timeoutInMinutes: 120

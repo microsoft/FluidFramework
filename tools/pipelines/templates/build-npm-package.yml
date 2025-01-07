@@ -37,11 +37,11 @@ parameters:
 
 - name: poolCG
   type: object
-  default: Small
+  default: Small-eastus2
 
 - name: poolBuild
   type: object
-  default: Small
+  default: Small-eastus2
 
 - name: preCG
   type: stepList
@@ -87,7 +87,7 @@ parameters:
 
 - name: buildToolsVersionToInstall
   type: string
-  default: latest
+  default: "^0.5.0"
 
 trigger: none
 

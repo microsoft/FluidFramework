@@ -16,7 +16,7 @@ pr:
 - release/*
 
 pool:
-  Small
+  Small-eastus2
 
 variables:
 - name: skipComponentGovernanceDetection
