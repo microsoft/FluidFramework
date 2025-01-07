@@ -27,7 +27,6 @@ import {
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/deltaScheduler";
-// eslint-disable-next-line import/no-internal-modules
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -40,6 +39,7 @@ import {
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 describe("Container Runtime", () => {
 	/**
@@ -55,6 +55,7 @@ describe("Container Runtime", () => {
 		const docId = "docId";
 		let batchBegin: number = 0;
 		let batchEnd: number = 0;
+		let clock: SinonFakeTimers;
 
 		// Create a mock container context to be used with container runtime.
 		const getMockContext = (
@@ -121,12 +122,15 @@ describe("Container Runtime", () => {
 			// DeltaScheduler's processing time to process.
 			const processingDelay = DeltaScheduler.processingTime + 10;
 			containerRuntime.once("op", () => {
-				const startTime = Date.now();
-				while (Date.now() - startTime < processingDelay) {}
+				clock.tick(processingDelay);
 			});
 			containerRuntime.process(message, false);
 			deltaManager.emit("op", message);
 		}
+
+		before(() => {
+			clock = useFakeTimers({ shouldAdvanceTime: true });
+		});
 
 		beforeEach(async () => {
 			seq = 1;
@@ -196,8 +200,13 @@ describe("Container Runtime", () => {
 		});
 
 		afterEach(() => {
+			clock.reset();
 			batchBegin = 0;
 			batchEnd = 0;
+		});
+
+		after(() => {
+			clock.restore();
 		});
 
 		it("Batch messages that take longer than DeltaScheduler's processing time to process", async () => {

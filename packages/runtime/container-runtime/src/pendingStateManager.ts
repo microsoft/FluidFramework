@@ -638,7 +638,7 @@ export class PendingStateManager implements IDisposable {
 			/**
 			 * We must preserve the distinct batches on resubmit.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
-			 * either receive the whole batch ack or nothing at all.  @see InboundBatchAggregator for how this works.
+			 * either receive the whole batch ack or nothing at all. See {@link InboundBatchAggregator} for how this works.
 			 */
 			if (batchMetadataFlag === undefined) {
 				// Single-message batch
