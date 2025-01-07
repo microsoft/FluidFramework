@@ -80,9 +80,9 @@ export class FileSnapshotReader
 			throw new Error(`Unknown version id: ${versionRequested}`);
 		}
 
-		let snapshotTree: ISnapshotTree | undefined = this.trees[versionRequested.id];
+		let snapshotTree = this.trees[versionRequested.id];
 		if (snapshotTree === undefined) {
-			const tree: ITree | undefined = this.commits[versionRequested.id];
+			const tree = this.commits[versionRequested.id];
 			if (tree === undefined) {
 				throw new Error(`Can't find version ${versionRequested.id}`);
 			}
