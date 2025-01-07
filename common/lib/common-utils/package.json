@@ -94,7 +94,7 @@
 		"@types/benchmark": "^2.1.0",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "2.2.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.39",
 		"@types/sinon": "^17.0.3",
 		"benchmark": "^2.1.4",

@@ -5,7 +5,6 @@
 
 import type { Server } from "node:http";
 
-import { delay } from "@fluidframework/core-utils/internal";
 import cors from "cors";
 import express from "express";
 import fetch from "node-fetch";
@@ -19,7 +18,7 @@ import {
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import { ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
 
-import { closeServer } from "./utilities.js";
+import { closeServer, delay } from "./utilities.js";
 
 const externalTaskListId = "task-list-1";
 

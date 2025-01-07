@@ -22,10 +22,10 @@ COPY packages/gitrest-base/package*.json packages/gitrest-base/
 
 RUN corepack enable
 
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
+# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
-# Needs to set --no-frozen-lockfile since npmrc requires it if there are resolution changes, and the package dependencies don't exactly match
+# TODO: AB#26779: This Workaround (passing --no-frozen-lockfile) should be removed when possible.
 RUN pnpm install --unsafe-perm --no-frozen-lockfile
 
 COPY . .

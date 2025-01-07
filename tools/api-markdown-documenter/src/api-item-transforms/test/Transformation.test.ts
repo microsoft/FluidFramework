@@ -41,6 +41,7 @@ import { apiItemToSections } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
 import {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "../configuration/index.js";
 import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
@@ -48,7 +49,7 @@ import { betaWarningSpan, wrapInSection } from "../helpers/index.js";
 /**
  * Sample "default" configuration.
  */
-const defaultPartialConfig: Omit<ApiItemTransformationConfiguration, "apiModel"> = {
+const defaultPartialConfig: Omit<ApiItemTransformationOptions, "apiModel"> = {
 	uriRoot: ".",
 };
 
@@ -114,9 +115,9 @@ function findApiMember(
  * Creates a config for testing.
  */
 function createConfig(
-	partialConfig: Omit<ApiItemTransformationConfiguration, "apiModel">,
+	partialConfig: Omit<ApiItemTransformationOptions, "apiModel">,
 	apiModel: ApiModel,
-): Required<ApiItemTransformationConfiguration> {
+): ApiItemTransformationConfiguration {
 	return getApiItemTransformationConfigurationWithDefaults({
 		...partialConfig,
 		apiModel,
@@ -135,7 +136,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiVariable(apiVariable, config);
+		const result = config.transformations[ApiItemKind.Variable](apiVariable, config);
 
 		const expected = [
 			wrapInSection(
@@ -172,7 +173,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiFunction(apiFunction, config);
+		const result = config.transformations[ApiItemKind.Function](apiFunction, config);
 
 		const expected = [
 			wrapInSection(
@@ -307,8 +308,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const config = createConfig(defaultPartialConfig, model);
 
-		const result = config.transformApiInterface(apiInterface, config, (childItem) =>
-			apiItemToSections(childItem, config),
+		const result = config.transformations[ApiItemKind.Interface](
+			apiInterface,
+			config,
+			(childItem) => apiItemToSections(childItem, config),
 		);
 
 		const expected: DocumentationNode[] = [
@@ -423,8 +426,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			model,
 		);
 
-		const result = config.transformApiNamespace(apiNamespace, config, (childItem) =>
-			apiItemToSections(childItem, config),
+		const result = config.transformations[ApiItemKind.Namespace](
+			apiNamespace,
+			config,
+			(childItem) => apiItemToSections(childItem, config),
 		);
 
 		// Note: the namespace being processed includes 3 const variables:
