@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-container-views",
-	"version": "2.13.0",
+	"version": "2.13.1",
 	"private": true,
 	"description": "Minimal Fluid Container & data store sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",

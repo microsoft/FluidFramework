@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools-core",
-	"version": "2.13.0",
+	"version": "2.13.1",
 	"description": "Fluid Framework developer tools core functionality",
 	"homepage": "https://fluidframework.com",
 	"repository": {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-service-utils",
-	"version": "2.13.0",
+	"version": "2.13.1",
 	"description": "Helper service-side utilities for connecting to Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
