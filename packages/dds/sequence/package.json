@@ -192,7 +192,56 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_BaseSegment": {
+				"backCompat": false
+			},
+			"Class_Marker": {
+				"backCompat": false
+			},
+			"Class_TextSegment": {
+				"backCompat": false
+			},
+			"Class_TrackingGroup": {
+				"backCompat": false
+			},
+			"ClassStatics_BaseSegment": {
+				"backCompat": false
+			},
+			"ClassStatics_Marker": {
+				"backCompat": false
+			},
+			"ClassStatics_TextSegment": {
+				"backCompat": false
+			},
+			"ClassStatics_TrackingGroup": {
+				"backCompat": false
+			},
+			"Interface_ISegment": {
+				"backCompat": false
+			},
+			"Interface_ISequenceDeltaRange": {
+				"backCompat": false
+			},
+			"Interface_SequenceDeltaEvent": {
+				"backCompat": false
+			},
+			"Interface_SequenceEvent": {
+				"backCompat": false
+			},
+			"Interface_SequenceMaintenanceEvent": {
+				"backCompat": false
+			},
+			"TypeAlias_IntervalRevertible": {
+				"backCompat": false
+			},
+			"TypeAlias_SharedStringRevertible": {
+				"backCompat": false
+			},
+			"TypeAlias_SharedStringSegment": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
