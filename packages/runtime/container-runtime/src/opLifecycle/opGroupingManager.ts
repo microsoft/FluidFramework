@@ -34,6 +34,7 @@ export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
 
 export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
+	readonly reentrantBatchGroupingEnabled: boolean;
 }
 
 export class OpGroupingManager {
@@ -155,7 +156,7 @@ export class OpGroupingManager {
 			// or be empty (to allow for empty batches to be grouped)
 			batch.messages.length !== 1 &&
 			// Support for reentrant batches
-			batch.hasReentrantOps !== true
+			this.config.reentrantBatchGroupingEnabled
 		);
 	}
 }

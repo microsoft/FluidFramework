@@ -72,6 +72,7 @@ describe("OpGroupingManager", () => {
 					new OpGroupingManager(
 						{
 							groupedBatchingEnabled: option.enabled,
+							reentrantBatchGroupingEnabled: option.reentryEnabled ?? false,
 						},
 						mockLogger,
 					).shouldGroup(createBatch(5, option.reentrant)),
@@ -87,6 +88,7 @@ describe("OpGroupingManager", () => {
 				new OpGroupingManager(
 					{
 						groupedBatchingEnabled: false,
+						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5));
@@ -97,6 +99,7 @@ describe("OpGroupingManager", () => {
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
+					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).groupBatch(createBatch(5));
@@ -116,6 +119,7 @@ describe("OpGroupingManager", () => {
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
+					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).groupBatch(createBatch(5, false, false, batchId));
@@ -128,6 +132,7 @@ describe("OpGroupingManager", () => {
 				new OpGroupingManager(
 					{
 						groupedBatchingEnabled: false,
+						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).createEmptyGroupedBatch("resubmittingBatchId", 0);
@@ -139,6 +144,7 @@ describe("OpGroupingManager", () => {
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
+					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
@@ -156,6 +162,7 @@ describe("OpGroupingManager", () => {
 			const result = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
+					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).shouldGroup({
@@ -172,6 +179,7 @@ describe("OpGroupingManager", () => {
 				new OpGroupingManager(
 					{
 						groupedBatchingEnabled: true,
+						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5));
@@ -183,6 +191,7 @@ describe("OpGroupingManager", () => {
 				new OpGroupingManager(
 					{
 						groupedBatchingEnabled: true,
+						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true));
@@ -194,6 +203,7 @@ describe("OpGroupingManager", () => {
 				new OpGroupingManager(
 					{
 						groupedBatchingEnabled: true,
+						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true, "batchId"));
@@ -206,6 +216,7 @@ describe("OpGroupingManager", () => {
 			const opGroupingManager = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
+					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -257,6 +268,7 @@ describe("OpGroupingManager", () => {
 			const opGroupingManager = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
+					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -274,6 +286,7 @@ describe("OpGroupingManager", () => {
 			const opGroupingManager = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: false,
+					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -317,6 +330,7 @@ describe("OpGroupingManager", () => {
 			const opGroupingManager = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: false,
+					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
