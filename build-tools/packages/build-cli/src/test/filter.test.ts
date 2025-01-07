@@ -5,7 +5,7 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { getResolvedFluidRoot, type Package } from "@fluidframework/build-tools";
+import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { describe, expect, it } from "vitest";
 
