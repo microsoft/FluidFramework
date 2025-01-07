@@ -414,15 +414,14 @@ stages:
                   "Count": 1, // How many copies of the above resources to allocate for the reservation. Should almost always be 1
                 };
 
-
-                const bearerToken = fetch(
+                fetch(
                   "https://tdff5prd.office.net/v2.0/reservations/current?isSynthetic=false&durationMinutes=75",
                   {
                     method: "POST",
                     body: JSON.stringify(requestBody),
                   })
-                  .then((response) => response.json());
-                stringBearerToken = JSON.stringify(bearerToken);
+                  .then((response) => response.json())
+                  .then((data) => stringBearerToken = JSON.stringify(data));
 
                 // step 2: wait for resource hydration
                 // returns "Ready" or "Not Ready"
