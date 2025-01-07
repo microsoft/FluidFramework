@@ -26,8 +26,8 @@ import {
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureTokenProvider } from "./AzureTokenFactory.js";
-import { configProvider } from "./utils.js";
+import { createAzureTokenProvider } from "../AzureTokenFactory.js";
+import { configProvider } from "../utils.js";
 
 interface MessageFromParent {
 	command: string;

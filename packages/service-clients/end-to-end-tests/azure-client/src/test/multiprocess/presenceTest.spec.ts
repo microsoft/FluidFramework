@@ -21,8 +21,8 @@ import {
 } from "@fluidframework/presence/alpha";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { createAzureClient } from "./AzureClientFactory.js";
-import { configProvider } from "./utils.js";
+import { createAzureClient } from "../AzureClientFactory.js";
+import { configProvider } from "../utils.js";
 
 interface MessageFromChild {
 	event: string;
@@ -37,20 +37,25 @@ interface MessageToParent {
 
 describe(`Presence with AzureClient`, () => {
 	const numClients = 5;
-	const children: ChildProcess[] = [];
+	let children: ChildProcess[] = [];
 	const connectTimeoutMs = 10_000;
 	const initialUser: AzureUser = {
 		id: "test-user-id-1",
 		name: "test-user-name-1",
 	};
 
+	const afterCleanUp: (() => void)[] = [];
 	afterEach(async () => {
 		// kill all child processes after each test
 		for (const child of children) {
-			if (!child.killed) {
-				child.kill();
-			}
+			child.kill();
 		}
+		children = [];
+
+		for (const cleanUp of afterCleanUp) {
+			cleanUp();
+		}
+		afterCleanUp.length = 0;
 	});
 
 	const createPresenceContainer = async (
@@ -121,17 +126,17 @@ describe(`Presence with AzureClient`, () => {
 		// Wait to receive attendeeJoined event on presence from remote attendees
 		await timeoutPromise(
 			(resolve) => {
-				let count = 0;
-				presence.events.on("attendeeJoined", (attendee) => {
-					// Only account for remote attendees
-					if (attendee !== presence.getMyself()) {
-						count++;
-						attendeesJoined.push(attendee.sessionId);
-						if (count === numClients) {
-							resolve();
+				afterCleanUp.push(
+					presence.events.on("attendeeJoined", (attendee) => {
+						// Only account for remote attendees
+						if (attendee !== presence.getMyself()) {
+							attendeesJoined.push(attendee.sessionId);
+							if (attendeesJoined.length === numClients) {
+								resolve();
+							}
 						}
-					}
-				});
+					}),
+				);
 			},
 			{
 				durationMs: connectTimeoutMs,
@@ -150,16 +155,21 @@ describe(`Presence with AzureClient`, () => {
 		// Wait for child processes to receive attendeeDisconnected event
 		const waitForDisconnected = children.map(async (child, index) =>
 			timeoutPromise(
-				(resolve) =>
-					child.on("message", (msg: MessageFromChild) => {
+				(resolve) => {
+					const childProcess = child.on("message", (msg: MessageFromChild) => {
 						if (msg.event === "attendeeDisconnected") {
 							attendeesDisconnected.push(msg.sessionId);
 							resolve();
 						}
-					}),
+					});
+
+					afterCleanUp.push(() => {
+						childProcess.removeAllListeners();
+					});
+				},
 				{
 					durationMs: connectTimeoutMs,
-					errorMsg: `Signaller[${index}] Timeout`,
+					errorMsg: `Attendee[${index}] Timeout`,
 				},
 			),
 		);
