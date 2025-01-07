@@ -876,9 +876,6 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -900,21 +897,15 @@ importers:
       '@fluidframework/presence':
         specifier: workspace:~
         version: link:../../../packages/framework/presence
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/telemetry-utils
-      '@fluidframework/test-runtime-utils':
+      '@fluidframework/tinylicious-client':
         specifier: workspace:~
-        version: link:../../../packages/runtime/test-runtime-utils
-      axios:
-        specifier: ^1.7.7
-        version: 1.7.9(debug@4.4.0)
+        version: link:../../../packages/service-clients/tinylicious-client
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework

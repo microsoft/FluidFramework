@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IAzureAudience } from "@fluidframework/azure-client";
 import { IEvent } from "@fluidframework/core-interfaces";
 import type {
 	IPresence,
@@ -13,6 +12,7 @@ import type {
 	PresenceStates,
 } from "@fluidframework/presence/alpha";
 import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
+import type { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 
 export interface IFocusTrackerEvents extends IEvent {
 	(event: "focusChanged", listener: () => void): void;
@@ -29,7 +29,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		public readonly presence: IPresence,
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		statesWorkspace: PresenceStates<{}>,
-		public readonly audience: IAzureAudience,
+		public readonly audience: ITinyliciousAudience,
 	) {
 		super();
 

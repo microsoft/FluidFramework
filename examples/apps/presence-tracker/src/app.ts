@@ -4,16 +4,13 @@
  */
 
 import {
-	AzureClient,
-	AzureContainerServices,
-	AzureLocalConnectionConfig,
-} from "@fluidframework/azure-client";
-import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
-// eslint-disable-next-line import/no-internal-modules
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import {
+	TinyliciousClient,
+	type TinyliciousContainerServices,
+} from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { FocusTracker } from "./FocusTracker.js";
@@ -23,12 +20,6 @@ import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./
 const user = {
 	id: "1234567890",
 	name: "Test User",
-};
-
-const connectionConfig: AzureLocalConnectionConfig = {
-	type: "local",
-	tokenProvider: new InsecureTokenProvider("unused", user),
-	endpoint: "http://localhost:7070",
 };
 
 // Define the schema of our Container.
@@ -50,12 +41,9 @@ export type PresenceTrackerSchema = typeof containerSchema;
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
-	const clientProps = {
-		connection: connectionConfig,
-	};
-	const client = new AzureClient(clientProps);
+	const client = new TinyliciousClient();
 	let container: IFluidContainer<PresenceTrackerSchema>;
-	let services: AzureContainerServices;
+	let services: TinyliciousContainerServices;
 
 	let id: string;
 
