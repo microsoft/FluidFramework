@@ -97,7 +97,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
-		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.13.0",
+		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.12.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
