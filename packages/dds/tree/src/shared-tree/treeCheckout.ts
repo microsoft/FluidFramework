@@ -623,7 +623,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					0x576 /* branch A and branch B must be related */,
 				);
 
-				// Now clone the revertible branch for the forked checkout
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				assert(
 					revertibleBranch !== undefined,
