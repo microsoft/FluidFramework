@@ -42,7 +42,6 @@ import React, { useEffect, useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
-// eslint-disable-next-line import/no-internal-modules
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
 	aiCollabLlmTreeNodeValidator,
