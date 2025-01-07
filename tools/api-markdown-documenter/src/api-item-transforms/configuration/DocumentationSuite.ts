@@ -353,37 +353,37 @@ export namespace DefaultDocumentationSuiteConfiguration {
  * in the remainder with the documented defaults.
  */
 export function getDocumentationSuiteConfigurationWithDefaults(
-	options: DocumentationSuiteOptions,
+	options?: DocumentationSuiteOptions,
 ): DocumentationSuiteConfiguration {
 	const config: Omit<DocumentationSuiteConfiguration, "hierarchy"> = {
-		includeTopLevelDocumentHeading: options.includeTopLevelDocumentHeading ?? true,
-		includeBreadcrumb: options.includeBreadcrumb ?? true,
+		includeTopLevelDocumentHeading: options?.includeTopLevelDocumentHeading ?? true,
+		includeBreadcrumb: options?.includeBreadcrumb ?? true,
 		getUriBaseOverrideForItem:
-			options.getUriBaseOverrideForItem ??
+			options?.getUriBaseOverrideForItem ??
 			DefaultDocumentationSuiteConfiguration.defaultGetUriBaseOverrideForItem,
 		getHeadingTextForItem:
-			options.getHeadingTextForItem ??
+			options?.getHeadingTextForItem ??
 			DefaultDocumentationSuiteConfiguration.defaultGetHeadingTextForItem,
 		getLinkTextForItem:
-			options.getLinkTextForItem ??
+			options?.getLinkTextForItem ??
 			DefaultDocumentationSuiteConfiguration.defaultGetLinkTextForItem,
 		getAlertsForItem:
-			options.getAlertsForItem ??
+			options?.getAlertsForItem ??
 			DefaultDocumentationSuiteConfiguration.defaultGetAlertsForItem,
 		skipPackage:
-			options.skipPackage ?? DefaultDocumentationSuiteConfiguration.defaultSkipPackage,
-		minimumReleaseLevel: options.minimumReleaseLevel ?? ReleaseTag.Internal,
+			options?.skipPackage ?? DefaultDocumentationSuiteConfiguration.defaultSkipPackage,
+		minimumReleaseLevel: options?.minimumReleaseLevel ?? ReleaseTag.Internal,
 	};
 
 	const defaultDocumentName =
-		options.documentName ??
+		options?.documentName ??
 		((apiItem) =>
 			DefaultDocumentationSuiteConfiguration.getDocumentName(
 				apiItem,
 				config as DocumentationSuiteConfiguration,
 			));
 	const defaultFolderName =
-		options.folderName ??
+		options?.folderName ??
 		((apiItem) =>
 			DefaultDocumentationSuiteConfiguration.getFolderName(
 				apiItem,
@@ -391,7 +391,7 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 			));
 
 	const hierarchy: HierarchyConfiguration = getHierarchyConfigurationWithDefaults(
-		options.hierarchy,
+		options?.hierarchy,
 		defaultDocumentName,
 		defaultFolderName,
 	);
