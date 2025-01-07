@@ -1504,10 +1504,7 @@ export class ContainerRuntime
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		runtimeOptions: Readonly<
-			Required<Omit<IContainerRuntimeOptions, "flushMode" | "enableGroupedBatching">> &
-				IContainerRuntimeOptions // Let flushMode and enabledGroupedBatching be optional now since they're soon to be removed
-		>,
+		runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
