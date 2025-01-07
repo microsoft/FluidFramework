@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ITypeValidationConfig, PackageJson } from "@fluidframework/build-tools";
 import { assert, describe, expect, it } from "vitest";
 
 import {

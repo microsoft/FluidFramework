@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// The .forEach syntax is more compact and readable in this file.
+/* eslint-disable unicorn/no-array-for-each */
+
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
@@ -20,7 +23,7 @@ import { Context } from "../library/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-async function getContext() {
+async function getContext(): Promise<Context> {
 	const resolvedRoot = await getResolvedFluidRoot();
 	const context = new Context(resolvedRoot);
 	return context;

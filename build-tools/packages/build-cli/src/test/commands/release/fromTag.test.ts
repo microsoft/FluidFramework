@@ -7,7 +7,7 @@ import { ReleaseVersion, VersionBumpType } from "@fluid-tools/version-tools";
 import { runCommand } from "@oclif/test";
 import { describe, expect, it } from "vitest";
 
-import { ReleaseGroup, ReleasePackage } from "../../../src/releaseGroups.js";
+import { ReleaseGroup, ReleasePackage } from "../../../releaseGroups.js";
 
 interface jsonOutput {
 	packageOrReleaseGroup: ReleaseGroup | ReleasePackage;
@@ -36,6 +36,7 @@ describe("flub release fromTag", () => {
 		const { stdout } = await runCommand(["release:fromTag", "build-tools_v0.26.1", "--json"], {
 			root: import.meta.url,
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const output: jsonOutput = JSON.parse(stdout);
 		expect(output).to.deep.equal(expected);
 	});

@@ -8,12 +8,12 @@ import { PackageName } from "@rushstack/node-core-library";
 import { parseJSON } from "date-fns";
 import { assert, describe, it } from "vitest";
 
+import { VersionDetails } from "../../library/index.js";
 import {
 	ensureDevDependencyExists,
 	generateReleaseGitTagName,
 	sortVersions,
 } from "../../library/package.js";
-import { VersionDetails } from "../../src/library/index.js";
 
 describe("VersionDetails sorting", () => {
 	const versions: VersionDetails[] = [

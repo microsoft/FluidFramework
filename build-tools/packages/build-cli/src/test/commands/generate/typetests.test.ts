@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { TypeData } from "@fluidframework/build-tools";
 import { assert, describe, it } from "vitest";
 
 import {
