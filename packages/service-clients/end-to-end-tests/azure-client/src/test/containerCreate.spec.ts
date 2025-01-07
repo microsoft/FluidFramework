@@ -201,15 +201,16 @@ for (const testOpts of testMatrix) {
 		 *
 		 * Note: This test is currently skipped because it is failing when ran against tinylicious (azure-local-service).
 		 */
-		it.skip("cannot load improperly created container (cannot load a non-existent container)", async () => {
+		it("cannot load improperly created container (cannot load a non-existent container)", async () => {
 			const consoleErrorFn = console.error;
 			console.error = (): void => {};
 			const containerAndServicesP = client.getContainer("containerConfig", schema, "2");
 
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
+				// AFR gives R11s fetch error, T9s gives 0x8e4
 				assert.strict(
-					error.message.startsWith("R11s fetch error"),
+					error.message.startsWith("R11s fetch error") || error.message === "0x8e4",
 					`Unexpected error: ${error.message}`,
 				);
 				return true;
