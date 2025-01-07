@@ -26,7 +26,7 @@ type IRuntimeMessageMetadata =
 
 /**
  * This class ensures that we aggregate a complete batch of incoming ops before processing them. It basically ensures
- * that we never start processing ops in ab batch IF we do not have all ops in the batch.
+ * that we never start processing ops in a batch IF we do not have all ops in the batch.
  */
 export class InboundBatchAggregator {
 	private pauseSequenceNumber: number | undefined;
@@ -43,15 +43,15 @@ export class InboundBatchAggregator {
 		// Listen for updates and peek at the inbound
 		this.deltaManager.inbound.on("push", this.trackPending);
 
-		// We are intentionally directly listening to the "op" to inspect system ops as well.
-		// If we do not observe system ops, we are likely to hit an error when system ops
-		// precedes start of incomplete batch.
-		this.deltaManager.on("op", this.afterOpProcessing);
-
 		const allPending = this.deltaManager.inbound.toArray();
 		for (const pending of allPending) {
 			this.trackPending(pending);
 		}
+
+		// We are intentionally directly listening to the "op" to inspect system ops as well.
+		// If we do not observe system ops, we are likely to hit an error when system ops
+		// precedes start of incomplete batch.
+		this.deltaManager.on("op", this.afterOpProcessing);
 	}
 
 	public dispose() {
@@ -60,7 +60,7 @@ export class InboundBatchAggregator {
 	}
 
 	/**
-	 * This is called when delta manager processes an op to make decision if op processing should
+	 * Callback for DeltaManager's "op" event, for us to make decision if op processing should
 	 * be paused or not after that.
 	 */
 	private readonly afterOpProcessing = (message: ISequencedDocumentMessage) => {
