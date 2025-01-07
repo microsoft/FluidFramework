@@ -73,7 +73,6 @@ describe("OpGroupingManager", () => {
 						{
 							groupedBatchingEnabled: option.enabled,
 							opCountThreshold: option.tooSmall === true ? 10 : 2,
-							reentrantBatchGroupingEnabled: option.reentryEnabled ?? false,
 						},
 						mockLogger,
 					).shouldGroup(createBatch(5, option.reentrant)),
@@ -90,7 +89,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: false,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5));
@@ -102,7 +100,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).groupBatch(createBatch(5));
@@ -123,7 +120,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).groupBatch(createBatch(5, false, false, batchId));
@@ -137,7 +133,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: false,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).createEmptyGroupedBatch("resubmittingBatchId", 0);
@@ -150,7 +145,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
@@ -169,7 +163,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).shouldGroup({
@@ -187,7 +180,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 10,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5));
@@ -200,7 +192,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true));
@@ -213,7 +204,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true, "batchId"));
@@ -227,7 +217,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -280,7 +269,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -299,7 +287,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -344,7 +331,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
