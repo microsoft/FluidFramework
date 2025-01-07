@@ -604,7 +604,6 @@ export const shortCodeMap = {
 	"0x3f2": "inserts must track segments",
 	"0x3f3": "tracking group removed",
 	"0x3f4": "removes must track local refs",
-	"0x3f5": "insert segment must exist at position",
 	"0x3f6": "forward should always be true when detached",
 	"0x3f7": "annotates must track segments",
 	"0x3f8": "Local value expected on resubmission",
@@ -1275,7 +1274,6 @@ export const shortCodeMap = {
 	"0x8be": "unexpected case",
 	"0x8bf": "Schema upgrade should always work if canUpgrade is set.",
 	"0x8c0": "unexpected getViewOrError",
-	"0x8c1": "Node should have a kernel",
 	"0x8c2": "Cannot create second view from checkout",
 	"0x8c3": "requireSchema invoked with incompatible schema",
 	"0x8c4": "unexpected dispose",
@@ -1672,5 +1670,6 @@ export const shortCodeMap = {
 	"0xaa7": "Checkout has already been locked",
 	"0xaa8": "Checkout has not been locked",
 	"0xaa9": "Forks may only be disposed once",
-	"0xaaa": "All local changes should be applied to the trunk before loading from summary"
+	"0xaaa": "All local changes should be applied to the trunk before loading from summary",
+	"0xaab": "must be segment leaf"
 };

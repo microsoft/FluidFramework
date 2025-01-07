@@ -20,7 +20,6 @@ import {
 } from "./constants.js";
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	LocalReferenceCollection,
 	LocalReferencePosition,
 	SlidingPreference,
@@ -97,9 +96,7 @@ import {
 	toMoveInfo,
 	toRemovalInfo,
 	type IInsertionInfo,
-	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
-	// eslint-disable-next-line import/no-deprecated
 	type IRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -113,15 +110,11 @@ import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SortedSegmentSet } from "./sortedSegmentSet.js";
 import { zamboniSegments } from "./zamboni.js";
 
-function isRemovedAndAcked(
-	segment: ISegmentPrivate,
-	// eslint-disable-next-line import/no-deprecated
-): segment is ISegmentLeaf & IRemovalInfo {
+function isRemovedAndAcked(segment: ISegmentPrivate): segment is ISegmentLeaf & IRemovalInfo {
 	const removalInfo = toRemovalInfo(segment);
 	return removalInfo !== undefined && removalInfo.removedSeq !== UnassignedSequenceNumber;
 }
 
-// eslint-disable-next-line import/no-deprecated
 function isMovedAndAcked(segment: ISegmentPrivate): segment is ISegmentLeaf & IMoveInfo {
 	const moveInfo = toMoveInfo(segment);
 	return moveInfo !== undefined && moveInfo.movedSeq !== UnassignedSequenceNumber;
@@ -868,9 +861,7 @@ export class MergeTree {
 	 */
 	private slideAckedRemovedSegmentReferences(segments: ISegmentLeaf[]): void {
 		// References are slid in groups to preserve their order.
-		// eslint-disable-next-line import/no-deprecated
 		let currentForwardSlideGroup: LocalReferenceCollection[] = [];
-		// eslint-disable-next-line import/no-deprecated
 		let currentBackwardSlideGroup: LocalReferenceCollection[] = [];
 
 		let currentForwardMaybeEndpoint: "start" | "end" | undefined;
@@ -884,7 +875,6 @@ export class MergeTree {
 		const slideGroup = (
 			currentSlideDestination: ISegmentLeaf | undefined,
 			currentSlideIsForward: boolean | undefined,
-			// eslint-disable-next-line import/no-deprecated
 			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
 			maybeEndpoint: "start" | "end" | undefined,
@@ -909,7 +899,6 @@ export class MergeTree {
 
 			if (maybeEndpoint) {
 				const endpoint = maybeEndpoint === "start" ? this.startOfTree : this.endOfTree;
-				// eslint-disable-next-line import/no-deprecated
 				const localRefs = LocalReferenceCollection.setOrGet(endpoint);
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(...endpointRefsToAdd);
@@ -929,7 +918,6 @@ export class MergeTree {
 					}
 				}
 			} else {
-				// eslint-disable-next-line import/no-deprecated
 				const localRefs = LocalReferenceCollection.setOrGet(currentSlideDestination);
 				if (currentSlideIsForward) {
 					localRefs.addBeforeTombstones(...nonEndpointRefsToAdd);
@@ -943,13 +931,11 @@ export class MergeTree {
 			segment: ISegmentLeaf,
 			currentSlideDestination: ISegmentLeaf | undefined,
 			currentSlideIsForward: boolean | undefined,
-			// eslint-disable-next-line import/no-deprecated
 			currentSlideGroup: LocalReferenceCollection[],
 			pred: (ref: LocalReferencePosition) => boolean,
 			slidingPreference: SlidingPreference,
 			currentMaybeEndpoint: "start" | "end" | undefined,
 			reassign: (
-				// eslint-disable-next-line import/no-deprecated
 				localRefs: LocalReferenceCollection,
 				slideToSegment: ISegmentLeaf | undefined,
 				slideIsForward: boolean,
@@ -1650,7 +1636,6 @@ export class MergeTree {
 			}
 
 			if (oldest && newest?.clientId !== clientId) {
-				// eslint-disable-next-line import/no-deprecated
 				const moveInfo: IMoveInfo = {
 					movedClientIds,
 					movedSeq: oldest.seq,
@@ -2006,7 +1991,6 @@ export class MergeTree {
 
 		let _overwrite = false;
 		const localOverlapWithRefs: ISegmentLeaf[] = [];
-		// eslint-disable-next-line import/no-deprecated
 		const movedSegments: SegmentWithInfo<IMoveInfo, ISegmentLeaf>[] = [];
 		const localSeq =
 			seq === UnassignedSequenceNumber ? ++this.collabWindow.localSeq : undefined;
@@ -2088,7 +2072,6 @@ export class MergeTree {
 				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber);
 
 			if (existingMoveInfo === undefined) {
-				// eslint-disable-next-line import/no-deprecated
 				const movedSeg = overwriteInfo<IMoveInfo, ISegmentLeaf>(segment, {
 					movedClientIds: [clientId],
 					movedSeq: seq,
@@ -2232,7 +2215,6 @@ export class MergeTree {
 		this.ensureIntervalBoundary(end, refSeq, clientId);
 
 		let segmentGroup: SegmentGroup;
-		// eslint-disable-next-line import/no-deprecated
 		const removedSegments: SegmentWithInfo<IRemovalInfo, ISegmentLeaf>[] = [];
 		const localOverlapWithRefs: ISegmentLeaf[] = [];
 		const localSeq =
@@ -2246,7 +2228,6 @@ export class MergeTree {
 			const existingRemovalInfo = toRemovalInfo(segment);
 
 			if (existingRemovalInfo === undefined) {
-				// eslint-disable-next-line import/no-deprecated
 				const removed = overwriteInfo<IRemovalInfo, ISegmentLeaf>(segment, {
 					removedClientIds: [clientId],
 					removedSeq: seq,
@@ -2496,7 +2477,6 @@ export class MergeTree {
 			segment = _segment;
 		}
 
-		// eslint-disable-next-line import/no-deprecated
 		const localRefs = LocalReferenceCollection.setOrGet(segment);
 
 		const segRef = localRefs.createLocalRef(
