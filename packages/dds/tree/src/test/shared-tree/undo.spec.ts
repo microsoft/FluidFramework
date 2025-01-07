@@ -738,7 +738,7 @@ describe("Undo and redo", () => {
 
 		assert(viewA.root.child !== undefined);
 		viewA.root.child.propertyOne = 256; // 128 -> 256
-		viewA.root.child.propertyTwo.itemOne = "newItem";
+		viewA.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
 
 		const revertibles: RevertibleAlpha[] = [];
 		for (const revertible of undoStack) {
