@@ -231,7 +231,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_SummarizerStopReason": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_ISummarizeEventProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_ISummarizerEvents": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
