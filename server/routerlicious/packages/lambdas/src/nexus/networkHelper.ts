@@ -16,20 +16,20 @@ export async function checkNetworkInformation(
 	socket: core.IWebSocket,
 ): Promise<{ message: string; shouldConnect: boolean }> {
 	const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
-	const tennatInfo = await tenantManager.getTenantfromRiddler(tenantId);
+	const tenantInfo = await tenantManager.getTenantfromRiddler(tenantId);
 	const clientIPAddress = socket.handshake.headers["x-forwarded-for"].split(",")[0] as
 		| string
 		| undefined;
 	const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 	if (networkInfo.isPrivateLink) {
-		const accountLinkID = tennatInfo?.customData?.accountLinkID;
+		const accountLinkID = tenantInfo?.customData?.accountLinkID;
 		if (networkInfo.privateLinkId === accountLinkID) {
 			return { message: "This is a private link socket connection", shouldConnect: true };
 		} else {
 			return { message: "private link should not connect", shouldConnect: false };
 		}
 	} else {
-		const accountLinkID = tennatInfo?.customData?.accountLinkID;
+		const accountLinkID = tenantInfo?.customData?.accountLinkID;
 		if (accountLinkID) {
 			return {
 				message:

@@ -32,11 +32,7 @@ import {
 	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import {
-	RestLessServer,
-	IHttpServerConfig,
-	// validatePrivateLink,
-} from "@fluidframework/server-services";
+import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
 import { IDocumentDeleteService } from "./services";
@@ -115,7 +111,6 @@ export function create(
 						additionalProperties.hashedClientIPAddress = hashedClientIP;
 
 						const clientIPAddress = req.ip ? req.ip : "";
-						additionalProperties.clientIPAddress = clientIPAddress;
 						if (isIPv4(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv4";
 						} else if (isIPv6(clientIPAddress)) {
@@ -157,9 +152,6 @@ export function create(
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
-
-	// const isNetworkCheck: boolean = config.get("alfred:isNetworkCheck");
-	// app.use(validatePrivateLink(tenantManager, isNetworkCheck));
 
 	app.use(cookieParser());
 	app.use(json({ limit: requestSize }));

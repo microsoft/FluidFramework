@@ -45,10 +45,10 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
  */
 export function validatePrivateLink(
 	tenantManager: ITenantManager,
-	isNetworkCheck: boolean = false,
+	enableNetworkCheck: boolean = false,
 ): RequestHandler {
 	return async (req, res, next) => {
-		if (isNetworkCheck) {
+		if (enableNetworkCheck) {
 			const tenantId = req.params.tenantId;
 			if (!tenantId) {
 				next();

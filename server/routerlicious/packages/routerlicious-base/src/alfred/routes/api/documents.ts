@@ -148,7 +148,7 @@ export function create(
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
-	const isNetworkCheck: boolean = config.get("alfred:isNetworkCheck");
+	const enableNetworkCheck: boolean = config.get("alfred:enableNetworkCheck");
 	const externalDeltaStreamUrl: string =
 		config.get("worker:deltaStreamUrl") || externalOrdererUrl;
 	const messageBrokerId: string | undefined =
@@ -239,7 +239,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
-		validatePrivateLink(tenantManager, isNetworkCheck),
+		validatePrivateLink(tenantManager, enableNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -261,13 +261,10 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
-			Lumberjack.info(`Here is the request.heads ${JSON.stringify(request.headers)}.`);
 			const clientIPAddress = request.ip ? request.ip : "";
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			// Tenant and document
 			const tenantId = request.params.tenantId;
-			Lumberjack.info(`This is the clientIPAddress: ${clientIPAddress}.`);
-			Lumberjack.info(`Here is the result ${JSON.stringify(networkInfo)}.`);
 			const documentUrls = getDocumentUrlsfromNetworkInfo(
 				tenantId,
 				externalOrdererUrl,
@@ -385,7 +382,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
-		validatePrivateLink(tenantManager, isNetworkCheck),
+		validatePrivateLink(tenantManager, enableNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,

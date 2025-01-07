@@ -104,7 +104,7 @@ export function configureWebSocketServices(
 	isTokenExpiryEnabled: boolean = false,
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
-	isNetworkCheck: boolean = false,
+	enableNetworkCheck: boolean = false,
 	cache?: core.ICache,
 	connectThrottlerPerTenant?: core.IThrottler,
 	connectThrottlerPerCluster?: core.IThrottler,
@@ -252,27 +252,7 @@ export function configureWebSocketServices(
 				[BaseTelemetryProperties.correlationId]: correlationId,
 			};
 
-			if (isNetworkCheck) {
-				Lumberjack.info(
-					`Come to isNetworkCheck: ${isNetworkCheck}`,
-					baseLumberjackProperties,
-				);
-				Lumberjack.info(
-					`Print the socket handshake address: ${socket.handshake.address}`,
-					baseLumberjackProperties,
-				);
-				Lumberjack.info(
-					`Print the socket handshake headers x forward: ${
-						socket.handshake.headers["x-forwarded-for"].split(",")[0]
-					}`,
-					baseLumberjackProperties,
-				);
-				Lumberjack.info(
-					`Print the socket handshake headers: ${JSON.stringify(
-						socket.handshake.headers,
-					)}`,
-					baseLumberjackProperties,
-				);
+			if (enableNetworkCheck) {
 				const networkError = await checkNetworkInformation(tenantManager, socket);
 				if (!networkError.shouldConnect) {
 					const nackMessage = createNackMessage(
