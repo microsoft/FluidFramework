@@ -217,12 +217,12 @@ export const defaultConsoleLogger: Logger;
 // @public
 export namespace DefaultDocumentationSuiteConfiguration {
     export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
-    export function defaultGetDocumentNameForItem(apiItem: ApiItem, config: DocumentationSuiteConfiguration): string;
-    export function defaultGetFolderNameForItem(apiItem: ApiItem, config: DocumentationSuiteConfiguration): string;
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
     export function defaultGetUriBaseOverrideForItem(): string | undefined;
     export function defaultSkipPackage(): boolean;
+    export function getDocumentName(apiItem: ApiItem, config: DocumentationSuiteConfiguration): string;
+    export function getFolderName(apiItem: ApiItem, config: DocumentationSuiteConfiguration): string;
 }
 
 // @public @sealed
@@ -334,8 +334,8 @@ export interface DocumentationSuiteConfiguration {
 // @public
 export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfiguration>, "hierarchy"> & {
     readonly hierarchy?: HierarchyOptions;
-    readonly getDocumentNameForItem?: (apiItem: ApiItem) => string;
-    readonly getFolderNameForItem?: (apiItem: ApiItem) => string;
+    readonly documentName?: (apiItem: ApiItem) => string;
+    readonly folderName?: (apiItem: ApiItem) => string;
 };
 
 // @public

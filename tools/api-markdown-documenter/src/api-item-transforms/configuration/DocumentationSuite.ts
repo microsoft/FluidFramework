@@ -24,7 +24,7 @@ import {
 import { createQualifiedDocumentNameForApiItem } from "../ApiItemTransformUtilities.js";
 
 import {
-	getHierarchyOptionsWithDefaults,
+	getHierarchyConfigurationWithDefaults,
 	type HierarchyConfiguration,
 	type HierarchyOptions,
 } from "./Hierarchy.js";
@@ -170,9 +170,9 @@ export type DocumentationSuiteOptions = Omit<
 	 *
 	 * @param apiItem - The API item in question.
 	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.defaultGetDocumentNameForItem}
+	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.getDocumentName}
 	 */
-	readonly getDocumentNameForItem?: (apiItem: ApiItem) => string;
+	readonly documentName?: (apiItem: ApiItem) => string;
 
 	/**
 	 * Generate the desired folder name for the provided `ApiItem`.
@@ -183,9 +183,9 @@ export type DocumentationSuiteOptions = Omit<
 	 *
 	 * @param apiItem - The API item in question.
 	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.defaultGetFolderNameForItem}
+	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.getFolderName}
 	 */
-	readonly getFolderNameForItem?: (apiItem: ApiItem) => string;
+	readonly folderName?: (apiItem: ApiItem) => string;
 };
 
 /**
@@ -196,7 +196,7 @@ export type DocumentationSuiteOptions = Omit<
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultDocumentationSuiteConfiguration {
 	/**
-	 * Default {@link DocumentationSuiteOptions.getDocumentNameForItem}.
+	 * Default {@link DocumentationSuiteOptions.documentName}.
 	 *
 	 * @remarks
 	 * Uses the item's scoped and qualified API name, but is handled differently for the following items:
@@ -205,7 +205,7 @@ export namespace DefaultDocumentationSuiteConfiguration {
 	 *
 	 * - Package: Use the unscoped package name.
 	 */
-	export function defaultGetDocumentNameForItem(
+	export function getDocumentName(
 		apiItem: ApiItem,
 		config: DocumentationSuiteConfiguration,
 	): string {
@@ -224,14 +224,14 @@ export namespace DefaultDocumentationSuiteConfiguration {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteOptions.getFolderNameForItem}.
+	 * Default {@link DocumentationSuiteOptions.folderName}.
 	 *
 	 * @remarks
 	 * Uses the item's scoped and qualified API name, but is handled differently for the  following items:
 	 *
 	 * - Package: Use the unscoped package name.
 	 */
-	export function defaultGetFolderNameForItem(
+	export function getFolderName(
 		apiItem: ApiItem,
 		config: DocumentationSuiteConfiguration,
 	): string {
@@ -376,21 +376,21 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 	};
 
 	const defaultDocumentName =
-		options.getDocumentNameForItem ??
+		options.documentName ??
 		((apiItem) =>
-			DefaultDocumentationSuiteConfiguration.defaultGetDocumentNameForItem(
+			DefaultDocumentationSuiteConfiguration.getDocumentName(
 				apiItem,
 				config as DocumentationSuiteConfiguration,
 			));
 	const defaultFolderName =
-		options.getFolderNameForItem ??
+		options.folderName ??
 		((apiItem) =>
-			DefaultDocumentationSuiteConfiguration.defaultGetFolderNameForItem(
+			DefaultDocumentationSuiteConfiguration.getFolderName(
 				apiItem,
 				config as DocumentationSuiteConfiguration,
 			));
 
-	const hierarchy: HierarchyConfiguration = getHierarchyOptionsWithDefaults(
+	const hierarchy: HierarchyConfiguration = getHierarchyConfigurationWithDefaults(
 		options.hierarchy,
 		defaultDocumentName,
 		defaultFolderName,

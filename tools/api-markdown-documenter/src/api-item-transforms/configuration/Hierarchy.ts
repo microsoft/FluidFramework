@@ -70,7 +70,7 @@ export interface DocumentHierarchyProperties {
 	/**
 	 * Document name to use for the API item.
 	 *
-	 * @defaultValue {@link DocumentationSuiteOptions.getDocumentNameForItem}
+	 * @defaultValue {@link DocumentationSuiteOptions.documentName}
 	 */
 	readonly documentName: string | ((apiItem: ApiItem) => string);
 }
@@ -126,7 +126,7 @@ export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
 	/**
 	 * Folder name to use for the API item.
 	 *
-	 * @defaultValue {@link DocumentationSuiteOptions.getFolderNameForItem}
+	 * @defaultValue {@link DocumentationSuiteOptions.folderName}
 	 */
 	readonly folderName: string | ((apiItem: ApiItem) => string);
 }
@@ -302,13 +302,10 @@ export type HierarchyOptions = {
 };
 
 /**
- * Default {@link HierarchyConfiguration}.
+ * Default {@link HierarchyOptions}.
  */
 const defaultHierarchyOptions = {
-	[ApiItemKind.Model]: {
-		kind: HierarchyKind.Document,
-		documentName: "index",
-	},
+	[ApiItemKind.Model]: HierarchyKind.Document,
 
 	// Items that introduce folder hierarchy:
 	[ApiItemKind.Namespace]: HierarchyKind.Folder,
@@ -393,7 +390,7 @@ function mapHierarchyOption(
  * Gets a complete {@link HierarchyConfiguration} using the provided partial configuration, and filling
  * in the remainder with defaults.
  */
-export function getHierarchyOptionsWithDefaults(
+export function getHierarchyConfigurationWithDefaults(
 	hierarchyOptions: HierarchyOptions | undefined,
 	defaultDocumentName: string | ((apiItem: ApiItem) => string),
 	defaultFolderName: string | ((apiItem: ApiItem) => string),
