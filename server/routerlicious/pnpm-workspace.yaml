@@ -10,5 +10,5 @@
 
 packages:
   - "packages/*"
-  - "../gitrest/packages/*"
-  - "../historian/packages/*"
+  # - "../gitrest/packages/*"
+  # - "../historian/packages/*"

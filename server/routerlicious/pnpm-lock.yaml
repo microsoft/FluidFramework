@@ -67,17 +67,56 @@ importers:
         specifier: ~5.1.6
         version: 5.1.6
 
-  ../gitrest/packages/gitrest:
+  packages/gitresources:
+    devDependencies:
+      '@fluid-tools/build-cli':
+        specifier: ^0.38.0
+        version: 0.38.0(@types/node@18.19.39)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.38.0
+        version: 0.38.0(@types/node@18.19.39)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.2.0
+        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
+      '@fluidframework/gitresources-previous':
+        specifier: npm:@fluidframework/gitresources@5.0.0
+        version: /@fluidframework/gitresources@5.0.0
+      '@microsoft/api-extractor':
+        specifier: ^7.45.1
+        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.1
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.1.6
+        version: 5.1.6
+
+  packages/gitrest:
     dependencies:
       '@fluid-internal/gitrest-base':
         specifier: workspace:^
         version: link:../gitrest-base
       '@fluidframework/server-services-shared':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-shared
+        version: link:../services-shared
       '@fluidframework/server-services-utils':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-utils
+        version: link:../services-utils
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3
@@ -167,38 +206,38 @@ importers:
         specifier: ~5.1.6
         version: 5.1.6
 
-  ../gitrest/packages/gitrest-base:
+  packages/gitrest-base:
     dependencies:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/gitresources
+        version: link:../gitresources
       '@fluidframework/protocol-base':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/protocol-base
+        version: link:../protocol-base
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
       '@fluidframework/server-services-client':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-client
+        version: link:../services-client
       '@fluidframework/server-services-core':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-core
+        version: link:../services-core
       '@fluidframework/server-services-shared':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-shared
+        version: link:../services-shared
       '@fluidframework/server-services-telemetry':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-telemetry
+        version: link:../services-telemetry
       '@fluidframework/server-services-utils':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-utils
+        version: link:../services-utils
       '@fluidframework/server-test-utils':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/test-utils
+        version: link:../test-utils
       async-mutex:
         specifier: ^0.3.2
         version: 0.3.2
@@ -339,17 +378,17 @@ importers:
         specifier: ~5.1.6
         version: 5.1.6
 
-  ../historian/packages/historian:
+  packages/historian:
     dependencies:
       '@fluid-internal/historian-base':
         specifier: workspace:^
         version: link:../historian-base
       '@fluidframework/server-services-shared':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-shared
+        version: link:../services-shared
       '@fluidframework/server-services-utils':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-utils
+        version: link:../services-utils
       body-parser:
         specifier: ^1.17.2
         version: 1.20.3
@@ -436,35 +475,35 @@ importers:
         specifier: ~5.1.6
         version: 5.1.6
 
-  ../historian/packages/historian-base:
+  packages/historian-base:
     dependencies:
       '@fluidframework/common-utils':
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/gitresources
+        version: link:../gitresources
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
       '@fluidframework/server-services':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services
+        version: link:../services
       '@fluidframework/server-services-client':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-client
+        version: link:../services-client
       '@fluidframework/server-services-core':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-core
+        version: link:../services-core
       '@fluidframework/server-services-shared':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-shared
+        version: link:../services-shared
       '@fluidframework/server-services-telemetry':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-telemetry
+        version: link:../services-telemetry
       '@fluidframework/server-services-utils':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/services-utils
+        version: link:../services-utils
       '@types/ioredis-mock':
         specifier: ^8.2.5
         version: 8.2.5
@@ -516,7 +555,7 @@ importers:
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-test-utils':
         specifier: workspace:^
-        version: link:../../../routerlicious/packages/test-utils
+        version: link:../test-utils
       '@types/compression':
         specifier: 0.0.36
         version: 0.0.36
@@ -583,45 +622,6 @@ importers:
       supertest:
         specifier: ^3.3.0
         version: 3.4.2
-      typescript:
-        specifier: ~5.1.6
-        version: 5.1.6
-
-  packages/gitresources:
-    devDependencies:
-      '@fluid-tools/build-cli':
-        specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.2.0
-        version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
-      '@fluidframework/gitresources-previous':
-        specifier: npm:@fluidframework/gitresources@5.0.0
-        version: /@fluidframework/gitresources@5.0.0
-      '@microsoft/api-extractor':
-        specifier: ^7.45.1
-        version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.1
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
