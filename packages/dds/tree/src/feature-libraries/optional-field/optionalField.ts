@@ -658,14 +658,10 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): {
-	fieldChanges: DeltaFieldChanges;
-	global?: DeltaDetachedNodeChanges[];
-	rename?: DeltaDetachedNodeRename[];
-} {
+): [DeltaFieldChanges, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] {
 	let fieldChanges: DeltaFieldChanges = [];
-	let global: DeltaDetachedNodeChanges[] | undefined;
-	let rename: DeltaDetachedNodeRename[] | undefined;
+	const global: DeltaDetachedNodeChanges[] = [];
+	const rename: DeltaDetachedNodeRename[] = [];
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
@@ -681,31 +677,36 @@ export function optionalFieldIntoDelta(
 	}
 
 	if (change.moves.length > 0) {
-		rename = change.moves.map(([src, dst]) => ({
-			count: 1,
-			oldId: nodeIdFromChangeAtom(src),
-			newId: nodeIdFromChangeAtom(dst),
-		}));
+		change.moves.forEach(([src, dst]) =>
+			rename.push({
+				count: 1,
+				oldId: nodeIdFromChangeAtom(src),
+				newId: nodeIdFromChangeAtom(dst),
+			}),
+		);
 	}
 
 	if (change.childChanges.length > 0) {
-		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const childDelta = deltaFromChild(childChange);
-			if (id !== "self") {
-				const fields = childDelta;
-				globals.push({
-					id: { major: id.revision, minor: id.localId },
-					fields,
-				});
-			} else {
-				mark.fields = childDelta;
-				markIsANoop = false;
+			if (childDelta !== undefined) {
+				const [fields, childGlobal, childRename] = childDelta;
+				if (id !== "self") {
+					global.push({
+						id: { major: id.revision, minor: id.localId },
+						fields,
+					});
+				} else {
+					mark.fields = fields;
+					markIsANoop = false;
+				}
+				if (childGlobal.length > 0) {
+					childGlobal.forEach((c) => global.push(c));
+				}
+				if (childRename.length > 0) {
+					childRename.forEach((r) => rename.push(r));
+				}
 			}
-		}
-
-		if (globals.length > 0) {
-			global = globals;
 		}
 	}
 
@@ -713,7 +714,7 @@ export function optionalFieldIntoDelta(
 		fieldChanges = [mark];
 	}
 
-	return { fieldChanges, global, rename };
+	return [fieldChanges, global, rename];
 }
 
 export const optionalChangeHandler: FieldChangeHandler<

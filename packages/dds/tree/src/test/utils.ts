@@ -92,6 +92,8 @@ import {
 	CursorLocationType,
 	type RevertibleAlpha,
 	type RevertibleAlphaFactory,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeRename,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -460,8 +462,8 @@ export function spyOnMethod(
 /**
  * Determines whether or not the given delta has a visible impact on the document tree.
  */
-export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
-	for (const mark of delta.local ?? []) {
+export function isDeltaVisible(fieldChanges: DeltaFieldChanges): boolean {
+	for (const mark of fieldChanges ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
 		}
@@ -1042,10 +1044,18 @@ export function announceTestDelta(
 
 export function rootFromDeltaFieldMap(
 	delta: DeltaFieldMap,
+	global?: readonly DeltaDetachedNodeChanges[],
+	rename?: readonly DeltaDetachedNodeRename[],
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): Mutable<DeltaRoot> {
 	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (global !== undefined) {
+		rootDelta.global = global;
+	}
+	if (rename !== undefined) {
+		rootDelta.rename = rename;
+	}
 	if (build !== undefined) {
 		rootDelta.build = build;
 	}

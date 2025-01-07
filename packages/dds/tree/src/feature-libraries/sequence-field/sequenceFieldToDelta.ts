@@ -30,8 +30,8 @@ import type { ToDelta } from "../modular-schema/index.js";
 export function sequenceFieldToDelta(
 	change: MarkList,
 	deltaFromChild: ToDelta,
-): DeltaFieldChanges {
-	const local: DeltaMark[] = [];
+): [DeltaFieldChanges, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] {
+	const fieldChanges: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];
 
@@ -40,22 +40,29 @@ export function sequenceFieldToDelta(
 		const inputCellId = getInputCellId(mark);
 		const changes = mark.changes;
 		if (changes !== undefined) {
-			const nestedDelta = deltaFromChild(changes);
-			if (nestedDelta.size > 0) {
+			const childDelta = deltaFromChild(changes);
+			if (childDelta !== undefined) {
+				const [fields, childGlobal, childRename] = childDelta;
 				if (inputCellId === undefined) {
-					deltaMark.fields = nestedDelta;
+					deltaMark.fields = fields;
 				} else {
 					global.push({
 						id: nodeIdFromChangeAtom(inputCellId),
-						fields: nestedDelta,
+						fields,
 					});
+				}
+				if (childGlobal.length > 0) {
+					childGlobal.forEach((c) => global.push(c));
+				}
+				if (childRename.length > 0) {
+					childRename.forEach((r) => rename.push(r));
 				}
 			}
 		}
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 			// Since each cell is associated with exactly one node,
 			// the cell starting end ending populated means the cell content has not changed.
-			local.push(deltaMark);
+			fieldChanges.push(deltaMark);
 		} else if (isAttachAndDetachEffect(mark)) {
 			assert(
 				inputCellId !== undefined,
@@ -97,7 +104,7 @@ export function sequenceFieldToDelta(
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
 			switch (type) {
 				case "MoveIn": {
-					local.push({
+					fieldChanges.push({
 						attach: nodeIdFromChangeAtom(getEndpoint(mark)),
 						count: mark.count,
 					});
@@ -107,7 +114,7 @@ export function sequenceFieldToDelta(
 					const newDetachId = getDetachedNodeId(mark);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
-						local.push(deltaMark);
+						fieldChanges.push(deltaMark);
 					} else {
 						const oldId = nodeIdFromChangeAtom(inputCellId);
 						// Removal of already removed content is only a no-op if the detach IDs are different.
@@ -133,7 +140,7 @@ export function sequenceFieldToDelta(
 					const detachId = nodeIdFromChangeAtom(getDetachedNodeId(mark));
 					if (inputCellId === undefined) {
 						deltaMark.detach = detachId;
-						local.push(deltaMark);
+						fieldChanges.push(deltaMark);
 					} else {
 						// Move sources implicitly restore their content
 						rename.push({
@@ -156,12 +163,12 @@ export function sequenceFieldToDelta(
 						global.push({ id: buildId, fields: deltaMark.fields });
 						delete deltaMark.fields;
 					}
-					local.push(deltaMark);
+					fieldChanges.push(deltaMark);
 					break;
 				}
 				case NoopMarkType:
 					if (inputCellId === undefined) {
-						local.push(deltaMark);
+						fieldChanges.push(deltaMark);
 					}
 					break;
 				case "Rename":
@@ -176,8 +183,8 @@ export function sequenceFieldToDelta(
 		}
 	}
 	// Remove trailing no-op marks
-	while (hasSome(local)) {
-		const lastMark = getLast(local);
+	while (hasSome(fieldChanges)) {
+		const lastMark = getLast(fieldChanges);
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||
@@ -185,17 +192,7 @@ export function sequenceFieldToDelta(
 		) {
 			break;
 		}
-		local.pop();
+		fieldChanges.pop();
 	}
-	const delta: Mutable<DeltaFieldChanges> = {};
-	if (local.length > 0) {
-		delta.local = local;
-	}
-	if (global.length > 0) {
-		delta.global = global;
-	}
-	if (rename.length > 0) {
-		delta.rename = rename;
-	}
-	return delta;
+	return [fieldChanges, global, rename];
 }
