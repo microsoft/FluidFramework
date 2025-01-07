@@ -686,12 +686,8 @@ describe("Undo and redo", () => {
 
 		const forkedView = view.fork();
 
-		const batchedRevertibles: RevertibleAlpha[] = [];
-		for (const revertible of undoStack) {
-			batchedRevertibles.push(revertible);
-		}
-
-		const clonedRevertibles = cloneRevertibles(batchedRevertibles, forkedView);
+		const revertibles = [...undoStack];
+		const clonedRevertibles = cloneRevertibles(revertibles, forkedView);
 
 		assert.equal(clonedRevertibles.length, 2);
 		assert.equal(forkedView.root.child?.propertyOne, 256);
