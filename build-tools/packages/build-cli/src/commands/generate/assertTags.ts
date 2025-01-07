@@ -45,7 +45,7 @@ interface CollectedData {
  * Data about a specific package.
  */
 interface PackageData {
-	readonly newAssetFiles: ReadonlySet<SourceFile>;
+	readonly newAssertFiles: ReadonlySet<SourceFile>;
 	readonly assertionFunctions: AssertionFunctions;
 }
 
@@ -178,13 +178,13 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 				tsConfigFilePath: tsconfigPath,
 			});
 
-			const newAssetFiles = this.collectAssertData(
+			const newAssertFiles = this.collectAssertData(
 				project,
 				assertionFunctions,
 				collected,
 				errors,
 			);
-			dataMap.set(pkg, { assertionFunctions, newAssetFiles });
+			dataMap.set(pkg, { assertionFunctions, newAssertFiles: newAssertFiles });
 		}
 
 		// If there are errors, avoid making code changes and just report the errors.
@@ -209,7 +209,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 	): Set<SourceFile> {
 		const templateErrors: Node[] = [];
 		const otherErrors: Node[] = [];
-		const newAssetFiles = new Set<SourceFile>();
+		const newAssertFiles = new Set<SourceFile>();
 
 		// walk all the files in the project
 		for (const sourceFile of project.getSourceFiles()) {
@@ -226,7 +226,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 									numLit,
 								)}`,
 							);
-							return newAssetFiles;
+							return newAssertFiles;
 						}
 						const numLitValue = numLit.getLiteralValue();
 						if (collected.shortCodes.has(numLitValue)) {
@@ -239,7 +239,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 									collected.shortCodes.get(numLitValue)!,
 								)}\n\t${getCallsiteString(numLit)}`,
 							);
-							return newAssetFiles;
+							return newAssertFiles;
 						}
 						collected.shortCodes.set(numLitValue, numLit);
 						// calculate the maximun short code to ensure we don't duplicate
@@ -280,7 +280,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 					// If it's a simple string literal, track the file for replacements later
 					case SyntaxKind.StringLiteral:
 					case SyntaxKind.NoSubstitutionTemplateLiteral: {
-						newAssetFiles.add(sourceFile);
+						newAssertFiles.add(sourceFile);
 						break;
 					}
 					// Anything else isn't supported
@@ -322,7 +322,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 			errors.push(errorMessages.join("\n\n"));
 		}
 
-		return newAssetFiles;
+		return newAssertFiles;
 	}
 
 	/**
@@ -344,7 +344,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		}
 
 		// go through all the newly collected asserts and add short codes
-		for (const s of packageData.newAssetFiles) {
+		for (const s of packageData.newAssertFiles) {
 			// another policy may have changed the file, so reload it
 			s.refreshFromFileSystemSync();
 			for (const msg of getAssertMessageParams(s, packageData.assertionFunctions)) {
