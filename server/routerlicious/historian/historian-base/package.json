@@ -6,7 +6,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "server/historian/packages/historian-base"
+		"directory": "server/routerlicious/historian/historian-base"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
