@@ -491,7 +491,7 @@ describe("Summary Utils", () => {
 			const stats = summaryTreeWithStats.stats;
 			assert.strictEqual(stats.blobNodeCount, 1);
 			assert.strictEqual(stats.totalBlobSize, blobContent.length);
-			assert.strictEqual(summaryTree.tree.testBlob?.type, SummaryType.Blob);
+			assert.strictEqual(summaryTree.tree.testBlob.type, SummaryType.Blob);
 		});
 	});
 });

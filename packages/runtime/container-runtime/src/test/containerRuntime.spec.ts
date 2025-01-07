@@ -2424,7 +2424,7 @@ describe("Runtime", () => {
 					["missingDataStore"],
 				);
 				assert.deepStrictEqual(
-					snapshotTree.trees[".channels"]?.trees.missingDataStore,
+					snapshotTree.trees[".channels"].trees.missingDataStore,
 					snapshot.snapshotTree,
 					"snapshot should be equal",
 				);
