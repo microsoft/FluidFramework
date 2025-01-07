@@ -87,6 +87,44 @@ export async function start(): Promise<{
 	}
 }
 
+export async function getProfilePhoto(): Promise<string> {
+	const msalInstance = await authHelper();
+
+	// Handle the login redirect flows
+	const tokenResponse: AuthenticationResult | null =
+		await msalInstance.handleRedirectPromise();
+
+	// If the tokenResponse is not null, then the user is signed in
+	// and the tokenResponse is the result of the redirect.
+	if (tokenResponse === null) {
+		const currentAccounts = msalInstance.getAllAccounts();
+		if (currentAccounts.length === 0) {
+			// no accounts signed-in, attempt to sign a user in
+			await msalInstance.loginRedirect({
+				scopes: ["FileStorageContainer.Selected", "Files.ReadWrite"],
+			});
+
+			throw new Error(
+				"This should never happen! The previous line should have caused a browser redirect.",
+			);
+		} else {
+			// The user is signed in.
+			// Treat more than one account signed in and a single account the same as this is just a sample.
+			// A real app would need to handle the multiple accounts case.
+			// For now, just use the first account.
+			const account = msalInstance.getAllAccounts()[0];
+			if (account === undefined) {
+				throw new Error("No account found after logging in");
+			}
+			graphHelper = new GraphHelper(msalInstance, account);
+		}
+	} else {
+		graphHelper = new GraphHelper(msalInstance, tokenResponse.account);
+	}
+	const response = await graphHelper.getProfilePhoto();
+	return response;
+}
+
 async function signedInStart(
 	msalInstance: PublicClientApplication,
 	account: AccountInfo,
