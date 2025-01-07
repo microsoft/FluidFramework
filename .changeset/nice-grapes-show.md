@@ -6,7 +6,7 @@
 "section": legacy
 ---
 
-Remove Merge-Tree and SharedString ISegment Deprecations
+Remove deprecated Merge-Tree and SharedString ISegment members
 
 The current ISegment interface over-exposes a number of properties which do not have an external use case, and any external usage could result in damage to the underlying merge-tree including data corruption.
 [In Fluid Framework release 2.12.0 these properties and associated types were deprecated.](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.12.0.md#merge-tree-and-sharedstring-isegment-deprecations-23323)
