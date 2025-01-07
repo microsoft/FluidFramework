@@ -168,7 +168,7 @@ export type DocumentationSuiteOptions = Omit<
 	 *
 	 * Can be further overridden on a per-item-kind basis via {@link DocumentationSuiteConfiguration.hierarchy}.
 	 *
-	 * @param apiItem - The API item in question.
+	 * @param apiItem - The API item for which the document name is being generated.
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.getDocumentName}
 	 */
@@ -181,7 +181,7 @@ export type DocumentationSuiteOptions = Omit<
 	 *
 	 * Can be further overridden on a per-item-kind basis via {@link DocumentationSuiteConfiguration.hierarchy}.
 	 *
-	 * @param apiItem - The API item in question.
+	 * @param apiItem - The API item for which the folder name is being generated.
 	 *
 	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.getFolderName}
 	 */
