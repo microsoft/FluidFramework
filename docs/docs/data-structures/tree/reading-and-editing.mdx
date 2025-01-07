@@ -3,7 +3,8 @@ title: Reading and Editing
 sidebar_position: 4
 ---
 
-The `TreeView` object and its children expose properties and methods that allows applications read and edit the tree. The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays; although some editing APIs are different for the sake of making the merge semantics clearer.
+The `TreeView` object and its children expose properties and methods that allow applications read and edit the tree.
+The APIs have been designed to match as much as possible the syntax of TypeScript primitives, objects, maps, and arrays (although some editing APIs are different for the sake of making the merge semantics clearer).
 
 ## Leaf Node APIs
 
@@ -54,9 +55,6 @@ We show how to add this note to an array of notes in the tree in [Array node API
 To update the property on an object node, you assign a new node or value to it with the assignment operator (`=`).
 See [here](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/object-merge-semantics.md) for details on the merge semantics of these edits.
 
-Note that if the new value is a node (as opposed to a primitive), then its [status](./nodes.mdx#treestatus) must be `TreeStatus.New`,
-In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
-
 ```typescript
 rectangle.topLeft = new Point({ x: 0, y: 0 });
 ```
@@ -70,6 +68,9 @@ Optional properties can be cleared by assigning `undefined` to them.
 ```typescript
 proposal.text = undefined;
 ```
+
+Note that if the new value is a node (as opposed to a primitive), then its [status](./nodes.mdx#treestatus) must be `TreeStatus.New`,
+In other words, it is not possible to set a node that has already been inserted in the tree in the past, even if that node has since been removed.
 
 ## Map Node APIs
 
@@ -94,28 +95,24 @@ keys(): IterableIterator<string>
 ```
 
 Returns an Iterator that contains the keys in the map node.
-We do not make guarantees about the ordering of the keys.
 
 ```typescript
 values(): IterableIterator<T>
 ```
 
 Returns an Iterator that contains the values in the map node.
-We do not make guarantees about the ordering of the values.
 
 ```typescript
 entries(): IterableIterator<[string, T]>
 ```
 
 Returns an Iterator that contains the key/value pairs in the map node.
-We do not make guarantees about the ordering of the entries.
 
 ```typescript
 map(callback: ()=>[]): IterableIterator<[string, T]>
 ```
 
 Returns an array, _not a map node or array node_, that is the result of applying the callback parameter to each member of the original map node. It is just like [Array.map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map).
-We do not make guarantees about the ordering of the entries.
 
 ### Map Node Write APIs
 
@@ -215,6 +212,7 @@ Note the following about these methods:
 
 -   If multiple clients simultaneously move an item, then that item will be moved to the destination indicated by the move of the client whose edit is ordered last.
 -   A moved item may be removed as a result of a simultaneous remove operation from another client. For example, if one client moves items 3-5, and another client simultaneously removes items 4 and 5, then, if the remove operation is ordered last, items 4 and 5 are removed from their destination by the remove operation. If the move operation is ordered last, then all three items will be moved to the destination.
+-   Moved items that are nodes (as opposed to a primitives), must have a [status](./nodes.mdx#treestatus) equal `TreeStatus.InDocument`.
 -   We also expose variations of these methods for moving a single item.
 
 For the meaning of "simultaneously", see [Types of distributed data structures](../overview.mdx).

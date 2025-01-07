@@ -5,9 +5,16 @@ sidebar_position: 5
 
 ## Whole-Tree Events
 
-The `TreeView` object exposes 2 events that communicate changes that affect the whole tree.
+The `TreeView` object exposes 2 events that communicate changes that affect the whole tree. For example:
 
-`rootChanged` fires when the contents root field (the field that contains the root node) change.
+```typescript
+const unsubscribe = treeView.events.on("rootChanged", () => {...});
+
+// Later at some point when the event subscription is not needed anymore
+unsubscribe();
+```
+
+`rootChanged` fires when the contents of the root field (the field that contains the root node) change.
 That is, if a new root node is assigned or the schema changes.
 This will not fire when the node itself changes.
 
