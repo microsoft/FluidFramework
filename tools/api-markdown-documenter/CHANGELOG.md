@@ -1,5 +1,109 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.18.0
+
+### ⚠ BREAKING CHANGES
+
+#### Simplify the parameters given to `MarkdownRenderer` and `HtmlRenderer` methods.
+
+Combines the separate "config" property bag parameters into a single "options" property bag for simplicity.
+
+##### Example
+
+Before:
+
+```typescript
+import { loadModel, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
+
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+const outputDirectoryPath = "<YOUR-OUTPUT-DIRECTORY-PATH>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+const transformConfig = {
+	apiModel,
+	uriRoot: ".",
+};
+
+await MarkdownRenderer.renderApiModel(transformConfig, {}, { outputDirectoryPath });
+```
+
+After:
+
+```typescript
+import { loadModel, MarkdownRenderer } from "@fluid-tools/api-markdown-documenter";
+
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+const outputDirectoryPath = "<YOUR-OUTPUT-DIRECTORY-PATH>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+await MarkdownRenderer.renderApiModel({
+	apiModel,
+	uriRoot: ".",
+	outputDirectoryPath,
+});
+```
+
+#### Type-renames
+
+-   `ApiItemTransformationOptions` -> `ApiItemTransformations`
+-   `ConfigurationBase` -> `LoggingConfiguration`
+-   `RenderDocumentAsHtmlConfig` -> `RenderDocumentAsHtmlConfiguration`
+-   `RenderHtmlConfig` -> `RenderHtmlConfiguration`
+-   `ToHtmlConfig` -> `ToHtmlConfiguration`
+
+#### Utility function renames
+
+-   `ApiItemUtilities.getQualifiedApiItemName` -> `ApiItemUtilities.getFileSafeNameForApiItem`
+
+#### Configuration properties made `readonly`
+
+-   `ApiItemTransformations`
+-   `ApiItemTransformationConfiguration`
+-   `DocumentationSuiteOptions`
+-   `HtmlRenderer.RenderHtmlConfig`
+-   `LintApiModelConfiguration`
+-   `MarkdownRenderer.Renderers`
+-   `MarkdownRenderer.RenderContext`
+-   `ToHtmlTransformations`
+
+#### Separate input "options" types and system "configuration" types
+
+This library has an inconsistent mix of `Partial` and `Required` types to represent partial user input parameters and "complete" configurations needed by the system to function.
+
+This version of the library attempts to align its APIs with the following conventions:
+
+-   Naming:
+    -   "Options": refers to user-provided API parameters, which may be incomplete.
+    -   "Configuration": refers to the "complete" sets of parameters needed by system functionality.
+-   Typing:
+    -   When possible, "configuration" types will be declared with all properties required.
+    -   When possible, "options" types will be declared as `Partial<FooConfiguration>`. When not possible, they will be declared as separate types.
+
+##### Affected types
+
+-   `ApiTransformationConfiguration` -> `ApiTransformationOptions` (user input) and `ApiTransformationConfiguration` (derived system configuration).
+-   `DocumentationSuiteOptions` -> `DocumentationSuiteConfiguration` (user input is taken as `Partial<DocumentationSuiteConfiguration>`).
+
+#### Updated structure of `ApiTransformationConfiguration` and `ApiItemTransformations`
+
+Updated the structure of `ApiTransformationConfiguration` to contain a `transformations` property of type `ApiItemTransformations`, rather than implementing that interface directly.
+
+Also updates `ApiItemTransformations` methods to be keyed off of `ApiItemKind`, rather than being individually named.
+
+E.g. A call like `config.transformApiMethod(...)` would become `config.transformations["Method"](...)`.
+
+This better aligns with similar transformational API surfaces in this library, like the renderers.
+
+The `createDefaultLayout` property of `ApiItemTransformations` now lives directly in `ApiTransformationConfiguration`, but has been renamed to `defaultSectionLayout`.
+
 ## 0.17.3
 
 -   Fixes an issue where directories generated for API items configured to yield directory-wise hierarchy (via the `hierarchyBoundaries` option) would be generated with names that differed from their corresponding document names.

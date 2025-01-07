@@ -57,7 +57,7 @@ function generateCompressedBatchMessage(length: number): ISequencedDocumentMessa
 	return {
 		...messageBase,
 		// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 		metadata: { ...(messageBase.metadata as any), batch: true },
 	};
 }

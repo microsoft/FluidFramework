@@ -10,8 +10,18 @@ import {
 	type Difference,
 	SharedTreeBranchManager,
 } from "@fluidframework/ai-collab/alpha";
-import { TreeAlpha, type TreeBranch, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import {
+	CommitKind,
+	RevertibleStatus,
+	TreeAlpha,
+	type CommitMetadata,
+	type Revertible,
+	type RevertibleFactory,
+	type TreeBranch,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 import { Icon } from "@iconify/react";
+import { RedoRounded, UndoRounded } from "@mui/icons-material";
 import { LoadingButton } from "@mui/lab";
 import {
 	Box,
@@ -19,18 +29,19 @@ import {
 	Card,
 	Dialog,
 	Divider,
+	IconButton,
 	Popover,
 	Stack,
 	TextField,
+	Tooltip,
 	Typography,
 } from "@mui/material";
 import { type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
-// eslint-disable-next-line import/no-internal-modules
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
 	aiCollabLlmTreeNodeValidator,
@@ -59,7 +70,98 @@ export function TaskGroup(props: {
 		newBranchTargetNode: SharedTreeTaskGroup;
 	}>();
 
+	const [undoStack, setUndoStack] = useState<Revertible[]>([]);
+	const [redoStack, setRedoStack] = useState<Revertible[]>([]);
+
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTaskGroup, logId: "TaskGroup" });
+
+	/**
+	 * Create undo and redo stacks of {@link Revertible}.
+	 */
+	useEffect(() => {
+		function onRevertibleDisposed(disposed: Revertible): void {
+			const redoIndex = redoStack.indexOf(disposed);
+			if (redoIndex === -1) {
+				const undoIndex = undoStack.indexOf(disposed);
+				if (undoIndex !== -1) {
+					setUndoStack((currUndoStack) => {
+						const newUndoStack = currUndoStack.toSpliced(undoIndex, 1);
+						return newUndoStack;
+					});
+				}
+			} else {
+				setRedoStack((currRedostack) => {
+					const newRedoStack = currRedostack.toSpliced(redoIndex, 1);
+					return newRedoStack;
+				});
+			}
+		}
+
+		/**
+		 * Instead of application developer manually managing the life cycle of the {@link Revertible} instances,
+		 * example app stores up to `MAX_STACK_SIZE` number of {@link Revertible} instances in each of the undo and redo stacks.
+		 * When the stack size exceeds `MAX_STACK_SIZE`, the oldest {@link Revertible} instance is disposed.
+		 * @param stack - The stack that the {@link Revertible} instance is being added to.
+		 */
+		function trimStackToMaxSize(stack: Revertible[]): Revertible[] {
+			const MAX_STACK_SIZE = 50;
+
+			if (stack.length <= MAX_STACK_SIZE) {
+				return stack;
+			}
+
+			const itemsToRemove = stack.length - MAX_STACK_SIZE;
+			const itemsToDispose = stack.slice(0, itemsToRemove);
+
+			for (const revertible of itemsToDispose) {
+				if (revertible?.status !== RevertibleStatus.Disposed) {
+					revertible?.dispose();
+				}
+			}
+
+			return stack.slice(itemsToRemove);
+		}
+
+		/**
+		 * Event handler that manages the undo/redo functionality for tree view commits.
+		 *
+		 * @param commit - Metadata about the commit being applied
+		 * @param getRevertible - Optional factory function that creates a Revertible object
+		 *
+		 * This handler:
+		 * 1. Creates a Revertible object when a commit is applied
+		 * 2. Adds the Revertible to either the undo or redo stack based on the commit type
+		 * 3. Maintains a maximum stack size (defined in `maintainStackSize` function)
+		 *
+		 * The Revertible objects allow operations to be undone/redone, with automatic cleanup
+		 * handled by the onRevertibleDisposed callback.
+		 *
+		 * @returns An event listener cleanup function
+		 */
+		const unsubscribeFromCommitAppliedEvent = props.treeView.events.on(
+			"commitApplied",
+			(commit: CommitMetadata, getRevertible?: RevertibleFactory) => {
+				if (getRevertible !== undefined) {
+					const revertible = getRevertible(onRevertibleDisposed);
+					if (commit.kind === CommitKind.Undo) {
+						setRedoStack((prevRedoStack) => {
+							const newRedoStack = trimStackToMaxSize([...prevRedoStack, revertible]);
+							return newRedoStack;
+						});
+					} else {
+						setUndoStack((prevUndoStack) => {
+							const newUndoStack = trimStackToMaxSize([...prevUndoStack, revertible]);
+							return newUndoStack;
+						});
+					}
+				}
+			},
+		);
+
+		return () => {
+			unsubscribeFromCommitAppliedEvent();
+		};
+	}, [props.treeView.events, undoStack, redoStack]);
 
 	/**
 	 * Helper function for ai collaboration which creates a new branch from the current {@link SharedTreeAppState}
@@ -242,14 +344,46 @@ export function TaskGroup(props: {
 						treeView={llmBranchData.aiCollabBranch}
 						differences={llmBranchData.differences}
 						newBranchTargetNode={llmBranchData.newBranchTargetNode}
-					></TaskGroupDiffModal>
+					/>
+				)}
+
+				{undoStack.length > 0 && (
+					<Tooltip title="Undo">
+						<IconButton
+							color="error"
+							onClick={() => {
+								// Getting the revertible before removing it from the undo stack allows the the item to remains in the stack if `revert()` fails.
+								const revertible = undoStack[undoStack.length - 1];
+								revertible?.revert();
+								undoStack.pop();
+							}}
+						>
+							<UndoRounded />
+						</IconButton>
+					</Tooltip>
+				)}
+
+				{redoStack.length > 0 && (
+					<Tooltip title="Redo">
+						<IconButton
+							color="info"
+							onClick={() => {
+								// Getting the revertible before removing it from the redo stack allows the the item to remains in the stack if `revert()` fails.
+								const revertible = redoStack[redoStack.length - 1];
+								revertible?.revert();
+								redoStack.pop();
+							}}
+						>
+							<RedoRounded />
+						</IconButton>
+					</Tooltip>
 				)}
 
 				<Button
 					variant="contained"
 					color="success"
 					onClick={() => {
-						props.sharedTreeTaskGroup.tasks.insertAtStart({
+						props.sharedTreeTaskGroup.tasks.insertAtEnd({
 							title: `New Task #${props.sharedTreeTaskGroup.tasks.length + 1}`,
 							description: "This is the new task. ",
 							priority: "low",

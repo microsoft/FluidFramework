@@ -5,19 +5,17 @@
 
 import { EventEmitter } from "@fluid-example/example-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/legacy";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
+import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions/internal";
-import {
-	ReferenceType,
-	SharedString,
-	reservedTileLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/runtime-definitions/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { reservedTileLabelsKey } from "@fluidframework/sequence/internal";
+import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 
 // eslint-disable-next-line import/no-internal-modules, import/no-unassigned-import
 import "simplemde/dist/simplemde.min.css";

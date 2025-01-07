@@ -136,11 +136,11 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				detachedCursor.free();
 			},
 			afterAttach: () => {
-				assert(parent !== undefined, "must have a parent");
+				assert(parent !== undefined, 0xa99 /* must have a parent */);
 				this.reIndexSpine(parent);
 			},
 			afterDetach: () => {
-				assert(parent !== undefined, "must have a parent");
+				assert(parent !== undefined, 0xa9a /* must have a parent */);
 				this.reIndexSpine(parent);
 			},
 			// when a replace happens, the keys of previously indexed nodes could be changed so we must re-index them
@@ -318,7 +318,10 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 		if (!this.isShallowIndex) {
 			const cursor = this.forest.allocateCursor();
 			this.forest.moveCursorToPath(path, cursor);
-			assert(cursor.mode === CursorLocationType.Nodes, "attach should happen in a node");
+			assert(
+				cursor.mode === CursorLocationType.Nodes,
+				0xa9b /* attach should happen in a node */,
+			);
 			cursor.exitNode();
 			this.indexSpine(cursor);
 			cursor.clear();

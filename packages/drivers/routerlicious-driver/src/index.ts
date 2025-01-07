@@ -15,6 +15,7 @@ export { RouterliciousErrorTypes } from "./errorUtils.js";
 
 // Factory
 export {
+	createRouterliciousDocumentServiceFactory,
 	DocumentPostCreateError,
 	RouterliciousDocumentServiceFactory,
 } from "./documentServiceFactory.js";
