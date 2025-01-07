@@ -33,7 +33,7 @@ async function waitForAttendeeEvent(
 				(resolve) => presence.events.on(event, (attendee) => resolve(attendee)),
 				{
 					durationMs: 2000,
-					errorMsg: `Signaller[${index}] Timeout`,
+					errorMsg: `Attendee[${index}] Timeout`,
 				},
 			),
 		),
