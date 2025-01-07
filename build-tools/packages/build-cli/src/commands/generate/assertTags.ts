@@ -80,13 +80,13 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 	//
 	// The current approach isn't ideal from a readability or maintainability perspective for a few reasons:
 	//
-	// 1. selectAndFilterPackages is undocumented had relies on side effects.
+	// 1. selectAndFilterPackages is undocumented had relied on side effects.
 	// To override it correctly the the subclass must know and depend on many undocumented details of the base class (like that this method sets filteredPackages, that its ok for it to modify filteredPackages).
 	// This makes the base class fragile: refactoring it to work slightly differently
 	// (like printing the filtered packages info inside of this function instead of after it or cache data derived from the set of filteredPackages after they are computed)
 	// could break things.
 	//
-	// 2. Data flow is hard to follow. This method does not have inputs or outputs declared in its signature, and the values it reads from the class arn't readonly so its hard to know what is initialized when
+	// 2. Data flow is hard to follow. This method does not have inputs or outputs declared in its signature, and the values it reads from the class aren't readonly so it's hard to know what is initialized when
 	// and which values are functions of which other values.
 	//
 	// 3. The division of responsibility here is odd. Generally the user of a PackageCommand selects which packages to apply it to on the command line.
@@ -420,7 +420,7 @@ function writeShortCodeMappingFile(codeToMsgMap: Map<string, string>): void {
 			return accum;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		}, {} as any);
-	// TODO: this should prabably come from configuration (if each package can have their own) or a CLI argument.
+	// TODO: this should probably come from configuration (if each package can have their own) or a CLI argument.
 	const targetFolder = "packages/runtime/test-runtime-utils/src";
 
 	if (!fs.existsSync(targetFolder)) {
