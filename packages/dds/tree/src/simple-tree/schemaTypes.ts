@@ -13,6 +13,9 @@ import {
 	brand,
 	isReadonlyArray,
 	type UnionToIntersection,
+	compareSets,
+	type requireTrue,
+	type areOnlyKeys,
 } from "../util/index.js";
 import type {
 	Unhydrated,
@@ -21,6 +24,7 @@ import type {
 	TreeNodeSchemaClass,
 	TreeNode,
 	TreeNodeSchemaCore,
+	TreeNodeSchemaNonClass,
 } from "./core/index.js";
 import type { FieldKey } from "../core/index.js";
 import type { InsertableContent } from "./toMapTree.js";
@@ -28,6 +32,7 @@ import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 
 /**
  * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
+ * @internal
  */
 export function isTreeNodeSchemaClass<
 	Name extends string,
@@ -185,7 +190,10 @@ export interface FieldProps<TCustomMetadata = unknown> {
 
 	/**
 	 * Optional metadata to associate with the field.
-	 * @remarks Note: this metadata is not persisted in the document.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
+	 * Different clients in the same collaborative session may see different metadata for the same field.
 	 */
 	readonly metadata?: FieldSchemaMetadata<TCustomMetadata>;
 }
@@ -363,6 +371,8 @@ export function normalizeFieldSchema(schema: ImplicitFieldSchema): FieldSchema {
  *
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
+ *
+ * @internal
  */
 export function normalizeAllowedTypes(
 	types: ImplicitAllowedTypes,
@@ -378,6 +388,87 @@ export function normalizeAllowedTypes(
 	return normalized;
 }
 
+/**
+ * Returns true if the given {@link ImplicitFieldSchema} are equivalent, otherwise false.
+ * @remarks Two ImplicitFieldSchema are considered equivalent if all of the following are true:
+ * 1. They have the same {@link FieldKind | kinds}.
+ * 2. They have {@link areFieldPropsEqual | equivalent FieldProps}.
+ * 3. They have the same exact set of allowed types. The allowed types must be (respectively) reference equal.
+ *
+ * For example, comparing an ImplicitFieldSchema that is a {@link TreeNodeSchema} to an ImplicitFieldSchema that is a {@link FieldSchema}
+ * will return true if they are the same kind, the FieldSchema has exactly one allowed type (the TreeNodeSchema), and they have equivalent FieldProps.
+ */
+export function areImplicitFieldSchemaEqual(
+	a: ImplicitFieldSchema,
+	b: ImplicitFieldSchema,
+): boolean {
+	return areFieldSchemaEqual(normalizeFieldSchema(a), normalizeFieldSchema(b));
+}
+
+/**
+ * Returns true if the given {@link FieldSchema} are equivalent, otherwise false.
+ * @remarks Two FieldSchema are considered equivalent if all of the following are true:
+ * 1. They have the same {@link FieldKind | kinds}.
+ * 2. They have {@link areFieldPropsEqual | equivalent FieldProps}.
+ * 3. They have the same exact set of allowed types. The allowed types must be reference equal.
+ */
+export function areFieldSchemaEqual(a: FieldSchema, b: FieldSchema): boolean {
+	if (a === b) {
+		return true;
+	}
+
+	if (a.kind !== b.kind) {
+		return false;
+	}
+
+	if (!areFieldPropsEqual(a.props, b.props)) {
+		return false;
+	}
+
+	return compareSets({ a: a.allowedTypeSet, b: b.allowedTypeSet });
+}
+
+/**
+ * Returns true if the given {@link FieldProps} are equivalent, otherwise false.
+ * @remarks FieldProps are considered equivalent if their keys and default providers are reference equal, and their metadata are {@link areMetadataEqual | equivalent}.
+ */
+function areFieldPropsEqual(a: FieldProps | undefined, b: FieldProps | undefined): boolean {
+	// If any new fields are added to FieldProps, this check will stop compiling as a reminder that this function needs to be updated.
+	type _keys = requireTrue<areOnlyKeys<FieldProps, "key" | "defaultProvider" | "metadata">>;
+
+	if (a === b) {
+		return true;
+	}
+
+	if (a?.key !== b?.key || a?.defaultProvider !== b?.defaultProvider) {
+		return false;
+	}
+
+	if (!areMetadataEqual(a?.metadata, b?.metadata)) {
+		return false;
+	}
+
+	return true;
+}
+
+/**
+ * Returns true if the given {@link FieldSchemaMetadata} are equivalent, otherwise false.
+ * @remarks FieldSchemaMetadata are considered equivalent if their custom data and descriptions are (respectively) reference equal.
+ */
+function areMetadataEqual(
+	a: FieldSchemaMetadata | undefined,
+	b: FieldSchemaMetadata | undefined,
+): boolean {
+	// If any new fields are added to FieldSchemaMetadata, this check will stop compiling as a reminder that this function needs to be updated.
+	type _keys = requireTrue<areOnlyKeys<FieldSchemaMetadata, "custom" | "description">>;
+
+	if (a === b) {
+		return true;
+	}
+
+	return a?.custom === b?.custom && a?.description === b?.description;
+}
+
 function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 	const evaluatedSchema = isLazy(value) ? value() : value;
 	if (evaluatedSchema === undefined) {
@@ -389,9 +480,34 @@ function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
 }
 
 /**
- * Types allowed in a field.
+ * Types of {@link TreeNode|TreeNodes} or {@link TreeLeafValue|TreeLeafValues} allowed at a location in a tree.
  * @remarks
+ * Used by {@link TreeViewConfiguration} for the root and various kinds of {@link TreeNodeSchema} to specify their allowed child types.
+ *
+ * Use {@link SchemaFactory} to access leaf schema or declare new composite schema.
+ *
  * Implicitly treats a single type as an array of one type.
+ *
+ * Arrays of schema can be used to specify multiple types are allowed, which result in unions of those types in the Tree APIs.
+ *
+ * When saved into variables, avoid type-erasing the details, as doing so loses the compile time schema awareness of APIs derived from the types.
+ *
+ * When referring to types that are declared after the definition of the `ImplicitAllowedTypes`, the schema can be wrapped in a lambda to allow the forward reference.
+ * See {@link ValidateRecursiveSchema} for details on how to structure the `ImplicitAllowedTypes` instances when constructing recursive schema.
+ *
+ * @example Explicit use with strong typing
+ * ```typescript
+ * const sf = new SchemaFactory("myScope");
+ * const childTypes = [sf.number, sf.string] as const satisfies ImplicitAllowedTypes;
+ * const config = new TreeViewConfiguration({ schema: childTypes });
+ * ```
+ *
+ * @example Forward reference
+ * ```typescript
+ * const sf = new SchemaFactory("myScope");
+ * class A extends sf.array("example", [() => B]) {}
+ * class B extends sf.array("Inner", sf.number) {}
+ * ```
  * @public
  */
 export type ImplicitAllowedTypes = AllowedTypes | TreeNodeSchema;
@@ -647,15 +763,19 @@ export type InsertableTreeNodeFromAllowedTypes<TList extends AllowedTypes> =
 
 /**
  * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
+ * @privateRemarks
+ * If a schema is both TreeNodeSchemaClass and TreeNodeSchemaNonClass, prefer TreeNodeSchemaClass since that includes subclasses properly.
  * @public
  */
-export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchema<
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<
 	string,
 	NodeKind,
 	infer TNode
 >
 	? TNode
-	: never;
+	: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+		? TNode
+		: never;
 
 /**
  * Data which can be used as a node to be inserted.
@@ -707,3 +827,49 @@ export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boole
  */
 // eslint-disable-next-line @rushstack/no-new-null
 export type TreeLeafValue = number | string | boolean | IFluidHandle | null;
+
+/**
+ * Additional information to provide to Node Schema creation.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
+	/**
+	 * Optional metadata to associate with the Node Schema.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
+	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 */
+	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
+}
+
+/**
+ * Metadata associated with a Node Schema.
+ *
+ * @remarks Specified via {@link NodeSchemaOptions.metadata}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
+	/**
+	 * User-defined metadata.
+	 */
+	readonly custom?: TCustomMetadata | undefined;
+
+	/**
+	 * The description of the Node Schema.
+	 *
+	 * @remarks
+	 *
+	 * If provided, will be used by the system in scenarios where a description of the kind of node is useful.
+	 * E.g., when converting a Node Schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
+	 * used as the `description` property.
+	 */
+	readonly description?: string | undefined;
+}

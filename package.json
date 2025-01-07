@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.5.0",
+	"version": "2.14.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -148,8 +148,10 @@
 		"merge-async": true,
 		"report-dir": "nyc/report",
 		"reporter": [
+			"clover",
 			"cobertura",
 			"html",
+			"json-summary",
 			"text"
 		],
 		"temp-directory": "nyc/.nyc_output"
@@ -158,11 +160,11 @@
 		"@biomejs/biome": "~1.9.3",
 		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
-		"@fluid-tools/build-cli": "^0.49.0",
+		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.49.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
 		"@microsoft/api-extractor": "7.47.8",

@@ -15,22 +15,22 @@ title: repo-layout -- the build-infrastructure CLI
 # Commands
 
 <!-- commands -->
-* [`repo-layout list`](#repo-layout-list)
+* [`buildProject list`](#buildproject-list)
 
-## `repo-layout list`
+## `buildProject list`
 
-List objects in the Fluid repo, like release groups, workspaces, and packages. USED FOR TESTING ONLY.
+List objects in the build project, like release groups, workspaces, and packages. USED FOR TESTING ONLY.
 
 ```
 USAGE
-  $ repo-layout list [--path <value>] [--full]
+  $ buildProject list [--path <value>] [--full]
 
 FLAGS
   --full          Output the full report.
-  --path=<value>  [default: .] Path to start searching for the Fluid repo.
+  --path=<value>  [default: .] Path to start searching for the Build project configuration.
 
 DESCRIPTION
-  List objects in the Fluid repo, like release groups, workspaces, and packages. USED FOR TESTING ONLY.
+  List objects in the build project, like release groups, workspaces, and packages. USED FOR TESTING ONLY.
 ```
 
 _See code: [src/commands/list.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-infrastructure/src/commands/list.ts)_

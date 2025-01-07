@@ -8,6 +8,7 @@ import fsPromises from "node:fs/promises";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { closeRedisClientConnections } from "@fluidframework/server-services-shared";
 import {
 	IFileSystemManager,
 	IFileSystemManagerFactory,
@@ -142,5 +143,9 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 			fsManagerParams,
 			this.maxFileSizeBytes,
 		);
+	}
+
+	public async dispose(): Promise<void> {
+		await closeRedisClientConnections([this.redisClientConnectionManager]);
 	}
 }

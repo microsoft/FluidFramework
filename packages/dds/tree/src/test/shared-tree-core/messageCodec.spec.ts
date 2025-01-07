@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";

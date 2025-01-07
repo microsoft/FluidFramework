@@ -5,9 +5,10 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GitRepo, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { getResolvedFluidRoot, type Package } from "@fluidframework/build-tools";
 import { PackageName } from "@rushstack/node-core-library";
 import { describe, expect, it } from "vitest";
+
 import {
 	AllPackagesSelectionCriteria,
 	PackageFilterOptions,
@@ -21,9 +22,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 async function getContext() {
 	const resolvedRoot = await getResolvedFluidRoot();
-	const gitRepo = new GitRepo(resolvedRoot);
-	const branch = await gitRepo.getCurrentBranchName();
-	const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
+	const context = new Context(resolvedRoot);
 	return context;
 }
 

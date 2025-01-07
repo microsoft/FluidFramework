@@ -39,7 +39,7 @@ extends:
     tagName: bundle-and-code-coverage-artifacts
     # This pipeline doesn't generate production artifacts but the build-npm-package template is too intertwined with
     # that scenario, which requires that the pipeline runs in the 1ES pool.
-    poolBuild: NewLarge-linux-1ES
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     releaseBuildOverride: none
     publishOverride: default

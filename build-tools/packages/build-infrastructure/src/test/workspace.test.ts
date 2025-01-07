@@ -10,13 +10,13 @@ import path from "node:path";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
-import { loadFluidRepo } from "../fluidRepo.js";
+import { loadBuildProject } from "../buildProject.js";
 import type { PackageName, WorkspaceName } from "../types.js";
 
 import { testRepoRoot } from "./init.js";
 
 describe("workspaces", () => {
-	const repo = loadFluidRepo(testRepoRoot);
+	const repo = loadBuildProject(testRepoRoot);
 	const workspace = repo.workspaces.get("main" as WorkspaceName);
 
 	describe("lockfile outdated", () => {

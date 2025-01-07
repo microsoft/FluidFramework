@@ -50,18 +50,6 @@ export class GCSummaryStateTracker {
 	// to unreferenced or vice-versa.
 	public updatedDSCountSinceLastSummary: number = 0;
 
-	/** API for ensuring the correct auto-recovery mitigations */
-	public autoRecovery = {
-		requestFullGCOnNextRun: () => {
-			this.fullGCModeForAutoRecovery = true;
-		},
-		fullGCRequested: () => {
-			return this.fullGCModeForAutoRecovery;
-		},
-	};
-	/** If true, the next GC run will do fullGC mode to regenerate the GC data for each node */
-	private fullGCModeForAutoRecovery: boolean = false;
-
 	constructor(
 		// Tells whether GC should run or not.
 		private readonly configs: Pick<
@@ -235,7 +223,6 @@ export class GCSummaryStateTracker {
 		this.latestSummaryData = this.pendingSummaryData;
 		this.pendingSummaryData = undefined;
 		this.updatedDSCountSinceLastSummary = 0;
-		this.fullGCModeForAutoRecovery = false;
 	}
 
 	/**

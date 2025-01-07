@@ -1,0 +1,255 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# publish-api-model-artifact pipeline
+# This pipeline downloads the api-extractor artifacts from build pipelines and uploads them to the azure blob storage.
+# After the artifacts are uploaded, the pipeline triggers the deploy-website pipeline to deploy the website.
+# By default, artifacts are only published from the latest minor release branch of each major version series.
+
+name: $(Build.BuildId)
+
+parameters:
+  # override deployment condition to skip or force deployment
+  - name: deployOverride
+    displayName: Deployment Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  # determines deployment token to be used for Azure Static Web Apps
+  - name: deployEnvironment
+    displayName: Static web app environment to deploy to
+    type: string
+    default: new
+    values:
+      - new
+      - old
+  # determines whether to retain guardian assets
+  - name: guardianAssetRetentionOverride
+    displayName: Guardian Asset Retention Override (default = based on branch)
+    type: string
+    default: default
+    values:
+      - default
+      - skip
+      - force
+  # determines whether to publish guardian baseline files
+  - name: publishGuardianBaselines
+    displayName: Publish Guardian Baseline Files
+    type: boolean
+    default: false
+
+variables:
+  - group: doc-versions
+  - group: storage-vars
+  - group: ado-feeds
+  - name: repoToTrigger
+    value: microsoft/FluidFramework
+  - name: latestPipeline
+    value: ${{ or(
+      eq(variables['Build.SourceBranchName'], 'main'),
+      eq(variables['Build.SourceBranchName'], 'pl-test')
+      )}}
+  - name: n1Branch
+    value: ${{ join('/refs/heads/release/', variables['N1_BRANCH']) }}
+  - name: n1Pipeline
+    value: ${{ eq(variables['Build.SourceBranchName'], variables['N1_BRANCH']) }}
+  - name: releasePipeline
+    value: ${{ eq(variables['Build.SourceBranchName'], variables['RELEASE_BRANCH']) }}
+  - name: validRun
+    value: ${{ or(variables.releasePipeline, variables.n1Pipeline, variables.latestPipeline) }}
+  - name: Packaging.EnableSBOMSigning
+    value: true
+  - name: shouldRetainGuardianAssets
+    value: ${{ or(
+      eq(parameters.guardianAssetRetentionOverride, 'force'),
+      eq(parameters.guardianAssetRetentionOverride, 'default')
+      )}}
+  - name: deploymentToken
+    ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
+      value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
+    ${{ if eq( parameters['deployEnvironment'], 'old') }}:
+      value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+  # skip injected CG detection as we manually trigger it in a parallel job
+  - name: skipComponentGovernanceDetection
+    value: true
+  - name: pnpmStorePath
+    value: $(Pipeline.Workspace)/.pnpm-store
+
+trigger:
+  branches:
+    include:
+    - release/client/*
+pr: none
+
+stages:
+# Check release version of branch, and determine if the branch should be deployed
+# If the branch is the latest minor version of its major version series, it should be deployed
+# also, the artifact will be uploaded as latest-v*.tar.gz where * is the major version
+- stage: check_branch_version
+  displayName: 'Check Version Deployment Condition'
+  pool: Small-eastus2
+  jobs:
+    - job: check_branch_version
+      displayName: 'Check Version Deployment Condition'
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+
+        - template: /tools/pipelines/templates/include-install-build-tools.yml
+          parameters:
+            buildDirectory: $(Build.SourcesDirectory)
+        - task: Bash@3
+          name: SetVersion
+          displayName: 'Set Build Version'
+          env:
+            VERSION_BUILDNUMBER: $(Build.BuildNumber)
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
+              flub generate buildVersion
+        - task: Bash@3
+          name: SetShouldDeploy
+          displayName: 'Check Version Deployment Condition'
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Build.SourcesDirectory)
+            script: |
+              # Check if the version is the latest minor of its corresponding major version series
+              # Sets variable shouldDeploy to true if the version is the latest minor and false otherwise
+              # Sets variable majorVersion to the major version extracted from $(SetVersion.version)
+              flub check latestVersions $(SetVersion.version) client
+
+    - deployment: upload_json
+      displayName: 'Combine api-extractor JSON'
+      dependsOn: check_branch_version
+      environment: 'fluid-docs-env'
+      pool: Large-eastus2
+      variables:
+        isLatestMinorOfMajorTrain: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'] ]
+        majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - checkout: none
+                clean: true
+
+              - task: Bash@3
+                displayName: 'Print computed variables'
+                inputs:
+                  targetType: 'inline'
+                  script: |
+                    echo "isLatestMinorOfMajorTrain: $(isLatestMinorOfMajorTrain)"
+                    echo "majorVersion: $(majorVersion)"
+
+              # Download the api-extractor outputs
+              # Setting allowPartiallySucceededBuilds to true so that builds which complete with
+              # warnings will be included as well. This is especially needed for archived builds
+              # with warnings such as driver-definitions and core-interfaces.
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  buildType: specific
+                  project: internal
+                  pipeline: 'Build - client packages'
+                  buildVersionToDownload: latestFromBranch
+                  branchName: ${{ variables['Build.SourceBranch'] }}
+                  artifact: _api-extractor-temp
+                  allowPartiallySucceededBuilds: true
+
+              # Copy and merge the api-extractor outputs to a central location
+              - task: CopyFiles@2
+                displayName: 'Copy all api-extractor output JSON files into a single folder'
+                inputs:
+                  SourceFolder: $(Pipeline.Workspace)
+                  Contents: '**/*.api.json'
+                  TargetFolder: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  OverWrite: false
+                  flattenFolders: true
+                  CleanTargetFolder: true
+
+              - task: PublishPipelineArtifact@1
+                displayName: 'Publish api-extractor JSON'
+                inputs:
+                  targetPath: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  artifactName: 'api-extractor-combined'
+                  publishLocation: 'pipeline'
+
+              - task: ArchiveFiles@2
+                inputs:
+                  rootFolderOrFile: '$(Build.SourcesDirectory)/_api-extractor-temp'
+                  includeRootFolder: false
+                  archiveType: 'tar' # Options: zip, 7z, tar, wim
+                  tarCompression: 'gz'  # Optional. Options: gz, bz2, xz, none
+                  archiveFile: '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz'
+                  replaceExistingArchive: true
+                  verbose: true # Optional
+                  #quiet: # Optional
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON'
+                continueOnError: true
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --verbose
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON as latest.tar.gz'
+                continueOnError: true
+                condition: eq(variables['Build.SourceBranchName'], 'main')
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
+
+              - task: AzureCLI@2
+                displayName: 'Upload JSON as latest-v*.tar.gz'
+                continueOnError: true
+                condition: eq(variables.isLatestMinorOfMajorTrain, true)
+                inputs:
+                  azureSubscription: 'fluid-docs'
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
+
+# Runs TriggerBuild@4 to trigger the deploy-website pipeline
+# this stage runs depending on the check_branch_version stage and deployOverride parameter
+# the trigger is configured such that deploy-website runs using main branch resources
+# this ensures that the generated website is up-to-date with the latest changes
+- stage: deploy
+  displayName: 'Deploy website'
+  pool: Small-eastus2
+  dependsOn: ['check_branch_version']
+  jobs:
+    - job: deploy_site
+      displayName: 'Deploy website'
+      variables:
+        shouldDeploy: $[eq(stageDependencies.check_branch_version.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'], 'true')]
+      steps:
+        - checkout: self
+          submodules: false
+          clean: true
+        - task: TriggerBuild@4
+          condition: eq(variables['shouldDeploy'], 'true')
+          inputs:
+            definitionIsInCurrentTeamProject: True
+            buildDefinition: 'deploy-website'
+            useSameSourceVersion: False
+            useSameBranch: False
+            branchToUse: main
+            templateParameters: 'deployOverride:${{ parameters.deployOverride }}, deployEnvironment:${{ parameters.deployEnvironment }}, guardianAssetRetentionOverride:${{ parameters.guardianAssetRetentionOverride }}, publishGuardianBaselines:${{ parameters.publishGuardianBaselines }}'
+            storeInEnvironmentVariable: True
+            authenticationMethod: 'OAuth Token'
+            password: '$(System.AccessToken)'
+          displayName: Run deploy-website pipeline

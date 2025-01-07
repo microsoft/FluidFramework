@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type IMockLoggerExt,
@@ -27,7 +27,7 @@ import {
 	TreeCheckout,
 	type ITreeCheckout,
 	type ITreeCheckoutFork,
-	type TreeBranch,
+	type BranchableTree,
 } from "../../shared-tree/index.js";
 import {
 	TestTreeProviderLite,
@@ -47,9 +47,11 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
+	asTreeViewAlpha,
 	getOrCreateInnerNode,
 	toStoredSchema,
 	type InsertableField,
+	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
@@ -74,8 +76,8 @@ describe("sharedTreeView", () => {
 			const root = view.root;
 			const anchorNode = getOrCreateInnerNode(root).anchorNode;
 			const log: string[] = [];
-			const unsubscribe = anchorNode.on("childrenChanging", () => log.push("change"));
-			const unsubscribeSubtree = anchorNode.on("subtreeChanging", () => {
+			const unsubscribe = anchorNode.events.on("childrenChanging", () => log.push("change"));
+			const unsubscribeSubtree = anchorNode.events.on("subtreeChanging", () => {
 				log.push("subtree");
 			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
@@ -114,10 +116,10 @@ describe("sharedTreeView", () => {
 			const root = view.root;
 			const anchorNode = getOrCreateInnerNode(root).anchorNode;
 			const log: string[] = [];
-			const unsubscribe = anchorNode.on("childrenChanging", (upPath) =>
+			const unsubscribe = anchorNode.events.on("childrenChanging", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
 			);
-			const unsubscribeSubtree = anchorNode.on("subtreeChanging", (upPath) => {
+			const unsubscribeSubtree = anchorNode.events.on("subtreeChanging", (upPath) => {
 				log.push(`subtree-${String(upPath.parentField)}-${upPath.parentIndex}`);
 			});
 			const unsubscribeAfter = view.checkout.events.on("afterBatch", () => log.push("after"));
@@ -148,7 +150,7 @@ describe("sharedTreeView", () => {
 			]);
 		});
 
-		describe("commitApplied", () => {
+		describe("changed", () => {
 			const sf1 = new SchemaFactory("commit applied schema");
 			const mixedSchema = sf1.optional([sf1.string, sf1.number]);
 			const OptionalString = sf1.optional([sf1.string]);
@@ -158,9 +160,7 @@ describe("sharedTreeView", () => {
 				const checkout = provider.trees[0].checkout;
 
 				const log: string[] = [];
-				const unsubscribe = checkout.events.on("commitApplied", () =>
-					log.push("commitApplied"),
-				);
+				const unsubscribe = checkout.events.on("changed", () => log.push("changed"));
 
 				assert.equal(log.length, 0);
 
@@ -188,7 +188,7 @@ describe("sharedTreeView", () => {
 				const checkout = provider.trees[0].checkout;
 
 				const log: string[] = [];
-				const unsubscribe = checkout.events.on("commitApplied", (data, getRevertible) =>
+				const unsubscribe = checkout.events.on("changed", (data, getRevertible) =>
 					log.push(getRevertible === undefined ? "not-revertible" : "revertible"),
 				);
 
@@ -694,7 +694,7 @@ describe("sharedTreeView", () => {
 			viewBranch.root.insertAtEnd("43");
 			tree.merge(treeBranch, false);
 			assert.deepEqual(viewBranch.root, ["42", "43"]);
-			assert.equal(viewBranch.checkout.transaction.inProgress(), false);
+			assert.equal(viewBranch.checkout.transaction.isInProgress(), false);
 		});
 
 		itView("do not close across forks", ({ view, tree }) => {
@@ -705,7 +705,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtEnd("A");
 			assert.throws(
 				() => viewBranch.checkout.transaction.commit(),
-				(e: Error) => validateAssertionError(e, "No transaction is currently in progress"),
+				(e: Error) => validateAssertionError(e, "No transaction to commit"),
 			);
 		});
 
@@ -802,6 +802,37 @@ describe("sharedTreeView", () => {
 			},
 			{ skip: true },
 		);
+
+		itView("dispose branches created during the transaction", ({ view, tree }) => {
+			const branchA = tree.branch();
+			view.checkout.transaction.start();
+			const branchB = tree.branch();
+			view.checkout.transaction.start();
+			const branchC = tree.branch();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, false);
+			assert.equal(branchC.disposed, false);
+			view.checkout.transaction.abort();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, false);
+			assert.equal(branchC.disposed, true);
+			view.checkout.transaction.commit();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, true);
+			assert.equal(branchC.disposed, true);
+		});
+
+		itView("statuses are reported correctly", ({ view }) => {
+			assert.equal(view.checkout.transaction.isInProgress(), false);
+			view.checkout.transaction.start();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.start();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.commit();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.abort();
+			assert.equal(view.checkout.transaction.isInProgress(), false);
+		});
 	});
 
 	describe("disposal", () => {
@@ -809,7 +840,7 @@ describe("sharedTreeView", () => {
 			const treeBranch = tree.branch();
 			const viewBranch = treeBranch.viewWith(view.config);
 			viewBranch.dispose();
-			treeBranch.dispose();
+			assert.equal(treeBranch.disposed, true);
 		});
 
 		itView("disposed forks cannot be edited or double-disposed", ({ view, tree }) => {
@@ -1014,7 +1045,7 @@ describe("sharedTreeView", () => {
 	describe("revertibles", () => {
 		itView("can be generated for changes made to the local branch", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
 				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
@@ -1042,7 +1073,7 @@ describe("sharedTreeView", () => {
 			({ view }) => {
 				const revertiblesCreated: Revertible[] = [];
 
-				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
 					assert(getRevertible !== undefined, "commit should be revertible");
 					const revertible = getRevertible(onRevertibleDisposed);
 					assert.equal(revertible.status, RevertibleStatus.Valid);
@@ -1078,10 +1109,10 @@ describe("sharedTreeView", () => {
 		);
 
 		itView(
-			"revertibles cannot be acquired outside of the commitApplied event callback",
+			"revertibles cannot be acquired outside of the changed event callback",
 			({ view }) => {
 				let acquireRevertible: RevertibleFactory | undefined;
-				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
 					assert(getRevertible !== undefined, "commit should be revertible");
 					acquireRevertible = getRevertible;
 				});
@@ -1095,13 +1126,13 @@ describe("sharedTreeView", () => {
 
 		itView("revertibles cannot be acquired more than once", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe1 = view.events.on("commitApplied", (_, getRevertible) => {
+			const unsubscribe1 = view.events.on("changed", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
 				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
 				revertiblesCreated.push(revertible);
 			});
-			const unsubscribe2 = view.events.on("commitApplied", (_, getRevertible) => {
+			const unsubscribe2 = view.events.on("changed", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
 				assert.throws(() => getRevertible());
 			});
@@ -1113,7 +1144,7 @@ describe("sharedTreeView", () => {
 
 		itView("disposed revertibles cannot be released or reverted", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+			const unsubscribe = view.events.on("changed", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
 				const r = getRevertible();
 				assert.equal(r.status, RevertibleStatus.Valid);
@@ -1135,10 +1166,10 @@ describe("sharedTreeView", () => {
 			unsubscribe();
 		});
 
-		itView("commitApplied events have the correct commit kinds", ({ view }) => {
+		itView("changed events have the correct commit kinds", ({ view }) => {
 			const revertiblesCreated: Revertible[] = [];
 			const commitKinds: CommitKind[] = [];
-			const unsubscribe = view.events.on("commitApplied", ({ kind }, getRevertible) => {
+			const unsubscribe = view.events.on("changed", ({ kind }, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
 				const revertible = getRevertible();
 				assert.equal(revertible.status, RevertibleStatus.Valid);
@@ -1157,9 +1188,9 @@ describe("sharedTreeView", () => {
 
 		itView("disposing of a view also disposes of its revertibles", ({ view, tree }) => {
 			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
+			const viewBranch = asTreeViewAlpha(treeBranch.viewWith(view.config));
 			const revertiblesCreated: Revertible[] = [];
-			const unsubscribe = viewBranch.events.on("commitApplied", (_, getRevertible) => {
+			const unsubscribe = viewBranch.events.on("changed", (_, getRevertible) => {
 				assert(getRevertible !== undefined, "commit should be revertible");
 				const r = getRevertible(onRevertibleDisposed);
 				assert.equal(r.status, RevertibleStatus.Valid);
@@ -1188,7 +1219,7 @@ describe("sharedTreeView", () => {
 
 		itView("can be reverted after rebasing", ({ view, tree }) => {
 			const treeBranch = tree.branch();
-			const viewBranch = treeBranch.viewWith(view.config);
+			const viewBranch = asTreeViewAlpha(treeBranch.viewWith(view.config));
 			viewBranch.root.insertAtStart("A");
 
 			const stacks = createTestUndoRedoStacks(viewBranch.events);
@@ -1213,7 +1244,7 @@ describe("sharedTreeView", () => {
 		for (const ageToTest of [0, 1, 5]) {
 			itView(`Telemetry logs track reversion age (${ageToTest})`, ({ view, logger }) => {
 				let revertible: Revertible | undefined;
-				const unsubscribe = view.events.on("commitApplied", (_, getRevertible) => {
+				const unsubscribe = view.events.on("changed", (_, getRevertible) => {
 					assert(getRevertible !== undefined, "Expected commit to be revertible.");
 					// Only save off the first revertible, as it's the only one we'll use.
 					if (revertible === undefined) {
@@ -1238,6 +1269,78 @@ describe("sharedTreeView", () => {
 			});
 		}
 	});
+
+	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
+		const sf = new SchemaFactory("Checkout and view test schema");
+		class NumberNode extends sf.object("Number", { number: sf.number }) {}
+
+		/** Tests that an error is thrown when a given action is taken during the execution of a nodeChanged/treeChanged listener */
+		function expectErrorDuringEdit(args: {
+			/**
+			 * Runs after the main view has been created but before the edit occurs
+			 * @returns (optionally) a view (e.g. a fork of the main view) that will be passed to `duringEdit`
+			 */
+			setup?: (
+				view: SchematizingSimpleTreeView<typeof NumberNode>,
+			) => void | SchematizingSimpleTreeView<typeof NumberNode>;
+			/** The code to run during the edit that should throw an error */
+			duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) => void;
+			/** The expected error message */
+			error: string;
+		}): void {
+			let view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
+			);
+
+			view.initialize({ number: 3 });
+			view = args.setup?.(view) ?? view;
+
+			Tree.on(view.root, "nodeChanged", () => {
+				args.duringEdit(view);
+			});
+
+			assert.throws(() => (view.root.number = 0), new RegExp(args.error));
+		}
+
+		it("edit the tree", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => {
+					view.root.number = 4;
+				},
+				error: "Editing the tree is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("create a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.fork(),
+				error: ".*Branching is forbidden during a nodeChanged or treeChanged event.*",
+			});
+		});
+
+		it("rebase a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.rebaseOnto(view),
+				error: "Rebasing is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("merge a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.merge(view),
+				error: "Merging is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("dispose", () => {
+			let branch: TreeBranch | undefined;
+			expectErrorDuringEdit({
+				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
+				duringEdit: (view) => view.dispose(),
+				error: "Disposing a view is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+	});
 });
 
 const defaultSf = new SchemaFactory("Checkout and view test schema");
@@ -1258,7 +1361,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeBranch;
+		tree: BranchableTree;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1270,7 +1373,7 @@ function itView(
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<typeof rootArray>;
-		tree: TreeBranch;
+		tree: BranchableTree;
 		logger: IMockLoggerExt;
 	}) => void,
 	options?: {
@@ -1284,7 +1387,7 @@ function itView<
 	title: string,
 	fn: (args: {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeBranch;
+		tree: BranchableTree;
 		logger: IMockLoggerExt;
 	}) => void,
 	options: {
@@ -1298,7 +1401,7 @@ function itView<
 		thunk: typeof fn,
 		makeViewFromConfig: (config: TreeViewConfiguration<TRootSchema>) => {
 			view: SchematizingSimpleTreeView<TRootSchema>;
-			tree: TreeBranch;
+			tree: BranchableTree;
 			logger: IMockLoggerExt;
 		},
 	): void {
@@ -1316,7 +1419,7 @@ function itView<
 			const { view, tree, logger } = (
 				makeViewFromConfig as unknown as (config: TreeViewConfiguration<typeof rootArray>) => {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: TreeBranch;
+					tree: BranchableTree;
 					logger: IMockLoggerExt;
 				}
 			)(
@@ -1330,7 +1433,7 @@ function itView<
 			(
 				thunk as unknown as (args: {
 					view: SchematizingSimpleTreeView<typeof rootArray>;
-					tree: TreeBranch;
+					tree: BranchableTree;
 					logger: IMockLoggerExt;
 				}) => void
 			)({ view, tree, logger });
@@ -1342,7 +1445,7 @@ function itView<
 		fork: boolean,
 	): {
 		view: SchematizingSimpleTreeView<TRootSchema>;
-		tree: TreeBranch;
+		tree: BranchableTree;
 		logger: IMockLoggerExt;
 	} {
 		const logger = createMockLoggerExt();

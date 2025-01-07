@@ -161,11 +161,11 @@ export interface GraphCommit<TChange> {
  * @public
  */
 export enum CommitKind {
-	/** A commit corresponding to a change that is not the result of an undo/redo. */
+	/** A commit corresponding to a change that is not the result of an undo/redo from this client. */
 	Default,
-	/** A commit that is the result of an undo. */
+	/** A commit that is the result of an undo from this client. */
 	Undo,
-	/** A commit that is the result of a redo. */
+	/** A commit that is the result of a redo from this client. */
 	Redo,
 }
 

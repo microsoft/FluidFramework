@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { Command } from "@oclif/core";
-import chalk from "chalk";
-import { Machine } from "jssm";
-
-import { Context } from "../library/index.js";
-
 import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
+import { Command } from "@oclif/core";
+import { Machine } from "jssm";
+import chalk from "picocolors";
 
 import { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
+import { Context } from "../library/index.js";
 import { CommandLogger } from "../logging.js";
 import { MachineState } from "../machines/index.js";
 import { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
@@ -54,7 +52,7 @@ import {
 	promptToRunMinorReleaseCommand,
 	promptToRunTypeTests,
 } from "./promptFunctions.js";
-import { BaseStateHandler } from "./stateHandlers.js";
+import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Data that is passed to all the handling functions for the {@link FluidReleaseMachine}. This data is intended to be
@@ -145,6 +143,83 @@ export interface FluidReleaseStateHandlerData {
  * this class; it only acts as a "router" to route to the correct function based on the current state.
  */
 export class FluidReleaseStateHandler extends InitFailedStateHandler {
+	/**
+	 * A map of state machine states to the function that should be called to handle that state.
+	 */
+	private readonly stateHandlerMap: Map<string, StateHandlerFunction> = new Map([
+		["AskForReleaseType", askForReleaseType],
+		["CheckAssertTagging", checkAssertTagging],
+		["CheckBranchName", checkBranchName],
+		["CheckBranchName2", checkBranchName],
+		["CheckBranchName3", checkBranchName],
+		["CheckBranchUpToDate", checkBranchUpToDate],
+		["CheckChangelogs", checkChangelogs],
+		["CheckDependenciesInstalled", checkDependenciesInstalled],
+		["CheckDoesReleaseFromReleaseBranch", checkDoesReleaseFromReleaseBranch],
+		["CheckDoesReleaseFromReleaseBranch2", checkDoesReleaseFromReleaseBranch],
+		["CheckDoesReleaseFromReleaseBranch3", checkDoesReleaseFromReleaseBranch],
+		["CheckHasRemote", checkHasRemote],
+		["CheckMainNextIntegrated", checkMainNextIntegrated],
+		["CheckNoPrereleaseDependencies", checkNoPrereleaseDependencies],
+		["CheckNoPrereleaseDependencies2", checkNoPrereleaseDependencies],
+		["CheckNoPrereleaseDependencies3", checkNoPrereleaseDependencies],
+		["CheckOnReleaseBranch", checkOnReleaseBranch],
+		["CheckOnReleaseBranch", checkOnReleaseBranch],
+		["CheckOnReleaseBranch", checkOnReleaseBranch],
+		["CheckOnReleaseBranch", checkOnReleaseBranch],
+		["CheckOnReleaseBranch", checkOnReleaseBranch],
+		["CheckOnReleaseBranch2", checkOnReleaseBranch],
+		["CheckOnReleaseBranch3", checkOnReleaseBranch],
+		["CheckPolicy", checkPolicy],
+		["CheckReleaseBranchExists", checkReleaseBranchExists],
+		["CheckReleaseGroupIsBumped", checkReleaseGroupIsBumped],
+		["CheckReleaseGroupIsBumpedMinor", checkReleaseGroupIsBumped],
+		["CheckReleaseGroupIsBumpedMinor2", checkReleaseGroupIsBumped],
+		["CheckReleaseGroupIsBumpedPatch", checkReleaseGroupIsBumped],
+		["CheckReleaseGroupIsBumpedPatch2", checkReleaseGroupIsBumped],
+		["CheckReleaseIsDone", checkReleaseIsDone],
+		["CheckReleaseIsDone2", checkReleaseIsDone],
+		["CheckReleaseIsDone3", checkReleaseIsDone],
+		["CheckReleaseNotes", checkReleaseNotes],
+		["CheckShouldCommitBump", checkShouldCommit],
+		["CheckShouldCommitDeps", checkShouldCommit],
+		["CheckShouldCommitReleasedDepsBump", checkShouldCommitReleasedDepsBump],
+		["CheckShouldRunOptionalChecks", checkShouldRunOptionalChecks],
+		["CheckTypeTestGenerate", checkTypeTestGenerate],
+		["CheckTypeTestGenerate2", checkTypeTestGenerate],
+		["CheckTypeTestPrepare", checkTypeTestPrepare],
+		["CheckTypeTestPrepare2", checkTypeTestPrepare],
+		["CheckValidReleaseGroup", checkValidReleaseGroup],
+		["DoBumpReleasedDependencies", doBumpReleasedDependencies],
+		["DoMajorRelease", handleBumpType],
+		["DoMinorRelease", handleBumpType],
+		["DoPatchRelease", handleBumpType],
+		["DoReleaseGroupBump", doReleaseGroupBump],
+		["PromptToCommitBump", promptToCommitChanges],
+		["PromptToCommitDeps", promptToCommitChanges],
+		["PromptToCommitPolicy", promptToCommitChanges],
+		["PromptToCommitReleasedDepsBump", promptToCommitChanges],
+		["PromptToCreateReleaseBranch", promptToCreateReleaseBranch],
+		["PromptToGenerateChangelogs", promptToGenerateChangelogs],
+		["PromptToGenerateReleaseNotes", promptToGenerateReleaseNotes],
+		["PromptToIntegrateNext", promptToIntegrateNext],
+		["PromptToPRBump", promptToPRBump],
+		["PromptToPRDeps", promptToPRDeps],
+		["PromptToPRReleasedDepsBump", promptToPRDeps],
+		["PromptToRelease", promptToRelease],
+		["PromptToReleaseDeps", promptToReleaseDeps],
+		["PromptToRunMinorReleaseCommand", promptToRunMinorReleaseCommand],
+		["PromptToRunTypeTests", promptToRunTypeTests],
+
+		[
+			"ReleaseComplete",
+			async (_, __, ___, log): Promise<boolean> => {
+				log.info(chalk.green("Release complete!"));
+				return true;
+			},
+		],
+	]);
+
 	async handleState(
 		state: MachineState,
 		machine: Machine<unknown>,
@@ -152,235 +227,36 @@ export class FluidReleaseStateHandler extends InitFailedStateHandler {
 		log: CommandLogger,
 		data: FluidReleaseStateHandlerData,
 	): Promise<boolean> {
-		let superShouldHandle = false;
+		const handlerFunction = this.stateHandlerMap.get(state);
 
-		switch (state) {
-			case "AskForReleaseType": {
-				await askForReleaseType(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckShouldRunOptionalChecks": {
-				await checkShouldRunOptionalChecks(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckValidReleaseGroup": {
-				await checkValidReleaseGroup(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckPolicy": {
-				await checkPolicy(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckAssertTagging": {
-				await checkAssertTagging(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckReleaseNotes": {
-				await checkReleaseNotes(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckChangelogs": {
-				await checkChangelogs(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckHasRemote": {
-				await checkHasRemote(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckBranchUpToDate": {
-				await checkBranchUpToDate(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckNoPrereleaseDependencies3":
-			case "CheckNoPrereleaseDependencies2":
-			case "CheckNoPrereleaseDependencies": {
-				await checkNoPrereleaseDependencies(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "DoPatchRelease":
-			case "DoMinorRelease":
-			case "DoMajorRelease": {
-				if (testMode) return true;
-
-				const { bumpType } = data;
-
-				if (bumpType === undefined) {
-					BaseStateHandler.signalFailure(machine, state);
-				}
-
-				BaseStateHandler.signalSuccess(machine, state);
-				break;
-			}
-
-			case "CheckBranchName":
-			case "CheckBranchName2":
-			case "CheckBranchName3": {
-				await checkBranchName(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckDoesReleaseFromReleaseBranch":
-			case "CheckDoesReleaseFromReleaseBranch2":
-			case "CheckDoesReleaseFromReleaseBranch3": {
-				await checkDoesReleaseFromReleaseBranch(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckDependenciesInstalled": {
-				await checkDependenciesInstalled(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckMainNextIntegrated": {
-				await checkMainNextIntegrated(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckOnReleaseBranch":
-			case "CheckOnReleaseBranch2":
-			case "CheckOnReleaseBranch3": {
-				await checkOnReleaseBranch(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckReleaseIsDone":
-			case "CheckReleaseIsDone2":
-			case "CheckReleaseIsDone3": {
-				await checkReleaseIsDone(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckReleaseGroupIsBumped":
-			case "CheckReleaseGroupIsBumpedMinor":
-			case "CheckReleaseGroupIsBumpedMinor2":
-			case "CheckReleaseGroupIsBumpedPatch":
-			case "CheckReleaseGroupIsBumpedPatch2": {
-				await checkReleaseGroupIsBumped(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckTypeTestGenerate":
-			case "CheckTypeTestGenerate2": {
-				await checkTypeTestGenerate(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckTypeTestPrepare":
-			case "CheckTypeTestPrepare2": {
-				await checkTypeTestPrepare(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "DoReleaseGroupBump": {
-				await doReleaseGroupBump(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "DoBumpReleasedDependencies": {
-				await doBumpReleasedDependencies(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckReleaseBranchExists": {
-				await checkReleaseBranchExists(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckShouldCommitBump":
-			case "CheckShouldCommitDeps": {
-				await checkShouldCommit(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "CheckShouldCommitReleasedDepsBump": {
-				await checkShouldCommitReleasedDepsBump(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToCreateReleaseBranch": {
-				await promptToCreateReleaseBranch(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToGenerateChangelogs": {
-				await promptToGenerateChangelogs(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToGenerateReleaseNotes": {
-				await promptToGenerateReleaseNotes(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToIntegrateNext": {
-				await promptToIntegrateNext(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToRelease": {
-				await promptToRelease(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToPRDeps":
-			case "PromptToPRReleasedDepsBump": {
-				await promptToPRDeps(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToPRBump": {
-				await promptToPRBump(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToCommitBump":
-			case "PromptToCommitDeps":
-			case "PromptToCommitPolicy":
-			case "PromptToCommitReleasedDepsBump": {
-				await promptToCommitChanges(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToReleaseDeps": {
-				await promptToReleaseDeps(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToRunMinorReleaseCommand": {
-				await promptToRunMinorReleaseCommand(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "PromptToRunTypeTests": {
-				await promptToRunTypeTests(state, machine, testMode, log, data);
-				break;
-			}
-
-			case "ReleaseComplete": {
-				log.info(chalk.green("Release complete!"));
-				break;
-			}
-
-			default: {
-				superShouldHandle = true;
-			}
-		}
-
-		if (superShouldHandle === true) {
+		if (handlerFunction === undefined) {
 			const superHandled = await super.handleState(state, machine, testMode, log, data);
 			return superHandled;
 		}
 
+		await handlerFunction(state, machine, testMode, log, data);
 		return true;
 	}
 }
+
+/**
+ * Checks if the bump type is defined in the handler data and signals success if it is set and failure otherwise.
+ */
+const handleBumpType: StateHandlerFunction = async (
+	state,
+	machine,
+	testMode,
+	log,
+	data: FluidReleaseStateHandlerData,
+): Promise<boolean> => {
+	if (testMode) return true;
+
+	const { bumpType } = data;
+
+	if (bumpType === undefined) {
+		BaseStateHandler.signalFailure(machine, state);
+	} else {
+		BaseStateHandler.signalSuccess(machine, state);
+	}
+	return true;
+};

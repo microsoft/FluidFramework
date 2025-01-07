@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/tree-shim",
-	"version": "2.5.0",
+	"version": "2.14.0",
 	"private": true,
 	"description": "Migrating from legacy SharedTree to new SharedTree using a tree shim.",
 	"homepage": "https://fluidframework.com",
@@ -61,10 +61,10 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.49.0",
+		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.49.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",

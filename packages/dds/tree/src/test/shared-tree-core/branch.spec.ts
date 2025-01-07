@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -197,7 +197,7 @@ describe("Branches", () => {
 		// Create a parent and child branch, and count the change events emitted by the parent
 		let changeEventCount = 0;
 		const parent = create(({ type }) => {
-			if (type === "replace") {
+			if (type === "rebase") {
 				changeEventCount += 1;
 			}
 		});
@@ -215,7 +215,7 @@ describe("Branches", () => {
 		// Create a parent and child branch, and count the change events emitted by the parent
 		let changeEventCount = 0;
 		const parent = create(({ type }) => {
-			if (type === "replace") {
+			if (type === "rebase") {
 				changeEventCount += 1;
 			}
 		});
@@ -263,81 +263,10 @@ describe("Branches", () => {
 		assert.equal(changeEventCount, 2);
 	});
 
-	it("emit correct change events during and after committing a transaction", () => {
-		// Create a branch and count the change events emitted
-		let changeEventCount = 0;
-		let replaceEventCount = 0;
-		const branch = create(({ type }) => {
-			if (type === "append") {
-				changeEventCount += 1;
-			} else if (type === "replace") {
-				replaceEventCount += 1;
-			}
-		});
-		// Begin a transaction
-		branch.startTransaction();
-		// Ensure that the correct change is emitted when applying changes in a transaction
-		change(branch);
-		assert.equal(changeEventCount, 2);
-		change(branch);
-		assert.equal(changeEventCount, 4);
-		assert.equal(replaceEventCount, 0);
-		// Commit the transaction. No change event should be emitted since the commits, though squashed, are still equivalent
-		branch.commitTransaction();
-		assert.equal(changeEventCount, 4);
-		assert.equal(replaceEventCount, 2);
-	});
-
-	it("do not emit a change event after committing an empty transaction", () => {
-		// Create a branch and count the change events emitted
-		let changeEventCount = 0;
-		const branch = create(() => {
-			changeEventCount += 1;
-		});
-		// Start and immediately abort a transaction
-		branch.startTransaction();
-		branch.commitTransaction();
-		assert.equal(changeEventCount, 0);
-	});
-
-	it("emit a change event after aborting a transaction", () => {
-		// Create a branch and count the change events emitted
-		let changeEventCount = 0;
-		const branch = create(({ type }) => {
-			if (type === "remove") {
-				changeEventCount += 1;
-			}
-		});
-		// Begin a transaction
-		branch.startTransaction();
-		// Apply a couple of changes to the branch
-		change(branch);
-		change(branch);
-		// Ensure the the correct number of change events have been emitted so far
-		assert.equal(changeEventCount, 0);
-		// Abort the transaction. A new change event should be emitted since the state rolls back to before the transaction
-		branch.abortTransaction();
-		assert.equal(changeEventCount, 2);
-	});
-
-	it("do not emit a change event after aborting an empty transaction", () => {
-		// Create a branch and count the change events emitted
-		let changeEventCount = 0;
-		const branch = create(({ type }) => {
-			if (type === "remove") {
-				changeEventCount += 1;
-			}
-		});
-		// Start and immediately abort a transaction
-		branch.startTransaction();
-		branch.abortTransaction();
-		assert.equal(changeEventCount, 0);
-	});
-
 	it("emit a fork event after forking", () => {
 		let fork: DefaultBranch | undefined;
 		const branch = create();
-		branch.on("fork", (f) => (fork = f));
+		branch.events.on("fork", (f) => (fork = f));
 		// The fork event should return the new branch, just as the fork method does
 		assert.equal(branch.fork(), fork);
 		assert.equal(branch.fork(), fork);
@@ -346,171 +275,16 @@ describe("Branches", () => {
 	it("emit a dispose event after disposing", () => {
 		const branch = create();
 		let disposed = false;
-		branch.on("dispose", () => (disposed = true));
+		branch.events.on("dispose", () => (disposed = true));
 		branch.dispose();
 		assert.equal(disposed, true);
 	});
 
-	for (const withCommits of [true, false]) {
-		const [withCommitsTitle, potentiallyAddCommit] = withCommits
-			? ["(with commits)", change]
-			: ["(without commits)", () => {}];
-		it(`emit a transactionStarted event after a new transaction scope is opened ${withCommitsTitle}`, () => {
-			const branch = create();
-			const log: boolean[] = [];
-			branch.on("transactionStarted", (isOuterTransaction) => {
-				log.push(isOuterTransaction);
-			});
-			branch.startTransaction();
-			{
-				assert.deepEqual(log, [true]);
-				potentiallyAddCommit(branch);
-				branch.startTransaction();
-				{
-					assert.deepEqual(log, [true, false]);
-					potentiallyAddCommit(branch);
-				}
-				branch.abortTransaction();
-				potentiallyAddCommit(branch);
-				branch.startTransaction();
-				{
-					assert.deepEqual(log, [true, false, false]);
-					potentiallyAddCommit(branch);
-				}
-				branch.abortTransaction();
-			}
-			branch.abortTransaction();
-		});
-
-		it(`emit a transactionAborted event after a transaction scope is aborted ${withCommitsTitle}`, () => {
-			const branch = create();
-			const log: boolean[] = [];
-			branch.on("transactionAborted", (isOuterTransaction) => {
-				log.push(isOuterTransaction);
-			});
-			branch.startTransaction();
-			{
-				potentiallyAddCommit(branch);
-				branch.startTransaction();
-				{
-					potentiallyAddCommit(branch);
-					assert.deepEqual(log, []);
-				}
-				branch.abortTransaction();
-				assert.deepEqual(log, [false]);
-				potentiallyAddCommit(branch);
-				branch.startTransaction();
-				{
-					potentiallyAddCommit(branch);
-				}
-				branch.abortTransaction();
-				assert.deepEqual(log, [false, false]);
-				potentiallyAddCommit(branch);
-			}
-			branch.abortTransaction();
-			assert.deepEqual(log, [false, false, true]);
-		});
-
-		it(`emit a transactionCommitted event after a new transaction scope is committed ${withCommitsTitle}`, () => {
-			const branch = create();
-			const log: boolean[] = [];
-			branch.on("transactionCommitted", (isOuterTransaction) => {
-				log.push(isOuterTransaction);
-			});
-			branch.startTransaction();
-			{
-				potentiallyAddCommit(branch);
-				branch.startTransaction();
-				{
-					potentiallyAddCommit(branch);
-					assert.deepEqual(log, []);
-				}
-				branch.commitTransaction();
-				assert.deepEqual(log, [false]);
-				potentiallyAddCommit(branch);
-				branch.startTransaction();
-				{
-					potentiallyAddCommit(branch);
-				}
-				branch.commitTransaction();
-				assert.deepEqual(log, [false, false]);
-				potentiallyAddCommit(branch);
-			}
-			branch.commitTransaction();
-			assert.deepEqual(log, [false, false, true]);
-		});
-
-		it(`emit a transactionRolledBack event after a transaction scope is rolled back ${withCommitsTitle}`, () => {
-			const branch = create();
-			const log: boolean[] = [];
-			branch.on("transactionRolledBack", (isOuterTransaction) => {
-				log.push(isOuterTransaction);
-			});
-			branch.startTransaction();
-			{
-				potentiallyAddCommit(branch);
-				branch.startTransaction();
-				{
-					potentiallyAddCommit(branch);
-					assert.deepEqual(log, []);
-				}
-				branch.abortTransaction();
-				assert.deepEqual(log, [false]);
-				potentiallyAddCommit(branch);
-				branch.startTransaction();
-				{
-					potentiallyAddCommit(branch);
-				}
-				branch.abortTransaction();
-				assert.deepEqual(log, [false, false]);
-				potentiallyAddCommit(branch);
-			}
-			branch.abortTransaction();
-			assert.deepEqual(log, [false, false, true]);
-		});
-	}
-
 	it("can be read after disposal", () => {
 		const branch = create();
 		branch.dispose();
-		// These methods are valid to call after disposal
+		// Getting the head is valid after disposal
 		branch.getHead();
-		branch.isTransacting();
-	});
-
-	describe("do not include rebased-over changes in a transaction", () => {
-		it("when the transaction started on a commit known only to the local branch", () => {
-			const branch = create();
-			const fork = branch.fork();
-
-			change(branch);
-
-			change(fork);
-			fork.startTransaction();
-			change(fork);
-			change(fork);
-			fork.rebaseOnto(branch);
-			const [commits] = fork.commitTransaction() ?? [[]];
-			assert.equal(commits.length, 2);
-		});
-
-		it("when the transaction started on the commit the branch forked from", () => {
-			// i.e., the branch was created via .fork() and immediately started a transaction before any
-			// changes were applied.
-			const branch = create();
-			const fork = branch.fork();
-
-			change(branch);
-
-			fork.startTransaction();
-			change(fork);
-			change(fork);
-			fork.rebaseOnto(branch);
-			change(branch);
-			fork.rebaseOnto(branch);
-			const [commits] = fork.commitTransaction() ?? [[]];
-			assert.equal(commits.length, 2);
-		});
 	});
 
 	it("cannot be mutated after disposal", () => {
@@ -522,138 +296,32 @@ describe("Branches", () => {
 		assertDisposed(() => branch.fork());
 		assertDisposed(() => branch.rebaseOnto(fork));
 		assertDisposed(() => branch.merge(branch.fork()));
-		assertDisposed(() => branch.startTransaction());
-		assertDisposed(() => branch.commitTransaction());
-		assertDisposed(() => branch.abortTransaction());
-		assertDisposed(() => branch.abortTransaction());
 		assertDisposed(() => fork.merge(branch));
 	});
 
-	it("correctly report whether they are in the middle of a transaction", () => {
-		// Create a branch and test `isTransacting()` during two transactions, one nested within the other
+	it("can remove commits", () => {
 		const branch = create();
-		assert.equal(branch.isTransacting(), false);
-		branch.startTransaction();
-		assert.equal(branch.isTransacting(), true);
-		branch.startTransaction();
-		assert.equal(branch.isTransacting(), true);
-		branch.abortTransaction();
-		assert.equal(branch.isTransacting(), true);
-		branch.commitTransaction();
-		assert.equal(branch.isTransacting(), false);
-	});
-
-	it("squash their commits when committing a transaction", () => {
-		// Create a new branch and start a transaction
-		const branch = create();
-		branch.startTransaction();
-		// Apply two changes to it
+		const originalHead = branch.getHead();
 		const tag1 = change(branch);
 		const tag2 = change(branch);
-		// Ensure that the commits are in the correct order with the correct tags
 		assertHistory(branch, tag1, tag2);
-		// Commit the transaction and ensure that there is now only one commit on the branch
-		branch.commitTransaction();
-		assert.equal(branch.getHead().parent?.revision, nullRevisionTag);
+		branch.removeAfter(originalHead);
+		assert.equal(branch.getHead(), originalHead);
 	});
 
-	it("rollback their commits when aborting a transaction", () => {
-		// Create a new branch and apply one change before starting a transaction
-		const branch = create();
-		const tag1 = change(branch);
-		branch.startTransaction();
-		// Apply two more changes to it
-		const tag2 = change(branch);
-		const tag3 = change(branch);
-		// Ensure that the commits are in the correct order with the correct tags
-		assertHistory(branch, tag1, tag2, tag3);
-		// Abort the transaction and ensure that there is now only one commit on the branch
-		branch.abortTransaction();
-		assert.equal(branch.getHead().revision, tag1);
-	});
-
-	it("allow transactions to nest", () => {
-		// Create a new branch and open three transactions, applying one change in each
-		const branch = create();
-		branch.startTransaction();
-		change(branch);
-		branch.startTransaction();
-		change(branch);
-		branch.startTransaction();
-		change(branch);
-		// Commit the inner transaction, but abort the middle transaction so the inner one is moot
-		branch.commitTransaction();
-		branch.abortTransaction();
-		// Ensure that the branch has only one commit on it
-		assert.equal(branch.getHead().parent?.revision, nullRevisionTag);
-		// Abort the last transaction as well, and ensure that the branch has no commits on it
-		branch.abortTransaction();
-		assert.equal(branch.getHead().revision, nullRevisionTag);
-	});
-
-	describe("all nested forks and transactions are disposed and aborted when transaction is", () => {
-		const setUpNestedForks = (rootBranch: DefaultBranch) => {
-			change(rootBranch);
-			rootBranch.startTransaction();
-			const fork1 = rootBranch.fork();
-			change(rootBranch);
-			rootBranch.startTransaction();
-			const fork2 = rootBranch.fork();
-			change(rootBranch);
-			const fork3 = rootBranch.fork();
-			change(fork3);
-			const fork4 = fork3.fork();
-			change(fork3);
-			fork3.startTransaction();
-			change(fork3);
-			const fork5 = fork3.fork();
-
-			return {
-				disposedForks: [fork2, fork3, fork4, fork5],
-				notDisposedForks: [fork1],
-			};
-		};
-
-		const assertNestedForks = (nestedForks: {
-			disposedForks: readonly DefaultBranch[];
-			notDisposedForks: readonly DefaultBranch[];
-		}) => {
-			nestedForks.disposedForks.forEach((fork) => {
-				assertDisposed(() => fork.fork());
-				assert.equal(fork.isTransacting(), false);
-			});
-			nestedForks.notDisposedForks.forEach((fork) => assertNotDisposed(() => fork.fork()));
-		};
-
-		it("commited", () => {
-			const rootBranch = create();
-			const nestedForks = setUpNestedForks(rootBranch);
-			rootBranch.commitTransaction();
-
-			assert.equal(rootBranch.isTransacting(), true);
-			assertNestedForks(nestedForks);
-
-			rootBranch.commitTransaction();
-			assertNestedForks({
-				disposedForks: nestedForks.notDisposedForks,
-				notDisposedForks: [],
-			});
+	it("emit correct change events after a remove", () => {
+		let removeEventCount = 0;
+		const branch = create(({ type }) => {
+			if (type === "remove") {
+				removeEventCount += 1;
+			}
 		});
-
-		it("aborted", () => {
-			const rootBranch = create();
-			const nestedForks = setUpNestedForks(rootBranch);
-			rootBranch.abortTransaction();
-
-			assert.equal(rootBranch.isTransacting(), true);
-			assertNestedForks(nestedForks);
-
-			rootBranch.abortTransaction();
-			assertNestedForks({
-				disposedForks: nestedForks.notDisposedForks,
-				notDisposedForks: [],
-			});
-		});
+		const originalHead = branch.getHead();
+		change(branch);
+		change(branch);
+		assert.equal(removeEventCount, 0);
+		branch.removeAfter(originalHead);
+		assert.equal(removeEventCount, 2);
 	});
 
 	describe("transitive fork event", () => {
@@ -686,11 +354,9 @@ describe("Branches", () => {
 		it("registers listener on forks created inside of the listener", () => {
 			const branch = create();
 			let forkCount = 0;
-			onForkTransitive(branch, () => {
-				forkCount += 1;
-				assert(branch.hasListeners("fork"));
-				if (forkCount <= 1) {
-					branch.fork();
+			onForkTransitive(branch, (f) => {
+				if (forkCount++ === 0) {
+					f.fork();
 				}
 			});
 			branch.fork();
@@ -709,12 +375,12 @@ describe("Branches", () => {
 
 		const branch = new SharedTreeBranch(initCommit, defaultChangeFamily, mintRevisionTag);
 		let head = branch.getHead();
-		branch.on("beforeChange", (c) => {
+		branch.events.on("beforeChange", (c) => {
 			// Check that the branch head never changes in the "before" event; it should only change after the "after" event.
 			assert.equal(branch.getHead(), head);
 			onChange?.(c);
 		});
-		branch.on("afterChange", (c) => {
+		branch.events.on("afterChange", (c) => {
 			head = branch.getHead();
 			onChange?.(c);
 		});

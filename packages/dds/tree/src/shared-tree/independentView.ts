@@ -113,7 +113,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	};
 
 	const fieldCursors = fieldBatchCodec.decode(content.tree as JsonCompatibleReadOnly, context);
-	assert(fieldCursors.length === 1, "must have exactly 1 field in batch");
+	assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
 	// Checked above.
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const cursors = fieldCursorToNodesCursors(fieldCursors[0]!);

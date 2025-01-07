@@ -5,6 +5,7 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -226,7 +227,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
-					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+					const gcSnapshotTree: ISnapshotTree | undefined = baseSnapshot.trees[gcTreeKey];
 					if (gcSnapshotTree === undefined) {
 						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
 						// incremental gc summary will not work with older gc data as well
@@ -337,6 +338,43 @@ export class GarbageCollector implements IGarbageCollector {
 			...createParams.createContainerMetadata,
 		});
 	}
+
+	/** API for ensuring the correct auto-recovery mitigations */
+	private readonly autoRecovery = (() => {
+		// This uses a hidden state machine for forcing fullGC as part of autorecovery,
+		// to regenerate the GC data for each node.
+		//
+		// Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
+		//
+		// States:
+		// - undefined: No need to run fullGC now.
+		// - "requested": FullGC requested, but GC has not yet run. Keep using fullGC until back to undefined.
+		// - "ran": FullGC ran, but the following summary has not yet been acked. Keep using fullGC until back to undefined.
+		//
+		// Transitions:
+		// - autoRecovery.requestFullGCOnNextRun :: [anything] --> "requested"
+		// - autoRecovery.onCompletedGCRun       :: "requested" --> "ran"
+		// - autoRecovery.onSummaryAck           :: "ran" --> undefined
+		let state: "requested" | "ran" | undefined;
+		return {
+			requestFullGCOnNextRun: () => {
+				state = "requested";
+			},
+			onCompletedGCRun: () => {
+				if (state === "requested") {
+					state = "ran";
+				}
+			},
+			onSummaryAck: () => {
+				if (state === "ran") {
+					state = undefined;
+				}
+			},
+			useFullGC: () => {
+				return state !== undefined;
+			},
+		};
+	})();
 
 	/**
 	 * Called during container initialization. Initializes the tombstone and deleted nodes state from the base snapshot.
@@ -460,9 +498,7 @@ export class GarbageCollector implements IGarbageCollector {
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
 		const fullGC =
-			options.fullGC ??
-			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.autoRecovery.fullGCRequested());
+			options.fullGC ?? (this.configs.runFullGC === true || this.autoRecovery.useFullGC());
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -521,6 +557,7 @@ export class GarbageCollector implements IGarbageCollector {
 				await this.telemetryTracker.logPendingEvents(logger);
 				// Update the state of summary state tracker from this run's stats.
 				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
+				this.autoRecovery.onCompletedGCRun();
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
 
@@ -709,13 +746,9 @@ export class GarbageCollector implements IGarbageCollector {
 				deletedNodeIds: sweepReadyDSAndBlobs,
 			};
 
-			// Its fine for older clients to ignore this op because it doesn't have any functional impact. This op
-			// is an optimization to ensure that all clients are in sync when it comes to deleted nodes to prevent their
-			// accidental usage. The clients will sync without the delete op too but it may take longer.
 			const containerGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents,
-				compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 			};
 			this.submitMessage(containerGCMessage);
 			return;
@@ -857,6 +890,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		this.autoRecovery.onSummaryAck();
 		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 
@@ -891,7 +925,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 					// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
 					// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
-					this.summaryStateTracker.autoRecovery.requestFullGCOnNextRun();
+					this.autoRecovery.requestFullGCOnNextRun();
 					break;
 				}
 				default:
@@ -1036,15 +1070,12 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// Use compat behavior "Ignore" since this is an optimization to opportunistically protect
-		// objects from deletion, so it's fine for older clients to ignore this op.
 		const containerGCMessage: ContainerRuntimeGCMessage = {
 			type: ContainerMessageType.GC,
 			contents: {
 				type: GarbageCollectionMessageType.TombstoneLoaded,
 				nodePath,
 			},
-			compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 		};
 		this.submitMessage(containerGCMessage);
 	}

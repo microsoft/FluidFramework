@@ -13,6 +13,7 @@ import {
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import {
+	toIDeltaManagerFull,
 	ITestContainerConfig,
 	ITestObjectProvider,
 	timeoutPromise,
@@ -72,7 +73,7 @@ describeCompat(
 				sendOps("A");
 				const opsSent = await timeoutPromise<number>(
 					(resolve) => {
-						containerRuntime.deltaManager.outbound.once("idle", resolve);
+						toIDeltaManagerFull(containerRuntime.deltaManager).outbound.once("idle", resolve);
 					},
 					{ errorMsg: "container2 outbound queue never reached idle state" },
 				);

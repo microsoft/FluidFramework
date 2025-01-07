@@ -5,11 +5,12 @@
 
 import type { ValueSchema } from "../../core/index.js";
 import type { NodeKind } from "../core/index.js";
-import type { FieldKind } from "../schemaTypes.js";
+import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "../schemaTypes.js";
 
 /**
  * Base interface for all {@link SimpleNodeSchema} implementations.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
@@ -19,16 +20,24 @@ export interface SimpleNodeSchemaBase<TNodeKind extends NodeKind> {
 	 * @remarks can be used to type-switch between implementations.
 	 */
 	readonly kind: TNodeKind;
+
+	/**
+	 * {@inheritDoc NodeSchemaMetadata}
+	 */
+	readonly metadata?: NodeSchemaMetadata | undefined;
 }
 
 /**
  * A {@link SimpleNodeSchema} for an object node.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Object> {
 	/**
-	 * Schemas for each of the object's fields, keyed off of schema's property keys.
+	 * Schemas for each of the object's fields, keyed off of schema's keys.
+	 * @remarks
+	 * Depending on how this schema was exported, the string keys may be either the property keys or the stored keys.
 	 */
 	readonly fields: Record<string, SimpleFieldSchema>;
 }
@@ -36,6 +45,7 @@ export interface SimpleObjectNodeSchema extends SimpleNodeSchemaBase<NodeKind.Ob
 /**
  * A {@link SimpleNodeSchema} for an array node.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Array> {
@@ -51,6 +61,7 @@ export interface SimpleArrayNodeSchema extends SimpleNodeSchemaBase<NodeKind.Arr
 /**
  * A {@link SimpleNodeSchema} for a map node.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> {
@@ -66,6 +77,7 @@ export interface SimpleMapNodeSchema extends SimpleNodeSchemaBase<NodeKind.Map> 
 /**
  * A {@link SimpleNodeSchema} for a leaf node.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf> {
@@ -81,6 +93,8 @@ export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf
  * @remarks This definition is incomplete, and references child types by identifiers.
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
+ *
+ * @internal
  */
 export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
@@ -95,6 +109,7 @@ export type SimpleNodeSchema =
  * To be useful, this generally needs to be used as a part of a complete {@link SimpleTreeSchema}, which
  * contains backing {@link SimpleTreeSchema.definitions} for each referenced identifier.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleFieldSchema {
@@ -112,9 +127,9 @@ export interface SimpleFieldSchema {
 	readonly allowedTypes: ReadonlySet<string>;
 
 	/**
-	 * {@inheritDoc FieldSchemaMetadata.description}
+	 * {@inheritDoc FieldSchemaMetadata}
 	 */
-	readonly description?: string | undefined;
+	readonly metadata?: FieldSchemaMetadata | undefined;
 }
 
 /**
@@ -123,6 +138,7 @@ export interface SimpleFieldSchema {
  * @remarks Contains the complete set of schema {@link SimpleTreeSchema.definitions} required to resolve references,
  * which are represented inline with identifiers.
  *
+ * @internal
  * @sealed
  */
 export interface SimpleTreeSchema extends SimpleFieldSchema {

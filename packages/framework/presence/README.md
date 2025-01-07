@@ -1,9 +1,45 @@
-# @fluid-experimental/presence
+# @fluidframework/presence
 
 A set of session-focused utilities for lightweight data sharing and messaging.
 
 A session is a period of time when one or more clients are connected to a Fluid service. Session data and messages may be exchanged among clients, but will disappear once the no clients remain. (More specifically once no clients remain that have acquired the session `IPresence` interface.) Once fully implemented, no client will require container write permissions to use Presence features.
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
+
+## Using Fluid Framework libraries
+
+When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
+While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
+library consumers should always prefer `^`.
+
+If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
+
+## Installation
+
+To get started, install the package by running the following command:
+
+```bash
+npm i @fluidframework/presence
+```
+
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/presence` like normal.
+
+To access the `alpha` APIs, import via `@fluidframework/presence/alpha`.
+
+## API Documentation
+
+API documentation for **@fluidframework/presence** is available at <https://fluidframework.com/docs/apis/presence>.
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 ## Concepts
 
 ### Attendees
@@ -44,10 +80,10 @@ Notifications value managers are special case where no data is retained during a
 
 ## Onboarding
 
-While this package is developing as experimental and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
+While this package is developing and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
 
 ```typescript
-import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluid-experimental/presence";
+import { acquirePresenceViaDataObject, ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
 
 const containerSchema = {
 	initialObjects: {
@@ -88,42 +124,53 @@ presence.getStates("app:v1states", { myState2: Latest({x: true})});
 
 ### Notifications
 
-Notifications API is mostly unimplemented. All messages are always broadcast even if `unicast` API is used and all are emitted as `unattendedNotification` event rather than the appropriate custom event.
+Notifications API is partially implemented. All messages are always broadcast even if `unicast` API is used. Type inferences are not working even with a fully specified `initialSubscriptions` value provided to `Notifications` and schema type must be specified explicitly.
 
 Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
 
+### Throttling/grouping
 
-### Experimental
+Presence updates are grouped together and throttled to prevent flooding the network with messages when presence values are rapidly updated. This means the presence infrastructure will not immediately broadcast updates but will broadcast them after a configurable delay.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README:scripts=FALSE) -->
+The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances, enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1) specified during configuration of a [States Workspace](#states-workspace) or [Value Manager](#value-managers) and/or (2) updated later using the `controls` member of Workspace or Value Manager. [States Workspace](#states-workspace) configuration applies when a Value Manager does not have its own setting.
+
+Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be grouped with other updates that were already queued.
+
+Note that due to throttling, clients receiving updates may not see updates for all values set by another. For example,
+with `Latest*ValueManagers`, the only value sent is the value at the time the outgoing grouped message is sent. Previous
+values set by the client will not be broadcast or seen by other clients.
+
+#### Example
+
+You can configure the grouping and throttling behavior using the `allowableUpdateLatencyMs` property as in the following example:
+
+```ts
+// Configure a states workspace
+const stateWorkspace = presence.getStates("app:v1states",
+	{
+		// This value manager has an allowable latency of 100ms.
+		position: Latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
+		// This value manager uses the workspace default.
+		count: Latest({ num: 0 }),
+	},
+	// Specify the default for all value managers in this workspace to 200ms,
+    // overriding the default value of 60ms.
+	{ allowableUpdateLatencyMs: 200 }
+);
+
+// Temporarily set count updates to send as soon as possible
+const countState = stateWorkspace.props.count;
+countState.controls.allowableUpdateLatencyMs = 0;
+countState.local = { num: 5000 };
+
+// Reset the update latency to the workspace default
+countState.controls.allowableUpdateLatencyMs = undefined;
+```
+
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-**IMPORTANT: This package is experimental.**
-**Its APIs may change without notice.**
-
-**Do not use in production scenarios.**
-
-## Using Fluid Framework libraries
-
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
-
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
-
-## Installation
-
-To get started, install the package by running the following command:
-
-```bash
-npm i @fluid-experimental/presence
-```
-
-## API Documentation
-
-API documentation for **@fluid-experimental/presence** is available at <https://fluidframework.com/docs/apis/presence>.
 
 ## Minimum Client Requirements
 

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import {
@@ -20,12 +20,15 @@ function getSummaryTypeName(summaryObject: SummaryObject): "blob" | "tree" {
 
 	switch (type) {
 		case SummaryType.Blob:
-		case SummaryType.Attachment:
+		case SummaryType.Attachment: {
 			return "blob";
-		case SummaryType.Tree:
+		}
+		case SummaryType.Tree: {
 			return "tree";
-		default:
+		}
+		default: {
 			throw new Error(`Unknown type: ${type}`);
+		}
 	}
 }
 
@@ -66,7 +69,7 @@ function serializeTree(parentHandle: string, tree: ISummaryTree, rootNodeName: s
 			}
 			case SummaryType.Handle: {
 				if (!parentHandle) {
-					throw Error("Parent summary does not exist to reference by handle.");
+					throw new Error("Parent summary does not exist to reference by handle.");
 				}
 				let handlePath = summaryObject.handle;
 				if (handlePath.length > 0 && !handlePath.startsWith("/")) {

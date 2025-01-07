@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { getPackageInfo } from "../assignTestPorts";
 
 describe("assignTestPorts", () => {

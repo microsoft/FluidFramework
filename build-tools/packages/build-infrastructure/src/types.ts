@@ -6,7 +6,7 @@
 import { SimpleGit } from "simple-git";
 import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
-import type { IFluidRepoLayout } from "./config.js";
+import type { BuildProjectConfig } from "./config.js";
 
 /**
  * Extra package.json fields used by pnpm.
@@ -41,7 +41,7 @@ export type PackageJson = SetRequired<
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 /**
- * A Fluid repo organizes a collection of npm packages into workspaces and release groups. A Fluid repo can contain
+ * A BuildProject organizes a collection of npm packages into workspaces and release groups. A BuildProject can contain
  * multiple workspaces, and a workspace can in turn contain multiple release groups. Both workspaces and release groups
  * represent ways to organize packages in the repo, but their purpose and function are different.
  *
@@ -49,24 +49,24 @@ export type AdditionalPackageProps = Record<string, string> | undefined;
  *
  * @typeParam P - The type of {@link IPackage} the repo uses. This can be any type that implements {@link IPackage}.
  */
-export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
+export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
 	/**
-	 * The absolute path to the root of the IFluidRepo. This is the path where the config file is located.
+	 * The absolute path to the root of the IBuildProject. This is the path where the config file is located.
 	 */
 	root: string;
 
 	/**
-	 * A map of all workspaces in the Fluid repo.
+	 * A map of all workspaces in the BuildProject.
 	 */
 	workspaces: Map<WorkspaceName, IWorkspace>;
 
 	/**
-	 * A map of all release groups in the Fluid repo.
+	 * A map of all release groups in the BuildProject.
 	 */
 	releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 
 	/**
-	 * A map of all packages in the Fluid repo.
+	 * A map of all packages in the BuildProject.
 	 */
 	packages: Map<PackageName, P>;
 
@@ -77,21 +77,21 @@ export interface IFluidRepo<P extends IPackage = IPackage> extends Reloadable {
 	upstreamRemotePartialUrl?: string;
 
 	/**
-	 * The layout configuration for the repo.
+	 * The configuration for the build project.
 	 */
-	configuration: IFluidRepoLayout;
+	configuration: BuildProjectConfig;
 
 	/**
-	 * Transforms an absolute path to a path relative to the IFluidRepo root.
+	 * Transforms an absolute path to a path relative to the IBuildProject root.
 	 *
-	 * @param p - The path to make relative to the IFluidRepo root.
-	 * @returns The path relative to the IFluidRepo root.
+	 * @param p - The path to make relative to the IBuildProject root.
+	 * @returns The path relative to the IBuildProject root.
 	 */
 	relativeToRepo(p: string): string;
 
 	/**
-	 * If the FluidRepo is within a Git repository, this function will return a SimpleGit instance rooted at the root of
-	 * the Git repository. If the FluidRepo is _not_ within a Git repository, this function will throw a
+	 * If the BuildProject is within a Git repository, this function will return a SimpleGit instance rooted at the root
+	 * of the Git repository. If the BuildProject is _not_ within a Git repository, this function will throw a
 	 * {@link NotInGitRepository} error.
 	 *
 	 * @throws A {@link NotInGitRepository} error if the path is not within a Git repository.
@@ -141,8 +141,8 @@ export type WorkspaceName = Opaque<string, "WorkspaceName">;
 
 /**
  * A workspace is a collection of packages, including a root package, that is managed using a package manager's
- * "workspaces" functionality. A Fluid repo can contain multiple workspaces. Workspaces are defined and managed using
- * the package manager directly. A Fluid repo builds on top of workspaces and relies on the package manager to install
+ * "workspaces" functionality. A BuildProject can contain multiple workspaces. Workspaces are defined and managed using
+ * the package manager directly. A BuildProject builds on top of workspaces and relies on the package manager to install
  * and manage dependencies and interdependencies within the workspace.
  *
  * A workspace defines the _physical layout_ of the packages within it. Workspaces are a generally a feature provided by
@@ -154,8 +154,8 @@ export type WorkspaceName = Opaque<string, "WorkspaceName">;
  * it is trivial to link multiple packages so they can depend on one another. The `IWorkspace` type is a thin wrapper on
  * top of these package manager features.
  *
- * A Fluid repo will only load packages identified by the package manager's workspace feature. That is, any package in
- * the repo that is not configured as part of a workspace is invisible to tools using the Fluid repo.
+ * A BuildProject will only load packages identified by the package manager's workspace feature. That is, any package in
+ * the repo that is not configured as part of a workspace is invisible to tools using the BuildProject.
  *
  * Workspaces are not involved in versioning or releasing packages. They are used for dependency management only.
  * Release groups, on the other hand, are used to group packages into releasable groups. See {@link IReleaseGroup} for
@@ -183,9 +183,9 @@ export interface IWorkspace extends Installable, Reloadable {
 	releaseGroups: Map<ReleaseGroupName, IReleaseGroup>;
 
 	/**
-	 * The Fluid repo that the workspace belongs to.
+	 * The build project that the workspace belongs to.
 	 */
-	fluidRepo: IFluidRepo;
+	buildProject: IBuildProject;
 
 	/**
 	 * An array of all the packages in the workspace. This includes the workspace root and any release group roots and

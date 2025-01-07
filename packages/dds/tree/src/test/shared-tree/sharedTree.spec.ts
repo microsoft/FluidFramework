@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -12,6 +12,7 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ITestFluidObject,
@@ -61,10 +62,11 @@ import {
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	cursorFromInsertable,
+	getSimpleSchema,
 	SchemaFactory,
 	toStoredSchema,
 	type TreeFieldFromImplicitField,
-	type TreeView,
+	type TreeViewAlpha,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { brand, fail } from "../../util/index.js";
@@ -81,10 +83,10 @@ import {
 	treeTestFactory,
 	validateTreeConsistency,
 	validateTreeContent,
-	validateViewConsistency,
 	validateUsageError,
 	StringArray,
 	NumberArray,
+	validateViewConsistency,
 } from "../utils.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -832,6 +834,83 @@ describe("SharedTree", () => {
 	});
 
 	describe("Undo and redo", () => {
+		it("the insert of a node in a sequence field using the commitApplied event", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+
+			const undoStack: Revertible[] = [];
+			const redoStack: Revertible[] = [];
+
+			function onDispose(disposed: Revertible): void {
+				const redoIndex = redoStack.indexOf(disposed);
+				if (redoIndex !== -1) {
+					redoStack.splice(redoIndex, 1);
+				} else {
+					const undoIndex = undoStack.indexOf(disposed);
+					if (undoIndex !== -1) {
+						undoStack.splice(undoIndex, 1);
+					}
+				}
+			}
+
+			const unsubscribeFromCommitAppliedEvent = view1.events.on(
+				"commitApplied",
+				(commit, getRevertible) => {
+					if (getRevertible !== undefined) {
+						const revertible = getRevertible(onDispose);
+						if (commit.kind === CommitKind.Undo) {
+							redoStack.push(revertible);
+						} else {
+							undoStack.push(revertible);
+						}
+					}
+				},
+			);
+			const unsubscribe = (): void => {
+				unsubscribeFromCommitAppliedEvent();
+				for (const revertible of undoStack) {
+					revertible.dispose();
+				}
+				for (const revertible of redoStack) {
+					revertible.dispose();
+				}
+			};
+
+			provider.processMessages();
+			const tree2 = provider.trees[1];
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			provider.processMessages();
+
+			// Insert node
+			view1.root.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual([...view2.root], [value]);
+
+			// Undo node insertion
+			undoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual([...view1.root], []);
+			assert.deepEqual([...view2.root], []);
+
+			// Redo node insertion
+			redoStack.pop()?.revert();
+			provider.processMessages();
+
+			assert.deepEqual([...view1.root], [value]);
+			assert.deepEqual([...view2.root], [value]);
+			unsubscribe();
+		});
+
 		it("the insert of a node in a sequence field", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
@@ -1159,7 +1238,7 @@ describe("SharedTree", () => {
 
 			interface Peer extends ConnectionSetter {
 				readonly checkout: TreeCheckout;
-				readonly view: TreeView<typeof schema>;
+				readonly view: TreeViewAlpha<typeof schema>;
 				readonly outerList: TreeFieldFromImplicitField<typeof schema>;
 				readonly innerList: TreeFieldFromImplicitField<typeof innerListSchema>;
 				assertOuterListEquals(expected: readonly (readonly string[])[]): void;
@@ -1168,7 +1247,7 @@ describe("SharedTree", () => {
 
 			function makeUndoableEdit(peer: Peer, edit: () => void): Revertible {
 				const undos: Revertible[] = [];
-				const unsubscribe = peer.view.events.on("commitApplied", ({ kind }, getRevertible) => {
+				const unsubscribe = peer.view.events.on("changed", ({ kind }, getRevertible) => {
 					if (kind !== CommitKind.Undo && getRevertible !== undefined) {
 						undos.push(getRevertible());
 					}
@@ -1365,69 +1444,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	// TODO: many of these events tests should be tests of SharedTreeView instead.
 	describe("Events", () => {
-		it("triggers revertible events for local changes", () => {
-			const value = "42";
-			const provider = new TestTreeProviderLite(2);
-			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith(
-				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
-			);
-			view1.initialize([]);
-			provider.processMessages();
-			const tree2 = provider.trees[1];
-			const view2 = tree2.viewWith(
-				new TreeViewConfiguration({
-					schema: StringArray,
-					enableSchemaValidation,
-				}),
-			);
-
-			const {
-				undoStack: undoStack1,
-				redoStack: redoStack1,
-				unsubscribe: unsubscribe1,
-			} = createTestUndoRedoStacks(tree1.checkout.events);
-			const {
-				undoStack: undoStack2,
-				redoStack: redoStack2,
-				unsubscribe: unsubscribe2,
-			} = createTestUndoRedoStacks(tree2.checkout.events);
-
-			// Insert node
-			view1.root.insertAtStart(value);
-			provider.processMessages();
-
-			// Validate insertion
-			assert.deepEqual([...view2.root], [value]);
-			assert.equal(undoStack1.length, 1);
-			assert.equal(undoStack2.length, 0);
-
-			undoStack1.pop()?.revert();
-			provider.processMessages();
-
-			// Insert node
-			view2.root.insertAtStart("43");
-			provider.processMessages();
-
-			assert.equal(undoStack1.length, 0);
-			assert.equal(redoStack1.length, 1);
-			assert.equal(undoStack2.length, 1);
-			assert.equal(redoStack2.length, 0);
-
-			redoStack1.pop()?.revert();
-			provider.processMessages();
-
-			assert.equal(undoStack1.length, 1);
-			assert.equal(redoStack1.length, 0);
-			assert.equal(undoStack2.length, 1);
-			assert.equal(redoStack2.length, 0);
-
-			unsubscribe1();
-			unsubscribe2();
-		});
-
 		it("doesn't trigger a revertible event for rebases", () => {
 			const provider = new TestTreeProviderLite(2);
 			// Initialize the tree
@@ -1474,6 +1491,40 @@ describe("SharedTree", () => {
 			unsubscribe1();
 			unsubscribe2();
 		});
+
+		it("emits a changed event for remote edits", () => {
+			const value = "42";
+			const provider = new TestTreeProviderLite(2);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+			view1.initialize([]);
+			provider.processMessages();
+			const tree2 = provider.trees[1];
+			const view2 = tree2.viewWith(
+				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
+			);
+
+			let remoteEdits = 0;
+
+			const unsubscribe = view1.events.on("changed", (metadata) => {
+				if (metadata.isLocal !== true) {
+					remoteEdits++;
+				}
+			});
+
+			// Insert node
+			view2.root.insertAtStart(value);
+			provider.processMessages();
+
+			// Validate insertion
+			assert.deepEqual([...view1.root], [value]);
+
+			assert.equal(remoteEdits, 1);
+
+			unsubscribe();
+		});
 	});
 
 	describe("Rebasing", () => {
@@ -1504,8 +1555,11 @@ describe("SharedTree", () => {
 			otherLoadedView.root.insertAtStart("d");
 			await provider.ensureSynchronized();
 
-			const loader = provider.makeTestLoader();
-			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const loadedContainer = await provider.loadTestContainer(
+				undefined,
+				undefined,
+				pendingOps,
+			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<SharedTree>("TestSharedTree");
 			const view = tree.viewWith(
@@ -1800,8 +1854,11 @@ describe("SharedTree", () => {
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
-			const loader = provider.makeTestLoader();
-			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const loadedContainer = await provider.loadTestContainer(
+				undefined,
+				undefined,
+				pendingOps,
+			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
@@ -2047,6 +2104,28 @@ describe("SharedTree", () => {
 		);
 	});
 
+	it("throws an error if attaching during a transaction", () => {
+		const sharedTreeFactory = new SharedTreeFactory();
+		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
+		const tree = sharedTreeFactory.create(runtime, "tree");
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		runtimeFactory.createContainerRuntime(runtime);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: StringArray }));
+		view.initialize([]);
+		assert.throws(
+			() => {
+				Tree.runTransaction(view, () => {
+					tree.connect({
+						deltaConnection: runtime.createDeltaConnection(),
+						objectStorage: new MockStorage(),
+					});
+				});
+			},
+			(e: Error) =>
+				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
+		);
+	});
+
 	it("breaks on exceptions", () => {
 		const tree = treeTestFactory();
 		const sf = new SchemaFactory("test");
@@ -2075,5 +2154,21 @@ describe("SharedTree", () => {
 			() => tree.getAttachSummary(),
 			validateUsageError(/invalid state by another error/),
 		);
+	});
+
+	it("exportVerbose & exportSimpleSchema", () => {
+		const tree = treeTestFactory();
+		assert.deepEqual(tree.exportVerbose(), undefined);
+		const sf = new SchemaFactory(undefined);
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(sf.optional([])));
+
+		const config = new TreeViewConfiguration({
+			schema: numberSchema,
+		});
+		const view = tree.viewWith(config);
+		view.initialize(10);
+
+		assert.deepEqual(tree.exportVerbose(), 10);
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(numberSchema));
 	});
 });

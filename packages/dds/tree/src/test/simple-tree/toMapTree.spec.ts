@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	MockHandle,
@@ -1294,6 +1294,9 @@ describe("toMapTree", () => {
 				policy: {
 					fieldKinds,
 					validateSchema: true,
+					// toMapTree drops all extra fields, so varying this policy is unnecessary
+					// (schema validation only occurs after converting to a MapTree)
+					allowUnknownOptionalFields: () => false,
 				},
 			};
 		}
@@ -1398,6 +1401,20 @@ describe("toMapTree", () => {
 								schemaValidationPolicy,
 							),
 						outOfSchemaExpectedError,
+					);
+				});
+
+				it("Only imports data in the schema", () => {
+					const schemaValidationPolicy = createSchemaAndPolicyForObjectNode();
+					// Note that despite the content containing keys not in the object schema, this test passes.
+					// This is by design: if an app author wants to preserve data that isn't in the schema (ex: to
+					// collaborate with other clients that have newer schema without erasing auxiliary data), they
+					// can use import/export tree APIs as noted in `SchemaFactoryObjectOptions`.
+					mapTreeFromNodeData(
+						{ foo: "Hello world", notInSchemaKey: 5, anotherNotInSchemaKey: false },
+						[myObjectSchema, schemaFactory.string],
+						new MockNodeKeyManager(),
+						schemaValidationPolicy,
 					);
 				});
 			});
@@ -1629,7 +1646,7 @@ describe("toMapTree", () => {
 });
 
 describe("deepCopyMapTree", () => {
-	/** Used by `generateMapTree` to give unique types and values to each MapTree */
+	// Used by `generateMapTree` to give unique types and values to each MapTree
 	let mapTreeGeneration = 0;
 	function generateMapTree(depth: number): ExclusiveMapTree {
 		const generation = mapTreeGeneration++;

@@ -110,6 +110,7 @@ trigger:
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
 
 pr:
@@ -175,7 +176,6 @@ variables:
     parameters:
       publishOverride: '${{ parameters.publishOverride }}'
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-      buildNumberInPatch: ''
 
 extends:
   template: /tools/pipelines/templates/build-npm-package.yml@self
@@ -193,7 +193,7 @@ extends:
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
-    poolBuild: NewLarge-linux-1ES
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build

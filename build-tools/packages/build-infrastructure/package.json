@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/build-infrastructure",
-	"version": "0.45.0",
+	"version": "0.52.0",
 	"private": true,
 	"description": "Fluid build infrastructure",
 	"homepage": "https://fluidframework.com",
@@ -26,7 +26,7 @@
 	},
 	"main": "lib/index.js",
 	"bin": {
-		"repo-layout": "./bin/run.mjs"
+		"buildProject": "./bin/run.mjs"
 	},
 	"files": [
 		"/bin",
@@ -63,7 +63,7 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@fluid-tools/version-tools": "workspace:^",
+		"@fluid-tools/version-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.2",
 		"@oclif/core": "^4.0.30",
 		"cosmiconfig": "^8.3.6",
@@ -111,8 +111,8 @@
 		"unionfs": "^4.5.4"
 	},
 	"oclif": {
-		"bin": "repo-layout",
-		"dirname": "repo-layout",
+		"bin": "buildProject",
+		"dirname": "buildProject",
 		"commands": "./lib/commands",
 		"additionalHelpFlags": [
 			"-h"

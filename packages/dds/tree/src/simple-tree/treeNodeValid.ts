@@ -103,7 +103,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			// would not see the stored `constructorCached`, and the validation above against multiple derived classes would not work.
 
 			// This is not just an alias of `this`, but a reference to the item in the prototype chain being walked, which happens to start at `this`.
-			// eslint-disable-next-line @typescript-eslint/no-this-alias
+			// eslint-disable-next-line @typescript-eslint/no-this-alias, unicorn/no-this-assignment
 			let schemaBase: typeof TreeNodeValid = this;
 			while (!Object.prototype.hasOwnProperty.call(schemaBase, "constructorCached")) {
 				schemaBase = Reflect.getPrototypeOf(schemaBase) as typeof TreeNodeValid;
@@ -300,7 +300,7 @@ function formattedReference(
 	object: unknown,
 	config?: DevtoolsFormatter.ObjectConfig,
 ): DevtoolsFormatter.Item {
-	if (typeof object === "undefined") {
+	if (object === undefined) {
 		return ["span", "undefined"];
 	} else if (object === "null") {
 		return ["span", "null"];

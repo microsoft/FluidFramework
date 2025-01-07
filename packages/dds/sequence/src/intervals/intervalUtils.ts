@@ -160,30 +160,21 @@ export interface ISerializedInterval {
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
-	/**
-	 * @deprecated - This property should not be used externally and will be removed in a subsequent release.
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	propertyManager: PropertiesManager;
+
 	/***/
 	serialize(): ISerializedInterval;
-	/**
-	 * @deprecated - This function should not be used externally and will be removed in a subsequent release.
-	 */
-	addProperties(
-		props: PropertySet,
-		collaborating?: boolean,
-		seq?: number,
-	): PropertySet | undefined;
+
 	/**
 	 * Gets the id associated with this interval.
 	 * When the interval is used as part of an interval collection, this id can be used to modify or remove the
 	 * interval.
-	 * @remarks This signature includes `undefined` strictly for backwards-compatibility reasons, as older versions
-	 * of Fluid didn't always write interval ids.
 	 */
-	getIntervalId(): string | undefined;
+	getIntervalId(): string;
 }
+
+export type ISerializableIntervalPrivate<T extends ISerializableInterval> = T & {
+	propertyManager?: PropertiesManager;
+};
 
 /**
  * Represents a change that should be applied to an existing interval.

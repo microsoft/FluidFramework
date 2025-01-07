@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type ImplicitFieldSchema,
@@ -193,10 +193,10 @@ function testObjectLike(testCases: TestCaseErased[]) {
 			test1((subject) => {
 				try {
 					return Object.prototype.toLocaleString.call(subject);
-				} catch (e: unknown) {
-					assert(e instanceof Error);
+				} catch (error: unknown) {
+					assert(error instanceof Error);
 					// toLocaleString errors if there is a field named toString.
-					return e.message;
+					return error.message;
 				}
 			});
 		});
@@ -235,10 +235,10 @@ function testObjectLike(testCases: TestCaseErased[]) {
 				try {
 					// eslint-disable-next-line @typescript-eslint/no-base-to-string
 					return subject.toString();
-				} catch (e: unknown) {
-					assert(e instanceof Error);
+				} catch (error: unknown) {
+					assert(error instanceof Error);
 					// toString errors if there is a field named toString.
-					return e.message;
+					return error.message;
 				}
 			});
 		});
@@ -248,10 +248,10 @@ function testObjectLike(testCases: TestCaseErased[]) {
 			test1((subject) => {
 				try {
 					return subject.toLocaleString();
-				} catch (e: unknown) {
-					assert(e instanceof Error);
+				} catch (error: unknown) {
+					assert(error instanceof Error);
 					// toLocaleString errors if there is a field named toString.
-					return e.message;
+					return error.message;
 				}
 			});
 		});

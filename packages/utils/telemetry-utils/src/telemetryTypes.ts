@@ -36,19 +36,6 @@ export type TelemetryEventPropertyTypeExt =
 	| Record<string, string | number | boolean | undefined | (string | number | boolean)[]>;
 
 /**
- * A property to be logged to telemetry containing both the value and a tag. Tags are generic strings that can be used
- * to mark pieces of information that should be organized or handled differently by loggers in various first or third
- * party scenarios. For example, tags are used to mark personal information that should not be stored in logs.
- *
- * @deprecated Use {@link @fluidframework/core-interfaces#Tagged}\<{@link TelemetryEventPropertyTypeExt}\>
- * @internal
- */
-export interface ITaggedTelemetryPropertyTypeExt {
-	value: TelemetryEventPropertyTypeExt;
-	tag: string;
-}
-
-/**
  * JSON-serializable properties, which will be logged with telemetry.
  * @legacy
  * @alpha

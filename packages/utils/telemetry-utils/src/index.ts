@@ -89,7 +89,6 @@ export type {
 	ITelemetryErrorEventExt,
 	ITelemetryPerformanceEventExt,
 	ITelemetryLoggerExt,
-	ITaggedTelemetryPropertyTypeExt,
 	ITelemetryPropertiesExt,
 	TelemetryEventCategory,
 } from "./telemetryTypes.js";
