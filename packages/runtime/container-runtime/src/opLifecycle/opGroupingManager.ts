@@ -155,8 +155,8 @@ export class OpGroupingManager {
 			// The number of ops in the batch must surpass the configured threshold
 			// or be empty (to allow for empty batches to be grouped)
 			batch.messages.length !== 1 &&
-			// Support for reentrant batches
-			this.config.reentrantBatchGroupingEnabled
+			// Support for reentrant batches must be explicitly enabled
+			(this.config.reentrantBatchGroupingEnabled || batch.hasReentrantOps !== true)
 		);
 	}
 }
