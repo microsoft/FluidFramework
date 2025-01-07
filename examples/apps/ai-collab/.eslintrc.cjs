@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
+const { importInternalModulesAllowed } = require("../../.eslintrc.data.cjs");
+
 module.exports = {
-	extends: [require.resolve("@fluidframework/eslint-config-fluid/recommended"), "prettier"],
+	extends: [
+		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
+		"prettier",
+		"../../.eslintrc.cjs",
+	],
 	parserOptions: {
 		project: ["./tsconfig.json"],
 	},
@@ -13,8 +19,8 @@ module.exports = {
 			"error",
 			{
 				allow: [
-					"@fluidframework/odsp-client/beta",
-					"@fluidframework/tree/alpha",
+					"@fluidframework/*/beta",
+					"@fluidframework/*/alpha",
 
 					// NextJS requires reaching to its internal modules
 					"next/**",
@@ -22,7 +28,9 @@ module.exports = {
 					// Path aliases
 					"@/actions/**",
 					"@/types/**",
+					"@/infra/**",
 					"@/components/**",
+					"@/app/**",
 
 					// Experimental package APIs and exports are unknown, so allow any imports from them.
 					"@fluidframework/ai-collab/alpha",

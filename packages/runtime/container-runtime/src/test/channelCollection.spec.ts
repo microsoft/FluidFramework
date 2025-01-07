@@ -115,7 +115,7 @@ describe("Runtime", () => {
 				assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
 				assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");
 				// Put in variable to avoid type-narrowing bug
-				const nonDataStore1 = snapshot.trees[nonDataStorePaths[0]];
+				const nonDataStore1: ISnapshotTree | undefined = snapshot.trees[nonDataStorePaths[0]];
 				assert.strictEqual(
 					nonDataStore1?.id,
 					"lower-non-datastore-1",

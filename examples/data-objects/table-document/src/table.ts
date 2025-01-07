@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PropertySet } from "@fluidframework/sequence/internal";
+import { PropertySet } from "@fluidframework/sequence/legacy";
 
 /**
  * @deprecated `TableDocumentItem` is an abandoned prototype.

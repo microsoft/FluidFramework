@@ -16,6 +16,7 @@ import {
 import {
 	CompressionAlgorithms,
 	type IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
@@ -48,7 +49,7 @@ const compressionSuite = (getProvider) => {
 		});
 
 		async function setupContainers(
-			runtimeOptions: IContainerRuntimeOptions = defaultRuntimeOptions,
+			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
 		) {
 			const containerConfig: ITestContainerConfig = {
 				registry: [["mapKey", SharedMap.getFactory()]],
