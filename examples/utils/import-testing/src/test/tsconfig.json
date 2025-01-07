@@ -12,6 +12,7 @@
 		"skipLibCheck": false,
 		// Due to several of our own packages' exports failing to build with "exactOptionalPropertyTypes",
 		// disable it to prevent that from erroring when combined with "skipLibCheck".
+		// TODO: these errors should be fixed!
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
