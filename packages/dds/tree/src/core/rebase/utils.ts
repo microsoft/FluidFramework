@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { hasSome, type Mutable } from "../../util/index.js";
+import { defineLazyCachedProperty, hasSome, type Mutable } from "../../util/index.js";
 
 import {
 	type ChangeRebaser,
@@ -312,26 +312,23 @@ export function rebaseBranch<TChange>(
 		revInfos.unshift({ revision: rollback.revision, rollbackOf: rollback.rollbackOf });
 	}
 
-	let netChange: TChange | undefined;
-	return {
-		newSourceHead: newHead,
-		get sourceChange(): TChange | undefined {
-			if (netChange === undefined) {
-				netChange = changeRebaser.compose(editsToCompose);
-			}
-			return netChange;
+	return defineLazyCachedProperty(
+		{
+			newSourceHead: newHead,
+			commits: {
+				deletedSourceCommits,
+				targetCommits,
+				sourceCommits,
+			},
+			telemetryProperties: {
+				sourceBranchLength,
+				rebaseDistance: targetCommits.length,
+				countDropped: sourceBranchLength - sourceSet.size,
+			},
 		},
-		commits: {
-			deletedSourceCommits,
-			targetCommits,
-			sourceCommits,
-		},
-		telemetryProperties: {
-			sourceBranchLength,
-			rebaseDistance: targetCommits.length,
-			countDropped: sourceBranchLength - sourceSet.size,
-		},
-	};
+		"sourceChange",
+		() => changeRebaser.compose(editsToCompose),
+	);
 }
 
 /**

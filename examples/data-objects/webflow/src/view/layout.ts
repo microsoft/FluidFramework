@@ -7,16 +7,13 @@
 import assert from "assert";
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import {
-	MergeTreeMaintenanceType,
-	segmentIsRemoved,
-} from "@fluidframework/merge-tree/internal";
+import { MergeTreeMaintenanceType, segmentIsRemoved } from "@fluidframework/merge-tree/legacy";
 import {
 	ISegment,
 	LocalReferencePosition,
 	ReferencePosition,
 	SequenceEvent,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 
 import { FlowDocument } from "../document/index.js";
 import {
