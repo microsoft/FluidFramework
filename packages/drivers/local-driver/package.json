@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/local-driver",
-	"version": "2.14.0",
+	"version": "2.20.0",
 	"description": "Fluid local driver",
 	"homepage": "https://fluidframework.com",
 	"repository": {
