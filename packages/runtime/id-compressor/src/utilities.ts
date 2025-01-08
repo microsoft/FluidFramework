@@ -10,7 +10,7 @@ import { v4 } from "uuid";
 import { LocalCompressedId, NumericUuid } from "./identifiers.js";
 import { SessionId, StableId } from "./types/index.js";
 
-const hexadecimalCharCodes = Array.from("09afAF").map((c) => c.charCodeAt(0)) as [
+const hexadecimalCharCodes = [..."09afAF"].map((c) => c.charCodeAt(0)) as [
 	zero: number,
 	nine: number,
 	a: number,
@@ -76,17 +76,19 @@ export function isStableId(str: string): str is StableId {
 			case 8:
 			case 13:
 			case 18:
-			case 23:
+			case 23: {
 				if (str.charAt(i) !== "-") {
 					return false;
 				}
 				break;
+			}
 
-			case 14:
+			case 14: {
 				if (str.charAt(i) !== "4") {
 					return false;
 				}
 				break;
+			}
 
 			case 19: {
 				const char = str.charAt(i);
@@ -96,11 +98,12 @@ export function isStableId(str: string): str is StableId {
 				break;
 			}
 
-			default:
+			default: {
 				if (!isHexadecimalCharacter(str.charCodeAt(i))) {
 					return false;
 				}
 				break;
+			}
 		}
 	}
 
@@ -172,10 +175,10 @@ export function stableIdFromNumericUuid(numericUuid: NumericUuid): StableId {
 	const uuidU128 = upperMasked | versionMask | middieBittiesMasked | variantMask | lowerMasked;
 	// Pad to 32 characters, inserting leading zeroes if needed
 	const uuidString = uuidU128.toString(16).padStart(32, "0");
-	return `${uuidString.substring(0, 8)}-${uuidString.substring(8, 12)}-${uuidString.substring(
+	return `${uuidString.slice(0, 8)}-${uuidString.slice(8, 12)}-${uuidString.slice(
 		12,
 		16,
-	)}-${uuidString.substring(16, 20)}-${uuidString.substring(20, 32)}` as StableId;
+	)}-${uuidString.slice(16, 20)}-${uuidString.slice(20, 32)}` as StableId;
 }
 
 export function offsetNumericUuid(numericUuid: NumericUuid, offset: number): NumericUuid {

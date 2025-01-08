@@ -64,7 +64,7 @@ import {
  * The version of IdCompressor that is currently persisted.
  * This should not be changed without careful consideration to compatibility.
  */
-const currentWrittenVersion = 2.0;
+const currentWrittenVersion = 2;
 
 function rangeFinalizationError(expectedStart: number, actualStart: number): LoggingError {
 	return new LoggingError("Ranges finalized out of order", {
@@ -592,7 +592,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			index = writeNumericUuid(serializedUint, index, session.sessionUuid);
 		}
 
-		finalSpace.clusters.forEach((cluster) => {
+		for (const cluster of finalSpace.clusters) {
 			index = writeNumber(
 				serializedFloat,
 				index,
@@ -600,7 +600,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			);
 			index = writeNumber(serializedFloat, index, cluster.capacity);
 			index = writeNumber(serializedFloat, index, cluster.count);
-		});
+		}
 
 		if (hasLocalState) {
 			index = writeNumber(serializedFloat, index, this.localGenCount);
@@ -652,12 +652,15 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		};
 		const version = readNumber(index);
 		switch (version) {
-			case 1.0:
+			case 1: {
 				throw new Error("IdCompressor version 1.0 is no longer supported.");
-			case 2.0:
+			}
+			case 2: {
 				return IdCompressor.deserialize2_0(index, sessionId, logger);
-			default:
+			}
+			default: {
 				throw new Error("Unknown IdCompressor serialized version.");
+			}
 		}
 	}
 
@@ -673,17 +676,17 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// Sessions
 		let sessionOffset = 0;
 		const sessions: [NumericUuid, Session][] = [];
-		if (!hasLocalState) {
+		if (hasLocalState) {
+			assert(
+				sessionId === undefined,
+				0x75e /* Local state should not exist in serialized form. */,
+			);
+		} else {
 			// If !hasLocalState, there won't be a serialized local session ID so insert one at the beginning
 			assert(sessionId !== undefined, 0x75d /* Local session ID is undefined. */);
 			const localSessionNumeric = numericUuidFromStableId(sessionId);
 			sessions.push([localSessionNumeric, new Session(localSessionNumeric)]);
 			sessionOffset = 1;
-		} else {
-			assert(
-				sessionId === undefined,
-				0x75e /* Local state should not exist in serialized form. */,
-			);
 		}
 
 		for (let i = 0; i < sessionCount; i++) {

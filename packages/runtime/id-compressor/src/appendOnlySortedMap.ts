@@ -142,8 +142,7 @@ export class AppendOnlySortedMap<K, V> {
 		if (length !== 0 && this.comparator(key, this.maxKey() as K) <= 0) {
 			throw new Error("Inserted key must be > all others in the map.");
 		}
-		elements.push(key);
-		elements.push(value);
+		elements.push(key, value);
 	}
 
 	/**
@@ -162,8 +161,7 @@ export class AppendOnlySortedMap<K, V> {
 				throw new Error("Inserted key must be > all others in the map.");
 			}
 		}
-		elements.push(key);
-		elements.push(value);
+		elements.push(key, value);
 	}
 
 	/**

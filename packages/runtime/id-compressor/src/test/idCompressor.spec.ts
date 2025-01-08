@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { take } from "@fluid-private/stochastic-test-utils";
@@ -229,10 +229,10 @@ describe("IdCompressor", () => {
 				// Assert everything is unique and consistent.
 				const ids = new Set<SessionSpaceCompressedId>();
 				const uuids = new Set<StableId | string>();
-				[id1_1, id1_2, id2_1, id2_2, id3_1, id3_2, id4_1, id4_2].forEach((id) => {
+				for (const id of [id1_1, id1_2, id2_1, id2_2, id3_1, id3_2, id4_1, id4_2]) {
 					ids.add(id);
 					uuids.add(compressor.decompress(id));
-				});
+				}
 				assert.equal(ids.size, 8);
 				assert.equal(uuids.size, 8);
 			});
@@ -274,7 +274,7 @@ describe("IdCompressor", () => {
 
 				// All generated IDs should have aligned finals (even though range3 has not been finalized)
 				const allIds: SessionSpaceCompressedId[] = [id1_1, id1_2, id2_1, id2_2, id2_3, id3_1];
-				allIds.forEach((id) => assert(isFinalId(compressor.normalizeToOpSpace(id))));
+				for (const id of allIds) assert(isFinalId(compressor.normalizeToOpSpace(id)));
 
 				compressor.finalizeCreationRange(range3);
 
@@ -286,10 +286,10 @@ describe("IdCompressor", () => {
 				// Assert everything is unique and consistent.
 				const ids = new Set<SessionSpaceCompressedId>();
 				const uuids = new Set<StableId | string>();
-				allIds.forEach((id) => {
+				for (const id of allIds) {
 					ids.add(id);
 					uuids.add(compressor.decompress(id));
-				});
+				}
 				assert.equal(ids.size, 7);
 				assert.equal(uuids.size, 7);
 			});
@@ -321,18 +321,18 @@ describe("IdCompressor", () => {
 			{ title: "with more IDs than fit in a cluster", idCount: clusterSize * 2 },
 		];
 
-		tests.forEach(({ title, idCount }) => {
+		for (const { title, idCount } of tests) {
 			it(title, () => {
 				const compressor = CompressorFactory.createCompressor(Client.Client1);
 				generateCompressedIds(compressor, idCount);
 				const range = compressor.takeNextCreationRange();
-				if (range.ids !== undefined) {
-					assert.equal(range.ids.count, idCount);
-				} else {
+				if (range.ids === undefined) {
 					assert.equal(idCount, 0);
+				} else {
+					assert.equal(range.ids.count, idCount);
 				}
 			});
-		});
+		}
 
 		it("with the correct local ranges", () => {
 			const compressor = CompressorFactory.createCompressor(Client.Client1, 1);
@@ -500,9 +500,9 @@ describe("IdCompressor", () => {
 					}
 					compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 					const opIds = new Set<OpSpaceCompressedId>();
-					ids.forEach((id) => opIds.add(compressor.normalizeToOpSpace(id)));
+					for (const id of ids) opIds.add(compressor.normalizeToOpSpace(id));
 					assert.equal(ids.size, opIds.size);
-					opIds.forEach((id) => assert.equal(isFinalId(id), true));
+					for (const id of opIds) assert.equal(isFinalId(id), true);
 				}
 			}
 		});
@@ -957,7 +957,7 @@ describe("IdCompressor", () => {
 			const base64Content = compressor.serialize(false);
 			const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));
 			// Change the version to 1.0
-			floatView[0] = 1.0;
+			floatView[0] = 1;
 			const docString1 = bufferToString(
 				floatView.buffer,
 				"base64",
@@ -1142,48 +1142,45 @@ describe("IdCompressor", () => {
 
 			// Client 1 makes three IDs
 			network.allocateAndSendIds(Client.Client1, 3);
-			network.getIdLog(Client.Client1).forEach(({ id }) => assert(isLocalId(id)));
+			for (const { id } of network.getIdLog(Client.Client1)) assert(isLocalId(id));
 
 			// Client 1's IDs have not been acked so have no op space equivalent
-			network
-				.getIdLog(Client.Client1)
-				.forEach((idData) => assert(isLocalId(compressor1.normalizeToOpSpace(idData.id))));
+			for (const idData of network
+				.getIdLog(Client.Client1)) assert(isLocalId(compressor1.normalizeToOpSpace(idData.id)));
 
 			// Client 1's IDs are acked
 			network.deliverOperations(Client.Client1);
-			network.getIdLog(Client.Client1).forEach(({ id }) => assert(isLocalId(id)));
+			for (const { id } of network.getIdLog(Client.Client1)) assert(isLocalId(id));
 
 			// Client 2 makes three IDs
 			network.allocateAndSendIds(Client.Client2, 3);
 
-			network.getIdLog(Client.Client2).forEach(({ id }) => assert(isLocalId(id)));
+			for (const { id } of network.getIdLog(Client.Client2)) assert(isLocalId(id));
 
 			// Client 1 receives Client 2's IDs
 			network.deliverOperations(Client.Client1);
 
-			network
+			for (const { id } of network
 				.getIdLog(Client.Client1)
-				.slice(-3)
-				.forEach(({ id }) => assert(isFinalId(id)));
+				.slice(-3)) assert(isFinalId(id));
 
 			// All IDs have been acked or are from another client, and therefore have a final form in op space
-			network
-				.getIdLog(Client.Client1)
-				.forEach(({ id }) => assert(isFinalId(compressor1.normalizeToOpSpace(id))));
+			for (const { id } of network
+				.getIdLog(Client.Client1)) assert(isFinalId(compressor1.normalizeToOpSpace(id)));
 
 			// Compression should preserve ID space correctness
-			network.getIdLog(Client.Client1).forEach((idData) => {
+			for (const idData of network.getIdLog(Client.Client1)) {
 				const roundtripped = compressor1.recompress(compressor1.decompress(idData.id));
 				assert.equal(Math.sign(roundtripped), Math.sign(idData.id));
-			});
+			}
 
-			network.getIdLog(Client.Client1).forEach((idData) => {
+			for (const idData of network.getIdLog(Client.Client1)) {
 				const opNormalized = compressor1.normalizeToOpSpace(idData.id);
 				assert.equal(
 					Math.sign(compressor1.normalizeToSessionSpace(opNormalized, idData.sessionId)),
 					Math.sign(idData.id),
 				);
-			});
+			}
 		});
 
 		itNetwork("produces consistent IDs with large fuzz input", (network) => {

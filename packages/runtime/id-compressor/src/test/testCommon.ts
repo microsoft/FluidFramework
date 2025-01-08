@@ -91,7 +91,9 @@ export function incrementStableId(stableId: StableId, offset: number): StableId 
 	return stableIdFromNumericUuid(offsetNumericUuid(numericUuidFromStableId(stableId), offset));
 }
 
-/** An immutable view of an `IdCompressor` */
+/**
+ * An immutable view of an `IdCompressor`
+ */
 export type ReadonlyIdCompressor = Omit<
 	IdCompressor,
 	| "generateCompressedId"

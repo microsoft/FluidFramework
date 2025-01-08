@@ -5,7 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AppendOnlySortedMap } from "../appendOnlySortedMap.js";
 import { compareFiniteNumbers } from "../utilities.js";
@@ -74,7 +74,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 	});
 
 	it("can get an entry or next lower by key", () => {
-		[99, 100].forEach((elementCount) => {
+		for (const elementCount of [99, 100]) {
 			const map = mapBuilder();
 			for (let i = 0; i < elementCount; i++) {
 				map.append(i * 2, i * 2);
@@ -86,11 +86,11 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 			}
 			const maxKey = assertNotUndefined(map.maxKey());
 			assert.deepEqual(map.getPairOrNextLower(maxKey + 1), [maxKey, maxKey]);
-		});
+		}
 	});
 
 	it("can get an entry or next higher by key", () => {
-		[99, 100].forEach((elementCount) => {
+		for (const elementCount of [99, 100]) {
 			const map = mapBuilder();
 			for (let i = 0; i < elementCount; i++) {
 				map.append(i * 2, i * 2);
@@ -102,7 +102,7 @@ function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, num
 				assert.deepEqual(map.getPairOrNextHigher(i * 2 + 1), [i * 2 + 2, i * 2 + 2]);
 			}
 			assert.equal(map.getPairOrNextHigher(map.size * 2 + 1), undefined);
-		});
+		}
 	});
 
 	it("knows how big it is", () => {
