@@ -32,6 +32,15 @@ parameters:
   type: string
   default: none
 
+# Whether to actually perform the bump.
+# TODO: The awkwardness of this parameter implies some refactoring of pipelines would be good.
+# This is currently used as docker images need to decide what version to use outside of the docker build context, but bump
+# the package version from inside (else one can't install dependencies using a frozen lockfile, since the package versions/dependencies
+# are changed from what's source controlled).
+- name: performBump
+  type: boolean
+  default: false
+
 # Set version
 steps:
 
@@ -83,16 +92,17 @@ steps:
         # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
         flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists
 
-- task: Bash@3
-  displayName: Update Package Version (flub)
-  env:
-    VERSION_RELEASE: $(release)
-    RELEASE_GROUP: ${{ parameters.tagName }}
-    INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
-  inputs:
-    targetType: 'filePath'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
+- ${{ if eq(parameters.performBump, true) }}:
+  - task: Bash@3
+    displayName: Update Package Version (flub)
+    env:
+      VERSION_RELEASE: $(release)
+      RELEASE_GROUP: ${{ parameters.tagName }}
+      INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
+    inputs:
+      targetType: 'filePath'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.

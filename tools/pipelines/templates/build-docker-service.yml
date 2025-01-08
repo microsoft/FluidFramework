@@ -108,6 +108,11 @@ parameters:
     type: boolean
     default: true
 
+  # Whether the docker build for this package includes a bump of the package version.
+  - name: dockerBuildBumpsVersion
+    type: boolean
+    default: false
+
 trigger: none
 
 resources:
@@ -298,6 +303,10 @@ extends:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
               tagName: ${{ parameters.tagName }}
+              ${{ if eq(parameters.dockerBuildBumpsVersion, true) }}:
+                performBump: false
+              ${{ else }}:
+                performBump: true
         - ${{ if eq(parameters.setVersion, false) }}:
           - task: Bash@3
             name: SetVersion
@@ -308,6 +317,26 @@ extends:
                 set -eu -o pipefail
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
+
+        - task: Bash@3
+          name: DockerBuildArgs
+          displayName: Set docker build arguments
+          inputs:
+            targetType: 'inline'
+            ${{ if eq(parameters.dockerBuildBumpsVersion, true) }}:
+              script: |
+                set -eu -o pipefail
+                echo "Template additionalBuildArguments: ${{ parameters.additionalBuildArguments }}"
+                echo "SETVERSION_VERSION=$(SetVersion.version)"
+                echo "SETVERSION_CODEVERSION=$(SetVersion.codeversion)"
+                echo "INTERDEPENDENCY_RANGE=${{ parameters.interdependencyRange }}"
+                echo "RELEASE_GROUP=${{ parameters.tagName }}"
+                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }} --build-arg SETVERSION_VERSION=$(SetVersion.version) --build-arg SETVERSION_CODEVERSION=$(SetVersion.codeversion) --build-arg INTERDEPENDENCY_RANGE=${{ parameters.interdependencyRange }} --build-arg RELEASE_GROUP=${{ parameters.tagName }}"
+            ${{ else }}:
+              script: |
+                set -eu -o pipefail
+                echo "Template additionalBuildArguments: ${{ parameters.additionalBuildArguments }}"
+                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }}"
 
         # The 1ES.BuildContainerImage task apparently expects to see the CredScan suppressions file not in the root of
         # the repo, but in the folder used as its 'context' input. So we need to copy it there before building any images.
@@ -332,7 +361,7 @@ extends:
               dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
               context: ${{ parameters.buildDirectory }}
               image: $(baseContainerTag)
-              buildArguments: --target base ${{ parameters.additionalBuildArguments }}
+              buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
               enableNetwork: true
               enableCache: true
@@ -473,7 +502,7 @@ extends:
             dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
             context: ${{ parameters.buildDirectory }}
             image: $(containerTag)
-            buildArguments: ${{ parameters.additionalBuildArguments }}
+            buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
             enableNetwork: true
             enableCache: true
