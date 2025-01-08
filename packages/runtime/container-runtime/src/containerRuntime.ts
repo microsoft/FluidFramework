@@ -1654,9 +1654,6 @@ export class ContainerRuntime
 				groupedBatchingEnabled: this.groupedBatchingEnabled,
 				opCountThreshold:
 					this.mc.config.getNumber("Fluid.ContainerRuntime.GroupedBatchingOpCount") ?? 2,
-				reentrantBatchGroupingEnabled:
-					this.mc.config.getBoolean("Fluid.ContainerRuntime.GroupedBatchingReentrancy") ??
-					true,
 			},
 			this.mc.logger,
 		);
