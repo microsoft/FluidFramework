@@ -1905,6 +1905,7 @@ export class ContainerRuntime
 
 		this.deltaScheduler = new DeltaScheduler(
 			this.innerDeltaManager,
+			this,
 			createChildLogger({ logger: this.logger, namespace: "DeltaScheduler" }),
 		);
 
@@ -2225,6 +2226,7 @@ export class ContainerRuntime
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
 		this.inboundBatchAggregator.dispose();
+		this.deltaScheduler.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
 	}
@@ -2952,7 +2954,6 @@ export class ContainerRuntime
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
 			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
-			this.deltaScheduler.batchBegin(firstMessage);
 			this.emit("batchBegin", firstMessage);
 		}
 
@@ -3053,7 +3054,6 @@ export class ContainerRuntime
 			if (locationInBatch.batchEnd) {
 				const lastMessage = messagesWithMetadata[messagesWithMetadata.length - 1]?.message;
 				assert(lastMessage !== undefined, 0xa32 /* Batch must have at least one message */);
-				this.deltaScheduler.batchEnd(lastMessage);
 				this.emit("batchEnd", error, lastMessage);
 			}
 		}
