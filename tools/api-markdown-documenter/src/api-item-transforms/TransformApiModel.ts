@@ -119,22 +119,18 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 				}
 			}
 		}
+	}
 
-		const documents = [...documentsMap.values()];
+	const documents = [...documentsMap.values()];
 
-		try {
-			checkForDuplicateDocumentPaths(documents);
-		} catch (error: unknown) {
-			logger.warning((error as Error).message);
-		}
-
-		logger.success("API Model documents generated!");
-		return documents;
+	try {
+		checkForDuplicateDocumentPaths(documents);
+	} catch (error: unknown) {
+		logger.warning((error as Error).message);
 	}
 
 	logger.success("API Model documents generated!");
-
-	return [...documentsMap.values()];
+	return documents;
 }
 
 /**
