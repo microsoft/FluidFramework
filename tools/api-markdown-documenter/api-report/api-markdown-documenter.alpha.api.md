@@ -107,7 +107,6 @@ export interface ApiItemTransformations {
 declare namespace ApiItemUtilities {
     export {
         createQualifiedDocumentNameForApiItem,
-        doesItemKindRequireOwnDocument,
         filterItems,
         getHeadingForApiItem,
         getLinkForApiItem,
@@ -370,9 +369,6 @@ export interface DocumentWriter {
 export namespace DocumentWriter {
     export function create(): DocumentWriter;
 }
-
-// @public
-function doesItemKindRequireOwnDocument(apiItemKind: ValidApiItemKind, hierarchyConfig: Required<HierarchyConfiguration>): boolean;
 
 // @public
 export class FencedCodeBlockNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {

@@ -9,7 +9,6 @@
 
 export {
 	createQualifiedDocumentNameForApiItem,
-	doesItemKindRequireOwnDocument,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
