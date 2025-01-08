@@ -18,7 +18,7 @@ import { type RenderDocumentAsHtmlConfiguration, renderDocumentAsHtml } from "./
 /**
  * API Model HTML rendering options.
  *
- * @public
+ * @alpha
  */
 export interface RenderApiModelAsHtmlOptions
 	extends ApiItemTransformationOptions,
@@ -55,7 +55,7 @@ export async function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions)
 /**
  * Options for rendering {@link DocumentNode}s as HTML.
  *
- * @public
+ * @alpha
  */
 export interface RenderDocumentsAsHtmlOptions
 	extends RenderDocumentAsHtmlConfiguration,

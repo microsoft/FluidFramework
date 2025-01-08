@@ -13407,12 +13407,18 @@ importers:
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../dds/cell
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
@@ -13461,6 +13467,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13491,6 +13500,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
