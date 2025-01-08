@@ -659,9 +659,9 @@ namespace Rollback {
  * @param allowEqual - If true, returns true when ancestor === descendant
  * @returns true if ancestor is an ancestor of descendant (or equal if allowEqual is true)
  */
-export function isAncestor<T extends { readonly parent?: T }>(
-	ancestor: T,
-	descendant: T,
+export function isAncestor<TNode extends { readonly parent?: TNode }>(
+	ancestor: TNode,
+	descendant: TNode,
 	allowEqual: boolean,
 ): boolean {
 	if (allowEqual && ancestor === descendant) {
