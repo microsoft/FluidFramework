@@ -15,7 +15,7 @@ import type { DocumentNode, SectionNode } from "../documentation-domain/index.js
 
 import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
 import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
-import { createDocument } from "./Utilities.js";
+import { checkForDuplicateDocumentPaths, createDocument } from "./Utilities.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
@@ -37,10 +37,10 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 	// If a package has multiple entry-points, it's possible for the same API item to appear under more than one
 	// entry-point (i.e., we are traversing a graph, rather than a tree).
 	// To avoid redundant computation, we will keep a ledger of which API items we have transformed.
-	const documents: Map<ApiItem, DocumentNode> = new Map<ApiItem, DocumentNode>();
+	const documentsMap: Map<ApiItem, DocumentNode> = new Map<ApiItem, DocumentNode>();
 
 	// Always render Model document (this is the "root" of the generated documentation suite).
-	documents.set(apiModel, createDocumentForApiModel(apiModel, config));
+	documentsMap.set(apiModel, createDocumentForApiModel(apiModel, config));
 
 	const packages = apiModel.packages;
 
@@ -75,42 +75,49 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 
 			const entryPoint = packageEntryPoints[0];
 
-			documents.set(
+			documentsMap.set(
 				packageItem,
 				createDocumentForSingleEntryPointPackage(packageItem, entryPoint, config),
 			);
 
 			const packageDocumentItems = getDocumentItems(entryPoint, config);
 			for (const apiItem of packageDocumentItems) {
-				if (!documents.has(apiItem)) {
-					documents.set(apiItem, apiItemToDocument(apiItem, config));
+				if (!documentsMap.has(apiItem)) {
+					documentsMap.set(apiItem, apiItemToDocument(apiItem, config));
 				}
 			}
 		} else {
 			// If a package contains multiple entry-points, we will generate a separate document for each.
 			// The package-level document will enumerate the entry-points.
 
-			documents.set(
+			documentsMap.set(
 				packageItem,
 				createDocumentForMultiEntryPointPackage(packageItem, packageEntryPoints, config),
 			);
 
 			for (const entryPoint of packageEntryPoints) {
-				documents.set(entryPoint, createDocumentForApiEntryPoint(entryPoint, config));
+				documentsMap.set(entryPoint, createDocumentForApiEntryPoint(entryPoint, config));
 
 				const packageDocumentItems = getDocumentItems(entryPoint, config);
 				for (const apiItem of packageDocumentItems) {
-					if (!documents.has(apiItem)) {
-						documents.set(apiItem, apiItemToDocument(apiItem, config));
+					if (!documentsMap.has(apiItem)) {
+						documentsMap.set(apiItem, apiItemToDocument(apiItem, config));
 					}
 				}
 			}
 		}
 	}
 
-	logger.success("API Model documents generated!");
+	const documents = [...documentsMap.values()];
 
-	return [...documents.values()];
+	try {
+		checkForDuplicateDocumentPaths(documents);
+	} catch (error: unknown) {
+		logger.warning((error as Error).message);
+	}
+
+	logger.success("API Model documents generated!");
+	return documents;
 }
 
 /**
