@@ -12,7 +12,6 @@ import { expect } from "chai";
 import { compare } from "dir-compare";
 
 import {
-	ApiItemUtilities,
 	FolderDocumentPlacement,
 	HierarchyKind,
 	type FolderHierarchyConfiguration,
@@ -48,11 +47,6 @@ export namespace HierarchyConfigurations {
 	const outsideFolderConfig: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Outside,
-	};
-
-	const insideFolderOptions: FolderHierarchyConfiguration = {
-		kind: HierarchyKind.Folder,
-		documentPlacement: FolderDocumentPlacement.Inside,
 	};
 
 	/**
@@ -106,6 +100,10 @@ export namespace HierarchyConfigurations {
 	};
 
 	// TODO
+	// const insideFolderOptions: FolderHierarchyConfiguration = {
+	// 	kind: HierarchyKind.Folder,
+	// 	documentPlacement: FolderDocumentPlacement.Inside,
+	// };
 	// /**
 	//  * "Deep" hierarchy: All "parent" API items generate hierarchy. All other items are rendered as documents under their parent hierarchy.
 	//  * @remarks Leads to many documents, but each document is likely to be relatively small.
