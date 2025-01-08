@@ -6,7 +6,6 @@
 import {
 	type FieldUpPath,
 	type Revertible,
-	type RevertibleAlpha,
 	cloneRevertibles,
 	RevertibleStatus,
 	type UpPath,
@@ -718,16 +717,15 @@ describe("Undo and redo", () => {
 		view.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
 
 		const forkedView = view.fork();
+		const revertibles = [...undoStack];
 
-		const batchedRevertibles: RevertibleAlpha[] = [];
 		for (const revertible of undoStack) {
 			revertible.revert();
-			batchedRevertibles.push(revertible);
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 		}
 
 		assert.throws(
-			() => cloneRevertibles(batchedRevertibles, forkedView),
+			() => cloneRevertibles(revertibles, forkedView),
 			/List of revertible should not contain disposed revertibles./,
 		);
 	});
@@ -743,10 +741,7 @@ describe("Undo and redo", () => {
 		viewA.root.child.propertyOne = 256; // 128 -> 256
 		viewA.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
 
-		const revertibles: RevertibleAlpha[] = [];
-		for (const revertible of undoStack) {
-			revertibles.push(revertible);
-		}
+		const revertibles = [...undoStack];
 
 		assert.throws(
 			() => cloneRevertibles(revertibles, viewB),
