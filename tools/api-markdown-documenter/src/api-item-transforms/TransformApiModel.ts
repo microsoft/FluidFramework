@@ -26,19 +26,6 @@ import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "
 /**
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.
  *
- * @remarks
- *
- * Which API members get their own documents and which get written to the contents of their parent is
- * determined by {@link DocumentationSuiteConfiguration.documentBoundaries}.
- *
- * The generated nodes' {@link DocumentNode.documentPath}s are determined by the provided output path and the
- * following configuration properties:
- *
- * - {@link DocumentationSuiteConfiguration.documentBoundaries}
- * - {@link DocumentationSuiteConfiguration.hierarchyBoundaries}
- *
- * @param options - Options for transforming API items into {@link DocumentationNode}s.
- *
  * @public
  */
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[] {
