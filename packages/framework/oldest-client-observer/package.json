@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/oldest-client-observer",
-	"version": "2.14.0",
+	"version": "2.20.0",
 	"description": "Data object to determine if the local client is the oldest amongst connected clients",
 	"homepage": "https://fluidframework.com",
 	"repository": {
