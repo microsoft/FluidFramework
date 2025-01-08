@@ -572,6 +572,8 @@ export interface SharedTreeFormatOptions {
 
 /**
  * Used to distinguish between different forest types.
+ * @remarks
+ * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
  * @sealed @alpha
  */
 export interface ForestType extends ErasedType<"ForestType"> {}
