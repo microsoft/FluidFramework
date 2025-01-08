@@ -51,6 +51,127 @@ await MarkdownRenderer.renderApiModel({
 });
 ```
 
+#### Update pattern for controlling file-wise hierarchy
+
+Previously, users could control certain aspects of the output documentation suite's file-system hierarchy via the `documentBoundaries` and `hierarchyBoundaries` properties of the transformation configuration.
+One particular limitation of this setup was that items yielding folder-wise hierarchy (`hierarchyBoundaries`) could never place their own document *inside* of their own hierarchy.
+This naturally lent itself to a pattern where output would commonly be formatted as:
+
+```
+- foo.md
+- foo
+    - bar.md
+    - baz.md
+```
+
+This pattern works fine for many site generation systems - a link to `/foo` will end up pointing `foo.md` and a link to `/foo/bar` will end up pointing to `foo/bar.md`.
+But some systems (e.g. `Docusaurus`) don't handle this well, and instead prefer setups like the following:
+
+```
+- foo
+    - index.md
+    - bar.md
+    - baz.md
+```
+
+With the previous configuration options, this pattern was not possible, but now is.
+Additionally, this pattern is *more* commonly accepted, so lack of support for this was a real detriment.
+
+Such patterns can now be produced via the consolidated `hierarchy` property, while still allowing full file-naming flexibility.
+
+##### Related changes
+
+For consistency / discoverability, the `DocumentationSuiteConfiguration.getFileNameForItem` property has also been moved under the new `hierarchy` property (`HierarchyConfiguration`) and renamed to `getDocumentName`.
+
+Additionally, where previously that property controlled both the document *and* folder naming corresponding to a given API item, folder naming can now be controlled independently via the `getFolderName` property.
+
+##### Example migration
+
+Consider the following configuration:
+
+```typescript
+const config = {
+    ...
+    documentBoundaries: [
+        ApiItemKind.Class,
+        ApiItemKind.Interface,
+        ApiItemKind.Namespace,
+    ],
+    hierarchyBoundaries: [
+        ApiItemKind.Namespace,
+    ]
+    ...
+}
+```
+
+With this configuration, `Class`, `Interface`, and `Namespace` API items would yield their own documents (rather than being rendered to a parent item's document), and `Namespace` items would additionally generate folder hierarchy (child items rendered to their own documents would be placed under a sub-directory).
+
+Output for this case might look something like the following:
+
+```
+- package.md
+- class.md
+- interface.md
+- namespace.md
+- namespace
+    - namespace-member-a.md
+    - namespace-member-b.md
+```
+
+This same behavior can now be configured via the following:
+
+```typescript
+const config = {
+    ...
+    hierarchy: {
+        [ApiItemKind.Class]: HierarchyKind.Document,
+        [ApiItemKind.Interface]: HierarchyKind.Document,
+        [ApiItemKind.Namespace]: {
+            kind: HierarchyKind.Folder,
+            documentPlacement: FolderDocumentPlacement.Outside,
+        },
+    }
+    ...
+}
+```
+
+Further, if you would prefer to place the resulting `Namespace` documents *under* their resulting folder, you could use a configuration like the following:
+
+```typescript
+const config = {
+    ...
+    hierarchy: {
+        [ApiItemKind.Class]: HierarchyKind.Document,
+        [ApiItemKind.Interface]: HierarchyKind.Document,
+        [ApiItemKind.Namespace]: {
+            kind: HierarchyKind.Folder,
+            documentPlacement: FolderDocumentPlacement.Inside, // <=
+        },
+        getDocumentName: (apiItem) => {
+            switch(apiItem.kind) {
+                case ApiItemKind.Namespace:
+                    return "index";
+                default:
+                    ...
+            }
+        }
+    }
+    ...
+}
+```
+
+Output for this updated case might look something like the following:
+
+```
+- package.md
+- class.md
+- interface.md
+- namespace
+    - index.md
+    - namespace-member-a.md
+    - namespace-member-b.md
+```
+
 #### Type-renames
 
 -   `ApiItemTransformationOptions` -> `ApiItemTransformations`
