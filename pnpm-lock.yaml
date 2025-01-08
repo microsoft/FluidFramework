@@ -1131,8 +1131,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/tree
       '@sinclair/typebox':
-        specifier: ^0.32.29
-        version: 0.32.35
+        specifier: ^0.34.13
+        version: 0.34.13
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -9146,8 +9146,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       '@sinclair/typebox':
-        specifier: ^0.32.29
-        version: 0.32.35
+        specifier: ^0.34.13
+        version: 0.34.13
       '@tylerbu/sorted-btree-es6':
         specifier: ^1.8.0
         version: 1.8.0
@@ -23938,6 +23938,11 @@ packages:
 
   /@sinclair/typebox@0.32.35:
     resolution: {integrity: sha512-Ul3YyOTU++to8cgNkttakC0dWvpERr6RYoHO2W47DLbFvrwBDJUY31B1sImH6JZSYc4Kt4PyHtoPNu+vL2r2dA==}
+    dev: true
+
+  /@sinclair/typebox@0.34.13:
+    resolution: {integrity: sha512-ceVKqyCEgC355Kw0s/0tyfY9MzMQINSykJ/pG2w6YnaZyrcjV48svZpr8lVZrYgWjzOmrIPBhQRAtr/7eJpA5g==}
+    dev: false
 
   /@sindresorhus/is@4.6.0:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
