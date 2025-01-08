@@ -62,12 +62,14 @@ describe("API model transformation end-to-end tests", () => {
 			describe("Ensure no duplicate document paths", () => {
 				for (const [configName, inputConfig] of testConfigs) {
 					it(configName, async () => {
-						const options: ApiItemTransformationOptions = {
+						const config: ApiItemTransformationOptions = {
 							...inputConfig,
 							apiModel,
 						};
 
-						const documents = transformApiModel(options);
+						const documents = transformApiModel(config);
+
+						// Will throw if any duplicates are found.
 						checkForDuplicateDocumentPaths(documents);
 					});
 				}
