@@ -3,24 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import type { EventEmitter } from "@fluid-internal/client-utils";
 import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
-	createChildLogger,
 	extractSafePropertiesFromMessage,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { DeltaScheduler } from "./deltaScheduler.js";
 import { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
 
@@ -31,46 +25,10 @@ type IRuntimeMessageMetadata =
 	  };
 
 /**
- * This class has the following responsibilities:
- *
- * 1. It tracks batches as we process ops and raises "batchBegin" and "batchEnd" events.
- * As part of it, it validates batch correctness (i.e. no system ops in the middle of batch)
- *
- * 2. It creates instance of ScheduleManagerCore that ensures we never start processing ops from batch
- * unless all ops of the batch are in.
+ * This class ensures that we aggregate a complete batch of incoming ops before processing them. It basically ensures
+ * that we never start processing ops in a batch IF we do not have all ops in the batch.
  */
-export class ScheduleManager {
-	private readonly deltaScheduler: DeltaScheduler;
-
-	constructor(
-		private readonly deltaManager: IDeltaManagerFull,
-		private readonly emitter: EventEmitter,
-		readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLoggerExt,
-	) {
-		this.deltaScheduler = new DeltaScheduler(
-			this.deltaManager,
-			createChildLogger({ logger: this.logger, namespace: "DeltaScheduler" }),
-		);
-		void new ScheduleManagerCore(deltaManager, getClientId, logger);
-	}
-
-	public batchBegin(message: ISequencedDocumentMessage) {
-		this.emitter.emit("batchBegin", message);
-		this.deltaScheduler.batchBegin(message);
-	}
-
-	public batchEnd(error: any | undefined, message: ISequencedDocumentMessage) {
-		this.emitter.emit("batchEnd", error, message);
-		this.deltaScheduler.batchEnd(message);
-	}
-}
-
-/**
- * This class controls pausing and resuming of inbound queue to ensure that we never
- * start processing ops in a batch IF we do not have all ops in the batch.
- */
-class ScheduleManagerCore {
+export class InboundBatchAggregator {
 	private pauseSequenceNumber: number | undefined;
 	private currentBatchClientId: string | undefined;
 	private localPaused = false;
@@ -82,38 +40,8 @@ class ScheduleManagerCore {
 		private readonly getClientId: () => string | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
-		// Listen for delta manager sends and add batch metadata to messages
-		this.deltaManager.on("prepareSend", (messages: IDocumentMessage[]) => {
-			if (messages.length === 0) {
-				return;
-			}
-
-			// First message will have the batch flag set to true if doing a batched send
-			const firstMessageMetadata = messages[0].metadata as IRuntimeMessageMetadata;
-			if (!firstMessageMetadata?.batch) {
-				return;
-			}
-
-			// If the batch contains only a single op, clear the batch flag.
-			if (messages.length === 1) {
-				delete firstMessageMetadata.batch;
-				return;
-			}
-
-			// Set the batch flag to false on the last message to indicate the end of the send batch
-			const lastMessage = messages[messages.length - 1];
-			// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
-
-			lastMessage.metadata = { ...(lastMessage.metadata as any), batch: false };
-		});
-
 		// Listen for updates and peek at the inbound
-		this.deltaManager.inbound.on("push", (message: ISequencedDocumentMessage) => {
-			this.trackPending(message);
-		});
-
-		// Start with baseline - empty inbound queue.
-		assert(!this.localPaused, 0x293 /* "initial state" */);
+		this.deltaManager.inbound.on("push", this.trackPending);
 
 		const allPending = this.deltaManager.inbound.toArray();
 		for (const pending of allPending) {
@@ -121,16 +49,21 @@ class ScheduleManagerCore {
 		}
 
 		// We are intentionally directly listening to the "op" to inspect system ops as well.
-		// If we do not observe system ops, we are likely to hit 0x296 assert when system ops
+		// If we do not observe system ops, we are likely to hit an error when system ops
 		// precedes start of incomplete batch.
-		this.deltaManager.on("op", (message) => this.afterOpProcessing(message));
+		this.deltaManager.on("op", this.afterOpProcessing);
+	}
+
+	public dispose() {
+		this.deltaManager.off("op", this.afterOpProcessing);
+		this.deltaManager.inbound.off("push", this.trackPending);
 	}
 
 	/**
-	 * The only public function in this class - called when we processed an op,
-	 * to make decision if op processing should be paused or not after that.
+	 * Callback for DeltaManager's "op" event, for us to make decision if op processing should
+	 * be paused or not after that.
 	 */
-	public afterOpProcessing(message: ISequencedDocumentMessage) {
+	private readonly afterOpProcessing = (message: ISequencedDocumentMessage) => {
 		assert(
 			!this.localPaused,
 			0x294 /* "can't have op processing paused if we are processing an op" */,
@@ -157,7 +90,7 @@ class ScheduleManagerCore {
 				throw DataProcessingError.create(
 					// Former assert 0x296
 					"Incomplete batch",
-					"ScheduleManager",
+					"InboundBatchAggregator",
 					message,
 					{
 						type: message.type,
@@ -174,47 +107,12 @@ class ScheduleManagerCore {
 				this.pauseQueue();
 			}
 		}
-	}
-
-	private pauseQueue() {
-		assert(!this.localPaused, 0x297 /* "always called from resumed state" */);
-		this.localPaused = true;
-		this.timePaused = performance.now();
-		// eslint-disable-next-line @typescript-eslint/no-floating-promises
-		this.deltaManager.inbound.pause();
-	}
-
-	private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
-		const endBatch = messageEndBatch.sequenceNumber;
-		const duration = this.localPaused ? performance.now() - this.timePaused : undefined;
-
-		this.batchCount++;
-		if (this.batchCount % 1000 === 1) {
-			this.logger.sendTelemetryEvent({
-				eventName: "BatchStats",
-				sequenceNumber: endBatch,
-				length: endBatch - startBatch + 1,
-				msnDistance: endBatch - messageEndBatch.minimumSequenceNumber,
-				duration,
-				batchCount: this.batchCount,
-				interrupted: this.localPaused,
-			});
-		}
-
-		// Return early if no change in value
-		if (!this.localPaused) {
-			return;
-		}
-
-		this.localPaused = false;
-
-		this.deltaManager.inbound.resume();
-	}
+	};
 
 	/**
 	 * Called for each incoming op (i.e. inbound "push" notification)
 	 */
-	private trackPending(message: ISequencedDocumentMessage) {
+	private readonly trackPending = (message: ISequencedDocumentMessage) => {
 		assert(
 			this.deltaManager.inbound.length !== 0,
 			0x298 /* "we have something in the queue that generates this event" */,
@@ -324,5 +222,40 @@ class ScheduleManagerCore {
 			// Continuation of current batch. Do nothing
 			assert(this.currentBatchClientId !== undefined, 0x2a1 /* "logic error" */);
 		}
+	};
+
+	private pauseQueue() {
+		assert(!this.localPaused, 0x297 /* "always called from resumed state" */);
+		this.localPaused = true;
+		this.timePaused = performance.now();
+		// eslint-disable-next-line @typescript-eslint/no-floating-promises
+		this.deltaManager.inbound.pause();
+	}
+
+	private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
+		const endBatch = messageEndBatch.sequenceNumber;
+		const duration = this.localPaused ? performance.now() - this.timePaused : undefined;
+
+		this.batchCount++;
+		if (this.batchCount % 1000 === 1) {
+			this.logger.sendTelemetryEvent({
+				eventName: "BatchStats",
+				sequenceNumber: endBatch,
+				length: endBatch - startBatch + 1,
+				msnDistance: endBatch - messageEndBatch.minimumSequenceNumber,
+				duration,
+				batchCount: this.batchCount,
+				interrupted: this.localPaused,
+			});
+		}
+
+		// Return early if no change in value
+		if (!this.localPaused) {
+			return;
+		}
+
+		this.localPaused = false;
+
+		this.deltaManager.inbound.resume();
 	}
 }

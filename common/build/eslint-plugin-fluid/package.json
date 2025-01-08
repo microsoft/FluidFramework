@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/eslint-plugin-fluid",
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"description": "Custom ESLint rules for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,7 +31,6 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"eslint": "^8.57.0",
 		"mocha": "^10.4.0",
-
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.2.5",
 		"rimraf": "^5.0.7",
