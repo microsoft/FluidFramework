@@ -78,6 +78,26 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return result;
 	}
 
+	public async getTenantfromRiddler(tenantId?: string): Promise<core.ITenantConfig> {
+		const restWrapper = new BasicRestWrapper(
+			undefined /* baseUrl */,
+			undefined /* defaultQueryString */,
+			undefined /* maxBodyLength */,
+			undefined /* maxContentLength */,
+			undefined /* defaultHeaders */,
+			undefined /* axios */,
+			undefined /* refreshDefaultQureyString */,
+			undefined /* refreshDefaultHeaders */,
+			() => getGlobalTelemetryContext().getProperties().correlationId,
+			() => getGlobalTelemetryContext().getProperties(),
+		);
+		const result = await restWrapper.get<core.ITenantConfig>(
+			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`,
+			undefined,
+		);
+		return result;
+	}
+
 	public async getTenant(
 		tenantId: string,
 		documentId: string,

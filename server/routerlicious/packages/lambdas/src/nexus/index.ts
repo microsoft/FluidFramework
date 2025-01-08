@@ -47,6 +47,7 @@ import { addNexusMessageTrace } from "./trace";
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
 import { isValidConnectionMessage } from "./protocol";
+import { checkNetworkInformation } from "./networkHelper";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -103,6 +104,7 @@ export function configureWebSocketServices(
 	isTokenExpiryEnabled: boolean = false,
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
+	enableNetworkCheck: boolean = false,
 	cache?: core.ICache,
 	connectThrottlerPerTenant?: core.IThrottler,
 	connectThrottlerPerCluster?: core.IThrottler,
@@ -249,6 +251,25 @@ export function configureWebSocketServices(
 				[CommonProperties.roomClients]: JSON.stringify([...roomMap.keys()]),
 				[BaseTelemetryProperties.correlationId]: correlationId,
 			};
+
+			if (enableNetworkCheck) {
+				const networkError = await checkNetworkInformation(tenantManager, socket);
+				if (!networkError.shouldConnect) {
+					const nackMessage = createNackMessage(
+						404,
+						NackErrorType.BadRequestError,
+						networkError.message,
+					);
+					const error = new NetworkError(404, "socket private link check failed");
+					Lumberjack.warning(
+						"socket private link check failed",
+						baseLumberjackProperties,
+						error,
+					);
+					socket.emit("nack", "", [nackMessage]);
+					return;
+				}
+			}
 
 			connectDocumentP = getGlobalTelemetryContext().bindPropertiesAsync(
 				{ correlationId, ...baseLumberjackProperties },

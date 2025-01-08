@@ -13,6 +13,7 @@ alfred:
   tenants: []
   key: jwt_key
   numberOfMessagesPerTrace: 100
+  enableNetworkCheck: false
   sessionStickinessDurationMs: 3600000
   ignoreEphemeralFlag: true
   throttling:
@@ -49,6 +50,7 @@ nexus:
   key: jwt_key
   maxNumberOfClientsPerDocument: 1000000
   numberOfMessagesPerTrace: 100
+  enableNetworkCheck: false
   throttling:
     socketConnectionsPerTenant: disabled
     socketConnectionsPerCluster: disabled

@@ -4,10 +4,10 @@
  */
 
 import { parse } from "path";
-import { NetworkError } from "@fluidframework/server-services-client";
+import { NetworkError, getNetworkInformationFromIP } from "@fluidframework/server-services-client";
 import type { RequestHandler, Response } from "express";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-
+import { ITenantManager, type ITenantConfig } from "@fluidframework/server-services-core";
 /**
  * Check a given path string for path traversal (e.g. "../" or "/").
  * @internal
@@ -33,6 +33,59 @@ export function validateRequestParams(...paramNames: (string | number)[]): Reque
 					Promise.reject(new NetworkError(400, `Invalid ${paramName}: ${param}`)),
 					res,
 				);
+			}
+		}
+		next();
+	};
+}
+
+/**
+ * Validate private link.
+ * @internal
+ */
+export function validatePrivateLink(
+	tenantManager: ITenantManager,
+	enableNetworkCheck: boolean = false,
+): RequestHandler {
+	return async (req, res, next) => {
+		if (enableNetworkCheck) {
+			const tenantId = req.params.tenantId;
+			if (!tenantId) {
+				next();
+			}
+			const clientIPAddress = req.ip ? req.ip : "";
+			const result = getNetworkInformationFromIP(clientIPAddress);
+			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
+			const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
+			if (result.isPrivateLink) {
+				if (tenantInfo.customData.accountLinkID === result.privateLinkId) {
+					Lumberjack.info("This is a private link request", {
+						tenantId,
+						clientIPAddress,
+					});
+				} else {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`This req private network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+							),
+						),
+						res,
+					);
+				}
+			} else {
+				if (privateLinkEnable) {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(
+								400,
+								`This req public network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+							),
+						),
+						res,
+					);
+				}
 			}
 		}
 		next();

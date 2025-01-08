@@ -102,6 +102,9 @@
 			},
 			"InterfaceDeclaration_ITenantManager": {
 				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IWebSocket": {
+				"forwardCompat": false
 			}
 		}
 	}

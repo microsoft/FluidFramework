@@ -50,6 +50,7 @@ export {
 	SocketIoNodeClusterWebServerFactory,
 	SocketIoWebServerFactory,
 	validateRequestParams,
+	validatePrivateLink,
 	WebServer,
 	WholeSummaryReadGitManager,
 	WholeSummaryWriteGitManager,

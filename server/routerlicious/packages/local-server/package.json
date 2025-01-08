@@ -101,6 +101,15 @@
 		"broken": {
 			"ClassDeclaration_LocalOrdererManager": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalWebSocket": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalDeltaConnectionServer": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_LocalWebSocketServer": {
+				"forwardCompat": false
 			}
 		}
 	}

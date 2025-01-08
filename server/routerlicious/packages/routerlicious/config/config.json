@@ -83,6 +83,7 @@
 	},
 	"alfred": {
 		"kafkaClientId": "alfred",
+		"enableNetworkCheck": false,
 		"sessionStickinessDurationMs": 3600000,
 		"ignoreEphemeralFlag": true,
 		"enableClientIPLogging": false,
@@ -134,6 +135,7 @@
 		"verifyMaxMessageSize": false,
 		"maxNumberOfClientsPerDocument": 1000000,
 		"numberOfMessagesPerTrace": 100,
+		"enableNetworkCheck": false,
 		"throttling": {
 			"socketConnectionsPerTenant": "disabled",
 			"socketConnectionsPerCluster": "disabled",
@@ -429,9 +431,5 @@
 	},
 	"clusterDraining": {
 		"enable": false
-	},
-	"getSession": {
-		"readDocumentRetryDelay": 150,
-		"readDocumentMaxRetries": 2
 	}
 }

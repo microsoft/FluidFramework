@@ -2873,6 +2873,7 @@ declare function get_old_InterfaceDeclaration_IWebSocket():
 declare function use_current_InterfaceDeclaration_IWebSocket(
     use: TypeOnly<current.IWebSocket>): void;
 use_current_InterfaceDeclaration_IWebSocket(
+    // @ts-expect-error compatibility expected to be broken
     get_old_InterfaceDeclaration_IWebSocket());
 
 /*

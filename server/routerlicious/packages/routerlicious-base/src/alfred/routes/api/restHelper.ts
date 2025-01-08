@@ -130,3 +130,31 @@ export function craftMapSet(op: IMapSetOperation) {
 
 	return opMessage;
 }
+
+export function getDocumentUrlsfromNetworkInfo(
+	tenantId: string,
+	externalOrdererUrl: string,
+	externalHistorianUrl: string,
+	externalDeltaStreamUrl: string,
+	isPrivateLink?: boolean | false,
+): {
+	documentOrdererUrl: string;
+	documentHistorianUrl: string;
+	documentDeltaStreamUrl: string;
+} {
+	if (isPrivateLink) {
+		return {
+			documentOrdererUrl: externalOrdererUrl.replace("https://", `https://${tenantId}.`),
+			documentHistorianUrl: externalHistorianUrl.replace("https://", `https://${tenantId}.`),
+			documentDeltaStreamUrl: externalDeltaStreamUrl.replace(
+				"https://",
+				`https://${tenantId}.`,
+			),
+		};
+	}
+	return {
+		documentOrdererUrl: externalOrdererUrl,
+		documentHistorianUrl: externalHistorianUrl,
+		documentDeltaStreamUrl: externalDeltaStreamUrl,
+	};
+}

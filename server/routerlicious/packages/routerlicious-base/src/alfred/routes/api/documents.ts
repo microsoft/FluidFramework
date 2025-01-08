@@ -29,6 +29,7 @@ import {
 	getBooleanParam,
 	validateRequestParams,
 	handleResponse,
+	validatePrivateLink,
 } from "@fluidframework/server-services";
 import { Request, Router } from "express";
 import winston from "winston";
@@ -39,8 +40,7 @@ import {
 	NetworkError,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
-	createFluidServiceNetworkError,
-	InternalErrorCode,
+	getNetworkInformationFromIP,
 } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
@@ -53,6 +53,7 @@ import { v4 as uuid } from "uuid";
 import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
+import { getDocumentUrlsfromNetworkInfo } from "./restHelper";
 
 /**
  * Response body shape for modern clients that can handle object responses.
@@ -146,6 +147,7 @@ export function create(
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
 	const externalHistorianUrl: string = config.get("worker:blobStorageUrl");
+	const enableNetworkCheck: boolean = config.get("alfred:enableNetworkCheck");
 	const externalDeltaStreamUrl: string =
 		config.get("worker:deltaStreamUrl") || externalOrdererUrl;
 	const messageBrokerId: string | undefined =
@@ -236,6 +238,7 @@ export function create(
 	router.post(
 		"/:tenantId",
 		validateRequestParams("tenantId"),
+		validatePrivateLink(tenantManager, enableNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.createDocThrottleIdPrefix),
 			winston,
@@ -257,23 +260,18 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
-			// Reject create document request if cluster is in draining process.
-			if (
-				clusterDrainingChecker &&
-				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
-					Lumberjack.error("Failed to get cluster draining status", undefined, error);
-					return false;
-				}))
-			) {
-				Lumberjack.info("Cluster is in draining process. Reject create document request.");
-				const error = createFluidServiceNetworkError(503, {
-					message: "Server is unavailable. Please retry create document later.",
-					internalErrorCode: InternalErrorCode.ClusterDraining,
-				});
-				handleResponse(Promise.reject(error), response);
-			}
+			const clientIPAddress = request.ip ? request.ip : "";
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			// Tenant and document
 			const tenantId = request.params.tenantId;
+			const documentUrls = getDocumentUrlsfromNetworkInfo(
+				tenantId,
+				externalOrdererUrl,
+				externalHistorianUrl,
+				externalDeltaStreamUrl,
+				networkInfo.isPrivateLink,
+			);
+
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
@@ -284,6 +282,9 @@ export function create(
 				? convertFirstSummaryWholeSummaryTreeToSummaryTree(request.body.summary)
 				: request.body.summary;
 
+			Lumberjack.info(
+				`Put a debug message here: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
+			);
 			Lumberjack.info(
 				`Whole summary on First Summary: ${request.body.enableAnyBinaryBlobOnFirstSummary}.`,
 			);
@@ -306,9 +307,9 @@ export function create(
 				summary,
 				sequenceNumber,
 				crypto.randomBytes(4).toString("hex"),
-				externalOrdererUrl,
-				externalHistorianUrl,
-				externalDeltaStreamUrl,
+				documentUrls.documentOrdererUrl,
+				documentUrls.documentHistorianUrl,
+				documentUrls.documentDeltaStreamUrl,
 				values,
 				enableDiscovery,
 				isEphemeral,
@@ -327,9 +328,9 @@ export function create(
 					generateToken,
 					enableDiscovery,
 					{
-						externalOrdererUrl,
-						externalHistorianUrl,
-						externalDeltaStreamUrl,
+						externalOrdererUrl: documentUrls.documentOrdererUrl,
+						externalHistorianUrl: documentUrls.documentHistorianUrl,
+						externalDeltaStreamUrl: documentUrls.documentDeltaStreamUrl,
 						messageBrokerId,
 					},
 				);
@@ -380,6 +381,7 @@ export function create(
 	 */
 	router.get(
 		"/:tenantId/session/:id",
+		validatePrivateLink(tenantManager, enableNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getSessionThrottleIdPrefix),
 			winston,
@@ -395,6 +397,15 @@ export function create(
 		async (request, response, next) => {
 			const documentId = request.params.id;
 			const tenantId = request.params.tenantId;
+			const clientIPAddress = request.ip ? request.ip : "";
+			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+			const documentUrls = getDocumentUrlsfromNetworkInfo(
+				tenantId,
+				externalOrdererUrl,
+				externalHistorianUrl,
+				externalDeltaStreamUrl,
+				networkInfo.isPrivateLink,
+			);
 
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(
@@ -403,30 +414,11 @@ export function create(
 			);
 			// Tracks the different stages of getSessionMetric
 			const connectionTrace = new StageTrace<string>("GetSession");
-			// Reject get session request on existing, inactive sessions if cluster is in draining process.
-			if (
-				clusterDrainingChecker &&
-				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
-					Lumberjack.error("Failed to get cluster draining status", undefined, error);
-					return false;
-				}))
-			) {
-				Lumberjack.info("Cluster is in draining process. Reject get session request.");
-				connectionTrace?.stampStage("ClusterIsDraining");
-				const error = createFluidServiceNetworkError(503, {
-					message: "Server is unavailable. Please retry session discovery later.",
-					internalErrorCode: InternalErrorCode.ClusterDraining,
-				});
-				handleResponse(Promise.reject(error), response);
-			}
-			connectionTrace?.stampStage("ClusterDrainingChecked");
-			const readDocumentRetryDelay: number = config.get("getSession:readDocumentRetryDelay");
-			const readDocumentMaxRetries: number = config.get("getSession:readDocumentMaxRetries");
 
 			const session = getSession(
-				externalOrdererUrl,
-				externalHistorianUrl,
-				externalDeltaStreamUrl,
+				documentUrls.documentOrdererUrl,
+				documentUrls.documentHistorianUrl,
+				documentUrls.documentDeltaStreamUrl,
 				tenantId,
 				documentId,
 				documentRepository,
@@ -435,8 +427,6 @@ export function create(
 				clusterDrainingChecker,
 				ephemeralDocumentTTLSec,
 				connectionTrace,
-				readDocumentRetryDelay,
-				readDocumentMaxRetries,
 			);
 
 			const onSuccess = (result: ISession): void => {

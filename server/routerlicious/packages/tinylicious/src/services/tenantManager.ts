@@ -83,6 +83,10 @@ export class TenantManager implements ITenantManager, ITenantConfigManager {
 		throw new Error("Method not implemented.");
 	}
 
+	public async getTenantfromRiddler(tenantId?: string): Promise<ITenantConfig> {
+		throw new Error("Method not implemented.");
+	}
+
 	public getTenant(tenantId: string): Promise<ITenant> {
 		return Promise.resolve(
 			new TinyliciousTenant(this.url, `${this.url}/repos/${encodeURIComponent(tenantId)}`),
