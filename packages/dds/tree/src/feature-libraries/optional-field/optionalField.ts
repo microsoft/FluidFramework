@@ -660,9 +660,7 @@ export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
 ): FieldChangeDelta {
-	let fieldChanges: DeltaFieldChanges = [];
-	const global: DeltaDetachedNodeChanges[] = [];
-	const rename: DeltaDetachedNodeRename[] = [];
+	const delta: Mutable<FieldChangeDelta> = {};
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
@@ -678,41 +676,39 @@ export function optionalFieldIntoDelta(
 	}
 
 	if (change.moves.length > 0) {
-		change.moves.forEach(([src, dst]) =>
-			rename.push({
-				count: 1,
-				oldId: nodeIdFromChangeAtom(src),
-				newId: nodeIdFromChangeAtom(dst),
-			}),
-		);
+		delta.rename = change.moves.map(([src, dst]) => ({
+			count: 1,
+			oldId: nodeIdFromChangeAtom(src),
+			newId: nodeIdFromChangeAtom(dst),
+		}));
 	}
 
 	if (change.childChanges.length > 0) {
+		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const childDelta = deltaFromChild(childChange);
-			if (childDelta !== undefined) {
-				if (id !== "self") {
-					global.push({
-						id: { major: id.revision, minor: id.localId },
-						fields: childDelta,
-					});
-				} else {
-					mark.fields = childDelta;
-					markIsANoop = false;
-				}
+			if (id !== "self" && childDelta !== undefined) {
+				const fields = childDelta;
+				globals.push({
+					id: { major: id.revision, minor: id.localId },
+					fields,
+				});
+			} else {
+				mark.fields = childDelta;
+				markIsANoop = false;
 			}
+		}
+
+		if (globals.length > 0) {
+			delta.global = globals;
 		}
 	}
 
 	if (!markIsANoop) {
-		fieldChanges = [mark];
+		delta.local = [mark];
 	}
 
-	return {
-		local: fieldChanges,
-		global,
-		rename,
-	};
+	return delta;
 }
 
 export const optionalChangeHandler: FieldChangeHandler<
