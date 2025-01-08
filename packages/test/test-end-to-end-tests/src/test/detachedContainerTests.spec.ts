@@ -41,6 +41,7 @@ import {
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 	TestFluidObjectFactory,
+	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 	timeoutPromise,
@@ -115,7 +116,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		);
 		assert.strictEqual(container.closed, false, "Container should be open");
 		assert.strictEqual(
-			container.deltaManager.inbound.length,
+			toIDeltaManagerFull(container.deltaManager).inbound.length,
 			0,
 			"Inbound queue should be empty",
 		);
@@ -156,7 +157,7 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 		);
 		assert.strictEqual(container.closed, false, "Container should be open");
 		assert.strictEqual(
-			container.deltaManager.inbound.length,
+			toIDeltaManagerFull(container.deltaManager).inbound.length,
 			0,
 			"Inbound queue should be empty",
 		);
@@ -931,7 +932,7 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		);
 		assert.strictEqual(container.closed, false, "Container should be open");
 		assert.strictEqual(
-			container.deltaManager.inbound.length,
+			toIDeltaManagerFull(container.deltaManager).inbound.length,
 			0,
 			"Inbound queue should be empty",
 		);

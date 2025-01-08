@@ -1,5 +1,38 @@
 # @fluidframework/devtools
 
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+### Minor Changes
+
+-   API clarifications for devtools packages ([#23165](https://github.com/microsoft/FluidFramework/pull/23165)) [cea34d10d0](https://github.com/microsoft/FluidFramework/commit/cea34d10d0f816335ab1b88b190940046ae7b696)
+
+    APIs that were never intended for direct consumer use have been marked as `@system`.
+    These are:
+
+    -   HasContainerKey
+
+    APIs that were not intended to be extended by consumers have been marked as `@sealed`.
+    These are:
+
+    -   ContainerDevtoolsProps
+    -   DevtoolsProps
+    -   HasContainerKey
+    -   IDevtools
+
+    Additionally, interface properties have been marked as `readonly`.
+
+## 2.10.0
+
+Dependency updates only.
+
 ## 2.5.0
 
 Dependency updates only.

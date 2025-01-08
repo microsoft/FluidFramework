@@ -42,6 +42,9 @@ export interface IMockSocketConnectResponse {
 		  }
 		| {
 				eventToEmit: "connect_timeout";
+		  }
+		| {
+				eventToEmit: undefined;
 		  };
 }
 
@@ -52,7 +55,7 @@ export interface IMockSocketConnectResponse {
 export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 	public disconnected = false;
 	constructor(
-		private readonly mockSocketConnectResponse: IMockSocketConnectResponse = {
+		private mockSocketConnectResponse: IMockSocketConnectResponse = {
 			connect_document: { eventToEmit: "connect_document_success" },
 		},
 	) {
@@ -102,6 +105,16 @@ export class ClientSocketMock extends TypedEventEmitter<SocketMockEvents> {
 			this.disconnect();
 		}
 		this.emit("server_disconnect", socketError, clientId);
+	}
+
+	/**
+	 * Use this to set connect response when the socket is reused.
+	 * @param connectResponse - response to be sent on connect event.
+	 */
+	public setMockSocketConnectResponseForReuse(
+		connectResponse: IMockSocketConnectResponse,
+	): void {
+		this.mockSocketConnectResponse = connectResponse;
 	}
 
 	public emit(eventName: string, ...args: unknown[]): boolean {

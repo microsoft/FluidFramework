@@ -13,47 +13,13 @@ import {
 
 import {
 	GCSummaryStateTracker,
-	GCVersion,
 	IGCStats,
 	IGarbageCollectionState,
 	gcStateBlobKey,
 	nextGCVersion,
 } from "../../gc/index.js";
 
-type GCSummaryStateTrackerWithPrivates = Omit<
-	GCSummaryStateTracker,
-	"latestSummaryGCVersion"
-> & {
-	latestSummaryGCVersion: GCVersion;
-};
-
 describe("GCSummaryStateTracker tests", () => {
-	it("Autorecovery: requesting Full GC", async () => {
-		const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker({
-			gcAllowed: true,
-			gcVersionInBaseSnapshot: 1,
-			gcVersionInEffect: 1,
-		}) as any;
-		assert.equal(tracker.autoRecovery.fullGCRequested(), false, "Should be false by default");
-
-		tracker.autoRecovery.requestFullGCOnNextRun();
-
-		assert.equal(
-			tracker.autoRecovery.fullGCRequested(),
-			true,
-			"Should be true after requesting full GC",
-		);
-
-		// After the first summary succeeds (refreshLatestSummary called), the state should be reset.
-		await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
-
-		assert.equal(
-			tracker.autoRecovery.fullGCRequested(),
-			false,
-			"Should be false after Summary Ack",
-		);
-	});
-
 	/**
 	 * These tests validate that the GC data is written in summary incrementally. Basically, only parts of the GC
 	 * data that has changed since the last successful summary is re-written, rest is written as SummaryHandle.
@@ -115,15 +81,15 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
-				summary.summary.tree[gcStateBlobKey].type === SummaryType.Blob,
+				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Blob,
 				"GC state should be written as a blob",
 			);
 			assert(
-				summary.summary.tree[gcTombstoneBlobKey].type === SummaryType.Handle,
+				summary.summary.tree[gcTombstoneBlobKey]?.type === SummaryType.Handle,
 				"Tombstone state should be written as handle",
 			);
 			assert(
-				summary.summary.tree[gcDeletedBlobKey].type === SummaryType.Handle,
+				summary.summary.tree[gcDeletedBlobKey]?.type === SummaryType.Handle,
 				"Deleted nodes should be written as handle",
 			);
 		});
@@ -140,15 +106,15 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
-				summary.summary.tree[gcStateBlobKey].type === SummaryType.Handle,
+				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Handle,
 				"GC state should be written as handle",
 			);
 			assert(
-				summary.summary.tree[gcTombstoneBlobKey].type === SummaryType.Blob,
+				summary.summary.tree[gcTombstoneBlobKey]?.type === SummaryType.Blob,
 				"Tombstone state should be written as a blob",
 			);
 			assert(
-				summary.summary.tree[gcDeletedBlobKey].type === SummaryType.Handle,
+				summary.summary.tree[gcDeletedBlobKey]?.type === SummaryType.Handle,
 				"Deleted nodes should be written as handle",
 			);
 		});
@@ -165,15 +131,15 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
-				summary.summary.tree[gcStateBlobKey].type === SummaryType.Handle,
+				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Handle,
 				"GC state should be written as handle",
 			);
 			assert(
-				summary.summary.tree[gcTombstoneBlobKey].type === SummaryType.Handle,
+				summary.summary.tree[gcTombstoneBlobKey]?.type === SummaryType.Handle,
 				"Tombstone state should be written as handle",
 			);
 			assert(
-				summary.summary.tree[gcDeletedBlobKey].type === SummaryType.Blob,
+				summary.summary.tree[gcDeletedBlobKey]?.type === SummaryType.Blob,
 				"Deleted nodes should be written as a blob",
 			);
 		});

@@ -5,7 +5,6 @@
 
 import type { Server } from "node:http";
 
-import { delay } from "@fluidframework/core-utils/internal";
 import cors from "cors";
 import express from "express";
 import fetch, { Response } from "node-fetch";
@@ -19,7 +18,7 @@ import {
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import { ITaskData } from "../src/model-interface/index.js";
 
-import { closeServer } from "./utilities.js";
+import { closeServer, delay } from "./utilities.js";
 
 const localServicePort = 5002;
 const externalTaskListId = "task-list-1";
@@ -47,7 +46,7 @@ const registerExternalServiceWebhook = async (taskListId: string): Promise<Respo
 
 /**
  * Helper function for updating data within the external data service.
- * It also tests the response for a given code as well and will fail if it doesnt match.
+ * It also tests the response for a given code as well and will fail if it doesn't match.
  */
 const updateExternalData = async (data: ITaskData, taskListId: string): Promise<Response> => {
 	const dataUpdateResponse = await fetch(
@@ -154,6 +153,14 @@ describe("mock-customer-service", () => {
 
 		await closeServer(_externalDataService);
 		await closeServer(_customerService);
+
+		// Something about shutting down the servers after each test and then starting new ones on the same ports before
+		// running the next test is causing issues where the second test to run gets an "other side closed" message when
+		// it tries to issue its first request to the services. This does not happen on Node18 but does on Node20.
+		// I couldn't figure out why, but letting the JS turn end here before the test runs seems to fix it.
+		await new Promise<void>((resolve) => {
+			setTimeout(resolve, 0);
+		});
 	});
 
 	// We have omitted `@types/supertest` due to cross-package build issue.

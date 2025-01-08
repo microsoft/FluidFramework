@@ -17,7 +17,12 @@ export {
 	type TreeBranchEvents,
 	asTreeViewAlpha,
 } from "./tree.js";
-export { SchemaFactory, type ScopedSchemaName } from "./schemaFactory.js";
+export {
+	SchemaFactory,
+	type ScopedSchemaName,
+	type SchemaFactoryObjectOptions,
+} from "./schemaFactory.js";
+export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
 	ValidateRecursiveSchema,
 	FixRecursiveArraySchema,
@@ -29,7 +34,16 @@ export {
 } from "./schemaCreationUtilities.js";
 export { treeNodeApi, type TreeNodeApi, tryGetSchema } from "./treeNodeApi.js";
 export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
-export type { SimpleTreeSchema } from "./simpleSchema.js";
+export type {
+	SimpleTreeSchema,
+	SimpleNodeSchema,
+	SimpleFieldSchema,
+	SimpleLeafNodeSchema,
+	SimpleMapNodeSchema,
+	SimpleArrayNodeSchema,
+	SimpleObjectNodeSchema,
+	SimpleNodeSchemaBase,
+} from "./simpleSchema.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -81,11 +95,22 @@ export {
 	verboseFromCursor,
 } from "./verboseTree.js";
 
-export type { EncodeOptions } from "./customTree.js";
+export {
+	type EncodeOptions,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
+} from "./customTree.js";
 
 export { type ConciseTree, conciseFromCursor } from "./conciseTree.js";
 
 export { TreeBeta, type NodeChangedData, type TreeChangeEventsBeta } from "./treeApiBeta.js";
+export { createSimpleTreeIndex, type SimpleTreeIndex } from "./simpleTreeIndex.js";
+export {
+	createIdentifierIndex,
+	type IdentifierIndex,
+} from "./identifierIndex.js";
 
 export {
 	extractPersistedSchema,

@@ -21,12 +21,13 @@ import {
 	mapCursorFields,
 	Multiplicity,
 	ValueSchema,
+	type TreeChunk,
+	tryGetChunk,
 } from "../../core/index.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { FullSchemaPolicy } from "../modular-schema/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
-import { type TreeChunk, tryGetChunk } from "./chunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 import { isStableNodeKey } from "../node-key/index.js";
@@ -134,7 +135,7 @@ export class Chunker implements IChunker {
 		if (cached !== undefined) {
 			return cached;
 		}
-		this.unregisterSchemaCallback = this.schema.on("afterSchemaChange", () =>
+		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
 		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);

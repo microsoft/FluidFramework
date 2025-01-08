@@ -171,10 +171,6 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		getAudience: (...args) => {
 			return context.getAudience(...args);
 		},
-		// back-compat, to be removed in 2.0
-		ensureNoDataModelChanges: (...args) => {
-			return context.ensureNoDataModelChanges(...args);
-		},
 		submitMessage: (...args) => {
 			return context.submitMessage(...args);
 		},
@@ -1555,7 +1551,7 @@ export function getSummaryForDatastores(
 	}
 
 	if (rootHasIsolatedChannels(metadata)) {
-		const datastoresSnapshot = snapshot.trees[channelsTreeName];
+		const datastoresSnapshot: ISnapshotTree | undefined = snapshot.trees[channelsTreeName];
 		assert(!!datastoresSnapshot, 0x168 /* Expected tree in snapshot not found */);
 		return datastoresSnapshot;
 	} else {

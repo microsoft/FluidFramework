@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-properties",
-	"version": "2.10.0",
+	"version": "2.20.0",
 	"description": "definitions of properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,8 +78,8 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.50.0",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/build-tools": "^0.51.0",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^8.0.1",

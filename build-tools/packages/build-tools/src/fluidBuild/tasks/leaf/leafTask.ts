@@ -7,8 +7,8 @@ import * as assert from "assert";
 import crypto from "crypto";
 import * as path from "path";
 import { AsyncPriorityQueue } from "async";
-import chalk from "chalk";
 import registerDebug from "debug";
+import chalk from "picocolors";
 
 import { existsSync } from "node:fs";
 import { readFile, stat, unlink, writeFile } from "node:fs/promises";

@@ -19,3 +19,11 @@ export async function closeServer(server: Server): Promise<void> {
 		});
 	});
 }
+
+/**
+ * Returns a promise that resolves after `timeMs`.
+ * @param timeMs - Time in milliseconds to wait.
+ * @internal
+ */
+export const delay = async (timeMs: number): Promise<void> =>
+	new Promise((resolve) => setTimeout(() => resolve(), timeMs));

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "5.5.0",
+	"version": "5.7.1",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -24,17 +24,19 @@
 		"print-config:react": "eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json",
 		"print-config:recommended": "eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json",
 		"print-config:strict": "eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json",
+		"print-config:strict-biome": "eslint --config ./strict-biome.js --print-config ./src/file.ts > ./printed-configs/strict-biome.json",
 		"print-config:test": "eslint --config ./index.js --print-config ./src/test/file.ts > ./printed-configs/test.json",
 		"test": "echo TODO: add tests"
 	},
 	"dependencies": {
-		"@fluid-internal/eslint-plugin-fluid": "^0.1.2",
+		"@fluid-internal/eslint-plugin-fluid": "^0.1.4",
 		"@microsoft/tsdoc": "^0.14.2",
 		"@rushstack/eslint-patch": "~1.4.0",
 		"@rushstack/eslint-plugin": "~0.13.1",
 		"@rushstack/eslint-plugin-security": "~0.7.1",
 		"@typescript-eslint/eslint-plugin": "~6.7.5",
 		"@typescript-eslint/parser": "~6.7.5",
+		"eslint-config-biome": "~1.9.3",
 		"eslint-config-prettier": "~9.0.0",
 		"eslint-import-resolver-typescript": "~3.6.3",
 		"eslint-plugin-eslint-comments": "~3.2.0",

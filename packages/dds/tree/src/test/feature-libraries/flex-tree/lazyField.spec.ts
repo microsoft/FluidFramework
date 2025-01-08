@@ -5,7 +5,7 @@
 
 /* eslint-disable import/no-internal-modules */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 

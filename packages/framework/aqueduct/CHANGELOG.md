@@ -1,5 +1,52 @@
 # @fluidframework/aqueduct
 
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+### Minor Changes
+
+-   The ContainerRuntime class is now deprecated ([#23331](https://github.com/microsoft/FluidFramework/pull/23331)) [dc48446d7c](https://github.com/microsoft/FluidFramework/commit/dc48446d7c4914aca2a76095205975824aac1ba5)
+
+    The class `ContainerRuntime` is deprecated and will no longer be exported starting in version 2.20.0.
+
+    There are two possible migration paths to stop using `ContainerRuntime`:
+
+    -   When using it as a type, replace it with an interface like `IContainerRuntime`
+    -   When using the static function `ContainerRuntime.loadRuntime` replace it with the free function `loadContainerRuntime`.
+
+    `BaseContainerRuntimeFactory` has some changes as well, since it exposed `ContainerRuntime` in several function signatures:
+
+    -   `instantiateFirstTime` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
+    -   `instantiateFromExisting` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
+    -   `preInitialize` - deprecated as well, since it returns `ContainerRuntime`
+
+    These functions should never be called directly anyway - use `BaseContainerRuntimeFactory.instantiateRuntime` instead.
+
+## 2.11.0
+
+Dependency updates only.
+
+## 2.10.0
+
+### Minor Changes
+
+-   The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
+
+    The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
+
+    `IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    #### Alternatives
+
+    -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+    -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
+    -   Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
+
 ## 2.5.0
 
 Dependency updates only.

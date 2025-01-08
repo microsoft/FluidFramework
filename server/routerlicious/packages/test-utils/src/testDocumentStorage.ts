@@ -50,7 +50,7 @@ export class TestDocumentStorage implements IDocumentStorage {
 	/**
 	 * Retrieves database details for the given document
 	 */
-	public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
+	public async getDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
 		const collection = await this.databaseManager.getDocumentCollection();
 		return collection.findOne({ documentId, tenantId });
 	}
@@ -179,7 +179,7 @@ export class TestDocumentStorage implements IDocumentStorage {
 	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
 		const versions = await this.getVersions(tenantId, documentId, 1);
 		if (!versions.length) {
-			return null;
+			throw new Error("No versions found");
 		}
 
 		const latest = versions[0];

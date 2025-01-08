@@ -16,7 +16,6 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
@@ -36,8 +35,6 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	SegmentGroup,
 	SlidingPreference,
 	createAnnotateRangeOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -46,7 +43,9 @@ import {
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 	matchProperties,
+	type AdjustParams,
 	type InteriorSequencePlace,
+	type MapLike,
 } from "@fluidframework/merge-tree/internal";
 import {
 	ISummaryTreeWithStats,
@@ -301,6 +300,21 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	annotateRange(start: number, end: number, props: PropertySet): void;
 
 	/**
+	 * Annotates a specified range within the sequence by applying the provided adjustments.
+	 *
+	 * @param start - The inclusive start position of the range to annotate. This is a zero-based index.
+	 * @param end - The exclusive end position of the range to annotate. This is a zero-based index.
+	 * @param adjust - A map-like object specifying the properties to adjust. Each key-value pair represents a property and its corresponding adjustment to be applied over the range.
+	 * An adjustment is defined by an object containing a `delta` to be added to the current property value, and optional `min` and `max` constraints to limit the adjusted value.
+	 *
+	 * @remarks
+	 * The range is defined by the start and end positions, where the start position is inclusive and the end position is exclusive.
+	 * The properties provided in the adjust parameter will be applied to the specified range. Each adjustment modifies the current value of the property by adding the specified `value`.
+	 * If the current value is not a number, the `delta` will be summed with 0 to compute the new value. The optional `min` and `max` constraints are applied after the adjustment to ensure the final value falls within the specified bounds.
+	 */
+	annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void;
+
+	/**
 	 * @param start - The inclusive start of the range to remove
 	 * @param end - The exclusive end of the range to remove
 	 */
@@ -487,7 +501,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.ongoingResubmitRefSeq ?? this.deltaManager.lastSequenceNumber;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
@@ -521,11 +534,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				mergeTreeEnableSidedObliterate: (c, n) => c.getBoolean(n),
 				intervalStickinessEnabled: (c, n) => c.getBoolean(n),
 				mergeTreeReferencesCanSlideToEndpoint: (c, n) => c.getBoolean(n),
+				mergeTreeEnableAnnotateAdjust: (c, n) => c.getBoolean(n),
 			},
 			dataStoreRuntime.options,
 		);
 
-		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
 			segmentFromSpec,
 			createChildLogger({
@@ -541,7 +554,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			if (event.isLocal) {
 				this.submitSequenceMessage(opArgs.op);
 			}
-			this.emit("sequenceDelta", event, this);
+			if (deltaArgs.deltaSegments.length > 0) {
+				this.emit("sequenceDelta", event, this);
+			}
 		});
 
 		this.client.on("maintenance", (args, opArgs) => {
@@ -601,6 +616,10 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	public annotateRange(start: number, end: number, props: PropertySet): void {
 		this.guardReentrancy(() => this.client.annotateRangeLocal(start, end, props));
+	}
+
+	public annotateAdjustRange(start: number, end: number, adjust: MapLike<AdjustParams>): void {
+		this.guardReentrancy(() => this.client.annotateAdjustRangeLocal(start, end, adjust));
 	}
 
 	public getPropertiesAtPosition(pos: number): PropertySet | undefined {
@@ -788,11 +807,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				)
 			) {
 				this.submitSequenceMessage(
-					this.client.regeneratePendingOp(
-						content as IMergeTreeOp,
-						// eslint-disable-next-line import/no-deprecated
-						localOpMetadata as SegmentGroup | SegmentGroup[],
-					),
+					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata),
 				);
 			}
 		});

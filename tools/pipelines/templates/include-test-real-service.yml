@@ -34,7 +34,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Small
+  default: Small-eastus2
 
 - name: testPackage
   type: string
@@ -210,7 +210,7 @@ stages:
                 artifactBuildId=${{ parameters.artifactBuildId }}
               "
 
-        - template: include-use-node-version.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         # Download artifact
         - task: DownloadPipelineArtifact@2
@@ -440,7 +440,7 @@ stages:
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
         # Log Test Failures
-        # - template: include-process-test-results.yml
+        # - template: /tools/pipelines/templates/include-process-test-results.yml@self
         #   parameters:
         #     buildDirectory: ${{ variables.testPackageDir }}
 

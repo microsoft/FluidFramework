@@ -6,19 +6,20 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
 import {
-	IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
 	createGroupOp,
 	createRemoveRangeOp,
+	// eslint-disable-next-line import/no-internal-modules -- #26905: `merge-tree` internals used in examples
 } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
 import {
 	Marker,
 	ReferenceType,
 	SharedString,
 	TextSegment,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 import { exampleSetup } from "prosemirror-example-setup";
 import { DOMSerializer, Schema, Slice } from "prosemirror-model";
 import { addListNodes } from "prosemirror-schema-list";

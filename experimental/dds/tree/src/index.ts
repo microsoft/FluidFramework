@@ -188,3 +188,5 @@ export {
 	SharedTreeShim,
 	SharedTreeShimFactory,
 } from './migration-shim/index.js';
+
+export { IRevertible, IUndoConsumer, SharedTreeUndoRedoHandler } from './UndoRedoHandler.js';

@@ -112,6 +112,12 @@
 		"broken": {
 			"ClassDeclaration_MongoDb": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_WebServer": {
+				"backCompat": false
+			},
+			"ClassDeclaration_TenantManager": {
+				"forwardCompat": false
 			}
 		}
 	}

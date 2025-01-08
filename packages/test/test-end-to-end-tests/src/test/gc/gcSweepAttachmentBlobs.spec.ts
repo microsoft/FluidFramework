@@ -22,12 +22,12 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
-	ISummarizeEventProps,
 	ISummarizer,
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
+import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
@@ -35,6 +35,7 @@ import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
+	toIDeltaManagerFull,
 	createSummarizer,
 	createTestConfigProvider,
 	summarizeNow,
@@ -79,7 +80,7 @@ function validateBlobStateInSummary(
 
 	if (expectGCStateHandle) {
 		assert.equal(
-			summaryTree.tree[gcTreeKey].type,
+			summaryTree.tree[gcTreeKey]?.type,
 			SummaryType.Handle,
 			"Expecting the GC tree to be handle",
 		);
@@ -1159,7 +1160,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 			// Pause the inbound queue so that GC ops are not processed in between failures. This will be resumed
 			// before the final attempt.
 			if (blockInboundGCOp) {
-				await containerRuntime.deltaManager.inbound.pause();
+				await toIDeltaManagerFull(containerRuntime.deltaManager).inbound.pause();
 			}
 
 			let summarizeFunc = containerRuntime.summarize;
@@ -1175,7 +1176,7 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 				}
 				// If this is the last attempt, resume the inbound queue to let the GC ops (if any) through.
 				if (blockInboundGCOp) {
-					containerRuntime.deltaManager.inbound.resume();
+					toIDeltaManagerFull(containerRuntime.deltaManager).inbound.resume();
 				}
 				return results;
 			};

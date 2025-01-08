@@ -23,7 +23,7 @@ import type {
 	TreeNodeSchema,
 	TreeNodeSchemaCore,
 } from "../core/index.js";
-import type { TreeArrayNodeBase } from "../arrayNode.js";
+import type { TreeArrayNode } from "../arrayNode.js";
 import type { FlexListToUnion, LazyItem } from "../flexList.js";
 
 /*
@@ -238,7 +238,8 @@ export type NodeBuilderDataUnsafe<T extends Unenforced<TreeNodeSchema>> =
  * @system @sealed @public
  */
 export interface TreeArrayNodeUnsafe<TAllowedTypes extends Unenforced<ImplicitAllowedTypes>>
-	extends TreeArrayNodeBase<
+	extends TreeArrayNode<
+		TAllowedTypes,
 		TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>,
 		InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>
 	> {}

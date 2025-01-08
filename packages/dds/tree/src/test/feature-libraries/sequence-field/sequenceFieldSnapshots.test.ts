@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import path from "path";
+import path from "node:path";
 
 import { RevisionTagCodec } from "../../../core/index.js";
 import { SequenceField } from "../../../feature-libraries/index.js";

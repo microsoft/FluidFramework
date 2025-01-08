@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/build-tools",
-	"version": "0.51.0",
+	"version": "0.52.0",
 	"description": "Fluid Build tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -42,7 +42,6 @@
 		"@fluid-tools/version-tools": "workspace:~",
 		"@manypkg/get-packages": "^2.2.2",
 		"async": "^3.2.6",
-		"chalk": "^2.4.2",
 		"cosmiconfig": "^8.3.6",
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.7",
@@ -56,6 +55,7 @@
 		"lodash": "^4.17.21",
 		"lodash.isequal": "^4.5.0",
 		"multimatch": "^5.0.0",
+		"picocolors": "^1.1.1",
 		"picomatch": "^2.3.1",
 		"rimraf": "^4.4.1",
 		"semver": "^7.6.3",

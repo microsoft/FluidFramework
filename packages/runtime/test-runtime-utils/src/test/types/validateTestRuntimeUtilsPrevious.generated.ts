@@ -148,7 +148,7 @@ declare type current_as_old_for_Class_MockDeltaManager = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_MockDeltaQueue": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<old.MockDeltaQueue<any>>, TypeOnly<current.MockDeltaQueue<any>>>
+declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<old.MockDeltaQueue<never>>, TypeOnly<current.MockDeltaQueue<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -157,7 +157,7 @@ declare type old_as_current_for_Class_MockDeltaQueue = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_MockDeltaQueue": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<current.MockDeltaQueue<any>>, TypeOnly<old.MockDeltaQueue<any>>>
+declare type current_as_old_for_Class_MockDeltaQueue = requireAssignableTo<TypeOnly<current.MockDeltaQueue<never>>, TypeOnly<old.MockDeltaQueue<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -203,7 +203,7 @@ declare type current_as_old_for_Class_MockFluidDataStoreRuntime = requireAssigna
  * typeValidation.broken:
  * "Class_MockHandle": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_MockHandle = requireAssignableTo<TypeOnly<old.MockHandle<any>>, TypeOnly<current.MockHandle<any>>>
+declare type old_as_current_for_Class_MockHandle = requireAssignableTo<TypeOnly<old.MockHandle<never>>, TypeOnly<current.MockHandle<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -212,7 +212,7 @@ declare type old_as_current_for_Class_MockHandle = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_MockHandle": {"backCompat": false}
  */
-declare type current_as_old_for_Class_MockHandle = requireAssignableTo<TypeOnly<current.MockHandle<any>>, TypeOnly<old.MockHandle<any>>>
+declare type current_as_old_for_Class_MockHandle = requireAssignableTo<TypeOnly<current.MockHandle<never>>, TypeOnly<old.MockHandle<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

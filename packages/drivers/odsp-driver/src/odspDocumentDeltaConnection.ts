@@ -351,6 +351,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	private flushOpNonce: string | undefined;
 	private flushDeferred: Deferred<FlushResult> | undefined;
 	private connectionNotYetDisposedTimeout: ReturnType<typeof setTimeout> | undefined;
+	// Due to socket reuse(multiplexing), we can get "disconnect" event from other clients in the socket reference.
+	// So, a race condition could happen, where this client is establishing connection and listening for "connect_document_success"
+	// on the socket among other events, but we get "disconnect" event on the socket reference from other clients, in which case,
+	// we dispose connection object and stop listening to further events on the socket. Due to this we get stuck as the connection
+	// is not yet established and so we don't return any connection object to the client(connection manager). So, we remain stuck.
+	// In order to handle this, we use this deferred promise to keep track of connection initialization and reject this promise with
+	// error in the disconnectCore so that the caller can know and handle the error.
+	private connectionInitializeDeferredP: Deferred<void> | undefined;
 
 	/**
 	 * Error raising for socket.io issues
@@ -634,7 +642,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			}
 		});
 
-		await super.initialize(connectMessage, timeout).finally(() => {
+		this.connectionInitializeDeferredP = new Deferred<void>();
+
+		super
+			.initialize(connectMessage, timeout)
+			.then(() => this.connectionInitializeDeferredP?.resolve())
+			.catch((error) => this.connectionInitializeDeferredP?.reject(error));
+
+		await this.connectionInitializeDeferredP.promise.finally(() => {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptInfo",
 				...this.getConnectionDetailsProps(),
@@ -642,7 +657,6 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		});
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	protected addTrackedListener(event: string, listener: (...args: any[]) => void): void {
 		// override some event listeners in order to support multiple documents/clients over the same websocket
 		switch (event) {
@@ -685,6 +699,10 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 						);
 
 						if (filteredMsgs.length > 0) {
+							// This ternary is needed for signal-based layer compat tests to pass,
+							// specifically the layer version combination where you have an old loader and the most recent driver layer.
+							// Old loader doesn't send or receive batched signals (ISignalMessage[]),
+							// so only individual ISignalMessage's should be passed when there's one element for backcompat.
 							listener(filteredMsgs.length === 1 ? filteredMsgs[0] : filteredMsgs, documentId);
 						}
 					},
@@ -809,7 +827,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Disconnect from the websocket
 	 */
-	protected disconnectCore(): void {
+	protected disconnectCore(err: IAnyDriverError): void {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;
@@ -821,5 +839,11 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		}
 
 		socket.removeSocketIoReference();
+		if (
+			this.connectionInitializeDeferredP !== undefined &&
+			!this.connectionInitializeDeferredP.isCompleted
+		) {
+			this.connectionInitializeDeferredP.reject(err);
+		}
 	}
 }

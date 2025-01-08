@@ -30,7 +30,7 @@ import {
 	validateRequestParams,
 	handleResponse,
 } from "@fluidframework/server-services";
-import { Router } from "express";
+import { Request, Router } from "express";
 import winston from "winston";
 import {
 	convertFirstSummaryWholeSummaryTreeToSummaryTree,
@@ -39,6 +39,8 @@ import {
 	NetworkError,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
+	createFluidServiceNetworkError,
+	InternalErrorCode,
 } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
@@ -51,6 +53,81 @@ import { v4 as uuid } from "uuid";
 import { Constants, getSession, StageTrace } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
 import type { RequestHandler } from "express-serve-static-core";
+
+/**
+ * Response body shape for modern clients that can handle object responses.
+ * @internal
+ */
+interface ICreateDocumentResponseBody {
+	/**
+	 * The id of the created document.
+	 */
+	readonly id: string;
+	/**
+	 * The access token for the created document.
+	 * When this is provided, the client should use this token to connect to the document.
+	 * Otherwise, if not provided, the client will need to generate a new token using the provided document id.
+	 * @privateRemarks TODO: This is getting generated multiple times. We should generate it once and reuse it.
+	 */
+	readonly token?: string;
+	/**
+	 * The session information for the created document.
+	 * When this is provided, the client should use this session information to connect to the document in the correct location.
+	 * Otherwise, if not provided, the client will need to discover the correct location using the getSession API or continue using the
+	 * original location used when creating the document.
+	 */
+	readonly session?: ISession;
+}
+
+async function generateCreateDocumentResponseBody(
+	request: Request,
+	tenantManager: ITenantManager,
+	documentId: string,
+	tenantId: string,
+	generateToken: boolean,
+	enableDiscovery: boolean,
+	sessionInfo: {
+		externalOrdererUrl: string;
+		externalHistorianUrl: string;
+		externalDeltaStreamUrl: string;
+		messageBrokerId?: string;
+	},
+): Promise<ICreateDocumentResponseBody> {
+	const authorizationHeader = request.header("Authorization");
+	let newDocumentAccessToken: string | undefined;
+	if (generateToken && authorizationHeader !== undefined) {
+		// Generate creation token given a jwt from header
+		const tokenRegex = /Basic (.+)/;
+		const tokenMatch = tokenRegex.exec(authorizationHeader);
+		const token = tokenMatch !== null ? tokenMatch[1] : undefined;
+		if (token === undefined) {
+			throw new NetworkError(400, "Authorization header is missing or malformed");
+		}
+		newDocumentAccessToken = await getCreationToken(tenantManager, token, documentId);
+	}
+	let newDocumentSession: ISession | undefined;
+	if (enableDiscovery) {
+		// Session information
+		const session: ISession = {
+			ordererUrl: sessionInfo.externalOrdererUrl,
+			historianUrl: sessionInfo.externalHistorianUrl,
+			deltaStreamUrl: sessionInfo.externalDeltaStreamUrl,
+			// Indicate to consumer that session was newly created.
+			isSessionAlive: false,
+			isSessionActive: false,
+		};
+		// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
+		if (sessionInfo.messageBrokerId) {
+			session.messageBrokerId = sessionInfo.messageBrokerId;
+		}
+		newDocumentSession = session;
+	}
+	return {
+		id: documentId,
+		token: newDocumentAccessToken,
+		session: newDocumentSession,
+	};
+}
 
 export function create(
 	storage: IDocumentStorage,
@@ -139,11 +216,10 @@ export function create(
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		(request, response, next) => {
+			const tenantId = request.params.tenantId;
+			const documentId = request.params.id;
 			const documentP = storage
-				.getDocument(
-					getParam(request.params, "tenantId") || appTenants[0].id,
-					getParam(request.params, "id"),
-				)
+				.getDocument(tenantId ?? appTenants[0].id, documentId)
 				.then((document) => {
 					if (!document || document.scheduledDeletionTime) {
 						throw new NetworkError(404, "Document not found.");
@@ -181,8 +257,23 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
+			// Reject create document request if cluster is in draining process.
+			if (
+				clusterDrainingChecker &&
+				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
+					Lumberjack.error("Failed to get cluster draining status", undefined, error);
+					return false;
+				}))
+			) {
+				Lumberjack.info("Cluster is in draining process. Reject create document request.");
+				const error = createFluidServiceNetworkError(503, {
+					message: "Server is unavailable. Please retry create document later.",
+					internalErrorCode: InternalErrorCode.ClusterDraining,
+				});
+				handleResponse(Promise.reject(error), response);
+			}
 			// Tenant and document
-			const tenantId = getParam(request.params, "tenantId");
+			const tenantId = request.params.tenantId;
 			// If enforcing server generated document id, ignore id parameter
 			const id = enforceServerGeneratedDocumentId
 				? uuid()
@@ -228,34 +319,24 @@ export function create(
 			// TODO: remove condition once old drivers are phased out and all clients can handle object response
 			const clientAcceptsObjectResponse = enableDiscovery === true || generateToken === true;
 			if (clientAcceptsObjectResponse) {
-				const responseBody = { id, token: undefined, session: undefined };
-				if (generateToken) {
-					// Generate creation token given a jwt from header
-					const authorizationHeader = request.header("Authorization");
-					const tokenRegex = /Basic (.+)/;
-					const tokenMatch = tokenRegex.exec(authorizationHeader);
-					const token = tokenMatch[1];
-					const tenantKey = await tenantManager.getKey(tenantId);
-					responseBody.token = getCreationToken(token, tenantKey, id);
-				}
-				if (enableDiscovery) {
-					// Session information
-					const session: ISession = {
-						ordererUrl: externalOrdererUrl,
-						historianUrl: externalHistorianUrl,
-						deltaStreamUrl: externalDeltaStreamUrl,
-						// Indicate to consumer that session was newly created.
-						isSessionAlive: false,
-						isSessionActive: false,
-					};
-					// if undefined and added directly to the session object - will be serialized as null in mongo which is undesirable
-					if (messageBrokerId) {
-						session.messageBrokerId = messageBrokerId;
-					}
-					responseBody.session = session;
-				}
+				const generateResponseBodyP = generateCreateDocumentResponseBody(
+					request,
+					tenantManager,
+					id,
+					tenantId,
+					generateToken,
+					enableDiscovery,
+					{
+						externalOrdererUrl,
+						externalHistorianUrl,
+						externalDeltaStreamUrl,
+						messageBrokerId,
+					},
+				);
 				handleResponse(
-					createP.then(() => responseBody),
+					Promise.all([createP, generateResponseBodyP]).then(
+						([, responseBody]) => responseBody,
+					),
 					response,
 					undefined,
 					undefined,
@@ -312,8 +393,8 @@ export function create(
 		verifyStorageTokenForGetSession(tenantManager, config, defaultTokenValidationOptions),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
-			const documentId = getParam(request.params, "id");
-			const tenantId = getParam(request.params, "tenantId");
+			const documentId = request.params.id;
+			const tenantId = request.params.tenantId;
 
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(
@@ -322,6 +403,25 @@ export function create(
 			);
 			// Tracks the different stages of getSessionMetric
 			const connectionTrace = new StageTrace<string>("GetSession");
+			// Reject get session request on existing, inactive sessions if cluster is in draining process.
+			if (
+				clusterDrainingChecker &&
+				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
+					Lumberjack.error("Failed to get cluster draining status", undefined, error);
+					return false;
+				}))
+			) {
+				Lumberjack.info("Cluster is in draining process. Reject get session request.");
+				connectionTrace?.stampStage("ClusterIsDraining");
+				const error = createFluidServiceNetworkError(503, {
+					message: "Server is unavailable. Please retry session discovery later.",
+					internalErrorCode: InternalErrorCode.ClusterDraining,
+				});
+				handleResponse(Promise.reject(error), response);
+			}
+			connectionTrace?.stampStage("ClusterDrainingChecked");
+			const readDocumentRetryDelay: number = config.get("getSession:readDocumentRetryDelay");
+			const readDocumentMaxRetries: number = config.get("getSession:readDocumentMaxRetries");
 
 			const session = getSession(
 				externalOrdererUrl,
@@ -335,6 +435,8 @@ export function create(
 				clusterDrainingChecker,
 				ephemeralDocumentTTLSec,
 				connectionTrace,
+				readDocumentRetryDelay,
+				readDocumentMaxRetries,
 			);
 
 			const onSuccess = (result: ISession): void => {
@@ -361,8 +463,8 @@ export function create(
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
-			const documentId = getParam(request.params, "id");
-			const tenantId = getParam(request.params, "tenantId");
+			const documentId = request.params.id;
+			const tenantId = request.params.tenantId;
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
 
@@ -382,8 +484,8 @@ export function create(
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
-			const documentId = getParam(request.params, "id");
-			const tenantId = getParam(request.params, "tenantId");
+			const documentId = request.params.id;
+			const tenantId = request.params.tenantId;
 			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 			Lumberjack.info(`Received token revocation request.`, lumberjackProperties);
 
@@ -401,6 +503,14 @@ export function create(
 					request,
 					response,
 				).correlationId;
+				if (!correlationId) {
+					return handleResponse(
+						Promise.reject(
+							new NetworkError(400, `Missing correlationId in request headers.`),
+						),
+						response,
+					);
+				}
 				const options: IRevokeTokenOptions = {
 					correlationId,
 				};

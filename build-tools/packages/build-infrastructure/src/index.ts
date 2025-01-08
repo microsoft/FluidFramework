@@ -15,6 +15,10 @@
  */
 
 export {
+	getAllDependencies,
+	loadBuildProject,
+} from "./buildProject.js";
+export {
 	type ReleaseGroupDefinition,
 	type WorkspaceDefinition,
 	type IFluidBuildDir,
@@ -26,11 +30,14 @@ export {
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
 export {
-	BuildProject,
-	getAllDependencies,
-	loadBuildProject,
-} from "./buildProject.js";
+	getFiles,
+	findGitRootSync,
+	getMergeBaseRemote,
+	getRemote,
+	getChangedSinceRef,
+} from "./git.js";
 export { PackageBase } from "./package.js";
+export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 export { createPackageManager } from "./packageManagers.js";
 export type {
 	AdditionalPackageProps,

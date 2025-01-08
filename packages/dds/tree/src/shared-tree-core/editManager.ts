@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -21,12 +22,7 @@ import {
 } from "../core/index.js";
 import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
-import {
-	SharedTreeBranch,
-	type BranchTrimmingEvents,
-	getChangeReplaceType,
-	onForkTransitive,
-} from "./branch.js";
+import { SharedTreeBranch, type BranchTrimmingEvents, onForkTransitive } from "./branch.js";
 import type {
 	Commit,
 	SeqNumber,
@@ -41,7 +37,6 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
-import { createEmitter } from "../events/index.js";
 import {
 	TelemetryEventBatcher,
 	measure,
@@ -191,7 +186,7 @@ export class EditManager<
 			this.telemetryEventBatcher,
 		);
 
-		this.localBranch.on("afterChange", (event) => {
+		this.localBranch.events.on("afterChange", (event) => {
 			if (event.type === "append") {
 				for (const commit of event.newCommits) {
 					this.localCommits.push(commit);
@@ -223,19 +218,19 @@ export class EditManager<
 	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
 		this.trackBranch(branch);
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offBeforeRebase = branch.on("beforeChange", (args) => {
-			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
+		const offBeforeRebase = branch.events.on("beforeChange", (args) => {
+			if (args.type === "rebase") {
 				this.untrackBranch(branch);
 			}
 		});
-		const offAfterRebase = branch.on("afterChange", (args) => {
-			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
+		const offAfterRebase = branch.events.on("afterChange", (args) => {
+			if (args.type === "rebase") {
 				this.trackBranch(branch);
 				this.trimTrunk();
 			}
 		});
 		// When the branch is disposed, update our branch set and trim the trunk
-		const offDispose = branch.on("dispose", () => {
+		const offDispose = branch.events.on("dispose", () => {
 			this.untrackBranch(branch);
 			this.trimTrunk();
 			offBeforeRebase();

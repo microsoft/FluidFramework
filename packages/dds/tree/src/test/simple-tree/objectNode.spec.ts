@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -277,11 +277,11 @@ describeHydration(
 					class Root extends schemaFactory.object("", {
 						x: [schemaFactory.number, schemaFactory.null],
 					}) {}
-					const node = init(Root, { x: NaN });
+					const node = init(Root, { x: Number.NaN });
 					assert.equal(node.x, null);
 					node.x = 6;
 					assert.equal(node.x, 6);
-					node.x = Infinity;
+					node.x = Number.POSITIVE_INFINITY;
 					assert.equal(node.x, null);
 					node.x = -0;
 					assert(Object.is(node.x, 0));
@@ -293,7 +293,7 @@ describeHydration(
 					}) {}
 					const node = init(Root, { x: 1 });
 					assert.throws(() => {
-						node.x = NaN;
+						node.x = Number.NaN;
 					}, validateUsageError(/NaN/));
 					assert.equal(node.x, 1);
 					node.x = -0;
@@ -409,7 +409,7 @@ describeHydration(
 			const allowed = [Note] as const;
 			{
 				type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
-				const test: X = [{}];
+				const test: X = {};
 			}
 		});
 
@@ -552,6 +552,28 @@ describeHydration(
 			assert.equal(Tree.schema(node), Customizable);
 			assert.equal(node[typeNameSymbol], Customizable.identifier);
 			assert.equal(node[typeSchemaSymbol], Customizable);
+		});
+
+		it("Build Parameter unexpected properties", () => {
+			class A extends schemaFactory.object("A", {}) {}
+			class B extends schemaFactory.object("B", { a: schemaFactory.number }) {}
+
+			const a = new A({});
+			const b = new B({ a: 1 });
+
+			// @ts-expect-error "Object literal may only specify known properties"
+			const a2 = new A({ thisDoesNotExist: 5 });
+
+			// @ts-expect-error "Object literal may only specify known properties"
+			const b3 = new B({ a: 1, thisDoesNotExist: 5 });
+
+			type BuildA = NodeBuilderData<typeof A>;
+			type BuildB = NodeBuilderData<typeof B>;
+
+			// @ts-expect-error "Object literal may only specify known properties"
+			const builderA: BuildA = { thisDoesNotExist: 5 };
+			// @ts-expect-error "Object literal may only specify known properties"
+			const builderB: BuildB = { a: 1, thisDoesNotExist: 5 };
 		});
 	},
 );

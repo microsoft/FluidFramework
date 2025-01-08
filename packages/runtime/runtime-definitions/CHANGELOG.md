@@ -1,5 +1,102 @@
 # @fluidframework/runtime-definitions
 
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+### Minor Changes
+
+-   Synchronous Child Datastore Creation ([#23143](https://github.com/microsoft/FluidFramework/pull/23143)) [3426b434df](https://github.com/microsoft/FluidFramework/commit/3426b434dfa06de3ee1a60a5f0d605cd312f2c58)
+
+    #### Overview
+
+    This feature introduces a new pattern for creating datastores synchronously within the Fluid Framework. It allows for the synchronous creation of a child datastore from an existing datastore, provided that the child datastore is available synchronously via the existing datastore's registry and that the child's factory supports synchronous creation. This method also ensures strong typing for the consumer.
+
+    In this context, "child" refers specifically to the organization of factories and registries, not to any hierarchical or hosting relationship between datastores. The parent datastore does not control the runtime behaviors of the child datastore beyond its creation.
+
+    The synchronous creation of child datastores enhances the flexibility of datastore management within the Fluid Framework. It ensures type safety and provides a different way to manage datastores within a container. However, it is important to consider the overhead associated with datastores, as they are stored, summarized, garbage collected, loaded, and referenced independently. This overhead should be justified by the scenario's requirements.
+
+    Datastores offer increased capabilities, such as the ability to reference them via handles, allowing multiple references to exist and enabling those references to be moved, swapped, or changed. Additionally, datastores are garbage collected after becoming unreferenced, which can simplify final cleanup across clients. This is in contrast to subdirectories in a shared directory, which do not have native capabilities for referencing or garbage collection but are very low overhead to create.
+
+    Synchronous creation relies on both the factory and the datastore to support it. This means that asynchronous operations, such as resolving handles, some browser API calls, consensus-based operations, or other asynchronous tasks, cannot be performed during the creation flow. Therefore, synchronous child datastore creation is best limited to scenarios where the existing asynchronous process cannot be used, such as when a new datastore must be created in direct response to synchronous user input.
+
+    #### Key Benefits
+
+    -   **Synchronous Creation**: Allows for the immediate creation of child datastores without waiting for asynchronous operations.
+    -   **Strong Typing**: Ensures type safety and better developer experience by leveraging TypeScript's type system.
+
+    #### Use Cases
+
+    ##### Example 1: Creating a Child Datastore
+
+    In this example, we demonstrate how to support creating a child datastore synchronously from a parent datastore.
+
+    ```typescript
+    /**
+     * This is the parent DataObject, which is also a datastore. It has a
+     * synchronous method to create child datastores, which could be called
+     * in response to synchronous user input, like a key press.
+     */
+    class ParentDataObject extends DataObject {
+    	createChild(name: string): ChildDataStore {
+    		assert(
+    			this.context.createChildDataStore !== undefined,
+    			"this.context.createChildDataStore",
+    		);
+
+    		const { entrypoint } = this.context.createChildDataStore(
+    			ChildDataStoreFactory.instance,
+    		);
+    		const dir = this.root.createSubDirectory("children");
+    		dir.set(name, entrypoint.handle);
+    		entrypoint.setProperty("childValue", name);
+
+    		return entrypoint;
+    	}
+
+    	getChild(name: string): IFluidHandle<ChildDataStore> | undefined {
+    		const dir = this.root.getSubDirectory("children");
+    		return dir?.get<IFluidHandle<ChildDataStore>>(name);
+    	}
+    }
+    ```
+
+    For a complete example see the following test:
+    https://github.com/microsoft/FluidFramework/blob/main/packages/test/local-server-tests/src/test/synchronousDataStoreCreation.spec.ts
+
+## 2.10.0
+
+### Minor Changes
+
+-   Changes to the batchBegin and batchEnd events on ContainerRuntime ([#22791](https://github.com/microsoft/FluidFramework/pull/22791)) [d252af539a](https://github.com/microsoft/FluidFramework/commit/d252af539afc2b44d05db35cb94b4351b75d9432)
+
+    The 'batchBegin'/'batchEnd' events on ContainerRuntime indicate when a batch is beginning or finishing being processed. The `contents` property on the event argument `op` is not useful or relevant when reasoning over incoming changes at the batch level. Accordingly, it has been removed from the `op` event argument.
+
+-   "Remove `IFluidParentContext.ensureNoDataModelChanges` and its implementations ([#22842](https://github.com/microsoft/FluidFramework/pull/22842)) [3aff19a462](https://github.com/microsoft/FluidFramework/commit/3aff19a4622a242e906286c14dfcfa6523175132)
+
+    -   `IFluidParentContext.ensureNoDataModelChanges` has been removed. [prior deprecation commit](https://github.com/microsoft/FluidFramework/commit/c9d156264bdfa211a3075bdf29cde442ecea234c)
+    -   `MockFluidDataStoreContext.ensureNoDataModelChanges` has also been removed.
+
+-   The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
+
+    The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
+
+    `IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    #### Alternatives
+
+    -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+    -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
+    -   Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
+
 ## 2.5.0
 
 ### Minor Changes

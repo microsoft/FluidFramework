@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.10.0",
+	"version": "2.20.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -149,23 +149,23 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "^0.50.0",
+		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.50.0",
+		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.5.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.13.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/double-ended-queue": "^2.1.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
@@ -193,16 +193,52 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassStatics_SequenceDeltaEvent": {
+			"Class_BaseSegment": {
 				"backCompat": false
 			},
-			"ClassStatics_SequenceEvent": {
+			"Class_Marker": {
 				"backCompat": false
 			},
-			"ClassStatics_SequenceInterval": {
+			"Class_TextSegment": {
 				"backCompat": false
 			},
-			"ClassStatics_SequenceMaintenanceEvent": {
+			"Class_TrackingGroup": {
+				"backCompat": false
+			},
+			"ClassStatics_BaseSegment": {
+				"backCompat": false
+			},
+			"ClassStatics_Marker": {
+				"backCompat": false
+			},
+			"ClassStatics_TextSegment": {
+				"backCompat": false
+			},
+			"ClassStatics_TrackingGroup": {
+				"backCompat": false
+			},
+			"Interface_ISegment": {
+				"backCompat": false
+			},
+			"Interface_ISequenceDeltaRange": {
+				"backCompat": false
+			},
+			"Interface_SequenceDeltaEvent": {
+				"backCompat": false
+			},
+			"Interface_SequenceEvent": {
+				"backCompat": false
+			},
+			"Interface_SequenceMaintenanceEvent": {
+				"backCompat": false
+			},
+			"TypeAlias_IntervalRevertible": {
+				"backCompat": false
+			},
+			"TypeAlias_SharedStringRevertible": {
+				"backCompat": false
+			},
+			"TypeAlias_SharedStringSegment": {
 				"backCompat": false
 			}
 		},

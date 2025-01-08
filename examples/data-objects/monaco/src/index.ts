@@ -4,8 +4,8 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import * as sequence from "@fluidframework/sequence/internal";
+import { DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import * as sequence from "@fluidframework/sequence/legacy";
 import React from "react";
 
 import { MonacoRunner } from "./dataObject.js";

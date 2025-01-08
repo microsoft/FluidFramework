@@ -130,7 +130,7 @@ extends:
     packageManager: pnpm
     tagName: server
     isReleaseGroup: true
-    pool: NewLarge-linux-1ES
+    pool: Large-eastus2
     pack: true
     lint: true
     test: ci:test

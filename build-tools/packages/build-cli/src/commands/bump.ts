@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 import * as semver from "semver";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
@@ -272,10 +272,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				scheme,
 			);
 			this.log(`Creating branch ${bumpBranch}`);
-			await context.createBranch(bumpBranch);
-			await context.gitRepo.commit(commitMessage, "Error committing");
+			const gitRepo = await context.getGitRepository();
+			await gitRepo.createBranch(bumpBranch);
+			await gitRepo.gitClient.commit(commitMessage);
 			this.finalMessages.push(
-				`You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
+				`You can now create a PR for branch ${bumpBranch} targeting ${gitRepo.originalBranchName}`,
 			);
 		} else {
 			this.warning(`Skipping commit. You'll need to manually commit changes.`);

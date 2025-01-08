@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
 	ITelemetryLoggerExt,
@@ -11,6 +13,7 @@ import type {
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
 import type {
 	ClientSessionId,
@@ -31,9 +34,7 @@ import type {
 import type {
 	IContainerExtension,
 	IExtensionMessage,
-} from "@fluid-experimental/presence/internal/container-definitions/internal";
-import type { IEmitter } from "@fluid-experimental/presence/internal/events";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
+} from "@fluidframework/presence/internal/container-definitions/internal";
 
 /**
  * Portion of the container extension requirements ({@link IContainerExtension}) that are delegated to presence manager.
@@ -45,23 +46,9 @@ export type PresenceExtensionInterface = Required<
 >;
 
 /**
- *	Internal managment of client connection ids.
- */
-export interface ClientConnectionManager {
-	/**
-	 * Remove the current client connection ID from the corresponding disconnected attendee.
-	 *
-	 * @param clientConnectionId - The current client connection ID to be removed.
-	 */
-	removeClientConnectionId(clientConnectionId: ClientConnectionId): void;
-}
-
-/**
  * The Presence manager
  */
-class PresenceManager
-	implements IPresence, PresenceExtensionInterface, ClientConnectionManager
-{
+class PresenceManager implements IPresence, PresenceExtensionInterface {
 	private readonly datastoreManager: PresenceDatastoreManager;
 	private readonly systemWorkspace: SystemWorkspace;
 
@@ -85,6 +72,14 @@ class PresenceManager
 
 		runtime.on("connected", this.onConnect.bind(this));
 
+		runtime.on("disconnected", () => {
+			if (runtime.clientId !== undefined) {
+				this.removeClientConnectionId(runtime.clientId);
+			}
+		});
+
+		runtime.getAudience().on("removeMember", this.removeClientConnectionId.bind(this));
+
 		// Check if already connected at the time of construction.
 		// If constructed during data store load, the runtime may already be connected
 		// and the "connected" event will be raised during completion. With construction
@@ -102,7 +97,7 @@ class PresenceManager
 		this.datastoreManager.joinSession(clientConnectionId);
 	}
 
-	public removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
+	private removeClientConnectionId(clientConnectionId: ClientConnectionId): void {
 		this.systemWorkspace.removeClientConnectionId(clientConnectionId);
 	}
 
@@ -121,8 +116,13 @@ class PresenceManager
 	public getStates<TSchema extends PresenceStatesSchema>(
 		workspaceAddress: PresenceWorkspaceAddress,
 		requestedContent: TSchema,
+		controls?: BroadcastControlSettings,
 	): PresenceStates<TSchema> {
-		return this.datastoreManager.getWorkspace(`s:${workspaceAddress}`, requestedContent);
+		return this.datastoreManager.getWorkspace(
+			`s:${workspaceAddress}`,
+			requestedContent,
+			controls,
+		);
 	}
 
 	public getNotifications<TSchema extends PresenceStatesSchema>(
@@ -167,6 +167,7 @@ function setupSubComponents(
 		clientSessionId,
 		systemWorkspaceDatastore,
 		events,
+		runtime.getAudience(),
 	);
 	const datastoreManager = new PresenceDatastoreManagerImpl(
 		clientSessionId,
@@ -187,6 +188,6 @@ function setupSubComponents(
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,
 	clientSessionId: ClientSessionId = createSessionId() as ClientSessionId,
-): IPresence & PresenceExtensionInterface & ClientConnectionManager {
+): IPresence & PresenceExtensionInterface {
 	return new PresenceManager(runtime, clientSessionId);
 }

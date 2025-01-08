@@ -28,7 +28,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type {
+	IFluidDataStoreFactory,
+	IProvideFluidDataStoreFactory,
+} from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
 	IGarbageCollectionData,
@@ -122,28 +125,24 @@ export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilitySt
  * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
-	(
-		event: "batchBegin",
-		listener: (
-			op: Omit<ISequencedDocumentMessage, "contents"> & {
-				/** @deprecated Use the "op" event to get details about the message contents */
-				contents: unknown;
-			},
-		) => void,
-	);
+	/**
+	 * Indicates the beginning of an incoming batch of ops
+	 * @param op - The first op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 */
+	(event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void);
+	/**
+	 * Indicates the end of an incoming batch of ops
+	 * @param error - If an error occurred while processing the batch, it is provided here.
+	 * @param op - The last op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 */
 	(
 		event: "batchEnd",
-		listener: (
-			error: any,
-			op: Omit<ISequencedDocumentMessage, "contents"> & {
-				/** @deprecated Use the "op" event to get details about the message contents */
-				contents: unknown;
-			},
-		) => void,
+		listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents">) => void,
 	);
 	/**
+	 * Indicates that an incoming op has been processed.
 	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. its type and content
-	 * represent internal container runtime type / content.
+	 * represent internal container runtime type / content. i.e. A grouped batch of N ops will result in N "op" events
 	 */
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
@@ -485,19 +484,6 @@ export interface IFluidParentContext
 	getAudience(): IAudience;
 
 	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 *
-	 * @deprecated
-	 * // back-compat: to be removed in 2.0
-	 */
-	ensureNoDataModelChanges<T>(callback: () => T): T;
-
-	/**
 	 * Submits the message to be sent to other clients.
 	 * @param type - Type of the message.
 	 * @param content - Content of the message.
@@ -601,6 +587,28 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * and its children with the GC details from the previous summary.
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+
+	/**
+	 * Synchronously creates a detached child data store.
+	 *
+	 * The `createChildDataStore` method allows for the synchronous creation of a detached child data store. This is particularly
+	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
+	 * of a parent data store, or when creation is in response to synchronous user input.
+	 *
+	 * In order for this function to succeed:
+	 * 1. The parent data store's factory must also be an `IFluidDataStoreRegistry`.
+	 * 2. The parent data store's registry must include the same instance as the provided child factory.
+	 * 3. The parent data store's registry must synchronously provide the child factory via the `getSync` method.
+	 * 4. The child factory must implement the `createDataStore` method.
+	 *
+	 * These invariants ensure that the child data store can also be created by a remote client running the same code as this client.
+	 *
+	 * @param childFactory - The factory of the data store to be created.
+	 * @returns The created data store channel.
+	 */
+	createChildDataStore?<T extends IFluidDataStoreFactory>(
+		childFactory: T,
+	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
 
 /**

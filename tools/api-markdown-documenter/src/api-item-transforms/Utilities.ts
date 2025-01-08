@@ -4,19 +4,20 @@
  */
 
 import type { ApiItem } from "@microsoft/api-extractor-model";
-import { type DocDeclarationReference } from "@microsoft/tsdoc";
+import type { DocDeclarationReference } from "@microsoft/tsdoc";
 
+import type { Link } from "../Link.js";
 import { DocumentNode, type SectionNode } from "../documentation-domain/index.js";
-import { type Link } from "../Link.js";
+import { resolveSymbolicReference } from "../utilities/index.js";
+
 import {
 	getDocumentPathForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
-import { type TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
-import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
+import type { TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
+import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { wrapInSection } from "./helpers/index.js";
-import { resolveSymbolicReference } from "../utilities/index.js";
 
 /**
  * Creates a {@link DocumentNode} representing the provided API item.
@@ -30,7 +31,7 @@ import { resolveSymbolicReference } from "../utilities/index.js";
 export function createDocument(
 	documentItem: ApiItem,
 	sections: SectionNode[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
 	// Wrap sections in a root section if top-level heading is requested.
 	const contents = config.includeTopLevelDocumentHeading
@@ -54,7 +55,7 @@ export function createDocument(
  */
 export function getTsdocNodeTransformationOptions(
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TsdocNodeTransformOptions {
 	return {
 		contextApiItem,
@@ -74,7 +75,7 @@ export function getTsdocNodeTransformationOptions(
 function resolveSymbolicLink(
 	contextApiItem: ApiItem,
 	codeDestination: DocDeclarationReference,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): Link | undefined {
 	const { apiModel, logger } = config;
 

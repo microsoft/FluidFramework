@@ -28,6 +28,8 @@ import {
 	Side,
 	endpointPosAndSide,
 	addProperties,
+	copyPropertiesAndManager,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -191,12 +193,12 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc ISerializableInterval.propertyManager}
 	 */
-	public propertyManager: PropertiesManager = new PropertiesManager();
+	public propertyManager?: PropertiesManager;
 
 	/***/
 	public get stickiness(): IntervalStickiness {
-		const startSegment = this.start.getSegment();
-		const endSegment = this.end.getSegment();
+		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
+		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
 		return computeStickinessFromSide(
 			startSegment?.endpointType,
 			this.startSide,
@@ -407,17 +409,6 @@ export class SequenceIntervalClass implements SequenceInterval {
 	}
 
 	/**
-	 * {@inheritDoc ISerializableInterval.addProperties}
-	 */
-	public addProperties(
-		newProps: PropertySet,
-		collab: boolean = false,
-		seq?: number,
-	): PropertySet | undefined {
-		return this.propertyManager.addProperties(this.properties, newProps, seq, collab);
-	}
-
-	/**
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {
@@ -438,10 +429,12 @@ export class SequenceIntervalClass implements SequenceInterval {
 		useNewSlidingBehavior: boolean = false,
 	) {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
+		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
+		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
 		const stickiness = computeStickinessFromSide(
-			startPos ?? this.start.getSegment()?.endpointType,
+			startPos ?? startSegment?.endpointType,
 			startSide ?? this.startSide,
-			endPos ?? this.end.getSegment()?.endpointType,
+			endPos ?? endSegment?.endpointType,
 			endSide ?? this.endSide,
 		);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
@@ -498,13 +491,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
 		);
-		if (this.properties) {
-			this.propertyManager.copyTo(
-				this.properties,
-				newInterval.properties,
-				newInterval.propertyManager,
-			);
-		}
+		copyPropertiesAndManager(this, newInterval);
 		return newInterval;
 	}
 }
