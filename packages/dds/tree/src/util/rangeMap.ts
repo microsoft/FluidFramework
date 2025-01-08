@@ -18,7 +18,7 @@ export class RangeMap<T> {
 
 	/**
 	 * Retrieves all entries from the rangeMap.
-	 * @returns An array of RangeEntryResult objects, each containing the start index, length, and value of a contiguous range.
+	 * @returns An array of RangeQueryResult objects, each containing the start index, length, and value of a contiguous range.
 	 */
 	public getAllEntries(): RangeQueryResult<T>[] {
 		const entries: RangeQueryResult<T>[] = [];
