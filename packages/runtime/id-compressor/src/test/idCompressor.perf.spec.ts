@@ -94,10 +94,13 @@ describe("IdCompressor Perf", () => {
 		const log = network.getIdLog(client);
 		for (let i = log.length - 1; i > 0; i--) {
 			const { id, originatingClient } = log[i];
-			if (originatingClient === client && ((eagerFinal && isFinalId(id)) || (!eagerFinal && isLocalId(id)))) {
-					assert(eagerFinal === isFinalId(id), "Not local/final as requested.");
-					return id;
-				}
+			if (
+				originatingClient === client &&
+				((eagerFinal && isFinalId(id)) || (!eagerFinal && isLocalId(id)))
+			) {
+				assert(eagerFinal === isFinalId(id), "Not local/final as requested.");
+				return id;
+			}
 		}
 		fail("no ID found in log");
 	}

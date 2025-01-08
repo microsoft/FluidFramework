@@ -1145,8 +1145,8 @@ describe("IdCompressor", () => {
 			for (const { id } of network.getIdLog(Client.Client1)) assert(isLocalId(id));
 
 			// Client 1's IDs have not been acked so have no op space equivalent
-			for (const idData of network
-				.getIdLog(Client.Client1)) assert(isLocalId(compressor1.normalizeToOpSpace(idData.id)));
+			for (const idData of network.getIdLog(Client.Client1))
+				assert(isLocalId(compressor1.normalizeToOpSpace(idData.id)));
 
 			// Client 1's IDs are acked
 			network.deliverOperations(Client.Client1);
@@ -1160,13 +1160,11 @@ describe("IdCompressor", () => {
 			// Client 1 receives Client 2's IDs
 			network.deliverOperations(Client.Client1);
 
-			for (const { id } of network
-				.getIdLog(Client.Client1)
-				.slice(-3)) assert(isFinalId(id));
+			for (const { id } of network.getIdLog(Client.Client1).slice(-3)) assert(isFinalId(id));
 
 			// All IDs have been acked or are from another client, and therefore have a final form in op space
-			for (const { id } of network
-				.getIdLog(Client.Client1)) assert(isFinalId(compressor1.normalizeToOpSpace(id)));
+			for (const { id } of network.getIdLog(Client.Client1))
+				assert(isFinalId(compressor1.normalizeToOpSpace(id)));
 
 			// Compression should preserve ID space correctness
 			for (const idData of network.getIdLog(Client.Client1)) {
