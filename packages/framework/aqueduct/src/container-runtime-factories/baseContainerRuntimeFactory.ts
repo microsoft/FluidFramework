@@ -123,8 +123,6 @@ export class BaseContainerRuntimeFactory
 	 * Called at the start of initializing a container, to create the container runtime instance.
 	 * @param context - The context for the container being initialized
 	 * @param existing - Whether the container already exists and is being loaded (else it's being created new just now)
-	 *
-	 * @deprecated This function should not be called directly, use instantiateRuntime instead.
 	 */
 	public async preInitialize(
 		context: IContainerContext,
