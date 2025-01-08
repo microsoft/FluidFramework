@@ -10,7 +10,7 @@
 # The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed
 
 Removed two main APIs, `ContainerRuntime.createDataStoreWithProps` and `IContainerRuntimeBase.createDataStoreWithProps`
-has been removed.
+have been removed.
 
 Replace uses of these APIs with `PureDataObjectFactory.createInstanceWithDataStore` and pass in props via the `initialState`
 parameter.
