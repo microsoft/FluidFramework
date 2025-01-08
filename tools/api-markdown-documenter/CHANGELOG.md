@@ -54,7 +54,7 @@ await MarkdownRenderer.renderApiModel({
 #### Update pattern for controlling file-wise hierarchy
 
 Previously, users could control certain aspects of the output documentation suite's file-system hierarchy via the `documentBoundaries` and `hierarchyBoundaries` properties of the transformation configuration.
-One particular limitation of this setup was that items yielding folder-wise hierarchy (`hierarchyBoundaries`) could never place their own document *inside* of their own hierarchy.
+One particular limitation of this setup was that items yielding folder-wise hierarchy (`hierarchyBoundaries`) could never place their own document _inside_ of their own hierarchy.
 This naturally lent itself to a pattern where output would commonly be formatted as:
 
 ```
@@ -75,7 +75,7 @@ But some systems (e.g. `Docusaurus`) don't handle this well, and instead prefer 
 ```
 
 With the previous configuration options, this pattern was not possible, but now is.
-Additionally, this pattern is *more* commonly accepted, so lack of support for this was a real detriment.
+Additionally, this pattern is _more_ commonly accepted, so lack of support for this was a real detriment.
 
 Such patterns can now be produced via the consolidated `hierarchy` property, while still allowing full file-naming flexibility.
 
@@ -83,7 +83,7 @@ Such patterns can now be produced via the consolidated `hierarchy` property, whi
 
 For consistency / discoverability, the `DocumentationSuiteConfiguration.getFileNameForItem` property has also been moved under the new `hierarchy` property (`HierarchyConfiguration`) and renamed to `getDocumentName`.
 
-Additionally, where previously that property controlled both the document *and* folder naming corresponding to a given API item, folder naming can now be controlled independently via the `getFolderName` property.
+Additionally, where previously that property controlled both the document _and_ folder naming corresponding to a given API item, folder naming can now be controlled independently via the `getFolderName` property.
 
 ##### Example migration
 
@@ -135,7 +135,7 @@ const config = {
 }
 ```
 
-Further, if you would prefer to place the resulting `Namespace` documents *under* their resulting folder, you could use a configuration like the following:
+Further, if you would prefer to place the resulting `Namespace` documents _under_ their resulting folder, you could use a configuration like the following:
 
 ```typescript
 const config = {
