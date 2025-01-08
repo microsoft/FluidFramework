@@ -616,9 +616,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				}
 
 				const commitToRevert = revertibleBranch.getHead();
-				const activeBranch = targetCheckout.#transaction.activeBranch;
+				const activeBranchHead = targetCheckout.#transaction.activeBranch.getHead();
 
-				if (isAncestor(commitToRevert, activeBranch.getHead(), true) === false) {
+				if (isAncestor(commitToRevert, activeBranchHead, true) === false) {
 					throw new UsageError(
 						"Cannot clone revertible for a commit that is not present on the given branch.",
 					);
