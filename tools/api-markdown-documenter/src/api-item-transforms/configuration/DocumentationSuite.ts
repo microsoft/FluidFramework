@@ -356,7 +356,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteConfiguration.getHeadingTextForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getAlertsForItem}.
 	 *
 	 * Generates alerts for the following tags, if found:
 	 *
