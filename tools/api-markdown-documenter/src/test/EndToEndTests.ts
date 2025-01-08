@@ -13,8 +13,9 @@ import type { Suite } from "mocha";
 
 import { loadModel } from "../LoadModel.js";
 import {
-	transformApiModel,
 	type ApiItemTransformationOptions,
+	checkForDuplicateDocumentPaths,
+	transformApiModel,
 } from "../api-item-transforms/index.js";
 import type { DocumentNode } from "../documentation-domain/index.js";
 
@@ -155,16 +156,8 @@ export function endToEndTests<TRenderConfig>(
 						it("Ensure no duplicate file paths", () => {
 							const documents = transformApiModel(apiItemTransformConfig);
 
-							const pathMap = new Map<string, DocumentNode>();
-							for (const document of documents) {
-								if (pathMap.has(document.documentPath)) {
-									expect.fail(
-										`Rendering generated multiple documents to be rendered to the same file path.`,
-									);
-								} else {
-									pathMap.set(document.documentPath, document);
-								}
-							}
+							// Will throw if any duplicates are found.
+							checkForDuplicateDocumentPaths(documents);
 						});
 
 						// Perform actual output snapshot comparison test against checked-in test collateral.
