@@ -315,7 +315,7 @@ export interface DocumentationSuiteConfiguration {
     readonly hierarchyBoundaries: HierarchyBoundaries;
     readonly includeBreadcrumb: boolean;
     readonly includeTopLevelDocumentHeading: boolean;
-    readonly minimumReleaseLevel: Omit<ReleaseTag, ReleaseTag.None>;
+    readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
     readonly skipPackage: (apiPackage: ApiPackage) => boolean;
 }
 
