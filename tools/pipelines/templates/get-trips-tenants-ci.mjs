@@ -2,15 +2,8 @@
 // Licensed under the MIT License.
 
 import fetch from "node-fetch";
-// import "OSS.TDFTestLibrary";
-
-// define variables
-// stringBearerToken="";
-
 
 async function main() {
-	console.log("set -eu -o pipefail");
-	console.log("az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId");
 	const requestBody = {
 		"Resources": [
 			{
@@ -32,8 +25,6 @@ async function main() {
 	console.log(`bearerToken: ${bearerToken}`);
 	const stringBearerToken = JSON.stringify(bearerToken);
 	console.log(`stringBearerToken: ${stringBearerToken}`);
-		// .then((response) => response.json())
-		// .then((data) => (stringBearerToken = JSON.stringify(data)));
 
 	// step 2: wait for resource hydration
 	// returns "Ready" or "Not Ready"
@@ -43,10 +34,10 @@ async function main() {
 			// are single quotes needed here in addition to backticks?
 			Authorization: `'BEARER ${stringBearerToken}'`,
 		},
-	}).then((response) => response.json());
+	}).then((response) => response.text());
 	console.log(`status: ${status}`);
 	const stringStatus = JSON.stringify(status);
-	console.log(`string status ${stringStatus}`);
+	console.log(`string status: ${stringStatus}`);
 
 	// step 3: check out hydrated resource
 	const credentials = await fetch(
@@ -61,8 +52,6 @@ async function main() {
 		},
 	).then((response) => response.json());
 	const loginTenants = JSON.stringify(credentials);
-	// "
-	console.log(`login tenants: ${loginTenants} ; stringbearertoken: ${stringBearerToken}`);
 	console.log(`##vso[task.setvariable variable=tenantCreds;issecret=true]${loginTenants}`);
 	console.log(`##vso[task.setvariable variable=stringBearerToken;]${stringBearerToken}`);
 }

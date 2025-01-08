@@ -391,8 +391,11 @@ stages:
             azureSubscription: 'Fluid Framework Tests'
             addSpnToEnvironment: true
             scriptType: 'bash'
-            scriptLocation: 'scriptPath'
-            scriptPath: 'tools/pipelines/templates/get-trips-tenants.mjs'
+            scriptLocation: 'inlineScript'
+            scriptPath: |
+              set -eu -o pipefail
+              az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+              node 'tools/pipelines/templates/get-trips-tenants-ci.mjs';
 
         # run the test
         - task: Npm@1
