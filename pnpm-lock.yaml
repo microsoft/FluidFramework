@@ -27,9 +27,6 @@ importers:
 
   .:
     devDependencies:
-      '@azure/identity':
-        specifier: 4.5.0
-        version: 4.5.0
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
