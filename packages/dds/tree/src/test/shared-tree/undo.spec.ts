@@ -679,6 +679,7 @@ describe("Undo and redo", () => {
 		);
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("clone list of revertibles", () => {
 		const view = createInitializedView();
 		const { undoStack } = createTestUndoRedoStacks(view.events);
@@ -707,6 +708,7 @@ describe("Undo and redo", () => {
 		assert.equal(forkedView.root.child?.propertyOne, 128);
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("cloning list of disposed revertibles throws error", () => {
 		const view = createInitializedView();
 		const { undoStack } = createTestUndoRedoStacks(view.events);
@@ -724,11 +726,13 @@ describe("Undo and redo", () => {
 			assert.equal(revertible.status, RevertibleStatus.Disposed);
 		}
 
-		assert.throws(() => cloneRevertibles(batchedRevertibles, forkedView), {
-			message: "List of revertible should not contain disposed revertibles.",
-		});
+		assert.throws(
+			() => cloneRevertibles(batchedRevertibles, forkedView),
+			/List of revertible should not contain disposed revertibles./,
+		);
 	});
 
+	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
 	it("cloning list of revertibles between views with different changes throws error", () => {
 		const viewA = createInitializedView();
 		const viewB = createInitializedView();
@@ -744,7 +748,10 @@ describe("Undo and redo", () => {
 			revertibles.push(revertible);
 		}
 
-		assert.throws(() => cloneRevertibles(revertibles, viewB), "Error: 0x576");
+		assert.throws(
+			() => cloneRevertibles(revertibles, viewB),
+			/Cannot clone revertible for a commit that is not present on the given branch./,
+		);
 	});
 });
 
