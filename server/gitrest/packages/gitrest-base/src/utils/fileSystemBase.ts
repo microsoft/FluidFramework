@@ -12,7 +12,7 @@ import { type IFileSystemPromises } from "./definitions";
 import { filepathToString, FilesystemError, SystemErrors } from "./fileSystemHelper";
 
 export abstract class FsPromisesBase implements IFileSystemPromises {
-	public readonly promises: IFileSystemPromises;
+	public readonly promises?: IFileSystemPromises;
 	constructor(private readonly maxFileSizeBytes?: number) {}
 
 	protected abstract readFileCore(

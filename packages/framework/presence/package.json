@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.11.0",
+	"version": "2.20.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,10 +31,6 @@
 			"import": "./lib/core-interfaces/index.js",
 			"require": "./dist/core-interfaces/index.js"
 		},
-		"./internal/events": {
-			"import": "./lib/events/events.js",
-			"require": "./dist/events/events.js"
-		},
 		"./internal/exposedInternalTypes": {
 			"import": "./lib/exposedInternalTypes.js",
 			"require": "./dist/exposedInternalTypes.js"
@@ -63,7 +59,7 @@
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"build:test:esm:core-interfaces-no-exactOptionalPropertyTypes": "tsc --project ./src/test/core-interfaces/tsconfig.no-exactOptionalPropertyTypes.json",
-		"check:are-the-types-wrong": "echo skip per issue #112 - node10 requirement: attw --pack .",
+		"check:are-the-types-wrong": "attw --pack . --profile node16",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -112,6 +108,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
@@ -127,17 +124,17 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^8.0.1",

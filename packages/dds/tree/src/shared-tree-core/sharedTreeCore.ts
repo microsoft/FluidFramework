@@ -45,7 +45,7 @@ import {
 	breakingClass,
 } from "../util/index.js";
 
-import { type SharedTreeBranch, getChangeReplaceType } from "./branch.js";
+import type { SharedTreeBranch } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import type { SeqNumber } from "./editManagerFormat.js";
@@ -56,7 +56,7 @@ import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./chang
 import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
-import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -95,13 +95,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 */
 	public get editor(): TEditor {
 		return this.getLocalBranch().editor;
-	}
-
-	/**
-	 * Gets the revision at the head of the trunk.
-	 */
-	protected get trunkHeadRevision(): RevisionTag {
-		return this.editManager.getTrunkHead().revision;
 	}
 
 	/**
@@ -183,45 +176,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.mintRevisionTag,
 			rebaseLogger,
 		);
-		this.editManager.localBranch.events.on("transactionStarted", () => {
-			if (this.detachedRevision === undefined) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.startTransaction();
-			}
-		});
-		this.editManager.localBranch.events.on("transactionAborted", () => {
-			if (this.detachedRevision === undefined) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.abortTransaction();
-			}
-		});
-		this.editManager.localBranch.events.on("transactionCommitted", () => {
-			if (this.detachedRevision === undefined) {
-				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
-				this.commitEnricher.commitTransaction();
-			}
-		});
+
 		this.editManager.localBranch.events.on("beforeChange", (change) => {
 			if (this.detachedRevision === undefined) {
 				// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
 				this.commitEnricher.processChange(change);
 			}
-		});
-		this.editManager.localBranch.events.on("afterChange", (change) => {
-			// We do not submit ops for changes that are part of a transaction.
-			if (!this.getLocalBranch().isTransacting()) {
-				if (
-					change.type === "append" ||
-					(change.type === "replace" && getChangeReplaceType(change) === "transactionCommit")
-				) {
-					for (const commit of change.newCommits) {
-						this.submitCommit(
-							this.detachedRevision !== undefined
-								? commit
-								: this.commitEnricher.enrich(commit),
-							this.schemaAndPolicy,
-						);
-					}
+			if (change.type === "append") {
+				for (const commit of change.newCommits) {
+					this.submitCommit(commit, this.schemaAndPolicy, false);
 				}
 			}
 		});
@@ -294,6 +257,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
+		assert(
+			this.editManager.localBranch.getHead() === this.editManager.getTrunkHead(),
+			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
+		);
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
 		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);
 		const loadSummarizables = summarizables.map(async (s) =>
@@ -338,21 +305,20 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * @returns the submitted commit. This is undefined if the underlying `SharedObject` is not attached,
 	 * and may differ from `commit` due to enrichments like detached tree refreshers.
 	 */
-
-	private submitCommit(
+	protected submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
-		isResubmit = false,
+		isResubmit: boolean,
 	): void {
-		assert(
-			// Edits should not be submitted until all transactions finish
-			!this.getLocalBranch().isTransacting() || isResubmit,
-			0x68b /* Unexpected edit submitted during transaction */,
-		);
 		assert(
 			this.isAttached() === (this.detachedRevision === undefined),
 			0x95a /* Detached revision should only be set when not attached */,
 		);
+
+		const enrichedCommit =
+			this.detachedRevision === undefined && !isResubmit
+				? this.commitEnricher.enrich(commit)
+				: commit;
 
 		// Edits submitted before the first attach are treated as sequenced because they will be included
 		// in the attach summary that is uploaded to the service.
@@ -361,7 +327,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
 			this.editManager.addSequencedChange(
-				{ ...commit, sessionId: this.editManager.localSessionId },
+				{ ...enrichedCommit, sessionId: this.editManager.localSessionId },
 				newRevision,
 				this.detachedRevision,
 			);
@@ -370,7 +336,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 		const message = this.messageCodec.encode(
 			{
-				commit,
+				commit: enrichedCommit,
 				sessionId: this.editManager.localSessionId,
 			},
 			{
@@ -383,7 +349,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			schema: schemaAndPolicy.schema.clone(),
 			policy: schemaAndPolicy.policy,
 		});
-		this.resubmitMachine.onCommitSubmitted(commit);
+		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
 	}
 
 	protected processCore(
@@ -406,9 +372,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	/**
-	 * @returns the head commit of the root local branch
-	 */
 	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
 		return this.editManager.localBranch;
 	}
@@ -416,13 +379,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	protected onDisconnect(): void {}
 
 	protected override didAttach(): void {
-		if (this.getLocalBranch().isTransacting()) {
-			// Attaching during a transaction is not currently supported.
-			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
-			throw new UsageError(
-				"Cannot attach while a transaction is in progress. Commit or abort the transaction before attaching.",
-			);
-		}
 		if (this.detachedRevision !== undefined) {
 			this.detachedRevision = undefined;
 		}
@@ -461,10 +417,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
-		assert(
-			!this.getLocalBranch().isTransacting(),
-			0x674 /* Unexpected transaction is open while applying stashed ops */,
-		);
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision, change },

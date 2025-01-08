@@ -38,7 +38,7 @@ import {
 } from "../leafNodeSchema.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import {
-	customFromCursorInner,
+	customFromCursor,
 	type CustomTreeNode,
 	type CustomTreeValue,
 	type EncodeOptions,
@@ -344,7 +344,7 @@ function verboseFromCursorInner<TCustom>(
 	options: Required<EncodeOptions<TCustom>>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): VerboseTree<TCustom> {
-	const fields = customFromCursorInner(reader, options, schema, verboseFromCursorInner);
+	const fields = customFromCursor(reader, options, schema, verboseFromCursorInner);
 	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
 	if (nodeSchema.kind === NodeKind.Leaf) {
 		return fields as CustomTreeValue<TCustom>;

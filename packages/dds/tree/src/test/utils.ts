@@ -120,7 +120,6 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	type ITransaction,
 	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -130,7 +129,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import type {
+	SharedTreeOptions,
+	SharedTreeOptionsInternal,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -152,6 +155,7 @@ import type { Client } from "@fluid-private/test-dds-utils";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
+import type { Transactor } from "../shared-tree-core/index.js";
 
 // Testing utilities
 
@@ -511,10 +515,11 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
 	public constructor(
-		private readonly onCreate: (tree: SharedTree) => void,
-		private readonly onLoad?: (tree: SharedTree) => void,
+		protected readonly onCreate: (tree: SharedTree) => void,
+		protected readonly onLoad?: (tree: SharedTree) => void,
+		options: SharedTreeOptionsInternal = {},
 	) {
-		super({ jsonValidator: typeboxValidator });
+		super({ ...options, jsonValidator: typeboxValidator });
 	}
 
 	public override async load(
@@ -1219,7 +1224,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		}
 		return this.options.editor;
 	}
-	public get transaction(): ITransaction {
+	public get transaction(): Transactor {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
 	public get events(): Listenable<CheckoutEvents> {

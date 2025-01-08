@@ -35,14 +35,14 @@ export type Listeners<T extends object> = {
  * @param TListeners - All the {@link Listeners | events} that this subscribable supports
  *
  * @privateRemarks
- * `EventEmitter` can be used as a base class to implement this via extension.
+ * {@link @fluid-internal/client-utils#CustomEventEmitter} can be used as a base class to implement this via extension.
  * ```ts
- * type MyEventEmitter = IEventEmitter<{
+ * type MyEventEmitter = IEmitter<{
  *   load: (user: string, data: IUserData) => void;
  *   error: (errorCode: number) => void;
  * }>
  * ```
- * {@link createEmitter} can help implement this interface via delegation.
+ * {@link @fluid-internal/client-utils#createEmitter} can help implement this interface via delegation.
  *
  * @sealed @public
  */

@@ -204,7 +204,7 @@ class ComposableEventEmitter<TListeners extends Listeners<TListeners>>
  * }
  *
  * class MyClass implements Listenable<MyEvents> {
- * 	private readonly events = createEmitterMinimal<MyEvents>();
+ * 	private readonly events = createEmitter<MyEvents>();
  *
  * 	private load(): void {
  * 		this.events.emit("loaded");

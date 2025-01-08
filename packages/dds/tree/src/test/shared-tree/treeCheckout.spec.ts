@@ -51,6 +51,7 @@ import {
 	getOrCreateInnerNode,
 	toStoredSchema,
 	type InsertableField,
+	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { stringSchema } from "../../simple-tree/leafNodeSchema.js";
@@ -693,7 +694,7 @@ describe("sharedTreeView", () => {
 			viewBranch.root.insertAtEnd("43");
 			tree.merge(treeBranch, false);
 			assert.deepEqual(viewBranch.root, ["42", "43"]);
-			assert.equal(viewBranch.checkout.transaction.inProgress(), false);
+			assert.equal(viewBranch.checkout.transaction.isInProgress(), false);
 		});
 
 		itView("do not close across forks", ({ view, tree }) => {
@@ -704,7 +705,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtEnd("A");
 			assert.throws(
 				() => viewBranch.checkout.transaction.commit(),
-				(e: Error) => validateAssertionError(e, "No transaction is currently in progress"),
+				(e: Error) => validateAssertionError(e, "No transaction to commit"),
 			);
 		});
 
@@ -801,6 +802,37 @@ describe("sharedTreeView", () => {
 			},
 			{ skip: true },
 		);
+
+		itView("dispose branches created during the transaction", ({ view, tree }) => {
+			const branchA = tree.branch();
+			view.checkout.transaction.start();
+			const branchB = tree.branch();
+			view.checkout.transaction.start();
+			const branchC = tree.branch();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, false);
+			assert.equal(branchC.disposed, false);
+			view.checkout.transaction.abort();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, false);
+			assert.equal(branchC.disposed, true);
+			view.checkout.transaction.commit();
+			assert.equal(branchA.disposed, false);
+			assert.equal(branchB.disposed, true);
+			assert.equal(branchC.disposed, true);
+		});
+
+		itView("statuses are reported correctly", ({ view }) => {
+			assert.equal(view.checkout.transaction.isInProgress(), false);
+			view.checkout.transaction.start();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.start();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.commit();
+			assert.equal(view.checkout.transaction.isInProgress(), true);
+			view.checkout.transaction.abort();
+			assert.equal(view.checkout.transaction.isInProgress(), false);
+		});
 	});
 
 	describe("disposal", () => {
@@ -1236,6 +1268,78 @@ describe("sharedTreeView", () => {
 				unsubscribe();
 			});
 		}
+	});
+
+	describe("throws an error if it is in the middle of an edit when a user attempts to", () => {
+		const sf = new SchemaFactory("Checkout and view test schema");
+		class NumberNode extends sf.object("Number", { number: sf.number }) {}
+
+		/** Tests that an error is thrown when a given action is taken during the execution of a nodeChanged/treeChanged listener */
+		function expectErrorDuringEdit(args: {
+			/**
+			 * Runs after the main view has been created but before the edit occurs
+			 * @returns (optionally) a view (e.g. a fork of the main view) that will be passed to `duringEdit`
+			 */
+			setup?: (
+				view: SchematizingSimpleTreeView<typeof NumberNode>,
+			) => void | SchematizingSimpleTreeView<typeof NumberNode>;
+			/** The code to run during the edit that should throw an error */
+			duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) => void;
+			/** The expected error message */
+			error: string;
+		}): void {
+			let view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
+			);
+
+			view.initialize({ number: 3 });
+			view = args.setup?.(view) ?? view;
+
+			Tree.on(view.root, "nodeChanged", () => {
+				args.duringEdit(view);
+			});
+
+			assert.throws(() => (view.root.number = 0), new RegExp(args.error));
+		}
+
+		it("edit the tree", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => {
+					view.root.number = 4;
+				},
+				error: "Editing the tree is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("create a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.fork(),
+				error: ".*Branching is forbidden during a nodeChanged or treeChanged event.*",
+			});
+		});
+
+		it("rebase a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.rebaseOnto(view),
+				error: "Rebasing is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("merge a branch", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.merge(view),
+				error: "Merging is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
+
+		it("dispose", () => {
+			let branch: TreeBranch | undefined;
+			expectErrorDuringEdit({
+				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
+				duringEdit: (view) => view.dispose(),
+				error: "Disposing a view is forbidden during a nodeChanged or treeChanged event",
+			});
+		});
 	});
 });
 

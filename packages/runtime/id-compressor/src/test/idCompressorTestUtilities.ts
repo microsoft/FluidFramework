@@ -638,7 +638,7 @@ export class IdCompressorTestNetwork {
 			assert(originatingSession !== undefined, "Expected originating client to be defined");
 			idIndicesAggregator.set(
 				originatingSession,
-				// eslint-disable-next-line @typescript-eslint/restrict-plus-operands
+
 				(idIndicesAggregator.get(originatingSession) ??
 					fail("Expected pre-existing index for originating client")) + 1,
 			);

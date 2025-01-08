@@ -10,7 +10,10 @@ import { ContainerErrorTypes } from "@fluidframework/container-definitions/inter
 import { IErrorBase, ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { Timer } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	ISnapshotTree,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -526,7 +529,6 @@ describe("Garbage Collection Tests", () => {
 						type: GarbageCollectionMessageType.TombstoneLoaded,
 						nodePath: nodes[0],
 					},
-					compatDetails: { behavior: "Ignore" },
 				} satisfies ContainerRuntimeGCMessage,
 				"submitted message not as expected",
 			);
@@ -1508,7 +1510,8 @@ describe("Garbage Collection Tests", () => {
 			assert(summaryTree?.summary.type === SummaryType.Tree, "The summary should be a tree");
 
 			// Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
-			const deletedNodesBlob = summaryTree.summary.tree[gcDeletedBlobKey];
+			const deletedNodesBlob: SummaryObject | undefined =
+				summaryTree.summary.tree[gcDeletedBlobKey];
 			assert(
 				deletedNodesBlob.type === SummaryType.Blob,
 				"Deleted blob not present in summary",
@@ -1557,7 +1560,8 @@ describe("Garbage Collection Tests", () => {
 			assert(gcSummary?.summary.type === SummaryType.Tree, "The summary should be a tree");
 
 			// Get the deleted node ids from summary and validate that its the same as the one GC loaded from.
-			const deletedNodesBlob = gcSummary.summary.tree[gcDeletedBlobKey];
+			const deletedNodesBlob: SummaryObject | undefined =
+				gcSummary.summary.tree[gcDeletedBlobKey];
 			assert(
 				deletedNodesBlob.type === SummaryType.Handle,
 				"Deleted nodes state should be a handle",
@@ -1645,13 +1649,12 @@ describe("Garbage Collection Tests", () => {
 			assert(summaryTree.type === SummaryType.Tree, "Expecting a summary tree!");
 
 			let rootGCState: IGarbageCollectionState = { gcNodes: {} };
-			for (const key of Object.keys(summaryTree.tree)) {
+			for (const [key, gcBlob] of Object.entries(summaryTree.tree)) {
 				// Skip blobs that do not start with the GC prefix.
 				if (!key.startsWith(gcBlobPrefix)) {
 					continue;
 				}
 
-				const gcBlob = summaryTree.tree[key];
 				assert(gcBlob?.type === SummaryType.Blob, `GC blob not available`);
 				const gcState = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;
 				// Merge the GC state of this blob into the root GC state.
@@ -1952,7 +1955,7 @@ describe("Garbage Collection Tests", () => {
 				defaultGCData.gcNodes[nodeE] = [nodeA];
 
 				// 4. Add reference from A to D with calling addedOutboundReference
-				defaultGCData.gcNodes[nodeA].push(nodeD);
+				defaultGCData.gcNodes[nodeA]?.push(nodeD);
 				garbageCollector.addedOutboundReference(nodeA, nodeD, Date.now());
 
 				// 5. Run GC and generate summary 2. E = [A -\> B, A -\> C, A -\> E, D -\> C, E -\> A].
@@ -2217,61 +2220,21 @@ describe("Garbage Collection Tests", () => {
 		assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting 0 deleted nodes");
 	});
 
-	describe("Future GC op type compatibility", () => {
+	it("process remote op with unrecognized type", async () => {
+		const garbageCollector = createGarbageCollector();
 		const gcMessageFromFuture: Record<string, unknown> = {
 			type: "FUTURE_MESSAGE",
 			hello: "HELLO",
 		};
-
-		let garbageCollector: IGarbageCollector;
-		beforeEach(async () => {
-			garbageCollector = createGarbageCollector({
-				createParams: { gcOptions: { enableGCSweep: true } },
-			});
-		});
-
-		it("can submit GC op compat behavior", async () => {
-			const gcWithPrivates = garbageCollector as GcWithPrivates;
-			const containerRuntimeGCMessage: Omit<ContainerRuntimeGCMessage, "type" | "contents"> & {
-				type: string;
-				contents: any;
-			} = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture,
-				compatDetails: { behavior: "Ignore" },
-			};
-
-			assert.doesNotThrow(
-				() =>
-					gcWithPrivates.submitMessage(containerRuntimeGCMessage as ContainerRuntimeGCMessage),
-				"Cannot submit GC message with compatDetails",
-			);
-		});
-
-		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-			assert.throws(
-				() =>
-					garbageCollector.processMessages(
-						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
-						Date.now(),
-						false /* local */,
-					),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
-
-		it("process remote op with unrecognized type and no compat behavior", async () => {
-			assert.throws(
-				() =>
-					garbageCollector.processMessages(
-						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
-						Date.now(),
-						false /* local */,
-					),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
+		assert.throws(
+			() =>
+				garbageCollector.processMessages(
+					[gcMessageFromFuture as unknown as GarbageCollectionMessage],
+					Date.now(),
+					false /* local */,
+				),
+			(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+			"Garbage collection message of unknown type FUTURE_MESSAGE",
+		);
 	});
 });

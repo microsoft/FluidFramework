@@ -213,7 +213,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 		}
 
 		parsedUrl.pathname = replaceDocumentIdInPath(parsedUrl.pathname, documentId);
-		const deltaStorageUrl = resolvedUrl.endpoints.deltaStorageUrl;
+		const deltaStorageUrl = resolvedUrl.endpoints?.deltaStorageUrl;
 		if (!deltaStorageUrl) {
 			throw new Error(
 				`All endpoints urls must be provided. [deltaStorageUrl:${deltaStorageUrl}]`,
@@ -303,9 +303,9 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			},
 		);
 
-		const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
-		const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
-		const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+		const storageUrl = fluidResolvedUrl.endpoints?.storageUrl;
+		const ordererUrl = fluidResolvedUrl.endpoints?.ordererUrl;
+		const deltaStorageUrl = fluidResolvedUrl.endpoints?.deltaStorageUrl;
 		const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
 		if (!ordererUrl || !deltaStorageUrl) {
 			throw new Error(
@@ -388,4 +388,16 @@ export class DocumentPostCreateError extends Error {
 	public get stack() {
 		return this.innerError.stack;
 	}
+}
+
+/**
+ * Creates factory for creating the routerlicious document service.
+ *
+ * @legacy
+ * @alpha
+ */
+export function createRouterliciousDocumentServiceFactory(
+	tokenProvider: ITokenProvider,
+): IDocumentServiceFactory {
+	return new RouterliciousDocumentServiceFactory(tokenProvider);
 }

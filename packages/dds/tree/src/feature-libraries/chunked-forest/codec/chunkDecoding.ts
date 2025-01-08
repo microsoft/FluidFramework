@@ -6,10 +6,14 @@
 import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
-import type { FieldKey, TreeNodeSchemaIdentifier, Value } from "../../../core/index.js";
+import type {
+	FieldKey,
+	TreeNodeSchemaIdentifier,
+	Value,
+	TreeChunk,
+} from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
-import type { TreeChunk } from "../chunk.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
 

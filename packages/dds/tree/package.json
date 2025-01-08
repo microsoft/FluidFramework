@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.11.0",
+	"version": "2.20.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -171,7 +171,7 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
@@ -183,14 +183,14 @@
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.10.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.13.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"ajv": "^8.12.0",

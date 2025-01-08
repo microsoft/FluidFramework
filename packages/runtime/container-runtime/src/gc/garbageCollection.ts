@@ -5,6 +5,7 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -226,7 +227,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
-					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
+					const gcSnapshotTree: ISnapshotTree | undefined = baseSnapshot.trees[gcTreeKey];
 					if (gcSnapshotTree === undefined) {
 						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
 						// incremental gc summary will not work with older gc data as well
@@ -745,13 +746,9 @@ export class GarbageCollector implements IGarbageCollector {
 				deletedNodeIds: sweepReadyDSAndBlobs,
 			};
 
-			// Its fine for older clients to ignore this op because it doesn't have any functional impact. This op
-			// is an optimization to ensure that all clients are in sync when it comes to deleted nodes to prevent their
-			// accidental usage. The clients will sync without the delete op too but it may take longer.
 			const containerGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents,
-				compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 			};
 			this.submitMessage(containerGCMessage);
 			return;
@@ -1073,15 +1070,12 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// Use compat behavior "Ignore" since this is an optimization to opportunistically protect
-		// objects from deletion, so it's fine for older clients to ignore this op.
 		const containerGCMessage: ContainerRuntimeGCMessage = {
 			type: ContainerMessageType.GC,
 			contents: {
 				type: GarbageCollectionMessageType.TombstoneLoaded,
 				nodePath,
 			},
-			compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 		};
 		this.submitMessage(containerGCMessage);
 	}

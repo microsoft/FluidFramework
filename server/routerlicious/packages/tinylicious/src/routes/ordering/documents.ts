@@ -11,16 +11,14 @@ import {
 import { Router } from "express";
 import { v4 as uuid } from "uuid";
 import winston from "winston";
-import { getParam } from "../../utils";
 
 export function create(storage: IDocumentStorage): Router {
 	const router: Router = Router();
 
 	router.get("/:tenantId?/:id", (request, response) => {
-		const documentP = storage.getDocument(
-			getParam(request.params, "tenantId"),
-			getParam(request.params, "id"),
-		);
+		const tenantId = request.params.tenantId ?? "fluid";
+		const documentId = request.params.id;
+		const documentP = storage.getDocument(tenantId, documentId);
 		documentP.then(
 			(document) => {
 				response.status(200).json(document);
@@ -36,7 +34,7 @@ export function create(storage: IDocumentStorage): Router {
 	 */
 	router.post("/:tenantId", (request, response, next) => {
 		// Tenant and document
-		const tenantId = getParam(request.params, "tenantId");
+		const tenantId = request.params.tenantId;
 		const id = request.body.id || uuid();
 
 		// Summary information

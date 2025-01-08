@@ -73,10 +73,12 @@ export interface IOdspErrorAugmentations {
 
 // @alpha (undocumented)
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
+    appName?: string;
     // (undocumented)
     codeHint?: {
         containerPackageName?: string;
     };
+    context?: string;
     // (undocumented)
     dataStorePath?: string;
     // (undocumented)
