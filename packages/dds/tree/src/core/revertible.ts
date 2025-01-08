@@ -100,13 +100,14 @@ export type RevertibleAlphaFactory = (
 ) => RevertibleAlpha;
 
 /**
- * Clones a batch of revertibles for a target branch.
- * @throws Error if any revertible is disposed
- * @throws Error if the target branch does not contain the changes that the revertibles are meant to revert
+ * Clones a group of revertibles for a target branch.
  *
- * @param revertibles - Array of revertibles to clone
- * @param targetBranch - The target branch to clone the revertibles for
- * @returns Array of cloned revertibles, maintaining the same order as the input
+ * @throws Error if any revertible is disposed.
+ * @throws Error if the target branch does not contain the changes that the revertibles are meant to revert.
+ *
+ * @param revertibles - Array of revertibles to clone.
+ * @param targetBranch - The target branch to clone the revertibles for.
+ * @returns Array of cloned revertibles, maintaining the same order as the input.
  *
  * @alpha
  */
