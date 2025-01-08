@@ -41,7 +41,6 @@ import {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 	type GraphCommit,
-	findCommonAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -77,6 +76,7 @@ import type {
 	TreeChangeEvents,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { findCommitInActiveBranch } from "./treeApi.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -606,32 +606,27 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					revertible.dispose();
 				}
 			},
-			clone: (forkedBranch: TreeBranch) => {
-				if (forkedBranch === undefined) {
-					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
+			clone: (targetBranch: TreeBranch) => {
+				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
+				const targetCheckout = getCheckout(targetBranch);
+
+				const revertibleBranch = this.revertibleCommitBranches.get(revision);
+				if (revertibleBranch === undefined) {
+					throw new UsageError("Change to revert does not exist on the branch.");
 				}
 
-				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
-				const forkedCheckout = getCheckout(forkedBranch);
+				const commitToRevert = revertibleBranch.getHead();
+				const activeBranch = targetCheckout.#transaction.activeBranch;
 
-				// Check if the original branch and forked branch have a common ancestor.
-				const originalBranchHead = this.#transaction.activeBranch.getHead();
-				const forkedBranchHead = forkedCheckout.#transaction.activeBranch.getHead();
-
-				if (findCommonAncestor(originalBranchHead, forkedBranchHead) === undefined) {
+				if (findCommitInActiveBranch(commitToRevert, activeBranch) === false) {
 					throw new UsageError(
 						"Cannot clone revertible: branch A and branch B must be related",
 					);
 				}
 
-				const revertibleBranch = this.revertibleCommitBranches.get(revision);
-				assert(
-					revertibleBranch !== undefined,
-					0xa82 /* change to revert does not exist on the given forked branch */,
-				);
-				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 
-				return this.createRevertible(revision, kind, forkedCheckout, onRevertibleDisposed);
+				return this.createRevertible(revision, kind, targetCheckout, onRevertibleDisposed);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
