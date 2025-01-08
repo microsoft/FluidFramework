@@ -38,7 +38,7 @@
 		"test:jest": "jest --detectOpenHandles",
 		"test:jest:coverage": "jest --detectOpenHandles --coverage --ci",
 		"watch:devtools-core": "tsc --watch --project ../devtools-core/tsconfig.json --preserveWatchOutput",
-		"watch:devtools-view": "copyfiles -f ../../../../common/build/build-common/src/esm/package.json ../devtools-view/lib && fluid-tsc module --watch --project ../devtools-view/tsconfig.esm.json --preserveWatchOutput",
+		"watch:devtools-view": "fluid-tsc module --watch --project ../devtools-view/tsconfig.esm.json --preserveWatchOutput",
 		"watch:esnext": "tsc --watch --project ./tsconfig.json",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"

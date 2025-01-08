@@ -310,7 +310,6 @@ module.exports = {
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
 			"common/build/build-common/src/cjs/package.json",
-			"common/build/build-common/src/esm/package.json",
 			"packages/framework/presence/src/cjs/package.json",
 		],
 		// Exclusion per handler
