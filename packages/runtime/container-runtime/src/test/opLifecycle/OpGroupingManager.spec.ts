@@ -71,7 +71,11 @@ describe("OpGroupingManager", () => {
 							groupedBatchingEnabled: option.enabled,
 						},
 						mockLogger,
-					).shouldGroup(createBatch(5, option.reentrant)),
+					).shouldGroup(
+						option.tooSmall
+							? createBatch(1, option.reentrant)
+							: createBatch(5, option.reentrant),
+					),
 					option.expectedResult,
 				);
 			});
@@ -171,7 +175,7 @@ describe("OpGroupingManager", () => {
 						groupedBatchingEnabled: true,
 					},
 					mockLogger,
-				).groupBatch(createBatch(5));
+				).groupBatch(createBatch(1));
 			});
 		});
 
