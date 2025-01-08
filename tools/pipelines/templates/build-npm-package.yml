@@ -114,7 +114,9 @@ stages:
         displayName: Build
         pool: ${{ parameters.poolBuild }}
         variables:
-          testCoverage: ${{ and(eq(parameters.taskTest, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}
+          # Coverage has quality issues in LTS, and root-causing + fixing is not a priority given changes to LTS at this point
+          # will be things like upgrading node or security fixes, not adding new features.
+          testCoverage: false
           releaseBuildVar: $[variables.releaseBuild]
         steps:
         # Setup
