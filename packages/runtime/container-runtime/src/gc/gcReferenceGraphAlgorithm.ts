@@ -31,7 +31,7 @@ export function runGarbageCollection(
 
 		// Get the node for the referenced id and add its outbound routes to referencedIds since they are
 		// also referenced.
-		const routes: string[] | undefined = referenceGraph[id];
+		const routes = referenceGraph[id];
 		if (routes !== undefined) {
 			referencedIds.push(...routes);
 		}

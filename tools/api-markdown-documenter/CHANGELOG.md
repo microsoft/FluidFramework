@@ -189,6 +189,7 @@ Output for this updated case might look something like the following:
 -   `ApiItemTransformations`
 -   `ApiItemTransformationConfiguration`
 -   `DocumentationSuiteOptions`
+-   `FileSystemConfiguration`
 -   `HtmlRenderer.RenderHtmlConfig`
 -   `LintApiModelConfiguration`
 -   `MarkdownRenderer.Renderers`

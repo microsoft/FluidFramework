@@ -139,7 +139,7 @@ export interface DocumentationSuiteConfiguration {
 	 * releaseLevel: ReleaseTag.Beta
 	 * ```
 	 */
-	readonly minimumReleaseLevel?: Exclude<ReleaseTag, ReleaseTag.None>;
+	readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
 }
 
 /**
