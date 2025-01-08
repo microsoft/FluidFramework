@@ -12,7 +12,7 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
+	type DeltaRoot,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -20,6 +20,7 @@ import {
 	makeAnonChange,
 	mapTaggedChange,
 	revisionMetadataSourceFromInfo,
+	rootFieldKey,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
@@ -74,7 +75,7 @@ import {
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
-	assertFieldChangesEqual,
+	assertDeltaEqual,
 	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
@@ -490,12 +491,17 @@ export function invert(
 }
 
 export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset) {
-	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
+	assertDeltaEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: SF.Changeset): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset): DeltaRoot {
 	deepFreeze(change);
-	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
+	const { local, global, rename } = SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
+	return {
+		fields: local === undefined ? new Map([]) : new Map([[rootFieldKey, local]]),
+		global,
+		rename,
+	};
 }
 
 export function toDeltaWrapped(change: WrappedChange) {

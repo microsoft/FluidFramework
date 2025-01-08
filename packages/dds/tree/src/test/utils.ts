@@ -108,6 +108,7 @@ import {
 	MockNodeKeyManager,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
+	type FieldChangeDelta,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -481,7 +482,7 @@ export function isDeltaVisible(fieldChanges: DeltaFieldChanges): boolean {
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
+export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
 	assert.deepStrictEqual(a, b);
 }
 
@@ -1006,15 +1007,22 @@ export function defaultRevInfosFromChanges(
 	return revInfos;
 }
 
+export interface DeltaParams {
+	detachedFieldIndex?: DetachedFieldIndex;
+	revision?: RevisionTag;
+	global?: readonly DeltaDetachedNodeChanges[];
+	rename?: readonly DeltaDetachedNodeRename[];
+	build?: readonly DeltaDetachedNodeBuild[];
+	destroy?: readonly DeltaDetachedNodeDestruction[];
+}
+
 export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
-	detachedFieldIndex?: DetachedFieldIndex,
-	revision?: RevisionTag,
-	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DeltaDetachedNodeDestruction[],
+	params?: DeltaParams,
 ): void {
-	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
+	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
+	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
 	applyDelta(
 		rootDelta,
 		revision,
@@ -1027,12 +1035,10 @@ export function applyTestDelta(
 export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
-	detachedFieldIndex?: DetachedFieldIndex,
-	revision?: RevisionTag,
-	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DeltaDetachedNodeDestruction[],
+	params?: DeltaParams,
 ): void {
-	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
+	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
+	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
 	announceDelta(
 		rootDelta,
 		revision,

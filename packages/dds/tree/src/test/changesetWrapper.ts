@@ -7,7 +7,6 @@ import { strict } from "node:assert";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type ChangeAtomIdMap,
-	type DeltaFieldChanges,
 	type RevisionTag,
 	type TaggedChange,
 	makeAnonChange,
@@ -16,6 +15,7 @@ import {
 	taggedOptAtomId,
 } from "../core/index.js";
 import type {
+	FieldChangeDelta,
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
@@ -205,8 +205,8 @@ function prune<T>(
 
 function toDelta<T>(
 	change: ChangesetWrapper<T>,
-	fieldToDelta: (change: T, deltaFromChild: ToDelta) => DeltaFieldChanges,
-): DeltaFieldChanges {
+	fieldToDelta: (change: T, deltaFromChild: ToDelta) => FieldChangeDelta,
+): FieldChangeDelta {
 	const deltaFromChild = (id: NodeId) => {
 		const node = tryGetFromNestedMap(change.nodes, id.revision, id.localId);
 		assert(node !== undefined, "Unknown node ID");

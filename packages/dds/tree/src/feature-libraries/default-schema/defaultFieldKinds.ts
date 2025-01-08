@@ -6,7 +6,6 @@
 import {
 	type ChangeAtomId,
 	type DeltaDetachedNodeId,
-	type DeltaFieldChanges,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,

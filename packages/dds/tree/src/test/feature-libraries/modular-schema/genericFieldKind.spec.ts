@@ -189,13 +189,11 @@ describe("GenericField", () => {
 			[2, nodeChange2],
 		]);
 
-		const expected: DeltaFieldChanges = {
-			local: [
-				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
-				{ count: 1 },
-				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
-			],
-		};
+		const expected: DeltaFieldChanges = [
+			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
+			{ count: 1 },
+			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
+		];
 
 		const actual = genericChangeHandler.intoDelta(
 			input,

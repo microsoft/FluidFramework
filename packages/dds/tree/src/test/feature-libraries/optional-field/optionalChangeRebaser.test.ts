@@ -6,12 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
-import type { CrossFieldManager } from "../../../feature-libraries/index.js";
+import type { CrossFieldManager, FieldChangeDelta } from "../../../feature-libraries/index.js";
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
@@ -108,7 +107,7 @@ const failCrossFieldManager: CrossFieldManager = {
 function toDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
-): DeltaFieldChanges {
+): FieldChangeDelta {
 	return optionalFieldIntoDelta(change, deltaFromChild);
 }
 
@@ -266,7 +265,8 @@ function composeWrapped(
 }
 
 function isWrappedChangeEmpty(change: WrappedChangeset): boolean {
-	return !isDeltaVisible(toDeltaWrapped(makeAnonChange(change)));
+	const delta = toDeltaWrapped(makeAnonChange(change)).local;
+	return delta === undefined || !isDeltaVisible(delta);
 }
 
 function assertWrappedChangesetsEquivalent(
@@ -525,7 +525,8 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const inv = invertWrapped(change, tag1, true);
 				const actual = composeWrapped(change, tagRollbackInverse(inv, tag1, change.revision));
-				const delta = toDeltaWrapped(makeAnonChange(actual));
+				const delta = toDeltaWrapped(makeAnonChange(actual)).local;
+				assert(delta !== undefined);
 				assert.equal(isDeltaVisible(delta), false);
 			});
 		}
@@ -540,7 +541,8 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 					change.revision,
 				);
 				const actual = composeWrapped(inv, change);
-				const delta = toDeltaWrapped(makeAnonChange(actual));
+				const delta = toDeltaWrapped(makeAnonChange(actual)).local;
+				assert(delta !== undefined);
 				assert.equal(isDeltaVisible(delta), false);
 			});
 		}

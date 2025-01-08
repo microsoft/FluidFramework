@@ -11,8 +11,6 @@ import {
 	type ChangesetLocalId,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
-	type DeltaDetachedNodeRename,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionTag,
 	areEqualChangeAtomIds,
