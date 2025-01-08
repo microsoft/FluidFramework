@@ -34,11 +34,7 @@ export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
 
 export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
-<<<<<<< HEAD
-	readonly reentrantBatchGroupingEnabled: boolean
-=======
-	readonly opCountThreshold: number
->>>>>>> origin
+	readonly opCountThreshold: number;
 }
 
 export class OpGroupingManager {
