@@ -78,12 +78,12 @@ export enum FolderDocumentPlacement {
 	/**
 	 * The document is placed inside its folder.
 	 */
-	Inside = "inside",
+	Inside = "Inside",
 
 	/**
 	 * The document is placed outside (adjacent to) its folder.
 	 */
-	Outside = "outside",
+	Outside = "Outside",
 }
 
 /**

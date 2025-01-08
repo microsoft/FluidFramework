@@ -394,8 +394,8 @@ function filterItems(apiItems: readonly ApiItem[], config: ApiItemTransformation
 
 // @public
 export enum FolderDocumentPlacement {
-    Inside = "inside",
-    Outside = "outside"
+    Inside = "Inside",
+    Outside = "Outside"
 }
 
 // @public @sealed
