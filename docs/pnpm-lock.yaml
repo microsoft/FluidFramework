@@ -42,8 +42,8 @@ importers:
         specifier: ^0.45.0
         version: 0.45.0(@docusaurus/theme-common@3.6.2)(@mdx-js/react@3.1.0)(acorn@8.14.0)(eslint@8.55.0)(react-dom@18.3.1)(react@18.3.1)(typescript@5.5.4)
       '@fluid-tools/api-markdown-documenter':
-        specifier: ^0.17.2
-        version: 0.17.2(@types/node@22.9.1)
+        specifier: file:../tools/api-markdown-documenter
+        version: file:../tools/api-markdown-documenter(@types/node@22.9.1)
       '@fluid-tools/markdown-magic':
         specifier: file:../tools/markdown-magic
         version: file:../tools/markdown-magic(@types/node@22.9.1)(markdown-magic@2.6.1)
@@ -3478,23 +3478,6 @@ packages:
       - eslint
       - supports-color
       - typescript
-    dev: true
-
-  /@fluid-tools/api-markdown-documenter@0.17.2(@types/node@22.9.1):
-    resolution: {integrity: sha512-GqRjShw43OZHZnQT0rQwBXmkqeWZrjH6XDikfqX60+A7WGzvR//y7bLGoSAucvxpooff0J/RerLtYXsUIk5EMQ==}
-    dependencies:
-      '@microsoft/api-extractor-model': 7.28.21(@types/node@22.9.1)
-      '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.66.1(@types/node@22.9.1)
-      chalk: 4.1.2
-      hast-util-format: 1.1.0
-      hast-util-from-html: 2.0.3
-      hast-util-raw: 9.1.0
-      hast-util-to-html: 9.0.3
-      hastscript: 9.0.0
-      unist-util-remove-position: 5.0.0
-    transitivePeerDependencies:
-      - '@types/node'
     dev: true
 
   /@fluidframework/build-common@2.0.3:
@@ -17030,6 +17013,25 @@ packages:
 
   /zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
+    dev: true
+
+  file:../tools/api-markdown-documenter(@types/node@22.9.1):
+    resolution: {directory: ../tools/api-markdown-documenter, type: directory}
+    id: file:../tools/api-markdown-documenter
+    name: '@fluid-tools/api-markdown-documenter'
+    dependencies:
+      '@microsoft/api-extractor-model': 7.28.21(@types/node@22.9.1)
+      '@microsoft/tsdoc': 0.14.2
+      '@rushstack/node-core-library': 3.66.1(@types/node@22.9.1)
+      chalk: 4.1.2
+      hast-util-format: 1.1.0
+      hast-util-from-html: 2.0.3
+      hast-util-raw: 9.1.0
+      hast-util-to-html: 9.0.3
+      hastscript: 9.0.0
+      unist-util-remove-position: 5.0.0
+    transitivePeerDependencies:
+      - '@types/node'
     dev: true
 
   file:../tools/markdown-magic(@types/node@22.9.1)(markdown-magic@2.6.1):

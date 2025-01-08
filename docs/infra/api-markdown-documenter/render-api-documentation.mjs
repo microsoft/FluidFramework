@@ -8,6 +8,7 @@ import {
 	ApiItemUtilities,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
+	HierarchyKind,
 	loadModel,
 	MarkdownRenderer,
 	ReleaseTag,
@@ -78,13 +79,36 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,
-		documentBoundaries: [
-			ApiItemKind.Class,
-			ApiItemKind.Enum,
-			ApiItemKind.Interface,
-			ApiItemKind.Namespace,
-			ApiItemKind.TypeAlias,
-		],
+		hierarchy: {
+			getDocumentName: (apiItem, hierarchyConfig) => {
+				switch (apiItem.kind) {
+					case ApiItemKind.Model:
+						return "package-reference";
+					case ApiItemKind.Package:
+						return ApiItemUtilities.getUnscopedPackageName(apiItem);
+					default:
+						let documentName = ApiItemUtilities.createQualifiedDocumentNameForApiItem(
+							apiItem,
+							hierarchyConfig,
+						);
+
+						// Docusaurus treats any document name starting with "_" as a "partial" document, which
+						// will not be included in the site output.
+						// See: <https://docusaurus.io/docs/create-doc>
+						// To work around this, while (hopefully) preventing name collisions, we will prefix
+						// The filename with "u". E.g. `_foo.md` -> `u_foo.md`.
+						// This doesn't affect displayed contents, strictly changes the resulting filenames and any
+						// links to them.
+						if (documentName.startsWith("_")) {
+							documentName = `u${documentName}`;
+						}
+
+						return documentName;
+				}
+			},
+			[ApiItemKind.Enum]: HierarchyKind.Document,
+			[ApiItemKind.TypeAlias]: HierarchyKind.Document,
+		},
 		newlineKind: "lf",
 		uriRoot: uriRootDir,
 		includeBreadcrumb: false, // Docusaurus includes this by default based on file hierarchy
@@ -110,33 +134,6 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				}
 			}
 			return alerts;
-		},
-		getFileNameForItem: (apiItem) => {
-			switch (apiItem.kind) {
-				case ApiItemKind.Model: {
-					return "package-reference";
-				}
-				case ApiItemKind.Package: {
-					return ApiItemUtilities.getUnscopedPackageName(apiItem);
-				}
-				default: {
-					const qualifiedName = ApiItemUtilities.getQualifiedApiItemName(apiItem);
-					let fileName = qualifiedName;
-
-					// Docusaurus treats any document name starting with "_" as a "partial" document, which
-					// will not be included in the site output.
-					// See: <https://docusaurus.io/docs/create-doc>
-					// To work around this, while (hopefully) preventing name collisions, we will prefix
-					// The filename with "u". E.g. `_foo.md` -> `u_foo.md`.
-					// This doesn't affect displayed contents, strictly changes the resulting filenames and any
-					// links to them.
-					if (qualifiedName.startsWith("_")) {
-						fileName = `u${qualifiedName}`;
-					}
-
-					return fileName;
-				}
-			}
 		},
 		skipPackage: (apiPackage) => {
 			const packageName = apiPackage.displayName;
