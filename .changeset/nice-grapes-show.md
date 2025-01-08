@@ -6,10 +6,10 @@
 "section": legacy
 ---
 
-Remove deprecated Merge-Tree and SharedString ISegment members
+Deprecated Merge-Tree and SharedString ISegment members have been removed
 
 The current ISegment interface over-exposes a number of properties which do not have an external use case, and any external usage could result in damage to the underlying merge-tree including data corruption.
-[In Fluid Framework release 2.12.0 these properties and associated types were deprecated.](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.12.0.md#merge-tree-and-sharedstring-isegment-deprecations-23323)
+[In Fluid Framework release 2.12.0 these properties and associated types were deprecated.](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-merge-tree-and-sharedstring-isegment-deprecations-23323)
 
 The only use case that will continue to be supported is determining if a segment is removed. For this purpose we've added the free function `segmentIsRemoved(segment: ISegment): boolean`.
 
