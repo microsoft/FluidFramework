@@ -91,6 +91,7 @@ import type {
 	NodeId,
 } from "./modularChangeTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { mergeTupleBTrees, newTupleBTree, type TupleBTree } from "../../util/index.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
