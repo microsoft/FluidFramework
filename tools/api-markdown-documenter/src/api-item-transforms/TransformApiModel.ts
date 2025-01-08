@@ -26,8 +26,6 @@ import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "
 /**
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.
  *
- * @param options - Configuration for transforming API items into {@link DocumentationNode}s.
- *
  * @public
  */
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[] {
