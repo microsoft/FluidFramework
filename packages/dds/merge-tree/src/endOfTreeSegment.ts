@@ -6,11 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { LocalClientId } from "./constants.js";
-// eslint-disable-next-line import/no-deprecated
 import { LocalReferenceCollection } from "./localReference.js";
 import { MergeTree } from "./mergeTree.js";
 import { NodeAction, depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { ISegment, ISegmentPrivate, type MergeBlock } from "./mergeTreeNodes.js";
+import { ISegment, type ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
+import { type IMergeNodeInfo } from "./segmentInfos.js";
 
 /**
  * This is a special segment that is not bound or known by the merge tree itself,
@@ -33,7 +33,7 @@ import { ISegment, ISegmentPrivate, type MergeBlock } from "./mergeTreeNodes.js"
  * must be possible in some way to refer to a position before or after the tree
  * respectively. The endpoint segments allow us to support such behavior.
  */
-abstract class BaseEndpointSegment {
+abstract class BaseEndpointSegment implements IMergeNodeInfo {
 	constructor(protected readonly mergeTree: MergeTree) {}
 	/*
 	 * segments must be of at least length one, but
@@ -72,7 +72,6 @@ abstract class BaseEndpointSegment {
 
 	abstract get ordinal(): string;
 
-	// eslint-disable-next-line import/no-deprecated
 	localRefs?: LocalReferenceCollection;
 
 	/*
@@ -114,7 +113,7 @@ export class StartOfTreeSegment extends BaseEndpointSegment implements ISegment 
 		index: number;
 		depth: number;
 	} {
-		let firstSegment: ISegmentPrivate | undefined;
+		let firstSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(
@@ -164,7 +163,7 @@ export class EndOfTreeSegment extends BaseEndpointSegment implements ISegment {
 		index: number;
 		depth: number;
 	} {
-		let lastSegment: ISegmentPrivate | undefined;
+		let lastSegment: ISegmentLeaf | undefined;
 		let depth = 1;
 		const root = this.mergeTree.root;
 		depthFirstNodeWalk(

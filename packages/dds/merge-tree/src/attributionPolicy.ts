@@ -17,8 +17,8 @@ import {
 	IMergeTreeSegmentDelta,
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
-import type { ISegmentPrivate } from "./mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "./ops.js";
+import { isInserted } from "./segmentInfos.js";
 
 // Note: these thinly wrap MergeTreeDeltaCallback and MergeTreeMaintenanceCallback to provide the client.
 // This is because the base callbacks don't always have enough information to infer whether the op being
@@ -98,8 +98,7 @@ const attributeInsertionOnSegments = (
 	key: AttributionKey,
 ): void => {
 	for (const { segment } of deltaSegments) {
-		const seg: ISegmentPrivate = segment;
-		if (seg.seq !== undefined) {
+		if (isInserted(segment)) {
 			segment.attribution?.update(
 				undefined,
 				new AttributionCollection(segment.cachedLength, key),

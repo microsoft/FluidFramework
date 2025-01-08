@@ -16,7 +16,6 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import type { IdAllocator, Invariant } from "../../util/index.js";
-import type { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
@@ -65,11 +64,7 @@ export interface FieldChangeHandler<
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
-	intoDelta(
-		change: TChangeset,
-		deltaFromChild: ToDelta,
-		idAllocator: MemoizedIdRangeAllocator,
-	): FieldChangeDelta;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): FieldChangeDelta;
 	/**
 	 * Returns the set of removed roots that should be in memory for the given change to be applied.
 	 * A removed root is relevant if any of the following is true:

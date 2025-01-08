@@ -61,7 +61,6 @@ import {
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import {
 	type CrossFieldManager,
@@ -2010,7 +2009,6 @@ export function intoDelta(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): DeltaRoot {
 	const change = taggedChange.change;
-	const idAllocator = MemoizedIdRangeAllocator.fromNextId();
 	const rootDelta: Mutable<DeltaRoot> = {};
 
 	if (!hasConflicts(change)) {
@@ -2018,7 +2016,6 @@ export function intoDelta(
 		const [fieldDeltas, global, rename] = intoDeltaImpl(
 			change.fieldChanges,
 			change.nodeChanges,
-			idAllocator,
 			fieldKinds,
 		);
 		if (fieldDeltas.size > 0) {
@@ -2076,7 +2073,6 @@ function copyDetachedNodes(
 function intoDeltaImpl(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): [Map<FieldKey, DeltaFieldChanges>, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] {
 	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
@@ -2092,12 +2088,7 @@ function intoDeltaImpl(
 			fieldChange.change,
 			(childChange) => {
 				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
-				const nodeChangeDelta = deltaFromNodeChange(
-					nodeChange,
-					nodeChanges,
-					idAllocator,
-					fieldKinds,
-				);
+				const nodeChangeDelta = deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds);
 				if (nodeChangeDelta !== undefined) {
 					const [nodeFieldChanges, nodeGlobals, nodeRenames] = nodeChangeDelta;
 					if (nodeGlobals.length > 0) {
@@ -2109,7 +2100,6 @@ function intoDeltaImpl(
 					return nodeFieldChanges;
 				}
 			},
-			idAllocator,
 		);
 		if (fieldChanges !== undefined && !isEmptyFieldChanges(fieldChanges)) {
 			delta.set(field, fieldChanges);
@@ -2127,11 +2117,10 @@ function intoDeltaImpl(
 function deltaFromNodeChange(
 	change: NodeChangeset,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): [DeltaFieldMap, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] | undefined {
 	if (change.fieldChanges !== undefined) {
-		return intoDeltaImpl(change.fieldChanges, nodeChanges, idAllocator, fieldKinds);
+		return intoDeltaImpl(change.fieldChanges, nodeChanges, fieldKinds);
 	}
 	// TODO: update the API to allow undefined to be returned here
 	return undefined;

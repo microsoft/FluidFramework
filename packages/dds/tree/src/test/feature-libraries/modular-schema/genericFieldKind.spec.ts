@@ -6,11 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import {
-	type GenericChangeset,
-	type CrossFieldManager,
-	MemoizedIdRangeAllocator,
-} from "../../../feature-libraries/index.js";
+import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
 import type { DeltaFieldChanges } from "../../../core/index.js";
 import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
@@ -195,11 +191,7 @@ describe("GenericField", () => {
 			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
 		];
 
-		const actual = genericChangeHandler.intoDelta(
-			input,
-			TestNodeId.deltaFromChild,
-			MemoizedIdRangeAllocator.fromNextId(),
-		);
+		const actual = genericChangeHandler.intoDelta(input, TestNodeId.deltaFromChild);
 		assert.deepEqual(actual, expected);
 	});
 

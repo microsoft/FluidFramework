@@ -37,6 +37,7 @@ export {
 	CustomBenchmark,
 	BenchmarkTimer,
 	CustomBenchmarkArguments,
+	TestType,
 } from "./Configuration";
 export {
 	benchmark,

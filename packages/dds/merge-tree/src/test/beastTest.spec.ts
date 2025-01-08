@@ -35,7 +35,6 @@ import { MergeTree } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	IJSONMarkerSegment,
-	IMergeNode,
 	compareNumbers,
 	compareStrings,
 	reservedMarkerIdKey,
@@ -290,10 +289,6 @@ function printTextSegment(textSegment: ISegmentPrivate, pos: number): boolean {
 	return true;
 }
 
-export function makeTextSegment(text: string): IMergeNode {
-	return new TextSegment(text);
-}
-
 function makeCollabTextSegment(text: string): TextSegment {
 	return new TextSegment(text);
 }
@@ -387,11 +382,7 @@ export function mergeTreeTest1(): void {
 	// checkRemoveSegTree(segTree, 4, 13);
 	checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
 	mergeTree.mapRange(printTextSegment, UniversalSequenceNumber, LocalClientId, undefined);
-	const segoff = mergeTree.getContainingSegment<ISegmentPrivate>(
-		4,
-		UniversalSequenceNumber,
-		LocalClientId,
-	);
+	const segoff = mergeTree.getContainingSegment(4, UniversalSequenceNumber, LocalClientId);
 	log(mergeTree.getPosition(segoff.segment!, UniversalSequenceNumber, LocalClientId));
 	log(new MergeTreeTextHelper(mergeTree).getText(UniversalSequenceNumber, LocalClientId));
 	log(mergeTree.toString());
@@ -1441,7 +1432,7 @@ export class DocumentTree {
 				});
 				this.pos++;
 			} else {
-				const trid = docNode.name + this.ids[docNode.name].toString();
+				const trid = docNode.name + this.ids[docNode.name]!.toString();
 				docNode.id = trid;
 				id = this.ids[docNode.name]++;
 				const props = {
