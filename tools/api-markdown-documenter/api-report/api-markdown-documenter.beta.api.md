@@ -374,7 +374,7 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
 // @public
 export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
-    outputDirectoryPath: string;
+    readonly outputDirectoryPath: string;
 }
 
 // @public
