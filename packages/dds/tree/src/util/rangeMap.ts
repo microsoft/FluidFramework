@@ -180,6 +180,9 @@ interface RangeEntry<T> {
  * Describes the result of a range query, including the value and length of the matching prefix.
  */
 export interface RangeQueryResult<T> {
+	/**
+	 * The key for the first element in the range.
+	 */
 	readonly start: number;
 
 	/**
