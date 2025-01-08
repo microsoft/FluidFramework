@@ -41,6 +41,7 @@ import {
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	type NestedChangesIndices,
+	type FieldChangeDelta,
 } from "../modular-schema/index.js";
 
 import type {
@@ -658,7 +659,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): [DeltaFieldChanges, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] {
+): FieldChangeDelta {
 	let fieldChanges: DeltaFieldChanges = [];
 	const global: DeltaDetachedNodeChanges[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];
@@ -690,21 +691,14 @@ export function optionalFieldIntoDelta(
 		for (const [id, childChange] of change.childChanges) {
 			const childDelta = deltaFromChild(childChange);
 			if (childDelta !== undefined) {
-				const [fields, childGlobal, childRename] = childDelta;
 				if (id !== "self") {
 					global.push({
 						id: { major: id.revision, minor: id.localId },
-						fields,
+						fields: childDelta,
 					});
 				} else {
-					mark.fields = fields;
+					mark.fields = childDelta;
 					markIsANoop = false;
-				}
-				if (childGlobal.length > 0) {
-					childGlobal.forEach((c) => global.push(c));
-				}
-				if (childRename.length > 0) {
-					childRename.forEach((r) => rename.push(r));
 				}
 			}
 		}
@@ -714,7 +708,11 @@ export function optionalFieldIntoDelta(
 		fieldChanges = [mark];
 	}
 
-	return [fieldChanges, global, rename];
+	return {
+		local: fieldChanges,
+		global,
+		rename,
+	};
 }
 
 export const optionalChangeHandler: FieldChangeHandler<

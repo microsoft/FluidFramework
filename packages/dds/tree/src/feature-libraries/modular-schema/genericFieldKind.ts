@@ -61,7 +61,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			nodeIndex += 1;
 		}
-		return [markList, [], []];
+		return { local: markList };
 	},
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,

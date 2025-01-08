@@ -2084,14 +2084,20 @@ function intoDeltaImpl(
 	const rename: DeltaDetachedNodeRename[] = [];
 
 	for (const [field, fieldChange] of change) {
-		const [fieldChanges, fieldGlobal, fieldRename] = getChangeHandler(
-			fieldKinds,
-			fieldChange.fieldKind,
-		).intoDelta(
+		const {
+			local: fieldChanges,
+			global: fieldGlobal,
+			rename: fieldRename,
+		} = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
 			fieldChange.change,
 			(childChange) => {
 				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
-				const nodeChangeDelta = deltaFromNodeChange(nodeChange, nodeChanges, idAllocator, fieldKinds);
+				const nodeChangeDelta = deltaFromNodeChange(
+					nodeChange,
+					nodeChanges,
+					idAllocator,
+					fieldKinds,
+				);
 				if (nodeChangeDelta !== undefined) {
 					const [nodeFieldChanges, nodeGlobals, nodeRenames] = nodeChangeDelta;
 					if (nodeGlobals.length > 0) {
@@ -2105,13 +2111,13 @@ function intoDeltaImpl(
 			},
 			idAllocator,
 		);
-		if (!isEmptyFieldChanges(fieldChanges)) {
+		if (fieldChanges !== undefined && !isEmptyFieldChanges(fieldChanges)) {
 			delta.set(field, fieldChanges);
 		}
-		if (fieldGlobal.length > 0) {
+		if (fieldGlobal !== undefined) {
 			fieldGlobal.forEach((c) => global.push(c));
 		}
-		if (fieldRename.length > 0) {
+		if (fieldRename !== undefined) {
 			fieldRename.forEach((r) => rename.push(r));
 		}
 	}

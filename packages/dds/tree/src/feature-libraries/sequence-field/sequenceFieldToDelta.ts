@@ -8,7 +8,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
@@ -25,12 +24,12 @@ import {
 	getInputCellId,
 	isAttachAndDetachEffect,
 } from "./utils.js";
-import type { ToDelta } from "../modular-schema/index.js";
+import type { FieldChangeDelta, ToDelta } from "../modular-schema/index.js";
 
 export function sequenceFieldToDelta(
 	change: MarkList,
 	deltaFromChild: ToDelta,
-): [DeltaFieldChanges, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] {
+): FieldChangeDelta {
 	const fieldChanges: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];
@@ -42,20 +41,13 @@ export function sequenceFieldToDelta(
 		if (changes !== undefined) {
 			const childDelta = deltaFromChild(changes);
 			if (childDelta !== undefined) {
-				const [fields, childGlobal, childRename] = childDelta;
 				if (inputCellId === undefined) {
-					deltaMark.fields = fields;
+					deltaMark.fields = childDelta;
 				} else {
 					global.push({
 						id: nodeIdFromChangeAtom(inputCellId),
-						fields,
+						fields: childDelta,
 					});
-				}
-				if (childGlobal.length > 0) {
-					childGlobal.forEach((c) => global.push(c));
-				}
-				if (childRename.length > 0) {
-					childRename.forEach((r) => rename.push(r));
 				}
 			}
 		}
@@ -194,5 +186,9 @@ export function sequenceFieldToDelta(
 		}
 		fieldChanges.pop();
 	}
-	return [fieldChanges, global, rename];
+	return {
+		local: fieldChanges,
+		global,
+		rename,
+	};
 }
