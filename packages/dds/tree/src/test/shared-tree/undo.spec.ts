@@ -573,7 +573,7 @@ describe("Undo and redo", () => {
 	});
 
 	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
-	it.only("reverts cloned revertible on original view", () => {
+	it("reverts cloned revertible on original view", () => {
 		const view = createInitializedView();
 		const { undoStack } = createTestUndoRedoStacks(view.events);
 
