@@ -37,7 +37,7 @@ export class OpCompressor {
 	public compressBatch(batch: IBatch<[BatchMessage]>): IBatch<[BatchMessage]> {
 		assert(
 			batch.contentSizeInBytes > 0 && batch.messages.length === 1,
-			0x5a4 /* Batch should not be empty and should be a single message */,
+			0x5a4 /* Batch should not be empty and should contain a single message */,
 		);
 
 		const compressionStart = Date.now();
