@@ -415,6 +415,35 @@ export function create(
 		async (request, response, next) => {
 			const documentId = request.params.id;
 			const tenantId = request.params.tenantId;
+
+			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
+			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(
+				LumberEventName.GetSession,
+				lumberjackProperties,
+			);
+			// Tracks the different stages of getSessionMetric
+			const connectionTrace = new StageTrace<string>("GetSession");
+
+			// Reject get session request on existing, inactive sessions if cluster is in draining process.
+			if (
+				clusterDrainingChecker &&
+				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
+					Lumberjack.error("Failed to get cluster draining status", undefined, error);
+					return false;
+				}))
+			) {
+				Lumberjack.info("Cluster is in draining process. Reject get session request.");
+				connectionTrace?.stampStage("ClusterIsDraining");
+				const error = createFluidServiceNetworkError(503, {
+					message: "Server is unavailable. Please retry session discovery later.",
+					internalErrorCode: InternalErrorCode.ClusterDraining,
+				});
+				handleResponse(Promise.reject(error), response);
+			}
+			connectionTrace?.stampStage("ClusterDrainingChecked");
+			const readDocumentRetryDelay: number = config.get("getSession:readDocumentRetryDelay");
+			const readDocumentMaxRetries: number = config.get("getSession:readDocumentMaxRetries");
+
 			const clientIPAddress = request.ip ? request.ip : "";
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			const documentUrls = getDocumentUrlsfromNetworkInfo(
@@ -424,14 +453,6 @@ export function create(
 				externalDeltaStreamUrl,
 				networkInfo.isPrivateLink,
 			);
-
-			const lumberjackProperties = getLumberBaseProperties(documentId, tenantId);
-			const getSessionMetric: Lumber<LumberEventName.GetSession> = Lumberjack.newLumberMetric(
-				LumberEventName.GetSession,
-				lumberjackProperties,
-			);
-			// Tracks the different stages of getSessionMetric
-			const connectionTrace = new StageTrace<string>("GetSession");
 
 			const session = getSession(
 				documentUrls.documentOrdererUrl,
@@ -445,6 +466,8 @@ export function create(
 				clusterDrainingChecker,
 				ephemeralDocumentTTLSec,
 				connectionTrace,
+				readDocumentRetryDelay,
+				readDocumentMaxRetries,
 			);
 
 			const onSuccess = (result: ISession): void => {

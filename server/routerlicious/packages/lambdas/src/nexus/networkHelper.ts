@@ -2,14 +2,16 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-/* eslint-disable unicorn/prefer-ternary */
 
 import * as core from "@fluidframework/server-services-core";
 import { getNetworkInformationFromIP } from "@fluidframework/server-services-client";
 
-// eslint-disable-next-line jsdoc/require-description
 /**
- * @returns NetworkInformation
+ * Check the network information to determine if the socket should connect.
+ *
+ * @param tenantManager - The tenant manager to use to get the tenant information.
+ * @param socket - The socket to check the network information for.
+ * @returns A promise that resolves to an object containing a message and a boolean indicating if the socket should connect.
  */
 export async function checkNetworkInformation(
 	tenantManager: core.ITenantManager,
@@ -23,6 +25,7 @@ export async function checkNetworkInformation(
 	const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 	if (networkInfo.isPrivateLink) {
 		const accountLinkID = tenantInfo?.customData?.accountLinkID;
+		// eslint-disable-next-line unicorn/prefer-ternary
 		if (networkInfo.privateLinkId === accountLinkID) {
 			return { message: "This is a private link socket connection", shouldConnect: true };
 		} else {
@@ -30,6 +33,7 @@ export async function checkNetworkInformation(
 		}
 	} else {
 		const accountLinkID = tenantInfo?.customData?.accountLinkID;
+		// eslint-disable-next-line unicorn/prefer-ternary
 		if (accountLinkID) {
 			return {
 				message:
