@@ -186,12 +186,18 @@ export interface ForestOptions {
     readonly forest?: ForestType;
 }
 
-// @alpha
-export enum ForestType {
-    Expensive = 2,
-    Optimized = 1,
-    Reference = 0
+// @alpha @sealed
+export interface ForestType extends ErasedType_2<"ForestType"> {
 }
+
+// @alpha
+export const ForestTypeExpensiveDebug: ForestType;
+
+// @alpha
+export const ForestTypeOptimized: ForestType;
+
+// @alpha
+export const ForestTypeReference: ForestType;
 
 // @alpha @deprecated
 export function getBranch(tree: ITree): BranchableTree;
