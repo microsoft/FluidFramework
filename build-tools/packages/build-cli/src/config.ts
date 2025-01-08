@@ -222,21 +222,11 @@ export interface PolicyConfig {
  */
 export interface AssertTaggingConfig {
 	/**
-	 * Property key is the name of the assert function.
-	 * Property value is the index of the augment to tag.
-	 * @remarks
-	 * The function names are not handled in a scoped/qualified way, so any function imported or declared with that name will have tagging applied.
-	 * See also {@link AssertTaggingConfig.assertionFunctions}
-	 *
-	 * This applies to the package it is in.
-	 */
-	assertionFunctions?: { [functionName: string]: number };
-
-	/**
 	 * An array of paths under which assert tagging applies to. If this setting is provided, only packages whose paths
 	 * match the regular expressions in this setting will be assert-tagged.
 	 *
 	 * This is used from the root where flub is run.
+	 * TODO: this should be replaced by package selection flags passed to the command.
 	 */
 	enabledPaths?: RegExp[];
 }

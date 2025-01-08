@@ -10,10 +10,14 @@ import { VersionBumpType } from '@fluid-tools/version-tools';
 
 // @public
 export interface AssertTaggingConfig {
-    assertionFunctions?: {
+    enabledPaths?: RegExp[];
+}
+
+// @public
+export interface AssertTaggingPackageConfig {
+    assertionFunctions: {
         [functionName: string]: number;
     };
-    enabledPaths?: RegExp[];
 }
 
 // @public

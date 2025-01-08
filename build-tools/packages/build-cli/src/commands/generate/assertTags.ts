@@ -9,7 +9,9 @@ import { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
 import { PackageKind, type PackageWithKind } from "../../filter.js";
 
+import assert from "node:assert";
 import { Flags } from "@oclif/core";
+import { cosmiconfig } from "cosmiconfig";
 import {
 	NoSubstitutionTemplateLiteral,
 	Node,
@@ -19,14 +21,28 @@ import {
 	StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
-import { getFlubConfig } from "../../config.js";
 
+/**
+ * Used by `TagAssertsCommand`.
+ */
+export interface AssertTaggingPackageConfig {
+	/**
+	 * Property key is the name of the assert function.
+	 * Property value is the index of the augment to tag.
+	 * @remarks
+	 * The function names are not handled in a scoped/qualified way, so any function imported or declared with that name will have tagging applied.
+	 * This applies to the package it is in.
+	 * @privateRemarks
+	 * See also {@link AssertTaggingConfig.assertionFunctions}.
+	 */
+	assertionFunctions: { [functionName: string]: number };
+}
 /**
  * Key is the name of the assert function.
  * Value is the index of the augment to tag.
  * @remarks
  * The function names are not handled in a scoped/qualified way, so any function imported or declared with that name will have tagging applied.
- * See also {@link AssertTaggingConfig.assertionFunctions}.
+ * See also {@link AssertTaggingPackageConfig.assertionFunctions}.
  */
 type AssertionFunctions = ReadonlyMap<string, number>;
 
@@ -161,16 +177,29 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		};
 
 		const dataMap = new Map<PackageWithKind, PackageData>();
+		const config = cosmiconfig("assertTagging");
 
 		for (const pkg of packages) {
 			// Package configuration:
 			// eslint-disable-next-line no-await-in-loop
 			const tsconfigPath = await this.getTsConfigPath(pkg);
-			const packageConfig = getFlubConfig(pkg.directory).assertTagging;
-			const assertionFunctions: AssertionFunctions =
-				packageConfig?.assertionFunctions === undefined
-					? defaultAssertionFunctions
-					: new Map<string, number>(Object.entries(packageConfig.assertionFunctions));
+			// eslint-disable-next-line no-await-in-loop
+			const packageConfig = await config.search(pkg.directory);
+			let assertionFunctions: AssertionFunctions;
+			if (packageConfig === null) {
+				assertionFunctions = defaultAssertionFunctions;
+			} else {
+				const innerConfig = packageConfig.config as AssertTaggingPackageConfig;
+				// Do some really minimal validation of the configuration.
+				// TODO: replace this with robust validation, like a strongly typed utility wrapping cosmiconfig and typebox.
+				assert(
+					typeof innerConfig.assertionFunctions === "object",
+					`Assert tagging config in ${packageConfig.filepath} is not valid.`,
+				);
+				assertionFunctions = new Map<string, number>(
+					Object.entries(innerConfig.assertionFunctions),
+				);
+			}
 
 			// load the project based on the tsconfig
 			const project = new Project({

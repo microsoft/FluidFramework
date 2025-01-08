@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-"use strict";
-
-module.exports = {
-	assertTagging: {
-		assertionFunctions: {},
-	},
-};
+/**
+ * @type {import("@fluid-tools/build-cli").AssertTaggingConfig}
+ */
+export default { assertionFunctions: {} };
