@@ -1,0 +1,15 @@
+---
+title: Undo Redo Support
+sidebar_position: 7
+---
+
+`SharedTree` makes creating an undo and redo stack very simple. By listening for the `commitApplied` event on the `TreeView` object, you can get a `Revertible` object from a `Commit`.
+`Commit` objects come in three flavors:
+
+-   Default: a normal commit made in the local client that would go on the undo stack
+-   Undo: a commit that is the result of reverting a Default or Redo `Revertible` object that would go on the redo stack
+-   Redo: a commit that is the result of reverting an Undo `Revertible` object that would go on the undo stack
+
+To undo a change, call the `revert` method on the `Revertible` object. This will return the properties of the `TreeView` object last changed by the local client to the their previous state. If changes were made to those properties by other clients in the meantime these changes will be overwritten. For example, if the local client moves 3 items into an array, and then a remote client moves one of those items somewhere else, when the local client reverts their change, the item moved by the remote client will be returned to its original position.
+
+There is an example of a working undo/redo stack here: [Shared Tree Demo](https://github.com/microsoft/FluidExamples/tree/main/brainstorm).

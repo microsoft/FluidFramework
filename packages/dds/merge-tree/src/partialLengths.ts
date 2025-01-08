@@ -11,7 +11,7 @@ import { MergeTree } from "./mergeTree.js";
 import {
 	CollaborationWindow,
 	IMergeNode,
-	ISegmentLeaf,
+	ISegmentPrivate,
 	compareNumbers,
 	seqLTE,
 	type MergeBlock,
@@ -19,11 +19,10 @@ import {
 import {
 	toRemovalInfo,
 	toMoveInfo,
-	// eslint-disable-next-line import/no-deprecated
 	IRemovalInfo,
-	// eslint-disable-next-line import/no-deprecated
 	IMoveInfo,
 	assertInserted,
+	isRemoved,
 } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
@@ -506,7 +505,7 @@ export class PartialSequenceLengths {
 	 */
 	static accumulateMoveOverlapForExisting(
 		segmentLen: number,
-		segment: ISegmentLeaf,
+		segment: ISegmentPrivate,
 		firstGte: PartialSequenceLength,
 		clientIds: number[],
 	): void {
@@ -527,7 +526,7 @@ export class PartialSequenceLengths {
 			PartialSequenceLengths.accumulateMoveClientOverlap(
 				firstGte,
 				[segment.clientId],
-				segment.wasMovedOnInsert ? -segment.cachedLength : segmentLen,
+				toMoveInfo(segment)?.wasMovedOnInsert ? -segment.cachedLength : segmentLen,
 			);
 		}
 	}
@@ -540,7 +539,7 @@ export class PartialSequenceLengths {
 	 * segment
 	 */
 	private static getMoveOverlapForExisting(
-		segment: ISegmentLeaf,
+		segment: ISegmentPrivate,
 		obliterateOverlapLen: number,
 		clientIds: number[],
 	): RedBlackTree<number, IOverlapClient> {
@@ -554,7 +553,9 @@ export class PartialSequenceLengths {
 		if (clientIds.length !== nonInsertingClientIds.length) {
 			overlapObliterateClients.put(segment.clientId, {
 				clientId: segment.clientId,
-				seglen: segment.wasMovedOnInsert ? -segment.cachedLength : obliterateOverlapLen,
+				seglen: toMoveInfo(segment)?.wasMovedOnInsert
+					? -segment.cachedLength
+					: obliterateOverlapLen,
 			});
 		}
 
@@ -562,7 +563,7 @@ export class PartialSequenceLengths {
 	}
 
 	private static updatePartialsAfterInsertion(
-		segment: ISegmentLeaf,
+		segment: ISegmentPrivate,
 		segmentLen: number,
 		remoteObliteratedLen: number | undefined,
 		obliterateOverlapLen: number = segmentLen,
@@ -642,10 +643,8 @@ export class PartialSequenceLengths {
 	 */
 	private static insertSegment(
 		combinedPartialLengths: PartialSequenceLengths,
-		segment: ISegmentLeaf,
-		// eslint-disable-next-line import/no-deprecated
+		segment: ISegmentPrivate,
 		removalInfo?: IRemovalInfo,
-		// eslint-disable-next-line import/no-deprecated
 		moveInfo?: IMoveInfo,
 	): void {
 		assertInserted(segment);
@@ -694,7 +693,7 @@ export class PartialSequenceLengths {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			seqOrLocalSeq = moveIsLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
 
-			if (segment.wasMovedOnInsert) {
+			if (moveInfo.wasMovedOnInsert) {
 				assert(
 					moveInfo.movedSeq !== -1,
 					0x871 /* wasMovedOnInsert should only be set on acked obliterates */,
@@ -706,7 +705,10 @@ export class PartialSequenceLengths {
 
 			const hasOverlap = moveInfo.movedClientIds.length > 1;
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
-		} else if (segment.wasMovedOnInsert) {
+		} // BUG BUG: something fishy here around how/when move info is passed or not
+		// this condition only hits if it is not passed, so we can't rely on the passed move info
+		// and need to inspect the segment directly. maybe related to AB#15630.
+		else if (toMoveInfo(segment)?.wasMovedOnInsert) {
 			// if this segment was obliterated on insert, its length is only
 			// visible to the client that inserted it
 			segmentLen = 0;
@@ -779,7 +781,12 @@ export class PartialSequenceLengths {
 		// todo: the below block needs to be changed to handle obliterate, which
 		// doesn't have great support for reconnect at the moment. see ADO #3714
 		const { unsequencedRecords } = combinedPartialLengths;
-		if (unsequencedRecords && removeClientOverlap && segment.localRemovedSeq !== undefined) {
+		if (
+			unsequencedRecords &&
+			removeClientOverlap &&
+			isRemoved(segment) &&
+			segment.localRemovedSeq !== undefined
+		) {
 			const localSeq = segment.localRemovedSeq;
 			const localPartialLengthEntry: LocalPartialSequenceLength = {
 				seq: seqOrLocalSeq,
@@ -942,10 +949,10 @@ export class PartialSequenceLengths {
 					// if this segment was moved on insert, its length should
 					// only be visible to the inserting client
 					if (
-						segment.wasMovedOnInsert &&
 						segment.seq !== undefined &&
 						moveInfo &&
-						moveInfo.movedSeq < segment.seq
+						moveInfo.movedSeq < segment.seq &&
+						moveInfo.wasMovedOnInsert
 					) {
 						remoteObliteratedLen += segment.cachedLength;
 					} else {
@@ -968,7 +975,7 @@ export class PartialSequenceLengths {
 					if (removeHappenedFirst) {
 						remoteObliteratedLen -= segment.cachedLength;
 					} else if (
-						segment.wasMovedOnInsert &&
+						moveInfo.wasMovedOnInsert &&
 						segment.seq !== UnassignedSequenceNumber &&
 						segment.seq !== undefined &&
 						moveInfo.movedSeq > segment.seq

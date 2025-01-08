@@ -23,14 +23,12 @@ import {
 import { Client } from "./client.js";
 import { NonCollabClient, UniversalSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { ISegmentLeaf } from "./mergeTreeNodes.js";
+import { ISegmentPrivate } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IRemovalInfo,
 	overwriteInfo,
 	type IInsertionInfo,
-	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -124,7 +122,6 @@ export class SnapshotLoader {
 					spec.removedClientIds ??= [specAsBuggyFormat.removedClient];
 				}
 				assert(spec.removedClientIds !== undefined, "must have removedClient ids");
-				// eslint-disable-next-line import/no-deprecated
 				overwriteInfo<IRemovalInfo>(seg, {
 					removedSeq: spec.removedSeq,
 					removedClientIds: spec.removedClientIds.map((id) =>
@@ -135,9 +132,8 @@ export class SnapshotLoader {
 			if (spec.movedSeq !== undefined) {
 				assert(
 					spec.movedClientIds !== undefined && spec.movedSeqs !== undefined,
-					"must have movedIds ids",
+					0xaa5 /* must have movedIds ids */,
 				);
-				// eslint-disable-next-line import/no-deprecated
 				overwriteInfo<IMoveInfo>(seg, {
 					movedSeq: spec.movedSeq,
 					movedSeqs: spec.movedSeqs,
@@ -249,7 +245,7 @@ export class SnapshotLoader {
 
 		// Helper to insert segments at the end of the MergeTree.
 		const mergeTree = this.mergeTree;
-		const append = (segments: ISegmentLeaf[], cli: number, seq: number): void => {
+		const append = (segments: ISegmentPrivate[], cli: number, seq: number): void => {
 			mergeTree.insertSegments(
 				mergeTree.root.cachedLength ?? 0,
 				segments,
@@ -283,7 +279,7 @@ export class SnapshotLoader {
 		flushBatch();
 	}
 
-	private extractAttribution(segments: ISegmentLeaf[], chunk: MergeTreeChunkV1): void {
+	private extractAttribution(segments: ISegmentPrivate[], chunk: MergeTreeChunkV1): void {
 		if (chunk.attribution) {
 			const { attributionPolicy } = this.mergeTree;
 			if (attributionPolicy === undefined) {

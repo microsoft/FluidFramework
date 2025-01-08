@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.13.0",
+	"version": "2.20.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -103,7 +103,7 @@
 		"@testing-library/user-event": "^14.4.3",
 		"@types/chai": "^4.0.0",
 		"@types/jest": "29.5.3",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",

@@ -64,6 +64,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ISummaryContext,
+	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -513,16 +514,6 @@ export interface IContainerRuntimeOptions {
 	 * @experimental Not ready for use.
 	 */
 	readonly enableRuntimeIdCompressor?: IdCompressorMode;
-
-	/**
-	 * If enabled, the runtime will group messages within a batch into a single
-	 * message to be sent to the service.
-	 * The grouping and ungrouping of such messages is handled by the "OpGroupingManager".
-	 *
-	 * By default, the feature is enabled.
-	 * @deprecated  The ability to disable Grouped Batching is deprecated and will be removed in v2.20.0. This feature is required for the proper functioning of the Fluid Framework.
-	 */
-	readonly enableGroupedBatching?: boolean;
 
 	/**
 	 * When this property is set to true, it requires runtime to control is document schema properly through ops
@@ -4170,7 +4161,7 @@ export class ContainerRuntime
 			// Counting dataStores and handles
 			// Because handles are unchanged dataStores in the current logic,
 			// summarized dataStore count is total dataStore count minus handle count
-			const dataStoreTree = summaryTree.tree[channelsTreeName];
+			const dataStoreTree: SummaryObject | undefined = summaryTree.tree[channelsTreeName];
 
 			assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
 			const handleCount = Object.values(dataStoreTree.tree).filter(
