@@ -231,7 +231,7 @@ describe("Outbox", () => {
 			groupingManager: new OpGroupingManager(
 				params.opGroupingConfig ?? {
 					groupedBatchingEnabled: false,
-					reentrantBatchGroupingEnabled: false,
+					opCountThreshold: Infinity,
 				},
 				mockLogger,
 			),
@@ -324,7 +324,7 @@ describe("Outbox", () => {
 			context: getMockContext(),
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
-				reentrantBatchGroupingEnabled: true,
+				opCountThreshold: 2,
 			},
 		});
 		currentSeqNumbers.referenceSequenceNumber = 0;
@@ -355,7 +355,7 @@ describe("Outbox", () => {
 			context: getMockContext(),
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
-				reentrantBatchGroupingEnabled: true,
+				opCountThreshold: 3,
 			},
 		});
 		// Flush 1 - resubmit multi-message batch including ID Allocation
@@ -1005,7 +1005,7 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: false,
-					reentrantBatchGroupingEnabled: true,
+					opCountThreshold: 2,
 				},
 			});
 
@@ -1027,7 +1027,7 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
-					reentrantBatchGroupingEnabled: true,
+					opCountThreshold: 2,
 				},
 			});
 
@@ -1051,7 +1051,7 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
-					reentrantBatchGroupingEnabled: true,
+					opCountThreshold: 2,
 				},
 			});
 
@@ -1073,7 +1073,7 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: false,
-					reentrantBatchGroupingEnabled: true,
+					opCountThreshold: 2,
 				},
 			});
 
@@ -1095,7 +1095,7 @@ describe("Outbox", () => {
 				context: getMockContext(),
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
-					reentrantBatchGroupingEnabled: true,
+					opCountThreshold: 2,
 				},
 			});
 
