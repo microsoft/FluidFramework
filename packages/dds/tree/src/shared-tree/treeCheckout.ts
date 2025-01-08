@@ -620,7 +620,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 				if (findCommitInActiveBranch(commitToRevert, activeBranch) === false) {
 					throw new UsageError(
-						"Cannot clone revertible: branch A and branch B must be related",
+						"Cannot clone revertible for a commit that is not present on the given branch.",
 					);
 				}
 
