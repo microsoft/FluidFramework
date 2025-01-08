@@ -332,7 +332,11 @@ export namespace DefaultDocumentationSuiteOptions {
 	/**
 	 * Default {@link DocumentationSuiteConfiguration.getLinkTextForItem}.
 	 *
-	 * Uses the item's signature, except for `Model` items, in which case the text "Packages" is displayed.
+	 * Uses the item's qualified API name, but is handled differently for the following items:
+	 *
+	 * - CallSignature, ConstructSignature, IndexSignature: Uses a cleaned up variation on the type signature.
+	 *
+	 * - Model: Uses "API Overview".
 	 */
 	export function defaultGetLinkTextForItem(apiItem: ApiItem): string {
 		const itemKind = getApiItemKind(apiItem);
@@ -356,7 +360,7 @@ export namespace DefaultDocumentationSuiteOptions {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteConfiguration.getHeadingTextForItem}.
+	 * Default {@link DocumentationSuiteConfiguration.getAlertsForItem}.
 	 *
 	 * Generates alerts for the following tags, if found:
 	 *
