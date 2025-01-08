@@ -1,8 +1,8 @@
-/* eslint-disable unicorn/prefer-ternary */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+/* eslint-disable unicorn/prefer-ternary */
 
 import * as core from "@fluidframework/server-services-core";
 import { getNetworkInformationFromIP } from "@fluidframework/server-services-client";

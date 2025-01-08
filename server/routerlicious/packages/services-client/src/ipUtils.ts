@@ -1,3 +1,8 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
 /* eslint-disable no-bitwise */
 /* eslint-disable max-len */
 import { IPv6, IPv4 } from "ipaddr.js";
