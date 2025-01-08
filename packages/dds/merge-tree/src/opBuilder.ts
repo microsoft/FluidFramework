@@ -184,11 +184,6 @@ export function createInsertOp(pos: number, segSpec: unknown): IMergeTreeInsertM
  *
  * @param ops - The ops to group
  *
- * @deprecated The ability to create group ops will be removed in an upcoming
- * release, as group ops are redundant with he native batching capabilities of
- * the runtime
- *
- * @deprecated The ability to create group ops will be removed in an upcoming release, as group ops are redundant with he native batching capabilities of the runtime
  * @internal
  */
 // eslint-disable-next-line import/no-deprecated

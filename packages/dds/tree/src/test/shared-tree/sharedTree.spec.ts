@@ -47,7 +47,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
-	ForestType,
+	ForestTypeExpensiveDebug,
+	ForestTypeOptimized,
+	ForestTypeReference,
 	getBranch,
 	type ISharedTree,
 	type SharedTree,
@@ -100,7 +102,7 @@ const enableSchemaValidation = true;
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
-	forest: ForestType.Reference,
+	forest: ForestTypeReference,
 }) as ISharedObjectKind<unknown> as ISharedObjectKind<SharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
@@ -1886,7 +1888,7 @@ describe("SharedTree", () => {
 				1,
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
-					forest: ForestType.Reference,
+					forest: ForestTypeReference,
 				}),
 			);
 			const forest = trees[0].checkout.forest;
@@ -1899,7 +1901,7 @@ describe("SharedTree", () => {
 				1,
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
-					forest: ForestType.Optimized,
+					forest: ForestTypeOptimized,
 				}),
 			);
 			assert.equal(trees[0].checkout.forest instanceof ChunkedForest, true);
@@ -1910,7 +1912,7 @@ describe("SharedTree", () => {
 				1,
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
-					forest: ForestType.Expensive,
+					forest: ForestTypeExpensiveDebug,
 				}),
 			);
 			const forest = trees[0].checkout.forest;

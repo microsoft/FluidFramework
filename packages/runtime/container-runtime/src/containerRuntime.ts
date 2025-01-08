@@ -64,6 +64,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ISummaryContext,
+	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -469,15 +470,7 @@ export interface IContainerRuntimeOptions {
 	 * 3. "bypass" will skip the check entirely. This is not recommended.
 	 */
 	readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
-	/**
-	 * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
-	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
-	 * and then sent them as a single batch at the end of the turn.
-	 * By default, flush mode is TurnBased.
-	 *
-	 * @deprecated Only the default value TurnBased is supported. This option will be removed in the future.
-	 */
-	readonly flushMode?: FlushMode;
+
 	/**
 	 * Enables the runtime to compress ops. See {@link ICompressionRuntimeOptions}.
 	 */
@@ -513,16 +506,6 @@ export interface IContainerRuntimeOptions {
 	 * @experimental Not ready for use.
 	 */
 	readonly enableRuntimeIdCompressor?: IdCompressorMode;
-
-	/**
-	 * If enabled, the runtime will group messages within a batch into a single
-	 * message to be sent to the service.
-	 * The grouping and ungrouping of such messages is handled by the "OpGroupingManager".
-	 *
-	 * By default, the feature is enabled.
-	 * @deprecated  The ability to disable Grouped Batching is deprecated and will be removed in v2.20.0. This feature is required for the proper functioning of the Fluid Framework.
-	 */
-	readonly enableGroupedBatching?: boolean;
 
 	/**
 	 * When this property is set to true, it requires runtime to control is document schema properly through ops
@@ -1521,10 +1504,7 @@ export class ContainerRuntime
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		runtimeOptions: Readonly<
-			Required<Omit<IContainerRuntimeOptions, "flushMode" | "enableGroupedBatching">> &
-				IContainerRuntimeOptions // Let flushMode and enabledGroupedBatching be optional now since they're soon to be removed
-		>,
+		runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
@@ -1674,9 +1654,6 @@ export class ContainerRuntime
 				groupedBatchingEnabled: this.groupedBatchingEnabled,
 				opCountThreshold:
 					this.mc.config.getNumber("Fluid.ContainerRuntime.GroupedBatchingOpCount") ?? 2,
-				reentrantBatchGroupingEnabled:
-					this.mc.config.getBoolean("Fluid.ContainerRuntime.GroupedBatchingReentrancy") ??
-					true,
 			},
 			this.mc.logger,
 		);
@@ -4170,7 +4147,7 @@ export class ContainerRuntime
 			// Counting dataStores and handles
 			// Because handles are unchanged dataStores in the current logic,
 			// summarized dataStore count is total dataStore count minus handle count
-			const dataStoreTree = summaryTree.tree[channelsTreeName];
+			const dataStoreTree: SummaryObject | undefined = summaryTree.tree[channelsTreeName];
 
 			assert(dataStoreTree.type === SummaryType.Tree, 0x1fc /* "summary is not a tree" */);
 			const handleCount = Object.values(dataStoreTree.tree).filter(
