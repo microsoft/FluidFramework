@@ -650,7 +650,7 @@ export { ReleaseTag }
 // @alpha
 function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void>;
 
-// @public
+// @alpha
 interface RenderApiModelAsHtmlOptions extends ApiItemTransformationOptions, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
@@ -674,7 +674,7 @@ export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, 
 // @alpha
 function renderDocumentsAsHtml(documents: DocumentNode[], options: RenderDocumentsAsHtmlOptions): Promise<void>;
 
-// @public
+// @alpha
 interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
