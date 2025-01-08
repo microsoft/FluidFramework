@@ -1632,7 +1632,6 @@ export const shortCodeMap = {
 	"0xa7e": "Expected at least two types",
 	"0xa7f": "Delta manager does not have inbound/outbound queues.",
 	"0xa80": "Invalid delta manager",
-	"0xa82": "change to revert does not exist on the given forked branch",
 	"0xa83": "Expected commit(s) for a non no-op rebase",
 	"0xa84": "Commit must be in the branch's ancestry",
 	"0xa86": "Expected source commits in non no-op merge",
