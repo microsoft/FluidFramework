@@ -7,7 +7,4 @@
 
 IContainerRuntimeOptions.flushMode has been removed
 
-This option allowed an application to specify whether to flush ops "immediately" (literally 1-by-1) or "turn-based"
-(batched by JS turn). `Immediate` mode has been deprecated and should no longer be used.
-
-Now there is only one choice, which is the default `TurnBased` mode, so the `flushMode` option can be removed.
+See [2.12.0 release note](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-icontainerruntimeoptionsflushmode-is-now-deprecated-23288)
