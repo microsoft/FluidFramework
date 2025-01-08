@@ -38,7 +38,6 @@ describe("RemoteMessageProcessor", () => {
 			new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
-					opCountThreshold: Infinity,
 				},
 				logger,
 			),
@@ -128,7 +127,6 @@ describe("RemoteMessageProcessor", () => {
 				const groupingManager = new OpGroupingManager(
 					{
 						groupedBatchingEnabled: true,
-						opCountThreshold: 2,
 					},
 					mockLogger,
 				);
