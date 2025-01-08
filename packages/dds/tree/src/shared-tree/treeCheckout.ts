@@ -41,6 +41,7 @@ import {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 	type GraphCommit,
+	isAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -76,7 +77,6 @@ import type {
 	TreeChangeEvents,
 } from "../simple-tree/index.js";
 import { getCheckout, SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import { findCommitInActiveBranch } from "./treeApi.js";
 
 /**
  * Events for {@link ITreeCheckout}.
@@ -618,7 +618,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				const commitToRevert = revertibleBranch.getHead();
 				const activeBranch = targetCheckout.#transaction.activeBranch;
 
-				if (findCommitInActiveBranch(commitToRevert, activeBranch) === false) {
+				if (isAncestor(commitToRevert, activeBranch.getHead(), true) === false) {
 					throw new UsageError(
 						"Cannot clone revertible for a commit that is not present on the given branch.",
 					);

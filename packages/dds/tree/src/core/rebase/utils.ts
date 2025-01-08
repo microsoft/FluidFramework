@@ -651,3 +651,30 @@ namespace Rollback {
 		}
 	}
 }
+
+/**
+ * Checks if one node is an ancestor of another in a parent-linked tree structure.
+ * @param ancestor - The potential ancestor node
+ * @param descendant - The potential descendant node
+ * @param allowEqual - If true, returns true when ancestor === descendant
+ * @returns true if ancestor is an ancestor of descendant (or equal if allowEqual is true)
+ */
+export function isAncestor<T extends { readonly parent?: T }>(
+	ancestor: T,
+	descendant: T,
+	allowEqual: boolean,
+): boolean {
+	if (allowEqual && ancestor === descendant) {
+		return true;
+	}
+
+	let current = descendant.parent;
+	while (current !== undefined) {
+		if (current === ancestor) {
+			return true;
+		}
+		current = current.parent;
+	}
+
+	return false;
+}

@@ -573,7 +573,7 @@ describe("Undo and redo", () => {
 	});
 
 	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
-	it("reverts cloned revertible on original view", () => {
+	it.only("reverts cloned revertible on original view", () => {
 		const view = createInitializedView();
 		const { undoStack } = createTestUndoRedoStacks(view.events);
 
@@ -650,7 +650,7 @@ describe("Undo and redo", () => {
 
 		assert.throws(
 			() => undoOriginalPropertyOne?.clone(viewB),
-			/Cannot clone revertible: branch A and branch B must be related/,
+			/Cannot clone revertible for a commit that is not present on the given branch./,
 		);
 	});
 

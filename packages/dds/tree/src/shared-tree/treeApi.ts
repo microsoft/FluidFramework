@@ -20,11 +20,6 @@ import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
 import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 import { rollback, type TransactionConstraint } from "./transactionTypes.js";
-import type { GraphCommit } from "../core/index.js";
-import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
-import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { SharedTreeBranch } from "../shared-tree-core/branch.js";
 
 /**
  * A function which runs a transaction in a SharedTree.
@@ -471,32 +466,4 @@ function runTransactionInCheckout<TResult>(
 	}
 
 	return result;
-}
-
-/**
- * Checks if a given commit exists in the active branch by traversing from the head to the root.
- * @param commit - The commit to search for in the branch
- * @param branch - The branch to search through
- * @returns `true` if the commit is found in the branch, `false` otherwise
- *
- * @remarks
- * This function traverses the branch from its head towards the root (following parent pointers),
- * checking each commit for equality with the target commit. The search stops either when the
- * commit is found or when reaching a commit with no parent.
- */
-export function findCommitInActiveBranch(
-	commit: GraphCommit<SharedTreeChange>,
-	branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-): boolean {
-	let current = branch.getHead();
-
-	while (current.parent !== undefined) {
-		if (current === commit) {
-			return true;
-		}
-
-		current = current.parent;
-	}
-
-	return false;
 }
