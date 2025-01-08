@@ -14,14 +14,10 @@ import {
 import {
 	getApiItemKind,
 	getConciseSignature,
-	getFileSafeNameForApiItemName,
 	getReleaseTag,
 	getSingleLineExcerptText,
-	getUnscopedPackageName,
 	isDeprecated,
-	type Mutable,
 } from "../../utilities/index.js";
-import { createQualifiedDocumentNameForApiItem } from "../ApiItemTransformUtilities.js";
 
 import {
 	getHierarchyConfigurationWithDefaults,
@@ -159,32 +155,6 @@ export type DocumentationSuiteOptions = Omit<
 	 * {@inheritDoc DocumentationSuiteConfiguration.hierarchy}
 	 */
 	readonly hierarchy?: HierarchyOptions;
-
-	/**
-	 * Generate the desired document name for the provided `ApiItem`.
-	 *
-	 * @remarks Will be invoked for any item configured to generate document or folder level hierarchy via {@link DocumentationSuiteConfiguration.hierarchy}.
-	 *
-	 * Can be further overridden on a per-item-kind basis via {@link DocumentationSuiteConfiguration.hierarchy}.
-	 *
-	 * @param apiItem - The API item for which the document name is being generated.
-	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.getDocumentName}
-	 */
-	readonly documentName?: (apiItem: ApiItem) => string;
-
-	/**
-	 * Generate the desired folder name for the provided `ApiItem`.
-	 *
-	 * @remarks Will be invoked for any item configured to generate document or folder level hierarchy via {@link DocumentationSuiteConfiguration.hierarchy}.
-	 *
-	 * Can be further overridden on a per-item-kind basis via {@link DocumentationSuiteConfiguration.hierarchy}.
-	 *
-	 * @param apiItem - The API item for which the folder name is being generated.
-	 *
-	 * @defaultValue {@link DefaultDocumentationSuiteConfiguration.getFolderName}
-	 */
-	readonly folderName?: (apiItem: ApiItem) => string;
 };
 
 /**
@@ -194,59 +164,6 @@ export type DocumentationSuiteOptions = Omit<
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DefaultDocumentationSuiteConfiguration {
-	/**
-	 * Default {@link DocumentationSuiteOptions.documentName}.
-	 *
-	 * @remarks
-	 * Uses the item's scoped and qualified API name, but is handled differently for the following items:
-	 *
-	 * - Model: "index"
-	 *
-	 * - Package: Use the unscoped package name.
-	 */
-	export function getDocumentName(
-		apiItem: ApiItem,
-		config: DocumentationSuiteConfiguration,
-	): string {
-		const kind = getApiItemKind(apiItem);
-		switch (kind) {
-			case ApiItemKind.Model: {
-				return "index";
-			}
-			case ApiItemKind.Package: {
-				return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
-			}
-			default: {
-				// Let the system generate a unique name that accounts for folder hierarchy.
-				return createQualifiedDocumentNameForApiItem(apiItem, config);
-			}
-		}
-	}
-
-	/**
-	 * Default {@link DocumentationSuiteOptions.folderName}.
-	 *
-	 * @remarks
-	 * Uses the item's scoped and qualified API name, but is handled differently for the  following items:
-	 *
-	 * - Package: Use the unscoped package name.
-	 */
-	export function getFolderName(
-		apiItem: ApiItem,
-		config: DocumentationSuiteConfiguration,
-	): string {
-		const kind = getApiItemKind(apiItem);
-		switch (kind) {
-			case ApiItemKind.Package: {
-				return getFileSafeNameForApiItemName(getUnscopedPackageName(apiItem as ApiPackage));
-			}
-			default: {
-				// Let the system generate a unique name that accounts for folder hierarchy.
-				return createQualifiedDocumentNameForApiItem(apiItem, config);
-			}
-		}
-	}
-
 	/**
 	 * Default {@link DocumentationSuiteConfiguration.getUriBaseOverrideForItem}.
 	 *
@@ -355,7 +272,12 @@ export namespace DefaultDocumentationSuiteConfiguration {
 export function getDocumentationSuiteConfigurationWithDefaults(
 	options?: DocumentationSuiteOptions,
 ): DocumentationSuiteConfiguration {
-	const config: Omit<DocumentationSuiteConfiguration, "hierarchy"> = {
+	const hierarchy: HierarchyConfiguration = getHierarchyConfigurationWithDefaults(
+		options?.hierarchy,
+	);
+
+	return {
+		hierarchy,
 		includeTopLevelDocumentHeading: options?.includeTopLevelDocumentHeading ?? true,
 		includeBreadcrumb: options?.includeBreadcrumb ?? true,
 		getUriBaseOverrideForItem:
@@ -374,29 +296,4 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 			options?.skipPackage ?? DefaultDocumentationSuiteConfiguration.defaultSkipPackage,
 		minimumReleaseLevel: options?.minimumReleaseLevel ?? ReleaseTag.Internal,
 	};
-
-	const documentName =
-		options?.documentName ??
-		((apiItem) =>
-			DefaultDocumentationSuiteConfiguration.getDocumentName(
-				apiItem,
-				config as DocumentationSuiteConfiguration,
-			));
-	const folderName =
-		options?.folderName ??
-		((apiItem) =>
-			DefaultDocumentationSuiteConfiguration.getFolderName(
-				apiItem,
-				config as DocumentationSuiteConfiguration,
-			));
-
-	const hierarchy: HierarchyConfiguration = getHierarchyConfigurationWithDefaults(
-		options?.hierarchy,
-		documentName,
-		folderName,
-	);
-
-	(config as Mutable<DocumentationSuiteConfiguration>).hierarchy = hierarchy;
-
-	return config as DocumentationSuiteConfiguration;
 }

@@ -12,9 +12,10 @@ import { expect } from "chai";
 import { compare } from "dir-compare";
 
 import {
+	ApiItemUtilities,
 	FolderDocumentPlacement,
 	HierarchyKind,
-	type FolderHierarchyOptions,
+	type FolderHierarchyConfiguration,
 	type HierarchyOptions,
 } from "../index.js";
 
@@ -44,15 +45,14 @@ export const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "t
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace HierarchyConfigurations {
-	const outsideFolderConfig: FolderHierarchyOptions = {
+	const outsideFolderConfig: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Outside,
 	};
 
-	const insideFolderOptions: FolderHierarchyOptions = {
+	const insideFolderOptions: FolderHierarchyConfiguration = {
 		kind: HierarchyKind.Folder,
 		documentPlacement: FolderDocumentPlacement.Inside,
-		documentName: "index",
 	};
 
 	/**
@@ -130,6 +130,24 @@ export namespace HierarchyConfigurations {
 		[ApiItemKind.Property]: HierarchyKind.Document,
 		[ApiItemKind.PropertySignature]: HierarchyKind.Document,
 		[ApiItemKind.Variable]: HierarchyKind.Document,
+
+		getDocumentName: (apiItem, config): string => {
+			switch (apiItem.kind) {
+				case ApiItemKind.Model:
+				case ApiItemKind.Package:
+				case ApiItemKind.Namespace:
+				case ApiItemKind.Class:
+				case ApiItemKind.Enum:
+				case ApiItemKind.Interface:
+				case ApiItemKind.TypeAlias: {
+					return "index";
+				}
+				default: {
+					// Let the system generate a unique name that accounts for folder hierarchy.
+					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
+				}
+			}
+		},
 	};
 }
 

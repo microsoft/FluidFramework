@@ -188,7 +188,7 @@ function createExamplesSection(apiItem: ApiItem, config: ApiItemTransformationCo
 function createParametersSection(apiFunctionLike: ApiFunctionLike, config: ApiItemTransformationConfiguration): SectionNode | undefined;
 
 // @public
-function createQualifiedDocumentNameForApiItem(apiItem: ApiItem, config: DocumentationSuiteConfiguration): string;
+function createQualifiedDocumentNameForApiItem(apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration): string;
 
 // @public
 function createRemarksSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
@@ -221,20 +221,15 @@ export namespace DefaultDocumentationSuiteConfiguration {
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
     export function defaultGetUriBaseOverrideForItem(): string | undefined;
     export function defaultSkipPackage(): boolean;
-    export function getDocumentName(apiItem: ApiItem, config: DocumentationSuiteConfiguration): string;
-    export function getFolderName(apiItem: ApiItem, config: DocumentationSuiteConfiguration): string;
 }
 
 // @public @sealed
 export type DocumentationHierarchyConfiguration = SectionHierarchyConfiguration | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
 
-// @public
+// @public @sealed
 export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends HierarchyKind> {
     readonly kind: THierarchyKind;
 }
-
-// @public @sealed
-export type DocumentationHierarchyOptions = SectionHierarchyOptions | DocumentHierarchyOptions | FolderHierarchyOptions;
 
 // @public
 export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TValue>, DocumentationNode {
@@ -334,20 +329,10 @@ export interface DocumentationSuiteConfiguration {
 // @public
 export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfiguration>, "hierarchy"> & {
     readonly hierarchy?: HierarchyOptions;
-    readonly documentName?: (apiItem: ApiItem) => string;
-    readonly folderName?: (apiItem: ApiItem) => string;
 };
 
-// @public
-export type DocumentHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Document> & DocumentHierarchyProperties;
-
-// @public
-export type DocumentHierarchyOptions = DocumentationHierarchyConfigurationBase<HierarchyKind.Document> & Partial<DocumentHierarchyProperties>;
-
-// @public
-export interface DocumentHierarchyProperties {
-    readonly documentName: string | ((apiItem: ApiItem) => string);
-}
+// @public @sealed
+export type DocumentHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Document>;
 
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
@@ -414,16 +399,9 @@ export enum FolderDocumentPlacement {
 }
 
 // @public @sealed
-export type FolderHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Folder> & FolderHierarchyProperties;
-
-// @public @sealed
-export type FolderHierarchyOptions = DocumentationHierarchyConfigurationBase<HierarchyKind.Folder> & Partial<FolderHierarchyProperties>;
-
-// @public @sealed
-export interface FolderHierarchyProperties extends DocumentHierarchyProperties {
+export type FolderHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Folder> & {
     readonly documentPlacement: FolderDocumentPlacement;
-    readonly folderName: string | ((apiItem: ApiItem) => string);
-}
+};
 
 // @public
 export function getApiItemTransformationConfigurationWithDefaults(options: ApiItemTransformationOptions): ApiItemTransformationConfiguration;
@@ -500,22 +478,26 @@ export type HierarchyConfiguration = {
     [ApiItemKind.Model]: DocumentHierarchyConfiguration;
     [ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
     [ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
+    readonly getDocumentName: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
+    readonly getFolderName: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
 
 // @public
 export enum HierarchyKind {
-    Document = "document",
-    Folder = "folder",
-    Section = "section"
+    Document = "Document",
+    Folder = "Folder",
+    Section = "Section"
 }
 
 // @public
 export type HierarchyOptions = {
-    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]?: HierarchyKind | DocumentationHierarchyOptions;
+    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]?: HierarchyKind | DocumentationHierarchyConfiguration;
 } & {
-    [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyOptions;
-    [ApiItemKind.Package]?: HierarchyKind.Document | HierarchyKind.Folder | DocumentHierarchyOptions | FolderHierarchyOptions;
-    [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyOptions;
+    [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+    [ApiItemKind.Package]?: HierarchyKind.Document | HierarchyKind.Folder | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+    [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+    readonly getDocumentName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
+    readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
 
 // @public
@@ -730,11 +712,8 @@ function renderNode(node: DocumentationNode, writer: DocumentWriter, context: Ma
 // @public
 function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
-// @public
+// @public @sealed
 export type SectionHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
-
-// @public
-export type SectionHierarchyOptions = DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {
