@@ -41,6 +41,8 @@ import {
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 	getNetworkInformationFromIP,
+	createFluidServiceNetworkError,
+	InternalErrorCode,
 } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
@@ -260,6 +262,22 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
+			// Reject create document request if cluster is in draining process.
+			if (
+				clusterDrainingChecker &&
+				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
+					Lumberjack.error("Failed to get cluster draining status", undefined, error);
+					return false;
+				}))
+			) {
+				Lumberjack.info("Cluster is in draining process. Reject create document request.");
+				const error = createFluidServiceNetworkError(503, {
+					message: "Server is unavailable. Please retry create document later.",
+					internalErrorCode: InternalErrorCode.ClusterDraining,
+				});
+				handleResponse(Promise.reject(error), response);
+			}
+
 			const clientIPAddress = request.ip ? request.ip : "";
 			const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 			// Tenant and document
