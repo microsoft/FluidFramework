@@ -5,14 +5,7 @@ sidebar_position: 5
 
 ## Whole-Tree Events
 
-The `TreeView` object exposes 2 events that communicate changes that affect the whole tree. For example:
-
-```typescript
-const unsubscribe = treeView.events.on("rootChanged", () => {...});
-
-// Later at some point when the event subscription is not needed anymore
-unsubscribe();
-```
+The `TreeView` object exposes 2 events that communicate changes that affect the whole tree.
 
 `rootChanged` fires when the contents of the root field (the field that contains the root node) change.
 That is, if a new root node is assigned or the schema changes.
@@ -21,6 +14,15 @@ This will not fire when the node itself changes.
 `commitApplied` fires whenever a change is applied outside of a transaction or when a transaction is committed.
 This is used to get `Revertible` objects to put on the undo or redo stacks.
 See [undo redo support](./undo-redo.mdx) and [Transactions](./transactions.mdx).
+
+Here is an example of how to subscribe to one of these events:
+
+```typescript
+const unsubscribe = treeView.events.on("rootChanged", () => {...});
+
+// Later at some point when the event subscription is not needed anymore
+unsubscribe();
+```
 
 ## Node-Level Events
 
