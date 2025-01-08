@@ -473,11 +473,14 @@ export class HeadingNode extends DocumentationParentNodeBase<SingleLineDocumenta
 
 // @public
 export type HierarchyConfiguration = {
-    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]: DocumentationHierarchyConfiguration;
+    /**
+    * Hierarchy configuration for the API item kind.
+    */
+    readonly [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]: DocumentationHierarchyConfiguration;
 } & {
-    [ApiItemKind.Model]: DocumentHierarchyConfiguration;
-    [ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
-    [ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
+    readonly [ApiItemKind.Model]: DocumentHierarchyConfiguration;
+    readonly [ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+    readonly [ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
     readonly getDocumentName: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
     readonly getFolderName: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
@@ -491,11 +494,14 @@ export enum HierarchyKind {
 
 // @public
 export type HierarchyOptions = {
-    [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]?: HierarchyKind | DocumentationHierarchyConfiguration;
+    /**
+    * Hierarchy configuration for the API item kind.
+    */
+    readonly [Kind in Exclude<ValidApiItemKind, ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package>]?: HierarchyKind | DocumentationHierarchyConfiguration;
 } & {
-    [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
-    [ApiItemKind.Package]?: HierarchyKind.Document | HierarchyKind.Folder | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
-    [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+    readonly [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+    readonly [ApiItemKind.Package]?: HierarchyKind.Document | HierarchyKind.Folder | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+    readonly [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
     readonly getDocumentName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
     readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };

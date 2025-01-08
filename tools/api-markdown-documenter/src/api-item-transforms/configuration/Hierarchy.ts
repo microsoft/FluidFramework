@@ -145,7 +145,7 @@ export type HierarchyConfiguration = {
 	/**
 	 * Hierarchy configuration for the API item kind.
 	 */
-	[Kind in Exclude<
+	readonly [Kind in Exclude<
 		ValidApiItemKind,
 		ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package
 	>]: DocumentationHierarchyConfiguration;
@@ -157,7 +157,7 @@ export type HierarchyConfiguration = {
 	 * Always its own document. Never introduces folder hierarchy.
 	 * This is an important invariant, as it ensures that there is always at least one document in the output.
 	 */
-	[ApiItemKind.Model]: DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.Model]: DocumentHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `Package` API item kind.
@@ -168,7 +168,7 @@ export type HierarchyConfiguration = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+	readonly [ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `EntryPoint` API item kind.
@@ -181,7 +181,7 @@ export type HierarchyConfiguration = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
 
 	/**
 	 * {@inheritDoc HierarchyOptions.getDocumentName}
@@ -210,7 +210,7 @@ export type HierarchyOptions = {
 	/**
 	 * Hierarchy configuration for the API item kind.
 	 */
-	[Kind in Exclude<
+	readonly [Kind in Exclude<
 		ValidApiItemKind,
 		ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package
 	>]?: HierarchyKind | DocumentationHierarchyConfiguration;
@@ -222,7 +222,7 @@ export type HierarchyOptions = {
 	 * Always its own document. Never introduces folder hierarchy.
 	 * This is an important invariant, as it ensures that there is always at least one document in the output.
 	 */
-	[ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `Package` API item kind.
@@ -233,7 +233,7 @@ export type HierarchyOptions = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.Package]?:
+	readonly [ApiItemKind.Package]?:
 		| HierarchyKind.Document
 		| HierarchyKind.Folder
 		| DocumentHierarchyConfiguration
@@ -250,7 +250,7 @@ export type HierarchyOptions = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
 
 	/**
 	 * Generate the desired document name for the provided `ApiItem`.
