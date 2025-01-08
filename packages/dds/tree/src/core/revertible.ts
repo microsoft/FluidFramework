@@ -47,7 +47,7 @@ export interface RevertibleAlpha extends Revertible {
 	/**
 	 * Clones the {@link Revertible} to a target branch.
 	 *
-	 * @remarks To clone `RevertibleAlpha` in batch, use {@link cloneRevertibles}.
+	 * @remarks To clone a group of`RevertibleAlpha`s, use {@link cloneRevertibles}.
 	 *
 	 * @param branch - A target branch to apply the revertible to.
 	 * The target branch must contain the same commit that this revertible is meant to revert, otherwise will throw an error.
