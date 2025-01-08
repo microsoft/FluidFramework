@@ -58,3 +58,59 @@ export function getOrCreate<K, V>(
 	}
 	return value;
 }
+
+/**
+ * Computes the Levenshtein distance between two strings.
+ * The levenshtein distance between two strings is the minimum number of single-character edits (insertions, deletions, or substitutions) required to change one string into the other.
+ */
+export function levenshteinDistance(a: string, b: string): number {
+	const dp: number[][] = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+
+	for (let j = 1; j <= b.length; j++) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-ignore
+		dp[0][j] = j;
+	}
+
+	for (let i = 1; i <= a.length; i++) {
+		for (let j = 1; j <= b.length; j++) {
+			const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore
+			dp[i][j] = Math.min(
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				dp[i - 1][j] + 1, // Deletion
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				dp[i][j - 1] + 1, // Insertion
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore
+				dp[i - 1][j - 1] + cost, // Substitution
+			);
+		}
+	}
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore
+	return dp[a.length][b.length];
+}
+
+/**
+ * Returns the closest match from a list of possibleMatches to the input string,
+ * based on the smallest Levenshtein distance.
+ *
+ * @remarks this is intended to be used to help steer the LLM towards the correct field name if it attempts to use a field that does not exist on a given tree node.
+ */
+export function findClosestStringMatch(input: string, possibleMatches: string[]): string {
+	let bestMatch = "";
+	let bestDistance = Number.POSITIVE_INFINITY;
+
+	for (const candidate of possibleMatches) {
+		const distance = levenshteinDistance(input, candidate);
+		if (distance < bestDistance) {
+			bestDistance = distance;
+			bestMatch = candidate;
+		}
+	}
+	return bestMatch;
+}
