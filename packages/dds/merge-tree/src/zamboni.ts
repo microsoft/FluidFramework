@@ -18,7 +18,7 @@ import {
 	seqLTE,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
-import { toRemovalInfo, toMoveInfo } from "./segmentInfos.js";
+import { toRemovalInfo, toMoveInfo, removeMergeNodeInfo } from "./segmentInfos.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
@@ -164,18 +164,17 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 					},
 					undefined,
 				);
-
-				segment.parent = undefined;
 				if (Marker.is(segment)) {
 					mergeTree.unlinkMarker(segment);
 				}
+				removeMergeNodeInfo(segment);
 			} else {
 				holdNodes.push(segment);
 			}
 
 			prevSegment = undefined;
 		} else {
-			if (segment.seq! <= mergeTree.collabWindow.minSeq) {
+			if (segment.seq <= mergeTree.collabWindow.minSeq) {
 				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
@@ -194,7 +193,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 					);
 
 					for (const tg of segment.trackingCollection.trackingGroups) tg.unlink(segment);
-					segment.parent = undefined;
+					removeMergeNodeInfo(segment);
 				} else {
 					holdNodes.push(segment);
 					prevSegment = segmentHasPositiveLength ? segment : undefined;

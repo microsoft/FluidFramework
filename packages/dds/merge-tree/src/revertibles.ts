@@ -8,12 +8,17 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { DoublyLinkedList } from "./collections/index.js";
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
-// eslint-disable-next-line import/no-deprecated
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
 import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
 import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
-import { type ISegmentPrivate } from "./mergeTreeNodes.js";
+import {
+	assertSegmentLeaf,
+	isSegmentLeaf,
+	toSegmentLeaf,
+	type ISegmentLeaf,
+	type ISegmentPrivate,
+} from "./mergeTreeNodes.js";
 import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
 import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
@@ -87,7 +92,7 @@ export interface MergeTreeWithRevert extends MergeTree {
 export type PickPartial<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 	const segmentOrNode = trackable.isLeaf() ? trackable : trackable.getSegment();
-	const maybeRoot = findRootMergeBlock(segmentOrNode);
+	const maybeRoot = findRootMergeBlock(toSegmentLeaf(segmentOrNode));
 	assert(
 		maybeRoot?.mergeTree !== undefined,
 		0x5c2 /* trackable is invalid as it is not in a rooted merge tree. */,
@@ -100,7 +105,6 @@ function findMergeTreeWithRevert(trackable: Trackable): MergeTreeWithRevert {
 		const refCallbacks: MergeTreeWithRevert["__mergeTreeRevertible"]["refCallbacks"] = {
 			afterSlide: (r: LocalReferencePosition) => {
 				if (mergeTree.referencePositionToLocalPosition(r) === DetachedReferencePosition) {
-					// eslint-disable-next-line import/no-deprecated
 					const refs = LocalReferenceCollection.setOrGet(detachedReferences);
 					refs.addAfterTombstones([r]);
 				}
@@ -262,7 +266,7 @@ function revertLocalInsert(
 			tracked.trackingCollection.unlink(revertible.trackingGroup),
 			0x3f1 /* tracking group removed */,
 		);
-		assert(tracked.isLeaf(), 0x3f2 /* inserts must track segments */);
+		assert(isSegmentLeaf(tracked), 0x3f2 /* inserts must track segments */);
 		if (toRemovalInfo(tracked) === undefined) {
 			const start = getPosition(mergeTreeWithRevert, tracked);
 			driver.removeRange(start, start + tracked.cachedLength);
@@ -285,14 +289,14 @@ function revertLocalRemove(
 
 		assert(!tracked.isLeaf(), 0x3f4 /* removes must track local refs */);
 
-		const refSeg: ISegmentPrivate | undefined = tracked.getSegment();
+		const refSeg = tracked.getSegment();
 		let realPos = mergeTreeWithRevert.referencePositionToLocalPosition(tracked);
 
 		// References which are on EndOfStringSegment don't return detached for pos,
 		// they will return the length of the merge-tree. this case just catches
 		// random references, likely not created in the revertible flow,
 		// that are tying to be reverted for some reason.
-		if (realPos === DetachedReferencePosition || refSeg === undefined) {
+		if (realPos === DetachedReferencePosition || !isSegmentLeaf(refSeg)) {
 			throw new UsageError("Cannot insert at detached references position");
 		}
 
@@ -302,13 +306,12 @@ function revertLocalRemove(
 
 		const props = tracked.properties as RemoveSegmentRefProperties;
 		driver.insertFromSpec(realPos, props.segSpec);
-		const insertSegment: ISegmentPrivate | undefined =
-			mergeTreeWithRevert.getContainingSegment(
-				realPos,
-				mergeTreeWithRevert.collabWindow.currentSeq,
-				mergeTreeWithRevert.collabWindow.clientId,
-			).segment;
-		assert(insertSegment !== undefined, 0x3f5 /* insert segment must exist at position */);
+		const insertSegment = mergeTreeWithRevert.getContainingSegment(
+			realPos,
+			mergeTreeWithRevert.collabWindow.currentSeq,
+			mergeTreeWithRevert.collabWindow.clientId,
+		).segment;
+		assertSegmentLeaf(insertSegment);
 
 		const localSlideFilter = (lref: LocalReferencePosition): boolean =>
 			(lref.properties as Partial<RemoveSegmentRefProperties>)?.referenceSpace ===
@@ -335,8 +338,7 @@ function revertLocalRemove(
 			}
 		};
 		depthFirstNodeWalk(
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			insertSegment.parent!,
+			insertSegment.parent,
 			insertSegment,
 			undefined,
 			(seg: ISegmentPrivate) => {
@@ -358,7 +360,6 @@ function revertLocalRemove(
 		}
 
 		if (insertRef !== undefined) {
-			// eslint-disable-next-line import/no-deprecated
 			const localRefs = LocalReferenceCollection.setOrGet(insertSegment);
 			if (insertRef.before?.empty === false) {
 				localRefs.addBeforeTombstones(insertRef.before.map((n) => n.data));
@@ -385,7 +386,7 @@ function revertLocalAnnotate(
 	while (revertible.trackingGroup.size > 0) {
 		const tracked = revertible.trackingGroup.tracked[0];
 		const unlinked = tracked.trackingCollection.unlink(revertible.trackingGroup);
-		assert(unlinked && tracked.isLeaf(), 0x3f7 /* annotates must track segments */);
+		assert(unlinked && isSegmentLeaf(tracked), 0x3f7 /* annotates must track segments */);
 		if (toRemovalInfo(tracked) === undefined) {
 			const start = getPosition(mergeTreeWithRevert, tracked);
 			driver.annotateRange(start, start + tracked.cachedLength, revertible.propertyDeltas);
@@ -393,10 +394,7 @@ function revertLocalAnnotate(
 	}
 }
 
-function getPosition(
-	mergeTreeWithRevert: MergeTreeWithRevert,
-	segment: ISegmentPrivate,
-): number {
+function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegmentLeaf): number {
 	return mergeTreeWithRevert.getPosition(
 		segment,
 		mergeTreeWithRevert.collabWindow.currentSeq,

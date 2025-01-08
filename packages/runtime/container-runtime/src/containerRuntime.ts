@@ -156,6 +156,7 @@ import {
 	DeltaManagerPendingOpsProxy,
 	DeltaManagerSummarizerProxy,
 } from "./deltaManagerProxies.js";
+import { DeltaScheduler } from "./deltaScheduler.js";
 import {
 	GCNodeType,
 	GarbageCollector,
@@ -165,6 +166,7 @@ import {
 	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 } from "./gc/index.js";
+import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeDocumentSchemaMessage,
@@ -198,7 +200,6 @@ import {
 	IPendingLocalState,
 	PendingStateManager,
 } from "./pendingStateManager.js";
-import { ScheduleManager } from "./scheduleManager.js";
 import {
 	DocumentsSchemaController,
 	EnqueueSummarizeResult,
@@ -469,15 +470,7 @@ export interface IContainerRuntimeOptions {
 	 * 3. "bypass" will skip the check entirely. This is not recommended.
 	 */
 	readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
-	/**
-	 * Sets the flush mode for the runtime. In Immediate flush mode the runtime will immediately
-	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
-	 * and then sent them as a single batch at the end of the turn.
-	 * By default, flush mode is TurnBased.
-	 *
-	 * @deprecated Only the default value TurnBased is supported. This option will be removed in the future.
-	 */
-	readonly flushMode?: FlushMode;
+
 	/**
 	 * Enables the runtime to compress ops. See {@link ICompressionRuntimeOptions}.
 	 */
@@ -513,16 +506,6 @@ export interface IContainerRuntimeOptions {
 	 * @experimental Not ready for use.
 	 */
 	readonly enableRuntimeIdCompressor?: IdCompressorMode;
-
-	/**
-	 * If enabled, the runtime will group messages within a batch into a single
-	 * message to be sent to the service.
-	 * The grouping and ungrouping of such messages is handled by the "OpGroupingManager".
-	 *
-	 * By default, the feature is enabled.
-	 * @deprecated  The ability to disable Grouped Batching is deprecated and will be removed in v2.20.0. This feature is required for the proper functioning of the Fluid Framework.
-	 */
-	readonly enableGroupedBatching?: boolean;
 
 	/**
 	 * When this property is set to true, it requires runtime to control is document schema properly through ops
@@ -864,11 +847,7 @@ export async function loadContainerRuntime(
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
  *
- * @deprecated To be removed from the Legacy-Alpha API in version 2.20.0.
- * Use the loadContainerRuntime function and interfaces IContainerRuntime / IRuntime instead.
- *
- * @legacy
- * @alpha
+ * @internal
  */
 export class ContainerRuntime
 	extends TypedEventEmitter<IContainerRuntimeEvents>
@@ -1410,7 +1389,8 @@ export class ContainerRuntime
 	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
 	 */
 	private readonly _summarizer?: Summarizer;
-	private readonly scheduleManager: ScheduleManager;
+	private readonly deltaScheduler: DeltaScheduler;
+	private readonly inboundBatchAggregator: InboundBatchAggregator;
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
@@ -1521,10 +1501,7 @@ export class ContainerRuntime
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		runtimeOptions: Readonly<
-			Required<Omit<IContainerRuntimeOptions, "flushMode" | "enableGroupedBatching">> &
-				IContainerRuntimeOptions // Let flushMode and enabledGroupedBatching be optional now since they're soon to be removed
-		>,
+		runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
@@ -1674,9 +1651,6 @@ export class ContainerRuntime
 				groupedBatchingEnabled: this.groupedBatchingEnabled,
 				opCountThreshold:
 					this.mc.config.getNumber("Fluid.ContainerRuntime.GroupedBatchingOpCount") ?? 2,
-				reentrantBatchGroupingEnabled:
-					this.mc.config.getBoolean("Fluid.ContainerRuntime.GroupedBatchingReentrancy") ??
-					true,
 			},
 			this.mc.logger,
 		);
@@ -1901,11 +1875,16 @@ export class ContainerRuntime
 			closeContainer: (error?: ICriticalContainerError) => this.closeFn(error),
 		});
 
-		this.scheduleManager = new ScheduleManager(
+		this.deltaScheduler = new DeltaScheduler(
 			this.innerDeltaManager,
 			this,
+			createChildLogger({ logger: this.logger, namespace: "DeltaScheduler" }),
+		);
+
+		this.inboundBatchAggregator = new InboundBatchAggregator(
+			this.innerDeltaManager,
 			() => this.clientId,
-			createChildLogger({ logger: this.logger, namespace: "ScheduleManager" }),
+			createChildLogger({ logger: this.logger, namespace: "InboundBatchAggregator" }),
 		);
 
 		const disablePartialFlush = this.mc.config.getBoolean(
@@ -2218,6 +2197,8 @@ export class ContainerRuntime
 		this._summarizer?.dispose();
 		this.channelCollection.dispose();
 		this.pendingStateManager.dispose();
+		this.inboundBatchAggregator.dispose();
+		this.deltaScheduler.dispose();
 		this.emit("dispose");
 		this.removeAllListeners();
 	}
@@ -2923,7 +2904,7 @@ export class ContainerRuntime
 	private _processedClientSequenceNumber: number | undefined;
 
 	/**
-	 * Processes inbound message(s). It calls schedule manager according to the messages' location in the batch.
+	 * Processes inbound message(s). It calls delta scheduler according to the messages' location in the batch.
 	 * @param messagesWithMetadata - messages to process along with their metadata.
 	 * @param locationInBatch - Are we processing the start and/or end of a batch?
 	 * @param local - true if the messages were originally generated by the client receiving it.
@@ -2945,7 +2926,7 @@ export class ContainerRuntime
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
 			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
-			this.scheduleManager.batchBegin(firstMessage);
+			this.emit("batchBegin", firstMessage);
 		}
 
 		let error: unknown;
@@ -3045,7 +3026,7 @@ export class ContainerRuntime
 			if (locationInBatch.batchEnd) {
 				const lastMessage = messagesWithMetadata[messagesWithMetadata.length - 1]?.message;
 				assert(lastMessage !== undefined, 0xa32 /* Batch must have at least one message */);
-				this.scheduleManager.batchEnd(error, lastMessage);
+				this.emit("batchEnd", error, lastMessage);
 			}
 		}
 	}

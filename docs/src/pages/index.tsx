@@ -53,7 +53,9 @@ if (appInsights !== undefined) {
 export default function Home(): React.ReactElement {
 	return (
 		<Layout>
-			<Homepage />
+			<main>
+				<Homepage />
+			</main>
 		</Layout>
 	);
 }

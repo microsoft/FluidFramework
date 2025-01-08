@@ -1432,7 +1432,7 @@ export class DocumentTree {
 				});
 				this.pos++;
 			} else {
-				const trid = docNode.name + this.ids[docNode.name].toString();
+				const trid = docNode.name + this.ids[docNode.name]!.toString();
 				docNode.id = trid;
 				id = this.ids[docNode.name]++;
 				const props = {

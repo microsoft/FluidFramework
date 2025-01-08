@@ -315,7 +315,7 @@ export interface DocumentationSuiteConfiguration {
     readonly hierarchyBoundaries: HierarchyBoundaries;
     readonly includeBreadcrumb: boolean;
     readonly includeTopLevelDocumentHeading: boolean;
-    readonly minimumReleaseLevel: Omit<ReleaseTag, ReleaseTag.None>;
+    readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
     readonly skipPackage: (apiPackage: ApiPackage) => boolean;
 }
 
@@ -374,7 +374,7 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
 // @public
 export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
-    outputDirectoryPath: string;
+    readonly outputDirectoryPath: string;
 }
 
 // @public
@@ -626,10 +626,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
 export { ReleaseTag }
 
 // @public
-interface RenderApiModelAsHtmlOptions extends ApiItemTransformationOptions, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
-}
-
-// @public
 function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
 
 // @public
@@ -644,10 +640,6 @@ function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfigur
 
 // @public @sealed
 export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
-}
-
-// @public
-interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
