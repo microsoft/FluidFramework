@@ -32,7 +32,7 @@
 		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json",
+		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
 		"build:test": "concurrently npm:build:test:cjs npm:build:test:esm",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "fluid-tsc module --project ./src/test/tsconfig.esm.json",
