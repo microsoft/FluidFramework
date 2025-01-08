@@ -209,10 +209,17 @@ for (const testOpts of testMatrix) {
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
 				// AFR gives R11s fetch error, T9s gives 0x8e4
-				assert.strict(
-					error.message.startsWith("R11s fetch error") || error.message === "0x8e4",
-					`Unexpected error: ${error.message}`,
-				);
+				if (process.env.FLUID_CLIENT === "azure") {
+					assert.strict(
+						"errorType" in error &&
+							error.errorType === "fileNotFoundOrAccessDeniedError" &&
+							"statusCode" in error &&
+							error.statusCode === 404,
+						`Unexpected error: ${error.message}`,
+					);
+				} else {
+					assert.strict(error.message === "0x8e4", `Unexpected error: ${error.message}`);
+				}
 				return true;
 			};
 
