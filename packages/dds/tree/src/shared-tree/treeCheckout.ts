@@ -612,7 +612,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 				const revertibleBranch = this.revertibleCommitBranches.get(revision);
 				if (revertibleBranch === undefined) {
-					throw new UsageError("Change to revert does not exist on the branch.");
+					throw new UsageError("Unable to clone a revertible that has been disposed.");
 				}
 
 				const commitToRevert = revertibleBranch.getHead();
