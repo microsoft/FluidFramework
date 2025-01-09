@@ -175,7 +175,7 @@ export function manufactureHandle<T>(
 	const handle: IFluidHandleInternal<T> = parseHandles(
 		{ type: "__fluid_handle__", url },
 		serializer,
-	);
+	) as IFluidHandleInternal<T>;
 	return handle;
 }
 

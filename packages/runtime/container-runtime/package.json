@@ -63,16 +63,6 @@
 				"default": "./dist/deltaScheduler.js"
 			}
 		},
-		"./internal/test/scheduleManager": {
-			"import": {
-				"types": "./lib/scheduleManager.d.ts",
-				"default": "./lib/scheduleManager.js"
-			},
-			"require": {
-				"types": "./dist/scheduleManager.d.ts",
-				"default": "./dist/scheduleManager.js"
-			}
-		},
 		"./internal/test/blobManager": {
 			"import": {
 				"types": "./lib/blobManager/index.d.ts",
@@ -122,7 +112,7 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/containerRuntime ./internal/test/deltaScheduler ./internal/test/scheduleManager ./internal/test/blobManager ./internal/test/summary ./internal/test/gc",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/containerRuntime ./internal/test/deltaScheduler ./internal/test/blobManager ./internal/test/summary ./internal/test/gc",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -231,7 +221,17 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ContainerRuntime": {
+				"backCompat": false
+			},
+			"Class_DocumentsSchemaController": {
+				"forwardCompat": false
+			},
+			"ClassStatics_ContainerRuntime": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
