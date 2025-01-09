@@ -44,6 +44,9 @@ export interface BranchableTree extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
+// @alpha
+export function cloneRevertibles(revertibles: RevertibleAlpha[], targetBranch: TreeBranch): RevertibleAlpha[];
+
 // @public
 export enum CommitKind {
     Default = 0,
