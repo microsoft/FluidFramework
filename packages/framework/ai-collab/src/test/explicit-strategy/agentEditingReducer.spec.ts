@@ -381,261 +381,207 @@ describe("applyAgentEdit", () => {
 		});
 	});
 
-	// it("FEEDBACK TESTING: modify edits", () => {
-	// 	const tree = factory.create(
-	// 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-	// 		"tree",
-	// 	);
-	// 	const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
-	// 	const view = tree.viewWith(config);
-	// 	const simpleSchema = getSimpleSchema(view.schema);
-
-	// 	view.initialize({
-	// 		str: "testStr",
-	// 		vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-	// 		bools: [true],
-	// 	});
-
-	// 	idGenerator.assignIds(view.root);
-	// 	const vectorId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
-
-	// 	const modifyEdit: TreeEdit = {
-	// 		explanation: "Modify a vector",
-	// 		type: "modify",
-	// 		target: { target: vectorId },
-	// 		field: "vectors",
-	// 		modification: [
-	// 			{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
-	// 			{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
-	// 		],
-	// 	};
-	// 	applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions);
-
-	// 	const modifyEdit2: TreeEdit = {
-	// 		explanation: "Modify a vector",
-	// 		type: "modify",
-	// 		target: { target: vectorId },
-	// 		field: "bools",
-	// 		modification: [false],
-	// 	};
-	// 	applyAgentEdit(modifyEdit2, idGenerator, simpleSchema.definitions);
-
-	// 	idGenerator.assignIds(view.root);
-	// 	const vectorId2 =
-	// 		idGenerator.getId(view.root.vectors[0] as Vector) ?? fail("ID expected.");
-
-	// 	const modifyEdit3: TreeEdit = {
-	// 		explanation: "Modify a vector",
-	// 		type: "modify",
-	// 		target: { target: vectorId2 },
-	// 		field: "x2",
-	// 		modification: 111,
-	// 	};
-
-	// 	try {
-	// 		applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
-	// 	} catch (error) {
-	// 		if (error instanceof Error) {
-	// 			console.log(`caught error wit msg : ${error.message}`);
-	// 		}
-	// 	}
-
-	// 	const modifyEdit4: TreeEdit = {
-	// 		explanation: "Modify a vector",
-	// 		type: "modify",
-	// 		target: { target: vectorId2 },
-	// 		field: "x",
-	// 		modification: "anUnsupportedType",
-	// 	};
-
-	// 	try {
-	// 		applyAgentEdit(modifyEdit4, idGenerator, simpleSchema.definitions);
-	// 	} catch (error) {
-	// 		if (error instanceof Error) {
-	// 			console.log(`caught error wit msg : ${error.message}`);
-	// 		}
-	// 	}
-
-	// 	const identifier = (view.root.vectors[0] as Vector).id;
-	// 	const identifier2 = (view.root.vectors[1] as Vector2).id;
-
-	// 	// Types of modify error messages we can enhance:
-	// 	// wrong type in field.
-	// 	// Modification referencecs nonexistant field.
-
-	// 	const expected = {
-	// 		"str": "testStr",
-	// 		"vectors": [
-	// 			{
-	// 				"id": identifier,
-	// 				"x": 111,
-	// 				"y": 3,
-	// 				"z": 4,
-	// 			},
-	// 			{
-	// 				"id": identifier2,
-	// 				"x2": 3,
-	// 				"y2": 4,
-	// 				"z2": 5,
-	// 			},
-	// 		],
-	// 		"bools": [false],
-	// 	};
-
-	// 	assert.deepEqual(
-	// 		JSON.stringify(view.root, undefined, 2),
-	// 		JSON.stringify(expected, undefined, 2),
-	// 	);
-	// });
-
-	it("modify edits", () => {
-		const tree = factory.create(
+	describe("modify edits", () => {
+		let tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
-		const view = tree.viewWith(config);
-		const simpleSchema = getSimpleSchema(view.schema);
+		let config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
+		let view = tree.viewWith(config);
+		let simpleSchema = getSimpleSchema(view.schema);
 
-		view.initialize({
-			str: "testStr",
-			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-			bools: [true],
+		// Reinitialize our test tree to the same initial state.
+		beforeEach(() => {
+			tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
+			view = tree.viewWith(config);
+			simpleSchema = getSimpleSchema(view.schema);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
 		});
 
-		idGenerator.assignIds(view.root);
-		const vectorId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
+		it("replace an array node of objects", () => {
+			const vectorArrayId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
 
-		const modifyEdit: TreeEdit = {
-			explanation: "Modify a vector",
-			type: "modify",
-			target: { target: vectorId },
-			field: "vectors",
-			modification: [
-				{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
-				{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
-			],
-		};
-		applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions);
+			const modifyEdit: TreeEdit = {
+				explanation: "Replace an array of vectors",
+				type: "modify",
+				target: { target: vectorArrayId },
+				field: "vectors",
+				modification: [
+					{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
+					{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
+				],
+			};
+			applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions);
 
-		const modifyEdit2: TreeEdit = {
-			explanation: "Modify a vector",
-			type: "modify",
-			target: { target: vectorId },
-			field: "bools",
-			modification: [false],
-		};
-		applyAgentEdit(modifyEdit2, idGenerator, simpleSchema.definitions);
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": (view.root.vectors[0] as Vector).id,
+						"x": 2,
+						"y": 3,
+						"z": 4,
+					},
+					{
+						"id": (view.root.vectors[1] as Vector2).id,
+						"x2": 3,
+						"y2": 4,
+						"z2": 5,
+					},
+				],
+				"bools": [true],
+			};
 
-		idGenerator.assignIds(view.root);
-		const vectorId2 =
-			idGenerator.getId(view.root.vectors[0] as Vector) ?? fail("ID expected.");
-
-		const modifyEdit3: TreeEdit = {
-			explanation: "Modify a vector",
-			type: "modify",
-			target: { target: vectorId2 },
-			field: "x",
-			modification: 111,
-		};
-		applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
-
-		const identifier = (view.root.vectors[0] as Vector).id;
-		const identifier2 = (view.root.vectors[1] as Vector2).id;
-
-		const expected = {
-			"str": "testStr",
-			"vectors": [
-				{
-					"id": identifier,
-					"x": 111,
-					"y": 3,
-					"z": 4,
-				},
-				{
-					"id": identifier2,
-					"x2": 3,
-					"y2": 4,
-					"z2": 5,
-				},
-			],
-			"bools": [false],
-		};
-
-		assert.deepEqual(
-			JSON.stringify(view.root, undefined, 2),
-			JSON.stringify(expected, undefined, 2),
-		);
-	});
-
-	it("modify edit with non existent field fails", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
-		const view = tree.viewWith(config);
-		const simpleSchema = getSimpleSchema(view.schema);
-
-		view.initialize({
-			str: "testStr",
-			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-			bools: [true],
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
 		});
 
-		idGenerator.assignIds(view.root);
-		const vectorId =
-			idGenerator.getId(view.root.vectors[0] as TreeNode) ?? fail("ID expected.");
+		it("replace an array node of primitive leaf nodes", () => {
+			const vectorArrayId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
 
-		const modifyEdit3: TreeEdit = {
-			explanation: "Modify a vector",
-			type: "modify",
-			target: { target: vectorId },
-			field: "x2",
-			modification: 111,
-		};
+			const modifyEdit2: TreeEdit = {
+				explanation: "replace a primitive array",
+				type: "modify",
+				target: { target: vectorArrayId },
+				field: "bools",
+				modification: [false],
+			};
+			applyAgentEdit(modifyEdit2, idGenerator, simpleSchema.definitions);
 
-		assert.throws(
-			() => applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions),
-			validateUsageError(
-				`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. The node's field you selected for modification \`x2\` does not exist in this nodes schema. The set of available fields for this node are: [\`id\`, \`x\`, \`y\`, \`z\`]. If you are sure you are trying to modify this node, did you mean to use the field \`x\`?`,
-			),
-		);
-	});
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": (view.root.vectors[0] as Vector).id,
+						"x": 1,
+						"y": 2,
+						"z": 3,
+					},
+				],
+				"bools": [false],
+			};
 
-	it("modify edit with invalid primitive value type for field fails", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
-		const view = tree.viewWith(config);
-		const simpleSchema = getSimpleSchema(view.schema);
-
-		view.initialize({
-			str: "testStr",
-			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-			bools: [true],
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
 		});
 
-		idGenerator.assignIds(view.root);
-		const vectorId =
-			idGenerator.getId(view.root.vectors[0] as TreeNode) ?? fail("ID expected.");
+		it("Modifies a primitive leaf node value within an object node", () => {
+			const vectorId =
+				idGenerator.getId(view.root.vectors[0] as Vector) ?? fail("ID expected.");
 
-		const modifyEdit3: TreeEdit = {
-			explanation: "Modify a vector",
-			type: "modify",
-			target: { target: vectorId },
-			field: "x",
-			modification: false,
-		};
+			const modifyEdit3: TreeEdit = {
+				explanation: "Modify a vector",
+				type: "modify",
+				target: { target: vectorId },
+				field: "x",
+				modification: 111,
+			};
+			applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
 
-		assert.throws(
-			() => applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions),
-			validateUsageError(
-				`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. You cannot set the node's field \`x\` to the value \`false\` with type \`boolean\` because this type is incompatible with all of the types allowed by the node's schema. The set of allowed types are [\`com.fluidframework.leaf.number\`].`,
-			),
-		);
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": (view.root.vectors[0] as Vector).id,
+						"x": 111,
+						"y": 2,
+						"z": 3,
+					},
+				],
+				"bools": [true],
+			};
+
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("Modifies a primitive leaf node value", () => {
+			const rootNodeId = idGenerator.getId(view.root) ?? fail("ID expected");
+
+			const modifyEdit3: TreeEdit = {
+				explanation: "Modify a string",
+				type: "modify",
+				target: { target: rootNodeId },
+				field: "str",
+				modification: "modifiedString",
+			};
+			applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
+
+			const expected = {
+				"str": "modifiedString",
+				"vectors": [
+					{
+						"id": (view.root.vectors[0] as Vector).id,
+						"x": 1,
+						"y": 2,
+						"z": 3,
+					},
+				],
+				"bools": [true],
+			};
+
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("modify edit with non existent field fails", () => {
+			const vectorId =
+				idGenerator.getId(view.root.vectors[0] as TreeNode) ?? fail("ID expected.");
+
+			const modifyEdit3: TreeEdit = {
+				explanation: "Modify a vector",
+				type: "modify",
+				target: { target: vectorId },
+				field: "x2",
+				modification: 111,
+			};
+
+			assert.throws(
+				() => applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions),
+				validateUsageError(
+					`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. The node's field you selected for modification \`x2\` does not exist in this nodes schema. The set of available fields for this node are: \`['id', 'x', 'y', 'z']\`. If you are sure you are trying to modify this node, did you mean to use the field \`x\` which has the following set of allowed types: \`['com.fluidframework.leaf.number']\`?`,
+				),
+			);
+		});
+
+		it("modify edit with invalid primitive value type for field fails", () => {
+			const vectorId =
+				idGenerator.getId(view.root.vectors[0] as TreeNode) ?? fail("ID expected.");
+
+			const modifyEdit3: TreeEdit = {
+				explanation: "Modify a vector",
+				type: "modify",
+				target: { target: vectorId },
+				field: "x",
+				modification: false,
+			};
+
+			assert.throws(
+				() => applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions),
+				validateUsageError(
+					`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. You cannot set the node's field \`x\` to the value \`false\` with type \`boolean\` because this type is incompatible with all of the types allowed by the node's schema. The set of allowed types are \`['com.fluidframework.leaf.number']\`.`,
+				),
+			);
+		});
 	});
 
 	describe("remove edits", () => {

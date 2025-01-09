@@ -248,6 +248,69 @@ describe("Prompt Generation Regression Tests", () => {
 		);
 	});
 
+	it("Editing System Prompt with plan and edit log with invalid `modify` has no regression", function (this: Mocha.Context) {
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestTodoAppSchema }));
+		view.initialize(initialAppState);
+
+		idGenerator.assignIds(view.root);
+
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const todo1Id = idGenerator.getId(view.root.todos[0]!)!;
+
+		const editLog: EditLog = [
+			// We expect an error for this edit because the field is 'completed' not 'complete'
+			{
+				edit: {
+					type: "modify",
+					explanation:
+						"Change the completed field to false for the todo at index 0 in the list of todos",
+					target: { target: todo1Id },
+					field: "complete",
+					modification: false,
+				},
+			},
+			// We expect an error for this field because 'yes' is not a valid boolean value.
+			{
+				edit: {
+					type: "modify",
+					explanation:
+						"Change the completed field to false for the todo at index 0 in the list of todos",
+					target: { target: todo1Id },
+					field: "completed",
+					modification: "yes",
+				},
+			},
+		];
+		const simpleSchema = getSimpleSchema(Tree.schema(view.root));
+		for (const editLogEntry of editLog) {
+			try {
+				applyAgentEdit(editLogEntry.edit, idGenerator, simpleSchema.definitions);
+			} catch (error) {
+				assert(error instanceof Error);
+				editLogEntry.error = error.message;
+			}
+		}
+
+		const actualPrompt = getEditingSystemPrompt(
+			userAsk,
+			idGenerator,
+			view.root,
+			editLog,
+			systemRoleContext,
+			plan,
+		);
+
+		snapShotTester.expectToMatchSnapshot(
+			this,
+			actualPrompt,
+			"Editing_System_Prompt_With_Plan_With_Log_With_Failed_Edits",
+		);
+	});
+
 	it("Editing System Prompt created with node containing no arrays has no regression", function (this: Mocha.Context) {
 		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),

@@ -338,6 +338,9 @@ export function applyAgentEdit(
 
 /**
  * Produces a useful, context-rich error message for the LLM when the LLM produces an {@link ModifyEdit} that either references a nonexistant field or an invalid type for the selected field.
+ * @param errorType - The type of error message to produce. You must determine the error type before calling this function.
+ * - `'NONEXISTENT_FIELD'` is used when the field does not exist in the node's schema.
+ * - `'INVALID_TYPE'` is used when the field exists but the type of the modification is invalid.
  */
 function createInvalidModifyFeedbackMsg(
 	modifyEdit: Modify,
@@ -355,22 +358,33 @@ function createInvalidModifyFeedbackMsg(
 			modifyEdit.field,
 			nodeFieldNames,
 		);
-		const closestPossibleMatchForFieldMessage = `If you are sure you are trying to modify this node, did you mean to use the field \`${closestPossibleMatchForField}\`?`;
-		messageSuffix = ` The node's field you selected for modification \`${modifyEdit.field}\` does not exist in this nodes schema. The set of available fields for this node are: [${nodeFieldNames.map((field) => `\`${field}\``).join(", ")}]. ${closestPossibleMatchForFieldMessage}`;
-	} else if (errorType === "INVALID_TYPE") {
-		const targetFieldNodeSchema = nodeFieldSchemas[modifyEdit.field];
-		const allowedTypeIdentifiers: string[] = [];
-		// If the node is a field schema we can collect all possible types in the case this field allows for more than one.
-		if (targetFieldNodeSchema instanceof FieldSchema) {
-			for (const allowedType of targetFieldNodeSchema.allowedTypeSet.values()) {
-				allowedTypeIdentifiers.push(allowedType.identifier);
-			}
-		} else {
-			allowedTypeIdentifiers.push((targetFieldNodeSchema as TreeNodeSchema).identifier);
+
+		let closestPossibleMatchForFieldMessage = "";
+		if (closestPossibleMatchForField !== "") {
+			const targetFieldNodeSchema = nodeFieldSchemas[closestPossibleMatchForField];
+			const allowedTypeIdentifiers: string[] =
+				targetFieldNodeSchema instanceof FieldSchema
+					? [...targetFieldNodeSchema.allowedTypeSet.values()].map(
+							(schema) => schema.identifier,
+						)
+					: [(targetFieldNodeSchema as TreeNodeSchema).identifier];
+			closestPossibleMatchForFieldMessage = ` If you are sure you are trying to modify this node, did you mean to use the field \`${closestPossibleMatchForField}\` which has the following set of allowed types: \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`?`;
 		}
 
+		messageSuffix = ` The node's field you selected for modification \`${modifyEdit.field}\` does not exist in this nodes schema. The set of available fields for this node are: \`[${nodeFieldNames.map((field) => `'${field}'`).join(", ")}]\`.${closestPossibleMatchForFieldMessage}`;
+	} else if (errorType === "INVALID_TYPE") {
+		const targetFieldNodeSchema = nodeFieldSchemas[modifyEdit.field];
+		const allowedTypeIdentifiers =
+			targetFieldNodeSchema instanceof FieldSchema
+				? [
+						[...targetFieldNodeSchema.allowedTypeSet.values()].map(
+							(schema) => schema.identifier,
+						),
+					]
+				: [(targetFieldNodeSchema as TreeNodeSchema).identifier];
+
 		// TODO: If the invalid modification is a new object, it won't be clear what part of the object is invalid for the given type. If we could give some more detailed guidance on what was wrong with the object it would be ideal.
-		messageSuffix = ` You cannot set the node's field \`${modifyEdit.field}\` to the value \`${modifyEdit.modification}\` with type \`${typeof modifyEdit.modification}\` because this type is incompatible with all of the types allowed by the node's schema. The set of allowed types are [${allowedTypeIdentifiers.map((id) => `\`${id}\``).join(", ")}].`;
+		messageSuffix = ` You cannot set the node's field \`${modifyEdit.field}\` to the value \`${modifyEdit.modification}\` with type \`${typeof modifyEdit.modification}\` because this type is incompatible with all of the types allowed by the node's schema. The set of allowed types are \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`.`;
 	}
 
 	return messagePrefix + messageSuffix;
