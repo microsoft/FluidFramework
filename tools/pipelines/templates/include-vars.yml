@@ -103,3 +103,5 @@ variables:
 - name: testCoverage
   value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   readonly: true
+
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self

@@ -44,6 +44,9 @@ export interface BranchableTree extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
+// @alpha
+export function cloneRevertibles(revertibles: RevertibleAlpha[], targetBranch: TreeBranch): RevertibleAlpha[];
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -186,12 +189,18 @@ export interface ForestOptions {
     readonly forest?: ForestType;
 }
 
-// @alpha
-export enum ForestType {
-    Expensive = 2,
-    Optimized = 1,
-    Reference = 0
+// @alpha @sealed
+export interface ForestType extends ErasedType_2<"ForestType"> {
 }
+
+// @alpha
+export const ForestTypeExpensiveDebug: ForestType;
+
+// @alpha
+export const ForestTypeOptimized: ForestType;
+
+// @alpha
+export const ForestTypeReference: ForestType;
 
 // @alpha @deprecated
 export function getBranch(tree: ITree): BranchableTree;
@@ -708,12 +717,14 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
 // @alpha
-export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = {
+export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback?: false;
     value: TSuccessValue;
 } | {
     rollback: true;
     value: TFailureValue;
+}) & {
+    preconditionsOnRevert?: readonly TransactionConstraint[];
 };
 
 // @public
