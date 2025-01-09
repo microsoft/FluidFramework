@@ -338,7 +338,7 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export type IsListener<T> = IsListener_2<T>;
 
 // @alpha
@@ -443,10 +443,10 @@ export interface JsonValidator {
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export type Listenable<T extends object> = Listenable_2<T>;
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export type Listeners<T extends object> = Listeners_2<T>;
 
 // @public @sealed
@@ -513,7 +513,7 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<I
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
-// @public @deprecated (undocumented)
+// @public @deprecated
 export type Off = Off_2;
 
 // @alpha
