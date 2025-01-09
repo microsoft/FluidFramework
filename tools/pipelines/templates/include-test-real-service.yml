@@ -394,6 +394,7 @@ stages:
             scriptLocation: 'inlineScript'
             scriptPath: |
               set -eu -o pipefail
+
               az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
               node 'tools/pipelines/templates/get-trips-tenants-ci.mjs';
 

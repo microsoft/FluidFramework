@@ -22,9 +22,8 @@ async function main() {
 			body: JSON.stringify(requestBody),
 		},
 	).then((response) => response.json());
-	console.log(`bearerToken: ${bearerToken}`);
+
 	const stringBearerToken = JSON.stringify(bearerToken);
-	console.log(`stringBearerToken: ${stringBearerToken}`);
 
 	// step 2: wait for resource hydration
 	// returns "Ready" or "Not Ready"
