@@ -3431,25 +3431,6 @@ export class ContainerRuntime
 		);
 	}
 
-	/**
-	 * @deprecated 0.16 Issue #1537, #3631
-	 */
-	public async _createDataStoreWithProps(
-		pkg: Readonly<string | string[]>,
-		props?: any,
-	): Promise<IDataStore> {
-		const context = this.channelCollection.createDataStoreContext(
-			Array.isArray(pkg) ? pkg : [pkg],
-			props,
-		);
-		return channelToDataStore(
-			await context.realize(),
-			context.id,
-			this.channelCollection,
-			this.mc.logger,
-		);
-	}
-
 	private canSendOps() {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.

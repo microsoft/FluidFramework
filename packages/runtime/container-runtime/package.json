@@ -221,7 +221,17 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ContainerRuntime": {
+				"backCompat": false
+			},
+			"Class_DocumentsSchemaController": {
+				"forwardCompat": false
+			},
+			"ClassStatics_ContainerRuntime": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
