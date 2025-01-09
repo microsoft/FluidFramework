@@ -157,7 +157,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_MockFluidDataStoreContext": {
+				"backCompat": false
+			},
+			"ClassStatics_MockFluidDataStoreContext": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
