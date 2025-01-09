@@ -81,15 +81,15 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
-				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Blob,
+				summary.summary.tree[gcStateBlobKey].type === SummaryType.Blob,
 				"GC state should be written as a blob",
 			);
 			assert(
-				summary.summary.tree[gcTombstoneBlobKey]?.type === SummaryType.Handle,
+				summary.summary.tree[gcTombstoneBlobKey].type === SummaryType.Handle,
 				"Tombstone state should be written as handle",
 			);
 			assert(
-				summary.summary.tree[gcDeletedBlobKey]?.type === SummaryType.Handle,
+				summary.summary.tree[gcDeletedBlobKey].type === SummaryType.Handle,
 				"Deleted nodes should be written as handle",
 			);
 		});
@@ -106,15 +106,15 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
-				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Handle,
+				summary.summary.tree[gcStateBlobKey].type === SummaryType.Handle,
 				"GC state should be written as handle",
 			);
 			assert(
-				summary.summary.tree[gcTombstoneBlobKey]?.type === SummaryType.Blob,
+				summary.summary.tree[gcTombstoneBlobKey].type === SummaryType.Blob,
 				"Tombstone state should be written as a blob",
 			);
 			assert(
-				summary.summary.tree[gcDeletedBlobKey]?.type === SummaryType.Handle,
+				summary.summary.tree[gcDeletedBlobKey].type === SummaryType.Handle,
 				"Deleted nodes should be written as handle",
 			);
 		});
@@ -131,15 +131,15 @@ describe("GCSummaryStateTracker tests", () => {
 			);
 			assert(summary?.summary.type === SummaryType.Tree, "GC summary should be a tree");
 			assert(
-				summary.summary.tree[gcStateBlobKey]?.type === SummaryType.Handle,
+				summary.summary.tree[gcStateBlobKey].type === SummaryType.Handle,
 				"GC state should be written as handle",
 			);
 			assert(
-				summary.summary.tree[gcTombstoneBlobKey]?.type === SummaryType.Handle,
+				summary.summary.tree[gcTombstoneBlobKey].type === SummaryType.Handle,
 				"Tombstone state should be written as handle",
 			);
 			assert(
-				summary.summary.tree[gcDeletedBlobKey]?.type === SummaryType.Blob,
+				summary.summary.tree[gcDeletedBlobKey].type === SummaryType.Blob,
 				"Deleted nodes should be written as a blob",
 			);
 		});

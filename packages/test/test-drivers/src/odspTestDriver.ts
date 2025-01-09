@@ -100,8 +100,9 @@ export function getOdspCredentials(
 		const tenants: LoginTenants = JSON.parse(loginTenants);
 		const tenantNames = Object.keys(tenants);
 		const tenant = tenantNames[tenantIndex % tenantNames.length];
+		const tenantInfo = tenants[tenant];
 		// Translate all the user from that user to the full user principle name by appending the tenant domain
-		const range = tenants[tenant]?.range;
+		const range = tenantInfo.range;
 
 		// Return the set of account to choose from a single tenant
 		for (let i = 0; i < range.count; i++) {

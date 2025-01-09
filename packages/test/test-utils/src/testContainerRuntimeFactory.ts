@@ -5,7 +5,6 @@
 
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptionsInternal,
@@ -58,9 +57,7 @@ interface backCompat_ContainerRuntime {
 		runtimeOptions?: IContainerRuntimeOptionsInternal,
 		containerScope?: FluidObject,
 		existing?: boolean,
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		containerRuntimeCtor?: typeof ContainerRuntime,
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	): Promise<ContainerRuntime>;
 }
 
@@ -69,7 +66,6 @@ interface backCompat_ContainerRuntime {
  * @internal
  */
 export const createTestContainerRuntimeFactory = (
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 	containerRuntimeCtor: typeof ContainerRuntime,
 ) => {
 	return class extends RuntimeFactoryHelper {
@@ -92,7 +88,6 @@ export const createTestContainerRuntimeFactory = (
 			super();
 		}
 
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
 			// Back-compat - old code does not return IDataStore for rootContext.attachRuntime() call!
 			// Thus need to leverage old API createDetachedRootDataStore() that is gone in latest releases.
@@ -111,7 +106,6 @@ export const createTestContainerRuntimeFactory = (
 			assert(result === "Success" || result === undefined, "success");
 		}
 
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 		public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
 			// Validate we can load root data stores.
 			// We should be able to load any data store that was created in initializeFirstTime!
@@ -190,5 +184,4 @@ export const createTestContainerRuntimeFactory = (
  * A container runtime factory that allows you to set runtime options
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
 export const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(ContainerRuntime);

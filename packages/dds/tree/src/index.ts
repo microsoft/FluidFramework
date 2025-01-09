@@ -32,7 +32,7 @@ export {
 export {
 	type ITreeInternal,
 	type SharedTreeOptions,
-	ForestType,
+	type ForestType,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -55,6 +55,9 @@ export {
 	type TransactionResultExt,
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
+	ForestTypeOptimized,
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
 } from "./shared-tree/index.js";
 
 export {
