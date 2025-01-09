@@ -199,21 +199,24 @@ export function applyAgentEdit(
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 					(node as any)[treeEdit.field] = modification;
 				} catch (error) {
-					if (error instanceof UsageError) {
-						// If the LLM attempts to use the wrong type for a field, we generate a useful error message that can be used as part of the feedback loop.
-						const isInvalidTypeError =
-							error.message.match(
-								/The provided data is incompatible with all of the types allowed by the schema./,
-							) !== null;
-						if (isInvalidTypeError === true) {
-							const errorMessage = createInvalidModifyFeedbackMsg(
-								treeEdit,
-								node,
-								"INVALID_TYPE",
-							);
-							throw new UsageError(errorMessage);
-						}
+					if (error instanceof UsageError === false) {
+						throw error;
 					}
+					// If the LLM attempts to use the wrong type for a field, we generate a useful error message that can be used as part of the feedback loop.
+					const isInvalidTypeError =
+						error.message.match(
+							/The provided data is incompatible with all of the types allowed by the schema./,
+						) !== null;
+					if (isInvalidTypeError === true) {
+						const errorMessage = createInvalidModifyFeedbackMsg(
+							treeEdit,
+							node,
+							"INVALID_TYPE",
+						);
+						throw new UsageError(errorMessage);
+					}
+
+					throw error;
 				}
 			}
 			// If the fieldSchema is a function we can grab the constructor and make an instance of that node.
