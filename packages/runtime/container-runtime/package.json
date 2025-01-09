@@ -230,6 +230,18 @@
 			},
 			"ClassStatics_ContainerRuntime": {
 				"backCompat": false
+			},
+			"TypeAlias_SummarizerStopReason": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_ISummarizeEventProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_ISummarizerEvents": {
+				"backCompat": false,
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"
