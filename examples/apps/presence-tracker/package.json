@@ -48,7 +48,6 @@
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"process": "^0.11.10"
 	},
