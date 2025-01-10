@@ -148,7 +148,7 @@ const configExplorer = cosmiconfigSync(configName, {
  * Set to true when the default config is returned by getFluidBuildConfig so that repeated calls to the function don't
  * result in repeated searches for config.
  */
-let defaultConfigLoaded = false;
+const defaultSearchDir = new Set<string>();
 
 /**
  * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
@@ -159,18 +159,21 @@ let defaultConfigLoaded = false;
  */
 export function getFluidBuildConfig(
 	searchDir: string,
+	warnNotFound = true,
 	log = defaultLogger,
 ): IFluidBuildConfig {
-	if (defaultConfigLoaded) {
+	if (defaultSearchDir.has(searchDir)) {
 		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
 	const configResult = configExplorer.search(searchDir);
 	if (configResult?.config === undefined) {
-		log.warning(
-			`No fluidBuild config found when searching ${searchDir}; default configuration loaded. Packages and tasks will be inferred.`,
-		);
-		defaultConfigLoaded = true;
+		if (warnNotFound) {
+			log.warning(
+				`No fluidBuild config found when searching ${searchDir}; default configuration loaded. Packages and tasks will be inferred.`,
+			);
+		}
+		defaultSearchDir.add(searchDir);
 		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
