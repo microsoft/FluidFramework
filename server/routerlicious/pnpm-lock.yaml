@@ -172,9 +172,6 @@ importers:
       '@fluidframework/server-services-core':
         specifier: workspace:~
         version: link:../services-core
-      '@fluidframework/server-services-shared':
-        specifier: workspace:~
-        version: link:../services-shared
       '@fluidframework/server-services-telemetry':
         specifier: workspace:~
         version: link:../services-telemetry
