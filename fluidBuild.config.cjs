@@ -160,9 +160,38 @@ module.exports = {
 
 	multiCommandExecutables: ["oclif", "syncpack"],
 	declarativeTasks: {
+		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
+		"flub check buildversion": {
+			inputGlobs: [
+				"package.json",
+
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/package.json",
+				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
+				"tools/markdown-magic/package.json",
+			],
+			outputGlobs: ["package.json"],
+			gitignore: ["input", "output"],
+		},
 		"jssm-viz": {
 			inputGlobs: ["src/**/*.fsl"],
 			outputGlobs: ["src/**/*.fsl.svg"],
+		},
+		"markdown-magic": {
+			inputGlobs: [],
+			outputGlobs: [
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have generated markdown files at today. Once we can upgrade to a later version of
+				// globby things might be faster.
+				"{azure,examples,experimental,packages}/*/*/*.md",
+				"{azure,examples,experimental,packages}/*/*/*/*.md",
+				"{azure,examples,experimental,packages}/*/*/*/*/*.md",
+				"tools/markdown-magic/**/*.md",
+			],
+			gitignore: ["input", "output"],
 		},
 		"oclif manifest": {
 			inputGlobs: ["package.json", "src/**"],
@@ -188,7 +217,9 @@ module.exports = {
 			outputGlobs: [
 				"package.json",
 
-				// release group packages
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
 				"{azure,examples,experimental,packages}/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
@@ -212,7 +243,9 @@ module.exports = {
 			outputGlobs: [
 				"package.json",
 
-				// release group packages
+				// release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
+				// have packages at today. Once we can upgrade to a later version of
+				// globby things might be faster.
 				"{azure,examples,experimental,packages}/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/package.json",
 				"{azure,examples,experimental,packages}/*/*/*/*/package.json",
@@ -282,9 +315,6 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
-			"extraneous-lockfiles": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
-			],
 			"fluid-build-tasks-eslint": [
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
@@ -341,9 +371,6 @@ module.exports = {
 				// The root package.json is not checked temporarily due to AB#8640
 				"^package.json",
 			],
-			"package-lockfiles-npm-version": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
-			],
 			"npm-package-json-prettier": [
 				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
 				".*",
@@ -390,8 +417,6 @@ module.exports = {
 				"^examples/data-objects/table-document/",
 				// AB#8147: ./test/EditLog export should be ./internal/... or tagged for support
 				"^experimental/dds/tree/",
-				// comments in api-extractor JSON files fail parsing - PR #22498 to fix
-				"^packages/framework/presence/",
 
 				// Packages with APIs that don't need strict API linting
 				"^build-tools/",
@@ -526,7 +551,6 @@ module.exports = {
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",
-			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
@@ -560,12 +584,7 @@ module.exports = {
 	},
 
 	assertTagging: {
-		enabledPaths: [
-			/^common\/lib\/common-utils/i,
-			/^experimental/i,
-			/^packages/i,
-			/^server\/routerlicious\/packages\/protocol-base/i,
-		],
+		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
 		assertionFunctions: {
 			assert: 1,
 		},

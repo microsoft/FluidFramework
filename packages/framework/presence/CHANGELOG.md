@@ -1,5 +1,71 @@
 # @fluid-experimental/presence
 
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+### Minor Changes
+
+-   Presence updates are now grouped and throttled ([#23075](https://github.com/microsoft/FluidFramework/pull/23075)) [abde76d8de](https://github.com/microsoft/FluidFramework/commit/abde76d8decbaf2cde8aac68b3fa061a0fe75d92)
+
+    Presence updates are grouped together and throttled to prevent flooding the network with messages when presence values are rapidly updated. This means the presence infrastructure will not immediately broadcast updates but will broadcast them after a configurable delay.
+
+    The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances,
+    enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1)
+    specified during configuration of a [States
+    Workspace](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#states-workspace)
+    or [Value
+    Manager](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#value-managers)
+    and/or (2) updated later using the `controls` member of a Workspace or Value Manager. The [States
+    Workspace](https://github.com/microsoft/FluidFramework/tree/main/packages/framework/presence#states-workspace)
+    configuration applies when a Value Manager does not have its own setting.
+
+    Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be grouped with other updates that were already queued.
+
+    Note that due to throttling, clients receiving updates may not see updates for all values set by another. For example,
+    with `Latest*ValueManagers`, the only value sent is the value at the time the outgoing grouped message is sent. Previous
+    values set by the client will not be broadcast or seen by other clients.
+
+    #### Example
+
+    You can configure the grouping and throttling behavior using the `allowableUpdateLatencyMs` property as in the following example:
+
+    ```ts
+    // Create and configure a states workspace
+    const stateWorkspace = presence.getStates(
+    	"app:v1states",
+    	{
+    		// This value manager has an allowable latency of 100ms.
+    		position: Latest({ x: 0, y: 0 }, { allowableUpdateLatencyMs: 100 }),
+    		// This value manager uses the workspace default allowable latency of 60ms.
+    		count: Latest({ num: 0 }),
+    	},
+    	// Set the default allowable latency for all value managers in this workspace to 200ms,
+    	// overriding the default value of 60ms.
+    	{ allowableUpdateLatencyMs: 200 },
+    );
+
+    // Temporarily set count updates to send as soon as possible.
+    const countState = stateWorkspace.props.count;
+    countState.controls.allowableUpdateLatencyMs = 0;
+    countState.local = { num: 5000 };
+
+    // Reset the update latency to the workspace default of 60ms.
+    countState.controls.allowableUpdateLatencyMs = undefined;
+    ```
+
+-   Presence-related events now support the `off` event deregistration pattern ([#23196](https://github.com/microsoft/FluidFramework/pull/23196)) [f7be9651da](https://github.com/microsoft/FluidFramework/commit/f7be9651daeba09853627c0953e5969a60674ce3)
+
+    Event subscriptions within `@fluidframework/presence` may now use `off` to deregister event listeners, including initial listeners provided to `Notifications`.
+
+    Some type names have shifted within the API though no consumers are expected to be using those types directly. The most visible rename is `NotificationSubscribable` to `NotificationListenable`. Other shifts are to use types now exported through `@fluidframework/core-interfaces` where the most notable is `ISubscribable` that is now `Listenable`.
+
 ## 2.10.0
 
 ### Minor Changes

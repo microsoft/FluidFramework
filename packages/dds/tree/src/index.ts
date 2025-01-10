@@ -4,35 +4,16 @@
  */
 
 export {
-	EmptyKey,
-	type FieldKey,
-	type TreeValue,
-	type FieldMapObject,
-	type NodeData,
-	type GenericTreeNode,
-	type JsonableTree,
-	type GenericFieldsNode,
-	type TreeNodeSchemaIdentifier,
-	type TreeFieldStoredSchema,
 	ValueSchema,
-	TreeNodeStoredSchema,
-	type FieldKindIdentifier,
-	type TreeTypeSet,
-	type TreeStoredSchema,
 	type Revertible,
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
-	type StoredSchemaCollection,
-	type ErasedTreeNodeSchemaDataFormat,
-	ObjectNodeStoredSchema,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
+	cloneRevertibles,
 } from "./core/index.js";
-export { type Brand } from "./util/index.js";
 
 export type {
 	Listeners,
@@ -44,13 +25,15 @@ export type {
 export {
 	TreeStatus,
 	TreeCompressionStrategy,
+	type TreeIndex,
+	type TreeIndexKey,
+	type TreeIndexNodes,
 } from "./feature-libraries/index.js";
 
 export {
-	type ISharedTree,
+	type ITreeInternal,
 	type SharedTreeOptions,
-	ForestType,
-	type SharedTreeContentSnapshot,
+	type ForestType,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -66,6 +49,16 @@ export {
 	type ViewContent,
 	TreeAlpha,
 	independentView,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	ForestTypeOptimized,
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
 } from "./shared-tree/index.js";
 
 export {
@@ -82,6 +75,8 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SchemaFactoryObjectOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeChangeEvents,
@@ -128,6 +123,11 @@ export {
 	// Recursive Schema APIs
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
+	// Index APIs
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -182,17 +182,14 @@ export {
 	type SimpleObjectNodeSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
-	numberSchema,
-	stringSchema,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type TreeBranch,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
+	type NodeSchemaOptions,
+	type NodeSchemaMetadata,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -209,8 +206,6 @@ export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export {
-	type Covariant,
-	BrandedType,
 	type RestrictiveReadonlyRecord,
 	type RestrictiveStringRecord,
 	type MakeNominal,

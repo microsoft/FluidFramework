@@ -16,7 +16,6 @@ export {
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
 } from "./mapTreeCursor.js";
-export { MemoizedIdRangeAllocator, type IdRange } from "./memoizedIdRangeAllocator.js";
 export { buildForest } from "./object-forest/index.js";
 export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
 export {
@@ -76,7 +75,20 @@ export {
 	type FieldKindConfigurationEntry,
 	getAllowedContentDiscrepancies,
 	isRepoSuperset,
+	type AllowedTypeDiscrepancy,
+	type FieldKindDiscrepancy,
+	type ValueSchemaDiscrepancy,
+	type FieldDiscrepancy,
+	type NodeDiscrepancy,
+	type NodeKindDiscrepancy,
+	type NodeFieldsDiscrepancy,
 	isNeverTree,
+	type LinearExtension,
+	type Realizer,
+	fieldRealizer,
+	PosetComparisonResult,
+	comparePosetElements,
+	posetLte,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -172,3 +184,12 @@ export {
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";
+
+export {
+	type KeyFinder,
+	AnchorTreeIndex,
+	hasElement,
+	type TreeIndex,
+	type TreeIndexKey,
+	type TreeIndexNodes,
+} from "./indexing/index.js";

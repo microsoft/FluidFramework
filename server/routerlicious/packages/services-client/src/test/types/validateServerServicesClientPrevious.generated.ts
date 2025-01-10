@@ -1053,6 +1053,7 @@ declare function get_current_ClassDeclaration_NetworkError():
 declare function use_old_ClassDeclaration_NetworkError(
     use: TypeOnly<old.NetworkError>): void;
 use_old_ClassDeclaration_NetworkError(
+    // @ts-expect-error compatibility expected to be broken
     get_current_ClassDeclaration_NetworkError());
 
 /*

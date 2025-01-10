@@ -10,6 +10,7 @@ import type { FieldKey, TreeStoredSchemaSubscription } from "../schema-stored/in
 import {
 	type Anchor,
 	type AnchorSet,
+	type AnnouncedVisitor,
 	type DetachedField,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
@@ -133,6 +134,16 @@ export interface IForestSubscription {
 	 * This means no nodes under any detached field, not just the special document root one.
 	 */
 	readonly isEmpty: boolean;
+
+	/**
+	 * Obtains and registers an {@link AnnouncedVisitor} that responds to changes on the forest.
+	 */
+	registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
+
+	/**
+	 * Deregister the given visitor so that it stops responding to updates
+	 */
+	deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void;
 }
 
 /**

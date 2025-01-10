@@ -38,6 +38,8 @@ export type PackageManager = "npm" | "pnpm" | "yarn";
  * - If package.json contains a workspaces field, then packages will be loaded based on the globs in that field.
  *
  * - If the version was not defined in lerna.json, then the version value in package.json will be used.
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export class MonoRepo {
 	public readonly packages: Package[] = [];

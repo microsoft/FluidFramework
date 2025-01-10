@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/telemetry-utils",
-	"version": "2.11.0",
+	"version": "2.20.0",
 	"description": "Collection of telemetry relates utilities for Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -125,17 +125,17 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.10.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/telemetry-utils-previous": "npm:@fluidframework/telemetry-utils@2.13.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/debug": "^4.1.5",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"@types/uuid": "^9.0.2",

@@ -1,5 +1,54 @@
 # @fluidframework/merge-tree
 
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+### Minor Changes
+
+-   Merge-Tree and SharedString ISegment Deprecations ([#23323](https://github.com/microsoft/FluidFramework/pull/23323)) [e8762e37cd](https://github.com/microsoft/FluidFramework/commit/e8762e37cd5edbad36b78b5a40d62a730522e18f)
+
+    The current ISegment interface over-exposes a number of properties which do not have an external use case, and any external usage could result in damage to the underlying merge-tree including data corruption.
+
+    The only use case that will continue to be supported is determining if a segment is removed. For this purpose we've added the free function `segmentIsRemoved(segment: ISegment): boolean`.
+
+    For example, checking if a segment is not removed would change as follows:
+
+    ```diff
+    - if(segment.removedSeq === undefined){
+    + if(!segmentIsRemoved(segment)){
+    ```
+
+    The following properties are deprecated on ISegment and its implementations:
+
+    -   clientId
+    -   index
+    -   localMovedSeq
+    -   localRefs
+    -   localRemovedSeq
+    -   localSeq
+    -   movedClientsIds
+    -   movedSeq
+    -   movedSeqs
+    -   ordinal
+    -   removedClientIds
+    -   removedSeq
+    -   seq
+    -   wasMovedOnInsert
+
+    Additionally, the following types are also deprecated, and will become internal (i.e. users of the Fluid Framework will not have access to them):
+
+    -   IMergeNodeCommon
+    -   IMoveInfo
+    -   IRemovalInfo
+    -   LocalReferenceCollection
+
+## 2.11.0
+
+Dependency updates only.
+
 ## 2.10.0
 
 ### Minor Changes

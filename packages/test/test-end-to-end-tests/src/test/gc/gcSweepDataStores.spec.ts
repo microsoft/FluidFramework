@@ -17,7 +17,6 @@ import {
 	ContainerRuntime,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
-	ISummarizeEventProps,
 	ISummarizer,
 	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
@@ -28,6 +27,7 @@ import {
 	defaultMaxAttemptsForSubmitFailures,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
+import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import { IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { delay } from "@fluidframework/core-utils/internal";
@@ -85,7 +85,7 @@ function validateDataStoreStateInSummary(
 
 	if (expectGCStateHandle) {
 		assert.equal(
-			summaryTree.tree[gcTreeKey].type,
+			summaryTree.tree[gcTreeKey]?.type,
 			SummaryType.Handle,
 			"Expecting the GC tree to be handle",
 		);

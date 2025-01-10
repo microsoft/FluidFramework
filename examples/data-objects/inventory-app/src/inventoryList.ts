@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
 import { treeDataObjectInternal } from "@fluid-experimental/tree-react-api/internal";
 
 import { Inventory, treeConfiguration } from "./schema.js";

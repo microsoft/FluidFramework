@@ -10,6 +10,7 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
+import { objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
@@ -17,8 +18,13 @@ import type {
 	PresenceStatesInternal,
 	ValueElementMap,
 } from "./presenceStates.js";
-import { createPresenceStates, mergeUntrackedDatastore } from "./presenceStates.js";
+import {
+	createPresenceStates,
+	mergeUntrackedDatastore,
+	mergeValueDirectory,
+} from "./presenceStates.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import { TimerManager } from "./timerManager.js";
 import type {
 	PresenceStates,
 	PresenceStatesSchema,
@@ -93,6 +99,41 @@ export interface PresenceDatastoreManager {
 	processSignal(message: IExtensionMessage, local: boolean): void;
 }
 
+function mergeGeneralDatastoreMessageContent(
+	base: GeneralDatastoreMessageContent | undefined,
+	newData: GeneralDatastoreMessageContent,
+): GeneralDatastoreMessageContent {
+	// This function-local "datastore" will hold the merged message data.
+	const queueDatastore = base ?? {};
+
+	// Merge the current data with the existing data, if any exists.
+	// Iterate over the current message data; individual items are workspaces.
+	for (const [workspaceName, workspaceData] of Object.entries(newData)) {
+		// Initialize the merged data as the queued datastore entry for the workspace.
+		// Since the key might not exist, create an empty object in that case. It will
+		// be set explicitly after the loop.
+		const mergedData = queueDatastore[workspaceName] ?? {};
+
+		// Iterate over each value manager and its data, merging it as needed.
+		for (const valueManagerKey of Object.keys(workspaceData)) {
+			for (const [clientSessionId, value] of objectEntries(workspaceData[valueManagerKey])) {
+				mergedData[valueManagerKey] ??= {};
+				const oldData = mergedData[valueManagerKey][clientSessionId];
+				mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
+					oldData,
+					value,
+					0, // local values do not need a time shift
+				);
+			}
+		}
+
+		// Store the merged data in the function-local queue workspace. The whole contents of this
+		// datastore will be sent as the message data.
+		queueDatastore[workspaceName] = mergedData;
+	}
+	return queueDatastore;
+}
+
 /**
  * Manages singleton datastore for all Presence.
  */
@@ -101,7 +142,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
-
+	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<
 		string,
 		PresenceWorkspaceEntry<PresenceStatesSchema>
@@ -148,7 +189,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return existing.internal.ensureContent(requestedContent, controls);
 		}
 
-		let workspaceDatastore = this.datastore[internalWorkspaceAddress];
+		let workspaceDatastore: ValueElementMap<PresenceStatesSchema> | undefined =
+			this.datastore[internalWorkspaceAddress];
 		if (workspaceDatastore === undefined) {
 			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
 		}
@@ -162,27 +204,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				return;
 			}
 
-			const clientConnectionId = this.runtime.clientId;
-			assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
-			const currentClientToSessionValueState =
-				this.datastore["system:presence"].clientToSessionId[clientConnectionId];
-
 			const updates: GeneralDatastoreMessageContent[InternalWorkspaceAddress] = {};
 			for (const [key, value] of Object.entries(states)) {
 				updates[key] = { [this.clientSessionId]: value };
 			}
-			this.localUpdate({
-				// Always send current connection mapping for some resiliency against
-				// lost signals. This ensures that client session id found in `updates`
-				// (which is this client's client session id) is always represented in
-				// system workspace of recipient clients.
-				"system:presence": {
-					clientToSessionId: {
-						[clientConnectionId]: { ...currentClientToSessionValueState },
-					},
+
+			this.enqueueMessage(
+				{
+					[internalWorkspaceAddress]: updates,
 				},
-				[internalWorkspaceAddress]: updates,
-			});
+				options,
+			);
 		};
 
 		const entry = createPresenceStates(
@@ -200,14 +232,98 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		return entry.public;
 	}
 
-	private localUpdate(data: DatastoreMessageContent): void {
-		const content = {
+	/**
+	 * The combined contents of all queued updates. Will be undefined when no messages are queued.
+	 */
+	private queuedData: GeneralDatastoreMessageContent | undefined;
+
+	/**
+	 * Enqueues a new message to be sent. The message may be queued or may be sent immediately depending on the state of
+	 * the send timer, other messages in the queue, the configured allowed latency, etc.
+	 */
+	private enqueueMessage(
+		data: GeneralDatastoreMessageContent,
+		options: RuntimeLocalUpdateOptions,
+	): void {
+		// Merging the message with any queued messages effectively queues the message.
+		// It is OK to queue all incoming messages as long as when we send, we send the queued data.
+		this.queuedData = mergeGeneralDatastoreMessageContent(this.queuedData, data);
+
+		const { allowableUpdateLatencyMs } = options;
+		const now = Date.now();
+		const thisMessageDeadline = now + allowableUpdateLatencyMs;
+
+		if (
+			// If the timer has not expired, we can short-circuit because the timer will fire
+			// and cover this update. In other words, queuing this will be fast enough to
+			// meet its deadline, because a timer is already scheduled to fire before its deadline.
+			!this.timer.hasExpired() &&
+			// If the deadline for this message is later than the overall send deadline, then
+			// we can exit early since a timer will take care of sending it.
+			thisMessageDeadline >= this.timer.expireTime
+		) {
+			return;
+		}
+
+		// Either we need to send this message immediately, or we need to schedule a timer
+		// to fire at the send deadline that will take care of it.
+
+		// Note that timeoutInMs === allowableUpdateLatency, but the calculation is done this way for clarity.
+		const timeoutInMs = thisMessageDeadline - now;
+		const scheduleForLater = timeoutInMs > 0;
+
+		if (scheduleForLater) {
+			// Schedule the queued messages to be sent at the updateDeadline
+			this.timer.setTimeout(this.sendQueuedMessage.bind(this), timeoutInMs);
+		} else {
+			this.sendQueuedMessage();
+		}
+	}
+
+	/**
+	 * Send any queued signal immediately. Does nothing if no message is queued.
+	 */
+	private sendQueuedMessage(): void {
+		this.timer.clearTimeout();
+
+		if (this.queuedData === undefined) {
+			return;
+		}
+
+		// Check for connectivity before sending updates.
+		if (!this.runtime.connected) {
+			// Clear the queued data since we're disconnected. We don't want messages
+			// to queue infinitely while disconnected.
+			this.queuedData = undefined;
+			return;
+		}
+
+		const clientConnectionId = this.runtime.clientId;
+		assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
+		const currentClientToSessionValueState =
+			// When connected, `clientToSessionId` must always have current connection entry.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.datastore["system:presence"].clientToSessionId[clientConnectionId]!;
+
+		const newMessage = {
 			sendTimestamp: Date.now(),
 			avgLatency: this.averageLatency,
 			// isComplete: false,
-			data,
+			data: {
+				// Always send current connection mapping for some resiliency against
+				// lost signals. This ensures that client session id found in `updates`
+				// (which is this client's client session id) is always represented in
+				// system workspace of recipient clients.
+				"system:presence": {
+					clientToSessionId: {
+						[clientConnectionId]: { ...currentClientToSessionValueState },
+					},
+				},
+				...this.queuedData,
+			},
 		} satisfies DatastoreUpdateMessage["content"];
-		this.runtime.submitSignal(datastoreUpdateMessageType, content);
+		this.queuedData = undefined;
+		this.runtime.submitSignal(datastoreUpdateMessageType, newMessage);
 	}
 
 	private broadcastAllKnownState(): void {
