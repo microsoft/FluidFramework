@@ -33,7 +33,7 @@ async function main() {
 	const repo = new FluidRepoBuild({
 		repoRoot: resolvedRoot,
 		gitRepo: new GitRepo(resolvedRoot),
-		fluidBuildConfig: getFluidBuildConfig(resolvedRoot, false),
+		fluidBuildConfig: fluidConfig,
 	});
 
 	timer.time("Package scan completed");
