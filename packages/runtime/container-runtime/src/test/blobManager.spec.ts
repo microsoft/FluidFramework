@@ -26,6 +26,7 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions/inte
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	LoggingError,
+	MockLogger,
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
@@ -40,6 +41,9 @@ import {
 	blobManagerBasePath,
 	redirectTableBlobName,
 } from "../blobManager/index.js";
+
+/** Const id for forcing specific test behavior */
+const mockId_disposeAndThrow = "disposeAndThrow";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -102,6 +106,8 @@ export class MockRuntime
 		});
 	}
 
+	public disposed: boolean = false;
+
 	public get storage() {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
@@ -131,7 +137,14 @@ export class MockRuntime
 				this.blobPs.push(P);
 				return P;
 			},
-			readBlob: async (id) => this.storage.readBlob(id),
+			readBlob: async (id) => {
+				// For testing what happens if the runtime were to be disposed during the readBlob call
+				if (id === mockId_disposeAndThrow) {
+					this.disposed = true;
+					throw new Error(mockId_disposeAndThrow);
+				}
+				return this.storage.readBlob(id);
+			},
 		} as unknown as IDocumentStorageService;
 	}
 
@@ -299,6 +312,7 @@ export const validateSummary = (runtime: MockRuntime) => {
 
 describe("BlobManager", () => {
 	const handlePs: Promise<IFluidHandle<ArrayBufferLike>>[] = [];
+	const mockLogger = new MockLogger();
 	let runtime: MockRuntime;
 	let createBlob: (blob: ArrayBufferLike, signal?: AbortSignal) => Promise<void>;
 	let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
@@ -309,7 +323,10 @@ describe("BlobManager", () => {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
-		mc = mixinMonitoringContext(createChildLogger(), configProvider(injectedSettings));
+		mc = mixinMonitoringContext(
+			createChildLogger({ logger: mockLogger }),
+			configProvider(injectedSettings),
+		);
 		runtime = new MockRuntime(mc);
 		handlePs.length = 0;
 
@@ -343,6 +360,7 @@ describe("BlobManager", () => {
 	afterEach(async () => {
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
+		mockLogger.clear();
 	});
 
 	it("empty snapshot", () => {
@@ -692,6 +710,27 @@ describe("BlobManager", () => {
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, false);
 		await runtime.processAll();
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
+	});
+
+	it("runtime disposed during readBlob - log no error", async () => {
+		// To appease some assert
+		(runtime.blobManager as any).setRedirection(mockId_disposeAndThrow, undefined);
+		await assert.rejects(
+			async () => runtime.blobManager.getBlob(mockId_disposeAndThrow),
+			(e: Error) => e.message === mockId_disposeAndThrow,
+			"Expected getBlob to throw with test error message",
+		);
+		assert(runtime.disposed, "Runtime should be disposed");
+		mockLogger.assertMatchNone(
+			[{ category: "error" }],
+			"Should not have logged any errors",
+			undefined,
+			false /* clearEventsAfterCheck */,
+		);
+		mockLogger.assertMatch(
+			[{ category: "generic", eventName: "BlobManager:AttachmentReadBlob_cancel" }],
+			"Expected the _cancel event to be logged with 'generic' category",
+		);
 	});
 
 	describe("Abort Signal", () => {
