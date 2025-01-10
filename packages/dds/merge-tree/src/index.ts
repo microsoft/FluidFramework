@@ -58,17 +58,13 @@ export {
 export {
 	BaseSegment,
 	CollaborationWindow,
-	debugMarkerToString,
 	IJSONMarkerSegment,
-	IMergeNodeCommon,
 	segmentIsRemoved,
 	ISegment,
 	ISegmentAction,
 	Marker,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SegmentGroup,
-	ObliterateInfo,
 	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
@@ -123,10 +119,6 @@ export {
 	reservedRangeLabelsKey,
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
-export {
-	IMoveInfo,
-	IRemovalInfo,
-} from "./segmentInfos.js";
 export {
 	PropsOrAdjust,
 	copyPropertiesAndManager,

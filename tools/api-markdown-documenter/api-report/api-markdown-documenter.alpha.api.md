@@ -315,7 +315,7 @@ export interface DocumentationSuiteConfiguration {
     readonly hierarchyBoundaries: HierarchyBoundaries;
     readonly includeBreadcrumb: boolean;
     readonly includeTopLevelDocumentHeading: boolean;
-    readonly minimumReleaseLevel: Omit<ReleaseTag, ReleaseTag.None>;
+    readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
     readonly skipPackage: (apiPackage: ApiPackage) => boolean;
 }
 
@@ -374,7 +374,7 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase implements 
 // @public
 export interface FileSystemConfiguration {
     readonly newlineKind?: NewlineKind;
-    outputDirectoryPath: string;
+    readonly outputDirectoryPath: string;
 }
 
 // @public
@@ -650,7 +650,7 @@ export { ReleaseTag }
 // @alpha
 function renderApiModelAsHtml(options: RenderApiModelAsHtmlOptions): Promise<void>;
 
-// @public
+// @alpha
 interface RenderApiModelAsHtmlOptions extends ApiItemTransformationOptions, RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
@@ -672,14 +672,14 @@ export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, 
 }
 
 // @alpha
-function renderDocumentsAsHtml(documents: DocumentNode[], options: RenderDocumentsAsHtmlOptions): Promise<void>;
+function renderDocumentsAsHtml(documents: readonly DocumentNode[], options: RenderDocumentsAsHtmlOptions): Promise<void>;
 
-// @public
+// @alpha
 interface RenderDocumentsAsHtmlOptions extends RenderDocumentAsHtmlConfiguration, FileSystemConfiguration {
 }
 
 // @public
-function renderDocumentsAsMarkdown(documents: DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
+function renderDocumentsAsMarkdown(documents: readonly DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
 
 // @public
 interface RenderDocumentsAsMarkdownOptions extends MarkdownRenderConfiguration, FileSystemConfiguration {

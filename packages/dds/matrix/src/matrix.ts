@@ -17,7 +17,6 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 	IMergeTreeOp,
@@ -25,8 +24,6 @@ import {
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	SegmentGroup,
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
@@ -755,7 +752,6 @@ export class SharedMatrix<T = any>
 	}
 
 	private rebasePosition(
-		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 		ref: LocalReferencePosition,
 		localSeq: number,
@@ -813,23 +809,11 @@ export class SharedMatrix<T = any>
 		} else {
 			switch (content.target) {
 				case SnapshotPath.cols: {
-					this.submitColMessage(
-						this.cols.regeneratePendingOp(
-							content,
-							// eslint-disable-next-line import/no-deprecated
-							localOpMetadata as SegmentGroup | SegmentGroup[],
-						),
-					);
+					this.submitColMessage(this.cols.regeneratePendingOp(content, localOpMetadata));
 					break;
 				}
 				case SnapshotPath.rows: {
-					this.submitRowMessage(
-						this.rows.regeneratePendingOp(
-							content,
-							// eslint-disable-next-line import/no-deprecated
-							localOpMetadata as SegmentGroup | SegmentGroup[],
-						),
-					);
+					this.submitRowMessage(this.rows.regeneratePendingOp(content, localOpMetadata));
 					break;
 				}
 				default: {

@@ -41,6 +41,7 @@ import {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 	type GraphCommit,
+	isAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -605,21 +606,27 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					revertible.dispose();
 				}
 			},
-			clone: (forkedBranch: TreeBranch) => {
-				if (forkedBranch === undefined) {
-					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
+			clone: (targetBranch: TreeBranch) => {
+				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
+				const targetCheckout = getCheckout(targetBranch);
+
+				const revertibleBranch = this.revertibleCommitBranches.get(revision);
+				if (revertibleBranch === undefined) {
+					throw new UsageError("Unable to clone a revertible that has been disposed.");
 				}
 
-				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
-				const forkedCheckout = getCheckout(forkedBranch);
-				const revertibleBranch = this.revertibleCommitBranches.get(revision);
-				assert(
-					revertibleBranch !== undefined,
-					0xa82 /* change to revert does not exist on the given forked branch */,
-				);
-				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+				const commitToRevert = revertibleBranch.getHead();
+				const activeBranchHead = targetCheckout.#transaction.activeBranch.getHead();
 
-				return this.createRevertible(revision, kind, forkedCheckout, onRevertibleDisposed);
+				if (isAncestor(commitToRevert, activeBranchHead, true) === false) {
+					throw new UsageError(
+						"Cannot clone revertible for a commit that is not present on the given branch.",
+					);
+				}
+
+				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+
+				return this.createRevertible(revision, kind, targetCheckout, onRevertibleDisposed);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -1036,7 +1043,7 @@ class EditLock {
 		if (this.locked) {
 			debugger;
 		}
-		assert(!this.locked, "Checkout has already been locked");
+		assert(!this.locked, 0xaa7 /* Checkout has already been locked */);
 		this.locked = true;
 	}
 
@@ -1061,7 +1068,7 @@ class EditLock {
 	 * @remarks May only be called when the lock is currently locked.
 	 */
 	public unlock(): void {
-		assert(this.locked, "Checkout has not been locked");
+		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
 		this.locked = false;
 	}
 }
@@ -1082,7 +1089,7 @@ function trackForksForDisposal(checkout: TreeCheckout): () => void {
 	});
 	let disposed = false;
 	return () => {
-		assert(!disposed, "Forks may only be disposed once");
+		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
 		forks.forEach((fork) => fork.dispose());
 		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
 		onForkUnSubscribe();

@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	BaseSegment, // eslint-disable-next-line import/no-deprecated
+	BaseSegment,
 	Client,
 	IJSONSegment,
 	IMergeTreeDeltaCallbackArgs,
