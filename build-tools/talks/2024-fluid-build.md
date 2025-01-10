@@ -118,7 +118,7 @@ It read _all_ the projects scripts and the dependencies in `package.json`, and w
 
 <!-- _class: lead -->
 
-And for an embarassingly long time, because I was dumb and naïve, I thought that all that magic was enabled by `&&` and `concurrently`.
+And for an embarrassingly long time, because I was dumb and naïve, I thought that all that magic was enabled by `&&` and `concurrently`.
 
 ---
 

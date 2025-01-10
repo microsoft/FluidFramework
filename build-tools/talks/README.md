@@ -1,6 +1,6 @@
 # Talks and presentations
 
-The files in this folder are talsk/presentations about the Fluid build tools that have been presented to the team voer
+The files in this folder are talks/presentations about the Fluid build tools that have been presented to the team over
 the years. They are included here for both historical reference and because they give some context for some of the more
 confusing aspects of build-tools.
 
