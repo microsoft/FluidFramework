@@ -32,6 +32,7 @@ import {
 	mixinMonitoringContext,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+import Sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -41,9 +42,6 @@ import {
 	blobManagerBasePath,
 	redirectTableBlobName,
 } from "../blobManager/index.js";
-
-/** Const id for forcing specific test behavior */
-const mockId_disposeAndThrow = "disposeAndThrow";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
@@ -137,14 +135,7 @@ export class MockRuntime
 				this.blobPs.push(P);
 				return P;
 			},
-			readBlob: async (id) => {
-				// For testing what happens if the runtime were to be disposed during the readBlob call
-				if (id === mockId_disposeAndThrow) {
-					this.disposed = true;
-					throw new Error(mockId_disposeAndThrow);
-				}
-				return this.storage.readBlob(id);
-			},
+			readBlob: async (id) => this.storage.readBlob(id),
 		} as unknown as IDocumentStorageService;
 	}
 
@@ -713,11 +704,18 @@ describe("BlobManager", () => {
 	});
 
 	it("runtime disposed during readBlob - log no error", async () => {
-		// To appease some assert
-		(runtime.blobManager as any).setRedirection(mockId_disposeAndThrow, undefined);
+		const someId = "someId";
+		(runtime.blobManager as any).setRedirection(someId, undefined); // To appease an assert
+
+		// Mock storage.readBlob to dispose the runtime and throw an error
+		Sinon.stub(runtime.storage, "readBlob").callsFake(async (_id: string) => {
+			runtime.disposed = true;
+			throw new Error("BOOM!");
+		});
+
 		await assert.rejects(
-			async () => runtime.blobManager.getBlob(mockId_disposeAndThrow),
-			(e: Error) => e.message === mockId_disposeAndThrow,
+			async () => runtime.blobManager.getBlob(someId),
+			(e: Error) => e.message === "BOOM!",
 			"Expected getBlob to throw with test error message",
 		);
 		assert(runtime.disposed, "Runtime should be disposed");
