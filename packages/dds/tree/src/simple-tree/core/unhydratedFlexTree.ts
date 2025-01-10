@@ -4,6 +4,8 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -15,6 +17,7 @@ import {
 	type FieldKindIdentifier,
 	type FieldUpPath,
 	forbiddenFieldKindIdentifier,
+	type ITreeCursorSynchronous,
 	type MapTree,
 	type SchemaPolicy,
 	type TreeNodeSchemaIdentifier,
@@ -39,9 +42,9 @@ import {
 	type FlexFieldKind,
 	FieldKinds,
 	type SequenceFieldEditBuilder,
+	cursorForMapTreeNode,
 } from "../../feature-libraries/index.js";
 import type { Context } from "./context.js";
-import { createEmitter, type Listenable } from "../../events/index.js";
 
 interface UnhydratedTreeSequenceFieldEditBuilder
 	extends SequenceFieldEditBuilder<ExclusiveMapTree[]> {
@@ -166,6 +169,10 @@ export class UnhydratedFlexTreeNode implements UnhydratedFlexTreeNode {
 	 */
 	public get parentField(): LocationInField {
 		return this.location;
+	}
+
+	public borrowCursor(): ITreeCursorSynchronous {
+		return cursorForMapTreeNode(this.mapTree);
 	}
 
 	public tryGetField(key: FieldKey): UnhydratedFlexTreeField | undefined {

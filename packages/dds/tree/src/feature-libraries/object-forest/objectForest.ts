@@ -4,10 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
 
 import {
 	type Anchor,
 	AnchorSet,
+	type AnnouncedVisitor,
 	type CursorLocationType,
 	type DeltaVisitor,
 	type DetachedField,
@@ -31,9 +34,9 @@ import {
 	type UpPath,
 	type Value,
 	aboveRootPlaceholder,
+	combineVisitors,
 	deepCopyMapTree,
 } from "../../core/index.js";
-import { createEmitter } from "../../events/index.js";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
@@ -72,8 +75,10 @@ export class ObjectForest implements IEditableForest {
 
 	// All cursors that are in the "Current" state. Must be empty when editing.
 	public readonly currentCursors: Set<Cursor> = new Set();
+	private readonly deltaVisitors: Set<() => AnnouncedVisitor> = new Set();
 
-	private readonly events = createEmitter<ForestEvents>();
+	readonly #events = createEmitter<ForestEvents>();
+	public readonly events: Listenable<ForestEvents> = this.#events;
 
 	readonly #roots: MutableMapTree;
 	public get roots(): MapTree {
@@ -96,13 +101,6 @@ export class ObjectForest implements IEditableForest {
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
-	}
-
-	public on<K extends keyof ForestEvents>(
-		eventName: K,
-		listener: ForestEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
 	}
 
 	public clone(_: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
@@ -133,7 +131,7 @@ export class ObjectForest implements IEditableForest {
 		 * This is required for each change since there may be app facing change event handlers which create cursors.
 		 */
 		const preEdit = (): void => {
-			this.events.emit("beforeChange");
+			this.#events.emit("beforeChange");
 			assert(
 				this.currentCursors.has(cursor),
 				0x995 /* missing visitor cursor while editing */,
@@ -168,7 +166,7 @@ export class ObjectForest implements IEditableForest {
 			public create(content: ProtoNodes, destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
-				this.forest.events.emit("afterRootFieldCreated", destination);
+				this.forest.#events.emit("afterRootFieldCreated", destination);
 			}
 			public attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				preEdit();
@@ -260,9 +258,23 @@ export class ObjectForest implements IEditableForest {
 			}
 		}
 
-		const visitor = new Visitor(this);
-		this.activeVisitor = visitor;
-		return visitor;
+		const forestVisitor = new Visitor(this);
+		const announcedVisitors: AnnouncedVisitor[] = [];
+		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
+		const combinedVisitor = combineVisitors(
+			[forestVisitor, ...announcedVisitors],
+			announcedVisitors,
+		);
+		this.activeVisitor = combinedVisitor;
+		return combinedVisitor;
+	}
+
+	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.add(visitor);
+	}
+
+	public deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.delete(visitor);
 	}
 
 	private nextRange = 0;

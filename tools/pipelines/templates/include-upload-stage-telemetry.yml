@@ -34,13 +34,10 @@ stages:
     - ${{ parameters.stageId}}
   variables:
     - group: ado-feeds
-    - name: absolutePathToTelemetryGenerator
-      value: $(Build.SourcesDirectory)/tools/telemetry-generator
-      readonly: true
   jobs:
   - job: upload_run_telemetry
     displayName: Upload stage telemetry to Kusto
-    pool: Small
+    pool: Small-eastus2
     variables:
     - group: ado-feeds
 
@@ -49,7 +46,7 @@ stages:
       parameters:
         devFeedUrl: $(ado-feeds-dev)
         officeFeedUrl: $(ado-feeds-office)
-        isCheckoutNeeded: true
+        pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
     - task: Bash@3
       displayName: Get stage timing and result data from ADO
@@ -78,14 +75,14 @@ stages:
         WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTimingAndResult
       inputs:
         targetType: 'inline'
-        workingDirectory: $(absolutePathToTelemetryGenerator)
+        workingDirectory: $(pathToTelemetryGenerator)
         script: |
           set -eu -o pipefail
 
           echo "Listing files in '$WORK_FOLDER'"
           ls -laR $WORK_FOLDER;
 
-          node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir "$WORK_FOLDER";
+          npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
 
     - ${{ if parameters.uploadTestPassRateTelemetry }}:
       - task: Bash@3
@@ -111,10 +108,10 @@ stages:
           WORK_FOLDER: ${{ parameters.testWorkspace }}/stageTestPassRate
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Listing files in '$WORK_FOLDER'"
             ls -laR $WORK_FOLDER;
 
-            node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/testPassRate.js" --dir "$WORK_FOLDER"
+            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/testPassRate.js" --dir "$WORK_FOLDER"

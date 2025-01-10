@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
 import { describeHydration } from "./utils.js";
@@ -89,9 +89,8 @@ describeHydration(
 			const _fromMap: Schema = new Schema(new Map());
 			const _fromIterable: Schema = new Schema([]);
 			const _fromObject: Schema = new Schema({});
-			// TODO: AB#8043: support omitting parameter
-			// const _fromUndefined: Schema = new Schema(undefined);
-			// const _fromNothing: Schema = new Schema();
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
 		});
 
 		it("create - NonClass", () => {
@@ -100,9 +99,21 @@ describeHydration(
 			const _fromMap: Schema = Schema.create(new Map());
 			const _fromIterable: Schema = Schema.create([]);
 			const _fromObject: Schema = Schema.create({});
-			// TODO: AB#8043: support omitting parameter
-			// const _fromUndefined: Schema = Schema.create(undefined);
-			// const _fromNothing: Schema = Schema.create();
+			const _fromUndefined: Schema = Schema.create(undefined);
+			const _fromNothing: Schema = Schema.create();
+		});
+
+		it("constructor - recursive", () => {
+			class Schema extends schemaFactory.mapRecursive("x", [() => Schema]) {
+				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
+				public foo(): void {}
+			}
+			const _fromMap: Schema = new Schema(new Map());
+			const _fromIterable: Schema = new Schema([]);
+			// Unsupported due to breaking recursive types.
+			// const _fromObject: Schema = new Schema({});
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
 		});
 
 		it("entries", () => {

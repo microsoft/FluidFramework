@@ -151,7 +151,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			const anchorNode =
 				context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
 				fail("parent anchor node should always exist since field is under a node");
-			this.offAfterDestroy = anchorNode.on("afterDestroy", () => {
+			this.offAfterDestroy = anchorNode.events.on("afterDestroy", () => {
 				this[disposeSymbol]();
 			});
 		}

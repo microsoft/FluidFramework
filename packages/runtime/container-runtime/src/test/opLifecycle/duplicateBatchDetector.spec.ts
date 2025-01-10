@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ITelemetryContext } from "@fluidframework/runtime-definitions/internal";
 
 // eslint-disable-next-line import/no-internal-modules
 import { DuplicateBatchDetector } from "../../opLifecycle/duplicateBatchDetector.js";
@@ -51,7 +52,7 @@ describe("DuplicateBatchDetector", () => {
 
 	beforeEach("setup", () => {
 		seqNum = 1;
-		detector = new DuplicateBatchDetector() as any;
+		detector = new DuplicateBatchDetector(undefined /* batchIdsFromSnapshot */) as any;
 	});
 
 	afterEach("validation", () => {
@@ -62,7 +63,18 @@ describe("DuplicateBatchDetector", () => {
 		);
 	});
 
+	it("Constructor param is respected", () => {
+		const input: [number, string][] = [
+			[1, "batch1"],
+			[2, "batch2"],
+		];
+		detector = new DuplicateBatchDetector(input) as any;
+		assert.deepEqual(detector.getRecentBatchInfoForSummary(), input);
+	});
+
 	it("First inbound batch is not a duplicate", () => {
+		assert(detector.batchIdsAll.size === 0, "Expected detector to start empty");
+
 		const inboundBatch = makeBatch({
 			sequenceNumber: seqNum++,
 			minimumSequenceNumber: 0,
@@ -121,6 +133,26 @@ describe("DuplicateBatchDetector", () => {
 		assert.deepEqual(result, { duplicate: true, otherSequenceNumber: 1 });
 	});
 
+	it("Matching inbound batches are duplicates (roundtrip through summary)", () => {
+		const inboundBatch1 = makeBatch({
+			sequenceNumber: seqNum++, // 1
+			minimumSequenceNumber: 0,
+			batchId: "batch1",
+		});
+		detector.processInboundBatch(inboundBatch1);
+
+		const summaryPayload = JSON.stringify(detector.getRecentBatchInfoForSummary());
+		const detector2 = new DuplicateBatchDetector(JSON.parse(summaryPayload));
+
+		const inboundBatch2 = makeBatch({
+			sequenceNumber: seqNum++, // 2
+			minimumSequenceNumber: 0,
+			batchId: "batch1",
+		});
+		const result = detector2.processInboundBatch(inboundBatch2);
+		assert.deepEqual(result, { duplicate: true, otherSequenceNumber: 1 });
+	});
+
 	it("should clear old batchIds that are no longer at risk for duplicates", () => {
 		const inboundBatch1 = makeBatch({
 			sequenceNumber: seqNum++, // 1
@@ -153,5 +185,53 @@ describe("DuplicateBatchDetector", () => {
 			["batch2", "batch3"],
 			"Incorrect batchIds (after 3)",
 		);
+	});
+
+	describe("getStateForSummary", () => {
+		it("If empty, return undefined", () => {
+			assert.equal(
+				detector.batchIdsBySeqNum.size,
+				0,
+				"PRECONDITION: Expected detector to start empty",
+			);
+			assert.equal(detector.getRecentBatchInfoForSummary(), undefined);
+		});
+
+		it("If not empty, return batchIds by seqNum (and update telemetryContext)", () => {
+			const inboundBatch1 = makeBatch({
+				sequenceNumber: seqNum++, // 1
+				minimumSequenceNumber: 0,
+				batchId: "batch1",
+			});
+			const inboundBatch2 = makeBatch({
+				sequenceNumber: seqNum++, // 2
+				minimumSequenceNumber: 0,
+				batchId: "batch2",
+			});
+			detector.processInboundBatch(inboundBatch1);
+			detector.processInboundBatch(inboundBatch2);
+
+			let setCalled = 0;
+			const telemetryContext = {
+				set: (key: string, subKey: string, value: any) => {
+					++setCalled;
+					assert.equal(key, "fluid_DuplicateBatchDetector_");
+					assert.equal(subKey, "recentBatchCount");
+					assert.equal(value, 2);
+				},
+			} satisfies Partial<ITelemetryContext> as ITelemetryContext;
+
+			const recentBatchInfo = detector.getRecentBatchInfoForSummary(telemetryContext);
+
+			assert.deepEqual(
+				recentBatchInfo,
+				[
+					[1, "batch1"],
+					[2, "batch2"],
+				],
+				"Incorrect recentBatchInfo",
+			);
+			assert.equal(setCalled, 1, "Expected telemetryContext.set to be called once");
+		});
 	});
 });

@@ -258,8 +258,8 @@ importers:
         specifier: ^18.19.39
         version: 18.19.39
       '@types/sinon':
-        specifier: ^9.0.9
-        version: 9.0.11
+        specifier: ^17.0.3
+        version: 17.0.3
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.2
@@ -282,8 +282,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       source-map-loader:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.94.0)
@@ -452,8 +452,8 @@ importers:
         specifier: ^18.19.39
         version: 18.19.39
       '@types/sinon':
-        specifier: ^9.0.9
-        version: 9.0.11
+        specifier: ^17.0.3
+        version: 17.0.3
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.2
@@ -482,8 +482,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.1.6)(webpack@5.94.0)
@@ -721,8 +721,8 @@ importers:
         specifier: ^2.17.1
         version: 2.20.3
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       ioredis:
         specifier: ^5.2.3
         version: 5.3.2
@@ -842,8 +842,8 @@ importers:
         specifier: ^2.8.4
         version: 2.8.5
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       ioredis:
         specifier: ^5.2.3
         version: 5.3.2
@@ -939,8 +939,8 @@ importers:
         specifier: ^18.19.39
         version: 18.19.39
       '@types/sinon':
-        specifier: ^9.0.9
-        version: 9.0.11
+        specifier: ^17.0.3
+        version: 17.0.3
       '@types/split':
         specifier: ^0.3.28
         version: 0.3.28
@@ -972,8 +972,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       supertest:
         specifier: ^3.1.0
         version: 3.4.2
@@ -1090,8 +1090,8 @@ importers:
         specifier: ^18.19.39
         version: 18.19.39
       '@types/sinon':
-        specifier: ^9.0.9
-        version: 9.0.11
+        specifier: ^17.0.3
+        version: 17.0.3
       '@types/uuid':
         specifier: ^9.0.2
         version: 9.0.2
@@ -1117,8 +1117,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -1271,18 +1271,33 @@ importers:
       '@fluidframework/server-services-core-previous':
         specifier: npm:@fluidframework/server-services-core@5.0.0
         version: /@fluidframework/server-services-core@5.0.0
+      '@types/mocha':
+        specifier: ^10.0.1
+        version: 10.0.1
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      mocha:
+        specifier: ^10.2.0
+        version: 10.2.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -1342,8 +1357,8 @@ importers:
         specifier: ^18.19.39
         version: 18.19.39
       '@types/sinon':
-        specifier: ^9.0.9
-        version: 9.0.11
+        specifier: ^17.0.3
+        version: 17.0.3
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -1357,8 +1372,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -1421,8 +1436,8 @@ importers:
         specifier: ^18.19.39
         version: 18.19.39
       '@types/sinon':
-        specifier: ^9.0.9
-        version: 9.0.11
+        specifier: ^17.0.3
+        version: 17.0.3
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -1436,8 +1451,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -1479,8 +1494,8 @@ importers:
         specifier: ^18.19.39
         version: 18.19.39
       '@types/sinon':
-        specifier: ^9.0.9
-        version: 9.0.11
+        specifier: ^17.0.3
+        version: 17.0.3
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -1494,8 +1509,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -1542,8 +1557,8 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       fast-redact:
         specifier: ^3.3.0
         version: 3.3.0
@@ -1712,8 +1727,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -1736,8 +1751,8 @@ importers:
         specifier: ^4.3.4
         version: 4.3.4(supports-color@8.1.1)
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       ioredis:
         specifier: ^5.2.3
         version: 5.3.2
@@ -1924,8 +1939,8 @@ importers:
         specifier: ^18.19.39
         version: 18.19.39
       '@types/sinon':
-        specifier: ^9.0.9
-        version: 9.0.11
+        specifier: ^17.0.3
+        version: 17.0.3
       '@types/string-hash':
         specifier: ^1.1.1
         version: 1.1.1
@@ -1951,8 +1966,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       sinon:
-        specifier: ^9.2.3
-        version: 9.2.4
+        specifier: ^18.0.1
+        version: 18.0.1
       typescript:
         specifier: ~5.1.6
         version: 5.1.6
@@ -2023,8 +2038,8 @@ importers:
         specifier: ^1.3.0
         version: 1.5.1
       express:
-        specifier: ^4.21.1
-        version: 4.21.1
+        specifier: ^4.21.2
+        version: 4.21.2
       isomorphic-git:
         specifier: ^1.25.7
         version: 1.25.7
@@ -2096,8 +2111,8 @@ importers:
         specifier: ^4.14.149
         version: 4.14.199
       '@types/mocha':
-        specifier: ^9.1.1
-        version: 9.1.1
+        specifier: ^10.0.10
+        version: 10.0.10
       '@types/morgan':
         specifier: ^1.7.35
         version: 1.9.4
@@ -2128,9 +2143,6 @@ importers:
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
-      mocha-json-output-reporter:
-        specifier: ^2.0.1
-        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.2.0)
@@ -3434,7 +3446,7 @@ packages:
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
       fs-extra: 7.0.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /@changesets/errors@0.2.0:
@@ -3473,7 +3485,7 @@ packages:
       '@changesets/errors': 0.2.0
       '@manypkg/get-packages': 1.1.3
       is-subdir: 1.2.0
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       spawndamnit: 2.0.0
     dev: true
 
@@ -4073,7 +4085,7 @@ packages:
       compression: 1.7.4
       cookie-parser: 1.4.7
       cors: 2.8.5
-      express: 4.21.1
+      express: 4.21.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
@@ -4111,7 +4123,7 @@ packages:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@fluidframework/server-services-utils': 5.0.0
       commander: 2.20.3
-      express: 4.21.1
+      express: 4.21.2
       ioredis: 5.3.2
       nconf: 0.12.1
       winston: 3.9.0
@@ -4249,7 +4261,7 @@ packages:
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
       debug: 4.3.4(supports-color@8.1.1)
-      express: 4.21.1
+      express: 4.21.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
       jsonwebtoken: 9.0.2
@@ -5220,28 +5232,34 @@ packages:
     engines: {node: '>=14.16'}
     dev: true
 
-  /@sinonjs/commons@1.8.6:
-    resolution: {integrity: sha512-Ky+XkAkqPZSm3NLBeUng77EBQl3cmeJhITaGHdYH8kjVB+aun3S4XBRti2zt17mtt0mIUDiNxYeoJm6drVvBJQ==}
+  /@sinonjs/commons@3.0.1:
+    resolution: {integrity: sha512-K3mCHKQ9sVh8o1C9cxkwxaOmXoAMlDxC1mYyHrjqOWEcBjYr76t96zL2zlj5dUGZ3HSw240X1qgH3Mjf1yJWpQ==}
     dependencies:
       type-detect: 4.0.8
     dev: true
 
-  /@sinonjs/fake-timers@6.0.1:
-    resolution: {integrity: sha512-MZPUxrmFubI36XS1DI3qmI0YdN1gks62JtFZvxR67ljjSNCeK6U08Zx4msEWOXuofgqUt6zPHSi1H9fbjR/NRA==}
+  /@sinonjs/fake-timers@11.2.2:
+    resolution: {integrity: sha512-G2piCSxQ7oWOxwGSAyFHfPIsyeJGXYtc6mFbnFA+kRXkiEnTl8c/8jul2S329iFBnDI9HGoeWWAZvuvOkZccgw==}
     dependencies:
-      '@sinonjs/commons': 1.8.6
+      '@sinonjs/commons': 3.0.1
     dev: true
 
-  /@sinonjs/samsam@5.3.1:
-    resolution: {integrity: sha512-1Hc0b1TtyfBu8ixF/tpfSHTVWKwCBLY4QJbkgnE7HcwyvT2xArDxb4K7dMgqRm3szI+LJbzmW/s4xxEhv6hwDg==}
+  /@sinonjs/fake-timers@13.0.5:
+    resolution: {integrity: sha512-36/hTbH2uaWuGVERyC6da9YwGWnzUZXuPro/F2LfsdOsLnCojz/iSH8MxUt/FD2S5XBSVPhmArFUXcpCQ2Hkiw==}
     dependencies:
-      '@sinonjs/commons': 1.8.6
+      '@sinonjs/commons': 3.0.1
+    dev: true
+
+  /@sinonjs/samsam@8.0.2:
+    resolution: {integrity: sha512-v46t/fwnhejRSFTGqbpn9u+LQ9xJDse10gNnPgAcxgdoCDMXj/G2asWAC/8Qs+BAZDicX+MNZouXT1A7c83kVw==}
+    dependencies:
+      '@sinonjs/commons': 3.0.1
       lodash.get: 4.4.2
-      type-detect: 4.0.8
+      type-detect: 4.1.0
     dev: true
 
-  /@sinonjs/text-encoding@0.7.2:
-    resolution: {integrity: sha512-sXXKG+uL9IrKqViTtao2Ws6dy0znu9sOaP1di/jKGW1M6VssO8vlpXCQcpZ+jisQ1tTFAC5Jo/EOzFbggBagFQ==}
+  /@sinonjs/text-encoding@0.7.3:
+    resolution: {integrity: sha512-DE427ROAphMQzU4ENbliGYrBSYPXF+TtLg9S8vzeA+OF4ZKzoDdzfL8sxuMUGS/lgRhM6j1URSk9ghf7Xo1tyA==}
     dev: true
 
   /@smithy/abort-controller@2.0.15:
@@ -6351,8 +6369,8 @@ packages:
     resolution: {integrity: sha512-/fvYntiO1GeICvqbQ3doGDIP97vWmvFt83GKguJ6prmQM2iXZfFcq6YE8KteFyRtX2/h5Hf91BYvPodJKFYv5Q==}
     dev: true
 
-  /@types/mocha@9.1.1:
-    resolution: {integrity: sha512-Z61JK7DKDtdKTWwLeElSEBcWGRLY8g95ic5FoQqI9CMx0ns/Ghep3B4DfcEimiKMvtamNVULVNKEsiwV3aQmXw==}
+  /@types/mocha@10.0.10:
+    resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
     dev: true
 
   /@types/morgan@1.9.4:
@@ -6453,8 +6471,8 @@ packages:
       '@types/node': 18.19.39
     dev: true
 
-  /@types/sinon@9.0.11:
-    resolution: {integrity: sha512-PwP4UY33SeeVKodNE37ZlOsR9cReypbMJOhZ7BVE0lB+Hix3efCOxiJWiE5Ia+yL9Cn2Ch72EjFTRze8RZsNtg==}
+  /@types/sinon@17.0.3:
+    resolution: {integrity: sha512-j3uovdn8ewky9kRBG19bOwaZbexJu/XjtkHyjvUgt4xfPFz18dcORIMqnYh66Fx3Powhcr85NT5+er3+oViapw==}
     dependencies:
       '@types/sinonjs__fake-timers': 8.1.2
     dev: true
@@ -7596,7 +7614,7 @@ packages:
       minipass-pipeline: 1.2.4
       p-map: 4.0.0
       ssri: 10.0.4
-      tar: 6.1.15
+      tar: 6.2.1
       unique-filename: 3.0.0
     dev: true
 
@@ -8256,7 +8274,7 @@ packages:
     engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
     hasBin: true
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
     dev: true
 
   /cross-spawn@5.1.0:
@@ -8267,8 +8285,8 @@ packages:
       which: 1.3.1
     dev: true
 
-  /cross-spawn@7.0.3:
-    resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
+  /cross-spawn@7.0.6:
+    resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
     dependencies:
       path-key: 3.1.1
@@ -8315,7 +8333,7 @@ packages:
       lodash.mapvalues: 4.6.0
       lodash.memoize: 4.1.2
       memfs-or-file-map-to-github-branch: 1.2.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       node-cleanup: 2.1.2
       node-fetch: 2.7.0
       override-require: 1.1.1
@@ -8597,6 +8615,11 @@ packages:
 
   /diff@5.0.0:
     resolution: {integrity: sha512-/VTCrvm5Z0JGty/BWHljh+BAiw3IK+2j87NGMu8Nwc/f48WoDAC395uomO9ZD117ZOBaHmkX1oyLvkVM/aIT3w==}
+    engines: {node: '>=0.3.1'}
+    dev: true
+
+  /diff@5.2.0:
+    resolution: {integrity: sha512-uIFDxqpRZGZ6ThOk84hEfqWoHx2devRFvpTZcTHur85vImfaxUbTW9Ryh4CpCuDnToOP1CEtXKIgytHBPVff5A==}
     engines: {node: '>=0.3.1'}
     dev: true
 
@@ -9168,7 +9191,7 @@ packages:
       '@ungap/structured-clone': 1.2.0
       ajv: 6.12.6
       chalk: 4.1.2
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       debug: 4.3.4(supports-color@8.1.1)
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
@@ -9272,7 +9295,7 @@ packages:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       get-stream: 6.0.1
       human-signals: 2.1.0
       is-stream: 2.0.1
@@ -9304,8 +9327,8 @@ packages:
     resolution: {integrity: sha512-dX7e/LHVJ6W3DE1MHWi9S1EYzDESENfLrYohG2G++ovZrYOkm4Knwa0mc1cn84xJOR4KEU0WSchhLbd0UklbHw==}
     dev: true
 
-  /express@4.21.1:
-    resolution: {integrity: sha512-YSFlK1Ee0/GC8QaO91tHcDxJiE/X4FbpAyQWkxAvG6AXCuR65YzK8ua6D9hvi/TzUfZMpc+BwuM1IPw8fmQBiQ==}
+  /express@4.21.2:
+    resolution: {integrity: sha512-28HqgMZAmih1Czt9ny7qr6ek2qddF4FclbMzwhCREB6OFfH+rXAnuNCwo1/wFvrtbgsQDb4kSbX9de9lFbrXnA==}
     engines: {node: '>= 0.10.0'}
     dependencies:
       accepts: 1.3.8
@@ -9327,7 +9350,7 @@ packages:
       methods: 1.1.2
       on-finished: 2.4.1
       parseurl: 1.3.3
-      path-to-regexp: 0.1.10
+      path-to-regexp: 0.1.12
       proxy-addr: 2.0.7
       qs: 6.11.2
       range-parser: 1.2.1
@@ -9386,7 +9409,7 @@ packages:
       '@nodelib/fs.walk': 1.2.8
       glob-parent: 5.1.2
       merge2: 1.4.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /fast-json-patch@3.1.1:
@@ -9547,7 +9570,7 @@ packages:
   /find-yarn-workspace-root@2.0.0:
     resolution: {integrity: sha512-1IMnbjt4KzsQfnhnzNd8wUEgXZ44IzZaZmnLYx7D5FZlaHt2gW20Cri8Q+E/t5tIj4+epTBub+2Zxu/vNILzqQ==}
     dependencies:
-      micromatch: 4.0.5
+      micromatch: 4.0.8
     dev: true
 
   /flat-cache@3.0.4:
@@ -9590,7 +9613,7 @@ packages:
     resolution: {integrity: sha512-dCIq9FpEcyQyXKCkyzmlPTFNgrCzPudOe+mhvJU5zAtlBnGVy2yKxtfsxK2tQBThwq225jcvBjpw1Gr40uzZCA==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       signal-exit: 3.0.7
     dev: true
 
@@ -9598,7 +9621,7 @@ packages:
     resolution: {integrity: sha512-TMKDUnIte6bfb5nWv7V/caI169OHgvwjb7V4WkeUvbQQdjr5rWKqHFiKWb/fcOwB+CzBT+qbWjvj+DVwRskpIg==}
     engines: {node: '>=14'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       signal-exit: 4.1.0
     dev: true
 
@@ -11121,8 +11144,8 @@ packages:
       setimmediate: 1.0.5
     dev: true
 
-  /just-extend@4.2.1:
-    resolution: {integrity: sha512-g3UB796vUFIY90VIv/WX3L2c8CS2MdWUww3CNrYmqza1Fg0DURc2K/O4YrnklBdQarSJ/y8JnJYDGc+1iumQjg==}
+  /just-extend@6.2.0:
+    resolution: {integrity: sha512-cYofQu2Xpom82S6qD778jBDpwvvy39s1l/hrYij2u9AMdQcGRpaBu6kY4mVhuno5kJVi1DAz4aiphA2WI1/OAw==}
     dev: true
 
   /jwa@1.4.1:
@@ -11612,8 +11635,8 @@ packages:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
 
-  /micromatch@4.0.5:
-    resolution: {integrity: sha512-DMy+ERcEW2q8Z2Po+WNXuw3c5YaUSFjAO5GsJqfEl7UjvtIuFKO6ZrKvcItdy98dwFI2N1tg3zNIdKaQT+aNdA==}
+  /micromatch@4.0.8:
+    resolution: {integrity: sha512-PXwfBhYu0hBCPw8Dn0E+WDYb7af3dSLVWKi3HGv84IdF4TyFoC0ysxFd0Goxw7nSv4T/PzEJQxsYsEiFCKo2BA==}
     engines: {node: '>=8.6'}
     dependencies:
       braces: 3.0.3
@@ -11821,16 +11844,6 @@ packages:
     hasBin: true
     dev: true
 
-  /mocha-json-output-reporter@2.1.0(mocha@10.2.0)(moment@2.29.4):
-    resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
-    peerDependencies:
-      mocha: ^10.0.0
-      moment: ^2.21.0
-    dependencies:
-      mocha: 10.2.0
-      moment: 2.29.4
-    dev: true
-
   /mocha-multi-reporters@1.5.1(mocha@10.2.0):
     resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
     engines: {node: '>=6.0.0'}
@@ -12026,14 +12039,14 @@ packages:
     engines: {node: '>= 0.4.0'}
     dev: true
 
-  /nise@4.1.0:
-    resolution: {integrity: sha512-eQMEmGN/8arp0xsvGoQ+B1qvSkR73B1nWSCh7nOt5neMCtwcQVYQGdzQMhcNscktTsWB54xnlSQFzOAPJD8nXA==}
+  /nise@6.1.1:
+    resolution: {integrity: sha512-aMSAzLVY7LyeM60gvBS423nBmIPP+Wy7St7hsb+8/fc1HmeoHJfLO8CKse4u3BtOZvQLJghYPI2i/1WZrEj5/g==}
     dependencies:
-      '@sinonjs/commons': 1.8.6
-      '@sinonjs/fake-timers': 6.0.1
-      '@sinonjs/text-encoding': 0.7.2
-      just-extend: 4.2.1
-      path-to-regexp: 1.8.0
+      '@sinonjs/commons': 3.0.1
+      '@sinonjs/fake-timers': 13.0.5
+      '@sinonjs/text-encoding': 0.7.3
+      just-extend: 6.2.0
+      path-to-regexp: 8.2.0
     dev: true
 
   /no-case@2.3.2:
@@ -12102,7 +12115,7 @@ packages:
       npmlog: 6.0.2
       rimraf: 3.0.2
       semver: 7.6.0
-      tar: 6.1.15
+      tar: 6.2.1
       which: 2.0.2
     transitivePeerDependencies:
       - supports-color
@@ -12681,7 +12694,7 @@ packages:
       read-package-json-fast: 3.0.2
       sigstore: 1.6.0
       ssri: 10.0.4
-      tar: 6.1.15
+      tar: 6.2.1
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -12788,7 +12801,7 @@ packages:
     resolution: {integrity: sha512-HkrjG2aJlvF0t2BMH0e2LB/EHf3Lcq3fNMzy4GYHcQblAvOl+QQji1Lx7WRBMqpVK8p+KR7bCg7oqAMXtdgqyw==}
     dependencies:
       ansi-escapes: 4.3.2
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
     dev: true
 
   /path-browserify@1.0.1:
@@ -12837,13 +12850,12 @@ packages:
       minipass: 6.0.2
     dev: true
 
-  /path-to-regexp@0.1.10:
-    resolution: {integrity: sha512-7lf7qcQidTku0Gu3YDPc8DJ1q7OOucfa/BSsIwjuh56VU7katFvuM8hULfkwB3Fns/rsVF7PwPKVw1sl5KQS9w==}
+  /path-to-regexp@0.1.12:
+    resolution: {integrity: sha512-RA1GjUVMnvYFxuqovrEqZoxxW5NUZqbwKtYz/Tt7nXerk0LbLblQmrsgdeOxV5SFHf0UDggjS/bSeOZwt1pmEQ==}
 
-  /path-to-regexp@1.8.0:
-    resolution: {integrity: sha512-n43JRhlUKUAlibEJhPeir1ncUID16QnEjNpwzNdO3Lm4ywrBpBZ5oLD0I6br9evr1Y9JTqwRtAh7JLoOzAQdVA==}
-    dependencies:
-      isarray: 0.0.1
+  /path-to-regexp@8.2.0:
+    resolution: {integrity: sha512-TdrF7fW9Rphjq4RjrW0Kp2AW0Ahwu9sRGTkS6bvDi0SCwZlEZYmcfDbEsTz8RVk0EHIS/Vd1bv3JhG+1xZuAyQ==}
+    engines: {node: '>=16'}
     dev: true
 
   /path-type@4.0.0:
@@ -13687,6 +13699,7 @@ packages:
 
   /rimraf@3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
     dependencies:
       glob: 7.2.3
@@ -14068,14 +14081,14 @@ packages:
     dependencies:
       is-arrayish: 0.3.2
 
-  /sinon@9.2.4:
-    resolution: {integrity: sha512-zljcULZQsJxVra28qIAL6ow1Z9tpattkCTEJR4RBP3TGc00FcttsP5pK284Nas5WjMZU5Yzy3kAIp3B3KRf5Yg==}
+  /sinon@18.0.1:
+    resolution: {integrity: sha512-a2N2TDY1uGviajJ6r4D1CyRAkzE9NNVlYOV1wX5xQDuAk0ONgzgRl0EjCQuRCPxOwp13ghsMwt9Gdldujs39qw==}
     dependencies:
-      '@sinonjs/commons': 1.8.6
-      '@sinonjs/fake-timers': 6.0.1
-      '@sinonjs/samsam': 5.3.1
-      diff: 4.0.2
-      nise: 4.1.0
+      '@sinonjs/commons': 3.0.1
+      '@sinonjs/fake-timers': 11.2.2
+      '@sinonjs/samsam': 8.0.2
+      diff: 5.2.0
+      nise: 6.1.1
       supports-color: 7.2.0
     dev: true
 
@@ -14279,7 +14292,7 @@ packages:
     resolution: {integrity: sha512-KM8coezO6ISQ89c1BzyWNtcn2V2kAVtwIXd3cN/V5a0xPYc1F/vydrRc01wsKFEQ/p+V1a4sw4z2yMITIXrgGw==}
     engines: {node: '>=14'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
     dev: true
 
   /spawndamnit@2.0.0:
@@ -14637,8 +14650,8 @@ packages:
       to-buffer: 1.1.1
       xtend: 4.0.2
 
-  /tar@6.1.15:
-    resolution: {integrity: sha512-/zKt9UyngnxIT/EAGYuxaMYgOIJiP81ab9ZfkILq4oNLPFX50qyYmu7jRj9qeXoxmJHjGlbH0+cm2uy1WCs10A==}
+  /tar@6.2.1:
+    resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
     dependencies:
       chownr: 2.0.0
@@ -14794,7 +14807,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       enhanced-resolve: 5.17.1
-      micromatch: 4.0.5
+      micromatch: 4.0.8
       semver: 7.6.0
       source-map: 0.7.4
       typescript: 5.1.6
@@ -14893,6 +14906,11 @@ packages:
 
   /type-detect@4.0.8:
     resolution: {integrity: sha512-0fr/mIH1dlO+x7TlcMy+bIDqKPsw/70tVyeHW787goQjhmqaZe10uwLujubK9q9Lg6Fiho1KUKDYz0Z7k7g5/g==}
+    engines: {node: '>=4'}
+    dev: true
+
+  /type-detect@4.1.0:
+    resolution: {integrity: sha512-Acylog8/luQ8L7il+geoSxhEkazvkslg7PSNKOX59mbB9cOveP5aq9h74Y7YU8yDpJwetzQQrfIwtf4Wp4LKcw==}
     engines: {node: '>=4'}
     dev: true
 
@@ -15288,7 +15306,7 @@ packages:
       '@webpack-cli/serve': 2.0.5(webpack-cli@5.1.4)(webpack@5.94.0)
       colorette: 2.0.20
       commander: 10.0.1
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       envinfo: 7.9.0
       fastest-levenshtein: 1.0.16
       import-local: 3.1.0

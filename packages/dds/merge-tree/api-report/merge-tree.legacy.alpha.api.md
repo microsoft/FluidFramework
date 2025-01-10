@@ -5,24 +5,18 @@
 ```ts
 
 // @alpha
-export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
-
-// @alpha @sealed @deprecated
-export interface AttributionPolicy {
-    attach: (client: Client) => void;
-    detach: () => void;
-    // (undocumented)
-    isAttached: boolean;
-    serializer: IAttributionCollectionSerializer;
+export interface AdjustParams {
+    delta: number;
+    max?: number | undefined;
+    min?: number | undefined;
 }
+
+// @alpha
+export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha (undocumented)
 export abstract class BaseSegment implements ISegment {
     constructor(properties?: PropertySet);
-    // @deprecated (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-    // @deprecated
-    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
     // (undocumented)
     protected addSerializedProps(jseg: IJSONSegment): void;
     // (undocumented)
@@ -34,8 +28,6 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
-    clientId: number;
-    // (undocumented)
     abstract clone(): ISegment;
     // (undocumented)
     protected cloneInto(b: ISegment): void;
@@ -44,37 +36,9 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
-    index: number;
-    // (undocumented)
     isLeaf(): this is ISegment;
     // (undocumented)
-    localMovedSeq?: number;
-    // (undocumented)
-    localRefs?: LocalReferenceCollection;
-    // (undocumented)
-    localRemovedSeq?: number;
-    // (undocumented)
-    localSeq?: number;
-    // (undocumented)
-    movedClientIds?: number[];
-    // (undocumented)
-    movedSeq?: number;
-    // (undocumented)
-    movedSeqs?: number[];
-    // (undocumented)
-    ordinal: string;
-    // (undocumented)
     properties?: PropertySet;
-    // @deprecated
-    propertyManager?: PropertiesManager;
-    // (undocumented)
-    removedClientIds?: number[];
-    // (undocumented)
-    removedSeq?: number;
-    // @deprecated (undocumented)
-    readonly segmentGroups: SegmentGroupCollection;
-    // (undocumented)
-    seq: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
@@ -83,106 +47,6 @@ export abstract class BaseSegment implements ISegment {
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     abstract readonly type: string;
-    // (undocumented)
-    wasMovedOnInsert?: boolean | undefined;
-}
-
-// @alpha @deprecated (undocumented)
-export class Client extends TypedEventEmitter<IClientEvents> {
-    constructor(specToSegment: (spec: IJSONSegment) => ISegment, logger: ITelemetryLoggerExt, options?: IMergeTreeOptions & PropertySet, getMinInFlightRefSeq?: () => number | undefined);
-    // (undocumented)
-    addLongClientId(longClientId: string): void;
-    annotateMarker(marker: Marker, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
-    annotateRangeLocal(start: number, end: number, props: PropertySet): IMergeTreeAnnotateMsg | undefined;
-    // (undocumented)
-    applyMsg(msg: ISequencedDocumentMessage, local?: boolean): void;
-    // (undocumented)
-    applyStashedOp(op: IMergeTreeOp): void;
-    createLocalReferencePosition(segment: ISegment | "start" | "end", offset: number | undefined, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    // (undocumented)
-    createTextHelper(): IMergeTreeTextHelper;
-    findReconnectionPosition(segment: ISegment, localSeq: number): number;
-    // (undocumented)
-    getClientId(): number;
-    // (undocumented)
-    getCollabWindow(): CollaborationWindow;
-    // (undocumented)
-    getContainingSegment<T extends ISegment>(pos: number, sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">, localSeq?: number): {
-        segment: T | undefined;
-        offset: number | undefined;
-    };
-    // (undocumented)
-    getCurrentSeq(): number;
-    // (undocumented)
-    getLength(): number;
-    // (undocumented)
-    getLongClientId(shortClientId: number): string;
-    // (undocumented)
-    getMarkerFromId(id: string): ISegment | undefined;
-    // (undocumented)
-    getOrAddShortClientId(longClientId: string): number;
-    getPosition(segment: ISegment | undefined, localSeq?: number): number;
-    // (undocumented)
-    getPropertiesAtPosition(pos: number): PropertySet | undefined;
-    // (undocumented)
-    getRangeExtentsOfPosition(pos: number): {
-        posStart: number | undefined;
-        posAfterEnd: number | undefined;
-    };
-    // (undocumented)
-    protected getShortClientId(longClientId: string): number;
-    insertAtReferencePositionLocal(refPos: ReferencePosition, segment: ISegment): IMergeTreeInsertMsg | undefined;
-    insertSegmentLocal(pos: number, segment: ISegment): IMergeTreeInsertMsg | undefined;
-    // (undocumented)
-    load(runtime: IFluidDataStoreRuntime, storage: IChannelStorageService, serializer: IFluidSerializer): Promise<{
-        catchupOpsP: Promise<ISequencedDocumentMessage[]>;
-    }>;
-    localReferencePositionToPosition(lref: ReferencePosition): number;
-    // (undocumented)
-    localTransaction(groupOp: IMergeTreeGroupMsg): void;
-    // (undocumented)
-    readonly logger: ITelemetryLoggerExt;
-    // (undocumented)
-    longClientId: string | undefined;
-    obliterateRangeLocal(start: number | InteriorSequencePlace, end: number | InteriorSequencePlace): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
-    peekPendingSegmentGroups(): SegmentGroup | undefined;
-    // (undocumented)
-    peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
-    posFromRelativePos(relativePos: IRelativePosition): number;
-    regeneratePendingOp(resetOp: IMergeTreeOp, segmentGroup: SegmentGroup | SegmentGroup[]): IMergeTreeOp;
-    removeLocalReferencePosition(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    removeRangeLocal(start: number, end: number): IMergeTreeRemoveMsg;
-    resolveRemoteClientPosition(remoteClientPosition: number, remoteClientRefSeq: number, remoteClientId: string): number | undefined;
-    rollback?(op: unknown, localOpMetadata: unknown): void;
-    searchForMarker(startPos: number, markerLabel: string, forwards?: boolean): Marker | undefined;
-    serializeGCData(handle: IFluidHandle, handleCollectingSerializer: IFluidSerializer): void;
-    // (undocumented)
-    readonly specToSegment: (spec: IJSONSegment) => ISegment;
-    // (undocumented)
-    startOrUpdateCollaboration(longClientId: string | undefined, minSeq?: number, currentSeq?: number): void;
-    // (undocumented)
-    summarize(runtime: IFluidDataStoreRuntime, handle: IFluidHandle, serializer: IFluidSerializer, catchUpMsgs: ISequencedDocumentMessage[]): ISummaryTreeWithStats;
-    // (undocumented)
-    updateMinSeq(minSeq: number): void;
-    // (undocumented)
-    protected walkAllSegments<TClientData>(action: (segment: ISegment, accum?: TClientData) => boolean, accum?: TClientData): boolean;
-    // (undocumented)
-    walkSegments<TClientData>(handler: ISegmentAction<TClientData>, start: number | undefined, end: number | undefined, accum: TClientData, splitRange?: boolean): void;
-    // (undocumented)
-    walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
-}
-
-// @alpha @deprecated (undocumented)
-export class CollaborationWindow {
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    collaborating: boolean;
-    currentSeq: number;
-    // (undocumented)
-    loadFrom(a: CollaborationWindow): void;
-    localSeq: number;
-    minSeq: number;
 }
 
 // @alpha
@@ -244,16 +108,6 @@ export interface IAttributionCollectionSpec<T> {
     }>;
 }
 
-// @alpha @deprecated
-export interface IClientEvents {
-    // (undocumented)
-    (event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
-    // (undocumented)
-    (event: "delta", listener: (opArgs: IMergeTreeDeltaOpArgs, deltaArgs: IMergeTreeDeltaCallbackArgs, target: IEventThisPlaceHolder) => void): void;
-    // (undocumented)
-    (event: "maintenance", listener: (args: IMergeTreeMaintenanceCallbackArgs, deltaArgs: IMergeTreeDeltaOpArgs | undefined, target: IEventThisPlaceHolder) => void): void;
-}
-
 // @alpha (undocumented)
 export interface IJSONMarkerSegment extends IJSONSegment {
     // (undocumented)
@@ -278,16 +132,28 @@ export interface IMarkerDef {
     refType?: ReferenceType;
 }
 
-// @alpha
-export interface IMergeNodeCommon {
-    index: number;
+// @alpha (undocumented)
+export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
     // (undocumented)
-    isLeaf(): this is ISegment;
-    ordinal: string;
+    adjust: Record<string, AdjustParams>;
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    props?: never;
+    // (undocumented)
+    relativePos1?: undefined;
+    // (undocumented)
+    relativePos2?: undefined;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
 // @alpha (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    adjust?: never;
     // (undocumented)
     pos1?: number;
     // (undocumented)
@@ -302,12 +168,6 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
     type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
-// @alpha @deprecated (undocumented)
-export interface IMergeTreeAttributionOptions {
-    policyFactory?: () => AttributionPolicy;
-    track?: boolean;
-}
-
 // @alpha (undocumented)
 export interface IMergeTreeDelta {
     type: MergeTreeDeltaType;
@@ -320,7 +180,7 @@ export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDel
 }
 
 // @alpha (undocumented)
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeAnnotateAdjustMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaOpArgs {
@@ -392,9 +252,9 @@ export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 
 // @alpha (undocumented)
 export interface IMergeTreeOptions {
-    attribution?: IMergeTreeAttributionOptions;
     // (undocumented)
     catchUpBlobName?: string;
+    mergeTreeEnableAnnotateAdjust?: boolean;
     mergeTreeEnableObliterate?: boolean;
     mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeEnableSidedObliterate?: boolean;
@@ -424,22 +284,6 @@ export interface IMergeTreeSegmentDelta {
     segment: ISegment;
 }
 
-// @alpha @deprecated (undocumented)
-export interface IMergeTreeTextHelper {
-    // (undocumented)
-    getText(refSeq: number, clientId: number, placeholder: string, start?: number, end?: number): string;
-}
-
-// @alpha
-export interface IMoveInfo {
-    localMovedSeq?: number;
-    movedClientIds: number[];
-    movedSeq: number;
-    movedSeqs: number[];
-    moveDst?: ReferencePosition;
-    wasMovedOnInsert: boolean;
-}
-
 // @alpha
 export interface InteriorSequencePlace {
     // (undocumented)
@@ -456,37 +300,18 @@ export interface IRelativePosition {
 }
 
 // @alpha
-export interface IRemovalInfo {
-    localRemovedSeq?: number;
-    removedClientIds: number[];
-    removedSeq: number;
-}
-
-// @alpha
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
-    // @deprecated (undocumented)
-    ack(segmentGroup: SegmentGroup, opArgs: IMergeTreeDeltaOpArgs): boolean;
-    // @deprecated
-    addProperties(newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
+export interface ISegment {
     // (undocumented)
     append(segment: ISegment): void;
     attribution?: IAttributionCollection<AttributionKey>;
     cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
-    clientId: number;
     // (undocumented)
     clone(): ISegment;
-    readonly endpointType?: "start" | "end";
-    localRefs?: LocalReferenceCollection;
-    localRemovedSeq?: number;
-    localSeq?: number;
+    // (undocumented)
+    isLeaf(): this is ISegment;
     properties?: PropertySet;
-    // @deprecated
-    propertyManager?: PropertiesManager;
-    // @deprecated (undocumented)
-    readonly segmentGroups: SegmentGroupCollection;
-    seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
@@ -515,29 +340,6 @@ export interface ITrackingGroup {
     tracked: readonly Trackable[];
     // (undocumented)
     unlink(trackable: Trackable): boolean;
-}
-
-// @alpha @sealed
-export class LocalReferenceCollection {
-    [Symbol.iterator](): {
-        next(): IteratorResult<LocalReferencePosition>;
-        [Symbol.iterator](): IterableIterator<LocalReferencePosition>;
-    };
-    addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    addLocalRef(lref: LocalReferencePosition, offset: number): void;
-    // (undocumented)
-    static append(seg1: ISegment, seg2: ISegment): void;
-    append(other: LocalReferenceCollection): void;
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    get empty(): boolean;
-    has(lref: ReferencePosition): boolean;
-    isAfterTombstone(lref: LocalReferencePosition): boolean;
-    removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    // (undocumented)
-    static setOrGet(segment: ISegment): LocalReferenceCollection;
-    split(offset: number, splitSeg: ISegment): void;
-    walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
 // @alpha @sealed (undocumented)
@@ -594,18 +396,6 @@ export class Marker extends BaseSegment implements ReferencePosition, ISegment {
     readonly type = "Marker";
 }
 
-// @alpha @deprecated (undocumented)
-export class MergeNode implements IMergeNodeCommon {
-    // (undocumented)
-    cachedLength: number;
-    // (undocumented)
-    index: number;
-    // (undocumented)
-    isLeaf(): this is ISegment;
-    // (undocumented)
-    ordinal: string;
-}
-
 // @alpha (undocumented)
 export type MergeTreeDeltaOperationType = typeof MergeTreeDeltaType.ANNOTATE | typeof MergeTreeDeltaType.INSERT | typeof MergeTreeDeltaType.REMOVE | typeof MergeTreeDeltaType.OBLITERATE;
 
@@ -659,50 +449,11 @@ export interface MergeTreeRevertibleDriver {
     removeRange(start: number, end: number): void;
 }
 
-// @alpha @deprecated (undocumented)
-export interface ObliterateInfo {
-    // (undocumented)
-    clientId: number;
-    // (undocumented)
-    end: LocalReferencePosition;
-    // (undocumented)
-    localSeq: number | undefined;
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    segmentGroup: SegmentGroup | undefined;
-    // (undocumented)
-    seq: number;
-    // (undocumented)
-    start: LocalReferencePosition;
-}
-
-// @alpha @deprecated (undocumented)
-export class PropertiesManager {
-    // (undocumented)
-    ackPendingProperties(annotateOp: IMergeTreeAnnotateMsg): void;
-    // (undocumented)
-    addProperties(oldProps: PropertySet, newProps: PropertySet, seq?: number, collaborating?: boolean, rollback?: PropertiesRollback): PropertySet;
-    // (undocumented)
-    copyTo(oldProps: PropertySet, newProps: PropertySet | undefined, newManager: PropertiesManager): PropertySet | undefined;
-    hasPendingProperties(props: PropertySet): boolean;
-    // (undocumented)
-    hasPendingProperty(key: string): boolean;
-}
-
-// @alpha @deprecated (undocumented)
-export enum PropertiesRollback {
-    None = 0,
-    Rollback = 1
-}
-
 // @alpha
 export type PropertySet = MapLike<any>;
 
 // @alpha
 export interface ReferencePosition {
-    // @deprecated (undocumented)
-    addProperties(newProps: PropertySet): void;
     getOffset(): number;
     getSegment(): ISegment | undefined;
     // (undocumented)
@@ -737,38 +488,8 @@ export const reservedMarkerIdKey = "markerId";
 // @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
 
-// @alpha @deprecated (undocumented)
-export interface SegmentGroup {
-    // (undocumented)
-    localSeq?: number;
-    // (undocumented)
-    obliterateInfo?: ObliterateInfo;
-    // (undocumented)
-    previousProps?: PropertySet[];
-    // (undocumented)
-    refSeq: number;
-    // (undocumented)
-    segments: ISegment[];
-}
-
-// @alpha @deprecated (undocumented)
-export class SegmentGroupCollection {
-    constructor(segment: ISegment);
-    // (undocumented)
-    copyTo(segment: ISegment): void;
-    // (undocumented)
-    dequeue(): SegmentGroup | undefined;
-    // (undocumented)
-    get empty(): boolean;
-    // (undocumented)
-    enqueue(segmentGroup: SegmentGroup): void;
-    // (undocumented)
-    pop?(): SegmentGroup | undefined;
-    // (undocumented)
-    remove?(segmentGroup: SegmentGroup): boolean;
-    // (undocumented)
-    get size(): number;
-}
+// @alpha
+export function segmentIsRemoved(segment: ISegment): boolean;
 
 // @alpha (undocumented)
 export interface SequenceOffsets {

@@ -72,8 +72,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
-    // @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any, id?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
@@ -94,15 +92,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 // @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
-    // (undocumented)
-    (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents"> & {
-        contents: unknown;
-    }) => void): any;
-    // (undocumented)
-    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents"> & {
-        contents: unknown;
-    }) => void): any;
-    // (undocumented)
+    (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
+    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
     (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
@@ -138,7 +129,9 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
+    // @deprecated
     process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    processMessages?(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
@@ -155,6 +148,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
+    createChildDataStore?<T extends IFluidDataStoreFactory>(childFactory: T): ReturnType<Exclude<T["createDataStore"], undefined>>;
     // @deprecated (undocumented)
     readonly createProps?: any;
     // @deprecated (undocumented)
@@ -175,6 +169,9 @@ export const IFluidDataStoreFactory: keyof IProvideFluidDataStoreFactory;
 
 // @alpha
 export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
+    createDataStore?(context: IFluidDataStoreContext): {
+        readonly runtime: IFluidDataStoreChannel;
+    };
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
 }
@@ -184,8 +181,8 @@ export const IFluidDataStoreRegistry: keyof IProvideFluidDataStoreRegistry;
 
 // @alpha
 export interface IFluidDataStoreRegistry extends IProvideFluidDataStoreRegistry {
-    // (undocumented)
     get(name: string): Promise<FluidDataStoreRegistryEntry | undefined>;
+    getSync?(name: string): FluidDataStoreRegistryEntry | undefined;
 }
 
 // @alpha
@@ -206,8 +203,6 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     deleteChildSummarizerNode(id: string): void;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-    // @deprecated
-    ensureNoDataModelChanges<T>(callback: () => T): T;
     // @deprecated (undocumented)
     readonly gcThrowOnTombstoneUsage: boolean;
     // @deprecated (undocumented)
@@ -270,6 +265,23 @@ export interface IProvideFluidDataStoreRegistry {
     // (undocumented)
     readonly IFluidDataStoreRegistry: IFluidDataStoreRegistry;
 }
+
+// @alpha @sealed
+export interface IRuntimeMessageCollection {
+    readonly envelope: ISequencedMessageEnvelope;
+    readonly local: boolean;
+    readonly messagesContent: readonly IRuntimeMessagesContent[];
+}
+
+// @alpha @sealed
+export interface IRuntimeMessagesContent {
+    readonly clientSequenceNumber: number;
+    readonly contents: unknown;
+    readonly localOpMetadata: unknown;
+}
+
+// @alpha
+export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
 // @alpha
 export interface ISummarizeInternalResult extends ISummarizeResult {
@@ -365,10 +377,16 @@ export interface LocalAttributionKey {
 }
 
 // @alpha
-export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry>;
+export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;
 
 // @alpha
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
+
+// @alpha
+export type NamedFluidDataStoreRegistryEntry2 = [
+string,
+Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
+];
 
 // @alpha
 export interface OpAttributionKey {

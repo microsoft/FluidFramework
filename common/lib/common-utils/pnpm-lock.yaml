@@ -48,8 +48,8 @@ importers:
         specifier: npm:@fluidframework/common-utils@1.0.0
         version: /@fluidframework/common-utils@1.0.0
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.4.0
-        version: 5.4.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.5.1
+        version: 5.5.1(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=tos6v6doskwck2kr7bbxweswri)(@types/node@18.19.39)
@@ -64,10 +64,10 @@ importers:
         version: 29.5.3
       '@types/jest-environment-puppeteer':
         specifier: 2.2.0
-        version: 2.2.0
+        version: 2.2.0(typescript@5.4.5)
       '@types/mocha':
-        specifier: ^9.1.1
-        version: 9.1.1
+        specifier: ^10.0.10
+        version: 10.0.10
       '@types/node':
         specifier: ^18.19.39
         version: 18.19.39
@@ -102,14 +102,11 @@ importers:
         specifier: ^10.0.0
         version: 10.0.0
       jest-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2(puppeteer@22.2.0)(typescript@5.4.5)
+        specifier: ^10.1.3
+        version: 10.1.3(puppeteer@23.6.0)(typescript@5.4.5)
       mocha:
         specifier: ^10.2.0
         version: 10.2.0
-      mocha-json-output-reporter:
-        specifier: ^2.0.1
-        version: 2.1.0(mocha@10.2.0)(moment@2.29.4)
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@10.2.0)
@@ -120,8 +117,8 @@ importers:
         specifier: ~3.0.3
         version: 3.0.3
       puppeteer:
-        specifier: ^22.2.0
-        version: 22.2.0(typescript@5.4.5)
+        specifier: ^23.6.0
+        version: 23.6.0(typescript@5.4.5)
       rewire:
         specifier: ^5.0.0
         version: 5.0.0
@@ -129,8 +126,8 @@ importers:
         specifier: ^4.4.1
         version: 4.4.1
       sinon:
-        specifier: ^17.0.1
-        version: 17.0.1
+        specifier: ^18.0.1
+        version: 18.0.1
       ts-jest:
         specifier: ^29.1.1
         version: 29.1.1(@babel/core@7.25.2)(jest@29.6.2)(typescript@5.4.5)
@@ -1415,8 +1412,8 @@ packages:
       sha.js: 2.4.11
     dev: true
 
-  /@fluidframework/eslint-config-fluid@5.4.0(eslint@8.55.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-V9lKsH1oFq3pX8UjSv8AyZ9BswPEcozGi3Ic/KuMdsYHj8Ibm3EgTtYSyNgVOAFivDW474qvXc5PDhKD8T/mfw==}
+  /@fluidframework/eslint-config-fluid@5.5.1(eslint@8.55.0)(typescript@5.4.5):
+    resolution: {integrity: sha512-rbHvimalOIyLd6nsK5uWJQylxwkztJc0yWKOrop8rrxgMR9dSuGnjJXcjhijZ0p1+zHbZ325+udoDFWw2HJZRQ==}
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.2(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/tsdoc': 0.14.2
@@ -2453,17 +2450,17 @@ packages:
       config-chain: 1.1.13
     dev: true
 
-  /@puppeteer/browsers@2.1.0:
-    resolution: {integrity: sha512-xloWvocjvryHdUjDam/ZuGMh7zn4Sn3ZAaV4Ah2e2EwEt90N3XphZlSsU3n0VDc1F7kggCjMuH0UuxfPQ5mD9w==}
+  /@puppeteer/browsers@2.4.0:
+    resolution: {integrity: sha512-x8J1csfIygOwf6D6qUAZ0ASk3z63zPb7wkNeHRerCMh82qWKUrOgkuP005AJC8lDL6/evtXETGEJVcwykKT4/g==}
     engines: {node: '>=18'}
     hasBin: true
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       extract-zip: 2.0.1
       progress: 2.0.3
       proxy-agent: 6.4.0
-      semver: 7.6.0
-      tar-fs: 3.0.5
+      semver: 7.6.3
+      tar-fs: 3.0.6
       unbzip2-stream: 1.4.3
       yargs: 17.7.2
     transitivePeerDependencies:
@@ -2610,12 +2607,6 @@ packages:
     engines: {node: '>=14.16'}
     dev: true
 
-  /@sinonjs/commons@2.0.0:
-    resolution: {integrity: sha512-uLa0j859mMrg2slwQYdO/AkrOfmH+X6LTVmNTS9CqexuE2IvVORIkSpJLqePAbEnKJ77aMmCwr1NUZ57120Xcg==}
-    dependencies:
-      type-detect: 4.0.8
-    dev: true
-
   /@sinonjs/commons@3.0.1:
     resolution: {integrity: sha512-K3mCHKQ9sVh8o1C9cxkwxaOmXoAMlDxC1mYyHrjqOWEcBjYr76t96zL2zlj5dUGZ3HSw240X1qgH3Mjf1yJWpQ==}
     dependencies:
@@ -2628,16 +2619,22 @@ packages:
       '@sinonjs/commons': 3.0.1
     dev: true
 
-  /@sinonjs/fake-timers@11.3.1:
-    resolution: {integrity: sha512-EVJO7nW5M/F5Tur0Rf2z/QoMo+1Ia963RiMtapiQrEWvY0iBUvADo8Beegwjpnle5BHkyHuoxSTW3jF43H1XRA==}
+  /@sinonjs/fake-timers@11.2.2:
+    resolution: {integrity: sha512-G2piCSxQ7oWOxwGSAyFHfPIsyeJGXYtc6mFbnFA+kRXkiEnTl8c/8jul2S329iFBnDI9HGoeWWAZvuvOkZccgw==}
     dependencies:
       '@sinonjs/commons': 3.0.1
     dev: true
 
-  /@sinonjs/samsam@8.0.0:
-    resolution: {integrity: sha512-Bp8KUVlLp8ibJZrnvq2foVhP0IVX2CIprMJPK0vqGqgrDa0OHVKeZyBykqskkrdxV6yKBPmGasO8LVjAKR3Gew==}
+  /@sinonjs/fake-timers@13.0.5:
+    resolution: {integrity: sha512-36/hTbH2uaWuGVERyC6da9YwGWnzUZXuPro/F2LfsdOsLnCojz/iSH8MxUt/FD2S5XBSVPhmArFUXcpCQ2Hkiw==}
     dependencies:
-      '@sinonjs/commons': 2.0.0
+      '@sinonjs/commons': 3.0.1
+    dev: true
+
+  /@sinonjs/samsam@8.0.2:
+    resolution: {integrity: sha512-v46t/fwnhejRSFTGqbpn9u+LQ9xJDse10gNnPgAcxgdoCDMXj/G2asWAC/8Qs+BAZDicX+MNZouXT1A7c83kVw==}
+    dependencies:
+      '@sinonjs/commons': 3.0.1
       lodash.get: 4.4.2
       type-detect: 4.1.0
     dev: true
@@ -3298,10 +3295,15 @@ packages:
       '@types/istanbul-lib-report': 3.0.3
     dev: true
 
-  /@types/jest-environment-puppeteer@2.2.0:
+  /@types/jest-environment-puppeteer@2.2.0(typescript@5.4.5):
     resolution: {integrity: sha512-4XWMEDqFIocwxMerq5/0fghlUhvHTb3BtK9LUAmEX194R2ui34mX09EEpJavLRAzcjvfMklWfp3lm4CJYlBF1g==}
     dependencies:
-      '@types/puppeteer': 1.3.0
+      '@types/puppeteer': 7.0.4(typescript@5.4.5)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - typescript
+      - utf-8-validate
     dev: true
 
   /@types/jest@29.5.3:
@@ -3335,8 +3337,8 @@ packages:
     resolution: {integrity: sha512-K0VQKziLUWkVKiRVrx4a40iPaxTUefQmjtkQofBkYRcoaaL/8rhwDWww9qWbrgicNOgnpIsMxyNIUM4+n6dUIA==}
     dev: true
 
-  /@types/mocha@9.1.1:
-    resolution: {integrity: sha512-Z61JK7DKDtdKTWwLeElSEBcWGRLY8g95ic5FoQqI9CMx0ns/Ghep3B4DfcEimiKMvtamNVULVNKEsiwV3aQmXw==}
+  /@types/mocha@10.0.10:
+    resolution: {integrity: sha512-xPyYSz1cMPnJQhl0CLMH68j3gprKZaTjG3s5Vi+fDgx+uhG9NOXwbVt52eFS8ECyXhyKcjDLCBEqBExKuiZb7Q==}
     dev: true
 
   /@types/ms@0.7.34:
@@ -3365,11 +3367,16 @@ packages:
     resolution: {integrity: sha512-Gj7cI7z+98M282Tqmp2K5EIsoouUEzbBJhQQzDE3jSIRk6r9gsz0oUokqIUR4u1R3dMHo0pDHM7sNOHyhulypw==}
     dev: true
 
-  /@types/puppeteer@1.3.0:
-    resolution: {integrity: sha512-kp1R8cTYymvYezTYWSECtSEDbxnCQaNe3i+fdsZh3dVz7umB8q6LATv0VdJp1DT0evS8YqCrFI5+DaDYJYo6Vg==}
+  /@types/puppeteer@7.0.4(typescript@5.4.5):
+    resolution: {integrity: sha512-ja78vquZc8y+GM2al07GZqWDKQskQXygCDiu0e3uO0DMRKqE0MjrFBFmTulfPYzLB6WnL7Kl2tFPy0WXSpPomg==}
+    deprecated: This is a stub types definition. puppeteer provides its own type definitions, so you do not need this installed.
     dependencies:
-      '@types/events': 3.0.0
-      '@types/node': 18.19.39
+      puppeteer: 23.6.0(typescript@5.4.5)
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - typescript
+      - utf-8-validate
     dev: true
 
   /@types/responselike@1.0.0:
@@ -3888,7 +3895,7 @@ packages:
     resolution: {integrity: sha512-H0TSyFNDMomMNJQBn8wFV5YC/2eJ+VXECwOadZJT554xP6cODZHPX3H9QMQECxvrgiSOP1pHjy1sMWQVYJOUOA==}
     engines: {node: '>= 14'}
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -4520,7 +4527,7 @@ packages:
       promise-inflight: 1.0.1
       rimraf: 3.0.2
       ssri: 9.0.1
-      tar: 6.1.13
+      tar: 6.2.1
       unique-filename: 2.0.1
     transitivePeerDependencies:
       - bluebird
@@ -4541,7 +4548,7 @@ packages:
       p-map: 4.0.0
       promise-inflight: 1.0.1
       ssri: 10.0.3
-      tar: 6.1.13
+      tar: 6.2.1
       unique-filename: 3.0.0
     transitivePeerDependencies:
       - bluebird
@@ -4757,14 +4764,15 @@ packages:
     engines: {node: '>=6.0'}
     dev: true
 
-  /chromium-bidi@0.5.9(devtools-protocol@0.0.1249869):
-    resolution: {integrity: sha512-wOTX3m2zuHX0zRX4h7Ol1DAGz0cqHzo2IrAPvOqBxdd4ZR32vxg4FKNjmBihi1oP9b1QGSBBG5VNUUXUCsxDfg==}
+  /chromium-bidi@0.8.0(devtools-protocol@0.0.1354347):
+    resolution: {integrity: sha512-uJydbGdTw0DEUjhoogGveneJVWX/9YuqkWePzMmkBYwtdAqo5d3J/ovNKFr+/2hWXYmYCr6it8mSSTIj6SS6Ug==}
     peerDependencies:
       devtools-protocol: '*'
     dependencies:
-      devtools-protocol: 0.0.1249869
+      devtools-protocol: 0.0.1354347
       mitt: 3.0.1
       urlpattern-polyfill: 10.0.0
+      zod: 3.23.8
     dev: true
 
   /ci-info@3.9.0:
@@ -5103,19 +5111,11 @@ packages:
     engines: {node: '>=10.14', npm: '>=6', yarn: '>=1'}
     hasBin: true
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
     dev: true
 
-  /cross-fetch@4.0.0:
-    resolution: {integrity: sha512-e4a5N8lVvuLgAWgnCrLr2PP0YyDOTHa9H/Rj54dirp61qXnNq46m82bRhNqIA5VccJtWBvPTFRV3TtvHUKPB1g==}
-    dependencies:
-      node-fetch: 2.7.0
-    transitivePeerDependencies:
-      - encoding
-    dev: true
-
-  /cross-spawn@6.0.5:
-    resolution: {integrity: sha512-eTVLrBSt7fjbDygz805pMnstIs2VTBNkRm0qxZd+M7A5XDdxVRWO5MxGBXZhjY4cqLYLdtrGqRf8mBPmzwSpWQ==}
+  /cross-spawn@6.0.6:
+    resolution: {integrity: sha512-VqCUuhcd1iB+dsv8gxPttb5iZh/D0iubSP21g36KXdEuf6I5JiioesUVjpCdHV9MZRUfVFlvwtIUyPfxo5trtw==}
     engines: {node: '>=4.8'}
     dependencies:
       nice-try: 1.0.5
@@ -5125,8 +5125,8 @@ packages:
       which: 1.3.1
     dev: true
 
-  /cross-spawn@7.0.3:
-    resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
+  /cross-spawn@7.0.6:
+    resolution: {integrity: sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==}
     engines: {node: '>= 8'}
     dependencies:
       path-key: 3.1.1
@@ -5464,8 +5464,8 @@ packages:
       dequal: 2.0.3
     dev: true
 
-  /devtools-protocol@0.0.1249869:
-    resolution: {integrity: sha512-Ctp4hInA0BEavlUoRy9mhGq0i+JSo/AwVyX2EFgZmV1kYB+Zq+EMBAn52QWu6FbRr10hRb6pBl420upbp4++vg==}
+  /devtools-protocol@0.0.1354347:
+    resolution: {integrity: sha512-BlmkSqV0V84E2WnEnoPnwyix57rQxAM5SKJjf4TbYOCGLAWtz8CDH8RIaGOjPgPCXo2Mce3kxSY497OySidY3Q==}
     dev: true
 
   /diff-sequences@29.6.3:
@@ -6032,12 +6032,13 @@ packages:
   /eslint@6.8.0:
     resolution: {integrity: sha512-K+Iayyo2LtyYhDSYwz5D5QdWw0hCacNzyq1Y821Xna2xSJj7cijoLLYmLxTQgcgZ9mC61nryMy9S7GRbYpI5Ig==}
     engines: {node: ^8.10.0 || ^10.13.0 || >=11.10.1}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     dependencies:
       '@babel/code-frame': 7.24.7
       ajv: 6.12.6
       chalk: 2.4.2
-      cross-spawn: 6.0.5
+      cross-spawn: 6.0.6
       debug: 4.3.7(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint-scope: 5.1.1
@@ -6070,7 +6071,7 @@ packages:
       strip-json-comments: 3.1.1
       table: 5.4.6
       text-table: 0.2.0
-      v8-compile-cache: 2.3.0
+      v8-compile-cache: 2.4.0
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -6090,7 +6091,7 @@ packages:
       '@ungap/structured-clone': 1.2.0
       ajv: 6.12.6
       chalk: 4.1.2
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       debug: 4.3.4(supports-color@8.1.1)
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
@@ -6194,7 +6195,7 @@ packages:
     resolution: {integrity: sha512-8uSpZZocAZRBAPIEINJj3Lo9HyGitllczc27Eh5YYojjMFMn8yHMDMaUHE2Jqfq05D/wucwI4JGURyXt1vchyg==}
     engines: {node: '>=10'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       get-stream: 6.0.1
       human-signals: 2.1.0
       is-stream: 2.0.1
@@ -6224,8 +6225,8 @@ packages:
       homedir-polyfill: 1.0.3
     dev: true
 
-  /expect-puppeteer@9.0.2:
-    resolution: {integrity: sha512-nv3RD8MOStXOf4bLpr1wiqxPMLL7MwXvtMeZBtGvg5bubAHiHcYBcvDTJwkUjdOWz3scjOnOOl5z6KZakMobCw==}
+  /expect-puppeteer@10.1.3:
+    resolution: {integrity: sha512-2t1D2t0AfBDMp8rMHEws6mRx1iXeER6sOrIm/8sxM3KxkY7O8AD6j5XfTtVJI6Updc/c4IiuFSz3o/82soHUdA==}
     engines: {node: '>=16'}
     dev: true
 
@@ -6265,7 +6266,7 @@ packages:
     engines: {node: '>= 10.17.0'}
     hasBin: true
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       get-stream: 5.2.0
       yauzl: 2.10.0
     optionalDependencies:
@@ -6503,7 +6504,7 @@ packages:
     resolution: {integrity: sha512-dCIq9FpEcyQyXKCkyzmlPTFNgrCzPudOe+mhvJU5zAtlBnGVy2yKxtfsxK2tQBThwq225jcvBjpw1Gr40uzZCA==}
     engines: {node: '>=8.0.0'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       signal-exit: 3.0.7
     dev: true
 
@@ -6511,7 +6512,7 @@ packages:
     resolution: {integrity: sha512-TMKDUnIte6bfb5nWv7V/caI169OHgvwjb7V4WkeUvbQQdjr5rWKqHFiKWb/fcOwB+CzBT+qbWjvj+DVwRskpIg==}
     engines: {node: '>=14'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
       signal-exit: 4.1.0
     dev: true
 
@@ -6717,7 +6718,7 @@ packages:
     dependencies:
       basic-ftp: 5.0.5
       data-uri-to-buffer: 6.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       fs-extra: 11.2.0
     transitivePeerDependencies:
       - supports-color
@@ -7157,7 +7158,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -7193,7 +7194,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
     dev: true
@@ -7940,15 +7941,15 @@ packages:
       - supports-color
     dev: true
 
-  /jest-dev-server@9.0.2:
-    resolution: {integrity: sha512-Zc/JB0IlNNrpXkhBw+h86cGrde/Mey52KvF+FER2eyrtYJTHObOwW7Iarxm3rPyTKby5+3Y2QZtl8pRz/5GCxg==}
+  /jest-dev-server@10.1.1:
+    resolution: {integrity: sha512-Yk9gmW/io2udONlhdrsC69ZGYM2CISvGItyYk9zD5QK3tGq8ZAJP27NDHma4hI6ey/zcaiqbrDkIf7dmpHq86w==}
     engines: {node: '>=16'}
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
       find-process: 1.4.7
       prompts: 2.4.2
-      spawnd: 9.0.2
+      spawnd: 10.1.1
       tree-kill: 1.2.2
       wait-on: 7.2.0
     transitivePeerDependencies:
@@ -7996,14 +7997,14 @@ packages:
       jest-util: 29.7.0
     dev: true
 
-  /jest-environment-puppeteer@9.0.2(typescript@5.4.5):
-    resolution: {integrity: sha512-t7+W4LUiPoOz+xpKREgnu6IElMuRthOWTkrThDZqVKPmLhwbK3yx7OCiX8xT1Pw/Cv5WnSoNhwtN7czdCC3fQg==}
+  /jest-environment-puppeteer@10.1.3(typescript@5.4.5):
+    resolution: {integrity: sha512-dHBP44r0f1RUis6kWTxYmPyoB2QWXeotzzRWVjIgbiLIVIaRsKkvj3pIscRXQbJIfwaTAT+W50h0URV47IMc1Q==}
     engines: {node: '>=16'}
     dependencies:
       chalk: 4.1.2
       cosmiconfig: 8.3.6(typescript@5.4.5)
       deepmerge: 4.3.1
-      jest-dev-server: 9.0.2
+      jest-dev-server: 10.1.1
       jest-environment-node: 29.7.0
     transitivePeerDependencies:
       - debug
@@ -8105,15 +8106,15 @@ packages:
       jest-resolve: 29.7.0
     dev: true
 
-  /jest-puppeteer@9.0.2(puppeteer@22.2.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-ZB0K/tH+0e7foRRn+VpKIufvkW1by8l7ifh62VOdOh5ijEf7yt8W2/PcBNNwP0RLm46AytiBkrIEenvWhxcBRQ==}
+  /jest-puppeteer@10.1.3(puppeteer@23.6.0)(typescript@5.4.5):
+    resolution: {integrity: sha512-YQYrv7Wq3IWySyCsX6pmaSXq8VexELlxW073YvwKx6J4mchhTSHilIa5O0Wv2j95/pZtfAi/PzVmsOuCCcFlig==}
     engines: {node: '>=16'}
     peerDependencies:
       puppeteer: '>=19'
     dependencies:
-      expect-puppeteer: 9.0.2
-      jest-environment-puppeteer: 9.0.2(typescript@5.4.5)
-      puppeteer: 22.2.0(typescript@5.4.5)
+      expect-puppeteer: 10.1.3
+      jest-environment-puppeteer: 10.1.3(typescript@5.4.5)
+      puppeteer: 23.6.0(typescript@5.4.5)
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -9487,16 +9488,6 @@ packages:
     hasBin: true
     dev: true
 
-  /mocha-json-output-reporter@2.1.0(mocha@10.2.0)(moment@2.29.4):
-    resolution: {integrity: sha512-FF2BItlMo8nK9+SgN/WAD01ue7G+qI1Po0U3JCZXQiiyTJ5OV3KcT1mSoZKirjYP73JFZznaaPC6Mp052PF3Vw==}
-    peerDependencies:
-      mocha: ^10.0.0
-      moment: ^2.21.0
-    dependencies:
-      mocha: 10.2.0
-      moment: 2.29.4
-    dev: true
-
   /mocha-multi-reporters@1.5.1(mocha@10.2.0):
     resolution: {integrity: sha512-Yb4QJOaGLIcmB0VY7Wif5AjvLMUFAdV57D2TWEva1Y0kU/3LjKpeRVmlMIfuO1SVbauve459kgtIizADqxMWPg==}
     engines: {node: '>=6.0.0'}
@@ -9608,14 +9599,14 @@ packages:
     resolution: {integrity: sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==}
     dev: true
 
-  /nise@5.1.9:
-    resolution: {integrity: sha512-qOnoujW4SV6e40dYxJOb3uvuoPHtmLzIk4TFo+j0jPJoC+5Z9xja5qH5JZobEPsa8+YYphMrOSwnrshEhG2qww==}
+  /nise@6.1.1:
+    resolution: {integrity: sha512-aMSAzLVY7LyeM60gvBS423nBmIPP+Wy7St7hsb+8/fc1HmeoHJfLO8CKse4u3BtOZvQLJghYPI2i/1WZrEj5/g==}
     dependencies:
       '@sinonjs/commons': 3.0.1
-      '@sinonjs/fake-timers': 11.3.1
+      '@sinonjs/fake-timers': 13.0.5
       '@sinonjs/text-encoding': 0.7.3
       just-extend: 6.2.0
-      path-to-regexp: 6.2.2
+      path-to-regexp: 8.2.0
     dev: true
 
   /no-case@2.3.2:
@@ -9674,7 +9665,7 @@ packages:
       npmlog: 6.0.2
       rimraf: 3.0.2
       semver: 7.6.3
-      tar: 6.1.13
+      tar: 6.2.1
       which: 2.0.2
     transitivePeerDependencies:
       - bluebird
@@ -9998,7 +9989,7 @@ packages:
       levn: 0.3.0
       prelude-ls: 1.1.2
       type-check: 0.3.2
-      word-wrap: 1.2.4
+      word-wrap: 1.2.5
     dev: true
 
   /optionator@0.9.3:
@@ -10117,7 +10108,7 @@ packages:
     dependencies:
       '@tootallnate/quickjs-emscripten': 0.23.0
       agent-base: 7.1.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       get-uri: 6.0.3
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.5
@@ -10181,7 +10172,7 @@ packages:
       read-package-json-fast: 3.0.2
       sigstore: 1.4.0
       ssri: 10.0.3
-      tar: 6.1.13
+      tar: 6.2.1
     transitivePeerDependencies:
       - bluebird
       - supports-color
@@ -10331,8 +10322,9 @@ packages:
       minipass: 7.1.2
     dev: true
 
-  /path-to-regexp@6.2.2:
-    resolution: {integrity: sha512-GQX3SSMokngb36+whdpRXE+3f9V8UzyAorlYvOGx87ufGHehNTn5lCxrKtLyZ4Yl/wEKnNnr98ZzOwwDZV5ogw==}
+  /path-to-regexp@8.2.0:
+    resolution: {integrity: sha512-TdrF7fW9Rphjq4RjrW0Kp2AW0Ahwu9sRGTkS6bvDi0SCwZlEZYmcfDbEsTz8RVk0EHIS/Vd1bv3JhG+1xZuAyQ==}
+    engines: {node: '>=16'}
     dev: true
 
   /path-type@4.0.0:
@@ -10506,7 +10498,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       http-proxy-agent: 7.0.2
       https-proxy-agent: 7.0.5
       lru-cache: 7.18.3
@@ -10540,36 +10532,36 @@ packages:
       escape-goat: 4.0.0
     dev: true
 
-  /puppeteer-core@22.2.0:
-    resolution: {integrity: sha512-rxLM860FP05CxCPAn6dwY0KnVhbnogsXu4XORb+2hb/va69v7R1VdJWLMGHd7EE5wfpT8oFZ7Q6NN85OhOtV9Q==}
+  /puppeteer-core@23.6.0:
+    resolution: {integrity: sha512-se1bhgUpR9C529SgHGr/eyT92mYyQPAhA2S9pGtGrVG2xob9qE6Pbp7TlqiSPlnnY1lINqhn6/67EwkdzOmKqQ==}
     engines: {node: '>=18'}
     dependencies:
-      '@puppeteer/browsers': 2.1.0
-      chromium-bidi: 0.5.9(devtools-protocol@0.0.1249869)
-      cross-fetch: 4.0.0
-      debug: 4.3.4(supports-color@8.1.1)
-      devtools-protocol: 0.0.1249869
-      ws: 8.16.0
+      '@puppeteer/browsers': 2.4.0
+      chromium-bidi: 0.8.0(devtools-protocol@0.0.1354347)
+      debug: 4.3.7(supports-color@8.1.1)
+      devtools-protocol: 0.0.1354347
+      typed-query-selector: 2.12.0
+      ws: 8.18.0
     transitivePeerDependencies:
       - bufferutil
-      - encoding
       - supports-color
       - utf-8-validate
     dev: true
 
-  /puppeteer@22.2.0(typescript@5.4.5):
-    resolution: {integrity: sha512-0Ax7zeqqbQL6Zcpo1WAvrqWQAnGsLB4tmQUUwsb5Cfo05XaQ78LWUUjaO4um7qaddKpZfk0vXlGcRVwtedpWfg==}
+  /puppeteer@23.6.0(typescript@5.4.5):
+    resolution: {integrity: sha512-l+Fgo8SVFSd51STtq2crz8t1Y3VXowsuR4zfR64qDOn6oggz7YIZauWiNR4IJjczQ6nvFs3S4cgng55/nesxTQ==}
     engines: {node: '>=18'}
-    deprecated: < 22.8.2 is no longer supported
     hasBin: true
     requiresBuild: true
     dependencies:
-      '@puppeteer/browsers': 2.1.0
+      '@puppeteer/browsers': 2.4.0
+      chromium-bidi: 0.8.0(devtools-protocol@0.0.1354347)
       cosmiconfig: 9.0.0(typescript@5.4.5)
-      puppeteer-core: 22.2.0
+      devtools-protocol: 0.0.1354347
+      puppeteer-core: 23.6.0
+      typed-query-selector: 2.12.0
     transitivePeerDependencies:
       - bufferutil
-      - encoding
       - supports-color
       - typescript
       - utf-8-validate
@@ -11154,14 +11146,6 @@ packages:
       lru-cache: 6.0.0
     dev: true
 
-  /semver@7.6.0:
-    resolution: {integrity: sha512-EnwXhrlwXMk9gKu5/flx5sv/an57AkRplG3hTK68W7FRDN+k+OWBj65M7719OkA82XLBxrcX0KSHj+X5COhOVg==}
-    engines: {node: '>=10'}
-    hasBin: true
-    dependencies:
-      lru-cache: 6.0.0
-    dev: true
-
   /semver@7.6.3:
     resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
     engines: {node: '>=10'}
@@ -11302,14 +11286,14 @@ packages:
       - supports-color
     dev: true
 
-  /sinon@17.0.1:
-    resolution: {integrity: sha512-wmwE19Lie0MLT+ZYNpDymasPHUKTaZHUH/pKEubRXIzySv9Atnlw+BUMGCzWgV7b7wO+Hw6f1TEOr0IUnmU8/g==}
+  /sinon@18.0.1:
+    resolution: {integrity: sha512-a2N2TDY1uGviajJ6r4D1CyRAkzE9NNVlYOV1wX5xQDuAk0ONgzgRl0EjCQuRCPxOwp13ghsMwt9Gdldujs39qw==}
     dependencies:
       '@sinonjs/commons': 3.0.1
-      '@sinonjs/fake-timers': 11.3.1
-      '@sinonjs/samsam': 8.0.0
+      '@sinonjs/fake-timers': 11.2.2
+      '@sinonjs/samsam': 8.0.2
       diff: 5.2.0
-      nise: 5.1.9
+      nise: 6.1.1
       supports-color: 7.2.0
     dev: true
 
@@ -11392,7 +11376,7 @@ packages:
     engines: {node: '>= 14'}
     dependencies:
       agent-base: 7.1.1
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.3.7(supports-color@8.1.1)
       socks: 2.8.3
     transitivePeerDependencies:
       - supports-color
@@ -11472,11 +11456,11 @@ packages:
     resolution: {integrity: sha512-KM8coezO6ISQ89c1BzyWNtcn2V2kAVtwIXd3cN/V5a0xPYc1F/vydrRc01wsKFEQ/p+V1a4sw4z2yMITIXrgGw==}
     engines: {node: '>=14'}
     dependencies:
-      cross-spawn: 7.0.3
+      cross-spawn: 7.0.6
     dev: true
 
-  /spawnd@9.0.2:
-    resolution: {integrity: sha512-nl8DVHEDQ57IcKakzpjanspVChkMpGLuVwMR/eOn9cXE55Qr6luD2Kn06sA0ootRMdgrU4tInN6lA6ohTNvysw==}
+  /spawnd@10.1.1:
+    resolution: {integrity: sha512-kTim9sz8KuKX7ZcO8imlvEvbaJmFtFhT5tKS0WP5FRlmWLH5Pd9qj9u29nbMrvDcJPj8ltwOG+QAiZq928GKCw==}
     engines: {node: '>=16'}
     dependencies:
       signal-exit: 4.1.0
@@ -11795,8 +11779,8 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
-  /tar-fs@3.0.5:
-    resolution: {integrity: sha512-JOgGAmZyMgbqpLwct7ZV8VzkEB6pxXFBVErLtb+XCOqzc6w1xiWKI9GVd6bwk68EX7eJ4DWmfXVmq8K2ziZTGg==}
+  /tar-fs@3.0.6:
+    resolution: {integrity: sha512-iokBDQQkUyeXhgPYaZxmczGPhnhXZ0CmrqI+MOb/WFGS9DW5wnfrLgtjUJBvz50vQ3qfRwJ62QVoCFu8mPVu5w==}
     dependencies:
       pump: 3.0.1
       tar-stream: 3.1.7
@@ -11813,13 +11797,13 @@ packages:
       streamx: 2.20.0
     dev: true
 
-  /tar@6.1.13:
-    resolution: {integrity: sha512-jdIBIN6LTIe2jqzay/2vtYLlBHa3JF42ot3h1dW8Q0PaAG4v8rm0cvpVePtau5C6OKXGGcgO9q2AMNSWxiLqKw==}
+  /tar@6.2.1:
+    resolution: {integrity: sha512-DZ4yORTwrbTj/7MZYq2w+/ZFdI6OZ/f9SFHR+71gIVUZhOQPHzVCLpvRnPgyaMpfWxxk/4ONva3GQSyNIKRv6A==}
     engines: {node: '>=10'}
     dependencies:
       chownr: 2.0.0
       fs-minipass: 2.1.0
-      minipass: 4.2.8
+      minipass: 5.0.0
       minizlib: 2.1.2
       mkdirp: 1.0.4
       yallist: 4.0.0
@@ -12186,6 +12170,10 @@ packages:
       possible-typed-array-names: 1.0.0
     dev: true
 
+  /typed-query-selector@2.12.0:
+    resolution: {integrity: sha512-SbklCd1F0EiZOyPiW192rrHZzZ5sBijB6xM+cpmrwDqObvdtunOHHIk9fCGsoK5JVIYXoyEp4iEdE3upFH3PAg==}
+    dev: true
+
   /typed-rest-client@1.8.9:
     resolution: {integrity: sha512-uSmjE38B80wjL85UFX3sTYEUlvZ1JgCRhsWj/fJ4rZ0FqDUFoIuodtiVeE+cUqiVTOKPdKrp/sdftD15MDek6g==}
     dependencies:
@@ -12431,8 +12419,8 @@ packages:
     resolution: {integrity: sha512-wa7YjyUGfNZngI/vtK0UHAN+lgDCxBPCylVXGp0zu59Fz5aiGtNXaq3DhIov063MorB+VfufLh3JlF2KdTK3xg==}
     dev: true
 
-  /v8-compile-cache@2.3.0:
-    resolution: {integrity: sha512-l8lCEmLcLYZh4nbunNZvQCJc5pv7+RCwa8q/LdUx8u7lsWvPDKmpodJAJNwkAhJC//dFY48KuIEmjtd4RViDrA==}
+  /v8-compile-cache@2.4.0:
+    resolution: {integrity: sha512-ocyWc3bAHBB/guyqJQVI5o4BZkPhznPYUG2ea80Gond/BgNWpap8TOmLSeeQG7bnh2KMISxskdADG59j7zruhw==}
     dev: true
 
   /v8-to-istanbul@9.1.0:
@@ -12674,8 +12662,8 @@ packages:
       string-width: 5.1.2
     dev: true
 
-  /word-wrap@1.2.4:
-    resolution: {integrity: sha512-2V81OA4ugVo5pRo46hAoD2ivUJx8jXmWXfUkY4KFNw0hEptvN0QfH3K4nHiwzGeKl5rFKedV48QVoqYavy4YpA==}
+  /word-wrap@1.2.5:
+    resolution: {integrity: sha512-BN22B5eaMMI9UMtjrGd5g5eCYPpCPDUy0FJXbYsaT5zYxjFOckS53SQDE3pWkVoWpHXVb3BrYcEN4Twa55B5cA==}
     engines: {node: '>=0.10.0'}
     dev: true
 
@@ -12742,8 +12730,8 @@ packages:
       mkdirp: 0.5.6
     dev: true
 
-  /ws@8.16.0:
-    resolution: {integrity: sha512-HS0c//TP7Ina87TfiPUz1rQzMhHrl/SG2guqRcTOIUYD2q8uhUdNHZYJUaQ8aTGPzCh+c6oawMKW35nFl1dxyQ==}
+  /ws@8.18.0:
+    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -12916,6 +12904,10 @@ packages:
       validator: 13.9.0
     optionalDependencies:
       commander: 9.5.0
+    dev: true
+
+  /zod@3.23.8:
+    resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
     dev: true
 
   /zwitch@2.0.4:

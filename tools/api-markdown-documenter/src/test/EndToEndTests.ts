@@ -9,13 +9,14 @@ import type { ApiModel } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
-
-import {
-	transformApiModel,
-	type ApiItemTransformationConfiguration,
-} from "../api-item-transforms/index.js";
 import type { Suite } from "mocha";
+
 import { loadModel } from "../LoadModel.js";
+import {
+	type ApiItemTransformationOptions,
+	checkForDuplicateDocumentPaths,
+	transformApiModel,
+} from "../api-item-transforms/index.js";
 import type { DocumentNode } from "../documentation-domain/index.js";
 
 /**
@@ -93,7 +94,7 @@ export interface EndToEndTestConfig<TRenderConfig> {
 	/**
 	 * The transformation configuration to use.
 	 */
-	readonly transformConfig: Omit<ApiItemTransformationConfiguration, "apiModel">;
+	readonly transformConfig: Omit<ApiItemTransformationOptions, "apiModel">;
 
 	/**
 	 * Render configuration.
@@ -142,7 +143,7 @@ export function endToEndTests<TRenderConfig>(
 					);
 
 					describe(testName, () => {
-						let apiItemTransformConfig: ApiItemTransformationConfiguration;
+						let apiItemTransformConfig: ApiItemTransformationOptions;
 						before(async () => {
 							apiItemTransformConfig = {
 								...partialTransformConfig,
@@ -155,16 +156,8 @@ export function endToEndTests<TRenderConfig>(
 						it("Ensure no duplicate file paths", () => {
 							const documents = transformApiModel(apiItemTransformConfig);
 
-							const pathMap = new Map<string, DocumentNode>();
-							for (const document of documents) {
-								if (pathMap.has(document.documentPath)) {
-									expect.fail(
-										`Rendering generated multiple documents to be rendered to the same file path.`,
-									);
-								} else {
-									pathMap.set(document.documentPath, document);
-								}
-							}
+							// Will throw if any duplicates are found.
+							checkForDuplicateDocumentPaths(documents);
 						});
 
 						// Perform actual output snapshot comparison test against checked-in test collateral.

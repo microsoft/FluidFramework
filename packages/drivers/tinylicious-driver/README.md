@@ -2,6 +2,10 @@
 
 Driver for the `tinylicious` Fluid service.
 
+## Additional Test Exports
+
+Some additional test utilities are provided via `@fluidframework/tinylicious-driver/test-utils`. These are not meant for production use and may change in any minor update.
+
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->

@@ -23,6 +23,7 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
+	toIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -447,7 +448,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 				totalPayloadSizeInBytes = 0;
 				totalOps = 0;
-				localContainer.deltaManager.outbound.on("push", (messages) => {
+				toIDeltaManagerFull(localContainer.deltaManager).outbound.on("push", (messages) => {
 					totalPayloadSizeInBytes += JSON.stringify(messages).length;
 					totalOps += messages.length;
 				});
@@ -623,13 +624,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							container.disconnect();
 							container.once("connected", () => {
 								resolve();
-								container.deltaManager.outbound.off("op", handler);
+								toIDeltaManagerFull(container.deltaManager).outbound.off("op", handler);
 							});
 							container.connect();
 						}
 					};
 
-					container.deltaManager.outbound.on("op", handler);
+					toIDeltaManagerFull(container.deltaManager).outbound.on("op", handler);
 				});
 			};
 

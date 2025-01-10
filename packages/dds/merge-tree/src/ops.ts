@@ -195,6 +195,44 @@ export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
 	relativePos2?: IRelativePosition;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	props: Record<string, any>;
+	adjust?: never;
+}
+
+/**
+ * Used to define per key adjustments in an {@link IMergeTreeAnnotateAdjustMsg}
+ * @alpha
+ * @legacy
+ */
+export interface AdjustParams {
+	/**
+	 * The adjustment delta which will be summed with the current value if it is a number,
+	 * or summed with zero if the current value is not a number.
+	 */
+	delta: number;
+	/**
+	 * An optional minimum value for the computed value of the key this adjustment is applied to.
+	 * The minimum will be applied after the value is applied.
+	 */
+	min?: number | undefined;
+	/**
+	 * An optional maximum value for the computed value of the key this adjustment is applied to.
+	 * The maximum will be applied after the value is applied.
+	 */
+	max?: number | undefined;
+}
+
+/**
+ * @legacy
+ * @alpha
+ */
+export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
+	type: typeof MergeTreeDeltaType.ANNOTATE;
+	pos1?: number;
+	pos2?: number;
+	relativePos1?: undefined;
+	relativePos2?: undefined;
+	props?: never;
+	adjust: Record<string, AdjustParams>;
 }
 
 /**
@@ -227,6 +265,7 @@ export type IMergeTreeDeltaOp =
 	| IMergeTreeInsertMsg
 	| IMergeTreeRemoveMsg
 	| IMergeTreeAnnotateMsg
+	| IMergeTreeAnnotateAdjustMsg
 	| IMergeTreeObliterateMsg
 	| IMergeTreeObliterateSidedMsg;
 

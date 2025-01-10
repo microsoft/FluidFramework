@@ -140,9 +140,7 @@ export type SharedStringSegment = TextSegment | Marker;
  * In addition to text, a Shared String can also contain markers. Markers can be
  * used to store metadata at positions within the text, like the details of an
  * image or Fluid object that should be rendered with the text.
- * @legacy
- * @alpha
- * @deprecated  This functionality was not meant to be exported and will be removed in a future release
+ * @internal
  */
 export class SharedStringClass
 	// eslint-disable-next-line import/no-deprecated

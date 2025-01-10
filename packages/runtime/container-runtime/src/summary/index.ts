@@ -44,12 +44,10 @@ export {
 	ISummarizeHeuristicData,
 	ISummarizer,
 	ISummarizeResults,
-	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
-	SummarizerStopReason,
 	EnqueueSummarizeResult,
 	IAckSummaryResult,
 	IBaseSummarizeResult,
@@ -67,7 +65,6 @@ export {
 	SubmitSummaryFailureData,
 	SummaryStage,
 	IRetriableFailureError,
-	ISummarizeEventProps,
 } from "./summarizerTypes.js";
 export {
 	IAckedSummary,
@@ -84,6 +81,7 @@ export {
 export {
 	aliasBlobName,
 	chunksBlobName,
+	recentBatchInfoBlobName,
 	dataStoreAttributesBlobName,
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,

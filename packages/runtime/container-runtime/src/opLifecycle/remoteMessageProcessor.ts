@@ -13,7 +13,6 @@ import {
 	ContainerMessageType,
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
-	type InboundSequencedRecentlyAddedContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
 
@@ -59,6 +58,7 @@ export type InboundMessageResult =
 			messages: InboundSequencedContainerRuntimeMessage[];
 			batchStart: BatchStartInfo;
 			length: number;
+			groupedBatch: boolean; // Messages in a grouped batches are sent to the runtime in bunches.
 	  }
 	| {
 			type: "batchStartingMessage";
@@ -171,6 +171,7 @@ export class RemoteMessageProcessor {
 					keyMessage: groupedMessages[0] ?? message, // For an empty batch, this is the empty grouped batch message. Needed for sequence numbers for this batch
 				},
 				length: groupedMessages.length, // Will be 0 for an empty batch
+				groupedBatch: true,
 			};
 		}
 
@@ -220,6 +221,7 @@ export class RemoteMessageProcessor {
 					keyMessage: message,
 				},
 				length: 1,
+				groupedBatch: false,
 			};
 		}
 		assert(batchMetadataFlag !== true, 0x9d6 /* Unexpected batch start marker */);
@@ -256,7 +258,7 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
  *
  * The return type illustrates the assumption that the message param
  * becomes a InboundSequencedContainerRuntimeMessage by the time the function returns
- * (but there is no runtime validation of the 'type' or 'compatDetails' values).
+ * (but there is no runtime validation of the 'type').
  */
 function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRuntimeMessage {
 	// We assume the contents is an InboundContainerRuntimeMessage (the message is "packed")
@@ -267,10 +269,6 @@ function unpack(message: ISequencedDocumentMessage): InboundSequencedContainerRu
 
 	messageUnpacked.type = contents.type;
 	messageUnpacked.contents = contents.contents;
-	if ("compatDetails" in contents) {
-		(messageUnpacked as InboundSequencedRecentlyAddedContainerRuntimeMessage).compatDetails =
-			contents.compatDetails;
-	}
 	return messageUnpacked;
 }
 

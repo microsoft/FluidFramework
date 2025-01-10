@@ -13,17 +13,17 @@ import {
 import { MockLogger2, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import type {
-	InboundSequencedContainerRuntimeMessage,
-	RecentlyAddedContainerRuntimeMessageDetails,
-	UnknownContainerRuntimeMessage,
-} from "../messageTypes.js";
+import type { InboundSequencedContainerRuntimeMessage } from "../messageTypes.js";
 import {
 	BatchManager,
 	BatchMessage,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
-import { IPendingMessage, PendingStateManager } from "../pendingStateManager.js";
+import {
+	findFirstCharacterMismatched,
+	IPendingMessage,
+	PendingStateManager,
+} from "../pendingStateManager.js";
 
 type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
 	initialMessages: Deque<IPendingMessage>;
@@ -164,6 +164,7 @@ describe("Pending State Manager", () => {
 		const processFullBatch = (
 			messages: Partial<ISequencedDocumentMessage>[],
 			batchStartCsn: number,
+			groupedBatch: boolean,
 			emptyBatchSequenceNumber?: number,
 			resubmittedBatchId?: string,
 		) =>
@@ -180,6 +181,7 @@ describe("Pending State Manager", () => {
 						batchId: resubmittedBatchId,
 					},
 					length: messages.length,
+					groupedBatch,
 				},
 				true /* local */,
 			);
@@ -209,7 +211,7 @@ describe("Pending State Manager", () => {
 			];
 
 			submitBatch(messages);
-			processFullBatch(messages, 0 /* batchStartCsn */);
+			processFullBatch(messages, 0 /* batchStartCsn */, true /* groupedBatch */);
 		});
 
 		it("Ungrouped batch is processed correctly", () => {
@@ -287,6 +289,7 @@ describe("Pending State Manager", () => {
 			processFullBatch(
 				[],
 				1 /* batchStartCsn */,
+				true /* groupedBatch */,
 				3 /* emptyBatchSequenceNumber */,
 				"batchId" /* resubmittedBatchId */,
 			);
@@ -312,6 +315,7 @@ describe("Pending State Manager", () => {
 								type: "otherType",
 							})),
 							0 /* batchStartCsn */,
+							false /* groupedBatch */,
 						),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
@@ -323,6 +327,11 @@ describe("Pending State Manager", () => {
 							pendingContentScrubbed: JSON.stringify({ type: "op" }),
 							incomingContentScrubbed: JSON.stringify({ type: "otherType" }),
 							contentsMatch: true,
+							pendingLength: 13,
+							incomingLength: 20,
+							mismatchStartIndex: 10,
+							pendingChar: "p",
+							incomingChar: "t",
 						},
 					],
 					"Expected to log scrubbed messages",
@@ -350,6 +359,7 @@ describe("Pending State Manager", () => {
 								contents: undefined,
 							})),
 							0 /* batchStartCsn */,
+							false /* groupedBatch */,
 						),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
@@ -361,6 +371,11 @@ describe("Pending State Manager", () => {
 							pendingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
 							incomingContentScrubbed: JSON.stringify({ type: "op" }),
 							contentsMatch: false,
+							pendingLength: 27,
+							incomingLength: 13,
+							mismatchStartIndex: 12,
+							pendingChar: ",",
+							incomingChar: "}",
 						},
 					],
 					"Expected to log scrubbed messages",
@@ -388,6 +403,7 @@ describe("Pending State Manager", () => {
 								contents: { prop1: true },
 							})),
 							0 /* batchStartCsn */,
+							false /* groupedBatch */,
 						),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
@@ -402,6 +418,11 @@ describe("Pending State Manager", () => {
 								contents: { prop1: "boolean" },
 							}),
 							contentsMatch: false,
+							pendingLength: 27,
+							incomingLength: 39,
+							mismatchStartIndex: 25,
+							pendingChar: "}",
+							incomingChar: '"',
 						},
 					],
 					"Expected to log scrubbed messages",
@@ -430,7 +451,7 @@ describe("Pending State Manager", () => {
 				);
 
 				assert.throws(
-					() => processFullBatch([message], 0 /* batchStartCsn */),
+					() => processFullBatch([message], 0 /* batchStartCsn */, false /* groupedBatch */),
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
@@ -441,79 +462,115 @@ describe("Pending State Manager", () => {
 							pendingContentScrubbed: JSON.stringify({ contents: {}, type: "op" }),
 							incomingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
 							contentsMatch: true,
+							pendingLength: 27,
+							incomingLength: 27,
+							mismatchStartIndex: 2,
+							pendingChar: "c",
+							incomingChar: "t",
 						},
 					],
 					"Expected to log scrubbed messages",
 					true /* inlineDetailsProp */,
 				);
 			});
-		});
 
-		it("stringified message content with unexpected keys", () => {
-			const message: Partial<ISequencedDocumentMessage> = {
-				clientId,
-				type: MessageType.Operation,
-				clientSequenceNumber: 0,
-				referenceSequenceNumber: 0,
-				contents: {},
-			};
-
-			// contents and type are swapped in the stringified message relative to what we typically do/expect
-			pendingStateManager.onFlushBatch(
-				[
-					{
-						contents: JSON.stringify({
-							contents: message.contents,
-							type: message.type,
-							somethingElse: 123, // Unexpected key
-						}),
-						referenceSequenceNumber: 0,
-					},
-				],
-				0 /* clientSequenceNumber */,
-			);
-
-			assert.throws(
-				() => processFullBatch([message], 0 /* batchStartCsn */),
-				(closeError: any) => closeError.errorType === ContainerErrorTypes.dataProcessingError,
-			);
-			mockLogger.assertMatch(
-				[
-					{
-						eventName: "unexpectedAckReceived",
-						pendingContentScrubbed: JSON.stringify({
-							contents: {},
-							type: "op",
-							somethingElse: "number",
-						}),
-						incomingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
-						contentsMatch: true,
-					},
-				],
-				"Expected to log scrubbed messages",
-				true /* inlineDetailsProp */,
-			);
-		});
-
-		it("processing in sync messages will not throw", () => {
-			const messages: Partial<ISequencedDocumentMessage>[] = [
-				{
+			it("stringified message content with unexpected keys", () => {
+				const message: Partial<ISequencedDocumentMessage> = {
 					clientId,
 					type: MessageType.Operation,
 					clientSequenceNumber: 0,
 					referenceSequenceNumber: 0,
-					contents: { prop1: true },
-				},
-			];
+					contents: {},
+				};
 
-			submitBatch(messages);
-			processFullBatch(
-				messages.map((message) => ({
-					...message,
-					contents: { prop1: true },
-				})),
-				0 /* batchStartCsn */,
-			);
+				// contents and type are swapped in the stringified message relative to what we typically do/expect
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							contents: JSON.stringify({
+								type: message.type,
+								contents: message.contents,
+								somethingElse: 123, // Unexpected key
+							}),
+							referenceSequenceNumber: 0,
+						},
+					],
+					0 /* clientSequenceNumber */,
+				);
+
+				assert.throws(
+					() => processFullBatch([message], 0 /* batchStartCsn */, false /* groupedBatch */),
+					(closeError: any) =>
+						closeError.errorType === ContainerErrorTypes.dataProcessingError,
+				);
+				mockLogger.assertMatch(
+					[
+						{
+							eventName: "unexpectedAckReceived",
+							pendingContentScrubbed: JSON.stringify({
+								type: "op",
+								contents: {},
+								somethingElse: "number",
+							}),
+							incomingContentScrubbed: JSON.stringify({ type: "op", contents: {} }),
+							contentsMatch: true,
+							pendingLength: 47,
+							incomingLength: 27,
+							mismatchStartIndex: 26,
+							pendingChar: ",",
+							incomingChar: "}",
+						},
+					],
+					"Expected to log scrubbed messages",
+					true /* inlineDetailsProp */,
+				);
+			});
+
+			it("processing in sync messages will not throw", () => {
+				const messages: Partial<ISequencedDocumentMessage>[] = [
+					{
+						clientId,
+						type: MessageType.Operation,
+						clientSequenceNumber: 0,
+						referenceSequenceNumber: 0,
+						contents: { prop1: true },
+					},
+				];
+
+				submitBatch(messages);
+				processFullBatch(
+					messages.map((message) => ({
+						...message,
+						contents: { prop1: true },
+					})),
+					0 /* batchStartCsn */,
+					false /* groupedBatch */,
+				);
+			});
+
+			it("findFirstCharacterMismatched", () => {
+				const testCases = [
+					{ input: ["", ""], expected: [-1] },
+					{ input: ["", "b"], expected: [0, undefined, "b"] },
+					{ input: ["a", "b"], expected: [0, "a", "b"] },
+					{ input: ["xyz", "xxx"], expected: [1, "y", "x"] },
+					{ input: ["xyz", "xy"], expected: [2, "z", undefined] },
+					{ input: ["xy", "xxx"], expected: [1, "y", "x"] },
+					{ input: ["xyz", "xyz"], expected: [-1] },
+				];
+				testCases.forEach(({ input: [a, b], expected: [i, charA, charB] }) => {
+					assert.deepEqual(
+						findFirstCharacterMismatched(a, b),
+						[i, charA, charB],
+						`Failed input: "${a}", "${b}"`,
+					);
+					assert.deepEqual(
+						findFirstCharacterMismatched(b, a),
+						[i, charB, charA],
+						`Failed input: "${b}", "${a}"`,
+					);
+				});
+			});
 		});
 
 		describe("getLocalState", () => {
@@ -526,7 +583,7 @@ describe("Pending State Manager", () => {
 					sequenceNumber: i + 1, // starting with sequence number 1 so first assert does not filter any op
 				}));
 				submitBatch(messages);
-				processFullBatch(messages, 0 /* batchStartCsn */);
+				processFullBatch(messages, 0 /* batchStartCsn */, false /* groupedBatch */);
 				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 				pendingState = pendingStateManager.getLocalState(5).pendingStates;
@@ -595,44 +652,6 @@ describe("Pending State Manager", () => {
 				];
 				const pendingStateManager = createPendingStateManager(messages);
 				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
-			});
-		});
-
-		describe("Future op compat behavior", () => {
-			it("pending op roundtrip", async () => {
-				const pendingStateManager = createPendingStateManager([]);
-				const futureRuntimeMessage: Pick<ISequencedDocumentMessage, "type" | "contents"> &
-					RecentlyAddedContainerRuntimeMessageDetails = {
-					type: "FROM_THE_FUTURE",
-					contents: "Hello",
-					compatDetails: { behavior: "FailToProcess" },
-				};
-
-				pendingStateManager.onFlushBatch(
-					[
-						{
-							contents: JSON.stringify(futureRuntimeMessage),
-							referenceSequenceNumber: 0,
-						},
-					],
-					1,
-				);
-				const inboundMessage = futureRuntimeMessage as ISequencedDocumentMessage &
-					UnknownContainerRuntimeMessage;
-				pendingStateManager.processInboundMessages(
-					{
-						type: "fullBatch",
-						messages: [inboundMessage],
-						batchStart: {
-							batchStartCsn: 1 /* batchStartCsn */,
-							batchId: undefined,
-							clientId: "clientId",
-							keyMessage: inboundMessage,
-						},
-						length: 1,
-					},
-					true /* local */,
-				);
 			});
 		});
 	});

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { CrossFieldManager } from "../../../feature-libraries/index.js";

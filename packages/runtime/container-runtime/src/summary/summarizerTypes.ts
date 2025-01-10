@@ -7,8 +7,11 @@ import {
 	IDeltaManager,
 	ContainerWarning,
 } from "@fluidframework/container-definitions/internal";
+import type {
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
-	IEvent,
 	IEventProvider,
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
@@ -393,55 +396,6 @@ export type EnqueueSummarizeResult =
 			 */
 			readonly overridden?: undefined;
 	  };
-
-/**
- * @legacy
- * @alpha
- */
-export type SummarizerStopReason =
-	/** Summarizer client failed to summarize in all attempts. */
-	| "failToSummarize"
-	/** Parent client reported that it is no longer connected. */
-	| "parentNotConnected"
-	/**
-	 * Parent client reported that it is no longer elected the summarizer.
-	 * This is the normal flow; a disconnect will always trigger the parent
-	 * client to no longer be elected as responsible for summaries. Then it
-	 * tries to stop its spawned summarizer client.
-	 */
-	| "notElectedParent"
-	/**
-	 * We are not already running the summarizer and we are not the current elected client id.
-	 */
-	| "notElectedClient"
-	/** Summarizer client was disconnected */
-	| "summarizerClientDisconnected"
-	/** running summarizer threw an exception */
-	| "summarizerException"
-	/**
-	 * The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
-	 * first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
-	 */
-	| "latestSummaryStateStale";
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummarizeEventProps {
-	result: "success" | "failure" | "canceled";
-	currentAttempt: number;
-	maxAttempts: number;
-	error?: any;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummarizerEvents extends IEvent {
-	(event: "summarize", listener: (props: ISummarizeEventProps) => void);
-}
 
 /**
  * @legacy

@@ -33,7 +33,7 @@ export function create(store: nconf.Provider): Router {
 		const tagP = createTag(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.body,
 		);
 
@@ -44,7 +44,7 @@ export function create(store: nconf.Provider): Router {
 		const tagP = getTag(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params[0],
 		);
 

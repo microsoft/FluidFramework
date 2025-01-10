@@ -9,7 +9,11 @@
 
 /* Constants and Variables */
 type IndexSignatureType = { [key: string]: string };
+interface ExtendedIndexSignatureType extends IndexSignatureType {
+	a: string;
+}
 const indexedRecordOfStrings: IndexSignatureType = { a: "hello", b: "goodbye" };
+const extendedIndexedRecordOfStrings: ExtendedIndexSignatureType = { a: "hello", b: "goodbye" };
 const a = "a";
 const b = "b";
 
@@ -87,3 +91,6 @@ aLetExpectingStringOrUndefinedAfterVariableDeclaration = indexedRecordOfStrings.
  */
 const aImplicitType = indexedRecordOfStrings.a; // defect: Assigning index property with inferred type without an explicit undefined type is not allowed
 aImplicitType.length; // ok: aImplicitType is the continuation of the inferred type case and should be caught in the variable initialization
+
+extendedIndexedRecordOfStrings.a.length; // ok: Accessing string property of extendedIndexedRecordOfStrings is allowed
+extendedIndexedRecordOfStrings.b.length; // defect: Accessing length of index property 'b', but 'b' might not be present

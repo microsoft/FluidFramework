@@ -31,16 +31,8 @@ declare type old_as_current_for_Class_ContainerRuntime = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_ContainerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ContainerRuntime = requireAssignableTo<TypeOnly<current.ContainerRuntime>, TypeOnly<old.ContainerRuntime>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_DocumentsSchemaController": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_DocumentsSchemaController = requireAssignableTo<TypeOnly<old.DocumentsSchemaController>, TypeOnly<current.DocumentsSchemaController>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -94,6 +86,7 @@ declare type current_as_old_for_Class_SummaryCollection = requireAssignableTo<Ty
  * typeValidation.broken:
  * "ClassStatics_ContainerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ContainerRuntime = requireAssignableTo<TypeOnly<typeof current.ContainerRuntime>, TypeOnly<typeof old.ContainerRuntime>>
 
 /*
@@ -283,7 +276,7 @@ declare type current_as_old_for_Interface_ICancellableSummarizerController = req
  * typeValidation.broken:
  * "Interface_ICancellationToken": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ICancellationToken = requireAssignableTo<TypeOnly<old.ICancellationToken<any>>, TypeOnly<current.ICancellationToken<any>>>
+declare type old_as_current_for_Interface_ICancellationToken = requireAssignableTo<TypeOnly<old.ICancellationToken<never>>, TypeOnly<current.ICancellationToken<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -292,7 +285,7 @@ declare type old_as_current_for_Interface_ICancellationToken = requireAssignable
  * typeValidation.broken:
  * "Interface_ICancellationToken": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ICancellationToken = requireAssignableTo<TypeOnly<current.ICancellationToken<any>>, TypeOnly<old.ICancellationToken<any>>>
+declare type current_as_old_for_Interface_ICancellationToken = requireAssignableTo<TypeOnly<current.ICancellationToken<never>>, TypeOnly<old.ICancellationToken<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -751,6 +744,7 @@ declare type current_as_old_for_Interface_ISubmitSummaryOptions = requireAssigna
  * typeValidation.broken:
  * "Interface_ISummarizeEventProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISummarizeEventProps = requireAssignableTo<TypeOnly<old.ISummarizeEventProps>, TypeOnly<current.ISummarizeEventProps>>
 
 /*
@@ -760,6 +754,7 @@ declare type old_as_current_for_Interface_ISummarizeEventProps = requireAssignab
  * typeValidation.broken:
  * "Interface_ISummarizeEventProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISummarizeEventProps = requireAssignableTo<TypeOnly<current.ISummarizeEventProps>, TypeOnly<old.ISummarizeEventProps>>
 
 /*
@@ -823,6 +818,7 @@ declare type current_as_old_for_Interface_ISummarizeResults = requireAssignableT
  * typeValidation.broken:
  * "Interface_ISummarizerEvents": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISummarizerEvents = requireAssignableTo<TypeOnly<old.ISummarizerEvents>, TypeOnly<current.ISummarizerEvents>>
 
 /*
@@ -832,6 +828,7 @@ declare type old_as_current_for_Interface_ISummarizerEvents = requireAssignableT
  * typeValidation.broken:
  * "Interface_ISummarizerEvents": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISummarizerEvents = requireAssignableTo<TypeOnly<current.ISummarizerEvents>, TypeOnly<old.ISummarizerEvents>>
 
 /*
@@ -1327,7 +1324,7 @@ declare type current_as_old_for_TypeAlias_ISummaryMetadataMessage = requireAssig
  * typeValidation.broken:
  * "TypeAlias_OmitAttributesVersions": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_OmitAttributesVersions = requireAssignableTo<TypeOnly<old.OmitAttributesVersions<any>>, TypeOnly<current.OmitAttributesVersions<any>>>
+declare type old_as_current_for_TypeAlias_OmitAttributesVersions = requireAssignableTo<TypeOnly<old.OmitAttributesVersions<never>>, TypeOnly<current.OmitAttributesVersions<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1336,7 +1333,7 @@ declare type old_as_current_for_TypeAlias_OmitAttributesVersions = requireAssign
  * typeValidation.broken:
  * "TypeAlias_OmitAttributesVersions": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_OmitAttributesVersions = requireAssignableTo<TypeOnly<current.OmitAttributesVersions<any>>, TypeOnly<old.OmitAttributesVersions<any>>>
+declare type current_as_old_for_TypeAlias_OmitAttributesVersions = requireAssignableTo<TypeOnly<current.OmitAttributesVersions<never>>, TypeOnly<old.OmitAttributesVersions<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1417,7 +1414,7 @@ declare type current_as_old_for_TypeAlias_SubmitSummaryResult = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_SummarizeResultPart": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_SummarizeResultPart = requireAssignableTo<TypeOnly<old.SummarizeResultPart<any>>, TypeOnly<current.SummarizeResultPart<any>>>
+declare type old_as_current_for_TypeAlias_SummarizeResultPart = requireAssignableTo<TypeOnly<old.SummarizeResultPart<never>>, TypeOnly<current.SummarizeResultPart<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -1426,7 +1423,7 @@ declare type old_as_current_for_TypeAlias_SummarizeResultPart = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_SummarizeResultPart": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_SummarizeResultPart = requireAssignableTo<TypeOnly<current.SummarizeResultPart<any>>, TypeOnly<old.SummarizeResultPart<any>>>
+declare type current_as_old_for_TypeAlias_SummarizeResultPart = requireAssignableTo<TypeOnly<current.SummarizeResultPart<never>>, TypeOnly<old.SummarizeResultPart<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1435,6 +1432,7 @@ declare type current_as_old_for_TypeAlias_SummarizeResultPart = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_SummarizerStopReason": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_SummarizerStopReason = requireAssignableTo<TypeOnly<old.SummarizerStopReason>, TypeOnly<current.SummarizerStopReason>>
 
 /*
@@ -1444,6 +1442,7 @@ declare type old_as_current_for_TypeAlias_SummarizerStopReason = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_SummarizerStopReason": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_SummarizerStopReason = requireAssignableTo<TypeOnly<current.SummarizerStopReason>, TypeOnly<old.SummarizerStopReason>>
 
 /*

@@ -338,6 +338,43 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 	}
 
+	/** API for ensuring the correct auto-recovery mitigations */
+	private readonly autoRecovery = (() => {
+		// This uses a hidden state machine for forcing fullGC as part of autorecovery,
+		// to regenerate the GC data for each node.
+		//
+		// Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
+		//
+		// States:
+		// - undefined: No need to run fullGC now.
+		// - "requested": FullGC requested, but GC has not yet run. Keep using fullGC until back to undefined.
+		// - "ran": FullGC ran, but the following summary has not yet been acked. Keep using fullGC until back to undefined.
+		//
+		// Transitions:
+		// - autoRecovery.requestFullGCOnNextRun :: [anything] --> "requested"
+		// - autoRecovery.onCompletedGCRun       :: "requested" --> "ran"
+		// - autoRecovery.onSummaryAck           :: "ran" --> undefined
+		let state: "requested" | "ran" | undefined;
+		return {
+			requestFullGCOnNextRun: () => {
+				state = "requested";
+			},
+			onCompletedGCRun: () => {
+				if (state === "requested") {
+					state = "ran";
+				}
+			},
+			onSummaryAck: () => {
+				if (state === "ran") {
+					state = undefined;
+				}
+			},
+			useFullGC: () => {
+				return state !== undefined;
+			},
+		};
+	})();
+
 	/**
 	 * Called during container initialization. Initializes the tombstone and deleted nodes state from the base snapshot.
 	 * Also, initializes the GC state including unreferenced nodes tracking if a current reference timestamp exists.
@@ -460,9 +497,7 @@ export class GarbageCollector implements IGarbageCollector {
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined> {
 		const fullGC =
-			options.fullGC ??
-			(this.configs.runFullGC === true ||
-				this.summaryStateTracker.autoRecovery.fullGCRequested());
+			options.fullGC ?? (this.configs.runFullGC === true || this.autoRecovery.useFullGC());
 
 		// Add the options that are used to run GC to the telemetry context.
 		telemetryContext?.setMultiple("fluid_GC", "Options", {
@@ -521,6 +556,7 @@ export class GarbageCollector implements IGarbageCollector {
 				await this.telemetryTracker.logPendingEvents(logger);
 				// Update the state of summary state tracker from this run's stats.
 				this.summaryStateTracker.updateStateFromGCRunStats(gcStats);
+				this.autoRecovery.onCompletedGCRun();
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
 
@@ -709,13 +745,9 @@ export class GarbageCollector implements IGarbageCollector {
 				deletedNodeIds: sweepReadyDSAndBlobs,
 			};
 
-			// Its fine for older clients to ignore this op because it doesn't have any functional impact. This op
-			// is an optimization to ensure that all clients are in sync when it comes to deleted nodes to prevent their
-			// accidental usage. The clients will sync without the delete op too but it may take longer.
 			const containerGCMessage: ContainerRuntimeGCMessage = {
 				type: ContainerMessageType.GC,
 				contents,
-				compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 			};
 			this.submitMessage(containerGCMessage);
 			return;
@@ -857,48 +889,49 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Called to refresh the latest summary state. This happens when either a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
+		this.autoRecovery.onSummaryAck();
 		return this.summaryStateTracker.refreshLatestSummary(result);
 	}
 
 	/**
-	 * Process a GC message.
-	 * @param message - The GC message from the container runtime.
-	 * @param messageTimestampMs - The timestamp of the message.
+	 * Process GC messages.
+	 * @param messageContents - The contents of the messages.
+	 * @param messageTimestampMs - The timestamp of the messages.
 	 * @param local - Whether it was send by this client.
 	 */
-	public processMessage(
-		message: ContainerRuntimeGCMessage,
+	public processMessages(
+		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,
 	) {
-		const gcMessageType = message.contents.type;
-		switch (gcMessageType) {
-			case GarbageCollectionMessageType.Sweep: {
-				// Delete the nodes whose ids are present in the contents.
-				this.deleteSweepReadyNodes(message.contents.deletedNodeIds);
-				break;
-			}
-			case GarbageCollectionMessageType.TombstoneLoaded: {
-				// Mark the node as referenced to ensure it isn't Swept
-				const tombstonedNodePath = message.contents.nodePath;
-				this.addedOutboundReference(
-					"/",
-					tombstonedNodePath,
-					messageTimestampMs,
-					true /* autorecovery */,
-				);
+		for (const gcMessage of messageContents) {
+			const gcMessageType = gcMessage.type;
+			switch (gcMessageType) {
+				case GarbageCollectionMessageType.Sweep: {
+					// Delete the nodes whose ids are present in the contents.
+					this.deleteSweepReadyNodes(gcMessage.deletedNodeIds);
+					break;
+				}
+				case GarbageCollectionMessageType.TombstoneLoaded: {
+					// Mark the node as referenced to ensure it isn't Swept
+					const tombstonedNodePath = gcMessage.nodePath;
+					this.addedOutboundReference(
+						"/",
+						tombstonedNodePath,
+						messageTimestampMs,
+						true /* autorecovery */,
+					);
 
-				// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
-				// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
-				this.summaryStateTracker.autoRecovery.requestFullGCOnNextRun();
-
-				break;
-			}
-			default: {
-				throw DataProcessingError.create(
-					`Garbage collection message of unknown type ${gcMessageType}`,
-					"processMessage",
-				);
+					// In case the cause of the TombstoneLoaded event is incorrect GC Data (i.e. the object is actually reachable),
+					// do fullGC on the next run to get a chance to repair (in the likely case the bug is not deterministic)
+					this.autoRecovery.requestFullGCOnNextRun();
+					break;
+				}
+				default:
+					throw DataProcessingError.create(
+						`Garbage collection message of unknown type ${gcMessageType}`,
+						"processMessage",
+					);
 			}
 		}
 	}
@@ -1036,15 +1069,12 @@ export class GarbageCollector implements IGarbageCollector {
 			return;
 		}
 
-		// Use compat behavior "Ignore" since this is an optimization to opportunistically protect
-		// objects from deletion, so it's fine for older clients to ignore this op.
 		const containerGCMessage: ContainerRuntimeGCMessage = {
 			type: ContainerMessageType.GC,
 			contents: {
 				type: GarbageCollectionMessageType.TombstoneLoaded,
 				nodePath,
 			},
-			compatDetails: { behavior: "Ignore" }, // DEPRECATED: For temporary back compat only
 		};
 		this.submitMessage(containerGCMessage);
 	}

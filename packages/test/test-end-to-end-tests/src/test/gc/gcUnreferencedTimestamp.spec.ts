@@ -118,7 +118,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			await provider.ensureSynchronized();
 			const summaryResult3 = await summarizeNow(summarizer);
 			assert.strictEqual(
-				summaryResult3.summaryTree.tree[gcTreeKey].type,
+				summaryResult3.summaryTree.tree[gcTreeKey]?.type,
 				SummaryType.Handle,
 				"GC state should be a handle",
 			);
@@ -171,7 +171,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			await provider.ensureSynchronized();
 			const summaryResult3 = await summarizeNow(summarizer);
 			assert.strictEqual(
-				summaryResult3.summaryTree.tree[gcTreeKey].type,
+				summaryResult3.summaryTree.tree[gcTreeKey]?.type,
 				SummaryType.Handle,
 				"GC state should be a handle",
 			);
@@ -241,7 +241,7 @@ describeCompat("GC unreferenced timestamp", "NoCompat", (getTestObjectProvider, 
 			await provider.ensureSynchronized();
 			const summaryResult3 = await summarizeNow(summarizer2);
 			assert.strictEqual(
-				summaryResult3.summaryTree.tree[gcTreeKey].type,
+				summaryResult3.summaryTree.tree[gcTreeKey]?.type,
 				SummaryType.Handle,
 				"GC state should be a handle",
 			);

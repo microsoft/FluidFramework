@@ -160,14 +160,6 @@ module.exports = {
 	},
 };
 
-// Helper function to check if a type has an index signature
-function isIndexSignatureType(parserServices, node) {
-	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
-	const typeChecker = parserServices.program.getTypeChecker();
-	const type = typeChecker.getTypeAtLocation(tsNode);
-	return type.getStringIndexType() !== undefined;
-}
-
 // Helper function to check if a type includes undefined
 function isTypeUndefinable(type) {
 	if (type.isUnion()) {
@@ -176,17 +168,138 @@ function isTypeUndefinable(type) {
 	return false;
 }
 
-// Helper function to check if an index signature type includes undefined
-function isUndefinableIndexSignatureType(parserServices, node) {
+// Helper function to check if a type has an index signature
+function isIndexSignatureType(parserServices, node) {
+	if (!node || !node.object) return false;
+
 	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
+	if (!tsNode) return false;
+
 	const typeChecker = parserServices.program.getTypeChecker();
 	const type = typeChecker.getTypeAtLocation(tsNode);
-	const indexType = type.getStringIndexType();
-	return (
-		indexType &&
-		(indexType.flags & TypeFlags.Undefined ||
-			(indexType.isUnion() && indexType.types.some((t) => t.flags & TypeFlags.Undefined)))
-	);
+	if (!type) return false;
+
+	try {
+		const isArrayLike =
+			type.symbol?.escapedName === "Array" ||
+			type.symbol?.escapedName === "__tuple" ||
+			type.isTuple?.() ||
+			type.symbol?.declarations?.some(
+				(decl) => decl.kind === SyntaxKind.ArrayType || decl.kind === SyntaxKind.TupleType,
+			) ||
+			typeChecker.isArrayType(type) ||
+			typeChecker.isTupleType(type) ||
+			// Check for ReadonlyArray
+			type.symbol?.escapedName === "ReadonlyArray" ||
+			(type.getNumberIndexType() && !type.getStringIndexType()) ||
+			type.getProperty("length") !== undefined;
+
+		if (isArrayLike) {
+			return false;
+		}
+
+		if (node.computed) {
+			const prop = node.property;
+			if (
+				(prop.type === "Literal" &&
+					(typeof prop.value === "number" || !isNaN(prop.value))) ||
+				prop.kind === 8 || // TypeScript's SyntaxKind.NumericLiteral
+				prop.argumentExpression?.kind === 8
+			) {
+				return false;
+			}
+			if (prop.type === "Identifier") {
+				const propType = typeChecker.getTypeAtLocation(
+					parserServices.esTreeNodeToTSNodeMap.get(prop),
+				);
+				if (propType.flags & TypeFlags.NumberLike) {
+					return false;
+				}
+			}
+		}
+
+		// Check index signatures
+		const stringIndexType = type.getStringIndexType();
+		const numberIndexType = type.getNumberIndexType();
+		if (!stringIndexType && !numberIndexType) return false;
+
+		const propName =
+			node.property && (node.computed ? node.property.value : node.property.name);
+		if (!propName) return true;
+
+		const propSymbol = type.getProperty(propName);
+		if (!propSymbol) return true;
+
+		const declarations = propSymbol.declarations || [];
+		return (
+			declarations.some((decl) => decl?.kind === SyntaxKind.IndexSignature || !decl.name) ||
+			declarations.length === 0
+		);
+	} catch (e) {
+		return false;
+	}
+}
+
+// Helper function to check if an index signature type includes undefined
+function isUndefinableIndexSignatureType(parserServices, node) {
+	if (!node || !node.object) {
+		return false;
+	}
+
+	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node.object);
+	if (!tsNode) {
+		return false;
+	}
+
+	const typeChecker = parserServices.program.getTypeChecker();
+	const type = typeChecker.getTypeAtLocation(tsNode);
+	if (!type) {
+		return false;
+	}
+
+	// Get the property being accessed
+	const propName = node.property && (node.computed ? node.property.value : node.property.name);
+	if (!propName) {
+		return false;
+	}
+
+	try {
+		// Check if it's a property explicitly defined (not from index signature)
+		const propSymbol = type.getProperty(propName);
+		if (propSymbol) {
+			const declarations = propSymbol.declarations || [];
+			const isFromIndexSignature = declarations.some(
+				(decl) => decl && decl.kind === SyntaxKind.IndexSignature,
+			);
+
+			if (!isFromIndexSignature && declarations.length > 0) {
+				return false;
+			}
+		}
+
+		// Check both string and number index signatures
+		const stringIndexType = type.getStringIndexType();
+		const numberIndexType = type.getNumberIndexType();
+
+		const isStringIndexUndefinable =
+			stringIndexType &&
+			(stringIndexType.flags & TypeFlags.Undefined ||
+				(stringIndexType.isUnion &&
+					stringIndexType.isUnion() &&
+					stringIndexType.types.some((t) => t.flags & TypeFlags.Undefined)));
+
+		const isNumberIndexUndefinable =
+			numberIndexType &&
+			(numberIndexType.flags & TypeFlags.Undefined ||
+				(numberIndexType.isUnion &&
+					numberIndexType.isUnion() &&
+					numberIndexType.types.some((t) => t.flags & TypeFlags.Undefined)));
+
+		return isStringIndexUndefinable || isNumberIndexUndefinable;
+	} catch (e) {
+		// If there's any error in type checking, assume it might be undefinable
+		return true;
+	}
 }
 
 // Helper function to traverse up the code until the scope ends and checks if the property access has been checked for undefined
@@ -210,21 +323,56 @@ function getNodeType(node, parserServices) {
 
 // Helper function to determine if a node is defined. This has all the cases which define
 function isDefined(node) {
-	if (!node.parent) {
-		return false;
+	if (!node.parent) return false;
+	if (node.optional === true || node.parent.type === "TSNonNullExpression") return true;
+
+	let current = node;
+	while (current && current.parent) {
+		// Handle if statements that check property existence
+		if (current.parent.type === "IfStatement" && current.parent.test) {
+			const base = getBaseObject(node);
+			if (base && current.parent.test.type === "MemberExpression") {
+				const testBase = getBaseObject(current.parent.test);
+				if (base === testBase) {
+					return true;
+				}
+			}
+		}
+
+		// Handle for...of with Object.entries/keys
+		if (current.parent.type === "ForOfStatement") {
+			const right = current.parent.right;
+			if (
+				right.type === "CallExpression" &&
+				right.callee.type === "MemberExpression" &&
+				right.callee.object.name === "Object" &&
+				(right.callee.property.name === "entries" || right.callee.property.name === "keys")
+			) {
+				const base = getBaseObject(node);
+				if (right.arguments[0].type === "Identifier" && right.arguments[0].name === base) {
+					return true;
+				}
+			}
+		}
+
+		// Handle "in" operator checks
+		if (
+			(current.parent.type === "ConditionalExpression" ||
+				current.parent.type === "IfStatement") &&
+			current.parent.test?.type === "BinaryExpression" &&
+			current.parent.test.operator === "in"
+		) {
+			const test = current.parent.test;
+			const base = getBaseObject(node);
+			const testBase = getBaseObject(test.right);
+			if (base === testBase) {
+				return true;
+			}
+		}
+
+		current = current.parent;
 	}
 
-	// Optional chaining or non-null assertion
-	if (node.optional === true || node.parent.type === "TSNonNullExpression") {
-		return true;
-	}
-
-	// Presence check in if statement
-	if (node.parent.type === "IfStatement" && node.parent.test === node) {
-		return true;
-	}
-
-	// 'in' operator check
 	if (
 		node.parent.type === "BinaryExpression" &&
 		node.parent.operator === "in" &&
@@ -233,30 +381,15 @@ function isDefined(node) {
 		return true;
 	}
 
-	// Object.entries() or Object.keys() loop
-	if (
-		node.parent.type === "ForOfStatement" &&
-		node.parent.right &&
-		node.parent.right.callee &&
-		node.parent.right.callee.property &&
-		(node.parent.right.callee.property.name === "entries" ||
-			node.parent.right.callee.property.name === "keys")
-	) {
-		return true;
-	}
-
-	// Check for block statements in if or for...of loops
-	if (node.parent.type === "BlockStatement") {
-		const blockParent = node.parent.parent;
-		if (
-			blockParent &&
-			(blockParent.type === "IfStatement" || blockParent.type === "ForOfStatement")
-		) {
-			return isDefined(blockParent.test || blockParent.right);
-		}
-	}
-
 	return false;
+}
+
+function getBaseObject(node) {
+	let current = node;
+	while (current.type === "MemberExpression") {
+		current = current.object;
+	}
+	return current.type === "Identifier" ? current.name : null;
 }
 
 // Helper function to get the full name of a property access chain

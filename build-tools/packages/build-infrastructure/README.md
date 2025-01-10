@@ -5,21 +5,21 @@ This package contains types and helper functions that are used across multiple b
 
 The primary purpose of this package is to provide a common way to organize npm packages into groups called release
 groups, and leverages workspaces functionality provided by package managers like npm, yarn, and pnpm to manage
-interdependencies between packages across a Fluid repo. It then provides APIs to select, filter, and work with those
+interdependencies between packages across a build project. It then provides APIs to select, filter, and work with those
 package groups.
 
 ## API Overview
 
-The API is built around four key types which form a hierarchy: `IFluidRepo`, `IWorkspace`, `IReleaseGroup`, and
-`IPackage`. For the purposes of this documentation, the terms "Fluid repo," "workspace," "release group," and "package"
+The API is built around four key types which form a hierarchy: `IBuildProject`, `IWorkspace`, `IReleaseGroup`, and
+`IPackage`. For the purposes of this documentation, the terms "build project," "workspace," "release group," and "package"
 generally refer to these types.
 
-Conceptually, a **Fluid repo** is a way to organize npm packages into groups for versioning, release, and dependency
-management. A Fluid repo can contain multiple **workspaces**, each of which may contain one or more **release groups**.
+Conceptually, a **build project** is a way to organize npm packages into groups for versioning, release, and dependency
+management. A build project can contain multiple **workspaces**, each of which may contain one or more **release groups**.
 
-### The Fluid repo
+### The build project
 
-The primary entrypoint for the API is the `IFluidRepo` type. A Fluid repo can contain multiple workspaces and release
+The primary entrypoint for the API is the `IBuildProject` type. A build project can contain multiple workspaces and release
 groups. Both workspaces and release groups represent ways to organize packages in the repo, but their purpose and
 function are different.
 
@@ -35,10 +35,10 @@ trivial to link multiple packages so they can depend on one another. The `IWorks
 these package manager features.
 
 Importantly, this package does not attempt to re-implement any features provided by workspaces themselves. Users are
-expected to configure their package managers' workspace features in addition to the Fluid repo configuration.
+expected to configure their package managers' workspace features in addition to the build project configuration.
 
-A Fluid repo will only load packages identified by the package manager's workspace feature. That is, any package in the
-repo that is not configured as part of a workspace is invisible to tools using the Fluid repo.
+A build project will only load packages identified by the package manager's workspace feature. That is, any package in the
+repo that is not configured as part of a workspace is invisible to tools using the build project.
 
 ### Release groups
 
@@ -71,9 +71,9 @@ another larger workspace, contained within a single-package release group.
 
 ### Git repo capabilities
 
-A Fluid repo is often contained within a Git repository, and some functionality expects to be used within a Git
+A build project is often contained within a Git repository, and some functionality expects to be used within a Git
 repository. Features that need to execute Git operations can asynchronously retrieve the SimpleGit instance using the
-`IFluidRepo.getGitRepository` API. If the Fluid repo is not within a Git repo, then that call will throw a
+`IBuildProject.getGitRepository` API. If the build project is not within a Git repo, then that call will throw a
 `NotInGitRepository` exception that callers should handle appropriately. If they don't, though, the exception makes it
 clear what has happened.
 
@@ -82,33 +82,33 @@ clear what has happened.
 > This design addresses a major problem with build-tools v0, which was that code often made assumptions that it was
 > operating within a Git repo. That's often true, and some fetures can and should only work in that context, but the
 > implementation attempted to load the Git functionality blindly and would fail outright outside a Git context. With
-> `IFluidRepo`, the Git integration is more loosely coupled and the APIs make it clearer that it is not safe to assume
+> `IBuildProject`, the Git integration is more loosely coupled and the APIs make it clearer that it is not safe to assume
 > the presence of a Git repo.
 
 ### Package selection and filtering APIs
 
-The `IFluidRepo` object provides access to workspaces, release groups, and their constituent packages, but often one wants
+The `IBuildProject` object provides access to workspaces, release groups, and their constituent packages, but often one wants
 to operate on a subset of all packages in the repo. To support this, build-infrastructure provides a selection and
 filtering API. Packages can be selected based on criteria like workspace and release group, and the lists can be further
 filtered by scope or private/not private. Advanced filtering not covered by the built-in filters can be implemented
 using `Array.prototype.filter` on the results of package selection.
 
-### Built-in command-line tool to examine repo layout and config
+### Built-in command-line tool to examine project layout and config
 
-The included CLI tool makes it easy to examine the contents and layout of a Fluid repo. See [the CLI
+The included CLI tool makes it easy to examine the contents and layout of a build project. See [the CLI
 documentation](./docs/cli.md) for more information.
 
 ### Loading old config formats
 
-The `repoPackages` configuration currently used by fluid-build will be loaded if the newer `repoLayout` config can't be
-found. This is for back-compat only and will not be maintained indefinitely. Users should convert to `repoLayout` when
+The `repoPackages` configuration currently used by fluid-build will be loaded if the newer `buildProject` config can't be
+found. This is for back-compat only and will not be maintained indefinitely. Users should convert to `buildProject` when
 possible.
 
 ## Configuration
 
-Configuration for the repo layout is stored in a config file at the root of the repo. This can either be part of the
-`fluidBuild.config.cjs` file in the `repoLayout` property, or in an independent config file named
-`repoLayout.config.cjs` (or mjs).
+Configuration for the build project is stored in a config file at the root of the repo. This can either be part of the
+`fluidBuild.config.cjs` file in the `buildProject` property, or in an independent config file named
+`buildProject.config.cjs` (or mjs).
 
 ### Example
 
@@ -117,15 +117,15 @@ groups, a workspace with a single release group that contains multiple packages,
 group that contains a single package.
 
 ```js
-repoLayout: {
+buildProject: {
   workspaces: {
-    // This is the name of the workspace which is how it's referenced in the API. All workspaces in a Fluid repo must
+    // This is the name of the workspace which is how it's referenced in the API. All workspaces in a build project must
     // have a unique name.
     "client": {
       // This workspace is rooted at the root of the Git repo.
       directory: ".",
       releaseGroups: {
-        // This key is the name of the release group. All release groups in a Fluid repo must have a unique name.
+        // This key is the name of the release group. All release groups in a build project must have a unique name.
         client: {
           // The include property can contain package names OR package scopes. If
           // a scope is provided, all packages with that scope will be a part of
@@ -161,7 +161,7 @@ repoLayout: {
           rootPackageName: "examples-release-group-root",
         },
         // If any packages in the workspace don't match a release group, loading the
-        // repo layout config will throw an error.
+        // build project config will throw an error.
       },
     },
     "build-tools": {
@@ -193,13 +193,13 @@ repoLayout: {
 }
 ```
 
-### Loading a Fluid repo from a configuration file
+### Loading a build project from a configuration file
 
-To load a Fluid repo, you use the `loadFluidRepo` function. You can pass in a path to a Git repository root, or if one
+To load a build project, you use the `loadBuildProject` function. You can pass in a path to a Git repository root, or if one
 is not provided, then the Git repository nearest to the working directory can be used.
 
-This function will look for a repo layout configuration in that folder and load the workspaces, release groups, and
-packages accordingly and return an `IFluidRepo` object that includes Maps of workspaces, release groups, and packages as
+This function will look for a build project configuration in that folder and load the workspaces, release groups, and
+packages accordingly and return an `IBuildProject` object that includes Maps of workspaces, release groups, and packages as
 properties.
 
 ## Other APIs
@@ -215,17 +215,17 @@ The `PackageBase` abstract class can be used as a base class to create custom `I
 
 ## Miscellaneous improvements
 
-### Fluid repos can be rooted anywhere
+### Build projects can be rooted anywhere
 
-Fluid repos are rooted where their config file is located, _not_ at the root of a Git repo. There can be multiple Fluid
-repos within a Git repo, though this is usually only needed for testing. In typical use only a single Fluid repo per
-Git repo is needed. However, the Fluid repo does _not_ need to be rooted at the root of Git repo, and code should not
-assume that the root of the Fluid repo is the same as the root of a Git repo.
+Build projects are rooted where their config file is located, _not_ at the root of a Git repo. There can be multiple Fluid
+repos within a Git repo, though this is usually only needed for testing. In typical use only a single build project per
+Git repo is needed. However, the build project does _not_ need to be rooted at the root of Git repo, and code should not
+assume that the root of the build project is the same as the root of a Git repo.
 
 ### Better testing
 
-There is now a test project within the repo that is a fully functional Fluid repo. There are basic unit tests that verify the
-loading of the Fluid repo config and that packages are organized as expected. This is a dramatic improvement from v0
+There is now a test project within the repo that is a fully functional build project. There are basic unit tests that verify the
+loading of the build project config and that packages are organized as expected. This is a dramatic improvement from v0
 build-tools, in which all package traversal logic was effectively untested.
 
 There are also tests for the selection and filtering APIs.

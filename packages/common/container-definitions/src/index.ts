@@ -19,11 +19,13 @@ export type {
 	IConnectionDetails,
 	IDeltaManager,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	IDeltaQueueEvents,
 	IDeltaSender,
 	ReadOnlyInfo,
 } from "./deltas.js";
+export { isIDeltaManagerFull } from "./deltas.js";
 export type { ContainerWarning, ICriticalContainerError } from "./error.js";
 export { ContainerErrorTypes } from "./error.js";
 export type {
@@ -32,6 +34,7 @@ export type {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IContainerPolicies,
 	IFluidCodeResolver,
 	IFluidModuleWithDetails,
 	IHostLoader,

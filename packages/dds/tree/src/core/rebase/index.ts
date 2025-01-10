@@ -24,7 +24,6 @@ export {
 	taggedOptAtomId,
 	offsetChangeAtomId,
 	replaceAtomRevisions,
-	replaceChange,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {
@@ -49,4 +48,6 @@ export {
 	revisionMetadataSourceFromInfo,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
+	replaceChange,
+	isAncestor,
 } from "./utils.js";

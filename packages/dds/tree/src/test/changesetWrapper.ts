@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "assert";
+import { strict } from "node:assert";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type ChangeAtomIdMap,

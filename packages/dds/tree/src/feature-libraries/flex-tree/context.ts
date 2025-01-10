@@ -12,7 +12,7 @@ import {
 	anchorSlot,
 	moveToDetachedField,
 } from "../../core/index.js";
-import type { Listenable } from "../../events/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces";
 import { type IDisposable, disposeSymbol } from "../../util/index.js";
 import type { NodeKeyManager } from "../node-key/index.js";
 
@@ -49,7 +49,8 @@ export interface FlexTreeContext {
  * A common context of a "forest" of FlexTrees.
  * It handles group operations like transforming cursors into anchors for edits.
  */
-export interface FlexTreeHydratedContext extends FlexTreeContext, Listenable<ForestEvents> {
+export interface FlexTreeHydratedContext extends FlexTreeContext {
+	readonly events: Listenable<ForestEvents>;
 	/**
 	 * Gets the root field of the tree.
 	 */
@@ -92,7 +93,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		public readonly nodeKeyManager: NodeKeyManager,
 	) {
 		this.eventUnregister = [
-			this.checkout.forest.on("beforeChange", () => {
+			this.checkout.forest.events.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
 		];
@@ -160,11 +161,8 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		return field;
 	}
 
-	public on<K extends keyof ForestEvents>(
-		eventName: K,
-		listener: ForestEvents[K],
-	): () => void {
-		return this.checkout.forest.on(eventName, listener);
+	public get events(): Listenable<ForestEvents> {
+		return this.checkout.forest.events;
 	}
 }
 

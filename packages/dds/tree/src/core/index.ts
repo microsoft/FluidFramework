@@ -47,6 +47,7 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	createAnnouncedVisitor,
 	combineVisitors,
 	announceDelta,
 	applyDelta,
@@ -98,6 +99,11 @@ export {
 	type DeltaFieldChanges,
 	type ExclusiveMapTree,
 	deepCopyMapTree,
+	type TreeChunk,
+	dummyRoot,
+	cursorChunk,
+	tryGetChunk,
+	type ChunkedCursor,
 } from "./tree/index.js";
 
 export {
@@ -121,7 +127,7 @@ export {
 	type TreeFieldStoredSchema,
 	ValueSchema,
 	TreeNodeStoredSchema,
-	type TreeStoredSchemaSubscription as TreeStoredSchemaSubscription,
+	type TreeStoredSchemaSubscription,
 	type MutableTreeStoredSchema,
 	type FieldKindIdentifier,
 	type FieldKindData,
@@ -196,14 +202,21 @@ export {
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
+	isAncestor,
 } from "./rebase/index.js";
 
 export {
 	type Adapters,
 	AdaptedViewSchema,
-	Compatibility,
 	type TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";
+export {
+	type Revertible,
+	RevertibleStatus,
+	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
+	cloneRevertibles,
+} from "./revertible.js";

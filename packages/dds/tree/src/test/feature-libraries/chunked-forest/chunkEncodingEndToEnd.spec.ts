@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
@@ -48,11 +48,11 @@ import {
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
 import {
-	ForestType,
 	type TreeStoredContent,
 	type ISharedTreeEditor,
 	SharedTreeFactory,
 	Tree,
+	ForestTypeOptimized,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
@@ -70,7 +70,7 @@ import {
 	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
@@ -86,7 +86,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 const options = {
 	jsonValidator: typeboxValidator,
-	forest: ForestType.Optimized,
+	forest: ForestTypeOptimized,
 	summaryEncodeType: TreeCompressionStrategy.Compressed,
 };
 
@@ -397,7 +397,7 @@ describe("End to end chunked encoding", () => {
 		it("Initializing tree creates uniform chunks with encoded identifiers", async () => {
 			const factory = new SharedTreeFactory({
 				jsonValidator: typeboxValidator,
-				forest: ForestType.Optimized,
+				forest: ForestTypeOptimized,
 			});
 
 			const runtime = new MockFluidDataStoreRuntime({

@@ -13,8 +13,10 @@ import type {
 	InternalTreeNode,
 	NodeKind,
 	TreeNode,
+	TreeNodeSchema,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
+import type { UnionToTuple } from "../../util/index.js";
 
 /*
  * This file does two things:
@@ -40,7 +42,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	name: TName,
 ) {
 	class SingletonSchema extends factory.object(name, {}) {
-		public constructor(data?: InternalTreeNode) {
+		public constructor(data?: InternalTreeNode | Record<string, never>) {
 			super(data ?? {});
 		}
 		public get value(): TName {
@@ -48,7 +50,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 		}
 	}
 
-	type NodeType = TreeNode & { readonly value: TName };
+	type SingletonNodeType = TreeNode & { readonly value: TName };
 
 	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
 	// for the private brand field of TreeNode.
@@ -58,11 +60,12 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 	const toReturn: TreeNodeSchemaClass<
 		ScopedSchemaName<TScope, TName>,
 		NodeKind.Object,
-		NodeType,
-		never,
-		true
-	> &
-		(new () => NodeType) = SingletonSchema;
+		SingletonNodeType,
+		Record<string, never>,
+		true,
+		Record<string, never>,
+		undefined
+	> = SingletonSchema;
 
 	return toReturn;
 }
@@ -70,8 +73,8 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 /**
  * Converts an enum into a collection of schema which can be used in a union.
  * @remarks
- * Currently only supports `string` enums.
  * The string value of the enum is used as the name of the schema: callers must ensure that it is stable and unique.
+ * Numeric enums values have the value implicitly converted into a string.
  * Consider making a dedicated schema factory with a nested scope to avoid the enum members colliding with other schema.
  * @example
  * ```typescript
@@ -84,15 +87,14 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * // Define the schema for each member of the enum using a nested scope to group them together.
  * const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
  * // Defined the types of the nodes which correspond to this the schema.
- * type ModeNodes = NodeFromSchema<(typeof ModeNodes)[keyof typeof ModeNodes]>;
+ * type ModeNodes = TreeNodeFromImplicitAllowedTypes<(typeof ModeNodes.schema)>;
  * // An example schema which has an enum as a child.
  * class Parent extends schemaFactory.object("Parent", {
- * 	// typedObjectValues extracts a list of all the fields of ModeNodes, which are the schema for each enum member.
- * 	// This means any member of the enum is allowed in this field.
- * 	mode: typedObjectValues(ModeNodes),
+ * 	// adaptEnum's return value has a ".schema" property can be use as an `AllowedTypes` array allowing any of the members of the enum.
+ * 	mode: ModeNodes.schema,
  * }) {}
  *
- * // Example usage of enum-based nodes, showing what type to use and that `.value` can be used to read out the enum value.
+ * // Example usage of enum based nodes, showing what type to use and that `.value` can be used to read out the enum value.
  * function getValue(node: ModeNodes): Mode {
  * 	return node.value;
  * }
@@ -104,8 +106,6 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * }
  * ```
  * @privateRemarks
- * TODO:
- * Extend this to support numeric enums.
  * Maybe provide `SchemaFactory.nested` to ease creating nested scopes?
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
  * @alpha
@@ -131,35 +131,39 @@ export function adaptEnum<
 			typeof singletonSchema<TScope, TEnum[Property]>
 		>;
 	};
+
+	type SchemaArray = UnionToTuple<TOut[keyof TEnum]>;
+	const schemaArray: TreeNodeSchema[] = [];
+
 	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const factoryOut = <TValue extends Values>(value: TValue) => {
-		return new out[inverse.get(value) ?? fail("missing enum value")]() as NodeFromSchema<
-			ReturnType<typeof singletonSchema<TScope, TValue>>
-		>;
+		return new out[
+			inverse.get(value) ?? fail("missing enum value")
+			// "extends unknown" is required here to handle when TValue is an union: each member of the union should be processed independently.
+		]() as TValue extends unknown
+			? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>>
+			: never;
 	};
-	const out = factoryOut as typeof factoryOut & TOut;
+	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
 	for (const [key, value] of Object.entries(members)) {
+		const schema = singletonSchema(factory, value);
+		schemaArray.push(schema);
 		Object.defineProperty(out, key, {
 			enumerable: true,
 			configurable: false,
 			writable: false,
-			value: singletonSchema(factory, value),
+			value: schema,
 		});
 	}
 
-	return out;
-}
+	Object.defineProperty(out, "schema", {
+		enumerable: true,
+		configurable: false,
+		writable: false,
+		value: schemaArray,
+	});
 
-/**
- * `Object.values`, but with more specific types.
- * @remarks
- * Useful with collections of schema, like those returned by {@link adaptEnum} or {@link enumFromStrings}.
- * @alpha
- */
-export function typedObjectValues<TKey extends string, TValues>(
-	object: Record<TKey, TValues>,
-): TValues[] {
-	return Object.values(object);
+	return out;
 }
 
 /**
@@ -171,43 +175,73 @@ export function typedObjectValues<TKey extends string, TValues>(
  * The produced nodes use the provided strings as their `name`, and don't store any data beyond that.
  * @example
  * ```typescript
+ * const schemaFactory = new SchemaFactory("com.myApp");
  * const Mode = enumFromStrings(schemaFactory, ["Fun", "Cool"]);
- * type Mode = NodeFromSchema<(typeof Mode)[keyof typeof Mode]>;
+ * type Mode = TreeNodeFromImplicitAllowedTypes<typeof Mode.schema>;
  * const nodeFromString: Mode = Mode("Fun");
  * const nodeFromSchema: Mode = new Mode.Fun();
- * const nameFromNode = nodeFromSchema.value;
  *
- * class Parent extends schemaFactory.object("Parent", { mode: typedObjectValues(Mode) }) {}
+ * // Schema nodes have a strongly typed `.value` property.
+ * const nameFromNode: "Fun" | "Cool" = nodeFromSchema.value;
+ *
+ * class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
  * ```
  * @see {@link adaptEnum} for a similar function that works on enums instead of arrays of strings.
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export function enumFromStrings<TScope extends string, const Members extends string>(
-	factory: SchemaFactory<TScope>,
-	members: readonly Members[],
-) {
+export function enumFromStrings<
+	TScope extends string,
+	const Members extends readonly string[],
+>(factory: SchemaFactory<TScope>, members: Members) {
 	const names = new Set(members);
 	if (names.size !== members.length) {
 		throw new UsageError("All members of enums must have distinct names");
 	}
 
-	type TOut = Record<Members, ReturnType<typeof singletonSchema<TScope, Members>>>;
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	const factoryOut = <TValue extends Members>(value: TValue) => {
-		return new out[value]() as NodeFromSchema<
-			ReturnType<typeof singletonSchema<TScope, TValue>>
+	type MembersUnion = Members[number];
+
+	// Get all keys of the Members tuple which are numeric strings as union of numbers:
+	type Indexes = Extract<keyof Members, `${number}`> extends `${infer N extends number}`
+		? N
+		: never;
+
+	type TOut = {
+		[Index in Indexes as Members[Index]]: ReturnType<
+			typeof singletonSchema<TScope, Members[Index] & string>
 		>;
 	};
-	const out = factoryOut as typeof factoryOut & TOut;
+
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	const factoryOut = <TValue extends MembersUnion>(value: TValue) => {
+		// "extends unknown" is required here to handle when TValue is an union: each member of the union should be processed independently.
+		return new recordOut[value]() as TValue extends unknown
+			? NodeFromSchema<ReturnType<typeof singletonSchema<TScope, TValue>>>
+			: never;
+	};
+
+	type SchemaArray = UnionToTuple<MembersUnion extends unknown ? TOut[MembersUnion] : never>;
+	const schemaArray: TreeNodeSchema[] = [];
+
+	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
+	const recordOut = out as Record<MembersUnion, new () => unknown>;
 	for (const name of members) {
+		const schema = singletonSchema(factory, name);
+		schemaArray.push(schema);
 		Object.defineProperty(out, name, {
 			enumerable: true,
 			configurable: false,
 			writable: false,
-			value: singletonSchema(factory, name),
+			value: schema,
 		});
 	}
+
+	Object.defineProperty(out, "schema", {
+		enumerable: true,
+		configurable: false,
+		writable: false,
+		value: schemaArray,
+	});
 
 	return out;
 }

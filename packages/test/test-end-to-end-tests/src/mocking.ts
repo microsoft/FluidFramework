@@ -21,7 +21,7 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 ): T {
 	return new Proxy(obj, {
 		get: (target: T, property: string, r) => {
-			const override = overrides[property as keyof T];
+			const override = overrides?.[property as keyof T];
 			// check if the current property has an override
 			if (override) {
 				// check if the override is a function, which means it is factory
@@ -35,7 +35,7 @@ export function wrapObjectAndOverride<T extends Record<string, any>>(
 				// it is an object which nests more overrides, so
 				// get the property from the passed in object,
 				// so we can proxy nested overrides to it
-				const real = target[property as keyof T];
+				const real = target?.[property as keyof T];
 				// if the real property is a function, we'll
 				// call it, so whatever it returns can have
 				// the nested overrides applied to it

@@ -568,28 +568,34 @@ describeCompat(
 
 			// Verify the summary tree is generated as we expected it to be.
 			assert(
-				summaryTree.tree[".channels"].type === SummaryType.Tree,
+				summaryTree.tree[".channels"]?.type === SummaryType.Tree,
 				"Runtime summary tree not created for blob dds test",
 			);
-			const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
+			const dataObjectTree = summaryTree.tree[".channels"]?.tree[datastore.runtime.id];
 			assert(
 				dataObjectTree.type === SummaryType.Tree,
 				"Data store summary tree not created for blob dds test",
 			);
-			const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
+			const dataObjectChannelsTree: SummaryObject | undefined =
+				dataObjectTree.tree[".channels"];
 			assert(
 				dataObjectChannelsTree.type === SummaryType.Tree,
 				"Data store channels tree not created for blob dds test",
 			);
-			const ddsTree = dataObjectChannelsTree.tree[dds.id];
+			const ddsTree: SummaryObject | undefined = dataObjectChannelsTree.tree[dds.id];
 			assert(ddsTree.type === SummaryType.Tree, "Blob dds tree not created");
 			validateHandle(ddsTree.tree["0"], datastore.context.id, dds.id, "0", "Blob 0");
 			validateHandle(ddsTree.tree["1"], datastore.context.id, dds.id, "1", "Blob 1");
 			validateHandle(ddsTree.tree["2"], datastore.context.id, dds.id, "2", "Blob 2");
-			assert(ddsTree.tree["3"].type === SummaryType.Blob, "Blob 3 should be a blob");
+			assert(ddsTree.tree["3"]?.type === SummaryType.Blob, "Blob 3 should be a blob");
 		});
 
-		it("can create summary handles for trees in DDSes that do not change", async () => {
+		it("can create summary handles for trees in DDSes that do not change", async function () {
+			// Skip this test for standard r11s as its summarization timing is flaky.
+			// This test is covering client logic and the coverage from other drivers/endpoints is sufficient.
+			if (provider.driver.type === "r11s" && provider.driver.endpointName !== "frs") {
+				this.skip();
+			}
 			const container = await createContainer();
 			const datastore = (await container.getEntryPoint()) as ITestFluidObject;
 			const dds = await datastore.getSharedObject<TestIncrementalSummaryTreeDDS>(
@@ -623,22 +629,23 @@ describeCompat(
 			// Verify the summary tree is generated as we expected it to be.
 			// Handles for "a" and "c", "b" and "f" should be trees
 			assert(
-				summaryTree.tree[".channels"].type === SummaryType.Tree,
+				summaryTree.tree[".channels"]?.type === SummaryType.Tree,
 				"Runtime summary1 tree not created for tree dds test",
 			);
-			const dataObjectTree = summaryTree.tree[".channels"].tree[datastore.runtime.id];
+			const dataObjectTree = summaryTree.tree[".channels"]?.tree[datastore.runtime.id];
 			assert(
 				dataObjectTree.type === SummaryType.Tree,
 				"Data store summary1 tree not created for tree dds test",
 			);
-			const dataObjectChannelsTree = dataObjectTree.tree[".channels"];
+			const dataObjectChannelsTree: SummaryObject | undefined =
+				dataObjectTree.tree[".channels"];
 			assert(
 				dataObjectChannelsTree.type === SummaryType.Tree,
 				"Data store summary1 channels tree not created for tree dds test",
 			);
-			const ddsTree = dataObjectChannelsTree.tree[dds.id];
+			const ddsTree: SummaryObject | undefined = dataObjectChannelsTree.tree[dds.id];
 			assert(ddsTree.type === SummaryType.Tree, "Summary1 tree not created for tree dds");
-			const rootNode = ddsTree.tree[dds.rootNodeName];
+			const rootNode: SummaryObject | undefined = ddsTree.tree[dds.rootNodeName];
 			assert(
 				rootNode.type === SummaryType.Tree,
 				"Summary1 - 'rootNode' should be a summary tree",
@@ -651,11 +658,11 @@ describeCompat(
 				"Summary1 - 'a'",
 			);
 			assert(
-				rootNode.tree.b.type === SummaryType.Tree,
+				rootNode.tree?.b.type === SummaryType.Tree,
 				"Summary1 - 'b' should be a summary tree",
 			);
 			assert(
-				rootNode.tree.b.tree.f.type === SummaryType.Tree,
+				rootNode.tree.b.tree?.f.type === SummaryType.Tree,
 				"Summary1 - 'f' should be a summary tree",
 			);
 			validateHandle(
@@ -688,22 +695,23 @@ describeCompat(
 			// Verify the summary tree is generated as we expected it to be.
 			// Handles for "a" and "b", "c" and "g" should be trees, "f" is under "b" and thus shouldn't be in the summary.
 			assert(
-				summaryTree2.tree[".channels"].type === SummaryType.Tree,
+				summaryTree2.tree[".channels"]?.type === SummaryType.Tree,
 				"Runtime summary2 tree not created for tree dds test",
 			);
-			const dataObjectTree2 = summaryTree2.tree[".channels"].tree[datastore2.runtime.id];
+			const dataObjectTree2 = summaryTree2.tree[".channels"]?.tree[datastore2.runtime.id];
 			assert(
 				dataObjectTree2.type === SummaryType.Tree,
 				"Data store summary2 tree not created for tree dds test",
 			);
-			const dataObjectChannelsTree2 = dataObjectTree2.tree[".channels"];
+			const dataObjectChannelsTree2: SummaryObject | undefined =
+				dataObjectTree2.tree[".channels"];
 			assert(
 				dataObjectChannelsTree2.type === SummaryType.Tree,
 				"Data store summary2 channels tree not created for tree dds test",
 			);
-			const ddsTree2 = dataObjectChannelsTree2.tree[dds2.id];
+			const ddsTree2: SummaryObject | undefined = dataObjectChannelsTree2.tree[dds2.id];
 			assert(ddsTree2.type === SummaryType.Tree, "Summary2 tree not created for tree dds");
-			const rootNode2 = ddsTree2.tree[dds.rootNodeName];
+			const rootNode2: SummaryObject | undefined = ddsTree2.tree[dds.rootNodeName];
 			assert(
 				rootNode2.type === SummaryType.Tree,
 				"Summary2 - 'rootNode' should be a summary tree",
@@ -723,11 +731,11 @@ describeCompat(
 				"Summary1 - 'b'",
 			);
 			assert(
-				rootNode2.tree.c.type === SummaryType.Tree,
+				rootNode2.tree?.c.type === SummaryType.Tree,
 				"Summary2 - 'c' should be a summary tree",
 			);
 			assert(
-				rootNode2.tree.c.tree.g.type === SummaryType.Tree,
+				rootNode2.tree.c.tree?.g.type === SummaryType.Tree,
 				"Summary2 - 'g' should be a summary tree",
 			);
 		});

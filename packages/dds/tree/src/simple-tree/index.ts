@@ -23,6 +23,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getKernel,
 } from "./core/index.js";
 export {
 	type ITree,
@@ -34,13 +35,14 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	typedObjectValues,
 	test_RecursiveObject,
 	test_RecursiveObject_base,
 	test_RecursiveObjectPojoMode,
@@ -51,7 +53,18 @@ export {
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type SimpleTreeIndex,
+	type IdentifierIndex,
+	createSimpleTreeIndex,
+	createIdentifierIndex,
+	type SimpleNodeSchemaBase,
 	type SimpleTreeSchema,
+	type SimpleNodeSchema,
+	type SimpleFieldSchema,
+	type SimpleLeafNodeSchema,
+	type SimpleMapNodeSchema,
+	type SimpleArrayNodeSchema,
+	type SimpleObjectNodeSchema,
 	type JsonSchemaId,
 	type JsonSchemaType,
 	type JsonObjectNodeSchema,
@@ -96,7 +109,21 @@ export {
 	type TreeNodeSchemaUnsafe,
 	type AllowedTypesUnsafe,
 	type TreeNodeSchemaNonClassUnsafe,
+	type InsertableTreeNodeFromAllowedTypesUnsafe,
 	type TreeViewAlpha,
+	type TreeBranch,
+	type TreeBranchEvents,
+	tryGetSchema,
+	applySchemaToParserOptions,
+	cursorFromVerbose,
+	verboseFromCursor,
+	conciseFromCursor,
+	createFromCursor,
+	asTreeViewAlpha,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -116,11 +143,21 @@ export {
 	type DefaultProvider,
 	type FieldProps,
 	normalizeFieldSchema,
+	areFieldSchemaEqual,
+	areImplicitFieldSchemaEqual,
 	type ApplyKind,
 	type FieldSchemaMetadata,
 	type InsertableField,
 	type Insertable,
 	type UnsafeUnknownSchema,
+	normalizeAllowedTypes,
+	type ApplyKindInput,
+	type InsertableTreeNodeFromAllowedTypes,
+	type Input,
+	type ReadableField,
+	type ReadSchema,
+	type NodeSchemaOptions,
+	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -129,7 +166,6 @@ export {
 export {
 	TreeArrayNode,
 	IterableTreeArrayContent,
-	type TreeArrayNodeBase,
 	type ReadonlyArrayNode,
 } from "./arrayNode.js";
 export {
@@ -138,6 +174,7 @@ export {
 	type ObjectFromSchemaRecord,
 	type TreeObjectNode,
 	setField,
+	createUnknownOptionalFieldPolicy,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export {
@@ -146,7 +183,7 @@ export {
 	type FactoryContent,
 	type FactoryContentObject,
 } from "./toMapTree.js";
-export { toStoredSchema, getStoredSchema } from "./toFlexSchema.js";
+export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,

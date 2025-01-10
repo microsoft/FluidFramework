@@ -9,9 +9,10 @@
  */
 import type { Element as HastElement } from "hast";
 import { h } from "hastscript";
+
 import type { TableNode } from "../../documentation-domain/index.js";
-import { transformChildrenUnderTag } from "../Utilities.js";
 import type { TransformationContext } from "../TransformationContext.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
  * Transform a {@link TableNode} to HTML.
