@@ -539,7 +539,7 @@ export class BuildGraph {
 		spinner?.start();
 		spinner?.setText("Checking incremental build task status...");
 		const isUpToDate = await this.isUpToDate();
-		if (timer) timer.time(`Check up to date completed`);
+		timer?.time(`Check up to date completed`);
 		spinner?.succeed("Tasks loaded.");
 
 		log(
