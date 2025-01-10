@@ -13,6 +13,7 @@ import includes from "lodash/includes.js";
 import isEmpty from "lodash/isEmpty.js";
 import isEqual from "lodash/isEqual.js";
 import isObject from "lodash/isObject.js";
+import omit from "lodash/omit.js";
 import without from "lodash/without.js";
 
 // @ts-ignore
@@ -263,10 +264,10 @@ export namespace ChangeSetIndexedCollectionFunctions {
 
 						// Finally, check if the data being inserted matches the data that was removed
 						const insertedEntry = isObject(insertedEntries[key])
-							? without(insertedEntries[key], "insert")
+							? omit(insertedEntries[key], "insert")
 							: insertedEntries[key];
 						const removedEntry = isObject(removalCS[key])
-							? without(removalCS[key], "remove")
+							? omit(removalCS[key], "remove")
 							: removalCS[key];
 						deeplyEqualCS = deeplyEqualCS && isEqual(insertedEntry, removedEntry);
 					}

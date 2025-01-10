@@ -144,7 +144,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 	): Promise<string> {
 		const parsedUrl = new URL(resolvedUrl.url);
 		const [, , documentId] = parsedUrl.pathname?.split("/") ?? [];
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 		assert(!!documentId, 0x273 /* "Invalid document id from parsed URL" */);
 
 		let url = relativeUrl;

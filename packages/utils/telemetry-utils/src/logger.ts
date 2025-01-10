@@ -289,11 +289,10 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 			}
 			for (const props of properties) {
 				if (props !== undefined) {
-					for (const key of Object.keys(props)) {
+					for (const [key, getterOrValue] of Object.entries(props)) {
 						if (eventLike[key] !== undefined) {
 							continue;
 						}
-						const getterOrValue = props[key];
 						// If this throws, hopefully it is handled elsewhere
 						const value =
 							typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
@@ -326,8 +325,7 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 			category: eventWithTagsMaybe.category,
 			eventName: eventWithTagsMaybe.eventName,
 		};
-		for (const key of Object.keys(eventWithTagsMaybe)) {
-			const taggableProp = eventWithTagsMaybe[key];
+		for (const [key, taggableProp] of Object.entries(eventWithTagsMaybe)) {
 			const { value, tag } =
 				typeof taggableProp === "object"
 					? taggableProp
@@ -944,7 +942,6 @@ export const tagData = <
 			// The ternary form is less legible in this case.
 			// eslint-disable-next-line unicorn/prefer-ternary
 			if (typeof value === "function") {
-				// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 				pv[key] = () => {
 					return { tag, value: value() };
 				};

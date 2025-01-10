@@ -9,21 +9,17 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	AllowedUpdateType,
-	anchorSlot,
-	Compatibility,
-	type SchemaPolicy,
-} from "../core/index.js";
+import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
 	type NodeKeyManager,
 	defaultSchemaPolicy,
 	ContextSlot,
 	cursorForMapTreeNode,
 	type FullSchemaPolicy,
+	TreeStatus,
 } from "../feature-libraries/index.js";
 import {
 	type FieldSchema,
@@ -48,6 +44,8 @@ import {
 	type UnsafeUnknownSchema,
 	type TreeBranch,
 	type TreeBranchEvents,
+	getOrCreateInnerNode,
+	getKernel,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
@@ -58,7 +56,17 @@ import {
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
+	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
+import type {
+	VoidTransactionCallbackStatus,
+	TransactionCallbackStatus,
+	TransactionResult,
+	TransactionResultExt,
+	RunTransactionParams,
+	TransactionConstraint,
+} from "./transactionTypes.js";
+
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
@@ -116,14 +124,14 @@ export class SchematizingSimpleTreeView<
 		}
 		checkout.forest.anchors.slots.set(ViewSlot, this);
 
-		const policy = {
+		this.rootFieldSchema = normalizeFieldSchema(config.schema);
+		this.schemaPolicy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.enableSchemaValidation,
+			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
-		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.schemaPolicy = defaultSchemaPolicy;
 
-		this.viewSchema = new ViewSchema(policy, {}, toStoredSchema(this.rootFieldSchema));
+		this.viewSchema = new ViewSchema(this.schemaPolicy, {}, this.rootFieldSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -166,16 +174,13 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 				{
 					schema: this.checkout.storedSchema,
-					policy: {
-						...defaultSchemaPolicy,
-						validateSchema: this.config.enableSchemaValidation,
-					},
+					policy: this.schemaPolicy,
 				},
 			);
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.schema,
+				schema: toStoredSchema(this.viewSchema.schema),
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -202,7 +207,7 @@ export class SchematizingSimpleTreeView<
 				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
 				{
-					schema: this.viewSchema.schema,
+					schema: toStoredSchema(this.viewSchema.schema),
 					initialTree: undefined,
 				},
 			);
@@ -217,6 +222,84 @@ export class SchematizingSimpleTreeView<
 		this.ensureUndisposed();
 		assert(this.view !== undefined, 0x8c0 /* unexpected getViewOrError */);
 		return this.view;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
+	 */
+	public runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue>;
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
+	 */
+	public runTransaction(
+		transaction: () => VoidTransactionCallbackStatus | void,
+		params?: RunTransactionParams,
+	): TransactionResult;
+	public runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () =>
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		const addConstraints = (
+			constraintsOnRevert: boolean,
+			constraints: readonly TransactionConstraint[] = [],
+		): void => {
+			for (const constraint of constraints) {
+				switch (constraint.type) {
+					case "nodeInDocument": {
+						const node = getOrCreateInnerNode(constraint.node);
+						const nodeStatus = getKernel(constraint.node).getStatus();
+						if (nodeStatus !== TreeStatus.InDocument) {
+							const revertText = constraintsOnRevert ? " on revert" : "";
+							throw new UsageError(
+								`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+							);
+						}
+						if (constraintsOnRevert) {
+							this.checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
+						} else {
+							this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
+						}
+						break;
+					}
+					default:
+						unreachableCase(constraint.type);
+				}
+			}
+		};
+
+		this.checkout.transaction.start();
+
+		// Validate preconditions before running the transaction callback.
+		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
+		const transactionCallbackStatus = transaction();
+		const rollback = transactionCallbackStatus?.rollback;
+		const value = (
+			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+		)?.value;
+
+		if (rollback === true) {
+			this.checkout.transaction.abort();
+			return value !== undefined
+				? { success: false, value: value as TFailureValue }
+				: { success: false };
+		}
+
+		// Validate preconditions on revert after running the transaction callback and was successful.
+		addConstraints(
+			true /* constraintsOnRevert */,
+			transactionCallbackStatus?.preconditionsOnRevert,
+		);
+
+		this.checkout.transaction.commit();
+		return value !== undefined
+			? { success: true, value: value as TSuccessValue }
+			: { success: true };
 	}
 
 	private ensureUndisposed(): void {
@@ -389,7 +472,7 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TRootSchema> {
+	public fork(): ReturnType<TreeBranch["fork"]> & SchematizingSimpleTreeView<TRootSchema> {
 		return this.checkout.branch().viewWith(this.config);
 	}
 
@@ -432,11 +515,7 @@ export function requireSchema(
 
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
-		assert(
-			compatibility.write === Compatibility.Compatible &&
-				compatibility.read === Compatibility.Compatible,
-			0x8c3 /* requireSchema invoked with incompatible schema */,
-		);
+		assert(compatibility.canView, 0x8c3 /* requireSchema invoked with incompatible schema */);
 	}
 
 	const view = new CheckoutFlexTreeView(checkout, schemaPolicy, nodeKeyManager, onDispose);

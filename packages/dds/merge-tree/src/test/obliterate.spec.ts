@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISegmentLeaf, ObliterateInfo } from "../mergeTreeNodes.js";
+import type { ISegmentPrivate, ObliterateInfo } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { TestClient } from "./testClient.js";
@@ -179,8 +179,8 @@ describe("obliterate", () => {
 
 			const obliterateStart = 0;
 			const obliterateEnd = client.getLength();
-			const startSeg = client.getContainingSegment<ISegmentLeaf>(obliterateStart);
-			const endSeg = client.getContainingSegment<ISegmentLeaf>(obliterateEnd);
+			const startSeg = client.getContainingSegment<ISegmentPrivate>(obliterateStart);
+			const endSeg = client.getContainingSegment<ISegmentPrivate>(obliterateEnd);
 			obliterateRange({
 				mergeTree: client.mergeTree,
 				start: obliterateStart,
