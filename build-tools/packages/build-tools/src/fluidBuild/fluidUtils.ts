@@ -145,8 +145,8 @@ const configExplorer = cosmiconfigSync(configName, {
 });
 
 /**
- * Set to true when the default config is returned by getFluidBuildConfig so that repeated calls to the function don't
- * result in repeated searches for config.
+ * Contains directories previously used to start search but did find an explicit fluidBuild config file.
+ * This allows avoiding repeated searches for config.
  */
 const defaultSearchDir = new Set<string>();
 
@@ -155,6 +155,7 @@ const defaultSearchDir = new Set<string>();
  *
  * @param searchDir - The path to search for the config. The search will look up the folder hierarchy for a config in
  * either a standalone file or package.json
+ * @param warnNotFound - Whether to warn if no fluidBuild config is found.
  * @returns The the loaded fluidBuild config, or the default config if one is not found.
  */
 export function getFluidBuildConfig(
