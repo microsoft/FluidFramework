@@ -314,9 +314,6 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
-			"extraneous-lockfiles": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
-			],
 			"fluid-build-tasks-eslint": [
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
@@ -372,9 +369,6 @@ module.exports = {
 			"npm-package-metadata-and-sorting": [
 				// The root package.json is not checked temporarily due to AB#8640
 				"^package.json",
-			],
-			"package-lockfiles-npm-version": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-prettier": [
 				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
@@ -556,7 +550,6 @@ module.exports = {
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",
-			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
@@ -589,12 +582,7 @@ module.exports = {
 	},
 
 	assertTagging: {
-		enabledPaths: [
-			/^common\/lib\/common-utils/i,
-			/^experimental/i,
-			/^packages/i,
-			/^server\/routerlicious\/packages\/protocol-base/i,
-		],
+		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
 		assertionFunctions: {
 			assert: 1,
 		},

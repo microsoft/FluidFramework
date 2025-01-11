@@ -102,7 +102,7 @@ export async function getFileLink(
 }
 
 /**
- * Handles location redirection while fulfilling the getFilelink call. We don't want browser to handle
+ * Handles location redirection while fulfilling the getFileLink call. We don't want browser to handle
  * the redirection as the browser will retry with same auth token which will not work as we need app
  * to regenerate tokens for the new site domain. So when we will make the network calls below we will set
  * the redirect:manual header to manually handle these redirects.
@@ -125,7 +125,7 @@ async function getFileLinkWithLocationRedirectionHandling(
 	let locationRedirected = false;
 	for (let count = 1; count <= 5; count++) {
 		try {
-			const fileItem = await getFileItemLite(getToken, resolvedUrl, logger, true);
+			const fileItem = await getFileItemLite(getToken, resolvedUrl, logger);
 			// Sometimes the siteUrl in the actual file is different from the siteUrl in the resolvedUrl due to location
 			// redirection. This creates issues in the getSharingInformation call. So we need to update the siteUrl in the
 			// resolvedUrl to the siteUrl in the fileItem which is the updated siteUrl.
@@ -260,7 +260,6 @@ async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
 	logger: ITelemetryLoggerExt,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(
 		logger,

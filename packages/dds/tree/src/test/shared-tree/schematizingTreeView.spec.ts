@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -476,7 +476,9 @@ describe("SchematizingSimpleTreeView", () => {
 
 	describe("runTransaction", () => {
 		const schemaFactory = new SchemaFactory(undefined);
-		class ChildObject extends schemaFactory.object("ChildObject", {}) {}
+		class ChildObject extends schemaFactory.object("ChildObject", {
+			content: schemaFactory.number,
+		}) {}
 		class TestObject extends schemaFactory.object("TestObject", {
 			content: schemaFactory.number,
 			child: schemaFactory.optional(ChildObject),
@@ -573,6 +575,45 @@ describe("SchematizingSimpleTreeView", () => {
 					"The runTransaction result is incorrect",
 				);
 			});
+
+			it("success + preconditions on revert", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 43, "The transaction did not commit");
+				const expectedResult: TransactionResult = {
+					success: true,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
+
+			it("rollback + preconditions on revert", () => {
+				const view = getTestObjectView();
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						rollback: true,
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: view.root }],
+					};
+				});
+				assert.equal(view.root.content, 42, "The transaction did not rollback");
+				const expectedResult: TransactionResult = {
+					success: false,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+			});
 		});
 
 		describe("transactions", () => {
@@ -649,7 +690,7 @@ describe("SchematizingSimpleTreeView", () => {
 			});
 
 			it("fails if node existence constraint is already violated", () => {
-				const view = getTestObjectView({});
+				const view = getTestObjectView({ content: 42 });
 				const childB = view.root.child;
 				assert(childB !== undefined);
 				// The node given to the constraint is deleted from the document, so the transaction can't possibly succeed even locally/optimistically
@@ -685,7 +726,7 @@ describe("SchematizingSimpleTreeView", () => {
 				const viewB = treeB.viewWith(viewConfig);
 				viewA.initialize({
 					content: 42,
-					child: {},
+					child: { content: 42 },
 				});
 				provider.processMessages();
 
@@ -716,6 +757,82 @@ describe("SchematizingSimpleTreeView", () => {
 				provider.processMessages();
 				assert.equal(viewB.root.content, 42);
 				assert.equal(viewB.root.content, 42);
+			});
+
+			/**
+			 * This test exercises the precondition on revert constraints API with a representative scenario.
+			 * For more in-depth testing of undo precondition constraints, see editing.spec.ts.
+			 */
+			it("constraint on revert violated by transaction body", () => {
+				const view = getTestObjectView({ content: 42 });
+				const child = view.root.child;
+				assert(child !== undefined);
+
+				// Called by the transaction body. This violates the constraint on revert but the transaction
+				// body doesn't know about it.
+				const doSomething = () => {
+					view.root.child = undefined;
+				};
+				assert.throws(
+					() =>
+						view.runTransaction(() => {
+							child.content = 43;
+							// Simulates a side effect where a code that the transaction calls ends up violating the
+							// constraint on revert.
+							doSomething();
+							return {
+								preconditionsOnRevert: [{ type: "nodeInDocument", node: child }],
+							};
+						}),
+					(e) => {
+						return (
+							e instanceof UsageError &&
+							e.message.startsWith(
+								`Attempted to add a "nodeInDocument" constraint on revert, but the node is not currently in the document`,
+							)
+						);
+					},
+				);
+				assert.throws(() => view.root.content, "View should be broken");
+			});
+
+			/**
+			 * This test exercises the precondition on revert constraints API with a representative scenario.
+			 * For more in-depth testing of undo precondition constraints, see editing.spec.ts.
+			 */
+			it("constraint on revert violated by interim change", () => {
+				const view = getTestObjectView({ content: 42 });
+				const child = view.root.child;
+				assert(child !== undefined);
+
+				const stack = createTestUndoRedoStacks(view.events);
+
+				const runTransactionResult = view.runTransaction(() => {
+					view.root.content = 43;
+					return {
+						preconditionsOnRevert: [{ type: "nodeInDocument", node: child }],
+					};
+				});
+				assert.equal(view.root.content, 43, "The transaction did not succeed");
+				const expectedResult: TransactionResult = {
+					success: true,
+				};
+				assert.deepStrictEqual(
+					runTransactionResult,
+					expectedResult,
+					"The runTransaction result is incorrect",
+				);
+
+				const changed42To43 = stack.undoStack[0] ?? fail("Missing undo");
+
+				// This change should violate the constraint in the revert
+				view.root.child = undefined;
+
+				// This revert should do nothing since its constraint has been violated
+				changed42To43.revert();
+				assert.equal(view.root.content, 43, "The revert should have been ignored");
+
+				stack.unsubscribe();
 			});
 		});
 	});
