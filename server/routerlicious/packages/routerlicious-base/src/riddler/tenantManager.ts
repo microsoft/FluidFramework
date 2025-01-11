@@ -162,6 +162,12 @@ export class TenantManager {
 		const lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
+			documentId,
+			scopes,
+			user,
+			lifetime,
+			ver,
+			jti,
 		};
 		const tenantDocument = await this.getTenantDocument(tenantId, includeDisabledTenant);
 		if (tenantDocument === undefined) {
@@ -200,6 +206,10 @@ export class TenantManager {
 			  ).key1
 			: keys.key1;
 
+		Lumberjack.info("Signing token with key1", {
+			...lumberProperties,
+			isTenantPrivateKeyAccessEnabled,
+		});
 		const token = generateToken(
 			tenantId,
 			documentId,
@@ -211,6 +221,10 @@ export class TenantManager {
 			jti,
 			isTenantPrivateKeyAccessEnabled,
 		);
+		Lumberjack.info("Token signed with key1", {
+			...lumberProperties,
+			isTenantPrivateKeyAccessEnabled,
+		});
 
 		return {
 			fluidAccessToken: token,
@@ -236,6 +250,7 @@ export class TenantManager {
 		const lumberProperties = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
+			isKeylessAccessValidation,
 		};
 
 		// Try validating with Key 1
