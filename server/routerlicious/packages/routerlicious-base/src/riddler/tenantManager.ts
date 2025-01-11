@@ -255,7 +255,7 @@ export class TenantManager {
 
 		// Try validating with Key 1
 		try {
-			await this.validateTokenWithKey(tenantKeys.key1, KeyName.key1, token);
+			await this.validateTokenWithKey(tenantKeys.key1, KeyName.key1, token, lumberProperties);
 			return;
 		} catch (error) {
 			if (isNetworkError(error)) {
@@ -287,7 +287,7 @@ export class TenantManager {
 		}
 		// If Key 1 validation fails, try with Key 2
 		try {
-			await this.validateTokenWithKey(tenantKeys.key2, KeyName.key2, token);
+			await this.validateTokenWithKey(tenantKeys.key2, KeyName.key2, token, lumberProperties);
 		} catch (error) {
 			if (isNetworkError(error)) {
 				if (error.code === 403) {
@@ -328,6 +328,7 @@ export class TenantManager {
 		key: string,
 		keyName: string,
 		token: string,
+		lumberjackProperties: any = {},
 	): Promise<boolean> {
 		return new Promise<boolean>((resolve, reject) => {
 			jwt.verify(token, key, (error) => {
@@ -339,8 +340,16 @@ export class TenantManager {
 				// When `exp` claim exists in token claims, jsonwebtoken verifies token expiration.
 
 				if (error instanceof jwt.TokenExpiredError) {
+					Lumberjack.error(
+						`Token expired validated with ${keyName}.`,
+						lumberjackProperties,
+					);
 					reject(new NetworkError(401, `Token expired validated with ${keyName}.`));
 				} else {
+					Lumberjack.error(
+						`Invalid token validated with ${keyName}.`,
+						lumberjackProperties,
+					);
 					reject(new NetworkError(403, `Invalid token validated with ${keyName}.`));
 				}
 			});
