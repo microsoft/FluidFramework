@@ -493,7 +493,6 @@ export class TestClient extends Client {
 	public peekPendingSegmentGroups(
 		count: number = 1,
 	): SegmentGroup | SegmentGroup[] | undefined {
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
 		return super.peekPendingSegmentGroups(count) as SegmentGroup | SegmentGroup[] | undefined;
 	}
 
