@@ -107,6 +107,11 @@ The key can be requested from internal Microsoft Fluid Framework engineers.
 INSTRUMENTATION_KEY=<key>
 ```
 
+## Deployment
+
+The Fluid Framework website is deployed using the build-docs pipeline. `INSTRUMENTATION_KEY`
+is set as a pipeline variable here.
+
 ## Writing site documentation
 
 For details about authoring documentation content in Docusaurus, see [here](https://docusaurus.io/docs/create-doc).

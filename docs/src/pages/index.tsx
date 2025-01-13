@@ -11,35 +11,33 @@ import appInsights from "@site/src/appInsights";
 import { Homepage } from "@site/src/components/home";
 
 /**
- * Helper function to get a cookie value
+ * Gets a cookie value
  * @param name - The name of the cookie
  * @returns - The value of the cookie
  */
-function getCookie(nam: string): string | undefined {
+function getCookie(name: string): string | undefined {
 	const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
 	return match ? decodeURIComponent(match[2]) : undefined;
 }
 
 /**
- * Helper function to set a cookie value
- * @param name - The name of the cookie
+ * Sets a cookie value
+ * @param cookieName - The name of the cookie
  * @param value - The value to set
  * @param days - The number of days until the cookie expires
  */
-function setCookie(name: string, value: string, days: number): void {
-	if (!/^[\w-]+$/.test(name)) {
+function setCookie(cookieName: string, value: string, days: number): void {
+	if (!/^[\w-]+$/.test(cookieName)) {
 		throw new Error(
-			`Invalid cookie name: "${name}". Only alphanumeric characters, hyphens, and underscores are allowed.`,
+			`Invalid cookie name: "${cookieName}". Only alphanumeric characters, hyphens, and underscores are allowed.`,
 		);
 	}
 	const expires = new Date(Date.now() + days * 86400000).toUTCString();
 	// eslint-disable-next-line unicorn/no-document-cookie
-	document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Strict`;
+	document.cookie = `${cookieName}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Strict`;
 }
 
-/**
- * Initialize Application Insights and set the user ID.
- */
+// Initialize Application Insights and set the user ID.
 if (appInsights !== undefined) {
 	const USAGE_ANALYTICS_COOKIE = "userId";
 	// Retrieve or generate the userId
