@@ -1460,14 +1460,11 @@ export async function runTestForSeed<
 	let operationCount = 0;
 	const generator = model.generatorFactory();
 	const finalState = await performFuzzActionsAsync(
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		async (state) => serializer.encode(await generator(state), bind),
+		async (state) => serializer.encode(await generator(state), bind) as TOperation,
 		async (state, operation) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const decodedHandles = serializer.decode(operation);
+			const decodedHandles = serializer.decode(operation) as TOperation;
 			options.emitter.emit("operation", decodedHandles);
 			operationCount++;
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return model.reducer(state, decodedHandles);
 		},
 		initialState,

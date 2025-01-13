@@ -39,8 +39,7 @@ describe("ESLint Rule Tests", function () {
 
 	it("Should report errors for unchecked record access for indexed record of strings", async function () {
 		const result = await lintFile("indexedRecordOfStrings.ts");
-		const expectedLines = [25, 27, 28, 29, 46, 61, 80, 82, 85, 92, 97];
-
+		const expectedLines = [25, 27, 28, 29, 46, 61, 80, 82, 85, 92, 96];
 		assert.strictEqual(result.errorCount, 11, "Should have 11 errors");
 
 		assert.strictEqual(

@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerContext } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainerContext,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-	ContainerRuntime,
 	FluidDataStoreRegistry,
+	loadContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -121,14 +123,11 @@ export class BaseContainerRuntimeFactory
 	 * Called at the start of initializing a container, to create the container runtime instance.
 	 * @param context - The context for the container being initialized
 	 * @param existing - Whether the container already exists and is being loaded (else it's being created new just now)
-	 *
-	 * @deprecated This function should not be called directly, use instantiateRuntime instead.
 	 */
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-	): Promise<ContainerRuntime> {
+	): Promise<IContainerRuntime & IRuntime> {
 		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
 		if (this.dependencyContainer) {
 			const dc = new DependencyContainer<FluidObject>(
@@ -138,8 +137,7 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
-		// eslint-disable-next-line import/no-deprecated -- ContainerRuntime class to be moved to internal scope
-		return ContainerRuntime.loadRuntime({
+		return loadContainerRuntime({
 			context,
 			existing,
 			runtimeOptions: this.runtimeOptions,

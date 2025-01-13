@@ -145,32 +145,36 @@ const configExplorer = cosmiconfigSync(configName, {
 });
 
 /**
- * Set to true when the default config is returned by getFluidBuildConfig so that repeated calls to the function don't
- * result in repeated searches for config.
+ * Contains directories previously used to start search but where we didn't find an explicit fluidBuild config file.
+ * This allows avoiding repeated searches for config.
  */
-let defaultConfigLoaded = false;
+const defaultSearchDir = new Set<string>();
 
 /**
  * Get an IFluidBuildConfig from the fluidBuild property in a package.json file, or from fluidBuild.config.[c]js.
  *
  * @param searchDir - The path to search for the config. The search will look up the folder hierarchy for a config in
  * either a standalone file or package.json
+ * @param warnNotFound - Whether to warn if no fluidBuild config is found.
  * @returns The the loaded fluidBuild config, or the default config if one is not found.
  */
 export function getFluidBuildConfig(
 	searchDir: string,
+	warnNotFound = true,
 	log = defaultLogger,
 ): IFluidBuildConfig {
-	if (defaultConfigLoaded) {
+	if (defaultSearchDir.has(searchDir)) {
 		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 
 	const configResult = configExplorer.search(searchDir);
 	if (configResult?.config === undefined) {
-		log.warning(
-			`No fluidBuild config found when searching ${searchDir}; default configuration loaded. Packages and tasks will be inferred.`,
-		);
-		defaultConfigLoaded = true;
+		if (warnNotFound) {
+			log.warning(
+				`No fluidBuild config found when searching ${searchDir}; default configuration loaded. Packages and tasks will be inferred.`,
+			);
+		}
+		defaultSearchDir.add(searchDir);
 		return DEFAULT_FLUIDBUILD_CONFIG;
 	}
 

@@ -128,7 +128,6 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
 import type {
 	SharedTreeOptions,
 	SharedTreeOptionsInternal,

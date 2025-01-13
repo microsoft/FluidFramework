@@ -69,7 +69,7 @@ function generateSummaryWithContent(contentSize: number) {
 				".channels"
 			] as ISummaryTree
 		).tree["7a99532d-94ec-43ac-8a53-d9f978ad4ae9"] as ISummaryTree
-	).tree?.header;
+	).tree.header;
 	let contentString = "";
 	while (contentString.length < contentSize) {
 		if (contentString.length + 10 > contentSize) {
@@ -91,7 +91,7 @@ function generateSummaryWithBinaryContent(startsWith: number, contentSize: numbe
 				".channels"
 			] as ISummaryTree
 		).tree["7a99532d-94ec-43ac-8a53-d9f978ad4ae9"] as ISummaryTree
-	).tree?.header;
+	).tree.header;
 	const content = new Uint8Array(contentSize);
 	content[0] = startsWith;
 	for (let i = 1; i < contentSize; i = i + 10) {
@@ -621,7 +621,7 @@ function getHeaderContent(summary: ISummaryTree) {
 }
 
 function getHeader(summary: ISummaryTree) {
-	return getHeaderHolder(summary).tree?.header;
+	return getHeaderHolder(summary).tree.header;
 }
 
 function getHeaderHolder(summary: ISummaryTree) {

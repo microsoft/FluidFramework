@@ -129,7 +129,7 @@ steps:
 # Install aria-logger
 - task: Npm@1
   displayName: 'npm install aria logger'
-  retryCountOnTaskFailure: 1
+  retryCountOnTaskFailure: 4
   inputs:
     workingDir: ${{ parameters.testWorkspace }}
     command: 'custom'

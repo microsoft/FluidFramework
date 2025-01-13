@@ -10,13 +10,16 @@ See [node types](./node-types.mdx) for details on the types of nodes that can be
 
 Below are some utilities provided to make working with nodes easier.
 
-### Node Information
+### `Tree.key`
 
 ```typescript
 Tree.key(node: SharedTreeNode): number | string
 ```
 
-Returns the key of the `node`. This is a string in all cases, except an array node, in which case it returns the index of the node.
+Returns the field key that the `node` is stored under.
+This is a string in all cases, except an array node, in which case it returns the index of the node.
+
+### `Tree.parent`
 
 ```typescript
 Tree.parent(node: SharedTreeNode): SharedTreeNode
@@ -33,15 +36,20 @@ if (Tree.is(parent, Notes) || Tree.is(parent, Items)) {
 }
 ```
 
+### `Tree.status`
+
 ```typescript
 Tree.status(node: SharedTreeNode): TreeStatus
 ```
 
 Returns the current status of `node`. Possible values are:
 
--   **InDocument**: The node is in the tree.
--   **Removed**: The node has been removed from the tree but is still restorable by undo.
--   **Deleted**: The node is deleted and unrestorable.
+-   **New**: The node is created but has not yet been inserted into the tree.
+-   **InDocument**: The node is parented (either directly or indirectly) under the root field.
+-   **Removed**: The node is not parented under the root field but may still be restorable by this client or other clients.
+-   **Deleted**: The node is deleted and cannot be restored by this client, though it may still be restorable by other clients.
+
+### `Tree.schema`
 
 ```typescript
 Tree.schema(node: SharedTreeNode): TreeNodeSchema
@@ -49,7 +57,7 @@ Tree.schema(node: SharedTreeNode): TreeNodeSchema
 
 Returns the object that defines the schema of the `node` object.
 
-### Type Guard
+### `Tree.is`
 
 When your code needs to process nodes only of a certain type and it has a reference to an object of an unknown type, you can use the `Tree.is()` method to test for the desired type as in the following examples.
 

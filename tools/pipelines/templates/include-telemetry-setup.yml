@@ -88,7 +88,7 @@ steps:
 
 - task: Npm@1
   displayName: 'Install telemetry-generator'
-  retryCountOnTaskFailure: 1
+  retryCountOnTaskFailure: 4
   inputs:
     workingDir: ${{ parameters.pathForTelemetryGeneratorInstall }}
     command: 'custom'

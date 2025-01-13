@@ -14,7 +14,8 @@ import { testIdCompressor } from "../utils.js";
 
 import {
 	configuredSharedTree,
-	ForestType,
+	ForestTypeOptimized,
+	ForestTypeReference,
 	SchemaFactory,
 	TreeCompressionStrategy,
 	TreeViewConfiguration,
@@ -233,11 +234,14 @@ describe("SharedTree memory usage", () => {
 	) {
 		describe(title, () => {
 			for (const numberOfNodes of testNodeCounts) {
-				for (const forestType of [ForestType.Reference, ForestType.Optimized]) {
+				for (const [forestName, forestType] of [
+					["ObjectForest", ForestTypeReference],
+					["ChunkedForest", ForestTypeOptimized],
+				] as const) {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							public readonly title =
-								`initialize ${numberOfNodes} nodes into tree using ${forestType === 0 ? "ObjectForest" : "ChunkedForest"}`;
+								`initialize ${numberOfNodes} nodes into tree using ${forestName}`;
 
 							private sharedTree: TreeView<typeof schema> | undefined;
 

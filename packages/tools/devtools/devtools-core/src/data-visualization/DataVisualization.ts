@@ -263,8 +263,7 @@ export class DataVisualizerGraph
 				this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject;
 
 			// Create visualizer node for the shared object
-			const editorFunction: EditSharedObject | undefined =
-				this.editors[sharedObject.attributes.type];
+			const editorFunction = this.editors[sharedObject.attributes.type];
 
 			const visualizerNode = new VisualizerNode(
 				sharedObject,

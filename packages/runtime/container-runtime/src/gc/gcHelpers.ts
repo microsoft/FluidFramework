@@ -109,7 +109,7 @@ export function concatGarbageCollectionStates(
 	}
 
 	for (const [nodeId, nodeData] of Object.entries(gcState2.gcNodes)) {
-		let combineNodeData: IGarbageCollectionNodeData | undefined = combinedGCNodes[nodeId];
+		let combineNodeData = combinedGCNodes[nodeId];
 		if (combineNodeData === undefined) {
 			combineNodeData = {
 				outboundRoutes: Array.from(nodeData.outboundRoutes),
@@ -202,7 +202,7 @@ export async function getGCDataFromSnapshot(
 			continue;
 		}
 
-		const blobId: string | undefined = gcSnapshotTree.blobs[key];
+		const blobId = gcSnapshotTree.blobs[key];
 		if (blobId === undefined) {
 			continue;
 		}

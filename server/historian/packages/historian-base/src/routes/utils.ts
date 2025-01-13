@@ -65,18 +65,6 @@ export interface ICreateGitServiceArgs {
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 }
 
-const defaultCreateGitServiceArgs: Required<
-	Pick<
-		ICreateGitServiceArgs,
-		"initialUpload" | "allowDisabledTenant" | "isEphemeralContainer" | "ephemeralDocumentTTLSec"
-	>
-> = {
-	initialUpload: false,
-	allowDisabledTenant: false,
-	isEphemeralContainer: false,
-	ephemeralDocumentTTLSec: 60 * 60 * 24, // 24 hours
-};
-
 function getEphemeralContainerCacheKey(documentId: string): string {
 	return `isEphemeralContainer:${documentId}`;
 }
@@ -277,7 +265,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		ephemeralDocumentTTLSec,
 		denyList,
 		simplifiedCustomDataRetriever,
-	} = { ...defaultCreateGitServiceArgs, ...createArgs };
+	} = { ...createArgs };
 	if (!authorization) {
 		throw new NetworkError(403, "Authorization header is missing.");
 	}
@@ -294,7 +282,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	if (denyList?.isDenied(tenantId, documentId)) {
 		throw new NetworkError(500, `Unable to process request for document id: ${documentId}`);
 	}
-	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant);
+	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
 	const customData: ITenantCustomDataExternal = details.customData;
 	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
 	const writeToExternalStorage = !!customData?.externalStorageData;
@@ -309,7 +297,7 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 				documentId,
 				tenantId,
 				documentManager,
-				ephemeralDocumentTTLSec,
+				ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60, // default: 24 hours
 				isEphemeralContainerOverride: isEphemeralContainer,
 				cache,
 		  });

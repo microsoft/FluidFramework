@@ -68,6 +68,7 @@ await MarkdownRenderer.renderApiModel({
 -   `ApiItemTransformations`
 -   `ApiItemTransformationConfiguration`
 -   `DocumentationSuiteOptions`
+-   `FileSystemConfiguration`
 -   `HtmlRenderer.RenderHtmlConfig`
 -   `LintApiModelConfiguration`
 -   `MarkdownRenderer.Renderers`
