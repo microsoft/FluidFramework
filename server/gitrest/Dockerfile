@@ -24,7 +24,7 @@ ENV TINI_VERSION=v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-WORKDIR $BUILD_ROOT
+FROM base AS build
 
 # Copy over and build the server. We use the same directory structure as outside of the docker container to ensure flub works smoothly.
 WORKDIR $GITREST_ROOT
@@ -38,47 +38,44 @@ COPY scripts/*.* ./scripts/
 COPY packages/gitrest/package*.json packages/gitrest/
 COPY packages/gitrest-base/package*.json packages/gitrest-base/
 
+# Configuring PNPM_HOME allows reusing the host container's pnpm cache by mounting it to
+# this location later on in the build.
 ENV PNPM_HOME="/pnpm"
 # Add pnpm executables as well as package dependency's executables to the PATH.
 ENV PATH="$PNPM_HOME:$GITREST_ROOT/node_modules/.bin:$PATH"
 RUN corepack enable
 
-#==============================================================================
-# TODO: Remove these steps once build-tools is just a normal install
-WORKDIR $BUILD_ROOT
-COPY --from=root common ./common
-WORKDIR $BUILD_ROOT/build-tools
-COPY --from=root build-tools .
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --unsafe-perm
-RUN pnpm run build:compile
-
-WORKDIR $BUILD_ROOT/build-tools/packages
-# for each package.json file in the workspace, replace workspace:~ with file:../
-RUN sed -i 's/@fluid-tools\/\(.*\)": "workspace:~"/@fluid-tools\/\1": "file:..\/\1"/' build-cli/package.json
-RUN sed -i 's/@fluid-tools\/\(.*\)": "workspace:~"/@fluid-tools\/\1": "file:..\/\1"/' build-infrastructure/package.json
-RUN sed -i 's/@fluid-tools\/\(.*\)": "workspace:~"/@fluid-tools\/\1": "file:..\/\1"/' build-tools/package.json
-WORKDIR $GITREST_ROOT
-# END TODO
-#==============================================================================
-
-
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --unsafe-perm
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store\
+    pnpm install --unsafe-perm
 
 # Copy over fluid config files to allow flub versioning to work
+WORKDIR $BUILD_ROOT
 COPY --from=root fluidBuild.config.cjs ./fluidBuild.base.config.cjs
 COPY --from=root ./server/gitrest/fluidBuild.docker.config.cjs fluidBuild.config.cjs
+WORKDIR $GITREST_ROOT
 ENV _FLUID_ROOT_=$BUILD_ROOT
 COPY --from=root /scripts/update-package-version.sh ./scripts/update-package-version.sh
-RUN set -eu ; if [ "$SETVERSION_VERSION" != "dev" ] ; then echo "Setting package version: $SETVERSION_VERSION" ; ./scripts/update-package-version.sh ; else echo "Skipping package version for dev build." ; fi
+RUN set -eu;\
+if [ "$SETVERSION_VERSION" != "dev" ];\
+    then echo "Setting package version: $SETVERSION_VERSION";\
+    ./scripts/update-package-version.sh;\
+else\
+    echo "Skipping package version for dev build.";\
+fi
 
 COPY . .
 RUN pnpm run build
 
 # Build that actually runs
 FROM base AS runner
+
+WORKDIR /home/node/server
+
+COPY --from=build $GITREST_ROOT/node_modules ./node_modules
+COPY --from=build $GITREST_ROOT/packages ./packages
 
 # Expose the port the app runs under
 EXPOSE 3000

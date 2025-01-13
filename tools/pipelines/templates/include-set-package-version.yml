@@ -34,12 +34,17 @@ parameters:
 
 # Whether to actually perform the bump.
 # TODO: The awkwardness of this parameter implies some refactoring of pipelines would be good.
-# This is currently used as docker images need to decide what version to use outside of the docker build context, but bump
+# This is currently used as docker images decide what version to use outside of the docker build context, but bump
 # the package version from inside (else one can't install dependencies using a frozen lockfile, since the package versions/dependencies
 # are changed from what's source controlled).
+# Doing both from outside the container and copying dependencies in isn't great as the container context doesn't necessarily match the host context
+# (so dependencies with platform-specific binaries might not work, since they were installed on the host).
+# Doing both from inside the container would involve putting git context into the container's build step (version determination involves git tags),
+# which is inefficient.
+# Thus we settle on this middle ground.
 - name: performBump
   type: boolean
-  default: false
+  default: true
 
 # Set version
 steps:
