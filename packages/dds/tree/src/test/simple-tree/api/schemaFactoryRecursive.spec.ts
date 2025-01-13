@@ -23,6 +23,7 @@ import {
 	type ApplyKindInput,
 	type NodeBuilderData,
 	SchemaFactoryAlpha,
+	customizeSchemaTyping,
 } from "../../../simple-tree/index.js";
 import type {
 	ValidateRecursiveSchema,

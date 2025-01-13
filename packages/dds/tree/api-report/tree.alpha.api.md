@@ -806,6 +806,26 @@ export function singletonSchema<TScope extends string, TName extends string | nu
     readonly value: TName;
 }, Record<string, never>, true, Record<string, never>, undefined>;
 
+// @public @sealed
+export interface StrictTypes<TSchema extends ImplicitAllowedTypes, TInput = DefaultInsertableTreeNodeFromImplicitAllowedTypes<TSchema>, TOutput extends TreeNode | TreeLeafValue = DefaultTreeNodeFromImplicitAllowedTypes<TSchema>> {
+    // (undocumented)
+    input: TInput;
+    // (undocumented)
+    output: TOutput;
+    // (undocumented)
+    readWrite: TInput extends never ? never : TOutput;
+}
+
+// @public
+export interface StrictTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>, TInput = DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>, TOutput = DefaultTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>> {
+    // (undocumented)
+    input: TInput;
+    // (undocumented)
+    output: TOutput;
+    // (undocumented)
+    readWrite: TOutput;
+}
+
 // @alpha
 export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = ({
     rollback?: false;
