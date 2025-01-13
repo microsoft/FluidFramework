@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-FROM node:18.17.1-buster-slim@sha256:cb2a746612c2564d3bd0f871174618337af9d0f4d895df6a623fd7a69ca6e5bd AS base
+FROM node:18.17.1-buster-slim@sha256:cb2a746612c2564d3bd0f871174618337af9d0f4d895df6a623fd7a69ca6e5bd AS runnerbase
 
 ARG SETVERSION_VERSION=dev
 ENV SETVERSION_VERSION=$SETVERSION_VERSION
@@ -24,7 +24,7 @@ ENV TINI_VERSION=v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-FROM base AS build
+FROM runnerbase AS base
 
 # Copy over and build the server. We use the same directory structure as outside of the docker container to ensure flub works smoothly.
 WORKDIR $GITREST_ROOT
@@ -70,12 +70,12 @@ COPY . .
 RUN pnpm run build
 
 # Build that actually runs
-FROM base AS runner
+FROM runnerbase AS runner
 
 WORKDIR /home/node/server
 
-COPY --from=build $GITREST_ROOT/node_modules ./node_modules
-COPY --from=build $GITREST_ROOT/packages ./packages
+COPY --from=base $GITREST_ROOT/node_modules ./node_modules
+COPY --from=base $GITREST_ROOT/packages ./packages
 
 # Expose the port the app runs under
 EXPOSE 3000
