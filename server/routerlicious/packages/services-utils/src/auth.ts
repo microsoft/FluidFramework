@@ -188,6 +188,12 @@ function getTokenFromRequest(request: Request): string {
 	return tokenMatch[1];
 }
 
+export function isTokenValid(token: string): boolean {
+	const tokenClaims = decode(token) as ITokenClaims;
+	const lifeTimeMSec = tokenClaims.exp * 1000 - new Date().getTime();
+	return lifeTimeMSec > 0;
+}
+
 const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
 
 /**

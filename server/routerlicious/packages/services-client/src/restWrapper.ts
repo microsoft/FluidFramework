@@ -167,6 +167,7 @@ export class BasicRestWrapper extends RestWrapper {
 		private readonly getTelemetryContextProperties?: () =>
 			| Record<string, string | number | boolean>
 			| undefined,
+		private readonly refreshTokenIfNeeded?: () => Promise<RawAxiosRequestHeaders | undefined>,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -177,6 +178,15 @@ export class BasicRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<T> {
 		const options = { ...requestConfig };
+		if (options.headers?.Authorization && this.refreshTokenIfNeeded) {
+			const refreshedToken = await this.refreshTokenIfNeeded().catch((error) => {
+				debug(`request to ${options.url} failed ${error ? error.message : ""}`);
+				throw error;
+			});
+			if (refreshedToken) {
+				options.headers.Authorization = refreshedToken;
+			}
+		}
 		options.headers = this.generateHeaders(
 			options.headers,
 			this.getCorrelationId?.() ?? uuid(),

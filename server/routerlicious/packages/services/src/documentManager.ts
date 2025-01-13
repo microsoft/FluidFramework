@@ -17,6 +17,7 @@ import {
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
+import { isTokenValid } from "@fluidframework/server-services-utils";
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
@@ -130,6 +131,28 @@ export class DocumentManager implements IDocumentManager {
 			};
 		};
 
+		const refreshTokenIfNeeded = async () => {
+			if (isTokenValid(accessToken)) {
+				Lumberjack.info(`Token is still valid for documentManager`, {
+					tenantId,
+					documentId,
+					scopes: [ScopeType.DocRead],
+				});
+				return undefined;
+			}
+			Lumberjack.info(`Refreshing token for documentManager`, {
+				tenantId,
+				documentId,
+				scopes: [ScopeType.DocRead],
+			});
+			const newToken = await this.tenantManager.signToken(tenantId, documentId, [
+				ScopeType.DocRead,
+			]);
+			return {
+				Authorization: `Basic ${newToken}`,
+			};
+		};
+
 		const restWrapper = new BasicRestWrapper(
 			this.internalAlfredUrl,
 			undefined /* defaultQueryString */,
@@ -141,6 +164,7 @@ export class DocumentManager implements IDocumentManager {
 			getDefaultHeaders /* refreshDefaultHeaders */,
 			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+			refreshTokenIfNeeded /* refreshTokenIfNeeded */,
 		);
 		return restWrapper;
 	}
