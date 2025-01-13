@@ -453,15 +453,13 @@ export class ConnectionManager implements IConnectionManager {
 				? errorOrSwitchToReadonly
 				: switchToReadonly;
 
-		const finalError =
-			errorOrSwitchToReadonly === undefined
-				? undefined
-				: typeof errorOrSwitchToReadonly === "boolean" &&
-						disconnectReasonOrError !== undefined &&
-						typeof disconnectReasonOrError === "object" &&
-						"errorType" in disconnectReasonOrError
-					? disconnectReasonOrError
-					: (errorOrSwitchToReadonly as ICriticalContainerError);
+		const finalError: ICriticalContainerError | undefined =
+			typeof errorOrSwitchToReadonly === "boolean" &&
+			disconnectReasonOrError !== undefined &&
+			typeof disconnectReasonOrError !== "string"
+				? disconnectReasonOrError
+				: undefined;
+
 		const disconnectReason: IConnectionStateChangeReason = {
 			text,
 			error: finalError,
