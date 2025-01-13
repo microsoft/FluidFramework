@@ -22,7 +22,7 @@
 		"clean": "rimraf --glob dist lib bundleAnalysis \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"exploreTree": "npm run build && npm run webpack && source-map-explorer ./dist/sharedTree.js --html bundleAnalysis/reportTree.html",
+		"explore:tree": "npm run build && npm run webpack && source-map-explorer ./dist/sharedTree.js --html bundleAnalysis/reportTree.html",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
