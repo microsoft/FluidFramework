@@ -202,6 +202,7 @@ export {
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
+	isAncestor,
 } from "./rebase/index.js";
 
 export {

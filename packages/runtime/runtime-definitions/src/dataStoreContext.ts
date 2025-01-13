@@ -217,15 +217,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
-	 * @deprecated 0.16 Issue #1537, #3631
-	 */
-	_createDataStoreWithProps(
-		pkg: Readonly<string | string[]>,
-		props?: any,
-		id?: string,
-	): Promise<IDataStore>;
-
-	/**
 	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
 	 * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
 	 * storage (file). Storing the entryPoint handle (or any other handle inside the data store, e.g. for DDS) into an
