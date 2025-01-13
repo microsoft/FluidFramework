@@ -444,23 +444,24 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		let text = "Closing DeltaManager";
-		let error: ICriticalContainerError;
-		let finalSwitchToReadonly = switchToReadonly;
+		const text =
+			typeof disconnectReasonOrError === "string"
+				? disconnectReasonOrError
+				: "Closing DeltaManager";
+		const finalSwitchToReadonly =
+			typeof errorOrSwitchToReadonly === "boolean"
+				? errorOrSwitchToReadonly
+				: switchToReadonly;
 
-		// Handle overloads
-		if (typeof disconnectReasonOrError === "string") {
-			text = disconnectReasonOrError;
-			error = errorOrSwitchToReadonly as ICriticalContainerError;
-		} else {
-			error = disconnectReasonOrError as ICriticalContainerError;
-			finalSwitchToReadonly =
-				typeof errorOrSwitchToReadonly === "boolean" ? errorOrSwitchToReadonly : true;
-		}
-
+		const finalError =
+			errorOrSwitchToReadonly &&
+			typeof errorOrSwitchToReadonly === "object" &&
+			"errorType" in errorOrSwitchToReadonly
+				? (errorOrSwitchToReadonly as ICriticalContainerError)
+				: undefined;
 		const disconnectReason: IConnectionStateChangeReason = {
 			text,
-			error,
+			error: finalError,
 			disconnectReason:
 				typeof disconnectReasonOrError === "string"
 					? disconnectReasonOrError
