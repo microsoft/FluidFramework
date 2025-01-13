@@ -34,6 +34,7 @@ COPY pnpm*.yaml ./
 COPY .npmrc ./
 COPY lerna.json ./
 COPY scripts/*.* ./scripts/
+COPY .npmrc ./
 
 COPY packages/gitrest/package*.json packages/gitrest/
 COPY packages/gitrest-base/package*.json packages/gitrest-base/
@@ -45,7 +46,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$GITREST_ROOT/node_modules/.bin:$PATH"
 RUN corepack enable
 
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
+# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store\
