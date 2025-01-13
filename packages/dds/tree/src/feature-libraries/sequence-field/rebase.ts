@@ -545,9 +545,14 @@ function getMovedChangesFromBaseMark(
 	baseMark: Mark,
 ): NodeId | undefined {
 	if (isMoveIn(baseMark)) {
-		return getMovedNodeChanges(moveEffects, baseMark.revision, baseMark.id);
+		return getMovedNodeChanges(moveEffects, baseMark.revision, baseMark.id, baseMark.count);
 	} else if (isAttachAndDetachEffect(baseMark) && isMoveIn(baseMark.attach)) {
-		return getMovedNodeChanges(moveEffects, baseMark.attach.revision, baseMark.attach.id);
+		return getMovedNodeChanges(
+			moveEffects,
+			baseMark.attach.revision,
+			baseMark.attach.id,
+			baseMark.count,
+		);
 	} else {
 		return undefined;
 	}
@@ -557,7 +562,9 @@ function getMovedNodeChanges(
 	moveEffects: MoveEffectTable,
 	revision: RevisionTag | undefined,
 	id: MoveId,
+	count: number,
 ): NodeId | undefined {
+	// XXX
 	return getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, 1).value
 		?.rebasedChanges;
 }

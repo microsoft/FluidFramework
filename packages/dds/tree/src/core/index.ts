@@ -203,6 +203,7 @@ export {
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	isAncestor,
+	ChangeAtomIdRangeMap,
 } from "./rebase/index.js";
 
 export {

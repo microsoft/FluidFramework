@@ -11,6 +11,7 @@ import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
+	ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type DeltaFieldChanges,
 	type RevisionInfo,
@@ -827,20 +828,18 @@ interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
 	dstQueries: CrossFieldQuerySet;
 	isInvalidated: boolean;
-	mapSrc: Map<RevisionTag | undefined, RangeMap<number, T>>;
-	mapDst: Map<RevisionTag | undefined, RangeMap<number, T>>;
+	mapSrc: ChangeAtomIdRangeMap<T>;
+	mapDst: ChangeAtomIdRangeMap<T>;
 	reset: () => void;
 }
 
 function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: CrossFieldQuerySet = new Map();
-	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: Map<RevisionTag | undefined, RangeMap<number, T>> = new Map();
-	const mapDst: Map<RevisionTag | undefined, RangeMap<number, T>> = new Map();
+	const srcQueries: CrossFieldQuerySet = new ChangeAtomIdRangeMap();
+	const dstQueries: CrossFieldQuerySet = new ChangeAtomIdRangeMap();
+	const mapSrc = new ChangeAtomIdRangeMap<T>();
+	const mapDst = new ChangeAtomIdRangeMap<T>();
 
-	const getMap = (
-		target: CrossFieldTarget,
-	): Map<RevisionTag | undefined, RangeMap<number, T>> =>
+	const getMap = (target: CrossFieldTarget): ChangeAtomIdRangeMap<T> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
 	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
@@ -863,8 +862,8 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			if (addDependency) {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			const rangeMap = getMap(target).get(revision) ?? new IntegerRangeMap<T>();
-			return rangeMap.get(id, count);
+			const rangeMap = getMap(target);
+			return rangeMap.get({ revision, localId: id }, count);
 		},
 		set: (
 			target: CrossFieldTarget,
@@ -874,8 +873,11 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			value: T,
 			invalidateDependents: boolean,
 		) => {
-			const queries = getQueries(target).get(revision);
-			if (invalidateDependents && queries?.get(id, count).value !== undefined) {
+			const queries = getQueries(target);
+			if (
+				invalidateDependents &&
+				queries.get({ revision, localId: id }, count).value !== undefined
+			) {
 				table.isInvalidated = true;
 			}
 			setInCrossFieldMap(getMap(target), revision, id, count, value);

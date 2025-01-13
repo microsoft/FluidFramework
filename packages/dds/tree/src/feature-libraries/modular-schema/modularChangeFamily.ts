@@ -40,6 +40,7 @@ import {
 	areEqualChangeAtomIdOpts,
 	tagChange,
 	makeAnonChange,
+	ChangeAtomIdRangeMap,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -2285,10 +2286,10 @@ interface ComposeFieldContext {
 
 function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	return {
-		srcTable: new Map(),
-		dstTable: new Map(),
-		srcDependents: new Map(),
-		dstDependents: new Map(),
+		srcTable: new ChangeAtomIdRangeMap(),
+		dstTable: new ChangeAtomIdRangeMap(),
+		srcDependents: new ChangeAtomIdRangeMap(),
+		dstDependents: new ChangeAtomIdRangeMap(),
 		invalidatedFields: new Set(),
 	};
 }
@@ -2346,7 +2347,7 @@ abstract class CrossFieldManagerI<T> implements CrossFieldManager {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeQueryResult<number, unknown> {
+	): RangeQueryResult<ChangeAtomId, unknown> {
 		if (addDependency) {
 			// We assume that if there is already an entry for this ID it is because
 			// a field handler has called compose on the same node multiple times.

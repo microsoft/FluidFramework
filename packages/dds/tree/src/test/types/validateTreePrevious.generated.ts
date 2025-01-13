@@ -344,24 +344,6 @@ declare type current_as_old_for_Interface_NodeInDocumentConstraint = requireAssi
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_NodeSchemaMetadata": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_NodeSchemaMetadata = requireAssignableTo<TypeOnly<current.NodeSchemaMetadata>, TypeOnly<old.NodeSchemaMetadata>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_NodeSchemaOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_NodeSchemaOptions = requireAssignableTo<TypeOnly<current.NodeSchemaOptions>, TypeOnly<old.NodeSchemaOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_Revertible": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_Revertible = requireAssignableTo<TypeOnly<current.Revertible>, TypeOnly<old.Revertible>>

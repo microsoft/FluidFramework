@@ -235,9 +235,9 @@ function addNodeToField(
 }
 
 const dummyCrossFieldManager: CrossFieldManager = {
-	get: (_target, _revision, id, count, _addDependency) => ({
+	get: (_target, revision, id, count, _addDependency) => ({
 		value: undefined,
-		start: id,
+		start: { revision, localId: id },
 		length: count,
 	}),
 	set: () => fail("Not supported"),

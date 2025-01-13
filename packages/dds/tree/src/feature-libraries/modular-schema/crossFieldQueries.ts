@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
-import { IntegerRangeMap, type RangeMap, type RangeQueryResult } from "../../util/index.js";
+import type {
+	ChangeAtomId,
+	ChangeAtomIdRangeMap,
+	ChangesetLocalId,
+	RevisionTag,
+} from "../../core/index.js";
+import type { RangeQueryResult } from "../../util/index.js";
 import type { NodeId } from "./modularChangeTypes.js";
 
-export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<number, T>>;
+export type CrossFieldMap<T> = ChangeAtomIdRangeMap<T>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
 
 export function addCrossFieldQuery(
@@ -26,12 +31,7 @@ export function setInCrossFieldMap<T>(
 	count: number,
 	value: T,
 ): void {
-	let rangeMap = map.get(revision);
-	if (rangeMap === undefined) {
-		rangeMap = new IntegerRangeMap();
-		map.set(revision, rangeMap);
-	}
-	rangeMap.set(id, count, value);
+	map.set({ revision, localId: id }, count, value);
 }
 
 export function getFirstFromCrossFieldMap<T>(
@@ -39,11 +39,8 @@ export function getFirstFromCrossFieldMap<T>(
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId,
 	count: number,
-): RangeQueryResult<number, T> {
-	const rangeMap = map.has(revision)
-		? (map.get(revision) as RangeMap<number, T>)
-		: new IntegerRangeMap<T>();
-	return rangeMap.get(id, count);
+): RangeQueryResult<ChangeAtomId, T> {
+	return map.get({ revision, localId: id }, count);
 }
 
 /**
@@ -68,7 +65,7 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeQueryResult<number, T>;
+	): RangeQueryResult<ChangeAtomId, T>;
 
 	/**
 	 * Sets the range of keys to `newValue`.

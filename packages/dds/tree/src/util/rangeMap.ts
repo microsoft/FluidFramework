@@ -28,6 +28,10 @@ export abstract class RangeMap<K, V> {
 		return entries;
 	}
 
+	public clear(): void {
+		this.tree.clear();
+	}
+
 	/**
 	 * Retrieves the value for some prefix of the query range.
 	 *
@@ -111,15 +115,15 @@ export abstract class RangeMap<K, V> {
 				const key = entry[0];
 				const { length: entryLength, value } = entry[1];
 				const lastEntryKey = this.offsetKey(key, entryLength - 1);
-				if (lastEntryKey >= start) {
+				if (this.ge(lastEntryKey, start)) {
 					// This entry overlaps with the deleted range, so we remove it.
 					this.tree.delete(key);
-					if (key < start) {
+					if (this.lt(key, start)) {
 						// A portion of the entry comes before the delete range, so we reinsert that portion.
 						this.tree.set(key, { value, length: this.subtractKeys(start, key) });
 					}
 
-					if (lastEntryKey > lastDeletedKey) {
+					if (this.gt(lastEntryKey, lastDeletedKey)) {
 						// A portion of the entry comes after the delete range, so we reinsert that portion.
 						this.tree.set(this.offsetKey(lastDeletedKey, 1), {
 							value,
@@ -136,7 +140,7 @@ export abstract class RangeMap<K, V> {
 			let entry = this.tree.nextHigherPair(start);
 			while (entry !== undefined) {
 				const key = entry[0];
-				if (key > lastDeletedKey) {
+				if (this.gt(key, lastDeletedKey)) {
 					return;
 				}
 
@@ -144,7 +148,7 @@ export abstract class RangeMap<K, V> {
 				const lastEntryKey = this.offsetKey(key, entryLength - 1);
 
 				this.tree.delete(key);
-				if (lastEntryKey > lastDeletedKey) {
+				if (this.gt(lastEntryKey, lastDeletedKey)) {
 					// A portion of the entry comes after the delete range, so we reinsert that portion.
 					this.tree.set(this.offsetKey(lastDeletedKey, 1), {
 						value,
