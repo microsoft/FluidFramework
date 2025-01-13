@@ -77,12 +77,10 @@ async function start() {
 	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
-	renderControlPanel(controlPanelDiv);
-	const slider = document.getElementById("mouse-latency") as HTMLInputElement;
-
 	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
-	const mouseTracker = new MouseTracker(presence, appPresence, services.audience, slider);
+	const mouseTracker = new MouseTracker(presence, appPresence, services.audience);
 
+	renderControlPanel(mouseTracker, controlPanelDiv);
 	renderFocusPresence(focusTracker, focusDiv);
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
 

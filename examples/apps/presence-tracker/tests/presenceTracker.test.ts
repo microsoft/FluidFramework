@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import puppeteer, { type Browser, type Page } from "puppeteer";
+import type { Browser, Page } from "puppeteer";
+import puppeteer from "puppeteer";
 
 import { globals } from "../jest.config.cjs";
 

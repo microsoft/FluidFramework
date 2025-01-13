@@ -11,7 +11,6 @@ module.exports = (env) => {
 	return {
 		entry: {
 			app: "./src/app.ts",
-			// app: "./tests/index.ts",
 		},
 		resolve: {
 			extensionAlias: {

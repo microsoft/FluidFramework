@@ -4,7 +4,7 @@
 		"outDir": "./lib",
 		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer"],
 		"exactOptionalPropertyTypes": false,
-		"noUnusedLocals": false,
+		"noUnusedLocals": true,
 	},
 	"include": ["src/**/*", "tests/**/*"],
 }

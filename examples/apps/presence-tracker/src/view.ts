@@ -91,7 +91,7 @@ export function renderMousePresence(
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
 }
 
-export function renderControlPanel(controlPanel: HTMLDivElement) {
+export function renderControlPanel(mouseTracker: MouseTracker, controlPanel: HTMLDivElement) {
 	controlPanel.style.paddingBottom = "10px";
 	const slider = document.createElement("input");
 	slider.type = "range";
@@ -106,7 +106,9 @@ export function renderControlPanel(controlPanel: HTMLDivElement) {
 	controlPanel.appendChild(slider);
 	controlPanel.appendChild(sliderLabel);
 
-	slider.addEventListener("input", (evt) => {
+	slider.addEventListener("input", (e) => {
 		sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+		const target = e.target as HTMLInputElement;
+		mouseTracker.setAllowableLatency(parseInt(target.value, 10));
 	});
 }
