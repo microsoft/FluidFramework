@@ -34,7 +34,7 @@ export class OpCompressor {
 	 * @param batch - The batch to compress
 	 * @returns A batch of the same length as the input batch, containing a single compressed message followed by empty placeholders
 	 */
-	public compressBatch(batch: IBatch): IBatch<[BatchMessage]> {
+	public compressBatch(batch: IBatch<[BatchMessage]>): IBatch<[BatchMessage]> {
 		assert(
 			batch.contentSizeInBytes > 0 && batch.messages.length === 1,
 			0x5a4 /* Batch should not be empty and should contain a single message */,
