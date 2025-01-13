@@ -145,7 +145,7 @@ const configExplorer = cosmiconfigSync(configName, {
 });
 
 /**
- * Contains directories previously used to start search but did find an explicit fluidBuild config file.
+ * Contains directories previously used to start search but where we didn't find an explicit fluidBuild config file.
  * This allows avoiding repeated searches for config.
  */
 const defaultSearchDir = new Set<string>();
