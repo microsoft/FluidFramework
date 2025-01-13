@@ -12,7 +12,6 @@ export {
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
-	cloneRevertibles,
 } from "./core/index.js";
 
 export type {
