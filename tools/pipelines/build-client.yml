@@ -80,6 +80,14 @@ pr:
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
 
+schedules:
+- cron: "00 09 * * *" # every day at 9:00 UTC
+  displayName: Daily LTS build
+  branches:
+    include:
+    - lts
+  always: true
+
 extends:
   template: templates/build-npm-package.yml
   parameters:
