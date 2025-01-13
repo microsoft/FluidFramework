@@ -1,20 +1,13 @@
 {
+	// This configuration is deprecated and ussages should be migrated to other options.
+	// The "common" in this file name means either that this is commonjs, or that this is a shared config since both are true.
+	"extends": ["./tsconfig.base.json"],
 	"exclude": ["dist", "node_modules"],
 	"compilerOptions": {
-		"target": "ES2020",
-		"declaration": true,
-		"declarationMap": true,
-		"esModuleInterop": true,
+		"composite": false,
 		"module": "commonjs",
 		"moduleResolution": "node",
-		"noUnusedLocals": true,
-		"sourceMap": true,
-		"inlineSources": true,
-		"noImplicitAny": false,
-		"incremental": true,
-		"types": [],
-		"strict": true,
-		"pretty": true,
-		"lib": ["ES2020", "DOM", "DOM.Iterable"]
+		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false
 	}
 }
