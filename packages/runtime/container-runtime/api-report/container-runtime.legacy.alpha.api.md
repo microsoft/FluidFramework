@@ -140,7 +140,7 @@ export interface IBroadcastSummaryResult {
 // @alpha
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
     // (undocumented)
-    stop(reason: SummarizerStopReason_2): void;
+    stop(reason: SummarizerStopReason): void;
 }
 
 // @alpha
@@ -389,33 +389,21 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly summaryLogger: ITelemetryLoggerExt;
 }
 
-// @alpha @deprecated (undocumented)
-export interface ISummarizeEventProps {
-    // (undocumented)
-    currentAttempt: number;
-    // (undocumented)
-    error?: any;
-    // (undocumented)
-    maxAttempts: number;
-    // (undocumented)
-    result: "success" | "failure" | "canceled";
-}
-
 // @alpha
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
 }
 
 // @alpha (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents_2> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     // (undocumented)
     close(): void;
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     readonly ISummarizer?: ISummarizer;
     // (undocumented)
-    run(onBehalfOf: string): Promise<SummarizerStopReason_2>;
+    run(onBehalfOf: string): Promise<SummarizerStopReason>;
     // (undocumented)
-    stop(reason: SummarizerStopReason_2): void;
+    stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
@@ -424,12 +412,6 @@ export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
     readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
-}
-
-// @alpha @deprecated (undocumented)
-export interface ISummarizerEvents extends IEvent {
-    // (undocumented)
-    (event: "summarize", listener: (props: ISummarizeEventProps) => void): any;
 }
 
 // @alpha (undocumented)
@@ -483,7 +465,7 @@ export interface ISummaryBaseConfiguration {
 }
 
 // @alpha
-export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason_2>;
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 // @alpha (undocumented)
 export interface ISummaryCollectionOpEvents extends IEvent {
@@ -601,7 +583,7 @@ export interface SubmitSummaryFailureData {
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
 // @alpha
-export class Summarizer extends TypedEventEmitter<ISummarizerEvents_2> implements ISummarizer {
+export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
     constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
@@ -615,9 +597,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents_2> implement
     // (undocumented)
     recordSummaryAttempt?(summaryRefSeqNum?: number): void;
     // (undocumented)
-    run(onBehalfOf: string): Promise<SummarizerStopReason_2>;
-    stop(reason: SummarizerStopReason_2): void;
-    static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason_2): boolean;
+    run(onBehalfOf: string): Promise<SummarizerStopReason>;
+    stop(reason: SummarizerStopReason): void;
+    static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean;
     // (undocumented)
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     // (undocumented)
@@ -634,33 +616,6 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     message: string;
     error: IRetriableFailureError;
 };
-
-// @alpha @deprecated (undocumented)
-export type SummarizerStopReason =
-/** Summarizer client failed to summarize in all attempts. */
-"failToSummarize"
-/** Parent client reported that it is no longer connected. */
-| "parentNotConnected"
-/**
-* Parent client reported that it is no longer elected the summarizer.
-* This is the normal flow; a disconnect will always trigger the parent
-* client to no longer be elected as responsible for summaries. Then it
-* tries to stop its spawned summarizer client.
-*/
-| "notElectedParent"
-/**
-* We are not already running the summarizer and we are not the current elected client id.
-*/
-| "notElectedClient"
-/** Summarizer client was disconnected */
-| "summarizerClientDisconnected"
-/** running summarizer threw an exception */
-| "summarizerException"
-/**
-* The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
-* first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
-*/
-| "latestSummaryStateStale";
 
 // @alpha
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
