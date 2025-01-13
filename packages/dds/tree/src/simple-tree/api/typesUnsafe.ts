@@ -52,64 +52,50 @@ import type { ApplyKindAssignment } from "../objectNode.js";
 export type Unenforced<_DesiredExtendsConstraint> = unknown;
 
 /**
- * {@link Unenforced} version of {@link customizeSchemaTyping} for use with recursive schema.
+ * {@link Unenforced} version of {@link customizeSchemaTyping} for use with recursive schema types.
+ *
+ * @remarks
+ * When using this API to modify a schema derived type such that the type is no longer recursive,
+ * or uses an externally defined type (which can be recursive), {@link customizeSchemaTyping} should be used instead for an improved developer experience.
+ * Additionally, in this case, none of the "unsafe" type variants should be needed: the whole schema (with runtime but not schema derived type recursion)
+ * should use the normal (not unsafe/recursive) APIs.
  * @alpha
  */
 export function customizeSchemaTypingUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>>(
 	schema: TSchema,
-): Customizer<TSchema> {
+): CustomizerUnsafe<TSchema> {
 	// This function just does type branding, and duplicating the typing here to avoid any would just make it harder to maintain not easier:
 	const f = (): any => schema;
-	return { simplifiedUnrestricted: f, custom: f };
+	return { simplified: f, simplifiedUnrestricted: f, custom: f };
 }
 
 /**
- * Utility for customizing the types used for data matching a given schema.
+ * {@link Unenforced} version of `Customizer`.
+ * @remarks
+ * This has fewer options than the safe version, but all options can still be expressed using the "custom" method.
  * @sealed @public
  */
-export interface Customizer<TSchema extends Unenforced<ImplicitAllowedTypes>> {
+export interface CustomizerUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>> {
 	/**
-	 * The default {@link StrictTypes}, explicitly applied.
-	 */
-	// strict(): CustomizedSchemaTyping<TSchema, StrictTypes<TSchema>>;
-	/**
-	 * Relaxed policy: allows possible invalid edits (which will err at runtime) when schema is not exact.
-	 * @remarks
-	 * Handles input types covariantly so any input which might be valid with the schema is allowed
-	 * instead of the default strict policy of only inputs with all possible schema re allowed.
-	 */
-	// relaxed(): CustomizedSchemaTyping<
-	// 	TSchema,
-	// 	{
-	// 		input: TSchema extends TreeNodeSchema
-	// 			? InsertableTypedNode<TSchema>
-	// 			: TSchema extends AllowedTypes
-	// 				? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema>
-	// 					? InsertableTypedNode<TSchemaInner>
-	// 					: never
-	// 				: never;
-	// 		readWrite: TreeNodeFromImplicitAllowedTypes<TSchema>;
-	// 		output: TreeNodeFromImplicitAllowedTypes<TSchema>;
-	// 	}
-	// >;
-	/**
-	 * Replace typing with a single substitute which allowed types must implement.
+	 * Replace typing with a single substitute type which allowed types must implement.
 	 * @remarks
 	 * This is generally type safe for reading the tree, but allows instances of `T` other than those listed in the schema to be assigned,
-	 * which can be out of schema and err at runtime in the same way {@link Customizer.relaxed} does.
-	 * Until with {@link Customizer.relaxed}, implicit construction is disabled, meaning all nodes must be explicitly constructed (and thus implement `T`) before being inserted.
+	 * which can be out of schema and err at runtime in the same way {@link CustomizerUnsafe.relaxed} does.
+	 * Until with {@link CustomizerUnsafe.relaxed}, implicit construction is disabled, meaning all nodes must be explicitly constructed (and thus implement `T`) before being inserted.
 	 */
-	// simplified<T extends TreeNodeFromImplicitAllowedTypes<TSchema>>(): CustomizedSchemaTyping<
-	// 	TSchema,
-	// 	{
-	// 		input: T;
-	// 		readWrite: T;
-	// 		output: T;
-	// 	}
-	// >;
+	simplified<
+		T extends (TreeNode | TreeLeafValue) & TreeNodeFromImplicitAllowedTypesUnsafe<TSchema>,
+	>(): CustomizedSchemaTyping<
+		TSchema,
+		{
+			input: T;
+			readWrite: T;
+			output: T;
+		}
+	>;
 
 	/**
-	 * The same as {@link Customizer} except that more T values are allowed, even ones not known to be implemented by `TSchema`.
+	 * The same as {@link CustomizerUnsafe} except that more T values are allowed, even ones not known to be implemented by `TSchema`.
 	 */
 	simplifiedUnrestricted<T extends TreeNode | TreeLeafValue>(): CustomizedSchemaTyping<
 		TSchema,
@@ -123,6 +109,9 @@ export interface Customizer<TSchema extends Unenforced<ImplicitAllowedTypes>> {
 	/**
 	 * Fully arbitrary customization.
 	 * Provided types override existing types.
+	 * @remarks
+	 * This can express any of the customizations possible via other {@link CustomizerUnsafe} methods:
+	 * this API is however more verbose and can more easily be used to unsafe typing.
 	 */
 	custom<T extends Partial<CustomTypes>>(): CustomizedSchemaTyping<
 		TSchema,
