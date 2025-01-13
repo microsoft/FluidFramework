@@ -23,7 +23,7 @@
 	},
 	"messages": {
 		"extractorMessageReporting": {
-			// Since we generate API reports for different release levels, it is possible (and valid) for `@link` tags
+			// Since we lint entrypoints at different release levels, it is possible (and valid) for `@link` tags
 			// to reference an API item that won't be visible at that level.
 			// For example, a public API may note that a newer feature is available in a beta release and link to that item.
 			// We want that to be possible, so we suppress this error for report generation.
