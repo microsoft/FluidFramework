@@ -107,7 +107,7 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     dockerBuildBumpsVersion: true
     packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i ; pnpm config set recursive-install true'
-    additionalBuildArguments: --root $(Build.SourcesDirectory)
+    additionalBuildArguments: --build-context root=$(Build.SourcesDirectory)
     packageManager: pnpm
     buildDirectory: server/gitrest
     containerName: fluidframework/routerlicious/gitrest
