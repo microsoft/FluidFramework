@@ -1,5 +1,5 @@
 {
-	// This configuration is deprecated and ussages should be migrated to other options.
+	// This configuration is deprecated and usages should be migrated to other options.
 	// The "common" in this file name means either that this is commonjs, or that this is a shared config since both are true.
 	"extends": ["./tsconfig.base.json"],
 	"exclude": ["dist", "node_modules"],
