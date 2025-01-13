@@ -58,19 +58,13 @@ export {
 export {
 	BaseSegment,
 	CollaborationWindow,
-	debugMarkerToString,
 	IJSONMarkerSegment,
-	IMergeNodeCommon,
-	IMoveInfo,
-	IRemovalInfo,
+	segmentIsRemoved,
 	ISegment,
 	ISegmentAction,
 	Marker,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SegmentGroup,
-	toRemovalInfo,
-	ObliterateInfo,
 	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {

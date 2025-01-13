@@ -4,6 +4,7 @@
  */
 
 export {
+	isIStorageRoutingId,
 	Constants,
 	GitObjectType,
 	IExternalWriterConfig,

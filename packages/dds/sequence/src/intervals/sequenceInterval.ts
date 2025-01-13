@@ -29,6 +29,7 @@ import {
 	endpointPosAndSide,
 	addProperties,
 	copyPropertiesAndManager,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -196,8 +197,8 @@ export class SequenceIntervalClass implements SequenceInterval {
 
 	/***/
 	public get stickiness(): IntervalStickiness {
-		const startSegment = this.start.getSegment();
-		const endSegment = this.end.getSegment();
+		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
+		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
 		return computeStickinessFromSide(
 			startSegment?.endpointType,
 			this.startSide,
@@ -428,10 +429,12 @@ export class SequenceIntervalClass implements SequenceInterval {
 		useNewSlidingBehavior: boolean = false,
 	) {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
+		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
+		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
 		const stickiness = computeStickinessFromSide(
-			startPos ?? this.start.getSegment()?.endpointType,
+			startPos ?? startSegment?.endpointType,
 			startSide ?? this.startSide,
-			endPos ?? this.end.getSegment()?.endpointType,
+			endPos ?? endSegment?.endpointType,
 			endSide ?? this.endSide,
 		);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {

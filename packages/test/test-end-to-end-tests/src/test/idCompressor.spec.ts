@@ -28,7 +28,10 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import {
+	type ISequencedDocumentMessage,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	IIdCompressor,
 	SessionSpaceCompressedId,
@@ -839,7 +842,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		sessionCount: number;
 		clusterCount: number;
 	} {
-		const compressorSummary = summaryTree.tree[".idCompressor"];
+		const compressorSummary: SummaryObject | undefined = summaryTree.tree[".idCompressor"];
 		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
 		const base64Content = (compressorSummary as any).content as string;
 		const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));
@@ -902,7 +905,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 	});
 
 	it("Newly connected container synchronizes from summary", async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7931
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7931
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}

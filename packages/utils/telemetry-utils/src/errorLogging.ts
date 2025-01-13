@@ -87,9 +87,9 @@ function copyProps(
 	target: ITelemetryPropertiesExt | LoggingError,
 	source: ITelemetryPropertiesExt,
 ): void {
-	for (const key of Object.keys(source)) {
+	for (const [key, value] of Object.entries(source)) {
 		if (target[key] === undefined) {
-			target[key] = source[key];
+			target[key] = value;
 		}
 	}
 }

@@ -18,7 +18,6 @@ import type { Covariant } from "./typeCheck.js";
  * `Type 'Name1' is not assignable to type 'Name2'.`
  *
  * These branded types are not opaque: A `Brand<A, B>` can still be used as a `B`.
- * @internal
  */
 export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
 
@@ -42,7 +41,6 @@ export type Brand<ValueType, Name> = ValueType & BrandedType<ValueType, Name>;
  * - get nominal typing (so types produced without using this class can never be assignable to it).
  *
  * @sealed
- * @internal
  */
 export abstract class BrandedType<out ValueType, Name> {
 	protected _typeCheck?: Covariant<ValueType>;

@@ -8,7 +8,7 @@ slug: /testing/testing
 
 ## Overview
 
-Testing and automation are crucial to maintaining the quality and longevity of your code. Internally, Fluid has a range of unit and integration tests powered by [Mocha](https://mochajs.org/), [Jest](https://jestjs.io/), [Puppeteer](https://github.com/puppeteer/puppeteer), and [webpack](https://webpack.js.org/). Tests that need to run against a service are backed by [Tinylicious](./tinylicious) or a test tenant of a [live service](../deployment/service-options) such as [Azure Fluid Relay](../deployment/azure-frs).
+Testing and automation are crucial to maintaining the quality and longevity of your code. Internally, Fluid has a range of unit and integration tests powered by [Mocha](https://mochajs.org/), [Jest](https://jestjs.io/), [Puppeteer](https://github.com/puppeteer/puppeteer), and [webpack](https://webpack.js.org/). Tests that need to run against a service are backed by [Tinylicious](./tinylicious.mdx) or a test tenant of a [live service](../deployment/service-options.mdx) such as [Azure Fluid Relay](../deployment/azure-fluid-relay.mdx).
 
 This document will explain how to use these tools to get started with writing automation for Fluid applications against a service. It will focus on interactions with the service rather than automation in general, and will not cover the automation tools themselves or scenarios that do not require a service.
 
@@ -34,11 +34,11 @@ Once installed, you can use the following npm scripts:
 }
 ```
 
-The `test:tinylicious` script will start Tinylicious, wait until port 7070 responds (the default port on which Tinylicious runs), run the test script, and then terminate Tinylicious. Your tests can then use `TinyliciousClient` as usual (see [Tinylicious](./tinylicious)).
+The `test:tinylicious` script will start Tinylicious, wait until port 7070 responds (the default port on which Tinylicious runs), run the test script, and then terminate Tinylicious. Your tests can then use `TinyliciousClient` as usual (see [Tinylicious](./tinylicious.mdx)).
 
 ## Automation against Azure Fluid Relay
 
-Your automation can connect to a test tenant for Azure Fluid Relay in the same way as your production tenant and only needs the appropriate connection configuration. See [Connect to Azure Fluid Relay](../deployment/azure-frs) for more details.
+Your automation can connect to a test tenant for Azure Fluid Relay in the same way as your production tenant and only needs the appropriate connection configuration. See [Connect to Azure Fluid Relay](../deployment/azure-fluid-relay.mdx) for more details.
 
 ### Azure Fluid Relay as an abstraction for Tinylicious
 

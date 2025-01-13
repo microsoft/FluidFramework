@@ -93,6 +93,8 @@ export {
 	getLast,
 	hasSome,
 	hasSingle,
+	defineLazyCachedProperty,
+	copyPropertyIfDefined as copyProperty,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 
@@ -119,13 +121,8 @@ export {
 } from "./brandedMap.js";
 
 export {
-	getFirstEntryFromRangeMap,
-	getFromRangeMap,
-	type RangeEntry,
-	type RangeMap,
+	RangeMap,
 	type RangeQueryResult,
-	setInRangeMap,
-	deleteFromRangeMap,
 } from "./rangeMap.js";
 
 export {
@@ -143,3 +140,5 @@ export {
 	throwIfBroken,
 	breakingClass,
 } from "./breakable.js";
+
+export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";

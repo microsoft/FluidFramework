@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.11.0",
+	"version": "2.20.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -89,7 +89,7 @@
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint:fix": "eslint --format stylish src --fix",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
@@ -146,7 +146,7 @@
 		"@fluidframework/telemetry-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
@@ -156,11 +156,11 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
-		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.10.0",
+		"@fluidframework/merge-tree-previous": "npm:@fluidframework/merge-tree@2.13.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
@@ -177,7 +177,65 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_BaseSegment": {
+				"backCompat": false
+			},
+			"Class_Marker": {
+				"backCompat": false
+			},
+			"Class_TextSegment": {
+				"backCompat": false
+			},
+			"Class_TrackingGroup": {
+				"backCompat": false
+			},
+			"ClassStatics_BaseSegment": {
+				"backCompat": false
+			},
+			"ClassStatics_Marker": {
+				"backCompat": false
+			},
+			"ClassStatics_TextSegment": {
+				"backCompat": false
+			},
+			"ClassStatics_TrackingGroup": {
+				"backCompat": false
+			},
+			"Interface_IMergeTreeDeltaCallbackArgs": {
+				"backCompat": false
+			},
+			"Interface_IMergeTreeMaintenanceCallbackArgs": {
+				"backCompat": false
+			},
+			"Interface_IMergeTreeSegmentDelta": {
+				"backCompat": false
+			},
+			"Interface_ISegment": {
+				"backCompat": false
+			},
+			"Interface_ITrackingGroup": {
+				"backCompat": false
+			},
+			"TypeAlias_MergeTreeDeltaRevertible": {
+				"backCompat": false
+			},
+			"TypeAlias_Trackable": {
+				"backCompat": false
+			},
+			"Interface_IMergeNodeCommon": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Interface_IMoveInfo": {
+				"forwardCompat": false,
+				"backCompat": false
+			},
+			"Interface_IRemovalInfo": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

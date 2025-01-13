@@ -13,7 +13,11 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import {
+	ISummaryTree,
+	SummaryType,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -132,7 +136,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 			"Data Store should exist on gc graph",
 		);
 		assert(
-			gcState.gcNodes[dataStoreHandle.absolutePath].unreferencedTimestampMs !== undefined,
+			gcState.gcNodes[dataStoreHandle.absolutePath]?.unreferencedTimestampMs !== undefined,
 			"Data Store should be unreferenced",
 		);
 		let tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
@@ -153,7 +157,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;
 		// GC state is a handle meaning it is the same as before, meaning nothing is tombstoned.
 		assert.equal(
-			summaryTree.tree[gcTreeKey].type,
+			summaryTree.tree[gcTreeKey]?.type,
 			SummaryType.Handle,
 			"GC tree should not have changed (indicated by incremental summary using the SummaryType.Handle)",
 		);
@@ -167,7 +171,7 @@ describeCompat("GC unreference phases", "NoCompat", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 		summaryTree = (await summarizeNow(summarizer)).summaryTree;
 
-		const rootGCTree = summaryTree.tree[gcTreeKey];
+		const rootGCTree: SummaryObject | undefined = summaryTree.tree[gcTreeKey];
 		assert.equal(rootGCTree?.type, SummaryType.Tree, "GC data should be a tree");
 		tombstoneState = getGCTombstoneStateFromSummary(summaryTree);
 		// After tombstoneTimeoutMs the object should be tombstoned.
