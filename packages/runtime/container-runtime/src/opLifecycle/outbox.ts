@@ -340,14 +340,9 @@ export class Outbox {
 		// If so, do nothing, as pending state manager will resubmit it correctly on reconnect.
 		// Because flush() is a task that executes async (on clean stack), we can get here in disconnected state.
 		if (this.params.shouldSend()) {
-			const processedBatch =
-				rawBatch.contentSizeInBytes >=
-				this.params.config.compressionOptions.minimumBatchSizeInBytes
-					? shouldGroup
-						? this.compressAndChunkBatch(this.params.groupingManager.groupBatch(rawBatch))
-						: this.compressAndChunkBatch(rawBatch as IBatch<[BatchMessage]>)
-					: rawBatch;
-
+			const processedBatch = this.compressAndChunkBatch(
+				shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
+			);
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
@@ -411,8 +406,9 @@ export class Outbox {
 	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original),
 	 * or (C) a batch containing the last chunk (plus empty placeholders from compression if applicable).
 	 */
-	private compressAndChunkBatch(batch: IBatch<[BatchMessage]>): IBatch {
+	private compressAndChunkBatch(batch: IBatch): IBatch {
 		if (
+			batch.messages.length === 0 ||
 			this.params.config.compressionOptions === undefined ||
 			this.params.config.compressionOptions.minimumBatchSizeInBytes >
 				batch.contentSizeInBytes ||
