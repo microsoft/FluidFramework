@@ -4577,6 +4577,9 @@ importers:
 
   examples/utils/import-testing:
     dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/client-utils
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
@@ -4586,6 +4589,9 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../packages/framework/fluid-framework
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
