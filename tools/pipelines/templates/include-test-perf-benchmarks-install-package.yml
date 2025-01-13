@@ -41,7 +41,32 @@ steps:
       # available at runtime. Also, using ! as separator instead of the usual / because forward slash is something we
       # need to replace.
       TEST_PACKAGE_NAME=$(echo "${{ parameters.testPackageName }}" | sed -r 's!@!!g' | sed -r 's!/!-!g')
-      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-?.?.?-*.tgz"
+
+      # There's some thought behind the value for the itpbip_sanitizedPackageName to make sure that two packages with
+      # partially overlapping names (e.g. @fluid-experimental/tree and @fluid-experimental/tree-react-api) can be
+      # differentiated, so the pipeline knows which of the two tgz files it is supposed to unpack, while also avoiding
+      # these issues we've run into in the past:
+      # - A pattern like `${TEST_PACKAGE_NAME}-?.?.?-*.tgz` stops working for two-digit major/minor/patch version numbers.
+      #   It also doesn't work when the pipeline runs for a release/* branch because in that case the tgz filename looks
+      #   like `<package-name>-<major>.<minor>.<patch>.tgz` instead of `<package-name>-<major>.<minor>.<patch>-<build-id>.tgz`,
+      #   so the final dash in the pattern causes it to not match.
+      # - A pattern like `${TEST_PACKAGE_NAME}-*.*.*-*.tgz` won't differentiate packages in all cases because extra
+      #   parts of the package name are separated with dashes (e.g.fluidexperimental-tree and fluidexperimental-tree-react-api),
+      #   which are also used to separate the package name from the major version number.
+      # The logic behind the current pattern is that we want to find these components:
+      # - `${TEST_PACKAGE_NAME}` - Matching package name.
+      # - `-` A dash.
+      # - `[0-9]*.[0-9]*.[0-9]*` - The version. While the glob syntax technically allows alpha-numerics for `*`, we
+      #   don't expect this will be an issue, and still allows us to match multi-digit version numbers (e.g. 2.10.0).
+      #   This component *must not* match another bit of package name. As long as we don't put numbers in package names,
+      #   the current pattern should keep working.
+      #   Also, the trailing `*` is important to handle the case where "-<build-id>" is appended to the version number,
+      #   but it also handles the case where it isn't because it can match 0 characters.
+      # - `.tgz` - The extension.
+      # NOTE: this ends up used as an input to an ADO task and in an argument in a call to `ls` so the syntax must work
+      # in both cases. We might not be able to leverage all of ADOs globbing capabilities as described in
+      # https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/file-matching-patterns?view=azure-devops#pattern-syntax.
+      echo "##vso[task.setvariable variable=itpbip_sanitizedPackageName]${TEST_PACKAGE_NAME}-[0-9]*.[0-9]*.[0-9]*.tgz"
       echo "##vso[task.setvariable variable=itpbip_downloadPath]$(Pipeline.Workspace)/downloadedPackages"
 
 # Download package that has performance tests
@@ -68,7 +93,7 @@ steps:
 # Install package that has performance tests
 - task: Bash@3
   displayName: Install package with perf tests - ${{ parameters.testPackageName }}
-  retryCountOnTaskFailure: 1
+  retryCountOnTaskFailure: 4
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.installPath }}

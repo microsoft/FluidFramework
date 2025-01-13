@@ -195,7 +195,7 @@ export class FluidDataStoreRuntime
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	public readonly id: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public readonly options: Record<string | number, any>;
 	public readonly deltaManagerInternal: IDeltaManager<
 		ISequencedDocumentMessage,
@@ -689,7 +689,7 @@ export class FluidDataStoreRuntime
 
 			// process the last set of channel ops
 			const channelContext = this.contexts.get(currentAddress);
-			assert(!!channelContext, "Channel context not found");
+			assert(!!channelContext, 0xa6b /* Channel context not found */);
 
 			channelContext.processMessages({
 				envelope: messageCollection.envelope,

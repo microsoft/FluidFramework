@@ -6,7 +6,7 @@
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
+} from "@fluidframework/presence/internal/core-interfaces";
 
 /**
  * Collection of value types that are not intended to be used/imported
@@ -60,13 +60,13 @@ export namespace InternalTypes {
 	/**
 	 * @system
 	 */
-	export interface MapValueState<T> {
+	export interface MapValueState<T, Keys extends string | number> {
 		rev: number;
 		items: {
 			// Caution: any particular item may or may not exist
 			// Typescript does not support absent keys without forcing type to also be undefined.
 			// See https://github.com/microsoft/TypeScript/issues/42810.
-			[name: string | number]: ValueOptionalState<T>;
+			[name in Keys]: ValueOptionalState<T>;
 		};
 	}
 
@@ -112,7 +112,7 @@ export namespace InternalTypes {
 		key: TKey,
 		datastoreHandle: StateDatastoreHandle<TKey, TValue>,
 	) => {
-		value?: TValue;
+		initialData?: { value: TValue; allowableUpdateLatencyMs: number | undefined };
 		manager: StateValue<TManager>;
 	});
 

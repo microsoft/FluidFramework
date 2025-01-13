@@ -2,13 +2,13 @@
 
 This is a _{@customTag constructor}_.
 
-### Signature {#_constructor_-signature}
+### Signature {#\_constructor\_-signature}
 
 ```typescript
 protected constructor(privateProperty: number, protectedProperty: TestEnum);
 ```
 
-### Parameters {#_constructor_-parameters}
+### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
 | --- | --- | --- |

@@ -582,7 +582,7 @@ export class ComposeQueue {
 		}
 	}
 
-	private dequeueBase(length: number = Infinity): ComposeMarks {
+	private dequeueBase(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
 		if (movedChanges !== undefined) {
@@ -593,7 +593,7 @@ export class ComposeQueue {
 		return { baseMark, newMark };
 	}
 
-	private dequeueNew(length: number = Infinity): ComposeMarks {
+	private dequeueNew(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const newMark = this.newMarks.dequeueUpTo(length);
 		const baseMark = createNoopMark(newMark.count, undefined, getInputCellId(newMark));
 

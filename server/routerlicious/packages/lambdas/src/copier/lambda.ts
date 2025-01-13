@@ -11,6 +11,7 @@ import {
 	IPartitionLambda,
 	IRawOperationMessage,
 	IRawOperationMessageBatch,
+	isCompleteBoxcarMessage,
 } from "@fluidframework/server-services-core";
 
 /**
@@ -33,6 +34,10 @@ export class CopierLambda implements IPartitionLambda {
 	public handler(message: IQueuedMessage): undefined {
 		// Extract batch of raw ops from Kafka message:
 		const boxcar = extractBoxcar(message);
+		if (!isCompleteBoxcarMessage(boxcar)) {
+			// If the boxcar is not complete, it cannot be routed correctly.
+			return undefined;
+		}
 		const batch = boxcar.contents;
 		const topic = `${boxcar.tenantId}/${boxcar.documentId}`;
 

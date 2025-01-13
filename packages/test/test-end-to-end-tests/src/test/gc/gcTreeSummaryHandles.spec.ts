@@ -19,6 +19,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type ISummaryContext,
 	type ISummaryTree,
+	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -55,7 +56,7 @@ describeCompat(
 		async function submitSummaryAndValidateState(summarizer: ISummarizer, isHandle: boolean) {
 			await provider.ensureSynchronized();
 			const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
-			const gcObject = summaryTree.tree[gcTreeKey];
+			const gcObject: SummaryObject | undefined = summaryTree.tree[gcTreeKey];
 
 			if (isHandle) {
 				assert(gcObject.type === SummaryType.Handle, "Expected a gc handle!");
@@ -127,8 +128,8 @@ describeCompat(
 				summarizer2,
 				true /* isHandle */,
 			);
-			const tree1 = summaryResult1.summaryTree.tree[gcTreeKey];
-			const tree2 = summaryResult2.summaryTree.tree[gcTreeKey];
+			const tree1: SummaryObject | undefined = summaryResult1.summaryTree.tree[gcTreeKey];
+			const tree2: SummaryObject | undefined = summaryResult2.summaryTree.tree[gcTreeKey];
 			assert.deepEqual(
 				tree1,
 				tree2,

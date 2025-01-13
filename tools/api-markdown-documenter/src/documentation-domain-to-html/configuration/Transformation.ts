@@ -5,6 +5,7 @@
 
 import type { Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
+
 import {
 	DocumentationNodeType,
 	type DocumentationNode,
@@ -23,6 +24,7 @@ import {
 	type TableRowNode,
 	type UnorderedListNode,
 } from "../../documentation-domain/index.js";
+import type { TransformationContext } from "../TransformationContext.js";
 import {
 	blockQuoteToHtml,
 	codeSpanToHtml,
@@ -39,7 +41,6 @@ import {
 	tableRowToHtml,
 	unorderedListToHtml,
 } from "../default-transformations/index.js";
-import type { TransformationContext } from "../TransformationContext.js";
 
 /**
  * Configuration for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
@@ -60,7 +61,7 @@ export interface Transformations {
 	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a transformation implementation
 	 * for that kind of node.
 	 */
-	[documentationNodeKind: string]: Transformation;
+	readonly [documentationNodeKind: string]: Transformation;
 }
 
 /**

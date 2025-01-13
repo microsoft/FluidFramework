@@ -171,10 +171,6 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		getAudience: (...args) => {
 			return context.getAudience(...args);
 		},
-		// back-compat, to be removed in 2.0
-		ensureNoDataModelChanges: (...args) => {
-			return context.ensureNoDataModelChanges(...args);
-		},
 		submitMessage: (...args) => {
 			return context.submitMessage(...args);
 		},
@@ -885,7 +881,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				return;
 			}
 			const currentContext = this.contexts.get(currentMessageState.address);
-			assert(!!currentContext, "Context not found");
+			assert(!!currentContext, 0xa66 /* Context not found */);
 
 			currentContext.processMessages({
 				envelope: { ...messageCollection.envelope, type: currentMessageState.type },

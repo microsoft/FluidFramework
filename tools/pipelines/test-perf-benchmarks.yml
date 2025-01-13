@@ -22,7 +22,7 @@ parameters:
 
 - name: poolBuild
   type: object
-  default: Large
+  default: Large-eastus2
 
 - name: memoryTestPackages
   type: object
@@ -58,6 +58,7 @@ parameters:
     timeoutInMinutes: 360
 
 variables:
+  - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
   # We use 'chalk' to colorize output, which auto-detects color support in the
   # running terminal.  The log output shown in Azure DevOps job runs only has
   # basic ANSI color support though, so force that in the pipeline
@@ -75,9 +76,6 @@ variables:
     readonly: true
   - name: artifactBuildId
     value: $(resources.pipeline.client.runID)
-    readonly: true
-  - name: absolutePathToTelemetryGenerator
-    value: $(Build.SourcesDirectory)/tools/telemetry-generator
     readonly: true
   - group: prague-key-vault
   - group: ado-feeds
@@ -112,6 +110,7 @@ stages:
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
+          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.executionTestPackages }}:
@@ -155,7 +154,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -191,23 +190,23 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto"
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
+            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
       - task: Bash@3
         displayName: Send Execution Time Performance Benchmark Measurments to Azure App Insights
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
         env:
           BUILD_ID: $(Build.BuildId)
           BRANCH_NAME: $(Build.SourceBranchName)
@@ -247,6 +246,7 @@ stages:
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
+          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.memoryTestPackages }}:
@@ -290,7 +290,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -326,23 +326,23 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: Bash@3
         displayName: Send Memory Usage Performance Benchmark Measurments to Azure App Insights
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
         env:
           BUILD_ID: $(Build.BuildId)
           BRANCH_NAME: $(Build.SourceBranchName)
@@ -382,6 +382,7 @@ stages:
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
+          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
       # Run tests for each package that has them
       - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
@@ -426,7 +427,7 @@ stages:
 
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -461,23 +462,23 @@ stages:
         displayName: Write measurements to Aria/Kusto
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
+            npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
       - task: Bash@3
         displayName: Send Custom Data Performance Benchmark Measurments to Azure App Insights
         inputs:
           targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
+          workingDirectory: $(pathToTelemetryGenerator)
           script: |
             set -eu -o pipefail
             echo "Writing performance benchmark output to Azure App Insights..."
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
         env:
           BUILD_ID: $(Build.BuildId)
           BRANCH_NAME: $(Build.SourceBranchName)
@@ -530,6 +531,7 @@ stages:
             officeFeedUrl: $(ado-feeds-office)
             testFilesPath: $(testFilesPath)
             testWorkspace: $(testWorkspace)
+            pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
         # Download and install package with performance tests
         - template: templates/include-test-perf-benchmarks-install-package.yml
@@ -547,7 +549,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ endpointObject.endpointName }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
@@ -613,12 +615,12 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.executionTimeTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
+              npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir ${{ variables.executionTimeTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -627,12 +629,12 @@ stages:
           condition: succeededOrFailed()
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing the following performance tests results to Aria/Kusto - ${{ endpointObject.endpointName }}"
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
+              npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
@@ -641,12 +643,12 @@ stages:
           condition: eq('${{ endpointObject.endpointName }}', 'local')
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing execution time performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.executionTimeTestOutputFolder }};
-              node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+              npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -657,12 +659,12 @@ stages:
           condition: eq('${{ endpointObject.endpointName }}', 'local')
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               echo "Writing memory usage performance benchmark output to Azure App Insights..."
               ls -laR ${{ variables.memoryUsageTestOutputFolder }};
-              node bin/run appInsights --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
+              npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
           env:
             BUILD_ID: $(Build.BuildId)
             BRANCH_NAME: $(Build.SourceBranchName)
@@ -687,7 +689,7 @@ stages:
           displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}
           inputs:
             targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
+            workingDirectory: $(pathToTelemetryGenerator)
             script: |
               set -eu -o pipefail
               ls -laR ${{ variables.executionTimeTestOutputFolder }};

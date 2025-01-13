@@ -31,16 +31,16 @@ import {
 	brand,
 	fail,
 	idAllocatorFromMaxId,
+	newTupleBTree,
 } from "../../../util/index.js";
 import {
 	getChangeHandler,
 	getFieldsForCrossFieldKey,
 	getParentFieldId,
 	newCrossFieldKeyTable,
-	newTupleBTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -235,8 +235,9 @@ function addNodeToField(
 }
 
 const dummyCrossFieldManager: CrossFieldManager = {
-	get: (_target, _revision, _id, count, _addDependency) => ({
+	get: (_target, _revision, id, count, _addDependency) => ({
 		value: undefined,
+		start: id,
 		length: count,
 	}),
 	set: () => fail("Not supported"),

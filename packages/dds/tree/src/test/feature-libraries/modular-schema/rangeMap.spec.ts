@@ -3,185 +3,171 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import {
-	type RangeEntry,
-	type RangeMap,
-	deleteFromRangeMap,
-	getFirstEntryFromRangeMap,
-	setInRangeMap,
-} from "../../../util/index.js";
+import { RangeMap } from "../../../util/index.js";
 
 function newRangeMap(): RangeMap<string> {
-	return [];
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+	return new RangeMap<string>();
 }
 
 describe("RangeMap", () => {
 	it("query on empty map returns undefined", () => {
 		const map = newRangeMap();
-		const entry = getFirstEntryFromRangeMap(map, 5, 4);
-		assert.equal(entry, undefined);
+		const entry = map.get(5, 4);
+		assert.deepEqual(entry, { start: 5, length: 4, value: undefined });
 	});
 
 	it("read one entry", () => {
 		const map = newRangeMap();
 
 		// Set keys 3-6
-		setInRangeMap(map, 3, 4, "a");
-		const expectedEntry: RangeEntry<string> = { start: 3, length: 4, value: "a" };
+		map.set(3, 4, "a");
 
 		// Read keys 0-2
-		const entryBefore = getFirstEntryFromRangeMap(map, 0, 3);
-		assert.equal(entryBefore, undefined);
+		const entryBefore = map.get(0, 3);
+		assert.deepEqual(entryBefore, { start: 0, length: 3, value: undefined });
 
 		// Read keys 1-3
-		const entryBeginning = getFirstEntryFromRangeMap(map, 1, 3);
-		assert.deepEqual(entryBeginning, expectedEntry);
+		const entryBeginning = map.get(1, 3);
+		assert.deepEqual(entryBeginning, { start: 1, length: 2, value: undefined });
 
 		// Read keys 2-7
-		const entryWhole = getFirstEntryFromRangeMap(map, 2, 6);
-		assert.deepEqual(entryWhole, expectedEntry);
+		const entryWhole = map.get(2, 6);
+		assert.deepEqual(entryWhole, { start: 2, length: 1, value: undefined });
 
-		const entryEnd = getFirstEntryFromRangeMap(map, 6, 2);
-		assert.deepEqual(entryEnd, expectedEntry);
+		const entryEnd = map.get(6, 2);
+		assert.deepEqual(entryEnd, { start: 6, length: 1, value: "a" });
 
 		// Read key 7
-		const entryAfter = getFirstEntryFromRangeMap(map, 7, 1);
-		assert.equal(entryAfter, undefined);
+		const entryAfter = map.get(7, 1);
+		assert.deepEqual(entryAfter, { start: 7, length: 1, value: undefined });
 	});
 
 	it("read two entries", () => {
 		const map = newRangeMap();
 
 		// Set keys 2-3
-		setInRangeMap(map, 2, 2, "a");
-		const expected1: RangeEntry<string> = { start: 2, length: 2, value: "a" };
+		map.set(2, 2, "a");
 
 		// Set keys 6-6
-		setInRangeMap(map, 6, 1, "b");
-		const expected2: RangeEntry<string> = { start: 6, length: 1, value: "b" };
+		map.set(6, 1, "b");
 
 		// Read key 3
-		const entryFirst = getFirstEntryFromRangeMap(map, 3, 1);
-		assert.deepEqual(entryFirst, expected1);
+		const entryFirst = map.get(3, 1);
+		assert.deepEqual(entryFirst, { start: 3, length: 1, value: "a" });
 
 		// Read keys 5-7
-		const entrySecond = getFirstEntryFromRangeMap(map, 5, 3);
-		assert.deepEqual(entrySecond, expected2);
+		const entrySecond = map.get(5, 3);
+		assert.deepEqual(entrySecond, { start: 5, length: 1, value: undefined });
 
 		// Read keys 4-5
-		const entryBetween = getFirstEntryFromRangeMap(map, 4, 2);
-		assert.equal(entryBetween, undefined);
+		const entryBetween = map.get(4, 2);
+		assert.deepEqual(entryBetween, { start: 4, length: 2, value: undefined });
 
 		// Read keys 3-6
-		const entryBoth = getFirstEntryFromRangeMap(map, 3, 4);
-		assert.deepEqual(entryBoth, expected1);
+		const entryBoth = map.get(3, 4);
+		assert.deepEqual(entryBoth, { start: 3, length: 1, value: "a" });
 	});
 
 	it("write overlapping ranges", () => {
 		const map = newRangeMap();
 
 		// Set keys 0-1
-		setInRangeMap(map, 0, 2, "a");
+		map.set(0, 2, "a");
 
 		// Set keys 3-4
-		setInRangeMap(map, 3, 2, "b");
+		map.set(3, 2, "b");
 
 		// Set key 6
-		setInRangeMap(map, 6, 1, "c");
+		map.set(6, 1, "c");
 
 		// Set keys 7-8
-		setInRangeMap(map, 7, 2, "d");
+		map.set(7, 2, "d");
 
 		// Set keys 1-7
-		setInRangeMap(map, 1, 7, "e");
-		const expectedE: RangeEntry<string> = { start: 1, length: 7, value: "e" };
+		map.set(1, 7, "e");
 
-		const entry0 = getFirstEntryFromRangeMap(map, 0, 8);
-		const expectedA: RangeEntry<string> = { start: 0, length: 1, value: "a" };
-		assert.deepEqual(entry0, expectedA);
+		const entry0 = map.get(0, 8);
+		assert.deepEqual(entry0, { start: 0, length: 1, value: "a" });
 
-		const entry1 = getFirstEntryFromRangeMap(map, 1, 1);
-		assert.deepEqual(entry1, expectedE);
+		const entry1 = map.get(1, 1);
+		assert.deepEqual(entry1, { start: 1, length: 1, value: "e" });
 
-		const entry3 = getFirstEntryFromRangeMap(map, 3, 2);
-		assert.deepEqual(entry3, expectedE);
+		const entry3 = map.get(3, 2);
+		assert.deepEqual(entry3, { start: 3, length: 2, value: "e" });
 
-		const entry5 = getFirstEntryFromRangeMap(map, 5, 1);
-		assert.deepEqual(entry5, expectedE);
+		const entry5 = map.get(5, 1);
+		assert.deepEqual(entry5, { start: 5, length: 1, value: "e" });
 
-		const entry6 = getFirstEntryFromRangeMap(map, 6, 1);
-		assert.deepEqual(entry6, expectedE);
+		const entry6 = map.get(6, 1);
+		assert.deepEqual(entry6, { start: 6, length: 1, value: "e" });
 
-		const entry7 = getFirstEntryFromRangeMap(map, 7, 2);
-		assert.deepEqual(entry7, expectedE);
+		const entry7 = map.get(7, 2);
+		assert.deepEqual(entry7, { start: 7, length: 1, value: "e" });
 
-		const entry8 = getFirstEntryFromRangeMap(map, 8, 1);
-		const expectedD: RangeEntry<string> = { start: 8, length: 1, value: "d" };
-		assert.deepEqual(entry8, expectedD);
+		const entry8 = map.get(8, 1);
+		assert.deepEqual(entry8, { start: 8, length: 1, value: "d" });
 	});
 
 	it("write range which splits existing range", () => {
 		const map = newRangeMap();
 
 		// Set keys 1-10
-		setInRangeMap(map, 1, 10, "a");
+		map.set(1, 10, "a");
 
 		// Set keys 4-6
-		setInRangeMap(map, 4, 3, "b");
-		const expectedB: RangeEntry<string> = { start: 4, length: 3, value: "b" };
+		map.set(4, 3, "b");
 
-		const entry1 = getFirstEntryFromRangeMap(map, 1, 10);
-		const expectedA1: RangeEntry<string> = { start: 1, length: 3, value: "a" };
-		assert.deepEqual(entry1, expectedA1);
+		const entry1 = map.get(1, 10);
+		assert.deepEqual(entry1, { start: 1, length: 3, value: "a" });
 
-		const entry4 = getFirstEntryFromRangeMap(map, 4, 8);
-		assert.deepEqual(entry4, expectedB);
+		const entry4 = map.get(4, 8);
+		assert.deepEqual(entry4, { start: 4, length: 3, value: "b" });
 
-		const entry7 = getFirstEntryFromRangeMap(map, 7, 4);
-		const expectedA2: RangeEntry<string> = { start: 7, length: 4, value: "a" };
-		assert.deepEqual(entry7, expectedA2);
+		const entry7 = map.get(7, 4);
+		assert.deepEqual(entry7, { start: 7, length: 4, value: "a" });
 	});
 
-	describe("deleteFromRangeMap", () => {
+	describe("deleteFromRange", () => {
 		it("delete range from empty map", () => {
 			const map = newRangeMap();
 
 			// Delete keys 3-6 from an empty map
-			deleteFromRangeMap(map, 3, 4);
+			map.delete(3, 4);
 
-			assert.deepEqual(map, []);
+			assert.deepEqual(map.getAllEntries(), []);
 		});
 
 		it("delete range spanning one entry", () => {
 			const map = newRangeMap();
 
 			// Set keys 2-5
-			setInRangeMap(map, 2, 4, "a");
+			map.set(2, 4, "a");
 
 			// Delete keys 3-6
-			deleteFromRangeMap(map, 3, 4);
+			map.delete(3, 4);
 
-			assert.deepEqual(map, [{ start: 2, length: 1, value: "a" }]);
+			assert.deepEqual(map.getAllEntries(), [{ start: 2, length: 1, value: "a" }]);
 		});
 
 		it("delete range spanning multiple entries", () => {
 			const map = newRangeMap();
 
 			// Set keys 2-4
-			setInRangeMap(map, 2, 3, "a");
+			map.set(2, 3, "a");
 
 			// Set keys 6-7
-			setInRangeMap(map, 6, 2, "b");
+			map.set(6, 2, "b");
 
 			// Set keys 9-12
-			setInRangeMap(map, 9, 4, "c");
+			map.set(9, 4, "c");
 
 			// Delete keys 4-8
-			deleteFromRangeMap(map, 4, 5);
+			map.delete(4, 5);
 
-			assert.deepEqual(map, [
+			assert.deepEqual(map.getAllEntries(), [
 				{ start: 2, length: 2, value: "a" },
 				{ start: 9, length: 4, value: "c" },
 			]);
@@ -191,30 +177,30 @@ describe("RangeMap", () => {
 			const map = newRangeMap();
 
 			// Set keys 2-5
-			setInRangeMap(map, 2, 4, "a");
+			map.set(2, 4, "a");
 
 			// Set keys 7-9
-			setInRangeMap(map, 7, 3, "b");
+			map.set(7, 3, "b");
 
 			// Delete keys 2-5
-			deleteFromRangeMap(map, 2, 4);
+			map.delete(2, 4);
 
-			assert.deepEqual(map, [{ start: 7, length: 3, value: "b" }]);
+			assert.deepEqual(map.getAllEntries(), [{ start: 7, length: 3, value: "b" }]);
 		});
 
 		it("delete range at startpoint of an entry", () => {
 			const map = newRangeMap();
 
 			// Set keys 2-5
-			setInRangeMap(map, 2, 4, "a");
+			map.set(2, 4, "a");
 
 			// Set keys 7-9
-			setInRangeMap(map, 7, 3, "b");
+			map.set(7, 3, "b");
 
 			// Delete keys 4-6
-			deleteFromRangeMap(map, 4, 3);
+			map.delete(4, 3);
 
-			assert.deepEqual(map, [
+			assert.deepEqual(map.getAllEntries(), [
 				{ start: 2, length: 2, value: "a" },
 				{ start: 7, length: 3, value: "b" },
 			]);
@@ -224,15 +210,15 @@ describe("RangeMap", () => {
 			const map = newRangeMap();
 
 			// Set keys 2-5
-			setInRangeMap(map, 2, 4, "a");
+			map.set(2, 4, "a");
 
 			// Set keys 7-9
-			setInRangeMap(map, 7, 3, "b");
+			map.set(7, 3, "b");
 
 			// Delete keys 5-8
-			deleteFromRangeMap(map, 5, 4);
+			map.delete(5, 4);
 
-			assert.deepEqual(map, [
+			assert.deepEqual(map.getAllEntries(), [
 				{ start: 2, length: 3, value: "a" },
 				{ start: 9, length: 1, value: "b" },
 			]);
@@ -242,12 +228,12 @@ describe("RangeMap", () => {
 			const map = newRangeMap();
 
 			// Set keys 2-7
-			setInRangeMap(map, 2, 6, "a");
+			map.set(2, 6, "a");
 
 			// Delete keys 4-6
-			deleteFromRangeMap(map, 4, 3);
+			map.delete(4, 3);
 
-			assert.deepEqual(map, [
+			assert.deepEqual(map.getAllEntries(), [
 				{ start: 2, length: 2, value: "a" },
 				{ start: 7, length: 1, value: "a" },
 			]);

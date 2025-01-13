@@ -12,8 +12,9 @@ import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegment, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
+import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -70,7 +71,24 @@ export const annotateRange: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
-) => client.annotateRangeLocal(opStart, opEnd, { client: client.longClientId });
+	random: IRandom,
+) => {
+	if (random.bool()) {
+		return client.annotateRangeLocal(opStart, opEnd, {
+			[random.integer(1, 5)]: client.longClientId,
+		});
+	} else {
+		const max = random.pick([undefined, random.integer(-10, 100)]);
+		const min = random.pick([undefined, random.integer(-100, 10)]);
+		return client.annotateAdjustRangeLocal(opStart, opEnd, {
+			[random.integer(0, 2).toString()]: {
+				delta: random.integer(-5, 5),
+				min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
+				max,
+			},
+		});
+	}
+};
 
 export const insertAtRefPos: TestOperation = (
 	client: TestClient,
@@ -78,7 +96,7 @@ export const insertAtRefPos: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const segs: ISegment[] = [];
+	const segs: ISegmentPrivate[] = [];
 	// gather all the segments at the pos, including removed segments
 	walkAllChildSegments(client.mergeTree.root, (seg) => {
 		const pos = client.getPosition(seg);

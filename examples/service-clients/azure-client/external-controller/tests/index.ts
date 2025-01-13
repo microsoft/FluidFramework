@@ -3,24 +3,21 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-
 import {
 	IContainer,
 	IFluidModuleWithDetails,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+} from "@fluidframework/container-definitions/legacy";
+import { Loader } from "@fluidframework/container-loader/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26986: `fluid-static` internal used in examples
 import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
+// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal used in examples
+import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
-	LocalSessionStorageDbFactory,
-} from "@fluidframework/local-driver/internal";
-import {
-	ILocalDeltaConnectionServer,
-	LocalDeltaConnectionServer,
-} from "@fluidframework/server-local-server";
+} from "@fluidframework/local-driver/legacy";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import type { IFluidContainer, ContainerSchema } from "fluid-framework";
 import { SharedMap } from "fluid-framework/legacy";
 
@@ -28,7 +25,7 @@ import { DiceRollerController } from "../src/controller.js";
 import { makeAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
-const localServerMap = new Map<string, ILocalDeltaConnectionServer>();
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
 
 const urlResolver = new LocalResolver();
 
@@ -43,12 +40,6 @@ export async function getSessionStorageContainer(
 	containerRuntimeFactory: IRuntimeFactory,
 	createNew: boolean,
 ): Promise<{ container: IContainer; attach: (() => Promise<void>) | undefined }> {
-	let localServer = localServerMap.get(containerId);
-	if (localServer === undefined) {
-		localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-		localServerMap.set(containerId, localServer);
-	}
-
 	const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
 	const url = `${window.location.origin}/${containerId}`;
 

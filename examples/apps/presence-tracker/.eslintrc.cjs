@@ -8,5 +8,7 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
 		"prettier",
 	],
-	rules: {},
+	rules: {
+		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+	},
 };

@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -21,12 +22,7 @@ import {
 } from "../core/index.js";
 import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
 
-import {
-	SharedTreeBranch,
-	type BranchTrimmingEvents,
-	getChangeReplaceType,
-	onForkTransitive,
-} from "./branch.js";
+import { SharedTreeBranch, type BranchTrimmingEvents, onForkTransitive } from "./branch.js";
 import type {
 	Commit,
 	SeqNumber,
@@ -41,7 +37,6 @@ import {
 	minSequenceId,
 	sequenceIdComparator,
 } from "./sequenceIdUtils.js";
-import { createEmitter } from "../events/index.js";
 import {
 	TelemetryEventBatcher,
 	measure,
@@ -191,7 +186,7 @@ export class EditManager<
 			this.telemetryEventBatcher,
 		);
 
-		this.localBranch.on("afterChange", (event) => {
+		this.localBranch.events.on("afterChange", (event) => {
 			if (event.type === "append") {
 				for (const commit of event.newCommits) {
 					this.localCommits.push(commit);
@@ -223,19 +218,19 @@ export class EditManager<
 	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
 		this.trackBranch(branch);
 		// Whenever the branch is rebased, update our record of its base trunk commit
-		const offBeforeRebase = branch.on("beforeChange", (args) => {
-			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
+		const offBeforeRebase = branch.events.on("beforeChange", (args) => {
+			if (args.type === "rebase") {
 				this.untrackBranch(branch);
 			}
 		});
-		const offAfterRebase = branch.on("afterChange", (args) => {
-			if (args.type === "replace" && getChangeReplaceType(args) === "rebase") {
+		const offAfterRebase = branch.events.on("afterChange", (args) => {
+			if (args.type === "rebase") {
 				this.trackBranch(branch);
 				this.trimTrunk();
 			}
 		});
 		// When the branch is disposed, update our branch set and trim the trunk
-		const offDispose = branch.on("dispose", () => {
+		const offDispose = branch.events.on("dispose", () => {
 			this.untrackBranch(branch);
 			this.trimTrunk();
 			offBeforeRebase();
@@ -424,15 +419,24 @@ export class EditManager<
 				} else {
 					Reflect.defineProperty(commit, "change", {
 						get: () =>
-							assert(false, "Should not access 'change' property of an evicted commit"),
+							assert(
+								false,
+								0xa5e /* Should not access 'change' property of an evicted commit */,
+							),
 					});
 					Reflect.defineProperty(commit, "revision", {
 						get: () =>
-							assert(false, "Should not access 'revision' property of an evicted commit"),
+							assert(
+								false,
+								0xa5f /* Should not access 'revision' property of an evicted commit */,
+							),
 					});
 					Reflect.defineProperty(commit, "parent", {
 						get: () =>
-							assert(false, "Should not access 'parent' property of an evicted commit"),
+							assert(
+								false,
+								0xa60 /* Should not access 'parent' property of an evicted commit */,
+							),
 					});
 					return { delete: true };
 				}
@@ -491,7 +495,10 @@ export class EditManager<
 
 		const trunk = getPathFromBase(this.trunk.getHead(), oldestCommitInCollabWindow).map(
 			(c) => {
-				assert(c !== this.trunkBase, "Serialized trunk should not include the trunk base");
+				assert(
+					c !== this.trunkBase,
+					0xa61 /* Serialized trunk should not include the trunk base */,
+				);
 				const metadata =
 					this.trunkMetadata.get(c.revision) ?? fail("Expected metadata for trunk commit");
 				const commit: SequencedCommit<TChangeset> = {
@@ -522,7 +529,7 @@ export class EditManager<
 						commits: branchPath.map((c) => {
 							assert(
 								c !== this.trunkBase,
-								"Serialized branch should not include the trunk base",
+								0xa62 /* Serialized branch should not include the trunk base */,
 							);
 							const commit: Commit<TChangeset> = {
 								change: c.change,
@@ -593,7 +600,7 @@ export class EditManager<
 		if (id === undefined) {
 			assert(
 				trunkCommitOrTrunkBase === this.trunkBase,
-				"Commit must be either be on the trunk or be the trunk base",
+				0xa63 /* Commit must be either be on the trunk or be the trunk base */,
 			);
 			return minimumPossibleSequenceId;
 		}
@@ -652,7 +659,7 @@ export class EditManager<
 		assert(
 			sequenceNumber >= // This is ">=", not ">" because changes in the same batch will have the same sequence number
 				(this.sequenceMap.maxKey()?.sequenceNumber ?? minimumPossibleSequenceNumber),
-			"Attempted to sequence change with an outdated sequence number",
+			0xa64 /* Attempted to sequence change with an outdated sequence number */,
 		);
 
 		const commitsSequenceNumber = this.getBatch(sequenceNumber);

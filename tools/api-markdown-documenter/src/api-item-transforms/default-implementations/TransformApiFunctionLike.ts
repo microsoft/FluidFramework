@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type SectionNode } from "../../documentation-domain/index.js";
-import { type ApiFunctionLike } from "../../utilities/index.js";
-import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
+import type { ApiFunctionLike } from "../../utilities/index.js";
+import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createParametersSection, createReturnsSection } from "../helpers/index.js";
 
 /**
@@ -13,7 +13,7 @@ import { createParametersSection, createReturnsSection } from "../helpers/index.
  */
 export function transformApiFunctionLike(
 	apiFunctionLike: ApiFunctionLike,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];
 
@@ -29,5 +29,5 @@ export function transformApiFunctionLike(
 		childSections.push(renderedReturnsSection);
 	}
 
-	return config.createDefaultLayout(apiFunctionLike, childSections, config);
+	return config.defaultSectionLayout(apiFunctionLike, childSections, config);
 }

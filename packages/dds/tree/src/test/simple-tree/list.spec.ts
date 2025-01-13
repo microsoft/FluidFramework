@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SchemaFactory } from "../../simple-tree/index.js";
 
@@ -95,6 +95,7 @@ describe("List", () => {
 			// An older technique for detecting arrays is to use the 'instanceof' operator.
 			// However, this is not reliable in the presence of multiple global contexts (e.g.,
 			// if an Array is passed across frame boundaries.)
+			// eslint-disable-next-line unicorn/no-instanceof-array
 			test0("instanceof Array", (target: unknown) => target instanceof Array);
 
 			// 'deepEquals' requires that objects have the same prototype to be considered equal.
@@ -194,8 +195,8 @@ describe("List", () => {
 			check(/* length: */ 2, /* index: */ 0);
 			check(/* length: */ 2, /* index: */ 1);
 			check(/* length: */ 2, /* index: */ -2);
-			check(/* length: */ 2, /* index: */ Infinity);
-			check(/* length: */ 2, /* index: */ -Infinity);
+			check(/* length: */ 2, /* index: */ Number.POSITIVE_INFINITY);
+			check(/* length: */ 2, /* index: */ Number.NEGATIVE_INFINITY);
 		});
 
 		describe("[Symbol.isConcatSpreadable] matches array defaults", () => {
@@ -345,8 +346,8 @@ describe("List", () => {
 				check([]);
 				check(["a"]);
 				check(["a", "b"]);
-				check(["a", "b"], -Infinity);
-				check(["a", "b"], 0, Infinity);
+				check(["a", "b"], Number.NEGATIVE_INFINITY);
+				check(["a", "b"], 0, Number.POSITIVE_INFINITY);
 
 				for (let i = 0; i < 4; i++) {
 					check(["a", "b"], i);
@@ -511,8 +512,8 @@ describe("List", () => {
 				check(["a", "b"], "a", /* start: */ -1);
 				check(["a", "b"], "b", /* start: */ -1);
 				check(["a", "b"], "a", /* start: */ -2);
-				check(["a", "b"], "a", /* start: */ Infinity);
-				check(["a", "b"], "a", /* start: */ -Infinity);
+				check(["a", "b"], "a", /* start: */ Number.POSITIVE_INFINITY);
+				check(["a", "b"], "a", /* start: */ Number.NEGATIVE_INFINITY);
 			});
 
 			describe("indexOf()", () => {
@@ -528,8 +529,8 @@ describe("List", () => {
 				check(["a", "b"], "a", /* start: */ -1);
 				check(["a", "b"], "b", /* start: */ -1);
 				check(["a", "b"], "a", /* start: */ -2);
-				check(["a", "b"], "a", /* start: */ Infinity);
-				check(["a", "b"], "a", /* start: */ -Infinity);
+				check(["a", "b"], "a", /* start: */ Number.POSITIVE_INFINITY);
+				check(["a", "b"], "a", /* start: */ Number.NEGATIVE_INFINITY);
 			});
 
 			describe("at()", () => {
@@ -562,8 +563,8 @@ describe("List", () => {
 				check(["a", "b"], -3.000001); // Truncated to -3 - out of bounds
 				check(["a", "b"], -3.5); // Truncated to -3 - out of bounds
 				// Extreme values
-				check(["a", "b"], Infinity);
-				check(["a", "b"], -Infinity);
+				check(["a", "b"], Number.POSITIVE_INFINITY);
+				check(["a", "b"], Number.NEGATIVE_INFINITY);
 				check(["a", "b"], Number.MAX_SAFE_INTEGER);
 				check(["a", "b"], Number.MIN_SAFE_INTEGER);
 				check(["a", "b"], Number.MAX_VALUE);
@@ -579,7 +580,7 @@ describe("List", () => {
 				check(["a", "b"], "-2.999999");
 				check(["a", "b"], "-3.0");
 				check(["a", "b"], "not-a-number");
-				check(["a", "b"], NaN);
+				check(["a", "b"], Number.NaN);
 				check(["a", "b"], true);
 				check(["a", "b"], false);
 				check(["a", "b"], undefined);
@@ -625,8 +626,8 @@ describe("List", () => {
 				check(["a", "b"], "a", /* start: */ -1);
 				check(["a", "b"], "b", /* start: */ -1);
 				check(["a", "b"], "a", /* start: */ -2);
-				check(["a", "b"], "a", /* start: */ Infinity);
-				check(["a", "b"], "a", /* start: */ -Infinity);
+				check(["a", "b"], "a", /* start: */ Number.POSITIVE_INFINITY);
+				check(["a", "b"], "a", /* start: */ Number.NEGATIVE_INFINITY);
 			});
 
 			describe("some()", () => {

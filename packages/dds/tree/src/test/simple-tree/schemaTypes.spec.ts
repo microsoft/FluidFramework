@@ -42,6 +42,9 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { objectSchema } from "../../simple-tree/objectNode.js";
+import { validateUsageError } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -215,6 +218,28 @@ describe("schemaTypes", () => {
 			type I13 = InsertableField<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
 		}
+
+		// NodeFromSchema
+		{
+			class Simple extends schema.object("A", { x: [schema.number] }) {}
+			class Customized extends schema.object("B", { x: [schema.number] }) {
+				public customized = true;
+			}
+
+			// Class that implements both TreeNodeSchemaNonClass and TreeNodeSchemaNonClass
+			class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, false) {
+				public customized = true;
+			}
+
+			type TA = NodeFromSchema<typeof Simple>;
+			type _checkA = requireAssignableTo<TA, Simple>;
+
+			type TB = NodeFromSchema<typeof Customized>;
+			type _checkB = requireAssignableTo<TB, Customized>;
+
+			type TC = NodeFromSchema<typeof CustomizedBoth>;
+			type _checkC = requireAssignableTo<TC, CustomizedBoth>;
+		}
 	}
 
 	describe("insertable", () => {
@@ -284,6 +309,22 @@ describe("schemaTypes", () => {
 				type X = InsertableTypedNode<typeof List | typeof schema.number>;
 				type _check = requireTrue<areSafelyAssignable<X, never>>;
 			}
+		});
+
+		it("unsound union properties", () => {
+			const schemaFactory = new SchemaFactory("demo");
+			class A extends schema.object("A", { value: schemaFactory.number }) {}
+			class B extends schema.object("B", { value: schemaFactory.string }) {}
+
+			function setValue(node: A | B, v: number | string): void {
+				// TODO: This is not safe: this should not build
+				// This limitation is due to an unsoundness in TypeScript's support for union property assignment.
+				// See https://github.com/microsoft/TypeScript/issues/33911#issuecomment-2489283581 for details.
+				// At the time of writing (TypeScript 5.6), this issue is still present despite the issue being closed as completed.
+				node.value = v;
+			}
+
+			assert.throws(() => setValue(new A({ value: 5 }), "x"), validateUsageError(/number/));
 		});
 
 		it("Objects", () => {
@@ -375,7 +416,7 @@ describe("schemaTypes", () => {
 
 			const allowed = [Note] as const;
 			type X = InsertableTreeNodeFromAllowedTypes<typeof allowed>;
-			const test: X = [{}];
+			const test: X = {};
 
 			const allowed3 = [Note] as const;
 			type X3 = InsertableTreeNodeFromAllowedTypes<typeof allowed3>;
@@ -385,7 +426,7 @@ describe("schemaTypes", () => {
 			type X4 = InsertableTypedNode<typeof allowed4>;
 
 			type X5 = InsertableTreeFieldFromImplicitField<typeof allowed>;
-			const test2: X5 = [{}];
+			const test2: X5 = {};
 
 			type X6 = InsertableObjectFromSchemaRecord<typeof Canvas.info>;
 			type X7 = InsertableTreeFieldFromImplicitField<typeof Canvas.info.stuff>;

@@ -887,9 +887,7 @@ describe("Shared String Obliterate", () => {
 		sharedString2.connect(services2);
 	});
 
-	// TODO: this test currently fails with 0x2d8
-	// AB#19722
-	it.skip("zero length obliterate in the middle of the string", () => {
+	it("zero length obliterate in the middle of the string", () => {
 		sharedString.insertText(0, "0123456789");
 		containerRuntimeFactory.processAllMessages();
 		assert.equal(
@@ -909,6 +907,6 @@ describe("Shared String Obliterate", () => {
 			sharedString2.getText(),
 			"end state should be equal after obliterate",
 		);
-		assert.equal(sharedString2.getText(), "01234AAA56789", "obliterate failed");
+		assert.equal(sharedString2.getText(), "01234BBB56789", "obliterate failed");
 	});
 });

@@ -22,13 +22,13 @@ import {
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
 	IGetPendingLocalStateProps,
-	IHostLoader,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
 	IDeltaManager,
 	ReadOnlyInfo,
+	type ILoader,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -67,6 +67,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ConnectionMode,
+	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -718,6 +719,14 @@ export class Container
 		return this._loadedCodeDetails;
 	}
 
+	/**
+	 * Get the package info for the code details that were used to load the container.
+	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
+	 */
+	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
+		return getPackageName(this._loadedCodeDetails);
+	}
+
 	private _loadedModule: IFluidModuleWithDetails | undefined;
 
 	/**
@@ -1319,7 +1328,7 @@ export class Container
 					) => {
 						try {
 							assert(
-								this.deltaManager.inbound.length === 0,
+								this._deltaManager.inbound.length === 0,
 								0x0d6 /* "Inbound queue should be empty when attaching" */,
 							);
 							return combineAppAndProtocolSummary(
@@ -1523,13 +1532,13 @@ export class Container
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
 		await Promise.all([
-			this.deltaManager.inbound.pause(),
-			this.deltaManager.inboundSignal.pause(),
+			this._deltaManager.inbound.pause(),
+			this._deltaManager.inboundSignal.pause(),
 		]);
 
 		if ((await this.satisfies(codeDetails)) === true) {
-			this.deltaManager.inbound.resume();
-			this.deltaManager.inboundSignal.resume();
+			this._deltaManager.inbound.resume();
+			this._deltaManager.inboundSignal.resume();
 			return;
 		}
 
@@ -2394,7 +2403,7 @@ export class Container
 
 		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
 		// are set. Global requests will still go directly to the loader
-		const maybeLoader: FluidObject<IHostLoader> = this.scope;
+		const maybeLoader: FluidObject<ILoader> = this.scope;
 		const loader = new RelativeLoader(this, maybeLoader.ILoader);
 
 		const loadCodeResult = await PerformanceEvent.timedExecAsync(

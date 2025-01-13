@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockFluidDataStoreRuntime,
@@ -15,6 +15,7 @@ import {
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
+	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeArrayNode,
@@ -363,7 +364,30 @@ describe("schemaFactory", () => {
 			);
 		});
 
-		it("Field Metadata", () => {
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "An object called Foo",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.object(
+				"Foo",
+				{ bar: factory.number },
+				{ metadata: fooMetadata },
+			) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
+		});
+
+		it("Field schema metadata", () => {
 			const schemaFactory = new SchemaFactory("com.example");
 			const barMetadata = {
 				description: "Bar",
@@ -460,7 +484,7 @@ describe("schemaFactory", () => {
 		);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
-		const item = stuff[0];
+		const item = stuff[0] ?? oob();
 		const s: string = item.text;
 		assert.equal(s, "hi");
 	});
@@ -543,6 +567,25 @@ describe("schemaFactory", () => {
 			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "An array of numbers",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.arrayAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
+		});
 	});
 
 	describe("Map", () => {
@@ -598,6 +641,25 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 			class NamedMap extends factory.map("name", factory.number) {}
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "A map of numbers",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.mapAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
 		});
 	});
 
@@ -846,8 +908,7 @@ describe("schemaFactory", () => {
 
 		class Empty extends f.object("C", {}) {}
 
-		// TODO: should not build
-		// BUG: object schema with no fields permit construction with any object, not just empty object.
+		// @ts-expect-error Invalid extra field
 		// TODO: this should runtime error when constructed (not just when hydrated)
 		const c2 = new Empty({ x: {} });
 
