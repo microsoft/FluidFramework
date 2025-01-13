@@ -389,15 +389,13 @@ export abstract class SharedObjectCore<
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use void instead of any (legacy breaking)
-	): any;
+	): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 change return type to void (legacy breaking)
-	protected abstract onDisconnect(): any;
+	protected abstract onDisconnect(): void;
 
 	/**
 	 * The serializer to serialize / parse handles.
@@ -412,8 +410,7 @@ export abstract class SharedObjectCore<
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -451,8 +448,7 @@ export abstract class SharedObjectCore<
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	protected reSubmitCore(content: any, localOpMetadata: unknown): void {
+	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		this.submitLocalMessage(content, localOpMetadata);
 	}
 
@@ -465,8 +461,7 @@ export abstract class SharedObjectCore<
 	protected async newAckBasedPromise<T>(
 		executor: (
 			resolve: (value: T | PromiseLike<T>) => void,
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-			reject: (reason?: any) => void,
+			reject: (reason?: unknown) => void,
 		) => void,
 	): Promise<T> {
 		let rejectBecauseDispose: () => void;
@@ -619,8 +614,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * Revert an op
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	protected rollback(content: any, localOpMetadata: unknown): void {
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		throw new Error("rollback not supported");
 	}
 
@@ -641,8 +635,7 @@ export abstract class SharedObjectCore<
 	 *
 	 * @param content - Contents of a stashed op.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	protected abstract applyStashedOp(content: any): void;
+	protected abstract applyStashedOp(content: unknown): void;
 
 	/**
 	 * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
