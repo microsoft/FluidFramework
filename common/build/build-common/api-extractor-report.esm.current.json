@@ -21,7 +21,6 @@
 			// It will be enabled for `model` generation, which is used for generating API documentation for the entire suite.
 			"ae-unresolved-link": {
 				"logLevel": "none",
-				"addToApiReportFile": false
 			}
 		}
 	}
