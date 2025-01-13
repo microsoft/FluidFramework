@@ -37,9 +37,11 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
+		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~"
+		"@fluidframework/tree": "workspace:~",
+		"fluid-framework": "workspace:~"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
