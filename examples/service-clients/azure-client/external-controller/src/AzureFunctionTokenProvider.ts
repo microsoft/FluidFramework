@@ -7,13 +7,6 @@ import { AzureMember } from "@fluidframework/azure-client";
 import { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 import axios from "axios";
 
-// NOTE: the code in this file is in multiple separate places in the repo:
-//
-// - examples/apps/presence-tracker/src/AzureFunctionTokenProvider.ts
-// - examples/service-clients/azure-client/external-controller/src/AzureFunctionTokenProvider.ts
-//
-// AB#26608 tracks rationalizing these different files.
-
 /**
  * Token Provider implementation for connecting to an Azure Function endpoint for
  * Azure Fluid Relay token resolution. Note: this is a simplified implementation of

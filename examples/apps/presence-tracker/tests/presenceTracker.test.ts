@@ -17,7 +17,6 @@ const initializeBrowser = async () => {
 	return browser;
 };
 
-// This suite is skipped because the tests fail if tinylicious is not running; need to figure that out.
 // Most tests are passing when tinylicious is running. Those that aren't are individually skipped.
 describe("presence-tracker", () => {
 	beforeAll(async () => {
