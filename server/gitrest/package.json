@@ -38,7 +38,11 @@
 		"exclude": [],
 		"include": [],
 		"report-dir": "nyc/report",
-		"reporter": ["cobertura", "html", "text"],
+		"reporter": [
+			"cobertura",
+			"html",
+			"text"
+		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {

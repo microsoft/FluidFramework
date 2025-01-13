@@ -12,12 +12,8 @@
 module.exports = {
 	...require("./fluidBuild.base.config.cjs"),
 	repoPackages: {
-		"gitrest": {
+		gitrest: {
 			directory: "server/gitrest",
-		},
-		// TODO: Remove this once flub is a proper dependency and we're not linking it here
-		"build-tools": {
-			directory: "build-tools",
 		},
 	},
 };
