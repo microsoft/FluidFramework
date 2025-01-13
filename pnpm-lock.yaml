@@ -1143,8 +1143,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/tree
       '@sinclair/typebox':
-        specifier: ^0.32.29
-        version: 0.32.35
+        specifier: ^0.34.13
+        version: 0.34.13
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -9158,8 +9158,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       '@sinclair/typebox':
-        specifier: ^0.32.29
-        version: 0.32.35
+        specifier: ^0.34.13
+        version: 0.34.13
       '@tylerbu/sorted-btree-es6':
         specifier: ^1.8.0
         version: 1.8.0
@@ -13419,12 +13419,18 @@ importers:
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../dds/cell
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
@@ -13473,6 +13479,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13503,6 +13512,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
@@ -23950,6 +23962,11 @@ packages:
 
   /@sinclair/typebox@0.32.35:
     resolution: {integrity: sha512-Ul3YyOTU++to8cgNkttakC0dWvpERr6RYoHO2W47DLbFvrwBDJUY31B1sImH6JZSYc4Kt4PyHtoPNu+vL2r2dA==}
+    dev: true
+
+  /@sinclair/typebox@0.34.13:
+    resolution: {integrity: sha512-ceVKqyCEgC355Kw0s/0tyfY9MzMQINSykJ/pG2w6YnaZyrcjV48svZpr8lVZrYgWjzOmrIPBhQRAtr/7eJpA5g==}
+    dev: false
 
   /@sindresorhus/is@4.6.0:
     resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
