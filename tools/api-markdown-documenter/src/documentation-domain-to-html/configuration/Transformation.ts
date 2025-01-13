@@ -61,7 +61,7 @@ export interface Transformations {
 	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a transformation implementation
 	 * for that kind of node.
 	 */
-	[documentationNodeKind: string]: Transformation;
+	readonly [documentationNodeKind: string]: Transformation;
 }
 
 /**

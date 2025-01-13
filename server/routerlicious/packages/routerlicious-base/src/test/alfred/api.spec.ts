@@ -18,6 +18,7 @@ import {
 	TestProducer,
 	TestKafka,
 	TestNotImplementedDocumentRepository,
+	TestClusterDrainingStatusChecker,
 } from "@fluidframework/server-test-utils";
 import {
 	IDocument,
@@ -119,6 +120,18 @@ describe("Routerlicious", () => {
 				appTenant2.key,
 				scopes,
 			)}`;
+			const tenantToken3 = `Basic ${generateToken(
+				appTenant1.id,
+				document1._id,
+				appTenant1.key,
+				scopes,
+			)}`;
+			const tenantToken4 = `Basic ${generateToken(
+				appTenant1.id,
+				document1._id,
+				appTenant1.key,
+				scopes,
+			)}`;
 			const defaultProducer = new TestProducer(new TestKafka());
 			const deltasCollection = await defaultDbManager.getDeltaCollection(
 				undefined,
@@ -132,6 +145,7 @@ describe("Routerlicious", () => {
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			let testFluidAccessTokenGenerator: TestFluidAccessTokenGenerator;
+			let testClusterDrainingStatusChecker: TestClusterDrainingStatusChecker;
 			describe("throttling", () => {
 				const limitTenant = 10;
 				const limitCreateDoc = 5;
@@ -832,6 +846,7 @@ describe("Routerlicious", () => {
 
 					const startupCheck = new StartupCheck();
 					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
+					testClusterDrainingStatusChecker = new TestClusterDrainingStatusChecker();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -848,7 +863,7 @@ describe("Routerlicious", () => {
 						undefined,
 						undefined,
 						undefined,
-						undefined,
+						testClusterDrainingStatusChecker,
 						undefined,
 						undefined,
 						testFluidAccessTokenGenerator,
@@ -911,6 +926,15 @@ describe("Routerlicious", () => {
 									isSessionActive: true,
 								});
 							});
+
+						// Error our when the cluster is draining
+						testClusterDrainingStatusChecker.setClusterDrainingStatus(true);
+						await supertest
+							.get(`/documents/${appTenant1.id}/session/${document1._id}`)
+							.set("Authorization", tenantToken1)
+							.expect((res) => {
+								assert.strictEqual(res.status, 503);
+							});
 					});
 				});
 			});
@@ -958,6 +982,7 @@ describe("Routerlicious", () => {
 					);
 
 					const startupCheck = new StartupCheck();
+					testClusterDrainingStatusChecker = new TestClusterDrainingStatusChecker();
 					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					app = alfredApp.create(
 						defaultProvider,
@@ -975,7 +1000,7 @@ describe("Routerlicious", () => {
 						undefined,
 						undefined,
 						defaultCollaborationSessionEventEmitter,
-						undefined,
+						testClusterDrainingStatusChecker,
 						undefined,
 						undefined,
 						testFluidAccessTokenGenerator,
@@ -1051,6 +1076,32 @@ describe("Routerlicious", () => {
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
 							.expect(400);
+					});
+				});
+
+				describe("/documents", () => {
+					it("/:tenantId cluster in draining status", async () => {
+						testClusterDrainingStatusChecker.setClusterDrainingStatus(true);
+
+						await supertest
+							.post(`/documents/${appTenant1.id}`)
+							.set("Authorization", tenantToken3)
+							.send({ id: document1._id })
+							.expect((res) => {
+								assert.strictEqual(res.status, 503);
+								return true;
+							});
+					});
+
+					it("/:tenantId cluster not in draining status", async () => {
+						await supertest
+							.post(`/documents/${appTenant1.id}`)
+							.set("Authorization", tenantToken4)
+							.send({ id: document1._id })
+							.expect((res) => {
+								assert.notStrictEqual(res.status, 503);
+								return true;
+							});
 					});
 				});
 			});

@@ -14,8 +14,8 @@ import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	type ContainerRuntime,
 	type IContainerRuntimeOptions,
-	SummarizerStopReason,
 } from "@fluidframework/container-runtime/internal";
+import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -235,7 +235,7 @@ describeCompat(
 			if (isGroupIdLoaderVersion(apis.loader.version)) {
 				const groupSnapshot = await snapshotADeferred.promise;
 				const snapshotTreeA =
-					groupSnapshot.snapshotTree.trees[".channels"].trees[dataObjectA2.id];
+					groupSnapshot.snapshotTree.trees[".channels"]?.trees[dataObjectA2.id];
 				assertPopulatedGroupIdTree(
 					snapshotTreeA,
 					groupSnapshot.blobContents,

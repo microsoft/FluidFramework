@@ -6,7 +6,7 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { FieldKey } from "../core/index.js";
+import type { FieldKey, SchemaPolicy } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexTreeField,
@@ -26,6 +26,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitAllowedTypes,
 	FieldKind,
+	type NodeSchemaMetadata,
 	type GetTypes,
 } from "./schemaTypes.js";
 import {
@@ -48,7 +49,11 @@ import {
 	type FlattenKeys,
 	type UnionToIntersection,
 } from "../util/index.js";
-import type { ObjectNodeSchema, ObjectNodeSchemaInternalData } from "./objectNodeTypes.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchema,
+	type ObjectNodeSchemaInternalData,
+} from "./objectNodeTypes.js";
 import { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
 import { getUnhydratedContext } from "./createContext.js";
 
@@ -372,11 +377,15 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
+	allowUnknownOptionalFields: boolean,
+	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+	ObjectNodeSchemaInternalData {
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
@@ -414,6 +423,7 @@ export function objectSchema<
 			]),
 		);
 		public static readonly identifierFieldKeys: readonly FieldKey[] = identifierFieldKeys;
+		public static readonly allowUnknownOptionalFields: boolean = allowUnknownOptionalFields;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -500,6 +510,8 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -554,4 +566,22 @@ function assertUniqueKeys<
 		}
 		derivedStoredKeys.add(storedKey);
 	}
+}
+
+/**
+ * Creates a policy for allowing unknown optional fields on an object node which delegates to the policy defined
+ * on the object node's internal schema data.
+ */
+export function createUnknownOptionalFieldPolicy(
+	schema: ImplicitFieldSchema,
+): SchemaPolicy["allowUnknownOptionalFields"] {
+	const context = getUnhydratedContext(schema);
+	return (identifier) => {
+		const storedSchema = context.schema.get(identifier);
+		return (
+			storedSchema !== undefined &&
+			isObjectNodeSchema(storedSchema) &&
+			storedSchema.allowUnknownOptionalFields
+		);
+	};
 }

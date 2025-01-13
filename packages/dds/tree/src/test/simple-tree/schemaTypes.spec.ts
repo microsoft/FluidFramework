@@ -265,7 +265,7 @@ describe("schemaTypes", () => {
 			}
 
 			// Class that implements both TreeNodeSchemaNonClass and TreeNodeSchemaNonClass
-			class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true) {
+			class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, false) {
 				public customized = true;
 			}
 

@@ -35,6 +35,8 @@ export {
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
@@ -118,6 +120,10 @@ export {
 	conciseFromCursor,
 	createFromCursor,
 	asTreeViewAlpha,
+	customFromCursorStored,
+	type CustomTreeNode,
+	type CustomTreeValue,
+	tryStoredSchemaAsArray,
 	type GetTypesUnsafe,
 	type DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
 	type DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
@@ -155,6 +161,8 @@ export {
 	type Input,
 	type ReadableField,
 	type ReadSchema,
+	type NodeSchemaOptions,
+	type NodeSchemaMetadata,
 	customizeSchemaTyping,
 	type DefaultTreeNodeFromImplicitAllowedTypes,
 	type Customizer,
@@ -182,6 +190,7 @@ export {
 	type ApplyKindAssignment,
 	type TreeObjectNode,
 	setField,
+	createUnknownOptionalFieldPolicy,
 } from "./objectNode.js";
 export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
 export {

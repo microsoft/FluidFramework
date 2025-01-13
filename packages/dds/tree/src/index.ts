@@ -4,42 +4,47 @@
  */
 
 export {
-	EmptyKey,
-	type FieldKey,
-	type TreeValue,
-	type FieldMapObject,
-	type NodeData,
-	type GenericTreeNode,
-	type JsonableTree,
-	type GenericFieldsNode,
-	type TreeNodeSchemaIdentifier,
-	type TreeFieldStoredSchema,
 	ValueSchema,
-	TreeNodeStoredSchema,
-	type FieldKindIdentifier,
-	type TreeTypeSet,
-	type TreeStoredSchema,
 	type Revertible,
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
-	type StoredSchemaCollection,
-	type ErasedTreeNodeSchemaDataFormat,
-	ObjectNodeStoredSchema,
-	MapNodeStoredSchema,
-	LeafNodeStoredSchema,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 } from "./core/index.js";
-export { type Brand } from "./util/index.js";
 
-export type {
-	Listeners,
-	IsListener,
-	Listenable,
-	Off,
+import type {
+	Listeners as EventListeners,
+	IsListener as EventIsListener,
+	Listenable as EventListenable,
+	Off as EventOff,
 } from "@fluidframework/core-interfaces";
+
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Listeners}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Listeners<T extends object> = EventListeners<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#IsListener}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type IsListener<T> = EventIsListener<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Listenable}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Listenable<T extends object> = EventListenable<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Off}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Off = EventOff;
 
 export {
 	TreeStatus,
@@ -50,10 +55,9 @@ export {
 } from "./feature-libraries/index.js";
 
 export {
-	type ISharedTree,
+	type ITreeInternal,
 	type SharedTreeOptions,
-	ForestType,
-	type SharedTreeContentSnapshot,
+	type ForestType,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
@@ -69,6 +73,16 @@ export {
 	type ViewContent,
 	TreeAlpha,
 	independentView,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	ForestTypeOptimized,
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
 } from "./shared-tree/index.js";
 
 export {
@@ -85,6 +99,8 @@ export {
 	type TreeView,
 	type TreeViewEvents,
 	SchemaFactory,
+	SchemaFactoryAlpha,
+	type SchemaFactoryObjectOptions,
 	type ImplicitFieldSchema,
 	type TreeFieldFromImplicitField,
 	type TreeChangeEvents,
@@ -190,17 +206,14 @@ export {
 	type SimpleObjectNodeSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
-	numberSchema,
-	stringSchema,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
 	type ReadonlyArrayNode,
 	type InsertableTreeNodeFromAllowedTypes,
 	type Input,
 	type TreeBranch,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
+	type NodeSchemaOptions,
+	type NodeSchemaMetadata,
 	type AssignableTreeFieldFromImplicitField,
 	type ApplyKindAssignment,
 	type DefaultTreeNodeFromImplicitAllowedTypes,
@@ -233,8 +246,6 @@ export { noopValidator } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export {
-	type Covariant,
-	BrandedType,
 	type RestrictiveReadonlyRecord,
 	type RestrictiveStringRecord,
 	type MakeNominal,
