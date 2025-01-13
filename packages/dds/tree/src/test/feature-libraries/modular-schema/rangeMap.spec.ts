@@ -5,11 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { RangeMap } from "../../../util/index.js";
+import { IntegerRangeMap, type RangeMap } from "../../../util/index.js";
 
-function newRangeMap(): RangeMap<string> {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return new RangeMap<string>();
+function newRangeMap(): RangeMap<number, string> {
+	return new IntegerRangeMap<string>();
 }
 
 describe("RangeMap", () => {

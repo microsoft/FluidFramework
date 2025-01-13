@@ -71,7 +71,7 @@ export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLoc
 
 /**
  */
-export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
+export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<number, T>>;
 
 /**
  * @returns true iff `a` and `b` are the same.

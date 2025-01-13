@@ -62,8 +62,9 @@ import {
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
 	type IdAllocator,
+	IntegerRangeMap,
 	type Mutable,
-	RangeMap,
+	type RangeMap,
 	brand,
 	fail,
 	fakeIdAllocator,
@@ -826,18 +827,20 @@ interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
 	dstQueries: CrossFieldQuerySet;
 	isInvalidated: boolean;
-	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
-	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
+	mapSrc: Map<RevisionTag | undefined, RangeMap<number, T>>;
+	mapDst: Map<RevisionTag | undefined, RangeMap<number, T>>;
 	reset: () => void;
 }
 
 function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 	const srcQueries: CrossFieldQuerySet = new Map();
 	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+	const mapSrc: Map<RevisionTag | undefined, RangeMap<number, T>> = new Map();
+	const mapDst: Map<RevisionTag | undefined, RangeMap<number, T>> = new Map();
 
-	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
+	const getMap = (
+		target: CrossFieldTarget,
+	): Map<RevisionTag | undefined, RangeMap<number, T>> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
 	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
@@ -860,7 +863,7 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			if (addDependency) {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
+			const rangeMap = getMap(target).get(revision) ?? new IntegerRangeMap<T>();
 			return rangeMap.get(id, count);
 		},
 		set: (

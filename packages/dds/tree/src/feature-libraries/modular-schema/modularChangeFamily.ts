@@ -2346,7 +2346,7 @@ abstract class CrossFieldManagerI<T> implements CrossFieldManager {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeQueryResult<unknown> {
+	): RangeQueryResult<number, unknown> {
 		if (addDependency) {
 			// We assume that if there is already an entry for this ID it is because
 			// a field handler has called compose on the same node multiple times.

@@ -101,7 +101,7 @@ export function getMoveEffect(
 	id: MoveId,
 	count: number,
 	addDependency: boolean = true,
-): RangeQueryResult<MoveEffect> {
+): RangeQueryResult<number, MoveEffect> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
 	return result.value !== undefined
 		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) }
