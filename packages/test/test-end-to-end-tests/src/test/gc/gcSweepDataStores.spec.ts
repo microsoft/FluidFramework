@@ -20,8 +20,13 @@ import {
 	ISummarizer,
 	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import/no-internal-modules
-import { ISweepMessage } from "@fluidframework/container-runtime/internal/test/gc";
+import {
+	computeTombstoneTimeout,
+	defaultSessionExpiryDurationMs,
+	defaultSweepGracePeriodMs,
+	ISweepMessage,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
@@ -123,13 +128,10 @@ function validateDataStoreStateInSummary(
 	);
 }
 
-const tombstoneTimeoutMs = 200;
-const sweepGracePeriodMs = 0; // Skip Tombstone, these tests focus on Sweep
-const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs;
+const tombstoneTimeoutMs = computeTombstoneTimeout(defaultSessionExpiryDurationMs) ?? 200;
+const sweepTimeoutMs = tombstoneTimeoutMs + defaultSweepGracePeriodMs;
 const newGCOptions: () => IGCRuntimeOptions = () => ({
-	inactiveTimeoutMs: 0,
 	enableGCSweep: true,
-	sweepGracePeriodMs,
 });
 const mockLogger = new MockLogger();
 const configProvider = createTestConfigProvider();
@@ -211,7 +213,10 @@ const summarizationWithUnreferencedDataStoreAfterTime = async (clock: SinonFakeT
 	const summaryVersion = (await ensureSynchronizedAndSummarize(summarizer1)).summaryVersion;
 
 	// Close the summarizer so that it doesn't interfere with the new one.
+	container.close();
 	summarizingContainer1.close();
+
+	clock.tick(sweepTimeoutMs + 10);
 
 	// Load a new container and summarizer from the latest summary
 	const { container: summarizingContainer2, summarizer: summarizer2 } = await loadSummarizer(
@@ -225,14 +230,12 @@ const summarizationWithUnreferencedDataStoreAfterTime = async (clock: SinonFakeT
 	});
 	const summarizerDataObject = response.value as ITestDataObject;
 
-	clock.tick(sweepTimeoutMs + 10);
-
 	// Send an op to update the timestamp that the summarizer client uses for GC to a current one.
 	defaultDataObject._root.set("update", "timestamp");
 	await provider.ensureSynchronized();
 
 	// Close the container as it would be closed by session expiry before sweep ready ever occurs.
-	container.close();
+	// container.close();
 
 	return {
 		unreferencedId,
@@ -263,10 +266,6 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
-		configProvider.set(
-			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
-			tombstoneTimeoutMs,
-		);
 	});
 
 	afterEach(() => {
@@ -642,65 +641,65 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			},
 		);
 
-		itExpects(
-			"trailing ops cause sweep ready data store to be realized by summarizer",
-			[
+		it("trailing ops cause sweep ready data store to be realized by summarizer", async () => {
+			const container = await provider.makeTestContainer(testContainerConfig);
+			const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
+			await waitForContainerConnection(container);
+
+			// Create a data store and make it unreferenced.
+			const ds2key = "ds2";
+			const dataStore =
+				await defaultDataObject._context.containerRuntime.createDataStore(TestDataObjectType);
+			const testDataObject =
+				await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
+			assert(
+				testDataObject !== undefined,
+				"Should have been able to retrieve testDataObject from entryPoint",
+			);
+			const unreferencedId = testDataObject._context.id;
+			defaultDataObject._root.set(ds2key, testDataObject.handle);
+			defaultDataObject._root.delete(ds2key);
+
+			// Summarize so that the above data store is unreferenced.
+			const { summarizer: summarizer1 } = await loadSummarizer(container);
+			const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer1);
+			summarizer1.close();
+
+			// To simulate this scenario, the container that deleted the data store should send an op before its
+			// session expires. At the same time, there should be a second container that receives the op whose
+			// session doesn't expire by sweep timeout (this is needed for ensureSynchronized to work since it needs
+			// at least one container that isn't closed).
+			// So, advance the clock partially, send the op and load another container.
+			const partialTimeoutMs = defaultSessionExpiryDurationMs / 2;
+			clock.tick(partialTimeoutMs);
+			testDataObject._root.set("key", "value");
+
+			const container2 = await provider.loadTestContainer(testContainerConfig);
+			await provider.ensureSynchronized();
+
+			// Close the first container before its session expires so we don't get unnecessary errors.
+			container.close();
+			clock.tick(sweepTimeoutMs - partialTimeoutMs + 10);
+
+			const logger = new MockLogger();
+			// Summarize. The sweep ready data store should get realized because it has a
+			// trailing op.
+			const { summarizer: summarizer2 } = await loadSummarizer(
+				container2,
+				summaryVersion,
+				logger,
+			);
+			await assert.doesNotReject(
+				ensureSynchronizedAndSummarize(summarizer2),
+				"summarize failed",
+			);
+			logger.assertMatch([
 				{
-					eventName:
-						"fluid:telemetry:FluidDataStoreContext:GC_Deleted_DataStore_Unexpected_Delete",
-					error: "GC_Deleted_DataStore_Unexpected_Delete",
+					eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Realized",
+					id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
 				},
-			],
-			async () => {
-				const container = await provider.makeTestContainer(testContainerConfig);
-				const defaultDataObject = (await container.getEntryPoint()) as ITestDataObject;
-				await waitForContainerConnection(container);
-
-				// Create a data store and make it unreferenced.
-				const ds2key = "ds2";
-				const dataStore =
-					await defaultDataObject._context.containerRuntime.createDataStore(
-						TestDataObjectType,
-					);
-				const testDataObject =
-					await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
-				assert(
-					testDataObject !== undefined,
-					"Should have been able to retrieve testDataObject from entryPoint",
-				);
-				const unreferencedId = testDataObject._context.id;
-				defaultDataObject._root.set(ds2key, testDataObject.handle);
-				defaultDataObject._root.delete(ds2key);
-
-				// Summarize so that the above data store is unreferenced.
-				const { summarizer: summarizer1 } = await loadSummarizer(container);
-				const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer1);
-
-				// Send a trailing op and close the summarizer.
-				testDataObject._root.set("key", "value");
-				summarizer1.close();
-				clock.tick(sweepTimeoutMs + 10);
-
-				const logger = new MockLogger();
-				// Summarize. The sweep ready data store should get realized because it has a
-				// trailing op.
-				const { summarizer: summarizer2 } = await loadSummarizer(
-					container,
-					summaryVersion,
-					logger,
-				);
-				await assert.doesNotReject(
-					ensureSynchronizedAndSummarize(summarizer2),
-					"summarize failed",
-				);
-				logger.assertMatch([
-					{
-						eventName: "fluid:telemetry:Summarizer:Running:SweepReadyObject_Realized",
-						id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
-					},
-				]);
-			},
-		);
+			]);
+		});
 	});
 
 	describe("Deleted data stores in summary", () => {
