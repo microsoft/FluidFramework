@@ -17,11 +17,6 @@ import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
-const user = {
-	id: "1234567890",
-	name: "Test User",
-};
-
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the Container is first created.
