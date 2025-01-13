@@ -14,3 +14,5 @@ Error: PR-008: Trying to remove a non-existing entry:
 ```
 
 The underlying problem has been fixed and this error should no longer occur.
+
+_Thanks to [@neerajcharokar](https://github.com/neerajcharokar) for submitting this fix!_

@@ -5,7 +5,7 @@
 "section": legacy
 ---
 
-MockLogger has been removed from the alpha+legacy API surface
+The MockLogger class has been removed
 
 The `MockLogger` class, which was previously part of the alpha+legacy API in `@fluidframework/telemetry-utils`, has
 been removed.
