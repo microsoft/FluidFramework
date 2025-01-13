@@ -13,7 +13,7 @@
 	"scripts": {
 		"build": "npm run build:genver && npm run build:compile && npm run lint",
 		"build:compile": "pnpm run -r --stream build:compile",
-		"build:docker": "docker build . --build-context root=\"../..\"",
+		"build:docker": "docker build . --build-context root=../..",
 		"build:genver": "pnpm run -r --no-sort --stream --no-bail build:genver",
 		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
