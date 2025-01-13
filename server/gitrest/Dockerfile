@@ -51,6 +51,8 @@ RUN corepack enable
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store\
     pnpm install --unsafe-perm
 
+COPY . .
+
 # Copy over fluid config files to allow flub versioning to work
 WORKDIR $BUILD_ROOT
 COPY --from=root fluidBuild.config.cjs ./fluidBuild.base.config.cjs
@@ -67,7 +69,6 @@ else\
     echo "Skipping package version for dev build.";\
 fi
 
-COPY . .
 RUN pnpm run build
 
 # Build that actually runs
