@@ -22,7 +22,7 @@
 			// We want that to be possible, so we suppress this error for report generation.
 			// It will be enabled for `model` generation, which is used for generating API documentation for the entire suite.
 			"ae-unresolved-link": {
-				"logLevel": "none",
+				"logLevel": "none"
 			}
 		}
 	}
