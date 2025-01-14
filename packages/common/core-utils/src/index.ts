@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export { assert } from "./assert.js";
+export { assert, debugAssert, configureDebugAsserts, debugAssertsIncluded } from "./assert.js";
 export { compareArrays } from "./compare.js";
 export { delay } from "./delay.js";
 export type { IComparer, IHeapNode } from "./heap.js";

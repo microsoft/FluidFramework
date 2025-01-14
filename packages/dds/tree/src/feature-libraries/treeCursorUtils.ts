@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -146,7 +146,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public getFieldKey(): FieldKey {
-		// assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+		debugAssert(() =>
+			this.mode === CursorLocationType.Fields ? true : "must be in fields mode",
+		);
 		return this.siblings[this.index] as FieldKey;
 	}
 
