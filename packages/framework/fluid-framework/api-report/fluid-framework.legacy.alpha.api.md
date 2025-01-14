@@ -743,7 +743,6 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
 // @alpha
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
 // @alpha

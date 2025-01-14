@@ -221,7 +221,29 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ContainerRuntime": {
+				"backCompat": false
+			},
+			"Class_DocumentsSchemaController": {
+				"forwardCompat": false
+			},
+			"ClassStatics_ContainerRuntime": {
+				"backCompat": false
+			},
+			"TypeAlias_SummarizerStopReason": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_ISummarizeEventProps": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_ISummarizerEvents": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
