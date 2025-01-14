@@ -15,7 +15,7 @@ import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
 import type { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 
 export interface IFocusTrackerEvents extends IEvent {
-	(event: "focusChanged", listener: () => void): void;
+	(event: "focusChanged", listener: (focusState: IFocusState) => void): void;
 }
 
 export interface IFocusState {
@@ -26,7 +26,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	private readonly focus: LatestValueManager<IFocusState>;
 
 	constructor(
-		public readonly presence: IPresence,
+		private readonly presence: IPresence,
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		statesWorkspace: PresenceStates<{}>,
 		public readonly audience: ITinyliciousAudience,
@@ -40,21 +40,23 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 			this.emit("focusChanged");
 		});
 
-		// Alert all connected clients that there has been a change to a client's focus state
+		// Alert all connected clients that there has been a change to this client's focus state
 		window.addEventListener("focus", () => {
 			this.focus.local = {
 				hasFocus: true,
 			};
+			this.emit("focusChanged", this.focus.local);
 		});
 		window.addEventListener("blur", () => {
 			this.focus.local = {
 				hasFocus: false,
 			};
+			this.emit("focusChanged", this.focus.local);
 		});
 	}
 
 	/**
-	 * A map of connection IDs to focus status.
+	 * A map of session clients to focus status.
 	 */
 	public getFocusPresences(): Map<ISessionClient, boolean> {
 		const statuses: Map<ISessionClient, boolean> = new Map();
@@ -72,5 +74,9 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		}
 
 		return statuses;
+	}
+
+	public getMyself() {
+		return this.presence.getMyself();
 	}
 }

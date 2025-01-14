@@ -897,9 +897,6 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
@@ -922,9 +919,6 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)
-      '@fluidframework/devtools':
-        specifier: workspace:~
-        version: link:../../../packages/tools/devtools/devtools
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
         version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)

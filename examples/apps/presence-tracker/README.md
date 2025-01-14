@@ -3,7 +3,7 @@
 **_This demo is a work-in-progress_**
 
 **Presence Tracker** is an example that demonstrates how the @fluidframework/presence package can be used to share data
-that does not require persistance between clients. The presence APIs are especially suited to data like real-time cursor
+that does not require persistence between clients. The presence APIs are especially suited to data like real-time cursor
 positions, mouse pointer positions, and object selection.
 
 In this example, presence is used to share both mouse position within the application window and the focus state of the

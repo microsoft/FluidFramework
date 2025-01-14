@@ -33,7 +33,7 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	const onFocusChanged = () => {
 		focusDiv.innerHTML = getFocusPresencesString("</br>", focusTracker);
 		const focusPresences = focusTracker.getFocusPresences();
-		const session = focusTracker.presence.getMyself();
+		const session = focusTracker.getMyself();
 		const hasFocus = focusPresences.get(session);
 
 		// hasFocus === undefined/true should hide the message (set to "none")

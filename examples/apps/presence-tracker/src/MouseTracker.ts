@@ -27,7 +27,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	private readonly cursor: LatestValueManager<IMousePosition>;
 
 	constructor(
-		public readonly presence: IPresence,
+		private readonly presence: IPresence,
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		statesWorkspace: PresenceStates<{}>,
 		public readonly audience: ITinyliciousAudience,
@@ -46,7 +46,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		});
 
 		window.addEventListener("mousemove", (e) => {
-			// Alert all connected clients that there has been a change to a client's mouse position
+			// Alert all connected clients that there has been a change to this client's mouse position
 			this.cursor.local = {
 				x: e.clientX,
 				y: e.clientY,
@@ -55,7 +55,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	}
 
 	/**
-	 * A map of connection IDs to mouse positions.
+	 * A map of session clients to mouse positions.
 	 */
 	public getMousePresences(): Map<ISessionClient, IMousePosition> {
 		const statuses: Map<ISessionClient, IMousePosition> = new Map();
