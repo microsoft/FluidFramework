@@ -33,6 +33,7 @@ export class HistorianResources implements core.IResources {
 		public readonly denyList?: historianServices.IDenyList,
 		public readonly ephemeralDocumentTTLSec?: number,
 		public readonly readinessCheck?: core.IReadinessCheck,
+		public readonly simplifiedCustomDataRetriever?: historianServices.ISimplifiedCustomDataRetriever,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);

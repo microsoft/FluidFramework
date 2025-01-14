@@ -1,5 +1,9 @@
 # @fluidframework/driver-base
 
+## 2.13.0
+
+Dependency updates only.
+
 ## 2.12.0
 
 Dependency updates only.
