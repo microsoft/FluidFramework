@@ -31,7 +31,12 @@ import {
 } from "../../../simple-tree/index.js";
 import { getView, validateUsageError } from "../../utils.js";
 import { getViewForForkedBranch, hydrate } from "../utils.js";
-import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
+import {
+	brand,
+	type areSafelyAssignable,
+	type requireAssignableTo,
+	type requireTrue,
+} from "../../../util/index.js";
 
 import {
 	booleanSchema,
@@ -1039,7 +1044,7 @@ describe("treeNodeApi", () => {
 			const rectangle = new TestRectangle({ topLeft, bottomRight, innerPoints: [] });
 
 			// Clone the root rectangle node.
-			const clonedRectangle = TreeBeta.clone<typeof TestRectangle>(rectangle);
+			const clonedRectangle = TreeBeta.clone(rectangle);
 			assert.deepEqual(rectangle, clonedRectangle, "Root node not cloned properly");
 			assert.notEqual(
 				rectangle,
@@ -1048,7 +1053,7 @@ describe("treeNodeApi", () => {
 			);
 
 			// Clone a node inside the rectangle.
-			const clonedTopLeft = TreeBeta.clone<typeof TestPoint>(topLeft);
+			const clonedTopLeft = TreeBeta.clone(topLeft);
 			assert.deepEqual(topLeft, clonedTopLeft, "Inner node not cloned properly");
 			assert.notEqual(topLeft, clonedTopLeft, "Cloned inner node object should be different");
 
@@ -1070,7 +1075,7 @@ describe("treeNodeApi", () => {
 			const rectangle = view.root;
 
 			// Clone the hydrated root rectangle node.
-			const clonedRectangle = TreeBeta.clone<typeof TestRectangle>(rectangle);
+			const clonedRectangle = TreeBeta.clone(rectangle);
 			assert.deepEqual(rectangle, clonedRectangle, "Root node not cloned properly");
 			assert.notEqual(
 				rectangle,
@@ -1085,7 +1090,7 @@ describe("treeNodeApi", () => {
 			// Clone the new node inside the rectangle.
 			const point1 = rectangle.innerPoints.at(0);
 			assert(point1 !== undefined, "Point not inserted correctly");
-			const clonedPoint1 = TreeBeta.clone<typeof TestPoint>(point1);
+			const clonedPoint1 = TreeBeta.clone(point1);
 			assert.deepEqual(point1, clonedPoint1, "Inner node not cloned properly");
 			assert.notEqual(point1, clonedPoint1, "Cloned inner node object should be different");
 
@@ -1100,11 +1105,11 @@ describe("treeNodeApi", () => {
 
 		it("clones unhydrated primitive types", () => {
 			const point = new TestPoint({ x: 1, y: 1, metadata: "unhydratedPoint" });
-			const clonedX = TreeBeta.clone<typeof schema.number>(point.x);
+			const clonedX = TreeBeta.clone(point.x);
 			assert.equal(clonedX, point.x, "Number not cloned properly");
 
 			assert(point.metadata !== undefined, "Metadata not set correctly");
-			const clonedMetadata = TreeBeta.clone<typeof schema.string>(point.metadata);
+			const clonedMetadata = TreeBeta.clone(point.metadata);
 			assert.equal(clonedMetadata, point.metadata, "String not cloned properly");
 		});
 
@@ -1116,14 +1121,54 @@ describe("treeNodeApi", () => {
 			view.initialize({ topLeft, bottomRight, innerPoints: [] });
 
 			const topLeftPoint = view.root.topLeft;
-			const clonedX = TreeBeta.clone<typeof schema.number>(topLeftPoint.x);
+			const clonedX = TreeBeta.clone(topLeftPoint.x);
 			assert.equal(clonedX, topLeftPoint.x, "Number not cloned properly");
 
 			topLeftPoint.metadata = "hydratedPoint";
 			assert(topLeftPoint.metadata !== undefined, "Metadata not set correctly");
-			const clonedMetadata = TreeBeta.clone<typeof schema.string>(topLeftPoint.metadata);
+			const clonedMetadata = TreeBeta.clone(topLeftPoint.metadata);
 			assert.equal(clonedMetadata, topLeftPoint.metadata, "String not cloned properly");
 		});
+
+		// Compile-time test: ensure that the return type of clone is the same as the input type for common cases (nodes, primitives, undefined).
+		function preservesTypesWhenCloning(
+			primitiveOrNode: string | TestPoint,
+			maybePrimitive: string | undefined,
+			maybeNode: TestPoint | undefined,
+		): void {
+			{
+				const nullValue = TreeBeta.clone(null);
+				type _check = requireAssignableTo<typeof nullValue, null>;
+			}
+			{
+				const boolean = TreeBeta.clone(true);
+				type _check = requireAssignableTo<typeof boolean, true>;
+			}
+			{
+				const number = TreeBeta.clone(3);
+				type _check = requireAssignableTo<typeof number, 3>;
+			}
+			{
+				const string = TreeBeta.clone("test");
+				type _check = requireAssignableTo<typeof string, "test">;
+			}
+			{
+				const node = TreeBeta.clone(new TestPoint({ x: 0, y: 0 }));
+				type _check = requireAssignableTo<typeof node, TestPoint>;
+			}
+			{
+				const primitive = TreeBeta.clone(maybePrimitive);
+				type _check = requireAssignableTo<typeof primitive, string | undefined>;
+			}
+			{
+				const node = TreeBeta.clone(maybeNode);
+				type _check = requireAssignableTo<typeof node, TestPoint | undefined>;
+			}
+			{
+				const clone = TreeBeta.clone(primitiveOrNode);
+				type _check = requireAssignableTo<typeof clone, string | TestPoint>;
+			}
+		}
 
 		describe("test-trees", () => {
 			for (const testCase of testSimpleTrees) {
