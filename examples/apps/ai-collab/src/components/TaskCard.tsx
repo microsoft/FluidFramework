@@ -168,7 +168,7 @@ export function TaskCard(props: {
 			const response: GenerateTreeEditsResponse = await aiCollab({
 				openAI: {
 					client: getOpenAiClient(),
-					modelName: "gpt-4o",
+					modelName: "gpt-4o-mini",
 				},
 				treeNode: newBranchTask,
 				prompt: {

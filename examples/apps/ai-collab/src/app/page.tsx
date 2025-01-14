@@ -36,7 +36,6 @@ import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 // Uncomment the import line that corresponds to the server you want to use
 // import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
 import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
-// import { DiffViewer } from "@/components/DiffViewer";
 
 export async function createAndInitializeContainer(): Promise<
 	IFluidContainer<typeof CONTAINER_SCHEMA>
