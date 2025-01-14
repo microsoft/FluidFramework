@@ -6,7 +6,7 @@
 
 Target ES2021
 
-The TypeScript build has been updated to target ES2021 instead of ES2020.
+The TypeScript build for Fluid Framework packages has been updated to target ES2021 instead of ES2020.
 This may result in newer JavaScript language features being used.
 This does not include updating the library version being used.
 We only support users which support ES2022, so updating to target ES2021 should not break any supported use-case.
