@@ -1115,7 +1115,7 @@ describe("IdCompressor", () => {
 			const uuids = new Set<StableId>();
 			for (const [i, data1] of log1.entries()) {
 				const id1 = compressor1.normalizeToOpSpace(data1.id);
-				const id2 = compressor2.normalizeToOpSpace(log2[i]?.id);
+				const id2 = compressor2.normalizeToOpSpace(log2[i].id);
 				assert(isFinalId(id1));
 				ids.add(id1);
 				assert.equal(id1, id2);

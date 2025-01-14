@@ -1131,8 +1131,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/tree
       '@sinclair/typebox':
-        specifier: ^0.32.29
-        version: 0.32.35
+        specifier: ^0.34.13
+        version: 0.34.13
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -4423,6 +4423,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      source-map-explorer:
+        specifier: ^2.5.3
+        version: 2.5.3
       source-map-loader:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.97.1)
@@ -4577,6 +4580,9 @@ importers:
 
   examples/utils/import-testing:
     dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/client-utils
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../packages/common/core-interfaces
@@ -4586,6 +4592,9 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../packages/framework/fluid-framework
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -9146,8 +9155,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       '@sinclair/typebox':
-        specifier: ^0.32.29
-        version: 0.32.35
+        specifier: ^0.34.13
+        version: 0.34.13
       '@tylerbu/sorted-btree-es6':
         specifier: ^1.8.0
         version: 1.8.0
@@ -13407,12 +13416,18 @@ importers:
       '@fluidframework/cell':
         specifier: workspace:~
         version: link:../../dds/cell
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
       '@fluidframework/container-runtime':
         specifier: workspace:~
         version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
@@ -13461,6 +13476,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13491,6 +13509,9 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
