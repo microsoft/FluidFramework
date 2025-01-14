@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-FROM node:18.20.5-bookworm-slim AS base
+FROM node:18.20.5-bookworm-slim@sha256:c4a278056a0f79abf472d912bbf5af6c874126ae450faad9df52069e9ad78335 AS base
 
 # Add Tini
 ENV TINI_VERSION v0.18.0
