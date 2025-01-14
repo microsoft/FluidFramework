@@ -575,6 +575,9 @@ export const UnsafeUnknownSchema: unique symbol = Symbol("UnsafeUnknownSchema");
  * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
  * or silently accept invalid data.
  * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
+ *
+ * TODO: This takes a very different approach than `customizeSchemaTyping` which applies to allowed types.
+ * Maybe generalize that to apply to field schema as well and replace this with it?
  * @alpha
  */
 export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
@@ -586,24 +589,7 @@ export type UnsafeUnknownSchema = typeof UnsafeUnknownSchema;
 export const CustomizedTyping: unique symbol = Symbol("CustomizedTyping");
 
 /**
- * TODO: rewrite this doc and/or dedup this with UnsafeUnknownSchema.
- * This system should be able to replace how UnsafeUnknownSchema is used.
- *
- * A special type which can be provided to some APIs as the schema type parameter when schema cannot easily be provided at compile time and an unsafe (instead of disabled) editing API is desired.
- * @remarks
- * When used, this means the TypeScript typing should err on the side of completeness (allow all inputs that could be valid).
- * This introduces the risk that out-of-schema data could be allowed at compile time, and only error at runtime.
- *
- * @privateRemarks
- * This only applies to APIs which input data which is expected to be in schema, since APIs outputting have easy mechanisms to do so in a type safe way even when the schema is unknown.
- * In most cases that amounts to returning `TreeNode | TreeLeafValue`.
- *
- * This can be contrasted with the default behavior of TypeScript, which is to require the intersection of the possible types for input APIs,
- * which for unknown schema defining input trees results in the `never` type.
- *
- * Any APIs which use this must produce UsageErrors when out of schema data is encountered, and never produce unrecoverable errors,
- * or silently accept invalid data.
- * This is currently only type exported from the package: the symbol is just used as a way to get a named type.
+ * A type brand used by {@link customizeSchemaTyping}.
  * @system @public
  */
 export type CustomizedTyping = typeof CustomizedTyping;
@@ -696,18 +682,22 @@ export interface Customizer<TSchema extends ImplicitAllowedTypes> {
 	 * Relaxed policy: allows possible invalid edits (which will err at runtime) when schema is not exact.
 	 * @remarks
 	 * Handles input types covariantly so any input which might be valid with the schema is allowed
-	 * instead of the default strict policy of only inputs with all possible schema re allowed.
+	 * instead of the default strict policy of only inputs with all possible schema are allowed.
+	 *
+	 * This only modifies the typing shallowly: the typing of children are not effected.
 	 */
 	relaxed(): CustomizedSchemaTyping<
 		TSchema,
 		{
-			input: TSchema extends TreeNodeSchema
-				? InsertableTypedNode<TSchema>
-				: TSchema extends AllowedTypes
-					? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema>
-						? InsertableTypedNode<TSchemaInner>
-						: never
-					: never;
+			input: TreeNodeSchema extends TSchema
+				? InsertableContent
+				: TSchema extends TreeNodeSchema
+					? InsertableTypedNode<TSchema>
+					: TSchema extends AllowedTypes
+						? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema>
+							? InsertableTypedNode<TSchemaInner>
+							: never
+						: never;
 			readWrite: TreeNodeFromImplicitAllowedTypes<TSchema>;
 			output: TreeNodeFromImplicitAllowedTypes<TSchema>;
 		}
@@ -774,13 +764,11 @@ export type GetTypes<TSchema extends ImplicitAllowedTypes> = [TSchema] extends [
  *
  * @see {@link Input}
  * @remarks
- * Extended version of {@link InsertableTreeNodeFromImplicitAllowedTypes} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * Alias of {@link InsertableTreeNodeFromImplicitAllowedTypes} with a shorter name.
  * @alpha
  */
-export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> =
-	TSchema extends ImplicitAllowedTypes
-		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
-		: InsertableContent;
+export type Insertable<TSchema extends ImplicitAllowedTypes> =
+	InsertableTreeNodeFromImplicitAllowedTypes<TSchema>;
 
 /**
  * Content which could be inserted into a field within a tree.
