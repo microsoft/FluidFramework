@@ -8,6 +8,7 @@ import {
 	IDeltaManagerEvents,
 	IDeltaManagerFull,
 	IDeltaQueue,
+	DisconnectReason,
 	type IDeltaSender,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
@@ -422,7 +423,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				},
 				error,
 			);
-			this.close(normalizeError(error));
+			this.close(DisconnectReason.Unknown, normalizeError(error));
 		});
 		const props: IConnectionManagerFactoryArgs = {
 			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
@@ -430,7 +431,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.enqueueMessages(messages, reason);
 				} catch (error) {
 					this.logger.sendErrorEvent({ eventName: "EnqueueMessages_Exception" }, error);
-					this.close(normalizeError(error));
+					this.close(DisconnectReason.Unknown, normalizeError(error));
 				}
 			},
 			signalHandler: (signals: ISignalMessage[]) => {
@@ -440,7 +441,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			},
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
-			closeHandler: (error: ICriticalContainerError | undefined) => this.close(error),
+			closeHandler: (error: ICriticalContainerError | undefined) =>
+				this.close(DisconnectReason.Unknown, error),
 			disconnectHandler: (reason: IConnectionStateChangeReason) =>
 				this.disconnectHandler(reason),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
@@ -465,6 +467,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		this._inbound.on("error", (error) => {
 			this.close(
+				DisconnectReason.Unknown,
 				DataProcessingError.wrapIfUnrecognized(
 					error,
 					"deltaManagerInboundErrorHandler",
@@ -486,7 +489,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		});
 
 		this._inboundSignal.on("error", (error) => {
-			this.close(normalizeError(error));
+			this.close(DisconnectReason.Unknown, normalizeError(error));
 		});
 
 		// Initially, all queues are created paused.
@@ -759,13 +762,13 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - close emits "closed"
 	 * - close cannot be called after dispose
 	 */
-	public close(error?: ICriticalContainerError): void {
+	public close(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void {
 		if (this._closed) {
 			return;
 		}
 		this._closed = true;
 
-		this.connectionManager.dispose(error, true /* switchToReadonly */);
+		this.connectionManager.dispose(disconnectReason, error, true /* switchToReadonly */);
 		this.clearQueues();
 		this.emit("closed", error);
 	}
@@ -778,7 +781,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - dispose will remove all listeners
 	 * - dispose can be called after closure
 	 */
-	public dispose(error?: Error | ICriticalContainerError): void {
+	public dispose(
+		disconnectReason?: DisconnectReason,
+		error?: Error | ICriticalContainerError,
+	): void {
 		if (this._disposed) {
 			return;
 		}
@@ -789,7 +795,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this._disposed = true;
 		this._closed = true; // We consider "disposed" as a further state than "closed"
 
-		this.connectionManager.dispose(error, false /* switchToReadonly */);
+		this.connectionManager.dispose(disconnectReason, error, false /* switchToReadonly */);
 		this.clearQueues();
 
 		// This needs to be the last thing we do (before removing listeners), as it causes
@@ -991,7 +997,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 								driverVersion: undefined,
 							},
 						);
-						this.close(error);
+						this.close(DisconnectReason.Unknown, error);
 					}
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
@@ -1175,7 +1181,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			);
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
-			this.close(normalizeError(error));
+			this.close(DisconnectReason.Unknown, normalizeError(error));
 		} finally {
 			this.refreshDelayInfo(this.deltaStorageDelayId);
 			this.fetchReason = undefined;

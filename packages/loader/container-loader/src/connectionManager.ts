@@ -5,7 +5,11 @@
 
 import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaQueue,
+	ReadOnlyInfo,
+	DisconnectReason,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IDisposable,
 	ITelemetryBaseProperties,
@@ -425,7 +429,11 @@ export class ConnectionManager implements IConnectionManager {
 		});
 	}
 
-	public dispose(error?: ICriticalContainerError, switchToReadonly: boolean = true): void {
+	public dispose(
+		disconnectReasonOrError?: DisconnectReason | ICriticalContainerError,
+		errorOrSwitchToReadonly?: ICriticalContainerError | boolean,
+		switchToReadonly: boolean = true,
+	): void {
 		if (this._disposed) {
 			return;
 		}
@@ -436,16 +444,37 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
+		const text =
+			typeof disconnectReasonOrError === "string"
+				? disconnectReasonOrError
+				: "Closing DeltaManager";
+
+		const finalSwitchToReadonly =
+			typeof errorOrSwitchToReadonly === "boolean"
+				? errorOrSwitchToReadonly
+				: switchToReadonly;
+
+		const error: ICriticalContainerError | undefined =
+			typeof errorOrSwitchToReadonly === "boolean" &&
+			disconnectReasonOrError !== undefined &&
+			typeof disconnectReasonOrError !== "string"
+				? disconnectReasonOrError
+				: undefined;
+
 		const disconnectReason: IConnectionStateChangeReason = {
-			text: "Closing DeltaManager",
+			text,
 			error,
+			disconnectReason:
+				typeof disconnectReasonOrError === "string"
+					? disconnectReasonOrError
+					: DisconnectReason.Unknown,
 		};
 
 		const oldReadonlyValue = this.readonly;
 		// This raises "disconnect" event if we have active connection.
 		this.disconnectFromDeltaStream(disconnectReason);
 
-		if (switchToReadonly) {
+		if (finalSwitchToReadonly) {
 			// Notify everyone we are in read-only state.
 			// Useful for data stores in case we hit some critical error,
 			// to switch to a mode where user edits are not accepted
@@ -811,7 +840,11 @@ export class ConnectionManager implements IConnectionManager {
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this._outbound.pause();
 		this._outbound.clear();
-		connection.dispose();
+		connection.dispose({
+			...reason.error,
+			name: "disconnectFromDeltaStream",
+			message: reason.disconnectReason ?? DisconnectReason.Unknown,
+		});
 
 		this.props.disconnectHandler(reason);
 
