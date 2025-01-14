@@ -28,10 +28,7 @@ import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
-	type ISequencedDocumentMessage,
-	type SummaryObject,
-} from "@fluidframework/driver-definitions/internal";
+import { type ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	IIdCompressor,
 	SessionSpaceCompressedId,
@@ -842,7 +839,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		sessionCount: number;
 		clusterCount: number;
 	} {
-		const compressorSummary: SummaryObject | undefined = summaryTree.tree[".idCompressor"];
+		const compressorSummary = summaryTree.tree[".idCompressor"];
 		assert(compressorSummary !== undefined, "IdCompressor should be present in summary");
 		const base64Content = (compressorSummary as any).content as string;
 		const floatView = new Float64Array(stringToBuffer(base64Content, "base64"));

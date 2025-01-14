@@ -26,8 +26,6 @@ export interface IdAllocationState {
 	maxId: number;
 }
 
-/**
- */
 export function idAllocatorFromMaxId(maxId: number | undefined = undefined): IdAllocator {
 	return idAllocatorFromState({ maxId: maxId ?? -1 });
 }

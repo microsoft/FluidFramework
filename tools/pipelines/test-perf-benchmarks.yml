@@ -154,7 +154,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -290,7 +290,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -427,7 +427,7 @@ stages:
 
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -549,7 +549,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ endpointObject.endpointName }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}

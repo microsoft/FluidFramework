@@ -14,7 +14,7 @@ export interface FileSystemConfiguration {
 	/**
 	 * The directory under which the document files will be generated.
 	 */
-	outputDirectoryPath: string;
+	readonly outputDirectoryPath: string;
 
 	/**
 	 * Specifies what type of newlines API Documenter should use when writing output files.

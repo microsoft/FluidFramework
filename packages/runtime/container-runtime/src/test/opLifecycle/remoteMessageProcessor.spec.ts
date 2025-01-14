@@ -39,7 +39,6 @@ describe("RemoteMessageProcessor", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: Infinity,
-					reentrantBatchGroupingEnabled: false,
 				},
 				logger,
 			),
@@ -130,7 +129,6 @@ describe("RemoteMessageProcessor", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				);

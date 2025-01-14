@@ -35,8 +35,7 @@ import { brand } from "../../util/brand.js";
 import { ajvValidator } from "../codec/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
-// eslint-disable-next-line import/no-internal-modules
-import { newTupleBTree } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { newTupleBTree } from "../../util/index.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
 

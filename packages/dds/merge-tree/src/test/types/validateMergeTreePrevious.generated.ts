@@ -31,6 +31,7 @@ declare type old_as_current_for_Class_BaseSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_BaseSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<TypeOnly<current.BaseSegment>, TypeOnly<old.BaseSegment>>
 
 /*
@@ -58,6 +59,7 @@ declare type old_as_current_for_Class_Marker = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Marker": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Marker = requireAssignableTo<TypeOnly<current.Marker>, TypeOnly<old.Marker>>
 
 /*
@@ -76,6 +78,7 @@ declare type old_as_current_for_Class_TextSegment = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_TextSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_TextSegment = requireAssignableTo<TypeOnly<current.TextSegment>, TypeOnly<old.TextSegment>>
 
 /*
@@ -94,6 +97,7 @@ declare type old_as_current_for_Class_TrackingGroup = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Class_TrackingGroup": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_TrackingGroup = requireAssignableTo<TypeOnly<current.TrackingGroup>, TypeOnly<old.TrackingGroup>>
 
 /*
@@ -121,6 +125,7 @@ declare type current_as_old_for_Class_TrackingGroupCollection = requireAssignabl
  * typeValidation.broken:
  * "ClassStatics_BaseSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_BaseSegment = requireAssignableTo<TypeOnly<typeof current.BaseSegment>, TypeOnly<typeof old.BaseSegment>>
 
 /*
@@ -139,6 +144,7 @@ declare type current_as_old_for_ClassStatics_LocalReferenceCollection = requireA
  * typeValidation.broken:
  * "ClassStatics_Marker": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_Marker = requireAssignableTo<TypeOnly<typeof current.Marker>, TypeOnly<typeof old.Marker>>
 
 /*
@@ -148,6 +154,7 @@ declare type current_as_old_for_ClassStatics_Marker = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "ClassStatics_TextSegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_TextSegment = requireAssignableTo<TypeOnly<typeof current.TextSegment>, TypeOnly<typeof old.TextSegment>>
 
 /*
@@ -157,6 +164,7 @@ declare type current_as_old_for_ClassStatics_TextSegment = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_TrackingGroup": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_TrackingGroup = requireAssignableTo<TypeOnly<typeof current.TrackingGroup>, TypeOnly<typeof old.TrackingGroup>>
 
 /*
@@ -400,6 +408,7 @@ declare type current_as_old_for_Interface_IMarkerDef = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IMergeNodeCommon": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IMergeNodeCommon = requireAssignableTo<TypeOnly<old.IMergeNodeCommon>, TypeOnly<current.IMergeNodeCommon>>
 
 /*
@@ -409,6 +418,7 @@ declare type old_as_current_for_Interface_IMergeNodeCommon = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IMergeNodeCommon": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeNodeCommon = requireAssignableTo<TypeOnly<current.IMergeNodeCommon>, TypeOnly<old.IMergeNodeCommon>>
 
 /*
@@ -481,6 +491,7 @@ declare type old_as_current_for_Interface_IMergeTreeDeltaCallbackArgs = requireA
  * typeValidation.broken:
  * "Interface_IMergeTreeDeltaCallbackArgs": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeDeltaCallbackArgs = requireAssignableTo<TypeOnly<current.IMergeTreeDeltaCallbackArgs>, TypeOnly<old.IMergeTreeDeltaCallbackArgs>>
 
 /*
@@ -553,6 +564,7 @@ declare type old_as_current_for_Interface_IMergeTreeMaintenanceCallbackArgs = re
  * typeValidation.broken:
  * "Interface_IMergeTreeMaintenanceCallbackArgs": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeMaintenanceCallbackArgs = requireAssignableTo<TypeOnly<current.IMergeTreeMaintenanceCallbackArgs>, TypeOnly<old.IMergeTreeMaintenanceCallbackArgs>>
 
 /*
@@ -643,6 +655,7 @@ declare type old_as_current_for_Interface_IMergeTreeSegmentDelta = requireAssign
  * typeValidation.broken:
  * "Interface_IMergeTreeSegmentDelta": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeTreeSegmentDelta = requireAssignableTo<TypeOnly<current.IMergeTreeSegmentDelta>, TypeOnly<old.IMergeTreeSegmentDelta>>
 
 /*
@@ -652,6 +665,7 @@ declare type current_as_old_for_Interface_IMergeTreeSegmentDelta = requireAssign
  * typeValidation.broken:
  * "Interface_IMoveInfo": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IMoveInfo = requireAssignableTo<TypeOnly<old.IMoveInfo>, TypeOnly<current.IMoveInfo>>
 
 /*
@@ -661,6 +675,7 @@ declare type old_as_current_for_Interface_IMoveInfo = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IMoveInfo": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMoveInfo = requireAssignableTo<TypeOnly<current.IMoveInfo>, TypeOnly<old.IMoveInfo>>
 
 /*
@@ -706,6 +721,7 @@ declare type current_as_old_for_Interface_IRelativePosition = requireAssignableT
  * typeValidation.broken:
  * "Interface_IRemovalInfo": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IRemovalInfo = requireAssignableTo<TypeOnly<old.IRemovalInfo>, TypeOnly<current.IRemovalInfo>>
 
 /*
@@ -715,6 +731,7 @@ declare type old_as_current_for_Interface_IRemovalInfo = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_IRemovalInfo": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IRemovalInfo = requireAssignableTo<TypeOnly<current.IRemovalInfo>, TypeOnly<old.IRemovalInfo>>
 
 /*
@@ -733,6 +750,7 @@ declare type old_as_current_for_Interface_ISegment = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Interface_ISegment": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISegment = requireAssignableTo<TypeOnly<current.ISegment>, TypeOnly<old.ISegment>>
 
 /*
@@ -769,6 +787,7 @@ declare type old_as_current_for_Interface_ITrackingGroup = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_ITrackingGroup": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ITrackingGroup = requireAssignableTo<TypeOnly<current.ITrackingGroup>, TypeOnly<old.ITrackingGroup>>
 
 /*
@@ -958,6 +977,7 @@ declare type old_as_current_for_TypeAlias_MergeTreeDeltaRevertible = requireAssi
  * typeValidation.broken:
  * "TypeAlias_MergeTreeDeltaRevertible": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_MergeTreeDeltaRevertible = requireAssignableTo<TypeOnly<current.MergeTreeDeltaRevertible>, TypeOnly<old.MergeTreeDeltaRevertible>>
 
 /*
@@ -1066,6 +1086,7 @@ declare type old_as_current_for_TypeAlias_Trackable = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_Trackable": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_Trackable = requireAssignableTo<TypeOnly<current.Trackable>, TypeOnly<old.Trackable>>
 
 /*

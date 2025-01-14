@@ -12,9 +12,7 @@ import {
 	isMoved,
 	isRemoved,
 	type IInsertionInfo,
-	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
-	// eslint-disable-next-line import/no-deprecated
 	type IRemovalInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -89,7 +87,6 @@ export class PerspectiveImpl implements Perspective {
  * @returns true iff this segment was removed in the given perspective.
  */
 export function wasRemovedBefore(
-	// eslint-disable-next-line import/no-deprecated
 	seg: SegmentWithInfo<IInsertionInfo & IRemovalInfo>,
 	{ refSeq, localSeq }: SeqTime,
 ): boolean {
@@ -111,7 +108,6 @@ export function wasRemovedBefore(
  * @returns true iff this segment was moved (aka obliterated) in the given perspective.
  */
 export function wasMovedBefore(
-	// eslint-disable-next-line import/no-deprecated
 	seg: SegmentWithInfo<IInsertionInfo & IMoveInfo>,
 	{ refSeq, localSeq }: SeqTime,
 ): boolean {

@@ -14,11 +14,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { IGarbageCollectionState } from "@fluidframework/container-runtime/internal/test/gc";
-import {
-	ISummaryBlob,
-	SummaryType,
-	type SummaryObject,
-} from "@fluidframework/driver-definitions";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { gcBlobPrefix, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestObjectProvider,
@@ -69,7 +65,7 @@ describeCompat("GC Data Store Duplicates", "NoCompat", (getTestObjectProvider, a
 			summaryResult.summaryVersion,
 		);
 		summaryResult = await waitForSummary(summarizer2);
-		const gcObject: SummaryObject | undefined = summaryResult.summaryTree.tree[gcTreeKey];
+		const gcObject = summaryResult.summaryTree.tree[gcTreeKey];
 		assert(gcObject !== undefined, "Expected a gc blob!");
 		assert(gcObject.type === SummaryType.Handle, "Expected a handle!");
 		assert(gcObject.handleType === SummaryType.Tree, "Expected a gc tree handle!");
@@ -100,7 +96,7 @@ describeCompat("GC Data Store Duplicates", "NoCompat", (getTestObjectProvider, a
 
 		// Get GC State
 		summaryResult = await waitForSummary(summarizer2);
-		const gcTree: SummaryObject | undefined = summaryResult.summaryTree.tree[gcTreeKey];
+		const gcTree = summaryResult.summaryTree.tree[gcTreeKey];
 		assert(gcTree?.type === SummaryType.Tree, "Expected a Tree!");
 		const gcBlob = gcTree.tree[`${gcBlobPrefix}_root`] as ISummaryBlob;
 		const gcState = JSON.parse(gcBlob.content as string) as IGarbageCollectionState;

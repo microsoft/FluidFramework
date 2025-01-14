@@ -47,8 +47,6 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 
 export const clone = structuredClone;
 
-/**
- */
 export function fail(message: string): never {
 	throw new Error(message);
 }

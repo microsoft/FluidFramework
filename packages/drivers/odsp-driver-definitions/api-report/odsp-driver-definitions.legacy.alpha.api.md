@@ -37,6 +37,7 @@ export interface ICacheEntry extends IEntry {
 
 // @alpha (undocumented)
 export interface ICollabSessionOptions {
+    displayName?: string;
     // @deprecated
     forceAccessTokenViaAuthorizationHeader?: boolean;
     // @deprecated

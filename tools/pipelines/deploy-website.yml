@@ -130,6 +130,8 @@ stages:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
+          env:
+            INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
 
         # Run the tests
         - task: Npm@1

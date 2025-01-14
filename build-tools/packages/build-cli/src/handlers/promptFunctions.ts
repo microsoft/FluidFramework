@@ -506,7 +506,7 @@ export const promptToGenerateReleaseNotes: StateHandlerFunction = async (
 			{
 				title: "FIRST: generate:releaseNotes",
 				message: `To generate the release notes, run the following command from the root of your release repo:`,
-				cmd: `flub generate releaseNotes -g ${releaseGroup} -t ${bumpType} --out RELEASE_NOTES/${releaseVersion}.md`,
+				cmd: `flub generate releaseNotes -g ${releaseGroup} -t ${bumpType} --outFile RELEASE_NOTES/${releaseVersion}.md`,
 			},
 			{
 				title: "FINALLY: merge the resulting changes",

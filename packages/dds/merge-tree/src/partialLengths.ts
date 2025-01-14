@@ -19,9 +19,7 @@ import {
 import {
 	toRemovalInfo,
 	toMoveInfo,
-	// eslint-disable-next-line import/no-deprecated
 	IRemovalInfo,
-	// eslint-disable-next-line import/no-deprecated
 	IMoveInfo,
 	assertInserted,
 	isRemoved,
@@ -646,9 +644,7 @@ export class PartialSequenceLengths {
 	private static insertSegment(
 		combinedPartialLengths: PartialSequenceLengths,
 		segment: ISegmentPrivate,
-		// eslint-disable-next-line import/no-deprecated
 		removalInfo?: IRemovalInfo,
-		// eslint-disable-next-line import/no-deprecated
 		moveInfo?: IMoveInfo,
 	): void {
 		assertInserted(segment);

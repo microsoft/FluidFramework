@@ -87,7 +87,7 @@ export function generateGCConfigs(
 		tombstoneTimeoutMs =
 			testOverrideTombstoneTimeoutMs ?? computeTombstoneTimeout(sessionExpiryTimeoutMs);
 
-		const gcGeneration = createParams.gcOptions?.[gcGenerationOptionName];
+		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
 		if (gcGeneration !== undefined) {
 			persistedGcFeatureMatrix = { gcGeneration };
 		}

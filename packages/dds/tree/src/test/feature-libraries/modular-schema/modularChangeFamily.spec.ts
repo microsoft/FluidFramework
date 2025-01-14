@@ -57,6 +57,7 @@ import {
 	brand,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
+	newTupleBTree,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
@@ -87,7 +88,6 @@ import {
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	newCrossFieldKeyTable,
-	newTupleBTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {

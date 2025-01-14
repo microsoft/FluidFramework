@@ -13,11 +13,7 @@ import {
 } from "@fluid-private/test-version-utils";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import {
-	ISummaryTree,
-	SummaryType,
-	type SummaryObject,
-} from "@fluidframework/driver-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -372,7 +368,7 @@ async function validateBlobsReferenceState(
 	}
 
 	if (!blobFound) {
-		const redirectTable: SummaryObject | undefined = blobsTree[".redirectTable"];
+		const redirectTable = blobsTree[".redirectTable"];
 		assert(redirectTable.type === SummaryType.Blob);
 		assert(typeof redirectTable.content === "string");
 		blobFound = redirectTable.content.indexOf(blobId) > 0;
