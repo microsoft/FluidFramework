@@ -234,9 +234,6 @@ const summarizationWithUnreferencedDataStoreAfterTime = async (clock: SinonFakeT
 	defaultDataObject._root.set("update", "timestamp");
 	await provider.ensureSynchronized();
 
-	// Close the container as it would be closed by session expiry before sweep ready ever occurs.
-	// container.close();
-
 	return {
 		unreferencedId,
 		summarizer: summarizer2,
