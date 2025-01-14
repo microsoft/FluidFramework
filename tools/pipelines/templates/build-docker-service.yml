@@ -303,10 +303,7 @@ extends:
               buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
               interdependencyRange: ${{ parameters.interdependencyRange }}
               tagName: ${{ parameters.tagName }}
-              ${{ if eq(parameters.dockerBuildBumpsVersion, true) }}:
-                performBump: false
-              ${{ else }}:
-                performBump: true
+              performBump: ${{ not(parameters.dockerBuildBumpsVersion) }}
         - ${{ if eq(parameters.setVersion, false) }}:
           - task: Bash@3
             name: SetVersion
