@@ -1054,16 +1054,28 @@ export class Container
 		return this.protocolHandler.quorum;
 	}
 
-	public dispose(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void {
-		this.verifyClosedAfter(() => this._deltaManager.dispose(disconnectReason, error));
+	public dispose(errorOrReason?: ICriticalContainerError | DisconnectReason, error?: ICriticalContainerError): void {
+		if (typeof errorOrReason === 'string') {
+			// Called as dispose(disconnectReason, error)
+			this.verifyClosedAfter(() => this._deltaManager.dispose(errorOrReason, error));
+		} else {
+			// Called as dispose(error)
+			this.verifyClosedAfter(() => this._deltaManager.dispose(undefined, errorOrReason));
+		}
 	}
 
-	public close(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void {
+	public close(errorOrReason?: ICriticalContainerError | DisconnectReason, error?: ICriticalContainerError): void {
 		// 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
-		this.verifyClosedAfter(() => this._deltaManager.close(disconnectReason, error));
+		if (typeof errorOrReason === 'string') {
+			// Called as close(disconnectReason, error)
+			this.verifyClosedAfter(() => this._deltaManager.close(errorOrReason, error));
+		} else {
+			// Called as close(error)
+			this.verifyClosedAfter(() => this._deltaManager.close(undefined, errorOrReason));
+		}
 	}
 
 	private verifyClosedAfterCalls = 0;

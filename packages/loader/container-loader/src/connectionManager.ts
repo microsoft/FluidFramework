@@ -448,12 +448,13 @@ export class ConnectionManager implements IConnectionManager {
 			typeof disconnectReasonOrError === "string"
 				? disconnectReasonOrError
 				: "Closing DeltaManager";
+
 		const finalSwitchToReadonly =
 			typeof errorOrSwitchToReadonly === "boolean"
 				? errorOrSwitchToReadonly
 				: switchToReadonly;
 
-		const finalError: ICriticalContainerError | undefined =
+		const error: ICriticalContainerError | undefined =
 			typeof errorOrSwitchToReadonly === "boolean" &&
 			disconnectReasonOrError !== undefined &&
 			typeof disconnectReasonOrError !== "string"
@@ -462,7 +463,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		const disconnectReason: IConnectionStateChangeReason = {
 			text,
-			error: finalError,
+			error,
 			disconnectReason:
 				typeof disconnectReasonOrError === "string"
 					? disconnectReasonOrError

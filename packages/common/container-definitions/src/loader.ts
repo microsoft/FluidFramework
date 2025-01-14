@@ -404,7 +404,8 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being disposed due to error, this provides details about the error that
 	 * resulted in disposing it.
 	 */
-	dispose(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void;
+	dispose(error?: ICriticalContainerError): void;
+	dispose(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
 
 	/**
 	 * Closes the container.
@@ -412,7 +413,8 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being closed due to error, this provides details about the error that
 	 * resulted in closing it.
 	 */
-	close(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void;
+	close(error?: ICriticalContainerError): void;
+	close(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
 
 	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.

@@ -762,7 +762,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - close emits "closed"
 	 * - close cannot be called after dispose
 	 */
-	public close(disconnectReason: DisconnectReason, error?: ICriticalContainerError): void {
+	public close(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void {
 		if (this._closed) {
 			return;
 		}
@@ -782,7 +782,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - dispose can be called after closure
 	 */
 	public dispose(
-		disconnectReason: DisconnectReason,
+		disconnectReason?: DisconnectReason,
 		error?: Error | ICriticalContainerError,
 	): void {
 		if (this._disposed) {
