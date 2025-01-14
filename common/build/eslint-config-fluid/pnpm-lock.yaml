@@ -93,9 +93,6 @@ importers:
 
 packages:
 
-  /@fluid-internal/eslint-plugin-fluid@0.1.4:
-    resolution: {integrity: sha512-xoy7lLdXVWpG6MQlQ/sSWG/HQTXFsJspPhptr8UxaajPdVwGxO/L0EWmMcicE4EXga1pLbX0AL+OqU+p9EIeGQ==}
-
   '@aashutoshrathi/word-wrap@1.2.6':
     resolution: {integrity: sha512-1Yjs2SvM8TflER/OD3cOjhWWOZb58A2t7wpE2S9XfBYTiIl+XFhQG2bjy4Pu1I+EAlCNUzRDYDdFwFYUKvXcIA==}
     engines: {node: '>=0.10.0'}
@@ -137,6 +134,9 @@ packages:
   '@eslint/js@8.55.0':
     resolution: {integrity: sha512-qQfo2mxH5yVom1kacMtZZJFVdW+E70mqHMJvVg6WTLo+VBuQJ4TojZlfWBjK0ve5BdEeNAVxOsl/nvNMpJOaJA==}
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
+
+  '@fluid-internal/eslint-plugin-fluid@0.1.4':
+    resolution: {integrity: sha512-xoy7lLdXVWpG6MQlQ/sSWG/HQTXFsJspPhptr8UxaajPdVwGxO/L0EWmMcicE4EXga1pLbX0AL+OqU+p9EIeGQ==}
 
   '@fluid-tools/markdown-magic@file:../../../tools/markdown-magic':
     resolution: {directory: ../../../tools/markdown-magic, type: directory}
@@ -2106,16 +2106,6 @@ packages:
 
 snapshots:
 
-  /@fluid-internal/eslint-plugin-fluid@0.1.4(eslint@8.55.0)(typescript@5.1.6):
-    dependencies:
-      '@microsoft/tsdoc': 0.14.2
-      '@typescript-eslint/parser': 6.21.0(eslint@8.55.0)(typescript@5.1.6)
-      ts-morph: 22.0.0
-    transitivePeerDependencies:
-      - eslint
-      - supports-color
-      - typescript
-
   '@aashutoshrathi/word-wrap@1.2.6': {}
 
   '@babel/code-frame@7.22.13':
@@ -2163,6 +2153,16 @@ snapshots:
       - supports-color
 
   '@eslint/js@8.55.0': {}
+
+  '@fluid-internal/eslint-plugin-fluid@0.1.4(eslint@8.55.0)(typescript@5.1.6)':
+    dependencies:
+      '@microsoft/tsdoc': 0.14.2
+      '@typescript-eslint/parser': 6.21.0(eslint@8.55.0)(typescript@5.1.6)
+      ts-morph: 22.0.0
+    transitivePeerDependencies:
+      - eslint
+      - supports-color
+      - typescript
 
   '@fluid-tools/markdown-magic@file:../../../tools/markdown-magic(markdown-magic@2.6.1)':
     id: '@fluid-tools/markdown-magic@file:../../../tools/markdown-magic'
