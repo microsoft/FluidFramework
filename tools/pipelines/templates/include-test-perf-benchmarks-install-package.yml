@@ -93,7 +93,7 @@ steps:
 # Install package that has performance tests
 - task: Bash@3
   displayName: Install package with perf tests - ${{ parameters.testPackageName }}
-  retryCountOnTaskFailure: 1
+  retryCountOnTaskFailure: 4
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.installPath }}
