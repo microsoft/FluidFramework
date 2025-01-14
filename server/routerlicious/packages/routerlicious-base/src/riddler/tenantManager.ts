@@ -154,7 +154,7 @@ export class TenantManager {
 		documentId: string,
 		scopes: ScopeType[],
 		user?: IUser,
-		lifetime: number = 5 * 60,
+		lifetime: number = 60 * 60,
 		ver: string = "1.0",
 		jti: string = uuid(),
 		includeDisabledTenant = false,
