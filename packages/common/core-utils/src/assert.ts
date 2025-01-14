@@ -37,6 +37,17 @@ export function assert(condition: boolean, message: string | number): asserts co
  * These asserts are disabled by default, even in debug builds to ensure that by default code will be tested as production runs, with them disabled.
  * Additionally this ensures that apps that use a bundler which does not remove `__PURE__` will not incur the runtime cost of calling the predicate.
  * These asserts can be can be enabled by calling `configureDebugAsserts(true)`: see {@link configureDebugAsserts}.
+ *
+ * @privateRemarks
+ * This design was chosen to accomplish two main goals:
+ *
+ * 1. Make it easy to compile debug asserts fully out of production builds.
+ * For webpack this happens by default, avoiding the need for customers to do special configuration.
+ * This is important for both performance and bundle size.
+ * 2. Make it easy to test (both manually and automated) with and without the predicates running.
+ * This ensures it is possible to benefit from the asserts when enabled, but also test with them disabled to ensure this disablement doesn't cause bugs.
+ *
+ * The default behavior of having debugAsserts disabled helps ensure that tests which don't know about debug asserts will still run in a way that is most similar to production.
  * @internal
  */
 export function debugAssert(predicate: () => true | { toString(): string }): void {
