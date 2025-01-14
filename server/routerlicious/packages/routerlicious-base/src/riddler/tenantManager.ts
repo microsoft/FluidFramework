@@ -164,7 +164,6 @@ export class TenantManager {
 			includeDisabledTenant,
 			documentId,
 			scopes,
-			user,
 			lifetime,
 			ver,
 			jti,
