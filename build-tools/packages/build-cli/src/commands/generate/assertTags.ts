@@ -65,12 +65,17 @@ interface PackageData {
 	readonly assertionFunctions: AssertionFunctions;
 }
 
+const configName = "assertTagging";
+
 export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
 	static readonly summary =
 		"Tags asserts by replacing their message with a unique numerical value.";
 
 	static readonly description =
-		"Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry purposes.";
+		`Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry purposes.
+Which functions and which of their augments get tagging depends on the configuration which is specified in the package being tagged.
+Configuration is searched for in the places listed by https://github.com/cosmiconfig/cosmiconfig?tab=readme-ov-file#usage-for-end-users under the {Name} "${configName}".
+The format of the configuration is specified by the "AssertTaggingPackageConfig" type.`;
 
 	static readonly flags = {
 		disableConfig: Flags.boolean({
@@ -177,7 +182,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		};
 
 		const dataMap = new Map<PackageWithKind, PackageData>();
-		const config = cosmiconfig("assertTagging");
+		const config = cosmiconfig(configName);
 
 		for (const pkg of packages) {
 			// Package configuration:
