@@ -215,6 +215,17 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		};
 		return data;
 	}
+
+	public timeBatch(callback: () => void): boolean {
+		let counter = this.iterationsPerBatch;
+		const before = this.timer.now();
+		while (counter--) {
+			callback();
+		}
+		const after = this.timer.now();
+		const duration = this.timer.toSeconds(before, after);
+		return this.recordBatch(duration);
+	}
 }
 
 /**

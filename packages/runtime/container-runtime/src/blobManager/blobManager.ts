@@ -96,7 +96,7 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "baseLogger" | "clientDetails"
+	"attachState" | "connected" | "baseLogger" | "clientDetails" | "disposed"
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
@@ -370,8 +370,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
-			async () => {
-				return this.getStorage().readBlob(storageId);
+			async (event) => {
+				return this.getStorage()
+					.readBlob(storageId)
+					.catch((error) => {
+						if (this.runtime.disposed) {
+							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+							event.cancel({ category: "generic" });
+						}
+
+						throw error;
+					});
 			},
 			{ end: true, cancel: "error" },
 		);

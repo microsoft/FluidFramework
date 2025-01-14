@@ -8,11 +8,10 @@ import {
 	ContainerWarning,
 } from "@fluidframework/container-definitions/internal";
 import type {
-	ISummarizerEvents as NewISummarizerEvents,
-	SummarizerStopReason as NewSummarizerStopReason,
+	ISummarizerEvents,
+	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import {
-	IEvent,
 	IEventProvider,
 	ITelemetryBaseProperties,
 	ITelemetryBaseLogger,
@@ -58,7 +57,7 @@ export interface ICancellationToken<T> {
  * @legacy
  * @alpha
  */
-export type ISummaryCancellationToken = ICancellationToken<NewSummarizerStopReason>;
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 /**
  * Data required to update internal tracking state after receiving a Summary Ack.
@@ -401,60 +400,8 @@ export type EnqueueSummarizeResult =
 /**
  * @legacy
  * @alpha
- * @deprecated Use SummarizerStopReason from the "\@fluidframework/container-runtime-definitions" package
  */
-export type SummarizerStopReason =
-	/** Summarizer client failed to summarize in all attempts. */
-	| "failToSummarize"
-	/** Parent client reported that it is no longer connected. */
-	| "parentNotConnected"
-	/**
-	 * Parent client reported that it is no longer elected the summarizer.
-	 * This is the normal flow; a disconnect will always trigger the parent
-	 * client to no longer be elected as responsible for summaries. Then it
-	 * tries to stop its spawned summarizer client.
-	 */
-	| "notElectedParent"
-	/**
-	 * We are not already running the summarizer and we are not the current elected client id.
-	 */
-	| "notElectedClient"
-	/** Summarizer client was disconnected */
-	| "summarizerClientDisconnected"
-	/** running summarizer threw an exception */
-	| "summarizerException"
-	/**
-	 * The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
-	 * first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
-	 */
-	| "latestSummaryStateStale";
-
-/**
- * @legacy
- * @alpha
- * @deprecated Use ISummarizeEventProps from the "\@fluidframework/container-runtime-definitions" package
- */
-export interface ISummarizeEventProps {
-	result: "success" | "failure" | "canceled";
-	currentAttempt: number;
-	maxAttempts: number;
-	error?: any;
-}
-
-/**
- * @legacy
- * @alpha
- * @deprecated Use ISummarizerEvents from the "\@fluidframework/container-runtime-definitions" package
- */
-export interface ISummarizerEvents extends IEvent {
-	(event: "summarize", listener: (props: ISummarizeEventProps) => void);
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummarizer extends IEventProvider<NewISummarizerEvents> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**
 	 * Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
 	 */
@@ -465,12 +412,12 @@ export interface ISummarizer extends IEventProvider<NewISummarizerEvents> {
 	 * Summarizer will finish current processes, which may take a while.
 	 * For example, summarizer may complete last summary before exiting.
 	 */
-	stop(reason: NewSummarizerStopReason): void;
+	stop(reason: SummarizerStopReason): void;
 
 	/* Closes summarizer. Any pending processes (summary in flight) are abandoned. */
 	close(): void;
 
-	run(onBehalfOf: string): Promise<NewSummarizerStopReason>;
+	run(onBehalfOf: string): Promise<SummarizerStopReason>;
 
 	/**
 	 * Attempts to generate a summary on demand. If already running, takes no action.

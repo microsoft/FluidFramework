@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
+import { SharedString } from "@fluidframework/sequence/legacy";
 import { v4 as uuid } from "uuid";
 
 import { ITodoItemInitialState, TodoItem, TodoItemFactory } from "../TodoItem/index.js";

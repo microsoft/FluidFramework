@@ -31,7 +31,7 @@ The device is a subsequent client in all future sessions.
 
 Your code creates containers using APIs provided by a service-specific client library.
 Each service-specific client library implements a common API for manipulating containers.
-For example, the [Tinylicious library](/docs/testing/tinylicious) provides <PackageLink packageName="tinylicious-client">these APIs</PackageLink> for the Tinylicious Fluid service.
+For example, the [Tinylicious library](../testing/tinylicious.mdx) provides <PackageLink packageName="tinylicious-client">these APIs</PackageLink> for the Tinylicious Fluid service.
 These common APIs enable your code to specify what shared objects should live in the `FluidContainer`, and to connect to the container once it is created.
 
 ### Container schema
@@ -44,7 +44,7 @@ A schema can specify:
 -   Some initial shared objects that are created as soon as the container is created, and are immediately and always available to all connected clients.
 -   The types of shared objects that can be added to the container at runtime and made available for use by all connected clients.
 
-As explained below, the same schema definition that is used to create the container must be provided when clients subsequently connect to the container. For more information about initial objects and dynamic object creation see [Data modeling](./data-modeling).
+As explained below, the same schema definition that is used to create the container must be provided when clients subsequently connect to the container. For more information about initial objects and dynamic object creation see [Data modeling](./data-modeling.mdx).
 
 This example schema defines two initial objects, `layout` and `text`, and declares that objects of the distributed data structure (DDS) types `SharedCell` and `SharedString` can be created at runtime.
 
@@ -77,7 +77,7 @@ Notes:
 -   The `client` object is defined by the service-specific client library. See the documentation for the service you are using for more details about how to use its service-specific client library.
 -   It is a good practice to destructure the object that is returned by `createContainer` into its two main parts; `container` and `services`. For more about the `services` object, see [Container services](#container-services).
 
-A newly created container is in an **unpublished** state. An unpublished container is stored on the local client only and therefore no data is shared with other clients yet. But the data in it can, and sometimes should be, edited while it is unpublished. See [Container states and events](./container-states-events).
+A newly created container is in an **unpublished** state. An unpublished container is stored on the local client only and therefore no data is shared with other clients yet. But the data in it can, and sometimes should be, edited while it is unpublished. See [Container states and events](./container-states-events.mdx).
 
 ### Publishing a container
 
@@ -94,7 +94,7 @@ Once published, the Fluid container becomes an entity on Fluid service and subse
 Invoking the container's `attach` method returns the unique identifier for the container.
 Subsequent clients use this ID to connect to the container.
 
-Note that once published, a container cannot be unpublished. (But it can be deleted. See [Deleting a container from the service](./container-states-events#deleting-a-container-from-the-service).)
+Note that once published, a container cannot be unpublished. (But it can be deleted. See [Deleting a container from the service](./container-states-events.mdx#deleting-a-container-from-the-service).)
 
 ```typescript {linenos=inline,hl_lines=[10]}
 const schema = {
@@ -108,7 +108,7 @@ const { container, services } = await client.createContainer(schema);
 const containerId = await container.attach();
 ```
 
-In addition to publishing the container, the `attach` method also connects the creating client to the published container. See [Connecting to a container](#connecting-to-a-container) and [Connection status states](./container-states-events#connection-status-states).
+In addition to publishing the container, the `attach` method also connects the creating client to the published container. See [Connecting to a container](#connecting-to-a-container) and [Connection status states](./container-states-events.mdx#connection-status-states).
 
 ### Connecting to a container
 
@@ -131,7 +131,7 @@ const { container, services } =
 
 :::tip
 
-This section provides only basic information about the _most important_ states that a container can be in. Details about _all_ container states, including state diagrams, state management, editing management, and container event handling are in [Container states and events](./container-states-events).
+This section provides only basic information about the _most important_ states that a container can be in. Details about _all_ container states, including state diagrams, state management, editing management, and container event handling are in [Container states and events](./container-states-events.mdx).
 
 :::
 
@@ -191,4 +191,4 @@ For example, consider an education application where multiple teachers collabora
 
 When you create or connect to a container with `createContainer` or `getContainer`, the Fluid service will also return a service-specific _services_ object.
 This object contains references to useful services you can use to build richer applications.
-An example of a container service is the [Audience](./audience), which provides user information for clients that are connected to the container. See [Working with the audience](./audience#working-with-the-audience) for more information.
+An example of a container service is the [Audience](./audience.mdx), which provides user information for clients that are connected to the container. See [Working with the audience](./audience.mdx#working-with-the-audience) for more information.

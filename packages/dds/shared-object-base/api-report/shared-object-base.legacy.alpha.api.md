@@ -6,16 +6,15 @@
 
 // @alpha (undocumented)
 export interface IFluidSerializer {
-    decode(input: any): any;
-    encode(value: any, bind: IFluidHandle): any;
-    parse(value: string): any;
-    stringify(value: any, bind: IFluidHandle): string;
+    decode(input: unknown): unknown;
+    encode(value: unknown, bind: IFluidHandle): unknown;
+    parse(value: string): unknown;
+    stringify(value: unknown, bind: IFluidHandle): string;
 }
 
 // @alpha
 export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends IChannel, IEventProvider<TEvent> {
     bindToContext(): void;
-    getGCData(fullGC?: boolean): IGarbageCollectionData;
 }
 
 // @alpha
@@ -33,10 +32,10 @@ export interface ISharedObjectKind<TSharedObject> {
 }
 
 // @alpha
-export function makeHandlesSerializable(value: unknown, serializer: IFluidSerializer, bind: IFluidHandle): any;
+export function makeHandlesSerializable(value: unknown, serializer: IFluidSerializer, bind: IFluidHandle): unknown;
 
 // @alpha
-export function parseHandles(value: unknown, serializer: IFluidSerializer): any;
+export function parseHandles(value: unknown, serializer: IFluidSerializer): unknown;
 
 // @alpha
 export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends SharedObjectCore<TEvent> {
@@ -53,7 +52,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
 // @alpha
 export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISharedObjectEvents> extends EventEmitterWithErrorHandling<TEvent> implements ISharedObject<TEvent> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-    protected abstract applyStashedOp(content: any): void;
+    protected abstract applyStashedOp(content: unknown): void;
     // (undocumented)
     readonly attributes: IChannelAttributes;
     bindToContext(): void;
@@ -76,16 +75,16 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     load(services: IChannelServices): Promise<void>;
     protected abstract loadCore(services: IChannelStorageService): Promise<void>;
     protected readonly logger: ITelemetryLoggerExt;
-    protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Promise<T>;
+    protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: unknown) => void) => void): Promise<T>;
     protected onConnect(): void;
-    protected abstract onDisconnect(): any;
-    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): any;
-    protected reSubmitCore(content: any, localOpMetadata: unknown): void;
-    protected rollback(content: any, localOpMetadata: unknown): void;
+    protected abstract onDisconnect(): void;
+    protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
     protected runtime: IFluidDataStoreRuntime;
     protected abstract get serializer(): IFluidSerializer;
-    protected submitLocalMessage(content: any, localOpMetadata?: unknown): void;
+    protected submitLocalMessage(content: unknown, localOpMetadata?: unknown): void;
     abstract summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummaryTreeWithStats>;
 }
 

@@ -5,8 +5,12 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { IMergeTreeDeltaOp, createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26905: `merge-tree` internals used in examples
+import { createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	ISegment,
 	ISequenceDeltaRange,
@@ -16,8 +20,7 @@ import {
 	SequenceDeltaEvent,
 	SharedString,
 	TextSegment,
-	reservedRangeLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 import {
 	Fragment,
 	Schema,

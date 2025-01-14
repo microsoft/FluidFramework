@@ -12,7 +12,6 @@ import {
 	IDocumentStaticProperties,
 	ICache,
 } from "@fluidframework/server-services-core";
-import { generateToken } from "@fluidframework/server-services-utils";
 import {
 	Lumberjack,
 	getLumberBaseProperties,
@@ -122,11 +121,12 @@ export class DocumentManager implements IDocumentManager {
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
-		const key = await this.tenantManager.getKey(tenantId);
+		const accessToken = await this.tenantManager.signToken(tenantId, documentId, [
+			ScopeType.DocRead,
+		]);
 		const getDefaultHeaders = () => {
-			const jwtToken = generateToken(tenantId, documentId, key, [ScopeType.DocRead]);
 			return {
-				Authorization: `Basic ${jwtToken}`,
+				Authorization: `Basic ${accessToken}`,
 			};
 		};
 

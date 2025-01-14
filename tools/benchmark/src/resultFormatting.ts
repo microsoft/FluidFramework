@@ -23,7 +23,7 @@ export function numberCell(key: string, title: string, f: (v: number) => string)
 	return {
 		key,
 		cell: (table, data): void => {
-			const field = data[key];
+			const field: unknown = data[key];
 			const content =
 				typeof field === "number" ? f(field) : chalk.red(`Expected number got "${field}"`);
 			table.cell(title, content, Table.padLeft);
@@ -35,7 +35,7 @@ export function stringCell(key: string, title: string, f: (s: string) => string)
 	return {
 		key,
 		cell: (table, data): void => {
-			const field = data[key];
+			const field: unknown = data[key];
 			const content =
 				typeof field === "string" ? f(field) : chalk.red(`Expected string got "${field}"`);
 			table.cell(title, content);
@@ -47,7 +47,7 @@ export function arrayCell(key: string, title: string, f: (a: unknown[]) => strin
 	return {
 		key,
 		cell: (table, data): void => {
-			const field = data[key];
+			const field: unknown = data[key];
 			const content = Array.isArray(field)
 				? f(field)
 				: chalk.red(`Expected array got "${field}"`);
@@ -60,7 +60,7 @@ export function objectCell(key: string, title: string, f: (a: object) => string)
 	return {
 		key,
 		cell: (table, data): void => {
-			const field = data[key];
+			const field: unknown = data[key];
 			const content =
 				typeof field === "object" && field !== null
 					? f(field)

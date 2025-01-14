@@ -98,7 +98,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const blob = await storage.readBlob("header");
 		const rawContent = bufferToString(blob, "utf8");
-		this.global = this.local = this.serializer.parse(rawContent);
+		this.global = this.local = this.serializer.parse(rawContent) as TState;
 	}
 
 	protected onDisconnect() {}
@@ -127,7 +127,7 @@ export abstract class SharedOT<TState, TOp> extends SharedObject {
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
 		this.sequencedOps.push({
 			seq: messageSeq,
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 			client: remoteClient as string,
 			op: remoteOp as TOp,
 		});

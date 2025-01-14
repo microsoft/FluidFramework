@@ -13,6 +13,7 @@ import {
 	Titled,
 	MochaExclusiveOptions,
 	qualifiedTitle,
+	TestType,
 } from "../Configuration";
 import type { BenchmarkResult } from "../ResultTypes";
 import { Phase, runBenchmark } from "../runBenchmark";
@@ -34,7 +35,7 @@ import { Phase, runBenchmark } from "../runBenchmark";
  */
 export function benchmark(args: BenchmarkArguments): Test {
 	return supportParentProcess({
-		title: qualifiedTitle(args),
+		title: qualifiedTitle({ ...args, testType: TestType.ExecutionTime }),
 		only: args.only,
 		run: async () => {
 			const innerArgs = {

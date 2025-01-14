@@ -98,13 +98,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	/**
-	 * Gets the revision at the head of the trunk.
-	 */
-	protected get trunkHeadRevision(): RevisionTag {
-		return this.editManager.getTrunkHead().revision;
-	}
-
-	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
 	 *
 	 * @remarks Since there is currently only one format, this can just be cached on the class.
@@ -189,11 +182,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				// Commit enrichment is only necessary for changes that will be submitted as ops, and changes issued while detached are not submitted.
 				this.commitEnricher.processChange(change);
 			}
-		});
-		this.editManager.localBranch.events.on("afterChange", (change) => {
 			if (change.type === "append") {
 				for (const commit of change.newCommits) {
-					this.submitCommit(commit, this.schemaAndPolicy);
+					this.submitCommit(commit, this.schemaAndPolicy, false);
 				}
 			}
 		});
@@ -266,6 +257,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	protected async loadCore(services: IChannelStorageService): Promise<void> {
+		assert(
+			this.editManager.localBranch.getHead() === this.editManager.getTrunkHead(),
+			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
+		);
 		const [editManagerSummarizer, ...summarizables] = this.summarizables;
 		const loadEditManager = this.loadSummarizable(editManagerSummarizer, services);
 		const loadSummarizables = summarizables.map(async (s) =>
@@ -313,7 +308,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	protected submitCommit(
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
-		isResubmit = false,
+		isResubmit: boolean,
 	): void {
 		assert(
 			this.isAttached() === (this.detachedRevision === undefined),
@@ -377,9 +372,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	/**
-	 * @returns the head commit of the root local branch
-	 */
 	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
 		return this.editManager.localBranch;
 	}

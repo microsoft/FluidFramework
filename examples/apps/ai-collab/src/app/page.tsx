@@ -5,6 +5,7 @@
 
 "use client";
 
+import { acquirePresenceViaDataObject } from "@fluidframework/presence/alpha";
 import {
 	Box,
 	Button,
@@ -18,7 +19,10 @@ import {
 import type { IFluidContainer, TreeView } from "fluid-framework";
 import React, { useEffect, useState } from "react";
 
+import { PresenceManager } from "./presence";
+
 import { TaskGroup } from "@/components/TaskGroup";
+import { UserPresenceGroup } from "@/components/UserPresenceGroup";
 import {
 	CONTAINER_SCHEMA,
 	INITIAL_APP_STATE,
@@ -47,6 +51,7 @@ export async function createAndInitializeContainer(): Promise<
 export default function TasksListPage(): JSX.Element {
 	const [selectedTaskGroup, setSelectedTaskGroup] = useState<SharedTreeTaskGroup>();
 	const [treeView, setTreeView] = useState<TreeView<typeof SharedTreeAppState>>();
+	const [presenceManagerContext, setPresenceManagerContext] = useState<PresenceManager>();
 
 	const { container, isFluidInitialized, data } = useFluidContainerNextJs(
 		containerIdFromUrl(),
@@ -57,6 +62,9 @@ export default function TasksListPage(): JSX.Element {
 		(fluidContainer) => {
 			const _treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
 			setTreeView(_treeView);
+
+			const presence = acquirePresenceViaDataObject(fluidContainer.initialObjects.presence);
+			setPresenceManagerContext(new PresenceManager(presence));
 			return { sharedTree: _treeView };
 		},
 	);
@@ -79,6 +87,9 @@ export default function TasksListPage(): JSX.Element {
 			sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}
 			maxWidth={false}
 		>
+			{presenceManagerContext && (
+				<UserPresenceGroup presenceManager={presenceManagerContext} />
+			)}
 			<Typography variant="h2" sx={{ my: 3 }}>
 				My Work Items
 			</Typography>

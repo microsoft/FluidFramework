@@ -73,10 +73,8 @@ const getCodeCoverageSummary = (
 	const summary = codeCoverageComparisonReport
 		.sort(
 			(report1, report2) =>
-				// Sort the diff summary of packages based on the total coverage diff(line coverage + branch coverage)
-				report1.branchCoverageDiff +
-				report1.lineCoverageDiff -
-				(report2.branchCoverageDiff + report2.lineCoverageDiff),
+				// Sort the diff summary of packages based on the total coverage diff(branch coverage)
+				report1.branchCoverageDiff - report2.branchCoverageDiff,
 		)
 		.map((coverageReport) => getCodeCoverageSummaryForPackages(coverageReport))
 		.reduce((prev, current) => prev + current);
@@ -87,9 +85,9 @@ const getCodeCoverageSummary = (
 const getCodeCoverageSummaryForPackages = (coverageReport: CodeCoverageComparison): string => {
 	const metrics = codeCoverageDetailsHeader + getMetricRows(coverageReport);
 
-	return `<details><summary><b>${getGlyphForHtml(coverageReport.branchCoverageDiff + coverageReport.lineCoverageDiff)} ${
+	return `<details><summary><b>${getGlyphForHtml(coverageReport.branchCoverageDiff)} ${
 		coverageReport.packagePath
-	}:</b> <br> Line Coverage Change: ${formatDiff(coverageReport.lineCoverageDiff)}&nbsp;&nbsp;&nbsp;&nbsp;Branch Coverage Change: ${formatDiff(
+	}:</b> <br> &nbsp;Branch Coverage Change: ${formatDiff(
 		coverageReport.branchCoverageDiff,
 	)}</summary>${metrics}</table></details>`;
 };
@@ -114,23 +112,14 @@ const formatDiff = (coverageDiff: number): string => {
 };
 
 const getMetricRows = (codeCoverageComparisonReport: CodeCoverageComparison): string => {
-	const glyphForLineCoverage = getGlyphForHtml(codeCoverageComparisonReport.lineCoverageDiff);
 	const glyphForBranchCoverage = getGlyphForHtml(
 		codeCoverageComparisonReport.branchCoverageDiff,
 	);
 
-	return (
-		`<tr>
+	return `<tr>
     <td>Branch Coverage</td>
     <td>${codeCoverageComparisonReport.branchCoverageInBaseline.toFixed(2)}%</td>
     <td>${codeCoverageComparisonReport.branchCoverageInPr.toFixed(2)}%</td>
     <td>${glyphForBranchCoverage} ${formatDiff(codeCoverageComparisonReport.branchCoverageDiff)}</td>
-  </tr>` +
-		`<tr>
-    <td>Line Coverage</td>
-    <td>${codeCoverageComparisonReport.lineCoverageInBaseline.toFixed(2)}%</td>
-    <td>${codeCoverageComparisonReport.lineCoverageInPr.toFixed(2)}%</td>
-    <td>${glyphForLineCoverage} ${formatDiff(codeCoverageComparisonReport.lineCoverageDiff)}</td>
-    </tr>`
-	);
+  </tr>`;
 };

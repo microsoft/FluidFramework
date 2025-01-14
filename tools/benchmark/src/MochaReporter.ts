@@ -4,7 +4,7 @@
  */
 
 import chalk from "chalk";
-import { Runner, Suite, Test } from "mocha";
+import { Runner, Suite, Test, type Hook } from "mocha";
 
 import { isChildProcess, ReporterOptions } from "./Configuration";
 import { BenchmarkReporter } from "./Reporter";
@@ -83,6 +83,15 @@ module.exports = class {
 			.on(Runner.constants.EVENT_SUITE_END, (suite: Suite) => {
 				if (!isChildProcess) {
 					benchmarkReporter.recordSuiteResults(getSuiteName(suite));
+				}
+			})
+			.on(Runner.constants.EVENT_HOOK_END, (hook: Hook) => {
+				// Documentation ( https://mochajs.org/api/hook#error ) implies this is an Error.
+				// Inspecting with the debugger shows the non-error case uses `null`
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				const error: Error | null = hook.error();
+				if (error !== null) {
+					console.error(chalk.red(`Hook ${hook.fullTitle()} failed with error: `, error));
 				}
 			})
 			.once(Runner.constants.EVENT_RUN_END, () => {

@@ -4,8 +4,8 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import { IValueChanged } from "@fluidframework/map/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { IValueChanged } from "@fluidframework/map/legacy";
 import React from "react";
 
 const diceValueKey = "diceValue";

@@ -713,6 +713,24 @@ declare type current_as_old_for_TypeAlias_ContainerErrorTypes = requireAssignabl
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_IContainerPolicies": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_IContainerPolicies = requireAssignableTo<TypeOnly<old.IContainerPolicies>, TypeOnly<current.IContainerPolicies>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IContainerPolicies": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_IContainerPolicies = requireAssignableTo<TypeOnly<current.IContainerPolicies>, TypeOnly<old.IContainerPolicies>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_ICriticalContainerError": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_ICriticalContainerError = requireAssignableTo<TypeOnly<old.ICriticalContainerError>, TypeOnly<current.ICriticalContainerError>>

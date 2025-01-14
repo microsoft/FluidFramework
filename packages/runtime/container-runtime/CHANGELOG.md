@@ -1,5 +1,46 @@
 # @fluidframework/container-runtime
 
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+### Minor Changes
+
+-   SummarizerStopReason, ISummarizeEventProps, and ISummarizerEvents are now deprecated ([#23217](https://github.com/microsoft/FluidFramework/pull/23217)) [cd88ee2320](https://github.com/microsoft/FluidFramework/commit/cd88ee2320c40ed9e0d43ec8ed73cb878f1c18a9)
+
+    `SummarizerStopReason`, `ISummarizeEventProps`, and `ISummarizerEvents` have all been deprecated from the `"@fluidframework/container-runtime"` package. Please migrate all uses of these APIs to their counterparts in the `"@fluidframework/container-runtime-definitions"` package.
+
+-   IContainerRuntimeOptions.flushMode is now deprecated ([#23288](https://github.com/microsoft/FluidFramework/pull/23288)) [af1cd7b370](https://github.com/microsoft/FluidFramework/commit/af1cd7b3707cce1306ae071aba1482734b039635)
+
+    The `IContainerRuntimeOptions.flushMode` property is deprecated and will be removed in version 2.20.0.
+
+    Only the default value `FlushMode.TurnBased` is supported when calling `ContainerRuntime.loadRuntime` directly, so there's no need for consumers to pass this option in.
+
+-   The ContainerRuntime class is now deprecated ([#23331](https://github.com/microsoft/FluidFramework/pull/23331)) [dc48446d7c](https://github.com/microsoft/FluidFramework/commit/dc48446d7c4914aca2a76095205975824aac1ba5)
+
+    The class `ContainerRuntime` is deprecated and will no longer be exported starting in version 2.20.0.
+
+    There are two possible migration paths to stop using `ContainerRuntime`:
+
+    -   When using it as a type, replace it with an interface like `IContainerRuntime`
+    -   When using the static function `ContainerRuntime.loadRuntime` replace it with the free function `loadContainerRuntime`.
+
+    `BaseContainerRuntimeFactory` has some changes as well, since it exposed `ContainerRuntime` in several function signatures:
+
+    -   `instantiateFirstTime` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
+    -   `instantiateFromExisting` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
+    -   `preInitialize` - deprecated as well, since it returns `ContainerRuntime`
+
+    These functions should never be called directly anyway - use `BaseContainerRuntimeFactory.instantiateRuntime` instead.
+
+-   IContainerRuntimeOptions.enableGroupedBatching is now deprecated ([#23260](https://github.com/microsoft/FluidFramework/pull/23260)) [49d8e75e5c](https://github.com/microsoft/FluidFramework/commit/49d8e75e5cad12205aed15850db72c1ad21513c3)
+
+    The `IContainerRuntimeOptions.enableGroupedBatching` property is deprecated and will be removed in version 2.20.0. This will mean that the grouped batching feature can no longer be disabled. In versions 2.20.0 and beyond, grouped batching is required for the proper functioning of the Fluid Framework.
+
+    The sole case where grouped batching will be disabled is for compatibility with older v1 clients, and this will be implemented without any need for the configurable `IContainerRuntimeOptions.enableGroupedBatching` option.
+
 ## 2.11.0
 
 ### Minor Changes

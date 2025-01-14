@@ -15,7 +15,7 @@ import type {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
 	IFluidModuleWithDetails,
-} from "@fluidframework/container-definitions/internal";
+} from "@fluidframework/container-definitions/legacy";
 
 import { InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory1 } from "./modelVersion1/index.js";
 import { InventoryListContainerRuntimeFactory as InventoryListContainerRuntimeFactory2 } from "./modelVersion2/index.js";

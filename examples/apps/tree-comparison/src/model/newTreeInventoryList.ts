@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	type ITree,
@@ -12,7 +12,7 @@ import {
 	Tree,
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/legacy";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 

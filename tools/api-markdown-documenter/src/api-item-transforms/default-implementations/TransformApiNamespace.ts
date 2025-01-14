@@ -15,7 +15,7 @@ import { transformApiModuleLike } from "./TransformApiModuleLike.js";
  */
 export function transformApiNamespace(
 	apiNamespace: ApiNamespace,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	return transformApiModuleLike(apiNamespace, config, generateChildContent);

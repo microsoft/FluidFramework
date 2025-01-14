@@ -160,7 +160,6 @@ export class SharedCounter
 
 		// TODO: Clean up error code linter violations repo-wide.
 
-		// eslint-disable-next-line unicorn/numeric-separators-style
 		assert(counterOp.type === "increment", 0x3ec /* Op type is not increment */);
 
 		this.increment(counterOp.incrementAmount);

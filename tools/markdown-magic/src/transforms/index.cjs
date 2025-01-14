@@ -14,6 +14,8 @@ const { generateSectionFromTemplate } = require("./generateSectionFromTemplate.c
 
 const { includeTransform } = require("./includeTransform.cjs");
 
+const { includeCodeTransform } = require("./includeCodeTransform.cjs");
+
 const {
 	generateInstallationInstructionsSection,
 	installationInstructionsTransform,
@@ -45,6 +47,7 @@ module.exports = {
 	generatePackageScriptsSection,
 	generateSectionFromTemplate,
 	includeTransform,
+	includeCodeTransform,
 	installationInstructionsTransform,
 	importInstructionsTransform,
 	packageScopeNoticeTransform,

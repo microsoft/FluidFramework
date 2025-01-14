@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainerContext } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainerContext,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntime,
 	FluidDataStoreRegistry,
+	loadContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -97,19 +100,34 @@ export class BaseContainerRuntimeFactory
 		this.registry = new FluidDataStoreRegistry(this.registryEntries);
 	}
 
-	public async instantiateFirstTime(runtime: ContainerRuntime): Promise<void> {
+	/**
+	 * Called the one time the container is created, and not on any subsequent load.
+	 * i.e. only when it's initialized on the client that first created it
+	 * @param runtime - The runtime for the container being initialized
+	 */
+	public async instantiateFirstTime(runtime: IContainerRuntime): Promise<void> {
 		await this.containerInitializingFirstTime(runtime);
 		await this.containerHasInitialized(runtime);
 	}
 
-	public async instantiateFromExisting(runtime: ContainerRuntime): Promise<void> {
+	/**
+	 * Called every time the container runtime is loaded for an existing container.
+	 * i.e. every time it's initialized _except_ for when it is first created
+	 * @param runtime - The runtime for the container being initialized
+	 */
+	public async instantiateFromExisting(runtime: IContainerRuntime): Promise<void> {
 		await this.containerHasInitialized(runtime);
 	}
 
+	/**
+	 * Called at the start of initializing a container, to create the container runtime instance.
+	 * @param context - The context for the container being initialized
+	 * @param existing - Whether the container already exists and is being loaded (else it's being created new just now)
+	 */
 	public async preInitialize(
 		context: IContainerContext,
 		existing: boolean,
-	): Promise<ContainerRuntime> {
+	): Promise<IContainerRuntime & IRuntime> {
 		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
 		if (this.dependencyContainer) {
 			const dc = new DependencyContainer<FluidObject>(
@@ -119,7 +137,7 @@ export class BaseContainerRuntimeFactory
 			scope.IFluidDependencySynthesizer = dc;
 		}
 
-		return ContainerRuntime.loadRuntime({
+		return loadContainerRuntime({
 			context,
 			existing,
 			runtimeOptions: this.runtimeOptions,

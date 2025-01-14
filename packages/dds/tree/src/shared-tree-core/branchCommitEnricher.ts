@@ -105,7 +105,7 @@ export class BranchCommitEnricher<TChange> {
 	 * @remarks This will throw an error if there is no ongoing transaction.
 	 */
 	public addTransactionCommits(newCommits: Iterable<GraphCommit<TChange>>): void {
-		assert(this.#transactionEnricher.isTransacting(), "Not in transaction");
+		assert(this.#transactionEnricher.isTransacting(), 0xa97 /* Not in transaction */);
 		for (const commit of newCommits) {
 			this.#transactionEnricher.addTransactionStep(commit);
 		}

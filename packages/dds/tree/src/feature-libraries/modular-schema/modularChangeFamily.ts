@@ -51,6 +51,9 @@ import {
 	idAllocatorFromState,
 	type RangeQueryResult,
 	getOrAddInMapLazy,
+	newTupleBTree,
+	mergeTupleBTrees,
+	type TupleBTree,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -59,7 +62,6 @@ import {
 	defaultChunkPolicy,
 } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-import { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import {
 	type CrossFieldManager,
@@ -87,7 +89,6 @@ import type {
 	ModularChangeset,
 	NodeChangeset,
 	NodeId,
-	TupleBTree,
 } from "./modularChangeTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -273,14 +274,14 @@ export class ModularChangeFamily
 		// (since we assume that if two changesets use the same node ID they are referring to the same node),
 		// therefore all collisions will be addressed when processing the intersection of the changesets.
 		const composedNodeChanges: ChangeAtomIdBTree<NodeChangeset> = brand(
-			mergeBTrees(change1.nodeChanges, change2.nodeChanges),
+			mergeTupleBTrees(change1.nodeChanges, change2.nodeChanges),
 		);
 
 		const composedNodeToParent: ChangeAtomIdBTree<FieldId> = brand(
-			mergeBTrees(change1.nodeToParent, change2.nodeToParent),
+			mergeTupleBTrees(change1.nodeToParent, change2.nodeToParent),
 		);
 		const composedNodeAliases: ChangeAtomIdBTree<NodeId> = brand(
-			mergeBTrees(change1.nodeAliases, change2.nodeAliases),
+			mergeTupleBTrees(change1.nodeAliases, change2.nodeAliases),
 		);
 
 		const crossFieldTable = newComposeTable(change1, change2, composedNodeToParent);
@@ -305,7 +306,10 @@ export class ModularChangeFamily
 		);
 
 		// Currently no field kinds require making changes to cross-field keys during composition, so we can just merge the two tables.
-		const composedCrossFieldKeys = mergeBTrees(change1.crossFieldKeys, change2.crossFieldKeys);
+		const composedCrossFieldKeys = mergeTupleBTrees(
+			change1.crossFieldKeys,
+			change2.crossFieldKeys,
+		);
 		return {
 			fieldChanges: composedFields,
 			nodeChanges: composedNodeChanges,
@@ -649,7 +653,20 @@ export class ModularChangeFamily
 		crossFieldTable: ComposeTable,
 		revisionMetadata: RevisionMetadataSource,
 	): NodeChangeset {
+		// WARNING: this composition logic assumes that we never make compositions of the following form:
+		// change1: a changeset that impact the existence of a node
+		// change2: a node-exists constraint on that node.
+		// This is currently enforced by the fact that constraints which apply to the input context are included first in the composition.
+		// If that weren't the case, we would need to rebase the status of the constraint backward over the changes from change1.
 		const nodeExistsConstraint = change1.nodeExistsConstraint ?? change2.nodeExistsConstraint;
+
+		// WARNING: this composition logic assumes that we never make compositions of the following form:
+		// change1: a node-exists-on-revert constraint on a node
+		// change2: a changeset that impacts the existence of that node
+		// This is currently enforced by the fact that constraints which apply to the revert are included last in the composition.
+		// If that weren't the case, we would need to rebase the status of the constraint forward over the changes from change2.
+		const nodeExistsConstraintOnRevert =
+			change1.nodeExistsConstraintOnRevert ?? change2.nodeExistsConstraintOnRevert;
 
 		const composedFieldChanges = this.composeFieldMaps(
 			change1.fieldChanges,
@@ -668,6 +685,10 @@ export class ModularChangeFamily
 
 		if (nodeExistsConstraint !== undefined) {
 			composedNodeChange.nodeExistsConstraint = nodeExistsConstraint;
+		}
+
+		if (nodeExistsConstraintOnRevert !== undefined) {
+			composedNodeChange.nodeExistsConstraintOnRevert = nodeExistsConstraintOnRevert;
 		}
 
 		return composedNodeChange;
@@ -778,7 +799,8 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: genId.getMaxId(),
 			revisions: revInfos,
-			constraintViolationCount: change.change.constraintViolationCount,
+			constraintViolationCount: change.change.constraintViolationCountOnRevert,
+			constraintViolationCountOnRevert: change.change.constraintViolationCount,
 			destroys,
 		});
 	}
@@ -835,6 +857,19 @@ export class ModularChangeFamily
 	): NodeChangeset {
 		const inverse: NodeChangeset = {};
 
+		// If the node has a constraint, it should be inverted to a node-exist-on-revert constraint. This ensure that if
+		// the inverse is inverted again, the original input constraint will be restored.
+		if (change.nodeExistsConstraint !== undefined) {
+			inverse.nodeExistsConstraintOnRevert = change.nodeExistsConstraint;
+		}
+
+		// The node-exist-on-revert constraint of a node is the constraint that should apply when the a change is reverted.
+		// So, it should become the constraint in the inverse. If this constraint is violated when applying the inverse,
+		// it will be discarded.
+		if (change.nodeExistsConstraintOnRevert !== undefined) {
+			inverse.nodeExistsConstraint = change.nodeExistsConstraintOnRevert;
+		}
+
 		if (change.fieldChanges !== undefined) {
 			inverse.fieldChanges = this.invertFieldMap(
 				change.fieldChanges,
@@ -878,8 +913,6 @@ export class ModularChangeFamily
 			fieldsWithUnattachedChild: new Set(),
 		};
 
-		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
-
 		const getBaseRevisions = (): RevisionTag[] =>
 			revisionInfoFromTaggedChange(over).map((info) => info.revision);
 
@@ -895,7 +928,6 @@ export class ModularChangeFamily
 			crossFieldTable,
 			rebasedNodes,
 			genId,
-			constraintState,
 			rebaseMetadata,
 		);
 
@@ -907,10 +939,16 @@ export class ModularChangeFamily
 			genId,
 		);
 
+		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
+		const revertConstraintState = newConstraintState(
+			change.constraintViolationCountOnRevert ?? 0,
+		);
 		this.updateConstraintsForFields(
 			rebasedFields,
 			NodeAttachState.Attached,
+			NodeAttachState.Attached,
 			constraintState,
+			revertConstraintState,
 			rebasedNodes,
 		);
 
@@ -923,6 +961,7 @@ export class ModularChangeFamily
 			maxId: idState.maxId,
 			revisions: change.revisions,
 			constraintViolationCount: constraintState.violationCount,
+			constraintViolationCountOnRevert: revertConstraintState.violationCount,
 			builds: change.builds,
 			destroys: change.destroys,
 			refreshers: change.refreshers,
@@ -937,7 +976,6 @@ export class ModularChangeFamily
 		crossFieldTable: RebaseTable,
 		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		genId: IdAllocator,
-		constraintState: ConstraintState,
 		metadata: RebaseRevisionMetadata,
 	): FieldChangeMap {
 		const change = crossFieldTable.newChange;
@@ -960,7 +998,6 @@ export class ModularChangeFamily
 				genId,
 				crossFieldTable,
 				metadata,
-				constraintState,
 			);
 
 			setInChangeAtomIdMap(rebasedNodes, newId, rebasedNode);
@@ -1336,7 +1373,6 @@ export class ModularChangeFamily
 		genId: IdAllocator,
 		crossFieldTable: RebaseTable,
 		revisionMetadata: RebaseRevisionMetadata,
-		constraintState: ConstraintState,
 	): NodeChangeset {
 		const change = nodeChangeFromId(crossFieldTable.newChange.nodeChanges, newId);
 		const over = nodeChangeFromId(crossFieldTable.baseChange.nodeChanges, baseId);
@@ -1365,38 +1401,58 @@ export class ModularChangeFamily
 			rebasedChange.nodeExistsConstraint = change.nodeExistsConstraint;
 		}
 
+		if (change?.nodeExistsConstraintOnRevert !== undefined) {
+			rebasedChange.nodeExistsConstraintOnRevert = change.nodeExistsConstraintOnRevert;
+		}
+
 		setInChangeAtomIdMap(crossFieldTable.baseToRebasedNodeId, baseId, newId);
 		return rebasedChange;
 	}
 
 	private updateConstraintsForFields(
 		fields: FieldChangeMap,
-		parentAttachState: NodeAttachState,
+		parentInputAttachState: NodeAttachState,
+		parentOutputAttachState: NodeAttachState,
 		constraintState: ConstraintState,
+		revertConstraintState: ConstraintState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 	): void {
 		for (const field of fields.values()) {
 			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
-			for (const [nodeId, index] of handler.getNestedChanges(field.change)) {
-				const isDetached = index === undefined;
-				const attachState =
-					parentAttachState === NodeAttachState.Detached || isDetached
+			for (const [nodeId, inputIndex, outputIndex] of handler.getNestedChanges(field.change)) {
+				const isInputDetached = inputIndex === undefined;
+				const inputAttachState =
+					parentInputAttachState === NodeAttachState.Detached || isInputDetached
 						? NodeAttachState.Detached
 						: NodeAttachState.Attached;
-				this.updateConstraintsForNode(nodeId, attachState, constraintState, nodes);
+				const isOutputDetached = outputIndex === undefined;
+				const outputAttachState =
+					parentOutputAttachState === NodeAttachState.Detached || isOutputDetached
+						? NodeAttachState.Detached
+						: NodeAttachState.Attached;
+				this.updateConstraintsForNode(
+					nodeId,
+					inputAttachState,
+					outputAttachState,
+					nodes,
+					constraintState,
+					revertConstraintState,
+				);
 			}
 		}
 	}
 
 	private updateConstraintsForNode(
 		nodeId: NodeId,
-		attachState: NodeAttachState,
-		constraintState: ConstraintState,
+		inputAttachState: NodeAttachState,
+		outputAttachState: NodeAttachState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
+		constraintState: ConstraintState,
+		revertConstraintState: ConstraintState,
 	): void {
 		const node = nodes.get([nodeId.revision, nodeId.localId]) ?? fail("Unknown node ID");
 		if (node.nodeExistsConstraint !== undefined) {
-			const isNowViolated = attachState === NodeAttachState.Detached;
+			const isNowViolated = inputAttachState === NodeAttachState.Detached;
 			if (node.nodeExistsConstraint.violated !== isNowViolated) {
 				node.nodeExistsConstraint = {
 					...node.nodeExistsConstraint,
@@ -1405,9 +1461,26 @@ export class ModularChangeFamily
 				constraintState.violationCount += isNowViolated ? 1 : -1;
 			}
 		}
+		if (node.nodeExistsConstraintOnRevert !== undefined) {
+			const isNowViolated = outputAttachState === NodeAttachState.Detached;
+			if (node.nodeExistsConstraintOnRevert.violated !== isNowViolated) {
+				node.nodeExistsConstraintOnRevert = {
+					...node.nodeExistsConstraintOnRevert,
+					violated: isNowViolated,
+				};
+				revertConstraintState.violationCount += isNowViolated ? 1 : -1;
+			}
+		}
 
 		if (node.fieldChanges !== undefined) {
-			this.updateConstraintsForFields(node.fieldChanges, attachState, constraintState, nodes);
+			this.updateConstraintsForFields(
+				node.fieldChanges,
+				inputAttachState,
+				outputAttachState,
+				constraintState,
+				revertConstraintState,
+				nodes,
+			);
 		}
 	}
 
@@ -1748,15 +1821,19 @@ function composeBuildsDestroysAndRefreshers(
 	// composition all the changes already reflected on the tree, but that is not something we
 	// care to support at this time.
 	const allBuilds: ChangeAtomIdBTree<TreeChunk> = brand(
-		mergeBTrees(change1.builds ?? newTupleBTree(), change2.builds ?? newTupleBTree(), true),
+		mergeTupleBTrees(
+			change1.builds ?? newTupleBTree(),
+			change2.builds ?? newTupleBTree(),
+			true,
+		),
 	);
 
 	const allDestroys: ChangeAtomIdBTree<number> = brand(
-		mergeBTrees(change1.destroys ?? newTupleBTree(), change2.destroys ?? newTupleBTree()),
+		mergeTupleBTrees(change1.destroys ?? newTupleBTree(), change2.destroys ?? newTupleBTree()),
 	);
 
 	const allRefreshers: ChangeAtomIdBTree<TreeChunk> = brand(
-		mergeBTrees(
+		mergeTupleBTrees(
 			change1.refreshers ?? newTupleBTree(),
 			change2.refreshers ?? newTupleBTree(),
 			true,
@@ -1907,6 +1984,7 @@ export function updateRefreshers(
 		maxId,
 		revisions,
 		constraintViolationCount,
+		constraintViolationCountOnRevert,
 		builds,
 		destroys,
 	} = change;
@@ -1920,6 +1998,7 @@ export function updateRefreshers(
 		maxId: maxId as number,
 		revisions,
 		constraintViolationCount,
+		constraintViolationCountOnRevert,
 		builds,
 		destroys,
 		refreshers,
@@ -1935,17 +2014,11 @@ export function intoDelta(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): DeltaRoot {
 	const change = taggedChange.change;
-	const idAllocator = MemoizedIdRangeAllocator.fromNextId();
 	const rootDelta: Mutable<DeltaRoot> = {};
 
 	if (!hasConflicts(change)) {
 		// If there are no constraint violations, then tree changes apply.
-		const fieldDeltas = intoDeltaImpl(
-			change.fieldChanges,
-			change.nodeChanges,
-			idAllocator,
-			fieldKinds,
-		);
+		const fieldDeltas = intoDeltaImpl(change.fieldChanges, change.nodeChanges, fieldKinds);
 		if (fieldDeltas.size > 0) {
 			rootDelta.fields = fieldDeltas;
 		}
@@ -1995,7 +2068,6 @@ function copyDetachedNodes(
 function intoDeltaImpl(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Map<FieldKey, DeltaFieldChanges> {
 	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
@@ -2004,9 +2076,8 @@ function intoDeltaImpl(
 			fieldChange.change,
 			(childChange): DeltaFieldMap => {
 				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
-				return deltaFromNodeChange(nodeChange, nodeChanges, idAllocator, fieldKinds);
+				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds);
 			},
-			idAllocator,
 		);
 		if (!isEmptyFieldChanges(deltaField)) {
 			delta.set(field, deltaField);
@@ -2018,11 +2089,10 @@ function intoDeltaImpl(
 function deltaFromNodeChange(
 	change: NodeChangeset,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
-	idAllocator: MemoizedIdRangeAllocator,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): DeltaFieldMap {
 	if (change.fieldChanges !== undefined) {
-		return intoDeltaImpl(change.fieldChanges, nodeChanges, idAllocator, fieldKinds);
+		return intoDeltaImpl(change.fieldChanges, nodeChanges, fieldKinds);
 	}
 	// TODO: update the API to allow undefined to be returned here
 	return new Map();
@@ -2061,7 +2131,11 @@ export function rebaseRevisionMetadataFromInfo(
 }
 
 function isEmptyNodeChangeset(change: NodeChangeset): boolean {
-	return change.fieldChanges === undefined && change.nodeExistsConstraint === undefined;
+	return (
+		change.fieldChanges === undefined &&
+		change.nodeExistsConstraint === undefined &&
+		change.nodeExistsConstraintOnRevert === undefined
+	);
 }
 
 export function getFieldKind(
@@ -2504,6 +2578,7 @@ function makeModularChangeset(
 		maxId: number;
 		revisions?: readonly RevisionInfo[];
 		constraintViolationCount?: number;
+		constraintViolationCountOnRevert?: number;
 		builds?: ChangeAtomIdBTree<TreeChunk>;
 		destroys?: ChangeAtomIdBTree<number>;
 		refreshers?: ChangeAtomIdBTree<TreeChunk>;
@@ -2527,6 +2602,12 @@ function makeModularChangeset(
 	}
 	if (props.constraintViolationCount !== undefined && props.constraintViolationCount > 0) {
 		changeset.constraintViolationCount = props.constraintViolationCount;
+	}
+	if (
+		props.constraintViolationCountOnRevert !== undefined &&
+		props.constraintViolationCountOnRevert > 0
+	) {
+		changeset.constraintViolationCountOnRevert = props.constraintViolationCountOnRevert;
 	}
 	if (props.builds !== undefined && props.builds.size > 0) {
 		changeset.builds = props.builds;
@@ -2685,6 +2766,27 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	public addNodeExistsConstraint(path: UpPath, revision: RevisionTag): void {
 		const nodeChange: NodeChangeset = {
 			nodeExistsConstraint: { violated: false },
+		};
+
+		this.applyChange(
+			tagChange(
+				buildModularChangesetFromNode({
+					path,
+					nodeChange,
+					nodeChanges: newTupleBTree(),
+					nodeToParent: newTupleBTree(),
+					crossFieldKeys: newCrossFieldKeyTable(),
+					idAllocator: this.idAllocator,
+					revision,
+				}),
+				revision,
+			),
+		);
+	}
+
+	public addNodeExistsConstraintOnRevert(path: UpPath, revision: RevisionTag): void {
+		const nodeChange: NodeChangeset = {
+			nodeExistsConstraintOnRevert: { violated: false },
 		};
 
 		this.applyChange(
@@ -2880,27 +2982,6 @@ function revisionInfoFromTaggedChange(
 		revInfos.push(info);
 	}
 	return revInfos;
-}
-
-function mergeBTrees<K extends readonly unknown[], V>(
-	tree1: TupleBTree<K, V> | undefined,
-	tree2: TupleBTree<K, V> | undefined,
-	preferLeft = true,
-): TupleBTree<K, V> {
-	if (tree1 === undefined) {
-		return tree2 !== undefined ? brand(tree2.clone()) : newTupleBTree<K, V>();
-	}
-
-	const result: TupleBTree<K, V> = brand(tree1.clone());
-	if (tree2 === undefined) {
-		return result;
-	}
-
-	for (const [key, value] of tree2.entries()) {
-		result.set(key, value, !preferLeft);
-	}
-
-	return result;
 }
 
 function fieldChangeFromId(
@@ -3104,36 +3185,6 @@ function hasConflicts(change: ModularChangeset): boolean {
 
 export function newCrossFieldKeyTable(): CrossFieldKeyTable {
 	return newTupleBTree();
-}
-
-export function newTupleBTree<K extends readonly unknown[], V>(
-	entries?: [K, V][],
-): TupleBTree<K, V> {
-	return brand(new BTree<K, V>(entries, compareTuples));
-}
-
-// This assumes that the arrays are the same length.
-function compareTuples(arrayA: readonly unknown[], arrayB: readonly unknown[]): number {
-	for (let i = 0; i < arrayA.length; i++) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const a = arrayA[i] as any;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const b = arrayB[i] as any;
-
-		// Less-than and greater-than always return false if either value is undefined,
-		// so we handle undefined separately, treating it as less than all other values.
-		if (a === undefined && b !== undefined) {
-			return -1;
-		} else if (b === undefined && a !== undefined) {
-			return 1;
-		} else if (a < b) {
-			return -1;
-		} else if (a > b) {
-			return 1;
-		}
-	}
-
-	return 0;
 }
 
 interface ModularChangesetContent {

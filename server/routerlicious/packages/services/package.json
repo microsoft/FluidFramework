@@ -115,6 +115,9 @@
 			},
 			"ClassDeclaration_WebServer": {
 				"backCompat": false
+			},
+			"ClassDeclaration_TenantManager": {
+				"forwardCompat": false
 			}
 		}
 	}

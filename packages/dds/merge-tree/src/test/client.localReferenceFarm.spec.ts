@@ -10,6 +10,7 @@ import { strict as assert } from "node:assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import { SlidingPreference, setValidateRefCount } from "../localReference.js";
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { ReferencePosition } from "../referencePositions.js";
 
@@ -85,7 +86,7 @@ describe("MergeTree.Client", () => {
 				for (const [i, c] of clients.entries()) {
 					refs.push([]);
 					for (let t = 0; t < c.getLength(); t++) {
-						const seg = c.getContainingSegment(t);
+						const seg = c.getContainingSegment<ISegmentPrivate>(t);
 						const forwardLref = c.createLocalReferencePosition(
 							seg.segment!,
 							seg.offset,

@@ -5,7 +5,7 @@ sidebar_position: 8
 
 The audience is the collection of users connected to a container. When your app creates a container using a service-specific client library, the app is provided with a service-specific audience object for that container as well. Your code can query the audience object for connected users and use that information to build rich and collaborative user presence features.
 
-This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence. For anything service-specific, the [Tinylicious](/docs/testing/tinylicious) Fluid service is used.
+This document will explain how to use the audience APIs and then provide examples on how to use the audience to show user presence. For anything service-specific, the [Tinylicious](../testing/tinylicious.mdx) Fluid service is used.
 
 ## Working with the audience
 
@@ -100,7 +100,7 @@ While the audience is the foundation for user presence features, the list of con
 
 Most presence scenarios will involve data that only a single user or client knows and needs to communicate to other audience members. Some of those scenarios will require the app to save data for each user for future sessions. For example, consider a scenario where you want to display how long each user has spent in your application. An active user's time should increment while connected, pause when they disconnect, and resume once they reconnect. This means that the time each user has spent must be persisted so it can survive disconnections.
 
-One option is to use a `SharedMap` object with a `SharedCounter` object as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures](./dds)). All other connected users will then receive changes to that SharedMap automatically. Your app's UI can display data from the map for only users present in the audience. A returning user can find themselves in the map and resume from the latest state.
+One option is to use a `SharedMap` object with a `SharedCounter` object as the value onto which each user will increment their time spent every minute (also see [Introducing distributed data structures](./dds.mdx)). All other connected users will then receive changes to that SharedMap automatically. Your app's UI can display data from the map for only users present in the audience. A returning user can find themselves in the map and resume from the latest state.
 
 #### Shared transient data
 

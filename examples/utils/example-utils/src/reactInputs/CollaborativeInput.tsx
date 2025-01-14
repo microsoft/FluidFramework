@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/internal";
+import { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
 import React from "react";
 
 /**

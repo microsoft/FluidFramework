@@ -20,7 +20,7 @@ import type {
 	SimpleTreeSchema,
 } from "./simpleSchema.js";
 import type { ValueSchema } from "../../core/index.js";
-import { getOrCreate, type Mutable } from "../../util/index.js";
+import { copyProperty, getOrCreate, type Mutable } from "../../util/index.js";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 
@@ -41,11 +41,7 @@ export function toSimpleTreeSchema(schema: ImplicitFieldSchema): SimpleTreeSchem
 		definitions,
 	};
 
-	// Include the "description" property only if it's present on the input.
-	if (normalizedSchema.metadata !== undefined) {
-		output.metadata = normalizedSchema.metadata;
-	}
-
+	copyProperty(normalizedSchema, "metadata", output);
 	return output;
 }
 
@@ -95,20 +91,28 @@ function leafSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleLeafNodeSchema 
 function arraySchemaToSimpleSchema(schema: TreeNodeSchema): SimpleArrayNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
-	return {
+	const output: Mutable<SimpleArrayNodeSchema> = {
 		kind: NodeKind.Array,
 		allowedTypes,
 	};
+
+	copyProperty(schema, "metadata", output);
+
+	return output;
 }
 
 // TODO: Use a stronger type for map schemas once one is available (see object schema handler for an example).
 function mapSchemaToSimpleSchema(schema: TreeNodeSchema): SimpleMapNodeSchema {
 	const fieldSchema = normalizeFieldSchema(schema.info as ImplicitAllowedTypes);
 	const allowedTypes = allowedTypesFromFieldSchema(fieldSchema);
-	return {
+	const output: Mutable<SimpleMapNodeSchema> = {
 		kind: NodeKind.Map,
 		allowedTypes,
 	};
+
+	copyProperty(schema, "metadata", output);
+
+	return output;
 }
 
 function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeSchema {
@@ -116,10 +120,15 @@ function objectSchemaToSimpleSchema(schema: ObjectNodeSchema): SimpleObjectNodeS
 	for (const [key, field] of schema.fields) {
 		fields[key] = fieldSchemaToSimpleSchema(field);
 	}
-	return {
+
+	const output: Mutable<SimpleObjectNodeSchema> = {
 		kind: NodeKind.Object,
 		fields,
 	};
+
+	copyProperty(schema, "metadata", output);
+
+	return output;
 }
 
 /**
@@ -140,10 +149,7 @@ function fieldSchemaToSimpleSchema(schema: FieldSchema): SimpleFieldSchema {
 		allowedTypes,
 	};
 
-	// Don't include "metadata" property at all if it's not present.
-	if (schema.metadata !== undefined) {
-		result.metadata = schema.metadata;
-	}
+	copyProperty(schema, "metadata", result);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(schema as any)[simpleFieldSchemaCacheSymbol] = result;

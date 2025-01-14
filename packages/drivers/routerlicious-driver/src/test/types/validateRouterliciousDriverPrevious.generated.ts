@@ -16,6 +16,15 @@ import type * as current from "../../index.js";
 declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_createRouterliciousDocumentServiceFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_createRouterliciousDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.createRouterliciousDocumentServiceFactory>, TypeOnly<typeof old.createRouterliciousDocumentServiceFactory>>
+
+/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under

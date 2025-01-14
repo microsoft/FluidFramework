@@ -50,6 +50,7 @@ trigger:
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
@@ -72,6 +73,7 @@ pr:
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
 
@@ -80,7 +82,6 @@ variables:
     parameters:
       publishOverride: '${{ parameters.publishOverride }}'
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-      buildNumberInPatch: ''
 
 extends:
   template: /tools/pipelines/templates/build-npm-package.yml@self

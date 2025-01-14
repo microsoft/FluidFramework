@@ -32,7 +32,7 @@ export class WriteBuffer {
 			let index = 0;
 			const oldData = this.data;
 			while (index < length) {
-				newData[index] = oldData[index];
+				newData[index] = oldData[index]!;
 				index++;
 			}
 			this.data = newData;

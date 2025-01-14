@@ -57,23 +57,19 @@ describe("OpGroupingManager", () => {
 		const options: ConfigOption[] = [
 			{ enabled: false, expectedResult: false },
 			{ enabled: true, tooSmall: true, expectedResult: false },
-			{ enabled: true, reentrant: true, expectedResult: false },
-			{ enabled: true, reentrant: true, reentryEnabled: true, expectedResult: true },
+			{ enabled: true, reentrant: true, expectedResult: true },
 			{ enabled: true, expectedResult: true },
 		];
 
 		options.forEach((option) => {
 			it(`shouldGroup: groupedBatchingEnabled [${option.enabled}] tooSmall [${
 				option.tooSmall === true
-			}] reentrant [${option.reentrant === true}] reentryEnabled [${
-				option.reentryEnabled === true
-			}]`, () => {
+			}] reentrant [${option.reentrant === true}]`, () => {
 				assert.strictEqual(
 					new OpGroupingManager(
 						{
 							groupedBatchingEnabled: option.enabled,
 							opCountThreshold: option.tooSmall === true ? 10 : 2,
-							reentrantBatchGroupingEnabled: option.reentryEnabled ?? false,
 						},
 						mockLogger,
 					).shouldGroup(createBatch(5, option.reentrant)),
@@ -90,7 +86,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: false,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5));
@@ -102,7 +97,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).groupBatch(createBatch(5));
@@ -123,7 +117,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).groupBatch(createBatch(5, false, false, batchId));
@@ -137,7 +130,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: false,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).createEmptyGroupedBatch("resubmittingBatchId", 0);
@@ -150,7 +142,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
@@ -169,7 +160,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).shouldGroup({
@@ -187,7 +177,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 10,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5));
@@ -200,7 +189,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true));
@@ -213,7 +201,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true, "batchId"));
@@ -227,7 +214,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -280,7 +266,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -299,7 +284,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -344,7 +328,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);

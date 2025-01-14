@@ -291,13 +291,12 @@ export class BenchmarkReporter {
 		benchmarkName: string,
 		benchmark: BenchmarkData,
 	): Record<string, unknown> {
-		const keys = new Set(Object.getOwnPropertyNames(benchmark.customData));
 		const customData: Record<string, unknown> = {};
 
-		// As the name suggets, `customData` should only contain custom data that are specific to the benchmark test.
+		// As the name suggests, `customData` should only contain custom data that are specific to the benchmark test.
 		// If there are any other properties that are global to the benchmark test (e.g., `elapsedSeconds`), they should be added in the `benchMarkOutput` object.
-		for (const key of keys) {
-			customData[key] = benchmark.customData[key].rawValue;
+		for (const [key, value] of Object.entries(benchmark.customData)) {
+			customData[key] = value.rawValue;
 		}
 
 		const benchMarkOutput = {

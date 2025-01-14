@@ -25,12 +25,12 @@ import {
 	ProseMirrorReactView,
 } from "@fluid-example/prosemirror";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Serializable } from "@fluidframework/datastore-definitions/internal";
+import { Serializable } from "@fluidframework/datastore-definitions/legacy";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-definitions/legacy";
 import * as React from "react";
 
 const codeMirrorFactory = new SmdeFactory();

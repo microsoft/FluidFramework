@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { UnassignedSequenceNumber } from "../constants.js";
-import type { ISegmentLeaf } from "../mergeTreeNodes.js";
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { matchProperties } from "../properties.js";
 import {
 	PropertiesManager,
@@ -18,7 +18,7 @@ describe("PropertiesManager", () => {
 	describe("handleProperties", () => {
 		it("should handle properties without collaboration", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: "value" },
 			};
 			const op: PropsOrAdjust = { props: { key: "newValue" } };
@@ -29,7 +29,7 @@ describe("PropertiesManager", () => {
 
 		it("should handle properties with collaboration", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: "value" },
 			};
 			const op: PropsOrAdjust = { props: { key: "newValue" } };
@@ -46,7 +46,7 @@ describe("PropertiesManager", () => {
 
 		it("should handle properties with rollback", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: "value" },
 			};
 			const op: PropsOrAdjust = { props: { key: "newValue" } };
@@ -66,7 +66,7 @@ describe("PropertiesManager", () => {
 
 		it("should handle properties with seq as a number and collaborating true", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: "value" },
 			};
 			const op: PropsOrAdjust = { props: { key: "newValue" } };
@@ -77,7 +77,7 @@ describe("PropertiesManager", () => {
 
 		it("should handle properties with seq as a number and collaborating false", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: "value" },
 			};
 			const op: PropsOrAdjust = { props: { key: "newValue" } };
@@ -88,7 +88,7 @@ describe("PropertiesManager", () => {
 
 		it("should handle properties with adjusts", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: 1 },
 			};
 			const op: PropsOrAdjust = { adjust: { key: { delta: 1 } } };
@@ -99,7 +99,7 @@ describe("PropertiesManager", () => {
 
 		it("should handle properties with props and adjusts interleaved", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: 1, otherKey: "value" },
 			};
 			const op1: PropsOrAdjust = { props: { otherKey: "newValue" } };
@@ -114,7 +114,7 @@ describe("PropertiesManager", () => {
 	describe("rollbackProperties", () => {
 		it("should rollback properties when collaborating is true", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: "value" },
 			};
 			const op: PropsOrAdjust = { props: { key: "newValue" } };
@@ -136,7 +136,7 @@ describe("PropertiesManager", () => {
 
 		it("should rollback properties when collaborating is false", () => {
 			const propertiesManager = new PropertiesManager();
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {
 				properties: { key: "value" },
 			};
 			const op: PropsOrAdjust = { props: { key: "newValue" } };
@@ -161,7 +161,7 @@ describe("PropertiesManager", () => {
 		it("should acknowledge property changes", () => {
 			const propertiesManager = new PropertiesManager();
 			const op: PropsOrAdjust = { props: { key: "value" } };
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = { properties: {} };
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = { properties: {} };
 
 			propertiesManager.handleProperties(op, seg, UnassignedSequenceNumber, 1, true);
 			assert(propertiesManager.hasPendingProperties({ key: "value" }));
@@ -173,11 +173,11 @@ describe("PropertiesManager", () => {
 		it("should copy properties and manager state", () => {
 			const propertiesManager = new PropertiesManager();
 			const op: PropsOrAdjust = { props: { key: "value" } };
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = { properties: {} };
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = { properties: {} };
 
 			propertiesManager.handleProperties(op, seg, UnassignedSequenceNumber, 1, true);
 			assert(propertiesManager.hasPendingProperties({ key: "value" }));
-			const dest: Pick<ISegmentLeaf, "properties" | "propertyManager"> = {};
+			const dest: Pick<ISegmentPrivate, "properties" | "propertyManager"> = {};
 			propertiesManager.copyTo({ key: "value" }, dest);
 			assert(dest.propertyManager instanceof PropertiesManager);
 			assert(dest.propertyManager.hasPendingProperties({ key: "value" }));
@@ -188,7 +188,7 @@ describe("PropertiesManager", () => {
 		it("should retrieve properties at a specific sequence number", () => {
 			const propertiesManager = new PropertiesManager();
 			const op: PropsOrAdjust = { adjust: { key: { delta: 5 } } };
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = { properties: {} };
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = { properties: {} };
 
 			propertiesManager.handleProperties(op, seg, 1, 0, true);
 			const properties = propertiesManager.getAtSeq(seg.properties, 0);
@@ -200,7 +200,7 @@ describe("PropertiesManager", () => {
 		it("should check for pending properties", () => {
 			const propertiesManager = new PropertiesManager();
 			const op: PropsOrAdjust = { props: { key: "value" } };
-			const seg: Pick<ISegmentLeaf, "properties" | "propertyManager"> = { properties: {} };
+			const seg: Pick<ISegmentPrivate, "properties" | "propertyManager"> = { properties: {} };
 
 			propertiesManager.handleProperties(op, seg, UnassignedSequenceNumber, 1, true);
 			assert(propertiesManager.hasPendingProperties({ key: "value" }));

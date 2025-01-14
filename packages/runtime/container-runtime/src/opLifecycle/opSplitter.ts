@@ -190,7 +190,7 @@ export class OpSplitter {
 		const contents: IChunkedContents = message.contents;
 
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 		const clientId = message.clientId as string;
 		const chunkedContent = contents.contents;
 		this.addChunk(clientId, chunkedContent, message);

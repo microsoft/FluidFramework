@@ -4,17 +4,17 @@
  */
 
 import { LocalReferencePosition } from "./localReference.js";
-import { ISegment } from "./mergeTreeNodes.js";
-// eslint-disable-next-line import/no-deprecated
+import { ISegmentInternal } from "./mergeTreeNodes.js";
+import { hasProp, toMergeNodeInfo } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
 /**
  * @internal
  */
 export type SortedSegmentSetItem =
-	| ISegment
+	| ISegmentInternal
 	| LocalReferencePosition
-	| { readonly segment: ISegment };
+	| { readonly segment: ISegmentInternal };
 
 /**
  * Stores a unique and sorted set of segments, or objects with segments
@@ -28,11 +28,10 @@ export type SortedSegmentSetItem =
  *
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
-export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends SortedSet<
-	T,
-	string
-> {
+
+export class SortedSegmentSet<
+	T extends SortedSegmentSetItem = ISegmentInternal,
+> extends SortedSet<T, string> {
 	protected getKey(item: T): string {
 		const maybeRef = item as Partial<LocalReferencePosition>;
 		if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
@@ -41,15 +40,13 @@ export class SortedSegmentSet<T extends SortedSegmentSetItem = ISegment> extends
 			// The particular value for comparison doesn't matter because `findItemPosition` tolerates
 			// elements with duplicate keys (as it must, since local references use the same key as their segment).
 			// All that matters is that it's consistent.
-			return lref.getSegment()?.ordinal ?? "";
+			return toMergeNodeInfo(lref.getSegment())?.ordinal ?? "";
 		}
-		const maybeObject = item as { readonly segment: ISegment };
-		if (maybeObject?.segment) {
-			return maybeObject.segment.ordinal;
+		if (hasProp(item, "segment", "object")) {
+			return toMergeNodeInfo(item.segment)?.ordinal ?? "";
 		}
 
-		const maybeSegment = item as ISegment;
-		return maybeSegment.ordinal;
+		return toMergeNodeInfo(item)?.ordinal ?? "";
 	}
 
 	protected findItemPosition(item: T): { exists: boolean; index: number } {

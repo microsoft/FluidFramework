@@ -5,7 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { capitalize, mapIterable, transformObjectMap } from "../../util/index.js";
+import {
+	capitalize,
+	copyProperty,
+	defineLazyCachedProperty,
+	mapIterable,
+	transformObjectMap,
+} from "../../util/index.js";
 import { benchmark } from "@fluid-tools/benchmark";
 
 describe("Utils", () => {
@@ -49,5 +55,45 @@ describe("Utils", () => {
 		benchmarkFn: () => {
 			const m = new Map(mapIterable(testMap, ([k, v]) => [k, v] as const));
 		},
+	});
+
+	it("defineLazyCachedProperty", () => {
+		const obj = {};
+		let count = 0;
+		const objWithProperty = defineLazyCachedProperty(obj, "prop", () => {
+			count += 1;
+			return 3;
+		});
+
+		assert.equal(count, 0);
+		assert.equal(objWithProperty.prop, 3);
+		assert.equal(count, 1);
+		assert.equal(objWithProperty.prop, 3);
+		assert.equal(count, 1);
+	});
+
+	describe("copyProperty", () => {
+		it("copies a known property", () => {
+			const source = { a: 3 };
+			const destination = {};
+			copyProperty(source, "a", destination);
+			// `destination` should now be typed to have a property "a"
+			assert.equal(destination.a, 3);
+		});
+
+		it("does nothing if the property is not present", () => {
+			const source = {};
+			const destination = {};
+			copyProperty(undefined, "a", destination);
+			copyProperty(source, "a", destination);
+			assert.equal(Reflect.has(destination, "a"), false);
+		});
+
+		it("does nothing if the property is present but undefined", () => {
+			const source = { a: undefined };
+			const destination = {};
+			copyProperty(source, "a", destination);
+			assert.equal(Reflect.has(destination, "a"), false);
+		});
 	});
 });

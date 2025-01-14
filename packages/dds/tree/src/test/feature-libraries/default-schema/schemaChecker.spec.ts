@@ -55,6 +55,8 @@ function createSchemaAndPolicy(
 			// Note: the value of 'validateSchema' doesn't matter for the tests in this file because they're testing a
 			// layer where we already decided that we are doing validation and are validating that it works correctly.
 			validateSchema: true,
+			// TODO: unit test other options in this file
+			allowUnknownOptionalFields: () => false,
 		},
 	};
 }

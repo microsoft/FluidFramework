@@ -629,6 +629,7 @@ export type ILoaderOptions = {
 
 /**
  * Policies to have various behaviors during container create and load.
+ * @legacy
  * @alpha
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions

@@ -4,12 +4,12 @@
  */
 
 import { IPactMap, PactMap } from "@fluid-experimental/pact-map";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
+import { MessageType } from "@fluidframework/driver-definitions/legacy";
 
 import type {
 	ISameContainerMigrationTool,

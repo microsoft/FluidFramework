@@ -117,7 +117,7 @@ export class OldestClientObserver
 		// TODO: Clean up error code linter violations repo-wide.
 		assert(
 			this.observable.clientId !== undefined,
-			// eslint-disable-next-line unicorn/numeric-separators-style
+
 			0x1da /* "Client id should be set if connected" */,
 		);
 

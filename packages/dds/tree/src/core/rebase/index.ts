@@ -49,4 +49,5 @@ export {
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	replaceChange,
+	isAncestor,
 } from "./utils.js";

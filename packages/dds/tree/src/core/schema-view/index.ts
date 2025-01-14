@@ -5,7 +5,6 @@
 
 export {
 	type Adapters,
-	Compatibility,
 	type TreeAdapter,
 	AdaptedViewSchema,
 	AllowedUpdateType,

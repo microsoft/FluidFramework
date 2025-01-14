@@ -40,7 +40,6 @@ export interface DiceValues {
 const statesSchema = {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	lastRoll: Latest({} as DiceValues),
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 	lastDiceRolls: LatestMap<{ value: DieValue }, `die${number}`>(),
 } satisfies PresenceStatesSchema;
 

@@ -29,7 +29,6 @@ module.exports = {
 				],
 			},
 		],
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{

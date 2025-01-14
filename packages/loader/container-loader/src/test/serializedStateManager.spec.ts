@@ -154,8 +154,9 @@ const getAttributesFromPendingState = (
 	if (pendingState.baseSnapshot === undefined) {
 		throw new Error("base snapshot should be valid");
 	}
-	const attributesId = pendingState.baseSnapshot.trees[".protocol"].blobs.attributes;
-	const attributes = pendingState.snapshotBlobs[attributesId];
+	const attributesId: string | undefined =
+		pendingState.baseSnapshot.trees[".protocol"]?.blobs.attributes;
+	const attributes: string | undefined = pendingState.snapshotBlobs[attributesId];
 	return JSON.parse(attributes) as IDocumentAttributes;
 };
 

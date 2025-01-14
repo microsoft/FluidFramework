@@ -3,121 +3,95 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-import type { MigrationState } from "../migrationTool/index.js";
+import type { IAcceptedMigrationDetails, MigrationState } from "../migrationTool/index.js";
 
-// #region IMigratableModel
-
-/**
- * A model with a detectable version.
- *
- * @remarks
- * It's appropriate to use this version to deduce the more specific type of model.
- * @alpha
- */
-export interface IVersionedModel {
-	/**
-	 * The string version of the model, matching the version of the container code it's paired with.
-	 */
-	readonly version: string;
-}
+// #region Migrator callbacks
 
 /**
- * A model that can import data of ImportType when in detached state, and can also export its data to ExportType.
+ * Callback that should take the given container and export its data in some format.
  * @alpha
  */
-export interface IImportExportModel<ImportType, ExportType> {
-	/**
-	 * importData must be called after initialization but before modifying or attaching the model (i.e. can only
-	 * be called on an unaltered, detached model).
-	 */
-	importData: (initialData: ImportType) => Promise<void>;
-
-	/**
-	 * Export the data from the model.  Can be passed into importData() for a new container to replicate the data.
-	 */
-	exportData: () => Promise<ExportType>;
-
-	/**
-	 * Permit format checking in a generic manner - without knowing the type of our data or the type of the model,
-	 * we can still check whether the model supports that data.
-	 */
-	supportsDataFormat: (initialData: unknown) => initialData is ImportType;
-}
-
-// TODO: Is there a better way to express the unknown format here?  I think I'd prefer to put the burden of calling
-// supportsDataFormat() on the callers of importData() (and allow implementers of IMigratableModel to assume
-// importData() is called with valid data).
+export type ExportDataCallback = (sourceContainer: IContainer) => Promise<unknown>;
 /**
- * A model which supports migration via the MigrationTool and Migrator.
- *
- * @privateRemarks
- * A migratable model must have an observable version, which is used to determine if migration is required and to
- * identify the source and destination container codes.
- *
- * It must also support import/export, as this is the mechanism that MigrationTool and Migrator use to perform the
- * migration.
- *
- * Lastly, it should provide dispose capabilities for two purposes: (1) The Migrator will spawn a temporary model
- * to export the data, which should be cleaned up after export and (2) After migration is complete, the old model
- * is likely no longer needed and should be cleaned up.
+ * Callback provided to load the source container that data will be exported from.  Should be a separately
+ * loaded container to avoid including local changes.
  * @alpha
  */
-export interface IMigratableModel
-	extends IVersionedModel,
-		IImportExportModel<unknown, unknown> {
+export type LoadSourceContainerCallback = () => Promise<IContainer>;
+/**
+ * Callback provided to take desired migration steps after migration has been agreed upon and data has been
+ * exported.  Typically creating a new container and importing the data into it.
+ * @alpha
+ */
+export type MigrationCallback = (version: string, exportedData: unknown) => Promise<unknown>;
+
+// #region Entry point
+
+/**
+ * The partial type of the entrypoint provided when makeMigratorEntryPointPiece is used.
+ * @alpha
+ */
+export interface IMigratorEntryPoint {
 	/**
-	 * Dispose the model, rendering it inoperable and closing connections.
-	 *
-	 * @privateRemarks
-	 * This is required on the interface because the Migrator will make its own instance of the model for export,
-	 * and needs to clean that model up after the export is done.
+	 * Retrieve the IMigrator from the container.  It will use the provided callbacks to load the source
+	 * container for data export and perform the migration.
 	 */
-	dispose(): void;
+	getMigrator: (
+		loadSourceContainerCallback: LoadSourceContainerCallback,
+		migrationCallback: MigrationCallback,
+	) => Promise<IMigrator>;
 }
 
 // #region IMigrator
 
 /**
- * The DataTransformationCallback gives an opportunity to modify the exported data before attempting an import
- * to the new model.  The modelVersion is also provided to inform the appropriate transformation to perform.
- * It is async to permit network calls or lazy-loading the transform logic within the function.
- * @alpha
- */
-export type DataTransformationCallback = (
-	exportedData: unknown,
-	modelVersion: string,
-) => Promise<unknown>;
-
-/**
+ * Events emitted by the IMigrator.
  * @alpha
  */
 export interface IMigratorEvents extends IEvent {
-	(event: "migrated" | "migrating", listener: () => void);
-	(event: "migrationNotSupported", listener: (version: string) => void);
+	/**
+	 * As the migrator progresses between migration states, it emits the corresponding event.
+	 */
+	(event: "stopping" | "migrating" | "migrated", listener: () => void): void;
 }
 
 /**
+ * A tool used to propose and monitor container migration.
  * @alpha
  */
 export interface IMigrator {
+	/**
+	 * Event emitter object.
+	 */
 	readonly events: IEventProvider<IMigratorEvents>;
 
 	/**
-	 * The currently monitored migratable model.  As the Migrator completes a migration, it will swap in the new
-	 * migrated model and emit a "migrated" event.
-	 */
-	readonly currentModel: IMigratableModel;
-
-	/**
-	 * The container id of the current model.
-	 */
-	readonly currentModelId: string;
-
-	/**
-	 * The migration state of the current model.  Note that since we swap out for the new model as soon as migration
-	 * completes, we'll only ever see this as collaborating or migrating, never migrated.
+	 * The current state of migration.
 	 */
 	readonly migrationState: MigrationState;
+
+	/**
+	 * The version string of the proposed new version to use, if one has been proposed.
+	 */
+	readonly proposedVersion: string | undefined;
+
+	/**
+	 * The details of the accepted migration, if one has been accepted.
+	 * TODO: Consider hiding this - currently just used for debug output in the example.
+	 */
+	readonly acceptedMigration: IAcceptedMigrationDetails | undefined;
+
+	/**
+	 * The result of the migration, if complete.  Likely the container ID of the new container.
+	 */
+	readonly migrationResult: unknown | undefined;
+
+	/**
+	 * Propose a new version to use.
+	 * @param newVersion - the version string
+	 */
+	proposeVersion: (newVersion: string) => void;
 }

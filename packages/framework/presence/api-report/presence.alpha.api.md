@@ -58,7 +58,7 @@ export function Latest<T extends object, Key extends string = string>(initialVal
 // @alpha
 export function LatestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T>, LatestMapValueManager<T, Keys>>;
+}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapValueManager<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {

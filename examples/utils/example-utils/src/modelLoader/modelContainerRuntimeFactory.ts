@@ -8,13 +8,13 @@ import {
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
+} from "@fluidframework/container-definitions/legacy";
 import {
 	loadContainerRuntime,
 	IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/container-runtime/legacy";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/legacy";
 
 /**
  * @internal

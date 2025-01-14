@@ -92,7 +92,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		createDefaultLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
 			const alerts = [];
-			if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
+			if (ApiItemUtilities.hasModifierTag(apiItem, "@system")) {
 				alerts.push("System");
 			} else {
 				if (ApiItemUtilities.isDeprecated(apiItem)) {

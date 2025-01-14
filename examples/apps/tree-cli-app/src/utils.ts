@@ -10,11 +10,11 @@
 import { readFileSync, writeFileSync } from "node:fs";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { SerializedIdCompressorWithOngoingSession } from "@fluidframework/id-compressor/internal";
+import type { SerializedIdCompressorWithOngoingSession } from "@fluidframework/id-compressor/legacy";
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
-} from "@fluidframework/id-compressor/internal";
+} from "@fluidframework/id-compressor/legacy";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
 import {
@@ -29,7 +29,6 @@ import {
 	type ViewContent,
 	type ConciseTree,
 	TreeAlpha,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
 import { type Static, Type } from "@sinclair/typebox";
 

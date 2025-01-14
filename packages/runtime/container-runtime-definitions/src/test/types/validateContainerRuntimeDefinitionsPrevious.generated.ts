@@ -22,6 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Interface_IContainerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerRuntime = requireAssignableTo<TypeOnly<current.IContainerRuntime>, TypeOnly<old.IContainerRuntime>>
 
 /*
@@ -49,7 +50,35 @@ declare type old_as_current_for_Interface_IContainerRuntimeWithResolveHandle_Dep
  * typeValidation.broken:
  * "Interface_IContainerRuntimeWithResolveHandle_Deprecated": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerRuntimeWithResolveHandle_Deprecated = requireAssignableTo<TypeOnly<current.IContainerRuntimeWithResolveHandle_Deprecated>, TypeOnly<old.IContainerRuntimeWithResolveHandle_Deprecated>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ISummarizeEventProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ISummarizeEventProps = requireAssignableTo<TypeOnly<current.ISummarizeEventProps>, TypeOnly<old.ISummarizeEventProps>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ISummarizerEvents": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ISummarizerEvents = requireAssignableTo<TypeOnly<current.ISummarizerEvents>, TypeOnly<old.ISummarizerEvents>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ISummarizerObservabilityProps": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ISummarizerObservabilityProps = requireAssignableTo<TypeOnly<current.ISummarizerObservabilityProps>, TypeOnly<old.ISummarizerObservabilityProps>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -58,4 +87,14 @@ declare type current_as_old_for_Interface_IContainerRuntimeWithResolveHandle_Dep
  * typeValidation.broken:
  * "TypeAlias_IContainerRuntimeBaseWithCombinedEvents": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IContainerRuntimeBaseWithCombinedEvents = requireAssignableTo<TypeOnly<current.IContainerRuntimeBaseWithCombinedEvents>, TypeOnly<old.IContainerRuntimeBaseWithCombinedEvents>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_SummarizerStopReason": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_SummarizerStopReason = requireAssignableTo<TypeOnly<current.SummarizerStopReason>, TypeOnly<old.SummarizerStopReason>>

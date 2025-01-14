@@ -48,11 +48,11 @@ import {
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
 import {
-	ForestType,
 	type TreeStoredContent,
 	type ISharedTreeEditor,
 	SharedTreeFactory,
 	Tree,
+	ForestTypeOptimized,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
@@ -86,7 +86,7 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 const options = {
 	jsonValidator: typeboxValidator,
-	forest: ForestType.Optimized,
+	forest: ForestTypeOptimized,
 	summaryEncodeType: TreeCompressionStrategy.Compressed,
 };
 
@@ -397,7 +397,7 @@ describe("End to end chunked encoding", () => {
 		it("Initializing tree creates uniform chunks with encoded identifiers", async () => {
 			const factory = new SharedTreeFactory({
 				jsonValidator: typeboxValidator,
-				forest: ForestType.Optimized,
+				forest: ForestTypeOptimized,
 			});
 
 			const runtime = new MockFluidDataStoreRuntime({

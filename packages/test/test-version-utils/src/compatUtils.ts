@@ -7,10 +7,10 @@ import { mixinAttributor } from "@fluid-experimental/attributor";
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
-	IContainerRuntimeOptions,
 	DefaultSummaryConfiguration,
 	CompressionAlgorithms,
 	ICompressionRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
@@ -63,7 +63,7 @@ export const TestDataObjectType = "@fluid-example/test-dataStore";
  */
 function filterRuntimeOptionsForVersion(
 	version: string,
-	optionsArg: IContainerRuntimeOptions = {
+	optionsArg: IContainerRuntimeOptionsInternal = {
 		summaryOptions: {
 			summaryConfigOverrides: {
 				...DefaultSummaryConfiguration,

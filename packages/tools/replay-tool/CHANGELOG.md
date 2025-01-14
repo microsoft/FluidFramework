@@ -1,5 +1,13 @@
 # @fluid-internal/replay-tool
 
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
 ## 2.11.0
 
 Dependency updates only.

@@ -145,6 +145,21 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		this.audience.removeMember(clientId);
 	}
 
+	public connect(clientId: string): void {
+		this.clientId = clientId;
+		this.connected = true;
+		for (const listener of this.listeners.connected) {
+			listener(clientId);
+		}
+	}
+
+	public disconnect(): void {
+		this.connected = false;
+		for (const listener of this.listeners.disconnected) {
+			listener();
+		}
+	}
+
 	// #region IEphemeralRuntime
 
 	public clientId: string | undefined;

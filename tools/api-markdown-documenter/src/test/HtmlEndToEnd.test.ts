@@ -10,7 +10,10 @@ import { ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
 import type { DocumentNode } from "../documentation-domain/index.js";
-import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "../renderers/index.js";
+import {
+	type RenderDocumentAsHtmlConfiguration,
+	renderDocumentAsHtml,
+} from "../renderers/index.js";
 
 import {
 	endToEndTests,
@@ -50,7 +53,7 @@ const apiModels: ApiModelTestOptions[] = [
 	// TODO: add other models
 ];
 
-const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfig>[] = [
+const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfiguration>[] = [
 	/**
 	 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
 	 */
@@ -118,7 +121,7 @@ const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfig>[] = [
 
 async function renderDocumentToFile(
 	document: DocumentNode,
-	renderConfig: RenderDocumentAsHtmlConfig,
+	renderConfig: RenderDocumentAsHtmlConfiguration,
 	outputDirectoryPath: string,
 ): Promise<void> {
 	const renderedDocument = renderDocumentAsHtml(document, renderConfig);
@@ -130,7 +133,7 @@ async function renderDocumentToFile(
 	});
 }
 
-endToEndTests<RenderDocumentAsHtmlConfig>({
+endToEndTests<RenderDocumentAsHtmlConfiguration>({
 	suiteName: "Markdown End-to-End Tests",
 	temporaryOutputDirectoryPath: testTemporaryDirectoryPath,
 	snapshotsDirectoryPath,

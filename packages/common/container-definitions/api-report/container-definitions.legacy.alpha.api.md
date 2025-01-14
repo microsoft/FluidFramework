@@ -197,6 +197,11 @@ export interface IContainerLoadMode {
     opsBeforeReturn?: undefined | "cached" | "all";
 }
 
+// @alpha
+export type IContainerPolicies = {
+    maxClientLeaveWaitTime?: number;
+};
+
 // @public
 export type ICriticalContainerError = IErrorBase_2;
 

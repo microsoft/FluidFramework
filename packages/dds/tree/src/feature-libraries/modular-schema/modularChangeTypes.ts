@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { BTree } from "@tylerbu/sorted-btree-es6";
 import type {
 	ChangeAtomId,
 	ChangesetLocalId,
@@ -12,7 +11,7 @@ import type {
 	RevisionInfo,
 	RevisionTag,
 } from "../../core/index.js";
-import type { Brand } from "../../util/index.js";
+import type { Brand, TupleBTree } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
@@ -56,13 +55,21 @@ export interface ModularChangeset extends HasFieldChanges {
 	 */
 	readonly nodeAliases: ChangeAtomIdBTree<NodeId>;
 	readonly crossFieldKeys: CrossFieldKeyTable;
+	/**
+	 * The number of constraint violations that apply to the input context of the changeset, i.e., before this change is applied.
+	 * If this count is greater than 0, it will prevent the changeset from being applied.
+	 */
 	readonly constraintViolationCount?: number;
+	/**
+	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will
+	 * prevent the changeset from being reverted or undone.
+	 */
+	readonly constraintViolationCountOnRevert?: number;
 	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }
 
-export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;
 export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
 export type CrossFieldKeyTable = TupleBTree<CrossFieldKeyRange, FieldId>;
 export type CrossFieldKeyRange = readonly [
@@ -97,7 +104,10 @@ export interface NodeExistsConstraint {
  * Changeset for a subtree rooted at a specific node.
  */
 export interface NodeChangeset extends HasFieldChanges {
+	/** Keeps track of whether node exists constraint has been violated by this change */
 	nodeExistsConstraint?: NodeExistsConstraint;
+	/** Keeps track of whether node exists constraint will be violated when this change is reverted */
+	nodeExistsConstraintOnRevert?: NodeExistsConstraint;
 }
 
 export type NodeId = ChangeAtomId;

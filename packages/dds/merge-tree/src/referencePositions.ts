@@ -7,6 +7,7 @@ import { SlidingPreference } from "./localReference.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { ReferenceType } from "./ops.js";
 import { PropertySet } from "./properties.js";
+import { isMergeNodeInfo } from "./segmentInfos.js";
 
 /**
  * @internal
@@ -131,6 +132,8 @@ export function compareReferencePositions(a: ReferencePosition, b: ReferencePosi
 	if (aSeg === bSeg) {
 		return a.getOffset() - b.getOffset();
 	} else {
-		return aSeg === undefined || (bSeg !== undefined && aSeg.ordinal < bSeg.ordinal) ? -1 : 1;
+		return !isMergeNodeInfo(aSeg) || (isMergeNodeInfo(bSeg) && aSeg.ordinal < bSeg.ordinal)
+			? -1
+			: 1;
 	}
 }

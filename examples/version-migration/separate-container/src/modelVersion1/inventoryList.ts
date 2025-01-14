@@ -4,10 +4,11 @@
  */
 
 import { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26903: `cell` internals used in examples
 import { type ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { type ISharedString, SharedString } from "@fluidframework/sequence/internal";
+import { type ISharedString, SharedString } from "@fluidframework/sequence/legacy";
 import { v4 as uuid } from "uuid";
 
 import type { IInventoryItem, IInventoryList } from "../modelInterfaces.js";

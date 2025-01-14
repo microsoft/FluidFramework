@@ -184,7 +184,14 @@ export default class GenerateReleaseNotesCommand extends BaseCommand<
 
 			body.append(`## ${sectionHead}\n\n`);
 			for (const change of changes) {
-				if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
+				if (
+					// A changeset may apply to no packages, in which case the changeTypes.length will be 0. Such changesets are
+					// useful to add information to the release notes that don't apply to individual packages. Also useful when
+					// the relevant packages have all been deleted.
+					change.changeTypes.length === 0 ||
+					// If the change's type matches the release type flag, the change should be included.
+					change.changeTypes.includes(flags.releaseType)
+				) {
 					const pr = change.commit?.githubPullRequest;
 					const changeTitle = pr === undefined ? change.summary : `${change.summary} (#${pr})`;
 					body.append(`### ${changeTitle}\n\n${change.body}\n\n`);

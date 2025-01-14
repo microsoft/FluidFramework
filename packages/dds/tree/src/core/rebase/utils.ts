@@ -5,7 +5,7 @@
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import { hasSome, type Mutable } from "../../util/index.js";
+import { defineLazyCachedProperty, hasSome, type Mutable } from "../../util/index.js";
 
 import {
 	type ChangeRebaser,
@@ -312,26 +312,23 @@ export function rebaseBranch<TChange>(
 		revInfos.unshift({ revision: rollback.revision, rollbackOf: rollback.rollbackOf });
 	}
 
-	let netChange: TChange | undefined;
-	return {
-		newSourceHead: newHead,
-		get sourceChange(): TChange | undefined {
-			if (netChange === undefined) {
-				netChange = changeRebaser.compose(editsToCompose);
-			}
-			return netChange;
+	return defineLazyCachedProperty(
+		{
+			newSourceHead: newHead,
+			commits: {
+				deletedSourceCommits,
+				targetCommits,
+				sourceCommits,
+			},
+			telemetryProperties: {
+				sourceBranchLength,
+				rebaseDistance: targetCommits.length,
+				countDropped: sourceBranchLength - sourceSet.size,
+			},
 		},
-		commits: {
-			deletedSourceCommits,
-			targetCommits,
-			sourceCommits,
-		},
-		telemetryProperties: {
-			sourceBranchLength,
-			rebaseDistance: targetCommits.length,
-			countDropped: sourceBranchLength - sourceSet.size,
-		},
-	};
+		"sourceChange",
+		() => changeRebaser.compose(editsToCompose),
+	);
 }
 
 /**
@@ -653,4 +650,31 @@ namespace Rollback {
 			map.set(commit, rollback);
 		}
 	}
+}
+
+/**
+ * Checks if one node is an ancestor of another in a parent-linked tree structure.
+ * @param ancestor - The potential ancestor node
+ * @param descendant - The potential descendant node
+ * @param allowEqual - If true, returns true when ancestor === descendant
+ * @returns true if ancestor is an ancestor of descendant (or equal if allowEqual is true)
+ */
+export function isAncestor<TNode extends { readonly parent?: TNode }>(
+	ancestor: TNode,
+	descendant: TNode,
+	allowEqual: boolean,
+): boolean {
+	if (allowEqual && ancestor === descendant) {
+		return true;
+	}
+
+	let current = descendant.parent;
+	while (current !== undefined) {
+		if (current === ancestor) {
+			return true;
+		}
+		current = current.parent;
+	}
+
+	return false;
 }

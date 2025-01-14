@@ -16,24 +16,19 @@ export {
 } from "./compositeRuntime/index.js";
 export {
 	IAcceptedMigrationDetails,
-	IMigrationTool,
-	IMigrationToolEvents,
 	MigrationState,
-	migrationToolEntryPointPiece,
-	MigrationToolFactory,
 } from "./migrationTool/index.js";
 export {
-	DataTransformationCallback,
-	getModelAndMigrationToolFromContainer,
-	IImportExportModel,
-	IMigratableModel,
+	CreateDetachedContainerCallback,
+	ExportDataCallback,
 	IMigrator,
+	IMigratorEntryPoint,
 	IMigratorEvents,
-	IVersionedModel,
-	Migrator,
+	ImportDataCallback,
+	LoadSourceContainerCallback,
+	makeCreateDetachedContainerCallback,
+	makeSeparateContainerMigrationCallback,
+	makeMigratorEntryPointPiece,
+	MigrationCallback,
+	SeparateContainerMigrationResult,
 } from "./migrator/index.js";
-export {
-	ISimpleLoader,
-	SessionStorageSimpleLoader,
-	SimpleLoader,
-} from "./simpleLoader/index.js";

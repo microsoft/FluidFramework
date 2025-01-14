@@ -7,7 +7,7 @@ import { IContainerContext, IRuntime } from "@fluidframework/container-definitio
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
-	IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import {
 	IContainerRuntime,
@@ -54,7 +54,7 @@ interface backCompat_ContainerRuntime {
 		context: IContainerContext,
 		registryEntries: NamedFluidDataStoreRegistryEntries,
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-		runtimeOptions?: IContainerRuntimeOptions,
+		runtimeOptions?: IContainerRuntimeOptionsInternal,
 		containerScope?: FluidObject,
 		existing?: boolean,
 		containerRuntimeCtor?: typeof ContainerRuntime,
@@ -72,7 +72,7 @@ export const createTestContainerRuntimeFactory = (
 		constructor(
 			public type: string,
 			public dataStoreFactory: IFluidDataStoreFactory,
-			public runtimeOptions: IContainerRuntimeOptions = {
+			public runtimeOptions: IContainerRuntimeOptionsInternal = {
 				summaryOptions: {
 					summaryConfigOverrides: {
 						...DefaultSummaryConfiguration,

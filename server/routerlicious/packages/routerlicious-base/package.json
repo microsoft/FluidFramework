@@ -143,6 +143,12 @@
 			"ClassDeclaration_RiddlerResources": {
 				"forwardCompat": false,
 				"backCompat": false
+			},
+			"ClassDeclaration_TenantManager": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ITenantDocument": {
+				"backCompat": false
 			}
 		}
 	}

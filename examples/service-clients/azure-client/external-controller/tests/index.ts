@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
-
 import {
 	IContainer,
 	IFluidModuleWithDetails,
 	IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+} from "@fluidframework/container-definitions/legacy";
+import { Loader } from "@fluidframework/container-loader/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26986: `fluid-static` internal used in examples
 import { createDOProviderContainerRuntimeFactory } from "@fluidframework/fluid-static/internal";
+// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal used in examples
+import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
-	LocalSessionStorageDbFactory,
-} from "@fluidframework/local-driver/internal";
+} from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import type { IFluidContainer, ContainerSchema } from "fluid-framework";
 import { SharedMap } from "fluid-framework/legacy";

@@ -31,7 +31,7 @@ parameters:
     default: /home/node/server
 
   - name: buildNumberInPatch
-    type: string
+    type: boolean
     default: true
 
   - name: setVersion
@@ -165,7 +165,6 @@ extends:
       - job: build
         displayName: Build Container - ${{ parameters.containerName }}
         variables:
-          releaseBuildVar: $[variables.releaseBuild]
           hostPathToPackArtifact: $(Build.ArtifactStagingDirectory)/pack
           hostPathToTestResultsArtifact: $(Build.ArtifactStagingDirectory)/${{ parameters.buildDirectory }}/nyc
           hostPathToApiExtractorArtifact: $(Build.ArtifactStagingDirectory)/_api-extractor-temp
@@ -193,7 +192,6 @@ extends:
               # Show all task group conditions
               echo "
               Pipeline Variables:
-                releaseBuild=$(releaseBuildVar)
 
               Tasks Parameters:
                 docs=${{ parameters.docs }}

@@ -4,12 +4,13 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26903: `cell` internals used in examples
 import { ISharedCell, SharedCell } from "@fluidframework/cell/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
+import { SharedString } from "@fluidframework/sequence/legacy";
 
 import { customerServicePort } from "../mock-customer-service-interface/index.js";
 import { externalDataServicePort } from "../mock-external-data-service-interface/index.js";

@@ -55,7 +55,6 @@ import { ITokenProvider } from "./tokens.js";
  */
 export class DocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
-	// eslint-disable-next-line import/namespace
 	implements IDocumentService
 {
 	private storageManager: GitManager | undefined;

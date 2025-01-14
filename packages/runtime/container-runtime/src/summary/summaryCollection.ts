@@ -83,7 +83,7 @@ class Summary implements ISummary {
 	}
 	public static createFromOp(op: ISummaryOpMessage) {
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 		const summary = new Summary(op.clientId as string, op.clientSequenceNumber);
 		summary.broadcast(op);
 		return summary;
@@ -408,7 +408,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 
 		// Check if summary already being watched, broadcast if so
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
-		// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+
 		const watcher = this.summaryWatchers.get(op.clientId as string);
 		if (watcher) {
 			summary = watcher.tryGetSummary(op.clientSequenceNumber);

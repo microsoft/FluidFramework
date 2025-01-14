@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@fluidframework/sequence/internal";
+import { ISegment } from "@fluidframework/sequence/legacy";
 
 import { areStringsEquivalent } from "./string.js";
 

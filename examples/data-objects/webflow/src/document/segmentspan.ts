@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment } from "@fluidframework/sequence/internal";
+import { ISegment } from "@fluidframework/sequence/legacy";
 
 export class SegmentSpan {
 	public get segments(): readonly ISegment[] {

@@ -9,16 +9,17 @@ import {
 	positionToRowCol,
 	rowColToPosition,
 } from "@fluid-experimental/sequence-deprecated";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { createEndpointIndex } from "@fluidframework/sequence/internal";
 import {
 	PropertySet,
 	ReferencePosition,
 	SequenceDeltaEvent,
 	SharedString,
-	createEndpointIndex,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 
 import { CellRange } from "./cellrange.js";
 import { TableDocumentType } from "./componentTypes.js";

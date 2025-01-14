@@ -141,11 +141,11 @@ export function customFromCursorStored<TChild>(
 	const nodeSchema = schema.get(type) ?? fail("missing schema for type in cursor");
 
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
-		assert(valueSchemaAllows(nodeSchema.leafValue, reader.value), "invalid value");
+		assert(valueSchemaAllows(nodeSchema.leafValue, reader.value), 0xa9c /* invalid value */);
 		return reader.value;
 	}
 
-	assert(reader.value === undefined, "out of schema: unexpected value");
+	assert(reader.value === undefined, 0xa9d /* out of schema: unexpected value */);
 
 	const arrayTypes = tryStoredSchemaAsArray(nodeSchema);
 	if (arrayTypes !== undefined) {
@@ -164,7 +164,7 @@ export function customFromCursorStored<TChild>(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			fields[storedKey] = children[0]!;
 		} else {
-			assert(children.length === 0, "invalid children number");
+			assert(children.length === 0, 0xa9e /* invalid children number */);
 		}
 	});
 	return fields;
@@ -181,7 +181,7 @@ export function tryStoredSchemaAsArray(
 	if (schema instanceof ObjectNodeStoredSchema) {
 		const empty = schema.getFieldSchema(EmptyKey);
 		if (empty.kind === FieldKinds.sequence.identifier) {
-			assert(schema.objectNodeFields.size === 1, "invalid schema");
+			assert(schema.objectNodeFields.size === 1, 0xa9f /* invalid schema */);
 			return empty.types;
 		}
 	}

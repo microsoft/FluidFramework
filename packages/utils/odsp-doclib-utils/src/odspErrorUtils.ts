@@ -161,7 +161,6 @@ function isOdspErrorResponse(x: any): x is OdspErrorResponse {
  */
 export function tryParseErrorResponse(
 	response: string | undefined,
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 ): { success: true; errorResponse: OdspErrorResponse } | { success: false } {
 	try {
 		if (response !== undefined) {
@@ -429,7 +428,6 @@ export function throwOdspNetworkError(
 
 	networkError.addTelemetryProperties({ odspError: true, storageServiceError: true });
 
-	// eslint-disable-next-line @typescript-eslint/no-throw-literal
 	throw networkError;
 }
 

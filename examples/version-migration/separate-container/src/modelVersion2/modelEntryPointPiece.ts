@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-// TODO: Note that this would theoretically come from some model loading package, not migration-tools.
+// TODO: Note that this would theoretically come from some composite entry point package, not migration-tools.
 // Maybe move back into example-utils for the short-term
-import type { IEntryPointPiece } from "@fluid-example/migration-tools/internal";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IEntryPointPiece } from "@fluid-example/migration-tools/alpha";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import type { IInventoryList } from "../modelInterfaces.js";
 
 import { InventoryListAppModel } from "./appModel.js";
 import { InventoryListInstantiationFactory } from "./inventoryList.js";
 
-const modelEntryPointPieceName = "getModel";
+const modelEntryPointPieceName = "model";
 
 const inventoryListAlias = "default-inventory-list";
 
@@ -32,14 +31,12 @@ async function getDataStoreEntryPoint(
 	return entryPointHandle.get();
 }
 
-const createPiece = async (
-	runtime: IContainerRuntime,
-): Promise<(container: IContainer) => Promise<IInventoryListAppModel>> => {
-	return async (container: IContainer) =>
-		new InventoryListAppModel(
-			(await getDataStoreEntryPoint(runtime, inventoryListAlias)) as IInventoryList,
-			container,
-		);
+const createPiece = async (runtime: IContainerRuntime): Promise<FluidObject> => {
+	const inventoryList = (await getDataStoreEntryPoint(
+		runtime,
+		inventoryListAlias,
+	)) as IInventoryList;
+	return new InventoryListAppModel(inventoryList);
 };
 
 export const modelEntryPointPiece: IEntryPointPiece = {
