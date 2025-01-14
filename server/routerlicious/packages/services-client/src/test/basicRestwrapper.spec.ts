@@ -948,8 +948,8 @@ describe("BasicRestWrapper", () => {
 				() => assert.ok(true),
 			);
 
-			assert.notEqual(rw['defaultHeaders'].Authorization, `Basic ${expiredToken}`);
-			assert.strictEqual(rw['defaultHeaders'].Authorization, `Basic ${newToken}`);
+			assert.notEqual(rw["defaultHeaders"].Authorization, `Basic ${expiredToken}`);
+			assert.strictEqual(rw["defaultHeaders"].Authorization, `Basic ${newToken}`);
 		});
 	});
 });
