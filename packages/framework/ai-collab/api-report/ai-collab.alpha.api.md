@@ -5,7 +5,7 @@
 ```ts
 
 // @alpha
-export function aiCollab(options: AiCollabOptions): Promise<GenerateTreeEditsResponse>;
+export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessResponse | AiCollabErrorResponse>;
 
 // @alpha
 export interface AiCollabErrorResponse {
@@ -36,6 +36,7 @@ export interface AiCollabOptions {
 
 // @alpha
 export interface AiCollabSuccessResponse {
+    readonly diffs: Diff[];
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
 }
@@ -49,11 +50,11 @@ export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference
 // @alpha
 export interface Diff {
     // (undocumented)
-    description: string;
-    // (undocumented)
     id: string;
     // (undocumented)
-    type: "error" | "edit";
+    path: string;
+    // (undocumented)
+    type: "create" | "remove" | "change" | "move";
 }
 
 // @alpha
@@ -107,18 +108,6 @@ export interface DifferenceRemove {
     path: ObjectPath;
     // (undocumented)
     type: "REMOVE";
-}
-
-// @alpha
-export interface GenerateTreeEditsResponse {
-    // (undocumented)
-    diffs?: Diff[];
-    // (undocumented)
-    errorMessage?: string;
-    // (undocumented)
-    status: "success" | "failure" | "partial-failure";
-    // (undocumented)
-    tokensUsed: TokenUsage;
 }
 
 // @alpha

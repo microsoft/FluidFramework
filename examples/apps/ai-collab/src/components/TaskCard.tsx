@@ -7,7 +7,9 @@
 
 import {
 	aiCollab,
-	type GenerateTreeEditsResponse,
+	type AiCollabSuccessResponse,
+	type AiCollabErrorResponse,
+	type Diff,
 	type Difference,
 	type DifferenceChange,
 	type DifferenceMove,
@@ -35,6 +37,8 @@ import {
 import { Tree, type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
+
+import { DiffViewer } from "./DiffViewer";
 
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
@@ -68,6 +72,7 @@ export function TaskCard(props: {
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: "TaskCard" });
 
 	const [branchDifferences, setBranchDifferences] = useState(props.branchDifferences);
+	const [diffs, setDiffs] = useState<Diff[]>([]);
 
 	const deleteTask = (): void => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
@@ -165,7 +170,7 @@ export function TaskCard(props: {
 			console.log("ai-collab Branch Task BEFORE:", { ...newBranchTask });
 
 			// 2. execute the ai collaboration
-			const response: GenerateTreeEditsResponse = await aiCollab({
+			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
 				openAI: {
 					client: getOpenAiClient(),
 					modelName: "gpt-4o-mini",
@@ -187,6 +192,7 @@ export function TaskCard(props: {
 			}
 
 			// 3. Handle the response from the ai collaboration
+			setDiffs(response.diffs);
 			const taskDifferences = new SharedTreeBranchManager({
 				nodeIdAttributeName: "id",
 			}).compare(
@@ -246,6 +252,8 @@ export function TaskCard(props: {
 					</Tooltip>
 				</Box>
 			)}
+
+			<DiffViewer diffs={diffs} />
 
 			<Box component="span" sx={{ position: "absolute", top: 0, right: 0 }}>
 				<IconButton onClick={() => deleteTask()}>

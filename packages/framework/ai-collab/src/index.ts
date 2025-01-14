@@ -32,7 +32,6 @@ export {
 	type AiCollabSuccessResponse,
 	type AiCollabErrorResponse,
 	type Diff,
-	type GenerateTreeEditsResponse,
 	type TokenUsage,
 	type TokenLimits,
 	type OpenAiClientOptions,

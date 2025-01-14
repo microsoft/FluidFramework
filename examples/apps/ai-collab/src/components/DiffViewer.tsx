@@ -16,8 +16,8 @@ export const DiffViewer: React.FC<DiffViewerProps> = ({ diffs }) => {
 		<Box>
 			{diffs.map((diff) => (
 				<Card key={diff.id} sx={{ mb: 2, p: 2 }}>
-					<Typography variant="h6">{diff.type === "error" ? "Error" : "Edit"}</Typography>
-					<Typography variant="body1">{diff.description}</Typography>
+					<Typography variant="h6">{diff.type}</Typography>
+					<Typography variant="body1">{diff.path}</Typography>
 				</Card>
 			))}
 		</Box>

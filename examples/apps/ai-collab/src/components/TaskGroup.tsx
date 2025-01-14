@@ -5,7 +5,8 @@
 
 import {
 	aiCollab,
-	type GenerateTreeEditsResponse,
+	type AiCollabSuccessResponse,
+	type AiCollabErrorResponse,
 	type Difference,
 	SharedTreeBranchManager,
 } from "@fluidframework/ai-collab/alpha";
@@ -212,7 +213,7 @@ export function TaskGroup(props: {
 			console.log("ai-collab Branch Task Group BEFORE:", { ...newBranchTaskGroup });
 
 			// 2. execute the ai collaboration
-			const response: GenerateTreeEditsResponse = await aiCollab({
+			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
 				openAI: {
 					client: getOpenAiClient(),
 					modelName: "gpt-4o-mini",

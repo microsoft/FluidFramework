@@ -119,6 +119,10 @@ export interface AiCollabSuccessResponse {
 	 * {@inheritDoc TokenUsage}
 	 */
 	readonly tokensUsed: TokenUsage;
+	/**
+	 * The diffs that the AI collaboration performed on the SharedTree.
+	 */
+	readonly diffs: Diff[];
 }
 
 /**
@@ -184,24 +188,12 @@ export interface TokenLimits {
 }
 
 /**
- * The GenerateTreeEditsResponse interface defines the structure of the response object
- *
- * @alpha
- */
-export interface GenerateTreeEditsResponse {
-	status: "success" | "failure" | "partial-failure";
-	errorMessage?: string;
-	tokensUsed: TokenUsage;
-	diffs?: Diff[];
-}
-
-/**
- * The Diff interface defines the structure of the response object
+ * The Diff interface defines the operations that ai-collab performed on a SharedTree.
  *
  * @alpha
  */
 export interface Diff {
 	id: string;
-	type: "error" | "edit";
-	description: string;
+	type: "create" | "remove" | "change" | "move";
+	path: string;
 }

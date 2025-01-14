@@ -20,7 +20,8 @@ import { z } from "zod";
 import type {
 	AiCollabOptions,
 	Diff,
-	GenerateTreeEditsResponse,
+	AiCollabSuccessResponse,
+	AiCollabErrorResponse,
 	OpenAiClientOptions,
 	TokenLimits,
 	TokenUsage,
@@ -66,13 +67,16 @@ export interface GenerateTreeEditsOptions {
 }
 
 /**
- * The editLog is transformed into an array of Diff objects. Each Diff object includes
- * an id, type (either "error" or "edit"), and description (either the error message or
- * the edit explanation).
+ * Prompts the provided LLM client to generate valid tree edits.
+ * Applies those edits to the provided tree branch before returning.
+ *
+ * @remarks
+ * - Optional root nodes are not supported
+ * - Primitive root nodes are not supported
  */
 export async function generateTreeEdits(
 	options: AiCollabOptions,
-): Promise<GenerateTreeEditsResponse> {
+): Promise<AiCollabSuccessResponse | AiCollabErrorResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
 	let editCount = 0;
@@ -165,10 +169,10 @@ export async function generateTreeEdits(
 	// Transform editLog into diffs
 	const diffs: Diff[] = editLog.map((log, index) => ({
 		id: `diff-${index}`,
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		type: log.error ? "error" : "edit",
-		description: log.error ?? log.edit.explanation ?? "No description available",
+		type: log.edit.type as "remove" | "move" | "create" | "change",
+		path: log.edit.explanation,
 	}));
+
 	if (options.dumpDebugLog ?? false) {
 		console.log(DEBUG_LOG.join("\n\n"));
 		DEBUG_LOG.length = 0;
