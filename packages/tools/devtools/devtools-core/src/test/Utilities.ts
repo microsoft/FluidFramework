@@ -6,6 +6,7 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions";
 import type {
+	DisconnectReason,
 	IContainer,
 	IContainerEvents,
 } from "@fluidframework/container-definitions/internal";
@@ -45,7 +46,7 @@ class MockContainer
 		this.emit("attached");
 	}
 
-	public dispose(error?: IErrorBase | undefined): void {
+	public dispose(errorOrReason?: IErrorBase | DisconnectReason, error?: IErrorBase): void {
 		this.emit("disposed");
 	}
 

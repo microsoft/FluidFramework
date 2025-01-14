@@ -194,7 +194,6 @@ export interface IContainerEvents extends IEvent {
 	 *
 	 * - `error`: If the container was closed due to error, this will contain details about the error that caused it.
 	 *
-	 * @see {@link IContainer.close}
 	 */
 	(event: "closed", listener: (error?: ICriticalContainerError) => void);
 
@@ -205,7 +204,6 @@ export interface IContainerEvents extends IEvent {
 	 *
 	 * - `error`: If the container was disposed due to error, this will contain details about the error that caused it.
 	 *
-	 * @see {@link IContainer.dispose}
 	 */
 	(event: "disposed", listener: (error?: ICriticalContainerError) => void);
 
