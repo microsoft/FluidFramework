@@ -63,8 +63,8 @@ ENV _FLUID_ROOT_=$BUILD_ROOT
 COPY --from=root /scripts/update-package-version.sh ./scripts/update-package-version.sh
 RUN chmod +x ./scripts/update-package-version.sh
 RUN set -eu;\
-if [ "$SETVERSION_VERSION" != "dev" ];\
-    then echo "Setting package version: $SETVERSION_VERSION";\
+if [ "$SETVERSION_VERSION" != "dev" ]; then\
+    echo "Setting package version: $SETVERSION_VERSION";\
     ./scripts/update-package-version.sh;\
 else\
     echo "Skipping package version for dev build.";\
