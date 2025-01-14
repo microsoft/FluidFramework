@@ -353,7 +353,7 @@ export abstract class SharedObjectCore<
 	): Promise<ISummaryTreeWithStats>;
 
 	/**
-	 * {@inheritDoc (ISharedObject:interface).getGCData}
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
 	 */
 	public abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
 
@@ -766,7 +766,7 @@ export abstract class SharedObject<
 	}
 
 	/**
-	 * {@inheritDoc (ISharedObject:interface).getGCData}
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
 	 */
 	public getGCData(fullGC: boolean = false): IGarbageCollectionData {
 		// Set _isGCing to true. This flag is used to ensure that we only use SummarySerializer to serialize handles

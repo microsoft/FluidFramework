@@ -13,11 +13,7 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
-import {
-	ISummaryBlob,
-	SummaryType,
-	type SummaryObject,
-} from "@fluidframework/driver-definitions";
+import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
@@ -87,7 +83,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 					summary.tree[".metadata"]?.type === SummaryType.Blob,
 					"Expected .metadata blob in summary root.",
 				);
-				const metadata = readBlobContent(summary.tree[".metadata"]?.content) as Record<
+				const metadata = readBlobContent(summary.tree[".metadata"].content) as Record<
 					string,
 					unknown
 				>;
@@ -100,14 +96,13 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 					"Unexpected metadata blob disableIsolatedChannels",
 				);
 
-				const channelsTree: SummaryObject | undefined = summary.tree[channelsTreeName];
+				const channelsTree = summary.tree[channelsTreeName];
 				assert(
 					channelsTree?.type === SummaryType.Tree,
 					"Expected .channels tree in summary root.",
 				);
 
-				const defaultDataStoreNode: SummaryObject | undefined =
-					channelsTree.tree[defaultDataStore._context.id];
+				const defaultDataStoreNode = channelsTree.tree[defaultDataStore._context.id];
 				assert(
 					defaultDataStoreNode?.type === SummaryType.Tree,
 					"Expected default data store tree in summary.",
@@ -117,10 +112,9 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 					defaultDataStoreNode.tree[".component"]?.type === SummaryType.Blob,
 					"Expected .component blob in default data store summary tree.",
 				);
-				const dataStoreChannelsTree: SummaryObject | undefined =
-					defaultDataStoreNode.tree[channelsTreeName];
+				const dataStoreChannelsTree = defaultDataStoreNode.tree[channelsTreeName];
 				const attributes = readBlobContent(
-					defaultDataStoreNode.tree[".component"]?.content,
+					defaultDataStoreNode.tree[".component"].content,
 				) as Record<string, unknown>;
 				assert(
 					attributes.snapshotFormatVersion === undefined,
@@ -139,7 +133,7 @@ describeCompat("Summarization - runtime benchmarks", "NoCompat", (getTestObjectP
 					"Expected .channels tree in default data store.",
 				);
 
-				const defaultDdsNode: SummaryObject | undefined = dataStoreChannelsTree.tree.root;
+				const defaultDdsNode = dataStoreChannelsTree.tree.root;
 				assert(
 					defaultDdsNode?.type === SummaryType.Tree,
 					"Expected default root DDS in summary.",
