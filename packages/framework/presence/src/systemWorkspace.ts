@@ -195,16 +195,14 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		this.selfAttendee.setConnected();
 		this.attendees.set(clientConnectionId, this.selfAttendee);
 
-		// Start the stale connection timer
 		this.staleConnectionTimer.setTimeout(() => {
 			for (const client of this.staleConnectionClients) {
-				// Mark the client as disconnected and remove from the stale connection set
-				if (client.getConnectionStatus() === SessionClientStatus.Connected) {
-					client.setDisconnected();
-					this.events.emit("attendeeDisconnected", client);
-				}
-				this.staleConnectionClients.delete(client);
+				client.setDisconnected();
 			}
+			for (const client of this.staleConnectionClients) {
+				this.events.emit("attendeeDisconnected", client);
+			}
+			this.staleConnectionClients.clear();
 		}, 30_000);
 	}
 
@@ -226,6 +224,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		if (!attendeeReconnected && connected) {
 			attendee.setDisconnected();
 			this.events.emit("attendeeDisconnected", attendee);
+			this.staleConnectionClients.delete(attendee);
 		}
 	}
 
@@ -285,7 +284,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			attendee.connectionId = clientConnectionId;
 		}
 
-		if (this.staleConnectionClients.has(attendee) && isConnected) {
+		if (isConnected) {
 			// If the attendee is connected, remove them from the stale connection set
 			this.staleConnectionClients.delete(attendee);
 		}
