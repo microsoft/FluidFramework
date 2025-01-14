@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FocusTracker } from "./FocusTracker.js";
+import { FocusTracker, type IFocusState } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
@@ -30,18 +30,16 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusMessageDiv.style.display = "none";
 	wrapperDiv.appendChild(focusMessageDiv);
 
-	const onFocusChanged = () => {
+	const onFocusChanged = (focusState: IFocusState) => {
 		focusDiv.innerHTML = getFocusPresencesString("</br>", focusTracker);
-		const focusPresences = focusTracker.getFocusPresences();
-		const session = focusTracker.getMyself();
-		const hasFocus = focusPresences.get(session);
+		const { hasFocus } = focusState;
 
 		// hasFocus === undefined/true should hide the message (set to "none")
 		const display = hasFocus === false ? "" : "none";
 		focusMessageDiv.style.display = display;
 	};
 
-	onFocusChanged();
+	onFocusChanged({ hasFocus: true });
 	focusTracker.on("focusChanged", onFocusChanged);
 
 	wrapperDiv.appendChild(focusDiv);
@@ -55,9 +53,7 @@ function getFocusPresencesString(
 
 	focusTracker.getFocusPresences().forEach((hasFocus, sessionClient) => {
 		const prefix = `User session ${sessionClient.sessionId}:`;
-		if (hasFocus === undefined) {
-			focusString.push(`${prefix} unknown focus`);
-		} else if (hasFocus === true) {
+		if (hasFocus) {
 			focusString.push(`${prefix} has focus`);
 		} else {
 			focusString.push(`${prefix} missing focus`);

@@ -37,7 +37,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		this.focus = statesWorkspace.props.focus;
 
 		this.focus.events.on("updated", ({ client, value }) => {
-			this.emit("focusChanged");
+			this.emit("focusChanged", this.focus.local);
 		});
 
 		// Alert all connected clients that there has been a change to this client's focus state
@@ -74,9 +74,5 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		}
 
 		return statuses;
-	}
-
-	public getMyself() {
-		return this.presence.getMyself();
 	}
 }
