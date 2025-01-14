@@ -19,7 +19,6 @@ import type {
 	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITestObjectProvider,
 	type ITestContainerConfig,
@@ -29,63 +28,12 @@ import {
 	createAndAttachContainer,
 	DataObjectFactoryType,
 	type ITestFluidObject,
-	toIDeltaManagerFull,
 	waitForContainerConnection,
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 
 // eslint-disable-next-line import/no-internal-modules
-import { loadOffline } from "./offline/offlineTestsUtils.js";
-
-type SharedObjCallback = (
-	container: IContainer,
-	dataStore: ITestFluidObject,
-) => void | Promise<void>;
-
-const getPendingOps = async (
-	testContainerConfig: ITestContainerConfig,
-	testObjectProvider: ITestObjectProvider,
-	send: false | true | "afterReconnect",
-	cb: SharedObjCallback = () => undefined,
-) => {
-	const container: IContainerExperimental =
-		await testObjectProvider.loadTestContainer(testContainerConfig);
-	await waitForContainerConnection(container);
-	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-	const lots = 10;
-	[...Array(lots).keys()].map((i) =>
-		dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
-	);
-
-	await testObjectProvider.ensureSynchronized();
-	await testObjectProvider.opProcessingController.pauseProcessing(container);
-	const deltaManagerInternal = toIDeltaManagerFull(
-		toDeltaManagerInternal(dataStore.runtime.deltaManager),
-	);
-	assert(deltaManagerInternal.outbound.paused);
-
-	await cb(container, dataStore);
-
-	let pendingState: string | undefined;
-	if (send === true) {
-		pendingState = await container.getPendingLocalState?.();
-		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
-		container.close();
-	} else if (send === "afterReconnect") {
-		pendingState = await container.getPendingLocalState?.();
-		container.disconnect();
-		container.connect();
-		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
-		container.close();
-	} else {
-		pendingState = await container.closeAndGetPendingLocalState?.();
-	}
-
-	testObjectProvider.opProcessingController.resumeProcessing();
-
-	assert.ok(pendingState);
-	return pendingState;
-};
+import { loadOffline, getPendingOps } from "./offline/offlineTestsUtils.js";
 
 const waitForSummary = async (
 	provider: ITestObjectProvider,
