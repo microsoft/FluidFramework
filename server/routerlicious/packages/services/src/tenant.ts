@@ -11,9 +11,11 @@ import {
 	BasicRestWrapper,
 	getAuthorizationTokenFromCredentials,
 	IGitManager,
+	parseToken,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { isTokenValid } from "@fluidframework/server-services-utils";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
@@ -137,6 +139,37 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			}
 			return headers;
 		};
+
+		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
+			if (
+				authorizationHeader.Authorization &&
+				typeof authorizationHeader.Authorization === "string"
+			) {
+				const token = parseToken(tenantId, authorizationHeader.Authorization);
+				if (token) {
+					if (isTokenValid(token)) {
+						return undefined;
+					}
+					const newToken = await core.requestWithRetry(
+						async () =>
+							this.signToken(tenantId, documentId, [
+								ScopeType.DocWrite,
+								ScopeType.DocRead,
+								ScopeType.SummaryWrite,
+							]),
+						"getTenantGitManager_signToken" /* callName */,
+						lumberProperties /* telemetryProperties */,
+					);
+					const newCredentials: ICredentials = {
+						password: newToken,
+						user: tenantId,
+					};
+					return {
+						Authorization: getAuthorizationTokenFromCredentials(newCredentials),
+					};
+				}
+			}
+		};
 		const defaultHeaders = getDefaultHeaders();
 		const baseUrl = `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
 		const tenantRestWrapper = new BasicRestWrapper(
@@ -150,6 +183,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			getDefaultHeaders,
 			() => getGlobalTelemetryContext().getProperties().correlationId,
 			() => getGlobalTelemetryContext().getProperties(),
+			refreshTokenIfNeeded,
 		);
 		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);

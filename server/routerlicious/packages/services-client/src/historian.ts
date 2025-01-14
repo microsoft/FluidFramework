@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { Buffer, fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
+import { NetworkError } from "./error";
 
 function endsWith(value: string, endings: string[]): boolean {
 	for (const ending of endings) {
@@ -32,6 +33,32 @@ export interface ICredentials {
  */
 export const getAuthorizationTokenFromCredentials = (credentials: ICredentials): string =>
 	`Basic ${fromUtf8ToBase64(`${credentials.user}:${credentials.password}`)}`;
+
+/**
+ * @internal
+ */
+export function parseToken(
+	tenantId: string,
+	authorization: string | undefined,
+): string | undefined {
+	let token: string | undefined;
+	if (authorization) {
+		const base64TokenMatch = authorization.match(/Basic (.+)/);
+		if (!base64TokenMatch) {
+			throw new NetworkError(403, "Malformed authorization token");
+		}
+		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
+
+		const tokenMatch = encoded.match(/(.+):(.+)/);
+		if (!tokenMatch || tenantId !== tokenMatch[1]) {
+			throw new NetworkError(403, "Malformed authorization token");
+		}
+
+		token = tokenMatch[2];
+	}
+
+	return token;
+}
 
 /**
  * Implementation of the IHistorian interface that calls out to a REST interface

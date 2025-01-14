@@ -596,6 +596,9 @@ export class NetworkError extends Error {
 }
 
 // @internal (undocumented)
+export function parseToken(tenantId: string, authorization: string | undefined): string | undefined;
+
+// @internal (undocumented)
 export function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any>;
 
 // @internal
