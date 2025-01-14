@@ -395,6 +395,9 @@ importers:
       '@oclif/core':
         specifier: ^4.0.30
         version: 4.0.30
+      '@sinclair/typebox':
+        specifier: ^0.34.13
+        version: 0.34.13
       cosmiconfig:
         specifier: ^8.3.6
         version: 8.3.6(typescript@5.4.5)
@@ -2925,6 +2928,10 @@ packages:
       tuf-js: 1.1.7
     transitivePeerDependencies:
       - supports-color
+
+  /@sinclair/typebox@0.34.13:
+    resolution: {integrity: sha512-ceVKqyCEgC355Kw0s/0tyfY9MzMQINSykJ/pG2w6YnaZyrcjV48svZpr8lVZrYgWjzOmrIPBhQRAtr/7eJpA5g==}
+    dev: false
 
   /@sindresorhus/is@0.14.0:
     resolution: {integrity: sha512-9NET910DNaIPngYnLLPeg+Ogzqsi9uM4mSboU5y6p8S5DzMTVEsJZrawi+BoDNUVBa2DhJqQYUFvMDfgU062LQ==}

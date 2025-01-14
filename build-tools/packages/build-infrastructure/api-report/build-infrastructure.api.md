@@ -9,6 +9,14 @@ import type { PackageJson as PackageJson_2 } from 'type-fest';
 import { SemVer } from 'semver';
 import type { SetRequired } from 'type-fest';
 import { SimpleGit } from 'simple-git';
+import { Static } from '@sinclair/typebox';
+import { TArray } from '@sinclair/typebox';
+import { TNumber } from '@sinclair/typebox';
+import { TObject } from '@sinclair/typebox';
+import { TOptional } from '@sinclair/typebox';
+import { TRecord } from '@sinclair/typebox';
+import { TString } from '@sinclair/typebox';
+import { TUnion } from '@sinclair/typebox';
 
 // @public
 export type AdditionalPackageProps = Record<string, string> | undefined;
@@ -17,16 +25,30 @@ export type AdditionalPackageProps = Record<string, string> | undefined;
 export const BUILDPROJECT_CONFIG_VERSION = 1;
 
 // @public
-export interface BuildProjectLayout {
-    buildProject?: {
-        workspaces: {
-            [name: string]: WorkspaceDefinition;
-        };
-    };
-    // @deprecated
-    repoPackages?: IFluidBuildDirs;
-    version: typeof BUILDPROJECT_CONFIG_VERSION;
-}
+export type BuildProjectLayout = Static<typeof BuildProjectLayout>;
+
+// @public (undocumented)
+export const BuildProjectLayout: TObject<    {
+version: TNumber;
+repoPackages: TOptional<TRecord<TString, TUnion<[TString, TObject<    {
+directory: TString;
+ignoredDirs: TOptional<TArray<TString>>;
+}>, TArray<TUnion<[TString, TObject<    {
+directory: TString;
+ignoredDirs: TOptional<TArray<TString>>;
+}>]>>]>>>;
+buildProject: TOptional<TObject<    {
+workspaces: TRecord<TString, TObject<    {
+directory: TString;
+releaseGroups: TRecord<TString, TObject<    {
+include: TArray<TString>;
+exclude: TOptional<TArray<TString>>;
+rootPackageName: TOptional<TString>;
+adoPipelineUrl: TOptional<TString>;
+}>>;
+}>>;
+}>>;
+}>;
 
 // @public
 export function createPackageManager(name: PackageManagerName): IPackageManager;
@@ -86,20 +108,37 @@ export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable
 }
 
 // @public @deprecated
-export interface IFluidBuildDir {
-    directory: string;
-    // @deprecated
-    ignoredDirs?: string[];
-}
+export type IFluidBuildDir = Static<typeof IFluidBuildDir>;
+
+// @public (undocumented)
+export const IFluidBuildDir: TObject<    {
+directory: TString;
+ignoredDirs: TOptional<TArray<TString>>;
+}>;
 
 // @public @deprecated (undocumented)
-export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
+export type IFluidBuildDirEntry = Static<typeof IFluidBuildDirEntry>;
+
+// @public (undocumented)
+export const IFluidBuildDirEntry: TUnion<[TString, TObject<    {
+directory: TString;
+ignoredDirs: TOptional<TArray<TString>>;
+}>, TArray<TUnion<[TString, TObject<    {
+directory: TString;
+ignoredDirs: TOptional<TArray<TString>>;
+}>]>>]>;
 
 // @public @deprecated (undocumented)
-export interface IFluidBuildDirs {
-    // (undocumented)
-    [name: string]: IFluidBuildDirEntry;
-}
+export type IFluidBuildDirs = Static<typeof IFluidBuildDirs>;
+
+// @public (undocumented)
+export const IFluidBuildDirs: TRecord<TString, TUnion<[TString, TObject<    {
+directory: TString;
+ignoredDirs: TOptional<TArray<TString>>;
+}>, TArray<TUnion<[TString, TObject<    {
+directory: TString;
+ignoredDirs: TOptional<TArray<TString>>;
+}>]>>]>>;
 
 // @public
 export interface Installable {
@@ -224,12 +263,15 @@ export type PackageManagerName = "npm" | "pnpm" | "yarn";
 export type PackageName = Opaque<string, "PackageName">;
 
 // @public
-export interface ReleaseGroupDefinition {
-    adoPipelineUrl?: string;
-    exclude?: string[];
-    include: string[];
-    rootPackageName?: string;
-}
+export type ReleaseGroupDefinition = Static<typeof ReleaseGroupDefinition>;
+
+// @public (undocumented)
+export const ReleaseGroupDefinition: TObject<    {
+include: TArray<TString>;
+exclude: TOptional<TArray<TString>>;
+rootPackageName: TOptional<TString>;
+adoPipelineUrl: TOptional<TString>;
+}>;
 
 // @public
 export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
@@ -249,12 +291,18 @@ export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packa
 export function updatePackageJsonFileAsync<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => Promise<void>): Promise<void>;
 
 // @public
-export interface WorkspaceDefinition {
-    directory: string;
-    releaseGroups: {
-        [name: string]: ReleaseGroupDefinition;
-    };
-}
+export type WorkspaceDefinition = Static<typeof WorkspaceDefinition>;
+
+// @public (undocumented)
+export const WorkspaceDefinition: TObject<    {
+directory: TString;
+releaseGroups: TRecord<TString, TObject<    {
+include: TArray<TString>;
+exclude: TOptional<TArray<TString>>;
+rootPackageName: TOptional<TString>;
+adoPipelineUrl: TOptional<TString>;
+}>>;
+}>;
 
 // @public
 export type WorkspaceName = Opaque<string, "WorkspaceName">;
