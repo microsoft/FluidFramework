@@ -1,13 +1,11 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "./api-extractor-base.esm.json",
+	"extends": "./api-extractor-base.json",
 	"mainEntryPointFilePath": "<projectFolder>/lib/legacy.d.ts",
 	"apiReport": {
+		"enabled": true,
 		"reportFileName": "<unscopedPackageName>.legacy",
 		"reportVariants": ["public", "alpha"] // "beta" is not included to reduce noise
-	},
-	"docModel": {
-		"enabled": false
 	},
 	// Assume all projects use a "current" report and don't need tsdocMetadata generated a
 	// second time via "legacy" report.

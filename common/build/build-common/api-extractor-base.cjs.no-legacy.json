@@ -1,6 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "./api-extractor-base.json",
+	"extends": "./api-extractor-model-base.json",
 	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
 	"apiReport": {
 		"enabled": true,

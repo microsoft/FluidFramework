@@ -31,7 +31,8 @@
 	 * Configures how the doc model file (*.api.json) will be generated.
 	 */
 	"docModel": {
-		"enabled": true,
+		// Enabled in `-model` configurations
+		"enabled": false,
 		"apiJsonFilePath": "<projectFolder>/_api-extractor-temp/doc-models/<unscopedPackageName>.api.json"
 	},
 
@@ -175,7 +176,12 @@
 
 			// The @link tag needs a TSDoc declaration reference.
 			"ae-unresolved-link": {
-				"logLevel": "error",
+				// Since we generate API reports for different release levels, it is possible (and valid) for `@link` tags
+				// to reference an API item that won't be visible at that level.
+				// For example, a public API may note that a newer feature is available in a beta release and link to that item.
+				// We want that to be possible, so we suppress this error for report generation.
+				// It will be enabled in configurations that generate API models, which are used for generating API documentation for the entire package suite.
+				"logLevel": "none",
 				"addToApiReportFile": false
 			},
 

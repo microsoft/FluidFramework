@@ -1,0 +1,24 @@
+{
+	// Base configuration for API Model generation
+
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "./api-extractor-base.json",
+	"apiReport": {
+		"enabled": false
+	},
+	"docModel": {
+		"enabled": true
+	},
+	"tsdocMetadata": {
+		"enabled": false
+	},
+	"messages": {
+		"extractorMessageReporting": {
+			// Ensure `@link` references are valid within the package's API exports
+			"ae-unresolved-link": {
+				"logLevel": "error",
+				"addToApiReportFile": false // Fail build instead
+			}
+		}
+	}
+}
