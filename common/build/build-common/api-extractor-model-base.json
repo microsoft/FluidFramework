@@ -14,7 +14,8 @@
 	},
 	"messages": {
 		"extractorMessageReporting": {
-			// Ensure `@link` references are valid within the package's API exports
+			// Ensure `@link` references are valid within the package's API exports.
+			// Needed to ensure that API docs generated from the model do not contain invalid links.
 			"ae-unresolved-link": {
 				"logLevel": "error",
 				"addToApiReportFile": false // Fail build instead
