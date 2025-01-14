@@ -110,38 +110,45 @@ const getPresenceContainer = async (
 	};
 };
 
-process.on("message", (msg: MessageFromParent) => {
-	(async () => {
-		let presence: IPresence | undefined;
-		let container: IFluidContainer | undefined;
+function setupMessageHandler(): void {
+	process.on("message", (msg: MessageFromParent) => {
+		(async () => {
+			let presence: IPresence | undefined;
+			let container: IFluidContainer | undefined;
 
-		if (msg.command === "connect" && msg.containerId && msg.user) {
-			const { container: c, presence: p } = await getPresenceContainer(
-				msg.containerId,
-				msg.user,
-			);
-			container = c;
-			presence = p;
+			if (msg.command === "connect" && msg.containerId && msg.user) {
+				const { container: c, presence: p } = await getPresenceContainer(
+					msg.containerId,
+					msg.user,
+				);
+				container = c;
+				presence = p;
 
-			presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
-				const m: MessageToParent = { event: "attendeeJoined", sessionId: attendee.sessionId };
-				process.send?.(m);
-			});
-			presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
-				const m: MessageToParent = {
-					event: "attendeeDisconnected",
-					sessionId: attendee.sessionId,
-				};
-				process.send?.(m);
-			});
+				presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
+					const m: MessageToParent = {
+						event: "attendeeJoined",
+						sessionId: attendee.sessionId,
+					};
+					process.send?.(m);
+				});
+				presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
+					const m: MessageToParent = {
+						event: "attendeeDisconnected",
+						sessionId: attendee.sessionId,
+					};
+					process.send?.(m);
+				});
 
-			// Signal ready
-			process.send?.({ event: "ready" });
-		} else if (msg.command === "disconnectSelf" && container) {
-			container.disconnect();
-			process.send?.({ event: "disconnectedSelf" });
-		}
-	})().catch((error) => {
-		console.error("Error in child client", error);
+				// Signal ready
+				process.send?.({ event: "ready" });
+			} else if (msg.command === "disconnectSelf" && container) {
+				container.disconnect();
+				process.send?.({ event: "disconnectedSelf" });
+			}
+		})().catch((error) => {
+			console.error("Error in child client", error);
+		});
 	});
-});
+}
+
+setupMessageHandler();
