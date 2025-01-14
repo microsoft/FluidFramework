@@ -39,16 +39,16 @@ COPY .npmrc ./
 COPY packages/gitrest/package*.json packages/gitrest/
 COPY packages/gitrest-base/package*.json packages/gitrest-base/
 
-# Configuring PNPM_HOME allows reusing the host container's pnpm cache by mounting it to
-# this location later on in the build.
 ENV PNPM_HOME="/pnpm"
-# Add pnpm executables as well as package dependency's executables to the PATH.
+# Add package dependency's executables to the PATH. We also add global pnpm executables by including $PNPM_HOME,
+# though it's not leveraged currently.
 ENV PATH="$PNPM_HOME:$GITREST_ROOT/node_modules/.bin:$PATH"
 RUN corepack enable
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
+# Using a cache mount for the pnpm store improves the incremental docker build.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store\
     pnpm install --unsafe-perm
 
