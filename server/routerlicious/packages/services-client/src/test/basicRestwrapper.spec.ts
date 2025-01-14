@@ -910,16 +910,16 @@ describe("BasicRestWrapper", () => {
 					Authorization: `Basic ${expiredToken}`,
 				};
 			};
+			const newToken = jsrsasign.jws.JWS.sign(
+				null,
+				JSON.stringify({ alg: "HS256", typ: "JWT" }),
+				{ exp: Math.round(new Date().getTime() / 1000) + 10000 },
+				key,
+			);
 
 			const refreshTokenIfNeeded = async () => {
 				const tokenClaims = jwtDecode(expiredToken);
 				if (tokenClaims.exp < new Date().getTime() / 1000) {
-					const newToken = jsrsasign.jws.JWS.sign(
-						null,
-						JSON.stringify({ alg: "HS256", typ: "JWT" }),
-						{ exp: Math.round(new Date().getTime() / 1000) + 10000 },
-						key,
-					);
 					return {
 						Authorization: `Basic ${newToken}`,
 					};
@@ -947,6 +947,9 @@ describe("BasicRestWrapper", () => {
 				// tslint:disable-next-line:no-void-expression
 				() => assert.ok(true),
 			);
+
+			assert.notEqual(rw['defaultHeaders'].Authorization, `Basic ${expiredToken}`);
+			assert.strictEqual(rw['defaultHeaders'].Authorization, `Basic ${newToken}`);
 		});
 	});
 });

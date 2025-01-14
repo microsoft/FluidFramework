@@ -180,6 +180,10 @@ function getTokenFromRequest(request: Request): string {
 	if (!authorizationHeader) {
 		throw new NetworkError(403, "Missing Authorization header.");
 	}
+	return extractTokenFromHeader(authorizationHeader);
+}
+
+export function extractTokenFromHeader(authorizationHeader: string): string {
 	const tokenRegex = /Basic (.+)/;
 	const tokenMatch = tokenRegex.exec(authorizationHeader);
 	if (!tokenMatch?.[1]) {

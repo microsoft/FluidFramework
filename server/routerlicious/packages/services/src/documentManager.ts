@@ -17,7 +17,8 @@ import {
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { isTokenValid } from "@fluidframework/server-services-utils";
+import { extractTokenFromHeader, isTokenValid } from "@fluidframework/server-services-utils";
+import type { RawAxiosRequestHeaders } from "axios";
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
@@ -131,26 +132,34 @@ export class DocumentManager implements IDocumentManager {
 			};
 		};
 
-		const refreshTokenIfNeeded = async () => {
-			if (isTokenValid(accessToken)) {
-				Lumberjack.info(`Token is still valid for documentManager`, {
+		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
+			if (
+				authorizationHeader.Authorization &&
+				typeof authorizationHeader.Authorization === "string"
+			) {
+				const currentAccessToken = extractTokenFromHeader(
+					authorizationHeader.Authorization,
+				);
+				if (isTokenValid(currentAccessToken)) {
+					Lumberjack.info(`Token is still valid for documentManager`, {
+						tenantId,
+						documentId,
+						scopes: [ScopeType.DocRead],
+					});
+					return undefined;
+				}
+				Lumberjack.info(`Refreshing token for documentManager`, {
 					tenantId,
 					documentId,
 					scopes: [ScopeType.DocRead],
 				});
-				return undefined;
+				const newToken = await this.tenantManager.signToken(tenantId, documentId, [
+					ScopeType.DocRead,
+				]);
+				return {
+					Authorization: `Basic ${newToken}`,
+				};
 			}
-			Lumberjack.info(`Refreshing token for documentManager`, {
-				tenantId,
-				documentId,
-				scopes: [ScopeType.DocRead],
-			});
-			const newToken = await this.tenantManager.signToken(tenantId, documentId, [
-				ScopeType.DocRead,
-			]);
-			return {
-				Authorization: `Basic ${newToken}`,
-			};
 		};
 
 		const restWrapper = new BasicRestWrapper(

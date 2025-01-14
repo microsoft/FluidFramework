@@ -9,7 +9,8 @@ import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import { IDeltaService } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { TenantManager } from "./tenant";
-import { isTokenValid } from "@fluidframework/server-services-utils";
+import { isTokenValid, extractTokenFromHeader } from "@fluidframework/server-services-utils";
+import type { RawAxiosRequestHeaders } from "axios";
 
 /**
  * Manager to fetch deltas from Alfred using the internal URL.
@@ -94,24 +95,34 @@ export class DeltaManager implements IDeltaService {
 			};
 		};
 
-		const refreshTokenIfNeeded = async () => {
-			if (isTokenValid(accessToken)) {
-				Lumberjack.info(`Token is still valid for deltaManager`, {
+		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
+			if (
+				authorizationHeader.Authorization &&
+				typeof authorizationHeader.Authorization === "string"
+			) {
+				const currentAccessToken = extractTokenFromHeader(
+					authorizationHeader.Authorization,
+				);
+				if (isTokenValid(currentAccessToken)) {
+					Lumberjack.info(`Token is still valid for deltaManager`, {
+						tenantId,
+						documentId,
+						scopes: [ScopeType.DocRead],
+					});
+					return undefined;
+				}
+				Lumberjack.info(`Refreshing token for deltaManager`, {
 					tenantId,
 					documentId,
 					scopes: [ScopeType.DocRead],
 				});
-				return undefined;
+				const newToken = await this.getAccessToken(tenantId, documentId, [
+					ScopeType.DocRead,
+				]);
+				return {
+					Authorization: `Basic ${newToken}`,
+				};
 			}
-			Lumberjack.info(`Refreshing token for deltaManager`, {
-				tenantId,
-				documentId,
-				scopes: [ScopeType.DocRead],
-			});
-			const newToken = await this.getAccessToken(tenantId, documentId, [ScopeType.DocRead]);
-			return {
-				Authorization: `Basic ${newToken}`,
-			};
 		};
 
 		const restWrapper = new BasicRestWrapper(
