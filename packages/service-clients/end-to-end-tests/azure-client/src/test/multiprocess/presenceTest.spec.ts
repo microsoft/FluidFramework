@@ -25,12 +25,12 @@ import { createAzureClient } from "../AzureClientFactory.js";
 import { configProvider } from "../utils.js";
 
 interface MessageFromChild {
-	event: string;
+	event: "attendeeDisconnected" | "attendeeJoined" | "ready" | "disconnectSelf";
 	sessionId: string;
 }
 
 interface MessageToChild {
-	command: string;
+	command: "connect";
 	containerId: string;
 	user: AzureUser;
 }

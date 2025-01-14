@@ -141,7 +141,10 @@ function setupMessageHandler(): void {
 				process.send?.({ event: "ready", sessionId: presence?.getMyself().sessionId });
 			} else if (msg.command === "disconnectSelf" && container) {
 				container.disconnect();
-				process.send?.({ event: "disconnectedSelf", sessionId: presence?.getMyself().sessionId });
+				process.send?.({
+					event: "disconnectedSelf",
+					sessionId: presence?.getMyself().sessionId,
+				});
 			}
 		})().catch((error) => {
 			console.error("Error in child client", error);
