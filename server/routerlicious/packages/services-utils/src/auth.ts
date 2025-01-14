@@ -192,10 +192,11 @@ export function extractTokenFromHeader(authorizationHeader: string): string {
 	return tokenMatch[1];
 }
 
+// Returns true if the token is valid for at least 1 minute.
 export function isTokenValid(token: string): boolean {
 	const tokenClaims = decode(token) as ITokenClaims;
 	const lifeTimeMSec = tokenClaims.exp * 1000 - new Date().getTime();
-	return lifeTimeMSec > 0;
+	return lifeTimeMSec > 60 * 1000; // 1 minute
 }
 
 const defaultMaxTokenLifetimeSec = 60 * 60; // 1 hour
