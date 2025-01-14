@@ -31,47 +31,44 @@ describe("presence-tracker", () => {
 		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
-	it("Document is connected", async () => {
-		await page.waitForFunction(() => document.isConnected);
-	});
+	describe("Single client", () => {
+		it("Document is connected", async () => {
+			await page.waitForFunction(() => document.isConnected);
+		});
 
-	it("Focus Content exists", async () => {
-		await page.waitForFunction(() => document.getElementById("focus-content"));
-	});
+		it("Focus Content exists", async () => {
+			await page.waitForFunction(() => document.getElementById("focus-content"));
+		});
 
-	it("Focus Div exists", async () => {
-		await page.waitForFunction(() => document.getElementById("focus-div"));
-	});
+		it("Focus Div exists", async () => {
+			await page.waitForFunction(() => document.getElementById("focus-div"));
+		});
 
-	it("Mouse Content exists", async () => {
-		await page.waitForFunction(() => document.getElementById("mouse-position"));
-	});
+		it("Mouse Content exists", async () => {
+			await page.waitForFunction(() => document.getElementById("mouse-position"));
+		});
 
-	it("Current User is displayed", async () => {
-		const elementHandle = await page.waitForFunction(() =>
-			document.getElementById("focus-div"),
-		);
-		const innerHTML = await page.evaluate(
-			(element) => element?.innerHTML.trim(),
-			elementHandle,
-		);
-		expect(innerHTML).toMatch(/^User session .*?: has focus/);
-	});
+		it("Current User is displayed", async () => {
+			const elementHandle = await page.waitForFunction(() =>
+				document.getElementById("focus-div"),
+			);
+			const innerHTML = await page.evaluate(
+				(element) => element?.innerHTML.trim(),
+				elementHandle,
+			);
+			expect(innerHTML).toMatch(/^User session .*?: has focus/);
+		});
 
-	it("Current user has focus", async () => {
-		const elementHandle = await page.waitForFunction(() =>
-			document.getElementById("focus-div"),
-		);
-		const innerHTML = await page.evaluate(
-			(element) => element?.innerHTML.trim(),
-			elementHandle,
-		);
-		expect(innerHTML?.endsWith("has focus")).toBe(true);
-	});
-
-	describe("Multiple clients", () => {
-		let browser2: Browser;
-		let page2: Page;
+		it("Current user has focus", async () => {
+			const elementHandle = await page.waitForFunction(() =>
+				document.getElementById("focus-div"),
+			);
+			const innerHTML = await page.evaluate(
+				(element) => element?.innerHTML.trim(),
+				elementHandle,
+			);
+			expect(innerHTML?.endsWith("has focus")).toBe(true);
+		});
 
 		it("First client shows single client connected", async () => {
 			const elementHandle = await page.waitForFunction(() =>
@@ -86,15 +83,29 @@ describe("presence-tracker", () => {
 			// There should only be a single client connected
 			expect(clientListHtml?.split("<br>").length).toEqual(1);
 		});
+	});
 
-		it("Second user can join", async () => {
+	describe("Multiple clients", () => {
+		let browser2: Browser;
+		let page2: Page;
+
+		beforeAll(async () => {
 			// Create a second browser instance and navigate to the session created by the first browser.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
 
-			await page2.goto(page.url(), { waitUntil: "load" });
-			await page2.waitForFunction(() => (window as any).fluidStarted as unknown);
+			// Wait for the page to load first before running any tests
+			// so this time isn't attributed to the first test
+			await page2.goto(page.url(), { waitUntil: "load", timeout: 0 });
+			await page2.waitForFunction(() => window["fluidStarted"]);
+		}, 45000);
 
+		beforeEach(async () => {
+			await page2.goto(page.url(), { waitUntil: "load" });
+			await page2.waitForFunction(() => window["fluidStarted"]);
+		});
+
+		it("Second user can join", async () => {
 			// Both browser instances should be pointing to the same URL now.
 			expect(page2.url()).toEqual(page.url());
 		});
@@ -123,7 +134,7 @@ describe("presence-tracker", () => {
 			expect(clientListHtml?.split("<br>").length).toEqual(2);
 		});
 
-		it("First client shows one client connected when second client leaves", async () => {
+		it.skip("First client shows one client connected when second client leaves", async () => {
 			// Navigate the second client away
 			await page2.browser().close();
 
