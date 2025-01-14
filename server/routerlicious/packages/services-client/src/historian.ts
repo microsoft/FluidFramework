@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Buffer, fromUtf8ToBase64 } from "@fluidframework/common-utils";
+import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";

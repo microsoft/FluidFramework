@@ -20,6 +20,7 @@ import {
 	CommonProperties,
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
+	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { RawAxiosRequestHeaders } from "axios";
 import { IsEphemeralContainer } from ".";
@@ -148,8 +149,18 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 				const token = parseToken(tenantId, authorizationHeader.Authorization);
 				if (token) {
 					if (isTokenValid(token)) {
+						Lumberjack.info(`Token is still valid for historian`, {
+							tenantId,
+							documentId,
+							scopes: [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite],
+						});
 						return undefined;
 					}
+					Lumberjack.info(`Refreshing token for historian`, {
+						tenantId,
+						documentId,
+						scopes: [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite],
+					});
 					const newToken = await core.requestWithRetry(
 						async () =>
 							this.signToken(tenantId, documentId, [
