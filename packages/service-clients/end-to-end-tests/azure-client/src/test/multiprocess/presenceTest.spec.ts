@@ -29,7 +29,7 @@ interface MessageFromChild {
 	sessionId: string;
 }
 
-interface MessageToParent {
+interface MessageToChild {
 	command: string;
 	containerId: string;
 	user: AzureUser;
@@ -119,7 +119,7 @@ describe(`Presence with AzureClient`, () => {
 			children.push(child);
 
 			// Send connect command to child
-			const message: MessageToParent = { command: "connect", containerId, user };
+			const message: MessageToChild = { command: "connect", containerId, user };
 			child.send(message);
 		}
 

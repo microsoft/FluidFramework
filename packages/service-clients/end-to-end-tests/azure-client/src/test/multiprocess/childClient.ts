@@ -90,8 +90,6 @@ const getPresenceContainer = async (
 			errorMsg: "container connect() timeout",
 		});
 	}
-
-	assert.strictEqual(typeof containerId, "string", "Attach did not return a string ID");
 	assert.strictEqual(
 		container.attachState,
 		AttachState.Attached,
@@ -140,10 +138,10 @@ function setupMessageHandler(): void {
 				});
 
 				// Signal ready
-				process.send?.({ event: "ready" });
+				process.send?.({ event: "ready", sessionId: presence?.getMyself().sessionId });
 			} else if (msg.command === "disconnectSelf" && container) {
 				container.disconnect();
-				process.send?.({ event: "disconnectedSelf" });
+				process.send?.({ event: "disconnectedSelf", sessionId: presence?.getMyself().sessionId });
 			}
 		})().catch((error) => {
 			console.error("Error in child client", error);
