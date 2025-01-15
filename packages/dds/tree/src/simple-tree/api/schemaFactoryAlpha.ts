@@ -32,6 +32,14 @@ import type {
 import { mapSchema, type MapNodeInsertableData, type TreeMapNode } from "../mapNode.js";
 import { arraySchema, type TreeArrayNode } from "../arrayNode.js";
 
+export interface SchemaFactoryOptions<TScope extends string | undefined = string | undefined> {
+	scope: TScope;
+	/**
+	 * Fallback values for object schemas created by this factory.
+	 */
+	objectDefaults?: Omit<SchemaFactoryObjectOptions, "metadata">;
+}
+
 /**
  * {@link SchemaFactory} with additional alpha APIs.
  *
@@ -45,6 +53,12 @@ export class SchemaFactoryAlpha<
 	out TScope extends string | undefined = string | undefined,
 	TName extends number | string = string,
 > extends SchemaFactory<TScope, TName> {
+	private readonly objectDefaultOptions?: Omit<SchemaFactoryObjectOptions, "metadata">;
+	public constructor(options: SchemaFactoryOptions<TScope>) {
+		super(options.scope);
+		this.objectDefaultOptions = options.objectDefaults;
+	}
+
 	private scoped2<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
 		return (
 			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
@@ -81,6 +95,7 @@ export class SchemaFactoryAlpha<
 			fields,
 			true,
 			options?.allowUnknownOptionalFields ??
+				this.objectDefaultOptions?.allowUnknownOptionalFields ??
 				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 			options?.metadata,
 		);
@@ -108,11 +123,10 @@ export class SchemaFactoryAlpha<
 		TCustomMetadata
 	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		return this.object(
-			name,
-			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
-			options,
-		) as unknown as TreeNodeSchemaClass<
+		return this.object(name, t as T & RestrictiveStringRecord<ImplicitFieldSchema>, {
+			...this.objectDefaultOptions,
+			...options,
+		}) as unknown as TreeNodeSchemaClass<
 			TScopedName,
 			NodeKind.Object,
 			TreeObjectNodeUnsafe<T, TScopedName>,
