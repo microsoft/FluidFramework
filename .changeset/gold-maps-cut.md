@@ -6,6 +6,9 @@
 "@fluidframework/runtime-definitions": minor
 "@fluidframework/test-runtime-utils": minor
 ---
+---
+"section": legacy
+---
 
 The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed
 
