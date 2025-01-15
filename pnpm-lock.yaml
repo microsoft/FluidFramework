@@ -10422,12 +10422,18 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       openai:
         specifier: ^4.67.3
         version: 4.76.1(zod@3.24.0)
       typechat:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)(zod@3.24.0)
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
       zod:
         specifier: ^3.23.8
         version: 3.24.0

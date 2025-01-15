@@ -8,6 +8,24 @@ import type { TreeNode } from "@fluidframework/tree";
 import type OpenAI from "openai";
 
 /**
+ * Debug event types for the ai-collab
+ *
+ * @alpha
+ */
+export interface DebugEvent {
+	id: string;
+	traceId?: string;
+	eventName?: string;
+	timestamp: string;
+}
+
+/**
+ * A callback function that can be used to handle debug events that occur during the AI collaboration process.
+ * @alpha
+ */
+export type DebugEventLogHandler = <T extends DebugEvent>(event: T) => unknown;
+
+/**
  * OpenAI client options for the {@link AiCollabOptions} interface.
  *
  * @alpha
@@ -99,9 +117,9 @@ export interface AiCollabOptions {
 	 */
 	readonly validator?: (newContent: TreeNode) => void;
 	/**
-	 * When enabled, the library will console.log information useful for debugging the AI collaboration.
+	 * An optional handler for debug events that occur during the AI collaboration.
 	 */
-	readonly dumpDebugLog?: boolean;
+	readonly debugEventLogHandler?: DebugEventLogHandler;
 }
 
 /**

@@ -85,7 +85,7 @@ export class PlannerAppState extends sf.object("PlannerAppState", {
 ### Example 1: Collaborate with AI
 
 ```ts
-import { aiCollab } from "@fluidframework/ai-collab/alpha";
+import { aiCollab, DebugEvent } from "@fluidframework/ai-collab/alpha";
 import { PlannerAppState } from "./types.ts"
 // This is not a real file, this is meant to represent how you initialize your app data.
 import { initializeAppState } from "./yourAppInitializationFile.ts"
@@ -145,7 +145,7 @@ const response = await aiCollab({
 		},
 		planningStep: true,
 		finalReviewStep: true,
-		dumpDebugLog: true,
+		debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
 	});
 
 if (response.status === 'sucess') {

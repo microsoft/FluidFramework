@@ -15,12 +15,29 @@ import type {
 	ChatCompletionCreateParams,
 	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
+import { v4 as uuidv4 } from "uuid";
 import { z } from "zod";
 
-import type { OpenAiClientOptions, TokenLimits, TokenUsage } from "../aiCollabApi.js";
+import type {
+	DebugEventLogHandler,
+	OpenAiClientOptions,
+	TokenLimits,
+	TokenUsage,
+} from "../aiCollabApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
+import type {
+	ApplyEditFailureDebugEvent,
+	ApplyEditSuccessDebugEvent,
+	GenerateTreeEditCompletedDebugEvent,
+	GenerateTreeEditInitiatedDebugEvent,
+	FinalReviewCompletedDebugEvent,
+	FinalReviewInitiatedDebugEvent,
+	LlmApiCallDebugEvent,
+	PlanningPromptCompletedDebugEvent,
+	PlanningPromptInitiatedDebugEvent,
+} from "./debugEventLogTypes.js";
 import { IdGenerator } from "./idGenerator.js";
 import {
 	getEditingSystemPrompt,
@@ -31,8 +48,6 @@ import {
 } from "./promptGeneration.js";
 import { generateGenericEditTypes } from "./typeGeneration.js";
 import { fail } from "./utils.js";
-
-const DEBUG_LOG: string[] = [];
 
 /**
  * {@link generateTreeEdits} options.
@@ -54,7 +69,7 @@ export interface GenerateTreeEditsOptions {
 	};
 	finalReviewStep?: boolean;
 	validator?: (newContent: TreeNode) => void;
-	dumpDebugLog?: boolean;
+	debugEventLogHandler?: DebugEventLogHandler;
 	planningStep?: boolean;
 }
 
@@ -91,6 +106,8 @@ export async function generateTreeEdits(
 
 	const tokensUsed = { inputTokens: 0, outputTokens: 0 };
 
+	const debugLogTraceId = uuidv4();
+
 	try {
 		for await (const edit of generateEdits(
 			options,
@@ -99,6 +116,10 @@ export async function generateTreeEdits(
 			editLog,
 			options.limiters?.tokenLimits,
 			tokensUsed,
+			{
+				eventLogHandler: options.debugEventLogHandler,
+				traceId: debugLogTraceId,
+			},
 		)) {
 			try {
 				const result = applyAgentEdit(
@@ -110,11 +131,27 @@ export async function generateTreeEdits(
 				const explanation = result.explanation;
 				editLog.push({ edit: { ...result, explanation } });
 				sequentialErrorCount = 0;
+
+				options.debugEventLogHandler?.({
+					id: uuidv4(),
+					traceId: debugLogTraceId,
+					eventName: "APPLIED_EDIT_SUCCESS",
+					timestamp: new Date().toISOString(),
+					edit,
+				} satisfies ApplyEditSuccessDebugEvent);
 			} catch (error: unknown) {
 				if (error instanceof Error) {
 					sequentialErrorCount += 1;
 					editLog.push({ edit, error: error.message });
-					DEBUG_LOG?.push(`Error: ${error.message}`);
+					options.debugEventLogHandler?.({
+						id: uuidv4(),
+						traceId: debugLogTraceId,
+						eventName: "APPLIED_EDIT_FAILURE",
+						timestamp: new Date().toISOString(),
+						edit,
+						errorMessage: error.message,
+						sequentialErrorCount,
+					} satisfies ApplyEditFailureDebugEvent);
 				} else {
 					throw error;
 				}
@@ -151,15 +188,6 @@ export async function generateTreeEdits(
 			}
 		}
 	} catch (error: unknown) {
-		if (error instanceof Error) {
-			DEBUG_LOG?.push(`Error: ${error.message}`);
-		}
-
-		if (options.dumpDebugLog ?? false) {
-			console.log(DEBUG_LOG.join("\n\n"));
-			DEBUG_LOG.length = 0;
-		}
-
 		if (error instanceof TokenLimitExceededError) {
 			return {
 				status:
@@ -169,11 +197,6 @@ export async function generateTreeEdits(
 			};
 		}
 		throw error;
-	}
-
-	if (options.dumpDebugLog ?? false) {
-		console.log(DEBUG_LOG.join("\n\n"));
-		DEBUG_LOG.length = 0;
 	}
 
 	return {
@@ -202,19 +225,43 @@ async function* generateEdits(
 	editLog: EditLog,
 	tokenLimits: TokenLimits | undefined,
 	tokensUsed: TokenUsage,
+	debugOptions?: {
+		eventLogHandler?: DebugEventLogHandler;
+		traceId?: string;
+	},
 ): AsyncGenerator<TreeEdit> {
 	const [types, rootTypeName] = generateGenericEditTypes(simpleSchema, true);
 
 	let plan: string | undefined;
 	if (options.planningStep !== undefined) {
-		const planningPromt = getPlanningSystemPrompt(
+		const planningPrompt = getPlanningSystemPrompt(
 			options.treeNode,
 			options.prompt.userAsk,
 			options.prompt.systemRoleContext,
 		);
-		DEBUG_LOG?.push(planningPromt);
-		plan = await getStringFromLlm(planningPromt, options.openAI, tokensUsed);
-		DEBUG_LOG?.push(`AI Generated the following plan: ${planningPromt}`);
+
+		const debugEventSharedProps = {
+			...(debugOptions?.traceId !== undefined && { traceId: debugOptions.traceId }),
+			eventName: "GENERATE_PLANNING_PROMPT_LLM",
+			prompt: planningPrompt,
+		} as const;
+
+		debugOptions?.eventLogHandler?.({
+			id: uuidv4(),
+			...debugEventSharedProps,
+			eventFlowStatus: "INITIATED",
+			timestamp: new Date().toISOString(),
+		} satisfies PlanningPromptInitiatedDebugEvent);
+
+		plan = await getStringFromLlm(planningPrompt, options.openAI, tokensUsed, debugOptions);
+		debugOptions?.eventLogHandler?.({
+			id: uuidv4(),
+			...debugEventSharedProps,
+			eventFlowStatus: "COMPLETED",
+			timestamp: new Date().toISOString(),
+			requestOutcome: plan === undefined ? "failure" : "success",
+			llmGeneratedPlan: plan,
+		} satisfies PlanningPromptCompletedDebugEvent);
 	}
 
 	const originalDecoratedJson =
@@ -233,30 +280,47 @@ async function* generateEdits(
 			plan,
 		);
 
-		DEBUG_LOG?.push(systemPrompt);
-
 		const schema = types[rootTypeName] ?? fail("Root type not found.");
+
+		const debugEventSharedProps = {
+			...(debugOptions?.traceId !== undefined && { traceId: debugOptions.traceId }),
+			eventName: "GENERATE_TREE_EDIT_LLM",
+			prompt: systemPrompt,
+		} as const;
+
+		debugOptions?.eventLogHandler?.({
+			id: uuidv4(),
+			...debugEventSharedProps,
+			eventFlowStatus: "INITIATED",
+			timestamp: new Date().toISOString(),
+		} satisfies GenerateTreeEditInitiatedDebugEvent);
+
 		const wrapper = await getStructuredOutputFromLlm<EditWrapper>(
 			systemPrompt,
 			options.openAI,
 			schema,
 			"A JSON object that represents an edit to a JSON tree.",
 			tokensUsed,
+			debugOptions,
 		);
 
-		// eslint-disable-next-line unicorn/no-null
-		DEBUG_LOG?.push(JSON.stringify(wrapper, null, 2));
+		debugOptions?.eventLogHandler?.({
+			id: uuidv4(),
+			...debugEventSharedProps,
+			eventFlowStatus: "COMPLETED",
+			timestamp: new Date().toISOString(),
+			requestOutcome: wrapper === undefined ? "failure" : "success",
+			...(wrapper !== undefined && { llmGeneratedEdit: wrapper.edit }),
+		} satisfies GenerateTreeEditCompletedDebugEvent);
+
 		if (wrapper === undefined) {
-			DEBUG_LOG?.push("Failed to get response");
 			return undefined;
 		}
 
 		if (wrapper.edit === null) {
-			DEBUG_LOG?.push("No more edits.");
 			if ((options.finalReviewStep ?? false) && !hasReviewed) {
 				const reviewResult = await reviewGoal();
 				if (reviewResult === undefined) {
-					DEBUG_LOG?.push("Failed to get review response");
 					return undefined;
 				}
 				// eslint-disable-next-line require-atomic-updates
@@ -283,14 +347,41 @@ async function* generateEdits(
 			options.prompt.systemRoleContext,
 		);
 
-		DEBUG_LOG?.push(systemPrompt);
-
 		const schema = z.object({
 			goalAccomplished: z
 				.enum(["yes", "no"])
 				.describe('Whether the user\'s goal was met in the "after" tree.'),
 		});
-		return getStructuredOutputFromLlm<ReviewResult>(systemPrompt, options.openAI, schema);
+
+		const debugEventSharedProps = {
+			...(debugOptions?.traceId !== undefined && { traceId: debugOptions.traceId }),
+			eventName: "FINAL_REVIEW_LLM",
+			prompt: systemPrompt,
+		} as const;
+
+		debugOptions?.eventLogHandler?.({
+			id: uuidv4(),
+			...debugEventSharedProps,
+			eventFlowStatus: "INITIATED",
+			timestamp: new Date().toISOString(),
+		} satisfies FinalReviewInitiatedDebugEvent);
+
+		const output = await getStructuredOutputFromLlm<ReviewResult>(
+			systemPrompt,
+			options.openAI,
+			schema,
+		);
+
+		debugOptions?.eventLogHandler?.({
+			id: uuidv4(),
+			...debugEventSharedProps,
+			eventFlowStatus: "COMPLETED",
+			timestamp: new Date().toISOString(),
+			status: output === undefined ? "failure" : "success",
+			...(output !== undefined && { llmReviewResponse: output }),
+		} satisfies FinalReviewCompletedDebugEvent);
+
+		return output;
 	}
 
 	let edit = await getNextEdit();
@@ -315,6 +406,10 @@ async function getStructuredOutputFromLlm<T>(
 	structuredOutputSchema: Zod.ZodTypeAny,
 	description?: string,
 	tokensUsed?: TokenUsage,
+	debugOptions?: {
+		eventLogHandler?: DebugEventLogHandler;
+		traceId?: string;
+	},
 ): Promise<T | undefined> {
 	const response_format = zodResponseFormat(structuredOutputSchema, "SharedTreeAI", {
 		description,
@@ -327,6 +422,22 @@ async function getStructuredOutputFromLlm<T>(
 	};
 
 	const result = await openAi.client.beta.chat.completions.parse(body);
+
+	debugOptions?.eventLogHandler?.({
+		id: uuidv4(),
+		...(debugOptions?.traceId !== undefined && { traceId: debugOptions.traceId }),
+		eventName: "LLM_API_CALL",
+		timestamp: new Date().toISOString(),
+		modelName: openAi.modelName ?? "gpt-4o",
+		requestParams: body,
+		response: { ...result },
+		...(result.usage && {
+			tokenUsage: {
+				promptTokens: result.usage.prompt_tokens,
+				completionTokens: result.usage.completion_tokens,
+			},
+		}),
+	} satisfies LlmApiCallDebugEvent);
 
 	if (result.usage !== undefined && tokensUsed !== undefined) {
 		tokensUsed.inputTokens += result.usage?.prompt_tokens;
@@ -345,6 +456,10 @@ async function getStringFromLlm(
 	prompt: string,
 	openAi: OpenAiClientOptions,
 	tokensUsed?: TokenUsage,
+	debugOptions?: {
+		eventLogHandler?: DebugEventLogHandler;
+		traceId?: string;
+	},
 ): Promise<string | undefined> {
 	const body: ChatCompletionCreateParams = {
 		messages: [{ role: "system", content: prompt }],
@@ -352,6 +467,22 @@ async function getStringFromLlm(
 	};
 
 	const result = await openAi.client.chat.completions.create(body);
+
+	debugOptions?.eventLogHandler?.({
+		id: uuidv4(),
+		...(debugOptions?.traceId !== undefined && { traceId: debugOptions.traceId }),
+		eventName: "LLM_API_CALL",
+		timestamp: new Date().toISOString(),
+		modelName: openAi.modelName ?? "gpt-4o",
+		requestParams: body,
+		response: { ...result },
+		...(result.usage && {
+			tokenUsage: {
+				promptTokens: result.usage.prompt_tokens,
+				completionTokens: result.usage.completion_tokens,
+			},
+		}),
+	} satisfies LlmApiCallDebugEvent);
 
 	if (result.usage !== undefined && tokensUsed !== undefined) {
 		tokensUsed.inputTokens += result.usage?.prompt_tokens;
