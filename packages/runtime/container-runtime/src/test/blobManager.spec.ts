@@ -19,7 +19,7 @@ import {
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import { type IFluidHandleContext, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
@@ -41,6 +41,7 @@ import {
 	IBlobManagerRuntime,
 	blobManagerBasePath,
 	redirectTableBlobName,
+	type IPendingBlobs,
 } from "../blobManager/index.js";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
@@ -84,14 +85,14 @@ export class MockRuntime
 		public mc: MonitoringContext,
 		snapshot: IBlobManagerLoadInfo = {},
 		attached = false,
-		stashed: any[] = [[], {}],
+		stashed: unknown[] = [[], {}],
 	) {
 		super();
 		this.attachState = attached ? AttachState.Attached : AttachState.Detached;
-		this.ops = stashed[0];
+		this.ops = stashed[0] as unknown[];
 		this.baseLogger = mc.logger;
 		this.blobManager = new BlobManager({
-			routeContext: undefined as any,
+			routeContext: undefined as unknown as IFluidHandleContext,
 			snapshot,
 			getStorage: () => this.getStorage(),
 			sendBlobAttachOp: (localId: string, blobId?: string) =>
@@ -99,7 +100,7 @@ export class MockRuntime
 			blobRequested: () => undefined,
 			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
 			runtime: this,
-			stashedBlobs: stashed[1],
+			stashedBlobs: stashed[1] as IPendingBlobs | undefined,
 			closeContainer: () => (this.closed = true),
 		});
 	}
@@ -171,15 +172,15 @@ export class MockRuntime
 	public detachedStorage = new NonDedupeStorage();
 	public baseLogger: ITelemetryLoggerExt;
 
-	private ops: any[] = [];
+	private ops: unknown[] = [];
 	private processBlobsP = new Deferred<void>();
-	private blobPs: Promise<any>[] = [];
-	private handlePs: Promise<any>[] = [];
+	private blobPs: Promise<unknown>[] = [];
+	private handlePs: Promise<unknown>[] = [];
 	private readonly deletedBlobs: string[] = [];
 
 	public processOps() {
 		assert(this.connected || this.ops.length === 0);
-		this.ops.forEach((op) => this.blobManager.processBlobAttachMessage(op, true));
+		this.ops.forEach((op) => this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, true));
 		this.ops = [];
 	}
 
@@ -204,7 +205,7 @@ export class MockRuntime
 	public async processHandles() {
 		const handlePs = this.handlePs;
 		this.handlePs = [];
-		const handles: IFluidHandleInternal<ArrayBufferLike>[] = await Promise.all(handlePs);
+		const handles = await Promise.all(handlePs) as IFluidHandleInternal<ArrayBufferLike>[];
 		handles.forEach((handle) => handle.attachGraph());
 	}
 
@@ -243,7 +244,9 @@ export class MockRuntime
 		await this.processStashed(processStashedWithRetry);
 		const ops = this.ops;
 		this.ops = [];
-		ops.forEach((op) => this.blobManager.reSubmit(op.metadata));
+		// TODO: better typing
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		ops.forEach((op) => this.blobManager.reSubmit((op as any).metadata));
 	}
 
 	public async processStashed(processStashedWithRetry?: boolean) {
@@ -286,7 +289,7 @@ export class MockRuntime
 
 export const validateSummary = (runtime: MockRuntime) => {
 	const summary = runtime.blobManager.summarize();
-	const ids: any[] = [];
+	const ids: string[] = [];
 	let redirectTable;
 	for (const [key, attachment] of Object.entries(summary.summary.tree)) {
 		if (attachment.type === SummaryType.Attachment) {
@@ -342,6 +345,8 @@ describe("BlobManager", () => {
 		};
 
 		const onNoPendingBlobs = () => {
+			// Accessing private field
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		};
 
@@ -349,6 +354,8 @@ describe("BlobManager", () => {
 	});
 
 	afterEach(async () => {
+		// Accessing private field
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
 		mockLogger.clear();
@@ -477,8 +484,8 @@ describe("BlobManager", () => {
 		try {
 			await handleP;
 			assert.fail("should fail");
-		} catch (error: any) {
-			assert.strictEqual(error.message, "fake driver error");
+		} catch (error: unknown) {
+			assert.strictEqual((error as Error).message, "fake driver error");
 		}
 		await assert.rejects(handleP);
 		const summaryData = validateSummary(runtime);
@@ -705,6 +712,8 @@ describe("BlobManager", () => {
 
 	it("runtime disposed during readBlob - log no error", async () => {
 		const someId = "someId";
+		// Accessing private field
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(runtime.blobManager as any).setRedirection(someId, undefined); // To appease an assert
 
 		// Mock storage.readBlob to dispose the runtime and throw an error
@@ -741,6 +750,9 @@ describe("BlobManager", () => {
 				const blob = IsoBuffer.from("blob", "utf8");
 				await runtime.createBlob(blob, ac.signal);
 				assert.fail("Should not succeed");
+
+			// TODO: better typing
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
 				assert.strictEqual(error.status, undefined);
 				assert.strictEqual(error.uploadTime, undefined);
@@ -764,6 +776,8 @@ describe("BlobManager", () => {
 			try {
 				await handleP;
 				assert.fail("Should not succeed");
+				// TODO: better typing
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
 				assert.strictEqual(error.uploadTime, undefined);
 				assert.strictEqual(error.acked, false);
@@ -789,14 +803,14 @@ describe("BlobManager", () => {
 			try {
 				await handleP;
 				assert.fail("Should not succeed");
-			} catch (error: any) {
-				assert.strictEqual(error.message, "uploadBlob aborted");
+			} catch (error: unknown) {
+				assert.strictEqual((error as Error).message, "uploadBlob aborted");
 			}
 			try {
 				await handleP2;
 				assert.fail("Should not succeed");
-			} catch (error: any) {
-				assert.strictEqual(error.message, "fake driver error");
+			} catch (error: unknown) {
+				assert.strictEqual((error as Error).message, "fake driver error");
 			}
 			await assert.rejects(handleP);
 			await assert.rejects(handleP2);
@@ -817,8 +831,8 @@ describe("BlobManager", () => {
 			try {
 				await handleP;
 				assert.fail("Should not succeed");
-			} catch (error: any) {
-				assert.strictEqual(error.message, "uploadBlob aborted");
+			} catch (error: unknown) {
+				assert.strictEqual((error as Error).message, "uploadBlob aborted");
 			}
 			await assert.rejects(handleP);
 			const summaryData = validateSummary(runtime);
@@ -836,7 +850,7 @@ describe("BlobManager", () => {
 				handleP = runtime.createBlob(blob, ac.signal);
 				await runtime.processAll();
 				ac.abort();
-			} catch (error: any) {
+			} catch (error: unknown) {
 				assert.fail("abort after processing should not throw");
 			}
 			assert(handleP);
@@ -862,6 +876,9 @@ describe("BlobManager", () => {
 				// finish op
 				await handleP;
 				assert.fail("Should not succeed");
+
+			// TODO: better typing
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);
@@ -888,6 +905,8 @@ describe("BlobManager", () => {
 				ac.abort();
 				await handleP;
 				assert.fail("Should not succeed");
+				// TODO: better typing
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);
@@ -940,6 +959,8 @@ describe("BlobManager", () => {
 		}
 
 		beforeEach(() => {
+			// Mutating private field
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			redirectTable = (runtime.blobManager as any).redirectTable;
 		});
 

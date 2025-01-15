@@ -12,6 +12,8 @@ import {
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
+import type { IPendingBlobs } from "../blobManager/index.js";
+
 import { MockRuntime, validateSummary } from "./blobManager.spec.js";
 
 describe("getPendingLocalState", () => {
@@ -32,7 +34,7 @@ describe("getPendingLocalState", () => {
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
-		const pendingBlobs = pendingState[1] ?? {};
+		const pendingBlobs = (pendingState[1] ?? {}) as IPendingBlobs;
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
 		assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
@@ -61,7 +63,7 @@ describe("getPendingLocalState", () => {
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
-		const pendingBlobs = pendingState[1] ?? {};
+		const pendingBlobs = (pendingState[1] ?? {}) as IPendingBlobs;
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
 		assert.ok(Object.values(pendingBlobs)[0].uploadTime);
@@ -153,7 +155,7 @@ describe("getPendingLocalState", () => {
 		await runtime.processHandles();
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
-		const pendingBlobs = pendingState[1] ?? {};
+		const pendingBlobs = (pendingState[1] ?? {}) as IPendingBlobs;
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
 		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
 		assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
