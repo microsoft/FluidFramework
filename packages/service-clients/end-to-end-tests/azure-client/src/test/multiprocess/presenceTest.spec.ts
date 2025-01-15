@@ -115,7 +115,7 @@ describe(`Presence with AzureClient`, () => {
 
 		// Fork child processes
 		for (let i = 0; i < numClients; i++) {
-			const user = { id: `test-user-id-${i+2}`, name: `test-user-name-${i+2}` };
+			const user = { id: `test-user-id-${i + 2}`, name: `test-user-name-${i + 2}` };
 			const child = fork("./lib/test/multiprocess/childClient.js", [`child${i + 1}`]);
 			children.push(child);
 			// Send connect command to child
@@ -135,7 +135,7 @@ describe(`Presence with AzureClient`, () => {
 				},
 				{
 					durationMs: connectTimeoutMs,
-					errorMsg: `No 'attendeeJoined' event received from child[${i+1}]`,
+					errorMsg: `No 'attendeeJoined' event received from child[${i + 1}]`,
 				},
 			);
 
