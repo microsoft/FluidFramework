@@ -512,8 +512,8 @@ export interface IContainerRuntimeOptions {
 	 * message to be sent to the service.
 	 * The grouping and ungrouping of such messages is handled by the "OpGroupingManager".
 	 *
-	 * By default, the feature is enabled.
-	 * @deprecated  The ability to disable Grouped Batching is deprecated and will be removed future release. This feature is required for the proper functioning of the Fluid Framework.
+	 * By default, the feature is enabled. This feature can only be disabled when compression is also disabled.
+	 * @deprecated  The ability to disable Grouped Batching is deprecated and will be removed in a future release. This feature is required for the proper functioning of the Fluid Framework.
 	 */
 	readonly enableGroupedBatching?: boolean;
 
