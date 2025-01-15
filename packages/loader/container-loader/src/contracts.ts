@@ -12,7 +12,7 @@ import {
 	IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import type { DisconnectReason } from "@fluidframework/core-interfaces/internal";
+import { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IContainerPackageInfo,
