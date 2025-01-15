@@ -5,7 +5,7 @@
 
 import assert from "assert";
 
-import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import { ContainerErrorTypes, type IErrorBase } from "@fluidframework/container-definitions/internal";
 import {
 	MessageType,
 	ISequencedDocumentMessage,
@@ -154,7 +154,7 @@ describe("Pending State Manager", () => {
 				messages.map<BatchMessage>((message) => ({
 					contents: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-					metadata: message.metadata as unknown as Record<string, unknown> | undefined,
+					metadata: message.metadata as Record<string, unknown> | undefined,
 					localOpMetadata,
 				})),
 				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,
@@ -317,6 +317,7 @@ describe("Pending State Manager", () => {
 							0 /* batchStartCsn */,
 							false /* groupedBatch */,
 						),
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(closeError: any) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
@@ -361,7 +362,7 @@ describe("Pending State Manager", () => {
 							0 /* batchStartCsn */,
 							false /* groupedBatch */,
 						),
-					(closeError: any) =>
+					(closeError: IErrorBase) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
 				mockLogger.assertMatch(
@@ -405,7 +406,7 @@ describe("Pending State Manager", () => {
 							0 /* batchStartCsn */,
 							false /* groupedBatch */,
 						),
-					(closeError: any) =>
+					(closeError: IErrorBase) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
 				mockLogger.assertMatch(
@@ -452,7 +453,7 @@ describe("Pending State Manager", () => {
 
 				assert.throws(
 					() => processFullBatch([message], 0 /* batchStartCsn */, false /* groupedBatch */),
-					(closeError: any) =>
+					(closeError: IErrorBase) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
 				mockLogger.assertMatch(
@@ -500,7 +501,7 @@ describe("Pending State Manager", () => {
 
 				assert.throws(
 					() => processFullBatch([message], 0 /* batchStartCsn */, false /* groupedBatch */),
-					(closeError: any) =>
+					(closeError: IErrorBase) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
 				mockLogger.assertMatch(
@@ -610,7 +611,6 @@ describe("Pending State Manager", () => {
 
 	describe("Local state processing", () => {
 		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -622,7 +622,7 @@ describe("Pending State Manager", () => {
 				},
 				{ pendingStates },
 				logger,
-			) as any;
+			) as unknown as PendingStateManager_WithPrivates;
 		}
 
 		describe("Constructor pendingStates", () => {
@@ -676,7 +676,7 @@ describe("Pending State Manager", () => {
 				},
 				undefined /* initialLocalState */,
 				logger,
-			) as any;
+			);
 		});
 
 		it("replays pending states", () => {
@@ -805,7 +805,6 @@ describe("Pending State Manager", () => {
 		];
 
 		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -817,7 +816,7 @@ describe("Pending State Manager", () => {
 				},
 				{ pendingStates },
 				logger,
-			) as any;
+			) as unknown as PendingStateManager_WithPrivates;
 		}
 
 		it("no pending or initial messages", () => {
@@ -940,7 +939,6 @@ describe("Pending State Manager", () => {
 		function createPendingStateManager(
 			pendingStates?: IPendingMessage[],
 		): PendingStateManager {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -952,7 +950,7 @@ describe("Pending State Manager", () => {
 				},
 				pendingStates ? { pendingStates } : undefined /* initialLocalState */,
 				logger,
-			) as any;
+			);
 		}
 
 		it("minimum sequence number can be retrieved from initial messages", async () => {

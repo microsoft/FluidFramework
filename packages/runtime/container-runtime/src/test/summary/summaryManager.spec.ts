@@ -276,7 +276,7 @@ describe("Summary Manager", () => {
 		clock.reset();
 
 		// Make sure we don't accidentally reuse the same summary manager across tests
-		summaryManager = undefined as any;
+		summaryManager = undefined as unknown as SummaryManager;
 	});
 
 	it("Should become summarizer if connected, then elected; stop summarizer after disconnect", async () => {
@@ -397,8 +397,10 @@ describe("Summary Manager", () => {
 
 			// Simulate disposing the summary manager in between (potential) initial delay and actually starting
 			const summaryManager_delayBeforeCreatingSummarizer = (
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				summaryManager as any
 			).delayBeforeCreatingSummarizer.bind(summaryManager);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(summaryManager as any).delayBeforeCreatingSummarizer = async (...args) => {
 				const result = await summaryManager_delayBeforeCreatingSummarizer(args);
 				summaryManager.dispose();

@@ -191,6 +191,7 @@ describe("OpSplitter", () => {
 			splitOp(generateChunkableOp(chunkSizeInBytes * 3), chunkSizeInBytes),
 			"testClient1",
 		).map((op) => {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(op.contents as any).type = ContainerMessageType.FluidDataStoreOp;
 			return op;
 		});
