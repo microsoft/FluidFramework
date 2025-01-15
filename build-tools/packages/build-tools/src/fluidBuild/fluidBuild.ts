@@ -119,7 +119,7 @@ async function main() {
 		timer.time("Check install completed");
 
 		// Run the build
-		const buildResult = await buildGraph.build(timer, spinner);
+		const buildResult = await buildGraph.build(timer);
 		const buildStatus = buildResultString(buildResult);
 		const elapsedTime = timer.time();
 		if (commonOptions.timer) {
