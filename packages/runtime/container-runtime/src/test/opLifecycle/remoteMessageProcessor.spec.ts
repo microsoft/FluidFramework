@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import {
@@ -12,8 +13,9 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { compress } from "lz4js";
 
-import { ContainerMessageType } from "../../index.js";
+import { CompressionAlgorithms, ContainerMessageType } from "../../index.js";
 import type { InboundSequencedContainerRuntimeMessage } from "../../messageTypes.js";
 import {
 	BatchManager,
@@ -22,7 +24,6 @@ import {
 	ensureContentsDeserialized,
 	type IBatch,
 	type InboundMessageResult,
-	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
@@ -108,6 +109,50 @@ describe("RemoteMessageProcessor", () => {
 		grouping: [true, false],
 	});
 
+	/**
+	 * Combine the batch's content strings into a single JSON string (a serialized array)
+	 */
+	function serializeBatchContents(batch: IBatch): string {
+		// Yields a valid JSON array, since each message.contents is already serialized to JSON
+		return `[${batch.messages.map(({ contents }) => contents).join(",")}]`;
+	}
+
+	/**
+	 * This is a helper function that replicates the now deprecated process for compressing a batch that creates empty placeholder messages.
+	 * It was added since the new process can not receive a batch with multiple messages, it now only compresses individual messages (which can be a regular message or a grouped one).
+	 * @param batch - batch with messages that are going to be compressed
+	 * @returns compresed batch with empty placeholder messages
+	 */
+	function compressMultipleMessageBatch(batch: IBatch): IBatch {
+		const contentsAsBuffer = new TextEncoder().encode(serializeBatchContents(batch));
+		const compressedContents = compress(contentsAsBuffer);
+		const compressedContent = IsoBuffer.from(compressedContents).toString("base64");
+
+		const messages: BatchMessage[] = [];
+		messages.push({
+			...batch.messages[0],
+			contents: JSON.stringify({ packedContents: compressedContent }),
+			metadata: batch.messages[0].metadata,
+			compression: CompressionAlgorithms.lz4,
+		});
+
+		// Add empty placeholder messages to reserve the sequence numbers
+		for (const message of batch.messages.slice(1)) {
+			messages.push({
+				localOpMetadata: message.localOpMetadata,
+				metadata: message.metadata,
+				referenceSequenceNumber: message.referenceSequenceNumber,
+			});
+		}
+
+		const compressedBatch: IBatch = {
+			contentSizeInBytes: compressedContent.length,
+			messages,
+			referenceSequenceNumber: batch.referenceSequenceNumber,
+		};
+		return compressedBatch;
+	}
+
 	messageGenerationOptions.forEach((option) => {
 		it(`Correctly processes single batch: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
@@ -136,8 +181,7 @@ describe("RemoteMessageProcessor", () => {
 			let leadingChunkCount = 0;
 			const outboundMessages: IBatchMessage[] = [];
 			if (option.compressionAndChunking.compression) {
-				const compressor = new OpCompressor(mockLogger);
-				batch = compressor.compressBatch(batch as IBatch<[BatchMessage]>);
+				batch = compressMultipleMessageBatch(batch);
 
 				if (option.compressionAndChunking.chunking) {
 					const splitter = new OpSplitter(
