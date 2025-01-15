@@ -103,6 +103,7 @@ export function getMoveEffect(
 	addDependency: boolean = true,
 ): RangeQueryResult<ChangeAtomId, MoveEffect> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
+	assert(result.length === count, "Queried range has multiple values");
 	return result.value !== undefined
 		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) }
 		: result;

@@ -564,7 +564,6 @@ function getMovedNodeChanges(
 	id: MoveId,
 	count: number,
 ): NodeId | undefined {
-	// XXX
-	return getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, 1).value
+	return getMoveEffect(moveEffects, CrossFieldTarget.Destination, revision, id, count).value
 		?.rebasedChanges;
 }

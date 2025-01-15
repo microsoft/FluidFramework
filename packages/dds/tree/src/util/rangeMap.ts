@@ -22,8 +22,6 @@ export class RangeMap<K, V> {
 		private readonly offsetKey: (key: K, offset: number) => K,
 		private readonly subtractKeys: (a: K, b: K) => number,
 	) {
-		// XXX: If the tree is cloned it will hold a reference to the original RangeMap instance
-		// XXX: This also unnecessarily requires dynamic dispatch whenever keys are compared
 		this.tree = new BTree(undefined, subtractKeys);
 	}
 
@@ -200,7 +198,7 @@ export class RangeMap<K, V> {
 
 		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys);
 
-		// XXX: Is there a good pattern that lets us make `tree` readonly?
+		// TODO: Is there a good pattern that lets us make `tree` readonly?
 		merged.tree = a.tree.clone();
 		for (const [key, value] of b.tree.entries()) {
 			// TODO: Handle key collisions
