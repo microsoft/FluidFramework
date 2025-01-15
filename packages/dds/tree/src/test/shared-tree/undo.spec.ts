@@ -6,7 +6,6 @@
 import {
 	type FieldUpPath,
 	type Revertible,
-	cloneRevertibles,
 	RevertibleStatus,
 	type UpPath,
 	rootFieldKey,
@@ -675,77 +674,6 @@ describe("Undo and redo", () => {
 		assert.throws(
 			() => clonedUndoOriginalPropertyOne?.revert(),
 			"Error: Unable to revert a revertible that has been disposed.",
-		);
-	});
-
-	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
-	it("clone list of revertibles", () => {
-		const view = createInitializedView();
-		const { undoStack } = createTestUndoRedoStacks(view.events);
-
-		assert(view.root.child !== undefined);
-		view.root.child.propertyOne = 256; // 128 -> 256
-		view.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
-
-		const forkedView = view.fork();
-
-		const revertibles = [...undoStack];
-		const clonedRevertibles = cloneRevertibles(revertibles, forkedView);
-
-		assert.equal(clonedRevertibles.length, 2);
-		assert.equal(forkedView.root.child?.propertyOne, 256);
-		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "newItem");
-
-		assert.equal(clonedRevertibles[0]?.status, RevertibleStatus.Valid);
-		assert.equal(clonedRevertibles[1]?.status, RevertibleStatus.Valid);
-
-		clonedRevertibles.pop()?.revert();
-		assert.equal(forkedView.root.child?.propertyOne, 256);
-		assert.equal(forkedView.root.child?.propertyTwo.itemOne, "");
-
-		clonedRevertibles.pop()?.revert();
-		assert.equal(forkedView.root.child?.propertyOne, 128);
-	});
-
-	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
-	it("cloning list of disposed revertibles throws error", () => {
-		const view = createInitializedView();
-		const { undoStack } = createTestUndoRedoStacks(view.events);
-
-		assert(view.root.child !== undefined);
-		view.root.child.propertyOne = 256; // 128 -> 256
-		view.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
-
-		const forkedView = view.fork();
-		const revertibles = [...undoStack];
-
-		for (const revertible of undoStack) {
-			revertible.revert();
-			assert.equal(revertible.status, RevertibleStatus.Disposed);
-		}
-
-		assert.throws(
-			() => cloneRevertibles(revertibles, forkedView),
-			/List of revertible should not contain disposed revertibles./,
-		);
-	});
-
-	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
-	it("cloning list of revertibles between views with different changes throws error", () => {
-		const viewA = createInitializedView();
-		const viewB = createInitializedView();
-
-		const { undoStack } = createTestUndoRedoStacks(viewA.events);
-
-		assert(viewA.root.child !== undefined);
-		viewA.root.child.propertyOne = 256; // 128 -> 256
-		viewA.root.child.propertyTwo.itemOne = "newItem"; // "" -> "newItem"
-
-		const revertibles = [...undoStack];
-
-		assert.throws(
-			() => cloneRevertibles(revertibles, viewB),
-			/Cannot clone revertible for a commit that is not present on the given branch./,
 		);
 	});
 });
