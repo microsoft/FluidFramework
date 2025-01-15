@@ -308,6 +308,23 @@ ${JSON.stringify(actualEvents)}`);
 		}
 		return matchObjects(actual, expected);
 	}
+
+	/**
+	 * Throws if any errors were logged
+	 */
+	public assertNoErrors(message?: string, clearEventsAfterCheck: boolean = true): void {
+		const actualEvents = this.events;
+		const errors = actualEvents.filter((event) => event.category === "error");
+		if (clearEventsAfterCheck) {
+			this.clear();
+		}
+		if (errors.length > 0) {
+			throw new Error(`${message ?? "Errors found in logs"}
+
+error logs:
+${JSON.stringify(errors)}`);
+		}
+	}
 }
 
 function matchObjects(
@@ -369,29 +386,4 @@ export function createMockLoggerExt(minLogLevel?: LogLevel): IMockLoggerExt {
 			mockLogger.events.map((e) => e as ITelemetryEventExt),
 	});
 	return childLogger as IMockLoggerExt;
-}
-
-/**
- * Temporary extension to add new functionality during breaking change freeze,
- * since MockLogger wasn't able to be made internal yet.
- *
- * @internal
- */
-export class MockLogger2 extends MockLogger {
-	/**
-	 * Throws if any errors were logged
-	 */
-	public assertNoErrors(message?: string, clearEventsAfterCheck: boolean = true): void {
-		const actualEvents = this.events;
-		const errors = actualEvents.filter((event) => event.category === "error");
-		if (clearEventsAfterCheck) {
-			this.clear();
-		}
-		if (errors.length > 0) {
-			throw new Error(`${message ?? "Errors found in logs"}
-
-error logs:
-${JSON.stringify(errors)}`);
-		}
-	}
 }

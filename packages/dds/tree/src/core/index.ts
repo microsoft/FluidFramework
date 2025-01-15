@@ -218,5 +218,4 @@ export {
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
-	cloneRevertibles,
 } from "./revertible.js";
