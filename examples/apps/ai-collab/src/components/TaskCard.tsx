@@ -173,7 +173,7 @@ export function TaskCard(props: {
 			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
 				openAI: {
 					client: getOpenAiClient(),
-					modelName: "gpt-4o-mini",
+					modelName: "gpt-4o",
 				},
 				treeNode: newBranchTask,
 				prompt: {
@@ -252,8 +252,6 @@ export function TaskCard(props: {
 					</Tooltip>
 				</Box>
 			)}
-
-			<DiffViewer diffs={diffs} />
 
 			<Box component="span" sx={{ position: "absolute", top: 0, right: 0 }}>
 				<IconButton onClick={() => deleteTask()}>
@@ -364,6 +362,7 @@ export function TaskCard(props: {
 			)}
 
 			<Stack direction="row" sx={{ mb: 2 }}>
+				<DiffViewer diffs={diffs} />
 				<TextField
 					id="input-description-label-id"
 					label="Description"

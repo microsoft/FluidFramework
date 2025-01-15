@@ -49,11 +49,8 @@ export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference
 
 // @alpha
 export interface Diff {
-    // (undocumented)
     id: string;
-    // (undocumented)
     path: string;
-    // (undocumented)
     type: "create" | "remove" | "change" | "move";
 }
 

@@ -193,7 +193,16 @@ export interface TokenLimits {
  * @alpha
  */
 export interface Diff {
+	/**
+	 * The id to find the node in the SharedTree.
+	 */
 	id: string;
+	/**
+	 * The type of operation that was performed on the SharedTree.
+	 */
 	type: "create" | "remove" | "change" | "move";
+	/**
+	 * The path to the node in the SharedTree.
+	 */
 	path: string;
 }
