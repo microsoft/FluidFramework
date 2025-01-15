@@ -13,6 +13,7 @@
 	"scripts": {
 		"build": "npm run build:genver && npm run build:compile && npm run lint",
 		"build:compile": "pnpm run -r --stream build:compile",
+		"build:docker": "docker build . --build-context root=../..",
 		"build:genver": "pnpm run -r --no-sort --stream --no-bail build:genver",
 		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
@@ -45,9 +46,9 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.49.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.49.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
