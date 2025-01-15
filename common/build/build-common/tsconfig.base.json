@@ -13,7 +13,7 @@
 		"pretty": true,
 		"sourceMap": true,
 		"strict": true,
-		"target": "ES2021",
+		"target": "ES2020",
 		"types": [],
 		// Enabling these compiler flags is necessary for typechecking compliance with semver as per https://www.semver-ts.org/
 		// See specifically https://www.semver-ts.org/formal-spec/5-compiler-considerations.html#strictness.
