@@ -226,8 +226,8 @@ export namespace DefaultDocumentationSuiteConfiguration {
 export type DocumentationHierarchyConfiguration = SectionHierarchyConfiguration | DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
 
 // @public @sealed
-export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends HierarchyKind> {
-    readonly kind: THierarchyKind;
+export interface DocumentationHierarchyConfigurationBase {
+    readonly kind: HierarchyKind;
 }
 
 // @public
@@ -331,7 +331,9 @@ export type DocumentationSuiteOptions = Omit<Partial<DocumentationSuiteConfigura
 };
 
 // @public @sealed
-export type DocumentHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Document>;
+export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+    readonly kind: HierarchyKind.Document;
+}
 
 // @public
 export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
@@ -395,9 +397,10 @@ export enum FolderDocumentPlacement {
 }
 
 // @public @sealed
-export type FolderHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Folder> & {
+export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
     readonly documentPlacement: FolderDocumentPlacement;
-};
+    readonly kind: HierarchyKind.Folder;
+}
 
 // @public
 export function getApiItemTransformationConfigurationWithDefaults(options: ApiItemTransformationOptions): ApiItemTransformationConfiguration;
@@ -737,7 +740,9 @@ function renderNode(node: DocumentationNode, writer: DocumentWriter, context: Ma
 function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
 
 // @public @sealed
-export type SectionHierarchyConfiguration = DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
+export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+    readonly kind: HierarchyKind.Section;
+}
 
 // @public
 export class SectionNode extends DocumentationParentNodeBase implements MultiLineDocumentationNode {

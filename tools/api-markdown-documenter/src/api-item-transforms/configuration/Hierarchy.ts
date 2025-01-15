@@ -44,11 +44,11 @@ export enum HierarchyKind {
  * @sealed
  * @public
  */
-export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends HierarchyKind> {
+export interface DocumentationHierarchyConfigurationBase {
 	/**
 	 * {@inheritDoc HierarchyKind}
 	 */
-	readonly kind: THierarchyKind;
+	readonly kind: HierarchyKind;
 }
 
 /**
@@ -57,8 +57,12 @@ export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends 
  * @sealed
  * @public
  */
-export type SectionHierarchyConfiguration =
-	DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
+export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+	/**
+	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
+	 */
+	readonly kind: HierarchyKind.Section;
+}
 
 /**
  * The corresponding API item will get its own document, in the folder for an ancestor of the API item.
@@ -66,8 +70,12 @@ export type SectionHierarchyConfiguration =
  * @sealed
  * @public
  */
-export type DocumentHierarchyConfiguration =
-	DocumentationHierarchyConfigurationBase<HierarchyKind.Document>;
+export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+	/**
+	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
+	 */
+	readonly kind: HierarchyKind.Document;
+}
 
 /**
  * Placement of the API item's document relative to its generated folder.
@@ -92,16 +100,20 @@ export enum FolderDocumentPlacement {
  * @sealed
  * @public
  */
-export type FolderHierarchyConfiguration =
-	DocumentationHierarchyConfigurationBase<HierarchyKind.Folder> & {
-		/**
-		 * Placement of the API item's document relative to its generated folder.
-		 *
-		 * @defaultValue {@link FolderDocumentPlacement.Outside}
-		 * @privateRemarks TODO: change default to `inside`
-		 */
-		readonly documentPlacement: FolderDocumentPlacement;
-	};
+export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+	/**
+	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
+	 */
+	readonly kind: HierarchyKind.Folder;
+
+	/**
+	 * Placement of the API item's document relative to its generated folder.
+	 *
+	 * @defaultValue {@link FolderDocumentPlacement.Outside}
+	 * @privateRemarks TODO: change default to `inside`
+	 */
+	readonly documentPlacement: FolderDocumentPlacement;
+}
 
 /**
  * API item hierarchy configuration.
