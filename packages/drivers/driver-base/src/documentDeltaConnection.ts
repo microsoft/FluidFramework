@@ -8,6 +8,7 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
+import { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -409,14 +410,29 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
+
 		this.disconnect(
 			createGenericNetworkError(
 				// pre-0.58 error message: clientClosingConnection
-				error?.message ?? "Client closing delta connection",
+				this.getDisconnectionMessage(error),
 				{ canRetry: true },
 				{ driverVersion },
 			),
 		);
+	}
+
+	private getDisconnectionMessage(error?: Error) {
+		const DEFAULT_MESSAGE = "Client closing delta connection";
+
+		if (!error) {
+			return DEFAULT_MESSAGE;
+		}
+
+		const hasDisconnectReason = Object.values(DisconnectReason).some((reason) =>
+			error.message?.includes(reason),
+		);
+
+		return hasDisconnectReason ? error.message : DEFAULT_MESSAGE;
 	}
 
 	protected disconnect(err: IAnyDriverError) {

@@ -28,7 +28,6 @@ import {
 	isFluidCodeDetails,
 	IDeltaManager,
 	ReadOnlyInfo,
-	DisconnectReason,
 	type ILoader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -38,7 +37,10 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import {
+	DisconnectReason,
+	type ISignalEnvelope,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IClient,

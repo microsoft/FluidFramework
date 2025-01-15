@@ -8,7 +8,6 @@ import {
 	IDeltaManagerEvents,
 	IDeltaManagerFull,
 	IDeltaQueue,
-	DisconnectReason,
 	type IDeltaSender,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
@@ -17,7 +16,10 @@ import {
 	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import {
+	DisconnectReason,
+	IThrottlingWarning,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -762,15 +764,29 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - close emits "closed"
 	 * - close cannot be called after dispose
 	 */
-	public close(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void {
+	public close(
+		errorOrReason?: ICriticalContainerError | DisconnectReason,
+		error?: ICriticalContainerError,
+	): void {
 		if (this._closed) {
 			return;
 		}
 		this._closed = true;
 
-		this.connectionManager.dispose(disconnectReason, error, true /* switchToReadonly */);
+		let finalError: ICriticalContainerError | undefined;
+		let disconnectReason: DisconnectReason | undefined;
+
+		if (typeof errorOrReason === "string") {
+			finalError = error;
+			disconnectReason = errorOrReason;
+		} else {
+			finalError = errorOrReason;
+			disconnectReason = undefined;
+		}
+
+		this.connectionManager.dispose(disconnectReason, finalError, true /* switchToReadonly */);
 		this.clearQueues();
-		this.emit("closed", error);
+		this.emit("closed", finalError);
 	}
 
 	/**

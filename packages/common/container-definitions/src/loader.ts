@@ -9,6 +9,7 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import type { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import type {
 	IClient,
 	IClientDetails,
@@ -270,24 +271,6 @@ export interface IContainerEvents extends IEvent {
 	 */
 	(event: "metadataUpdate", listener: (metadata: Record<string, string>) => void);
 }
-
-/**
- * DisconnectReason of disconnect events emitted by the {@link IContainer}.
- * @legacy
- * @alpha
- */
-export const DisconnectReason = {
-	Expected: "Expected",
-	Corruption: "Corruption",
-	Unknown: "Unknown",
-} as const;
-
-/**
- * {@inheritDoc (DisconnectReason:variable)}
- * @legacy
- * @alpha
- */
-export type DisconnectReason = (typeof DisconnectReason)[keyof typeof DisconnectReason];
 
 /**
  * Namespace for the different connection states a container can be in.

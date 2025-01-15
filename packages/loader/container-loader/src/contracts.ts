@@ -10,9 +10,9 @@ import {
 	IFluidCodeDetails,
 	isFluidPackage,
 	IConnectionDetails,
-	type DisconnectReason,
 } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IContainerPackageInfo,

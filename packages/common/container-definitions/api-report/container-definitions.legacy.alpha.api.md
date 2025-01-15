@@ -40,16 +40,6 @@ export interface ContainerWarning extends IErrorBase_2 {
     logged?: boolean;
 }
 
-// @alpha
-export const DisconnectReason: {
-    readonly Expected: "Expected";
-    readonly Corruption: "Corruption";
-    readonly Unknown: "Unknown";
-};
-
-// @alpha
-export type DisconnectReason = (typeof DisconnectReason)[keyof typeof DisconnectReason];
-
 // @public
 export interface IAudience extends IEventProvider<IAudienceEvents> {
     getMember(clientId: string): IClient | undefined;

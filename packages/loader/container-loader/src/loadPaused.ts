@@ -4,13 +4,13 @@
  */
 
 import {
-	DisconnectReason,
 	isIDeltaManagerFull,
 	LoaderHeader,
 	type IContainer,
 } from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
