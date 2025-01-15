@@ -461,8 +461,6 @@ describe("visitDelta", () => {
 			destroy: [{ id: node1, count: 1 }],
 		};
 		const expected: VisitScript = [
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -470,8 +468,6 @@ describe("visitDelta", () => {
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -509,13 +505,9 @@ describe("visitDelta", () => {
 		};
 		const expected: VisitScript = [
 			["create", [content], field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["destroy", field1, 1],
 		];
 		testDeltaVisit(delta, expected, index);
@@ -748,13 +740,9 @@ describe("visitDelta", () => {
 		};
 		const expected: VisitScript = [
 			["create", [content], field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 43 }, root: 1 }]);
@@ -779,8 +767,6 @@ describe("visitDelta", () => {
 		};
 		const expected: VisitScript = [
 			["create", [content], field0], // field0: buildId
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", barKey],
@@ -791,8 +777,6 @@ describe("visitDelta", () => {
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field2], // field2: detachId
 			["exitField", field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field2],
 			["enterNode", 0],
 			["enterField", barKey],
@@ -870,8 +854,6 @@ describe("visitDelta", () => {
 		};
 		const delta = { global: [modify] };
 		const expected: VisitScript = [
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -879,8 +861,6 @@ describe("visitDelta", () => {
 			["exitField", fooKey],
 			["exitNode", 0],
 			["exitField", field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["enterNode", 0],
 			["enterField", fooKey],
@@ -952,13 +932,9 @@ describe("visitDelta", () => {
 		};
 		const delta = { rename: [restore] };
 		const expected: VisitScript = [
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [{ id: { minor: 42 }, root: 1 }]);
@@ -985,16 +961,12 @@ describe("visitDelta", () => {
 		};
 		const expected: VisitScript = [
 			["create", [content], field1], // field1: buildId
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0], // field0: node1
 			["detach", { start: 0, end: 1 }, field2], // field2: detachId
 			["exitField", field0],
 			["enterField", field1],
 			["detach", { start: 0, end: 1 }, field3], // field3: node1
 			["exitField", field1],
-			["enterField", rootKey],
-			["exitField", rootKey],
 		];
 		testDeltaVisit(delta, expected, index);
 		assert.deepEqual(Array.from(index.entries()), [
@@ -1083,17 +1055,13 @@ describe("visitDelta", () => {
 			const buildId = { minor: 43 };
 			const expected: VisitScript = [
 				["create", [content], field0],
-				["enterField", rootKey],
 				["create", [content], field1],
-				["exitField", rootKey],
 				["enterField", field1],
 				["enterNode", 0],
 				["enterField", fooKey],
 				["exitField", fooKey],
 				["exitNode", 0],
 				["exitField", field1],
-				["enterField", rootKey],
-				["exitField", rootKey],
 				["enterField", field1],
 				["enterNode", 0],
 				["enterField", fooKey],
@@ -1133,13 +1101,9 @@ describe("visitDelta", () => {
 			rename: [rename],
 		};
 		const expected: VisitScript = [
-			["enterField", rootKey],
-			["exitField", rootKey],
 			["enterField", field0],
 			["detach", { start: 0, end: 1 }, field1],
 			["exitField", field0],
-			["enterField", rootKey],
-			["exitField", rootKey],
 		];
 		const revision = mintRevisionTag();
 		testDeltaVisit(delta, expected, index, revision);
@@ -1329,20 +1293,11 @@ describe("visitDelta", () => {
 							rename: [rename],
 						};
 						const expected: VisitScript = cycle
-							? [
-									["enterField", rootKey],
-									["exitField", rootKey],
-									["enterField", rootKey],
-									["exitField", rootKey],
-								]
+							? []
 							: [
-									["enterField", rootKey],
-									["exitField", rootKey],
 									["enterField", field0],
 									["detach", { start: 0, end: 1 }, field1],
 									["exitField", field0],
-									["enterField", rootKey],
-									["exitField", rootKey],
 								];
 						testDeltaVisit(delta, expected, index);
 						assert.deepEqual(Array.from(index.entries()), [{ id: end, root: cycle ? 0 : 1 }]);
@@ -1371,16 +1326,12 @@ describe("visitDelta", () => {
 								][ordering - 1],
 							};
 							const expected: VisitScript = [
-								["enterField", rootKey],
-								["exitField", rootKey],
 								["enterField", field0],
 								["detach", { start: 0, end: 1 }, field1],
 								["exitField", field0],
 								["enterField", field1],
 								["detach", { start: 0, end: 1 }, field2],
 								["exitField", field1],
-								["enterField", rootKey],
-								["exitField", rootKey],
 							];
 							testDeltaVisit(delta, expected, index);
 							assert.deepEqual(Array.from(index.entries()), [{ id: end, root: 2 }]);
@@ -1418,8 +1369,6 @@ describe("visitDelta", () => {
 								][ordering - 1],
 							};
 							const expected: VisitScript = [
-								["enterField", rootKey],
-								["exitField", rootKey],
 								["enterField", field0],
 								["detach", { start: 0, end: 1 }, field1],
 								["exitField", field0],
@@ -1429,8 +1378,6 @@ describe("visitDelta", () => {
 								["enterField", field2],
 								["detach", { start: 0, end: 1 }, field3],
 								["exitField", field2],
-								["enterField", rootKey],
-								["exitField", rootKey],
 							];
 							const index = makeDetachedFieldIndex("", testRevisionTagCodec, testIdCompressor);
 							index.createEntry(pointA);

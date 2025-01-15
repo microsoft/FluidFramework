@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FieldChangeDelta } from "../../feature-libraries/index.js";
 import type { Mutable } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -12,7 +13,7 @@ import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root<never> = {};
 
-export const emptyFieldChanges: FieldChanges = [];
+export const emptyFieldChanges: FieldChangeDelta = {};
 
 export function isAttachMark(mark: Mark): boolean {
 	return mark.attach !== undefined && mark.detach === undefined;
@@ -24,10 +25,6 @@ export function isDetachMark(mark: Mark): boolean {
 
 export function isReplaceMark(mark: Mark): boolean {
 	return mark.detach !== undefined && mark.attach !== undefined;
-}
-
-export function isEmptyFieldChanges(fieldChanges: FieldChanges): boolean {
-	return fieldChanges.length === 0;
 }
 
 export function deltaForRootInitialization(content: readonly ITreeCursorSynchronous[]): Root {

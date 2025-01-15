@@ -525,9 +525,8 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 			it(`${name} ○ ${name}⁻¹ === ε`, () => {
 				const inv = invertWrapped(change, tag1, true);
 				const actual = composeWrapped(change, tagRollbackInverse(inv, tag1, change.revision));
-				const delta = toDeltaWrapped(makeAnonChange(actual)).local;
-				assert(delta !== undefined);
-				assert.equal(isDeltaVisible(delta), false);
+				const delta = toDeltaWrapped(makeAnonChange(actual));
+				assert.equal(isDeltaVisible(delta.local), false);
 			});
 		}
 	});
@@ -541,9 +540,8 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 					change.revision,
 				);
 				const actual = composeWrapped(inv, change);
-				const delta = toDeltaWrapped(makeAnonChange(actual)).local;
-				assert(delta !== undefined);
-				assert.equal(isDeltaVisible(delta), false);
+				const delta = toDeltaWrapped(makeAnonChange(actual));
+				assert.equal(isDeltaVisible(delta.local), false);
 			});
 		}
 	});

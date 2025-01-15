@@ -68,7 +68,6 @@ export {
 	type PathRootPrefix,
 	deltaForRootInitialization,
 	emptyFieldChanges,
-	isEmptyFieldChanges,
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,

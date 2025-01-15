@@ -105,6 +105,8 @@ export function visitDelta(
 		rootDestructions,
 	};
 	processBuilds(delta.build, detachConfig, visitor);
+	processGlobal(delta.global, detachConfig, visitor);
+	processRename(delta.rename, detachConfig);
 	visitFieldMarks(delta.fields, visitor, detachConfig);
 	fixedPointVisitOfRoots(visitor, detachPassRoots, detachConfig);
 	transferRoots(
@@ -423,27 +425,7 @@ function detachPass(
 	fieldChanges: Delta.FieldChanges,
 	visitor: DeltaVisitor,
 	config: PassConfig,
-	global?: readonly Delta.DetachedNodeChanges[],
-	rename?: readonly Delta.DetachedNodeRename[],
 ): void {
-	if (global !== undefined) {
-		for (const { id, fields } of global) {
-			let root = config.detachedFieldIndex.tryGetEntry(id);
-			if (root === undefined) {
-				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
-				assert(tree !== undefined, 0x928 /* refresher data not found */);
-				buildTrees(id, [tree], config.detachedFieldIndex, config.latestRevision, visitor);
-				root = config.detachedFieldIndex.getEntry(id);
-			}
-			// the revision is updated for any refresher data included in the delta that is used
-			config.detachedFieldIndex.updateLatestRevision(id, config.latestRevision);
-			config.detachPassRoots.set(root, fields);
-			config.attachPassRoots.set(root, fields);
-		}
-	}
-	if (rename !== undefined) {
-		config.rootTransfers.push(...rename);
-	}
 	let index = 0;
 	for (const mark of fieldChanges) {
 		if (mark.fields !== undefined) {
@@ -496,6 +478,37 @@ function processBuilds(
 		for (const { id, trees } of builds) {
 			buildTrees(id, trees, config.detachedFieldIndex, config.latestRevision, visitor);
 		}
+	}
+}
+
+function processGlobal(
+	global: readonly Delta.DetachedNodeChanges[] | undefined,
+	config: PassConfig,
+	visitor: DeltaVisitor,
+): void {
+	if (global !== undefined) {
+		for (const { id, fields } of global) {
+			let root = config.detachedFieldIndex.tryGetEntry(id);
+			if (root === undefined) {
+				const tree = tryGetFromNestedMap(config.refreshers, id.major, id.minor);
+				assert(tree !== undefined, 0x928 /* refresher data not found */);
+				buildTrees(id, [tree], config.detachedFieldIndex, config.latestRevision, visitor);
+				root = config.detachedFieldIndex.getEntry(id);
+			}
+			// the revision is updated for any refresher data included in the delta that is used
+			config.detachedFieldIndex.updateLatestRevision(id, config.latestRevision);
+			config.detachPassRoots.set(root, fields);
+			config.attachPassRoots.set(root, fields);
+		}
+	}
+}
+
+function processRename(
+	rename: readonly Delta.DetachedNodeRename[] | undefined,
+	config: PassConfig,
+): void {
+	if (rename !== undefined) {
+		config.rootTransfers.push(...rename);
 	}
 }
 

@@ -12,7 +12,6 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	type DeltaRoot,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -20,7 +19,6 @@ import {
 	makeAnonChange,
 	mapTaggedChange,
 	revisionMetadataSourceFromInfo,
-	rootFieldKey,
 	tagChange,
 	tagRollbackInverse,
 } from "../../../core/index.js";
@@ -30,6 +28,7 @@ import {
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
 	setInCrossFieldMap,
@@ -74,7 +73,7 @@ import {
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
-	assertDeltaEqual,
+	assertFieldChangesEqual,
 	assertIsSessionId,
 	defaultRevInfosFromChanges,
 	defaultRevisionMetadataFromChanges,
@@ -490,17 +489,12 @@ export function invert(
 }
 
 export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset) {
-	assertDeltaEqual(toDelta(actual), toDelta(expected));
+	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: SF.Changeset): DeltaRoot {
+export function toDelta(change: SF.Changeset): FieldChangeDelta {
 	deepFreeze(change);
-	const { local, global, rename } = SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
-	return {
-		fields: local === undefined ? new Map([]) : new Map([[rootFieldKey, local]]),
-		global,
-		rename,
-	};
+	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
 
 export function toDeltaWrapped(change: WrappedChange) {

@@ -30,7 +30,6 @@ import {
 	type RevisionTag,
 	type TaggedChange,
 	type UpPath,
-	isEmptyFieldChanges,
 	makeDetachedNodeId,
 	mapCursorField,
 	replaceAtomRevisions,
@@ -2101,7 +2100,7 @@ function intoDeltaImpl(
 				}
 			},
 		);
-		if (fieldChanges !== undefined && !isEmptyFieldChanges(fieldChanges)) {
+		if (fieldChanges !== undefined && fieldChanges.length > 0) {
 			delta.set(field, fieldChanges);
 		}
 		if (fieldGlobal !== undefined) {
