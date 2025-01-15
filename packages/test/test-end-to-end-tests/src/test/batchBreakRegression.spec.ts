@@ -416,6 +416,11 @@ describeCompat("Batching failures", "NoCompat", (getTestObjectProvider) => {
 				try {
 					await runAndValidateBatch(provider, proxyDsf, this.timeout(), {
 						enableGroupedBatching: false,
+						compressionOptions: {
+							// If group batching is disabled, compression is disabled
+							minimumBatchSizeInBytes: Number.POSITIVE_INFINITY, // disable
+							compressionAlgorithm: CompressionAlgorithms.lz4,
+						},
 					});
 					assert.fail("expected error");
 				} catch (e) {
