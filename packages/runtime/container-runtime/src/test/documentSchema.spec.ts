@@ -406,6 +406,8 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 		);
 
+		// Accessing private field
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		assert.deepEqual((controller2 as any).documentSchema, schema);
 
 		// updates with old refSeq should fail silently.

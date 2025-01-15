@@ -35,6 +35,7 @@ import {
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
 	channelsTreeName,
+	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -579,7 +580,7 @@ describe("Data Store Context Tests", () => {
 			parentContext = {
 				IFluidDataStoreRegistry: registry,
 				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
-				containerRuntime: parentContext as any,
+				containerRuntime: parentContext as unknown as IContainerRuntimeBase ,
 			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 		});
 

@@ -43,6 +43,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
+	type IEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -113,6 +114,8 @@ const changeConnectionState = (
 	const audience = runtime.getAudience() as MockAudience;
 	audience.setCurrentClientId(clientId);
 
+	// Modifying private field
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(runtime as any)._getClientId = () => clientId;
 
 	runtime.setConnectionState(connected, clientId);
@@ -143,11 +146,12 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 }
 
 function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	// Modifying private field
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any
 	(containerRuntime as any).channelCollection = {
 		setConnectionState: (_connected: boolean, _clientId?: string) => {},
 		// Pass data store op right back to ContainerRuntime
-		reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+		reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
 			submitDataStoreOp(
 				containerRuntime,
 				envelope.address,
