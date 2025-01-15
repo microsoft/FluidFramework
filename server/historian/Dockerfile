@@ -3,7 +3,7 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-FROM node:18.17.1-buster-slim@sha256:cb2a746612c2564d3bd0f871174618337af9d0f4d895df6a623fd7a69ca6e5bd AS base
+FROM node:18.20.5-bookworm-slim@sha256:c4a278056a0f79abf472d912bbf5af6c874126ae450faad9df52069e9ad78335 AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
