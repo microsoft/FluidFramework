@@ -5,13 +5,25 @@
 
 /**
  * A browser friendly assert library.
- * Use this instead of the 'assert' package, which has a big impact on bundle sizes.
+ *
  * @param condition - The condition that should be true, if the condition is false an error will be thrown.
  * Only use this API when `false` indicates a logic error in the problem and thus a bug that should be fixed.
  * @param message - The message to include in the error when the condition does not hold.
  * A number should not be specified manually: use a string.
  * Before a release, policy-check should be run, which will convert any asserts still using strings to
  * use numbered error codes instead.
+ * @remarks
+ * Use this instead of the node 'assert' package, which requires polyfills and has a big impact on bundle sizes.
+ *
+ * Asserts using this API will be included in all configurations: there is no option to disable or optimize them out.
+ * Thus this API is suitable for detecting conditions that should terminate the application and produce a useful diagnostic message.
+ * It can be used to ensure bad states are detected early and avoid data corruption or harder to debug errors.
+ *
+ * In cases where the assert is very unlikely to have an impact on production code but is still useful as documentation and for debugging, consider using `debugAssert` instead
+ * to optimize bundle size.
+ * @privateRemarks
+ * This should be deprecated (as a non internal API) then moved to purely internal.
+ * When done the `debugAssert` reference above should be turned into a link.
  * @legacy
  * @alpha
  */
@@ -25,6 +37,10 @@ export function assert(condition: boolean, message: string | number): asserts co
 
 /**
  * Asserts that can be conditionally enabled in debug/development builds but will be optimized out of production builds.
+ *
+ * Disabled by default.
+ *
+ * If the assert must be enforced/checked in production or enabled by default, use {@link assert} instead.
  *
  * @param predicate - A pure function that should return true if the condition holds, or a string or object describing the condition that failed.
  * This function will only be run in some configurations so it should be pure, and only used to detect bugs (when debugAssert are enabled), and must not be relied on to enforce the condition is true: for that use {@link assert}.
