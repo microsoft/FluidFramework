@@ -28,8 +28,6 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
-    clientId: number;
-    // (undocumented)
     abstract clone(): ISegment;
     // (undocumented)
     protected cloneInto(b: ISegment): void;
@@ -38,33 +36,9 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
-    index: number;
-    // (undocumented)
     isLeaf(): this is ISegment;
     // (undocumented)
-    localMovedSeq?: number;
-    // (undocumented)
-    localRefs?: LocalReferenceCollection;
-    // (undocumented)
-    localRemovedSeq?: number;
-    // (undocumented)
-    localSeq?: number;
-    // (undocumented)
-    movedClientIds?: number[];
-    // (undocumented)
-    movedSeq?: number;
-    // (undocumented)
-    movedSeqs?: number[];
-    // (undocumented)
-    ordinal: string;
-    // (undocumented)
     properties?: PropertySet;
-    // (undocumented)
-    removedClientIds?: number[];
-    // (undocumented)
-    removedSeq?: number;
-    // (undocumented)
-    seq: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
@@ -73,8 +47,6 @@ export abstract class BaseSegment implements ISegment {
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     abstract readonly type: string;
-    // (undocumented)
-    wasMovedOnInsert?: boolean | undefined;
 }
 
 // @alpha
@@ -158,14 +130,6 @@ export interface IJSONTextSegment extends IJSONSegment {
 export interface IMarkerDef {
     // (undocumented)
     refType?: ReferenceType;
-}
-
-// @alpha
-export interface IMergeNodeCommon {
-    index: number;
-    // (undocumented)
-    isLeaf(): this is ISegment;
-    ordinal: string;
 }
 
 // @alpha (undocumented)
@@ -321,16 +285,6 @@ export interface IMergeTreeSegmentDelta {
 }
 
 // @alpha
-export interface IMoveInfo {
-    localMovedSeq?: number;
-    movedClientIds: number[];
-    movedSeq: number;
-    movedSeqs: number[];
-    moveDst?: ReferencePosition;
-    wasMovedOnInsert: boolean;
-}
-
-// @alpha
 export interface InteriorSequencePlace {
     // (undocumented)
     pos: number;
@@ -346,29 +300,18 @@ export interface IRelativePosition {
 }
 
 // @alpha
-export interface IRemovalInfo {
-    localRemovedSeq?: number;
-    removedClientIds: number[];
-    removedSeq: number;
-}
-
-// @alpha
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
+export interface ISegment {
     // (undocumented)
     append(segment: ISegment): void;
     attribution?: IAttributionCollection<AttributionKey>;
     cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
-    clientId: number;
     // (undocumented)
     clone(): ISegment;
-    readonly endpointType?: "start" | "end";
-    localRefs?: LocalReferenceCollection;
-    localRemovedSeq?: number;
-    localSeq?: number;
+    // (undocumented)
+    isLeaf(): this is ISegment;
     properties?: PropertySet;
-    seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
@@ -397,29 +340,6 @@ export interface ITrackingGroup {
     tracked: readonly Trackable[];
     // (undocumented)
     unlink(trackable: Trackable): boolean;
-}
-
-// @alpha @sealed
-export class LocalReferenceCollection {
-    [Symbol.iterator](): {
-        next(): IteratorResult<LocalReferencePosition>;
-        [Symbol.iterator](): IterableIterator<LocalReferencePosition>;
-    };
-    addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    addLocalRef(lref: LocalReferencePosition, offset: number): void;
-    // (undocumented)
-    static append(seg1: ISegment, seg2: ISegment): void;
-    append(other: LocalReferenceCollection): void;
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    get empty(): boolean;
-    has(lref: ReferencePosition): boolean;
-    isAfterTombstone(lref: LocalReferencePosition): boolean;
-    removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    // (undocumented)
-    static setOrGet(segment: ISegment): LocalReferenceCollection;
-    split(offset: number, splitSeg: ISegment): void;
-    walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
 // @alpha @sealed (undocumented)
@@ -567,6 +487,9 @@ export const reservedMarkerIdKey = "markerId";
 
 // @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
+
+// @alpha
+export function segmentIsRemoved(segment: ISegment): boolean;
 
 // @alpha (undocumented)
 export interface SequenceOffsets {

@@ -202,12 +202,12 @@ export {
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
+	isAncestor,
 } from "./rebase/index.js";
 
 export {
 	type Adapters,
 	AdaptedViewSchema,
-	Compatibility,
 	type TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view/index.js";

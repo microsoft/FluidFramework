@@ -4,7 +4,8 @@
  */
 
 import type { ISameContainerMigrator } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+
 import { globals } from "../jest.config.cjs";
 
 describe("same-container migration", () => {

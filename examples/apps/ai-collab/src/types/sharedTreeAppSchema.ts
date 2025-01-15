@@ -3,99 +3,120 @@
  * Licensed under the MIT License.
  */
 
-import {
-	SchemaFactory,
-	Tree,
-	TreeViewConfiguration,
-	type TreeNode,
-} from "@fluidframework/tree";
+import { ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
+import { Tree, type TreeNode, TreeViewConfiguration } from "@fluidframework/tree";
+import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import { SharedTree } from "fluid-framework";
 
 // The string passed to the SchemaFactory should be unique
-const sf = new SchemaFactory("ai-collab-sample-application");
+const sf = new SchemaFactoryAlpha("ai-collab-sample-application");
 
 // NOTE that there is currently a bug with the ai-collab library that requires us to rearrange the keys of each type to not have the same first key.
 
-export class SharedTreeTask extends sf.object("Task", {
-	title: sf.required(sf.string, {
+export class SharedTreeTask extends sf.object(
+	"Task",
+	{
+		title: sf.required(sf.string, {
+			metadata: {
+				description: `The title of the task.`,
+			},
+		}),
+		id: sf.identifier,
+		description: sf.required(sf.string, {
+			metadata: {
+				description: `The description of the task.`,
+			},
+		}),
+		priority: sf.required(sf.string, {
+			metadata: {
+				description: `The priority of the task which can ONLY be one of three levels: "Low", "Medium", "High" (case-sensitive).`,
+			},
+		}),
+		complexity: sf.required(sf.number, {
+			metadata: {
+				description: `The complexity of the task as a fibonacci number.`,
+			},
+		}),
+		status: sf.required(sf.string, {
+			metadata: {
+				description: `The status of the task which can ONLY be one of the following values: "To Do", "In Progress", "Done"  (case-sensitive).`,
+			},
+		}),
+		assignee: sf.required(sf.string, {
+			metadata: {
+				description: `The name of the tasks assignee e.g. "Bob" or "Alice".`,
+			},
+		}),
+	},
+	{
 		metadata: {
-			description: `The title of the task.`,
+			description: `A task that can be assigned to an engineer.`,
 		},
-	}),
-	id: sf.identifier,
-	description: sf.required(sf.string, {
-		metadata: {
-			description: `The description of the task.`,
-		},
-	}),
-	priority: sf.required(sf.string, {
-		metadata: {
-			description: `The priority of the task which can ONLY be one of three levels: "Low", "Medium", "High" (case-sensitive).`,
-		},
-	}),
-	complexity: sf.required(sf.number, {
-		metadata: {
-			description: `The complexity of the task as a fibonacci number.`,
-		},
-	}),
-	status: sf.required(sf.string, {
-		metadata: {
-			description: `The status of the task which can ONLY be one of the following values: "To Do", "In Progress", "Done"  (case-sensitive).`,
-		},
-	}),
-	assignee: sf.required(sf.string, {
-		metadata: {
-			description: `The name of the tasks assignee e.g. "Bob" or "Alice".`,
-		},
-	}),
-}) {}
+	},
+) {}
 
 export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
 
-export class SharedTreeEngineer extends sf.object("Engineer", {
-	name: sf.required(sf.string, {
+export class SharedTreeEngineer extends sf.object(
+	"Engineer",
+	{
+		name: sf.required(sf.string, {
+			metadata: {
+				description: `The name of the engineer.`,
+			},
+		}),
+		id: sf.identifier,
+		skills: sf.required(sf.string, {
+			metadata: {
+				description: `A description of the engineer's skills, which influence what types of tasks they should be assigned to.`,
+			},
+		}),
+		maxCapacity: sf.required(sf.number, {
+			metadata: {
+				description: `The maximum capacity of tasks this engineer can handle, measured in task complexity points.`,
+			},
+		}),
+	},
+	{
 		metadata: {
-			description: `The name of an engineer whom can be assigned to a task.`,
+			description: `An engineer to whom tasks may be assigned.`,
 		},
-	}),
-	id: sf.identifier,
-	skills: sf.required(sf.string, {
-		metadata: {
-			description: `A description of the engineers skills which influence what types of tasks they should be assigned to.`,
-		},
-	}),
-	maxCapacity: sf.required(sf.number, {
-		metadata: {
-			description: `The maximum capacity of tasks this engineer can handle measured in in task complexity points.`,
-		},
-	}),
-}) {}
+	},
+) {}
 
 export class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
 
-export class SharedTreeTaskGroup extends sf.object("TaskGroup", {
-	description: sf.required(sf.string, {
+export class SharedTreeTaskGroup extends sf.object(
+	"TaskGroup",
+	{
+		description: sf.required(sf.string, {
+			metadata: {
+				description: `The description of the task group.`,
+			},
+		}),
+		id: sf.identifier,
+		title: sf.required(sf.string, {
+			metadata: {
+				description: `The title of the task group.`,
+			},
+		}),
+		tasks: sf.required(SharedTreeTaskList, {
+			metadata: {
+				description: `The lists of tasks within this task group.`,
+			},
+		}),
+		engineers: sf.required(SharedTreeEngineerList, {
+			metadata: {
+				description: `The lists of engineers within this task group to whom tasks may be assigned.`,
+			},
+		}),
+	},
+	{
 		metadata: {
-			description: `The description of the task group, which is a collection of tasks and engineers that can be assigned to said tasks.`,
+			description: "A collection of tasks and engineers to whom tasks may be assigned.",
 		},
-	}),
-	id: sf.identifier,
-	title: sf.required(sf.string, {
-		metadata: {
-			description: `The title of the task group.`,
-		},
-	}),
-	tasks: sf.required(SharedTreeTaskList, {
-		metadata: {
-			description: `The lists of tasks within this task group.`,
-		},
-	}),
-	engineers: sf.required(SharedTreeEngineerList, {
-		metadata: {
-			description: `The lists of engineers within this task group which can be assigned to tasks.`,
-		},
-	}),
-}) {}
+	},
+) {}
 
 export class SharedTreeTaskGroupList extends sf.array("TaskGroupList", SharedTreeTaskGroup) {}
 
@@ -179,7 +200,14 @@ export const INITIAL_APP_STATE = {
 } as const;
 
 export const CONTAINER_SCHEMA = {
-	initialObjects: { appState: SharedTree },
+	initialObjects: {
+		appState: SharedTree,
+		/**
+		 * A Presence Manager object temporarily needs to be placed within container schema
+		 * https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
+		 * */
+		presence: ExperimentalPresenceManager,
+	},
 };
 
 export const TREE_CONFIGURATION = new TreeViewConfiguration({

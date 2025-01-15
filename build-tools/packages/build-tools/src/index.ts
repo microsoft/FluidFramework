@@ -15,7 +15,6 @@ export {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "./common/npmPackage";
-export { Timer } from "./common/timer";
 
 // For repo policy check
 export {

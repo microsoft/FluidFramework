@@ -72,8 +72,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly clientDetails: IClientDetails;
     createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
-    // @deprecated (undocumented)
-    _createDataStoreWithProps(pkg: Readonly<string | string[]>, props?: any, id?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
@@ -95,7 +93,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 // @alpha @sealed (undocumented)
 export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
-    (event: "batchEnd", listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
+    (event: "batchEnd", listener: (error: unknown, op: Omit<ISequencedDocumentMessage, "contents">) => void): any;
     (event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void): any;
     // (undocumented)
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
