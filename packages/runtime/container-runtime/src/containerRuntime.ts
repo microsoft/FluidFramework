@@ -508,6 +508,16 @@ export interface IContainerRuntimeOptions {
 	readonly enableRuntimeIdCompressor?: IdCompressorMode;
 
 	/**
+	 * If enabled, the runtime will group messages within a batch into a single
+	 * message to be sent to the service.
+	 * The grouping and ungrouping of such messages is handled by the "OpGroupingManager".
+	 *
+	 * By default, the feature is enabled. This feature can only be disabled when compression is also disabled.
+	 * @deprecated  The ability to disable Grouped Batching is deprecated and will be removed in a future release. This feature is required for the proper functioning of the Fluid Framework.
+	 */
+	readonly enableGroupedBatching?: boolean;
+
+	/**
 	 * When this property is set to true, it requires runtime to control is document schema properly through ops
 	 * The benefit of this mode is that clients who do not understand schema will fail in predictable way, with predictable message,
 	 * and will not attempt to limp along, which could cause data corruptions and crashes in random places.
@@ -1549,7 +1559,6 @@ export class ContainerRuntime
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
 		this.runtimeOptions = {
 			flushMode: defaultFlushMode,
-			enableGroupedBatching: true,
 			...runtimeOptions,
 		};
 		this.logger = createChildLogger({ logger: this.baseLogger });
@@ -3422,25 +3431,6 @@ export class ContainerRuntime
 			Array.isArray(pkg) ? pkg : [pkg],
 			undefined, // props
 			loadingGroupId,
-		);
-		return channelToDataStore(
-			await context.realize(),
-			context.id,
-			this.channelCollection,
-			this.mc.logger,
-		);
-	}
-
-	/**
-	 * @deprecated 0.16 Issue #1537, #3631
-	 */
-	public async _createDataStoreWithProps(
-		pkg: Readonly<string | string[]>,
-		props?: any,
-	): Promise<IDataStore> {
-		const context = this.channelCollection.createDataStoreContext(
-			Array.isArray(pkg) ? pkg : [pkg],
-			props,
 		);
 		return channelToDataStore(
 			await context.realize(),

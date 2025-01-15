@@ -32,6 +32,7 @@ import {
 	brand,
 	fail,
 	idAllocatorFromMaxId,
+	newTupleBTree,
 } from "../../util/index.js";
 import {
 	type FieldBatchCodec,
@@ -65,7 +66,7 @@ import type {
 	NodeId,
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import { newCrossFieldKeyTable, newTupleBTree } from "./modularChangeFamily.js";
+import { newCrossFieldKeyTable } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,

@@ -10,7 +10,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { MockLogger2, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
 import type { InboundSequencedContainerRuntimeMessage } from "../messageTypes.js";
@@ -30,7 +30,7 @@ type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessag
 };
 
 describe("Pending State Manager", () => {
-	const mockLogger = new MockLogger2();
+	const mockLogger = new MockLogger();
 	const logger = createChildLogger({ logger: mockLogger });
 
 	afterEach("ThrowOnErrorLogs", () => {
