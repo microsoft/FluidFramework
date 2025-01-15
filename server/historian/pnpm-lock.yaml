@@ -733,14 +733,14 @@ packages:
   '@fluidframework/gitresources@6.0.0-310414':
     resolution: {integrity: sha512-cfxbG0aWG3D3TX7lxK5KzMw8SBirbglA7d8bESF6/qTlypeUKspH5daTkxkhLQL8esgDQQC6L0jkVuyASvKmJQ==}
 
-  '@fluidframework/gitresources@6.0.0-314981':
-    resolution: {integrity: sha512-sekpJ/DXBDke5INPbHKYhlqrmJHOq6m0MHulu9RyrzwF9KuAkqbtfofm0RMmkB7720W8hgj8KCwwklMtY9MrfQ==}
+  '@fluidframework/gitresources@6.0.0-317195':
+    resolution: {integrity: sha512-LAuLuMylGR93itPgY/aM3BEuXvsjCyZEHFOivXExg0TZnsJYClmNgI6zkbG4f97Asaj5iFkuz/fs4wRwXcU2bA==}
 
   '@fluidframework/protocol-base@6.0.0-287165':
     resolution: {integrity: sha512-6C8tS3TIH/ABpBvLlicLaj1oAdAR6JguTKj4FBeNVJcyInE/jn65IXVK8u3Eh00nFs8SG13m3FKVKgZd0fmF0A==}
 
-  '@fluidframework/protocol-base@6.0.0-314981':
-    resolution: {integrity: sha512-SC3Jyfj1fXF1OZtv07mRT7N7dg8+CJvniYvs1UU0m0FS4tdncQ2aDGi3Kmp8asiCB5ygZPf2bl/CY/fSL3ACJw==}
+  '@fluidframework/protocol-base@6.0.0-317195':
+    resolution: {integrity: sha512-YsSJHOeCKvbJuBnQHFQipKEkjwiU+JPSALOttF7QjSCaEaI+89nc+mISXsf2NqQ8BKCfyWHCrd92M6ZBI56ucA==}
 
   '@fluidframework/protocol-definitions@3.2.0':
     resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
@@ -748,47 +748,47 @@ packages:
   '@fluidframework/server-services-client@6.0.0-287165':
     resolution: {integrity: sha512-vZ3n96/gCCQnR0w11RZSygj242HCV6pJIfNRiQt5PbUJma75KKXrkH6R9w9skbQTHa8XJ7fpNAimKdqXfUv8PQ==}
 
-  '@fluidframework/server-services-client@6.0.0-314981':
-    resolution: {integrity: sha512-JumAPKV9Gg6idq8ORRnsVyTwUhHgU1lmkNWjRSpNmf+Lt29zjR1YPIF1L/lg6/avN5BvTnpZ/LDMmaiIA64jDA==}
+  '@fluidframework/server-services-client@6.0.0-317195':
+    resolution: {integrity: sha512-44oOmHvqD0HZ1VOAxk9QuP6cE6/Lw4w6LKzFvM/P1awLlXD2i0ZLPi82S99XrWiFUEXMJUE/2Co4UA0w2yC43A==}
 
   '@fluidframework/server-services-core@6.0.0-287165':
     resolution: {integrity: sha512-bWYAOJEpQjy5eTGBcTes07nzENkaKbxDz4GtBp9GOD69TiooENxWeryz2HmWsNL7ZeDvZ1j5ozAtLsy5dBSMug==}
 
-  '@fluidframework/server-services-core@6.0.0-314981':
-    resolution: {integrity: sha512-6ymzKG42lmkpBtFGzENu0xNFTGdIC0zXCSHSbP0OkMFcUbwtKRkJJv+4jSY38Sd8ddHGmwq7HBBwMnboDuBE3g==}
+  '@fluidframework/server-services-core@6.0.0-317195':
+    resolution: {integrity: sha512-apm7UT36gupH5c2aXzhBMUP+YzaQjsKSABYUEzXvCAh0PYzjhp6Zvv5OcTrALitmwnrTUIGox/xr7rol1pAoUA==}
 
-  '@fluidframework/server-services-ordering-kafkanode@6.0.0-314981':
-    resolution: {integrity: sha512-+skGQI2nMNO+UuZ2VfE/kmlCkFXMj0tTxiHUiUWoGHS8fCqF590LuO7ozJUwKfgm9uh5nCsukyUkieSd7exy3Q==}
+  '@fluidframework/server-services-ordering-kafkanode@6.0.0-317195':
+    resolution: {integrity: sha512-ybi992UWfm+bfeibMdU/+boZftHLAOWJIPNX/2f6a7PGTFe8sdhXnMMdQAdEt8ql1BIiNbkisV/ONFNVMjonqA==}
 
-  '@fluidframework/server-services-ordering-rdkafka@6.0.0-314981':
-    resolution: {integrity: sha512-OTRsyzdE0WO+ysx6ax5CcmTcFzrxjKuffsyRrcrFk9Wd815CB8V5iA9GgY3mpiwRcdPHx4cdKUpbmQpcoM5NVw==}
+  '@fluidframework/server-services-ordering-rdkafka@6.0.0-317195':
+    resolution: {integrity: sha512-QI9TKrObwFHVtZuEPxCBo1B3iSgAEZ6ILpHvITNdOfZ+hKa5/a3XuO2V1YCcyLnE/kUSp5eCDfagkmW8UUKGOw==}
 
-  '@fluidframework/server-services-ordering-zookeeper@6.0.0-314981':
-    resolution: {integrity: sha512-jeu4bwLps9mfsxnC9sYggJZXXlgWqQEsC3eKFpR3p6vFAKgK4IBo5dV4GuHx36uVM9Tx9bce6U4CbNbM5wn6tw==}
+  '@fluidframework/server-services-ordering-zookeeper@6.0.0-317195':
+    resolution: {integrity: sha512-TJ8blkLmoeaTfSDRxglA+fxBNjgcRWDIY+ThYyRZO5lP+O5pY8uFuQ4QHvW5ofuqXirKalxWYWTpGjJrq+0Jew==}
 
   '@fluidframework/server-services-shared@6.0.0-287165':
     resolution: {integrity: sha512-hUcGH3/61AwGGxeV0gssj7VwD2/Pjh7j3M+X/7PLhc3L8UT2NMiOUDw9XFI+5IgS1VeZp6mLRmDqEYHFPIVdlw==}
 
-  '@fluidframework/server-services-shared@6.0.0-314981':
-    resolution: {integrity: sha512-hdEeGqcUatHtc/CIEMeCn8vp3lBW0QH96WDiJfSm+/O3DBETGsv8gv2rW+sLFwo5IXf+cmEHA5IVWKPb1ekJLQ==}
+  '@fluidframework/server-services-shared@6.0.0-317195':
+    resolution: {integrity: sha512-nRic+D+R4r6Fgu746lqmwDQVt4nQFIECKlBndZCpVGB+hWeDddJR8kxNLB6kaYZD6UZAZvtYgfnpIRAt/rc+eQ==}
 
   '@fluidframework/server-services-telemetry@6.0.0-287165':
     resolution: {integrity: sha512-atRyaaoowJh90XmIdjvybMwHyxQBaV2FpXIOfHPQnW4xzaD72sngD4jecedYijX5flvexupL3PhHq7uVHRezzg==}
 
-  '@fluidframework/server-services-telemetry@6.0.0-314981':
-    resolution: {integrity: sha512-Y9MIjSyNy+anoNU52nYjN3jFezkpe6W2+wzBzBJL07Qtnk81rMW7l55ndXor0tJI2yF9rdz7EfHgwLPEFkHaqw==}
+  '@fluidframework/server-services-telemetry@6.0.0-317195':
+    resolution: {integrity: sha512-J+YRXcKH7/4XA/PNRH1Ha4beDAa/es8NIQYYYcv/mTIwSpe/EazwVFZG+BdC3IcehSIHMelcl1SZghghz9yArg==}
 
   '@fluidframework/server-services-utils@6.0.0-287165':
     resolution: {integrity: sha512-29ZIPdjVNg9tKr3S1Xs22+FOSztVwq/ZnqSD/v6WyqpH3ack5NpDy2oxw509XVW3Bd8xln9ReV+xm0pgUdONAw==}
 
-  '@fluidframework/server-services-utils@6.0.0-314981':
-    resolution: {integrity: sha512-b0z9w5oIfLT9PGSNkMVMiU/2E6sy2fZ+d6pQw+DiDSCvM/nIG7lURyJxkHeQXIyGT2B7AIRlmXid9Vix2DVJrA==}
+  '@fluidframework/server-services-utils@6.0.0-317195':
+    resolution: {integrity: sha512-xBcxifDU+zoZ683nU1T1LeOIyJv/1+pCCcLl4Yl+SzAj6wgg54L2i1pf7Q/ok7/d9wGWCNr+HyET7vkU0QFYzQ==}
 
-  '@fluidframework/server-services@6.0.0-314981':
-    resolution: {integrity: sha512-WA5wfJ89cl3SH/n+CQ/62wctH2rSm3fAruNnDIbg49N7AFl41jbVsdGVSwNmPCcRj/eANnDRy4aLoY8zAonnnw==}
+  '@fluidframework/server-services@6.0.0-317195':
+    resolution: {integrity: sha512-usASG1x5/kRNizDhUZM5/H/dMH6V1uYj+cWeB0cEnxw4m0YBGNpA0u4zoyDcHyNEnjIw8uLCx6ld2bUqiX4cEQ==}
 
-  '@fluidframework/server-test-utils@6.0.0-314981':
-    resolution: {integrity: sha512-cFTxtZQI3XBKjmW8nezdOc09jZajYMH3QUNih8L32BwxCb6KGqitdcwyYxJ3d+MR8vvA2uNsn0X2UdIsR5kQcA==}
+  '@fluidframework/server-test-utils@6.0.0-317195':
+    resolution: {integrity: sha512-tQrahVeiMym2dxZb2Sh11Ubv4+ylueE7cZXLHPgV7PW1+vhFwH0mxXcWkNvkRyf8bb/s/Ilh5YAiN68xYE/1fA==}
 
   '@gar/promisify@1.1.3':
     resolution: {integrity: sha512-k2Ty1JcVojjJFwrg/ThKi2ujJ7XNLYaFGNB/bWT9wGR+oSMJHMa5w+CUq6p/pVrKeNNgA7pCqEcjSnHVoqJQFw==}
@@ -7791,8 +7791,7 @@ snapshots:
 
   '@fluidframework/gitresources@6.0.0-310414': {}
 
-  /@fluidframework/gitresources@6.0.0-317195:
-    resolution: {integrity: sha512-LAuLuMylGR93itPgY/aM3BEuXvsjCyZEHFOivXExg0TZnsJYClmNgI6zkbG4f97Asaj5iFkuz/fs4wRwXcU2bA==}
+  '@fluidframework/gitresources@6.0.0-317195': {}
 
   '@fluidframework/protocol-base@6.0.0-287165':
     dependencies:
@@ -7801,8 +7800,7 @@ snapshots:
       '@fluidframework/protocol-definitions': 3.2.0
       events_pkg: events@3.3.0
 
-  /@fluidframework/protocol-base@6.0.0-317195:
-    resolution: {integrity: sha512-YsSJHOeCKvbJuBnQHFQipKEkjwiU+JPSALOttF7QjSCaEaI+89nc+mISXsf2NqQ8BKCfyWHCrd92M6ZBI56ucA==}
+  '@fluidframework/protocol-base@6.0.0-317195':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 6.0.0-317195
@@ -7828,8 +7826,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/server-services-client@6.0.0-317195:
-    resolution: {integrity: sha512-44oOmHvqD0HZ1VOAxk9QuP6cE6/Lw4w6LKzFvM/P1awLlXD2i0ZLPi82S99XrWiFUEXMJUE/2Co4UA0w2yC43A==}
+  '@fluidframework/server-services-client@6.0.0-317195':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 6.0.0-317195
@@ -7861,8 +7858,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/server-services-core@6.0.0-317195:
-    resolution: {integrity: sha512-apm7UT36gupH5c2aXzhBMUP+YzaQjsKSABYUEzXvCAh0PYzjhp6Zvv5OcTrALitmwnrTUIGox/xr7rol1pAoUA==}
+  '@fluidframework/server-services-core@6.0.0-317195':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 6.0.0-317195
@@ -7877,36 +7873,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/server-services-ordering-kafkanode@6.0.0-317195:
-    resolution: {integrity: sha512-ybi992UWfm+bfeibMdU/+boZftHLAOWJIPNX/2f6a7PGTFe8sdhXnMMdQAdEt8ql1BIiNbkisV/ONFNVMjonqA==}
+  '@fluidframework/server-services-ordering-kafkanode@6.0.0-317195':
     dependencies:
       '@fluidframework/server-services-client': 6.0.0-317195
       '@fluidframework/server-services-core': 6.0.0-317195
       '@fluidframework/server-services-ordering-zookeeper': 6.0.0-317195
       '@fluidframework/server-services-telemetry': 6.0.0-317195
-      events_pkg: /events@3.3.0
+      events_pkg: events@3.3.0
       kafka-node: 5.0.0
       nconf: 0.12.0
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/server-services-ordering-rdkafka@6.0.0-317195:
-    resolution: {integrity: sha512-QI9TKrObwFHVtZuEPxCBo1B3iSgAEZ6ILpHvITNdOfZ+hKa5/a3XuO2V1YCcyLnE/kUSp5eCDfagkmW8UUKGOw==}
+  '@fluidframework/server-services-ordering-rdkafka@6.0.0-317195':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/server-services-client': 6.0.0-317195
       '@fluidframework/server-services-core': 6.0.0-317195
       '@fluidframework/server-services-telemetry': 6.0.0-317195
-      events_pkg: /events@3.3.0
+      events_pkg: events@3.3.0
       nconf: 0.12.0
       node-rdkafka: 3.0.1
       sillyname: 0.1.0
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/server-services-ordering-zookeeper@6.0.0-317195:
-    resolution: {integrity: sha512-TJ8blkLmoeaTfSDRxglA+fxBNjgcRWDIY+ThYyRZO5lP+O5pY8uFuQ4QHvW5ofuqXirKalxWYWTpGjJrq+0Jew==}
+  '@fluidframework/server-services-ordering-zookeeper@6.0.0-317195':
     dependencies:
       '@fluidframework/server-services-core': 6.0.0-317195
       zookeeper: 5.6.0
@@ -7944,8 +7937,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  /@fluidframework/server-services-shared@6.0.0-317195:
-    resolution: {integrity: sha512-nRic+D+R4r6Fgu746lqmwDQVt4nQFIECKlBndZCpVGB+hWeDddJR8kxNLB6kaYZD6UZAZvtYgfnpIRAt/rc+eQ==}
+  '@fluidframework/server-services-shared@6.0.0-317195':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 6.0.0-317195
@@ -7977,18 +7969,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  /@fluidframework/server-services-telemetry@6.0.0-287165:
-    resolution: {integrity: sha512-atRyaaoowJh90XmIdjvybMwHyxQBaV2FpXIOfHPQnW4xzaD72sngD4jecedYijX5flvexupL3PhHq7uVHRezzg==}
-    dependencies:
-      '@fluidframework/common-utils': 3.1.0
-      json-stringify-safe: 5.0.1
-      path-browserify: 1.0.1
-      serialize-error: 8.1.0
-      uuid: 9.0.1
-    dev: false
-
-  /@fluidframework/server-services-telemetry@6.0.0-317195:
-    resolution: {integrity: sha512-J+YRXcKH7/4XA/PNRH1Ha4beDAa/es8NIQYYYcv/mTIwSpe/EazwVFZG+BdC3IcehSIHMelcl1SZghghz9yArg==}
+  '@fluidframework/server-services-telemetry@6.0.0-287165':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       json-stringify-safe: 5.0.1
@@ -7996,7 +7977,7 @@ snapshots:
       serialize-error: 8.1.0
       uuid: 9.0.1
 
-  '@fluidframework/server-services-telemetry@6.0.0-314981':
+  '@fluidframework/server-services-telemetry@6.0.0-317195':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       json-stringify-safe: 5.0.1
@@ -8026,8 +8007,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/server-services-utils@6.0.0-317195:
-    resolution: {integrity: sha512-xBcxifDU+zoZ683nU1T1LeOIyJv/1+pCCcLl4Yl+SzAj6wgg54L2i1pf7Q/ok7/d9wGWCNr+HyET7vkU0QFYzQ==}
+  '@fluidframework/server-services-utils@6.0.0-317195':
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 6.0.0-317195
@@ -8049,8 +8029,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/server-services@6.0.0-317195:
-    resolution: {integrity: sha512-usASG1x5/kRNizDhUZM5/H/dMH6V1uYj+cWeB0cEnxw4m0YBGNpA0u4zoyDcHyNEnjIw8uLCx6ld2bUqiX4cEQ==}
+  '@fluidframework/server-services@6.0.0-317195':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-definitions': 3.2.0
@@ -8082,8 +8061,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  /@fluidframework/server-test-utils@6.0.0-317195:
-    resolution: {integrity: sha512-tQrahVeiMym2dxZb2Sh11Ubv4+ylueE7cZXLHPgV7PW1+vhFwH0mxXcWkNvkRyf8bb/s/Ilh5YAiN68xYE/1fA==}
+  '@fluidframework/server-test-utils@6.0.0-317195':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 6.0.0-317195
