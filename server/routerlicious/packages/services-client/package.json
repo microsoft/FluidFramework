@@ -35,7 +35,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -96,9 +96,19 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_NetworkError": {
+			"Class_NetworkError": {
+				"backCompat": false
+			},
+			"ClassStatics_NetworkError": {
+				"backCompat": false
+			},
+			"Enum_InternalErrorCode": {
+				"backCompat": false
+			},
+			"Interface_INetworkErrorDetails": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

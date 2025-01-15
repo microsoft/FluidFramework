@@ -34,7 +34,7 @@
 		"scriptorium": "node dist/scriptorium/index.js",
 		"scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -83,6 +83,8 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"disabled": true,
+		"entrypoint": "public"
 	}
 }

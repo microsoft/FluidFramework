@@ -29,7 +29,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:debug": "mocha inspect --recursive \"dist/test/*.spec.*js\"",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -107,6 +107,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "public"
 	}
 }

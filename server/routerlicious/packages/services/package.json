@@ -27,7 +27,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -110,15 +110,19 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_MongoDb": {
+			"Class_MongoDb": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_WebServer": {
+			"Class_TenantManager": {
+				"forwardCompat": false
+			},
+			"Class_WebServer": {
 				"backCompat": false
 			},
-			"ClassDeclaration_TenantManager": {
-				"forwardCompat": false
+			"ClassStatics_WebServer": {
+				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

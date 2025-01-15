@@ -24,7 +24,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -54,9 +54,10 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_KafkaOrdererConnection": {
+			"Class_KafkaOrdererConnection": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

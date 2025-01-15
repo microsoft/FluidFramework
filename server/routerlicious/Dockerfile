@@ -42,7 +42,7 @@ RUN chmod +x /tini
 FROM runnerbase AS base
 
 # Routerlicious's root release directory has a 'file:' devDependency on this package. Despite it not being used in the docker
-# container, we thus copy just the package.json there to ensure this dependency is resolvable.
+# container, we thus copy just the package.json there to ensure this dependency is resolvable. This won't be persisted in the runner image anyway.
 WORKDIR $BUILD_ROOT
 COPY --from=root packages/tools/changelog-generator-wrapper/package.json packages/tools/changelog-generator-wrapper/
 

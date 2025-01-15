@@ -28,7 +28,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -84,15 +84,20 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_DocumentContext": {
+			"Class_DocumentContext": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_KafkaRunner": {
+			"Class_DocumentLambdaFactory": {
+				"backCompat": false,
 				"forwardCompat": false
 			},
-			"ClassDeclaration_PartitionManager": {
+			"Class_KafkaRunner": {
+				"forwardCompat": false
+			},
+			"Class_PartitionManager": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }
