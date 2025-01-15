@@ -382,10 +382,10 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO : breaking change
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	reSubmit(type: string, content: any, localOpMetadata: unknown);
 
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO : breaking change
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
 
 	/**
@@ -394,7 +394,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO : breaking change
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	rollback?(type: string, content: any, localOpMetadata: unknown): void;
 
 	/**
@@ -442,7 +442,7 @@ export interface IPendingMessagesState {
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
 		Partial<IProvideFluidDataStoreRegistry> {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO : breaking change
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
@@ -495,7 +495,7 @@ export interface IFluidParentContext
 	 * the server. This will be sent back when this message is received back from the server. This is also sent if
 	 * we are asked to resubmit the message.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO : breaking change
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	submitMessage(type: string, content: any, localOpMetadata: unknown): void;
 
 	/**
@@ -585,7 +585,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 */
 	// Seems like this can be removed now; the issues mentioned in the @deprecated tag are about _createDataStoreWithProps
 	// which we finally removed in FF 2.20 (https://github.com/microsoft/FluidFramework/pull/22996).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO : breaking change
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly createProps?: any;
 
 	/**

@@ -23,7 +23,7 @@ export interface IEnvelope {
 	/**
 	 * The contents of the envelope
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: breaking change
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	contents: any;
 }
 
