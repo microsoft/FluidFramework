@@ -30,6 +30,7 @@ interface IPackedContentsContents {
  */
 export class OpDecompressor {
 	private activeBatch = false;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private rootMessageContents: any | undefined;
 	private processedCount = 0;
 	private readonly logger;
@@ -162,7 +163,7 @@ export class OpDecompressor {
 // We should not be mutating the input message nor its metadata
 const newMessage = (
 	originalMessage: ISequencedDocumentMessage,
-	contents: any,
+	contents: unknown,
 ): ISequencedDocumentMessage => ({
 	...originalMessage,
 	contents,
@@ -172,5 +173,5 @@ const newMessage = (
 	metadata:
 		originalMessage.metadata === undefined
 			? undefined
-			: { ...(originalMessage.metadata as any) },
+			: { ...originalMessage.metadata },
 });
