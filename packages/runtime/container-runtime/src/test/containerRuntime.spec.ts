@@ -93,7 +93,7 @@ import {
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
 	id: string,
-	contents: any,
+	contents: unknown,
 	localOpMetadata?: unknown,
 ) {
 	runtime.submitMessage(
@@ -167,6 +167,7 @@ describe("Runtime", () => {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let submittedOps: any[] = [];
 	let submittedSignals: ISignalEnvelopeWithClientIds[] = [];
 	let opFakeSequenceNumber = 1;
@@ -226,7 +227,7 @@ describe("Runtime", () => {
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
 			getLoadedFromVersion: () => loadedFromVersion,
-			submitFn: (_type: MessageType, contents: any, _batch: boolean, metadata?: unknown) => {
+			submitFn: (_type: MessageType, contents: object, _batch: boolean, metadata?: unknown) => {
 				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
 			},
@@ -335,6 +336,7 @@ describe("Runtime", () => {
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).ensureNoDataModelChanges = (callback) => {
 					callback();
 					callsToEnsure++;
@@ -343,6 +345,7 @@ describe("Runtime", () => {
 
 				// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
 				submitDataStoreOp(containerRuntime, "1", "test", { emptyBatch: true });
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
 
@@ -387,10 +390,12 @@ describe("Runtime", () => {
 
 					// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
 					submitDataStoreOp(containerRuntime, "1", "test");
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(containerRuntime as any).flush();
 
 					submitDataStoreOp(containerRuntime, "2", "test");
 					changeConnectionState(containerRuntime, true, mockClientId);
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(containerRuntime as any).flush();
 
 					assert.strictEqual(submittedOps.length, 2);
@@ -435,6 +440,7 @@ describe("Runtime", () => {
 				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					let mockContext: Partial<IContainerContext>;
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const submittedOpsMetadata: any[] = [];
 					const containerErrors: ICriticalContainerError[] = [];
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
@@ -454,9 +460,10 @@ describe("Runtime", () => {
 							updateDirtyContainerState: (_dirty: boolean) => {},
 							submitFn: (
 								_type: MessageType,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								contents: any,
 								_batch: boolean,
-								appData?: any,
+								appData?: unknown,
 							) => {
 								if (contents.type === "groupedBatch") {
 									for (const subMessage of contents.contents) {
@@ -505,6 +512,7 @@ describe("Runtime", () => {
 					it("Can't call flush() inside orderSequentially's callback", () => {
 						assert.throws(() =>
 							containerRuntime.orderSequentially(() => {
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								(containerRuntime as any).flush();
 							}),
 						);
@@ -523,6 +531,7 @@ describe("Runtime", () => {
 						assert.throws(() =>
 							containerRuntime.orderSequentially(() =>
 								containerRuntime.orderSequentially(() => {
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any
 									(containerRuntime as any).flush();
 								}),
 							),
@@ -542,6 +551,7 @@ describe("Runtime", () => {
 						containerRuntime.orderSequentially(() => {
 							try {
 								containerRuntime.orderSequentially(() => {
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any
 									(containerRuntime as any).flush();
 								});
 							} catch (e) {
@@ -595,6 +605,7 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "2", "test");
 							submitDataStoreOp(containerRuntime, "3", "test");
 						});
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(submittedOpsMetadata.length, 3, "3 messages should be sent");
@@ -625,6 +636,7 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "2", "test");
 							submitDataStoreOp(containerRuntime, "3", "test");
 						});
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(containerRuntime as any).flush();
 
 						containerRuntime.orderSequentially(() => {
@@ -632,6 +644,7 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "5", "test");
 							submitDataStoreOp(containerRuntime, "6", "test");
 						});
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(submittedOpsMetadata.length, 0, "no messages should be sent");
@@ -901,6 +914,8 @@ describe("Runtime", () => {
 				pendingStateManager: PendingStateManager,
 				_maxReconnects: number | undefined = undefined,
 			) {
+				// Modifying private fields
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const runtime = containerRuntime as any;
 				runtime.pendingStateManager = pendingStateManager;
 				runtime.channelCollection = getMockChannelCollection();
@@ -1156,7 +1171,7 @@ describe("Runtime", () => {
 				patched.channelCollection = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+					reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
 						submitDataStoreOp(
 							containerRuntime,
 							envelope.address,
@@ -1177,6 +1192,7 @@ describe("Runtime", () => {
 				submitDataStoreOp(patchedContainerRuntime, "1", "test");
 				submitDataStoreOp(patchedContainerRuntime, "2", "test");
 				patchedContainerRuntime.submit({
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					type: "FUTURE_TYPE" as any,
 					contents: "3",
 				});
@@ -1266,10 +1282,10 @@ describe("Runtime", () => {
 				});
 
 				assert.equal(
-					(runtime as unknown as { method1: () => any }).method1(),
+					(runtime as unknown as { method1: () => unknown }).method1(),
 					"mixed in return",
 				);
-				assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
+				assert.equal((runtime as unknown as { method2: () => unknown }).method2(), 42);
 			});
 		});
 
@@ -1314,6 +1330,7 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				const responseFromRequestMethod = await (containerRuntime as any).request({
 					url: "/",
 				});
@@ -1346,12 +1363,14 @@ describe("Runtime", () => {
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				pendingStateManager = (containerRuntime as any).pendingStateManager;
 			});
 
 			it("modifying op content after submit does not reflect in PendingStateManager", () => {
 				const content = { prop1: 1 };
 				submitDataStoreOp(containerRuntime, "1", content);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).flush();
 
 				content.prop1 = 2;
@@ -1850,7 +1869,7 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
+				const mockPendingStateManager = new Proxy<PendingStateManager>({} as unknown as PendingStateManager, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
 						switch (p) {
 							case "getLocalState":
@@ -1863,6 +1882,7 @@ describe("Runtime", () => {
 					},
 				});
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const state = containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
@@ -1888,7 +1908,7 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
+				const mockPendingStateManager = new Proxy<PendingStateManager>({} as unknown as PendingStateManager, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
 						switch (p) {
 							case "getLocalState":
@@ -1903,6 +1923,7 @@ describe("Runtime", () => {
 					},
 				});
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const state = containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
@@ -1929,7 +1950,7 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
+				const mockPendingStateManager = new Proxy<PendingStateManager>({} as unknown as PendingStateManager, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
 						switch (p) {
 							case "getLocalState":
@@ -1944,6 +1965,7 @@ describe("Runtime", () => {
 					},
 				});
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const stateP = containerRuntime.getPendingLocalState({
@@ -1996,7 +2018,7 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
+				const mockPendingStateManager = new Proxy<PendingStateManager>({} as unknown as PendingStateManager, {
 					get: (_t, p: keyof PendingStateManager, _r) => {
 						switch (p) {
 							case "getLocalState":
@@ -2011,6 +2033,7 @@ describe("Runtime", () => {
 					},
 				});
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const state = (await containerRuntime.getPendingLocalState({
@@ -2050,7 +2073,7 @@ describe("Runtime", () => {
 					const assertThrowsOnlyIfExpected = enableOfflineLoad
 						? assert.throws
 						: assert.doesNotThrow;
-					const errorPredicate = (e: any) =>
+					const errorPredicate = (e: Error) =>
 						e.message === "Duplicate batch - The same batch was sequenced twice";
 					assertThrowsOnlyIfExpected(
 						() => {
@@ -2136,7 +2159,7 @@ describe("Runtime", () => {
 							false,
 						);
 					},
-					(e: any) => e.message === "Duplicate batch - The same batch was sequenced twice",
+					(e: Error) => e.message === "Duplicate batch - The same batch was sequenced twice",
 					"Expected duplicate batch detected after loading with recentBatchInfo",
 				);
 			});
@@ -2250,7 +2273,9 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				containerContext = getMockContext({ logger }) as IContainerContext;
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerContext as any).snapshotWithContents = snapshotWithContents;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerContext as any).baseSnapshot = snapshotWithContents.snapshotTree;
 				containerContext.storage.readBlob = async (id: string) => {
 					return blobContents.get(id) as ArrayBuffer;
@@ -2474,6 +2499,7 @@ describe("Runtime", () => {
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerContext.deltaManager as any).lastSequenceNumber = 5;
 				const missingDataStore = await containerRuntime.resolveHandle({
 					url: "/missingDataStore",
@@ -2535,6 +2561,7 @@ describe("Runtime", () => {
 				});
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerContext.deltaManager as any).lastSequenceNumber = 2;
 
 				let opsProcessed = 0;
