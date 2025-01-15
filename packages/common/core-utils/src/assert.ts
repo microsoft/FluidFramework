@@ -67,15 +67,10 @@ export function assert(condition: boolean, message: string | number): asserts co
  * @internal
  */
 export function debugAssert(predicate: () => true | { toString(): string }): void {
-	// Here __PURE__ annotation is used to indicate that is is safe to optimize out this call.
-	// This is valid since the contract for this function is that predicate should be side effect free and never return in production scenarios:
+	// This is valid since the contract for this function is that "predicate" should be side effect free and never return non true in production scenarios:
 	// it returning non-true indicates a bug is present, and that the validation it does to detect the bug is only desired in specific test/debug situations.
 	// Production scenarios, where pure code is removed, should never hit a failing predicate, and thus this code should be side effect free.
-	// See https://webpack.js.org/guides/tree-shaking/#mark-a-function-call-as-side-effect-free for documentation on this annotation.
-
-	// Using the exact syntax from https://webpack.js.org/guides/tree-shaking/#mark-a-function-call-as-side-effect-free to maximize compatibility with tree-shaking tools.
-	// eslint-disable-next-line spaced-comment
-	/*#__PURE__*/ (() => {
+	skipInProduction(() => {
 		if (debugAssertsEnabled) {
 			const result = predicate();
 			if (result !== true) {
@@ -83,7 +78,7 @@ export function debugAssert(predicate: () => true | { toString(): string }): voi
 				throw new Error(`Debug assert failed: ${result.toString()}`);
 			}
 		}
-	})();
+	});
 }
 
 let debugAssertsEnabled = false;
@@ -97,7 +92,7 @@ let debugAssertsEnabled = false;
  */
 export function configureDebugAsserts(enabled: boolean): boolean {
 	assert(
-		debugAssertsIncluded(),
+		nonProductionConditionalsIncluded(),
 		"Debug asserts cannot be configured since they have been optimized out.",
 	);
 	const old = debugAssertsEnabled;
@@ -106,19 +101,40 @@ export function configureDebugAsserts(enabled: boolean): boolean {
 }
 
 /**
- * Checks if {@link debugAssert} is included in this build.
+ * Checks if non-production conditional code like {@link debugAssert} is included in this build.
  * @remarks
- * debugAsserts can be optimized out by bundlers: this checks if that has occurred.
+ * Such code can be optimized out by bundlers: this checks if that has occurred.
+ * @privateRemarks
+ * See {@link skipInProduction}.
  * @internal
  */
-export function debugAssertsIncluded(): boolean {
+export function nonProductionConditionalsIncluded(): boolean {
 	let included = false;
-	const enabled = debugAssertsEnabled;
-	debugAssertsEnabled = true;
-	debugAssert(() => {
+	skipInProduction(() => {
 		included = true;
-		return true;
 	});
-	debugAssertsEnabled = enabled;
 	return included;
+}
+
+/**
+ * Run `conditional` only in debug/development builds, but optimize it out of production builds.
+ *
+ * @param conditional - This function will only be run in some configurations so it should be pure (at least in production scenarios).
+ * It can be used to interact with debug only functionality that is also removed in production builds, or to do validation/testing/debugging that can be assumed to be sideeffect free in production where it might be removed.
+ * @remarks
+ * Great care must be taken when using this to ensure that bugs are not introduced which only occur when `conditional` is not run.
+ * One way to do this is to provide an alternative way to disable the effects of `conditional` in development builds so both configurations can be tested:
+ * {@link debugAssert} uses this pattern.
+ *
+ * @privateRemarks
+ * Since this function has no built in option for toggling it in development for testing, it is not exported and is only used as a building block for other testable options.
+ */
+function skipInProduction(conditional: () => void): void {
+	// Here __PURE__ annotation is used to indicate that is is safe to optimize out this call.
+	// This is valid since the contract for this function is that "conditional" should be side effect free if it were run in production scenarios
+	// See https://webpack.js.org/guides/tree-shaking/#mark-a-function-call-as-side-effect-free for documentation on this annotation.
+
+	// Using the exact syntax from https://webpack.js.org/guides/tree-shaking/#mark-a-function-call-as-side-effect-free to maximize compatibility with tree-shaking tools.
+	// eslint-disable-next-line spaced-comment
+	/*#__PURE__*/ conditional();
 }

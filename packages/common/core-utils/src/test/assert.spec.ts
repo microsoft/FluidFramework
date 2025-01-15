@@ -9,7 +9,7 @@ import {
 	assert,
 	configureDebugAsserts,
 	debugAssert,
-	debugAssertsIncluded,
+	nonProductionConditionalsIncluded,
 } from "@fluidframework/core-utils/internal";
 
 describe("assert", () => {
@@ -26,7 +26,7 @@ describe("assert", () => {
 	});
 
 	it("debugAssert", () => {
-		strict.equal(debugAssertsIncluded(), true);
+		strict.equal(nonProductionConditionalsIncluded(), true);
 
 		// debugAsserts are disabled by default
 		debugAssert(() => {
