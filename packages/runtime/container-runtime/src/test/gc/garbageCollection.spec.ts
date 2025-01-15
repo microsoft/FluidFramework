@@ -153,7 +153,7 @@ describe("Garbage Collection Tests", () => {
 	function createGarbageCollector(
 		params: {
 			createParams?: Partial<IGarbageCollectorCreateParams>;
-			gcBlobsMap?: Map<string, any>;
+			gcBlobsMap?: Map<string, unknown>;
 			gcMetadata?: IGCMetadata;
 			closeFn?: (error?: ICriticalContainerError) => void;
 			isSummarizerClient?: boolean;
@@ -338,6 +338,7 @@ describe("Garbage Collection Tests", () => {
 			requestFullGCOnNextRun: () => void;
 			onCompletedGCRun: () => void;
 			onSummaryAck: () => void;
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} = createGarbageCollector().autoRecovery as any;
 
 		assert.equal(autoRecovery.useFullGC(), false, "Expect false by default");
@@ -1239,7 +1240,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				snapshotTree.blobs[metadataBlobName] = metadataBlobId;
 
-				const gcBlobsMap: Map<string, any> = new Map();
+				const gcBlobsMap: Map<string, unknown> = new Map();
 				gcBlobsMap.set(gcBlobId, gcState);
 				gcBlobsMap.set(gcTombstoneBlobId, tombstones);
 				gcBlobsMap.set(gcDeletedBlobId, deletedBlobs);
@@ -1256,7 +1257,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: baseGCVersion,
 				};
 				let snapshotTree: ISnapshotTree;
-				let gcBlobsMap: Map<string, any> | undefined;
+				let gcBlobsMap: Map<string, unknown> | undefined;
 				if (gcStateInBaseSnapshot) {
 					const snapshotWithGCState = getSnapshotWithGCVersion(baseGCVersion);
 					snapshotTree = snapshotWithGCState.snapshotTree;

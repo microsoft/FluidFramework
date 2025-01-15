@@ -387,7 +387,8 @@ describe("RemoteMessageProcessor", () => {
 		);
 
 		// We checked messages in the previous assert, now clear them since they're not included in expectedInfo
-		const clearMessages = (result: any) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const clearMessages = (result: any): InboundMessageResult => {
 			delete result.messages;
 			delete result.nextMessage;
 			return result as InboundMessageResult;
@@ -431,7 +432,7 @@ describe("RemoteMessageProcessor", () => {
 				() => {
 					inboundMessages.map((message) => processor.process(message, () => {}));
 				},
-				(e: any) => {
+				(e: Error) => {
 					return e.message === "0x9d6";
 				},
 				"unexpected batch end marker should trigger assert",
@@ -465,7 +466,7 @@ describe("RemoteMessageProcessor", () => {
 				() => {
 					inboundMessages.map((message) => processor.process(message, () => {}));
 				},
-				(e: any) => {
+				(e: Error) => {
 					return e.message === "0x9d5";
 				},
 				"unexpected batch start marker should trigger assert",

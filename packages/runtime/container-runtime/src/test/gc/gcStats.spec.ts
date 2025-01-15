@@ -62,7 +62,7 @@ describe("Garbage Collection Stats", () => {
 
 	function createGarbageCollector(
 		createParams: Partial<IGarbageCollectorCreateParams> = {},
-		gcBlobsMap: Map<string, any> = new Map(),
+		gcBlobsMap: Map<string, unknown> = new Map(),
 		gcMetadata: IGCMetadata = {},
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
 		isSummarizerClient: boolean = true,
