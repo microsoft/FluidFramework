@@ -444,11 +444,6 @@ export class ConnectionManager implements IConnectionManager {
 
 		this._outbound.clear();
 
-		const text =
-			typeof disconnectReasonOrError === "string"
-				? disconnectReasonOrError
-				: "Closing DeltaManager";
-
 		const finalSwitchToReadonly =
 			typeof errorOrSwitchToReadonly === "boolean"
 				? errorOrSwitchToReadonly
@@ -462,7 +457,7 @@ export class ConnectionManager implements IConnectionManager {
 				: undefined;
 
 		const disconnectReason: IConnectionStateChangeReason = {
-			text,
+			text: "Closing DeltaManager",
 			error,
 			disconnectReason:
 				typeof disconnectReasonOrError === "string"
