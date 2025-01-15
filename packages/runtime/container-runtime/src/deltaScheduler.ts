@@ -84,7 +84,7 @@ export class DeltaScheduler {
 		}
 	};
 
-	private readonly batchEnd = (error: any, message: ISequencedDocumentMessage) => {
+	private readonly batchEnd = (error: unknown, message: ISequencedDocumentMessage) => {
 		if (this.schedulingLog) {
 			this.schedulingLog.numberOfBatchesProcessed++;
 			this.schedulingLog.lastSequenceNumber = message.sequenceNumber;

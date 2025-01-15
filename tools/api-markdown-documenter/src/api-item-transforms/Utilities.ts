@@ -33,15 +33,17 @@ export function createDocument(
 	sections: SectionNode[],
 	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
+	const title = config.getHeadingTextForItem(documentItem);
+
 	// Wrap sections in a root section if top-level heading is requested.
 	const contents = config.includeTopLevelDocumentHeading
-		? [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })]
+		? [wrapInSection(sections, { title })]
 		: sections;
 
 	return new DocumentNode({
 		apiItem: documentItem,
 		children: contents,
-		documentPath: getDocumentPathForApiItem(documentItem, config),
+		documentPath: getDocumentPathForApiItem(documentItem, config.hierarchy),
 	});
 }
 
