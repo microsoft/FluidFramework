@@ -15,11 +15,7 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import {
-	ISummaryTree,
-	SummaryType,
-	type SummaryObject,
-} from "@fluidframework/driver-definitions";
+import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	gcBlobPrefix,
 	gcDeletedBlobKey,
@@ -38,7 +34,7 @@ import { waitForContainerConnection } from "@fluidframework/test-utils/internal"
 export function getGCStateFromSummary(
 	summaryTree: ISummaryTree,
 ): IGarbageCollectionState | undefined {
-	const rootGCTree: SummaryObject | undefined = summaryTree.tree[gcTreeKey];
+	const rootGCTree = summaryTree.tree[gcTreeKey];
 	if (rootGCTree === undefined) {
 		return undefined;
 	}
@@ -55,7 +51,7 @@ export function getGCStateFromSummary(
 			continue;
 		}
 
-		const gcBlob: SummaryObject | undefined = rootGCTree.tree[key];
+		const gcBlob = rootGCTree.tree[key];
 		assert(gcBlob !== undefined, "getGCStateFromSummary: GC state not available");
 		assert.equal(
 			gcBlob.type,
@@ -75,7 +71,7 @@ export function getGCStateFromSummary(
  * values for gcFeature.
  */
 export function getGCFeatureFromSummary(summaryTree: ISummaryTree): number {
-	const metadata: SummaryObject | undefined = summaryTree.tree[".metadata"];
+	const metadata = summaryTree.tree[".metadata"];
 	assert.equal(metadata.type, SummaryType.Blob, "Expected to find metadata blob in summary");
 	assert(typeof metadata.content === "string", "Expected metadata to be a string");
 	const content = JSON.parse(metadata.content) as { gcFeature: number };
@@ -91,7 +87,7 @@ export function getGCFeatureFromSummary(summaryTree: ISummaryTree): number {
 export function getGCTombstoneStateFromSummary(
 	summaryTree: ISummaryTree,
 ): string[] | undefined {
-	const rootGCTree: SummaryObject | undefined = summaryTree.tree[gcTreeKey];
+	const rootGCTree = summaryTree.tree[gcTreeKey];
 	if (rootGCTree === undefined) {
 		return undefined;
 	}
@@ -101,7 +97,7 @@ export function getGCTombstoneStateFromSummary(
 		SummaryType.Tree,
 		"getGCTombstoneStateFromSummary: GC data should be a tree",
 	);
-	const tombstoneBlob: SummaryObject | undefined = rootGCTree.tree[gcTombstoneBlobKey];
+	const tombstoneBlob = rootGCTree.tree[gcTombstoneBlobKey];
 	if (tombstoneBlob === undefined) {
 		return undefined;
 	}
@@ -121,7 +117,7 @@ export function getGCTombstoneStateFromSummary(
  * @returns The sweep data if it exists, undefined otherwise.
  */
 export function getGCDeletedStateFromSummary(summaryTree: ISummaryTree): string[] | undefined {
-	const rootGCTree: SummaryObject | undefined = summaryTree.tree[gcTreeKey];
+	const rootGCTree = summaryTree.tree[gcTreeKey];
 	if (rootGCTree === undefined) {
 		return undefined;
 	}
@@ -131,7 +127,7 @@ export function getGCDeletedStateFromSummary(summaryTree: ISummaryTree): string[
 		SummaryType.Tree,
 		"getGCDeletedStateFromSummary: GC data should be a tree",
 	);
-	const sweepBlob: SummaryObject | undefined = rootGCTree.tree[gcDeletedBlobKey];
+	const sweepBlob = rootGCTree.tree[gcDeletedBlobKey];
 	if (sweepBlob === undefined) {
 		return undefined;
 	}
@@ -175,7 +171,7 @@ export function manufactureHandle<T>(
 	const handle: IFluidHandleInternal<T> = parseHandles(
 		{ type: "__fluid_handle__", url },
 		serializer,
-	);
+	) as IFluidHandleInternal<T>;
 	return handle;
 }
 

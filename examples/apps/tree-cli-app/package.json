@@ -38,7 +38,7 @@
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"@sinclair/typebox": "^0.32.29"
+		"@sinclair/typebox": "^0.34.13"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
