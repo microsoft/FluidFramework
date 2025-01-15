@@ -34,8 +34,8 @@ describe("getPendingLocalState", () => {
 		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].uploadTime, undefined);
+		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
+		assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 0);
@@ -63,8 +63,8 @@ describe("getPendingLocalState", () => {
 		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
-		assert.ok(Object.values<any>(pendingBlobs)[0].uploadTime);
+		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
+		assert.ok(Object.values(pendingBlobs)[0].uploadTime);
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 0);
@@ -155,8 +155,8 @@ describe("getPendingLocalState", () => {
 		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1] ?? {};
 		assert.strictEqual(Object.keys(pendingBlobs).length, 1);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].acked, false);
-		assert.strictEqual(Object.values<any>(pendingBlobs)[0].uploadTime, undefined);
+		assert.strictEqual(Object.values(pendingBlobs)[0].acked, false);
+		assert.strictEqual(Object.values(pendingBlobs)[0].uploadTime, undefined);
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 0);

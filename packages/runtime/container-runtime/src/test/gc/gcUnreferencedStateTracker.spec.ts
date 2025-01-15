@@ -255,6 +255,7 @@ describe("Garbage Collection Tests", () => {
 				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const timerClearSpy: SinonSpy = spy((tracker as any).inactiveTimer, "clear");
 			// At T10 we had 15 to go based on server timestamps, so Timer is set to 25
 			clock.tick(6); // at T16 (9 to go)
