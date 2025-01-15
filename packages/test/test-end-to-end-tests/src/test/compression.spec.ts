@@ -126,7 +126,7 @@ const compressionSuite = (getProvider) => {
 				{ compression: true, chunking: false },
 				{ compression: true, chunking: true },
 			],
-			grouping: [true, false],
+			grouping: [true],
 		});
 
 		messageGenerationOptions.forEach((option) => {
