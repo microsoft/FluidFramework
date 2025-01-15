@@ -39,7 +39,7 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
  *
  * This should only be called for API item kinds that are intended to be rendered to their own document
  * (as opposed to being rendered to the same document as their parent) per the provided `config`
- * (see {@link DocumentationSuiteConfiguration.documentBoundaries}).
+ * (see {@link ApiItemTransformationConfiguration.hierarchy}).
  *
  * Also note that this should not be called for the following item kinds, which must be handled specially:
  *
@@ -72,7 +72,7 @@ export function apiItemToDocument(
 		);
 	}
 
-	if (!doesItemRequireOwnDocument(apiItem, config.documentBoundaries)) {
+	if (!doesItemRequireOwnDocument(apiItem, config.hierarchy)) {
 		throw new Error(
 			`"apiItemToDocument" called for an API item kind that is not intended to be rendered to its own document. Provided item kind: "${itemKind}".`,
 		);

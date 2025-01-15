@@ -112,6 +112,7 @@ export function create(
 		revokedTokenChecker,
 		denyList,
 		ephemeralDocumentTTLSec,
+		simplifiedCustomDataRetriever,
 	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);
