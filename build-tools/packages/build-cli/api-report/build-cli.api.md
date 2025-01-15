@@ -4,87 +4,169 @@
 
 ```ts
 
-import { InterdependencyRange } from '@fluid-tools/version-tools';
 import { run } from '@oclif/core';
-import { VersionBumpType } from '@fluid-tools/version-tools';
+import { Static } from '@sinclair/typebox';
+import { TArray } from '@sinclair/typebox';
+import { TBoolean } from '@sinclair/typebox';
+import { TLiteral } from '@sinclair/typebox';
+import { TNumber } from '@sinclair/typebox';
+import { TObject } from '@sinclair/typebox';
+import { TOptional } from '@sinclair/typebox';
+import { TRecord } from '@sinclair/typebox';
+import { TString } from '@sinclair/typebox';
+import { TTemplateLiteral } from '@sinclair/typebox';
+import { TTuple } from '@sinclair/typebox';
+import { TUnion } from '@sinclair/typebox';
+
+// @public
+export type AssertTaggingConfig = Static<typeof AssertTaggingConfig>;
 
 // @public (undocumented)
-export interface AssertTaggingConfig {
-    // (undocumented)
-    assertionFunctions: {
-        [functionName: string]: number;
-    };
-    enabledPaths?: RegExp[];
-}
+export const AssertTaggingConfig: TObject<    {
+assertionFunctions: TRecord<TString, TNumber>;
+enabledPaths: TOptional<TArray<TString>>;
+}>;
 
 // @public
-export interface BumpConfig {
-    defaultInterdependencyRange?: Record<ReleaseGroup, InterdependencyRange>;
-}
+export type BumpConfig = Static<typeof BumpConfig>;
+
+// @public (undocumented)
+export const BumpConfig: TObject<    {
+defaultInterdependencyRange: TOptional<TRecord<TString, TUnion<[TLiteral<"">, TLiteral<"workspace:*">, TLiteral<"workspace:^">, TLiteral<"workspace:~">, TTemplateLiteral<[TLiteral<"^">, TOptional<TString>]>, TTemplateLiteral<[TLiteral<"~">, TOptional<TString>]>]>>>;
+}>;
 
 // @public
-export interface FlubConfig {
-    assertTagging?: AssertTaggingConfig;
-    // @deprecated
-    branchReleaseTypes?: {
-        [name: string]: VersionBumpType | PreviousVersionStyle;
-    };
-    bump?: BumpConfig;
-    policy?: PolicyConfig;
-    releaseNotes?: ReleaseNotesConfig;
-    releaseReport?: ReleaseReportConfig;
-    version?: 1;
-}
+export type FlubConfig = Static<typeof FlubConfig>;
+
+// @public (undocumented)
+export const FlubConfig: TObject<    {
+version: TOptional<TNumber>;
+policy: TOptional<TObject<    {
+additionalLockfilePaths: TOptional<TArray<TString>>;
+pnpmSinglePackageWorkspace: TOptional<TArray<TString>>;
+fluidBuildTasks: TObject<    {
+tsc: TObject<    {
+ignoreTasks: TArray<TString>;
+ignoreDependencies: TArray<TString>;
+ignoreDevDependencies: TArray<TString>;
+}>;
+}>;
+dependencies: TOptional<TObject<    {
+commandPackages: TArray<TTuple<[TString, TString]>>;
+}>>;
+exclusions: TOptional<TArray<TString>>;
+handlerExclusions: TRecord<TString, TArray<TString>>;
+packageNames: TOptional<TObject<    {
+allowedScopes: TOptional<TArray<TString>>;
+unscopedPackages: TOptional<TArray<TString>>;
+mustPublish: TObject<    {
+npm: TOptional<TArray<TString>>;
+internalFeed: TOptional<TArray<TString>>;
+}>;
+mayPublish: TObject<    {
+npm: TOptional<TArray<TString>>;
+internalFeed: TOptional<TArray<TString>>;
+}>;
+}>>;
+publicPackageRequirements: TOptional<TObject<    {
+requiredScripts: TOptional<TArray<TObject<    {
+name: TString;
+body: TString;
+bodyMustMatch: TOptional<TBoolean>;
+}>>>;
+requiredDevDependencies: TOptional<TArray<TString>>;
+}>>;
+}>>;
+assertTagging: TOptional<TObject<    {
+assertionFunctions: TRecord<TString, TNumber>;
+enabledPaths: TOptional<TArray<TString>>;
+}>>;
+bump: TOptional<TObject<    {
+defaultInterdependencyRange: TOptional<TRecord<TString, TUnion<[TLiteral<"">, TLiteral<"workspace:*">, TLiteral<"workspace:^">, TLiteral<"workspace:~">, TTemplateLiteral<[TLiteral<"^">, TOptional<TString>]>, TTemplateLiteral<[TLiteral<"~">, TOptional<TString>]>]>>>;
+}>>;
+releaseNotes: TOptional<TObject<    {
+sections: TRecord<TString, TObject<    {
+heading: TString;
+}>>;
+}>>;
+releaseReport: TOptional<TObject<    {
+legacyCompatInterval: TRecord<TString, TNumber>;
+}>>;
+}>;
 
 // @public
 export const knownReleaseGroups: readonly ["build-tools", "client", "server", "gitrest", "historian"];
 
 // @public
-export interface PackageNamePolicyConfig {
-    allowedScopes?: string[];
-    mayPublish: {
-        npm?: string[];
-        internalFeed?: string[];
-    };
-    mustPublish: {
-        npm?: string[];
-        internalFeed?: string[];
-    };
-    unscopedPackages?: string[];
-}
+export type PackageNamePolicyConfig = Static<typeof PackageNamePolicyConfig>;
+
+// @public (undocumented)
+export const PackageNamePolicyConfig: TObject<    {
+allowedScopes: TOptional<TArray<TString>>;
+unscopedPackages: TOptional<TArray<TString>>;
+mustPublish: TObject<    {
+npm: TOptional<TArray<TString>>;
+internalFeed: TOptional<TArray<TString>>;
+}>;
+mayPublish: TObject<    {
+npm: TOptional<TArray<TString>>;
+internalFeed: TOptional<TArray<TString>>;
+}>;
+}>;
 
 // @public
-export interface PackageRequirements {
-    requiredDevDependencies?: string[];
-    requiredScripts?: ScriptRequirement[];
-}
+export type PackageRequirements = Static<typeof PackageRequirements>;
+
+// @public (undocumented)
+export const PackageRequirements: TObject<    {
+requiredScripts: TOptional<TArray<TObject<    {
+name: TString;
+body: TString;
+bodyMustMatch: TOptional<TBoolean>;
+}>>>;
+requiredDevDependencies: TOptional<TArray<TString>>;
+}>;
 
 // @public
-export interface PolicyConfig {
-    // (undocumented)
-    additionalLockfilePaths?: string[];
-    // (undocumented)
-    dependencies?: {
-        commandPackages: [string, string][];
-    };
-    exclusions?: string[];
-    // (undocumented)
-    fluidBuildTasks: {
-        tsc: {
-            ignoreTasks: string[];
-            ignoreDependencies: string[];
-            ignoreDevDependencies: string[];
-        };
-    };
-    handlerExclusions?: {
-        [rule: string]: (string | RegExp)[];
-    };
-    // (undocumented)
-    packageNames?: PackageNamePolicyConfig;
-    // (undocumented)
-    pnpmSinglePackageWorkspace?: string[];
-    publicPackageRequirements?: PackageRequirements;
-}
+export type PolicyConfig = Static<typeof PolicyConfig>;
+
+// @public (undocumented)
+export const PolicyConfig: TObject<    {
+additionalLockfilePaths: TOptional<TArray<TString>>;
+pnpmSinglePackageWorkspace: TOptional<TArray<TString>>;
+fluidBuildTasks: TObject<    {
+tsc: TObject<    {
+ignoreTasks: TArray<TString>;
+ignoreDependencies: TArray<TString>;
+ignoreDevDependencies: TArray<TString>;
+}>;
+}>;
+dependencies: TOptional<TObject<    {
+commandPackages: TArray<TTuple<[TString, TString]>>;
+}>>;
+exclusions: TOptional<TArray<TString>>;
+handlerExclusions: TRecord<TString, TArray<TString>>;
+packageNames: TOptional<TObject<    {
+allowedScopes: TOptional<TArray<TString>>;
+unscopedPackages: TOptional<TArray<TString>>;
+mustPublish: TObject<    {
+npm: TOptional<TArray<TString>>;
+internalFeed: TOptional<TArray<TString>>;
+}>;
+mayPublish: TObject<    {
+npm: TOptional<TArray<TString>>;
+internalFeed: TOptional<TArray<TString>>;
+}>;
+}>>;
+publicPackageRequirements: TOptional<TObject<    {
+requiredScripts: TOptional<TArray<TObject<    {
+name: TString;
+body: TString;
+bodyMustMatch: TOptional<TBoolean>;
+}>>>;
+requiredDevDependencies: TOptional<TArray<TString>>;
+}>>;
+}>;
 
 // @public
 export type PreviousVersionStyle = "baseMajor" | "baseMinor" | "previousPatch" | "previousMinor" | "previousMajor" | "~baseMinor" | "^previousMajor" | "^previousMinor" | "~previousMajor" | "~previousMinor";
@@ -93,15 +175,22 @@ export type PreviousVersionStyle = "baseMajor" | "baseMinor" | "previousPatch" |
 export type ReleaseGroup = (typeof knownReleaseGroups)[number];
 
 // @public
-export interface ReleaseNotesConfig {
-    // (undocumented)
-    sections: Record<ReleaseNotesSectionName, ReleaseNotesSection>;
-}
+export type ReleaseNotesConfig = Static<typeof ReleaseNotesConfig>;
+
+// @public (undocumented)
+export const ReleaseNotesConfig: TObject<    {
+sections: TRecord<TString, TObject<    {
+heading: TString;
+}>>;
+}>;
 
 // @public
-export interface ReleaseNotesSection {
-    heading: string;
-}
+export type ReleaseNotesSection = Static<typeof ReleaseNotesSection>;
+
+// @public (undocumented)
+export const ReleaseNotesSection: TObject<    {
+heading: TString;
+}>;
 
 // @public
 export type ReleaseNotesSectionName = string;
@@ -110,18 +199,24 @@ export type ReleaseNotesSectionName = string;
 export type ReleasePackage = string;
 
 // @public
-export interface ReleaseReportConfig {
-    legacyCompatInterval: Record<ReleaseGroup | string, number>;
-}
+export type ReleaseReportConfig = Static<typeof ReleaseReportConfig>;
+
+// @public (undocumented)
+export const ReleaseReportConfig: TObject<    {
+legacyCompatInterval: TRecord<TString, TNumber>;
+}>;
 
 export { run }
 
 // @public
-export interface ScriptRequirement {
-    body: string;
-    bodyMustMatch?: boolean;
-    name: string;
-}
+export type ScriptRequirement = Static<typeof ScriptRequirement>;
+
+// @public (undocumented)
+export const ScriptRequirement: TObject<    {
+name: TString;
+body: TString;
+bodyMustMatch: TOptional<TBoolean>;
+}>;
 
 // (No @packageDocumentation comment for this package)
 

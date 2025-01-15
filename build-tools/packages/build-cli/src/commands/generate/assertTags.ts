@@ -76,7 +76,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 				return false;
 			}
 			if (assertTaggingEnabledPaths !== undefined) {
-				if (assertTaggingEnabledPaths.some((regex) => regex.test(tsconfigPath))) {
+				if (assertTaggingEnabledPaths.some((regex) => new RegExp(regex).test(tsconfigPath))) {
 					return true;
 				}
 				this.verbose(

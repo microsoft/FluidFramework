@@ -4,20 +4,233 @@
  */
 
 import { statSync } from "node:fs";
-import {
-	DEFAULT_INTERDEPENDENCY_RANGE,
-	InterdependencyRange,
-	VersionBumpType,
-} from "@fluid-tools/version-tools";
 import { MonoRepo } from "@fluidframework/build-tools";
+import { type Static, Type } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 import { cosmiconfigSync } from "cosmiconfig";
+import type { SemVer } from "semver";
 import { Context } from "./library/index.js";
 import type { ReleaseGroup } from "./releaseGroups.js";
 
 /**
+ * Requirements for a given script.
+ */
+export type ScriptRequirement = Static<typeof ScriptRequirement>;
+export const ScriptRequirement = Type.Object({
+	/**
+	 * Name of the script to check.
+	 */
+	name: Type.String(),
+
+	/**
+	 * Body of the script being checked.
+	 * A contents match will be enforced iff {@link ScriptRequirement.bodyMustMatch}.
+	 * This value will be used as the default contents inserted by the policy resolver (regardless of {@link ScriptRequirement.bodyMustMatch}).
+	 */
+	body: Type.String(),
+
+	/**
+	 * Whether or not the script body is required to match {@link ScriptRequirement.body} when running the policy checker.
+	 * @defaultValue `false`
+	 */
+	bodyMustMatch: Type.Optional(Type.Boolean()),
+});
+
+// TODO: This is a duplicated definition of the type in version-tools. This code should live there and replace the
+// version-tools definition.
+/**
+ * A type for valid dependency ranges in package.json.
+ */
+type InterdependencyRangeSetting = Static<typeof InterdependencyRangeSetting>;
+const InterdependencyRangeSetting = Type.Union([
+	Type.Literal(""),
+	Type.Literal("workspace:*"),
+	Type.Literal("workspace:^"),
+	Type.Literal("workspace:~"),
+	Type.TemplateLiteral([Type.Literal("^"), Type.Optional(Type.String())]),
+	Type.TemplateLiteral([Type.Literal("~"), Type.Optional(Type.String())]),
+	// TODO: The original type allowed semver.SemVer objects as well - not sure how to express that in typebox.
+]);
+
+/**
+ * Configuration settings that influence `flub bump`.
+ */
+export type BumpConfig = Static<typeof BumpConfig>;
+export const BumpConfig = Type.Object({
+	/**
+	 * The interdependencyRange controls the type of semver range to use between packages in the same release group. This
+	 * setting controls the default range that will be used when updating the version of a release group. The default can
+	 * be overridden using the `--interdependencyRange` flag in the `flub bump` command.
+	 */
+	defaultInterdependencyRange: Type.Optional(
+		Type.Record(Type.String(), InterdependencyRangeSetting),
+	),
+});
+
+/**
+ * Expresses requirements for a given package, applied to its package.json.
+ */
+export type PackageRequirements = Static<typeof PackageRequirements>;
+export const PackageRequirements = Type.Object({
+	/**
+	 * (optional) list of script requirements for the package.
+	 */
+	requiredScripts: Type.Optional(Type.Array(ScriptRequirement)),
+
+	/**
+	 * (optional) list of required dev dependencies for the package.
+	 * @remarks Note: there is no enforcement of version requirements, only that a dependency on the specified name must exist.
+	 */
+	requiredDevDependencies: Type.Optional(Type.Array(Type.String())),
+});
+
+/**
+ * Configuration for package naming and publication policies.
+ */
+export type PackageNamePolicyConfig = Static<typeof PackageNamePolicyConfig>;
+export const PackageNamePolicyConfig = Type.Object({
+	/**
+	 * A list of package scopes that are permitted in the repo.
+	 */
+	allowedScopes: Type.Optional(Type.Array(Type.String())),
+
+	/**
+	 * A list of packages that have no scope.
+	 */
+	unscopedPackages: Type.Optional(Type.Array(Type.String())),
+
+	/**
+	 * Packages that must be published.
+	 */
+	mustPublish: Type.Object({
+		/**
+		 * A list of package names or scopes that must publish to npm, and thus should never be marked private.
+		 */
+		npm: Type.Optional(Type.Array(Type.String())),
+
+		/**
+		 * A list of package names or scopes that must publish to an internal feed, and thus should always be marked
+		 * private.
+		 */
+		internalFeed: Type.Optional(Type.Array(Type.String())),
+	}),
+
+	/**
+	 * Packages that may or may not be published.
+	 */
+	mayPublish: Type.Object({
+		/**
+		 * A list of package names or scopes that may publish to npm, and thus might or might not be marked private.
+		 */
+		npm: Type.Optional(Type.Array(Type.String())),
+
+		/**
+		 * A list of package names or scopes that must publish to an internal feed, and thus might or might not be marked
+		 * private.
+		 */
+		internalFeed: Type.Optional(Type.Array(Type.String())),
+	}),
+});
+
+/**
+ * Configuration for package naming and publication policies.
+ */
+export type AssertTaggingConfig = Static<typeof AssertTaggingConfig>;
+export const AssertTaggingConfig = Type.Object({
+	assertionFunctions: Type.Record(Type.String(), Type.Number()),
+
+	/**
+	 * An array of paths under which assert tagging applies to. If this setting is provided, only packages whose paths
+	 * match the regular expressions in this setting will be assert-tagged.
+	 *
+	 * TODO: Original typing was `RegExp[]` -- can we tighten this definition?
+	 */
+	enabledPaths: Type.Optional(Type.Array(Type.String())),
+});
+
+/**
+ * Policy configuration for the `check:policy` command.
+ */
+export type PolicyConfig = Static<typeof PolicyConfig>;
+export const PolicyConfig = Type.Object({
+	additionalLockfilePaths: Type.Optional(Type.Array(Type.String())),
+	pnpmSinglePackageWorkspace: Type.Optional(Type.Array(Type.String())),
+	fluidBuildTasks: Type.Object({
+		tsc: Type.Object({
+			ignoreTasks: Type.Array(Type.String()),
+			ignoreDependencies: Type.Array(Type.String()),
+			ignoreDevDependencies: Type.Array(Type.String()),
+		}),
+	}),
+	dependencies: Type.Optional(
+		Type.Object({
+			commandPackages: Type.Array(Type.Tuple([Type.String(), Type.String()])),
+		}),
+	),
+
+	/**
+	 * An array of strings/regular expressions. Paths that match any of these expressions will be completely excluded from
+	 * policy-check.
+	 */
+	exclusions: Type.Optional(Type.Array(Type.String())),
+
+	/**
+	 * An object with handler name as keys that maps to an array of strings/regular expressions to
+	 * exclude that rule from being checked.
+	 */
+	handlerExclusions: Type.Record(Type.String(), Type.Array(Type.String())),
+
+	packageNames: Type.Optional(PackageNamePolicyConfig),
+
+	/**
+	 * (optional) requirements to enforce against each public package.
+	 */
+	publicPackageRequirements: Type.Optional(PackageRequirements),
+});
+
+/**
+ * A short name for the section. Each section in a {@link ReleaseNotesConfig} must have a unique name.
+ */
+export type ReleaseNotesSectionName = string;
+
+/**
+ * Configuration for a release notes section.
+ */
+export type ReleaseNotesSection = Static<typeof ReleaseNotesSection>;
+export const ReleaseNotesSection = Type.Object({
+	/**
+	 * A full string to serve as the heading for the section when displayed in release notes.
+	 */
+	heading: Type.String(),
+});
+
+/**
+ * Configuration for the `generate:releaseNotes` command. If this configuration is not present in the config, the
+ * `generate:releaseNotes` command will report an error.
+ */
+export type ReleaseNotesConfig = Static<typeof ReleaseNotesConfig>;
+export const ReleaseNotesConfig = Type.Object({
+	sections: Type.Record(Type.String(), ReleaseNotesSection),
+});
+
+/**
+ * Configuration for the `release report` command. If this configuration is not present in the config, the
+ * `release report` command will report an error.
+ */
+export type ReleaseReportConfig = Static<typeof ReleaseReportConfig>;
+export const ReleaseReportConfig = Type.Object({
+	/**
+	 * Each key in the `legacyCompatInterval` object represents a specific release group or package name as string,
+	 * and the associated value is a number that defines the legacy compatibility interval for that group.
+	 */
+	legacyCompatInterval: Type.Record(Type.String(), Type.Number()),
+});
+
+/**
  * Flub configuration that is expected in the flub config file or package.json.
  */
-export interface FlubConfig {
+export type FlubConfig = Static<typeof FlubConfig>;
+export const FlubConfig = Type.Object({
 	/**
 	 * The version of the config.
 	 *
@@ -31,56 +244,46 @@ export interface FlubConfig {
 	 *
 	 * In other words, version 1 is the only version of the configs where they can be stored in the same file.
 	 */
-	version?: 1;
+	version: Type.Optional(Type.Number({ maximum: 1, minimum: 1 })),
 
 	/**
 	 * Ponfiguration for the `check:policy` command.
 	 */
-	policy?: PolicyConfig;
+	policy: Type.Optional(PolicyConfig),
 
 	/**
 	 * Configuration for assert tagging.
 	 */
-	assertTagging?: AssertTaggingConfig;
+	assertTagging: Type.Optional(AssertTaggingConfig),
 
 	/**
 	 * Configuration for `flub bump`.
 	 */
-	bump?: BumpConfig;
-
-	/**
-	 * A mapping of branch names to previous version baseline styles. The type test generator takes this information
-	 * into account when calculating the baseline version to use when it's run on a particular branch. If this is not
-	 * defined for a branch or package, then that package will be skipped during type test generation.
-	 *
-	 * @deprecated This setting is no longer used and will be removed in the future.
-	 */
-	branchReleaseTypes?: {
-		[name: string]: VersionBumpType | PreviousVersionStyle;
-	};
+	bump: Type.Optional(BumpConfig),
 
 	/**
 	 * Configuration for the `generate:releaseNotes` command.
 	 */
-	releaseNotes?: ReleaseNotesConfig;
+	releaseNotes: Type.Optional(ReleaseNotesConfig),
 
 	/**
 	 * Configuration for `release report` command
 	 */
-	releaseReport?: ReleaseReportConfig;
-}
+	releaseReport: Type.Optional(ReleaseReportConfig),
+});
 
-/**
- * Configuration for the `release report` command. If this configuration is not present in the config, the
- * `release report` command will report an error.
- */
-export interface ReleaseReportConfig {
-	/**
-	 * Each key in the `legacyCompatInterval` object represents a specific release group or package name as string,
-	 * and the associated value is a number that defines the legacy compatibility interval for that group.
-	 */
-	legacyCompatInterval: Record<ReleaseGroup | string, number>;
-}
+// export interface FlubConfig {
+// 	/**
+// 	 * A mapping of branch names to previous version baseline styles. The type test generator takes this information
+// 	 * into account when calculating the baseline version to use when it's run on a particular branch. If this is not
+// 	 * defined for a branch or package, then that package will be skipped during type test generation.
+// 	 *
+// 	 * @deprecated This setting is no longer used and will be removed in the future.
+// 	 */
+// 	branchReleaseTypes?: {
+// 		[name: string]: VersionBumpType | PreviousVersionStyle;
+// 	};
+// }
 
 /**
  * A type representing the different version constraint styles we use when determining the previous version for type
@@ -153,171 +356,6 @@ export type PreviousVersionStyle =
 	| "~previousMajor"
 	| "~previousMinor";
 
-/**
- * A short name for the section. Each section in a {@link ReleaseNotesConfig} must have a unique name.
- */
-export type ReleaseNotesSectionName = string;
-
-/**
- * Configuration for a release notes section.
- */
-export interface ReleaseNotesSection {
-	/**
-	 * A full string to serve as the heading for the section when displayed in release notes.
-	 */
-	heading: string;
-}
-
-/**
- * Configuration for the `generate:releaseNotes` command. If this configuration is not present in the config, the
- * `generate:releaseNotes` command will report an error.
- */
-export interface ReleaseNotesConfig {
-	sections: Record<ReleaseNotesSectionName, ReleaseNotesSection>;
-}
-
-/**
- * Policy configuration for the `check:policy` command.
- */
-export interface PolicyConfig {
-	additionalLockfilePaths?: string[];
-	pnpmSinglePackageWorkspace?: string[];
-	fluidBuildTasks: {
-		tsc: {
-			ignoreTasks: string[];
-			ignoreDependencies: string[];
-			ignoreDevDependencies: string[];
-		};
-	};
-	dependencies?: {
-		commandPackages: [string, string][];
-	};
-	/**
-	 * An array of strings/regular expressions. Paths that match any of these expressions will be completely excluded from
-	 * policy-check.
-	 */
-	exclusions?: string[];
-
-	/**
-	 * An object with handler name as keys that maps to an array of strings/regular expressions to
-	 * exclude that rule from being checked.
-	 */
-	handlerExclusions?: { [rule: string]: (string | RegExp)[] };
-
-	packageNames?: PackageNamePolicyConfig;
-
-	/**
-	 * (optional) requirements to enforce against each public package.
-	 */
-	publicPackageRequirements?: PackageRequirements;
-}
-
-export interface AssertTaggingConfig {
-	assertionFunctions: { [functionName: string]: number };
-
-	/**
-	 * An array of paths under which assert tagging applies to. If this setting is provided, only packages whose paths
-	 * match the regular expressions in this setting will be assert-tagged.
-	 */
-	enabledPaths?: RegExp[];
-}
-
-/**
- * Configuration settings that influence `flub bump`.
- */
-export interface BumpConfig {
-	/**
-	 * The interdependencyRange controls the type of semver range to use between packages in the same release group. This
-	 * setting controls the default range that will be used when updating the version of a release group. The default can
-	 * be overridden using the `--interdependencyRange` flag in the `flub bump` command.
-	 */
-	defaultInterdependencyRange?: Record<ReleaseGroup, InterdependencyRange>;
-}
-
-/**
- * Configuration for package naming and publication policies.
- */
-export interface PackageNamePolicyConfig {
-	/**
-	 * A list of package scopes that are permitted in the repo.
-	 */
-	allowedScopes?: string[];
-	/**
-	 * A list of packages that have no scope.
-	 */
-	unscopedPackages?: string[];
-	/**
-	 * Packages that must be published.
-	 */
-	mustPublish: {
-		/**
-		 * A list of package names or scopes that must publish to npm, and thus should never be marked private.
-		 */
-		npm?: string[];
-
-		/**
-		 * A list of package names or scopes that must publish to an internal feed, and thus should always be marked
-		 * private.
-		 */
-		internalFeed?: string[];
-	};
-
-	/**
-	 * Packages that may or may not be published.
-	 */
-	mayPublish: {
-		/**
-		 * A list of package names or scopes that may publish to npm, and thus might or might not be marked private.
-		 */
-		npm?: string[];
-
-		/**
-		 * A list of package names or scopes that must publish to an internal feed, and thus might or might not be marked
-		 * private.
-		 */
-		internalFeed?: string[];
-	};
-}
-
-/**
- * Expresses requirements for a given package, applied to its package.json.
- */
-export interface PackageRequirements {
-	/**
-	 * (optional) list of script requirements for the package.
-	 */
-	requiredScripts?: ScriptRequirement[];
-
-	/**
-	 * (optional) list of required dev dependencies for the package.
-	 * @remarks Note: there is no enforcement of version requirements, only that a dependency on the specified name must exist.
-	 */
-	requiredDevDependencies?: string[];
-}
-
-/**
- * Requirements for a given script.
- */
-export interface ScriptRequirement {
-	/**
-	 * Name of the script to check.
-	 */
-	name: string;
-
-	/**
-	 * Body of the script being checked.
-	 * A contents match will be enforced iff {@link ScriptRequirement.bodyMustMatch}.
-	 * This value will be used as the default contents inserted by the policy resolver (regardless of {@link ScriptRequirement.bodyMustMatch}).
-	 */
-	body: string;
-
-	/**
-	 * Whether or not the script body is required to match {@link ScriptRequirement.body} when running the policy checker.
-	 * @defaultValue `false`
-	 */
-	bodyMustMatch?: boolean;
-}
-
 const configName = "flub";
 
 /**
@@ -355,13 +393,15 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 		configExplorer.clearCaches();
 	}
 
-	// const configResult = configExplorer.search(rootDir);
-
 	const configResult = statSync(configPath).isFile()
 		? configExplorer.load(configPath)
 		: configExplorer.search(configPath);
 
-	const config = configResult?.config as FlubConfig | undefined;
+	if (configResult === null || configResult === undefined) {
+		throw new Error("No BuildProject configuration found.");
+	}
+
+	const config = Value.Parse(FlubConfig, configResult.config);
 
 	if (config === undefined) {
 		throw new Error(`No flub configuration found (configPath='${configPath}').`);
@@ -384,12 +424,12 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 export function getDefaultInterdependencyRange(
 	releaseGroup: ReleaseGroup | MonoRepo,
 	context: Context,
-): InterdependencyRange {
+): InterdependencyRangeSetting {
 	const releaseGroupName = releaseGroup instanceof MonoRepo ? releaseGroup.name : releaseGroup;
 
 	// Prefer to use the configuration in the flub config if available.
 	const flubConfigRanges = context.flubConfig.bump?.defaultInterdependencyRange;
-	const interdependencyRangeFromFlubConfig: InterdependencyRange | undefined =
+	const interdependencyRangeFromFlubConfig: InterdependencyRangeSetting | undefined =
 		flubConfigRanges?.[releaseGroupName as ReleaseGroup];
 
 	// Return early if the flub config had a range configured - no need to check/load other configs.
@@ -397,15 +437,16 @@ export function getDefaultInterdependencyRange(
 		return interdependencyRangeFromFlubConfig;
 	}
 
+	// TODO: Re-enable this if needed.
 	// For back-compat with earlier configs, try to load the default interdependency range from the fluid-build config.
 	// This can be removed once we are no longer supporting release branches older than release/client/2.4
-	const fbConfig = context.fluidBuildConfig.repoPackages?.[releaseGroupName];
-	const interdependencyRangeFromFluidBuildConfig =
-		fbConfig !== undefined && typeof fbConfig === "object" && !Array.isArray(fbConfig)
-			? fbConfig.defaultInterdependencyRange
-			: undefined;
+	// const fbConfig = context.fluidBuildConfig.repoPackages?.[releaseGroupName];
+	// const interdependencyRangeFromFluidBuildConfig: InterdependencyRangeSetting =
+	// 	fbConfig !== undefined && typeof fbConfig === "object" && !Array.isArray(fbConfig)
+	// 		? fbConfig.defaultInterdependencyRange
+	// 		: undefined;
 
 	// Once the back-compat code above is removed, this should change to
 	// return interdependencyRangeFromFlubConfig ?? DEFAULT_INTERDEPENDENCY_RANGE
-	return interdependencyRangeFromFluidBuildConfig ?? DEFAULT_INTERDEPENDENCY_RANGE;
+	return "^" as InterdependencyRangeSetting;
 }
