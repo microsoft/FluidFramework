@@ -125,7 +125,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in th
 type PendingAliasResolve = (success: boolean) => void;
 
 interface FluidDataStoreMessage {
-	content: any;
+	content: unknown;
 	type: string;
 }
 
@@ -212,7 +212,7 @@ function wrapContextForInnerChannel(
 ): IFluidParentContext {
 	const context = wrapContext(parentContext);
 
-	context.submitMessage = (type: string, content: any, localOpMetadata: unknown) => {
+	context.submitMessage = (type: string, content: unknown, localOpMetadata: unknown) => {
 		const fluidDataStoreContent: FluidDataStoreMessage = {
 			content,
 			type,
@@ -649,7 +649,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	public createDataStoreContext(
 		pkg: Readonly<string[]>,
-		props?: any,
+		props?: unknown,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextInternal {
 		return this.createContext(
@@ -665,7 +665,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		id: string,
 		pkg: Readonly<string[]>,
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
-		createProps?: any,
+		createProps?: unknown,
 		loadingGroupId?: string,
 	) {
 		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
@@ -700,7 +700,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 	public readonly dispose = () => this.disposeOnce.value;
 
-	public reSubmit(type: string, content: any, localOpMetadata: unknown) {
+	public reSubmit(type: string, content: unknown, localOpMetadata: unknown) {
 		switch (type) {
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
@@ -713,7 +713,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	protected reSubmitChannelOp(type: string, content: any, localOpMetadata: unknown) {
+	protected reSubmitChannelOp(type: string, content: unknown, localOpMetadata: unknown) {
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
@@ -731,7 +731,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		context.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
 	}
 
-	public rollback(type: string, content: any, localOpMetadata: unknown) {
+	public rollback(type: string, content: unknown, localOpMetadata: unknown) {
 		assert(type === ContainerMessageType.FluidDataStoreOp, 0x8e8 /* type */);
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);

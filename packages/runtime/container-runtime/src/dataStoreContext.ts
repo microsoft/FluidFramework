@@ -155,6 +155,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly createProps?: any;
 }
 
