@@ -8,7 +8,7 @@
  */
 
 export {
-	doesItemRequireOwnDocument,
+	createQualifiedDocumentNameForApiItem,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
