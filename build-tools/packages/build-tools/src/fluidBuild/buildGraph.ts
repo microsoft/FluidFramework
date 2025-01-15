@@ -532,6 +532,7 @@ export class BuildGraph {
 		}
 		return succeeded;
 	}
+
 	public async build(timer?: Timer): Promise<BuildResult> {
 		// This function must only be called once here at the beginning of the build.
 		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
