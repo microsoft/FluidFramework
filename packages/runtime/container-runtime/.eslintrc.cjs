@@ -15,8 +15,12 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
-		// TODO: remove overrides and upgrade config to `recommended`
+		// #region TODO: remove overrides and upgrade config to `recommended`
+
 		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+		"jsdoc/require-description": ["error", { checkConstructors: false }],
+
+		// #endregion
 	},
 	overrides: [
 		{

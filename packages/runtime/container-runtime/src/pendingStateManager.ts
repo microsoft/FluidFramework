@@ -140,7 +140,7 @@ function scrubAndStringify(
 }
 
 /**
- * @returns The index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
+ * Finds and returns the index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
  */
 export function findFirstCharacterMismatched(
 	a: string,

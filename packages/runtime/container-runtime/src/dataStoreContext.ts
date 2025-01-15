@@ -806,6 +806,7 @@ export abstract class FluidDataStoreContext
 		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated 0.18.Should call request on the runtime directly
 	 */
@@ -954,6 +955,7 @@ export abstract class FluidDataStoreContext
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated Sets the datastore as root, for aliasing purposes: #7948
 	 * This method should not be used outside of the aliasing context.
@@ -963,6 +965,7 @@ export abstract class FluidDataStoreContext
 		this._isInMemoryRoot = true;
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
@@ -1228,14 +1231,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachSummary
+	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
 	 */
 	public getAttachSummary(): ISummaryTreeWithStats {
 		throw new Error("Cannot attach remote store");
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachGCData
+	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
 	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		throw new Error("Cannot attach remote store");
@@ -1313,7 +1316,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachSummary
+	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
@@ -1343,7 +1346,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachGCData
+	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
 	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		assert(
