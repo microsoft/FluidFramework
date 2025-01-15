@@ -5,6 +5,7 @@
 
 /**
  * Potential reasons for disconnect events emitted by {@link @fluidframework/container-definitions#IContainer}.
+ *
  * @legacy
  * @alpha
  */
@@ -20,3 +21,16 @@ export const DisconnectReason = {
  * @alpha
  */
 export type DisconnectReason = (typeof DisconnectReason)[keyof typeof DisconnectReason];
+
+/**
+ * Type guard that checks if a value is a valid DisconnectReason.
+ *
+ * @param value - The value to check
+ * @returns True if the value is a valid DisconnectReason, false otherwise
+ * @legacy
+ * @alpha
+ */
+export const isDisconnectReason = (value: unknown): boolean =>
+	value !== undefined &&
+	typeof value === "string" &&
+	Object.values(DisconnectReason).includes(value as DisconnectReason);

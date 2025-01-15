@@ -4,7 +4,7 @@
  */
 
 export type { IDisposable } from "./disposable.js";
-export { DisconnectReason } from "./disconnectReason.js";
+export { DisconnectReason, isDisconnectReason } from "./disconnectReason.js";
 
 export type { IErrorBase, IGenericError, IUsageError, IThrottlingWarning } from "./error.js";
 export { FluidErrorTypes } from "./error.js";

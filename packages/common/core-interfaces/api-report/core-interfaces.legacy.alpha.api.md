@@ -345,6 +345,9 @@ export interface IResponse {
     value: any;
 }
 
+// @alpha
+export const isDisconnectReason: (value: unknown) => boolean;
+
 // @public
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;
 

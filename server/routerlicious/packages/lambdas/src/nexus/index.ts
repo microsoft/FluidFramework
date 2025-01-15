@@ -641,8 +641,13 @@ export function configureWebSocketServices(
 		socket.on(
 			"disconnect_document",
 			(clientId: string, documentId: string, disconnectReason: string) => {
+                const disconnectReasonDisplay: Record<string, string> = {
+                    "Expected": "Client disconnected normally",
+                    "Corruption": "Client disconnected due to data corruption",
+                    "Unknown": "Client disconnected unexpectedly"
+                };
 				Lumberjack.error(
-					"Client disconnected due to error",
+					disconnectReasonDisplay[disconnectReason] || "Client disconnected unexpectedly",
 					{ clientId, documentId },
 					disconnectReason,
 				);

@@ -776,11 +776,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		let finalError: ICriticalContainerError | undefined;
 		let disconnectReason: DisconnectReason | undefined;
 
-		if (typeof errorOrReason === "string") {
+		if (
+			typeof errorOrReason === "string" &&
+			Object.values(DisconnectReason).some((reason) => errorOrReason.includes(reason))
+		) {
 			finalError = error;
 			disconnectReason = errorOrReason;
 		} else {
-			finalError = errorOrReason;
+			finalError = typeof errorOrReason === "object" ? errorOrReason : undefined;
 			disconnectReason = undefined;
 		}
 

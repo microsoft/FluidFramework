@@ -99,7 +99,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
-    // (undocumented)
     close(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
     readonly closed: boolean;
     connect(): void;
@@ -108,7 +107,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
-    // (undocumented)
     dispose(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
     readonly disposed?: boolean;
     forceReadonly?(readonly: boolean): any;

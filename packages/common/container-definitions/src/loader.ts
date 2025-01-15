@@ -388,6 +388,15 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * resulted in disposing it.
 	 */
 	dispose(error?: ICriticalContainerError): void;
+
+	/**
+	 * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
+	 * The container is not expected to be used anymore once it is disposed.
+	 *
+	 * @param disconnectReason - The reason for disconnecting the container
+	 * @param error - OIf the container is being disposed due to error, this provides details about the error that
+	 * resulted in disposing it.
+	 */
 	dispose(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
 
 	/**
@@ -395,9 +404,16 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 *
 	 * @param error - If the container is being closed due to error, this provides details about the error that
 	 * resulted in closing it.
-	 * @param disconnectReason - The reason for disconnecting the container
 	 */
 	close(error?: ICriticalContainerError): void;
+
+	/**
+	 * Closes the container.
+	 *
+	 * @param disconnectReason - The reason for disconnecting the container
+	 * @param error - If the container is being closed due to error, this provides details about the error that
+	 * resulted in closing it.
+	 */
 	close(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
 
 	/**
