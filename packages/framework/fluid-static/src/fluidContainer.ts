@@ -9,7 +9,10 @@ import {
 	type ConnectionState,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import { DisconnectReason, type IContainer } from "@fluidframework/container-definitions/internal";
+import {
+	DisconnectReason,
+	type IContainer,
+} from "@fluidframework/container-definitions/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
