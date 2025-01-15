@@ -91,18 +91,26 @@ describe("presence-tracker", () => {
 		let browser2: Browser;
 		let page2: Page;
 
-		beforeAll(async () => {
+		// beforeAll(async () => {
+		// 	// Create a second browser instance and navigate to the session created by the first browser.
+		// 	browser2 = await initializeBrowser();
+		// 	page2 = await browser2.newPage();
+
+		// 	// Wait for the page to load first before running any tests
+		// 	// so this time isn't attributed to the first test
+		// 	await page2.goto(page.url(), { waitUntil: "load", timeout: 0 });
+		// 	await page2.waitForFunction(() => window["fluidStarted"]);
+		// }, 45000);
+
+		// afterEach(async () => {
+		// 	await
+		// });
+
+		beforeEach(async () => {
 			// Create a second browser instance and navigate to the session created by the first browser.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
 
-			// Wait for the page to load first before running any tests
-			// so this time isn't attributed to the first test
-			await page2.goto(page.url(), { waitUntil: "load", timeout: 0 });
-			await page2.waitForFunction(() => window["fluidStarted"]);
-		}, 45000);
-
-		beforeEach(async () => {
 			await page2.goto(page.url(), { waitUntil: "load" });
 			await page2.waitForFunction(() => window["fluidStarted"]);
 		});
