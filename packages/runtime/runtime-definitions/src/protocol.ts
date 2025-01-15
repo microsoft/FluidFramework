@@ -23,6 +23,7 @@ export interface IEnvelope {
 	/**
 	 * The contents of the envelope
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: breaking change
 	contents: any;
 }
 
@@ -67,6 +68,7 @@ export interface IAttachMessage {
  * @alpha
  */
 export type InboundAttachMessage = Omit<IAttachMessage, "snapshot"> & {
+	// eslint-disable-next-line @rushstack/no-new-null -- TODO: breaking change; protocol might even explicitly use null
 	snapshot: IAttachMessage["snapshot"] | null;
 };
 
