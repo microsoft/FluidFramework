@@ -20,13 +20,8 @@ import {
 	ISummarizer,
 	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
-import {
-	computeTombstoneTimeout,
-	defaultSessionExpiryDurationMs,
-	defaultSweepGracePeriodMs,
-	ISweepMessage,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/container-runtime/internal/test/gc";
+// eslint-disable-next-line import/no-internal-modules
+import { ISweepMessage } from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
@@ -128,10 +123,13 @@ function validateDataStoreStateInSummary(
 	);
 }
 
-const tombstoneTimeoutMs = computeTombstoneTimeout(defaultSessionExpiryDurationMs) ?? 200;
-const sweepTimeoutMs = tombstoneTimeoutMs + defaultSweepGracePeriodMs;
+const tombstoneTimeoutMs = 200;
+const sweepGracePeriodMs = 0; // Skip Tombstone, these tests focus on Sweep
+const sweepTimeoutMs = tombstoneTimeoutMs + sweepGracePeriodMs; // defaultSweepGracePeriodMs;
 const newGCOptions: () => IGCRuntimeOptions = () => ({
+	inactiveTimeoutMs: 0,
 	enableGCSweep: true,
+	sweepGracePeriodMs,
 });
 const mockLogger = new MockLogger();
 const configProvider = createTestConfigProvider();
@@ -251,7 +249,7 @@ const summarizationWithUnreferencedDataStoreAfterTime = async (clock: SinonFakeT
  *
  * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughout, since sweepGracePeriod is set to 0.
  */
-describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat.only("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
@@ -263,6 +261,10 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
+		configProvider.set(
+			"Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs",
+			tombstoneTimeoutMs,
+		);
 	});
 
 	afterEach(() => {
@@ -662,21 +664,12 @@ describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) 
 			const { summaryVersion } = await ensureSynchronizedAndSummarize(summarizer1);
 			summarizer1.close();
 
-			// To simulate this scenario, the container that deleted the data store should send an op before its
-			// session expires. At the same time, there should be a second container that receives the op whose
-			// session doesn't expire by sweep timeout (this is needed for ensureSynchronized to work since it needs
-			// at least one container that isn't closed).
-			// So, advance the clock partially, send the op and load another container.
-			const partialTimeoutMs = defaultSessionExpiryDurationMs / 2;
-			clock.tick(partialTimeoutMs);
 			testDataObject._root.set("key", "value");
-
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			await provider.ensureSynchronized();
-
-			// Close the first container before its session expires so we don't get unnecessary errors.
+			// Close the first container to simulate scenario where it closes before its session expires.
 			container.close();
-			clock.tick(sweepTimeoutMs - partialTimeoutMs + 10);
+			clock.tick(sweepTimeoutMs + 10);
 
 			const logger = new MockLogger();
 			// Summarize. The sweep ready data store should get realized because it has a
