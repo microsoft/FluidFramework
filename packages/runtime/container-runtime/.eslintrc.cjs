@@ -15,7 +15,7 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
-		// #region TODO: remove overrides and upgrade config to `recommended`
+		// #region TODO:AB#3027: remove overrides and upgrade config to `recommended`
 
 		"@typescript-eslint/no-explicit-any": [
 			"error",
