@@ -44,6 +44,7 @@ export {
 	type NestedChangesIndices,
 } from "./fieldChangeHandler.js";
 export type {
+	CrossFieldKey,
 	CrossFieldKeyRange,
 	FieldChange,
 	FieldChangeMap,

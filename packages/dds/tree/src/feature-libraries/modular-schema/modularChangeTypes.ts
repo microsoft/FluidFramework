@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ChangeAtomId,
-	ChangesetLocalId,
-	FieldKey,
-	FieldKindIdentifier,
-	RevisionInfo,
-	RevisionTag,
+import {
+	compareRevisions,
+	type ChangeAtomId,
+	type ChangesetLocalId,
+	type FieldKey,
+	type FieldKindIdentifier,
+	type RevisionInfo,
+	type RevisionTag,
 } from "../../core/index.js";
-import type { Brand, TupleBTree } from "../../util/index.js";
+import { brand, RangeMap, type Brand, type TupleBTree } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
@@ -71,23 +72,42 @@ export interface ModularChangeset extends HasFieldChanges {
 }
 
 export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;
-export type CrossFieldKeyTable = TupleBTree<CrossFieldKeyRange, FieldId>;
-export type CrossFieldKeyRange = readonly [
-	CrossFieldTarget,
-	RevisionTag | undefined,
-	ChangesetLocalId,
-	/**
-	 * The length of this range.
-	 * TODO: This does not need to be part of the key and could be part of the value instead.
-	 */
-	number,
-];
 
-export type CrossFieldKey = readonly [
-	CrossFieldTarget,
-	RevisionTag | undefined,
-	ChangesetLocalId,
-];
+export type CrossFieldKeyTable = RangeMap<CrossFieldKey, FieldId>;
+
+export function newCrossFieldKeyTable(): CrossFieldKeyTable {
+	return new RangeMap(offsetCrossFieldKey, subtractCrossFieldKeys);
+}
+
+function offsetCrossFieldKey(key: CrossFieldKey, offset: number): CrossFieldKey {
+	return {
+		...key,
+		localId: brand(key.localId + offset),
+	};
+}
+
+function subtractCrossFieldKeys(a: CrossFieldKey, b: CrossFieldKey): number {
+	const cmpTarget = a.target - b.target;
+	if (cmpTarget !== 0) {
+		return cmpTarget * Number.POSITIVE_INFINITY;
+	}
+
+	const cmpRevision = compareRevisions(a.revision, b.revision);
+	if (cmpRevision !== 0) {
+		return cmpRevision * Number.POSITIVE_INFINITY;
+	}
+
+	return a.localId - b.localId;
+}
+
+export interface CrossFieldKey extends ChangeAtomId {
+	readonly target: CrossFieldTarget;
+}
+
+export interface CrossFieldKeyRange {
+	key: CrossFieldKey;
+	count: number;
+}
 
 export interface FieldId {
 	readonly nodeId: NodeId | undefined;

@@ -40,7 +40,7 @@ export function getFirstFromCrossFieldMap<T>(
 	id: ChangesetLocalId,
 	count: number,
 ): RangeQueryResult<ChangeAtomId, T> {
-	return map.get({ revision, localId: id }, count);
+	return map.getFirst({ revision, localId: id }, count);
 }
 
 /**

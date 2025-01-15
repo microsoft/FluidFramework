@@ -201,22 +201,25 @@ export function mintCommit<TChange>(
 	};
 }
 
-export class ChangeAtomIdRangeMap<V> extends RangeMap<ChangeAtomId, V> {
-	protected override offsetKey(key: ChangeAtomId, offset: number): ChangeAtomId {
-		return offsetChangeAtomId(key, offset);
-	}
+export type ChangeAtomIdRangeMap<V> = RangeMap<ChangeAtomId, V>;
 
-	protected override subtractKeys(a: ChangeAtomId, b: ChangeAtomId): number {
-		const cmp = compareRevisions(a.revision, b.revision);
-		if (cmp !== 0) {
-			return cmp * Number.POSITIVE_INFINITY;
-		}
-
-		return a.localId - b.localId;
-	}
+export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
 }
 
-function compareRevisions(a: RevisionTag | undefined, b: RevisionTag | undefined): number {
+function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
+	const cmp = compareRevisions(a.revision, b.revision);
+	if (cmp !== 0) {
+		return cmp * Number.POSITIVE_INFINITY;
+	}
+
+	return a.localId - b.localId;
+}
+
+export function compareRevisions(
+	a: RevisionTag | undefined,
+	b: RevisionTag | undefined,
+): number {
 	if (a === undefined) {
 		return b === undefined ? 0 : -1;
 	} else if (b === undefined) {

@@ -3,24 +3,35 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 /**
  * RangeMap represents a mapping from integers to values of type T or undefined.
  * The values for a range of consecutive keys can be changed or queried in a single operation.
  */
-export abstract class RangeMap<K, V> {
-	private readonly tree: BTree<K, RangeEntry<V>>;
+export class RangeMap<K, V> {
+	private tree: BTree<K, RangeEntry<V>>;
 
-	public constructor() {
-		this.tree = new BTree(undefined, (a, b) => this.subtractKeys(a, b));
+	/**
+	 * @param subtractKeys - Returns the distance from `b` to `a`.
+	 * Can be infinite if `a` cannot be reached from `b` by offsetting,
+	 * but the return value should still be positive if `a` is larger than `b` and negative if smaller.
+	 */
+	public constructor(
+		private readonly offsetKey: (key: K, offset: number) => K,
+		private readonly subtractKeys: (a: K, b: K) => number,
+	) {
+		// XXX: If the tree is cloned it will hold a reference to the original RangeMap instance
+		// XXX: This also unnecessarily requires dynamic dispatch whenever keys are compared
+		this.tree = new BTree(undefined, subtractKeys);
 	}
 
 	/**
 	 * Retrieves all entries from the RangeMap.
 	 */
-	public getAllEntries(): RangeQueryResult<K, V>[] {
-		const entries: RangeQueryResult<K, V>[] = [];
+	public entries(): RangeQueryEntry<K, V>[] {
+		const entries: RangeQueryEntry<K, V>[] = [];
 		for (const [start, entry] of this.tree.entries()) {
 			entries.push({ start, length: entry.length, value: entry.value });
 		}
@@ -32,6 +43,49 @@ export abstract class RangeMap<K, V> {
 		this.tree.clear();
 	}
 
+	public get(start: K, length: number): RangeQueryEntry<K, V>[] {
+		const result: RangeQueryEntry<K, V>[] = [];
+		const lastQueryKey = this.offsetKey(start, length - 1);
+
+		let nextKey = start;
+		let remainingLength = length;
+		{
+			const entry = this.tree.getPairOrNextLower(start);
+			if (entry !== undefined) {
+				const [key, { length: entryLength, value }] = entry;
+				const lastEntryKey = this.offsetKey(key, entryLength);
+				if (this.ge(lastEntryKey, start)) {
+					const overlappingLength = Math.min(
+						this.subtractKeys(lastEntryKey, start) + 1,
+						length,
+					);
+
+					result.push({ start, length: overlappingLength, value });
+					nextKey = this.offsetKey(lastEntryKey, 1);
+				}
+			}
+		}
+
+		while (remainingLength > 0) {
+			const entry = this.tree.getPairOrNextHigher(nextKey);
+			if (entry === undefined) {
+				break;
+			}
+
+			const [key, { length: entryLength, value }] = entry;
+			const lastEntryKey = this.offsetKey(key, entryLength);
+			if (this.gt(key, lastQueryKey)) {
+				break;
+			}
+			const overlappingLength = Math.min(remainingLength, entryLength);
+			result.push({ start: key, length: overlappingLength, value });
+			nextKey = this.offsetKey(lastEntryKey, 1);
+			remainingLength -= entryLength;
+		}
+
+		return result;
+	}
+
 	/**
 	 * Retrieves the value for some prefix of the query range.
 	 *
@@ -40,7 +94,7 @@ export abstract class RangeMap<K, V> {
 	 * @returns A RangeQueryResult containing the value associated with `start`,
 	 * and the number of consecutive keys with that same value.
 	 */
-	public get(start: K, length: number): RangeQueryResult<K, V> {
+	public getFirst(start: K, length: number): RangeQueryResult<K, V> {
 		// We first check for an entry with a key less than or equal to `start`.
 		{
 			const entry = this.tree.getPairOrNextLower(start);
@@ -48,8 +102,8 @@ export abstract class RangeMap<K, V> {
 				const entryKey = entry[0];
 				const { value, length: entryLength } = entry[1];
 
-				const entryLastId = this.offsetKey(entryKey, entryLength - 1);
-				const overlappingLength = Math.min(this.subtractKeys(entryLastId, start) + 1, length);
+				const entryLastKey = this.offsetKey(entryKey, entryLength - 1);
+				const overlappingLength = Math.min(this.subtractKeys(entryLastKey, start) + 1, length);
 				if (overlappingLength > 0) {
 					return { value, start, length: overlappingLength };
 				}
@@ -63,8 +117,8 @@ export abstract class RangeMap<K, V> {
 			if (key !== undefined) {
 				const entryKey = key;
 
-				const lastQueryId = this.offsetKey(start, length - 1);
-				if (this.le(entryKey, lastQueryId)) {
+				const lastQueryKey = this.offsetKey(start, length - 1);
+				if (this.le(entryKey, lastQueryKey)) {
 					return { value: undefined, start, length: this.subtractKeys(entryKey, start) };
 				}
 			}
@@ -108,7 +162,57 @@ export abstract class RangeMap<K, V> {
 	 * @param length - The length of the range to delete.
 	 */
 	public delete(start: K, length: number): void {
-		const lastDeletedKey = this.offsetKey(start, length - 1);
+		const lastDeleteKey = this.offsetKey(start, length - 1);
+		for (const { start: key, length: entryLength, value } of this.getIntersectingEntries(
+			start,
+			length,
+		)) {
+			this.tree.delete(key);
+			const lengthBefore = this.subtractKeys(start, key);
+			if (lengthBefore > 0) {
+				// A portion of this entry comes before the deletion range, so we reinsert that portion.
+				this.tree.set(key, { length: lengthBefore, value });
+			}
+
+			const lastEntryKey = this.offsetKey(key, entryLength - 1);
+			const lengthAfter = this.subtractKeys(lastEntryKey, lastDeleteKey);
+			if (lengthAfter > 0) {
+				// A portion of this entry comes after the deletion range, so we reinsert that portion.
+				this.tree.set(this.offsetKey(lastDeleteKey, 1), { length: lengthAfter, value });
+			}
+		}
+	}
+
+	public clone(): RangeMap<K, V> {
+		const cloned = new RangeMap<K, V>(this.offsetKey, this.subtractKeys);
+		cloned.tree = this.tree.clone();
+		return cloned;
+	}
+
+	/**
+	 * Returns a new map which contains the entries from both input tables.
+	 */
+	public static mergeMaps<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
+		assert(
+			a.offsetKey === b.offsetKey && a.subtractKeys === b.subtractKeys,
+			"Maps should have the same behavior",
+		);
+
+		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys);
+
+		// XXX: Is there a good pattern that lets us make `tree` readonly?
+		merged.tree = a.tree.clone();
+		for (const [key, value] of b.tree.entries()) {
+			// TODO: Handle key collisions
+			merged.tree.set(key, value);
+		}
+
+		return merged;
+	}
+
+	private getIntersectingEntries(start: K, length: number): RangeQueryEntry<K, V>[] {
+		const entries: RangeQueryEntry<K, V>[] = [];
+		const lastQueryKey = this.offsetKey(start, length - 1);
 		{
 			const entry = this.tree.getPairOrNextLower(start);
 			if (entry !== undefined) {
@@ -116,22 +220,7 @@ export abstract class RangeMap<K, V> {
 				const { length: entryLength, value } = entry[1];
 				const lastEntryKey = this.offsetKey(key, entryLength - 1);
 				if (this.ge(lastEntryKey, start)) {
-					// This entry overlaps with the deleted range, so we remove it.
-					this.tree.delete(key);
-					if (this.lt(key, start)) {
-						// A portion of the entry comes before the delete range, so we reinsert that portion.
-						this.tree.set(key, { value, length: this.subtractKeys(start, key) });
-					}
-
-					if (this.gt(lastEntryKey, lastDeletedKey)) {
-						// A portion of the entry comes after the delete range, so we reinsert that portion.
-						this.tree.set(this.offsetKey(lastDeletedKey, 1), {
-							value,
-							length: this.subtractKeys(lastEntryKey, lastDeletedKey),
-						});
-
-						return;
-					}
+					entries.push({ start: key, length: entryLength, value });
 				}
 			}
 		}
@@ -140,37 +229,20 @@ export abstract class RangeMap<K, V> {
 			let entry = this.tree.nextHigherPair(start);
 			while (entry !== undefined) {
 				const key = entry[0];
-				if (this.gt(key, lastDeletedKey)) {
-					return;
+				if (this.gt(key, lastQueryKey)) {
+					break;
 				}
 
 				const { length: entryLength, value } = entry[1];
 				const lastEntryKey = this.offsetKey(key, entryLength - 1);
 
-				this.tree.delete(key);
-				if (this.gt(lastEntryKey, lastDeletedKey)) {
-					// A portion of the entry comes after the delete range, so we reinsert that portion.
-					this.tree.set(this.offsetKey(lastDeletedKey, 1), {
-						value,
-						length: this.subtractKeys(lastEntryKey, lastDeletedKey),
-					});
-
-					return;
-				}
-
+				entries.push({ start: key, length: entryLength, value });
 				entry = this.tree.nextHigherPair(lastEntryKey);
 			}
 		}
+
+		return entries;
 	}
-
-	protected abstract offsetKey(key: K, offset: number): K;
-
-	/**
-	 * Returns the distance from `b` to `a`.
-	 * Can be infinite if `a` cannot be reached from `b` by offsetting,
-	 * but the return value should still be positive if `a` is larger than `b` and negative if smaller.
-	 */
-	protected abstract subtractKeys(a: K, b: K): number;
 
 	private gt(a: K, b: K): boolean {
 		return this.subtractKeys(a, b) > 0;
@@ -227,12 +299,18 @@ export interface RangeQueryResult<K, V> {
 	readonly length: number;
 }
 
-export class IntegerRangeMap<V> extends RangeMap<number, V> {
-	protected override offsetKey(key: number, offset: number): number {
-		return key + offset;
-	}
+export interface RangeQueryEntry<K, V> extends RangeQueryResult<K, V> {
+	readonly value: V;
+}
 
-	protected override subtractKeys(a: number, b: number): number {
-		return a - b;
-	}
+export function newIntegerRangeMap<V>(): RangeMap<number, V> {
+	return new RangeMap(offsetInteger, subtractIntegers);
+}
+
+function offsetInteger(key: number, offset: number): number {
+	return key + offset;
+}
+
+function subtractIntegers(a: number, b: number): number {
+	return a - b;
 }

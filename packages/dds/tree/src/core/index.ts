@@ -203,7 +203,9 @@ export {
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	isAncestor,
-	ChangeAtomIdRangeMap,
+	type ChangeAtomIdRangeMap,
+	newChangeAtomIdRangeMap,
+	compareRevisions,
 } from "./rebase/index.js";
 
 export {

@@ -11,7 +11,7 @@ import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
-	ChangeAtomIdRangeMap,
+	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type DeltaFieldChanges,
 	type RevisionInfo,
@@ -20,6 +20,7 @@ import {
 	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
+	newChangeAtomIdRangeMap,
 	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
@@ -63,9 +64,7 @@ import {
 } from "../../../feature-libraries/sequence-field/utils.js";
 import {
 	type IdAllocator,
-	IntegerRangeMap,
 	type Mutable,
-	type RangeMap,
 	brand,
 	fail,
 	fakeIdAllocator,
@@ -834,10 +833,10 @@ interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 }
 
 function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: CrossFieldQuerySet = new ChangeAtomIdRangeMap();
-	const dstQueries: CrossFieldQuerySet = new ChangeAtomIdRangeMap();
-	const mapSrc = new ChangeAtomIdRangeMap<T>();
-	const mapDst = new ChangeAtomIdRangeMap<T>();
+	const srcQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
+	const dstQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
+	const mapSrc = newChangeAtomIdRangeMap<T>();
+	const mapDst = newChangeAtomIdRangeMap<T>();
 
 	const getMap = (target: CrossFieldTarget): ChangeAtomIdRangeMap<T> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
@@ -863,7 +862,7 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
 			const rangeMap = getMap(target);
-			return rangeMap.get({ revision, localId: id }, count);
+			return rangeMap.getFirst({ revision, localId: id }, count);
 		},
 		set: (
 			target: CrossFieldTarget,
@@ -876,7 +875,7 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			const queries = getQueries(target);
 			if (
 				invalidateDependents &&
-				queries.get({ revision, localId: id }, count).value !== undefined
+				queries.getFirst({ revision, localId: id }, count).value !== undefined
 			) {
 				table.isInvalidated = true;
 			}

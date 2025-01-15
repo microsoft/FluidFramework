@@ -17,12 +17,13 @@ import type {
 	ModularChangeset,
 	NodeId,
 } from "../../../feature-libraries/index.js";
-import type {
-	ChangeAtomIdBTree,
-	CrossFieldKeyTable,
-	FieldChange,
-	FieldId,
-	NodeChangeset,
+import {
+	newCrossFieldKeyTable,
+	type ChangeAtomIdBTree,
+	type CrossFieldKeyTable,
+	type FieldChange,
+	type FieldId,
+	type NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
@@ -35,9 +36,8 @@ import {
 } from "../../../util/index.js";
 import {
 	getChangeHandler,
-	getFieldsForCrossFieldKey,
 	getParentFieldId,
-	newCrossFieldKeyTable,
+	normalizeFieldId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import { strict as assert } from "node:assert";
@@ -178,8 +178,8 @@ function fieldChangeMapFromDescription(
 			field.changeset,
 		);
 
-		for (const key of changeHandler.getCrossFieldKeys(fieldChangeset)) {
-			crossFieldKeys.set(key, fieldId);
+		for (const { key, count } of changeHandler.getCrossFieldKeys(fieldChangeset)) {
+			crossFieldKeys.set(key, count, fieldId);
 		}
 
 		const fieldChange: FieldChange = {
@@ -257,10 +257,12 @@ export function removeAliases(changeset: ModularChangeset): ModularChangeset {
 	);
 
 	const updatedCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
-	for (const key of changeset.crossFieldKeys.keys()) {
-		const fields = getFieldsForCrossFieldKey(changeset, key);
-		assert(fields.length === 1);
-		updatedCrossFieldKeys.set(key, fields[0]);
+	for (const entry of changeset.crossFieldKeys.entries()) {
+		updatedCrossFieldKeys.set(
+			entry.start,
+			entry.length,
+			normalizeFieldId(entry.value, changeset.nodeAliases),
+		);
 	}
 
 	return {
