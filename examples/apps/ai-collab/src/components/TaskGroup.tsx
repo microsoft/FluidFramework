@@ -5,8 +5,8 @@
 
 import {
 	aiCollab,
-	type AiCollabSuccessResponse,
 	type AiCollabErrorResponse,
+	type AiCollabSuccessResponse,
 	type Difference,
 	SharedTreeBranchManager,
 } from "@fluidframework/ai-collab/alpha";
