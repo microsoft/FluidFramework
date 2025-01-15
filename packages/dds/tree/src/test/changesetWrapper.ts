@@ -15,7 +15,6 @@ import {
 	taggedOptAtomId,
 } from "../core/index.js";
 import type {
-	FieldChangeDelta,
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
@@ -31,6 +30,8 @@ import {
 	tryGetFromNestedMap,
 } from "../util/index.js";
 import { TestChange } from "./testChange.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 export interface ChangesetWrapper<T> {
 	fieldChange: T;

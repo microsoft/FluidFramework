@@ -12,14 +12,9 @@ import {
 	type DeltaMark,
 	type FieldKey,
 	type RevisionTag,
-	emptyFieldChanges,
 	tagChange,
 } from "../../../core/index.js";
-import {
-	type FieldChangeDelta,
-	type NodeId,
-	SequenceField as SF,
-} from "../../../feature-libraries/index.js";
+import { type NodeId, SequenceField as SF } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { assertFieldChangesEqual, mintRevisionTag } from "../../utils.js";
@@ -27,6 +22,8 @@ import { TestNodeId } from "../../testNodeId.js";
 import { ChangeMaker as Change, MarkMaker as Mark } from "./testEdits.js";
 import { inlineRevision, toDelta } from "./utils.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldChangeDelta } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 const moveId = brand<ChangesetLocalId>(4242);
 const moveId2 = brand<ChangesetLocalId>(4343);
@@ -46,6 +43,8 @@ const nodeId1: NodeId = { localId: brand(1) };
 const childChange1 = TestNodeId.create(nodeId1, TestChange.mint([0], 1));
 const childChange1Delta = TestChange.toDelta(tagChange(childChange1.testChange, tag));
 const detachId = { major: tag, minor: 42 };
+
+export const emptyFieldChanges: FieldChangeDelta = {};
 
 export function testToDelta() {
 	describe("toDelta", () => {

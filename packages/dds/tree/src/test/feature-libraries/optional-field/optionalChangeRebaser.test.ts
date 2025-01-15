@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
-import type { CrossFieldManager, FieldChangeDelta } from "../../../feature-libraries/index.js";
+import type { CrossFieldManager } from "../../../feature-libraries/index.js";
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
@@ -20,6 +20,7 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import {
+	type FieldChangeDelta,
 	type NodeChangeComposer,
 	type NodeChangeRebaser,
 	type NodeId,

@@ -108,7 +108,6 @@ import {
 	MockNodeKeyManager,
 	cursorForMapTreeField,
 	type IDefaultEditBuilder,
-	type FieldChangeDelta,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
@@ -159,6 +158,8 @@ import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 // Testing utilities
 

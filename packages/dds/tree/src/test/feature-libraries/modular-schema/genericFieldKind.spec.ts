@@ -6,11 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import type {
-	GenericChangeset,
-	CrossFieldManager,
-	FieldChangeDelta,
-} from "../../../feature-libraries/index.js";
+import type { GenericChangeset, CrossFieldManager } from "../../../feature-libraries/index.js";
 import { fakeIdAllocator, brand, idAllocatorFromMaxId } from "../../../util/index.js";
 import {
 	type EncodingTestData,
@@ -21,6 +17,7 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
+	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type NodeId,
 	type RebaseRevisionMetadata,

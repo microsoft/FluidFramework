@@ -67,7 +67,6 @@ export {
 	forEachField,
 	type PathRootPrefix,
 	deltaForRootInitialization,
-	emptyFieldChanges,
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,

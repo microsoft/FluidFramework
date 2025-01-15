@@ -43,7 +43,6 @@ export {
 	ModularEditBuilder,
 	type FieldEditDescription as EditDescription,
 	type FieldChangeHandler,
-	type FieldChangeDelta,
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type FieldChangeMap,

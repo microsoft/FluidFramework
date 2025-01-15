@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldChangeDelta } from "../../feature-libraries/index.js";
 import type { Mutable } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -12,8 +11,6 @@ import type { DetachedNodeId, FieldChanges, Mark, Root } from "./delta.js";
 import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root<never> = {};
-
-export const emptyFieldChanges: FieldChangeDelta = {};
 
 export function isAttachMark(mark: Mark): boolean {
 	return mark.attach !== undefined && mark.detach === undefined;
