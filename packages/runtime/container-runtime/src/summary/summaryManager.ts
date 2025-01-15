@@ -470,8 +470,8 @@ export class SummaryManager
 	}
 
 	private cleanupForwardedEvents() {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		this.forwardedEvents.forEach((listener, event) =>
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.summarizer?.off(event as any, listener),
 		);
 		this.forwardedEvents.clear();
