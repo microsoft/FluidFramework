@@ -17,8 +17,7 @@ import {
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { extractTokenFromHeader, getValidAccessToken } from "@fluidframework/server-services-utils";
-import type { RawAxiosRequestHeaders } from "axios";
+import { getRefreshTokenIfNeededCallback } from "./tenant";
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
@@ -131,38 +130,13 @@ export class DocumentManager implements IDocumentManager {
 			};
 		};
 
-		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
-			if (
-				authorizationHeader.Authorization &&
-				typeof authorizationHeader.Authorization === "string"
-			) {
-				const currentAccessToken = extractTokenFromHeader(
-					authorizationHeader.Authorization,
-				);
-				const props = {
-					...getLumberBaseProperties(documentId, tenantId),
-					serviceName: "documentManager",
-					scopes,
-				};
-				const newAccessToken = await getValidAccessToken(
-					currentAccessToken,
-					this.tenantManager,
-					tenantId,
-					documentId,
-					scopes,
-					props,
-				).catch((error) => {
-					Lumberjack.error("Failed to refresh access token", props, error);
-					throw error;
-				});
-				if (newAccessToken) {
-					return {
-						Authorization: `Basic ${newAccessToken}`,
-					};
-				}
-				return undefined;
-			}
-		};
+		const refreshTokenIfNeeded = getRefreshTokenIfNeededCallback(
+			this.tenantManager,
+			documentId,
+			tenantId,
+			scopes,
+			"documentManager",
+		);
 
 		const restWrapper = new BasicRestWrapper(
 			this.internalAlfredUrl,

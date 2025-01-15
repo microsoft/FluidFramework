@@ -6,25 +6,22 @@
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
-import { IDeltaService } from "@fluidframework/server-services-core";
-import {
-	getGlobalTelemetryContext,
-	getLumberBaseProperties,
-	Lumberjack,
-} from "@fluidframework/server-services-telemetry";
-import { TenantManager } from "./tenant";
-import { extractTokenFromHeader, getValidAccessToken } from "@fluidframework/server-services-utils";
-import type { RawAxiosRequestHeaders } from "axios";
+import { IDeltaService, type ITenantManager } from "@fluidframework/server-services-core";
+import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
+import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";
 
 /**
  * Manager to fetch deltas from Alfred using the internal URL.
  * @internal
  */
 export class DeltaManager implements IDeltaService {
+	private readonly tenantManager: ITenantManager;
 	constructor(
 		private readonly authEndpoint,
 		private readonly internalAlfredUrl: string,
-	) {}
+	) {
+		this.tenantManager = new TenantManager(this.authEndpoint, "");
+	}
 
 	public async getDeltas(
 		_collectionName: string,
@@ -71,8 +68,7 @@ export class DeltaManager implements IDeltaService {
 		scopes: ScopeType[],
 		includeDisabledTenant = false,
 	): Promise<string> {
-		const tenantManager = new TenantManager(this.authEndpoint, "");
-		const tokenP = await tenantManager.signToken(
+		const tokenP = await this.tenantManager.signToken(
 			tenantId,
 			documentId,
 			scopes,
@@ -100,39 +96,13 @@ export class DeltaManager implements IDeltaService {
 			};
 		};
 
-		const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
-			if (
-				authorizationHeader.Authorization &&
-				typeof authorizationHeader.Authorization === "string"
-			) {
-				const currentAccessToken = extractTokenFromHeader(
-					authorizationHeader.Authorization,
-				);
-				const tenantManager = new TenantManager(this.authEndpoint, "");
-				const props = {
-					...getLumberBaseProperties(documentId, tenantId),
-					serviceName: "documentManager",
-					scopes,
-				};
-				const newAccessToken = await getValidAccessToken(
-					currentAccessToken,
-					tenantManager,
-					tenantId,
-					documentId,
-					scopes,
-					props,
-				).catch((error) => {
-					Lumberjack.error("Failed to refresh access token", props, error);
-					throw error;
-				});
-				if (newAccessToken) {
-					return {
-						Authorization: `Basic ${newAccessToken}`,
-					};
-				}
-				return undefined;
-			}
-		};
+		const refreshTokenIfNeeded = getRefreshTokenIfNeededCallback(
+			this.tenantManager,
+			documentId,
+			tenantId,
+			scopes,
+			"deltaManager",
+		);
 
 		const restWrapper = new BasicRestWrapper(
 			baseUrl,

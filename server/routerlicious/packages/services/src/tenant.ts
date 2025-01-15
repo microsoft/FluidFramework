@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { getValidAccessToken } from "@fluidframework/server-services-utils";
+import { extractTokenFromHeader, getValidAccessToken } from "@fluidframework/server-services-utils";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
@@ -24,6 +24,46 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { RawAxiosRequestHeaders } from "axios";
 import { IsEphemeralContainer } from ".";
+
+export function getRefreshTokenIfNeededCallback(
+	tenantManager: core.ITenantManager,
+	documentId: string,
+	tenantId: string,
+	scopes: ScopeType[],
+	serviceName: string,
+): (authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined> {
+	const refreshTokenIfNeeded = async (authorizationHeader: RawAxiosRequestHeaders) => {
+		if (
+			authorizationHeader.Authorization &&
+			typeof authorizationHeader.Authorization === "string"
+		) {
+			const currentAccessToken = extractTokenFromHeader(authorizationHeader.Authorization);
+			const props = {
+				...getLumberBaseProperties(documentId, tenantId),
+				serviceName,
+				scopes,
+			};
+			const newAccessToken = await getValidAccessToken(
+				currentAccessToken,
+				tenantManager,
+				tenantId,
+				documentId,
+				scopes,
+				props,
+			).catch((error) => {
+				Lumberjack.error("Failed to refresh access token", props, error);
+				throw error;
+			});
+			if (newAccessToken) {
+				return {
+					Authorization: `Basic ${newAccessToken}`,
+				};
+			}
+			return undefined;
+		}
+	};
+	return refreshTokenIfNeeded;
+}
 
 /**
  * @internal
@@ -149,9 +189,13 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 						serviceName: "historian",
 						scopes,
 					};
+					const tenantManager = new TenantManager(
+						this.endpoint,
+						this.internalHistorianUrl,
+					);
 					const newAccessToken = await getValidAccessToken(
 						currentAccessToken,
-						this /* ITenantManager instance */,
+						tenantManager,
 						tenantId,
 						documentId,
 						scopes,
