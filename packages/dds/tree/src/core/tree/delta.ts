@@ -108,7 +108,7 @@ export interface Root<TTree = ProtoNode> {
 	 */
 	readonly global?: readonly DetachedNodeChanges[];
 	/**
-	 * Detached whose associated ID needs to be updated.
+	 * Detached roots whose associated ID needs to be updated.
 	 * The ordering has no significance.
 	 * Note that the renames may need to be performed in a specific order to avoid collisions.
 	 * This ordering problem is left to the consumer of this format.
