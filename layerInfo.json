@@ -195,7 +195,7 @@
 				"deps": ["Server-Libs"]
 			},
 			"GitRest": {
-				"dirs": ["server/gitrest/", "server/gitrest/packages/"],
+				"dirs": ["server/routerlicious/gitrest/"],
 				"deps": [
 					"Server-Libs",
 					"Common-Utils",
@@ -206,7 +206,7 @@
 				]
 			},
 			"Historian": {
-				"dirs": ["server/historian/", "server/historian/packages/"],
+				"dirs": ["server/routerlicious/historian/"],
 				"deps": [
 					"Server-Libs",
 					"Common-Utils",
