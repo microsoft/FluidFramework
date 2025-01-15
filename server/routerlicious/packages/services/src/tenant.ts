@@ -15,7 +15,7 @@ import {
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { isTokenValid } from "@fluidframework/server-services-utils";
+import { getValidAccessToken } from "@fluidframework/server-services-utils";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
@@ -107,13 +107,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			...getLumberBaseProperties(documentId, tenantId),
 			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
 		};
+		const scopes = [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite];
 		const accessToken = await core.requestWithRetry(
-			async () =>
-				this.signToken(tenantId, documentId, [
-					ScopeType.DocWrite,
-					ScopeType.DocRead,
-					ScopeType.SummaryWrite,
-				]),
+			async () => this.signToken(tenantId, documentId, scopes),
 			"getTenantGitManager_signToken" /* callName */,
 			lumberProperties /* telemetryProperties */,
 		);
@@ -146,38 +142,34 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 				authorizationHeader.Authorization &&
 				typeof authorizationHeader.Authorization === "string"
 			) {
-				const token = parseToken(tenantId, authorizationHeader.Authorization);
-				if (token) {
-					if (isTokenValid(token)) {
-						Lumberjack.info(`Token is still valid for historian`, {
-							tenantId,
-							documentId,
-							scopes: [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite],
-						});
-						return undefined;
-					}
-					Lumberjack.info(`Refreshing token for historian`, {
+				const currentAccessToken = parseToken(tenantId, authorizationHeader.Authorization);
+				if (currentAccessToken) {
+					const props = {
+						...lumberProperties,
+						serviceName: "historian",
+						scopes,
+					};
+					const newAccessToken = await getValidAccessToken(
+						currentAccessToken,
+						this /* ITenantManager instance */,
 						tenantId,
 						documentId,
-						scopes: [ScopeType.DocWrite, ScopeType.DocRead, ScopeType.SummaryWrite],
+						scopes,
+						props,
+					).catch((error) => {
+						Lumberjack.error("Failed to refresh access token", props, error);
+						throw error;
 					});
-					const newToken = await core.requestWithRetry(
-						async () =>
-							this.signToken(tenantId, documentId, [
-								ScopeType.DocWrite,
-								ScopeType.DocRead,
-								ScopeType.SummaryWrite,
-							]),
-						"getTenantGitManager_signToken" /* callName */,
-						lumberProperties /* telemetryProperties */,
-					);
-					const newCredentials: ICredentials = {
-						password: newToken,
-						user: tenantId,
-					};
-					return {
-						Authorization: getAuthorizationTokenFromCredentials(newCredentials),
-					};
+					if (newAccessToken) {
+						const newCredentials: ICredentials = {
+							password: newAccessToken,
+							user: tenantId,
+						};
+						return {
+							Authorization: getAuthorizationTokenFromCredentials(newCredentials),
+						};
+					}
+					return undefined;
 				}
 			}
 		};

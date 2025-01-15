@@ -9,6 +9,7 @@ import { RestWrapper, BasicRestWrapper } from "./restWrapper";
 import { IHistorian } from "./storage";
 import { IWholeFlatSummary, IWholeSummaryPayload, IWriteSummaryResponse } from "./storageContracts";
 import { NetworkError } from "./error";
+import { debug } from "./debug";
 
 function endsWith(value: string, endings: string[]): boolean {
 	for (const ending of endings) {
@@ -45,12 +46,14 @@ export function parseToken(
 	if (authorization) {
 		const base64TokenMatch = authorization.match(/Basic (.+)/);
 		if (!base64TokenMatch) {
+			debug("Invalid base64 token", { tenantId });
 			throw new NetworkError(403, "Malformed authorization token");
 		}
 		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
 
 		const tokenMatch = encoded.match(/(.+):(.+)/);
 		if (!tokenMatch || tenantId !== tokenMatch[1]) {
+			debug("Tenant mismatch or invalid token format", { tenantId });
 			throw new NetworkError(403, "Malformed authorization token");
 		}
 

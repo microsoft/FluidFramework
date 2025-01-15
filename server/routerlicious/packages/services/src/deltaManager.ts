@@ -7,9 +7,13 @@ import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
 import { IDeltaService } from "@fluidframework/server-services-core";
-import { getGlobalTelemetryContext, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	getGlobalTelemetryContext,
+	getLumberBaseProperties,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import { TenantManager } from "./tenant";
-import { isTokenValid, extractTokenFromHeader } from "@fluidframework/server-services-utils";
+import { extractTokenFromHeader, getValidAccessToken } from "@fluidframework/server-services-utils";
 import type { RawAxiosRequestHeaders } from "axios";
 
 /**
@@ -82,7 +86,8 @@ export class DeltaManager implements IDeltaService {
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string, baseUrl: string) {
-		const accessToken = await this.getAccessToken(tenantId, documentId, [ScopeType.DocRead]);
+		const scopes = [ScopeType.DocRead];
+		const accessToken = await this.getAccessToken(tenantId, documentId, scopes);
 
 		const defaultQueryString = {
 			token: fromUtf8ToBase64(`${tenantId}`),
@@ -103,25 +108,29 @@ export class DeltaManager implements IDeltaService {
 				const currentAccessToken = extractTokenFromHeader(
 					authorizationHeader.Authorization,
 				);
-				if (isTokenValid(currentAccessToken)) {
-					Lumberjack.info(`Token is still valid for deltaManager`, {
-						tenantId,
-						documentId,
-						scopes: [ScopeType.DocRead],
-					});
-					return undefined;
-				}
-				Lumberjack.info(`Refreshing token for deltaManager`, {
+				const tenantManager = new TenantManager(this.authEndpoint, "");
+				const props = {
+					...getLumberBaseProperties(documentId, tenantId),
+					serviceName: "documentManager",
+					scopes,
+				};
+				const newAccessToken = await getValidAccessToken(
+					currentAccessToken,
+					tenantManager,
 					tenantId,
 					documentId,
-					scopes: [ScopeType.DocRead],
+					scopes,
+					props,
+				).catch((error) => {
+					Lumberjack.error("Failed to refresh access token", props, error);
+					throw error;
 				});
-				const newToken = await this.getAccessToken(tenantId, documentId, [
-					ScopeType.DocRead,
-				]);
-				return {
-					Authorization: `Basic ${newToken}`,
-				};
+				if (newAccessToken) {
+					return {
+						Authorization: `Basic ${newAccessToken}`,
+					};
+				}
+				return undefined;
 			}
 		};
 

@@ -17,7 +17,7 @@ import {
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { extractTokenFromHeader, isTokenValid } from "@fluidframework/server-services-utils";
+import { extractTokenFromHeader, getValidAccessToken } from "@fluidframework/server-services-utils";
 import type { RawAxiosRequestHeaders } from "axios";
 
 /**
@@ -123,9 +123,8 @@ export class DocumentManager implements IDocumentManager {
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
-		const accessToken = await this.tenantManager.signToken(tenantId, documentId, [
-			ScopeType.DocRead,
-		]);
+		const scopes = [ScopeType.DocRead];
+		const accessToken = await this.tenantManager.signToken(tenantId, documentId, scopes);
 		const getDefaultHeaders = () => {
 			return {
 				Authorization: `Basic ${accessToken}`,
@@ -140,25 +139,28 @@ export class DocumentManager implements IDocumentManager {
 				const currentAccessToken = extractTokenFromHeader(
 					authorizationHeader.Authorization,
 				);
-				if (isTokenValid(currentAccessToken)) {
-					Lumberjack.info(`Token is still valid for documentManager`, {
-						tenantId,
-						documentId,
-						scopes: [ScopeType.DocRead],
-					});
-					return undefined;
-				}
-				Lumberjack.info(`Refreshing token for documentManager`, {
+				const props = {
+					...getLumberBaseProperties(documentId, tenantId),
+					serviceName: "documentManager",
+					scopes,
+				};
+				const newAccessToken = await getValidAccessToken(
+					currentAccessToken,
+					this.tenantManager,
 					tenantId,
 					documentId,
-					scopes: [ScopeType.DocRead],
+					scopes,
+					props,
+				).catch((error) => {
+					Lumberjack.error("Failed to refresh access token", props, error);
+					throw error;
 				});
-				const newToken = await this.tenantManager.signToken(tenantId, documentId, [
-					ScopeType.DocRead,
-				]);
-				return {
-					Authorization: `Basic ${newToken}`,
-				};
+				if (newAccessToken) {
+					return {
+						Authorization: `Basic ${newAccessToken}`,
+					};
+				}
+				return undefined;
 			}
 		};
 
