@@ -1559,7 +1559,6 @@ export class ContainerRuntime
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
 		this.runtimeOptions = {
 			flushMode: defaultFlushMode,
-			enableGroupedBatching: true,
 			...runtimeOptions,
 		};
 		this.logger = createChildLogger({ logger: this.baseLogger });
