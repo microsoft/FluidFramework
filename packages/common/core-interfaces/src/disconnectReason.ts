@@ -4,7 +4,7 @@
  */
 
 /**
- * DisconnectReason of disconnect events emitted by the {@link @fluidframework/container-definitions#IContainer}.
+ * Potential reasons for disconnect events emitted by {@link @fluidframework/container-definitions#IContainer}.
  * @legacy
  * @alpha
  */
