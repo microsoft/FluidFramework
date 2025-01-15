@@ -206,6 +206,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			tenantManager,
 			gitCache,
 		);
+		const simplifiedCustomDataRetriever =
+			customizations?.simplifiedCustomDataRetriever ??
+			new historianServices.SimplifiedCustomDataRetriever();
 
 		// Token revocation
 		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
@@ -232,6 +235,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			denyList,
 			ephemeralDocumentTTLSec,
 			customizations?.readinessCheck,
+			simplifiedCustomDataRetriever,
 		);
 	}
 }
@@ -253,6 +257,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.denyList,
 			resources.ephemeralDocumentTTLSec,
 			resources.readinessCheck,
+			resources.simplifiedCustomDataRetriever,
 		);
 	}
 }
