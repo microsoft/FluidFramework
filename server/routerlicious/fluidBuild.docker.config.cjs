@@ -12,7 +12,7 @@
 module.exports = {
 	...require("./fluidBuild.base.config.cjs"),
 	repoPackages: {
-		routerlicious: {
+		server: {
 			directory: "server/routerlicious",
 		},
 	},
