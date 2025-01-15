@@ -685,6 +685,7 @@ export function getDeviceSpec() {
 	try {
 		if (typeof navigator === "object" && navigator !== null) {
 			return {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				deviceMemory: (navigator as any).deviceMemory,
 				hardwareConcurrency: navigator.hardwareConcurrency,
 			};
@@ -700,7 +701,7 @@ export function getDeviceSpec() {
  */
 export const makeLegacySendBatchFn =
 	(
-		submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number,
+		submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => number,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
 	(batch: IBatch) => {
@@ -748,6 +749,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const response = await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
 		});
@@ -1161,7 +1163,7 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public readonly options: Record<string | number, any>;
+	public readonly options: Record<string | number, unknown>;
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
@@ -1181,9 +1183,9 @@ export class ContainerRuntime
 
 	private readonly submitFn: (
 		type: MessageType,
-		contents: any,
+		contents: unknown,
 		batch: boolean,
-		appData?: any,
+		appData?: unknown,
 	) => number;
 	/**
 	 * Although current IContainerContext guarantees submitBatchFn, it is not available on older loaders.
@@ -3496,7 +3498,7 @@ export class ContainerRuntime
 	private createNewSignalEnvelope(
 		address: string | undefined,
 		type: string,
-		content: any,
+		content: unknown,
 	): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
 		const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
 			address,
