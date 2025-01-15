@@ -413,8 +413,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being closed due to error, this provides details about the error that
 	 * resulted in closing it.
 	 * @param disconnectReason - The reason for disconnecting the container
-	 *
-	 * @see {@link @fluidframework/container-definitions#IContainer.(close:1)}
 	 */
 	close(error?: ICriticalContainerError): void;
 	close(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
