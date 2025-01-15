@@ -7,10 +7,7 @@ import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
 } from "@fluidframework/presence/alpha";
-import {
-	TinyliciousClient,
-	type TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { FocusTracker } from "./FocusTracker.js";
@@ -38,7 +35,6 @@ export type PresenceTrackerSchema = typeof containerSchema;
 async function start() {
 	const client = new TinyliciousClient();
 	let container: IFluidContainer<PresenceTrackerSchema>;
-	let services: TinyliciousContainerServices;
 
 	let id: string;
 
@@ -46,7 +42,7 @@ async function start() {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(containerSchema, "2"));
+		({ container } = await client.createContainer(containerSchema, "2"));
 
 		// If the app is in a `createNew` state, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
@@ -57,7 +53,7 @@ async function start() {
 		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container, services } = await client.getContainer(id, containerSchema, "2"));
+		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
 	document.title = id;
@@ -72,8 +68,8 @@ async function start() {
 	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
-	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
-	const mouseTracker = new MouseTracker(presence, appPresence, services.audience);
+	const focusTracker = new FocusTracker(presence, appPresence);
+	const mouseTracker = new MouseTracker(presence, appPresence);
 
 	renderControlPanel(mouseTracker, controlPanelDiv);
 	renderFocusPresence(focusTracker, focusDiv);

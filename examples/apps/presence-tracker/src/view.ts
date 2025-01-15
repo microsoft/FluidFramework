@@ -34,9 +34,8 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 		focusDiv.innerHTML = getFocusPresencesString("</br>", focusTracker);
 		const { hasFocus } = focusState;
 
-		// hasFocus === undefined/true should hide the message (set to "none")
-		const display = hasFocus === false ? "" : "none";
-		focusMessageDiv.style.display = display;
+		// hasFocus === true should hide the message
+		focusMessageDiv.style.display = hasFocus ? "none" : "";
 	};
 
 	onFocusChanged({ hasFocus: true });

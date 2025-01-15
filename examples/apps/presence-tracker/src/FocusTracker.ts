@@ -12,7 +12,6 @@ import type {
 	PresenceStates,
 } from "@fluidframework/presence/alpha";
 import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
-import type { ITinyliciousAudience } from "@fluidframework/tinylicious-client";
 
 export interface IFocusTrackerEvents extends IEvent {
 	(event: "focusChanged", listener: (focusState: IFocusState) => void): void;
@@ -29,7 +28,6 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 		private readonly presence: IPresence,
 		// eslint-disable-next-line @typescript-eslint/ban-types
 		statesWorkspace: PresenceStates<{}>,
-		public readonly audience: ITinyliciousAudience,
 	) {
 		super();
 

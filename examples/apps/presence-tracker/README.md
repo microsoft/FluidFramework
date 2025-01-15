@@ -36,17 +36,16 @@ You can run this example using the following steps:
 
 ## Tests
 
-The tests in this example require that tinylicious be running. In previous versions of the example, the test app and the
-"real" app were completely different, which allowed the tests to run against local-server while the real app ran
-againsdt tinylicious. Now, the tests run against the "real app," and tinylicious is triggered in the background as part
-of the test invocation.
+The tests in this example require that tinylicious be running. The tests run against the "real app" running in Webpack's
+dev server and tinylicious is triggered in the background as part of the test invocation.
 
 ### Multiple browser clients
 
 The presence APIs do not broadcast state unless multiple clients are connected, so it is necessary to run multiple
 clients to test that the presence data is correctly being exchanged between clients. The tests do this by creating
 multiple puppeteer clients and pointing them to the same URL. This partially works. However, the most crucial test,
-which verifies that changes from one client are reflected on the other, does not yet pass, and is thus skipped. See AB##
+which verifies that changes from one client are reflected on the other, does not yet pass, and is thus skipped. See
+AB#28502 (https://dev.azure.com/fluidframework/internal/_workitems/edit/28502)
 for more details.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->

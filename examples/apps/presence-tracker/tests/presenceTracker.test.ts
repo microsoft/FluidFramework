@@ -10,8 +10,10 @@ import { globals } from "../jest.config.cjs";
 
 const initializeBrowser = async () => {
 	const browser = await puppeteer.launch({
-		headless: true,
+		// https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
 		args: ["--no-sandbox", "--disable-setuid-sandbox"],
+		// Use chrome-headless-shell because that's what the CI pipeline installs; see AB#7150.
+		headless: "shell",
 	});
 
 	return browser;
@@ -134,9 +136,9 @@ describe("presence-tracker", () => {
 			expect(clientListHtml?.split("<br>").length).toEqual(2);
 		});
 
-		it.skip("First client shows one client connected when second client leaves", async () => {
+		it("First client shows one client connected when second client leaves", async () => {
 			// Navigate the second client away
-			await page2.browser().close();
+			await page2.goto(globals.PATH, { waitUntil: "load" });
 
 			// Get the client list from the first browser; it should have a single element.
 			const elementHandle = await page.waitForFunction(() =>
