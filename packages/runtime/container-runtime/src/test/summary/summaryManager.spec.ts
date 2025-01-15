@@ -177,7 +177,7 @@ describe("Summary Manager", () => {
 				neverCancelledSummaryToken,
 				// stopSummarizerCallback
 				(reason) => {},
-				mockRuntime as any as ISummarizerRuntime,
+				mockRuntime as unknown as ISummarizerRuntime,
 			);
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);

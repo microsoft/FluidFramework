@@ -47,7 +47,7 @@ describe("Pending State Manager", () => {
 		let batchManager: BatchManager;
 
 		function getMessage(payload: string) {
-			return { contents: payload } as any as BatchMessage;
+			return { contents: payload } as unknown as BatchMessage;
 		}
 
 		const rollBackCallback = (m: BatchMessage) => {
@@ -154,7 +154,7 @@ describe("Pending State Manager", () => {
 				messages.map<BatchMessage>((message) => ({
 					contents: JSON.stringify({ type: message.type, contents: message.contents }),
 					referenceSequenceNumber: message.referenceSequenceNumber!, // eslint-disable-line @typescript-eslint/no-non-null-assertion
-					metadata: message.metadata as any as Record<string, unknown> | undefined,
+					metadata: message.metadata as unknown as Record<string, unknown> | undefined,
 					localOpMetadata,
 				})),
 				clientSequenceNumber ?? messages[0]?.clientSequenceNumber,

@@ -860,7 +860,7 @@ describe("Runtime", () => {
 					},
 					onFlushBatch: (batch: BatchMessage[], _csn?: number) =>
 						(pendingMessages += batch.length),
-				} satisfies Partial<PendingStateManager> as any as PendingStateManager;
+				} satisfies Partial<PendingStateManager> as unknown as PendingStateManager;
 			};
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions

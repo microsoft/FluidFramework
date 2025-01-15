@@ -300,7 +300,7 @@ describe("Runtime", () => {
 					(reason) => {
 						stopCall++;
 					},
-					mockRuntime as any as ISummarizerRuntime,
+					mockRuntime as unknown as ISummarizerRuntime,
 				);
 			};
 
