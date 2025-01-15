@@ -39,11 +39,11 @@ export interface IDataStoreAliasMessage {
  * @returns True if the {@link IDataStoreAliasMessage} is fully implemented, false otherwise
  */
 export const isDataStoreAliasMessage = (
-	maybeDataStoreAliasMessage: any,
+	maybeDataStoreAliasMessage: unknown,
 ): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
 	return (
-		typeof maybeDataStoreAliasMessage?.internalId === "string" &&
-		typeof maybeDataStoreAliasMessage?.alias === "string"
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.internalId === "string" &&
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.alias === "string"
 	);
 };
 
@@ -187,7 +187,7 @@ class DataStore implements IDataStore {
 	private async ackBasedPromise<T>(
 		executor: (
 			resolve: (value: T | PromiseLike<T>) => void,
-			reject: (reason?: any) => void,
+			reject: (reason?: unknown) => void,
 		) => void,
 	): Promise<T> {
 		let rejectBecauseDispose: () => void;

@@ -24,8 +24,8 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
-function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
-	return opContents?.type === OpGroupingManager.groupedBatchOp;
+function isGroupContents(opContents: unknown): opContents is IGroupedBatchMessageContents {
+	return (opContents as Partial<IGroupedBatchMessageContents>)?.type === OpGroupingManager.groupedBatchOp;
 }
 
 export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {

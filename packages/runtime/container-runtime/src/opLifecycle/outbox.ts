@@ -77,6 +77,8 @@ export function serializeOpContents(contents: OutboundContainerRuntimeMessage): 
  * @returns the result of the action provided
  */
 export function getLongStack<T>(action: () => T, length: number = 50): T {
+	// TODO: better typing here
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const errorObj = Error as any;
 	if (
 		/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */

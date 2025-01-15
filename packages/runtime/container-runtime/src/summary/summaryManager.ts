@@ -449,7 +449,10 @@ export class SummaryManager
 		this._disposed = true;
 	}
 
-	private readonly forwardedEvents = new Map<any, () => void>();
+
+
+	private readonly forwardedEvents = new Map<string, () => void>();
+
 
 	private setupForwardedEvents() {
 		[
@@ -462,13 +465,16 @@ export class SummaryManager
 			const listener = (...args: any[]) => {
 				this.emit(event, ...args);
 			};
+			// TODO: better typing here
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.summarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
 		});
 	}
 
 	private cleanupForwardedEvents() {
-		this.forwardedEvents.forEach((listener, event) => this.summarizer?.off(event, listener));
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		this.forwardedEvents.forEach((listener, event) => this.summarizer?.off(event as any, listener));
 		this.forwardedEvents.clear();
 	}
 }
