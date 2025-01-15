@@ -29,16 +29,11 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { configProvider } from "../utils.js";
 
-interface MessageFromParent {
-	command: string;
-	containerId?: string;
-	user?: AzureUser;
-}
+import { MessageFromChild, MessageToChild } from "./presenceTest.spec.js";
 
-interface MessageToParent {
-	event: string;
-	sessionId?: string;
-}
+type MessageFromParent = Required<MessageToChild>;
+type MessageToParent = Required<MessageFromChild>;
+
 const connectTimeoutMs = 10_000;
 
 const useAzure = process.env.FLUID_CLIENT === "azure";
@@ -108,12 +103,15 @@ const getPresenceContainer = async (
 	};
 };
 
+// Ensure process.send is available
+assert(process.send);
+const send: (msg: MessageToParent) => void = process.send.bind(process);
+
 function setupMessageHandler(): void {
 	process.on("message", (msg: MessageFromParent) => {
 		(async () => {
 			let presence: IPresence | undefined;
 			let container: IFluidContainer | undefined;
-
 			if (msg.command === "connect" && msg.containerId && msg.user) {
 				const { container: c, presence: p } = await getPresenceContainer(
 					msg.containerId,
@@ -127,23 +125,23 @@ function setupMessageHandler(): void {
 						event: "attendeeJoined",
 						sessionId: attendee.sessionId,
 					};
-					process.send?.(m);
+					send(m);
 				});
 				presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
 					const m: MessageToParent = {
 						event: "attendeeDisconnected",
 						sessionId: attendee.sessionId,
 					};
-					process.send?.(m);
+					send(m);
 				});
 
 				// Signal ready
-				process.send?.({ event: "ready", sessionId: presence?.getMyself().sessionId });
-			} else if (msg.command === "disconnectSelf" && container) {
+				send({ event: "ready", sessionId: presence?.getMyself().sessionId });
+			} else if (msg.command === "disconnectSelf" && container && presence) {
 				container.disconnect();
-				process.send?.({
+				send({
 					event: "disconnectedSelf",
-					sessionId: presence?.getMyself().sessionId,
+					sessionId: presence.getMyself().sessionId,
 				});
 			}
 		})().catch((error) => {

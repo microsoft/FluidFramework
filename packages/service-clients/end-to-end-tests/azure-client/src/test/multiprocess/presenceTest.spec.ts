@@ -14,6 +14,7 @@ import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-sta
 import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
+	type ClientSessionId,
 	type ExperimentalPresenceDO,
 	type IPresence,
 	// type ISessionClient,
@@ -24,13 +25,13 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { createAzureClient } from "../AzureClientFactory.js";
 import { configProvider } from "../utils.js";
 
-interface MessageFromChild {
-	event: "attendeeDisconnected" | "attendeeJoined" | "ready" | "disconnectSelf";
-	sessionId: string;
+export interface MessageFromChild {
+	event: "attendeeDisconnected" | "attendeeJoined" | "ready" | "disconnectedSelf";
+	sessionId: ClientSessionId;
 }
 
-interface MessageToChild {
-	command: "connect";
+export interface MessageToChild {
+	command: "connect" | "disconnectSelf";
 	containerId: string;
 	user: AzureUser;
 }
@@ -105,7 +106,7 @@ describe(`Presence with AzureClient`, () => {
 		};
 	};
 
-	it("announces 'attendeeDisconnected' when remote client disconnects", async () => {
+	it("announces 'attendeeJoined' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
 		const attendeesJoined: string[] = [];
 		const attendeesDisconnected: string[] = [];
 
@@ -115,34 +116,31 @@ describe(`Presence with AzureClient`, () => {
 		// Fork child processes
 		for (let i = 0; i < numClients; i++) {
 			const user = { id: `test-user-id-${i}`, name: `test-user-name-${i}` };
-			const child = fork("./lib/test/multiprocess/childClient.js");
+			const child = fork("./lib/test/multiprocess/childClient.js", [`child${i}`]);
 			children.push(child);
-
 			// Send connect command to child
 			const message: MessageToChild = { command: "connect", containerId, user };
 			child.send(message);
-		}
-
-		// Wait to receive attendeeJoined event on presence from remote attendees
-		await timeoutPromise(
-			(resolve) => {
-				afterCleanUp.push(
-					presence.events.on("attendeeJoined", (attendee) => {
+			// Wait to receive attendeeJoined event on presence from remote attendee
+			await timeoutPromise(
+				(resolve) => {
+					const deregister = presence.events.on("attendeeJoined", (attendee) => {
 						// Only account for remote attendees
 						if (attendee !== presence.getMyself()) {
 							attendeesJoined.push(attendee.sessionId);
-							if (attendeesJoined.length === numClients) {
-								resolve();
-							}
+							deregister();
+							resolve();
 						}
-					}),
-				);
-			},
-			{
-				durationMs: connectTimeoutMs,
-				errorMsg: "attendeeJoined event timeout",
-			},
-		);
+					});
+				},
+				{
+					durationMs: connectTimeoutMs,
+					errorMsg: `No 'attendeeJoined' event received from child[${i}]`,
+				},
+			);
+
+			afterCleanUp.push(() => child.removeAllListeners());
+		}
 
 		assert.strictEqual(
 			attendeesJoined.length,
@@ -156,15 +154,11 @@ describe(`Presence with AzureClient`, () => {
 		const waitForDisconnected = children.map(async (child, index) =>
 			timeoutPromise(
 				(resolve) => {
-					const childProcess = child.on("message", (msg: MessageFromChild) => {
+					child.on("message", (msg: MessageFromChild) => {
 						if (msg.event === "attendeeDisconnected") {
 							attendeesDisconnected.push(msg.sessionId);
 							resolve();
 						}
-					});
-
-					afterCleanUp.push(() => {
-						childProcess.removeAllListeners();
 					});
 				},
 				{
