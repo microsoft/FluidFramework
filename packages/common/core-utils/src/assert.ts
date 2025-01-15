@@ -117,7 +117,7 @@ export function nonProductionConditionalsIncluded(): boolean {
 }
 
 /**
- * Run `conditional` only in debug/development builds, but optimize it out of production builds.
+ * Run `conditional` only in debug/development (non optimized/minified) builds, but optimize it out of production builds.
  *
  * @param conditional - This function will only be run in some configurations so it should be pure (at least in production scenarios).
  * It can be used to interact with debug only functionality that is also removed in production builds, or to do validation/testing/debugging that can be assumed to be sideeffect free in production where it might be removed.
@@ -128,7 +128,12 @@ export function nonProductionConditionalsIncluded(): boolean {
  *
  * @privateRemarks
  * Since this function has no built in option for toggling it in development for testing, it is not exported and is only used as a building block for other testable options.
+ * There are some additional details about syntax and bundler support in https://github.com/javascript-compiler-hints/compiler-notations-spec/tree/main .
+ * This code uses both NO_SIDE_EFFECTS and PURE to maximize compatibility: for any bundler supporting both they are redundant.
  */
+// Using the exact syntax from https://github.com/javascript-compiler-hints/compiler-notations-spec/blob/main/no-side-effects-notation-spec.md to maximize compatibility with tree-shaking tools.
+// eslint-disable-next-line spaced-comment
+/*#__NO_SIDE_EFFECTS__*/
 function skipInProduction(conditional: () => void): void {
 	// Here __PURE__ annotation is used to indicate that is is safe to optimize out this call.
 	// This is valid since the contract for this function is that "conditional" should be side effect free if it were run in production scenarios
