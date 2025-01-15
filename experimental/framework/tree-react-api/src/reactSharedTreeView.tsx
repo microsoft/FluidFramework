@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DataObject,
-	DataObjectFactory,
-	createDataObjectKind,
-} from "@fluidframework/aqueduct/internal";
-import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { PureDataObject, PureDataObjectFactory } from "@fluidframework/aqueduct/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import { createDataObjectKind } from "@fluidframework/shared-object-base/internal";
+import type {
+	ISharedObject,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ITree,
 	SchemaCompatibilityStatus,
@@ -59,7 +60,7 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	key: string,
 	treeConfiguration: TreeViewConfiguration<TSchema>,
 	createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & DataObject> & {
+): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable> & {
 	readonly factory: IFluidDataStoreFactory;
 } {
 	class SchemaAwareTreeDataObject extends TreeDataObject<TSchema> {
@@ -67,7 +68,7 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 		public readonly config = treeConfiguration;
 		protected readonly createInitialTree = createInitialTree;
 
-		public static readonly factory = new DataObjectFactory(
+		public static readonly factory = new PureDataObjectFactory(
 			`TreeDataObject:${key}`,
 			SchemaAwareTreeDataObject,
 			[SharedTree.getFactory()],
@@ -151,9 +152,55 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
  * @internal
  */
 export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
-	extends DataObject
+	extends PureDataObject
 	implements IReactTreeDataObject<TSchema>
 {
+	private internalRoot: ITree | undefined;
+	private readonly rootTreeId = "root";
+
+	/**
+	 * The root tree will either be ready or will return an error. If an error is thrown
+	 * the root has not been correctly created/set.
+	 */
+	protected get root(): ITree {
+		if (!this.internalRoot) {
+			throw new Error(this.getUninitializedErrorString(`root`));
+		}
+
+		return this.internalRoot;
+	}
+
+	/**
+	 * Initializes internal objects and calls initialization overrides.
+	 * Caller is responsible for ensuring this is only invoked once.
+	 */
+	public async initializeInternal(existing: boolean): Promise<void> {
+		if (existing) {
+			// data store has a root tree so we just need to set it before calling initializingFromExisting
+			const channel = await this.runtime.getChannel(this.rootTreeId);
+			if (SharedTree.is(channel)) {
+				this.internalRoot = channel;
+			} else {
+				throw new UsageError(
+					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
+				);
+			}
+		} else {
+			this.internalRoot = SharedTree.create(this.runtime, this.rootTreeId);
+			(this.internalRoot as unknown as ISharedObject).bindToContext();
+		}
+
+		await super.initializeInternal(existing);
+	}
+
+	/**
+	 * Generates an error string indicating an item is uninitialized.
+	 * @param item - The name of the item that was uninitialized.
+	 */
+	protected getUninitializedErrorString(item: string): string {
+		return `${item} must be initialized before being accessed.`;
+	}
+
 	#tree?: TreeView<TSchema>;
 
 	public get tree(): TreeView<TSchema> {
@@ -166,17 +213,10 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 		this.#tree = tree.viewWith(this.config);
 		// Initialize the tree content and schema.
 		this.#tree.initialize(this.createInitialTree());
-		this.root.set(this.key, tree.handle);
 	}
 
 	protected override async initializingFromExisting(): Promise<void> {
-		const handle = this.root.get<IFluidHandle<ITree>>(this.key);
-		if (handle === undefined)
-			throw new Error("map should be populated on creation by 'initializingFirstTime'");
-
-		// the TreeView exposes this via `compatibility` which is explicitly handled by TreeViewComponent.
-		const iTree = await handle.get();
-		this.#tree = iTree.viewWith(this.config);
+		this.#tree = this.root.viewWith(this.config);
 	}
 
 	protected override async hasInitialized(): Promise<void> {

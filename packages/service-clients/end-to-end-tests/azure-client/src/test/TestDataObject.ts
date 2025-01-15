@@ -9,12 +9,12 @@ import {
 	DataObject,
 	DataObjectFactory,
 	IDataObjectProps,
-	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import { type IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import { createDataObjectKind } from "@fluidframework/shared-object-base/internal";
 
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";

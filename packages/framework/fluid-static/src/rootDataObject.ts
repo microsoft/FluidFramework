@@ -13,15 +13,17 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IDirectory } from "@fluidframework/map/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type {
+	IDataObjectKind,
+	ISharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	CompatibilityMode,
 	ContainerSchema,
-	DataObjectClass,
 	IRootDataObject,
-	LoadableObjectClass,
+	LoadableObjectKind,
 	LoadableObjectClassRecord,
 	LoadableObjectRecord,
 } from "./types.js";
@@ -125,7 +127,7 @@ class RootDataObject
 	 * {@inheritDoc IRootDataObject.create}
 	 */
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
-		const internal = objectClass as unknown as LoadableObjectClass<T & IFluidLoadable>;
+		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
 		if (isDataObjectClass(internal)) {
 			return this.createDataObject(internal);
 		} else if (isSharedObjectKind(internal)) {
@@ -135,7 +137,7 @@ class RootDataObject
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: DataObjectClass<T>,
+		dataObjectClass: IDataObjectKind<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];

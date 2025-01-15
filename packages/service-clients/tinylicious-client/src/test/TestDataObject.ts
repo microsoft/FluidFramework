@@ -6,9 +6,9 @@
 import {
 	DataObject,
 	DataObjectFactory,
-	createDataObjectKind,
 	type IDataObjectProps,
 } from "@fluidframework/aqueduct/internal";
+import { createDataObjectKind } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Mock {@link @fluidframework/aqueduct#DataObject} for use in tests.

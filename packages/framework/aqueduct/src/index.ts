@@ -24,7 +24,6 @@ export {
 	type DataObjectTypes,
 	type IDataObjectProps,
 	PureDataObject,
-	createDataObjectKind,
 } from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,

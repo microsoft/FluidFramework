@@ -4,9 +4,11 @@
  */
 
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type {
+	IDataObjectKind,
+	ISharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 
 /**
  * Valid compatibility modes that may be specified when creating a DOProviderContainerRuntimeFactory.
@@ -27,9 +29,9 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
 
 /**
- * A class object of `DataObject` or `SharedObject`.
+ * A kind of `DataObject` or `SharedObject`.
  *
- * @typeParam T - The class of the `DataObject` or `SharedObject`.
+ * @typeParam T - The kind of the `DataObject` or `SharedObject`.
  *
  * @privateRemarks
  * There are some edge cases in TypeScript where the order of the members in a union matter.
@@ -38,24 +40,9 @@ export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
  * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
+export type LoadableObjectKind<T extends IFluidLoadable = IFluidLoadable> =
 	| ISharedObjectKind<T>
-	| DataObjectClass<T>;
-
-/**
- * A class that has a factory that can create a `DataObject` and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The class of the `DataObject`.
- * @privateRemarks
- * Having both `factory` and constructor is redundant.
- * TODO: It appears the factory is what's used, so the constructor should be removed once factory provides strong typing.
- */
-export interface DataObjectClass<T extends IFluidLoadable> {
-	readonly factory: IFluidDataStoreFactory;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	new (...args: any[]): T;
-}
+	| IDataObjectKind<T>;
 
 /**
  * Represents properties that can be attached to a container.

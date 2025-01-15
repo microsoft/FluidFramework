@@ -4,6 +4,20 @@
 
 ```ts
 
+// @alpha
+export function createDataObjectKind<T extends IDataObjectKind, TInstance = T extends new (arg: never) => infer X ? X : T extends IDataObjectKind<infer I> ? I : unknown>(factory: T): T & SharedObjectKind<T extends IDataObjectKind<infer I> ? I : unknown>;
+
+// @alpha
+export type IDataObjectKind<T = unknown> = {
+    readonly factory: IFluidDataStoreFactory;
+} & ({
+    readonly makeCovariant?: T;
+}
+/**
+* Not actually used, but helps with strong typing.
+*/
+| (new (...args: never[]) => T));
+
 // @alpha (undocumented)
 export interface IFluidSerializer {
     decode(input: any): any;

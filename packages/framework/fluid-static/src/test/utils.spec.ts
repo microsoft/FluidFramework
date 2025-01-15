@@ -5,13 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	DataObject,
-	DataObjectFactory,
-	createDataObjectKind,
-} from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { MapFactory, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
+import { createDataObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { ContainerSchema } from "../types.js";
 import { parseDataObjectsFromSharedObjects } from "../utils.js";

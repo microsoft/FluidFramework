@@ -99,10 +99,14 @@
 	"dependencies": {
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
+		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
+		"@fluidframework/synthesize": "workspace:~",
+		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1"
 	},

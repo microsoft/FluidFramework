@@ -41,7 +41,7 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	/**
 	 * Uniquely identifies the type of data store created by this factory.
 	 */
-	type: string;
+	readonly type: string;
 
 	/**
 	 * Asynchronously generates the runtime for the data store from the given context.

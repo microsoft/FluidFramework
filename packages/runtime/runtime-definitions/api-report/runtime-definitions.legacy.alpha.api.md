@@ -175,7 +175,7 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
         readonly runtime: IFluidDataStoreChannel;
     };
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
-    type: string;
+    readonly type: string;
 }
 
 // @alpha (undocumented)

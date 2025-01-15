@@ -7,10 +7,10 @@ import {
 	DataObject,
 	DataObjectFactory,
 	IDataObjectProps,
-	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
+import { createDataObjectKind } from "@fluidframework/shared-object-base/internal";
 
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";

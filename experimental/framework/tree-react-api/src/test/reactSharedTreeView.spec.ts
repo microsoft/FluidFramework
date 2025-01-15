@@ -20,16 +20,15 @@ describe("reactSharedTreeView", () => {
 			bolts: builder.number,
 		}) {}
 
+		const t = treeDataObject(
+			"tree",
+			new TreeViewConfiguration({ schema: Inventory }),
+			() => new Inventory({ nuts: 5, bolts: 6 }),
+		);
 		const containerSchema = {
 			initialObjects: {
-				// TODO: it seems odd that DataObjects in container schema need both a key under initialObjects where they are,
-				// as well as a key under the root data object, and SharedObjects only need one key.
-				// Maybe we can default the shared object's key to be derived from the data objects key by default?
-				tree: treeDataObject(
-					"tree",
-					new TreeViewConfiguration({ schema: Inventory }),
-					() => new Inventory({ nuts: 5, bolts: 6 }),
-				),
+				// Create a tree data store. Thus results in the tree being it its own data store, unlike when using a tree directly here which puts it in the root datastore.
+				tree: t,
 			},
 		} satisfies ContainerSchema;
 
@@ -41,5 +40,9 @@ describe("reactSharedTreeView", () => {
 		assert.equal(tree.tree.root.nuts, 5);
 		tree.tree.root.nuts += 1;
 		assert.equal(tree.tree.root.bolts, 6);
+
+		// Create a new datastore not in the container schema.
+		// This will get GCed by the container eventually if not referenced.
+		const customDataObject = await container.create(t);
 	});
 });

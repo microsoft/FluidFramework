@@ -4,11 +4,7 @@
  */
 
 import { EventEmitter, TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	DataObject,
-	DataObjectFactory,
-	createDataObjectKind,
-} from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { IErrorEvent, type IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { Jsonable } from "@fluidframework/datastore-definitions/internal";
@@ -18,6 +14,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import { createDataObjectKind } from "@fluidframework/shared-object-base/internal";
 
 // TODO:
 // add way to mark with current sequence number for ordering signals relative to ops

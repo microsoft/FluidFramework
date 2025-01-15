@@ -33,6 +33,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
+	type IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -893,6 +894,49 @@ export interface ISharedObjectKind<TSharedObject> {
 	 */
 	create(runtime: IFluidDataStoreRuntime, id?: string): TSharedObject;
 }
+
+/**
+ * Utility for creating SharedObjectKind instances for data objects.
+ * @typeparam T - IDataObjectKind.
+ * @legacy
+ * @alpha
+ */
+export function createDataObjectKind<
+	T extends IDataObjectKind,
+	TInstance = T extends new (
+		arg: never,
+	) => infer X
+		? X
+		: T extends IDataObjectKind<infer I>
+			? I
+			: unknown,
+>(factory: T): T & SharedObjectKind<T extends IDataObjectKind<infer I> ? I : unknown> {
+	return factory as T & SharedObjectKind<T extends IDataObjectKind<infer I> ? I : unknown>;
+}
+
+/**
+ * An object that has a factory that can create a data object.
+ *
+ * @typeParam T - The type of the data object.
+ * @legacy
+ * @alpha
+ */
+export type IDataObjectKind<T = unknown> = {
+	readonly factory: IFluidDataStoreFactory;
+} & (
+	| {
+			/**
+			 * Not actually used, but required for strong typing.
+			 */
+			readonly makeCovariant?: T;
+	  }
+	/**
+	 * Not actually used, but helps with strong typing.
+	 */
+	| (new (
+			...args: never[]
+	  ) => T)
+);
 
 /**
  * Defines a kind of shared object.
