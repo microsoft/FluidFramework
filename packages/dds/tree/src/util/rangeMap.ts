@@ -7,16 +7,23 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 /**
- * RangeMap represents a mapping from integers to values of type T or undefined.
+ * RangeMap represents a mapping from keys of type K to values of type V or undefined.
+ * The set of all possible keys is assumed to be fully ordered,
+ * and for each key there should be a single next higher key.
  * The values for a range of consecutive keys can be changed or queried in a single operation.
+ * The structure of the keys is described by the `offsetKey` and `subtractKeys` functions provided in the constructor.
  */
 export class RangeMap<K, V> {
 	private tree: BTree<K, RangeEntry<V>>;
 
 	/**
-	 * @param subtractKeys - Returns the distance from `b` to `a`.
-	 * Can be infinite if `a` cannot be reached from `b` by offsetting,
-	 * but the return value should still be positive if `a` is larger than `b` and negative if smaller.
+	 * @param offsetKey - Function which returns a new key which is `offset` keys after `key`.
+	 * When `offset` is negative, the returned key should come before `key`.
+	 *
+	 * @param subtractKeys - Function which returns the difference between `b` and `a`.
+	 * Offsetting `b` by this difference should return `a`.
+	 * The difference can be infinite if `a` cannot be reached from `b` by offsetting,
+	 * but the difference should still be positive if `a` is larger than `b` and negative if smaller.
 	 */
 	public constructor(
 		private readonly offsetKey: (key: K, offset: number) => K,
@@ -93,8 +100,8 @@ export class RangeMap<K, V> {
 	 * and the number of consecutive keys with that same value.
 	 */
 	public getFirst(start: K, length: number): RangeQueryResult<K, V> {
-		// We first check for an entry with a key less than or equal to `start`.
 		{
+			// We first check for an entry with a key less than or equal to `start`.
 			const entry = this.tree.getPairOrNextLower(start);
 			if (entry !== undefined) {
 				const entryKey = entry[0];
@@ -188,7 +195,7 @@ export class RangeMap<K, V> {
 	}
 
 	/**
-	 * Returns a new map which contains the entries from both input tables.
+	 * Returns a new map which contains the entries from both input maps.
 	 */
 	public static mergeMaps<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
 		assert(
