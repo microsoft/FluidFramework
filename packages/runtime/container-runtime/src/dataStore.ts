@@ -42,7 +42,8 @@ export const isDataStoreAliasMessage = (
 	maybeDataStoreAliasMessage: unknown,
 ): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
 	return (
-		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.internalId === "string" &&
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.internalId ===
+			"string" &&
 		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.alias === "string"
 	);
 };

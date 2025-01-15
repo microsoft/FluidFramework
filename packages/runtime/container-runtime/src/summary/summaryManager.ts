@@ -449,10 +449,7 @@ export class SummaryManager
 		this._disposed = true;
 	}
 
-
-
 	private readonly forwardedEvents = new Map<string, () => void>();
-
 
 	private setupForwardedEvents() {
 		[
@@ -474,7 +471,9 @@ export class SummaryManager
 
 	private cleanupForwardedEvents() {
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		this.forwardedEvents.forEach((listener, event) => this.summarizer?.off(event as any, listener));
+		this.forwardedEvents.forEach((listener, event) =>
+			this.summarizer?.off(event as any, listener),
+		);
 		this.forwardedEvents.clear();
 	}
 }

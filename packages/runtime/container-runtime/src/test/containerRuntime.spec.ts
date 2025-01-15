@@ -227,7 +227,12 @@ describe("Runtime", () => {
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
 			getLoadedFromVersion: () => loadedFromVersion,
-			submitFn: (_type: MessageType, contents: object, _batch: boolean, metadata?: unknown) => {
+			submitFn: (
+				_type: MessageType,
+				contents: object,
+				_batch: boolean,
+				metadata?: unknown,
+			) => {
 				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
 			},
@@ -1869,18 +1874,21 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as unknown as PendingStateManager, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return () => undefined;
-							case "pendingMessagesCount":
-								return 0;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
+				const mockPendingStateManager = new Proxy<PendingStateManager>(
+					{} as unknown as PendingStateManager,
+					{
+						get: (_t, p: keyof PendingStateManager, _r) => {
+							switch (p) {
+								case "getLocalState":
+									return () => undefined;
+								case "pendingMessagesCount":
+									return 0;
+								default:
+									assert.fail(`unexpected access to pendingStateManager.${p}`);
+							}
+						},
 					},
-				});
+				);
 
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
@@ -1908,20 +1916,23 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as unknown as PendingStateManager, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return (): IPendingLocalState => ({
-									pendingStates,
-								});
-							case "pendingMessagesCount":
-								return 5;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
+				const mockPendingStateManager = new Proxy<PendingStateManager>(
+					{} as unknown as PendingStateManager,
+					{
+						get: (_t, p: keyof PendingStateManager, _r) => {
+							switch (p) {
+								case "getLocalState":
+									return (): IPendingLocalState => ({
+										pendingStates,
+									});
+								case "pendingMessagesCount":
+									return 5;
+								default:
+									assert.fail(`unexpected access to pendingStateManager.${p}`);
+							}
+						},
 					},
-				});
+				);
 
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
@@ -1950,20 +1961,23 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as unknown as PendingStateManager, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return (): IPendingLocalState => ({
-									pendingStates,
-								});
-							case "pendingMessagesCount":
-								return 5;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
+				const mockPendingStateManager = new Proxy<PendingStateManager>(
+					{} as unknown as PendingStateManager,
+					{
+						get: (_t, p: keyof PendingStateManager, _r) => {
+							switch (p) {
+								case "getLocalState":
+									return (): IPendingLocalState => ({
+										pendingStates,
+									});
+								case "pendingMessagesCount":
+									return 5;
+								default:
+									assert.fail(`unexpected access to pendingStateManager.${p}`);
+							}
+						},
 					},
-				});
+				);
 
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
@@ -2018,20 +2032,23 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as unknown as PendingStateManager, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return (): IPendingLocalState => ({
-									pendingStates,
-								});
-							case "pendingMessagesCount":
-								return 5;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
+				const mockPendingStateManager = new Proxy<PendingStateManager>(
+					{} as unknown as PendingStateManager,
+					{
+						get: (_t, p: keyof PendingStateManager, _r) => {
+							switch (p) {
+								case "getLocalState":
+									return (): IPendingLocalState => ({
+										pendingStates,
+									});
+								case "pendingMessagesCount":
+									return 5;
+								default:
+									assert.fail(`unexpected access to pendingStateManager.${p}`);
+							}
+						},
 					},
-				});
+				);
 
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;

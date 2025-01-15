@@ -57,11 +57,11 @@ describe("Runtime", () => {
 				assert(snapshot === undefined);
 				snapshot = getSummaryForDatastores(undefined, disabledMetadata);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree , undefined);
+				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree, undefined);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree , enabledMetadata);
+				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree, enabledMetadata);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree , disabledMetadata);
+				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree, disabledMetadata);
 				assert(snapshot === undefined);
 			});
 

@@ -711,7 +711,12 @@ export function getDeviceSpec() {
  */
 export const makeLegacySendBatchFn =
 	(
-		submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => number,
+		submitFn: (
+			type: MessageType,
+			contents: unknown,
+			batch: boolean,
+			appData?: unknown,
+		) => number,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
 	(batch: IBatch) => {

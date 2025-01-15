@@ -19,7 +19,10 @@ import {
 	IErrorBase,
 	IFluidHandle,
 } from "@fluidframework/core-interfaces";
-import { type IFluidHandleContext, type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import {
+	type IFluidHandleContext,
+	type IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
@@ -180,7 +183,9 @@ export class MockRuntime
 
 	public processOps() {
 		assert(this.connected || this.ops.length === 0);
-		this.ops.forEach((op) => this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, true));
+		this.ops.forEach((op) =>
+			this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, true),
+		);
 		this.ops = [];
 	}
 
@@ -205,7 +210,7 @@ export class MockRuntime
 	public async processHandles() {
 		const handlePs = this.handlePs;
 		this.handlePs = [];
-		const handles = await Promise.all(handlePs) as IFluidHandleInternal<ArrayBufferLike>[];
+		const handles = (await Promise.all(handlePs)) as IFluidHandleInternal<ArrayBufferLike>[];
 		handles.forEach((handle) => handle.attachGraph());
 	}
 
@@ -751,8 +756,8 @@ describe("BlobManager", () => {
 				await runtime.createBlob(blob, ac.signal);
 				assert.fail("Should not succeed");
 
-			// TODO: better typing
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				// TODO: better typing
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
 				assert.strictEqual(error.status, undefined);
 				assert.strictEqual(error.uploadTime, undefined);
@@ -877,8 +882,8 @@ describe("BlobManager", () => {
 				await handleP;
 				assert.fail("Should not succeed");
 
-			// TODO: better typing
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				// TODO: better typing
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
 				assert.strictEqual(error.message, "uploadBlob aborted");
 				assert.ok(error.uploadTime);

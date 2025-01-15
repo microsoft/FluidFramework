@@ -580,7 +580,7 @@ describe("Data Store Context Tests", () => {
 			parentContext = {
 				IFluidDataStoreRegistry: registry,
 				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
-				containerRuntime: parentContext as unknown as IContainerRuntimeBase ,
+				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
 			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 		});
 

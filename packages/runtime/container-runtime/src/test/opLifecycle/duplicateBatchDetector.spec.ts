@@ -40,11 +40,11 @@ function makeBatch({
 type Patch<T, U> = Omit<T, keyof U> & U;
 
 type PatchedDuplicateBatchDetector = Patch<
-DuplicateBatchDetector,
-{
-	batchIdsAll: Set<string>;
-	batchIdsBySeqNum: Map<number, string>;
-}
+	DuplicateBatchDetector,
+	{
+		batchIdsAll: Set<string>;
+		batchIdsBySeqNum: Map<number, string>;
+	}
 >;
 
 describe("DuplicateBatchDetector", () => {
@@ -54,7 +54,9 @@ describe("DuplicateBatchDetector", () => {
 
 	beforeEach("setup", () => {
 		seqNum = 1;
-		detector = new DuplicateBatchDetector(undefined /* batchIdsFromSnapshot */) as unknown as PatchedDuplicateBatchDetector;
+		detector = new DuplicateBatchDetector(
+			undefined /* batchIdsFromSnapshot */,
+		) as unknown as PatchedDuplicateBatchDetector;
 	});
 
 	afterEach("validation", () => {

@@ -5,7 +5,10 @@
 
 import assert from "assert";
 
-import { ContainerErrorTypes, type IErrorBase } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerErrorTypes,
+	type IErrorBase,
+} from "@fluidframework/container-definitions/internal";
 import {
 	MessageType,
 	ISequencedDocumentMessage,

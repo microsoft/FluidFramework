@@ -338,7 +338,7 @@ describe("Garbage Collection Tests", () => {
 			requestFullGCOnNextRun: () => void;
 			onCompletedGCRun: () => void;
 			onSummaryAck: () => void;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} = createGarbageCollector().autoRecovery as any;
 
 		assert.equal(autoRecovery.useFullGC(), false, "Expect false by default");

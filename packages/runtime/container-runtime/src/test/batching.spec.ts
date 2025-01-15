@@ -12,7 +12,11 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { MockLogger, mixinMonitoringContext, type IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	mixinMonitoringContext,
+	type IFluidErrorBase,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
 	MockDeltaManager,

@@ -171,7 +171,5 @@ const newMessage = (
 	// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
 
 	metadata:
-		originalMessage.metadata === undefined
-			? undefined
-			: { ...originalMessage.metadata },
+		originalMessage.metadata === undefined ? undefined : { ...originalMessage.metadata },
 });

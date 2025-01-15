@@ -25,7 +25,10 @@ interface IGroupedMessage {
 }
 
 function isGroupContents(opContents: unknown): opContents is IGroupedBatchMessageContents {
-	return (opContents as Partial<IGroupedBatchMessageContents>)?.type === OpGroupingManager.groupedBatchOp;
+	return (
+		(opContents as Partial<IGroupedBatchMessageContents>)?.type ===
+		OpGroupingManager.groupedBatchOp
+	);
 }
 
 export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {

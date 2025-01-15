@@ -396,10 +396,9 @@ describe("Summary Manager", () => {
 			});
 
 			// Simulate disposing the summary manager in between (potential) initial delay and actually starting
-			const summaryManager_delayBeforeCreatingSummarizer = (
+			const summaryManager_delayBeforeCreatingSummarizer =
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				summaryManager as any
-			).delayBeforeCreatingSummarizer.bind(summaryManager);
+				(summaryManager as any).delayBeforeCreatingSummarizer.bind(summaryManager);
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			(summaryManager as any).delayBeforeCreatingSummarizer = async (...args) => {
 				const result = await summaryManager_delayBeforeCreatingSummarizer(args);
