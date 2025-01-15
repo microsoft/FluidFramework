@@ -9,7 +9,6 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
-import type { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import type {
 	IClient,
 	IClientDetails,
@@ -394,10 +393,20 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * The container is not expected to be used anymore once it is disposed.
 	 *
 	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - OIf the container is being disposed due to error, this provides details about the error that
+	 * @param error - If the container is being disposed due to error, this provides details about the error that
 	 * resulted in disposing it.
 	 */
-	dispose(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
+	dispose(disconnectReason: "Corruption", error: ICriticalContainerError): void;
+
+	/**
+	 * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
+	 * The container is not expected to be used anymore once it is disposed.
+	 *
+	 * @param disconnectReason - The reason for disconnecting the container
+	 * @param error - If the container is being disposed due to error, this provides details about the error that
+	 * resulted in disposing it.
+	 */
+	dispose(disconnectReason: "Expected" | "Unknown", error?: ICriticalContainerError): void;
 
 	/**
 	 * Closes the container.
@@ -414,7 +423,16 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being closed due to error, this provides details about the error that
 	 * resulted in closing it.
 	 */
-	close(disconnectReason?: DisconnectReason, error?: ICriticalContainerError): void;
+	close(disconnectReason: "Corruption", error: ICriticalContainerError): void;
+
+	/**
+	 * Closes the container.
+	 *
+	 * @param disconnectReason - The reason for disconnecting the container
+	 * @param error - If the container is being closed due to error, this provides details about the error that
+	 * resulted in closing it.
+	 */
+	close(disconnectReason: "Expected" | "Unknown", error?: ICriticalContainerError): void;
 
 	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.
