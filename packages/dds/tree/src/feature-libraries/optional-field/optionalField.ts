@@ -685,7 +685,7 @@ export function optionalFieldIntoDelta(
 		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const childDelta = deltaFromChild(childChange);
-			if (id !== "self" && childDelta !== undefined) {
+			if (id !== "self") {
 				const fields = childDelta;
 				globals.push({
 					id: { major: id.revision, minor: id.localId },

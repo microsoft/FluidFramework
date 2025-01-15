@@ -2087,17 +2087,18 @@ function intoDeltaImpl(
 			fieldChange.change,
 			(childChange) => {
 				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
-				const nodeChangeDelta = deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds);
-				if (nodeChangeDelta !== undefined) {
-					const [nodeFieldChanges, nodeGlobals, nodeRenames] = nodeChangeDelta;
-					if (nodeGlobals.length > 0) {
-						nodeGlobals.forEach((c) => global.push(c));
-					}
-					if (nodeRenames.length > 0) {
-						nodeRenames.forEach((r) => rename.push(r));
-					}
-					return nodeFieldChanges;
+				const [nodeFieldChanges, nodeGlobals, nodeRenames] = deltaFromNodeChange(
+					nodeChange,
+					nodeChanges,
+					fieldKinds,
+				);
+				if (nodeGlobals.length > 0) {
+					nodeGlobals.forEach((c) => global.push(c));
 				}
+				if (nodeRenames.length > 0) {
+					nodeRenames.forEach((r) => rename.push(r));
+				}
+				return nodeFieldChanges;
 			},
 		);
 		if (fieldChanges !== undefined && fieldChanges.length > 0) {
@@ -2117,12 +2118,12 @@ function deltaFromNodeChange(
 	change: NodeChangeset,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-): [DeltaFieldMap, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] | undefined {
+): [DeltaFieldMap, DeltaDetachedNodeChanges[], DeltaDetachedNodeRename[]] {
 	if (change.fieldChanges !== undefined) {
 		return intoDeltaImpl(change.fieldChanges, nodeChanges, fieldKinds);
 	}
 	// TODO: update the API to allow undefined to be returned here
-	return undefined;
+	return [new Map(), [], []];
 }
 
 /**

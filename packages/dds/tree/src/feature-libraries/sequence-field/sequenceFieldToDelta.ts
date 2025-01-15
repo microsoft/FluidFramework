@@ -40,7 +40,7 @@ export function sequenceFieldToDelta(
 		const changes = mark.changes;
 		if (changes !== undefined) {
 			const nestedDelta = deltaFromChild(changes);
-			if (nestedDelta !== undefined && nestedDelta.size > 0) {
+			if (nestedDelta.size > 0) {
 				if (inputCellId === undefined) {
 					deltaMark.fields = nestedDelta;
 				} else {

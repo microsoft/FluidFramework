@@ -55,10 +55,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 				markList.push({ count: offset });
 				nodeIndex = index;
 			}
-			const childDelta = deltaFromChild(nodeChange);
-			if (childDelta !== undefined) {
-				markList.push({ count: 1, fields: childDelta });
-			}
+			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
 		return { local: markList };
