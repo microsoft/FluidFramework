@@ -508,6 +508,16 @@ export interface IContainerRuntimeOptions {
 	readonly enableRuntimeIdCompressor?: IdCompressorMode;
 
 	/**
+	 * If enabled, the runtime will group messages within a batch into a single
+	 * message to be sent to the service.
+	 * The grouping and ungrouping of such messages is handled by the "OpGroupingManager".
+	 *
+	 * By default, the feature is enabled.
+	 * @deprecated  The ability to disable Grouped Batching is deprecated and will be removed in v2.20.0. This feature is required for the proper functioning of the Fluid Framework.
+	 */
+	readonly enableGroupedBatching?: boolean;
+
+	/**
 	 * When this property is set to true, it requires runtime to control is document schema properly through ops
 	 * The benefit of this mode is that clients who do not understand schema will fail in predictable way, with predictable message,
 	 * and will not attempt to limp along, which could cause data corruptions and crashes in random places.
