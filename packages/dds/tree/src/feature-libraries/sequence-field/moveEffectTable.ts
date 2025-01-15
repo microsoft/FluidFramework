@@ -177,12 +177,12 @@ function getFirstMoveEffectLength(
 	effects: MoveEffectTable,
 ): number {
 	if (isMoveMark(markEffect)) {
-		return getMoveEffect(
-			effects,
+		return effects.get(
 			getCrossFieldTargetFromMove(markEffect),
 			markEffect.revision,
 			markEffect.id,
 			count,
+			true,
 		).length;
 	} else if (isAttachAndDetachEffect(markEffect)) {
 		return Math.min(
