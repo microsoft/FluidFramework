@@ -426,9 +426,6 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
-      '@fluid-experimental/tree':
-        specifier: workspace:~
-        version: link:../../../experimental/dds/tree
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
@@ -483,18 +480,12 @@ importers:
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../../packages/dds/tree
       react:
         specifier: ^18.3.1
         version: 18.3.1
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      tiny-typed-emitter:
-        specifier: ^2.1.0
-        version: 2.1.0
       uuid:
         specifier: ^9.0.0
         version: 9.0.1

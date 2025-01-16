@@ -38,7 +38,6 @@
 	},
 	"dependencies": {
 		"@fluid-example/example-utils": "workspace:~",
-		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
@@ -57,10 +56,8 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
-		"tiny-typed-emitter": "^2.1.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

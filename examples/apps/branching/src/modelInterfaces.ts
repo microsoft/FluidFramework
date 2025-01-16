@@ -4,7 +4,6 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { TypedEmitter } from "tiny-typed-emitter";
 
 /**
  * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
@@ -17,11 +16,11 @@ export interface IGroceryListAppModel {
 	readonly groceryList: IGroceryList;
 }
 
-export interface IGroceryItemEvents {
-	quantityChanged: () => void;
+export interface IGroceryItemEvents extends IEvent {
+	(event: "quantityChanged", listener: () => void);
 }
 
-export interface IGroceryItem extends TypedEmitter<IGroceryItemEvents> {
+export interface IGroceryItem extends IEventProvider<IGroceryItemEvents> {
 	readonly id: string;
 	readonly name: string;
 	readonly deleteItem: () => void;

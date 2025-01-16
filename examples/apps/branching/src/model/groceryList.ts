@@ -21,7 +21,6 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
-import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
 import type {
@@ -35,7 +34,7 @@ import type {
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
-class GroceryItem extends TypedEmitter<IGroceryItemEvents> implements IGroceryItem {
+class GroceryItem extends TypedEventEmitter<IGroceryItemEvents> implements IGroceryItem {
 	public constructor(
 		public readonly id: string,
 		public readonly name: string,
