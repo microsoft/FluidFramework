@@ -352,7 +352,7 @@ describe("Outbox", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
 			opGroupingConfig: {
-				groupedBatchingEnabled: true,
+				groupedBatchingEnabled: false,
 			},
 		});
 		// Flush 1 - resubmit multi-message batch including ID Allocation
@@ -382,7 +382,7 @@ describe("Outbox", () => {
 			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
 			[
 				[undefined], // Flush 1 - ID Allocation (no batch ID used)
-				["batchId-A"], // Flush 1 - Main
+				["batchId-A", undefined], // Flush 1 - Main
 				["batchId-B"], // Flush 2 - Main
 				["batchId-C", undefined], // Flush 3 - Blob Attach
 				[undefined], // Flush 4 - Main (no batch ID given)
