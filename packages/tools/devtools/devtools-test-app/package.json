@@ -89,6 +89,7 @@
 		"@types/testing-library__jest-dom": "^5.14.5",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
+		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"eslint-plugin-jest": "~27.4.2",
