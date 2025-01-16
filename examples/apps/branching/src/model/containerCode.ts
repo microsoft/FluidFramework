@@ -15,7 +15,10 @@ import type { IGroceryList, IGroceryListAppModel } from "../modelInterfaces.js";
 import { GroceryListAppModel } from "./appModel.js";
 import { GroceryListFactory } from "./groceryList.js";
 
-export const newTreeInventoryListId = "new-tree-inventory-list";
+export const groceryListId = "grocery-list";
+
+const groceryListRegistryKey = "grocery-list";
+const groceryListFactory = new GroceryListFactory();
 
 /**
  * @internal
@@ -23,8 +26,7 @@ export const newTreeInventoryListId = "new-tree-inventory-list";
 export class GroceryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IGroceryListAppModel> {
 	public constructor() {
 		super(
-			new Map([GroceryListFactory.registryEntry]), // registryEntries
-			{ enableRuntimeIdCompressor: "on" },
+			new Map([[groceryListRegistryKey, Promise.resolve(groceryListFactory)]]), // registryEntries
 		);
 	}
 
@@ -32,8 +34,8 @@ export class GroceryListContainerRuntimeFactory extends ModelContainerRuntimeFac
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const newTreeInventoryList = await runtime.createDataStore(GroceryListFactory.type);
-		await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
+		const groceryList = await runtime.createDataStore(groceryListRegistryKey);
+		await groceryList.trySetAlias(groceryListId);
 	}
 
 	/**
@@ -42,7 +44,7 @@ export class GroceryListContainerRuntimeFactory extends ModelContainerRuntimeFac
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
 		const newTreeInventoryList = await getDataStoreEntryPoint<IGroceryList>(
 			runtime,
-			newTreeInventoryListId,
+			groceryListId,
 		);
 		return new GroceryListAppModel(newTreeInventoryList);
 	}

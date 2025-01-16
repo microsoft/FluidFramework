@@ -3,11 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	FluidObject,
+	IEventProvider,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
+import type {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/legacy";
+import { type ISharedMap, MapFactory } from "@fluidframework/map/legacy";
+import type {
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/legacy";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type { IGroceryItem, IGroceryItemEvents, IGroceryList } from "../modelInterfaces.js";
+import type {
+	IGroceryItem,
+	IGroceryItemEvents,
+	IGroceryList,
+	IGroceryListEvents,
+} from "../modelInterfaces.js";
 
 /**
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
@@ -26,54 +48,121 @@ class GroceryItem extends TypedEmitter<IGroceryItemEvents> implements IGroceryIt
 	};
 }
 
-export class GroceryList extends DataObject implements IGroceryList {
+class GroceryList implements IGroceryList {
 	private readonly _groceryItems = new Map<string, GroceryItem>();
 
+	private _disposed = false;
+
+	public get disposed(): boolean {
+		return this._disposed;
+	}
+
+	private readonly _events = new TypedEventEmitter<IGroceryListEvents>();
+	public get events(): IEventProvider<IGroceryListEvents> {
+		return this._events;
+	}
+
+	public get handle(): IFluidHandle<FluidObject> {
+		// GroceryListFactory already provides an entryPoint initialization function to the data store runtime,
+		// so this object should always have access to a non-null entryPoint.
+		assert(this.runtime.entryPoint !== undefined, "EntryPoint was undefined");
+		return this.runtime.entryPoint;
+	}
+
+	public constructor(
+		// TODO:  Consider just specifying what the data object requires rather than taking a full runtime.
+		private readonly runtime: IFluidDataStoreRuntime,
+		private readonly map: ISharedMap,
+	) {
+		if (this.runtime.disposed) {
+			this.dispose();
+		} else {
+			this.runtime.once("dispose", this.dispose);
+			this.map.on("valueChanged", (changed) => {
+				const changedId = changed.key;
+				const newName = this.map.get(changedId);
+				if (newName === undefined) {
+					this._groceryItems.delete(changedId);
+					this._events.emit("itemDeleted");
+				} else {
+					const newGroceryItem = new GroceryItem(changedId, newName, () => {
+						this.map.delete(changedId);
+					});
+					this._groceryItems.set(changedId, newGroceryItem);
+					this._events.emit("itemAdded");
+				}
+			});
+
+			for (const [id, groceryName] of this.map) {
+				const preExistingGroceryItem = new GroceryItem(id, groceryName, () => {
+					this.map.delete(id);
+				});
+				this._groceryItems.set(id, preExistingGroceryItem);
+			}
+		}
+	}
+
 	public readonly addItem = (name: string) => {
-		this.root.set(uuid(), name);
+		this.map.set(uuid(), name);
 	};
 
 	public readonly getItems = (): IGroceryItem[] => {
 		return [...this._groceryItems.values()];
 	};
 
-	protected async initializingFirstTime(): Promise<void> {
-		this.root.set(uuid(), "apple");
-		this.root.set(uuid(), "banana");
-	}
-
-	protected async hasInitialized(): Promise<void> {
-		this.root.on("valueChanged", (changed) => {
-			const changedId = changed.key;
-			const newName = this.root.get(changedId);
-			if (newName === undefined) {
-				this._groceryItems.delete(changedId);
-				this.emit("itemDeleted");
-			} else {
-				const newGroceryItem = new GroceryItem(changedId, newName, () => {
-					this.root.delete(changedId);
-				});
-				this._groceryItems.set(changedId, newGroceryItem);
-				this.emit("itemAdded");
-			}
-		});
-		for (const [id, groceryName] of this.root) {
-			const preExistingGroceryItem = new GroceryItem(id, groceryName, () => {
-				this.root.delete(id);
-			});
-			this._groceryItems.set(id, preExistingGroceryItem);
-		}
-	}
+	/**
+	 * Called when the host container closes and disposes itself
+	 */
+	private readonly dispose = (): void => {
+		this._disposed = true;
+		// TODO: Unregister listeners
+		this._events.emit("disposed");
+	};
 }
 
-/**
- * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
- * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
- * scenario, the fourth argument is not used.
- */
-export const GroceryListFactory = new DataObjectFactory<GroceryList>(
-	"grocery-list",
-	GroceryList,
-	[],
-	{},
-);
+const mapId = "grocery-list";
+
+const mapFactory = new MapFactory();
+const groceryListSharedObjectRegistry = new Map<string, IChannelFactory>([
+	[mapFactory.type, mapFactory],
+]);
+
+export class GroceryListFactory implements IFluidDataStoreFactory {
+	public get type(): string {
+		throw new Error("Do not use the type on the data store factory");
+	}
+
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+		return this;
+	}
+
+	// Effectively, this pattern puts the factory in charge of "unpacking" the context, getting everything ready to assemble the MigrationTool
+	// As opposed to the MigrationTool instance having an initialize() method to be called after the fact that does the unpacking.
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+			context,
+			groceryListSharedObjectRegistry,
+			existing,
+			async () => instance,
+		);
+
+		let map: ISharedMap;
+		if (existing) {
+			map = (await runtime.getChannel(mapId)) as ISharedMap;
+		} else {
+			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
+			map.set(uuid(), "apple");
+			map.set(uuid(), "banana");
+			map.bindToContext();
+		}
+
+		// By this point, we've performed any async work required to get the dependencies of the MigrationTool,
+		// so just a normal sync constructor will work fine (no followup async initialize()).
+		const instance = new GroceryList(runtime, map);
+
+		return runtime;
+	}
+}

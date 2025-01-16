@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { EventEmitter } from "@fluid-example/example-utils";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { TypedEmitter } from "tiny-typed-emitter";
 
 /**
@@ -27,17 +27,18 @@ export interface IGroceryItem extends TypedEmitter<IGroceryItemEvents> {
 	readonly deleteItem: () => void;
 }
 
+export interface IGroceryListEvents extends IEvent {
+	(event: "itemAdded" | "itemDeleted", listener: (item: IGroceryItem) => void);
+	(event: "disposed", listener: () => void);
+}
+
 /**
  * IInventoryList describes the public API surface for our inventory list object.
  */
-export interface IGroceryList extends EventEmitter {
+export interface IGroceryList {
+	readonly events: IEventProvider<IGroceryListEvents>;
+
 	readonly addItem: (name: string) => void;
 
 	readonly getItems: () => IGroceryItem[];
-
-	/**
-	 * The listChanged event will fire whenever an item is added/removed, either locally or remotely.
-	 * TODO: Consider using tiny-typed-emitter if not using DataObject
-	 */
-	on(event: "itemAdded" | "itemDeleted", listener: (item: IGroceryItem) => void): this;
 }

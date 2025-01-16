@@ -95,12 +95,12 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 			// not so useful.  Is there a good way to make a more granular change?
 			setInventoryItems(inventoryList.getItems());
 		};
-		inventoryList.on("itemAdded", updateItems);
-		inventoryList.on("itemDeleted", updateItems);
+		inventoryList.events.on("itemAdded", updateItems);
+		inventoryList.events.on("itemDeleted", updateItems);
 
 		return () => {
-			inventoryList.off("itemAdded", updateItems);
-			inventoryList.off("itemDeleted", updateItems);
+			inventoryList.events.off("itemAdded", updateItems);
+			inventoryList.events.off("itemDeleted", updateItems);
 		};
 	}, [inventoryList]);
 
