@@ -124,8 +124,6 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 		return this;
 	}
 
-	// Effectively, this pattern puts the factory in charge of "unpacking" the context, getting everything ready to assemble the MigrationTool
-	// As opposed to the MigrationTool instance having an initialize() method to be called after the fact that does the unpacking.
 	public async instantiateDataStore(
 		context: IFluidDataStoreContext,
 		existing: boolean,
@@ -169,8 +167,6 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 			});
 		};
 
-		// By this point, we've performed any async work required to get the dependencies of the MigrationTool,
-		// so just a normal sync constructor will work fine (no followup async initialize()).
 		const instance = new GroceryList(runtime, handle, map, branch);
 
 		return runtime;
