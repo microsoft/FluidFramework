@@ -36,7 +36,7 @@
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --no-cache",
-		"test:jest:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles --coverage --no-cache --ci",
+		"test:jest:coverage": "cross-env NODE_OPTIONS=--experimental-vm-modules TF_BUILD=True jest --detectOpenHandles --coverage --no-cache",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

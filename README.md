@@ -245,13 +245,19 @@ npm run test:coverage
 
 ### Mimic the official CI build
 
-Our CI pipelines run on Linux machines, and the npm scripts all have the `ci` prefix.
+Our CI pipelines run on Linux machines, and the top-level npm scripts all have the `ci` prefix.
 To replicate the test steps from the CI pipeline locally, run the following commands for the packages or pnpm workspaces:
 
 | Run      | Non-Windows                | Windows                                             |
 | -------- | -------------------------- | --------------------------------------------------- |
 | PR       | `npm run ci:test`          | `npm run test:report && npm run test:copyresults`   |
 | Official | `npm run ci:test:coverage` | `npm run test:coverage && npm run test:copyresults` |
+
+> [!IMPORTANT]
+> Jest auto-detects CI environments based on environment variables, so to fully replicate the CI environment, these
+> scripts set the TF_BUILD=True environment variable, which is what Azure Pipelines uses. See
+> <https://learn.microsoft.com/en-us/azure/devops/pipelines/build/variables?view=azure-devops&tabs=yaml#system-variables-devops-services>
+> for more information.
 
 ### Run tests from within VS Code
 

@@ -57,7 +57,7 @@
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
 		"test:jest:cjs": "jest --roots ./dist",
-		"test:jest:coverage": "jest --coverage --ci",
+		"test:jest:coverage": "cross-env TF_BUILD=True jest --coverage",
 		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:jest",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",

@@ -38,6 +38,7 @@
 		"checks:fix": "fluid-build --task checks:fix",
 		"ci:build": "fluid-build --task ci:build",
 		"ci:build:docs": "fluid-build --task ci:build:docs",
+		"ci:test": "npm run ci:test:mocha && npm run ci:test:jest",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha",
