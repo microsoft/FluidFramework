@@ -5,17 +5,6 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-/**
- * For demo purposes this is a super-simple interface, but in a real scenario this should have all relevant surface
- * for the application to run.
- */
-export interface IGroceryListAppModel {
-	/**
-	 * An inventory tracker list using the new shared tree.
-	 */
-	readonly groceryList: IGroceryList;
-}
-
 export interface IGroceryItem {
 	readonly id: string;
 	readonly name: string;

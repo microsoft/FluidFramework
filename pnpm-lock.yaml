@@ -462,6 +462,9 @@ importers:
       '@fluidframework/driver-utils':
         specifier: workspace:~
         version: link:../../../packages/loader/driver-utils
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
@@ -477,6 +480,9 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/server-local-server':
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/telemetry-utils

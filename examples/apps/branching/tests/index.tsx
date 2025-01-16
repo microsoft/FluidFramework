@@ -3,13 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
+import { StaticCodeLoader } from "@fluid-example/example-utils";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal LocalSessionStorageDbFactory used in examples
+import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
+import {
+	LocalDocumentServiceFactory,
+	LocalResolver,
+	createLocalResolverCreateNewRequest,
+} from "@fluidframework/local-driver/legacy";
+import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import React from "react";
 import ReactDOM from "react-dom";
+import { v4 as uuid } from "uuid";
 
 import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
-import type { IGroceryList, IGroceryListAppModel } from "../src/modelInterfaces.js";
+import type { IGroceryList } from "../src/modelInterfaces.js";
 import { DebugView, GroceryListView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
@@ -20,29 +33,41 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
+const urlResolver = new LocalResolver();
+const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
-	const modelLoader = new SessionStorageModelLoader<IGroceryListAppModel>(
-		new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
-	);
 	let id: string;
-	let model: IGroceryListAppModel;
+	let groceryList: IGroceryList;
 
 	if (location.hash.length === 0) {
-		// Normally our code loader is expected to match up with the version passed here.
-		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
-		// the version doesn't actually matter.
-		const createResponse = await modelLoader.createDetached("one");
-		model = createResponse.model;
-
+		const container = await createDetachedContainer({
+			urlResolver,
+			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
+			codeDetails: { package: "1.0" },
+		});
+		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		const documentId = uuid();
+		await container.attach(createLocalResolverCreateNewRequest(documentId));
+		if (container.resolvedUrl === undefined) {
+			throw new Error("Resolved Url not available on attached container");
+		}
 		// Should be the same as the uuid we generated above.
-		id = await createResponse.attach();
+		id = container.resolvedUrl.id;
 	} else {
 		id = location.hash.substring(1);
-		model = await modelLoader.loadExisting(id);
+		const container = await loadExistingContainer({
+			request: { url: `${window.location.origin}/${id}` },
+			urlResolver,
+			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
+		});
+		groceryList = (await container.getEntryPoint()) as IGroceryList;
 	}
 
 	const appDiv = document.createElement("div");
@@ -65,7 +90,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(model.groceryList);
+	render(groceryList);
 
 	element.append(appDiv, debugDiv);
 

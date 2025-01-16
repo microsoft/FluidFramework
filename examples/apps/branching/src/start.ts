@@ -47,7 +47,6 @@ const render = (groceryList: IGroceryList) => {
 
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();
 const urlResolver = createInsecureTinyliciousTestUrlResolver();
-const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
 
 async function start(): Promise<void> {
 	let id: string;
@@ -55,10 +54,10 @@ async function start(): Promise<void> {
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
-			urlResolver,
-			documentServiceFactory,
-			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
 			codeDetails: { package: "1.0" },
+			urlResolver,
+			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
+			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
 		});
 		groceryList = (await container.getEntryPoint()) as IGroceryList;
 		await container.attach(createTinyliciousTestCreateNewRequest());
@@ -71,7 +70,7 @@ async function start(): Promise<void> {
 		const container = await loadExistingContainer({
 			request: { url: id },
 			urlResolver,
-			documentServiceFactory,
+			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
 		});
 		groceryList = (await container.getEntryPoint()) as IGroceryList;
