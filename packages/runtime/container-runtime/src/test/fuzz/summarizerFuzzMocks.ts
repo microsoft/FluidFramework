@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
@@ -112,7 +113,7 @@ export class MockContainerRuntimeForSummarizer
 			this /* summarizerRuntime */,
 			() => summaryConfiguration /* configurationGetter */,
 			this /* ISummarizerInternalsProvider */,
-			{} as any /* handleContext */,
+			{} as unknown as IFluidHandleContext /* handleContext */,
 			this.summaryCollection,
 			async (runtime: IConnectableRuntime) =>
 				RunWhileConnectedCoordinator.create(runtime, () => this.deltaManager.active),
@@ -130,12 +131,16 @@ export class MockContainerRuntimeForSummarizer
 	}
 
 	private nackScheduled = false;
-	/** Prepare a SummaryNack to be sent by the server */
+	/**
+	 * Prepare a SummaryNack to be sent by the server
+	 */
 	public prepareSummaryNack() {
 		this.nackScheduled = true;
 	}
 
-	/** Call on the Summarizer object to summarize */
+	/**
+	 * Call on the Summarizer object to summarize
+	 */
 	public async summarize() {
 		const result = this.summarizer.summarizeOnDemand({
 			reason: "fuzzTest",

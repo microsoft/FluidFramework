@@ -422,7 +422,9 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
  * @alpha
  */
 export interface ISummaryRuntimeOptions {
-	/** Override summary configurations set by the server. */
+	/**
+	 * Override summary configurations set by the server.
+	 */
 	summaryConfigOverrides?: ISummaryConfiguration;
 
 	/**
@@ -584,7 +586,9 @@ export interface RuntimeHeaderData {
 	allowTombstone?: boolean;
 }
 
-/** Default values for Runtime Headers */
+/**
+ * Default values for Runtime Headers
+ */
 export const defaultRuntimeHeaderData: Required<RuntimeHeaderData> = {
 	wait: true,
 	viaHandle: false,
@@ -663,9 +667,13 @@ const defaultCompressionConfig = {
 
 const defaultChunkSizeInBytes = 204800;
 
-/** The default time to wait for pending ops to be processed during summarization */
+/**
+ * The default time to wait for pending ops to be processed during summarization
+ */
 export const defaultPendingOpsWaitTimeoutMs = 1000;
-/** The default time to delay a summarization retry attempt when there are pending ops */
+/**
+ * The default time to delay a summarization retry attempt when there are pending ops
+ */
 export const defaultPendingOpsRetryDelayMs = 1000;
 
 /**
@@ -691,10 +699,14 @@ export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): bo
 export const agentSchedulerId = "_scheduler";
 
 // safely check navigator and get the hardware spec value
-export function getDeviceSpec() {
+export function getDeviceSpec(): {
+	deviceMemory?: number | undefined;
+	hardwareConcurrency?: number | undefined;
+} {
 	try {
 		if (typeof navigator === "object" && navigator !== null) {
 			return {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				deviceMemory: (navigator as any).deviceMemory,
 				hardwareConcurrency: navigator.hardwareConcurrency,
 			};
@@ -710,7 +722,12 @@ export function getDeviceSpec() {
  */
 export const makeLegacySendBatchFn =
 	(
-		submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => number,
+		submitFn: (
+			type: MessageType,
+			contents: unknown,
+			batch: boolean,
+			appData?: unknown,
+		) => number,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
 	(batch: IBatch) => {
@@ -758,12 +775,15 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 		const response = await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		fluidObject = response.value;
 	}
 
@@ -890,7 +910,9 @@ export class ContainerRuntime
 		runtimeOptions?: IContainerRuntimeOptions; // May also include options from IContainerRuntimeOptionsInternal
 		containerScope?: FluidObject;
 		containerRuntimeCtor?: typeof ContainerRuntime;
-		/** @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md */
+		/**
+		 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+		 */
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 	}): Promise<ContainerRuntime> {
@@ -1171,7 +1193,7 @@ export class ContainerRuntime
 		return runtime;
 	}
 
-	public readonly options: Record<string | number, any>;
+	public readonly options: Record<string | number, unknown>;
 	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
@@ -1191,9 +1213,9 @@ export class ContainerRuntime
 
 	private readonly submitFn: (
 		type: MessageType,
-		contents: any,
+		contents: unknown,
 		batch: boolean,
-		appData?: any,
+		appData?: unknown,
 	) => number;
 	/**
 	 * Although current IContainerContext guarantees submitBatchFn, it is not available on older loaders.
@@ -1365,7 +1387,9 @@ export class ContainerRuntime
 		return this._connected;
 	}
 
-	/** clientId of parent (non-summarizing) container that owns summarizer container */
+	/**
+	 * clientId of parent (non-summarizing) container that owns summarizer container
+	 */
 	public get summarizerClientId(): string | undefined {
 		return this.summarizerClientElection?.electedClientId;
 	}
@@ -1410,7 +1434,9 @@ export class ContainerRuntime
 	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
 
-	/** The last message processed at the time of the last summary. */
+	/**
+	 * The last message processed at the time of the last summary.
+	 */
 	private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
 	private get summarizer(): Summarizer {
@@ -1645,6 +1671,7 @@ export class ContainerRuntime
 			eventName: "GCFeatureMatrix",
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				gcOptions_gcGeneration: this.runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
 		});
@@ -2420,7 +2447,9 @@ export class ContainerRuntime
 		return this.channelCollection.internalId(maybeAlias);
 	}
 
-	/** Adds the container's metadata to the given summary tree. */
+	/**
+	 * Adds the container's metadata to the given summary tree.
+	 */
 	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
 		// The last message processed at the time of summary. If there are no new messages, use the message from the
 		// last summary.
@@ -2448,7 +2477,7 @@ export class ContainerRuntime
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
 			message: explicitSchemaControl
-				? ({ sequenceNumber: -1 } as any as ISummaryMetadataMessage)
+				? ({ sequenceNumber: -1 } as unknown as ISummaryMetadataMessage)
 				: message,
 			lastMessage: explicitSchemaControl ? message : undefined,
 			documentSchema,
@@ -2582,7 +2611,7 @@ export class ContainerRuntime
 	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
 	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
 		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
-		const message: LocalContainerRuntimeMessage = JSON.parse(serializedContents);
+		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
 		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
 		return message;
 	}
@@ -3429,7 +3458,6 @@ export class ContainerRuntime
 	): Promise<IDataStore> {
 		const context = this.channelCollection.createDataStoreContext(
 			Array.isArray(pkg) ? pkg : [pkg],
-			undefined, // props
 			loadingGroupId,
 		);
 		return channelToDataStore(
@@ -3505,7 +3533,7 @@ export class ContainerRuntime
 	private createNewSignalEnvelope(
 		address: string | undefined,
 		type: string,
-		content: any,
+		content: unknown,
 	): Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> {
 		const newEnvelope: Omit<ISignalEnvelope, "broadcastSignalSequenceNumber"> = {
 			address,
@@ -3664,17 +3692,29 @@ export class ContainerRuntime
 	 * Returns a summary of the runtime at the current sequence number.
 	 */
 	public async summarize(options: {
-		/** True to generate the full tree with no handle reuse optimizations; defaults to false */
+		/**
+		 * True to generate the full tree with no handle reuse optimizations; defaults to false
+		 */
 		fullTree?: boolean;
-		/** True to track the state for this summary in the SummarizerNodes; defaults to true */
+		/**
+		 * True to track the state for this summary in the SummarizerNodes; defaults to true
+		 */
 		trackState?: boolean;
-		/** Logger to use for correlated summary events */
+		/**
+		 * Logger to use for correlated summary events
+		 */
 		summaryLogger?: ITelemetryLoggerExt;
-		/** True to run garbage collection before summarizing; defaults to true */
+		/**
+		 * True to run garbage collection before summarizing; defaults to true
+		 */
 		runGC?: boolean;
-		/** True to generate full GC data */
+		/**
+		 * True to generate full GC data
+		 */
 		fullGC?: boolean;
-		/** True to run GC sweep phase after the mark phase */
+		/**
+		 * True to run GC sweep phase after the mark phase
+		 */
 		runSweep?: boolean;
 	}): Promise<ISummaryTreeWithStats> {
 		this.verifyNotClosed();
@@ -3853,11 +3893,17 @@ export class ContainerRuntime
 	 */
 	public async collectGarbage(
 		options: {
-			/** Logger to use for logging GC events */
+			/**
+			 * Logger to use for logging GC events
+			 */
 			logger?: ITelemetryLoggerExt;
-			/** True to run GC sweep phase after the mark phase */
+			/**
+			 * True to run GC sweep phase after the mark phase
+			 */
 			runSweep?: boolean;
-			/** True to generate full GC data */
+			/**
+			 * True to generate full GC data
+			 */
 			fullGC?: boolean;
 		},
 		telemetryContext?: ITelemetryContext,
@@ -4363,9 +4409,12 @@ export class ContainerRuntime
 			| ContainerMessageType.FluidDataStoreOp
 			| ContainerMessageType.Alias
 			| ContainerMessageType.Attach,
+		// TODO: better typing
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		this.submit({ type, contents }, localOpMetadata);
 	}
 
@@ -4647,7 +4696,9 @@ export class ContainerRuntime
 		}
 	}
 
-	/** Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck */
+	/**
+	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
+	 */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.

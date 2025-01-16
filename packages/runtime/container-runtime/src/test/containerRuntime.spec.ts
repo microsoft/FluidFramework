@@ -18,7 +18,11 @@ import {
 	IConfigProviderBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { ISignalEnvelope, type IErrorBase } from "@fluidframework/core-interfaces/internal";
+import {
+	ISignalEnvelope,
+	type IErrorBase,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -43,6 +47,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
+	type IEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -92,7 +97,7 @@ import {
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
 	id: string,
-	contents: any,
+	contents: unknown,
 	localOpMetadata?: unknown,
 ) {
 	runtime.submitMessage(
@@ -113,6 +118,7 @@ const changeConnectionState = (
 	const audience = runtime.getAudience() as MockAudience;
 	audience.setCurrentClientId(clientId);
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
 	(runtime as any)._getClientId = () => clientId;
 
 	runtime.setConnectionState(connected, clientId);
@@ -143,11 +149,11 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 }
 
 function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
 	(containerRuntime as any).channelCollection = {
 		setConnectionState: (_connected: boolean, _clientId?: string) => {},
 		// Pass data store op right back to ContainerRuntime
-		reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+		reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
 			submitDataStoreOp(
 				containerRuntime,
 				envelope.address,
@@ -163,6 +169,7 @@ describe("Runtime", () => {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	});
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let submittedOps: any[] = [];
 	let submittedSignals: ISignalEnvelopeWithClientIds[] = [];
 	let opFakeSequenceNumber = 1;
@@ -197,7 +204,7 @@ describe("Runtime", () => {
 	const getMockContext = (
 		params: {
 			settings?: Record<string, ConfigTypes>;
-			logger?;
+			logger?: ITelemetryBaseLogger;
 			mockStorage?: Partial<IDocumentStorageService>;
 			loadedFromVersion?: IVersion;
 			baseSnapshot?: ISnapshotTree;
@@ -222,7 +229,12 @@ describe("Runtime", () => {
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
 			getLoadedFromVersion: () => loadedFromVersion,
-			submitFn: (_type: MessageType, contents: any, _batch: boolean, metadata?: unknown) => {
+			submitFn: (
+				_type: MessageType,
+				contents: object,
+				_batch: boolean,
+				metadata?: unknown,
+			) => {
 				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
 				return opFakeSequenceNumber++;
 			},
@@ -331,7 +343,8 @@ describe("Runtime", () => {
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				(containerRuntime as any).ensureNoDataModelChanges = (callback) => {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				(containerRuntime as any).ensureNoDataModelChanges = (callback: () => void) => {
 					callback();
 					callsToEnsure++;
 				};
@@ -339,6 +352,7 @@ describe("Runtime", () => {
 
 				// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
 				submitDataStoreOp(containerRuntime, "1", "test", { emptyBatch: true });
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(containerRuntime as any).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
 
@@ -383,14 +397,18 @@ describe("Runtime", () => {
 
 					// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
 					submitDataStoreOp(containerRuntime, "1", "test");
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					(containerRuntime as any).flush();
 
 					submitDataStoreOp(containerRuntime, "2", "test");
 					changeConnectionState(containerRuntime, true, mockClientId);
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					(containerRuntime as any).flush();
 
 					assert.strictEqual(submittedOps.length, 2);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.strictEqual(submittedOps[0].contents.address, "1");
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					assert.strictEqual(submittedOps[1].contents.address, "2");
 
 					function batchIdMatchesUnsentFormat(batchId?: string) {
@@ -403,15 +421,19 @@ describe("Runtime", () => {
 
 					if (enableOfflineLoad) {
 						assert(
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 							batchIdMatchesUnsentFormat(submittedOps[0].metadata?.batchId),
 							"expected unsent batchId format (0)",
 						);
 						assert(
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 							batchIdMatchesUnsentFormat(submittedOps[1].metadata?.batchId),
 							"expected unsent batchId format (0)",
 						);
 					} else {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						assert(submittedOps[0].metadata?.batchId === undefined, "Expected no batchId (0)");
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
 					}
 				}),
@@ -431,6 +453,7 @@ describe("Runtime", () => {
 				}`, () => {
 					let containerRuntime: ContainerRuntime;
 					let mockContext: Partial<IContainerContext>;
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const submittedOpsMetadata: any[] = [];
 					const containerErrors: ICriticalContainerError[] = [];
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => {
@@ -450,12 +473,16 @@ describe("Runtime", () => {
 							updateDirtyContainerState: (_dirty: boolean) => {},
 							submitFn: (
 								_type: MessageType,
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any
 								contents: any,
 								_batch: boolean,
-								appData?: any,
+								appData?: unknown,
 							) => {
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 								if (contents.type === "groupedBatch") {
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 									for (const subMessage of contents.contents) {
+										// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 										submittedOpsMetadata.push(subMessage.metadata);
 									}
 								} else {
@@ -501,6 +528,7 @@ describe("Runtime", () => {
 					it("Can't call flush() inside orderSequentially's callback", () => {
 						assert.throws(() =>
 							containerRuntime.orderSequentially(() => {
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 								(containerRuntime as any).flush();
 							}),
 						);
@@ -519,6 +547,7 @@ describe("Runtime", () => {
 						assert.throws(() =>
 							containerRuntime.orderSequentially(() =>
 								containerRuntime.orderSequentially(() => {
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 									(containerRuntime as any).flush();
 								}),
 							),
@@ -538,6 +567,7 @@ describe("Runtime", () => {
 						containerRuntime.orderSequentially(() => {
 							try {
 								containerRuntime.orderSequentially(() => {
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 									(containerRuntime as any).flush();
 								});
 							} catch (e) {
@@ -591,10 +621,12 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "2", "test");
 							submitDataStoreOp(containerRuntime, "3", "test");
 						});
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(submittedOpsMetadata.length, 3, "3 messages should be sent");
 						assert.strictEqual(
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 							submittedOpsMetadata[0].batch,
 							true,
 							"first message should be the batch start",
@@ -605,6 +637,7 @@ describe("Runtime", () => {
 							"second message should not hold batch info",
 						);
 						assert.strictEqual(
+							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 							submittedOpsMetadata[2].batch,
 							false,
 							"third message should be the batch end",
@@ -621,6 +654,7 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "2", "test");
 							submitDataStoreOp(containerRuntime, "3", "test");
 						});
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
 						containerRuntime.orderSequentially(() => {
@@ -628,6 +662,7 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "5", "test");
 							submitDataStoreOp(containerRuntime, "6", "test");
 						});
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(submittedOpsMetadata.length, 0, "no messages should be sent");
@@ -860,7 +895,7 @@ describe("Runtime", () => {
 					},
 					onFlushBatch: (batch: BatchMessage[], _csn?: number) =>
 						(pendingMessages += batch.length),
-				} satisfies Partial<PendingStateManager> as any as PendingStateManager;
+				} satisfies Partial<PendingStateManager> as unknown as PendingStateManager;
 			};
 			const getMockChannelCollection = (): ChannelCollection => {
 				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -897,14 +932,20 @@ describe("Runtime", () => {
 				pendingStateManager: PendingStateManager,
 				_maxReconnects: number | undefined = undefined,
 			) {
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- Modifying private properties
 				const runtime = containerRuntime as any;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				runtime.pendingStateManager = pendingStateManager;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				runtime.channelCollection = getMockChannelCollection();
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				runtime.maxConsecutiveReconnects = _maxReconnects ?? runtime.maxConsecutiveReconnects;
 				return runtime as ContainerRuntime;
 			}
 
-			/** Connects with a new clientId and then immediately disconnects, returning that brief connection's clientId */
+			/**
+			 * Connects with a new clientId and then immediately disconnects, returning that brief connection's clientId
+			 */
 			const toggleConnection = (runtime: ContainerRuntime, salt: number) => {
 				const clientId = salt === undefined ? fakeClientId : `${fakeClientId}-${salt}`;
 				changeConnectionState(runtime, true, clientId);
@@ -1137,7 +1178,9 @@ describe("Runtime", () => {
 				});
 			});
 
-			/** Overwrites channelCollection property and exposes private submit function with modified typing */
+			/**
+			 * Overwrites channelCollection property and exposes private submit function with modified typing
+			 */
 			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
 				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
 			} {
@@ -1152,7 +1195,7 @@ describe("Runtime", () => {
 				patched.channelCollection = {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
-					reSubmit: (type: string, envelope: any, localOpMetadata: unknown) => {
+					reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
 						submitDataStoreOp(
 							containerRuntime,
 							envelope.address,
@@ -1173,6 +1216,7 @@ describe("Runtime", () => {
 				submitDataStoreOp(patchedContainerRuntime, "1", "test");
 				submitDataStoreOp(patchedContainerRuntime, "2", "test");
 				patchedContainerRuntime.submit({
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 					type: "FUTURE_TYPE" as any,
 					contents: "3",
 				});
@@ -1262,10 +1306,10 @@ describe("Runtime", () => {
 				});
 
 				assert.equal(
-					(runtime as unknown as { method1: () => any }).method1(),
+					(runtime as unknown as { method1: () => unknown }).method1(),
 					"mixed in return",
 				);
-				assert.equal((runtime as unknown as { method2: () => any }).method2(), 42);
+				assert.equal((runtime as unknown as { method2: () => unknown }).method2(), 42);
 			});
 		});
 
@@ -1310,6 +1354,7 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 				const responseFromRequestMethod = await (containerRuntime as any).request({
 					url: "/",
 				});
@@ -1342,12 +1387,14 @@ describe("Runtime", () => {
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				pendingStateManager = (containerRuntime as any).pendingStateManager;
 			});
 
 			it("modifying op content after submit does not reflect in PendingStateManager", () => {
 				const content = { prop1: 1 };
 				submitDataStoreOp(containerRuntime, "1", content);
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(containerRuntime as any).flush();
 
 				content.prop1 = 2;
@@ -1357,6 +1404,7 @@ describe("Runtime", () => {
 				assert.notStrictEqual(state, undefined, "expect pending local state");
 				assert.strictEqual(state?.pendingStates.length, 1, "expect 1 pending message");
 				assert.deepStrictEqual(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					JSON.parse(state?.pendingStates?.[0].content).contents.contents,
 					{
 						prop1: 1,
@@ -1846,19 +1894,23 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return () => undefined;
-							case "pendingMessagesCount":
-								return 0;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
+				const mockPendingStateManager = new Proxy<PendingStateManager>(
+					{} as unknown as PendingStateManager,
+					{
+						get: (_t, p: keyof PendingStateManager, _r) => {
+							switch (p) {
+								case "getLocalState":
+									return () => undefined;
+								case "pendingMessagesCount":
+									return 0;
+								default:
+									assert.fail(`unexpected access to pendingStateManager.${p}`);
+							}
+						},
 					},
-				});
+				);
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const state = containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
@@ -1884,21 +1936,25 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return (): IPendingLocalState => ({
-									pendingStates,
-								});
-							case "pendingMessagesCount":
-								return 5;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
+				const mockPendingStateManager = new Proxy<PendingStateManager>(
+					{} as unknown as PendingStateManager,
+					{
+						get: (_t, p: keyof PendingStateManager, _r) => {
+							switch (p) {
+								case "getLocalState":
+									return (): IPendingLocalState => ({
+										pendingStates,
+									});
+								case "pendingMessagesCount":
+									return 5;
+								default:
+									assert.fail(`unexpected access to pendingStateManager.${p}`);
+							}
+						},
 					},
-				});
+				);
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const state = containerRuntime.getPendingLocalState() as Partial<IPendingRuntimeState>;
@@ -1925,21 +1981,25 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return (): IPendingLocalState => ({
-									pendingStates,
-								});
-							case "pendingMessagesCount":
-								return 5;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
+				const mockPendingStateManager = new Proxy<PendingStateManager>(
+					{} as unknown as PendingStateManager,
+					{
+						get: (_t, p: keyof PendingStateManager, _r) => {
+							switch (p) {
+								case "getLocalState":
+									return (): IPendingLocalState => ({
+										pendingStates,
+									});
+								case "pendingMessagesCount":
+									return 5;
+								default:
+									assert.fail(`unexpected access to pendingStateManager.${p}`);
+							}
+						},
 					},
-				});
+				);
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const stateP = containerRuntime.getPendingLocalState({
@@ -1992,21 +2052,25 @@ describe("Runtime", () => {
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
 				}));
-				const mockPendingStateManager = new Proxy<PendingStateManager>({} as any, {
-					get: (_t, p: keyof PendingStateManager, _r) => {
-						switch (p) {
-							case "getLocalState":
-								return (): IPendingLocalState => ({
-									pendingStates,
-								});
-							case "pendingMessagesCount":
-								return 5;
-							default:
-								assert.fail(`unexpected access to pendingStateManager.${p}`);
-						}
+				const mockPendingStateManager = new Proxy<PendingStateManager>(
+					{} as unknown as PendingStateManager,
+					{
+						get: (_t, p: keyof PendingStateManager, _r) => {
+							switch (p) {
+								case "getLocalState":
+									return (): IPendingLocalState => ({
+										pendingStates,
+									});
+								case "pendingMessagesCount":
+									return 5;
+								default:
+									assert.fail(`unexpected access to pendingStateManager.${p}`);
+							}
+						},
 					},
-				});
+				);
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerRuntime as any).pendingStateManager = mockPendingStateManager;
 
 				const state = (await containerRuntime.getPendingLocalState({
@@ -2046,7 +2110,7 @@ describe("Runtime", () => {
 					const assertThrowsOnlyIfExpected = enableOfflineLoad
 						? assert.throws
 						: assert.doesNotThrow;
-					const errorPredicate = (e: any) =>
+					const errorPredicate = (e: Error) =>
 						e.message === "Duplicate batch - The same batch was sequenced twice";
 					assertThrowsOnlyIfExpected(
 						() => {
@@ -2132,7 +2196,7 @@ describe("Runtime", () => {
 							false,
 						);
 					},
-					(e: any) => e.message === "Duplicate batch - The same batch was sequenced twice",
+					(e: Error) => e.message === "Duplicate batch - The same batch was sequenced twice",
 					"Expected duplicate batch detected after loading with recentBatchInfo",
 				);
 			});
@@ -2246,7 +2310,9 @@ describe("Runtime", () => {
 				const logger = new MockLogger();
 				containerContext = getMockContext({ logger }) as IContainerContext;
 
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
 				(containerContext as any).snapshotWithContents = snapshotWithContents;
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
 				(containerContext as any).baseSnapshot = snapshotWithContents.snapshotTree;
 				containerContext.storage.readBlob = async (id: string) => {
 					return blobContents.get(id) as ArrayBuffer;
@@ -2470,6 +2536,7 @@ describe("Runtime", () => {
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerContext.deltaManager as any).lastSequenceNumber = 5;
 				const missingDataStore = await containerRuntime.resolveHandle({
 					url: "/missingDataStore",
@@ -2510,9 +2577,10 @@ describe("Runtime", () => {
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const missingDataStoreContext =
-					// eslint-disable-next-line @typescript-eslint/dot-notation
-					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+					(containerRuntime as any).channelCollection.contexts.get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
 				const envelopes: ISequencedMessageEnvelope[] = [
 					{ sequenceNumber: 1 },
@@ -2521,6 +2589,7 @@ describe("Runtime", () => {
 					{ sequenceNumber: 4 },
 				] as unknown as ISequencedMessageEnvelope[];
 				envelopes.forEach((envelope) => {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					missingDataStoreContext.processMessages({
 						envelope,
 						messagesContent: [
@@ -2531,6 +2600,7 @@ describe("Runtime", () => {
 				});
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(containerContext.deltaManager as any).lastSequenceNumber = 2;
 
 				let opsProcessed = 0;

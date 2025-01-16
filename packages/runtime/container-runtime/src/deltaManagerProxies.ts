@@ -132,7 +132,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.flush();
 	}
 
-	private readonly onPrepareSend = (messageBuffer: any[]): void => {
+	private readonly onPrepareSend = (messageBuffer: unknown[]): void => {
 		this.emit("prepareSend", messageBuffer);
 	};
 	private readonly onSubmitOp = (message: IDocumentMessage): void => {
