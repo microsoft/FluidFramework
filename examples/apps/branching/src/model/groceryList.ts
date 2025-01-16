@@ -33,11 +33,8 @@ class GroceryItem implements IGroceryItem {
 	public constructor(
 		public readonly id: string,
 		public readonly name: string,
-		private readonly _removeItemFromTree: () => void,
+		public readonly deleteItem: () => void,
 	) {}
-	public readonly deleteItem = () => {
-		this._removeItemFromTree();
-	};
 }
 
 class GroceryList implements IGroceryList {
