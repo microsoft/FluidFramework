@@ -16,9 +16,6 @@ export interface IGroceryListEvents extends IEvent {
 	(event: "disposed", listener: () => void);
 }
 
-/**
- * IInventoryList describes the public API surface for our inventory list object.
- */
 export interface IGroceryList {
 	readonly events: IEventProvider<IGroceryListEvents>;
 

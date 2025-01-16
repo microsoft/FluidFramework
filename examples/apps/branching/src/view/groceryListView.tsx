@@ -77,7 +77,7 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 	const [groceryItems, setGroceryItems] = useState<IGroceryItem[]>(groceryList.getItems());
 	useEffect(() => {
 		const updateItems = () => {
-			// TODO: This blows away all the inventory items, making the granular add/delete events
+			// TODO: This blows away all the grocery items, making the granular add/delete events
 			// not so useful.  Is there a good way to make a more granular change?
 			setGroceryItems(groceryList.getItems());
 		};
@@ -95,22 +95,20 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 	});
 
 	return (
-		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
-			<thead>
-				<tr>
-					<th>Inventory item</th>
-				</tr>
-			</thead>
-			<tbody>
-				{groceryItemViews.length > 0 ? (
-					groceryItemViews
-				) : (
-					<tr>
-						<td colSpan={1}>No items in inventory</td>
-					</tr>
-				)}
-				<AddItemView addItem={groceryList.addItem} />
-			</tbody>
-		</table>
+		<>
+			<h1>Groceries!</h1>
+			<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
+				<tbody>
+					{groceryItemViews.length > 0 ? (
+						groceryItemViews
+					) : (
+						<tr>
+							<td colSpan={1}>No items in inventory</td>
+						</tr>
+					)}
+					<AddItemView addItem={groceryList.addItem} />
+				</tbody>
+			</table>
+		</>
 	);
 };
