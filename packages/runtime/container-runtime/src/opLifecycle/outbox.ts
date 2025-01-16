@@ -496,7 +496,7 @@ export class Outbox {
 	}
 
 	/**
-	 * @returns A checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
+	 * Gets a checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
 	 */
 	public getBatchCheckpoints() {
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
