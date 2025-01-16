@@ -171,7 +171,7 @@ function getObjectAllowedTypes(schema: SimpleObjectNodeSchema): string {
 /**
  * Returns the schema & fields of the node.
  */
-async function visualizeVerboseNodeFields(
+export async function visualizeVerboseNodeFields(
 	tree: VerboseTreeNode,
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
