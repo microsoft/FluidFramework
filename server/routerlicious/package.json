@@ -70,10 +70,20 @@
 	"c8": {
 		"all": true,
 		"cache-dir": "nyc/.cache",
-		"exclude": [],
-		"include": [],
+		"exclude": [
+      "**/*.d.*ts",
+			"**/src/test/**/*.*ts",
+			"**/dist/test/**/*.*js",
+			"**/lib/test/**/*.*js",
+      "**/node_modules/**/*"
+    ],
+		"include": [
+      "packages/**/src/**/*.*ts",
+			"packages/**/dist/**/*.*js",
+			"packages/**/lib/**/*.*js"
+    ],
 		"report-dir": "nyc/report",
-		"reporter": [
+    "reporter": [
 			"cobertura",
 			"html",
 			"text"
