@@ -150,12 +150,7 @@ export class ForestSummarizer implements Summarizable {
 					id: buildId,
 					trees: nodeCursors,
 				});
-				fieldChanges.push([
-					fieldKey,
-					{
-						local: [{ count: nodeCursors.length, attach: buildId }],
-					},
-				]);
+				fieldChanges.push([fieldKey, [{ count: nodeCursors.length, attach: buildId }]]);
 			}
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

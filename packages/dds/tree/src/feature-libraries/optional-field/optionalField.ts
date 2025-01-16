@@ -11,7 +11,6 @@ import {
 	type ChangesetLocalId,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionTag,
 	areEqualChangeAtomIds,
@@ -40,6 +39,7 @@ import {
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	type NestedChangesIndices,
+	type FieldChangeDelta,
 } from "../modular-schema/index.js";
 
 import type {
@@ -657,8 +657,8 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): DeltaFieldChanges {
-	const delta: Mutable<DeltaFieldChanges> = {};
+): FieldChangeDelta {
+	const delta: Mutable<FieldChangeDelta> = {};
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
