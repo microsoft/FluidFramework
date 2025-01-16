@@ -27,6 +27,7 @@ module.exports = {
 				ignoreRestArgs: true,
 			},
 		],
+		"@typescript-eslint/no-unsafe-return": "error",
 
 		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
