@@ -12126,6 +12126,9 @@ importers:
       '@types/double-ended-queue':
         specifier: ^2.1.0
         version: 2.1.7
+      '@types/lz4js':
+        specifier: ^0.2.0
+        version: 0.2.1
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -24635,6 +24638,10 @@ packages:
 
   /@types/lru-cache@5.1.1:
     resolution: {integrity: sha512-ssE3Vlrys7sdIzs5LOxCzTVMsU7i9oa/IaW92wF32JFb3CVczqOkru2xspuKczHEbG3nvmPY7IFqVmGGHdNbYw==}
+    dev: true
+
+  /@types/lz4js@0.2.1:
+    resolution: {integrity: sha512-aAnbA4uKPNqZqu0XK1QAwKP0Wskb4Oa7ZFqxW5CMIyGgqYQKFgBxTfK3m3KODXoOLv5t14VregzgrEak13uGQA==}
     dev: true
 
   /@types/mdast@3.0.15:
