@@ -16,11 +16,7 @@ export interface IGroceryListAppModel {
 	readonly groceryList: IGroceryList;
 }
 
-export interface IGroceryItemEvents extends IEvent {
-	(event: "quantityChanged", listener: () => void);
-}
-
-export interface IGroceryItem extends IEventProvider<IGroceryItemEvents> {
+export interface IGroceryItem {
 	readonly id: string;
 	readonly name: string;
 	readonly deleteItem: () => void;

@@ -23,25 +23,18 @@ import type {
 } from "@fluidframework/runtime-definitions/legacy";
 import { v4 as uuid } from "uuid";
 
-import type {
-	IGroceryItem,
-	IGroceryItemEvents,
-	IGroceryList,
-	IGroceryListEvents,
-} from "../modelInterfaces.js";
+import type { IGroceryItem, IGroceryList, IGroceryListEvents } from "../modelInterfaces.js";
 
 /**
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
-class GroceryItem extends TypedEventEmitter<IGroceryItemEvents> implements IGroceryItem {
+class GroceryItem implements IGroceryItem {
 	public constructor(
 		public readonly id: string,
 		public readonly name: string,
 		private readonly _removeItemFromTree: () => void,
-	) {
-		super();
-	}
+	) {}
 	public readonly deleteItem = () => {
 		this._removeItemFromTree();
 	};
