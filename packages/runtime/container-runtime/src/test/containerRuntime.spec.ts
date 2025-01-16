@@ -2577,7 +2577,7 @@ describe("Runtime", () => {
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
 				const missingDataStoreContext =
-					// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access
+					// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
 				const envelopes: ISequencedMessageEnvelope[] = [
@@ -2587,7 +2587,7 @@ describe("Runtime", () => {
 					{ sequenceNumber: 4 },
 				] as unknown as ISequencedMessageEnvelope[];
 				envelopes.forEach((envelope) => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					missingDataStoreContext.processMessages({
 						envelope,
 						messagesContent: [

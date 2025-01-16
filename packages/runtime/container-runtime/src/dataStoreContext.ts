@@ -296,7 +296,7 @@ export abstract class FluidDataStoreContext
 		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
 		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
 		// and get the information from the alias map directly.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		if (aliasedDataStores !== undefined && (this.baseSnapshot as any)?.omitted === true) {
 			return aliasedDataStores.has(this.id);
 		}

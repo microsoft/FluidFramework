@@ -772,7 +772,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 		const response = await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
 		});
