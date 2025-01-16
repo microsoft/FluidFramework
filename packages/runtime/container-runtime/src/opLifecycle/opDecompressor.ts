@@ -33,6 +33,7 @@ interface IPackedContentsContents {
  */
 export class OpDecompressor {
 	private activeBatch = false;
+	// TODO: better typing
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private rootMessageContents: any | undefined;
 	private processedCount = 0;
@@ -125,9 +126,7 @@ export class OpDecompressor {
 		const decompressedMessage = decompress(contents);
 		const intoString = Uint8ArrayToString(decompressedMessage);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const asObj = JSON.parse(intoString);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		this.rootMessageContents = asObj;
+		this.rootMessageContents = JSON.parse(intoString);
 	}
 
 	/**
