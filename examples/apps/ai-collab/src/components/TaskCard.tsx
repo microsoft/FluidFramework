@@ -7,8 +7,8 @@
 
 import {
 	aiCollab,
-	type AiCollabSuccessResponse,
 	type AiCollabErrorResponse,
+	type AiCollabSuccessResponse,
 	type Diff,
 	type Difference,
 	type DifferenceChange,
