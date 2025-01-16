@@ -272,8 +272,14 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Schema of the tree node.
 	const treeSchema = sharedTree.exportSimpleSchema();
 
-	const sf = new SchemaFactory(undefined);
-	const schemaName = Tree.is(treeView, [sf.boolean, sf.null, sf.number, sf.handle, sf.string])
+	const schemaFactory = new SchemaFactory(undefined);
+	const schemaName = Tree.is(treeView, [
+		schemaFactory.boolean,
+		schemaFactory.null,
+		schemaFactory.number,
+		schemaFactory.handle,
+		schemaFactory.string,
+	])
 		? Tree.schema(treeView).identifier
 		: treeView.type;
 
