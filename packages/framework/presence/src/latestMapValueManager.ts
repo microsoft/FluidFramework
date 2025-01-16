@@ -372,10 +372,10 @@ class LatestMapValueManagerImpl<
 	public clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
-		if (!(clientSessionId in allKnownStates.states)) {
+		const clientStateMap = allKnownStates.states[clientSessionId];
+		if (clientStateMap === undefined) {
 			throw new Error("No entry for client");
 		}
-		const clientStateMap = allKnownStates.states[clientSessionId];
 		const items = new Map<Keys, LatestValueData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
 			const value = item.value;
@@ -396,14 +396,12 @@ class LatestMapValueManagerImpl<
 	): void {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId: SpecificSessionClientId = client.sessionId;
-		if (!(clientSessionId in allKnownStates.states)) {
+		const currentState = (allKnownStates.states[clientSessionId] ??=
 			// New client - prepare new client state directory
-			allKnownStates.states[clientSessionId] = {
+			{
 				rev: value.rev,
 				items: {} as unknown as InternalTypes.MapValueState<T, Keys>["items"],
-			};
-		}
-		const currentState = allKnownStates.states[clientSessionId];
+			});
 		// Accumulate individual update keys
 		const updatedItemKeys: Keys[] = [];
 		for (const [key, item] of objectEntries(value.items)) {
