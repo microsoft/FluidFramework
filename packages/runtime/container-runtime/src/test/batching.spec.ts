@@ -58,7 +58,9 @@ describe("Runtime batching", () => {
 	let sandbox: sinon.SinonSandbox;
 	let clock: SinonFakeTimers;
 
-	/** Overwrites channelCollection property to make process a no-op */
+	/**
+	 * Overwrites channelCollection property to make process a no-op
+	 */
 	function patchContainerRuntime(cr: ContainerRuntime): sinon.SinonStub {
 		const fakeProcess: () => void = () => {};
 		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {

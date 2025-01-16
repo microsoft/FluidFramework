@@ -28,6 +28,9 @@ module.exports = {
 			},
 		],
 
+		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
+		"jsdoc/require-description": ["error", { checkConstructors: false }],
+
 		// #endregion
 	},
 	overrides: [

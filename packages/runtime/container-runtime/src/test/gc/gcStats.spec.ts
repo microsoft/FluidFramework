@@ -172,7 +172,9 @@ describe("Garbage Collection Stats", () => {
 	let garbageCollector: IGarbageCollector;
 	let initialStats: IGCStats;
 
-	/** Helper function that makes the garbage collector process the last GC message */
+	/**
+	 * Makes the garbage collector process the last GC message
+	 */
 	function processLastGCMessage() {
 		if (lastGCMessage === undefined) {
 			return;

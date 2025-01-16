@@ -86,7 +86,9 @@ export class OpDecompressor {
 		return this.activeBatch;
 	}
 
-	/** Is the decompressed and stored batch only comprised of a single message */
+	/**
+	 * Is the decompressed and stored batch only comprised of a single message
+	 */
 	private isSingleMessageBatch = false;
 
 	/**

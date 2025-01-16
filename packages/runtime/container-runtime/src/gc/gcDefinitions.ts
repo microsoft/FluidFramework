@@ -32,9 +32,13 @@ import {
  */
 export type GCVersion = number;
 
-/** The stable/default version of GC Data */
+/**
+ * The stable/default version of GC Data
+ */
 export const stableGCVersion: GCVersion = 3;
-/** The next version of GC Data, to bump to in case we need to regenerate all GC Data across all files. */
+/**
+ * The next version of GC Data, to bump to in case we need to regenerate all GC Data across all files.
+ */
 export const nextGCVersion: GCVersion = 4;
 
 /**
@@ -50,14 +54,22 @@ export const nextGCVersion: GCVersion = 4;
  */
 export const gcGenerationOptionName = "gcGeneration";
 
-/** Config key to turn GC test mode on / off. */
+/**
+ * Config key to turn GC test mode on / off.
+ */
 export const gcTestModeKey = "Fluid.GarbageCollection.GCTestMode";
-/** Config key to expire a session after a set period of time. Defaults to true. */
+/**
+ * Config key to expire a session after a set period of time. Defaults to true.
+ */
 export const runSessionExpiryKey = "Fluid.GarbageCollection.RunSessionExpiry";
-/** Config key to disable throwing an error when tombstone object is loaded (requested). */
+/**
+ * Config key to disable throwing an error when tombstone object is loaded (requested).
+ */
 export const disableThrowOnTombstoneLoadKey =
 	"Fluid.GarbageCollection.DisableThrowOnTombstoneLoad";
-/** Config key to enable GC version upgrade. */
+/**
+ * Config key to enable GC version upgrade.
+ */
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
 
 // One day in milliseconds.
@@ -88,7 +100,9 @@ export type GCFeatureMatrix =
 			 * Provided via Container Runtime Options.
 			 */
 			gcGeneration?: number;
-			/** Deprecated property from legacy type. Will not be set concurrently with gcGeneration */
+			/**
+			 * Deprecated property from legacy type. Will not be set concurrently with gcGeneration
+			 */
 			tombstoneGeneration?: undefined;
 	  }
 	| {
@@ -148,7 +162,9 @@ export interface IGCMetadata {
 	 * @deprecated use GCFeatureMatrix.gcGeneration instead. @see GCFeatureMatrix.gcGeneration
 	 */
 	readonly sweepEnabled?: boolean;
-	/** If this is present, the session for this container will expire after this time and the container will close */
+	/**
+	 * If this is present, the session for this container will expire after this time and the container will close
+	 */
 	readonly sessionExpiryTimeoutMs?: number;
 	/**
 	 * How long to wait after an object is unreferenced before it becomes a Tombstone.
@@ -167,23 +183,41 @@ export interface IGCMetadata {
  * @alpha
  */
 export interface IMarkPhaseStats {
-	/** The number of nodes in the container. */
+	/**
+	 * The number of nodes in the container.
+	 */
 	nodeCount: number;
-	/** The number of data stores in the container. */
+	/**
+	 * The number of data stores in the container.
+	 */
 	dataStoreCount: number;
-	/** The number of attachment blobs in the container. */
+	/**
+	 * The number of attachment blobs in the container.
+	 */
 	attachmentBlobCount: number;
-	/** The number of unreferenced nodes in the container. */
+	/**
+	 * The number of unreferenced nodes in the container.
+	 */
 	unrefNodeCount: number;
-	/** The number of unreferenced data stores in the container. */
+	/**
+	 * The number of unreferenced data stores in the container.
+	 */
 	unrefDataStoreCount: number;
-	/** The number of unreferenced attachment blobs in the container. */
+	/**
+	 * The number of unreferenced attachment blobs in the container.
+	 */
 	unrefAttachmentBlobCount: number;
-	/** The number of nodes whose reference state updated since last GC run. */
+	/**
+	 * The number of nodes whose reference state updated since last GC run.
+	 */
 	updatedNodeCount: number;
-	/** The number of data stores whose reference state updated since last GC run. */
+	/**
+	 * The number of data stores whose reference state updated since last GC run.
+	 */
 	updatedDataStoreCount: number;
-	/** The number of attachment blobs whose reference state updated since last GC run. */
+	/**
+	 * The number of attachment blobs whose reference state updated since last GC run.
+	 */
 	updatedAttachmentBlobCount: number;
 }
 
@@ -193,17 +227,29 @@ export interface IMarkPhaseStats {
  * @alpha
  */
 export interface ISweepPhaseStats {
-	/** The number of nodes in the lifetime of the container. */
+	/**
+	 * The number of nodes in the lifetime of the container.
+	 */
 	lifetimeNodeCount: number;
-	/** The number of data stores in the lifetime of the container. */
+	/**
+	 * The number of data stores in the lifetime of the container.
+	 */
 	lifetimeDataStoreCount: number;
-	/** The number of attachment blobs in the lifetime of the container. */
+	/**
+	 * The number of attachment blobs in the lifetime of the container.
+	 */
 	lifetimeAttachmentBlobCount: number;
-	/** The number of deleted nodes in the container. */
+	/**
+	 * The number of deleted nodes in the container.
+	 */
 	deletedNodeCount: number;
-	/** The number of deleted data stores in the container. */
+	/**
+	 * The number of deleted data stores in the container.
+	 */
 	deletedDataStoreCount: number;
-	/** The number of deleted attachment blobs in the container. */
+	/**
+	 * The number of deleted attachment blobs in the container.
+	 */
 	deletedAttachmentBlobCount: number;
 }
 
@@ -241,9 +287,13 @@ export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
  * @internal
  */
 export const GarbageCollectionMessageType = {
-	/** Message sent directing GC to delete the given nodes */
+	/**
+	 * Message sent directing GC to delete the given nodes
+	 */
 	Sweep: "Sweep",
-	/** Message sent notifying GC that a Tombstoned object was Loaded */
+	/**
+	 * Message sent notifying GC that a Tombstoned object was Loaded
+	 */
 	TombstoneLoaded: "TombstoneLoaded",
 } as const;
 
@@ -258,9 +308,13 @@ export type GarbageCollectionMessageType =
  * @internal
  */
 export interface ISweepMessage {
-	/** @see GarbageCollectionMessageType.Sweep */
+	/**
+	 * @see GarbageCollectionMessageType.Sweep
+	 */
 	type: typeof GarbageCollectionMessageType.Sweep;
-	/** The ids of nodes that are deleted. */
+	/**
+	 * The ids of nodes that are deleted.
+	 */
 	deletedNodeIds: string[];
 }
 
@@ -269,9 +323,13 @@ export interface ISweepMessage {
  * @internal
  */
 export interface ITombstoneLoadedMessage {
-	/** @see GarbageCollectionMessageType.TombstoneLoaded */
+	/**
+	 * @see GarbageCollectionMessageType.TombstoneLoaded
+	 */
 	type: typeof GarbageCollectionMessageType.TombstoneLoaded;
-	/** The id of Tombstoned node that was loaded. */
+	/**
+	 * The id of Tombstoned node that was loaded.
+	 */
 	nodePath: string;
 }
 
@@ -285,9 +343,13 @@ export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
  * Defines the APIs for the runtime object to be passed to the garbage collector.
  */
 export interface IGarbageCollectionRuntime {
-	/** Returns the garbage collection data of the runtime. */
+	/**
+	 * Returns the garbage collection data of the runtime.
+	 */
 	getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
-	/** After GC has run, called to notify the runtime of routes that are used in it. */
+	/**
+	 * After GC has run, called to notify the runtime of routes that are used in it.
+	 */
 	updateUsedRoutes(usedRoutes: readonly string[]): void;
 	/**
 	 * After GC has run and identified nodes that are sweep ready, called to delete the sweep ready nodes. The runtime
@@ -295,17 +357,27 @@ export interface IGarbageCollectionRuntime {
 	 * @param sweepReadyRoutes - The routes of nodes that are sweep ready and should be deleted.
 	 */
 	deleteSweepReadyNodes(sweepReadyRoutes: readonly string[]): readonly string[];
-	/** Called to notify the runtime of routes that are tombstones. */
+	/**
+	 * Called to notify the runtime of routes that are tombstones.
+	 */
 	updateTombstonedRoutes(tombstoneRoutes: readonly string[]): void;
-	/** Returns a referenced timestamp to be used to track unreferenced nodes. */
+	/**
+	 * Returns a referenced timestamp to be used to track unreferenced nodes.
+	 */
 	getCurrentReferenceTimestampMs(): number | undefined;
-	/** Returns the type of the GC node. */
+	/**
+	 * Returns the type of the GC node.
+	 */
 	getNodeType(nodePath: string): GCNodeType;
-	/** Called when the runtime should close because of an error. */
+	/**
+	 * Called when the runtime should close because of an error.
+	 */
 	closeFn: (error?: ICriticalContainerError) => void;
 }
 
-/** Defines the contract for the garbage collector. */
+/**
+ * Defines the contract for the garbage collector.
+ */
 export interface IGarbageCollector {
 	/**
 	 * Tells the time at which session expiry timer started in a previous container.
@@ -313,13 +385,21 @@ export interface IGarbageCollector {
 	 * original container's local client time when it was loaded (and started the session expiry timer).
 	 */
 	readonly sessionExpiryTimerStarted: number | undefined;
-	/** Tells whether GC should run or not. */
+	/**
+	 * Tells whether GC should run or not.
+	 */
 	readonly shouldRunGC: boolean;
-	/** The count of data stores whose GC state updated since the last summary. */
+	/**
+	 * The count of data stores whose GC state updated since the last summary.
+	 */
 	readonly updatedDSCountSinceLastSummary: number;
-	/** Initialize the state from the base snapshot after its creation. */
+	/**
+	 * Initialize the state from the base snapshot after its creation.
+	 */
 	initializeBaseState(): Promise<void>;
-	/** Run garbage collection and update the reference / used state of the system. */
+	/**
+	 * Run garbage collection and update the reference / used state of the system.
+	 */
 	collectGarbage(
 		options: {
 			logger?: ITelemetryLoggerExt;
@@ -328,37 +408,51 @@ export interface IGarbageCollector {
 		},
 		telemetryContext?: ITelemetryContext,
 	): Promise<IGCStats | undefined>;
-	/** Summarizes the GC data and returns it as a summary tree. */
+	/**
+	 * Summarizes the GC data and returns it as a summary tree.
+	 */
 	summarize(
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
 	): ISummarizeResult | undefined;
-	/** Returns the garbage collector specific metadata to be written into the summary. */
+	/**
+	 * Returns the garbage collector specific metadata to be written into the summary.
+	 */
 	getMetadata(): IGCMetadata;
-	/** Returns the GC details generated from the base snapshot. */
+	/**
+	 * Returns the GC details generated from the base snapshot.
+	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
-	/** Called when the latest summary of the system has been refreshed. */
+	/**
+	 * Called when the latest summary of the system has been refreshed.
+	 */
 	refreshLatestSummary(result: IRefreshSummaryResult): Promise<void>;
 	/**
 	 * Called when a node with the given path is updated. If the node is inactive or tombstoned, this will log an error
 	 * or throw an error if failing on incorrect usage is configured.
 	 */
 	nodeUpdated(props: IGCNodeUpdatedProps): void;
-	/** Called when a reference is added to a node. Used to identify nodes that were referenced between summaries. */
+	/**
+	 * Called when a reference is added to a node. Used to identify nodes that were referenced between summaries.
+	 */
 	addedOutboundReference(
 		fromNodePath: string,
 		toNodePath: string,
 		timestampMs: number,
 		autorecovery?: true,
 	): void;
-	/** Called to process garbage collection messages */
+	/**
+	 * Called to process garbage collection messages
+	 */
 	processMessages(
 		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,
 	): void;
-	/** Returns true if this node has been deleted by GC during sweep phase. */
+	/**
+	 * Returns true if this node has been deleted by GC during sweep phase.
+	 */
 	isNodeDeleted(nodePath: string): boolean;
 	setConnectionState(connected: boolean, clientId?: string): void;
 	dispose(): void;
@@ -369,26 +463,40 @@ export interface IGarbageCollector {
  * @internal
  */
 export interface IGCNodeUpdatedProps {
-	/** Type and path of the updated node */
+	/**
+	 * Type and path of the updated node
+	 */
 	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
-	/** Whether the node (or a subpath) was loaded or changed. */
+	/**
+	 * Whether the node (or a subpath) was loaded or changed.
+	 */
 	reason: "Loaded" | "Changed" | "Realized";
 	/**
 	 * The op-based timestamp when the node changed. If the update is from receiving an op, this should
 	 * be the timestamp of the op. If not, this should be the timestamp of the last op processed.
 	 */
 	timestampMs: number | undefined;
-	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
+	/**
+	 * The package path of the node. This may not be available if the node hasn't been loaded yet
+	 */
 	packagePath?: readonly string[];
-	/** The original request for loads to preserve it in telemetry */
+	/**
+	 * The original request for loads to preserve it in telemetry
+	 */
 	request?: IRequest;
-	/** If the node was loaded via request path, the header data. May be modified from the original request */
+	/**
+	 * If the node was loaded via request path, the header data. May be modified from the original request
+	 */
 	headerData?: RuntimeHeaderData;
-	/** Any other properties to be logged. */
+	/**
+	 * Any other properties to be logged.
+	 */
 	additionalProps?: ITelemetryPropertiesExt;
 }
 
-/** Parameters necessary for creating a GarbageCollector. */
+/**
+ * Parameters necessary for creating a GarbageCollector.
+ */
 export interface IGarbageCollectorCreateParams {
 	readonly runtime: IGarbageCollectionRuntime;
 	readonly gcOptions: IGCRuntimeOptions;
@@ -463,44 +571,72 @@ export interface IGarbageCollectorConfigs {
 	 * flag defined below.
 	 */
 	readonly sweepAllowed: boolean;
-	/** Tracks if sweep phase is enabled to run in this session or not */
+	/**
+	 * Tracks if sweep phase is enabled to run in this session or not
+	 */
 	readonly sweepEnabled: boolean;
 	/**
 	 * If true, bypass optimizations and generate GC data for all nodes irrespective of whether a node changed or not.
 	 */
 	readonly runFullGC: boolean | undefined;
-	/** The time in ms to expire a session for a client for gc. */
+	/**
+	 * The time in ms to expire a session for a client for gc.
+	 */
 	readonly sessionExpiryTimeoutMs: number | undefined;
-	/** The time after which an unreferenced node can be Tombstoned - i.e. GC knows it can't be referenced again (revived). */
+	/**
+	 * The time after which an unreferenced node can be Tombstoned - i.e. GC knows it can't be referenced again (revived).
+	 */
 	readonly tombstoneTimeoutMs: number | undefined;
 	/**
 	 * The delay between tombstone and sweep. Not persisted, so concurrent sessions may use different values.
 	 * Sweep is implemented in an eventually-consistent way so this is acceptable.
 	 */
 	readonly sweepGracePeriodMs: number;
-	/** The time after which an unreferenced node is inactive. */
+	/**
+	 * The time after which an unreferenced node is inactive.
+	 */
 	readonly inactiveTimeoutMs: number;
-	/** Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately. */
+	/**
+	 * Tracks whether GC should run in test mode. In this mode, unreferenced objects are deleted immediately.
+	 */
 	readonly testMode: boolean;
-	/** @see GCFeatureMatrix. */
+	/**
+	 * @see GCFeatureMatrix.
+	 */
 	readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
-	/** The version of GC in the base snapshot. */
+	/**
+	 * The version of GC in the base snapshot.
+	 */
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
-	/** The current version of GC data in the running code */
+	/**
+	 * The current version of GC data in the running code
+	 */
 	readonly gcVersionInEffect: GCVersion;
-	/** If true, throw an error when a tombstone data store is retrieved */
+	/**
+	 * If true, throw an error when a tombstone data store is retrieved
+	 */
 	readonly throwOnTombstoneLoad: boolean;
 }
 
-/** The state of node that is unreferenced. */
+/**
+ * The state of node that is unreferenced.
+ */
 export const UnreferencedState = {
-	/** The node is active, i.e., it can become referenced again. */
+	/**
+	 * The node is active, i.e., it can become referenced again.
+	 */
 	Active: "Active",
-	/** The node is inactive, i.e., it should not become referenced. */
+	/**
+	 * The node is inactive, i.e., it should not become referenced.
+	 */
 	Inactive: "Inactive",
-	/** The node is ready to be tombstoned */
+	/**
+	 * The node is ready to be tombstoned
+	 */
 	TombstoneReady: "TombstoneReady",
-	/** The node is ready to be deleted by the sweep phase. */
+	/**
+	 * The node is ready to be deleted by the sweep phase.
+	 */
 	SweepReady: "SweepReady",
 } as const;
 export type UnreferencedState = (typeof UnreferencedState)[keyof typeof UnreferencedState];
@@ -509,8 +645,12 @@ export type UnreferencedState = (typeof UnreferencedState)[keyof typeof Unrefere
  * Represents the result of a GC run.
  */
 export interface IGCResult {
-	/** The ids of nodes that are referenced in the referenced graph */
+	/**
+	 * The ids of nodes that are referenced in the referenced graph
+	 */
 	referencedNodeIds: string[];
-	/** The ids of nodes that are not-referenced or deleted in the referenced graph */
+	/**
+	 * The ids of nodes that are not-referenced or deleted in the referenced graph
+	 */
 	deletedNodeIds: string[];
 }

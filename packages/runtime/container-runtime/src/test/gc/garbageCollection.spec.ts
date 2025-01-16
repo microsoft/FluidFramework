@@ -134,7 +134,9 @@ describe("Garbage Collection Tests", () => {
 		return sweepReadyRoutes;
 	}
 
-	/** More concise signature for calling IGarbageCollector.nodeUpdated */
+	/**
+	 * More concise signature for calling {@link IGarbageCollector.nodeUpdated}.
+	 */
 	function nodeUpdated(
 		garbageCollector: IGarbageCollector,
 		path: string,
@@ -1387,7 +1389,7 @@ describe("Garbage Collection Tests", () => {
 			it("starts with empty GC state when there is no GC state in base snapshot", async () => {
 				const garbageCollector = createGCOverride(
 					stableGCVersion,
-					false /** gcStateInBaseSnapshot */,
+					false /* gcStateInBaseSnapshot */,
 				);
 
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;

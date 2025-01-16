@@ -233,7 +233,9 @@ describe("Summary Manager", () => {
 		return summarizer;
 	};
 
-	/** Completes the pending request Summarizer call. */
+	/**
+	 * Completes the pending request Summarizer call.
+	 */
 	const completeSummarizerRequest = () => requestDeferred.resolve();
 
 	function createSummaryManager({

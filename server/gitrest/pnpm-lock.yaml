@@ -198,8 +198,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: 6.0.0-310414
-        version: 6.0.0-310414
+        specifier: 6.0.0-317195
+        version: 6.0.0-317195
       '@fluidframework/protocol-base':
         specifier: 6.0.0-317195
         version: 6.0.0-317195
@@ -1434,10 +1434,6 @@ packages:
 
   /@fluidframework/gitresources@6.0.0-287165:
     resolution: {integrity: sha512-bfCshXEH2WGtG7C+ylUqzwoHbHd4KEtASaym4q+ah2pEA2fxw2qfTOvGDat+xSBdmy1vvBib9P8vbhJ9bO4xdQ==}
-    dev: false
-
-  /@fluidframework/gitresources@6.0.0-310414:
-    resolution: {integrity: sha512-cfxbG0aWG3D3TX7lxK5KzMw8SBirbglA7d8bESF6/qTlypeUKspH5daTkxkhLQL8esgDQQC6L0jkVuyASvKmJQ==}
     dev: false
 
   /@fluidframework/gitresources@6.0.0-317195:

@@ -131,12 +131,16 @@ export class MockContainerRuntimeForSummarizer
 	}
 
 	private nackScheduled = false;
-	/** Prepare a SummaryNack to be sent by the server */
+	/**
+	 * Prepare a SummaryNack to be sent by the server
+	 */
 	public prepareSummaryNack() {
 		this.nackScheduled = true;
 	}
 
-	/** Call on the Summarizer object to summarize */
+	/**
+	 * Call on the Summarizer object to summarize
+	 */
 	public async summarize() {
 		const result = this.summarizer.summarizeOnDemand({
 			reason: "fuzzTest",
