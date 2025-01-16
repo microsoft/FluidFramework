@@ -32,7 +32,6 @@ import {
 	determineNodeKind,
 	toVisualTree,
 	visualizeSharedTreeNodeBySchema,
-	visualizeVerboseNodeFields,
 } from "./SharedTreeVisualizer.js";
 import {
 	VisualSharedTreeNodeKind,
@@ -274,8 +273,9 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	const treeSchema = sharedTree.exportSimpleSchema();
 
 	const sf = new SchemaFactory(undefined);
-	const isLeaf = Tree.is(treeView, [sf.boolean, sf.null, sf.number, sf.handle, sf.string]);
-	const schemaName = isLeaf ? Tree.schema(treeView).identifier : treeView.type;
+	const schemaName = Tree.is(treeView, [sf.boolean, sf.null, sf.number, sf.handle, sf.string])
+		? Tree.schema(treeView).identifier
+		: treeView.type;
 
 	// Create a root field visualization that shows the allowed types at the root
 	const visualTreeRepresentation: VisualSharedTreeNode = {
@@ -283,15 +283,9 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 			schemaName,
 			allowedTypes: concatenateTypes(treeSchema.allowedTypes),
 		},
-		fields: isLeaf
-			? {
-					root: await visualizeSharedTreeNodeBySchema(
-						treeView,
-						treeSchema,
-						visualizeChildData,
-					),
-				}
-			: await visualizeVerboseNodeFields(treeView, treeSchema, visualizeChildData),
+		fields: {
+			root: await visualizeSharedTreeNodeBySchema(treeView, treeSchema, visualizeChildData),
+		},
 		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 
