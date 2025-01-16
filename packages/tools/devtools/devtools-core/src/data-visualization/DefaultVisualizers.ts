@@ -22,16 +22,21 @@ import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ITreeInternal } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SchemaFactory, SharedTree, Tree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
 import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
+	concatenateTypes,
 	determineNodeKind,
 	toVisualTree,
 	visualizeSharedTreeNodeBySchema,
 } from "./SharedTreeVisualizer.js";
+import {
+	VisualSharedTreeNodeKind,
+	type VisualSharedTreeNode,
+} from "./VisualSharedTreeTypes.js";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
@@ -260,8 +265,6 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
-	// TODO: this visualizer doesn't consider the root as a field, and thus does not display the allowed types or handle when it is empty.
-	// Tracked by https://dev.azure.com/fluidframework/internal/_workitems/edit/26472.
 	if (treeView === undefined) {
 		throw new Error("Support for visualizing empty trees is not implemented");
 	}
@@ -269,17 +272,26 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Schema of the tree node.
 	const treeSchema = sharedTree.exportSimpleSchema();
 
-	// Traverses the SharedTree and generates a visual representation of the tree and its schema.
-	const visualTreeRepresentation = await visualizeSharedTreeNodeBySchema(
-		treeView,
-		treeSchema,
-		visualizeChildData,
-	);
+	const sf = new SchemaFactory(undefined);
+	const schemaName = Tree.is(treeView, [sf.boolean, sf.null, sf.number, sf.handle, sf.string])
+		? Tree.schema(treeView).identifier
+		: treeView.type;
+
+	// Create a root field visualization that shows the allowed types at the root
+	const visualTreeRepresentation: VisualSharedTreeNode = {
+		schema: {
+			schemaName,
+			allowedTypes: concatenateTypes(treeSchema.allowedTypes),
+		},
+		fields: {
+			root: await visualizeSharedTreeNodeBySchema(treeView, treeSchema, visualizeChildData),
+		},
+		kind: VisualSharedTreeNodeKind.InternalNode,
+	};
 
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = toVisualTree(visualTreeRepresentation);
 
-	// TODO: Validate the type casting.
 	const visualTreeResult: FluidObjectNode = {
 		...visualTree,
 		fluidObjectId: sharedTree.id,

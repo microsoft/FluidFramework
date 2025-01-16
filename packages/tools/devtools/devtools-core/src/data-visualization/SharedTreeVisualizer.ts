@@ -150,7 +150,7 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 /**
  * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
  */
-function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
+export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
 	return [...fieldTypes].join(" | ");
 }
 

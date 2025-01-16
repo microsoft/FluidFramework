@@ -189,29 +189,46 @@ export class AppData extends DataObject {
 			childData: builder.optional(LeafSchema),
 		}) {}
 
-		class RootNodeSchema extends builder.object("root-item", {
+		class RootNodeTwoItemTwo extends builder.object("root-node-two-item-two", {
 			childrenOne: builder.array(ChildSchema),
 			childrenTwo: builder.number,
 		}) {}
 
-		const config = new TreeViewConfiguration({ schema: RootNodeSchema });
+		class RootNodeTwoItem extends builder.object("root-node-item", {
+			childrenOne: builder.number,
+			childrenTwo: RootNodeTwoItemTwo,
+		}) {}
+
+		class RootNodeOne extends builder.object("root-node-one", {
+			leafField: [builder.boolean, builder.handle, builder.string],
+		}) {}
+
+		class RootNodeTwo extends builder.object("root-node-two", {
+			childField: RootNodeTwoItem,
+		}) {}
+
+		const config = new TreeViewConfiguration({
+			schema: [RootNodeOne, RootNodeTwo, builder.string, builder.number],
+		});
 		const view = sharedTree.viewWith(config);
 		view.initialize({
-			childrenOne: [
-				{
-					childField: "Hello world!",
-					childData: {
-						leafField: "Hello world again!",
-					},
+			childField: {
+				childrenOne: 42,
+				childrenTwo: {
+					childrenOne: [
+						{
+							childField: false,
+							childData: {
+								leafField: "leaf data",
+							},
+						},
+						{
+							childField: true,
+						},
+					],
+					childrenTwo: 123,
 				},
-				{
-					childField: true,
-					childData: {
-						leafField: false,
-					},
-				},
-			],
-			childrenTwo: 32,
+			},
 		});
 	}
 }
