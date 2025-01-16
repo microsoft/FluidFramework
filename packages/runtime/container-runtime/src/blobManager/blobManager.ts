@@ -499,6 +499,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			(error) => {
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "UploadBlobReject",
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					error,
 					localId,
 				});

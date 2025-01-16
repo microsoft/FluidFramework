@@ -4415,6 +4415,7 @@ export class ContainerRuntime
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		this.submit({ type, contents }, localOpMetadata);
 	}
 

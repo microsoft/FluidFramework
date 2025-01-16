@@ -978,8 +978,7 @@ describe("BlobManager", () => {
 		}
 
 		beforeEach(() => {
-			// Mutating private field
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment -- Mutating private property
 			redirectTable = (runtime.blobManager as any).redirectTable;
 		});
 

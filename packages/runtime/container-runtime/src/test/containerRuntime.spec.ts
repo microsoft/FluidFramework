@@ -18,7 +18,11 @@ import {
 	IConfigProviderBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { ISignalEnvelope, type IErrorBase } from "@fluidframework/core-interfaces/internal";
+import {
+	ISignalEnvelope,
+	type IErrorBase,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -202,7 +206,7 @@ describe("Runtime", () => {
 	const getMockContext = (
 		params: {
 			settings?: Record<string, ConfigTypes>;
-			logger?;
+			logger?: ITelemetryBaseLogger;
 			mockStorage?: Partial<IDocumentStorageService>;
 			loadedFromVersion?: IVersion;
 			baseSnapshot?: ISnapshotTree;
@@ -931,13 +935,13 @@ describe("Runtime", () => {
 				_maxReconnects: number | undefined = undefined,
 			) {
 				// Modifying private fields
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 				const runtime = containerRuntime as any;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				runtime.pendingStateManager = pendingStateManager;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				runtime.channelCollection = getMockChannelCollection();
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				runtime.maxConsecutiveReconnects = _maxReconnects ?? runtime.maxConsecutiveReconnects;
 				return runtime as ContainerRuntime;
 			}
@@ -1215,7 +1219,7 @@ describe("Runtime", () => {
 				submitDataStoreOp(patchedContainerRuntime, "1", "test");
 				submitDataStoreOp(patchedContainerRuntime, "2", "test");
 				patchedContainerRuntime.submit({
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 					type: "FUTURE_TYPE" as any,
 					contents: "3",
 				});
@@ -1353,7 +1357,7 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 				const responseFromRequestMethod = await (containerRuntime as any).request({
 					url: "/",
 				});
@@ -1386,7 +1390,7 @@ describe("Runtime", () => {
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				pendingStateManager = (containerRuntime as any).pendingStateManager;
 			});
 
@@ -2576,9 +2580,10 @@ describe("Runtime", () => {
 				const defaultDataStore =
 					await containerRuntime.getAliasedDataStoreEntryPoint("default");
 				assert(defaultDataStore !== undefined, "data store should load and is attached");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				const missingDataStoreContext =
-					// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
-					containerRuntime["channelCollection"]["contexts"].get("missingDataStore");
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+					(containerRuntime as any).channelCollection.contexts.get("missingDataStore");
 				assert(missingDataStoreContext !== undefined, "context should be there");
 				const envelopes: ISequencedMessageEnvelope[] = [
 					{ sequenceNumber: 1 },

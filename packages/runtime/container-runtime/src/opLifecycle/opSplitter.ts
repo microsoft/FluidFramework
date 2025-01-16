@@ -216,7 +216,7 @@ export class OpSplitter {
 		// back-compat with 1.x builds
 		// This is only required / present for non-compressed, chunked ops
 		// For compressed ops, we have op grouping enabled, and type of each op is preserved within compressed content.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		completeMessage.type = (chunkedContent as any).originalType;
 		completeMessage.metadata = chunkedContent.originalMetadata;
 		completeMessage.compression = chunkedContent.originalCompression;

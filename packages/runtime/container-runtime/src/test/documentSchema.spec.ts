@@ -275,7 +275,7 @@ describe("Runtime", () => {
 		// get rid of all properties with undefined values.
 		const summarySchema = JSON.parse(
 			JSON.stringify(controller.summarizeDocumentSchema(100 /* refSeq */)),
-		);
+		) as IDocumentSchemaCurrent;
 		if (!explicitSchemaControl) {
 			assert.deepEqual(summarySchema, validConfig, "summarized schema as expected");
 		} else if (existing) {

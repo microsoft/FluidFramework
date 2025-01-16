@@ -124,7 +124,9 @@ export class OpDecompressor {
 		);
 		const decompressedMessage = decompress(contents);
 		const intoString = Uint8ArrayToString(decompressedMessage);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const asObj = JSON.parse(intoString);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		this.rootMessageContents = asObj;
 	}
 

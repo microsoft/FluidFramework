@@ -1068,7 +1068,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				})
 				.then(
 					(pkg) => ({ pkg, error: undefined }),
-					(error) => ({ pkg: undefined, error }),
+					(error: Error) => ({ pkg: undefined, error }),
 				)
 				.then(({ pkg, error }) => {
 					this.mc.logger.sendTelemetryEvent(
@@ -1104,6 +1104,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public processSignal(messageArg: IInboundSignalMessage, local: boolean) {
 		const envelope = messageArg.content as IEnvelope;
 		const fluidDataStoreId = envelope.address;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const message = { ...messageArg, content: envelope.contents };
 		const context = this.contexts.get(fluidDataStoreId);
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
@@ -1604,7 +1605,7 @@ export function detectOutboundReferences(
 				// the address of the DDS is stored in a property called "address".  This is not ideal.
 				// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
 				if (key === "address" && ddsAddress === undefined) {
-					ddsAddress = value;
+					ddsAddress = value as string | undefined;
 				}
 
 				recursivelyFindHandles(value);
