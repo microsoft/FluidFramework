@@ -154,10 +154,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 	readonly pkg: Readonly<string[]> | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
 	readonly makeLocallyVisibleFn: () => void;
-	/**
-	 * @deprecated 0.16 Issue #1635, #3631
-	 */
-	readonly createProps?: unknown;
 }
 
 /**
@@ -1252,10 +1248,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
  */
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	private readonly snapshotTree: ISnapshotTree | undefined;
-	/**
-	 * @deprecated 0.16 Issue #1635, #3631
-	 */
-	public readonly createProps?: unknown;
 
 	constructor(props: ILocalFluidDataStoreContextProps) {
 		super(
@@ -1269,8 +1261,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
 
 		this.snapshotTree = props.snapshotTree;
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		this.createProps = props.createProps;
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

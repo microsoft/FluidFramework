@@ -3458,7 +3458,6 @@ export class ContainerRuntime
 	): Promise<IDataStore> {
 		const context = this.channelCollection.createDataStoreContext(
 			Array.isArray(pkg) ? pkg : [pkg],
-			undefined, // props
 			loadingGroupId,
 		);
 		return channelToDataStore(

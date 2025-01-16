@@ -651,21 +651,18 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.createDataStoreId(),
 			pkg,
 			LocalDetachedFluidDataStoreContext,
-			undefined, // props
 			loadingGroupId,
 		);
 	}
 
 	public createDataStoreContext(
 		pkg: Readonly<string[]>,
-		props?: unknown,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextInternal {
 		return this.createContext(
 			this.createDataStoreId(),
 			pkg,
 			LocalFluidDataStoreContext,
-			props,
 			loadingGroupId,
 		);
 	}
@@ -674,7 +671,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		id: string,
 		pkg: Readonly<string[]>,
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
-		createProps?: unknown,
 		loadingGroupId?: string,
 	) {
 		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
@@ -689,7 +685,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}),
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
-			createProps,
 			loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel) =>
 				channelToDataStore(
