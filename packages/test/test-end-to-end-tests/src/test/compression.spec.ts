@@ -126,8 +126,8 @@ const compressionSuite = (getProvider) => {
 				{ compression: true, chunking: false },
 				{ compression: true, chunking: true },
 			],
-			grouping: [true],
-		});
+			grouping: [true, false],
+		}).filter((option) => !option.compressionAndChunking.compression || option.grouping);
 
 		messageGenerationOptions.forEach((option) => {
 			it(`Correctly processes messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, async function () {
