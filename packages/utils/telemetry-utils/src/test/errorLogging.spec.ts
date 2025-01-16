@@ -689,7 +689,7 @@ const annotationCases: Record<string, IFluidErrorAnnotations> = {
 describe("normalizeError", () => {
 	describe("Valid Errors (Legacy and Current)", () => {
 		for (const annotationCase of Object.keys(annotationCases)) {
-			const annotations: IFluidErrorAnnotations | undefined = annotationCases[annotationCase];
+			const annotations = annotationCases[annotationCase];
 			it(`Valid Fluid Error - untouched (annotations: ${annotationCase})`, () => {
 				// Arrange
 				const fluidError = new TestFluidError({ errorType: "et1", message: "m1" });
@@ -914,9 +914,11 @@ describe("normalizeError", () => {
 				expected.withExpectedTelemetryProps({ stack: inputStack });
 			}
 		}
-		for (const [annotationCase, annotations] of Object.entries(annotationCases)) {
+		for (const annotationCase of Object.keys(annotationCases)) {
+			const annotations = annotationCases[annotationCase];
 			let doneOnceForThisAnnotationCase = false;
-			for (const [caseName, getTestCase] of Object.entries(testCases)) {
+			for (const caseName of Object.keys(testCases)) {
+				const getTestCase = testCases[caseName];
 				if (!doneOnceForThisAnnotationCase) {
 					doneOnceForThisAnnotationCase = true;
 					// Each test case only differs by what stack/error are.  Test the rest only once per annotation case.

@@ -289,10 +289,11 @@ export abstract class TelemetryLogger implements ITelemetryLoggerExt {
 			}
 			for (const props of properties) {
 				if (props !== undefined) {
-					for (const [key, getterOrValue] of Object.entries(props)) {
+					for (const key of Object.keys(props)) {
 						if (eventLike[key] !== undefined) {
 							continue;
 						}
+						const getterOrValue = props[key];
 						// If this throws, hopefully it is handled elsewhere
 						const value =
 							typeof getterOrValue === "function" ? getterOrValue() : getterOrValue;
@@ -325,7 +326,8 @@ export class TaggedLoggerAdapter implements ITelemetryBaseLogger {
 			category: eventWithTagsMaybe.category,
 			eventName: eventWithTagsMaybe.eventName,
 		};
-		for (const [key, taggableProp] of Object.entries(eventWithTagsMaybe)) {
+		for (const key of Object.keys(eventWithTagsMaybe)) {
+			const taggableProp = eventWithTagsMaybe[key];
 			const { value, tag } =
 				typeof taggableProp === "object"
 					? taggableProp
