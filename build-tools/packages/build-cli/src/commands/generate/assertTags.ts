@@ -66,6 +66,7 @@ interface PackageData {
 }
 
 const configName = "assertTagging";
+const searchPlaces = [`${configName}.config.mjs`];
 
 export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
 	static readonly summary =
@@ -74,7 +75,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 	static readonly description =
 		`Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry purposes.
 Which functions and which of their augments get tagging depends on the configuration which is specified in the package being tagged.
-Configuration is searched for in the places listed by https://github.com/cosmiconfig/cosmiconfig?tab=readme-ov-file#usage-for-end-users under the {Name} "${configName}".
+Configuration is searched by walking from each package's directory up to its parents recursively looking for the first file matching one of ${JSON.stringify(searchPlaces)}.
 The format of the configuration is specified by the "AssertTaggingPackageConfig" type.`;
 
 	static readonly flags = {
@@ -182,7 +183,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 		};
 
 		const dataMap = new Map<PackageWithKind, PackageData>();
-		const config = cosmiconfig(configName);
+		const config = cosmiconfig(configName, { searchPlaces });
 
 		for (const pkg of packages) {
 			// Package configuration:
