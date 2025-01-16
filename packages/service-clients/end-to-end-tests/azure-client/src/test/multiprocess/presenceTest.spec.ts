@@ -14,7 +14,6 @@ import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-sta
 import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
-	type ClientSessionId,
 	type ExperimentalPresenceDO,
 	type IPresence,
 	// type ISessionClient,
@@ -25,16 +24,7 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { createAzureClient } from "../AzureClientFactory.js";
 import { configProvider } from "../utils.js";
 
-export interface MessageFromChild {
-	event: "attendeeDisconnected" | "attendeeJoined" | "ready" | "disconnectedSelf";
-	sessionId: ClientSessionId;
-}
-
-export interface MessageToChild {
-	command: "connect" | "disconnectSelf";
-	containerId: string;
-	user: AzureUser;
-}
+import { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 describe(`Presence with AzureClient`, () => {
 	const numClients = 5;

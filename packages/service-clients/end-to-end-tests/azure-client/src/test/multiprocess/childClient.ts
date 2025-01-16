@@ -29,7 +29,7 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { configProvider } from "../utils.js";
 
-import { MessageFromChild, MessageToChild } from "./presenceTest.spec.js";
+import { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 type MessageFromParent = Required<MessageToChild>;
 type MessageToParent = Required<MessageFromChild>;
