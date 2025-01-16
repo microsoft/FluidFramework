@@ -614,7 +614,9 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Local state processing", () => {
-		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+		function createPendingStateManager(
+			pendingStates: IPendingMessage[] | undefined,
+		): PendingStateManager_WithPrivates {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -624,7 +626,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
-				{ pendingStates },
+				pendingStates ? { pendingStates } : undefined,
 				logger,
 			) as unknown as PendingStateManager_WithPrivates;
 		}
@@ -632,7 +634,9 @@ describe("Pending State Manager", () => {
 		describe("Constructor pendingStates", () => {
 			it("Empty local state", () => {
 				{
-					const pendingStateManager = createPendingStateManager(undefined);
+					const pendingStateManager = createPendingStateManager(
+						undefined as unknown as IPendingMessage[],
+					);
 					assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), []);
 				}
 				{
@@ -653,7 +657,7 @@ describe("Pending State Manager", () => {
 						content: '{"type": "component", "contents": {"prop1": "value"}}',
 						referenceSequenceNumber: 10,
 					},
-				];
+				] as unknown as IPendingMessage[];
 				const pendingStateManager = createPendingStateManager(messages);
 				assert.deepStrictEqual(pendingStateManager.initialMessages.toArray(), messages);
 			});
@@ -806,9 +810,11 @@ describe("Pending State Manager", () => {
 				content: '{"type": "component", "contents": {"prop1": "value"}}',
 				referenceSequenceNumber: 10,
 			},
-		];
+		] as unknown as IPendingMessage[];
 
-		function createPendingStateManager(pendingStates): PendingStateManager_WithPrivates {
+		function createPendingStateManager(
+			pendingStates: IPendingMessage[] | undefined,
+		): PendingStateManager_WithPrivates {
 			return new PendingStateManager(
 				{
 					applyStashedOp: async () => undefined,
@@ -818,7 +824,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
-				{ pendingStates },
+				pendingStates ? { pendingStates } : undefined,
 				logger,
 			) as unknown as PendingStateManager_WithPrivates;
 		}

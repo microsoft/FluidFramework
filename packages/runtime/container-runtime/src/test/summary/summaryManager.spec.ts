@@ -398,12 +398,13 @@ describe("Summary Manager", () => {
 			});
 
 			// Simulate disposing the summary manager in between (potential) initial delay and actually starting
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const summaryManager_delayBeforeCreatingSummarizer =
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(summaryManager as any).delayBeforeCreatingSummarizer.bind(summaryManager);
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(summaryManager as any).delayBeforeCreatingSummarizer = async (...args) => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 				const result = await summaryManager_delayBeforeCreatingSummarizer(args);
 				summaryManager.dispose();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
