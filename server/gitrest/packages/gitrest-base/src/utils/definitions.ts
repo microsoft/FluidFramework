@@ -5,6 +5,7 @@
 
 import fsPromises from "fs/promises";
 import * as git from "@fluidframework/gitresources";
+import type { MakeDirectoryOptions } from "fs";
 
 export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",
@@ -102,6 +103,10 @@ export interface IFileSystemManagerFactory {
 export interface IFileSystemManagerFactories {
 	defaultFileSystemManagerFactory: IFileSystemManagerFactory;
 	ephemeralFileSystemManagerFactory?: IFileSystemManagerFactory;
+}
+
+export interface IFileSystemMakeDirectoryOptions extends MakeDirectoryOptions {
+	simplifiedCustomData?: string;
 }
 
 export interface IStorageRoutingId {
