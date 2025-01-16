@@ -16,7 +16,7 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { fail } from "../../../util/index.js";
+import { fail, type Mutable } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -83,14 +83,15 @@ export const valueHandler = {
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
 	intoDelta: (change): FieldChangeDelta => {
+		const delta: Mutable<FieldChangeDelta> = {};
 		if (change !== 0) {
 			// We use the new and old numbers as the node ids.
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
 			const detach = makeDetachedNodeId(undefined, change.old);
 			const attach = makeDetachedNodeId(undefined, change.new);
-			return { local: [{ count: 1, attach, detach }] };
+			delta.local = [{ count: 1, attach, detach }];
 		}
-		return {};
+		return delta;
 	},
 
 	relevantRemovedRoots: (change) => [],

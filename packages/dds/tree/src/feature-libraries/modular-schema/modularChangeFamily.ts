@@ -2089,16 +2089,9 @@ function intoDeltaImpl(
 			rename: fieldRename,
 		} = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
 			fieldChange.change,
-			(childChange) => {
+			(childChange): DeltaFieldMap => {
 				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
-				const nodeFieldChanges = deltaFromNodeChange(
-					nodeChange,
-					nodeChanges,
-					fieldKinds,
-					global,
-					rename,
-				);
-				return nodeFieldChanges;
+				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds, global, rename);
 			},
 		);
 		if (fieldChanges !== undefined && fieldChanges.length > 0) {

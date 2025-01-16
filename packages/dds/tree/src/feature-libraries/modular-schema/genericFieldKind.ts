@@ -15,6 +15,7 @@ import { type IdAllocator, fail } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type {
+	FieldChangeDelta,
 	FieldChangeHandler,
 	NestedChangesIndices,
 	NodeChangeComposer,
@@ -46,7 +47,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return newGenericChangeset([[index, change]]);
 		},
 	},
-	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta) => {
+	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const [index, nodeChange] of change.entries()) {
