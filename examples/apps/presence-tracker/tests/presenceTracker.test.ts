@@ -69,7 +69,7 @@ describe("presence-tracker", () => {
 				(element) => element?.innerHTML.trim(),
 				elementHandle,
 			);
-			expect(innerHTML?.endsWith("has focus")).toBe(true);
+			expect(innerHTML).toMatch(/^[^<]+ has focus/);
 		});
 
 		it("First client shows single client connected", async () => {
@@ -83,7 +83,7 @@ describe("presence-tracker", () => {
 			);
 
 			// There should only be a single client connected
-			expect(clientListHtml?.split("<br>").length).toEqual(1);
+			expect(clientListHtml).toMatch(/^[^<]+$/);
 		});
 	});
 
@@ -120,7 +120,7 @@ describe("presence-tracker", () => {
 				(element) => element?.innerHTML?.trim(),
 				elementHandle,
 			);
-			expect(clientListHtml?.split("<br>").length).toEqual(2);
+			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
 		});
 
 		it.skip("First client shows two clients connected", async () => {
@@ -132,7 +132,7 @@ describe("presence-tracker", () => {
 				(element) => element?.innerHTML?.trim(),
 				elementHandle,
 			);
-			expect(clientListHtml?.split("<br>").length).toEqual(2);
+			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
 		});
 
 		it("First client shows one client connected when second client leaves", async () => {
@@ -147,7 +147,7 @@ describe("presence-tracker", () => {
 				(element) => element?.innerHTML?.trim(),
 				elementHandle,
 			);
-			expect(clientListHtml?.split("<br>").length).toEqual(1);
+			expect(clientListHtml).toMatch(/^[^<]+$/);
 		});
 	});
 });

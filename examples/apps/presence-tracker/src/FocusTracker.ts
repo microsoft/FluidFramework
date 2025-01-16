@@ -31,7 +31,7 @@ export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
 	) {
 		super();
 
-		statesWorkspace.add("focus", Latest({ hasFocus: true }));
+		statesWorkspace.add("focus", Latest({ hasFocus: window.document.hasFocus() }));
 		this.focus = statesWorkspace.props.focus;
 
 		this.focus.events.on("updated", ({ client, value }) => {

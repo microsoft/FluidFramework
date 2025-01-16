@@ -31,14 +31,14 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	wrapperDiv.appendChild(focusMessageDiv);
 
 	const onFocusChanged = (focusState: IFocusState) => {
-		focusDiv.innerHTML = getFocusPresencesString("</br>", focusTracker);
+		focusDiv.innerHTML = getFocusPresencesString("<br>", focusTracker);
 		const { hasFocus } = focusState;
 
 		// hasFocus === true should hide the message
 		focusMessageDiv.style.display = hasFocus ? "none" : "";
 	};
 
-	onFocusChanged({ hasFocus: true });
+	onFocusChanged({ hasFocus: window.document.hasFocus() });
 	focusTracker.on("focusChanged", onFocusChanged);
 
 	wrapperDiv.appendChild(focusDiv);
