@@ -389,7 +389,9 @@ describe("RemoteMessageProcessor", () => {
 		// We checked messages in the previous assert, now clear them since they're not included in expectedInfo
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const clearMessages = (result: any): InboundMessageResult => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			delete result.messages;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			delete result.nextMessage;
 			return result as InboundMessageResult;
 		};

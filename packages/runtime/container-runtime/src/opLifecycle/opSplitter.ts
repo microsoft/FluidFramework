@@ -11,6 +11,7 @@ import {
 	DataCorruptionError,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
@@ -37,7 +38,7 @@ function isChunkedContents(contents: unknown): contents is IChunkedContents {
 export class OpSplitter {
 	// Local copy of incomplete received chunks.
 	private readonly chunkMap: Map<string, string[]>;
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(
 		chunks: [string, string[]][],
@@ -215,7 +216,7 @@ export class OpSplitter {
 		// back-compat with 1.x builds
 		// This is only required / present for non-compressed, chunked ops
 		// For compressed ops, we have op grouping enabled, and type of each op is preserved within compressed content.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		completeMessage.type = (chunkedContent as any).originalType;
 		completeMessage.metadata = chunkedContent.originalMetadata;
 		completeMessage.compression = chunkedContent.originalCompression;
@@ -299,7 +300,7 @@ export const splitOp = (
 			// This is really bad, as we will crash on later ops and it's very hard to debug these cases.
 			// If we put some known type here, then we will crash on it (as 1.x does not understand compression, and thus will not
 			// find info on the op like address of the channel to deliver the op)
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(chunk as any).originalType = "component";
 		}
 

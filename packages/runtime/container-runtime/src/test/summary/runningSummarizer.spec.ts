@@ -1164,7 +1164,7 @@ describe("Runtime", () => {
 						"should be nack",
 					);
 					assert(
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 						JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
 						"summary nack error should be test-nack",
 					);

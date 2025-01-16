@@ -6,7 +6,11 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
@@ -20,7 +24,7 @@ import { BatchMessage, IBatch } from "./definitions.js";
  * op to reserve sequence numbers.
  */
 export class OpCompressor {
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpCompressor" });

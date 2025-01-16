@@ -44,9 +44,9 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("Rollback", () => {
-		let rollbackCalled;
-		let rollbackContent;
-		let rollbackShouldThrow;
+		let rollbackCalled: boolean;
+		let rollbackContent: BatchMessage[];
+		let rollbackShouldThrow: boolean;
 		let batchManager: BatchManager;
 
 		function getMessage(payload: string) {
@@ -322,6 +322,7 @@ describe("Pending State Manager", () => {
 						),
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					(closeError: any) =>
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
 				mockLogger.assertMatch(

@@ -258,7 +258,7 @@ describe("Runtime batching", () => {
 			// Change the type of the second message to an unknown runtime op.
 			const unknownMessage = batch[1];
 			const unknownMessageType = "unknown";
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(unknownMessage.contents as any).type = unknownMessageType;
 
 			assert.throws(

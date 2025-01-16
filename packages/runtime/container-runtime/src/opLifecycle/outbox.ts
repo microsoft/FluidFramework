@@ -92,11 +92,14 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 		return action();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	const originalStackTraceLimit = errorObj.stackTraceLimit;
 	try {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		errorObj.stackTraceLimit = length;
 		return action();
 	} finally {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }

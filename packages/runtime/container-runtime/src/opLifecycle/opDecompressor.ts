@@ -7,7 +7,10 @@ import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
@@ -33,7 +36,7 @@ export class OpDecompressor {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private rootMessageContents: any | undefined;
 	private processedCount = 0;
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });
@@ -133,6 +136,7 @@ export class OpDecompressor {
 		assert(this.currentlyUnrolling, 0x942 /* not currently unrolling */);
 		assert(this.rootMessageContents !== undefined, 0x943 /* missing rootMessageContents */);
 		assert(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			this.rootMessageContents.length > this.processedCount,
 			0x944 /* no more content to unroll */,
 		);
@@ -141,6 +145,7 @@ export class OpDecompressor {
 
 		if (batchMetadata === false || this.isSingleMessageBatch) {
 			// End of compressed batch
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount]);
 
 			this.activeBatch = false;
@@ -151,6 +156,7 @@ export class OpDecompressor {
 			return returnMessage;
 		} else if (batchMetadata === true) {
 			// Start of compressed batch
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			return newMessage(message, this.rootMessageContents[this.processedCount++]);
 		}
 
@@ -158,6 +164,7 @@ export class OpDecompressor {
 		assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
 		// Continuation of compressed batch
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		return newMessage(message, this.rootMessageContents[this.processedCount++]);
 	}
 }

@@ -330,6 +330,7 @@ export class SummaryManager
 					// If failure happened on container load, we may not yet realized that socket disconnected, so check
 					// offlineError.
 					const category =
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						error?.errorType === DriverErrorTypes.offlineError ? "generic" : "error";
 					this.logger.sendTelemetryEvent(
 						{
