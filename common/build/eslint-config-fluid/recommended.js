@@ -47,7 +47,7 @@ module.exports = {
 		"unicorn/empty-brace-spaces": "off",
 
 		// Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
-		//            significant performance regression [node 14 x64].
+		// significant performance regression [node 14 x64].
 		"unicorn/no-for-loop": "off",
 
 		/**

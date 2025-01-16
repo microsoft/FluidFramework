@@ -12,13 +12,17 @@ import {
 
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 
-/** @internal */
+/**
+ * @internal
+ */
 export class DataStoreContexts
 	implements Iterable<[string, FluidDataStoreContext]>, IDisposable
 {
 	private readonly notBoundContexts = new Set<string>();
 
-	/** Attached and loaded context proxies */
+	/**
+	 * Attached and loaded context proxies
+	 */
 	private readonly _contexts = new Map<string, FluidDataStoreContext>();
 
 	/**

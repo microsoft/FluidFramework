@@ -21,7 +21,9 @@ export interface IBatchManagerOptions {
 	 */
 	readonly canRebase: boolean;
 
-	/** If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored */
+	/**
+	 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
+	 */
 	readonly ignoreBatchId?: boolean;
 }
 
@@ -30,10 +32,14 @@ export interface BatchSequenceNumbers {
 	clientSequenceNumber?: number;
 }
 
-/** Type alias for the batchId stored in batch metadata */
+/**
+ * Type alias for the batchId stored in batch metadata
+ */
 export type BatchId = string;
 
-/** Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect */
+/**
+ * Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect
+ */
 export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
 	return `${originalClientId}_[${batchStartCsn}]`;
 }

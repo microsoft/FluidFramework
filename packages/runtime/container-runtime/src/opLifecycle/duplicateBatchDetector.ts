@@ -13,13 +13,19 @@ import { type BatchStartInfo } from "./remoteMessageProcessor.js";
  * This class tracks recent batchIds we've seen, and checks incoming batches for duplicates.
  */
 export class DuplicateBatchDetector {
-	/** All batchIds we've seen recently enough (based on MSN) that we need to watch for duplicates */
+	/**
+	 * All batchIds we've seen recently enough (based on MSN) that we need to watch for duplicates
+	 */
 	private readonly batchIdsAll = new Set<string>();
 
-	/** We map from sequenceNumber to batchId to find which ones we can stop tracking as MSN advances */
+	/**
+	 * We map from sequenceNumber to batchId to find which ones we can stop tracking as MSN advances
+	 */
 	private readonly batchIdsBySeqNum = new Map<number, string>();
 
-	/** Initialize from snapshot data if provided - otherwise initialize empty */
+	/**
+	 * Initialize from snapshot data if provided - otherwise initialize empty
+	 */
 	constructor(batchIdsFromSnapshot: [number, string][] | undefined) {
 		if (batchIdsFromSnapshot) {
 			this.batchIdsBySeqNum = new Map(batchIdsFromSnapshot);
