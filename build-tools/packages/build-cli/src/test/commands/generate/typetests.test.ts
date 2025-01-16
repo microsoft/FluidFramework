@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { assert, describe, it } from "vitest";
 
 import {
 	loadTypesSourceFile,

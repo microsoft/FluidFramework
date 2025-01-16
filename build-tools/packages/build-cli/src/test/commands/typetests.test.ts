@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, expect } from "chai";
-import { describe, it } from "mocha";
+import { assert, describe, expect, it } from "vitest";
 
 import {
 	VersionOptions,

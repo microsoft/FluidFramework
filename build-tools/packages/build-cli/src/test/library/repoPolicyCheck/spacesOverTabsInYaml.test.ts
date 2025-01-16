@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { expect } from "chai";
+import { describe, expect, it } from "vitest";
 import {
 	errorMessage,
 	lookForTabs,

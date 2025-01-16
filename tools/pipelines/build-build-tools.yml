@@ -113,6 +113,8 @@ extends:
     tasktest:
     - ci:test
     - test:copyresults
+    testResultDirs:
+    - nyc/packages
     taskLint: true
     taskLintName: ci:eslint
     poolBuild: Large-eastus2
