@@ -19258,18 +19258,6 @@ packages:
       - typescript
     dev: true
 
-  /@fluid-internal/eslint-plugin-fluid@0.1.4(eslint@8.55.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-xoy7lLdXVWpG6MQlQ/sSWG/HQTXFsJspPhptr8UxaajPdVwGxO/L0EWmMcicE4EXga1pLbX0AL+OqU+p9EIeGQ==}
-    dependencies:
-      '@microsoft/tsdoc': 0.14.2
-      '@typescript-eslint/parser': 6.21.0(eslint@8.55.0)(typescript@5.4.5)
-      ts-morph: 22.0.0
-    transitivePeerDependencies:
-      - eslint
-      - supports-color
-      - typescript
-    dev: true
-
   /@fluid-internal/test-driver-definitions@2.13.0:
     resolution: {integrity: sha512-ukMOLVON8eGMC361VNtpeXoDAfQqBCjr16ljUcj1ID1GOAr3PsXExz+XVa6AEEBf1pJfmC46sZUYXzvdmJoMhQ==}
     dependencies:
@@ -20115,37 +20103,6 @@ packages:
       idb: 6.1.5
     transitivePeerDependencies:
       - supports-color
-    dev: true
-
-  /@fluidframework/eslint-config-fluid@5.7.1(eslint@8.55.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-HCO82uXiOw1Zr1cTcsyw7LKiHVpBm4GRYedqPRPLk5znrszWJmv/rR8GOceTjQxbVFy6atjDhshZ6y5P483Ztw==}
-    dependencies:
-      '@fluid-internal/eslint-plugin-fluid': 0.1.4(eslint@8.55.0)(typescript@5.4.5)
-      '@microsoft/tsdoc': 0.14.2
-      '@rushstack/eslint-patch': 1.4.0
-      '@rushstack/eslint-plugin': 0.13.1(eslint@8.55.0)(typescript@5.4.5)
-      '@rushstack/eslint-plugin-security': 0.7.1(eslint@8.55.0)(typescript@5.4.5)
-      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5)(eslint@8.55.0)(typescript@5.4.5)
-      '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
-      eslint-config-biome: 1.9.4
-      eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5)(eslint-plugin-i@2.29.1)(eslint@8.55.0)
-      eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: /eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
-      eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
-      eslint-plugin-promise: 6.1.1(eslint@8.55.0)
-      eslint-plugin-react: 7.33.2(eslint@8.55.0)
-      eslint-plugin-react-hooks: 4.6.2(eslint@8.55.0)
-      eslint-plugin-tsdoc: 0.2.17
-      eslint-plugin-unicorn: 48.0.1(eslint@8.55.0)
-      eslint-plugin-unused-imports: 3.0.0(@typescript-eslint/eslint-plugin@6.7.5)(eslint@8.55.0)
-    transitivePeerDependencies:
-      - eslint
-      - eslint-import-resolver-node
-      - eslint-import-resolver-webpack
-      - eslint-plugin-import-x
-      - supports-color
-      - typescript
     dev: true
 
   /@fluidframework/eslint-config-fluid@5.7.1(eslint@8.55.0)(typescript@5.4.5):
