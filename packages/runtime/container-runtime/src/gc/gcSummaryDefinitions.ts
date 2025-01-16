@@ -32,11 +32,17 @@ export interface IGarbageCollectionState {
  * The GC data that is read from a snapshot. It contains the Garbage CollectionState state and tombstone state.
  */
 export interface IGarbageCollectionSnapshotData {
-	/** The garbage collection state. It is a list of nodes in the container and their GC data. */
+	/**
+	 * The garbage collection state. It is a list of nodes in the container and their GC data.
+	 */
 	gcState: IGarbageCollectionState | undefined;
-	/** A list of nodes that have been tombstoned by GC. */
+	/**
+	 * A list of nodes that have been tombstoned by GC.
+	 */
 	tombstones: string[] | undefined;
-	/** A list of nodes that have been deleted by GC. */
+	/**
+	 * A list of nodes that have been deleted by GC.
+	 */
 	deletedNodes: string[] | undefined;
 }
 
@@ -45,10 +51,16 @@ export interface IGarbageCollectionSnapshotData {
  * Legacy GC details from when the GC details were written at the data store's summary tree.
  */
 export interface IGarbageCollectionSummaryDetailsLegacy {
-	/** A list of routes to Fluid objects that are used in this node. */
+	/**
+	 * A list of routes to Fluid objects that are used in this node.
+	 */
 	usedRoutes?: string[];
-	/** The GC data of this node. */
+	/**
+	 * The GC data of this node.
+	 */
 	gcData?: IGarbageCollectionData;
-	/** If this node is unreferenced, the time when it was marked as such. */
+	/**
+	 * If this node is unreferenced, the time when it was marked as such.
+	 */
 	unrefTimestamp?: number;
 }

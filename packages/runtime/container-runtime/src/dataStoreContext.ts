@@ -104,7 +104,9 @@ export function createAttributesBlob(
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
-/** @internal */
+/**
+ * @internal
+ */
 export interface ISnapshotDetails {
 	pkg: readonly string[];
 	isRootDataStore: boolean;
@@ -177,7 +179,9 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 
 // back-compat: To be removed in the future.
 // Added in "2.0.0-rc.2.0.0" timeframe (to support older builds).
-/** @internal */
+/**
+ * @internal
+ */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
@@ -261,7 +265,9 @@ export abstract class FluidDataStoreContext
 	 */
 	public readonly gcTombstoneEnforcementAllowed: boolean = false;
 
-	/** If true, this means that this data store context and its children have been removed from the runtime */
+	/**
+	 * If true, this means that this data store context and its children have been removed from the runtime
+	 */
 	protected deleted: boolean = false;
 
 	public get attachState(): AttachState {
@@ -319,7 +325,9 @@ export abstract class FluidDataStoreContext
 	protected detachedRuntimeCreation = false;
 	protected channel: IFluidDataStoreChannel | undefined;
 	private loaded = false;
-	/** Tracks the messages for this data store that are sent while it's not loaded */
+	/**
+	 * Tracks the messages for this data store that are sent while it's not loaded
+	 */
 	private pendingMessagesState: IPendingMessagesState | undefined = {
 		messageCollections: [],
 		pendingCount: 0,
@@ -798,6 +806,7 @@ export abstract class FluidDataStoreContext
 		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated 0.18.Should call request on the runtime directly
 	 */
@@ -946,6 +955,7 @@ export abstract class FluidDataStoreContext
 
 	public abstract getInitialSnapshotDetails(): Promise<ISnapshotDetails>;
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated Sets the datastore as root, for aliasing purposes: #7948
 	 * This method should not be used outside of the aliasing context.
@@ -955,6 +965,7 @@ export abstract class FluidDataStoreContext
 		this._isInMemoryRoot = true;
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated The functionality to get base GC details has been moved to summarizer node.
 	 */
@@ -1087,7 +1098,9 @@ export abstract class FluidDataStoreContext
 	}
 }
 
-/** @internal */
+/**
+ * @internal
+ */
 export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	// Tells whether we need to fetch the snapshot before use. This is to support Data Virtualization.
 	private snapshotFetchRequired: boolean | undefined;
@@ -1218,14 +1231,14 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachSummary
+	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
 	 */
 	public getAttachSummary(): ISummaryTreeWithStats {
 		throw new Error("Cannot attach remote store");
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachGCData
+	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
 	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		throw new Error("Cannot attach remote store");
@@ -1303,7 +1316,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachSummary
+	 * {@inheritDoc FluidDataStoreContext.getAttachSummary}
 	 */
 	public getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats {
 		assert(
@@ -1333,7 +1346,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	}
 
 	/**
-	 * @see FluidDataStoreContext.getAttachGCData
+	 * {@inheritDoc FluidDataStoreContext.getAttachGCData}
 	 */
 	public getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData {
 		assert(

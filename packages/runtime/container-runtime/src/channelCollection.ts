@@ -110,13 +110,18 @@ import {
  * @internal
  */
 export enum RuntimeHeaders {
-	/** True to wait for a data store to be created and loaded before returning it. */
+	/**
+	 * True to wait for a data store to be created and loaded before returning it.
+	 */
 	wait = "wait",
-	/** True if the request is coming from an IFluidHandle. */
+	/**
+	 * True if the request is coming from an IFluidHandle.
+	 */
 	viaHandle = "viaHandle",
 }
 
-/** True if a tombstoned object should be returned without erroring
+/**
+ * True if a tombstoned object should be returned without erroring
  * @legacy
  * @alpha
  */
@@ -373,7 +378,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return pendingAliasPromise ?? "Success";
 	}
 
-	/** For sampling. Only log once per container */
+	/**
+	 * For sampling. Only log once per container
+	 */
 	private shouldSendAttachLog = true;
 
 	protected wrapContextForInnerChannel(id: string): IFluidParentContext {
@@ -545,7 +552,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return this.aliasMap.get(id) !== undefined || this.contexts.get(id) !== undefined;
 	}
 
-	/** Package up the context's attach summary etc into an IAttachMessage */
+	/**
+	 * Package up the context's attach summary etc into an IAttachMessage
+	 */
 	private generateAttachMessage(localContext: LocalFluidDataStoreContext): IAttachMessage {
 		// Get the attach summary.
 		const attachSummary = localContext.getAttachSummary();
@@ -1611,7 +1620,9 @@ export function detectOutboundReferences(
 	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
 }
 
-/** @internal */
+/**
+ * @internal
+ */
 export class ChannelCollectionFactory<T extends ChannelCollection = ChannelCollection>
 	implements IFluidDataStoreFactory
 {

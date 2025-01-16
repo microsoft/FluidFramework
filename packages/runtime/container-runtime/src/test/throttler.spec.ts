@@ -156,7 +156,9 @@ describe("Throttler", () => {
 		maxDelayMs: 30 * 1000,
 		// Exponential delay: [prev x 2 + 20] (0ms, 20ms, 60ms, 140ms, etc)
 		// Equivalent reduction with G = 1, F = 0:
-		/** f(n) = C x (B^n - G) + F = C x B^n + (F - C x G) = C x B^n - C */
+		/**
+		 * f(n) = C x (B^n - G) + F = C x B^n + (F - C x G) = C x B^n - C
+		 */
 		delayFn: formExponentialFn({ coefficient: 20, offset: -20 }),
 		expectedDelays: [0, 20, 60, 140, 300, 620, 1260, 2540, 5100, 10220, 20460],
 	});

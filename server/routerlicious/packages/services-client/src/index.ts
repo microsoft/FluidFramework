@@ -32,7 +32,12 @@ export {
 export { choose, getRandomName } from "./generateNames";
 export { GitManager } from "./gitManager";
 export { Heap, IHeapComparator } from "./heap";
-export { getAuthorizationTokenFromCredentials, Historian, ICredentials } from "./historian";
+export {
+	getAuthorizationTokenFromCredentials,
+	Historian,
+	ICredentials,
+	parseToken,
+} from "./historian";
 export { IAlfredTenant, ISession } from "./interfaces";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";

@@ -5,6 +5,7 @@
 
 import { AsyncPriorityQueue } from "async";
 import chalk from "picocolors";
+import { Spinner } from "picospinner";
 import * as semver from "semver";
 
 import * as assert from "assert";
@@ -535,8 +536,13 @@ export class BuildGraph {
 	public async build(timer?: Timer): Promise<BuildResult> {
 		// This function must only be called once here at the beginning of the build.
 		// It checks the up-to-date state at this moment and will not be changed for the duration of the build.
+		const spinner = new Spinner("Checking incremental build task status...");
+		spinner.start();
+
 		const isUpToDate = await this.isUpToDate();
-		if (timer) timer.time(`Check up to date completed`);
+
+		timer?.time(`Check up to date completed`);
+		spinner.succeed("Tasks loaded.");
 
 		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${

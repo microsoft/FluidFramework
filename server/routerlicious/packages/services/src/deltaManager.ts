@@ -6,19 +6,22 @@
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
 import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
-import { IDeltaService } from "@fluidframework/server-services-core";
+import { IDeltaService, type ITenantManager } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { TenantManager } from "./tenant";
+import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";
 
 /**
  * Manager to fetch deltas from Alfred using the internal URL.
  * @internal
  */
 export class DeltaManager implements IDeltaService {
+	private readonly tenantManager: ITenantManager;
 	constructor(
 		private readonly authEndpoint,
 		private readonly internalAlfredUrl: string,
-	) {}
+	) {
+		this.tenantManager = new TenantManager(this.authEndpoint, "");
+	}
 
 	public async getDeltas(
 		_collectionName: string,
@@ -65,8 +68,7 @@ export class DeltaManager implements IDeltaService {
 		scopes: ScopeType[],
 		includeDisabledTenant = false,
 	): Promise<string> {
-		const tenantManager = new TenantManager(this.authEndpoint, "");
-		const tokenP = await tenantManager.signToken(
+		const tokenP = await this.tenantManager.signToken(
 			tenantId,
 			documentId,
 			scopes,
@@ -80,7 +82,8 @@ export class DeltaManager implements IDeltaService {
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string, baseUrl: string) {
-		const accessToken = await this.getAccessToken(tenantId, documentId, [ScopeType.DocRead]);
+		const scopes = [ScopeType.DocRead];
+		const accessToken = await this.getAccessToken(tenantId, documentId, scopes);
 
 		const defaultQueryString = {
 			token: fromUtf8ToBase64(`${tenantId}`),
@@ -93,6 +96,14 @@ export class DeltaManager implements IDeltaService {
 			};
 		};
 
+		const refreshTokenIfNeeded = getRefreshTokenIfNeededCallback(
+			this.tenantManager,
+			documentId,
+			tenantId,
+			scopes,
+			"deltaManager",
+		);
+
 		const restWrapper = new BasicRestWrapper(
 			baseUrl,
 			defaultQueryString,
@@ -104,6 +115,7 @@ export class DeltaManager implements IDeltaService {
 			getDefaultHeaders,
 			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+			refreshTokenIfNeeded,
 		);
 		return restWrapper;
 	}

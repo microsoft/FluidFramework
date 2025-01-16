@@ -36,7 +36,9 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	return metadata.gcFeature ?? 0;
 }
 
-/** Indicates what GC version is in effect for new GC data being written in this session */
+/**
+ * Indicates what GC version is in effect for new GC data being written in this session
+ */
 export function getGCVersionInEffect(configProvider: IConfigProvider): number {
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	return configProvider.getBoolean(gcVersionUpgradeToV4Key) === true
@@ -294,7 +296,9 @@ function trimLeadingAndTrailingSlashes(str: string) {
 	return str.replace(/^\/+|\/+$/g, "");
 }
 
-/** Reformats a request URL to match expected format for a GC node path */
+/**
+ * Reformats a request URL to match expected format for a GC node path
+ */
 export function urlToGCNodePath(url: string): string {
 	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
 }

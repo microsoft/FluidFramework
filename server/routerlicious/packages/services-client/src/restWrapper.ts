@@ -167,6 +167,9 @@ export class BasicRestWrapper extends RestWrapper {
 		private readonly getTelemetryContextProperties?: () =>
 			| Record<string, string | number | boolean>
 			| undefined,
+		private readonly refreshTokenIfNeeded?: (
+			authorizationHeader: RawAxiosRequestHeaders,
+		) => Promise<RawAxiosRequestHeaders | undefined>,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -182,6 +185,21 @@ export class BasicRestWrapper extends RestWrapper {
 			this.getCorrelationId?.() ?? uuid(),
 			this.getTelemetryContextProperties?.(),
 		);
+
+		// If the request has an Authorization header and a refresh token function is provided, try to refresh the token if needed
+		if (options.headers?.Authorization && this.refreshTokenIfNeeded) {
+			const refreshedToken = await this.refreshTokenIfNeeded(options.headers).catch(
+				(error) => {
+					debug(`request to ${options.url} failed ${error ? error.message : ""}`);
+					throw error;
+				},
+			);
+			if (refreshedToken) {
+				options.headers.Authorization = refreshedToken.Authorization;
+				// Update the default headers to use the refreshed token
+				this.defaultHeaders.Authorization = refreshedToken.Authorization;
+			}
+		}
 
 		return new Promise<T>((resolve, reject) => {
 			this.axios

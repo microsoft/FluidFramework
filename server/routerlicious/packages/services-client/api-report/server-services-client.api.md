@@ -25,7 +25,7 @@ import { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
@@ -594,6 +594,9 @@ export class NetworkError extends Error {
         code: number;
     };
 }
+
+// @internal (undocumented)
+export function parseToken(tenantId: string, authorization: string | undefined): string | undefined;
 
 // @internal (undocumented)
 export function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any>;

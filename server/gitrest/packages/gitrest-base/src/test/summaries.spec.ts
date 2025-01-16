@@ -357,8 +357,9 @@ testFileSystems.forEach((fileSystem) => {
 					);
 					// Tests run against commit 7620034bac63c5e3c4cb85f666a41c46012e8a49 on Dec 13, 2023
 					// showed that the final storage size was 13kb, or 23kb for low-io mode where summary blobs are not shared.
+					// When updating docker base image, a size of 24kb was observed.
 					const finalStorageSizeKb = Math.ceil((await fsCheckSizeBytes()) / 1_024);
-					const expectedMaxStorageSizeKb = testMode.enableLowIoWrite ? 23 : 13;
+					const expectedMaxStorageSizeKb = testMode.enableLowIoWrite ? 24 : 13;
 					process.stdout.write(
 						`Final storage size: ${finalStorageSizeKb}kb; expected: ${expectedMaxStorageSizeKb}\n`,
 					);

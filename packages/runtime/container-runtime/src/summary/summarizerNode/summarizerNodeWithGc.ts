@@ -95,12 +95,16 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		config: ISummarizerNodeConfigWithGC,
 		_summaryHandleId: EscapedPath,
 		changeSequenceNumber: number,
-		/** Summary reference sequence number, i.e. last sequence number seen when it was created */
+		/**
+		 * Summary reference sequence number, i.e. last sequence number seen when it was created
+		 */
 		lastSummaryReferenceSequenceNumber?: number,
 		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
-		/** A unique id of this node to be logged when sending telemetry. */
+		/**
+		 * A unique id of this node to be logged when sending telemetry.
+		 */
 		telemetryId?: string,
 	) {
 		super(
@@ -335,9 +339,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * Override the createChild method to return an instance of SummarizerNodeWithGC.
 	 */
 	public createChild(
-		/** Summarize function */
+		/**
+		 * Summarize function
+		 */
 		summarizeInternalFn: SummarizeInternalFn,
-		/** Initial id or path part of this node */
+		/**
+		 * Initial id or path part of this node
+		 */
 		id: string,
 		/**
 		 * Information needed to create the node.

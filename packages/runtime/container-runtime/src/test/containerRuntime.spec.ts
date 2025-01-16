@@ -904,7 +904,9 @@ describe("Runtime", () => {
 				return runtime as ContainerRuntime;
 			}
 
-			/** Connects with a new clientId and then immediately disconnects, returning that brief connection's clientId */
+			/**
+			 * Connects with a new clientId and then immediately disconnects, returning that brief connection's clientId
+			 */
 			const toggleConnection = (runtime: ContainerRuntime, salt: number) => {
 				const clientId = salt === undefined ? fakeClientId : `${fakeClientId}-${salt}`;
 				changeConnectionState(runtime, true, clientId);
@@ -1137,7 +1139,9 @@ describe("Runtime", () => {
 				});
 			});
 
-			/** Overwrites channelCollection property and exposes private submit function with modified typing */
+			/**
+			 * Overwrites channelCollection property and exposes private submit function with modified typing
+			 */
 			function patchContainerRuntime(): Omit<ContainerRuntime, "submit"> & {
 				submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
 			} {

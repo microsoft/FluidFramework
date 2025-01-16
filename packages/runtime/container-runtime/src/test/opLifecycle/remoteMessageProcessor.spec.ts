@@ -89,7 +89,7 @@ describe("RemoteMessageProcessor", () => {
 	}
 
 	const messageGenerationOptions = generatePairwiseOptions<{
-		/** chunking cannot happen without compression */
+		// chunking cannot happen without compression
 		compressionAndChunking:
 			| {
 					compression: false;

@@ -4,6 +4,7 @@
  */
 
 import chalk from "picocolors";
+import { Spinner } from "picospinner";
 
 import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
@@ -99,12 +100,15 @@ async function main() {
 
 		// build the graph
 		let buildGraph: BuildGraph;
+		const spinner = new Spinner("Creating build graph...");
 		try {
+			spinner.start();
 			buildGraph = repo.createBuildGraph(options, options.buildTaskNames);
 		} catch (e: unknown) {
 			error((e as Error).message);
 			process.exit(-11);
 		}
+		spinner.succeed("Build graph created.");
 		timer.time("Build graph creation completed");
 
 		// Check install

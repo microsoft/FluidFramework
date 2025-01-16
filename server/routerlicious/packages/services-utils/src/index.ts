@@ -25,6 +25,9 @@ export {
 	verifyStorageToken,
 	validateTokenScopeClaims,
 	verifyToken,
+	isTokenValid,
+	extractTokenFromHeader,
+	getValidAccessToken,
 } from "./auth";
 export { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 export { parseBoolean } from "./conversion";
