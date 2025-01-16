@@ -11,10 +11,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
-import type {
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/legacy";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
 import { type ISharedMap, type IValueChanged, MapFactory } from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
@@ -23,7 +20,12 @@ import type {
 } from "@fluidframework/runtime-definitions/legacy";
 import { v4 as uuid } from "uuid";
 
-import type { IGroceryItem, IGroceryList, IGroceryListEvents } from "../modelInterfaces.js";
+import type {
+	IDisposableParent,
+	IGroceryItem,
+	IGroceryList,
+	IGroceryListEvents,
+} from "../modelInterfaces.js";
 
 /**
  * GroceryItem is the local object with a friendly interface for the view to use.
@@ -51,22 +53,20 @@ class GroceryList implements IGroceryList {
 		return this._events;
 	}
 
-	public get handle(): IFluidHandle<FluidObject> {
-		// GroceryListFactory already provides an entryPoint initialization function to the data store runtime,
-		// so this object should always have access to a non-null entryPoint.
-		assert(this.runtime.entryPoint !== undefined, "EntryPoint was undefined");
-		return this.runtime.entryPoint;
-	}
+	public readonly branch = () => {
+		throw new Error("Not implemented yet");
+	};
 
 	public constructor(
 		// TODO:  Consider just specifying what the data object requires rather than taking a full runtime.
-		private readonly runtime: IFluidDataStoreRuntime,
+		private readonly disposableParent: IDisposableParent,
+		public readonly handle: IFluidHandle<FluidObject>,
 		private readonly map: ISharedMap,
 	) {
-		if (this.runtime.disposed) {
+		if (this.disposableParent.disposed) {
 			this.dispose();
 		} else {
-			this.runtime.once("dispose", this.dispose);
+			this.disposableParent.once("dispose", this.dispose);
 			this.map.on("valueChanged", this.onMapValueChanged);
 
 			for (const [id, groceryName] of this.map) {
@@ -150,9 +150,12 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 			map.bindToContext();
 		}
 
+		assert(runtime.entryPoint !== undefined, "EntryPoint was undefined");
+		const handle = runtime.entryPoint;
+
 		// By this point, we've performed any async work required to get the dependencies of the MigrationTool,
 		// so just a normal sync constructor will work fine (no followup async initialize()).
-		const instance = new GroceryList(runtime, map);
+		const instance = new GroceryList(runtime, handle, map);
 
 		return runtime;
 	}
