@@ -17,6 +17,7 @@ module.exports = {
 
 		// #region TODO:AB#3027: remove overrides and upgrade config to `recommended`
 
+		"@typescript-eslint/explicit-module-boundary-types": "error",
 		"@typescript-eslint/no-explicit-any": [
 			"error",
 			{
