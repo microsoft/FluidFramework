@@ -6,7 +6,11 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
@@ -20,7 +24,7 @@ import { BatchMessage, IBatch } from "./definitions.js";
  * op to reserve sequence numbers.
  */
 export class OpCompressor {
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpCompressor" });
@@ -89,8 +93,8 @@ export class OpCompressor {
 		try {
 			// Yields a valid JSON array, since each message.contents is already serialized to JSON
 			return `[${batch.messages.map(({ contents }) => contents).join(",")}]`;
-		} catch (e: any) {
-			if (e.message === "Invalid string length") {
+		} catch (e: unknown) {
+			if ((e as Partial<Error>).message === "Invalid string length") {
 				// This is how JSON.stringify signals that
 				// the content size exceeds its capacity
 				const error = new UsageError("Payload too large");

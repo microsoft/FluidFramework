@@ -330,6 +330,7 @@ export class SummaryManager
 					// If failure happened on container load, we may not yet realized that socket disconnected, so check
 					// offlineError.
 					const category =
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						error?.errorType === DriverErrorTypes.offlineError ? "generic" : "error";
 					this.logger.sendTelemetryEvent(
 						{
@@ -404,7 +405,7 @@ export class SummaryManager
 
 		if (delayMs > 0) {
 			let timer;
-			let resolveOpPromiseFn;
+			let resolveOpPromiseFn: (value: void | PromiseLike<void>) => void;
 			// Create a listener that will break the delay if we've exceeded the initial delay ops count.
 			const opsListenerFn = () => {
 				if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
@@ -451,7 +452,7 @@ export class SummaryManager
 		this._disposed = true;
 	}
 
-	private readonly forwardedEvents = new Map<any, () => void>();
+	private readonly forwardedEvents = new Map<string, () => void>();
 
 	private setupForwardedEvents() {
 		[
@@ -464,13 +465,18 @@ export class SummaryManager
 			const listener = (...args: any[]) => {
 				this.emit(event, ...args);
 			};
+			// TODO: better typing here
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.summarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
 		});
 	}
 
 	private cleanupForwardedEvents() {
-		this.forwardedEvents.forEach((listener, event) => this.summarizer?.off(event, listener));
+		this.forwardedEvents.forEach((listener, event) =>
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			this.summarizer?.off(event as any, listener),
+		);
 		this.forwardedEvents.clear();
 	}
 }

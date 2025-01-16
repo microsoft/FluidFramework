@@ -106,7 +106,9 @@ export interface IRuntimeStateHandler {
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const content = JSON.parse(message.content);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
