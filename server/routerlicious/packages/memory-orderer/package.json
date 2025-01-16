@@ -110,6 +110,12 @@
 			},
 			"ClassDeclaration_LocalLambdaController": {
 				"forwardCompat": false
+			},
+			"ClassDeclaration_WebSocketSubscriber": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_ISubscriber": {
+				"forwardCompat": false
 			}
 		}
 	}
