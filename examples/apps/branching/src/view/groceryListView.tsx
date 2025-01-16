@@ -95,20 +95,17 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 	});
 
 	return (
-		<>
-			<h1>Groceries!</h1>
-			<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
-				<tbody>
-					{groceryItemViews.length > 0 ? (
-						groceryItemViews
-					) : (
-						<tr>
-							<td colSpan={1}>No items on grocery list</td>
-						</tr>
-					)}
-					<AddItemView addItem={groceryList.addItem} />
-				</tbody>
-			</table>
-		</>
+		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
+			<tbody>
+				{groceryItemViews.length > 0 ? (
+					groceryItemViews
+				) : (
+					<tr>
+						<td colSpan={1}>No items on grocery list</td>
+					</tr>
+				)}
+				<AddItemView addItem={groceryList.addItem} />
+			</tbody>
+		</table>
 	);
 };

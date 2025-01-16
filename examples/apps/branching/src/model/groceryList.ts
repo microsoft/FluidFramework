@@ -53,15 +53,12 @@ class GroceryList implements IGroceryList {
 		return this._events;
 	}
 
-	public readonly branch = () => {
-		throw new Error("Not implemented yet");
-	};
-
 	public constructor(
 		// TODO:  Consider just specifying what the data object requires rather than taking a full runtime.
 		private readonly disposableParent: IDisposableParent,
 		public readonly handle: IFluidHandle<FluidObject>,
 		private readonly map: ISharedMap,
+		public readonly branch: () => Promise<IGroceryList>,
 	) {
 		if (this.disposableParent.disposed) {
 			this.dispose();
@@ -147,15 +144,34 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
 			map.set(uuid(), "apple");
 			map.set(uuid(), "banana");
+			map.set(uuid(), "chocolate");
 			map.bindToContext();
 		}
 
 		assert(runtime.entryPoint !== undefined, "EntryPoint was undefined");
 		const handle = runtime.entryPoint;
 
+		// TODO: Use actual branching.  This is currently just creating a detached map and copying the data over.
+		const branchMap = (originalMap: ISharedMap) => {
+			const branchedMap = runtime.createChannel(uuid(), mapFactory.type) as ISharedMap;
+			for (const [key, value] of originalMap) {
+				branchedMap.set(key, value);
+			}
+			return branchedMap;
+		};
+
+		const branch = async () => {
+			const branchedMap = branchMap(map);
+			// TODO: Should there be a working handle here?  What would that mean?
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			return new GroceryList(runtime, {} as IFluidHandle<FluidObject>, branchedMap, () => {
+				throw new Error("Double-branching not supported right now");
+			});
+		};
+
 		// By this point, we've performed any async work required to get the dependencies of the MigrationTool,
 		// so just a normal sync constructor will work fine (no followup async initialize()).
-		const instance = new GroceryList(runtime, handle, map);
+		const instance = new GroceryList(runtime, handle, map, branch);
 
 		return runtime;
 	}

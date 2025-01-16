@@ -32,5 +32,5 @@ export interface IGroceryList {
 	readonly addItem: (name: string) => void;
 	readonly getItems: () => IGroceryItem[];
 
-	readonly branch: () => IGroceryList;
+	readonly branch: () => Promise<IGroceryList>;
 }

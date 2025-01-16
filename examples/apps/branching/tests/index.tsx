@@ -23,7 +23,7 @@ import { v4 as uuid } from "uuid";
 
 import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
 import type { IGroceryList } from "../src/modelInterfaces.js";
-import { DebugView, GroceryListView } from "../src/view/index.js";
+import { AppView, DebugView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -76,7 +76,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 
 	const render = (groceryList: IGroceryList) => {
 		const appRoot = createRoot(appDiv);
-		appRoot.render(createElement(GroceryListView, { groceryList }));
+		appRoot.render(createElement(AppView, { groceryList }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugRoot = createRoot(debugDiv);

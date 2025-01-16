@@ -20,7 +20,7 @@ import { createRoot } from "react-dom/client";
 
 import { GroceryListContainerRuntimeFactory } from "./model/index.js";
 import type { IGroceryList } from "./modelInterfaces.js";
-import { DebugView, GroceryListView } from "./view/index.js";
+import { AppView, DebugView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -33,7 +33,7 @@ const updateTabForId = (id: string) => {
 const render = (groceryList: IGroceryList) => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	const appRoot = createRoot(appDiv);
-	appRoot.render(createElement(GroceryListView, { groceryList }));
+	appRoot.render(createElement(AppView, { groceryList }));
 
 	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
 	const debugDiv = document.getElementById("debug") as HTMLDivElement;
