@@ -24,6 +24,7 @@ import {
 
 function typeFromBatchedOp(op: IBatchMessage) {
 	assert(op.contents !== undefined);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return JSON.parse(op.contents).type as string;
 }
 
@@ -191,7 +192,7 @@ describe("OpSplitter", () => {
 			splitOp(generateChunkableOp(chunkSizeInBytes * 3), chunkSizeInBytes),
 			"testClient1",
 		).map((op) => {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(op.contents as any).type = ContainerMessageType.FluidDataStoreOp;
 			return op;
 		});
@@ -354,17 +355,20 @@ describe("OpSplitter", () => {
 				}
 
 				assert.equal(result.messages.length, 4);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				const lastChunk = JSON.parse(result.messages[0].contents!).contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
 				assert.deepStrictEqual(result.messages.slice(1), new Array(3).fill(emptyMessage));
 				assert.equal(
 					!extraOp ||
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						JSON.parse(result.messages[0].contents!).contents?.contents?.length === 0,
 					true,
 				);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						(JSON.parse((x.messages[0] as BatchMessage).contents!).contents as IChunkedOp)
 							.contents,
 				);
@@ -413,16 +417,19 @@ describe("OpSplitter", () => {
 
 				assert.equal(result.messages.length, 1);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				const lastChunk = JSON.parse(result.messages[0].contents!).contents as IChunkedOp;
 				assert.equal(lastChunk.chunkId, lastChunk.totalChunks);
 				assert.equal(
 					!extraOp ||
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						JSON.parse(result.messages[0].contents!).contents?.contents?.length === 0,
 					true,
 				);
 				assert.notEqual(result.contentSizeInBytes, largeMessage.contents?.length ?? 0);
 				const contentSentSeparately = batchesSubmitted.map(
 					(x) =>
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						(JSON.parse((x.messages[0] as BatchMessage).contents!).contents as IChunkedOp)
 							.contents,
 				);

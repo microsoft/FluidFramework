@@ -43,6 +43,7 @@ import {
 
 function typeFromBatchedOp(op: IBatchMessage) {
 	assert(op.contents !== undefined);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return JSON.parse(op.contents).type as string;
 }
 
