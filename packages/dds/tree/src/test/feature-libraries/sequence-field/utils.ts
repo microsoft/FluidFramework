@@ -13,7 +13,6 @@ import {
 	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -31,6 +30,7 @@ import {
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
 	setInCrossFieldMap,
@@ -493,7 +493,7 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: SF.Changeset): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset): FieldChangeDelta {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }

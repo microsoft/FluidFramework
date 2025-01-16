@@ -92,6 +92,7 @@ import {
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
+	FieldChangeDelta,
 	FieldChangeEncodingContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -139,7 +140,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): DeltaFieldChanges => ({
+	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
 		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
@@ -1044,26 +1045,19 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const nodeDelta: DeltaFieldChanges = {
-				local: [
-					{
-						count: 1,
-						fields: new Map([
-							[
-								fieldA,
-								{
-									local: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }],
-								},
-							],
-						]),
-					},
-				],
-			};
+			const nodeDelta: DeltaFieldChanges = [
+				{
+					count: 1,
+					fields: new Map([
+						[fieldA, [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }]],
+					]),
+				},
+			];
 
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, { local: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
+					[fieldB, [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }]],
 				]),
 			};
 

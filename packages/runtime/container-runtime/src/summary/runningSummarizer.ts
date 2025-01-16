@@ -189,7 +189,9 @@ export class RunningSummarizer
 
 	private readonly runtimeListener;
 
-	/** The maximum number of summary attempts to do when submit summary fails. */
+	/**
+	 * The maximum number of summary attempts to do when submit summary fails.
+	 */
 	private readonly maxAttemptsForSubmitFailures: number;
 
 	/**
@@ -422,7 +424,9 @@ export class RunningSummarizer
 			? this.mc.logger
 			: undefined;
 
-	/** We only want a single heuristic runner micro-task (will provide better optimized grouping of ops) */
+	/**
+	 * We only want a single heuristic runner micro-task (will provide better optimized grouping of ops)
+	 */
 	private heuristicRunnerMicroTaskExists = false;
 
 	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean) {
@@ -680,7 +684,9 @@ export class RunningSummarizer
 		return resultsBuilder.build();
 	}
 
-	/** Heuristics summarize attempt. */
+	/**
+	 * Heuristics summarize attempt.
+	 */
 	private trySummarize(reason: SummarizeReason): void {
 		if (this.summarizingLock !== undefined) {
 			// lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
@@ -896,7 +902,9 @@ export class RunningSummarizer
 		return resultsBuilder.build();
 	}
 
-	/** {@inheritdoc (ISummarizer:interface).summarizeOnDemand} */
+	/**
+	 * {@inheritdoc (ISummarizer:interface).summarizeOnDemand}
+	 */
 	public summarizeOnDemand(
 		options: IOnDemandSummarizeOptions,
 		resultsBuilder: SummarizeResultBuilder = new SummarizeResultBuilder(),
@@ -932,7 +940,9 @@ export class RunningSummarizer
 		return resultsBuilder.build();
 	}
 
-	/** {@inheritdoc (ISummarizer:interface).enqueueSummarize} */
+	/**
+	 * {@inheritdoc (ISummarizer:interface).enqueueSummarize}
+	 */
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		const { reason, afterSequenceNumber = 0, override = false, ...summarizeOptions } = options;
 		let overridden = false;
