@@ -136,9 +136,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		},
 		senderConnectionId: ClientConnectionId,
 	): void {
-		const postUpdateActions: (() => void)[] = [];
 		const audienceMembers = this.audience.getMembers();
-		const joiningAttendees = new Set<SessionClient>();
+		const joiningAttendees: SessionClient[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
@@ -154,7 +153,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			);
 			// If the attendee is joining the session, add them to the list of joining attendees to be announced later.
 			if (isJoining) {
-				joiningAttendees.add(attendee);
+				joiningAttendees.push(attendee);
 			}
 
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
@@ -167,16 +166,16 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		}
 
 		for (const announcedAttendee of joiningAttendees) {
-			postUpdateActions.push(() => this.events.emit("attendeeJoined", announcedAttendee));
-		}
-
-		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.
-		for (const action of postUpdateActions) {
-			action();
+			this.events.emit("attendeeJoined", announcedAttendee);
 		}
 	}
 
 	public onConnectionAdded(clientConnectionId: ClientConnectionId): void {
+		assert(
+			this.selfAttendee.getConnectionStatus() === SessionClientStatus.Disconnected,
+			"Local client should be 'Disconnected' before adding new connection.",
+		);
+
 		this.datastore.clientToSessionId[clientConnectionId] = {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
@@ -212,8 +211,8 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			return;
 		}
 
+		// If the local connection is being removed, clear the stale connection timer
 		if (attendee === this.selfAttendee) {
-			// If the local connection is being removed, clear the stale connection timer
 			this.staleConnectionTimer.clearTimeout();
 		}
 
