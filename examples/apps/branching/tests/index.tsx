@@ -8,8 +8,8 @@ import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/exam
 import React from "react";
 import ReactDOM from "react-dom";
 
-import { InventoryListContainerRuntimeFactory } from "../src/model/index.js";
-import type { IInventoryListAppModel } from "../src/modelInterfaces.js";
+import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
+import type { IGroceryListAppModel } from "../src/modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
@@ -25,11 +25,11 @@ const updateTabForId = (id: string) => {
  * requires making async calls.
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
-	const modelLoader = new SessionStorageModelLoader<IInventoryListAppModel>(
-		new StaticCodeLoader(new InventoryListContainerRuntimeFactory()),
+	const modelLoader = new SessionStorageModelLoader<IGroceryListAppModel>(
+		new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
 	);
 	let id: string;
-	let model: IInventoryListAppModel;
+	let model: IGroceryListAppModel;
 
 	if (location.hash.length === 0) {
 		// Normally our code loader is expected to match up with the version passed here.
@@ -48,7 +48,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
-	const render = (model: IInventoryListAppModel) => {
+	const render = (model: IGroceryListAppModel) => {
 		ReactDOM.unmountComponentAtNode(appDiv);
 		ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
 

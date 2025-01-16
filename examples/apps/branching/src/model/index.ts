@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { InventoryListContainerRuntimeFactory } from "./containerCode.js";
+export { GroceryListContainerRuntimeFactory } from "./containerCode.js";

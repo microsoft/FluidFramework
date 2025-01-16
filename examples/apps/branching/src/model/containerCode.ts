@@ -10,18 +10,17 @@ import {
 import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.js";
+import type { IGroceryList, IGroceryListAppModel } from "../modelInterfaces.js";
 
-import { InventoryListAppModel } from "./appModel.js";
+import { GroceryListAppModel } from "./appModel.js";
 import { NewTreeInventoryListFactory } from "./newTreeInventoryList.js";
 
-export const legacyTreeInventoryListId = "legacy-tree-inventory-list";
 export const newTreeInventoryListId = "new-tree-inventory-list";
 
 /**
  * @internal
  */
-export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IInventoryListAppModel> {
+export class GroceryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IGroceryListAppModel> {
 	public constructor() {
 		super(
 			new Map([NewTreeInventoryListFactory.registryEntry]), // registryEntries
@@ -43,10 +42,10 @@ export class InventoryListContainerRuntimeFactory extends ModelContainerRuntimeF
 	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
 	 */
 	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		const newTreeInventoryList = await getDataStoreEntryPoint<IInventoryList>(
+		const newTreeInventoryList = await getDataStoreEntryPoint<IGroceryList>(
 			runtime,
 			newTreeInventoryListId,
 		);
-		return new InventoryListAppModel(newTreeInventoryList);
+		return new GroceryListAppModel(newTreeInventoryList);
 	}
 }

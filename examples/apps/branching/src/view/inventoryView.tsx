@@ -5,10 +5,10 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import { IInventoryItem, IInventoryList } from "../modelInterfaces.js";
+import { IGroceryItem, IGroceryList } from "../modelInterfaces.js";
 
 export interface IInventoryItemViewProps {
-	inventoryItem: IInventoryItem;
+	inventoryItem: IGroceryItem;
 	disabled?: boolean;
 }
 
@@ -119,7 +119,7 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 };
 
 export interface IInventoryListViewProps {
-	inventoryList: IInventoryList;
+	inventoryList: IGroceryList;
 	disabled?: boolean;
 }
 
@@ -127,7 +127,7 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 	inventoryList,
 	disabled,
 }: IInventoryListViewProps) => {
-	const [inventoryItems, setInventoryItems] = useState<IInventoryItem[]>(
+	const [inventoryItems, setInventoryItems] = useState<IGroceryItem[]>(
 		inventoryList.getItems(),
 	);
 	useEffect(() => {

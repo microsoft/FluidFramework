@@ -5,10 +5,10 @@
 
 import React from "react";
 
-import type { IInventoryListAppModel } from "../modelInterfaces.js";
+import type { IGroceryListAppModel } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {
-	model: IInventoryListAppModel;
+	model: IGroceryListAppModel;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = ({ model }: IDebugViewProps) => {

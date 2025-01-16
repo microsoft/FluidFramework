@@ -5,12 +5,12 @@
 
 import React from "react";
 
-import type { IInventoryListAppModel } from "../modelInterfaces.js";
+import type { IGroceryListAppModel } from "../modelInterfaces.js";
 
 import { InventoryListView } from "./inventoryView.js";
 
 export interface IInventoryListAppViewProps {
-	model: IInventoryListAppModel;
+	model: IGroceryListAppModel;
 }
 
 /**
@@ -23,7 +23,7 @@ export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = ({
 	return (
 		<>
 			<h1>Using new SharedTree</h1>
-			<InventoryListView inventoryList={model.newTreeInventoryList} />
+			<InventoryListView inventoryList={model.groceryList} />
 		</>
 	);
 };

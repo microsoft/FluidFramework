@@ -16,11 +16,7 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
-import type {
-	IInventoryItem,
-	IInventoryItemEvents,
-	IInventoryList,
-} from "../modelInterfaces.js";
+import type { IGroceryItem, IGroceryItemEvents, IGroceryList } from "../modelInterfaces.js";
 
 // To define the tree schema, we'll make a series of calls to a SchemaBuilder to produce schema objects.
 // The final schema object will later be used as an argument to the schematize call.  AB#5967
@@ -49,10 +45,7 @@ const sharedTreeKey = "sharedTree";
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
-class NewTreeInventoryItem
-	extends TypedEmitter<IInventoryItemEvents>
-	implements IInventoryItem
-{
+class NewTreeInventoryItem extends TypedEmitter<IGroceryItemEvents> implements IGroceryItem {
 	private readonly _unregisterChangingEvent: () => void;
 	public get id() {
 		return this._inventoryItemNode.id;
@@ -88,7 +81,7 @@ class NewTreeInventoryItem
 	};
 }
 
-export class NewTreeInventoryList extends DataObject implements IInventoryList {
+export class NewTreeInventoryList extends DataObject implements IGroceryList {
 	private _sharedTree: ITree | undefined;
 	private get sharedTree(): ITree {
 		if (this._sharedTree === undefined) {
@@ -115,7 +108,7 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		});
 	};
 
-	public readonly getItems = (): IInventoryItem[] => {
+	public readonly getItems = (): IGroceryItem[] => {
 		return [...this._inventoryItems.values()];
 	};
 
