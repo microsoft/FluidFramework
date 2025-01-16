@@ -4,5 +4,5 @@
  */
 
 module.exports = {
-	extends: ["@fluidframework/eslint-config-fluid/minimal-deprecated", "prettier"],
+	extends: ["@fluidframework/eslint-config-fluid/recommended", "prettier"],
 };
