@@ -35,6 +35,7 @@ const updateTabForId = (id: string) => {
 
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
+const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory());
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -46,10 +47,10 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
+			codeDetails: { package: "1.0" },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
-			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
-			codeDetails: { package: "1.0" },
+			codeLoader,
 		});
 		groceryList = (await container.getEntryPoint()) as IGroceryList;
 		const documentId = uuid();
@@ -65,7 +66,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			request: { url: `${window.location.origin}/${id}` },
 			urlResolver,
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
-			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
+			codeLoader,
 		});
 		groceryList = (await container.getEntryPoint()) as IGroceryList;
 	}

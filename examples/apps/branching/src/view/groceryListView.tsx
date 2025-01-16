@@ -103,7 +103,7 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 						groceryItemViews
 					) : (
 						<tr>
-							<td colSpan={1}>No items in inventory</td>
+							<td colSpan={1}>No items on grocery list</td>
 						</tr>
 					)}
 					<AddItemView addItem={groceryList.addItem} />

@@ -15,7 +15,7 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/legacy";
-import { type ISharedMap, MapFactory } from "@fluidframework/map/legacy";
+import { type ISharedMap, type IValueChanged, MapFactory } from "@fluidframework/map/legacy";
 import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -26,8 +26,8 @@ import { v4 as uuid } from "uuid";
 import type { IGroceryItem, IGroceryList, IGroceryListEvents } from "../modelInterfaces.js";
 
 /**
- * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
- * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
+ * GroceryItem is the local object with a friendly interface for the view to use.
+ * It wraps a new SharedTree node representing a grocery item to abstract out the DDS manipulation and access.
  */
 class GroceryItem implements IGroceryItem {
 	public constructor(
@@ -67,20 +67,7 @@ class GroceryList implements IGroceryList {
 			this.dispose();
 		} else {
 			this.runtime.once("dispose", this.dispose);
-			this.map.on("valueChanged", (changed) => {
-				const changedId = changed.key;
-				const newName = this.map.get(changedId);
-				if (newName === undefined) {
-					this._groceryItems.delete(changedId);
-					this._events.emit("itemDeleted");
-				} else {
-					const newGroceryItem = new GroceryItem(changedId, newName, () => {
-						this.map.delete(changedId);
-					});
-					this._groceryItems.set(changedId, newGroceryItem);
-					this._events.emit("itemAdded");
-				}
-			});
+			this.map.on("valueChanged", this.onMapValueChanged);
 
 			for (const [id, groceryName] of this.map) {
 				const preExistingGroceryItem = new GroceryItem(id, groceryName, () => {
@@ -99,12 +86,27 @@ class GroceryList implements IGroceryList {
 		return [...this._groceryItems.values()];
 	};
 
+	private readonly onMapValueChanged = (changed: IValueChanged) => {
+		const changedId = changed.key;
+		const newName = this.map.get(changedId);
+		if (newName === undefined) {
+			this._groceryItems.delete(changedId);
+			this._events.emit("itemDeleted");
+		} else {
+			const newGroceryItem = new GroceryItem(changedId, newName, () => {
+				this.map.delete(changedId);
+			});
+			this._groceryItems.set(changedId, newGroceryItem);
+			this._events.emit("itemAdded");
+		}
+	};
+
 	/**
 	 * Called when the host container closes and disposes itself
 	 */
 	private readonly dispose = (): void => {
 		this._disposed = true;
-		// TODO: Unregister listeners
+		this.map.off("valueChanged", this.onMapValueChanged);
 		this._events.emit("disposed");
 	};
 }
