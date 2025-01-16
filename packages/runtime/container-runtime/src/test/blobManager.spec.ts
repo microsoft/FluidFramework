@@ -905,7 +905,9 @@ describe("BlobManager", () => {
 	describe("Garbage Collection", () => {
 		let redirectTable: Map<string, string | undefined>;
 
-		/** Creates a blob with the given content and returns its local and storage id. */
+		/**
+		 * Creates a blob with the given content and returns its local and storage id.
+		 */
 		async function createBlobAndGetIds(content: string) {
 			// For a given blob's GC node id, returns the blob id.
 			const getBlobIdFromGCNodeId = (gcNodeId: string) => {

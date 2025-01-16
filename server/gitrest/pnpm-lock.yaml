@@ -198,8 +198,8 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1
       '@fluidframework/gitresources':
-        specifier: 6.0.0-310414
-        version: 6.0.0-310414
+        specifier: 6.0.0-317195
+        version: 6.0.0-317195
       '@fluidframework/protocol-base':
         specifier: 6.0.0-317195
         version: 6.0.0-317195
