@@ -16,37 +16,9 @@ export const InventoryItemView: FC<IInventoryItemViewProps> = ({
 	inventoryItem,
 	disabled,
 }: IInventoryItemViewProps) => {
-	const quantityRef = useRef<HTMLInputElement>(null);
-	useEffect(() => {
-		const updateFromRemoteQuantity = () => {
-			if (quantityRef.current !== null) {
-				quantityRef.current.value = inventoryItem.quantity.toString();
-			}
-		};
-		inventoryItem.on("quantityChanged", updateFromRemoteQuantity);
-		updateFromRemoteQuantity();
-		return () => {
-			inventoryItem.off("quantityChanged", updateFromRemoteQuantity);
-		};
-	}, [inventoryItem]);
-
-	const inputHandler = (e) => {
-		const newValue = parseInt(e.target.value, 10);
-		inventoryItem.quantity = newValue;
-	};
-
 	return (
 		<tr>
 			<td>{inventoryItem.name}</td>
-			<td>
-				<input
-					ref={quantityRef}
-					onInput={inputHandler}
-					type="number"
-					style={{ width: "60px" }}
-					disabled={disabled}
-				></input>
-			</td>
 			<td>
 				<button
 					onClick={inventoryItem.deleteItem}
@@ -61,28 +33,24 @@ export const InventoryItemView: FC<IInventoryItemViewProps> = ({
 };
 
 interface IAddItemViewProps {
-	readonly addItem: (name: string, quantity: number) => void;
+	readonly addItem: (name: string) => void;
 	disabled?: boolean;
 }
 
 const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewProps) => {
 	const nameRef = useRef<HTMLInputElement>(null);
-	const quantityRef = useRef<HTMLInputElement>(null);
 
 	const onAddItemButtonClick = () => {
-		if (nameRef.current === null || quantityRef.current === null) {
+		if (nameRef.current === null) {
 			throw new Error("Couldn't get the new item info");
 		}
 
 		// Extract the values from the inputs and add the new item
 		const name = nameRef.current.value;
-		const quantityString = quantityRef.current.value;
-		const quantity = quantityString !== "" ? parseInt(quantityString, 10) : 0;
-		addItem(name, quantity);
+		addItem(name);
 
 		// Clear the input form
 		nameRef.current.value = "";
-		quantityRef.current.value = "";
 	};
 
 	return (
@@ -94,15 +62,6 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 						type="text"
 						placeholder="New item"
 						style={{ width: "200px" }}
-						disabled={disabled}
-					/>
-				</td>
-				<td>
-					<input
-						ref={quantityRef}
-						type="number"
-						placeholder="0"
-						style={{ width: "60px" }}
 						disabled={disabled}
 					/>
 				</td>
@@ -160,7 +119,6 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 			<thead>
 				<tr>
 					<th>Inventory item</th>
-					<th>Quantity</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -168,7 +126,7 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 					inventoryItemViews
 				) : (
 					<tr>
-						<td colSpan={2}>No items in inventory</td>
+						<td colSpan={1}>No items in inventory</td>
 					</tr>
 				)}
 				<AddItemView addItem={inventoryList.addItem} disabled={disabled} />

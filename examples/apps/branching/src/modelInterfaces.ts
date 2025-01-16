@@ -24,7 +24,6 @@ export interface IGroceryItemEvents {
 export interface IGroceryItem extends TypedEmitter<IGroceryItemEvents> {
 	readonly id: string;
 	readonly name: string;
-	quantity: number;
 	readonly deleteItem: () => void;
 }
 
@@ -32,7 +31,7 @@ export interface IGroceryItem extends TypedEmitter<IGroceryItemEvents> {
  * IInventoryList describes the public API surface for our inventory list object.
  */
 export interface IGroceryList extends EventEmitter {
-	readonly addItem: (name: string, quantity: number) => void;
+	readonly addItem: (name: string) => void;
 
 	readonly getItems: () => IGroceryItem[];
 
