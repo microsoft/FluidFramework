@@ -68,6 +68,9 @@ module.exports = {
 		// The default for this rule is 4, but 5 is better
 		"max-params": ["warn", 5],
 
+		// Unnecessary rule that only serves to annoy
+		"new-cap": "off",
+
 		// Too strict for our needs
 		"unicorn/filename-case": "off",
 

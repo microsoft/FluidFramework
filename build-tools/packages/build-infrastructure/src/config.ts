@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { type Static, Type } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 import { cosmiconfigSync } from "cosmiconfig";
 
 import {
@@ -13,78 +15,64 @@ import {
 } from "./types.js";
 
 /**
+ * Configures a package or release group
+ *
+ * @deprecated Use buildProject and associated types instead.
+ */
+export type IFluidBuildDir = Static<typeof IFluidBuildDir>;
+export const IFluidBuildDir = Type.Object({
+	/**
+	 * The path to the package. For release groups this should be the path to the root of the release group.
+	 */
+	directory: Type.String(),
+
+	/**
+	 * An array of paths under `directory` that should be ignored.
+	 *
+	 * @deprecated This field is unused in all known configs and is ignored by the back-compat loading code.
+	 */
+	ignoredDirs: Type.Optional(Type.Array(Type.String())),
+});
+
+/**
+ * @deprecated Use buildProject and associated types instead.
+ */
+export type IFluidBuildDirEntry = Static<typeof IFluidBuildDirEntry>;
+export const IFluidBuildDirEntry = Type.Union([
+	Type.String(),
+	IFluidBuildDir,
+	Type.Array(Type.Union([Type.String(), IFluidBuildDir])),
+]);
+
+/**
+ * @deprecated Use buildProject and associated types instead.
+ */
+export type IFluidBuildDirs = Static<typeof IFluidBuildDirs>;
+export const IFluidBuildDirs = Type.Record(Type.String(), IFluidBuildDirEntry);
+
+/**
  * The version of the BuildProject configuration currently used.
  */
 export const BUILDPROJECT_CONFIG_VERSION = 1;
 
 /**
- * Top-most configuration for BuildProject settings.
+ * The definition of a release group in configuration.
  */
-export interface BuildProjectConfig {
-	/**
-	 * The version of the config.
-	 */
-	version: typeof BUILDPROJECT_CONFIG_VERSION;
-
-	/**
-	 * **BACK-COMPAT ONLY**
-	 *
-	 * A mapping of package or release group names to metadata about the package or release group.
-	 *
-	 * @deprecated Use the buildProject property instead.
-	 */
-	repoPackages?: IFluidBuildDirs;
-
-	/**
-	 * The layout of the build project into workspaces and release groups.
-	 */
-	buildProject?: {
-		workspaces: {
-			/**
-			 * A mapping of workspace name to folder containing a workspace config file (e.g. pnpm-workspace.yaml).
-			 */
-			[name: string]: WorkspaceDefinition;
-		};
-	};
-}
-
-/**
- * The definition of a workspace ih configuration.
- */
-export interface WorkspaceDefinition {
-	/**
-	 * The root directory of the workspace. This folder should contain a workspace config file (e.g. pnpm-workspace.yaml).
-	 */
-	directory: string;
-
-	/**
-	 * Definitions of the release groups within the workspace.
-	 */
-	releaseGroups: {
-		/**
-		 * A mapping of release group name to a definition for the release group.
-		 */
-		[name: string]: ReleaseGroupDefinition;
-	};
-}
-
-/**
- * The definition of a release group ih configuration.
- */
-export interface ReleaseGroupDefinition {
+export type ReleaseGroupDefinition = Static<typeof ReleaseGroupDefinition>;
+export const ReleaseGroupDefinition = Type.Object({
 	/**
 	 * An array of scopes or package names that should be included in the release group. Each package must
 	 * belong to a single release group.
 	 *
 	 * To include all packages, set this value to a single element: `["*"]`.
 	 */
-	include: string[];
+	include: Type.Array(Type.String()),
 
 	/**
 	 * An array of scopes or package names that should be excluded. Exclusions are applied AFTER inclusions, so
 	 * this can be used to exclude specific packages in a certain scope.
 	 */
-	exclude?: string[];
+	exclude: Type.Optional(Type.Array(Type.String())),
 
 	/**
 	 * The name of the package that should be considered the root package for the release group. If not provided, the
@@ -96,44 +84,61 @@ export interface ReleaseGroupDefinition {
 	 * workspace-root package: it is a convenient place to store release-group-wide scripts as opposed to workspace-wide
 	 * scripts.
 	 */
-	rootPackageName?: string;
+	rootPackageName: Type.Optional(Type.String()),
 
 	/**
 	 * A URL to the ADO CI pipeline that builds the release group.
 	 */
-	adoPipelineUrl?: string;
-}
+	adoPipelineUrl: Type.Optional(Type.String()),
+});
 
 /**
- * @deprecated Use buildProject and associated types instead.
+ * The definition of a workspace in configuration.
  */
-export interface IFluidBuildDirs {
-	[name: string]: IFluidBuildDirEntry;
-}
-
-/**
- * @deprecated Use buildProject and associated types instead.
- */
-export type IFluidBuildDirEntry = string | IFluidBuildDir | (string | IFluidBuildDir)[];
-
-/**
- * Configures a package or release group
- *
- * @deprecated Use buildProject and associated types instead.
- */
-export interface IFluidBuildDir {
+export type WorkspaceDefinition = Static<typeof WorkspaceDefinition>;
+export const WorkspaceDefinition = Type.Object({
 	/**
-	 * The path to the package. For release groups this should be the path to the root of the release group.
+	 * The root directory of the workspace. This folder should contain a workspace config file (e.g. pnpm-workspace.yaml).
 	 */
-	directory: string;
+	directory: Type.String(),
 
 	/**
-	 * An array of paths under `directory` that should be ignored.
+	 * Definitions of the release groups within the workspace.
+	 */
+	releaseGroups: Type.Record(Type.String(), ReleaseGroupDefinition),
+});
+
+/**
+ * Top-most configuration for BuildProject settings.
+ */
+export type BuildProjectConfig = Static<typeof BuildProjectConfig>;
+export const BuildProjectConfig = Type.Object({
+	/**
+	 * The version of the config.
+	 */
+	version: Type.Number({
+		maximum: BUILDPROJECT_CONFIG_VERSION,
+		minimum: BUILDPROJECT_CONFIG_VERSION,
+	}),
+
+	/**
+	 * **BACK-COMPAT ONLY**
 	 *
-	 * @deprecated This field is unused in all known configs and is ignored by the back-compat loading code.
+	 * A mapping of package or release group names to metadata about the package or release group.
+	 *
+	 * @deprecated Use the buildProject property instead.
 	 */
-	ignoredDirs?: string[];
-}
+	repoPackages: Type.Optional(IFluidBuildDirs),
+
+	/**
+	 * The layout of the build project into workspaces and release groups.
+	 */
+	buildProject: Type.Optional(
+		Type.Object({
+			workspaces: Type.Record(Type.String(), WorkspaceDefinition),
+		}),
+	),
+});
 
 /**
  * Checks if a package matches a given {@link ReleaseGroupDefinition}.
@@ -228,7 +233,7 @@ export function getBuildProjectConfig(
 	if (configResult === null || configResult === undefined) {
 		throw new Error("No BuildProject configuration found.");
 	}
-	const config = configResult.config as BuildProjectConfig;
+	const config = Value.Parse(BuildProjectConfig, configResult.config);
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
 	if (config.version !== BUILDPROJECT_CONFIG_VERSION) {

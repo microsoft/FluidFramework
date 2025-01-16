@@ -18,6 +18,13 @@ module.exports = {
 		"import/no-nodejs-modules": "off",
 
 		"tsdoc/syntax": ["warn"],
+
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: ["@sinclair/typebox/*"],
+			},
+		],
 	},
 	overrides: [
 		{
