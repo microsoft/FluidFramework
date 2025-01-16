@@ -188,7 +188,7 @@ export interface TokenLimits {
 }
 
 /**
- * The Diff interface defines the operations that ai-collab performed on a SharedTree.
+ * An operation that ai-collab performed on a SharedTree.
  *
  * @alpha
  */
