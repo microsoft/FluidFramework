@@ -157,8 +157,7 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly createProps?: any;
+	readonly createProps?: unknown;
 }
 
 /**
@@ -1256,8 +1255,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public readonly createProps?: any;
+	public readonly createProps?: unknown;
 
 	constructor(props: ILocalFluidDataStoreContextProps) {
 		super(
