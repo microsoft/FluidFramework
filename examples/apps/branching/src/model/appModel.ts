@@ -10,8 +10,5 @@ import type { IInventoryList, IInventoryListAppModel } from "../modelInterfaces.
  * and the other using new SharedTree.  They function the same and share the same interface.
  */
 export class InventoryListAppModel implements IInventoryListAppModel {
-	public constructor(
-		public readonly legacyTreeInventoryList: IInventoryList,
-		public readonly newTreeInventoryList: IInventoryList,
-	) {}
+	public constructor(public readonly newTreeInventoryList: IInventoryList) {}
 }

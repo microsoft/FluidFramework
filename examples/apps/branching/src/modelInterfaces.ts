@@ -12,10 +12,6 @@ import { TypedEmitter } from "tiny-typed-emitter";
  */
 export interface IInventoryListAppModel {
 	/**
-	 * An inventory tracker list using the legacy shared tree.
-	 */
-	readonly legacyTreeInventoryList: IInventoryList;
-	/**
 	 * An inventory tracker list using the new shared tree.
 	 */
 	readonly newTreeInventoryList: IInventoryList;
