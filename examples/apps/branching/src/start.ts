@@ -14,8 +14,9 @@ import {
 	createInsecureTinyliciousTestUrlResolver,
 	createTinyliciousTestCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/test-utils";
-import React from "react";
-import ReactDOM from "react-dom";
+import { createElement } from "react";
+// eslint-disable-next-line import/no-internal-modules
+import { createRoot } from "react-dom/client";
 
 import { GroceryListContainerRuntimeFactory } from "./model/index.js";
 import type { IGroceryList } from "./modelInterfaces.js";
@@ -31,18 +32,13 @@ const updateTabForId = (id: string) => {
 
 const render = (groceryList: IGroceryList) => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
-	ReactDOM.unmountComponentAtNode(appDiv);
-	ReactDOM.render(React.createElement(GroceryListView, { groceryList }), appDiv);
+	const appRoot = createRoot(appDiv);
+	appRoot.render(createElement(GroceryListView, { groceryList }));
 
 	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
 	const debugDiv = document.getElementById("debug") as HTMLDivElement;
-	ReactDOM.unmountComponentAtNode(debugDiv);
-	ReactDOM.render(
-		React.createElement(DebugView, {
-			groceryList,
-		}),
-		debugDiv,
-	);
+	const debugRoot = createRoot(debugDiv);
+	debugRoot.render(createElement(DebugView, { groceryList }));
 };
 
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();
