@@ -703,7 +703,7 @@ export function getDeviceSpec() {
 	try {
 		if (typeof navigator === "object" && navigator !== null) {
 			return {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				deviceMemory: (navigator as any).deviceMemory,
 				hardwareConcurrency: navigator.hardwareConcurrency,
 			};
@@ -772,13 +772,15 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		const response = await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
 		});
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		fluidObject = response.value;
 	}
 
