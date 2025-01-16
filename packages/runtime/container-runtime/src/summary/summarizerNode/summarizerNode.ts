@@ -98,13 +98,19 @@ export class SummarizerNode implements IRootSummarizerNode {
 		baseLogger: ITelemetryBaseLogger,
 		private readonly summarizeInternalFn: SummarizeInternalFn,
 		config: ISummarizerNodeConfig,
-		/** Encoded handle or path to the node */
+		/**
+		 * Encoded handle or path to the node
+		 */
 		private readonly _summaryHandleId: EscapedPath,
 		private _changeSequenceNumber: number,
-		/** Summary reference sequence number, i.e. last sequence number seen when last successful summary was created */
+		/**
+		 * Summary reference sequence number, i.e. last sequence number seen when last successful summary was created
+		 */
 		private _lastSummaryReferenceSequenceNumber?: number,
 		protected wipSummaryLogger?: ITelemetryBaseLogger,
-		/** A unique id of this node to be logged when sending telemetry. */
+		/**
+		 * A unique id of this node to be logged when sending telemetry.
+		 */
 		protected telemetryNodeId?: string,
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
@@ -502,9 +508,13 @@ export class SummarizerNode implements IRootSummarizerNode {
 	protected readonly canReuseHandle: boolean;
 
 	public createChild(
-		/** Summarize function */
+		/**
+		 * Summarize function
+		 */
 		summarizeInternalFn: SummarizeInternalFn,
-		/** Initial id or path part of this node */
+		/**
+		 * Initial id or path part of this node
+		 */
 		id: string,
 		/**
 		 * Information needed to create the node.
