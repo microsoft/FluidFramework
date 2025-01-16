@@ -7,23 +7,20 @@ import React, { FC, useEffect, useRef, useState } from "react";
 
 import { IGroceryItem, IGroceryList } from "../modelInterfaces.js";
 
-export interface IInventoryItemViewProps {
-	inventoryItem: IGroceryItem;
-	disabled?: boolean;
+export interface IGroceryItemViewProps {
+	groceryItem: IGroceryItem;
 }
 
-export const InventoryItemView: FC<IInventoryItemViewProps> = ({
-	inventoryItem,
-	disabled,
-}: IInventoryItemViewProps) => {
+export const GroceryItemView: FC<IGroceryItemViewProps> = ({
+	groceryItem,
+}: IGroceryItemViewProps) => {
 	return (
 		<tr>
-			<td>{inventoryItem.name}</td>
+			<td>{groceryItem.name}</td>
 			<td>
 				<button
-					onClick={inventoryItem.deleteItem}
+					onClick={groceryItem.deleteItem}
 					style={{ border: "none", background: "none" }}
-					disabled={disabled}
 				>
 					❌
 				</button>
@@ -34,10 +31,9 @@ export const InventoryItemView: FC<IInventoryItemViewProps> = ({
 
 interface IAddItemViewProps {
 	readonly addItem: (name: string) => void;
-	disabled?: boolean;
 }
 
-const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewProps) => {
+const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
 	const nameRef = useRef<HTMLInputElement>(null);
 
 	const onAddItemButtonClick = () => {
@@ -57,18 +53,12 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 		<>
 			<tr style={{ borderTop: "3px solid black" }}>
 				<td>
-					<input
-						ref={nameRef}
-						type="text"
-						placeholder="New item"
-						style={{ width: "200px" }}
-						disabled={disabled}
-					/>
+					<input ref={nameRef} type="text" placeholder="New item" style={{ width: "200px" }} />
 				</td>
 			</tr>
 			<tr>
 				<td colSpan={2}>
-					<button style={{ width: "100%" }} onClick={onAddItemButtonClick} disabled={disabled}>
+					<button style={{ width: "100%" }} onClick={onAddItemButtonClick}>
 						Add new item
 					</button>
 				</td>
@@ -77,41 +67,31 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem, disabled }: IAddItemViewP
 	);
 };
 
-export interface IInventoryListViewProps {
-	inventoryList: IGroceryList;
-	disabled?: boolean;
+export interface IGroceryListViewProps {
+	groceryList: IGroceryList;
 }
 
-export const InventoryListView: FC<IInventoryListViewProps> = ({
-	inventoryList,
-	disabled,
-}: IInventoryListViewProps) => {
-	const [inventoryItems, setInventoryItems] = useState<IGroceryItem[]>(
-		inventoryList.getItems(),
-	);
+export const GroceryListView: FC<IGroceryListViewProps> = ({
+	groceryList,
+}: IGroceryListViewProps) => {
+	const [groceryItems, setGroceryItems] = useState<IGroceryItem[]>(groceryList.getItems());
 	useEffect(() => {
 		const updateItems = () => {
 			// TODO: This blows away all the inventory items, making the granular add/delete events
 			// not so useful.  Is there a good way to make a more granular change?
-			setInventoryItems(inventoryList.getItems());
+			setGroceryItems(groceryList.getItems());
 		};
-		inventoryList.events.on("itemAdded", updateItems);
-		inventoryList.events.on("itemDeleted", updateItems);
+		groceryList.events.on("itemAdded", updateItems);
+		groceryList.events.on("itemDeleted", updateItems);
 
 		return () => {
-			inventoryList.events.off("itemAdded", updateItems);
-			inventoryList.events.off("itemDeleted", updateItems);
+			groceryList.events.off("itemAdded", updateItems);
+			groceryList.events.off("itemDeleted", updateItems);
 		};
-	}, [inventoryList]);
+	}, [groceryList]);
 
-	const inventoryItemViews = inventoryItems.map((inventoryItem) => {
-		return (
-			<InventoryItemView
-				key={inventoryItem.id}
-				inventoryItem={inventoryItem}
-				disabled={disabled}
-			/>
-		);
+	const groceryItemViews = groceryItems.map((groceryItem) => {
+		return <GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />;
 	});
 
 	return (
@@ -122,14 +102,14 @@ export const InventoryListView: FC<IInventoryListViewProps> = ({
 				</tr>
 			</thead>
 			<tbody>
-				{inventoryItemViews.length > 0 ? (
-					inventoryItemViews
+				{groceryItemViews.length > 0 ? (
+					groceryItemViews
 				) : (
 					<tr>
 						<td colSpan={1}>No items in inventory</td>
 					</tr>
 				)}
-				<AddItemView addItem={inventoryList.addItem} disabled={disabled} />
+				<AddItemView addItem={groceryList.addItem} />
 			</tbody>
 		</table>
 	);

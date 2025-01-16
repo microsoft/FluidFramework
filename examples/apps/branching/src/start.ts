@@ -18,8 +18,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { GroceryListContainerRuntimeFactory } from "./model/index.js";
-import type { IGroceryList, IGroceryListAppModel } from "./modelInterfaces.js";
-import { DebugView, InventoryListAppView } from "./view/index.js";
+import type { IGroceryList } from "./modelInterfaces.js";
+import { DebugView, GroceryListView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -29,17 +29,17 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const render = (model: IGroceryListAppModel) => {
+const render = (groceryList: IGroceryList) => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(appDiv);
-	ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+	ReactDOM.render(React.createElement(GroceryListView, { groceryList }), appDiv);
 
 	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
 	const debugDiv = document.getElementById("debug") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(debugDiv);
 	ReactDOM.render(
 		React.createElement(DebugView, {
-			model,
+			groceryList,
 		}),
 		debugDiv,
 	);
@@ -77,7 +77,7 @@ async function start(): Promise<void> {
 		groceryList = (await container.getEntryPoint()) as IGroceryList;
 	}
 
-	render({ groceryList });
+	render(groceryList);
 	updateTabForId(id);
 }
 

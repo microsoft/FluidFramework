@@ -9,8 +9,8 @@ import React from "react";
 import ReactDOM from "react-dom";
 
 import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
-import type { IGroceryListAppModel } from "../src/modelInterfaces.js";
-import { DebugView, InventoryListAppView } from "../src/view/index.js";
+import type { IGroceryList, IGroceryListAppModel } from "../src/modelInterfaces.js";
+import { DebugView, GroceryListView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
@@ -48,15 +48,15 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
-	const render = (model: IGroceryListAppModel) => {
+	const render = (groceryList: IGroceryList) => {
 		ReactDOM.unmountComponentAtNode(appDiv);
-		ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+		ReactDOM.render(React.createElement(GroceryListView, { groceryList }), appDiv);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		ReactDOM.unmountComponentAtNode(debugDiv);
 		ReactDOM.render(
 			React.createElement(DebugView, {
-				model,
+				groceryList,
 			}),
 			debugDiv,
 		);
@@ -65,7 +65,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(model);
+	render(model.groceryList);
 
 	element.append(appDiv, debugDiv);
 

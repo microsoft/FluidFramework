@@ -4,4 +4,4 @@
  */
 
 export { IDebugViewProps, DebugView } from "./debugView.js";
-export { IInventoryListAppViewProps, InventoryListAppView } from "./appView.js";
+export { IGroceryListViewProps, GroceryListView } from "./inventoryView.js";

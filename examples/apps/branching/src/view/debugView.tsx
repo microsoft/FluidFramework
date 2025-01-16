@@ -5,13 +5,13 @@
 
 import React from "react";
 
-import type { IGroceryListAppModel } from "../modelInterfaces.js";
+import type { IGroceryList } from "../modelInterfaces.js";
 
 export interface IDebugViewProps {
-	model: IGroceryListAppModel;
+	groceryList: IGroceryList;
 }
 
-export const DebugView: React.FC<IDebugViewProps> = ({ model }: IDebugViewProps) => {
+export const DebugView: React.FC<IDebugViewProps> = ({ groceryList }: IDebugViewProps) => {
 	return (
 		<div>
 			<h2 style={{ textDecoration: "underline" }}>Debug info</h2>
