@@ -993,7 +993,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		if (!destinationField.context.isHydrated()) {
 			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
 				throw new UsageError(
-					"Cannot move elements from an unhydrated array to a hydrated array.",
+					"Cannot move elements from a hydrated array to an unhydrated array.",
 				);
 			}
 

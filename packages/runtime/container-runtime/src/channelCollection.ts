@@ -130,7 +130,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in th
 type PendingAliasResolve = (success: boolean) => void;
 
 interface FluidDataStoreMessage {
-	content: any;
+	content: unknown;
 	type: string;
 }
 
@@ -217,7 +217,7 @@ function wrapContextForInnerChannel(
 ): IFluidParentContext {
 	const context = wrapContext(parentContext);
 
-	context.submitMessage = (type: string, content: any, localOpMetadata: unknown) => {
+	context.submitMessage = (type: string, content: unknown, localOpMetadata: unknown) => {
 		const fluidDataStoreContent: FluidDataStoreMessage = {
 			content,
 			type,
@@ -651,21 +651,18 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.createDataStoreId(),
 			pkg,
 			LocalDetachedFluidDataStoreContext,
-			undefined, // props
 			loadingGroupId,
 		);
 	}
 
 	public createDataStoreContext(
 		pkg: Readonly<string[]>,
-		props?: any,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextInternal {
 		return this.createContext(
 			this.createDataStoreId(),
 			pkg,
 			LocalFluidDataStoreContext,
-			props,
 			loadingGroupId,
 		);
 	}
@@ -674,7 +671,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		id: string,
 		pkg: Readonly<string[]>,
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
-		createProps?: any,
 		loadingGroupId?: string,
 	) {
 		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
@@ -689,7 +685,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}),
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
-			createProps,
 			loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel) =>
 				channelToDataStore(
@@ -709,7 +704,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 	public readonly dispose = () => this.disposeOnce.value;
 
-	public reSubmit(type: string, content: any, localOpMetadata: unknown) {
+	public reSubmit(type: string, content: unknown, localOpMetadata: unknown) {
 		switch (type) {
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
@@ -722,7 +717,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	protected reSubmitChannelOp(type: string, content: any, localOpMetadata: unknown) {
+	protected reSubmitChannelOp(type: string, content: unknown, localOpMetadata: unknown) {
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
@@ -740,7 +735,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		context.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
 	}
 
-	public rollback(type: string, content: any, localOpMetadata: unknown) {
+	public rollback(type: string, content: unknown, localOpMetadata: unknown) {
 		assert(type === ContainerMessageType.FluidDataStoreOp, 0x8e8 /* type */);
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);
@@ -1068,7 +1063,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				})
 				.then(
 					(pkg) => ({ pkg, error: undefined }),
-					(error) => ({ pkg: undefined, error }),
+					(error: Error) => ({ pkg: undefined, error }),
 				)
 				.then(({ pkg, error }) => {
 					this.mc.logger.sendTelemetryEvent(
@@ -1104,6 +1099,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public processSignal(messageArg: IInboundSignalMessage, local: boolean) {
 		const envelope = messageArg.content as IEnvelope;
 		const fluidDataStoreId = envelope.address;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const message = { ...messageArg, content: envelope.contents };
 		const context = this.contexts.get(fluidDataStoreId);
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
@@ -1604,7 +1600,7 @@ export function detectOutboundReferences(
 				// the address of the DDS is stored in a property called "address".  This is not ideal.
 				// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
 				if (key === "address" && ddsAddress === undefined) {
-					ddsAddress = value;
+					ddsAddress = value as string | undefined;
 				}
 
 				recursivelyFindHandles(value);
