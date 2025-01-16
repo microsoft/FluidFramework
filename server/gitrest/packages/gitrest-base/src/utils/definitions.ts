@@ -4,8 +4,8 @@
  */
 
 import fsPromises from "fs/promises";
-import * as git from "@fluidframework/gitresources";
 import type { MakeDirectoryOptions } from "fs";
+import * as git from "@fluidframework/gitresources";
 
 export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",

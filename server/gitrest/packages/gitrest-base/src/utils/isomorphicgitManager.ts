@@ -453,12 +453,12 @@ export class IsomorphicGitManagerFactory extends RepositoryManagerFactoryBase<vo
 		gitdir: string,
 		fsParams: IFileSystemManagerParams | undefined,
 	): Promise<void> {
-		const simplifiedCustomData = fsParams?.simplifiedCustomData;
-		if (simplifiedCustomData) {
-			// Only pass valid simplifiedCustomData to fs mkdir call during slimInit
+		const splfCustomData = fsParams?.simplifiedCustomData;
+		if (splfCustomData) {
+			// Only pass valid simplifiedCustomData to rootdir in fs mkdir call during slimInit
 			const mkdirOptions: IFileSystemMakeDirectoryOptions = {
 				recursive: false,
-				simplifiedCustomData: simplifiedCustomData,
+				simplifiedCustomData: splfCustomData,
 			};
 			await fs.promises.mkdir(gitdir, mkdirOptions);
 		}
