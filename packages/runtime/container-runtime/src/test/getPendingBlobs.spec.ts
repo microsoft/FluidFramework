@@ -50,7 +50,7 @@ describe("getPendingLocalState", () => {
 
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
-		assert.strictEqual(summaryData2.redirectTable.size, 1);
+		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 
 	it("get blobs and wait for blob attach while waiting for op", async () => {
@@ -79,7 +79,7 @@ describe("getPendingLocalState", () => {
 
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
-		assert.strictEqual(summaryData2.redirectTable.size, 1);
+		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 
 	it("shutdown multiple blobs", async () => {
@@ -109,7 +109,7 @@ describe("getPendingLocalState", () => {
 
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 2);
-		assert.strictEqual(summaryData2.redirectTable.size, 2);
+		assert.strictEqual(summaryData2.redirectTable?.length, 2);
 	});
 
 	it("upload blob while getting pending state", async () => {
@@ -143,7 +143,7 @@ describe("getPendingLocalState", () => {
 
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 3);
-		assert.strictEqual(summaryData2.redirectTable.size, 3);
+		assert.strictEqual(summaryData2.redirectTable?.length, 3);
 	});
 
 	it("retries blob after being rejected if it was stashed", async () => {
@@ -170,7 +170,7 @@ describe("getPendingLocalState", () => {
 		await runtime2.processAll();
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
-		assert.strictEqual(summaryData2.redirectTable.size, 1);
+		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 
 	it("does not restart upload after applying stashed ops if not expired", async () => {
@@ -184,6 +184,7 @@ describe("getPendingLocalState", () => {
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1] ?? {};
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
 		const summaryData = validateSummary(runtime);
 
@@ -195,7 +196,7 @@ describe("getPendingLocalState", () => {
 
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
-		assert.strictEqual(summaryData2.redirectTable.size, 1);
+		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 
 	it("does restart upload after applying stashed ops if expired", async () => {
@@ -210,6 +211,7 @@ describe("getPendingLocalState", () => {
 		await assert.doesNotReject(handleP);
 		const pendingState = await pendingStateP;
 		const pendingBlobs = pendingState[1] ?? {};
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		assert.ok(pendingBlobs[Object.keys(pendingBlobs)[0]].storageId);
 		const summaryData = validateSummary(runtime);
 
@@ -220,6 +222,6 @@ describe("getPendingLocalState", () => {
 
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
-		assert.strictEqual(summaryData2.redirectTable.size, 1);
+		assert.strictEqual(summaryData2.redirectTable?.length, 1);
 	});
 });

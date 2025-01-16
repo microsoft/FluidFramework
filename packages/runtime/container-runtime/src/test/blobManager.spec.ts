@@ -250,7 +250,7 @@ export class MockRuntime
 		const ops = this.ops;
 		this.ops = [];
 		// TODO: better typing
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		ops.forEach((op) => this.blobManager.reSubmit((op as any).metadata));
 	}
 
@@ -295,7 +295,7 @@ export class MockRuntime
 export const validateSummary = (runtime: MockRuntime) => {
 	const summary = runtime.blobManager.summarize();
 	const ids: string[] = [];
-	let redirectTable;
+	let redirectTable: [string, string][] | undefined;
 	for (const [key, attachment] of Object.entries(summary.summary.tree)) {
 		if (attachment.type === SummaryType.Attachment) {
 			ids.push(attachment.id);
@@ -303,7 +303,7 @@ export const validateSummary = (runtime: MockRuntime) => {
 			assert.strictEqual(key, redirectTableBlobName);
 			assert(attachment.type === SummaryType.Blob);
 			assert(typeof attachment.content === "string");
-			redirectTable = new Map(JSON.parse(attachment.content));
+			redirectTable = [...new Map<string, string>(JSON.parse(attachment.content)).entries()];
 		}
 	}
 	return { ids, redirectTable };
@@ -351,7 +351,7 @@ describe("BlobManager", () => {
 
 		const onNoPendingBlobs = () => {
 			// Accessing private field
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		};
 
@@ -360,7 +360,7 @@ describe("BlobManager", () => {
 
 	afterEach(async () => {
 		// Accessing private field
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
 		mockLogger.clear();
@@ -381,7 +381,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 1);
+		assert.strictEqual(summaryData.redirectTable?.length, 1);
 	});
 
 	it("hasPendingBlobs", async () => {
@@ -396,7 +396,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 2);
-		assert.strictEqual(summaryData.redirectTable.size, 2);
+		assert.strictEqual(summaryData.redirectTable?.length, 2);
 	});
 
 	it("NoPendingBlobs count", async () => {
@@ -414,7 +414,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(count, 2);
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 3);
-		assert.strictEqual(summaryData.redirectTable.size, 3);
+		assert.strictEqual(summaryData.redirectTable?.length, 3);
 	});
 
 	it("detached snapshot", async () => {
@@ -436,7 +436,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(runtime.blobManager.hasPendingBlobs, false);
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 1);
+		assert.strictEqual(summaryData.redirectTable?.length, 1);
 	});
 
 	it("uploads while disconnected", async () => {
@@ -448,7 +448,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 1);
+		assert.strictEqual(summaryData.redirectTable?.length, 1);
 	});
 
 	it("close container if blob expired", async () => {
@@ -476,7 +476,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 1);
+		assert.strictEqual(summaryData.redirectTable?.length, 1);
 	});
 
 	it("upload fails gracefully", async () => {
@@ -514,7 +514,7 @@ describe("BlobManager", () => {
 		assert(handleP);
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 1);
+		assert.strictEqual(summaryData.redirectTable?.length, 1);
 	});
 
 	it("completes after disconnection while op in flight", async () => {
@@ -531,7 +531,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 2);
+		assert.strictEqual(summaryData.redirectTable?.length, 2);
 	});
 
 	it("multiple disconnect/connects", async () => {
@@ -553,7 +553,7 @@ describe("BlobManager", () => {
 		await assert.doesNotReject(handleP2);
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 2);
-		assert.strictEqual(summaryData.redirectTable.size, 2);
+		assert.strictEqual(summaryData.redirectTable?.length, 2);
 	});
 
 	it("handles deduped IDs", async () => {
@@ -578,7 +578,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 6);
+		assert.strictEqual(summaryData.redirectTable?.length, 6);
 	});
 
 	it("handles deduped IDs in detached", async () => {
@@ -615,7 +615,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 4);
+		assert.strictEqual(summaryData.redirectTable?.length, 4);
 	});
 
 	it("can load from summary", async () => {
@@ -634,12 +634,12 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 3);
+		assert.strictEqual(summaryData.redirectTable?.length, 3);
 
 		const runtime2 = new MockRuntime(mc, summaryData, true);
 		const summaryData2 = validateSummary(runtime2);
 		assert.strictEqual(summaryData2.ids.length, 1);
-		assert.strictEqual(summaryData2.redirectTable.size, 3);
+		assert.strictEqual(summaryData2.redirectTable?.length, 3);
 	});
 
 	it("handles duplicate remote upload", async () => {
@@ -652,7 +652,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 2);
+		assert.strictEqual(summaryData.redirectTable?.length, 2);
 	});
 
 	it("handles duplicate remote upload between upload and op", async () => {
@@ -666,7 +666,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 2);
+		assert.strictEqual(summaryData.redirectTable?.length, 2);
 	});
 
 	it("handles duplicate remote upload with local ID", async () => {
@@ -680,7 +680,7 @@ describe("BlobManager", () => {
 
 		const summaryData = validateSummary(runtime);
 		assert.strictEqual(summaryData.ids.length, 1);
-		assert.strictEqual(summaryData.redirectTable.size, 2);
+		assert.strictEqual(summaryData.redirectTable?.length, 2);
 	});
 
 	it("includes blob IDs in summary while attaching", async () => {
@@ -694,7 +694,7 @@ describe("BlobManager", () => {
 		// IDs since this summary will be used to create the document
 		const summaryData = await runtime.attach();
 		assert.strictEqual(summaryData?.ids.length, 3);
-		assert.strictEqual(summaryData?.redirectTable.size, 3);
+		assert.strictEqual(summaryData?.redirectTable?.length, 3);
 	});
 
 	it("all blobs attached", async () => {
@@ -718,7 +718,7 @@ describe("BlobManager", () => {
 	it("runtime disposed during readBlob - log no error", async () => {
 		const someId = "someId";
 		// Accessing private field
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		(runtime.blobManager as any).setRedirection(someId, undefined); // To appease an assert
 
 		// Mock storage.readBlob to dispose the runtime and throw an error
@@ -759,9 +759,13 @@ describe("BlobManager", () => {
 				// TODO: better typing
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.status, undefined);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.uploadTime, undefined);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.acked, undefined);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
 			const summaryData = validateSummary(runtime);
@@ -784,8 +788,11 @@ describe("BlobManager", () => {
 				// TODO: better typing
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.uploadTime, undefined);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.acked, false);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.message, "uploadBlob aborted");
 			}
 			assert(handleP);
@@ -862,7 +869,7 @@ describe("BlobManager", () => {
 			await assert.doesNotReject(handleP);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 1);
-			assert.strictEqual(summaryData.redirectTable.size, 1);
+			assert.strictEqual(summaryData.redirectTable?.length, 1);
 		});
 
 		it("abort while waiting for op", async () => {
@@ -885,8 +892,11 @@ describe("BlobManager", () => {
 				// TODO: better typing
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.message, "uploadBlob aborted");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.ok(error.uploadTime);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.acked, false);
 			}
 			await assert.rejects(handleP);
@@ -913,8 +923,11 @@ describe("BlobManager", () => {
 				// TODO: better typing
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} catch (error: any) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.message, "uploadBlob aborted");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.ok(error.uploadTime);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.strictEqual(error.acked, false);
 			}
 			await runtime.connect();
@@ -967,7 +980,7 @@ describe("BlobManager", () => {
 
 		beforeEach(() => {
 			// Mutating private field
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			redirectTable = (runtime.blobManager as any).redirectTable;
 		});
 
