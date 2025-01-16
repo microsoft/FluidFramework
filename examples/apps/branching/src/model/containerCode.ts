@@ -13,7 +13,7 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { IGroceryList, IGroceryListAppModel } from "../modelInterfaces.js";
 
 import { GroceryListAppModel } from "./appModel.js";
-import { NewTreeInventoryListFactory } from "./newTreeInventoryList.js";
+import { GroceryListFactory } from "./groceryList.js";
 
 export const newTreeInventoryListId = "new-tree-inventory-list";
 
@@ -23,7 +23,7 @@ export const newTreeInventoryListId = "new-tree-inventory-list";
 export class GroceryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IGroceryListAppModel> {
 	public constructor() {
 		super(
-			new Map([NewTreeInventoryListFactory.registryEntry]), // registryEntries
+			new Map([GroceryListFactory.registryEntry]), // registryEntries
 			{ enableRuntimeIdCompressor: "on" },
 		);
 	}
@@ -32,9 +32,7 @@ export class GroceryListContainerRuntimeFactory extends ModelContainerRuntimeFac
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const newTreeInventoryList = await runtime.createDataStore(
-			NewTreeInventoryListFactory.type,
-		);
+		const newTreeInventoryList = await runtime.createDataStore(GroceryListFactory.type);
 		await newTreeInventoryList.trySetAlias(newTreeInventoryListId);
 	}
 

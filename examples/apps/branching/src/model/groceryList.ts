@@ -45,7 +45,7 @@ const sharedTreeKey = "sharedTree";
  * NewTreeInventoryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing an inventory item to abstract out the tree manipulation and access.
  */
-class NewTreeInventoryItem extends TypedEmitter<IGroceryItemEvents> implements IGroceryItem {
+class GroceryItem extends TypedEmitter<IGroceryItemEvents> implements IGroceryItem {
 	private readonly _unregisterChangingEvent: () => void;
 	public get id() {
 		return this._inventoryItemNode.id;
@@ -81,7 +81,7 @@ class NewTreeInventoryItem extends TypedEmitter<IGroceryItemEvents> implements I
 	};
 }
 
-export class NewTreeInventoryList extends DataObject implements IGroceryList {
+export class GroceryList extends DataObject implements IGroceryList {
 	private _sharedTree: ITree | undefined;
 	private get sharedTree(): ITree {
 		if (this._sharedTree === undefined) {
@@ -96,7 +96,7 @@ export class NewTreeInventoryList extends DataObject implements IGroceryList {
 		}
 		return this._inventoryItemList;
 	}
-	private readonly _inventoryItems = new Map<string, NewTreeInventoryItem>();
+	private readonly _inventoryItems = new Map<string, GroceryItem>();
 
 	public readonly addItem = (name: string, quantity: number) => {
 		this.inventoryItemList.insertAtEnd({
@@ -181,13 +181,13 @@ export class NewTreeInventoryList extends DataObject implements IGroceryList {
 
 	private makeInventoryItemFromInventoryItemNode(
 		inventoryItemNode: InventoryItem,
-	): NewTreeInventoryItem {
+	): GroceryItem {
 		const removeItemFromTree = () => {
 			// We pass in the delete capability as a callback to withold this.inventory access from the
 			// inventory items.  AB#6015
 			this.inventoryItemList.removeAt(this.inventoryItemList.indexOf(inventoryItemNode));
 		};
-		const inventoryItem = new NewTreeInventoryItem(inventoryItemNode, removeItemFromTree);
+		const inventoryItem = new GroceryItem(inventoryItemNode, removeItemFromTree);
 		return inventoryItem;
 	}
 }
@@ -197,9 +197,9 @@ export class NewTreeInventoryList extends DataObject implements IGroceryList {
  * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
  * scenario, the fourth argument is not used.
  */
-export const NewTreeInventoryListFactory = new DataObjectFactory<NewTreeInventoryList>(
-	"new-tree-inventory-list",
-	NewTreeInventoryList,
+export const GroceryListFactory = new DataObjectFactory<GroceryList>(
+	"grocery-list",
+	GroceryList,
 	[SharedTree.getFactory()],
 	{},
 );
