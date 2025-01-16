@@ -187,7 +187,10 @@ export function mergeValueDirectory<
 		}
 	}
 	for (const [key, value] of Object.entries(update.items)) {
-		const baseElement: InternalTypes.ValueDirectory<T> | InternalTypes.ValueOptionalState<T> | undefined = mergeBase.items[key];
+		const baseElement:
+			| InternalTypes.ValueDirectory<T>
+			| InternalTypes.ValueOptionalState<T>
+			| undefined = mergeBase.items[key];
 		mergeBase.items[key] = mergeValueDirectory(baseElement, value, timeDelta);
 	}
 	return mergeBase;

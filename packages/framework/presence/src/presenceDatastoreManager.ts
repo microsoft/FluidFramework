@@ -398,7 +398,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
 				// notes itself to be ignored.
-				let workspaceDatastore: ValueElementMap<PresenceStatesSchema> | undefined = this.datastore[workspaceAddress];
+				let workspaceDatastore: ValueElementMap<PresenceStatesSchema> | undefined =
+					this.datastore[workspaceAddress];
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
 					if (!workspaceAddress.startsWith("system:")) {
