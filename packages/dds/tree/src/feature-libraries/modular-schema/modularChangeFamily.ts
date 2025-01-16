@@ -2097,12 +2097,8 @@ function intoDeltaImpl(
 		if (fieldChanges !== undefined && fieldChanges.length > 0) {
 			delta.set(field, fieldChanges);
 		}
-		if (fieldGlobal !== undefined) {
-			fieldGlobal.forEach((c) => global.push(c));
-		}
-		if (fieldRename !== undefined) {
-			fieldRename.forEach((r) => rename.push(r));
-		}
+		fieldGlobal?.forEach((c) => global.push(c));
+		fieldRename?.forEach((r) => rename.push(r));
 	}
 	return delta;
 }
