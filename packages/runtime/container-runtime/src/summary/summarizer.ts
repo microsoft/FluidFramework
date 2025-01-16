@@ -55,7 +55,7 @@ export class SummarizingWarning
 		super(errorMessage);
 	}
 
-	static wrap(error: any, logged: boolean = false, logger: ITelemetryLoggerExt) {
+	static wrap(error: unknown, logged: boolean = false, logger: ITelemetryLoggerExt) {
 		const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
 		return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
 	}
@@ -84,12 +84,14 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
 	constructor(
-		/** Reference to runtime that created this object.
+		/**
+		 * Reference to runtime that created this object.
 		 * i.e. runtime with clientType === "summarizer"
 		 */
 		private readonly runtime: ISummarizerRuntime,
 		private readonly configurationGetter: () => ISummaryConfiguration,
-		/** Represents an object that can generate summary.
+		/**
+		 * Represents an object that can generate summary.
 		 * In practical terms, it's same runtime (this.runtime) with clientType === "summarizer".
 		 */
 		private readonly internalsProvider: ISummarizerInternalsProvider,
@@ -259,7 +261,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		this._heuristicData = new SummarizeHeuristicData(
 			this.runtime.deltaManager.lastSequenceNumber,
 			{
-				/** summary attempt baseline for heuristics */
+				/**
+				 * summary attempt baseline for heuristics
+				 */
 				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
 				summaryTime: Date.now(),
 			} as const,
@@ -376,13 +380,15 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		this._heuristicData?.recordAttempt(summaryRefSeqNum);
 	}
 
-	private readonly forwardedEvents = new Map<any, () => void>();
+	private readonly forwardedEvents = new Map<string, () => void>();
 
 	private setupForwardedEvents() {
 		["summarize", "summarizeAllAttemptsFailed"].forEach((event) => {
 			const listener = (...args: any[]) => {
 				this.emit(event, ...args);
 			};
+			// TODO: better typing here
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.runningSummarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
 		});

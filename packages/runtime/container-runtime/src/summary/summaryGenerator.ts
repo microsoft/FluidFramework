@@ -43,7 +43,9 @@ export type raceTimerResult<T> =
 	| { result: IPromiseTimerResult["timerResult"] }
 	| { result: "cancelled" };
 
-/** Helper function to wait for a promise or PromiseTimer to elapse. */
+/**
+ * Wait for a promise or PromiseTimer to elapse.
+ */
 export async function raceTimer<T>(
 	promise: Promise<T>,
 	timer: Promise<IPromiseTimerResult>,
@@ -95,9 +97,13 @@ export type SummarizeReason =
 	 * stay connected long enough for summarizer client to catch up.
 	 */
 	| "lastSummary"
-	/** On-demand summary requested with specified reason. */
+	/**
+	 * On-demand summary requested with specified reason.
+	 */
 	| `onDemand;${string}`
-	/** Enqueue summarize attempt with specified reason. */
+	/**
+	 * Enqueue summarize attempt with specified reason.
+	 */
 	| `enqueue;${string}`;
 
 const summarizeErrors = {
