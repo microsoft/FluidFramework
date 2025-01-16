@@ -350,8 +350,7 @@ describe("BlobManager", () => {
 		};
 
 		const onNoPendingBlobs = () => {
-			// Accessing private field
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
 			assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		};
 
@@ -359,8 +358,7 @@ describe("BlobManager", () => {
 	});
 
 	afterEach(async () => {
-		// Accessing private field
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
 		mockLogger.clear();

@@ -118,8 +118,7 @@ const changeConnectionState = (
 	const audience = runtime.getAudience() as MockAudience;
 	audience.setCurrentClientId(clientId);
 
-	// Modifying private field
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
 	(runtime as any)._getClientId = () => clientId;
 
 	runtime.setConnectionState(connected, clientId);
@@ -150,8 +149,7 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 }
 
 function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
-	// Modifying private field
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
 	(containerRuntime as any).channelCollection = {
 		setConnectionState: (_connected: boolean, _clientId?: string) => {},
 		// Pass data store op right back to ContainerRuntime
@@ -934,8 +932,7 @@ describe("Runtime", () => {
 				pendingStateManager: PendingStateManager,
 				_maxReconnects: number | undefined = undefined,
 			) {
-				// Modifying private fields
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- Modifying private properties
 				const runtime = containerRuntime as any;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				runtime.pendingStateManager = pendingStateManager;
