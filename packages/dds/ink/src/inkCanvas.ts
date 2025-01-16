@@ -35,7 +35,7 @@ class Vector {
 	) {}
 
 	public length(): number {
-		return Math.hypot(this.x * this.x + this.y * this.y);
+		return Math.hypot(this.x, this.y);
 	}
 }
 
@@ -190,9 +190,7 @@ export class InkCanvas {
 
 	private handlePointerMove(evt: PointerEvent): void {
 		if (this.localActiveStrokeMap.has(evt.pointerId)) {
-			const evts = (
-				evt as PointerEvent & { getCoalescedEvents?: () => PointerEvent[] }
-			)?.getCoalescedEvents?.() ?? [evt];
+			const evts = evt.getCoalescedEvents();
 			for (const e of evts) {
 				this.appendPointerEventToStroke(e);
 			}
