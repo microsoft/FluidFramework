@@ -717,8 +717,7 @@ describe("BlobManager", () => {
 
 	it("runtime disposed during readBlob - log no error", async () => {
 		const someId = "someId";
-		// Accessing private field
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call -- Accessing private property
 		(runtime.blobManager as any).setRedirection(someId, undefined); // To appease an assert
 
 		// Mock storage.readBlob to dispose the runtime and throw an error

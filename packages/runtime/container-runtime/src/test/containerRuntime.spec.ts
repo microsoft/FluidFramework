@@ -342,7 +342,7 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-				(containerRuntime as any).ensureNoDataModelChanges = (callback) => {
+				(containerRuntime as any).ensureNoDataModelChanges = (callback: () => void) => {
 					callback();
 					callsToEnsure++;
 				};
@@ -350,7 +350,7 @@ describe("Runtime", () => {
 
 				// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
 				submitDataStoreOp(containerRuntime, "1", "test", { emptyBatch: true });
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(containerRuntime as any).flush();
 				changeConnectionState(containerRuntime, true, mockClientId);
 
@@ -395,12 +395,12 @@ describe("Runtime", () => {
 
 					// Not connected, so nothing is submitted on flush - just queued in PendingStateManager
 					submitDataStoreOp(containerRuntime, "1", "test");
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					(containerRuntime as any).flush();
 
 					submitDataStoreOp(containerRuntime, "2", "test");
 					changeConnectionState(containerRuntime, true, mockClientId);
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					(containerRuntime as any).flush();
 
 					assert.strictEqual(submittedOps.length, 2);
@@ -526,7 +526,7 @@ describe("Runtime", () => {
 					it("Can't call flush() inside orderSequentially's callback", () => {
 						assert.throws(() =>
 							containerRuntime.orderSequentially(() => {
-								// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 								(containerRuntime as any).flush();
 							}),
 						);
@@ -545,7 +545,7 @@ describe("Runtime", () => {
 						assert.throws(() =>
 							containerRuntime.orderSequentially(() =>
 								containerRuntime.orderSequentially(() => {
-									// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 									(containerRuntime as any).flush();
 								}),
 							),
@@ -565,7 +565,7 @@ describe("Runtime", () => {
 						containerRuntime.orderSequentially(() => {
 							try {
 								containerRuntime.orderSequentially(() => {
-									// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+									// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 									(containerRuntime as any).flush();
 								});
 							} catch (e) {
@@ -619,7 +619,7 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "2", "test");
 							submitDataStoreOp(containerRuntime, "3", "test");
 						});
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(submittedOpsMetadata.length, 3, "3 messages should be sent");
@@ -652,7 +652,7 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "2", "test");
 							submitDataStoreOp(containerRuntime, "3", "test");
 						});
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
 						containerRuntime.orderSequentially(() => {
@@ -660,7 +660,7 @@ describe("Runtime", () => {
 							submitDataStoreOp(containerRuntime, "5", "test");
 							submitDataStoreOp(containerRuntime, "6", "test");
 						});
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 						(containerRuntime as any).flush();
 
 						assert.strictEqual(submittedOpsMetadata.length, 0, "no messages should be sent");
@@ -1353,7 +1353,7 @@ describe("Runtime", () => {
 				});
 
 				// Calling request on the runtime should use the request handler we passed in the runtime's constructor.
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				const responseFromRequestMethod = await (containerRuntime as any).request({
 					url: "/",
 				});
@@ -1393,7 +1393,7 @@ describe("Runtime", () => {
 			it("modifying op content after submit does not reflect in PendingStateManager", () => {
 				const content = { prop1: 1 };
 				submitDataStoreOp(containerRuntime, "1", content);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(containerRuntime as any).flush();
 
 				content.prop1 = 2;

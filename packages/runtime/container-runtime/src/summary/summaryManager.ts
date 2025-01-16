@@ -405,7 +405,7 @@ export class SummaryManager
 
 		if (delayMs > 0) {
 			let timer;
-			let resolveOpPromiseFn;
+			let resolveOpPromiseFn: (value: void | PromiseLike<void>) => void;
 			// Create a listener that will break the delay if we've exceeded the initial delay ops count.
 			const opsListenerFn = () => {
 				if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
