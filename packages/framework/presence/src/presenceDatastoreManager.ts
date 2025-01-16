@@ -118,8 +118,9 @@ function mergeGeneralDatastoreMessageContent(
 		for (const valueManagerKey of Object.keys(workspaceData)) {
 			for (const [clientSessionId, value] of objectEntries(workspaceData[valueManagerKey])) {
 				mergedData[valueManagerKey] ??= {};
-				const oldData = mergedData[valueManagerKey][clientSessionId];
-				mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
+				const oldData = mergedData[valueManagerKey]?.[clientSessionId];
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				mergedData[valueManagerKey]![clientSessionId] = mergeValueDirectory(
 					oldData,
 					value,
 					0, // local values do not need a time shift
@@ -397,7 +398,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
 				// notes itself to be ignored.
-				let workspaceDatastore = this.datastore[workspaceAddress];
+				let workspaceDatastore: ValueElementMap<PresenceStatesSchema> | undefined = this.datastore[workspaceAddress];
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
 					if (!workspaceAddress.startsWith("system:")) {

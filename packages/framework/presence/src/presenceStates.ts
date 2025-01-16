@@ -187,7 +187,7 @@ export function mergeValueDirectory<
 		}
 	}
 	for (const [key, value] of Object.entries(update.items)) {
-		const baseElement = mergeBase.items[key];
+		const baseElement: InternalTypes.ValueDirectory<T> | InternalTypes.ValueOptionalState<T> | undefined = mergeBase.items[key];
 		mergeBase.items[key] = mergeValueDirectory(baseElement, value, timeDelta);
 	}
 	return mergeBase;
@@ -281,7 +281,8 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 				if ("initialData" in newNodeData) {
 					const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
 					datastore[key] ??= {};
-					datastore[key][clientSessionId] = value;
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					datastore[key]![clientSessionId] = value;
 					newValues[key] = value;
 					if (allowableUpdateLatencyMs !== undefined) {
 						cumulativeAllowableUpdateLatencyMs =
@@ -370,7 +371,8 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			} else {
 				this.datastore[key] = {};
 			}
-			this.datastore[key][this.runtime.clientSessionId] = value;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.datastore[key]![this.runtime.clientSessionId] = value;
 			this.runtime.localUpdate(
 				{ [key]: value },
 				{
