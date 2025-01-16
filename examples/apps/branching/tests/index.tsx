@@ -17,8 +17,8 @@ import {
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import React from "react";
-import ReactDOM from "react-dom";
+import { createElement } from "react";
+import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
 import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
@@ -74,17 +74,12 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	const debugDiv = document.createElement("div");
 
 	const render = (groceryList: IGroceryList) => {
-		ReactDOM.unmountComponentAtNode(appDiv);
-		ReactDOM.render(React.createElement(GroceryListView, { groceryList }), appDiv);
+		const appRoot = createRoot(appDiv);
+		appRoot.render(createElement(GroceryListView, { groceryList }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
-		ReactDOM.unmountComponentAtNode(debugDiv);
-		ReactDOM.render(
-			React.createElement(DebugView, {
-				groceryList,
-			}),
-			debugDiv,
-		);
+		const debugRoot = createRoot(debugDiv);
+		debugRoot.render(createElement(DebugView, { groceryList }));
 	};
 
 	// update the browser URL and the window title with the actual container ID
