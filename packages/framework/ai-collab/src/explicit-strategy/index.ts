@@ -169,7 +169,7 @@ export async function generateTreeEdits(
 	// Transform editLog into diffs
 	const diffs: Diff[] = editLog.map((log, index) => ({
 		id: `diff-${index}`,
-		type: log.edit.type as "remove" | "move" | "create" | "change",
+		type: log.edit.type,
 		path: log.edit.explanation,
 	}));
 

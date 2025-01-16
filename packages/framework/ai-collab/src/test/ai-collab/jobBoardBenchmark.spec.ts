@@ -302,6 +302,10 @@ describe.skip("AI Job Listings App Benchmark", () => {
 			return;
 		}
 
+		if (response.status !== "success") {
+			throw new Error("Received an error response from ai collab");
+		}
+
 		const createQaTesterJobTaskResult = measureSubTaskBenchmark(
 			completedTasksBenchmark,
 			taskBencharmarkTitle,
@@ -347,9 +351,6 @@ describe.skip("AI Job Listings App Benchmark", () => {
 		}
 		const foundJohnDoe = createJohnDoeCandidateTask.data;
 		assert(foundJohnDoe !== undefined);
-		if ("diffs" in response) {
-			assert(response.diffs !== undefined);
-		}
 
 		measureSubTaskBenchmark(
 			completedTasksBenchmark,

@@ -200,9 +200,17 @@ export interface Diff {
 	/**
 	 * The type of operation that was performed on the SharedTree.
 	 */
-	type: "create" | "remove" | "change" | "move";
+	type: "insert" | "remove" | "modify" | "move";
 	/**
 	 * The path to the node in the SharedTree.
 	 */
-	path: string;
+	destination: string;
+	/**
+	 * The new value of the node in the SharedTree.
+	 */
+	newValue?: string;
+	/**
+	 * The old value of the node in the SharedTree.
+	 */
+	oldValue?: string;
 }
