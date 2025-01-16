@@ -552,6 +552,8 @@ export interface IGCRuntimeOptions {
 	/**
 	 * Allows additional GC options to be passed.
 	 */
+	// TODO: Use unknown (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	[key: string]: any;
 }
 

@@ -154,10 +154,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 	readonly pkg: Readonly<string[]> | undefined;
 	readonly snapshotTree: ISnapshotTree | undefined;
 	readonly makeLocallyVisibleFn: () => void;
-	/**
-	 * @deprecated 0.16 Issue #1635, #3631
-	 */
-	readonly createProps?: any;
 }
 
 /**
@@ -199,7 +195,7 @@ export abstract class FluidDataStoreContext
 		return this.pkg;
 	}
 
-	public get options(): Record<string | number, any> {
+	public get options(): Record<string | number, unknown> {
 		return this.parentContext.options;
 	}
 
@@ -295,6 +291,7 @@ export abstract class FluidDataStoreContext
 		// We know that if the base snapshot is omitted, then the isRootDataStore flag is not set.
 		// That means we can skip the expensive call to getInitialSnapshotDetails for virtualized datastores,
 		// and get the information from the alias map directly.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 		if (aliasedDataStores !== undefined && (this.baseSnapshot as any)?.omitted === true) {
 			return aliasedDataStores.has(this.id);
 		}
@@ -815,7 +812,7 @@ export abstract class FluidDataStoreContext
 		return runtime.request(request);
 	}
 
-	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
+	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
 		// Summarizer clients should not submit messages.
@@ -973,12 +970,12 @@ export abstract class FluidDataStoreContext
 		return {};
 	}
 
-	public reSubmit(type: string, contents: any, localOpMetadata: unknown) {
+	public reSubmit(type: string, contents: unknown, localOpMetadata: unknown) {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
 		this.channel.reSubmit(type, contents, localOpMetadata);
 	}
 
-	public rollback(type: string, contents: any, localOpMetadata: unknown) {
+	public rollback(type: string, contents: unknown, localOpMetadata: unknown) {
 		if (!this.channel) {
 			throw new Error("Channel must exist when rolling back ops");
 		}
@@ -988,7 +985,7 @@ export abstract class FluidDataStoreContext
 		this.channel.rollback(type, contents, localOpMetadata);
 	}
 
-	public async applyStashedOp(contents: any): Promise<unknown> {
+	public async applyStashedOp(contents: unknown): Promise<unknown> {
 		if (!this.channel) {
 			await this.realize();
 		}
@@ -1251,10 +1248,6 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
  */
 export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 	private readonly snapshotTree: ISnapshotTree | undefined;
-	/**
-	 * @deprecated 0.16 Issue #1635, #3631
-	 */
-	public readonly createProps?: any;
 
 	constructor(props: ILocalFluidDataStoreContextProps) {
 		super(
@@ -1268,7 +1261,6 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
 
 		this.snapshotTree = props.snapshotTree;
-		this.createProps = props.createProps;
 	}
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {

@@ -328,7 +328,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 					);
 					throw error;
 				}
-				this.referenceUsedRoutes = JSON.parse(summaryNodeWithGC.serializedUsedRoutes);
+				this.referenceUsedRoutes = JSON.parse(
+					summaryNodeWithGC.serializedUsedRoutes,
+				) as string[];
 			}
 		}
 
