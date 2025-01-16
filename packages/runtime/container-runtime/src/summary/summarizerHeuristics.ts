@@ -16,7 +16,9 @@ import {
 } from "./summarizerTypes.js";
 import { SummarizeReason } from "./summaryGenerator.js";
 
-/** Simple implementation of class for tracking summarize heuristic data. */
+/**
+ * Simple implementation of class for tracking summarize heuristic data.
+ */
 export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 	protected _lastAttempt: ISummarizeAttempt;
 	public get lastAttempt(): ISummarizeAttempt {
@@ -57,7 +59,9 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 
 	constructor(
 		public lastOpSequenceNumber: number,
-		/** Baseline attempt data used for comparisons with subsequent attempts/calculations. */
+		/**
+		 * Baseline attempt data used for comparisons with subsequent attempts/calculations.
+		 */
 		attemptBaseline: ISummarizeAttempt,
 	) {
 		this._lastAttempt = attemptBaseline;
@@ -184,7 +188,9 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 	}
 }
 
-/** Strategy used to run a summary when it's been a while since our last successful summary */
+/**
+ * Strategy used to run a summary when it's been a while since our last successful summary
+ */
 class MaxTimeSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
 	public readonly summarizeReason: Readonly<SummarizeReason> = "maxTime";
 
@@ -206,7 +212,9 @@ function getWeightedNumberOfOps(
 	return runtimeOpWeight * runtimeOpCount + nonRuntimeOpWeight * nonRuntimeOpCount;
 }
 
-/** Strategy used to do a weighted analysis on the ops we've processed since the last successful summary */
+/**
+ * Strategy used to do a weighted analysis on the ops we've processed since the last successful summary
+ */
 class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
 	public readonly summarizeReason: Readonly<SummarizeReason> = "maxOps";
 

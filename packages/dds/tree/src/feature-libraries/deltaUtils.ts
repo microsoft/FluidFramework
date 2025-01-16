@@ -39,5 +39,18 @@ export function mapRootChanges<TIn, TOut>(
 			trees: trees.map(func),
 		}));
 	}
+	if (root.global !== undefined) {
+		out.global = root.global.map(({ id, fields }) => ({
+			id,
+			fields,
+		}));
+	}
+	if (root.rename !== undefined) {
+		out.rename = root.rename.map(({ count, oldId, newId }) => ({
+			count,
+			oldId,
+			newId,
+		}));
+	}
 	return out;
 }

@@ -7,7 +7,6 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	type ChangeAtomId,
-	type DeltaFieldChanges,
 	type TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
@@ -43,8 +42,11 @@ import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { NestedChangesIndices } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
+import type {
+	FieldChangeDelta,
+	NestedChangesIndices,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -671,7 +673,7 @@ describe("optionalField", () => {
 	describe("IntoDelta", () => {
 		it("can be converted to a delta when field was empty", () => {
 			const outerNodeId = makeDetachedNodeId(tag, 41);
-			const expected: DeltaFieldChanges = {
+			const expected: FieldChangeDelta = {
 				global: [
 					{
 						id: outerNodeId,
@@ -686,7 +688,7 @@ describe("optionalField", () => {
 		});
 
 		it("can be converted to a delta when restoring content", () => {
-			const expected: DeltaFieldChanges = {
+			const expected: FieldChangeDelta = {
 				local: [
 					{
 						count: 1,
@@ -701,7 +703,7 @@ describe("optionalField", () => {
 		});
 
 		it("can be converted to a delta with only child changes", () => {
-			const expected: DeltaFieldChanges = {
+			const expected: FieldChangeDelta = {
 				local: [
 					{
 						count: 1,
