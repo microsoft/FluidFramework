@@ -3,12 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import { StaticCodeLoader } from "@fluid-example/example-utils";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/legacy";
+import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
+import {
+	createInsecureTinyliciousTestTokenProvider,
+	createInsecureTinyliciousTestUrlResolver,
+	createTinyliciousTestCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/test-utils";
 import React from "react";
 import ReactDOM from "react-dom";
 
 import { GroceryListContainerRuntimeFactory } from "./model/index.js";
-import type { IGroceryListAppModel } from "./modelInterfaces.js";
+import type { IGroceryList, IGroceryListAppModel } from "./modelInterfaces.js";
 import { DebugView, InventoryListAppView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
@@ -35,24 +45,39 @@ const render = (model: IGroceryListAppModel) => {
 	);
 };
 
-async function start(): Promise<void> {
-	const modelLoader = new TinyliciousModelLoader<IGroceryListAppModel>(
-		new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
-	);
+const tokenProvider = createInsecureTinyliciousTestTokenProvider();
+const urlResolver = createInsecureTinyliciousTestUrlResolver();
+const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
 
+async function start(): Promise<void> {
 	let id: string;
-	let model: IGroceryListAppModel;
+	let groceryList: IGroceryList;
 
 	if (location.hash.length === 0) {
-		const createResponse = await modelLoader.createDetached("1.0");
-		model = createResponse.model;
-		id = await createResponse.attach();
+		const container = await createDetachedContainer({
+			urlResolver,
+			documentServiceFactory,
+			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
+			codeDetails: { package: "1.0" },
+		});
+		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		await container.attach(createTinyliciousTestCreateNewRequest());
+		if (container.resolvedUrl === undefined) {
+			throw new Error("Resolved Url not available on attached container");
+		}
+		id = container.resolvedUrl.id;
 	} else {
 		id = location.hash.substring(1);
-		model = await modelLoader.loadExisting(id);
+		const container = await loadExistingContainer({
+			request: { url: id },
+			urlResolver,
+			documentServiceFactory,
+			codeLoader: new StaticCodeLoader(new GroceryListContainerRuntimeFactory()),
+		});
+		groceryList = (await container.getEntryPoint()) as IGroceryList;
 	}
 
-	render(model);
+	render({ groceryList });
 	updateTabForId(id);
 }
 

@@ -7,8 +7,15 @@ import {
 	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type {
+	IContainer,
+	IContainerContext,
+	IRuntime,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/legacy";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import type { IGroceryList, IGroceryListAppModel } from "../modelInterfaces.js";
 
@@ -23,7 +30,7 @@ const groceryListFactory = new GroceryListFactory();
 /**
  * @internal
  */
-export class GroceryListContainerRuntimeFactory extends ModelContainerRuntimeFactory<IGroceryListAppModel> {
+export class GroceryListContainerRuntimeFactoryOld extends ModelContainerRuntimeFactory<IGroceryListAppModel> {
 	public constructor() {
 		super(
 			new Map([[groceryListRegistryKey, Promise.resolve(groceryListFactory)]]), // registryEntries
@@ -47,5 +54,37 @@ export class GroceryListContainerRuntimeFactory extends ModelContainerRuntimeFac
 			groceryListId,
 		);
 		return new GroceryListAppModel(newTreeInventoryList);
+	}
+}
+
+export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
+	public get IRuntimeFactory(): IRuntimeFactory {
+		return this;
+	}
+
+	public async instantiateRuntime(
+		context: IContainerContext,
+		existing: boolean,
+	): Promise<IRuntime> {
+		const provideEntryPoint = async (
+			containerRuntime: IContainerRuntime,
+		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, groceryListId);
+
+		const runtime = await loadContainerRuntime({
+			context,
+			registryEntries: new Map([
+				[groceryListRegistryKey, Promise.resolve(groceryListFactory)],
+			]),
+			provideEntryPoint,
+			existing,
+		});
+
+		if (!existing) {
+			const groceryList = await runtime.createDataStore(groceryListRegistryKey);
+			await groceryList.trySetAlias(groceryListId);
+		}
+		// Any onLoad work would happen here, none needed so far though.
+
+		return runtime;
 	}
 }
