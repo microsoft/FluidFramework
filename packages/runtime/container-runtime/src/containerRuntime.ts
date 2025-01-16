@@ -699,11 +699,14 @@ export function isUnpackedRuntimeMessage(message: ISequencedDocumentMessage): bo
 export const agentSchedulerId = "_scheduler";
 
 // safely check navigator and get the hardware spec value
-export function getDeviceSpec() {
+export function getDeviceSpec(): {
+	deviceMemory?: number | undefined;
+	hardwareConcurrency?: number | undefined;
+} {
 	try {
 		if (typeof navigator === "object" && navigator !== null) {
 			return {
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				deviceMemory: (navigator as any).deviceMemory,
 				hardwareConcurrency: navigator.hardwareConcurrency,
 			};
@@ -772,7 +775,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	if (resolvedContainer.getEntryPoint !== undefined) {
 		fluidObject = await resolvedContainer.getEntryPoint();
 	} else {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 		const response = await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
 		});
@@ -780,7 +783,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		fluidObject = response.value;
 	}
 
@@ -1668,6 +1671,7 @@ export class ContainerRuntime
 			eventName: "GCFeatureMatrix",
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				gcOptions_gcGeneration: this.runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
 		});
@@ -2607,7 +2611,7 @@ export class ContainerRuntime
 	// TODO: markfields: confirm Local- versus Outbound- ContainerRuntimeMessage typing
 	private parseLocalOpContent(serializedContents?: string): LocalContainerRuntimeMessage {
 		assert(serializedContents !== undefined, 0x6d5 /* content must be defined */);
-		const message: LocalContainerRuntimeMessage = JSON.parse(serializedContents);
+		const message = JSON.parse(serializedContents) as LocalContainerRuntimeMessage;
 		assert(message.type !== undefined, 0x6d6 /* incorrect op content format */);
 		return message;
 	}
