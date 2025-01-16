@@ -320,9 +320,7 @@ describe("Pending State Manager", () => {
 							0 /* batchStartCsn */,
 							false /* groupedBatch */,
 						),
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					(closeError: any) =>
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					(closeError: IErrorBase) =>
 						closeError.errorType === ContainerErrorTypes.dataProcessingError,
 				);
 				mockLogger.assertMatch(
