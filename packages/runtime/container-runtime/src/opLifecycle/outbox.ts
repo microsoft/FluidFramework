@@ -345,7 +345,6 @@ export class Outbox {
 				: this.compressAndChunkBatch(
 						shouldGroup ? this.params.groupingManager.groupBatch(rawBatch) : rawBatch,
 					);
-
 			clientSequenceNumber = this.sendBatch(processedBatch);
 			assert(
 				clientSequenceNumber === undefined || clientSequenceNumber >= 0,
