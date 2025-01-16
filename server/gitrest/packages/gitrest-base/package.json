@@ -52,7 +52,7 @@
 	},
 	"dependencies": {
 		"@fluidframework/common-utils": "^1.1.1",
-		"@fluidframework/gitresources": "6.0.0-310414",
+		"@fluidframework/gitresources": "6.0.0-317195",
 		"@fluidframework/protocol-base": "6.0.0-317195",
 		"@fluidframework/protocol-definitions": "^3.2.0",
 		"@fluidframework/server-services-client": "6.0.0-317195",
