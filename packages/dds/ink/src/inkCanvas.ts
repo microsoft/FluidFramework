@@ -190,8 +190,10 @@ export class InkCanvas {
 
 	private handlePointerMove(evt: PointerEvent): void {
 		if (this.localActiveStrokeMap.has(evt.pointerId)) {
-			const evts = evt.getCoalescedEvents();
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+			const evts = (evt as any)?.getCoalescedEvents() ?? ([evt] as PointerEvent[]);
 			for (const e of evts) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				this.appendPointerEventToStroke(e);
 			}
 		}
