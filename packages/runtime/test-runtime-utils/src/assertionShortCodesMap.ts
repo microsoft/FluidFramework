@@ -819,7 +819,7 @@ export const shortCodeMap = {
 	"0x599": "Expected local branch to contain revision",
 	"0x5a1": "Unable to revert to undefined revision",
 	"0x5a3": "runtimeInstantiated fired but runtime is still undefined",
-	"0x5a4": "Batch should not be empty",
+	"0x5a4": "Batch should not be empty and should contain a single message",
 	"0x5a5": "Expected number of chunks",
 	"0x5a6": "Compression should not have happened if the loader does not support it",
 	"0x5a7": "ContainerRuntime entryPoint was not initialized",
