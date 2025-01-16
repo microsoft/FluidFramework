@@ -37,14 +37,14 @@ export class InkFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
 	 */
-	public get type() {
+	public get type(): string {
 		return InkFactory.Type;
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
 	 */
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return InkFactory.Attributes;
 	}
 
