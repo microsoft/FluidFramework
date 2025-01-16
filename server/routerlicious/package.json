@@ -71,19 +71,19 @@
 		"all": true,
 		"cache-dir": "nyc/.cache",
 		"exclude": [
-      "**/*.d.*ts",
+			"**/*.d.*ts",
 			"**/src/test/**/*.*ts",
 			"**/dist/test/**/*.*js",
 			"**/lib/test/**/*.*js",
-      "**/node_modules/**/*"
-    ],
+			"**/node_modules/**/*"
+		],
 		"include": [
-      "packages/**/src/**/*.*ts",
+			"packages/**/src/**/*.*ts",
 			"packages/**/dist/**/*.*js",
 			"packages/**/lib/**/*.*js"
-    ],
+		],
 		"report-dir": "nyc/report",
-    "reporter": [
+		"reporter": [
 			"cobertura",
 			"html",
 			"text"
