@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 
-import { booleanCases, generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	describeCompat,
 	describeInstallVersions,
@@ -117,77 +117,64 @@ const compressionSuite = (getProvider) => {
 				  }
 				| {
 						compression: true;
-	chunking: boolean;
-};
-grouping: boolean;
-|
-			compressionAndChunking:
-				|
-{
-	compression: false;
-	chunking: false;
-}
-|
-{
-	compression: true;
-	chunking: true;
-}
-grouping: boolean;
-}>(
-{
-	compressionAndChunking: [
-		{ compression: false, chunking: false },
-		{ compression: true, chunking: false },
-		{ compression: true, chunking: true },
-	],
-		grouping;
-	: [true, false],
-}
-).filter((option) => !option.compressionAndChunking.compression || option.grouping)
+						chunking: boolean;
+				  };
+			grouping: boolean;
+		}>({
+			compressionAndChunking: [
+				{ compression: false, chunking: false },
+				{ compression: true, chunking: false },
+				{ compression: true, chunking: true },
+			],
+			grouping: [true, false],
+		}).filter((option) => !option.compressionAndChunking.compression || option.grouping);
 
-messageGenerationOptions.forEach((option) => {
-	it(`Correctly processes messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, async function () {
-		// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
-		if (provider.type === "TestObjectProviderWithVersionedLoad") {
-			this.skip();
-		}
-		// This test has unreproducible flakiness against r11s (non-FRS).
-		// This test simply verifies all combinations of compression, chunking, and op grouping work end-to-end.
-		if (provider.driver.type === "routerlicious" && provider.driver.endpointName !== "frs") {
-			this.skip();
-		}
-		await setupContainers({
-			compressionOptions: {
-				minimumBatchSizeInBytes: option.compressionAndChunking.compression
-					? 10
-					: Number.POSITIVE_INFINITY,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-			chunkSizeInBytes: option.compressionAndChunking.chunking
-				? 100
-				: Number.POSITIVE_INFINITY,
-			enableGroupedBatching: option.grouping,
-		});
-		const values = [
-			generateRandomStringOfSize(100),
-			generateRandomStringOfSize(100),
-			generateRandomStringOfSize(100),
-		];
-		localDataObject.context.containerRuntime.orderSequentially(() => {
-			for (let i = 0; i < values.length; i++) {
-				localMap.set(`${i}`, values[i]);
-			}
-		});
+		messageGenerationOptions.forEach((option) => {
+			it(`Correctly processes messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, async function () {
+				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
+				if (provider.type === "TestObjectProviderWithVersionedLoad") {
+					this.skip();
+				}
+				// This test has unreproducible flakiness against r11s (non-FRS).
+				// This test simply verifies all combinations of compression, chunking, and op grouping work end-to-end.
+				if (
+					provider.driver.type === "routerlicious" &&
+					provider.driver.endpointName !== "frs"
+				) {
+					this.skip();
+				}
+				await setupContainers({
+					compressionOptions: {
+						minimumBatchSizeInBytes: option.compressionAndChunking.compression
+							? 10
+							: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					chunkSizeInBytes: option.compressionAndChunking.chunking
+						? 100
+						: Number.POSITIVE_INFINITY,
+					enableGroupedBatching: option.grouping,
+				});
+				const values = [
+					generateRandomStringOfSize(100),
+					generateRandomStringOfSize(100),
+					generateRandomStringOfSize(100),
+				];
+				localDataObject.context.containerRuntime.orderSequentially(() => {
+					for (let i = 0; i < values.length; i++) {
+						localMap.set(`${i}`, values[i]);
+					}
+				});
 
-		await provider.ensureSynchronized();
-		for (let i = 0; i < values.length; i++) {
-			assert.equal(localMap.get(`${i}`), values[i]);
-			assert.equal(remoteMap.get(`${i}`), values[i]);
-		}
+				await provider.ensureSynchronized();
+				for (let i = 0; i < values.length; i++) {
+					assert.equal(localMap.get(`${i}`), values[i]);
+					assert.equal(remoteMap.get(`${i}`), values[i]);
+				}
+			});
+		});
 	});
-});
-})
-}
+};
 
 describeCompat("Op Compression", "FullCompat", (getTestObjectProvider) =>
 	compressionSuite(async () => getTestObjectProvider()),
