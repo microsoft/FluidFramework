@@ -136,7 +136,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * - usedRoutes: This is used to figure out if the used state of this node changed since last summary.
 	 * - gcData: The garbage collection data of this node that is required for running GC.
 	 */
-	private async loadBaseGCDetails() {
+	private async loadBaseGCDetails(): Promise<void> {
 		if (this.baseGCDetailsLoaded) {
 			return;
 		}
@@ -365,7 +365,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 * snapshot and the child node wasn't created then. If a child is created after that, its GC details should be
 		 * the one from the downloaded snapshot and not the base GC details.
 		 */
-		const getChildBaseGCDetailsFn = async () => {
+		const getChildBaseGCDetailsFn = async (): Promise<IGarbageCollectionDetailsBase> => {
 			const childNodesBaseGCDetails = await this.childNodesBaseGCDetailsP;
 			return childNodesBaseGCDetails.get(id) ?? {};
 		};

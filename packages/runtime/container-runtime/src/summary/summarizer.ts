@@ -391,7 +391,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 	private setupForwardedEvents(): void {
 		["summarize", "summarizeAllAttemptsFailed"].forEach((event) => {
-			const listener = (...args: any[]) => {
+			const listener = (...args: any[]): void => {
 				this.emit(event, ...args);
 			};
 			// TODO: better typing here
