@@ -13,6 +13,13 @@ import {
 } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
+import {
+	Lumberjack,
+	LumberEventName,
+	HttpProperties,
+	BaseTelemetryProperties,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
 
@@ -170,6 +177,8 @@ export class BasicRestWrapper extends RestWrapper {
 		private readonly refreshTokenIfNeeded?: (
 			authorizationHeader: RawAxiosRequestHeaders,
 		) => Promise<RawAxiosRequestHeaders | undefined>,
+		private readonly serviceName?: string,
+		private readonly enableTelemetry = false,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -180,9 +189,10 @@ export class BasicRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<T> {
 		const options = { ...requestConfig };
+		const correlationId = this.getCorrelationId?.() ?? uuid();
 		options.headers = this.generateHeaders(
 			options.headers,
-			this.getCorrelationId?.() ?? uuid(),
+			correlationId,
 			this.getTelemetryContextProperties?.(),
 		);
 
@@ -202,6 +212,8 @@ export class BasicRestWrapper extends RestWrapper {
 		}
 
 		return new Promise<T>((resolve, reject) => {
+			const startTime = performance.now();
+			let axiosError: AxiosError<any>;
 			this.axios
 				.request<T>(options)
 				.then((response) => {
@@ -248,6 +260,7 @@ export class BasicRestWrapper extends RestWrapper {
 
 						this.request<T>(retryConfig, statusCode, false).then(resolve).catch(reject);
 					} else {
+						axiosError = error;
 						const errorSourceMessage = `[${error?.config?.method ?? ""}] request to [${
 							error?.config?.baseURL ?? options.baseURL ?? ""
 						}] failed with [${error.response?.status}] status code`;
@@ -290,6 +303,32 @@ export class BasicRestWrapper extends RestWrapper {
 								source: errorSourceMessage,
 							};
 							reject(createFluidServiceNetworkError(500, details));
+						}
+					}
+				})
+				.finally(() => {
+					if (this.enableTelemetry) {
+						const properties = {
+							[HttpProperties.method]: options.method ?? "METHOD_UNAVAILABLE",
+							[HttpProperties.url]: options.url ?? "URL_UNAVAILABLE",
+							[BaseTelemetryProperties.correlationId]: correlationId,
+							[CommonProperties.serviceName]: this.serviceName,
+							[CommonProperties.telemetryGroupName]: "rest_wrapper",
+						};
+						const httpMetric = Lumberjack.newLumberMetric(
+							LumberEventName.RestWrapper,
+							properties,
+						);
+						const endTime = performance.now();
+						httpMetric.setProperty("durationInMs", endTime - startTime);
+						if (axiosError) {
+							httpMetric.setProperty(
+								HttpProperties.status,
+								axiosError?.response?.status ?? "STATUS_UNAVAILABLE",
+							);
+							httpMetric.error("HttpRequest failed");
+						} else {
+							httpMetric.success("HttpRequest completed");
 						}
 					}
 				});

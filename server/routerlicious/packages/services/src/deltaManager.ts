@@ -116,6 +116,8 @@ export class DeltaManager implements IDeltaService {
 			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			refreshTokenIfNeeded,
+			"deltaManager" /* service */,
+			true /* enableTelemetry */,
 		);
 		return restWrapper;
 	}
