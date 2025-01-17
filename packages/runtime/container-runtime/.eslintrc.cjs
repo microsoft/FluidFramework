@@ -60,7 +60,7 @@ module.exports = {
 		"unicorn/prefer-optional-catch-binding": "error",
 		"unicorn/prefer-spread": "error",
 		"unicorn/switch-case-braces": "error",
-		// "unicorn/throw-new-error": "error",
+		"unicorn/throw-new-error": "error",
 
 		// #endregion
 	},
