@@ -232,6 +232,9 @@ class WeightedOpsSummaryHeuristicStrategy implements ISummaryHeuristicStrategy {
 	}
 }
 
-function getDefaultSummaryHeuristicStrategies() {
+function getDefaultSummaryHeuristicStrategies(): (
+	| MaxTimeSummaryHeuristicStrategy
+	| WeightedOpsSummaryHeuristicStrategy
+)[] {
 	return [new MaxTimeSummaryHeuristicStrategy(), new WeightedOpsSummaryHeuristicStrategy()];
 }

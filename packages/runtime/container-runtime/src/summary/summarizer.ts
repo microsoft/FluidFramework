@@ -60,7 +60,8 @@ export class SummarizingWarning
 		logged: boolean = false,
 		logger: ITelemetryLoggerExt,
 	): SummarizingWarning {
-		const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
+		const newErrorFn = (errMsg: string): SummarizingWarning =>
+			new SummarizingWarning(errMsg, logged);
 		return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
 	}
 }
@@ -388,7 +389,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 	private readonly forwardedEvents = new Map<string, () => void>();
 
-	private setupForwardedEvents() {
+	private setupForwardedEvents(): void {
 		["summarize", "summarizeAllAttemptsFailed"].forEach((event) => {
 			const listener = (...args: any[]) => {
 				this.emit(event, ...args);
@@ -400,7 +401,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		});
 	}
 
-	private cleanupForwardedEvents() {
+	private cleanupForwardedEvents(): void {
 		this.forwardedEvents.forEach((listener, event) =>
 			this.runningSummarizer?.off(event, listener),
 		);
