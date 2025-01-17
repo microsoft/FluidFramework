@@ -230,7 +230,7 @@ describe("Outbox", () => {
 			groupingManager: new OpGroupingManager(
 				params.opGroupingConfig ?? {
 					groupedBatchingEnabled: false,
-					opCountThreshold: Infinity,
+					opCountThreshold: Number.POSITIVE_INFINITY,
 				},
 				mockLogger,
 			),

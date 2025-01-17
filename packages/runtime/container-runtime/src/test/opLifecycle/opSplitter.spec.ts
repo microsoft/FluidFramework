@@ -469,7 +469,7 @@ describe("OpSplitter", () => {
 			value: crypto.randomBytes(contentSizeInBytes / 2).toString("hex"),
 		};
 		return {
-			referenceSequenceNumber: Infinity,
+			referenceSequenceNumber: Number.POSITIVE_INFINITY,
 			metadata: { meta: "data" },
 			compression: CompressionAlgorithms.lz4,
 			contents: JSON.stringify(contents),

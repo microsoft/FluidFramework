@@ -38,7 +38,7 @@ describe("RemoteMessageProcessor", () => {
 			new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
-					opCountThreshold: Infinity,
+					opCountThreshold: Number.POSITIVE_INFINITY,
 				},
 				logger,
 			),
@@ -53,7 +53,7 @@ describe("RemoteMessageProcessor", () => {
 					: {
 							batch: batchMetadata,
 						},
-			referenceSequenceNumber: Infinity,
+			referenceSequenceNumber: Number.POSITIVE_INFINITY,
 			contents: JSON.stringify({
 				contents: {
 					key: value,
@@ -81,7 +81,7 @@ describe("RemoteMessageProcessor", () => {
 			compression: undefined,
 			sequenceNumber: seqNum,
 			clientSequenceNumber: clientSeqNum,
-			referenceSequenceNumber: Infinity,
+			referenceSequenceNumber: Number.POSITIVE_INFINITY,
 			contents: {
 				key: value,
 			},
@@ -113,7 +113,7 @@ describe("RemoteMessageProcessor", () => {
 		it(`Correctly processes single batch: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
 				contentSizeInBytes: 1,
-				referenceSequenceNumber: Infinity,
+				referenceSequenceNumber: Number.POSITIVE_INFINITY,
 				messages: [
 					getOutboundMessage("a", true),
 					getOutboundMessage("b"),
@@ -150,7 +150,7 @@ describe("RemoteMessageProcessor", () => {
 							return 0;
 						},
 						2,
-						Infinity,
+						Number.POSITIVE_INFINITY,
 						mockLogger,
 					);
 					batch = splitter.splitFirstBatchMessage(batch);

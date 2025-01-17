@@ -34,7 +34,10 @@ describe("BatchManager", () => {
 
 	it("BatchManager: 'infinity' hard limit allows everything", () => {
 		const message = { contents: generateStringOfSize(1024) } as unknown as BatchMessage;
-		const batchManager = new BatchManager({ ...defaultOptions, hardLimit: Infinity });
+		const batchManager = new BatchManager({
+			...defaultOptions,
+			hardLimit: Number.POSITIVE_INFINITY,
+		});
 
 		for (let i = 1; i <= 10; i++) {
 			assert.equal(batchManager.push(message, /* reentrant */ false), true);

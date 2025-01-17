@@ -611,7 +611,7 @@ export enum CompressionAlgorithms {
  * @alpha
  */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
-	minimumBatchSizeInBytes: Infinity,
+	minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 	compressionAlgorithm: CompressionAlgorithms.lz4,
 };
 
@@ -1118,7 +1118,7 @@ export class ContainerRuntime
 		};
 
 		const compressionLz4 =
-			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
+			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
 		const documentSchemaController = new DocumentsSchemaController(
