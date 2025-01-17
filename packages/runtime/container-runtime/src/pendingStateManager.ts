@@ -551,7 +551,7 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Check if the incoming batch matches the batch info for the next pending message.
 	 */
-	private onLocalBatchBegin(batchStart: BatchStartInfo, batchLength?: number) {
+	private onLocalBatchBegin(batchStart: BatchStartInfo, batchLength?: number): void {
 		// Get the next message from the pending queue. Verify a message exists.
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(

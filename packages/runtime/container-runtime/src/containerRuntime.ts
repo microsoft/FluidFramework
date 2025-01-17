@@ -835,8 +835,11 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
  * This allows new runtime to make documents not openable for old runtimes, one explicit document schema control is enabled.
  * Please see addMetadataToSummary() as well
  */
-// eslint-disable-next-line import/no-deprecated
-function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined) {
+function lastMessageFromMetadata(
+	// eslint-disable-next-line import/no-deprecated
+	metadata: IContainerRuntimeMetadata | undefined,
+	// eslint-disable-next-line import/no-deprecated
+): ISummaryMetadataMessage | undefined {
 	return metadata?.documentSchema?.runtime?.explicitSchemaControl
 		? metadata?.lastMessage
 		: metadata?.message;
@@ -1120,7 +1123,7 @@ export class ContainerRuntime
 			idCompressorMode = desiredIdCompressorMode;
 		}
 
-		const createIdCompressorFn = async () => {
+		const createIdCompressorFn = async (): Promise<IIdCompressor & IIdCompressorCore> => {
 			const { createIdCompressor, deserializeIdCompressor, createSessionId } = await import(
 				"@fluidframework/id-compressor/internal"
 			);
@@ -2138,7 +2141,7 @@ export class ContainerRuntime
 				// Only create a SummaryManager and SummarizerClientElection
 
 				// if summaries are enabled and we are not the summarizer client.
-				const defaultAction = () => {
+				const defaultAction = (): void => {
 					if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
 						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
 						// unregister default to no log on every op after falling behind
@@ -2569,7 +2572,7 @@ export class ContainerRuntime
 	/**
 	 * Adds the container's metadata to the given summary tree.
 	 */
-	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats) {
+	private addMetadataToSummary(summaryTree: ISummaryTreeWithStats): void {
 		// The last message processed at the time of summary. If there are no new messages, use the message from the
 		// last summary.
 		const message =
@@ -2689,11 +2692,11 @@ export class ContainerRuntime
 		return this.consecutiveReconnects < this.maxConsecutiveReconnects;
 	}
 
-	private resetReconnectCount() {
+	private resetReconnectCount(): void {
 		this.consecutiveReconnects = 0;
 	}
 
-	private replayPendingStates() {
+	private replayPendingStates(): void {
 		// We need to be able to send ops to replay states
 		if (!this.canSendOps()) {
 			return;
@@ -2789,7 +2792,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private async loadIdCompressor() {
+	private async loadIdCompressor(): Promise<void | undefined> {
 		if (
 			this._idCompressor === undefined &&
 			this.idCompressorMode !== undefined &&
@@ -2857,7 +2860,7 @@ export class ContainerRuntime
 		this.setConnectionStateCore(connected, clientId);
 	}
 
-	private setConnectionStateCore(connected: boolean, clientId?: string) {
+	private setConnectionStateCore(connected: boolean, clientId?: string): void {
 		assert(
 			!this.delayConnectClientId,
 			0x394 /* connect event delay must be cleared before propagating connect event */,
@@ -3092,7 +3095,7 @@ export class ContainerRuntime
 		savedOp: boolean | undefined,
 		runtimeBatch: boolean,
 		groupedBatch: boolean,
-	) {
+	): void {
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
 			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
@@ -3110,9 +3113,11 @@ export class ContainerRuntime
 				return;
 			}
 
-			// Helper that updates a message's minimum sequence number to the minimum sequence number that container
+			// Updates a message's minimum sequence number to the minimum sequence number that container
 			// runtime is tracking and sets _processedClientSequenceNumber. It returns the updated message.
-			const updateSequenceNumbers = (message: ISequencedDocumentMessage) => {
+			const updateSequenceNumbers = (
+				message: ISequencedDocumentMessage,
+			): InboundSequencedContainerRuntimeMessage => {
 				// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
 				message.minimumSequenceNumber =
 					this.useDeltaManagerOpsProxy &&
@@ -3149,8 +3154,8 @@ export class ContainerRuntime
 			let bunchedMessagesContent: IRuntimeMessagesContent[] = [];
 			let previousMessage: InboundSequencedContainerRuntimeMessage | undefined;
 
-			// Helper that processes the previous bunch of messages.
-			const sendBunchedMessages = () => {
+			// Process the previous bunch of messages.
+			const sendBunchedMessages = (): void => {
 				assert(previousMessage !== undefined, 0xa67 /* previous message must exist */);
 				this.ensureNoDataModelChanges(() => {
 					this.validateAndProcessRuntimeMessages(
@@ -3205,7 +3210,7 @@ export class ContainerRuntime
 	 * Observes messages that are not intended for the runtime layer, updating/notifying Runtime systems as needed.
 	 * @param message - non-runtime message to process.
 	 */
-	private observeNonRuntimeMessage(message: ISequencedDocumentMessage) {
+	private observeNonRuntimeMessage(message: ISequencedDocumentMessage): void {
 		// Set the minimum sequence number to the containerRuntime's understanding of minimum sequence number.
 		if (this.deltaManager.minimumSequenceNumber < message.minimumSequenceNumber) {
 			message.minimumSequenceNumber = this.deltaManager.minimumSequenceNumber;
@@ -3314,7 +3319,10 @@ export class ContainerRuntime
 		}
 	}
 
-	private processIdCompressorMessages(messageContents: IdCreationRange[], savedOp?: boolean) {
+	private processIdCompressorMessages(
+		messageContents: IdCreationRange[],
+		savedOp?: boolean,
+	): void {
 		for (const range of messageContents) {
 			// Don't re-finalize the range if we're processing a "savedOp" in
 			// stashed ops flow. The compressor is stashed with these ops already processed.
@@ -3343,7 +3351,7 @@ export class ContainerRuntime
 	/**
 	 * Emits the Signal event and update the perf signal data.
 	 */
-	private sendSignalTelemetryEvent() {
+	private sendSignalTelemetryEvent(): void {
 		const duration = Date.now() - this._signalTracking.signalTimestamp;
 		this.mc.logger.sendPerformanceEvent({
 			eventName: "SignalLatency",
@@ -3609,7 +3617,7 @@ export class ContainerRuntime
 		);
 	}
 
-	private canSendOps() {
+	private canSendOps(): boolean {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
 		return (
@@ -3620,7 +3628,7 @@ export class ContainerRuntime
 	/**
 	 * Typically ops are batched and later flushed together, but in some cases we want to flush immediately.
 	 */
-	private currentlyBatching() {
+	private currentlyBatching(): boolean {
 		return this.flushMode !== FlushMode.Immediate || this._orderSequentiallyCalls !== 0;
 	}
 
@@ -3642,7 +3650,10 @@ export class ContainerRuntime
 		return this.dirtyContainer;
 	}
 
-	private isContainerMessageDirtyable({ type, contents }: OutboundContainerRuntimeMessage) {
+	private isContainerMessageDirtyable({
+		type,
+		contents,
+	}: OutboundContainerRuntimeMessage): boolean {
 		// Certain container runtime messages should not mark the container dirty such as the old built-in
 		// AgentScheduler and Garbage collector messages.
 		switch (type) {
@@ -3688,7 +3699,7 @@ export class ContainerRuntime
 		return newEnvelope;
 	}
 
-	private submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string) {
+	private submitEnvelopedSignal(envelope: ISignalEnvelope, targetClientId?: string): void {
 		const isBroadcastSignal = targetClientId === undefined;
 
 		if (isBroadcastSignal) {
@@ -4031,7 +4042,10 @@ export class ContainerRuntime
 	 * @returns Two route lists - One that contains routes for blob manager and another one that contains routes
 	 * for data stores.
 	 */
-	private getDataStoreAndBlobManagerRoutes(routes: readonly string[]) {
+	private getDataStoreAndBlobManagerRoutes(routes: readonly string[]): {
+		blobManagerRoutes: string[];
+		dataStoreRoutes: string[];
+	} {
 		const blobManagerRoutes: string[] = [];
 		const dataStoreRoutes: string[] = [];
 		for (const route of routes) {
@@ -4553,11 +4567,11 @@ export class ContainerRuntime
 		return this.pendingStateManager.pendingMessagesCount + this.outbox.messageCount;
 	}
 
-	private hasPendingMessages() {
+	private hasPendingMessages(): boolean {
 		return this.pendingMessagesCount !== 0;
 	}
 
-	private updateDocumentDirtyState(dirty: boolean) {
+	private updateDocumentDirtyState(dirty: boolean): void {
 		if (this.attachState !== AttachState.Attached) {
 			assert(dirty, 0x3d2 /* Non-attached container is dirty */);
 		} else {
@@ -4712,13 +4726,13 @@ export class ContainerRuntime
 		}
 	}
 
-	private scheduleFlush() {
+	private scheduleFlush(): void {
 		if (this.flushTaskExists) {
 			return;
 		}
 
 		this.flushTaskExists = true;
-		const flush = () => {
+		const flush = (): void => {
 			this.flushTaskExists = false;
 			try {
 				this.flush();
@@ -4752,7 +4766,10 @@ export class ContainerRuntime
 		}
 	}
 
-	private submitSummaryMessage(contents: ISummaryContent, referenceSequenceNumber: number) {
+	private submitSummaryMessage(
+		contents: ISummaryContent,
+		referenceSequenceNumber: number,
+	): number {
 		this.verifyNotClosed();
 		assert(
 			this.connected,
@@ -4772,7 +4789,7 @@ export class ContainerRuntime
 	 * Throw an error if the runtime is closed.  Methods that are expected to potentially
 	 * be called after dispose due to asynchrony should not call this.
 	 */
-	private verifyNotClosed() {
+	private verifyNotClosed(): void {
 		if (this._disposed) {
 			throw new Error("Runtime is closed");
 		}
@@ -4784,7 +4801,7 @@ export class ContainerRuntime
 	 * @remarks - If the "Offline Load" feature is enabled, the batchId is included in the resubmitted messages,
 	 * for correlation to detect container forking.
 	 */
-	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId) {
+	private reSubmitBatch(batch: PendingMessageResubmitData[], batchId: BatchId): void {
 		this.orderSequentially(() => {
 			for (const message of batch) {
 				this.reSubmit(message);
@@ -4796,7 +4813,7 @@ export class ContainerRuntime
 		this.flush(this.offlineEnabled ? batchId : undefined);
 	}
 
-	private reSubmit(message: PendingMessageResubmitData) {
+	private reSubmit(message: PendingMessageResubmitData): void {
 		// Need to parse from string for back-compat
 		const containerRuntimeMessage = this.parseLocalOpContent(message.content);
 		this.reSubmitCore(containerRuntimeMessage, message.localOpMetadata, message.opMetadata);
@@ -4813,7 +4830,7 @@ export class ContainerRuntime
 		message: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 		opMetadata: Record<string, unknown> | undefined,
-	) {
+	): void {
 		assert(
 			!this.isSummarizerClient,
 
@@ -4866,7 +4883,7 @@ export class ContainerRuntime
 		}
 	}
 
-	private rollback(content: string | undefined, localOpMetadata: unknown) {
+	private rollback(content: string | undefined, localOpMetadata: unknown): void {
 		// Need to parse from string for back-compat
 		const { type, contents } = this.parseLocalOpContent(content);
 		switch (type) {
@@ -4943,7 +4960,7 @@ export class ContainerRuntime
 		targetRefSeq: number,
 		targetAckHandle: string,
 		logger: ITelemetryLoggerExt,
-	) {
+	): Promise<void> {
 		const fetchedSnapshotRefSeq = await PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: "RefreshLatestSummaryAckFetch" },
@@ -5007,7 +5024,8 @@ export class ContainerRuntime
 				}
 
 				props.getSnapshotDuration = trace.trace().duration;
-				const readAndParseBlob = async <T>(id: string) => readAndParse<T>(this.storage, id);
+				const readAndParseBlob = async <T>(id: string): Promise<T> =>
+					readAndParse<T>(this.storage, id);
 				const snapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
 				props.snapshotRefSeq = snapshotRefSeq;
 				props.newerSnapshotPresent = snapshotRefSeq >= targetRefSeq;
@@ -5062,7 +5080,7 @@ export class ContainerRuntime
 		const logAndReturnPendingState = (
 			event: PerformanceEvent,
 			pendingState?: IPendingRuntimeState,
-		) => {
+		): IPendingRuntimeState | undefined => {
 			event.end({
 				attachmentBlobsSize: Object.keys(pendingState?.pendingAttachmentBlobs ?? {}).length,
 				pendingOpsSize: pendingState?.pending?.pendingStates.length,
@@ -5129,7 +5147,7 @@ export class ContainerRuntime
 
 	private validateSummaryHeuristicConfiguration(
 		configuration: ISummaryConfigurationHeuristics,
-	) {
+	): void {
 		// eslint-disable-next-line no-restricted-syntax
 		for (const prop in configuration) {
 			if (typeof configuration[prop] === "number" && configuration[prop] < 0) {

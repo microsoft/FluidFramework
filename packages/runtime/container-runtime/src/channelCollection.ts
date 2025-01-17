@@ -403,7 +403,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		this.parentContext.makeLocallyVisible();
 	}
 
-	private processAttachMessages(messageCollection: IRuntimeMessageCollection) {
+	private processAttachMessages(messageCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as InboundAttachMessage;
@@ -793,7 +793,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return context.applyStashedOp(envelope.contents);
 	}
 
-	private async applyStashedAttachOp(message: IAttachMessage) {
+	private async applyStashedAttachOp(message: IAttachMessage): Promise<void> {
 		const { id, snapshot } = message;
 
 		// build the snapshot from the summary in the attach message
@@ -896,7 +896,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		let currentMessagesContent: IRuntimeMessagesContent[] = [];
 
 		// Helper that sends the current bunch of messages to the data store. It validates that the data stores exists.
-		const sendBunchedMessages = () => {
+		const sendBunchedMessages = (): void => {
 			// Current message state will be undefined for the first message in the list.
 			if (currentMessageState === undefined) {
 				return;
@@ -1062,7 +1062,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		callSite: string,
 		requestHeaderData?: RuntimeHeaderData,
 		originalRequest?: IRequest,
-	) {
+	): boolean {
 		const dataStoreNodePath = `/${id}`;
 		if (!this.isDataStoreDeleted(dataStoreNodePath)) {
 			return false;
@@ -1613,7 +1613,7 @@ export function detectOutboundReferences(
 	const outboundPaths: string[] = [];
 	let ddsAddress: string | undefined;
 
-	function recursivelyFindHandles(obj: unknown) {
+	function recursivelyFindHandles(obj: unknown): void {
 		if (typeof obj === "object" && obj !== null) {
 			for (const [key, value] of Object.entries(obj)) {
 				// If 'value' is a serialized IFluidHandle, it represents a new outbound route.

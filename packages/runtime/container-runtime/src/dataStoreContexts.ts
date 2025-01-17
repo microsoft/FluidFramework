@@ -176,7 +176,7 @@ export class DataStoreContexts
 	 * Triggers the deferred to resolve, indicating the context is not local-only
 	 * @param id - The id of the context to resolve to
 	 */
-	private resolveDeferred(id: string) {
+	private resolveDeferred(id: string): void {
 		const context = this._contexts.get(id);
 		assert(!!context, 0x15a /* "Cannot find context to resolve to" */);
 		assert(

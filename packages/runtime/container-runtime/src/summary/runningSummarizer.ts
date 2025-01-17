@@ -365,7 +365,7 @@ export class RunningSummarizer
 				: defaultMaxAttemptsForSubmitFailures;
 	}
 
-	private async handleSummaryAck(ack: IAckedSummary) {
+	private async handleSummaryAck(ack: IAckedSummary): Promise<void> {
 		const refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
 		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
 		const summaryOpHandle = ack.summaryOp.contents.handle;
@@ -402,7 +402,7 @@ export class RunningSummarizer
 	private readonly refreshLatestSummaryAckAndHandleError = async (
 		// eslint-disable-next-line import/no-deprecated
 		options: IRefreshSummaryAckOptions,
-	) => {
+	): Promise<void> => {
 		return this.refreshLatestSummaryAckCallback(options).catch(async (error) => {
 			// If the error is 404, so maybe the fetched version no longer exists on server. We just
 			// ignore this error in that case, as that means we will have another summaryAck for the
@@ -438,7 +438,7 @@ export class RunningSummarizer
 	 * @param referenceSequenceNumber - The referenceSequenceNumber of the summary from which to start processing
 	 * acks.
 	 */
-	private async processIncomingSummaryAcks(referenceSequenceNumber: number) {
+	private async processIncomingSummaryAcks(referenceSequenceNumber: number): Promise<void> {
 		// Start waiting for acks that are for summaries newer that the one this client loaded from.
 		let nextReferenceSequenceNumber = referenceSequenceNumber;
 		while (!this.disposed) {
@@ -582,7 +582,7 @@ export class RunningSummarizer
 		this.lastSummarizeFailureEventProps = undefined;
 	}
 
-	private async waitStart() {
+	private async waitStart(): Promise<void> {
 		// Wait no longer than ack timeout for all pending
 		const waitStartResult = await raceTimer(
 			this.summaryWatcher.waitFlushed(),
@@ -607,11 +607,11 @@ export class RunningSummarizer
 		this.initialized = true;
 	}
 
-	private beforeSummaryAction() {
+	private beforeSummaryAction(): void {
 		this.summarizeCount++;
 	}
 
-	private afterSummaryAction() {
+	private afterSummaryAction(): void {
 		const retry = this.tryWhileSummarizing;
 		this.tryWhileSummarizing = false;
 
@@ -635,7 +635,7 @@ export class RunningSummarizer
 		before: () => void,
 		action: () => Promise<T>,
 		after: () => void,
-	) {
+	): Promise<T> {
 		assert(
 			this.summarizingLock === undefined,
 			0x25b /* "Caller is responsible for checking lock" */,
@@ -783,8 +783,13 @@ export class RunningSummarizer
 		// eslint-disable-next-line import/no-deprecated
 	): Promise<ISummarizeResults | undefined> {
 		// Helper to set summarize options, telemetry properties and call summarize.
-		const attemptSummarize = (attemptNumber: number, finalAttempt: boolean) => {
-			// eslint-disable-next-line import/no-deprecated
+		const attemptSummarize = (
+			attemptNumber: number,
+			finalAttempt: boolean,
+		): {
+			summarizeProps: ISummarizeTelemetryProperties;
+			summarizeResult: ISummarizeResults;
+		} => {
 			const summarizeOptions: ISummarizeOptions = {
 				fullTree: false,
 			};
@@ -967,7 +972,7 @@ export class RunningSummarizer
 		reason: SummarizeReason,
 
 		resultsBuilder: SummarizeResultBuilder,
-	) {
+	): Promise<ISummarizeResults> {
 		const results = await this.trySummarizeWithRetries(reason);
 		if (results === undefined) {
 			resultsBuilder.fail(
@@ -1070,7 +1075,7 @@ export class RunningSummarizer
 			: results;
 	}
 
-	private tryRunEnqueuedSummary() {
+	private tryRunEnqueuedSummary(): boolean {
 		if (this.stopping) {
 			this.disposeEnqueuedSummary();
 			return false;
@@ -1094,7 +1099,7 @@ export class RunningSummarizer
 		return true;
 	}
 
-	private disposeEnqueuedSummary() {
+	private disposeEnqueuedSummary(): void {
 		if (this.enqueuedSummary !== undefined) {
 			this.enqueuedSummary.resultsBuilder.fail(
 				"RunningSummarizer stopped or disposed",

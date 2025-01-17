@@ -389,7 +389,8 @@ export abstract class FluidDataStoreContext
 			fullTree: boolean,
 			trackState: boolean,
 			telemetryContext?: ITelemetryContext,
-		) => this.summarizeInternal(fullTree, trackState, telemetryContext);
+		): Promise<ISummarizeInternalResult> =>
+			this.summarizeInternal(fullTree, trackState, telemetryContext);
 
 		this.summarizerNode = props.createSummarizerNodeFn(
 			thisSummarizeInternal,
@@ -566,7 +567,7 @@ export abstract class FluidDataStoreContext
 		return created;
 	}
 
-	private async realizeCore(existing: boolean) {
+	private async realizeCore(existing: boolean): Promise<IFluidDataStoreChannel> {
 		const details = await this.getInitialSnapshotDetails();
 		// Base snapshot is the baseline where pending ops are applied to.
 		// It is important that this be in sync with the pending ops, and also
@@ -619,7 +620,7 @@ export abstract class FluidDataStoreContext
 	private processMessagesCompat(
 		channel: IFluidDataStoreChannel,
 		messageCollection: IRuntimeMessageCollection,
-	) {
+	): void {
 		if (channel.processMessages !== undefined) {
 			channel.processMessages(messageCollection);
 		} else {
@@ -1017,7 +1018,7 @@ export abstract class FluidDataStoreContext
 		callSite: string,
 		checkTombstone = true,
 		safeTelemetryProps: ITelemetryBaseProperties = {},
-	) {
+	): void {
 		if (this.deleted) {
 			const messageString = `Context is deleted! Call site [${callSite}]`;
 			const error = DataProcessingError.create(

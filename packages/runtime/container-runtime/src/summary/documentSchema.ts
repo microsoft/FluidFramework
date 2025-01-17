@@ -157,21 +157,21 @@ interface IProperty<T = unknown> {
 }
 
 class TrueOrUndefined implements IProperty<true | undefined> {
-	public and(currentDocSchema?: true, desiredDocSchema?: true) {
+	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return currentDocSchema === true && desiredDocSchema === true ? true : undefined;
 	}
 
-	public or(currentDocSchema?: true, desiredDocSchema?: true) {
+	public or(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return currentDocSchema === true || desiredDocSchema === true ? true : undefined;
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): t is true | undefined {
 		return t === undefined || t === true;
 	}
 }
 
 class TrueOrUndefinedMax extends TrueOrUndefined {
-	public and(currentDocSchema?: true, desiredDocSchema?: true) {
+	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return this.or(currentDocSchema, desiredDocSchema);
 	}
 }
@@ -179,7 +179,7 @@ class TrueOrUndefinedMax extends TrueOrUndefined {
 class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
-	public and(currentDocSchema?: string, desiredDocSchema?: string) {
+	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		if (currentDocSchema === undefined || desiredDocSchema === undefined) {
 			return undefined;
 		}
@@ -188,7 +188,7 @@ class MultiChoice implements IProperty<string | undefined> {
 		];
 	}
 
-	public or(currentDocSchema?: string, desiredDocSchema?: string) {
+	public or(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		if (currentDocSchema === undefined) {
 			return desiredDocSchema;
 		}
@@ -200,30 +200,36 @@ class MultiChoice implements IProperty<string | undefined> {
 		];
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): boolean {
 		return t === undefined || (typeof t === "string" && this.choices.includes(t));
 	}
 }
 
 class IdCompressorProperty extends MultiChoice {
 	// document schema always wins!
-	public and(currentDocSchema?: string, desiredDocSchema?: string) {
+	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		return currentDocSchema;
 	}
 }
 
 class CheckVersions implements IProperty<string[] | undefined> {
-	public or(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+	public or(
+		currentDocSchema: string[] = [],
+		desiredDocSchema: string[] = [],
+	): string[] | undefined {
 		const set = new Set<string>([...currentDocSchema, ...desiredDocSchema]);
 		return arrayToProp([...set.values()]);
 	}
 
 	// Once version is there, it stays there forever.
-	public and(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+	public and(
+		currentDocSchema: string[] = [],
+		desiredDocSchema: string[] = [],
+	): string[] | undefined {
 		return this.or(currentDocSchema, desiredDocSchema);
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): boolean {
 		return t === undefined || (Array.isArray(t) && !t.includes(pkgVersion));
 	}
 }
@@ -247,7 +253,7 @@ const documentSchemaSupportedConfigs = {
 function checkRuntimeCompatibility(
 	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
-) {
+): void {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
@@ -368,11 +374,11 @@ function same(
 	return true;
 }
 
-function boolToProp(b: boolean) {
+function boolToProp(b: boolean): true | undefined {
 	return b ? true : undefined;
 }
 
-function arrayToProp(arr: string[]) {
+function arrayToProp(arr: string[]): string[] | undefined {
 	return arr.length === 0 ? undefined : arr;
 }
 
@@ -608,7 +614,7 @@ export class DocumentsSchemaController {
 		schemaSeqNumber: number,
 		lastKnowSeqNumber: number,
 		message: string,
-	) {
+	): void {
 		if (!Number.isInteger(schemaSeqNumber) || !(schemaSeqNumber <= lastKnowSeqNumber)) {
 			throw DataProcessingError.create(
 				"DocSchema: Incorrect sequence number",
