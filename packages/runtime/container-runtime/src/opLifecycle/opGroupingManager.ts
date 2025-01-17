@@ -157,4 +157,7 @@ export class OpGroupingManager {
 			// Support for reentrant batches will be on by default
 		);
 	}
+	public groupedBatchingEnabled(): boolean {
+		return this.config.groupedBatchingEnabled;
+	}
 }

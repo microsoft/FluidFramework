@@ -415,7 +415,7 @@ export class Outbox {
 				this.params.config.compressionOptions.minimumBatchSizeInBytes >
 					batch.contentSizeInBytes ||
 				this.params.submitBatchFn === undefined) &&
-			!this.params.groupingManager.shouldGroup(batch)
+			!this.params.groupingManager.groupedBatchingEnabled()
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
 			return batch;
