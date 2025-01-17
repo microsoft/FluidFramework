@@ -150,6 +150,8 @@ export class DocumentManager implements IDocumentManager {
 			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			refreshTokenIfNeeded /* refreshTokenIfNeeded */,
+			"documentManager" /* service */,
+			true /* enableTelemetry */,
 		);
 		return restWrapper;
 	}
