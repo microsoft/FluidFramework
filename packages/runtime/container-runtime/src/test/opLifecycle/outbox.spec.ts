@@ -348,7 +348,7 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Batch ID added when applicable", () => {
+	it("Batch ID added when applicable (ungrouped batch)", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
 			opGroupingConfig: {

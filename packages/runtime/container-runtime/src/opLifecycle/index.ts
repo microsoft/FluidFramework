@@ -30,3 +30,4 @@ export {
 	OpGroupingManagerConfig,
 	isGroupedBatch,
 } from "./opGroupingManager.js";
+export { compressMultipleMessageBatch } from "./legacyCompression.js";
