@@ -1,6 +1,6 @@
 # test-suite-b
 
-[Packages](./) &gt; [test-suite-b](./test-suite-b)
+[Packages](./) &gt; [test-suite-b](./test-suite-b/)
 
 ## Interfaces
 

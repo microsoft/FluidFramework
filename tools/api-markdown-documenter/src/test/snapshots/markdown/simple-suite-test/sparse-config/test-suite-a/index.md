@@ -1,12 +1,13 @@
-## TestNamespace
+## TestSubNamespace
 
-Test Namespace
+Test sub-namespace
 
-### Signature {#testnamespace-signature}
+### Signature {#testsubnamespace-signature}
 
 ```typescript
-export declare namespace TestNamespace
+namespace TestSubNamespace
 ```
+`
 
 ### Remarks {#testnamespace-remarks}
 
@@ -60,4 +61,4 @@ const foo = {
 
 | Namespace | Description |
 | --- | --- |
-| [TestSubNamespace](docs/test-suite-a/testnamespace-testsubnamespace-namespace) | Test sub-namespace |
+| [TestSubNamespace](docs/test-suite-a/) | Test sub-namespace |

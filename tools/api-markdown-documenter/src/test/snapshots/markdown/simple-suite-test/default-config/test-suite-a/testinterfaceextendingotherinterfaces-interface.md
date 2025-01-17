@@ -1,6 +1,6 @@
 # TestInterfaceExtendingOtherInterfaces
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a) &gt; [TestInterfaceExtendingOtherInterfaces](./test-suite-a/testinterfaceextendingotherinterfaces-interface)
+[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestInterfaceExtendingOtherInterfaces](./test-suite-a/testinterfaceextendingotherinterfaces-interface)
 
 Test interface that extends other interfaces
 
@@ -10,7 +10,7 @@ Test interface that extends other interfaces
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
 ```
 
-**Extends:** [TestInterface](./test-suite-a/testinterface-interface), [TestMappedType](./test-suite-a#testmappedtype-typealias), [TestInterfaceWithTypeParameter](./test-suite-a/testinterfacewithtypeparameter-interface)&lt;number&gt;
+**Extends:** [TestInterface](./test-suite-a/testinterface-interface), [TestMappedType](./test-suite-a/testmappedtype-typealias), [TestInterfaceWithTypeParameter](./test-suite-a/testinterfacewithtypeparameter-interface)&lt;number&gt;
 
 ## Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
@@ -56,4 +56,4 @@ A number
 
 - [TestInterfaceWithTypeParameter](./test-suite-a/testinterfacewithtypeparameter-interface)
 
-- [TestMappedType](./test-suite-a#testmappedtype-typealias)
+- [TestMappedType](./test-suite-a/testmappedtype-typealias)
