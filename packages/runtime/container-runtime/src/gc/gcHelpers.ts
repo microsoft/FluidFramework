@@ -301,7 +301,7 @@ export function unpackChildNodesGCDetails(
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
  */
-function trimLeadingAndTrailingSlashes(str: string) {
+function trimLeadingAndTrailingSlashes(str: string): string {
 	return str.replace(/^\/+|\/+$/g, "");
 }
 

@@ -301,7 +301,7 @@ class OpPerfTelemetry {
 		});
 	}
 
-	private reportGettingUpToDate() {
+	private reportGettingUpToDate(): void {
 		this.connectionOpSeqNumber = undefined;
 		this.logger.sendPerformanceEvent({
 			eventName: "ConnectionSpeed",
@@ -315,7 +315,7 @@ class OpPerfTelemetry {
 		});
 	}
 
-	private recordPingTime(latency: number) {
+	private recordPingTime(latency: number): void {
 		this.pingLatency = latency;
 
 		// Log if latency is longer than 1 min
@@ -335,7 +335,7 @@ class OpPerfTelemetry {
 		}
 	}
 
-	private beforeOpSubmit(message: IDocumentMessage) {
+	private beforeOpSubmit(message: IDocumentMessage): void {
 		// start with first client op and measure latency every 500 client ops
 		if (
 			this.opLatencyLogger.isSamplingDisabled ||
@@ -362,7 +362,7 @@ class OpPerfTelemetry {
 		}
 	}
 
-	private afterProcessingOp(message: ISequencedDocumentMessage) {
+	private afterProcessingOp(message: ISequencedDocumentMessage): void {
 		const sequenceNumber = message.sequenceNumber;
 
 		if (sequenceNumber === this.connectionOpSeqNumber) {
