@@ -2,9 +2,9 @@
 
 ## 0.18.0
 
-- The default suite structure has been updated as follows:
-    - `Package` and `Namespace` items now generate documents *inside* of their own folder hierarchy, yielding documents named "index".
-    - `Enum` and `TypeAlias` items now generate their own documents (rather than being rendered as sections under their parent document).
+-   The default suite structure has been updated as follows:
+    -   `Package` and `Namespace` items now generate documents _inside_ of their own folder hierarchy, yielding documents named "index".
+    -   `Enum` and `TypeAlias` items now generate their own documents (rather than being rendered as sections under their parent document).
 
 ### ⚠ BREAKING CHANGES
 
