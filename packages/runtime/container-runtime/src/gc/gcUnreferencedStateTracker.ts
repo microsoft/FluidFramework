@@ -19,7 +19,7 @@ class TimerWithNoDefaultTimeout extends Timer {
 		});
 	}
 
-	start(timeoutMs: number) {
+	start(timeoutMs: number): void {
 		super.start(timeoutMs, this.callback);
 	}
 
@@ -173,7 +173,7 @@ export class UnreferencedStateTracker {
 		this.inactiveTimer.restart(this.inactiveTimeoutMs - unreferencedDurationMs);
 	}
 
-	private clearTimers() {
+	private clearTimers(): void {
 		this.inactiveTimer.clear();
 		this.tombstoneTimer.clear();
 		this.sweepTimer.clear();

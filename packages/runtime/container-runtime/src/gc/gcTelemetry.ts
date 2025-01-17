@@ -134,9 +134,13 @@ export class GCTelemetryTracker {
 	) {}
 
 	/**
-	 * Returns whether an event should be logged for a node that isn't active anymore. This does not apply to
-	 * tombstoned nodes for which an event is always logged. Some scenarios where we won't log:
+	 * Returns whether an event should be logged for a node that isn't active anymore.
+	 *
+	 * @remarks
+	 * This does not apply to tombstoned nodes for which an event is always logged. Some scenarios where we won't log:
+	 *
 	 * 1. When a DDS is changed. The corresponding data store's event will be logged instead.
+	 *
 	 * 2. An event is logged only once per container instance per event per node.
 	 */
 	private shouldLogNonActiveEvent(
@@ -144,7 +148,7 @@ export class GCTelemetryTracker {
 		usageType: NodeUsageType,
 		nodeStateTracker: UnreferencedStateTracker,
 		uniqueEventId: string,
-	) {
+	): boolean {
 		if (nodeStateTracker.state === UnreferencedState.Active) {
 			return false;
 		}
@@ -289,7 +293,7 @@ export class GCTelemetryTracker {
 		nodeType: GCNodeType,
 		usageType: NodeUsageType,
 		packagePath?: readonly string[],
-	) {
+	): void {
 		// This will log the following events:
 		// GC_Tombstone_DataStore_Requested, GC_Tombstone_DataStore_Changed, GC_Tombstone_DataStore_Revived
 		// GC_Tombstone_SubDataStore_Requested, GC_Tombstone_SubDataStore_Changed, GC_Tombstone_SubDataStore_Revived

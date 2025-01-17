@@ -679,7 +679,7 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		forceSend: boolean = false,
 		reason?: string,
-	) {
+	): void {
 		if (this.recordPerformanceEvents || forceSend) {
 			this.logger.sendPerformanceEvent({
 				eventName,
