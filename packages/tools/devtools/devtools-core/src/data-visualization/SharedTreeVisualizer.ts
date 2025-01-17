@@ -172,16 +172,14 @@ function getObjectAllowedTypes(schema: SimpleObjectNodeSchema): string {
  * Returns the schema & fields of the node.
  */
 async function visualizeVerboseNodeFields(
-	tree: VerboseTreeNode,
+	treeFields: VerboseTree[] | Record<string, VerboseTree>,
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<Record<string, VisualSharedTreeNode>> {
-	const treeFields = tree.fields;
-
 	const fields: Record<string | number, VisualSharedTreeNode> = {};
 
 	for (const [fieldKey, childField] of Object.entries(treeFields)) {
-		fields[fieldKey] = await visualizeSharedTreeNodeBySchema(
+		fields[fieldKey] = await visualizeSharedTreeBySchema(
 			childField,
 			treeSchema,
 			visualizeChildData,
@@ -205,7 +203,7 @@ async function visualizeObjectNode(
 			schemaName: tree.type,
 			allowedTypes: getObjectAllowedTypes(nodeSchema),
 		},
-		fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
+		fields: await visualizeVerboseNodeFields(tree.fields, treeSchema, visualizeChildData),
 		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 }
@@ -224,36 +222,25 @@ async function visualizeMapNode(
 			schemaName: tree.type,
 			allowedTypes: `Record<string, ${concatenateTypes(nodeSchema.allowedTypes)}>`,
 		},
-		fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
+		fields: await visualizeVerboseNodeFields(tree.fields, treeSchema, visualizeChildData),
 		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
 }
 
 /**
- * Main recursive helper function to create the visual representation of the SharedTree.
- * Processes tree nodes based on their schema type (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, LeafNodeStoredSchema), producing the visual representation for each type.
+ * Helper function to create the visual representation of non-leaf SharedTree nodes.
+ * Processes internal tree nodes based on their schema type (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, ArrayNodeStoredSchema),
+ * producing the visual representation for each type.
  *
  * @see {@link https://fluidframework.com/docs/data-structures/tree/} for more information on the SharedTree schema.
  *
  * @remarks
  */
-export async function visualizeSharedTreeNodeBySchema(
-	tree: VerboseTree,
+async function visualizeSharedTreeNodeBySchema(
+	tree: VerboseTreeNode,
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const sf = new SchemaFactory(undefined);
-	if (Tree.is(tree, [sf.boolean, sf.null, sf.number, sf.handle, sf.string])) {
-		const nodeSchema = Tree.schema(tree);
-		return {
-			schema: {
-				schemaName: nodeSchema.identifier,
-			},
-			value: await visualizeChildData(tree),
-			kind: VisualSharedTreeNodeKind.LeafNode,
-		};
-	}
-
 	const schema = treeSchema.definitions.get(tree.type);
 	if (schema === undefined) {
 		throw new TypeError("Unrecognized schema type.");
@@ -281,7 +268,7 @@ export async function visualizeSharedTreeNodeBySchema(
 			}
 
 			for (let i = 0; i < children.length; i++) {
-				fields[i] = await visualizeSharedTreeNodeBySchema(
+				fields[i] = await visualizeSharedTreeBySchema(
 					children[i],
 					treeSchema,
 					visualizeChildData,
@@ -293,7 +280,7 @@ export async function visualizeSharedTreeNodeBySchema(
 					schemaName: tree.type,
 					allowedTypes: concatenateTypes(schema.allowedTypes),
 				},
-				fields: await visualizeVerboseNodeFields(tree, treeSchema, visualizeChildData),
+				fields: await visualizeVerboseNodeFields(tree.fields, treeSchema, visualizeChildData),
 				kind: VisualSharedTreeNodeKind.InternalNode,
 			};
 		}
@@ -301,4 +288,39 @@ export async function visualizeSharedTreeNodeBySchema(
 			throw new TypeError("Unrecognized schema type.");
 		}
 	}
+}
+
+/**
+ * Creates a visual representation of a SharedTree based on its schema.
+ * @param tree - The {@link VerboseTree} to visualize
+ * @param treeSchema - The schema that defines the structure and types of the tree
+ * @param visualizeChildData - Callback function to visualize child node data
+ * @returns A visual representation of the tree that includes schema information and node values
+ *
+ * @remarks
+ * This function handles both leaf nodes (primitive values, handles) and internal nodes (objects, maps, arrays).
+ * For leaf nodes, it creates a visual representation with the node's schema and value.
+ * For internal nodes, it recursively processes the node's fields using {@link visualizeSharedTreeNodeBySchema}.
+ */
+export async function visualizeSharedTreeBySchema(
+	tree: VerboseTree,
+	treeSchema: SimpleTreeSchema,
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualSharedTreeNode> {
+	const schemaFactory = new SchemaFactory(undefined);
+	return Tree.is(tree, [
+		schemaFactory.boolean,
+		schemaFactory.null,
+		schemaFactory.number,
+		schemaFactory.handle,
+		schemaFactory.string,
+	])
+		? {
+				schema: {
+					schemaName: Tree.schema(tree).identifier,
+				},
+				value: await visualizeChildData(tree),
+				kind: VisualSharedTreeNodeKind.LeafNode,
+			}
+		: visualizeSharedTreeNodeBySchema(tree, treeSchema, visualizeChildData);
 }

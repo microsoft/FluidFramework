@@ -31,7 +31,7 @@ import {
 	concatenateTypes,
 	determineNodeKind,
 	toVisualTree,
-	visualizeSharedTreeNodeBySchema,
+	visualizeSharedTreeBySchema,
 } from "./SharedTreeVisualizer.js";
 import {
 	VisualSharedTreeNodeKind,
@@ -290,7 +290,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 			allowedTypes: concatenateTypes(treeSchema.allowedTypes),
 		},
 		fields: {
-			root: await visualizeSharedTreeNodeBySchema(treeView, treeSchema, visualizeChildData),
+			root: await visualizeSharedTreeBySchema(treeView, treeSchema, visualizeChildData),
 		},
 		kind: VisualSharedTreeNodeKind.InternalNode,
 	};
