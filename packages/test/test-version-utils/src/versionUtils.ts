@@ -468,6 +468,7 @@ function calculateRequestedRange(
 			// If N >= 2.10, then N-1 is the previous legacy breaking minor. For example, if N is 2.13, then N-1 is 2.10. If N is 2.20, then N-1 is 2.10.
 			const lowerMinorRange = Math.floor((version.minor - legacyMinorsToSkip) / 10) * 10;
 			const upperMinorRange = lowerMinorRange + 10;
+			// Here we do the range to get the latest minor version. For example, if N-1 is 2.10, then we try to get the latest minor between 2.10 and 2.20.
 			return `>=${version.major}.${lowerMinorRange}.0-0 <${version.major}.${upperMinorRange}.0-0`;
 		}
 	} else {
