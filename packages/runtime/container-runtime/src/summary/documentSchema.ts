@@ -45,7 +45,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * In the future that could be interpolated to more areas, including DDSs used, and even possibly - application
  * schema.
  *
- * Runtime will ignore any properties at the root that it does not understand (i.e. IDocumentSchema.app), but will
+ *Runtime will ignore any properties at the root that it does not understand (i.e. IDocumentSchema.app), but will
  * stop (and fail session) on any unknown properties within "runtime" sub-tree.
  *
  * In most cases values preserved in the document will not dictate if such features should be enabled in a given session.
@@ -62,7 +62,6 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-
 export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
 	// If runtime sees a version it does not understand, it should immediately fail and not
@@ -72,12 +71,13 @@ export interface IDocumentSchema {
 	// Sequence number when this schema became active.
 	refSeq: number;
 
+	// eslint-disable-next-line import/no-deprecated
 	runtime: Record<string, DocumentSchemaValueType>;
 }
 
 /**
  * Content of the type=ContainerMessageType.DocumentSchemaChange ops.
- * The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
+ *The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
  * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
  * regSeq of last known schema change (known to a client proposing schema change).
  * @see ContainerRuntimeDocumentSchemaMessage
@@ -85,20 +85,18 @@ export interface IDocumentSchema {
  * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
 /**
  * Settings that this session would like to have, based on options and feature gates.
  *
- * WARNING: This type is used to infer IDocumentSchemaCurrent type!
+ *WARNING: This type is used to infer IDocumentSchemaCurrent type!
  * Any changes here (including renaming of properties) are potentially changing document format and should be considered carefully!
  *
  * @legacy
  * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-
 export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
 	// - Legacy behavior - changing schema without leveraging schema change ops.
@@ -110,7 +108,7 @@ export interface IDocumentSchemaFeatures {
 
 	/**
 	 * List of disallowed versions of the runtime.
-	 * This option is sticky. Once a version of runtime is added to this list (when supplied to DocumentsSchemaController's constructor)
+	 *This option is sticky. Once a version of runtime is added to this list (when supplied to DocumentsSchemaController's constructor)
 	 * it will be added to the list of disallowed versions and stored in document metadata.
 	 * Each runtime checks if its version is in this list on container open. If it is, it immediately exits with error message
 	 * indicating to the user that this version is no longer supported.
@@ -124,7 +122,7 @@ export interface IDocumentSchemaFeatures {
 /**
  * Current version known properties that define document schema
  * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes.
- * Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
+ *Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
  * @legacy
  * @alpha
@@ -144,9 +142,11 @@ export type IDocumentSchemaCurrent = {
 	refSeq: number;
 
 	runtime: {
+		// eslint-disable-next-line import/no-deprecated
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
-			: IDocumentSchemaFeatures[P];
+			: // eslint-disable-next-line import/no-deprecated
+				IDocumentSchemaFeatures[P];
 	};
 };
 
@@ -251,6 +251,7 @@ const documentSchemaSupportedConfigs = {
  * @param documentSchema - current schema
  */
 function checkRuntimeCompatibility(
+	// eslint-disable-next-line import/no-deprecated
 	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
 ): void {
@@ -262,6 +263,7 @@ function checkRuntimeCompatibility(
 	}
 
 	const msg = "Document can't be opened with current version of the code";
+	// eslint-disable-next-line import/no-deprecated
 	if (documentSchema.version !== currentDocumentVersionSchema) {
 		throw DataProcessingError.create(
 			msg,
@@ -269,6 +271,7 @@ function checkRuntimeCompatibility(
 			undefined, // message
 			{
 				runtimeSchemaVersion: documentSchema.version,
+				// eslint-disable-next-line import/no-deprecated
 				currentRuntimeSchemaVersion: currentDocumentVersionSchema,
 				schemaName,
 			},
@@ -300,6 +303,7 @@ function checkRuntimeCompatibility(
 			"checkRuntimeCompat2",
 			undefined, // message
 			{
+				// eslint-disable-next-line import/no-deprecated
 				codeVersion: currentDocumentVersionSchema,
 				property: unknownProperty,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -311,9 +315,11 @@ function checkRuntimeCompatibility(
 }
 
 function and(
+	// eslint-disable-next-line import/no-deprecated
 	currentDocSchema: IDocumentSchemaCurrent,
-
+	// eslint-disable-next-line import/no-deprecated
 	desiredDocSchema: IDocumentSchemaCurrent,
+	// eslint-disable-next-line import/no-deprecated
 ): IDocumentSchemaCurrent {
 	const runtime = {};
 	for (const key of new Set([
@@ -326,16 +332,20 @@ function and(
 		);
 	}
 	return {
+		// eslint-disable-next-line import/no-deprecated
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
 		runtime,
+		// eslint-disable-next-line import/no-deprecated
 	} as unknown as IDocumentSchemaCurrent;
 }
 
 function or(
+	// eslint-disable-next-line import/no-deprecated
 	currentDocSchema: IDocumentSchemaCurrent,
-
+	// eslint-disable-next-line import/no-deprecated
 	desiredDocSchema: IDocumentSchemaCurrent,
+	// eslint-disable-next-line import/no-deprecated
 ): IDocumentSchemaCurrent {
 	const runtime = {};
 	for (const key of new Set([
@@ -348,15 +358,18 @@ function or(
 		);
 	}
 	return {
+		// eslint-disable-next-line import/no-deprecated
 		version: currentDocumentVersionSchema,
 		refSeq: currentDocSchema.refSeq,
 		runtime,
+		// eslint-disable-next-line import/no-deprecated
 	} as unknown as IDocumentSchemaCurrent;
 }
 
 function same(
+	// eslint-disable-next-line import/no-deprecated
 	currentDocSchema: IDocumentSchemaCurrent,
-
+	// eslint-disable-next-line import/no-deprecated
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
 	for (const key of new Set([
@@ -425,7 +438,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * Whenver document schema does not match future schema, controller will send an op that attempts to changs documents schema to
  * future schema.
  *
- * Users of this class need to use DocumentsSchemaController.sessionSchema to determine what features can be used.
+ *Users of this class need to use DocumentsSchemaController.sessionSchema to determine what features can be used.
  *
  * There are two modes this class can operate:
  * 1) Legacy mode. In such mode it does not issue any ops to change document schema. Any changes happen implicitly,
@@ -452,22 +465,21 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  * @sealed
  */
-
 export class DocumentsSchemaController {
 	private explicitSchemaControl: boolean;
 	private sendOp = true;
 
 	// schema coming from document metadata (snapshot we loaded from)
-
+	// eslint-disable-next-line import/no-deprecated
 	private documentSchema: IDocumentSchemaCurrent;
 
 	// desired schema, based on feature gates / runtime options.
 	// This includes requests to enable to disable functionality
-
+	// eslint-disable-next-line import/no-deprecated
 	private readonly desiredSchema: IDocumentSchemaCurrent;
 
 	// OR() of document schema and desired schema. It enables all the features that are enabled in either of schemas.
-
+	// eslint-disable-next-line import/no-deprecated
 	private futureSchema: IDocumentSchemaCurrent | undefined;
 
 	// Current schema this session operates with.
@@ -475,11 +487,11 @@ export class DocumentsSchemaController {
 	// 2) Non-legacy mode (explicitSchemaControl === true): this is AND() of document schema and desired schema. Only options that are enabled in both are enabled here.
 	//    If there are any options that are not enabled in document schema, but are enabled in desired schema, then attempt to change schema
 	//    (and enable such options) will be made through the session.
-
+	// eslint-disable-next-line import/no-deprecated
 	public sessionSchema: IDocumentSchemaCurrent;
 
 	/**
-	 * Constructs DocumentsSchemaController that controls current schema and processes around it, including changes in schema.
+	 *Constructs DocumentsSchemaController that controls current schema and processes around it, including changes in schema.
 	 * @param existing - Is the document existing document, or a new doc.
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param features - features of the document schema that current session wants to see enabled.
@@ -488,11 +500,11 @@ export class DocumentsSchemaController {
 	constructor(
 		existing: boolean,
 		snapshotSequenceNumber: number,
-
+		// eslint-disable-next-line import/no-deprecated
 		documentMetadataSchema: IDocumentSchema | undefined,
-
+		// eslint-disable-next-line import/no-deprecated
 		features: IDocumentSchemaFeatures,
-
+		// eslint-disable-next-line import/no-deprecated
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
@@ -503,6 +515,7 @@ export class DocumentsSchemaController {
 
 		// Desired schema by this session - almost all props are coming from arguments
 		this.desiredSchema = {
+			// eslint-disable-next-line import/no-deprecated
 			version: currentDocumentVersionSchema,
 			refSeq: documentMetadataSchema?.refSeq ?? 0,
 			runtime: {
@@ -519,8 +532,10 @@ export class DocumentsSchemaController {
 		// Latter is importnat sure that's what will go into summary.
 		this.documentSchema = !existing
 			? this.desiredSchema
-			: ((documentMetadataSchema as IDocumentSchemaCurrent) ??
+			: // eslint-disable-next-line import/no-deprecated
+				((documentMetadataSchema as IDocumentSchemaCurrent) ??
 				({
+					// eslint-disable-next-line import/no-deprecated
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
 					refSeq: 0,
@@ -529,6 +544,7 @@ export class DocumentsSchemaController {
 					runtime: {
 						explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
 					},
+					// eslint-disable-next-line import/no-deprecated
 				} satisfies IDocumentSchemaCurrent));
 
 		checkRuntimeCompatibility(this.documentSchema, "document");
@@ -567,6 +583,7 @@ export class DocumentsSchemaController {
 		checkRuntimeCompatibility(this.futureSchema, "future");
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined {
 		// For legacy behavior, we could write nothing (return undefined).
 		// It does not buy us anything, as whatever written in summary does not actually impact clients operating in legacy mode.
@@ -595,7 +612,7 @@ export class DocumentsSchemaController {
 	 * Please consider note above constructor about race conditions - current design is to send op only once in a session lifetime.
 	 * @returns Optional message to send.
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
 		if (this.sendOp && this.futureSchema !== undefined) {
 			this.sendOp = false;
@@ -639,6 +656,7 @@ export class DocumentsSchemaController {
 	 * @deprecated It has been replaced by processDocumentSchemaMessages instead.
 	 */
 	public processDocumentSchemaOp(
+		// eslint-disable-next-line import/no-deprecated
 		content: IDocumentSchemaChangeMessage,
 		local: boolean,
 		sequenceNumber: number,
@@ -655,6 +673,7 @@ export class DocumentsSchemaController {
 	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
 	public processDocumentSchemaMessages(
+		// eslint-disable-next-line import/no-deprecated
 		contents: IDocumentSchemaChangeMessage[],
 		local: boolean,
 		sequenceNumber: number,
@@ -683,8 +702,9 @@ export class DocumentsSchemaController {
 			// Changes are in effect. Immediately check that this client understands these changes
 			checkRuntimeCompatibility(content, "change");
 
+			// eslint-disable-next-line import/no-deprecated
 			const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
-
+			// eslint-disable-next-line import/no-deprecated
 			this.documentSchema = schema as IDocumentSchemaCurrent;
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);

@@ -31,7 +31,6 @@ import { IDocumentSchema } from "./documentSchema.js";
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type OmitAttributesVersions<T> = Omit<
 	T,
@@ -42,7 +41,6 @@ export type OmitAttributesVersions<T> = Omit<
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes0 {
 	readonly snapshotFormatVersion?: undefined;
@@ -60,7 +58,6 @@ export interface IFluidDataStoreAttributes0 {
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes1
 	extends OmitAttributesVersions<IFluidDataStoreAttributes0> {
@@ -72,7 +69,6 @@ export interface IFluidDataStoreAttributes1
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes2
 	extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
@@ -98,7 +94,6 @@ export interface IFluidDataStoreAttributes2
  *
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  *
  */
 export type ReadFluidDataStoreAttributes =
@@ -145,12 +140,12 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	/**
 	 * @deprecated - used by old (prior to 2.0 RC3) runtimes
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	readonly message?: ISummaryMetadataMessage;
 	/**
 	 * The last message processed at the time of summary. Only primitive property types are added to the summary.
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	readonly lastMessage?: ISummaryMetadataMessage;
 	/**
 	 * True if channels are not isolated in .channels subtrees, otherwise isolated.
@@ -174,7 +169,6 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
  * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-
 export interface ICreateContainerMetadata {
 	/**
 	 * Runtime version of the container when it was first created
@@ -192,7 +186,6 @@ export interface ICreateContainerMetadata {
  * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
 	| "clientId"
@@ -205,11 +198,12 @@ export type ISummaryMetadataMessage = Pick<
 >;
 
 /**
- * Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
+ *Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
  * added to the metadata blob in summary.
  */
 export const extractSummaryMetadataMessage = (
 	message?: ISequencedDocumentMessage,
+	// eslint-disable-next-line import/no-deprecated
 ): ISummaryMetadataMessage | undefined =>
 	message === undefined
 		? undefined
@@ -223,6 +217,7 @@ export const extractSummaryMetadataMessage = (
 				type: message.type,
 			};
 
+// eslint-disable-next-line import/no-deprecated
 export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
 	/**
 	 * Version 2+: Introduces runtime sequence number for data verification.
@@ -241,11 +236,12 @@ export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const recentBatchInfoBlobName = ".recentBatchInfo";
-
+// eslint-disable-next-line import/no-deprecated
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const idCompressorBlobName = ".idCompressor";
 export const blobHeadersBlobName = blobNameForBlobHeaders;
 
+// eslint-disable-next-line import/no-deprecated
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
 }
@@ -301,14 +297,11 @@ export const dataStoreAttributesBlobName = ".component";
  *
  * And adds +1 to treeNodeCount in stats.
  */
-
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {
 	summarizeResult.summary = {
 		type: SummaryType.Tree,
-
 		tree: { [channelsTreeName]: summarizeResult.summary },
 	};
-
 	summarizeResult.stats.treeNodeCount++;
 }
 
