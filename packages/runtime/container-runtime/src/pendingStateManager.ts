@@ -255,7 +255,7 @@ export class PendingStateManager implements IDisposable {
 		return {
 			pendingStates: [
 				...newSavedOps,
-				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
+				...this.pendingMessages.toArray().map((message) => withoutLocalOpMetadata(message)),
 			],
 		};
 	}

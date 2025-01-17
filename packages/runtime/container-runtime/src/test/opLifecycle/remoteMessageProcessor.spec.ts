@@ -396,7 +396,7 @@ describe("RemoteMessageProcessor", () => {
 			return result as InboundMessageResult;
 		};
 		assert.deepStrictEqual(
-			processResults.map(clearMessages),
+			processResults.map((result) => clearMessages(result)),
 			expectedInfo,
 			"unexpected result info",
 		);
