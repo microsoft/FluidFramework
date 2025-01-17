@@ -14,7 +14,7 @@ import { pkgVersion } from "../packageVersion.js";
  * Using false, or some string value (like "off") will result in clients who do not understand that property failing, whereas
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
@@ -59,7 +59,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * For now we are limiting it to just plain properties, and only really simple types, but that can be changed in the future.
  *
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -82,7 +82,7 @@ export interface IDocumentSchema {
  * regSeq of last known schema change (known to a client proposing schema change).
  * @see ContainerRuntimeDocumentSchemaMessage
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -95,7 +95,7 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
  * Any changes here (including renaming of properties) are potentially changing document format and should be considered carefully!
  *
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -127,7 +127,7 @@ export interface IDocumentSchemaFeatures {
  * Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const currentDocumentVersionSchema = 1;
@@ -135,7 +135,7 @@ export const currentDocumentVersionSchema = 1;
 /**
  * Current document schema.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
@@ -442,7 +442,7 @@ function arrayToProp(arr: string[]) {
  * recalc and decide if schema needs to be changed or not).
  *
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  * @sealed
  */

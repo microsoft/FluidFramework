@@ -272,7 +272,7 @@ export interface IOrderedClientElectionEvents extends IEvent {
 /**
  * Serialized state of IOrderedClientElection.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 

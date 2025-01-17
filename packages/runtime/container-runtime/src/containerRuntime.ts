@@ -269,6 +269,7 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
+	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaFeatures,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
@@ -587,7 +588,7 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 /**
  * Error responses when requesting a deleted object will have this header set to true
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -639,7 +640,7 @@ export enum CompressionAlgorithms {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
@@ -1312,9 +1313,11 @@ export class ContainerRuntime
 	 * this op roundtrips, compression will be On. Client can't send compressed ops until it's change in schema.
 	 */
 	public get sessionSchema(): {
+		// eslint-disable-next-line import/no-deprecated
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
-			: IDocumentSchemaFeatures[P];
+			: // eslint-disable-next-line import/no-deprecated
+				IDocumentSchemaFeatures[P];
 	} {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}

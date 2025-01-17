@@ -30,7 +30,7 @@ import { IDocumentSchema } from "./documentSchema.js";
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type OmitAttributesVersions<T> = Omit<
@@ -41,7 +41,7 @@ export type OmitAttributesVersions<T> = Omit<
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes0 {
@@ -59,7 +59,7 @@ export interface IFluidDataStoreAttributes0 {
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes1
@@ -71,7 +71,7 @@ export interface IFluidDataStoreAttributes1
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes2
@@ -97,7 +97,7 @@ export interface IFluidDataStoreAttributes2
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  *
  */
@@ -136,7 +136,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 // eslint-disable-next-line import/no-deprecated
@@ -171,7 +171,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -189,7 +189,7 @@ export interface ICreateContainerMetadata {
 /**
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 

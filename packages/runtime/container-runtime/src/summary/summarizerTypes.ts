@@ -40,7 +40,7 @@ import { SummarizeReason } from "./summaryGenerator.js";
  * Similar to AbortSignal, but using promise instead of events
  * @param T - cancellation reason type
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ICancellationToken<T> {
@@ -58,7 +58,7 @@ export interface ICancellationToken<T> {
 /**
  * Similar to AbortSignal, but using promise instead of events
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -67,7 +67,7 @@ export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>
 /**
  * Data required to update internal tracking state after receiving a Summary Ack.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -92,7 +92,7 @@ export interface IRefreshSummaryAckOptions {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -120,7 +120,7 @@ export interface ISummarizingWarning extends ContainerWarning {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -133,7 +133,7 @@ export interface IConnectableRuntime {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -160,7 +160,7 @@ export interface ISummarizerRuntime extends IConnectableRuntime {
 /**
  * Options affecting summarize behavior.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -173,7 +173,7 @@ export interface ISummarizeOptions {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -199,7 +199,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -217,7 +217,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
 /**
  * Options to use when enqueueing a summarize attempt.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -240,7 +240,7 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
  * In addition to the normal summary tree + stats, this contains additional stats
  * only relevant at the root of the tree.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -274,7 +274,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
 /**
  * Type for summarization failures that are retriable.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -285,7 +285,7 @@ export interface IRetriableFailureError extends Error {
 /**
  * Base results for all submitSummary attempts.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -306,7 +306,7 @@ export interface IBaseSummarizeResult {
 /**
  * Results of submitSummary after generating the summary tree.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -330,7 +330,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
 /**
  * Results of submitSummary after uploading the tree to storage.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -349,7 +349,7 @@ export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "
 /**
  * Results of submitSummary after submitting the summarize op.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
@@ -380,7 +380,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
  *
  * 4. "submit" - the summarize op was submitted, and the result contains the op client sequence number.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -393,7 +393,7 @@ export type SubmitSummaryResult =
 /**
  * The stages of Summarize, used to describe how far progress succeeded in case of a failure at a later stage.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -402,7 +402,7 @@ export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 /**
  * The data in summarizer result when submit summary stage fails.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -412,7 +412,7 @@ export interface SubmitSummaryFailureData {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -423,7 +423,7 @@ export interface IBroadcastSummaryResult {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -434,7 +434,7 @@ export interface IAckSummaryResult {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -445,7 +445,7 @@ export interface INackSummaryResult {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -464,7 +464,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -490,7 +490,7 @@ export interface ISummarizeResults {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -527,7 +527,7 @@ export type EnqueueSummarizeResult =
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 

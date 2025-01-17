@@ -30,7 +30,7 @@ import {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -98,7 +98,7 @@ export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
  * // eslint-disable-next-line import/no-deprecated
  * @see IGCMetadata.gcFeatureMatrix and @see gcGenerationOptionName
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -142,7 +142,7 @@ export interface IGCMetadata_Deprecated {
  * GC-specific metadata to be written into the summary.
  *
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -197,7 +197,7 @@ export interface IGCMetadata {
 /**
  * The statistics of the system state after a garbage collection mark phase run.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -243,7 +243,7 @@ export interface IMarkPhaseStats {
 /**
  * The statistics of the system state after a garbage collection sweep phase run.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -277,7 +277,7 @@ export interface ISweepPhaseStats {
 /**
  * The statistics of the system state after a garbage collection run.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 
@@ -286,7 +286,7 @@ export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
 /**
  * The types of GC nodes in the GC reference graph.
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const GCNodeType = {
@@ -302,7 +302,7 @@ export const GCNodeType = {
 
 /**
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];

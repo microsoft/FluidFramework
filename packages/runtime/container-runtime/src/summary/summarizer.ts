@@ -84,7 +84,7 @@ export const createSummarizingWarning = (
  * It is the main entry point for summary work.
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
  * @legacy
- * @internal
+ * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 // eslint-disable-next-line import/no-deprecated
