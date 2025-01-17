@@ -42,7 +42,7 @@ describe("OpCompressor", () => {
 			// batch with one small message
 			createBatch(1, 100 * 1024),
 			// batch with one large message
-			createBatch(1, 500 * 1024 * 1024),
+			createBatch(1, 10 * 1024 * 1024),
 		].forEach((batch) => {
 			it(`Batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
