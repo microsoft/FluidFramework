@@ -1,10 +1,9 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "./api-extractor-base.json",
-	"mainEntryPointFilePath": "<projectFolder>/dist/index.d.ts",
+	"mainEntryPointFilePath": "<projectFolder>/lib/index.d.ts",
 	"apiReport": {
-		"enabled": true,
-		"reportVariants": ["public", "beta", "alpha"] // TODO: add "complete"?
+		"enabled": true
 	},
 	// API-Extractor uses the presence of this file in an npm package to determine whether or not its API members
 	// should be considered when making decisions about reports and rollups in consuming packages.
@@ -16,6 +15,6 @@
 	// <https://api-extractor.com/pages/configs/api-extractor_json/#tsdoc-metadata-section>.
 	"tsdocMetadata": {
 		"enabled": true,
-		"tsdocMetadataFilePath": "<projectFolder>/dist/tsdoc-metadata.json"
+		"tsdocMetadataFilePath": "<projectFolder>/lib/tsdoc-metadata.json"
 	}
 }

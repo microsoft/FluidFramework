@@ -10,6 +10,10 @@
 		// Don't generate API report in lint pass
 		"enabled": false
 	},
+	"docModel": {
+		// Don't generate doc-model in lint pass
+		"enabled": false
+	},
 	"dtsRollup": {
 		// Don't generate rollups in lint pass
 		"enabled": false
