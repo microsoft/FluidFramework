@@ -21,7 +21,9 @@ import {
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ContainerRuntimeGCMessage } from "../messageTypes.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
 } from "../summary/index.js";
@@ -31,15 +33,18 @@ import {
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export type GCVersion = number;
 
 /**
  * The stable/default version of GC Data
  */
+
 export const stableGCVersion: GCVersion = 3;
 /**
  * The next version of GC Data, to bump to in case we need to regenerate all GC Data across all files.
  */
+
 export const nextGCVersion: GCVersion = 4;
 
 /**
@@ -71,6 +76,7 @@ export const disableThrowOnTombstoneLoadKey =
 /**
  * Config key to enable GC version upgrade.
  */
+
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
 
 // One day in milliseconds.
@@ -89,11 +95,13 @@ export const defaultSessionExpiryDurationMs = 30 * oneDayMs; // 30 days
 export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
 
 /**
+ * // eslint-disable-next-line import/no-deprecated
  * @see IGCMetadata.gcFeatureMatrix and @see gcGenerationOptionName
  * @legacy
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export type GCFeatureMatrix =
 	| {
 			/**
@@ -119,10 +127,12 @@ export type GCFeatureMatrix =
  * Deprecated properties formerly included in @see IGCMetadata.
  * These may be found in old snapshots, so we need to support them for backwards compatibility.
  */
+
 export interface IGCMetadata_Deprecated {
 	/**
 	 * How long to wait after an object is unreferenced before deleting it via GC Sweep
 	 *
+	 * // eslint-disable-next-line import/no-deprecated
 	 * @deprecated Replaced by @see IGCMetadata.tombstoneTimeoutMs
 	 */
 	readonly sweepTimeoutMs?: number;
@@ -135,6 +145,7 @@ export interface IGCMetadata_Deprecated {
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export interface IGCMetadata {
 	/**
 	 * The version of the GC code that was run to generate the GC data that is written in the summary.
@@ -143,6 +154,7 @@ export interface IGCMetadata {
 	 * - A value of 0 or undefined means GC is disabled.
 	 * - A value greater than 0 means GC is enabled.
 	 */
+
 	readonly gcFeature?: GCVersion;
 
 	/**
@@ -156,12 +168,14 @@ export interface IGCMetadata {
 	 *
 	 * Guidance is that if no value is provided at runtime, it should result in the current default behavior.
 	 */
+
 	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
 	 * Tells whether the GC sweep phase is enabled for this container.
 	 * - True means sweep phase is enabled.
 	 * - False means sweep phase is disabled. If GC is disabled as per gcFeature, sweep is also disabled.
 	 *
+	 * // eslint-disable-next-line import/no-deprecated
 	 * @deprecated use GCFeatureMatrix.gcGeneration instead. @see GCFeatureMatrix.gcGeneration
 	 */
 	readonly sweepEnabled?: boolean;
@@ -186,6 +200,7 @@ export interface IGCMetadata {
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export interface IMarkPhaseStats {
 	/**
 	 * The number of nodes in the container.
@@ -231,6 +246,7 @@ export interface IMarkPhaseStats {
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export interface ISweepPhaseStats {
 	/**
 	 * The number of nodes in the lifetime of the container.
@@ -264,6 +280,7 @@ export interface ISweepPhaseStats {
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
 
 /**
@@ -427,6 +444,7 @@ export interface IGarbageCollector {
 	/**
 	 * Returns the garbage collector specific metadata to be written into the summary.
 	 */
+
 	getMetadata(): IGCMetadata;
 	/**
 	 * Returns the GC details generated from the base snapshot.
@@ -510,7 +528,9 @@ export interface IGarbageCollectorCreateParams {
 	readonly gcOptions: IGCRuntimeOptions;
 	readonly baseLogger: ITelemetryLoggerExt;
 	readonly existing: boolean;
+	// eslint-disable-next-line import/no-deprecated
 	readonly metadata: IContainerRuntimeMetadata | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	readonly createContainerMetadata: ICreateContainerMetadata;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly isSummarizerClient: boolean;
@@ -609,16 +629,20 @@ export interface IGarbageCollectorConfigs {
 	 */
 	readonly testMode: boolean;
 	/**
+	 * // eslint-disable-next-line import/no-deprecated
 	 * @see GCFeatureMatrix.
 	 */
+
 	readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 	/**
 	 * The version of GC in the base snapshot.
 	 */
+
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 	/**
 	 * The current version of GC data in the running code
 	 */
+
 	readonly gcVersionInEffect: GCVersion;
 	/**
 	 * If true, throw an error when a tombstone data store is retrieved

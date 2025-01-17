@@ -54,6 +54,7 @@ interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
  * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
+
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
 	// Tracks the work-in-progress used routes during summary.
 	private wipSerializedUsedRoutes: string | undefined;
@@ -92,6 +93,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	public constructor(
 		logger: ITelemetryBaseLogger,
 		summarizeInternalFn: SummarizeInternalFn,
+
 		config: ISummarizerNodeConfigWithGC,
 		_summaryHandleId: EscapedPath,
 		changeSequenceNumber: number,
@@ -354,7 +356,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 * If it is from a base summary, it will assert that a summary has been seen.
 		 * Attach information if it is created from an attach op.
 		 */
+
 		createParam: CreateChildSummarizerNodeParam,
+
 		config: ISummarizerNodeConfigWithGC = {},
 		getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 	): ISummarizerNodeWithGC {
@@ -371,6 +375,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		};
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
+
 		const child = new SummarizerNodeWithGC(
 			this.logger,
 			summarizeInternalFn,
@@ -405,6 +410,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param child - The child node whose state is to be updated.
 	 * @param id - Initial id or path part of this node
 	 */
+
 	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string) {
 		super.maybeUpdateChildState(child, id);
 
@@ -449,6 +455,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	/**
 	 * Override the getChild method to return an instance of SummarizerNodeWithGC.
 	 */
+
 	public getChild(id: string): ISummarizerNodeWithGC | undefined {
 		return this.children.get(id) as SummarizerNodeWithGC;
 	}
@@ -512,11 +519,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param getGCDataFn - Function to get the GC data of this node
  * @param baseGCDetailsP - Function to get the initial GC details of this node
  */
+
 export const createRootSummarizerNodeWithGC = (
 	logger: ITelemetryBaseLogger,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,
+
 	config: ISummarizerNodeConfigWithGC = {},
 	getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,

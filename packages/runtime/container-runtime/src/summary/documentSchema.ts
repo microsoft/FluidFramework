@@ -62,6 +62,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
 	// If runtime sees a version it does not understand, it should immediately fail and not
@@ -84,6 +85,7 @@ export interface IDocumentSchema {
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
 /**
@@ -96,6 +98,7 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
 	// - Legacy behavior - changing schema without leveraging schema change ops.
@@ -303,6 +306,7 @@ function checkRuntimeCompatibility(
 
 function and(
 	currentDocSchema: IDocumentSchemaCurrent,
+
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -324,6 +328,7 @@ function and(
 
 function or(
 	currentDocSchema: IDocumentSchemaCurrent,
+
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): IDocumentSchemaCurrent {
 	const runtime = {};
@@ -345,6 +350,7 @@ function or(
 
 function same(
 	currentDocSchema: IDocumentSchemaCurrent,
+
 	desiredDocSchema: IDocumentSchemaCurrent,
 ): boolean {
 	for (const key of new Set([
@@ -440,18 +446,22 @@ function arrayToProp(arr: string[]) {
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  * @sealed
  */
+
 export class DocumentsSchemaController {
 	private explicitSchemaControl: boolean;
 	private sendOp = true;
 
 	// schema coming from document metadata (snapshot we loaded from)
+
 	private documentSchema: IDocumentSchemaCurrent;
 
 	// desired schema, based on feature gates / runtime options.
 	// This includes requests to enable to disable functionality
+
 	private readonly desiredSchema: IDocumentSchemaCurrent;
 
 	// OR() of document schema and desired schema. It enables all the features that are enabled in either of schemas.
+
 	private futureSchema: IDocumentSchemaCurrent | undefined;
 
 	// Current schema this session operates with.
@@ -459,6 +469,7 @@ export class DocumentsSchemaController {
 	// 2) Non-legacy mode (explicitSchemaControl === true): this is AND() of document schema and desired schema. Only options that are enabled in both are enabled here.
 	//    If there are any options that are not enabled in document schema, but are enabled in desired schema, then attempt to change schema
 	//    (and enable such options) will be made through the session.
+
 	public sessionSchema: IDocumentSchemaCurrent;
 
 	/**
@@ -471,8 +482,11 @@ export class DocumentsSchemaController {
 	constructor(
 		existing: boolean,
 		snapshotSequenceNumber: number,
+
 		documentMetadataSchema: IDocumentSchema | undefined,
+
 		features: IDocumentSchemaFeatures,
+
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
@@ -575,6 +589,7 @@ export class DocumentsSchemaController {
 	 * Please consider note above constructor about race conditions - current design is to send op only once in a session lifetime.
 	 * @returns Optional message to send.
 	 */
+
 	public maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined {
 		if (this.sendOp && this.futureSchema !== undefined) {
 			this.sendOp = false;
@@ -663,6 +678,7 @@ export class DocumentsSchemaController {
 			checkRuntimeCompatibility(content, "change");
 
 			const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
+
 			this.documentSchema = schema as IDocumentSchemaCurrent;
 			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
 			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);

@@ -21,8 +21,10 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";
+// eslint-disable-next-line import/no-deprecated
 import { IGCMetadata } from "../gc/index.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { IDocumentSchema } from "./documentSchema.js";
 
 /**
@@ -137,15 +139,18 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+// eslint-disable-next-line import/no-deprecated
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/**
 	 * @deprecated - used by old (prior to 2.0 RC3) runtimes
 	 */
+
 	readonly message?: ISummaryMetadataMessage;
 	/**
 	 * The last message processed at the time of summary. Only primitive property types are added to the summary.
 	 */
+
 	readonly lastMessage?: ISummaryMetadataMessage;
 	/**
 	 * True if channels are not isolated in .channels subtrees, otherwise isolated.
@@ -160,6 +165,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	 */
 	readonly telemetryDocumentId?: string;
 
+	// eslint-disable-next-line import/no-deprecated
 	readonly documentSchema?: IDocumentSchema;
 }
 
@@ -168,6 +174,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export interface ICreateContainerMetadata {
 	/**
 	 * Runtime version of the container when it was first created
@@ -185,6 +192,7 @@ export interface ICreateContainerMetadata {
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
 	| "clientId"
@@ -233,6 +241,7 @@ export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const recentBatchInfoBlobName = ".recentBatchInfo";
+
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const idCompressorBlobName = ".idCompressor";
 export const blobHeadersBlobName = blobNameForBlobHeaders;
@@ -292,11 +301,14 @@ export const dataStoreAttributesBlobName = ".component";
  *
  * And adds +1 to treeNodeCount in stats.
  */
+
 export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats): void {
 	summarizeResult.summary = {
 		type: SummaryType.Tree,
+
 		tree: { [channelsTreeName]: summarizeResult.summary },
 	};
+
 	summarizeResult.stats.treeNodeCount++;
 }
 

@@ -6,6 +6,7 @@
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	DefaultSummaryConfiguration,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
@@ -75,6 +76,7 @@ export const createTestContainerRuntimeFactory = (
 			public runtimeOptions: IContainerRuntimeOptionsInternal = {
 				summaryOptions: {
 					summaryConfigOverrides: {
+						// eslint-disable-next-line import/no-deprecated
 						...DefaultSummaryConfiguration,
 						...{
 							initialSummarizerDelayMs: 0,

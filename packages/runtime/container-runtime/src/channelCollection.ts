@@ -76,6 +76,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	DeletedResponseHeaderKey,
 	RuntimeHeaderData,
 	defaultRuntimeHeaderData,
@@ -96,10 +97,13 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
+// eslint-disable-next-line import/no-deprecated
 import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
+// eslint-disable-next-line import/no-deprecated
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
@@ -192,9 +196,11 @@ export function wrapContext(context: IFluidParentContext): IFluidParentContext {
 		addedGCOutboundRoute: (...args) => {
 			return context.addedGCOutboundRoute(...args);
 		},
+
 		getCreateChildSummarizerNodeFn: (...args) => {
 			return context.getCreateChildSummarizerNodeFn?.(...args);
 		},
+
 		deleteChildSummarizerNode: (...args) => {
 			return context.deleteChildSummarizerNode(...args);
 		},
@@ -228,6 +234,7 @@ function wrapContextForInnerChannel(
 			contents: fluidDataStoreContent,
 		};
 		parentContext.submitMessage(
+			// eslint-disable-next-line import/no-deprecated
 			ContainerMessageType.FluidDataStoreOp,
 			envelope,
 			localOpMetadata,
@@ -335,6 +342,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					parentContext: this.wrapContextForInnerChannel(key),
 					storage: this.parentContext.storage,
 					scope: this.parentContext.scope,
+
 					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
@@ -351,6 +359,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 					parentContext: this.wrapContextForInnerChannel(key),
 					storage: this.parentContext.storage,
 					scope: this.parentContext.scope,
+
 					createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(key, {
 						type: CreateSummarizerNodeSource.FromSummary,
 					}),
@@ -474,6 +483,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				),
 				scope: this.parentContext.scope,
 				loadingGroupId: attachMessage.snapshot?.groupId,
+
 				createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(
 					attachMessage.id,
 					{
@@ -599,6 +609,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	protected submitAttachChannelOp(localContext: LocalFluidDataStoreContext) {
 		const message = this.generateAttachMessage(localContext);
 		this.pendingAttach.set(localContext.id, message);
+		// eslint-disable-next-line import/no-deprecated
 		this.parentContext.submitMessage(ContainerMessageType.Attach, message, undefined);
 		this.attachOpFiredForDataStore.add(localContext.id);
 	}
@@ -681,6 +692,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			parentContext: this.wrapContextForInnerChannel(id),
 			storage: this.parentContext.storage,
 			scope: this.parentContext.scope,
+
 			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
 				type: CreateSummarizerNodeSource.Local,
 			}),
@@ -707,10 +719,13 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	public reSubmit(type: string, content: unknown, localOpMetadata: unknown) {
 		switch (type) {
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Attach:
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Alias:
 				this.parentContext.submitMessage(type, content, localOpMetadata);
 				return;
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.reSubmitChannelOp(type, content, localOpMetadata);
 			default:
@@ -737,6 +752,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	public rollback(type: string, content: unknown, localOpMetadata: unknown) {
+		// eslint-disable-next-line import/no-deprecated
 		assert(type === ContainerMessageType.FluidDataStoreOp, 0x8e8 /* type */);
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);
@@ -758,10 +774,13 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public async applyStashedOp(content: unknown): Promise<unknown> {
 		const opContents = content as LocalContainerRuntimeMessage;
 		switch (opContents.type) {
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Attach:
 				return this.applyStashedAttachOp(opContents.contents);
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Alias:
 				return;
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.FluidDataStoreOp:
 				return this.applyStashedChannelChannelOp(opContents.contents);
 			default:
@@ -802,6 +821,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			parentContext: this.wrapContextForInnerChannel(id),
 			storage,
 			scope: this.parentContext.scope,
+
 			createSummarizerNodeFn: this.parentContext.getCreateChildSummarizerNodeFn(id, {
 				type: CreateSummarizerNodeSource.FromSummary,
 			}),
@@ -832,12 +852,15 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		switch (messageCollection.envelope.type) {
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.FluidDataStoreOp:
 				this.processChannelMessages(messageCollection);
 				break;
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Attach:
 				this.processAttachMessages(messageCollection);
 				break;
+			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Alias:
 				this.processAliasMessages(messageCollection);
 				break;
@@ -986,6 +1009,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			// The requested data store has been deleted by gc. Create a 404 response exception.
 			throw responseToException(
 				createResponseError(404, "DataStore was deleted", originalRequest, {
+					// eslint-disable-next-line import/no-deprecated
 					[DeletedResponseHeaderKey]: true,
 				}),
 				originalRequest,
@@ -1372,7 +1396,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		dataStoreContext.delete();
 		// Delete the contexts of unused data stores.
 		this.contexts.delete(dataStoreId);
+
 		// Delete the summarizer node of the unused data stores.
+
 		this.parentContext.deleteChildSummarizerNode(dataStoreId);
 	}
 
@@ -1475,6 +1501,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * Called by GC to determine if a node is for a data store or for an object within a data store (for e.g. DDS).
 	 * @returns the GC node type if the node belongs to a data store or object within data store, undefined otherwise.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public getGCNodeType(nodePath: string): GCNodeType | undefined {
 		const pathParts = nodePath.split("/");
 		if (!this.contexts.has(pathParts[1])) {
@@ -1484,8 +1511,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Data stores paths are of the format "/dataStoreId".
 		// Sub data store paths are of the format "/dataStoreId/subPath/...".
 		if (pathParts.length === 2) {
+			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.DataStore;
 		}
+		// eslint-disable-next-line import/no-deprecated
 		return GCNodeType.SubDataStore;
 	}
 
@@ -1550,6 +1579,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 export function getSummaryForDatastores(
 	snapshot: ISnapshotTree | undefined,
+
+	// eslint-disable-next-line import/no-deprecated
 	metadata?: IContainerRuntimeMetadata,
 ): ISnapshotTree | undefined {
 	if (!snapshot) {

@@ -56,6 +56,7 @@ export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRoo
  * call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
  * latest successful summary.
  */
+
 export class SummarizerNode implements IRootSummarizerNode {
 	/**
 	 * The reference sequence number of the most recent acked summary.
@@ -97,6 +98,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	public constructor(
 		baseLogger: ITelemetryBaseLogger,
 		private readonly summarizeInternalFn: SummarizeInternalFn,
+
 		config: ISummarizerNodeConfig,
 		/**
 		 * Encoded handle or path to the node
@@ -114,6 +116,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		protected telemetryNodeId?: string,
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
+
 		// All logs posted by the summarizer node should include the telemetryNodeId.
 		this.logger = createChildLogger({
 			logger: baseLogger,
@@ -428,6 +431,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 				const pendingSummary = this.pendingSummaries.get(proposalHandle);
 				if (pendingSummary?.referenceSequenceNumber !== undefined) {
 					isSummaryTracked = true;
+
 					// update the pendingSummariesMap for the root and all child summarizerNodes
 					this.refreshLatestSummaryFromPending(
 						proposalHandle,
@@ -521,12 +525,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * If it is from a base summary, it will assert that a summary has been seen.
 		 * Attach information if it is created from an attach op.
 		 */
+
 		createParam: CreateChildSummarizerNodeParam,
+
 		config: ISummarizerNodeConfig = {},
 	): ISummarizerNode {
 		assert(!this.children.has(id), 0x1ab /* "Create SummarizerNode child already exists" */);
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
+
 		const child = new SummarizerNode(
 			this.logger,
 			summarizeInternalFn,
@@ -559,6 +566,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 */
 	protected getCreateDetailsForChild(
 		id: string,
+
 		createParam: CreateChildSummarizerNodeParam,
 	): ICreateChildDetails {
 		let childLastSummaryReferenceSequenceNumber: number | undefined;
@@ -577,7 +585,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;
 			}
+
 			case CreateSummarizerNodeSource.FromSummary:
+
 			case CreateSummarizerNodeSource.Local: {
 				childLastSummaryReferenceSequenceNumber = parentLastSummaryReferenceSequenceNumber;
 				changeSequenceNumber = parentLastSummaryReferenceSequenceNumber ?? -1;
@@ -585,6 +595,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 			}
 			default: {
 				const type = (createParam as unknown as CreateChildSummarizerNodeParam).type;
+
 				unreachableCase(createParam, `Unexpected CreateSummarizerNodeSource: ${type}`);
 			}
 		}
@@ -609,6 +620,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * @param id - Initial id or path part of this node
 	 *
 	 */
+
 	protected maybeUpdateChildState(child: SummarizerNode, id: string) {
 		// If a summary is in progress, this child was created after the summary started. So, we need to update the
 		// child's summary state as well.
@@ -659,11 +671,13 @@ export class SummarizerNode implements IRootSummarizerNode {
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
  */
+
 export const createRootSummarizerNode = (
 	logger: ITelemetryLoggerExt,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,
+
 	config: ISummarizerNodeConfig = {},
 ): IRootSummarizerNode =>
 	new SummarizerNode(

@@ -103,11 +103,13 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
  */
 export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 	private readonly idleTimer: Timer | undefined;
+
 	private readonly runSummarize: (reason: SummarizeReason) => void;
 
 	public constructor(
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly configuration: ISummaryConfigurationHeuristics,
+
 		trySummarize: (reason: SummarizeReason) => void,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly summarizeStrategies: ISummaryHeuristicStrategy[] = getDefaultSummaryHeuristicStrategies(),

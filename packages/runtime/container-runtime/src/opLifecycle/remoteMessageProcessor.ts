@@ -10,6 +10,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	ContainerMessageType,
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -293,6 +294,7 @@ export function unpackRuntimeMessage(
 ): boolean {
 	if (message.type !== MessageType.Operation) {
 		// Legacy format, but it's already "unpacked",
+
 		// i.e. message.type is actually ContainerMessageType.
 		// Or it's non-runtime message.
 		// Nothing to do in such case.
@@ -305,6 +307,7 @@ export function unpackRuntimeMessage(
 		(message.contents as { address?: unknown }).address !== undefined &&
 		(message.contents as { type?: unknown }).type === undefined
 	) {
+		// eslint-disable-next-line import/no-deprecated
 		message.type = ContainerMessageType.FluidDataStoreOp;
 		logLegacyCase("unpackRuntimeMessage_contentsWithAddress");
 	} else {

@@ -21,21 +21,31 @@ import {
 
 import { ISummaryConfiguration } from "../containerRuntime.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	EnqueueSummarizeResult,
+	// eslint-disable-next-line import/no-deprecated
 	IConnectableRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IOnDemandSummarizeOptions,
 	ISummarizeHeuristicData,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizeResults,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
 	ISummarizingWarning,
 } from "./summarizerTypes.js";
+// eslint-disable-next-line import/no-deprecated
 import { SummaryCollection } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryGenerator.js";
 
@@ -72,12 +82,15 @@ export const createSummarizingWarning = (errorMessage: string, logged: boolean) 
  * @internal
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+// eslint-disable-next-line import/no-deprecated
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
+	// eslint-disable-next-line import/no-deprecated
 	public get ISummarizer() {
 		return this;
 	}
 
 	private readonly logger: ITelemetryLoggerExt;
+
 	private runningSummarizer?: RunningSummarizer;
 	private _disposed: boolean = false;
 	private starting: boolean = false;
@@ -89,22 +102,30 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		 * Reference to runtime that created this object.
 		 * i.e. runtime with clientType === "summarizer"
 		 */
+
+		// eslint-disable-next-line import/no-deprecated
 		private readonly runtime: ISummarizerRuntime,
 		private readonly configurationGetter: () => ISummaryConfiguration,
 		/**
 		 * Represents an object that can generate summary.
 		 * In practical terms, it's same runtime (this.runtime) with clientType === "summarizer".
 		 */
+
+		// eslint-disable-next-line import/no-deprecated
 		private readonly internalsProvider: ISummarizerInternalsProvider,
 		handleContext: IFluidHandleContext,
+		// eslint-disable-next-line import/no-deprecated
 		public readonly summaryCollection: SummaryCollection,
 		private readonly runCoordinatorCreateFn: (
+			// eslint-disable-next-line import/no-deprecated
 			runtime: IConnectableRuntime,
+			// eslint-disable-next-line import/no-deprecated
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
 		this.logger = createChildLogger({
 			logger: this.runtime.baseLogger,
+
 			namespace: "Summarizer",
 		});
 	}
@@ -112,6 +133,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
 		try {
 			const stopReason = await this.runCore(onBehalfOf);
+
 			this.emit("summarizerStop", {
 				stopReason,
 				numUnsummarizedRuntimeOps: this._heuristicData?.numRuntimeOps,
@@ -120,6 +142,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			return stopReason;
 		} catch (error) {
 			this.stop("summarizerException");
+
 			this.emit("summarizerStop", {
 				stopReason: "summarizerException",
 				error,
@@ -137,6 +160,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * the run promise, and also close the container.
 	 * @param reason - reason code for stopping
 	 */
+
 	public stop(reason: SummarizerStopReason) {
 		this.stopDeferred.resolve(reason);
 	}
@@ -149,6 +173,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	}
 
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
+		// eslint-disable-next-line import/no-deprecated
 		const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(
 			this.runtime,
 		);
@@ -185,6 +210,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 		// There are two possible approaches here:
 		// 1. Propagate cancellation from this.stopDeferred to runCoordinator. This will ensure that we move to the exit
+
 		//    faster, including breaking out of the RunningSummarizer.trySummarize() faster.
 		//    We could create new coordinator and pass it to waitStop() -> trySummarizeOnce("lastSummary") flow.
 		//    The con of this approach is that we might cancel active summary, and lastSummary will fail because it
@@ -194,12 +220,15 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		// 2. We can not do it and make waitStop() do last summary only if there was no active summary. This ensures
 		//    that client behaves properly (from server POV) and we do not waste resources. But, it may mean we wait
 		//    substantially longer for trySummarize() retries to play out and thus this summary loop may run into
+
 		//    conflict with new summarizer client starting on different client.
 		// As of now, #2 is implemented. It's more forward looking, as issue #7279 suggests changing design for new
+
 		// summarizer client to not be created until current summarizer fully moves to exit, and that would reduce
 		// cons of #2 substantially.
 
 		// Cleanup after running
+
 		await runningSummarizer.waitStop(
 			!runCoordinator.cancelled && Summarizer.stopReasonCanRunLastSummary(stopReason),
 		);
@@ -216,6 +245,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * @param stopReason - SummarizerStopReason
 	 * @returns `true` if the stop reason can run a last summary, otherwise `false`.
 	 */
+
 	public static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean {
 		return stopReason === "parentNotConnected";
 	}
@@ -233,12 +263,14 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 */
 	private async start(
 		onBehalfOf: string,
+		// eslint-disable-next-line import/no-deprecated
 		runCoordinator: ICancellableSummarizerController,
 	): Promise<RunningSummarizer> {
 		if (this.runningSummarizer) {
 			if (this.runningSummarizer.disposed) {
 				throw new UsageError("Starting a disposed summarizer");
 			}
+
 			return this.runningSummarizer;
 		}
 		if (this.starting) {
@@ -272,19 +304,24 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 		const runningSummarizer = await RunningSummarizer.start(
 			this.logger,
+
 			this.summaryCollection.createWatcher(clientId),
 			this.configurationGetter(),
 			async (...args) => this.internalsProvider.submitSummary(...args), // submitSummaryCallback
 			async (...args) => this.internalsProvider.refreshLatestSummaryAck(...args), // refreshLatestSummaryAckCallback
 			this._heuristicData,
+
 			this.summaryCollection,
 			runCoordinator /* cancellationToken */,
+
 			(reason) => runCoordinator.stop(reason) /* stopSummarizerCallback */,
 			this.runtime,
 		);
+
 		this.runningSummarizer = runningSummarizer;
 		this.setupForwardedEvents();
 		this.starting = false;
+
 		return runningSummarizer;
 	}
 
@@ -296,16 +333,21 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 */
 	public dispose() {
 		// Given that the call can come from own ContainerRuntime, ensure that we stop all the processes.
+
 		this.stop("summarizerClientDisconnected");
 
 		this._disposed = true;
+
 		if (this.runningSummarizer) {
 			this.cleanupForwardedEvents();
+
 			this.runningSummarizer.dispose();
+
 			this.runningSummarizer = undefined;
 		}
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		try {
 			if (this._disposed || this.runningSummarizer?.disposed) {
@@ -322,9 +364,12 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 					"On-demand summary attempted while an elected summarizer is present",
 				);
 			}
+
 			const builder = new SummarizeResultBuilder();
+
 			if (this.runningSummarizer) {
 				// Summarizer is already running. Go ahead and start.
+
 				return this.runningSummarizer.summarizeOnDemand(options, builder);
 			}
 
@@ -340,14 +385,18 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const startP = this.start(this.runtime.clientId!, runCoordinator);
 					startP
+
 						.then(async (runningSummarizer) => {
 							// Successfully started the summarizer. Run it.
+
 							runningSummarizer.summarizeOnDemand(options, builder);
+
 							// Wait for a command to stop or loss of connectivity before tearing down the summarizer and client.
 							const stopReason = await Promise.race([
 								this.stopDeferred.promise,
 								runCoordinator.waitCancelled,
 							]);
+
 							await runningSummarizer.waitStop(false);
 							runCoordinator.stop(stopReason);
 							this.close();
@@ -366,6 +415,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		}
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (
 			this._disposed ||
@@ -374,6 +424,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		) {
 			throw new UsageError("Summarizer is not running or already disposed.");
 		}
+
 		return this.runningSummarizer.enqueueSummarize(options);
 	}
 

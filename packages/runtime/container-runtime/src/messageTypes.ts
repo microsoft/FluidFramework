@@ -14,6 +14,7 @@ import {
 import { IDataStoreAliasMessage } from "./dataStore.js";
 import { GarbageCollectionMessage } from "./gc/index.js";
 import { IChunkedOp } from "./opLifecycle/index.js";
+// eslint-disable-next-line import/no-deprecated
 import { IDocumentSchemaChangeMessage } from "./summary/index.js";
 
 /**
@@ -115,6 +116,7 @@ export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 >;
 export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.DocumentSchemaChange,
+	// eslint-disable-next-line import/no-deprecated
 	IDocumentSchemaChangeMessage
 >;
 

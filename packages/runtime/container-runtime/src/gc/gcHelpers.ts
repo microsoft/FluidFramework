@@ -15,8 +15,11 @@ import {
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
+	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
 	gcVersionUpgradeToV4Key,
 	nextGCVersion,
@@ -28,6 +31,7 @@ import {
 	IGarbageCollectionState,
 } from "./gcSummaryDefinitions.js";
 
+// eslint-disable-next-line import/no-deprecated
 export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	if (!metadata) {
 		// Force to 0/disallowed in prior versions
@@ -39,8 +43,10 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 /**
  * Indicates what GC version is in effect for new GC data being written in this session
  */
+
 export function getGCVersionInEffect(configProvider: IConfigProvider): number {
 	// If version upgrade is not enabled, fall back to the stable GC version.
+
 	return configProvider.getBoolean(gcVersionUpgradeToV4Key) === true
 		? nextGCVersion
 		: stableGCVersion;
@@ -63,6 +69,7 @@ export function getGCVersionInEffect(configProvider: IConfigProvider): number {
  * @returns true if GC Sweep should be allowed for this document
  */
 export function shouldAllowGcSweep(
+	// eslint-disable-next-line import/no-deprecated
 	featureMatrix: GCFeatureMatrix,
 	currentGeneration: number | undefined,
 ): boolean {

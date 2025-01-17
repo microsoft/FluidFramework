@@ -14,10 +14,13 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeHeaderData } from "../containerRuntime.js";
+// eslint-disable-next-line import/no-deprecated
 import { ICreateContainerMetadata } from "../summary/index.js";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	IGarbageCollectorConfigs,
 	UnreferencedState,
@@ -41,6 +44,7 @@ interface ICommonProps {
 /**
  * The event that is logged when unreferenced node is used after a certain time.
  */
+// eslint-disable-next-line import/no-deprecated
 interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps {
 	/**
 	 * The id that GC uses to track the node. May or may not match id
@@ -52,11 +56,14 @@ interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps
 	 */
 	id: Tagged<string>;
 	fromId?: Tagged<string>;
+	// eslint-disable-next-line import/no-deprecated
 	type: GCNodeType;
 	unrefTime: number;
 	age: number;
 	// Expanding GC feature matrix. Without doing this, the configs cannot be logged in telemetry directly.
+
 	gcConfigs: Omit<IGarbageCollectorConfigs, "persistedGcFeatureMatrix"> & {
+		// eslint-disable-next-line import/no-deprecated
 		[K in keyof GCFeatureMatrix]: GCFeatureMatrix[K];
 	};
 	timeout?: number;
@@ -122,8 +129,11 @@ export class GCTelemetryTracker {
 	constructor(
 		private readonly mc: MonitoringContext,
 		private readonly configs: IGarbageCollectorConfigs,
+
 		private readonly isSummarizerClient: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly createContainerMetadata: ICreateContainerMetadata,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly getNodeType: (nodeId: string) => GCNodeType,
 		private readonly getNodeStateTracker: (
 			nodeId: string,
@@ -140,6 +150,7 @@ export class GCTelemetryTracker {
 	 * 2. An event is logged only once per container instance per event per node.
 	 */
 	private shouldLogNonActiveEvent(
+		// eslint-disable-next-line import/no-deprecated
 		nodeType: GCNodeType,
 		usageType: NodeUsageType,
 		nodeStateTracker: UnreferencedStateTracker,
@@ -149,12 +160,14 @@ export class GCTelemetryTracker {
 			return false;
 		}
 
+		// eslint-disable-next-line import/no-deprecated
 		if (nodeType === GCNodeType.Other) {
 			return false;
 		}
 
 		// For sub data store (DDS) nodes, if they are changed, its data store will also be changed,
 		// so skip logging to make the telemetry less noisy.
+		// eslint-disable-next-line import/no-deprecated
 		if (nodeType === GCNodeType.SubDataStore && usageType === "Changed") {
 			return false;
 		}
@@ -205,6 +218,7 @@ export class GCTelemetryTracker {
 					return undefined;
 			}
 		})();
+
 		const { persistedGcFeatureMatrix, ...configs } = this.configs;
 		const unrefEventProps = {
 			trackedId,
@@ -219,6 +233,7 @@ export class GCTelemetryTracker {
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
 			...otherNodeUsageProps,
 			...this.createContainerMetadata,
+
 			gcConfigs: { ...configs, ...persistedGcFeatureMatrix },
 		} satisfies Omit<IUnreferencedEventProps, "state" | "usageType"> &
 			typeof otherNodeUsageProps;
@@ -245,10 +260,12 @@ export class GCTelemetryTracker {
 		this.loggedUnreferencedEvents.add(uniqueEventId);
 
 		// For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
+
 		// For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
 		// but it's a good signal nonetheless and we can consume it with a grain of salt.
 		// Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
 		// SweepReady errors are usages of Objects that will be deleted by GC Sweep!
+
 		if (this.isSummarizerClient) {
 			this.pendingEventsQueue.push({
 				...unrefEventProps, // Note: Contains some properties from INodeUsageProps as well
@@ -257,6 +274,7 @@ export class GCTelemetryTracker {
 			});
 		} else {
 			// For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
+
 			// summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
 			// Events generated:
 			// InactiveObject_Loaded, SweepReadyObject_Loaded
@@ -286,6 +304,7 @@ export class GCTelemetryTracker {
 	 */
 	private logTombstoneUsageTelemetry(
 		unrefEventProps: Omit<IUnreferencedEventProps, "state" | "usageType">,
+		// eslint-disable-next-line import/no-deprecated
 		nodeType: GCNodeType,
 		usageType: NodeUsageType,
 		packagePath?: readonly string[],
@@ -353,6 +372,7 @@ export class GCTelemetryTracker {
 			for (const route of currentOutboundRoutes) {
 				const nodeType = this.getNodeType(route);
 				if (
+					// eslint-disable-next-line import/no-deprecated
 					(nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob) &&
 					!nodeId.startsWith(route) &&
 					!previousRoutes.includes(route) &&

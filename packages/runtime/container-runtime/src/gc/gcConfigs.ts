@@ -9,10 +9,13 @@ import {
 	validatePrecondition,
 } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { IContainerRuntimeMetadata } from "../summary/index.js";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
 	IGCMetadata_Deprecated,
 	IGCRuntimeOptions,
@@ -42,15 +45,20 @@ export function generateGCConfigs(
 	mc: MonitoringContext,
 	createParams: {
 		gcOptions: IGCRuntimeOptions;
+
+		// eslint-disable-next-line import/no-deprecated
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
+
 		isSummarizerClient: boolean;
 	},
 ): IGarbageCollectorConfigs {
 	let gcAllowed: boolean = true;
 	let sessionExpiryTimeoutMs: number | undefined;
 	let tombstoneTimeoutMs: number | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	let gcVersionInBaseSnapshot: GCVersion | undefined;
 
 	/**
@@ -62,16 +70,20 @@ export function generateGCConfigs(
 	 */
 	if (createParams.existing) {
 		const metadata = createParams.metadata;
+
 		gcVersionInBaseSnapshot = getGCVersion(metadata);
 		// Existing documents which did not have metadata blob or had GC disabled have GC version as 0. GC will be
 		// disabled for these documents.
+
 		gcAllowed = gcVersionInBaseSnapshot !== 0;
 		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
+
 		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)?.sweepTimeoutMs;
 		tombstoneTimeoutMs =
 			metadata?.tombstoneTimeoutMs ??
 			legacyPersistedSweepTimeoutMs ?? // Backfill old documents that have sweepTimeoutMs instead of tombstoneTimeoutMs
 			computeTombstoneTimeout(sessionExpiryTimeoutMs); // Backfill old documents that didn't persist either value
+
 		persistedGcFeatureMatrix = metadata?.gcFeatureMatrix;
 	} else {
 		// This Test Override only applies for new containers
@@ -152,8 +164,11 @@ export function generateGCConfigs(
 		tombstoneTimeoutMs,
 		sweepGracePeriodMs,
 		inactiveTimeoutMs,
+
 		persistedGcFeatureMatrix,
+
 		gcVersionInBaseSnapshot,
+
 		gcVersionInEffect: getGCVersionInEffect(mc.config),
 		throwOnTombstoneLoad,
 	};

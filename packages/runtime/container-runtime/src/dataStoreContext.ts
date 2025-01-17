@@ -141,6 +141,7 @@ export interface IFluidDataStoreContextProps {
 	readonly parentContext: IFluidParentContext;
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
+
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
 	readonly loadingGroupId?: string;
@@ -333,6 +334,7 @@ export abstract class FluidDataStoreContext
 	protected _baseSnapshot: ISnapshotTree | undefined;
 	protected _attachState: AttachState;
 	private _isInMemoryRoot: boolean = false;
+
 	protected readonly summarizerNode: ISummarizerNodeWithGC;
 	protected readonly mc: MonitoringContext;
 	private readonly thresholdOpsCounter: ThresholdCounter;
@@ -710,6 +712,7 @@ export abstract class FluidDataStoreContext
 		);
 
 		// Wrap dds summaries in .channels subtree.
+
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
 
@@ -717,12 +720,15 @@ export abstract class FluidDataStoreContext
 		const { pkg } = await this.getInitialSnapshotDetails();
 		const isRoot = await this.isRoot();
 		const attributes = createAttributes(pkg, isRoot);
+
 		addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
 		// If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
 		// size in the summary stats with the blobs size of this data store.
+
 		if (!this.summarizerNode.isReferenced()) {
 			summarizeResult.summary.unreferenced = true;
+
 			summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
 		}
 
@@ -776,6 +782,7 @@ export abstract class FluidDataStoreContext
 	 */
 	public updateUsedRoutes(usedRoutes: string[]) {
 		// Update the used routes in this data store's summarizer node.
+
 		this.summarizerNode.updateUsedRoutes(usedRoutes);
 
 		// If the channel doesn't exist yet (data store is not realized), the summarizer node will update it
@@ -815,7 +822,9 @@ export abstract class FluidDataStoreContext
 	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
+
 		// Summarizer clients should not submit messages.
+
 		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
 
 		this.parentContext.submitMessage(type, content, localOpMetadata);
@@ -1046,6 +1055,7 @@ export abstract class FluidDataStoreContext
 	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
+
 	protected identifyLocalChangeInSummarizer(eventName: string, type?: string) {
 		if (
 			this.clientDetails.type !== summarizerClientType ||
@@ -1056,10 +1066,12 @@ export abstract class FluidDataStoreContext
 
 		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
 		// this is happening and which data stores do this. The eventual goal is to disallow local changes
+
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
 			type,
+
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(30),
 		});
@@ -1068,6 +1080,7 @@ export abstract class FluidDataStoreContext
 
 	public getCreateChildSummarizerNodeFn(
 		id: string,
+
 		createParam: CreateChildSummarizerNodeParam,
 	) {
 		return (
@@ -1258,6 +1271,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		);
 
 		// Summarizer client should not create local data stores.
+
 		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
 
 		this.snapshotTree = props.snapshotTree;

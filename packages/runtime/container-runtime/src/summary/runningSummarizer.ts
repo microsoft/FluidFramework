@@ -30,25 +30,39 @@ import { opSize } from "../opProperties.js";
 
 import { SummarizeHeuristicRunner } from "./summarizerHeuristics.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	EnqueueSummarizeResult,
+	// eslint-disable-next-line import/no-deprecated
 	IEnqueueSummarizeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IOnDemandSummarizeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
+	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizeResults,
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
+	// eslint-disable-next-line import/no-deprecated
 	SubmitSummaryResult,
+	// eslint-disable-next-line import/no-deprecated
 	type IRetriableFailureError,
 } from "./summarizerTypes.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IAckedSummary,
+	// eslint-disable-next-line import/no-deprecated
 	IClientSummaryWatcher,
+	// eslint-disable-next-line import/no-deprecated
 	SummaryCollection,
 } from "./summaryCollection.js";
 import {
@@ -79,20 +93,30 @@ export const defaultMaxAttemptsForSubmitFailures = 5;
  * track of summaries that it is generating as they are broadcast and acked/nacked.
  * This object is created and controlled by Summarizer object.
  */
+
 export class RunningSummarizer
 	extends TypedEventEmitter<ISummarizerEvents>
 	implements IDisposable
 {
 	public static async start(
 		logger: ITelemetryBaseLogger,
+		// eslint-disable-next-line import/no-deprecated
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
+
+		// eslint-disable-next-line import/no-deprecated
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
+		// eslint-disable-next-line import/no-deprecated
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
+		// eslint-disable-next-line import/no-deprecated
 		summaryCollection: SummaryCollection,
+		// eslint-disable-next-line import/no-deprecated
 		cancellationToken: ISummaryCancellationToken,
+
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
+
+		// eslint-disable-next-line import/no-deprecated
 		runtime: ISummarizerRuntime,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
@@ -102,18 +126,23 @@ export class RunningSummarizer
 			submitSummaryCallback,
 			refreshLatestSummaryAckCallback,
 			heuristicData,
+
 			summaryCollection,
 			cancellationToken,
+
 			stopSummarizerCallback,
 			runtime,
 		);
 
 		// If there have been any acks newer that the one this client loaded from until now, process them before
+
 		// starting the running summarizer which will trigger summary heuristics.
+
 		// This is done primarily to handle scenarios where the summarizer loads from a cached snapshot and there
 		// is newer one available. The ack for the newer summary is processed before summarizing because otherwise
 		// that summary would fail as it has an older parent.
 		let nextReferenceSequenceNumber = runtime.deltaManager.initialSequenceNumber + 1;
+
 		const latestAck = summaryCollection.latestAck;
 		if (
 			latestAck !== undefined &&
@@ -127,6 +156,7 @@ export class RunningSummarizer
 
 		// Process summary acks asynchronously
 		// Note: no exceptions are thrown from processIncomingSummaryAcks handler as it handles all exceptions
+
 		summarizer.processIncomingSummaryAcks(nextReferenceSequenceNumber).catch((error) => {
 			createChildLogger({ logger }).sendErrorEvent(
 				{ eventName: "HandleSummaryAckFatalError" },
@@ -137,6 +167,7 @@ export class RunningSummarizer
 		// Update heuristic counts
 		// By the time we get here, there are potentially ops missing from the heuristic summary counts
 		// Examples of where this could happen:
+
 		// 1. Op is processed during the time that we are initiating the RunningSummarizer instance but before we
 		//    listen for the op events (will get missed by the handlers in the current workflow)
 		// 2. Op was sequenced after the last time we summarized (op sequence number > summarize ref sequence number)
@@ -157,7 +188,9 @@ export class RunningSummarizer
 		heuristicData.lastOpSequenceNumber = runtime.deltaManager.lastSequenceNumber;
 
 		// Start heuristics
+
 		summarizer.heuristicRunner?.start();
+
 		summarizer.heuristicRunner?.run();
 
 		return summarizer;
@@ -179,7 +212,9 @@ export class RunningSummarizer
 		| {
 				reason: SummarizeReason;
 				afterSequenceNumber: number;
+				// eslint-disable-next-line import/no-deprecated
 				summarizeOptions: ISummarizeOptions;
+
 				readonly resultsBuilder: SummarizeResultBuilder;
 		  }
 		| undefined;
@@ -203,24 +238,34 @@ export class RunningSummarizer
 
 	private constructor(
 		baseLogger: ITelemetryBaseLogger,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly summaryWatcher: IClientSummaryWatcher,
 		private readonly configuration: ISummaryConfiguration,
 		private readonly submitSummaryCallback: (
+			// eslint-disable-next-line import/no-deprecated
 			options: ISubmitSummaryOptions,
+			// eslint-disable-next-line import/no-deprecated
 		) => Promise<SubmitSummaryResult>,
 		private readonly refreshLatestSummaryAckCallback: (
+			// eslint-disable-next-line import/no-deprecated
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly heuristicData: ISummarizeHeuristicData,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly summaryCollection: SummaryCollection,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly cancellationToken: ISummaryCancellationToken,
+
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
+
+		// eslint-disable-next-line import/no-deprecated
 		private readonly runtime: ISummarizerRuntime,
 	) {
 		super();
 
 		const telemetryProps: ISummarizeRunnerTelemetry = {
 			summarizeCount: () => this.summarizeCount,
+
 			summarizerSuccessfulAttempts: () => this.totalSuccessfulAttempts,
 		};
 
@@ -260,6 +305,7 @@ export class RunningSummarizer
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
+
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
 			this.mc.logger.sendErrorEvent({
@@ -272,6 +318,7 @@ export class RunningSummarizer
 			});
 		});
 		// Set up pending ack timeout by op timestamp differences for previous summaries.
+
 		summaryCollection.setPendingAckTimerTimeoutCallback(maxAckWaitTime, () => {
 			if (this.pendingAckTimer.hasTimer) {
 				this.mc.logger.sendTelemetryEvent({
@@ -292,6 +339,7 @@ export class RunningSummarizer
 			() => {
 				this.totalSuccessfulAttempts++;
 			},
+			// eslint-disable-next-line import/no-deprecated
 			async (options: IRefreshSummaryAckOptions) => {
 				if (immediatelyRefreshLatestSummaryAck) {
 					await this.refreshLatestSummaryAckAndHandleError(options);
@@ -319,6 +367,7 @@ export class RunningSummarizer
 				: defaultMaxAttemptsForSubmitFailures;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	private async handleSummaryAck(ack: IAckedSummary) {
 		const refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
 		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
@@ -340,6 +389,7 @@ export class RunningSummarizer
 		await this.lockedSummaryAction(
 			() => {},
 			async () => {
+				// eslint-disable-next-line import/no-deprecated
 				const options: IRefreshSummaryAckOptions = {
 					proposalHandle: summaryOpHandle,
 					ackHandle: summaryAckHandle,
@@ -353,6 +403,7 @@ export class RunningSummarizer
 	}
 
 	private readonly refreshLatestSummaryAckAndHandleError = async (
+		// eslint-disable-next-line import/no-deprecated
 		options: IRefreshSummaryAckOptions,
 	) => {
 		return this.refreshLatestSummaryAckCallback(options).catch(async (error) => {
@@ -361,6 +412,7 @@ export class RunningSummarizer
 			// latest version with which we will refresh the state. However in case of single commit
 			// summary, we might be missing a summary ack, so in that case we are still fine as the
 			// code in `submitSummary` function in container runtime, will refresh the latest state
+
 			// by calling `prefetchLatestSummaryThenClose`. We will load the next summarizer from the
 			// updated state and be fine.
 			const isIgnoredError =
@@ -504,6 +556,7 @@ export class RunningSummarizer
 			if (this.summarizingLock === undefined) {
 				this.trySummarizeOnce(
 					// summarizeProps
+
 					{ summarizeReason: "lastSummary" },
 					{},
 					undefined,
@@ -515,6 +568,7 @@ export class RunningSummarizer
 		// Note that trySummarizeOnce() call above returns right away, without waiting.
 		// So we need to wait for its completion, otherwise it would be destroyed right away.
 		// That said, if summary lock was taken upfront, this wait might wait on  multiple retries to
+
 		// submit summary. We should reconsider this flow and make summarizer move to exit faster.
 		// This resolves when the current pending summary gets an ack or fails.
 		await this.summarizingLock;
@@ -539,11 +593,13 @@ export class RunningSummarizer
 
 		// Remove pending ack wait timeout by op timestamp comparison, because
 		// it has race conditions with summaries submitted by this same client.
+
 		this.summaryCollection.unsetPendingAckTimerTimeoutCallback();
 
 		if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
 			this.heuristicData.updateWithLastSummaryAckInfo({
 				refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
+
 				// This will be the Summarizer starting point so only use timestamps from client's machine.
 				summaryTime: Date.now(),
 				summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
@@ -609,9 +665,13 @@ export class RunningSummarizer
 	 */
 	private trySummarizeOnce(
 		summarizeProps: ISummarizeTelemetryProperties,
+		// eslint-disable-next-line import/no-deprecated
 		options: ISummarizeOptions,
+
 		resultsBuilder = new SummarizeResultBuilder(),
 		isLastSummary = false,
+
+		// eslint-disable-next-line import/no-deprecated
 	): ISummarizeResults {
 		this.lockedSummaryAction(
 			() => {
@@ -622,14 +682,17 @@ export class RunningSummarizer
 					logger: this.mc.logger,
 					properties: { all: summarizeProps },
 				});
+				// eslint-disable-next-line import/no-deprecated
 				const summaryOptions: ISubmitSummaryOptions = {
 					...options,
 					summaryLogger,
 					cancellationToken: this.cancellationToken,
 					latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 				};
+
 				const summarizeResult = this.generator.summarize(summaryOptions, resultsBuilder);
 				// ensure we wait till the end of the process
+
 				const result = await summarizeResult.receivedSummaryAckOrNack;
 
 				if (result.success) {
@@ -687,6 +750,7 @@ export class RunningSummarizer
 	/**
 	 * Heuristics summarize attempt.
 	 */
+
 	private trySummarize(reason: SummarizeReason): void {
 		if (this.summarizingLock !== undefined) {
 			// lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
@@ -716,9 +780,12 @@ export class RunningSummarizer
 	 */
 	private async trySummarizeWithRetries(
 		reason: SummarizeReason,
+
+		// eslint-disable-next-line import/no-deprecated
 	): Promise<ISummarizeResults | undefined> {
 		// Helper to set summarize options, telemetry properties and call summarize.
 		const attemptSummarize = (attemptNumber: number, finalAttempt: boolean) => {
+			// eslint-disable-next-line import/no-deprecated
 			const summarizeOptions: ISummarizeOptions = {
 				fullTree: false,
 			};
@@ -732,6 +799,7 @@ export class RunningSummarizer
 				logger: this.mc.logger,
 				properties: { all: summarizeProps },
 			});
+			// eslint-disable-next-line import/no-deprecated
 			const summaryOptions: ISubmitSummaryOptions = {
 				...summarizeOptions,
 				summaryLogger,
@@ -739,7 +807,9 @@ export class RunningSummarizer
 				finalAttempt,
 				latestSummaryRefSeqNum: this.heuristicData.lastSuccessfulSummary.refSequenceNumber,
 			};
+
 			const summarizeResult = this.generator.summarize(summaryOptions);
+
 			return { summarizeProps, summarizeResult };
 		};
 
@@ -749,6 +819,7 @@ export class RunningSummarizer
 		// This makes it harder to predict how many attempts would actually happen as that depends on how far an attempt
 		// made. To keep things simple, the max attempts is reset after every attempt based on where it failed. This may
 		// result in some failures not being retried depending on what happened before this attempt. That's fine because
+
 		// such scenarios are very unlikely and even if it happens, it would resolve when a new summarizer starts over.
 		// For example - When failure switches from one the submit failures to nack failure, only one more retry will
 		// happen irrespective of the value of `defaultMaxAttempts`.
@@ -757,7 +828,10 @@ export class RunningSummarizer
 		let retryAfterSeconds: number | undefined;
 		let done = false;
 		let status: "success" | "failure" | "canceled" = "success";
+
+		// eslint-disable-next-line import/no-deprecated
 		let results: ISummarizeResults | undefined;
+		// eslint-disable-next-line import/no-deprecated
 		let error: IRetriableFailureError | undefined;
 		let failureMessage: string | undefined;
 		do {
@@ -769,6 +843,7 @@ export class RunningSummarizer
 			}
 
 			const attemptResult = attemptSummarize(currentAttempt, false /* finalAttempt */);
+
 			results = attemptResult.summarizeResult;
 
 			// Ack / nack is the final step, so if it succeeds we're done.
@@ -782,7 +857,9 @@ export class RunningSummarizer
 			// Update max attempts from the failure result.
 			// If submit summary failed, use maxAttemptsForSubmitFailures. Else use the defaultMaxAttempts.
 			// Note: Check "summarySubmitted" result first because if it fails, ack nack would fail as well.
+
 			const submitSummaryResult = await results.summarySubmitted;
+
 			maxAttempts = !submitSummaryResult.success
 				? this.maxAttemptsForSubmitFailures
 				: defaultMaxAttempts;
@@ -792,6 +869,7 @@ export class RunningSummarizer
 			error = ackNackResult.error;
 			failureMessage = ackNackResult.message;
 			retryAfterSeconds = error.retryAfterSeconds;
+
 			const eventProps: ISummarizeEventProps & ISummarizerObservabilityProps = {
 				result: status,
 				currentAttempt,
@@ -815,6 +893,7 @@ export class RunningSummarizer
 					eventName: "SummarizeAttemptDelay",
 					duration: retryAfterSeconds * 1000,
 					summaryNackDelay: ackNackResult.data !== undefined, // This will only be defined only for nack failures.
+
 					stage: submitSummaryResult.data?.stage,
 					...attemptResult.summarizeProps,
 				});
@@ -839,10 +918,12 @@ export class RunningSummarizer
 		if (retryAfterSeconds !== undefined) {
 			const { summarizeResult } = attemptSummarize(++currentAttempt, true /* finalAttempt */);
 			// Ack / nack is the final step, so if it succeeds we're done.
+
 			const ackNackResult = await summarizeResult.receivedSummaryAckOrNack;
 			status = ackNackResult.success ? "success" : "failure";
 			error = ackNackResult.success ? undefined : ackNackResult.error;
 			failureMessage = ackNackResult.success ? undefined : ackNackResult.message;
+
 			const eventProps: ISummarizeEventProps & ISummarizerObservabilityProps = {
 				result: status,
 				currentAttempt,
@@ -853,6 +934,7 @@ export class RunningSummarizer
 				numUnsummarizedNonRuntimeOps: this.heuristicData.numNonRuntimeOps,
 			};
 			this.emit("summarize", eventProps);
+
 			results = summarizeResult;
 		}
 
@@ -872,6 +954,7 @@ export class RunningSummarizer
 				error,
 				failureMessage,
 			};
+
 			this.stopSummarizerCallback("failToSummarize");
 		}
 		return results;
@@ -883,6 +966,7 @@ export class RunningSummarizer
 	 */
 	private async summarizeOnDemandWithRetries(
 		reason: SummarizeReason,
+
 		resultsBuilder: SummarizeResultBuilder,
 	) {
 		const results = await this.trySummarizeWithRetries(reason);
@@ -906,12 +990,17 @@ export class RunningSummarizer
 	 * {@inheritdoc (ISummarizer:interface).summarizeOnDemand}
 	 */
 	public summarizeOnDemand(
+		// eslint-disable-next-line import/no-deprecated
 		options: IOnDemandSummarizeOptions,
+
 		resultsBuilder: SummarizeResultBuilder = new SummarizeResultBuilder(),
+
+		// eslint-disable-next-line import/no-deprecated
 	): ISummarizeResults {
 		if (this.stopping) {
 			resultsBuilder.fail(
 				"RunningSummarizer stopped or disposed",
+
 				new RetriableSummaryError("RunningSummarizer stopped or disposed"),
 			);
 			return resultsBuilder.build();
@@ -920,6 +1009,7 @@ export class RunningSummarizer
 		// return a promise that caller can await before trying again.
 		if (this.summarizingLock !== undefined) {
 			// The heuristics are blocking concurrent summarize attempts.
+
 			throw new UsageError("Attempted to run an already-running summarizer on demand");
 		}
 
@@ -943,6 +1033,8 @@ export class RunningSummarizer
 	/**
 	 * {@inheritdoc (ISummarizer:interface).enqueueSummarize}
 	 */
+
+	// eslint-disable-next-line import/no-deprecated
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		const { reason, afterSequenceNumber = 0, override = false, ...summarizeOptions } = options;
 		let overridden = false;
@@ -965,6 +1057,7 @@ export class RunningSummarizer
 			reason: `enqueue;${reason}`,
 			afterSequenceNumber,
 			summarizeOptions,
+
 			resultsBuilder: new SummarizeResultBuilder(),
 		};
 		const results = this.enqueuedSummary.resultsBuilder.build();
@@ -1006,6 +1099,7 @@ export class RunningSummarizer
 		if (this.enqueuedSummary !== undefined) {
 			this.enqueuedSummary.resultsBuilder.fail(
 				"RunningSummarizer stopped or disposed",
+
 				new RetriableSummaryError("RunningSummarizer stopped or disposed"),
 			);
 			this.enqueuedSummary = undefined;

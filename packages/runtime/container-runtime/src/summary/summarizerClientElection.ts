@@ -11,9 +11,11 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	IOrderedClientElection,
+	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
+// eslint-disable-next-line import/no-deprecated
 import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export const summarizerClientType = "summarizer";
@@ -33,6 +35,7 @@ export interface ISummarizerClientElection
  * It will handle updating the elected client when a summary ack hasn't been seen
  * for some configured number of ops.
  */
+
 export class SummarizerClientElection
 	extends TypedEventEmitter<ISummarizerClientElectionEvents>
 	implements ISummarizerClientElection
@@ -60,6 +63,7 @@ export class SummarizerClientElection
 
 	constructor(
 		private readonly logger: ITelemetryLoggerExt,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
 		public readonly clientElection: IOrderedClientElection,
 		private readonly maxOpsSinceLastSummary: number,
@@ -67,6 +71,7 @@ export class SummarizerClientElection
 		super();
 		// On every inbound op, if enough ops pass without seeing a summary ack (per elected client),
 		// elect a new client and log to telemetry.
+
 		this.summaryCollection.on("default", ({ sequenceNumber }) => {
 			const electedClientId = this.electedClientId;
 			if (electedClientId === undefined) {
@@ -99,6 +104,7 @@ export class SummarizerClientElection
 		});
 
 		// When a summary ack comes in, reset our op seq counter.
+
 		this.summaryCollection.on(MessageType.SummaryAck, (op) => {
 			this.lastSummaryAckSeqForClient = op.sequenceNumber;
 		});
@@ -115,10 +121,12 @@ export class SummarizerClientElection
 				this.clientElection.resetElectedClient(sequenceNumber);
 			}
 			// Election can trigger a change in SummaryManager state.
+
 			this.emit("electedSummarizerChanged");
 		});
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public serialize(): ISerializedElection {
 		const { electedClientId, electedParentId, electionSequenceNumber } =
 			this.clientElection.serialize();
@@ -135,6 +143,7 @@ export class SummarizerClientElection
 			// Very old clients back-compat
 			return true;
 		}
+
 		return SummarizerClientElection.clientDetailsPermitElection(details);
 	}
 
