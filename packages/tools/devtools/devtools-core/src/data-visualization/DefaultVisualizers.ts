@@ -22,21 +22,17 @@ import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ITreeInternal } from "@fluidframework/tree/internal";
-import { SchemaFactory, SharedTree, Tree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
 import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
-	concatenateTypes,
 	determineNodeKind,
 	toVisualTree,
 	visualizeSharedTreeBySchema,
 } from "./SharedTreeVisualizer.js";
-import {
-	VisualSharedTreeNodeKind,
-	type VisualSharedTreeNode,
-} from "./VisualSharedTreeTypes.js";
+import type { VisualSharedTreeNode } from "./VisualSharedTreeTypes.js";
 import {
 	type FluidObjectNode,
 	type FluidObjectTreeNode,
@@ -278,28 +274,13 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Schema of the tree node.
 	const treeSchema = sharedTree.exportSimpleSchema();
 
-	const schemaFactory = new SchemaFactory(undefined);
-	const schemaName = Tree.is(treeView, [
-		schemaFactory.boolean,
-		schemaFactory.null,
-		schemaFactory.number,
-		schemaFactory.handle,
-		schemaFactory.string,
-	])
-		? Tree.schema(treeView).identifier
-		: treeView.type;
-
 	// Create a root field visualization that shows the allowed types at the root
-	const visualTreeRepresentation: VisualSharedTreeNode = {
-		schema: {
-			schemaName,
-			allowedTypes: concatenateTypes(treeSchema.allowedTypes),
-		},
-		fields: {
-			root: await visualizeSharedTreeBySchema(treeView, treeSchema, visualizeChildData),
-		},
-		kind: VisualSharedTreeNodeKind.InternalNode,
-	};
+	const visualTreeRepresentation: VisualSharedTreeNode = await visualizeSharedTreeBySchema(
+		treeView,
+		treeSchema,
+		visualizeChildData,
+		true,
+	);
 
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = toVisualTree(visualTreeRepresentation);

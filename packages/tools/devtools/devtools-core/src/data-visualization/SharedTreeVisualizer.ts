@@ -198,10 +198,14 @@ async function visualizeObjectNode(
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
+	const isRootField = treeSchema.allowedTypes.has(tree.type);
+
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: getObjectAllowedTypes(nodeSchema),
+			allowedTypes: isRootField
+				? concatenateTypes(treeSchema.allowedTypes)
+				: getObjectAllowedTypes(nodeSchema),
 		},
 		fields: await visualizeVerboseNodeFields(tree.fields, treeSchema, visualizeChildData),
 		kind: VisualSharedTreeNodeKind.InternalNode,
@@ -306,8 +310,10 @@ export async function visualizeSharedTreeBySchema(
 	tree: VerboseTree,
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
+	isRootField?: boolean,
 ): Promise<VisualSharedTreeNode> {
 	const schemaFactory = new SchemaFactory(undefined);
+
 	return Tree.is(tree, [
 		schemaFactory.boolean,
 		schemaFactory.null,
@@ -318,6 +324,10 @@ export async function visualizeSharedTreeBySchema(
 		? {
 				schema: {
 					schemaName: Tree.schema(tree).identifier,
+					allowedTypes:
+						isRootField === true
+							? concatenateTypes(treeSchema.allowedTypes)
+							: Tree.schema(tree).identifier,
 				},
 				value: await visualizeChildData(tree),
 				kind: VisualSharedTreeNodeKind.LeafNode,
