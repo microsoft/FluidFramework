@@ -405,8 +405,7 @@ export class Outbox {
 	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param batch - Raw or Grouped batch to consider for compression/chunking
-	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original),
-	 * or (C) a batch containing the last chunk (plus empty placeholders from compression if applicable).
+	 * @returns Either (A) the original batch or (B) a compressed batch (same length as original),
 	 */
 	private compressAndChunkBatch(batch: IBatch): IBatch {
 		if (
