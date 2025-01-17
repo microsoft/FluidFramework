@@ -67,20 +67,20 @@ export class DataStoreContexts
 		return this._contexts.size;
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = () => this.disposeOnce.value;
+	public readonly dispose = (): void => this.disposeOnce.value;
 
-	public notBoundLength() {
+	public notBoundLength(): number {
 		return this.notBoundContexts.size;
 	}
 
-	public isNotBound(id: string) {
+	public isNotBound(id: string): boolean {
 		return this.notBoundContexts.has(id);
 	}
 
-	public has(id: string) {
+	public has(id: string): boolean {
 		return this._contexts.has(id);
 	}
 
@@ -102,7 +102,7 @@ export class DataStoreContexts
 	private readonly _recentlyDeletedContexts: Map<string, FluidDataStoreContext | undefined> =
 		new Map();
 
-	public getRecentlyDeletedContext(id: string) {
+	public getRecentlyDeletedContext(id: string): FluidDataStoreContext | undefined {
 		return this._recentlyDeletedContexts.get(id);
 	}
 
@@ -122,7 +122,7 @@ export class DataStoreContexts
 	/**
 	 * Add the given context, marking it as to-be-bound
 	 */
-	public addUnbound(context: LocalFluidDataStoreContext) {
+	public addUnbound(context: LocalFluidDataStoreContext): void {
 		const id = context.id;
 		assert(!this._contexts.has(id), 0x158 /* "Creating store with existing ID" */);
 
@@ -165,7 +165,7 @@ export class DataStoreContexts
 	/**
 	 * Update this context as bound
 	 */
-	public bind(id: string) {
+	public bind(id: string): void {
 		const removed: boolean = this.notBoundContexts.delete(id);
 		assert(removed, 0x159 /* "The given id was not found in notBoundContexts to delete" */);
 
@@ -194,7 +194,7 @@ export class DataStoreContexts
 	 * This could be because it's a local context that's been bound, or because it's a remote context.
 	 * @param context - The context to add
 	 */
-	public addBoundOrRemoted(context: FluidDataStoreContext) {
+	public addBoundOrRemoted(context: FluidDataStoreContext): void {
 		const id = context.id;
 		assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 
