@@ -36,7 +36,6 @@ import {
 	IOnDemandSummarizeOptions,
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizeResults,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
@@ -107,7 +106,6 @@ export class SummaryManager
 	private latestClientId: string | undefined;
 	private state = SummaryManagerState.Off;
 
-	// eslint-disable-next-line import/no-deprecated
 	private summarizer?: ISummarizer;
 	private _disposed = false;
 
@@ -133,7 +131,6 @@ export class SummaryManager
 		 * get back its Summarizer instance.
 		 */
 
-		// eslint-disable-next-line import/no-deprecated
 		private readonly createSummarizerFn: () => Promise<ISummarizer>,
 		private readonly startThrottler: IThrottler,
 		{

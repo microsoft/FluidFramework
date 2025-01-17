@@ -12,7 +12,6 @@ import {
 import {
 	// eslint-disable-next-line import/no-deprecated
 	IOnDemandSummarizeOptions,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
 	ISummaryRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
@@ -44,7 +43,6 @@ const summarizerClientType = "summarizer";
  * This function can be removed once LTS version of Loader moves to 2.0.0-internal.7.0.0
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
 async function getSummarizerBackCompat(container: IContainer): Promise<ISummarizer> {
 	if (container.getEntryPoint !== undefined) {
 		const entryPoint = await container.getEntryPoint();
@@ -53,13 +51,11 @@ async function getSummarizerBackCompat(container: IContainer): Promise<ISummariz
 		// function container.getEntryPoint will be defined for the 2.X container. However, it will not return undefined
 		// since the container's runtime will be on version 1.X, which does not have an entry point defined.
 		if (entryPoint !== undefined) {
-			// eslint-disable-next-line import/no-deprecated
 			return entryPoint as ISummarizer;
 		}
 	}
 	const response: IResponse = await (container as any).request({ url: "_summarizer" });
 	assert(response.status === 200, "requesting '/' should return default data object");
-	// eslint-disable-next-line import/no-deprecated
 	return response.value as ISummarizer;
 }
 
@@ -126,7 +122,6 @@ export async function createSummarizerFromFactory(
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
-	// eslint-disable-next-line import/no-deprecated
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
 		containerRuntimeFactoryType,
@@ -159,7 +154,6 @@ export async function createSummarizer(
 	config?: ITestContainerConfig,
 	summaryVersion?: string,
 	logger?: ITelemetryBaseLogger,
-	// eslint-disable-next-line import/no-deprecated
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const testContainerConfig: ITestContainerConfig = {
 		...config,
@@ -187,7 +181,6 @@ export async function createSummarizer(
  * @internal
  */
 export async function summarizeNow(
-	// eslint-disable-next-line import/no-deprecated
 	summarizer: ISummarizer,
 	// eslint-disable-next-line import/no-deprecated
 	inputs: string | IOnDemandSummarizeOptions = "end-to-end test",

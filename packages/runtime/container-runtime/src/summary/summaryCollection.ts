@@ -70,7 +70,6 @@ export interface ISummary {
  * @legacy
  * @alpha
  */
-
 export interface IAckedSummary {
 	readonly summaryOp: ISummaryOpMessage;
 
@@ -266,7 +265,6 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * @legacy
  * @alpha
  */
-
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
 	// key: clientId
 	private readonly summaryWatchers = new Map<string, ClientSummaryWatcher>();

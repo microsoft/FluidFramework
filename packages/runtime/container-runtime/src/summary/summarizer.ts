@@ -37,7 +37,6 @@ import {
 	ISummarizeHeuristicData,
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizeResults,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
@@ -87,9 +86,7 @@ export const createSummarizingWarning = (
  * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-// eslint-disable-next-line import/no-deprecated
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
-	// eslint-disable-next-line import/no-deprecated
 	public get ISummarizer(): this {
 		return this;
 	}

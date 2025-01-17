@@ -62,7 +62,7 @@ export class DocumentsSchemaController {
     summarizeDocumentSchema(refSeq: number): IDocumentSchemaCurrent | undefined;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly alreadyEnqueued?: undefined;
 }) | (ISummarizeResults & {
@@ -103,7 +103,7 @@ export interface IAckedSummary {
     readonly summaryOp: ISummaryOpMessage;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export interface IAckSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
@@ -111,7 +111,7 @@ export interface IAckSummaryResult {
     readonly summaryAckOp: ISummaryAckMessage;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IBaseSummarizeResult {
     readonly error: IRetriableFailureError | undefined;
     // (undocumented)
@@ -129,7 +129,7 @@ export interface IBlobManagerLoadInfo {
     redirectTable?: [string, string][];
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export interface IBroadcastSummaryResult {
     // (undocumented)
     readonly broadcastDuration: number;
@@ -249,7 +249,7 @@ export interface IDocumentSchemaFeatures {
     opGroupingEnabled: boolean;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly afterSequenceNumber?: number;
     readonly override?: boolean;
@@ -305,7 +305,7 @@ export interface IGCRuntimeOptions {
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly dataStoreCount: number;
     readonly gcBlobNodeCount?: number;
@@ -315,7 +315,7 @@ export interface IGeneratedSummaryStats extends ISummaryStats {
     readonly summaryNumber: number;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "stage"> {
     readonly generateDuration: number;
     // (undocumented)
@@ -337,7 +337,7 @@ export interface IMarkPhaseStats {
     updatedNodeCount: number;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export interface INackSummaryResult {
     // (undocumented)
     readonly ackNackDuration: number;
@@ -348,7 +348,7 @@ export interface INackSummaryResult {
 // @alpha @deprecated
 export const InactiveResponseHeaderKey = "isInactive";
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
     readonly retryOnFailure?: boolean;
@@ -362,7 +362,7 @@ export interface IRefreshSummaryAckOptions {
     readonly summaryRefSeq: number;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IRetriableFailureError extends Error {
     // (undocumented)
     readonly retryAfterSeconds?: number;
@@ -375,7 +375,7 @@ export interface ISerializedElection {
     readonly electionSequenceNumber: number;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stage" | "error"> {
     readonly clientSequenceNumber: number;
     // (undocumented)
@@ -391,12 +391,12 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly summaryLogger: ITelemetryLoggerExt;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface ISummarizeOptions {
     readonly fullTree?: boolean;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     // (undocumented)
     close(): void;
@@ -409,7 +409,7 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export interface ISummarizeResults {
     readonly receivedSummaryAckOrNack: Promise<SummarizeResultPart<IAckSummaryResult, INackSummaryResult>>;
     readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
@@ -540,7 +540,7 @@ export interface ISweepPhaseStats {
     lifetimeNodeCount: number;
 }
 
-// @alpha @deprecated
+// @alpha
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
     readonly handle: string;
     // (undocumented)
@@ -575,13 +575,13 @@ export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck |
 // @alpha @deprecated
 export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
 
-// @alpha @deprecated
+// @alpha
 export interface SubmitSummaryFailureData {
     // (undocumented)
     stage: SummaryStage;
 }
 
-// @alpha @deprecated
+// @alpha
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
 // @alpha @deprecated
@@ -643,7 +643,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
     waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
 }
 
-// @alpha @deprecated
+// @alpha
 export type SummaryStage = SubmitSummaryResult["stage"] | "unknown";
 
 // @alpha

@@ -238,7 +238,6 @@ import {
 	ISubmitSummaryOptions,
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizeResults,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
@@ -591,14 +590,12 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
  * @alpha
  * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
  * @legacy
  * @alpha
  */
-
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
@@ -789,7 +786,6 @@ const summarizerRequestUrl = "_summarizer";
 /**
  * Create and retrieve the summmarizer
  */
-// eslint-disable-next-line import/no-deprecated
 async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
 	const request: IRequest = {
 		headers: {
@@ -807,7 +803,6 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 
 	const resolvedContainer = await loader.resolve(request);
 
-	// eslint-disable-next-line import/no-deprecated
 	let fluidObject: FluidObject<ISummarizer> | undefined;
 
 	// Older containers may not have the "getEntryPoint" API

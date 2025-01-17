@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IQuorumClients } from "@fluidframework/driver-definitions";
@@ -19,11 +18,8 @@ import { IFluidLastEditedTracker, ILastEditDetails } from "./interfaces.js";
  * discarded.
  */
 const shouldDiscardMessageDefault = (message: ISequencedDocumentMessage): boolean =>
-	// eslint-disable-next-line import/no-deprecated
 	message.type !== ContainerMessageType.Attach &&
-	// eslint-disable-next-line import/no-deprecated
 	message.type !== ContainerMessageType.FluidDataStoreOp &&
-	// eslint-disable-next-line import/no-deprecated
 	message.type !== ContainerMessageType.Alias;
 
 /**

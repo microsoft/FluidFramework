@@ -4,7 +4,6 @@
  */
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	ContainerMessageType,
 	IChunkedOp,
 	unpackRuntimeMessage,
@@ -538,30 +537,24 @@ function processOp(
 	let totalMsgSize = msgSize;
 	let opCount = 1;
 	if (unpackRuntimeMessage(runtimeMessage)) {
-		// eslint-disable-next-line import/no-deprecated
 		const messageType = runtimeMessage.type as ContainerMessageType;
 		switch (messageType) {
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Attach: {
 				const attachMessage = runtimeMessage.contents as IAttachMessage;
 				processDataStoreAttachOp(attachMessage, dataType);
 				break;
 			}
 			// skip for now because these ops do not have contents
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.BlobAttach: {
 				break;
 			}
 			// The default method to count stats should be used for GC messages.
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.GC: {
 				break;
 			}
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.DocumentSchemaChange: {
 				break;
 			}
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.ChunkedOp: {
 				const chunk = runtimeMessage.contents as IChunkedOp;
 				// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
@@ -594,13 +587,9 @@ function processOp(
 					return;
 				}
 			}
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.IdAllocation:
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.FluidDataStoreOp:
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Alias:
-			// eslint-disable-next-line import/no-deprecated
 			case ContainerMessageType.Rejoin: {
 				let envelope = runtimeMessage.contents as IEnvelope;
 				// TODO: Legacy?
