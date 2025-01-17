@@ -1132,16 +1132,20 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 		}
 	}
 
-	/*
-	This API should not be called for RemoteFluidDataStoreContext. But here is one scenario where it's not the case:
-	The scenario (hit by stashedOps.spec.ts, "resends attach op" UT is the following (as far as I understand):
-	1. data store is being attached in attached container
-	2. container state is serialized (stashed ops feature)
-	3. new container instance is rehydrated (from stashed ops)
-	    - As result, we create RemoteFluidDataStoreContext for this data store that is actually in "attaching" state (as of # 2).
-		  But its state is set to attached when loading container from stashed ops
-	4. attach op for this data store is processed - setAttachState() is called.
-	*/
+	/**
+	 * This API should not be called for RemoteFluidDataStoreContext. But here is one scenario where it's not the case:
+	 * The scenario (hit by stashedOps.spec.ts, "resends attach op" UT is the following (as far as I understand):
+	 *
+	 * 1. data store is being attached in attached container
+	 *
+	 * 2. container state is serialized (stashed ops feature)
+	 *
+	 * 3. new container instance is rehydrated (from stashed ops) -
+	 * As result, we create RemoteFluidDataStoreContext for this data store that is actually in "attaching" state  * (as of # 2).
+	 * But its state is set to attached when loading container from stashed ops.
+	 *
+	 * 4. attach op for this data store is processed - setAttachState() is called.
+	 */
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
 
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
