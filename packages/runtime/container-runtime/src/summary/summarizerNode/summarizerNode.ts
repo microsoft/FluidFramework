@@ -61,7 +61,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * The reference sequence number of the most recent acked summary.
 	 * Returns 0 if there is not yet an acked summary.
 	 */
-	public get referenceSequenceNumber() {
+	public get referenceSequenceNumber(): number {
 		return this._lastSummaryReferenceSequenceNumber ?? 0;
 	}
 

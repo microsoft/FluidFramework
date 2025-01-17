@@ -63,7 +63,7 @@ export class OpSplitter {
 		return this.chunkMap;
 	}
 
-	public clearPartialChunks(clientId: string) {
+	public clearPartialChunks(clientId: string): void {
 		if (this.chunkMap.has(clientId)) {
 			this.chunkMap.delete(clientId);
 		}
