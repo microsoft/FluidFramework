@@ -243,6 +243,7 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
+	type IDocumentSchemaFeatures,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -730,7 +731,7 @@ export const makeLegacySendBatchFn =
 		) => number,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
-	(batch: IBatch) => {
+	(batch: IBatch): number => {
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
 		for (const message of batch.messages) {
@@ -811,7 +812,7 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
  * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
  */
 export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
-	return (codePath: string) => {
+	return (codePath: string): void => {
 		logger.sendTelemetryEvent({
 			eventName: "LegacyMessageFormat",
 			details: { codePath, type },
@@ -1207,7 +1208,7 @@ export class ContainerRuntime
 		return this._storage;
 	}
 
-	public get containerRuntime() {
+	public get containerRuntime(): ContainerRuntime {
 		return this;
 	}
 
@@ -1259,9 +1260,13 @@ export class ContainerRuntime
 	 * has to deal with compressed ops as other clients might send them.
 	 * And in reverse, session schema can have compression Off, but feature gates / runtime options want it On.
 	 * In such case it will be off in session schema, however this client will propose change to schema, and once / if
-	 * this op rountrips, compression will be On. Client can't send compressed ops until it's change in schema.
+	 * this op roundtrips, compression will be On. Client can't send compressed ops until it's change in schema.
 	 */
-	public get sessionSchema() {
+	public get sessionSchema(): {
+		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
+			? true
+			: IDocumentSchemaFeatures[P];
+	} {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
