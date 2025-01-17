@@ -91,7 +91,7 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 }
 
 /**
- * Converts the visual representation from {@link visualizeSharedTreeNodeBySchema} to a visual tree compatible with the devtools-view.
+ * Converts the visual representation from {@link visualizeInternalNodeBySchema} to a visual tree compatible with the devtools-view.
  * @param tree - the visual representation of the SharedTree.
  * @returns - the visual representation of type {@link VisualChildNode}
  */
@@ -236,7 +236,7 @@ async function visualizeMapNode(
  *
  * @remarks
  */
-async function visualizeSharedTreeNodeBySchema(
+async function visualizeInternalNodeBySchema(
 	tree: VerboseTreeNode,
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
@@ -300,7 +300,7 @@ async function visualizeSharedTreeNodeBySchema(
  * @remarks
  * This function handles both leaf nodes (primitive values, handles) and internal nodes (objects, maps, arrays).
  * For leaf nodes, it creates a visual representation with the node's schema and value.
- * For internal nodes, it recursively processes the node's fields using {@link visualizeSharedTreeNodeBySchema}.
+ * For internal nodes, it recursively processes the node's fields using {@link visualizeInternalNodeBySchema}.
  */
 export async function visualizeSharedTreeBySchema(
 	tree: VerboseTree,
@@ -322,5 +322,5 @@ export async function visualizeSharedTreeBySchema(
 				value: await visualizeChildData(tree),
 				kind: VisualSharedTreeNodeKind.LeafNode,
 			}
-		: visualizeSharedTreeNodeBySchema(tree, treeSchema, visualizeChildData);
+		: visualizeInternalNodeBySchema(tree, treeSchema, visualizeChildData);
 }
