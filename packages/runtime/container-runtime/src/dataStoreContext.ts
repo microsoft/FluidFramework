@@ -657,7 +657,7 @@ export abstract class FluidDataStoreContext
 			);
 			this.pendingMessagesState.messageCollections.push({
 				...messageCollection,
-				messagesContent: Array.from(messagesContent),
+				messagesContent: [...messagesContent],
 			});
 			this.pendingMessagesState.pendingCount += messagesContent.length;
 			this.thresholdOpsCounter.sendIfMultiple(

@@ -58,7 +58,7 @@ module.exports = {
 		"unicorn/prefer-node-protocol": "error",
 		"unicorn/prefer-number-properties": "error",
 		"unicorn/prefer-optional-catch-binding": "error",
-		// "unicorn/prefer-spread": "error",
+		"unicorn/prefer-spread": "error",
 		// "unicorn/switch-case-braces": "error",
 		// "unicorn/throw-new-error": "error",
 

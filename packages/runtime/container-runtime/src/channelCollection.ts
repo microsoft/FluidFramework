@@ -1200,7 +1200,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			},
 		);
 		// Get the outbound routes (aliased data stores) and add a GC node for this channel.
-		builder.addNode("/", Array.from(this.aliasedDataStores));
+		builder.addNode("/", [...this.aliasedDataStores]);
 		return builder.getGCData();
 	}
 
@@ -1412,7 +1412,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 			this.deleteChild(dataStoreId);
 		}
-		return Array.from(sweepReadyDataStoreRoutes);
+		return [...sweepReadyDataStoreRoutes];
 	}
 
 	/**

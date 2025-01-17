@@ -3828,8 +3828,10 @@ export class ContainerRuntime
 		const { dataStoreRoutes, blobManagerRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
-		const deletedRoutes = this.channelCollection.deleteSweepReadyNodes(dataStoreRoutes);
-		return deletedRoutes.concat(this.blobManager.deleteSweepReadyNodes(blobManagerRoutes));
+		return [
+			...this.channelCollection.deleteSweepReadyNodes(dataStoreRoutes),
+			...this.blobManager.deleteSweepReadyNodes(blobManagerRoutes),
+		];
 	}
 
 	/**
@@ -4092,7 +4094,7 @@ export class ContainerRuntime
 					eventName: "LatestSummaryRefSeqNumMismatch",
 					details: {
 						...startSummaryResult,
-						mismatchNumbers: Array.from(startSummaryResult.mismatchNumbers),
+						mismatchNumbers: [...startSummaryResult.mismatchNumbers],
 					},
 				});
 

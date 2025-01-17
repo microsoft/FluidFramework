@@ -136,7 +136,7 @@ describe("OpSplitter", () => {
 		opSplitter.processChunk(chunks[1]);
 
 		const otherOpSplitter = new OpSplitter(
-			Array.from(opSplitter.chunks),
+			[...opSplitter.chunks],
 			mockSubmitBatchFn,
 			0,
 			maxBatchSizeInBytes,

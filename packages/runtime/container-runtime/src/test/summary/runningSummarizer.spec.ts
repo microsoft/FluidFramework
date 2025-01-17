@@ -1186,25 +1186,24 @@ describe("Runtime", () => {
 						fullTree,
 					});
 
-					const allResults = (
-						await Promise.all([
+					const allResults = [
+						...(await Promise.all([
 							result1.summarySubmitted,
 							result1.summaryOpBroadcasted,
 							result1.receivedSummaryAckOrNack,
 							result2.summarySubmitted,
 							result2.summaryOpBroadcasted,
 							result2.receivedSummaryAckOrNack,
-						])
-					).concat(
-						await Promise.all([
+						])),
+						...(await Promise.all([
 							result3.summarySubmitted,
 							result3.summaryOpBroadcasted,
 							result3.receivedSummaryAckOrNack,
 							result4.summarySubmitted,
 							result4.summaryOpBroadcasted,
 							result4.receivedSummaryAckOrNack,
-						]),
-					);
+						])),
+					];
 					for (const result of allResults) {
 						assert(!result.success, "all results should fail");
 					}

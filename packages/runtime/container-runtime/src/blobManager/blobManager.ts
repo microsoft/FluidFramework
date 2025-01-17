@@ -337,7 +337,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	}
 
 	public hasPendingStashedUploads(): boolean {
-		return Array.from(this.pendingBlobs.values()).some((e) => e.stashedUpload === true);
+		return [...this.pendingBlobs.values()].some((e) => e.stashedUpload === true);
 	}
 
 	public async getBlob(blobId: string): Promise<ArrayBufferLike> {
@@ -588,10 +588,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			// If there is already an op for this storage ID, append the local ID to the list. Once any op for
 			// this storage ID is ack'd, all pending blobs for it can be resolved since the op will keep the
 			// blob alive in storage.
-			this.opsInFlight.set(
-				response.id,
-				(this.opsInFlight.get(response.id) ?? []).concat(localId),
-			);
+			this.opsInFlight.set(response.id, [
+				...(this.opsInFlight.get(response.id) ?? []),
+				localId,
+			]);
 		}
 		return response;
 	}
@@ -703,7 +703,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 */
 	public deleteSweepReadyNodes(sweepReadyBlobRoutes: readonly string[]): readonly string[] {
 		this.deleteBlobsFromRedirectTable(sweepReadyBlobRoutes);
-		return Array.from(sweepReadyBlobRoutes);
+		return [...sweepReadyBlobRoutes];
 	}
 
 	/**

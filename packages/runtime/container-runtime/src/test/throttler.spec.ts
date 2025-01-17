@@ -72,12 +72,13 @@ describe("Throttler", () => {
 			});
 
 			it("Should increase as expected with instant failures", () => {
-				for (const expectedDelay of expectedDelays.concat([
+				for (const expectedDelay of [
+					...expectedDelays,
 					maxDelayMs,
 					maxDelayMs,
 					maxDelayMs,
 					maxDelayMs,
-				])) {
+				]) {
 					assert.strictEqual(getDelayAndTick(), expectedDelay);
 				}
 			});
