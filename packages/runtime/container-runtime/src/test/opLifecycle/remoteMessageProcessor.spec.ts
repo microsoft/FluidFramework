@@ -23,6 +23,7 @@ import {
 	ensureContentsDeserialized,
 	type IBatch,
 	type InboundMessageResult,
+	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
@@ -136,7 +137,12 @@ describe("RemoteMessageProcessor", () => {
 			let leadingChunkCount = 0;
 			const outboundMessages: IBatchMessage[] = [];
 			if (option.compressionAndChunking.compression) {
-				batch = compressMultipleMessageBatch(batch);
+				if (batch.messages.length === 1) {
+					const compressor = new OpCompressor(mockLogger);
+					batch = compressor.compressBatch(batch);
+				} else {
+					batch = compressMultipleMessageBatch(batch);
+				}
 
 				if (option.compressionAndChunking.chunking) {
 					const splitter = new OpSplitter(
