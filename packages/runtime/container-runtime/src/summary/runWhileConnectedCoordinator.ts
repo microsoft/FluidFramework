@@ -11,9 +11,7 @@ import { IConnectableRuntime, ISummaryCancellationToken } from "./summarizerType
 
 /**
  * Similar to AbortController, but using promise instead of events
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 // eslint-disable-next-line import/no-deprecated
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {

@@ -29,9 +29,7 @@ import {
 } from "../summary/index.js";
 
 /**
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export type GCVersion = number;
@@ -97,9 +95,7 @@ export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
 /**
  * // eslint-disable-next-line import/no-deprecated
  * @see IGCMetadata.gcFeatureMatrix and @see gcGenerationOptionName
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export type GCFeatureMatrix =
@@ -141,9 +137,7 @@ export interface IGCMetadata_Deprecated {
 /**
  * GC-specific metadata to be written into the summary.
  *
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface IGCMetadata {
@@ -196,9 +190,7 @@ export interface IGCMetadata {
 
 /**
  * The statistics of the system state after a garbage collection mark phase run.
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface IMarkPhaseStats {
@@ -242,9 +234,7 @@ export interface IMarkPhaseStats {
 
 /**
  * The statistics of the system state after a garbage collection sweep phase run.
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface ISweepPhaseStats {
@@ -276,18 +266,14 @@ export interface ISweepPhaseStats {
 
 /**
  * The statistics of the system state after a garbage collection run.
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
 
 /**
  * The types of GC nodes in the GC reference graph.
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export const GCNodeType = {
 	// Nodes that are for data stores.
@@ -301,9 +287,7 @@ export const GCNodeType = {
 } as const;
 
 /**
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 

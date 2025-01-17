@@ -586,9 +586,7 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 
 /**
  * Error responses when requesting a deleted object will have this header set to true
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
@@ -636,9 +634,7 @@ export enum CompressionAlgorithms {
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
 	minimumBatchSizeInBytes: Infinity,

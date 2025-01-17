@@ -39,9 +39,7 @@ import { SummarizeReason } from "./summaryGenerator.js";
 /**
  * Similar to AbortSignal, but using promise instead of events
  * @param T - cancellation reason type
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export interface ICancellationToken<T> {
 	/**
@@ -57,18 +55,14 @@ export interface ICancellationToken<T> {
 
 /**
  * Similar to AbortSignal, but using promise instead of events
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 /**
  * Data required to update internal tracking state after receiving a Summary Ack.
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface IRefreshSummaryAckOptions {
@@ -91,9 +85,7 @@ export interface IRefreshSummaryAckOptions {
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface ISummarizerInternalsProvider {
@@ -119,9 +111,7 @@ export interface ISummarizingWarning extends ContainerWarning {
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface IConnectableRuntime {
@@ -132,9 +122,7 @@ export interface IConnectableRuntime {
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface ISummarizerRuntime extends IConnectableRuntime {
@@ -171,9 +159,7 @@ export interface ISummarizeOptions {
 }
 
 /**
- * @legacy
- * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
@@ -430,9 +416,7 @@ export interface INackSummaryResult {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
 			success: true;
