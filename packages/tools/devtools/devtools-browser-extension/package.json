@@ -41,7 +41,7 @@
 		"test:coverage": "c8 npm test",
 		"test:end-to-end": "npm run test:jest",
 		"test:jest": "jest --ci",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/tsc/test/**/*.test.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/tsc/test/**/*.test.*js\" --exit",
