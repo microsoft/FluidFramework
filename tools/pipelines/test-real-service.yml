@@ -7,13 +7,6 @@ name: $(Build.BuildId)
 
 trigger: none
 pr: none
-schedules:
-- cron: "0 14 * * *" # Run every day at 7 am PST
-  displayName: LTS Branch Daily E2E Test Run
-  branches:
-    include:
-    - lts
-  always: true
 
 resources:
   pipelines:
