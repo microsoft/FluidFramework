@@ -429,9 +429,6 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -456,36 +453,21 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../../packages/loader/driver-utils
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
-      '@fluidframework/request-handler':
-        specifier: workspace:~
-        version: link:../../../packages/framework/request-handler
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server':
         specifier: ^5.0.0
         version: 5.0.0
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../packages/utils/telemetry-utils
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver

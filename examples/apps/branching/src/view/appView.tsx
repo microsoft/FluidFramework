@@ -37,7 +37,7 @@ export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
 				.then(setBranchedList)
 				.catch(console.error);
 		};
-		branchedView = <button onClick={onGetSuggestions}>Get suggestions</button>;
+		branchedView = <button onClick={onGetSuggestions}>Get suggestions from HealthBot!</button>;
 	}
 	return (
 		<>
