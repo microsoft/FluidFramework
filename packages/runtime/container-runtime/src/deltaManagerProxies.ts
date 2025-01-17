@@ -196,10 +196,6 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 }
 
 export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
-	/**
-	 * {@inheritDoc BaseDeltaManagerProxy.minimumSequenceNumber}
-	 * @override
-	 */
 	public get minimumSequenceNumber(): number {
 		const minPendingSeqNum = this.pendingStateManager.minimumPendingMessageSequenceNumber;
 		/**
@@ -222,10 +218,6 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 		return this.deltaManager.minimumSequenceNumber;
 	}
 
-	/**
-	 * {@inheritDoc BaseDeltaManagerProxy.lastMessage}
-	 * @override
-	 */
 	public get lastMessage(): ISequencedDocumentMessage | undefined {
 		if (this.deltaManager.lastMessage === undefined) {
 			return this.deltaManager.lastMessage;
