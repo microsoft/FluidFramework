@@ -405,15 +405,16 @@ export class Outbox {
 	 * @remarks - If chunking happens, a side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param batch - Raw or Grouped batch to consider for compression/chunking
-	 * @returns Either (A) the original batch or (B) a compressed batch (same length as original),
+	 * @returns Either (A) the original batch, (B) a compressed batch (same length as original)
+	 * or (C) a batch containing the last chunk.
 	 */
 	private compressAndChunkBatch(batch: IBatch): IBatch {
 		if (
-			(batch.messages.length === 0 ||
-				this.params.config.compressionOptions === undefined ||
-				this.params.config.compressionOptions.minimumBatchSizeInBytes >
-					batch.contentSizeInBytes ||
-				this.params.submitBatchFn === undefined) &&
+			batch.messages.length === 0 ||
+			this.params.config.compressionOptions === undefined ||
+			this.params.config.compressionOptions.minimumBatchSizeInBytes >
+				batch.contentSizeInBytes ||
+			this.params.submitBatchFn === undefined ||
 			!this.params.groupingManager.groupedBatchingEnabled()
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress

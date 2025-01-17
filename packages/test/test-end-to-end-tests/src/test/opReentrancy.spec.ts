@@ -39,6 +39,13 @@ describeCompat(
 		const testContainerConfig: ITestContainerConfig = {
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
+			runtimeOptions: {
+				compressionOptions: {
+					// Compression is always disabled for these tests
+					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+			},
 		};
 		let provider: ITestObjectProvider;
 		let container1: IContainer;
@@ -137,11 +144,6 @@ describeCompat(
 					...testContainerConfig,
 					runtimeOptions: {
 						enableGroupedBatching,
-						compressionOptions: {
-							// Compression is disabled if grouped batching is disabled
-							minimumBatchSizeInBytes: enableGroupedBatching ? 200 : Number.POSITIVE_INFINITY,
-							compressionAlgorithm: CompressionAlgorithms.lz4,
-						},
 					},
 				});
 
@@ -208,11 +210,6 @@ describeCompat(
 					...testContainerConfig,
 					runtimeOptions: {
 						enableGroupedBatching,
-						compressionOptions: {
-							// Compression is disabled if grouped batching is disabled
-							minimumBatchSizeInBytes: enableGroupedBatching ? 200 : Number.POSITIVE_INFINITY,
-							compressionAlgorithm: CompressionAlgorithms.lz4,
-						},
 					},
 				});
 
