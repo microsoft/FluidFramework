@@ -47,7 +47,7 @@ module.exports = {
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
 
 		"unicorn/catch-error-name": "error",
-		// "unicorn/new-for-builtins": "error",
+		"unicorn/new-for-builtins": "error",
 		// "unicorn/no-array-callback-reference": "error",
 		// "unicorn/no-array-for-each": "error",
 		// "unicorn/no-array-push-push": "error",

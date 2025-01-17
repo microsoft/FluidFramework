@@ -432,7 +432,7 @@ export class SummaryManager
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this.summarizer === undefined) {
-			throw Error("No running summarizer client");
+			throw new Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
 		}
 		return this.summarizer.summarizeOnDemand(options);
@@ -440,7 +440,7 @@ export class SummaryManager
 
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this.summarizer === undefined) {
-			throw Error("No running summarizer client");
+			throw new Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
 		}
 		return this.summarizer.enqueueSummarize(options);
