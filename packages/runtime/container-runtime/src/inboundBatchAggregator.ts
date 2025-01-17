@@ -54,7 +54,7 @@ export class InboundBatchAggregator {
 		this.deltaManager.on("op", this.afterOpProcessing);
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.deltaManager.off("op", this.afterOpProcessing);
 		this.deltaManager.inbound.off("push", this.trackPending);
 	}
