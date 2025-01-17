@@ -4,14 +4,16 @@
  */
 
 import type { Browser, Page } from "puppeteer";
-import puppeteer from "puppeteer";
+import { launch } from "puppeteer";
 
 import { globals } from "../jest.config.cjs";
 
 const initializeBrowser = async () => {
-	const browser = await puppeteer.launch({
+	const browser = await launch({
 		// https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
 		args: ["--no-sandbox", "--disable-setuid-sandbox"],
+		// output browser console to cmd line
+		dumpio: process.env.FLUID_TEST_VERBOSE !== undefined,
 		// Use chrome-headless-shell because that's what the CI pipeline installs; see AB#7150.
 		headless: "shell",
 	});
@@ -135,9 +137,11 @@ describe("presence-tracker", () => {
 			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
 		});
 
-		it("First client shows one client connected when second client leaves", async () => {
-			// Navigate the second client away
-			await page2.goto(globals.PATH, { waitUntil: "load" });
+		// While this test passes, it's a false pass because the first client is always failing to see more than one
+		// client. See previous test.
+		it.skip("First client shows one client connected when second client leaves", async () => {
+			// Navigate the second client away; use the tinylicious default URL
+			await page2.goto("http://localhost:7070", { waitUntil: "load" });
 
 			// Get the client list from the first browser; it should have a single element.
 			const elementHandle = await page.waitForFunction(() =>
