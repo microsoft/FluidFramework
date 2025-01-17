@@ -284,7 +284,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * If you always want to convert to string, instead of doing String(generateDocumentUniqueId()), consider
 	 * doing encodeCompactIdToString(generateDocumentUniqueId()).
 	 *
-	 * @see {@link IIdCompressor.generateDocumentUniqueId}
+	 * @see {@link @fluidframework/id-compressor#IIdCompressor.generateDocumentUniqueId}
 	 */
 	generateDocumentUniqueId(): number | string;
 
