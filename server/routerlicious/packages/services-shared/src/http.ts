@@ -56,9 +56,12 @@ export function validatePrivateLink(
 			const clientIPAddress = req.ip ? req.ip : "";
 			const result = getNetworkInformationFromIP(clientIPAddress);
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
-			const privateLinkEnable = tenantInfo?.customData?.privateLinkEnable ?? false;
+			const privateLinkEnable = tenantInfo?.customData?.accountLinkID ? true : false;
 			if (result.isPrivateLink) {
-				if (tenantInfo.customData.accountLinkID === result.privateLinkId) {
+				if (
+					privateLinkEnable &&
+					tenantInfo.customData.accountLinkID === result.privateLinkId
+				) {
 					Lumberjack.info("This is a private link request", {
 						tenantId,
 						clientIPAddress,
@@ -68,7 +71,7 @@ export function validatePrivateLink(
 						Promise.reject(
 							new NetworkError(
 								400,
-								`This req private network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+								`This reqest comes from the private network ${clientIPAddress} with the following link id ${result.privateLinkId}`,
 							),
 						),
 						res,
@@ -80,7 +83,7 @@ export function validatePrivateLink(
 						Promise.reject(
 							new NetworkError(
 								400,
-								`This req public network ${clientIPAddress}, the account linkid wrong ${result.privateLinkId}`,
+								`This is the public network ${clientIPAddress} called from the private link tenant ${tenantId}`,
 							),
 						),
 						res,
