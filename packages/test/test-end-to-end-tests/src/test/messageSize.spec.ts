@@ -257,7 +257,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const chunkingBatchesTimeoutMs = 200000;
 
-	[true].forEach((enableGroupedBatching) => {
+	[false, true].forEach((enableGroupedBatching) => {
 		const containerConfig: ITestContainerConfig = {
 			...testContainerConfig,
 			runtimeOptions: {

@@ -1123,6 +1123,11 @@ export class ContainerRuntime
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
+		assert(
+			!compressionLz4 || enableGroupedBatching,
+			"If compression is on, op grouping has to be on",
+		);
+
 		// Make sure we've got all the options including internal ones
 		const internalRuntimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>> = {
 			summaryOptions,

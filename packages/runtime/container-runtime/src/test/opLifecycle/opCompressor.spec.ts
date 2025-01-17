@@ -68,9 +68,9 @@ describe("OpCompressor", () => {
 					() => {
 						compressor.compressBatch(batch);
 					},
-					(e: Error) => {
+					(error: Error) => {
 						assert.strictEqual(
-							e.message,
+							error.message,
 							"0x5a4" /* Batch should not be empty and should contain a single message */,
 						);
 						return true;
