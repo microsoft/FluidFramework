@@ -421,7 +421,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Initialize the GC state if not already initialized. If GC state is already initialized, update the unreferenced
 	 * state tracking as per the current reference timestamp.
 	 */
-	private async initializeOrUpdateGCState() {
+	private async initializeOrUpdateGCState(): Promise<void> {
 		const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
 		if (currentReferenceTimestampMs === undefined) {
 			return;
@@ -722,7 +722,7 @@ export class GarbageCollector implements IGarbageCollector {
 		gcResult: IGCResult,
 		tombstoneReadyNodes: Set<string>,
 		sweepReadyNodes: Set<string>,
-	) {
+	): void {
 		/**
 		 * Under "Test Mode", unreferenced nodes are immediately deleted without waiting for them to be sweep-ready.
 		 *
@@ -968,7 +968,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * @param sweepReadyNodeIds - The ids of nodes that are ready to be deleted.
 	 */
-	private deleteSweepReadyNodes(sweepReadyNodeIds: readonly string[]) {
+	private deleteSweepReadyNodes(sweepReadyNodeIds: readonly string[]): void {
 		// Use a set for lookup because its much faster than array or map.
 		const sweepReadyNodesSet: Set<string> = new Set(sweepReadyNodeIds);
 
@@ -1085,7 +1085,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
 	 * before running GC next.
 	 */
-	private triggerAutoRecovery(nodePath: string) {
+	private triggerAutoRecovery(nodePath: string): void {
 		// If sweep isn't enabled, auto-recovery isn't needed since its purpose is to prevent this object from being
 		// deleted. It also would end up sending a GC op which can break clients running FF version 1.x.
 		if (!this.configs.sweepEnabled) {
@@ -1195,7 +1195,7 @@ export class GarbageCollector implements IGarbageCollector {
 			updatedAttachmentBlobCount: 0,
 		};
 
-		const updateNodeStats = (nodeId: string, isReferenced: boolean) => {
+		const updateNodeStats = (nodeId: string, isReferenced: boolean): void => {
 			markPhaseStats.nodeCount++;
 			// If there is no previous GC data, every node's state is generated and is considered as updated.
 			// Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
