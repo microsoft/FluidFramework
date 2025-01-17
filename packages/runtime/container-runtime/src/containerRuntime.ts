@@ -1631,9 +1631,12 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
+		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getClientId = () => context.clientId;
+		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
+			// eslint-disable-next-line unicorn/consistent-destructuring
 			if (context.getAbsoluteUrl === undefined) {
 				throw new Error("Driver does not implement getAbsoluteUrl");
 			}
@@ -1792,6 +1795,7 @@ export class ContainerRuntime
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
+		// eslint-disable-next-line unicorn/consistent-destructuring
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 			if (
@@ -3256,7 +3260,11 @@ export class ContainerRuntime
 	 * Updates signal telemetry including emitting telemetry events.
 	 */
 	private processSignalForTelemetry(envelope: ISignalEnvelope): void {
-		const { clientBroadcastSignalSequenceNumber } = envelope;
+		const {
+			clientBroadcastSignalSequenceNumber,
+			contents: envelopeContents,
+			address: envelopeAddress,
+		} = envelope;
 		if (clientBroadcastSignalSequenceNumber === undefined) {
 			return;
 		}
@@ -3301,8 +3309,8 @@ export class ContainerRuntime
 			};
 			// Only log `contents.type` when address is for container to avoid
 			// chance that contents type is customer data.
-			if (envelope.address === undefined) {
-				details.contentsType = envelope.contents.type; // Type of signal that was received out of order.
+			if (envelopeAddress === undefined) {
+				details.contentsType = envelopeContents.type; // Type of signal that was received out of order.
 			}
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SignalOutOfOrder",
@@ -3995,6 +4003,7 @@ export class ContainerRuntime
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
+			cancellationToken,
 			fullTree = false,
 			finalAttempt = false,
 			summaryLogger,
@@ -4138,7 +4147,7 @@ export class ContainerRuntime
 				// summarizer to reconnect in the future.
 				// Also checking for cancellation is a must as summary process may be abandoned for other reasons,
 				// like loss of connectivity for main (interactive) client.
-				if (options.cancellationToken.cancelled) {
+				if (cancellationToken.cancelled) {
 					return { continue: false, error: "disconnected" };
 				}
 				// That said, we rely on submitSystemMessage() that today only works in connected state.
@@ -4279,10 +4288,7 @@ export class ContainerRuntime
 
 			let handle: string;
 			try {
-				handle = await this.storage.uploadSummaryWithContext(
-					summarizeResult.summary,
-					summaryContext,
-				);
+				handle = await this.storage.uploadSummaryWithContext(summaryTree, summaryContext);
 			} catch (error) {
 				return {
 					stage: "generate",

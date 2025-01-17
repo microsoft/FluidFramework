@@ -51,6 +51,7 @@ module.exports = {
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
 
 		"unicorn/catch-error-name": "error",
+		"unicorn/consistent-destructuring": "error",
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
@@ -63,7 +64,6 @@ module.exports = {
 		"unicorn/switch-case-braces": "error",
 		"unicorn/throw-new-error": "error",
 
-		// unicorn/consistent-destructuring
 		// unicorn/prefer-string-slice
 		// unicorn/consistent-function-scoping
 		// unicorn/no-negated-condition

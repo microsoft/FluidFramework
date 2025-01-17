@@ -415,10 +415,8 @@ export class GCTelemetryTracker {
 			const active =
 				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
-				const pkg = await this.getNodePackagePath(eventProps.id.value);
-				const fromPkg = eventProps.fromId
-					? await this.getNodePackagePath(eventProps.fromId.value)
-					: undefined;
+				const pkg = await this.getNodePackagePath(id.value);
+				const fromPkg = fromId ? await this.getNodePackagePath(fromId.value) : undefined;
 				const event = {
 					eventName: `${state}Object_${usageType}`,
 					id,

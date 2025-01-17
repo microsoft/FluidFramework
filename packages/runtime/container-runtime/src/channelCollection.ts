@@ -828,7 +828,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			// if the client is not detached put in the pending attach list
 			// so that on ack of the stashed op, the context is found.
 			// detached client don't send ops, so should not expect and ack.
-			this.pendingAttach.set(message.id, message);
+			this.pendingAttach.set(id, message);
 		}
 	}
 
@@ -885,7 +885,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * @param messageCollection - The collection of messages to process.
 	 */
 	private processChannelMessages(messageCollection: IRuntimeMessageCollection): void {
-		const { messagesContent, local } = messageCollection;
+		const { envelope, messagesContent, local } = messageCollection;
 		let currentMessageState: { address: string; type: string } | undefined;
 		let currentMessagesContent: IRuntimeMessagesContent[] = [];
 
@@ -899,7 +899,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			assert(!!currentContext, 0xa66 /* Context not found */);
 
 			currentContext.processMessages({
-				envelope: { ...messageCollection.envelope, type: currentMessageState.type },
+				envelope: { ...envelope, type: currentMessageState.type },
 				messagesContent: currentMessagesContent,
 				local,
 			});
@@ -927,11 +927,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				throw DataProcessingError.create(
 					"No context for op",
 					"processFluidDataStoreOp",
-					messageCollection.envelope as ISequencedDocumentMessage,
+					envelope as ISequencedDocumentMessage,
 					{
 						local,
 						messageDetails: JSON.stringify({
-							type: messageCollection.envelope.type,
+							type: envelope.type,
 							contentType: typeof contents,
 						}),
 						...tagCodeArtifacts({ address }),
@@ -959,16 +959,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.gcNodeUpdated({
 				node: { type: "DataStore", path: `/${address}` },
 				reason: "Changed",
-				timestampMs: messageCollection.envelope.timestamp,
+				timestampMs: envelope.timestamp,
 				packagePath: context.isLoaded ? context.packagePath : undefined,
 			});
 
 			detectOutboundReferences(address, contextContents, (fromPath: string, toPath: string) =>
-				this.parentContext.addedGCOutboundRoute(
-					fromPath,
-					toPath,
-					messageCollection.envelope.timestamp,
-				),
+				this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp),
 			);
 		}
 
