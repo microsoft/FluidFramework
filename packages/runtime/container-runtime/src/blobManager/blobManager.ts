@@ -240,7 +240,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.redirectTable = toRedirectTable(snapshot, this.mc.logger, this.runtime.attachState);
 
 		// Begin uploading stashed blobs from previous container instance
-		Object.entries(stashedBlobs ?? {}).forEach(([localId, entry]) => {
+		for (const [localId, entry] of Object.entries(stashedBlobs ?? {})) {
 			const { acked, storageId, minTTLInSeconds, uploadTime } = entry;
 			const blob = stringToBuffer(entry.blob, "base64");
 			const pendingEntry: PendingBlob = {
@@ -260,7 +260,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				const timeLapseSinceLocalUpload = (Date.now() - uploadTime) / 1000;
 				// stashed entries with more than half-life in storage will not be reuploaded
 				if (minTTLInSeconds - timeLapseSinceLocalUpload > minTTLInSeconds / 2) {
-					return;
+					continue;
 				}
 			}
 			this.pendingStashedBlobs.set(localId, this.uploadBlob(localId, blob));
@@ -269,7 +269,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				...stashedPendingBlobOverrides,
 				uploadP: this.pendingStashedBlobs.get(localId),
 			});
-		});
+		}
 
 		this.stashedBlobsUploadP = new LazyPromise(async () =>
 			PerformanceEvent.timedExecAsync(
@@ -648,7 +648,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 				// For each op corresponding to this storage ID that we are waiting for, resolve the pending blob.
 				// This is safe because the server will keep the blob alive and the op containing the local ID to
 				// storage ID is already in flight and any op containing this local ID will be sequenced after that.
-				waitingBlobs.forEach((pendingLocalId) => {
+				for (const pendingLocalId of waitingBlobs) {
 					const entry = this.pendingBlobs.get(pendingLocalId);
 					assert(
 						entry !== undefined,
@@ -658,7 +658,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					entry.acked = true;
 					entry.handleP.resolve(this.getBlobHandle(pendingLocalId));
 					this.deletePendingBlobMaybe(pendingLocalId);
-				});
+				}
 				this.opsInFlight.delete(blobId);
 			}
 			const localEntry = this.pendingBlobs.get(localId);

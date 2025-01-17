@@ -42,7 +42,7 @@ describe("BatchManager", () => {
 		}
 	});
 
-	[true, false].forEach((includeBatchId) =>
+	for (const includeBatchId of [true, false])
 		it(`Batch metadata is set correctly [with${includeBatchId ? "" : "out"} batchId]`, () => {
 			const batchManager = new BatchManager(defaultOptions);
 			const batchId = includeBatchId ? "BATCH_ID" : undefined;
@@ -92,8 +92,7 @@ describe("BatchManager", () => {
 					includeBatchId ? { batchId } : undefined, // batchId propertly should be omitted (v. set to undefined) if not provided
 				],
 			);
-		}),
-	);
+		});
 
 	it("BatchId Format", () => {
 		const clientId = "3627a2a9-963f-4e3b-a4d2-a31b1267ef29";

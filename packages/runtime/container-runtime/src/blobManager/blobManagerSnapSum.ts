@@ -73,7 +73,9 @@ export const toRedirectTable = (
 	if (snapshot.ids) {
 		// If we are detached, we don't have storage IDs yet, so set to undefined
 		// Otherwise, set identity (id -> id) entries.
-		snapshot.ids.forEach((entry) => redirectTable.set(entry, detached ? undefined : entry));
+		for (const entry of snapshot.ids) {
+			redirectTable.set(entry, detached ? undefined : entry);
+		}
 	}
 	return redirectTable;
 };
@@ -93,9 +95,9 @@ const summarizeV1 = (
 	const blobIds =
 		storageIds.size > 0 ? Array.from(storageIds) : Array.from(redirectTable.keys());
 	const builder = new SummaryTreeBuilder();
-	blobIds.forEach((blobId) => {
+	for (const blobId of blobIds) {
 		builder.addAttachment(blobId);
-	});
+	}
 
 	// Any non-identity entries in the table need to be saved in the summary
 	if (redirectTable.size > blobIds.length) {

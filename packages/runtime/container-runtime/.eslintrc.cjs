@@ -49,7 +49,7 @@ module.exports = {
 		"unicorn/catch-error-name": "error",
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
-		// "unicorn/no-array-for-each": "error",
+		"unicorn/no-array-for-each": "error",
 		// "unicorn/no-array-push-push": "error",
 		// "unicorn/no-zero-fractions": "error",
 		// "unicorn/prefer-node-protocol": "error",

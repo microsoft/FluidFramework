@@ -1613,7 +1613,9 @@ export function detectOutboundReferences(
 	// GC node paths are all absolute paths, hence the "" prefix.
 	// e.g. this will yield "/dataStoreId/ddsId"
 	const fromPath = ["", address, ddsAddress].join("/");
-	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
+	for (const toPath of outboundPaths) {
+		addedOutboundReference(fromPath, toPath);
+	}
 }
 
 /**

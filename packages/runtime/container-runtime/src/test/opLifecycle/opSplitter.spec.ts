@@ -326,7 +326,7 @@ describe("OpSplitter", () => {
 	});
 
 	describe("Compressed batches", () => {
-		[false, true].forEach((extraOp) => {
+		for (const extraOp of [false, true]) {
 			it(`Split compressed batch with multiple messages with${
 				extraOp ? "" : "out"
 			} extra empty op.`, () => {
@@ -449,7 +449,7 @@ describe("OpSplitter", () => {
 					]),
 				);
 			});
-		});
+		}
 	});
 	const assertSameMessage = (result: ISequencedDocumentMessage, original: BatchMessage) => {
 		assert.deepStrictEqual(result.contents, JSON.parse(original.contents!));

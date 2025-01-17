@@ -457,13 +457,13 @@ export class SummaryManager
 	private readonly forwardedEvents = new Map<string, () => void>();
 
 	private setupForwardedEvents(): void {
-		[
+		for (const event of [
 			"summarize",
 			"summarizeAllAttemptsFailed",
 			"summarizerStop",
 			"summarizerStart",
 			"summarizerStartupFailed",
-		].forEach((event) => {
+		]) {
 			const listener = (...args: any[]): void => {
 				this.emit(event, ...args);
 			};
@@ -471,14 +471,14 @@ export class SummaryManager
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.summarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
-		});
+		}
 	}
 
 	private cleanupForwardedEvents(): void {
-		this.forwardedEvents.forEach((listener, event) =>
+		for (const [event, listener] of this.forwardedEvents.entries()) {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			this.summarizer?.off(event as any, listener),
-		);
+			this.summarizer?.off(event as any, listener);
+		}
 		this.forwardedEvents.clear();
 	}
 }

@@ -2088,17 +2088,17 @@ export class ContainerRuntime
 					},
 				);
 				// Forward events from SummaryManager
-				[
+				for (const eventName of [
 					"summarize",
 					"summarizeAllAttemptsFailed",
 					"summarizerStop",
 					"summarizerStart",
 					"summarizerStartupFailed",
-				].forEach((eventName) => {
+				]) {
 					this.summaryManager?.on(eventName, (...args: any[]) => {
 						this.emit(eventName, ...args);
 					});
-				});
+				}
 
 				this.summaryManager.start();
 			}
@@ -2981,11 +2981,11 @@ export class ContainerRuntime
 		let error: unknown;
 		try {
 			if (!runtimeBatch) {
-				messagesWithMetadata.forEach(({ message }) => {
+				for (const { message } of messagesWithMetadata) {
 					this.ensureNoDataModelChanges(() => {
 						this.observeNonRuntimeMessage(message);
 					});
-				});
+				}
 				return;
 			}
 

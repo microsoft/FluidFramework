@@ -377,7 +377,7 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			[true, undefined].forEach((enableOfflineLoad) =>
+			for (const enableOfflineLoad of [true, undefined])
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
@@ -436,16 +436,15 @@ describe("Runtime", () => {
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
 					}
-				}),
-			);
+				});
 		});
 
-		describe("orderSequentially", () =>
-			[
+		describe("orderSequentially", () => {
+			for (const flushMode of [
 				FlushMode.TurnBased,
 				FlushMode.Immediate,
 				FlushModeExperimental.Async as unknown as FlushMode,
-			].forEach((flushMode: FlushMode) => {
+			]) {
 				const fakeClientId = "fakeClientId";
 
 				describe(`orderSequentially with flush mode: ${
@@ -687,14 +686,15 @@ describe("Runtime", () => {
 						);
 					});
 				});
-			}));
+			}
+		});
 
-		describe("orderSequentially with rollback", () =>
-			[
+		describe("orderSequentially with rollback", () => {
+			for (const flushMode of [
 				FlushMode.TurnBased,
 				FlushMode.Immediate,
 				FlushModeExperimental.Async as unknown as FlushMode,
-			].forEach((flushMode: FlushMode) => {
+			]) {
 				describe(`orderSequentially with flush mode: ${
 					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
 				}`, () => {
@@ -755,7 +755,8 @@ describe("Runtime", () => {
 						assert.strictEqual(containerErrors.length, 0);
 					});
 				});
-			}));
+			}
+		});
 
 		describe("Dirty flag", () => {
 			const sandbox = createSandbox();
@@ -1543,14 +1544,14 @@ describe("Runtime", () => {
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 			};
 
-			[
+			for (const features of [
 				undefined,
 				new Map([["referenceSequenceNumbers", false]]),
 				new Map([
 					["other", true],
 					["feature", true],
 				]),
-			].forEach((features) => {
+			]) {
 				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
 					const runtime = await ContainerRuntime.loadRuntime({
 						context: localGetMockContext(features) as IContainerContext,
@@ -1568,7 +1569,7 @@ describe("Runtime", () => {
 						},
 					]);
 				});
-			});
+			}
 
 			it("Loader supported for async FlushMode", async () => {
 				const runtime = await ContainerRuntime.loadRuntime({
@@ -2082,7 +2083,7 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			[undefined, true].forEach((enableOfflineLoad) => {
+			for (const enableOfflineLoad of [undefined, true]) {
 				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad ? "ENABLED" : "DISABLED"})`, async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
@@ -2128,7 +2129,7 @@ describe("Runtime", () => {
 						"Expected duplicate batch detection to match Offline Load enablement",
 					);
 				});
-			});
+			}
 
 			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection requires OfflineLoad enabled
@@ -2588,7 +2589,7 @@ describe("Runtime", () => {
 					{ sequenceNumber: 3 },
 					{ sequenceNumber: 4 },
 				] as unknown as ISequencedMessageEnvelope[];
-				envelopes.forEach((envelope) => {
+				for (const envelope of envelopes) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					missingDataStoreContext.processMessages({
 						envelope,
@@ -2597,7 +2598,7 @@ describe("Runtime", () => {
 						],
 						local: false,
 					});
-				});
+				}
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access

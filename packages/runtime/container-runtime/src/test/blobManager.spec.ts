@@ -185,9 +185,9 @@ export class MockRuntime
 
 	public processOps(): void {
 		assert(this.connected || this.ops.length === 0);
-		this.ops.forEach((op) =>
-			this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, true),
-		);
+		for (const op of this.ops) {
+			this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, true);
+		}
 		this.ops = [];
 	}
 
@@ -213,7 +213,9 @@ export class MockRuntime
 		const handlePs = this.handlePs;
 		this.handlePs = [];
 		const handles = (await Promise.all(handlePs)) as IFluidHandleInternal<ArrayBufferLike>[];
-		handles.forEach((handle) => handle.attachGraph());
+		for (const handle of handles) {
+			handle.attachGraph();
+		}
 	}
 
 	public async processAll(): Promise<void> {
@@ -254,9 +256,11 @@ export class MockRuntime
 		await this.processStashed(processStashedWithRetry);
 		const ops = this.ops;
 		this.ops = [];
-		// TODO: better typing
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-		ops.forEach((op) => this.blobManager.reSubmit((op as any).metadata));
+		for (const op of ops) {
+			// TODO: better typing
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			this.blobManager.reSubmit((op as any).metadata);
+		}
 	}
 
 	public async processStashed(processStashedWithRetry?: boolean): Promise<void> {
@@ -1038,7 +1042,7 @@ describe("BlobManager", () => {
 		// Support for this config has been removed.
 		const legacyKey_disableAttachmentBlobSweep =
 			"Fluid.GarbageCollection.DisableAttachmentBlobSweep";
-		[true, undefined].forEach((disableAttachmentBlobsSweep) =>
+		for (const disableAttachmentBlobsSweep of [true, undefined])
 			it(`deletes unused blobs regardless of DisableAttachmentBlobsSweep setting [DisableAttachmentBlobsSweep=${disableAttachmentBlobsSweep}]`, async () => {
 				injectedSettings[legacyKey_disableAttachmentBlobSweep] = disableAttachmentBlobsSweep;
 
@@ -1059,8 +1063,7 @@ describe("BlobManager", () => {
 				runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
 				assert(!redirectTable.has(blob2.localId));
 				assert(!redirectTable.has(blob2.storageId));
-			}),
-		);
+			});
 
 		it("deletes unused de-duped blobs", async () => {
 			await runtime.attach();

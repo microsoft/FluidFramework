@@ -596,10 +596,10 @@ describe("Garbage Collection Tests", () => {
 	describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
 		// Mock node loaded and changed activity for all the nodes in the graph.
 		async function mockNodeChangesAndRunGC(garbageCollector: IGarbageCollector) {
-			nodes.forEach((nodeId) => {
+			for (const nodeId of nodes) {
 				nodeUpdated(garbageCollector, nodeId, "Loaded", Date.now(), testPkgPath);
 				nodeUpdated(garbageCollector, nodeId, "Changed", Date.now(), testPkgPath);
-			});
+			}
 			await garbageCollector.collectGarbage({});
 		}
 

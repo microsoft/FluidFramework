@@ -130,21 +130,19 @@ describe("Outbox", () => {
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
 		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
-			batch.forEach(
-				({
-					contents: content = "",
+			for (const {
+				contents: content = "",
+				referenceSequenceNumber,
+				metadata: opMetadata,
+				localOpMetadata,
+			} of batch)
+				state.pendingOpContents.push({
+					content,
 					referenceSequenceNumber,
-					metadata: opMetadata,
+					opMetadata,
 					localOpMetadata,
-				}) =>
-					state.pendingOpContents.push({
-						content,
-						referenceSequenceNumber,
-						opMetadata,
-						localOpMetadata,
-						batchStartCsn: clientSequenceNumber ?? -1,
-					}),
-			);
+					batchStartCsn: clientSequenceNumber ?? -1,
+				});
 		},
 	});
 
@@ -806,7 +804,7 @@ describe("Outbox", () => {
 		]);
 	});
 
-	[
+	for (const ops of [
 		[
 			{
 				...createMessage(ContainerMessageType.IdAllocation, "0"),
@@ -835,7 +833,7 @@ describe("Outbox", () => {
 				referenceSequenceNumber: 1,
 			},
 		],
-	].forEach((ops: BatchMessage[]) => {
+	]) {
 		it("Flushes all batches when an out of order message is detected in either flows", () => {
 			const outbox = getOutbox({ context: getMockContext() });
 			for (const op of ops) {
@@ -861,7 +859,7 @@ describe("Outbox", () => {
 				},
 			]);
 		});
-	});
+	}
 
 	it("Does not flush the batch when an out of order message is detected, if configured", () => {
 		const outbox = getOutbox({

@@ -37,8 +37,8 @@ describe("OpCompressor", () => {
 		new Array(sizeInBytes + 1).join("0");
 	const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
 
-	describe("Compressing batches", () =>
-		[
+	describe("Compressing batches", () => {
+		for (const batch of [
 			// small batch with one small message
 			createBatch(1, 100 * 1024),
 			// small batch with small messages
@@ -47,7 +47,7 @@ describe("OpCompressor", () => {
 			createBatch(2, 2 * 1024 * 1024),
 			// large batch with small messages
 			createBatch(1000, 100 * 1024),
-		].forEach((batch) => {
+		]) {
 			it(`Batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
@@ -61,15 +61,16 @@ describe("OpCompressor", () => {
 					assert.strictEqual(compressedBatch.messages[1].contents, undefined);
 				}
 			}).timeout(3000);
-		}));
+		}
+	});
 
-	describe("Unsupported batches", () =>
-		[
+	describe("Unsupported batches", () => {
+		for (const batch of [
 			// large batch with small messages
 			createBatch(6000, 100 * 1024),
 			// small batch with large messages
 			createBatch(6, 100 * 1024 * 1024),
-		].forEach((batch) => {
+		]) {
 			it(`Not compressing batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
@@ -83,5 +84,6 @@ describe("OpCompressor", () => {
 					},
 				]);
 			});
-		}));
+		}
+	});
 });

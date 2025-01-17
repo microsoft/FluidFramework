@@ -838,16 +838,14 @@ export class GarbageCollector implements IGarbageCollector {
 		 */
 		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
 		const newOutboundRoutesSinceLastRun: string[] = [];
-		this.newReferencesSinceLastRun.forEach(
-			(outboundRoutes: string[], sourceNodeId: string) => {
-				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
-					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
-				} else {
-					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
-				}
-				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
-			},
-		);
+		for (const [sourceNodeId, outboundRoutes] of this.newReferencesSinceLastRun) {
+			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
+				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
+			} else {
+				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
+			}
+			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
+		}
 
 		/**
 		 * Run GC on the above reference graph starting with root and all new outbound routes. This will generate a

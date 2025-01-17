@@ -109,7 +109,7 @@ describe("RemoteMessageProcessor", () => {
 		grouping: [true, false],
 	});
 
-	messageGenerationOptions.forEach((option) => {
+	for (const option of messageGenerationOptions) {
 		it(`Correctly processes single batch: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, () => {
 			let batch: IBatch = {
 				contentSizeInBytes: 1,
@@ -231,7 +231,7 @@ describe("RemoteMessageProcessor", () => {
 				"unexpected batchStartCsn",
 			);
 		});
-	});
+	}
 
 	it("Processes multiple batches (No Grouped Batching)", () => {
 		let csn = 1;

@@ -62,7 +62,7 @@ describe("OpGroupingManager", () => {
 			{ enabled: true, expectedResult: true },
 		];
 
-		options.forEach((option) => {
+		for (const option of options) {
 			it(`shouldGroup: groupedBatchingEnabled [${option.enabled}] tooSmall [${
 				option.tooSmall === true
 			}] reentrant [${option.reentrant === true}]`, () => {
@@ -77,7 +77,7 @@ describe("OpGroupingManager", () => {
 					option.expectedResult,
 				);
 			});
-		});
+		}
 	});
 
 	describe("groupBatch", () => {
