@@ -61,10 +61,10 @@ module.exports = {
 		"unicorn/prefer-number-properties": "error",
 		"unicorn/prefer-optional-catch-binding": "error",
 		"unicorn/prefer-spread": "error",
+		"unicorn/prefer-string-slice": "error",
 		"unicorn/switch-case-braces": "error",
 		"unicorn/throw-new-error": "error",
 
-		// unicorn/prefer-string-slice
 		// unicorn/consistent-function-scoping
 		// unicorn/no-negated-condition
 		// unicorn/no-lonely-if
