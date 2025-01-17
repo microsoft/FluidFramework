@@ -86,7 +86,7 @@ export class OpDecompressor {
 		return false;
 	}
 
-	public get currentlyUnrolling() {
+	public get currentlyUnrolling(): boolean {
 		return this.activeBatch;
 	}
 

@@ -184,7 +184,7 @@ export class GCTelemetryTracker {
 			isTombstoned,
 			...otherNodeUsageProps
 		}: INodeUsageProps,
-	) {
+	): void {
 		// Note: For SubDataStore Load usage, trackedId will be the DataStore's id, not the full path in question.
 		// This is necessary because the SubDataStore path may be unrecognized by GC (if suited for a custom request handler)
 		const nodeStateTracker = this.getNodeStateTracker(trackedId);
@@ -336,7 +336,7 @@ export class GCTelemetryTracker {
 		previousGCData: IGarbageCollectionData,
 		explicitReferences: Map<string, string[]>,
 		logger: ITelemetryLoggerExt,
-	) {
+	): void {
 		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
 			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
 			const explicitRoutes = explicitReferences.get(nodeId) ?? [];
@@ -380,7 +380,7 @@ export class GCTelemetryTracker {
 	 * Log events that are pending in pendingEventsQueue. This is called after GC runs in the summarizer client
 	 * so that the state of an unreferenced node is updated.
 	 */
-	public async logPendingEvents(logger: ITelemetryLoggerExt) {
+	public async logPendingEvents(logger: ITelemetryLoggerExt): Promise<void> {
 		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
 		// summary time they are then logged.
 		// Events generated:

@@ -926,7 +926,7 @@ export class GarbageCollector implements IGarbageCollector {
 		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,
-	) {
+	): void {
 		for (const gcMessage of messageContents) {
 			const gcMessageType = gcMessage.type;
 			switch (gcMessageType) {
@@ -1014,7 +1014,7 @@ export class GarbageCollector implements IGarbageCollector {
 		request,
 		headerData,
 		additionalProps,
-	}: IGCNodeUpdatedProps) {
+	}: IGCNodeUpdatedProps): void {
 		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
 		// logging as nothing interesting would have happened worth logging.
 		if (!this.shouldRunGC || timestampMs === undefined) {
@@ -1116,7 +1116,7 @@ export class GarbageCollector implements IGarbageCollector {
 		toNodePath: string,
 		timestampMs: number,
 		autorecovery?: true,
-	) {
+	): void {
 		if (!this.shouldRunGC) {
 			return;
 		}

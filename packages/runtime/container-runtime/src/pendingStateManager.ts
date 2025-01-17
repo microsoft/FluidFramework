@@ -270,10 +270,10 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = () => this.disposeOnce.value;
+	public readonly dispose = (): void => this.disposeOnce.value;
 
 	/**
 	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
@@ -287,7 +287,7 @@ export class PendingStateManager implements IDisposable {
 		batch: BatchMessage[],
 		clientSequenceNumber: number | undefined,
 		ignoreBatchId?: boolean,
-	) {
+	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
 		// In the typical case where the batch was actually sent, use the clientId and clientSequenceNumber.
@@ -326,7 +326,7 @@ export class PendingStateManager implements IDisposable {
 	 * Applies stashed ops at their reference sequence number so they are ready to be ACKed or resubmitted
 	 * @param seqNum - Sequence number at which to apply ops. Will apply all ops if seqNum is undefined.
 	 */
-	public async applyStashedOpsAt(seqNum?: number) {
+	public async applyStashedOpsAt(seqNum?: number): Promise<void> {
 		// apply stashed ops at sequence number
 		while (!this.initialMessages.isEmpty()) {
 			if (seqNum !== undefined) {
@@ -610,7 +610,7 @@ export class PendingStateManager implements IDisposable {
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 */
-	public replayPendingStates() {
+	public replayPendingStates(): void {
 		assert(
 			this.stateHandler.connected(),
 			0x172 /* "The connection state is not consistent with the runtime" */,
