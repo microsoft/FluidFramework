@@ -37,8 +37,6 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 				getGlobalTelemetryContext().getProperties().correlationId ??
 				uuid() /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
-			"historian",
-			true,
 		);
 	}
 

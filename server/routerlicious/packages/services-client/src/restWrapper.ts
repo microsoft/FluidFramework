@@ -13,7 +13,13 @@ import {
 } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
-import { Lumberjack, LumberEventName } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	LumberEventName,
+	HttpProperties,
+	BaseTelemetryProperties,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
 
@@ -171,8 +177,8 @@ export class BasicRestWrapper extends RestWrapper {
 		private readonly refreshTokenIfNeeded?: (
 			authorizationHeader: RawAxiosRequestHeaders,
 		) => Promise<RawAxiosRequestHeaders | undefined>,
-		serviceName?: string,
-		enableTelemetry = false,
+		private readonly serviceName?: string,
+		private readonly enableTelemetry = false,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -206,40 +212,14 @@ export class BasicRestWrapper extends RestWrapper {
 		}
 
 		return new Promise<T>((resolve, reject) => {
-			if (this.enableTelemetry) {
-				const startTime = performance.now();
-				const httpMetric = Lumberjack.newLumberMetric(LumberEventName.RestWrapper);
-				const properties = {
-					[HttpProperties.method]: options.method ?? "METHOD_UNAVAILABLE",
-					[HttpProperties.url]: options.url ?? "URL_UNAVAILABLE",
-					[BaseTelemetryProperties.correlationId]: correlationId,
-					[CommonProperties.serviceName]: this.serviceName,
-					[CommonProperties.telemetryGroupName]: "rest_wrapper",
-				};
-				httpMetric.setProperties(properties);
-			}
+			const startTime = performance.now();
+			let axiosError: AxiosError<any>;
 			this.axios
 				.request<T>(options)
 				.then((response) => {
-					if (this.enableTelemetry) {
-						const endTime = performance.now();
-						httpMetric.setProperty("durationInMs", endTime - startTime);
-						httpMetric.setProperty(HttpProperties.status, response.status);
-						httpMetric.success("Request successful");
-					}
 					resolve(response.data);
 				})
 				.catch((error: AxiosError<any>) => {
-					if (this.enableTelemetry) {
-						const endTime = performance.now();
-						httpMetric.setProperty("durationInMs", endTime - startTime);
-						httpMetric.setProperty(HttpProperties.status, error?.response?.status ?? "STATUS_UNAVAILABLE");
-						if (error?.response?.status === statusCode)	{
-							httpMetric.success("Request successful");
-						}	else {
-							httpMetric.error("Request failed");
-						}
-					}
 					if (error?.response?.status === statusCode) {
 						// Axios misinterpreted as error, return as successful response
 						resolve(error?.response?.data);
@@ -280,6 +260,7 @@ export class BasicRestWrapper extends RestWrapper {
 
 						this.request<T>(retryConfig, statusCode, false).then(resolve).catch(reject);
 					} else {
+						axiosError = error;
 						const errorSourceMessage = `[${error?.config?.method ?? ""}] request to [${
 							error?.config?.baseURL ?? options.baseURL ?? ""
 						}] failed with [${error.response?.status}] status code`;
@@ -326,10 +307,30 @@ export class BasicRestWrapper extends RestWrapper {
 					}
 				})
 				.finally(() => {
+					if (this.enableTelemetry) {
+						const properties = {
+							[HttpProperties.method]: options.method ?? "METHOD_UNAVAILABLE",
+							[HttpProperties.url]: options.url ?? "URL_UNAVAILABLE",
+							[BaseTelemetryProperties.correlationId]: correlationId,
+							[CommonProperties.serviceName]: this.serviceName,
+							[CommonProperties.telemetryGroupName]: "rest_wrapper",
+						};
+						const httpMetric = Lumberjack.newLumberMetric(
+							LumberEventName.RestWrapper,
+							properties,
+						);
 						const endTime = performance.now();
 						httpMetric.setProperty("durationInMs", endTime - startTime);
-						httpMetric.success("HttpRequest completed");
-						Lumberjack.log(httpMetric);
+						if (axiosError) {
+							httpMetric.setProperty(
+								HttpProperties.status,
+								axiosError?.response?.status ?? "STATUS_UNAVAILABLE",
+							);
+							httpMetric.error("HttpRequest failed");
+						} else {
+							httpMetric.success("HttpRequest completed");
+						}
+					}
 				});
 		});
 	}

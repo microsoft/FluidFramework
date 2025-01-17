@@ -384,8 +384,9 @@ const uploadBlob = async (
 			getGlobalTelemetryContext().getProperties().correlationId ??
 			uuid() /* getCorrelationId */,
 		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+		undefined /* refreshTokenIfNeeded */,
 		"alfred",
-		true,
+		true /* enableTelemetry */,
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",
