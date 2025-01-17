@@ -54,7 +54,7 @@ module.exports = {
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
-		// "unicorn/no-zero-fractions": "error",
+		"unicorn/no-zero-fractions": "error",
 		// "unicorn/prefer-node-protocol": "error",
 		// "unicorn/prefer-number-properties": "error",
 		// "unicorn/prefer-optional-catch-binding": "error",

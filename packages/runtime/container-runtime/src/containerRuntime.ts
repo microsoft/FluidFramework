@@ -414,7 +414,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
 	nonRuntimeOpWeight: 0.1,
 
-	runtimeOpWeight: 1.0,
+	runtimeOpWeight: 1,
 
 	nonRuntimeHeuristicThreshold: 20,
 };

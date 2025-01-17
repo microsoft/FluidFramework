@@ -100,7 +100,7 @@ describe("Runtime", () => {
 				minIdleTime: 5000, // 5 sec (idle)
 				maxIdleTime: 5000, // This must remain the same as minIdleTime for tests to pass nicely
 				nonRuntimeOpWeight: 0.1,
-				runtimeOpWeight: 1.0,
+				runtimeOpWeight: 1,
 				nonRuntimeHeuristicThreshold: 20,
 				...summaryCommon,
 			};
