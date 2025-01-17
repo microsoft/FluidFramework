@@ -17,6 +17,16 @@ module.exports = {
 
 		// #region TODO:AB#3027: remove overrides and upgrade config to `recommended`
 
+		"@typescript-eslint/explicit-function-return-type": [
+			"error",
+			{
+				allowExpressions: true,
+				allowTypedFunctionExpressions: true,
+				allowHigherOrderFunctions: true,
+				allowDirectConstAssertionInArrowFunctions: true,
+				allowConciseArrowFunctionExpressionsStartingWithVoid: false,
+			},
+		],
 		"@typescript-eslint/explicit-module-boundary-types": "error",
 		"@typescript-eslint/no-explicit-any": [
 			"error",
@@ -43,6 +53,9 @@ module.exports = {
 			// Rules only for test files
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
+				// TODO: remove these overrides and fix violations
+				"@typescript-eslint/explicit-function-return-type": "off",
+
 				// Test files are run in node only so additional node libraries can be used.
 				"import/no-nodejs-modules": ["error", { allow: ["assert", "crypto"] }],
 			},
