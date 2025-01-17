@@ -204,7 +204,7 @@ export class AppData extends DataObject {
 		}) {}
 
 		class RootNodeTwo extends builder.object("root-node-two", {
-			childField: RootNodeTwoItem,
+			childField: builder.optional(RootNodeTwoItem),
 		}) {}
 
 		const config = new TreeViewConfiguration({

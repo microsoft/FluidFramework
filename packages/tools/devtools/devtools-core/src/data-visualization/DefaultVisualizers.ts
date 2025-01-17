@@ -265,8 +265,14 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
+
 	if (treeView === undefined) {
-		throw new Error("Support for visualizing empty trees is not implemented");
+		return {
+			fluidObjectId: sharedTree.id,
+			typeMetadata: "SharedTree",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+			children: {},
+		};
 	}
 
 	// Schema of the tree node.
