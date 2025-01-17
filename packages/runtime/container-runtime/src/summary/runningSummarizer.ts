@@ -23,6 +23,7 @@ import {
 	createChildLogger,
 	createChildMonitoringContext,
 	isFluidError,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ISummaryConfiguration } from "../containerRuntime.js";
@@ -163,7 +164,7 @@ export class RunningSummarizer
 		return summarizer;
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 	private stopping = false;
@@ -419,7 +420,9 @@ export class RunningSummarizer
 	 * but only if they're logging about that same summary.
 	 * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
 	 */
-	public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
+	public tryGetCorrelatedLogger = (
+		summaryOpRefSeq: number,
+	): ITelemetryLoggerExt | undefined =>
 		this.heuristicData.lastAttempt.refSequenceNumber === summaryOpRefSeq
 			? this.mc.logger
 			: undefined;
@@ -429,7 +432,7 @@ export class RunningSummarizer
 	 */
 	private heuristicRunnerMicroTaskExists = false;
 
-	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean) {
+	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean): void {
 		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
 		if (runtimeMessage) {
