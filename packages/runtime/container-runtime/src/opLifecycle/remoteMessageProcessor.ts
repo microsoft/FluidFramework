@@ -293,7 +293,6 @@ export function unpackRuntimeMessage(
 ): boolean {
 	if (message.type !== MessageType.Operation) {
 		// Legacy format, but it's already "unpacked",
-
 		// i.e. message.type is actually ContainerMessageType.
 		// Or it's non-runtime message.
 		// Nothing to do in such case.

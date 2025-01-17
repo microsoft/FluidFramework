@@ -5,30 +5,40 @@
 
 export { GarbageCollector } from "./garbageCollection.js";
 export {
+	// eslint-disable-next-line import/no-deprecated
 	nextGCVersion,
 	defaultInactiveTimeoutMs,
 	defaultSweepGracePeriodMs,
 	defaultSessionExpiryDurationMs,
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	gcTestModeKey,
 	gcGenerationOptionName,
+	// eslint-disable-next-line import/no-deprecated
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
 	gcVersionUpgradeToV4Key,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
+	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata_Deprecated,
 	IGCNodeUpdatedProps,
 	IGCResult,
 	IGCRuntimeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IMarkPhaseStats,
+	// eslint-disable-next-line import/no-deprecated
 	ISweepPhaseStats,
+	// eslint-disable-next-line import/no-deprecated
 	IGCStats,
 	oneDayMs,
 	runSessionExpiryKey,
+	// eslint-disable-next-line import/no-deprecated
 	stableGCVersion,
 	UnreferencedState,
 	disableThrowOnTombstoneLoadKey,
@@ -39,6 +49,7 @@ export {
 export {
 	cloneGCData,
 	concatGarbageCollectionStates,
+	// eslint-disable-next-line import/no-deprecated
 	getGCVersionInEffect,
 	unpackChildNodesGCDetails,
 	urlToGCNodePath,

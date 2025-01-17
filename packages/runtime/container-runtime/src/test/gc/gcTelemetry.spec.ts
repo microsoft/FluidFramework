@@ -19,6 +19,7 @@ import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { blobManagerBasePath } from "../../blobManager/index.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GCTelemetryTracker,
 	IGarbageCollectorConfigs,
@@ -26,6 +27,7 @@ import {
 	cloneGCData,
 	defaultSessionExpiryDurationMs,
 	oneDayMs,
+	// eslint-disable-next-line import/no-deprecated
 	stableGCVersion,
 } from "../../gc/index.js";
 import { pkgVersion } from "../../packageVersion.js";
@@ -52,6 +54,7 @@ describe("GC Telemetry Tracker", () => {
 
 	function createTelemetryTracker(
 		enableSweep: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		isSummarizerClient = true,
 	): GCTelemetryTracker {
 		// Node types are as follows based on the path:
@@ -61,14 +64,18 @@ describe("GC Telemetry Tracker", () => {
 		// Everything else - other.
 		const getNodeType = (nodePath: string) => {
 			if (nodePath.split("/")[1] === blobManagerBasePath) {
+				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.Blob;
 			}
 			if (nodePath.split("/").length === 2) {
+				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.DataStore;
 			}
 			if (nodePath.split("/").length === 3) {
+				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.SubDataStore;
 			}
+			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.Other;
 		};
 		const configs: IGarbageCollectorConfigs = {
@@ -83,12 +90,15 @@ describe("GC Telemetry Tracker", () => {
 			sweepGracePeriodMs,
 			throwOnTombstoneLoad: false,
 			persistedGcFeatureMatrix: undefined,
+			// eslint-disable-next-line import/no-deprecated
 			gcVersionInBaseSnapshot: stableGCVersion,
+			// eslint-disable-next-line import/no-deprecated
 			gcVersionInEffect: stableGCVersion,
 		};
 		const tracker = new GCTelemetryTracker(
 			mc,
 			configs,
+			// eslint-disable-next-line import/no-deprecated
 			isSummarizerClient,
 			{ createContainerRuntimeVersion: pkgVersion },
 			getNodeType,
@@ -157,7 +167,9 @@ describe("GC Telemetry Tracker", () => {
 	 * For summarizer clients, inactive / sweep ready events are not logged when on node usage. They are logged when GC
 	 * runs next time. This emulates that by calling the functions in the telemetry tracker that are called when GC runs.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	async function simulateGCToTriggerEvents(isSummarizerClient: boolean) {
+		// eslint-disable-next-line import/no-deprecated
 		if (!isSummarizerClient) {
 			return;
 		}
@@ -187,6 +199,7 @@ describe("GC Telemetry Tracker", () => {
 	});
 
 	// Tests that are run once for summarizer client and once for interactive client.
+	// eslint-disable-next-line import/no-deprecated
 	const clientTypeTests = (isSummarizerClient: boolean) => {
 		/**
 		 * Asserts that the events are as expected based on whether its a summarizer client or not. In non-summarizer
@@ -202,6 +215,7 @@ describe("GC Telemetry Tracker", () => {
 			// For non-summarizer clients, events that are not "Loaded" are unexpected. Everything else is expected.
 			for (const event of events) {
 				const eventName = event.eventName as string;
+				// eslint-disable-next-line import/no-deprecated
 				if (!isSummarizerClient && !eventName.includes("Loaded")) {
 					unexpectedEvents.push(event);
 				} else {
@@ -219,6 +233,7 @@ describe("GC Telemetry Tracker", () => {
 		}
 
 		it("generates inactive, tombstone ready, and sweep ready events when nodes are used after time out", async () => {
+			// eslint-disable-next-line import/no-deprecated
 			telemetryTracker = createTelemetryTracker(true /* enable Sweep */, isSummarizerClient);
 			// Mark nodes 2 and 3 as unreferenced.
 			markNodesUnreferenced([nodes[2], nodes[3]]);
@@ -226,6 +241,7 @@ describe("GC Telemetry Tracker", () => {
 			// Advance the clock to trigger inactive timeout and validate that inactive events are as expected.
 			clock.tick(inactiveTimeoutMs + 1);
 			mockNodeChanges(nodes);
+			// eslint-disable-next-line import/no-deprecated
 			await simulateGCToTriggerEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
@@ -256,6 +272,7 @@ describe("GC Telemetry Tracker", () => {
 			// Advance the clock to trigger tombstone timeout and validate that TombstoneReady events are as expected.
 			clock.tick(tombstoneTimeoutMs - inactiveTimeoutMs);
 			mockNodeChanges(nodes);
+			// eslint-disable-next-line import/no-deprecated
 			await simulateGCToTriggerEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
@@ -286,6 +303,7 @@ describe("GC Telemetry Tracker", () => {
 			// Advance the clock by the delay and validate that SweepReady events are as expected.
 			clock.tick(sweepGracePeriodMs);
 			mockNodeChanges(nodes);
+			// eslint-disable-next-line import/no-deprecated
 			await simulateGCToTriggerEvents(isSummarizerClient);
 			assertMatchEvents(
 				[
@@ -315,6 +333,7 @@ describe("GC Telemetry Tracker", () => {
 		});
 
 		it("generates tombstone revived events when nodes are used after they are tombstoned", async () => {
+			// eslint-disable-next-line import/no-deprecated
 			telemetryTracker = createTelemetryTracker(true /* enable Sweep */, isSummarizerClient);
 			// Mark node 2 as unreferenced.
 			markNodesUnreferenced([nodes[2]]);
@@ -363,24 +382,28 @@ describe("GC Telemetry Tracker", () => {
 				}
 				telemetryTracker = createTelemetryTracker(
 					mode !== "inactive" /* enableSweep */,
+					// eslint-disable-next-line import/no-deprecated
 					isSummarizerClient,
 				);
 			});
 
 			it("doesn't generate events for referenced nodes", async () => {
 				mockNodeChanges(nodes);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				validateNoEvents();
 
 				// Advance the clock to just before the timeout expires, update nodes and validate no events.
 				clock.tick(timeout - 1);
 				mockNodeChanges(nodes);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				validateNoEvents();
 
 				// Advance the clock to expire the timeout, update nodes and validate no events.
 				clock.tick(1);
 				mockNodeChanges(nodes);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				validateNoEvents();
 			});
@@ -392,12 +415,14 @@ describe("GC Telemetry Tracker", () => {
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
 				mockNodeChanges(nodes);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				validateNoEvents();
 
 				// Expire the timeout, update nodes and validate that all events for node 1 and node 2 are logged.
 				clock.tick(1);
 				mockNodeChanges(nodes);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				expectedEvents.push(
@@ -430,6 +455,7 @@ describe("GC Telemetry Tracker", () => {
 
 				// Revived node 2 and validate that revived event is as expected.
 				reviveNode(nodes[0], nodes[2]);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				assertMatchEvents(
 					[
@@ -464,6 +490,7 @@ describe("GC Telemetry Tracker", () => {
 					completedGCRuns: 0,
 					isTombstoned: false,
 				});
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				expectedEvents.push({
@@ -481,17 +508,20 @@ describe("GC Telemetry Tracker", () => {
 			it("generates events once per node", async () => {
 				// Mark node 2 as unreferenced.
 				markNodesUnreferenced([nodes[2]]);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 
 				// Advance the clock just before the timeout and validate no unexpected events are logged.
 				clock.tick(timeout - 1);
 				mockNodeChanges(nodes);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				validateNoEvents();
 
 				// Expire the timeout, updated nodes and validate that events are logged as expected.
 				clock.tick(1);
 				mockNodeChanges(nodes);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				const expectedEvents: Omit<ITelemetryBaseEvent, "category">[] = [];
 				expectedEvents.push(
@@ -512,11 +542,13 @@ describe("GC Telemetry Tracker", () => {
 
 				// Update all nodes again. There shouldn't be any more events since for each node the event is only once.
 				mockNodeChanges(nodes);
+				// eslint-disable-next-line import/no-deprecated
 				await simulateGCToTriggerEvents(isSummarizerClient);
 				validateNoEvents();
 			});
 
 			// This test is only relevant for summarizer client because it does not log changed events if the node is revived.
+			// eslint-disable-next-line import/no-deprecated
 			if (isSummarizerClient) {
 				it("generates only revived event in summarizer when a node is updated and revived", async () => {
 					// Mark node 2 as unreferenced.
@@ -525,6 +557,7 @@ describe("GC Telemetry Tracker", () => {
 					// Advance the clock just before the timeout and validate no unexpected events are logged.
 					clock.tick(timeout - 1);
 					mockNodeChanges(nodes);
+					// eslint-disable-next-line import/no-deprecated
 					await simulateGCToTriggerEvents(isSummarizerClient);
 
 					validateNoEvents();
@@ -533,6 +566,7 @@ describe("GC Telemetry Tracker", () => {
 					clock.tick(1);
 					mockNodeChanges([nodes[2]]);
 					reviveNode(nodes[1], nodes[2]);
+					// eslint-disable-next-line import/no-deprecated
 					await simulateGCToTriggerEvents(isSummarizerClient);
 
 					for (const event of mockLogger.events) {
@@ -607,11 +641,14 @@ describe("GC Telemetry Tracker", () => {
 		});
 	};
 
+	// eslint-disable-next-line import/no-deprecated
 	describe("Summarizer client", () => {
+		// eslint-disable-next-line import/no-deprecated
 		clientTypeTests(true /* isSummarizerClient */);
 	});
 
 	describe("Interactive client", () => {
+		// eslint-disable-next-line import/no-deprecated
 		clientTypeTests(false /* isSummarizerClient */);
 	});
 
@@ -624,6 +661,7 @@ describe("GC Telemetry Tracker", () => {
 		beforeEach(() => {
 			telemetryTracker = createTelemetryTracker(
 				true /* enableSweep */,
+				// eslint-disable-next-line import/no-deprecated
 				true /* isSummarizerClient */,
 			);
 

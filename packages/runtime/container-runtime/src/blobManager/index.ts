@@ -13,6 +13,7 @@ export {
 } from "./blobManager.js";
 export {
 	loadBlobManagerLoadInfo,
+	// eslint-disable-next-line import/no-deprecated
 	IBlobManagerLoadInfo,
 	blobsTreeName,
 	redirectTableBlobName,

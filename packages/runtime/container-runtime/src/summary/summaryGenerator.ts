@@ -22,29 +22,21 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IAckSummaryResult,
-	// eslint-disable-next-line import/no-deprecated
 	IBroadcastSummaryResult,
-	// eslint-disable-next-line import/no-deprecated
 	INackSummaryResult,
 	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
 	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizeResults,
 	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
-	// eslint-disable-next-line import/no-deprecated
 	SubmitSummaryFailureData,
-	// eslint-disable-next-line import/no-deprecated
 	SubmitSummaryResult,
-	// eslint-disable-next-line import/no-deprecated
 	SummarizeResultPart,
 	SummaryGeneratorTelemetry,
-	// eslint-disable-next-line import/no-deprecated
 	type IRetriableFailureError,
 } from "./summarizerTypes.js";
 import { IClientSummaryWatcher } from "./summaryCollection.js";
@@ -153,15 +145,12 @@ export const getFailMessage = (errorCode: SummarizeErrorCode): string =>
 
 export class SummarizeResultBuilder {
 	public readonly summarySubmitted = new Deferred<
-		// eslint-disable-next-line import/no-deprecated
 		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
 	>();
 	public readonly summaryOpBroadcasted = new Deferred<
-		// eslint-disable-next-line import/no-deprecated
 		SummarizeResultPart<IBroadcastSummaryResult>
 	>();
 	public readonly receivedSummaryAckOrNack = new Deferred<
-		// eslint-disable-next-line import/no-deprecated
 		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
 	>();
 
@@ -173,11 +162,8 @@ export class SummarizeResultBuilder {
 	 */
 	public fail(
 		message: string,
-		// eslint-disable-next-line import/no-deprecated
 		error: IRetriableFailureError,
-		// eslint-disable-next-line import/no-deprecated
 		submitFailureResult?: SubmitSummaryFailureData,
-		// eslint-disable-next-line import/no-deprecated
 		nackSummaryResult?: INackSummaryResult,
 	): void {
 		assert(
@@ -185,7 +171,6 @@ export class SummarizeResultBuilder {
 			0x25e /* "no reason to call fail if all promises have been completed" */,
 		);
 
-		// eslint-disable-next-line import/no-deprecated
 		const result: SummarizeResultPart<undefined> = {
 			success: false,
 			message,
@@ -199,8 +184,6 @@ export class SummarizeResultBuilder {
 		this.summaryOpBroadcasted.resolve(result);
 		this.receivedSummaryAckOrNack.resolve({ ...result, data: nackSummaryResult });
 	}
-
-	// eslint-disable-next-line import/no-deprecated
 	public build(): ISummarizeResults {
 		return {
 			summarySubmitted: this.summarySubmitted.promise,
@@ -213,7 +196,6 @@ export class SummarizeResultBuilder {
 /**
  * Errors type for errors hit during summary that may be retriable.
  */
-// eslint-disable-next-line import/no-deprecated
 export class RetriableSummaryError extends LoggingError implements IRetriableFailureError {
 	constructor(
 		message: string,
@@ -235,14 +217,12 @@ export class SummaryGenerator {
 		private readonly submitSummaryCallback: (
 			// eslint-disable-next-line import/no-deprecated
 			options: ISubmitSummaryOptions,
-			// eslint-disable-next-line import/no-deprecated
 		) => Promise<SubmitSummaryResult>,
 		private readonly successfulSummaryCallback: () => void,
 		private readonly refreshLatestSummaryCallback: (
 			// eslint-disable-next-line import/no-deprecated
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
-
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
@@ -260,10 +240,7 @@ export class SummaryGenerator {
 	public summarize(
 		// eslint-disable-next-line import/no-deprecated
 		summaryOptions: ISubmitSummaryOptions,
-
 		resultsBuilder = new SummarizeResultBuilder(),
-
-		// eslint-disable-next-line import/no-deprecated
 	): ISummarizeResults {
 		this.summarizeCore(summaryOptions, resultsBuilder).catch((error) => {
 			const message = "UnexpectedSummarizeError";
@@ -277,13 +254,11 @@ export class SummaryGenerator {
 	private async summarizeCore(
 		// eslint-disable-next-line import/no-deprecated
 		submitSummaryOptions: ISubmitSummaryOptions,
-
 		resultsBuilder: SummarizeResultBuilder,
 	): Promise<void> {
 		const { summaryLogger, cancellationToken, ...summarizeOptions } = submitSummaryOptions;
 
 		// Note: timeSinceLastAttempt and timeSinceLastSummary for the
-
 		// first summary are basically the time since the summarizer was loaded.
 		const timeSinceLastAttempt = Date.now() - this.heuristicData.lastAttempt.summaryTime;
 		const timeSinceLastSummary =
@@ -304,7 +279,6 @@ export class SummaryGenerator {
 			{ start: true, end: true, cancel: "generic" },
 		);
 
-		// eslint-disable-next-line import/no-deprecated
 		let summaryData: SubmitSummaryResult | undefined;
 
 		/**
@@ -314,12 +288,9 @@ export class SummaryGenerator {
 		 */
 		const fail = (
 			errorCode: SummarizeErrorCode,
-			// eslint-disable-next-line import/no-deprecated
 			error: IRetriableFailureError,
 			properties?: SummaryGeneratorTelemetry,
-			// eslint-disable-next-line import/no-deprecated
 			submitFailureResult?: SubmitSummaryFailureData,
-			// eslint-disable-next-line import/no-deprecated
 			nackSummaryResult?: INackSummaryResult,
 		): void => {
 			// Report any failure as an error unless it was due to cancellation (like "disconnected" error)
@@ -554,7 +525,6 @@ export class SummaryGenerator {
 	}
 
 	private addSummaryDataToTelemetryProps(
-		// eslint-disable-next-line import/no-deprecated
 		summaryData: SubmitSummaryResult,
 		initialProps: SummaryGeneratorTelemetry,
 	): SummaryGeneratorTelemetry {

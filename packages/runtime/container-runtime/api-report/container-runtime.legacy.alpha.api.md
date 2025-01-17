@@ -73,7 +73,7 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly overridden?: undefined;
 };
 
-// @alpha @deprecated
+// @alpha @deprecated (undocumented)
 export type GCFeatureMatrix = {
     gcGeneration?: number;
     tombstoneGeneration?: undefined;
@@ -608,7 +608,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
     readonly summaryCollection: SummaryCollection;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     success: true;
     data: TSuccess;

@@ -141,7 +141,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private completedRuns = 0;
 
 	private readonly runtime: IGarbageCollectionRuntime;
-
+	// eslint-disable-next-line import/no-deprecated
 	private readonly isSummarizerClient: boolean;
 
 	private readonly summaryStateTracker: GCSummaryStateTracker;
@@ -169,7 +169,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
-
+		// eslint-disable-next-line import/no-deprecated
 		this.isSummarizerClient = createParams.isSummarizerClient;
 		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
@@ -222,7 +222,7 @@ export class GarbageCollector implements IGarbageCollector {
 		this.telemetryTracker = new GCTelemetryTracker(
 			this.mc,
 			this.configs,
-
+			// eslint-disable-next-line import/no-deprecated
 			this.isSummarizerClient,
 			createParams.createContainerMetadata,
 			(nodeId: string) => this.runtime.getNodeType(nodeId),
@@ -253,7 +253,6 @@ export class GarbageCollector implements IGarbageCollector {
 					// in the snapshot cannot be interpreted correctly. Set everything to undefined except for
 					// deletedNodes because irrespective of GC versions, these nodes have been deleted and cannot be
 					// brought back. The deletedNodes info is needed to identify when these nodes are used.
-
 					if (this.configs.gcVersionInEffect !== this.configs.gcVersionInBaseSnapshot) {
 						return {
 							gcState: undefined,
@@ -913,9 +912,7 @@ export class GarbageCollector implements IGarbageCollector {
 			 * If GC is allowed, the GC data is written using the GC version in effect and that is the gcFeature that goes
 			 * into the metadata blob. If GC is disabled, the gcFeature is 0.
 			 */
-
 			gcFeature: this.configs.gcAllowed ? this.configs.gcVersionInEffect : 0,
-
 			gcFeatureMatrix: this.configs.persistedGcFeatureMatrix,
 			sessionExpiryTimeoutMs: this.configs.sessionExpiryTimeoutMs,
 			sweepEnabled: false, // DEPRECATED - to be removed
@@ -1059,7 +1056,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
 		// we want to also trigger autorecovery to avoid the object being deleted
 		// Note: We don't need to trigger on "Changed" because any change will cause the object
-
+		// eslint-disable-next-line import/no-deprecated
 		// to be loaded by the Summarizer, and auto-recovery will be triggered then.
 		if (isTombstoned && reason === "Loaded") {
 			// Note that when a DataStore and its DDS are all loaded, each will trigger AutoRecovery for itself.
@@ -1099,7 +1096,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * prevent it from being deleted by Sweep (after the Grace Period).
 	 *
 	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
-	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
+	 *Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
 	 * before running GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string): void {

@@ -13,10 +13,14 @@ import {
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
+	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeParam,
+	// eslint-disable-next-line import/no-deprecated
 	CreateSummarizerNodeSource,
 	ISummarizeResult,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNode,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeConfig,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
@@ -36,11 +40,13 @@ import {
 	ICreateChildDetails,
 	IRefreshSummaryResult,
 	IStartSummaryResult,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeRootContract,
 	ValidateSummaryResult,
 	PendingSummaryInfo,
 } from "./summarizerNodeUtils.js";
 
+// eslint-disable-next-line import/no-deprecated
 export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRootContract {}
 
 /**
@@ -51,12 +57,12 @@ export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRoo
  * (work in progress) summary. Then all nodes will call summarize to summaries their
  * individual parts. Once completed and uploaded to storage, the root node will call
  * completeSummary or clearSummary to clear the WIP summary tracking state if something
- * went wrong. The SummarizerNodes will track all pending summaries that have been
+ *went wrong. The SummarizerNodes will track all pending summaries that have been
  * recorded by the completeSummary call. When one of them is acked, the root node should
- * call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
+ *call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
  * latest successful summary.
  */
-
+// eslint-disable-next-line import/no-deprecated
 export class SummarizerNode implements IRootSummarizerNode {
 	/**
 	 * The reference sequence number of the most recent acked summary.
@@ -74,6 +80,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		return this._summaryHandleId.toString();
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	protected readonly children = new Map<string, SummarizerNode>();
 	/**
 	 * Key value pair of summaries submitted by this client which are not yet acked.
@@ -93,12 +100,12 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 	/**
 	 * Do not call constructor directly.
-	 * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
+	 *Use createRootSummarizerNode to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
 		baseLogger: ITelemetryBaseLogger,
 		private readonly summarizeInternalFn: SummarizeInternalFn,
-
+		// eslint-disable-next-line import/no-deprecated
 		config: ISummarizerNodeConfig,
 		/**
 		 * Encoded handle or path to the node
@@ -116,7 +123,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		protected telemetryNodeId?: string,
 	) {
 		this.canReuseHandle = config.canReuseHandle ?? true;
-
 		// All logs posted by the summarizer node should include the telemetryNodeId.
 		this.logger = createChildLogger({
 			logger: baseLogger,
@@ -431,7 +437,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 				const pendingSummary = this.pendingSummaries.get(proposalHandle);
 				if (pendingSummary?.referenceSequenceNumber !== undefined) {
 					isSummaryTracked = true;
-
 					// update the pendingSummariesMap for the root and all child summarizerNodes
 					this.refreshLatestSummaryFromPending(
 						proposalHandle,
@@ -525,15 +530,17 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * If it is from a base summary, it will assert that a summary has been seen.
 		 * Attach information if it is created from an attach op.
 		 */
-
+		// eslint-disable-next-line import/no-deprecated
 		createParam: CreateChildSummarizerNodeParam,
-
+		// eslint-disable-next-line import/no-deprecated
 		config: ISummarizerNodeConfig = {},
+		// eslint-disable-next-line import/no-deprecated
 	): ISummarizerNode {
+		// eslint-disable-next-line import/no-deprecated
 		assert(!this.children.has(id), 0x1ab /* "Create SummarizerNode child already exists" */);
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
-
+		// eslint-disable-next-line import/no-deprecated
 		const child = new SummarizerNode(
 			this.logger,
 			summarizeInternalFn,
@@ -554,6 +561,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		return child;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public getChild(id: string): ISummarizerNode | undefined {
 		return this.children.get(id);
 	}
@@ -566,7 +574,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 */
 	protected getCreateDetailsForChild(
 		id: string,
-
+		// eslint-disable-next-line import/no-deprecated
 		createParam: CreateChildSummarizerNodeParam,
 	): ICreateChildDetails {
 		let childLastSummaryReferenceSequenceNumber: number | undefined;
@@ -574,6 +582,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 		const parentLastSummaryReferenceSequenceNumber = this._lastSummaryReferenceSequenceNumber;
 		switch (createParam.type) {
+			// eslint-disable-next-line import/no-deprecated
 			case CreateSummarizerNodeSource.FromAttach: {
 				if (
 					parentLastSummaryReferenceSequenceNumber !== undefined &&
@@ -585,17 +594,18 @@ export class SummarizerNode implements IRootSummarizerNode {
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;
 			}
-
+			// eslint-disable-next-line import/no-deprecated
 			case CreateSummarizerNodeSource.FromSummary:
-
+			// eslint-disable-next-line import/no-deprecated
 			case CreateSummarizerNodeSource.Local: {
 				childLastSummaryReferenceSequenceNumber = parentLastSummaryReferenceSequenceNumber;
 				changeSequenceNumber = parentLastSummaryReferenceSequenceNumber ?? -1;
 				break;
 			}
 			default: {
+				// eslint-disable-next-line import/no-deprecated
 				const type = (createParam as unknown as CreateChildSummarizerNodeParam).type;
-
+				// eslint-disable-next-line import/no-deprecated
 				unreachableCase(createParam, `Unexpected CreateSummarizerNodeSource: ${type}`);
 			}
 		}
@@ -620,7 +630,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * @param id - Initial id or path part of this node
 	 *
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	protected maybeUpdateChildState(child: SummarizerNode, id: string): void {
 		// If a summary is in progress, this child was created after the summary started. So, we need to update the
 		// child's summary state as well.
@@ -664,22 +674,24 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 /**
  * Creates a root summarizer node.
- * @param logger - Logger to use within SummarizerNode
+ *@param logger - Logger to use within SummarizerNode
  * @param summarizeInternalFn - Function to generate summary
  * @param changeSequenceNumber - Sequence number of latest change to new node/subtree
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,
  * or undefined if not loaded from summary
  * @param config - Configure behavior of summarizer node
  */
-
+// eslint-disable-next-line import/no-deprecated
 export const createRootSummarizerNode = (
 	logger: ITelemetryLoggerExt,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,
-
+	// eslint-disable-next-line import/no-deprecated
 	config: ISummarizerNodeConfig = {},
+	// eslint-disable-next-line import/no-deprecated
 ): IRootSummarizerNode =>
+	// eslint-disable-next-line import/no-deprecated
 	new SummarizerNode(
 		logger,
 		summarizeInternalFn,

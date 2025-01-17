@@ -8,11 +8,15 @@ import { strict as assert } from "assert";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IGarbageCollectionData,
+	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeParam,
+	// eslint-disable-next-line import/no-deprecated
 	CreateSummarizerNodeSource,
 	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeConfig,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	channelsTreeName,
@@ -28,18 +32,23 @@ import { cloneGCData } from "../gc/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IRootSummarizerNodeWithGC,
+	// eslint-disable-next-line import/no-deprecated
 	SummarizerNodeWithGC,
+	// eslint-disable-next-line import/no-deprecated
 	createRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc.js";
 
+// eslint-disable-next-line import/no-deprecated
 type SummarizerNodeWithPrivates = ISummarizerNodeWithGC & {
 	baseGCDetailsP: Promise<IGarbageCollectionDetailsBase>;
 	loadBaseGCDetails(): Promise<void>;
 	hasUsedStateChanged(): boolean;
 };
 
+// eslint-disable-next-line import/no-deprecated
 describe("SummarizerNodeWithGC Tests", () => {
 	const summarizerNodeId = "testNode";
 	const node1Id = "/gcNode1";
@@ -47,7 +56,9 @@ describe("SummarizerNodeWithGC Tests", () => {
 	const subNode1Id = "/gcNode1/subNode";
 	const subNode2Id = "/gcNode2/subNode";
 
+	// eslint-disable-next-line import/no-deprecated
 	let rootSummarizerNode: IRootSummarizerNodeWithGC;
+	// eslint-disable-next-line import/no-deprecated
 	let summarizerNode: SummarizerNodeWithPrivates;
 	// The base GC details of the root summarizer node. The child base GC details from this is passed on to the child
 	// summarizer node during its creation.
@@ -63,6 +74,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 	beforeEach(async () => {
 		mockLogger = new MockLogger();
+		// eslint-disable-next-line import/no-deprecated
 		rootSummarizerNode = createRootSummarizerNodeWithGC(
 			mockLogger,
 			(() => undefined) as unknown as SummarizeInternalFn,
@@ -72,14 +84,18 @@ describe("SummarizerNodeWithGC Tests", () => {
 			undefined,
 			getRootBaseGCDetails,
 		);
+		// eslint-disable-next-line import/no-deprecated
 		rootSummarizerNode.startSummary(0, createChildLogger(), 0);
 
+		// eslint-disable-next-line import/no-deprecated
 		summarizerNode = rootSummarizerNode.createChild(
 			summarizeInternal,
 			summarizerNodeId,
+			// eslint-disable-next-line import/no-deprecated
 			{ type: CreateSummarizerNodeSource.FromSummary },
 			undefined,
 			getChildInternalGCData,
+			// eslint-disable-next-line import/no-deprecated
 		) as SummarizerNodeWithPrivates;
 
 		// Initialize the values to be returned by the child node's getGCData.
@@ -127,6 +143,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			// fail.
 			let failed = false;
 			try {
+				// eslint-disable-next-line import/no-deprecated
 				await rootSummarizerNode.getGCData();
 			} catch {
 				failed = true;
@@ -290,12 +307,15 @@ describe("SummarizerNodeWithGC Tests", () => {
 		});
 
 		it("should not trigger re-summarization if base snapshot used routes is empty and GC is disabled", async () => {
+			// eslint-disable-next-line import/no-deprecated
 			const summarizerNodeGCDisabled = rootSummarizerNode.createChild(
 				summarizeInternal,
 				"nodeGCDisabled",
+				// eslint-disable-next-line import/no-deprecated
 				{ type: CreateSummarizerNodeSource.FromSummary },
 				{ gcDisabled: true },
 				getChildInternalGCData,
+				// eslint-disable-next-line import/no-deprecated
 			) as SummarizerNodeWithPrivates;
 
 			const baseGCDetails: IGarbageCollectionDetailsBase = {
@@ -321,8 +341,11 @@ describe("SummarizerNodeWithGC Tests", () => {
 			midId: "midId",
 			leafId: "leafId",
 		};
+		// eslint-disable-next-line import/no-deprecated
 		let rootNode: IRootSummarizerNodeWithGC;
+		// eslint-disable-next-line import/no-deprecated
 		let midNode: ISummarizerNodeWithGC | undefined;
+		// eslint-disable-next-line import/no-deprecated
 		let leafNode: ISummarizerNodeWithGC | undefined;
 
 		const logger = createChildLogger();
@@ -340,11 +363,13 @@ describe("SummarizerNodeWithGC Tests", () => {
 			refSeq,
 			...config
 		}: Partial<
+			// eslint-disable-next-line import/no-deprecated
 			ISummarizerNodeConfig & {
 				changeSeq: number;
 				refSeq: number;
 			}
 		> = {}) {
+			// eslint-disable-next-line import/no-deprecated
 			rootNode = createRootSummarizerNodeWithGC(
 				logger,
 				getSummarizeInternalFn(nodeIds.rootId),
@@ -354,6 +379,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 		}
 
+		// eslint-disable-next-line import/no-deprecated
 		function createMid(createParam: CreateChildSummarizerNodeParam) {
 			midNode = rootNode.createChild(
 				getSummarizeInternalFn(nodeIds.midId),
@@ -362,6 +388,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 			);
 		}
 
+		// eslint-disable-next-line import/no-deprecated
 		function createLeaf(createParam: CreateChildSummarizerNodeParam) {
 			leafNode = midNode?.createChild(
 				getSummarizeInternalFn(nodeIds.leafId),
@@ -394,7 +421,9 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 		it("summary validation should fail if GC not run on child node", async () => {
 			createRoot();
+			// eslint-disable-next-line import/no-deprecated
 			createMid({ type: CreateSummarizerNodeSource.Local });
+			// eslint-disable-next-line import/no-deprecated
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 			rootNode.startSummary(11, logger, 0);
 
@@ -427,7 +456,9 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 		it("summary validation should fail if GC not run on leaf node", async () => {
 			createRoot();
+			// eslint-disable-next-line import/no-deprecated
 			createMid({ type: CreateSummarizerNodeSource.Local });
+			// eslint-disable-next-line import/no-deprecated
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 			rootNode.startSummary(11, logger, 0);
 			// Call updateUsedRoutes (indicating GC ran) and summarize on the root and leaf nodes but not on the
@@ -461,6 +492,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 		it("Should add GC pending summary node created after parent node was summarized with non-empty used routes", async () => {
 			createRoot();
+			// eslint-disable-next-line import/no-deprecated
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			const latestSummaryRefSeqNum = summaryRefSeq;
 			rootNode.startSummary(summaryRefSeq++, logger, 0);
@@ -488,12 +520,14 @@ describe("SummarizerNodeWithGC Tests", () => {
 			rootNode.completeSummary("test-handle2");
 
 			// Create a new child node for which we will need to create a pending summary for.
+			// eslint-disable-next-line import/no-deprecated
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
 			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 			const leafNodePath = `${nodeIds.rootId}/${channelsTreeName}/${nodeIds.midId}/${channelsTreeName}/${nodeIds.leafId}`;
+			// eslint-disable-next-line import/no-deprecated
 			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC).summaryHandleId;
 			assert.strictEqual(
 				leafNodeLatestSummaryHandle,
@@ -504,6 +538,7 @@ describe("SummarizerNodeWithGC Tests", () => {
 
 		it("Should add GC pending summary node created after parent node was summarized with empty used routes", async () => {
 			createRoot();
+			// eslint-disable-next-line import/no-deprecated
 			createMid({ type: CreateSummarizerNodeSource.Local });
 			const latestSummaryRefSeqNum = summaryRefSeq;
 			rootNode.startSummary(summaryRefSeq++, logger, 0);
@@ -527,12 +562,14 @@ describe("SummarizerNodeWithGC Tests", () => {
 			rootNode.completeSummary("test-handle2");
 
 			// Create a new child node for which we will need to create a pending summary for.
+			// eslint-disable-next-line import/no-deprecated
 			createLeaf({ type: CreateSummarizerNodeSource.Local });
 
 			result = await rootNode.refreshLatestSummary("test-handle2", summaryRefSeq);
 			assert(result.isSummaryTracked, "should be tracked");
 			assert(result.isSummaryNewer === true, "should be newer");
 			const leafNodePath = `${nodeIds.rootId}/${channelsTreeName}/${nodeIds.midId}/${channelsTreeName}/${nodeIds.leafId}`;
+			// eslint-disable-next-line import/no-deprecated
 			const leafNodeLatestSummaryHandle = (leafNode as SummarizerNodeWithGC).summaryHandleId;
 			assert.strictEqual(
 				leafNodeLatestSummaryHandle,

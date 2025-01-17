@@ -9,15 +9,18 @@ import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 
 import { detectOutboundReferences, getSummaryForDatastores } from "../channelCollection.js";
+// eslint-disable-next-line import/no-deprecated
 import { IContainerRuntimeMetadata, nonDataStorePaths } from "../summary/index.js";
 
 describe("Runtime", () => {
 	describe("Container Runtime", () => {
 		describe("getSummaryForDatastores", () => {
+			// eslint-disable-next-line import/no-deprecated
 			const enabledMetadata: IContainerRuntimeMetadata = {
 				summaryFormatVersion: 1,
 				message: undefined,
 			};
+			// eslint-disable-next-line import/no-deprecated
 			const disabledMetadata: IContainerRuntimeMetadata = {
 				summaryFormatVersion: 1,
 				disableIsolatedChannels: true,

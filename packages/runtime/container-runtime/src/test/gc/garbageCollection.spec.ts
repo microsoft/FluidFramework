@@ -31,14 +31,18 @@ import {
 import { SinonFakeTimers, spy, useFakeTimers } from "sinon";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GCSummaryStateTracker,
 	GCTelemetryTracker,
+	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	GarbageCollector,
+	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	IGCStats,
 	IGCSummaryTrackingData,
 	IGarbageCollectionNodeData,
@@ -55,11 +59,13 @@ import {
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
 	oneDayMs,
+	// eslint-disable-next-line import/no-deprecated
 	stableGCVersion,
 } from "../../gc/index.js";
 import { ContainerMessageType, ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
 	dataStoreAttributesBlobName,
 	metadataBlobName,
@@ -76,6 +82,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly summaryStateTracker: WithPrivates<
 		GCSummaryStateTracker,
 		{
+			// eslint-disable-next-line import/no-deprecated
 			latestSummaryGCVersion: GCVersion;
 			latestSummaryData: IGCSummaryTrackingData | undefined;
 		}
@@ -92,6 +99,7 @@ type GcWithPrivates = IGarbageCollector & {
 	readonly unreferencedNodesState: Map<string, UnreferencedStateTracker>;
 	readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 	readonly triggerAutoRecovery: (nodePath: string) => void;
+	// eslint-disable-next-line import/no-deprecated
 	runGC: (fullGC: boolean) => Promise<IGCStats>;
 };
 
@@ -156,8 +164,10 @@ describe("Garbage Collection Tests", () => {
 		params: {
 			createParams?: Partial<IGarbageCollectorCreateParams>;
 			gcBlobsMap?: Map<string, unknown>;
+			// eslint-disable-next-line import/no-deprecated
 			gcMetadata?: IGCMetadata;
 			closeFn?: (error?: ICriticalContainerError) => void;
+			// eslint-disable-next-line import/no-deprecated
 			isSummarizerClient?: boolean;
 			getGCData?: (fullGC?: boolean) => Promise<IGarbageCollectionData>;
 		} = {},
@@ -167,14 +177,17 @@ describe("Garbage Collection Tests", () => {
 			gcBlobsMap = new Map(),
 			gcMetadata = {},
 			closeFn = () => {},
+			// eslint-disable-next-line import/no-deprecated
 			isSummarizerClient = true,
 			getGCData = async () => defaultGCData,
 		} = params;
 
 		const getNodeType = (nodePath: string) => {
 			if (nodePath.split("/").length !== 2) {
+				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.Other;
 			}
+			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.DataStore;
 		};
 
@@ -198,6 +211,7 @@ describe("Garbage Collection Tests", () => {
 			metadata = {
 				...metadata,
 				...gcMetadata,
+				// eslint-disable-next-line import/no-deprecated
 				gcFeature: gcMetadata.gcFeature ?? stableGCVersion,
 				summaryFormatVersion: 1,
 				message: undefined,
@@ -216,6 +230,7 @@ describe("Garbage Collection Tests", () => {
 				createContainerRuntimeVersion: pkgVersion,
 				createContainerTimestamp: Date.now(),
 			},
+			// eslint-disable-next-line import/no-deprecated
 			isSummarizerClient,
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
@@ -1203,6 +1218,7 @@ describe("Garbage Collection Tests", () => {
 		});
 
 		describe("Base GC state updates", () => {
+			// eslint-disable-next-line import/no-deprecated
 			function getSnapshotWithGCVersion(baseGCVersion: GCVersion) {
 				// Create a snapshot tree to be used as the GC snapshot tree.
 				const gcSnapshotTree = getDummySnapshotTree();
@@ -1236,7 +1252,9 @@ describe("Garbage Collection Tests", () => {
 				snapshotTree.trees[gcTreeKey] = gcSnapshotTree;
 
 				const metadataBlobId = "metadata";
+				// eslint-disable-next-line import/no-deprecated
 				const metadata: IContainerRuntimeMetadata = {
+					// eslint-disable-next-line import/no-deprecated
 					gcFeature: baseGCVersion,
 					summaryFormatVersion: 1,
 					message: undefined,
@@ -1253,15 +1271,19 @@ describe("Garbage Collection Tests", () => {
 			}
 
 			function createGCOverride(
+				// eslint-disable-next-line import/no-deprecated
 				baseGCVersion: GCVersion,
 				gcStateInBaseSnapshot: boolean = true,
 			) {
+				// eslint-disable-next-line import/no-deprecated
 				const gcMetadata: IGCMetadata = {
+					// eslint-disable-next-line import/no-deprecated
 					gcFeature: baseGCVersion,
 				};
 				let snapshotTree: ISnapshotTree;
 				let gcBlobsMap: Map<string, unknown> | undefined;
 				if (gcStateInBaseSnapshot) {
+					// eslint-disable-next-line import/no-deprecated
 					const snapshotWithGCState = getSnapshotWithGCVersion(baseGCVersion);
 					snapshotTree = snapshotWithGCState.snapshotTree;
 					gcBlobsMap = snapshotWithGCState.gcBlobsMap;
@@ -1276,6 +1298,7 @@ describe("Garbage Collection Tests", () => {
 			}
 
 			it("reads all GC data from base snapshot when GC version does not change", async () => {
+				// eslint-disable-next-line import/no-deprecated
 				const garbageCollector = createGCOverride(stableGCVersion);
 
 				// GC state, tombstone state and deleted nodes should all be read from base snapshot.
@@ -1307,6 +1330,7 @@ describe("Garbage Collection Tests", () => {
 
 			it("resets GC / tombstone state when GC version is newer that the one in base snapshot", async () => {
 				// Set the GC version in base snapshot to lower than the stable GC version (current GC version).
+				// eslint-disable-next-line import/no-deprecated
 				const garbageCollector = createGCOverride(stableGCVersion - 1);
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
@@ -1346,6 +1370,7 @@ describe("Garbage Collection Tests", () => {
 
 			it("resets GC / tombstone state when GC version is older that the one in base snapshot", async () => {
 				// Set the GC version in base snapshot to higher than the stable GC version (current GC version).
+				// eslint-disable-next-line import/no-deprecated
 				const garbageCollector = createGCOverride(stableGCVersion + 1);
 
 				// GC state and tombstone state should be discarded but deleted nodes should be read from base snapshot.
@@ -1389,6 +1414,7 @@ describe("Garbage Collection Tests", () => {
 
 			it("starts with empty GC state when there is no GC state in base snapshot", async () => {
 				const garbageCollector = createGCOverride(
+					// eslint-disable-next-line import/no-deprecated
 					stableGCVersion,
 					false /* gcStateInBaseSnapshot */,
 				);

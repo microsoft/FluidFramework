@@ -7,6 +7,7 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GarbageCollector,
 	IGarbageCollectionRuntime,
@@ -28,8 +29,10 @@ type GcWithPrivates = IGarbageCollector & {
 function createGarbageCollector(gcOptions: IGCRuntimeOptions): GcWithPrivates {
 	const getNodeType = (nodePath: string) => {
 		if (nodePath.split("/").length !== 2) {
+			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.Other;
 		}
+		// eslint-disable-next-line import/no-deprecated
 		return GCNodeType.DataStore;
 	};
 
@@ -61,6 +64,7 @@ function createGarbageCollector(gcOptions: IGCRuntimeOptions): GcWithPrivates {
 			createContainerRuntimeVersion: pkgVersion,
 			createContainerTimestamp: Date.now(),
 		},
+		// eslint-disable-next-line import/no-deprecated
 		isSummarizerClient: true,
 		readAndParseBlob: parseNothing,
 		getNodePackagePath: async (nodeId: string) => ["gcBenchmarkTestPkg"],

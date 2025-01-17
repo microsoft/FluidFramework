@@ -8,7 +8,9 @@ import { strict as assert } from "assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerEvents,
+	// eslint-disable-next-line import/no-deprecated
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -26,14 +28,20 @@ import { DefaultSummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IConnectedEvents,
 	IConnectedState,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerClientElection,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerClientElectionEvents,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
 	ISummaryManagerConfig,
 	ISummaryOpMessage,
+	// eslint-disable-next-line import/no-deprecated
 	RunningSummarizer,
 	SummarizeHeuristicData,
+	// eslint-disable-next-line import/no-deprecated
 	Summarizer,
 	SummaryCollection,
 	SummaryManager,
@@ -72,6 +80,7 @@ describe("Summary Manager", () => {
 	const mockDeltaManager = new MockDeltaManager();
 	const mockRuntime = new MockRuntime(mockDeltaManager);
 	let summaryManager: SummaryManager;
+	// eslint-disable-next-line import/no-deprecated
 	let runningSummarizer: RunningSummarizer;
 	// let runCount: number;
 	const summarizerClientId = "test";
@@ -127,6 +136,7 @@ describe("Summary Manager", () => {
 		}
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	class TestSummarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 		private notImplemented(): never {
 			throw Error("not implemented");
@@ -139,6 +149,7 @@ describe("Summary Manager", () => {
 		constructor() {
 			super();
 		}
+		// eslint-disable-next-line import/no-deprecated
 		public async setSummarizer(): Promise<Summarizer> {
 			this.notImplemented();
 		}
@@ -150,15 +161,18 @@ describe("Summary Manager", () => {
 		public stop(reason?: string): void {
 			this.stopDeferred.resolve(reason);
 		}
+		// eslint-disable-next-line import/no-deprecated
 		public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
 			this.onBehalfOf = onBehalfOf;
 			this.state = "running";
+			// eslint-disable-next-line import/no-deprecated
 			runningSummarizer = await RunningSummarizer.start(
 				mockLogger,
 				summaryCollection.createWatcher(summarizerClientId),
 				{
 					...DefaultSummaryConfiguration,
 					...{
+						// eslint-disable-next-line import/no-deprecated
 						initialSummarizerDelayMs: 0,
 					},
 				},
@@ -175,18 +189,23 @@ describe("Summary Manager", () => {
 				new SummarizeHeuristicData(0, { refSequenceNumber: 0, summaryTime: Date.now() }),
 				summaryCollection,
 				neverCancelledSummaryToken,
+				// eslint-disable-next-line import/no-deprecated
 				// stopSummarizerCallback
 				(reason) => {},
+				// eslint-disable-next-line import/no-deprecated
 				mockRuntime as unknown as ISummarizerRuntime,
 			);
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
+			// eslint-disable-next-line import/no-deprecated
 			await runningSummarizer.waitStop(true);
 			this.state = "stopped";
 			return "summarizerClientDisconnected";
 		}
 
+		// eslint-disable-next-line import/no-deprecated
 		public readonly summarizeOnDemand: ISummarizer["summarizeOnDemand"] = () =>
 			this.notImplemented();
+		// eslint-disable-next-line import/no-deprecated
 		public readonly enqueueSummarize: ISummarizer["enqueueSummarize"] = () =>
 			this.notImplemented();
 		public get IFluidLoadable(): IFluidLoadable {
@@ -197,8 +216,11 @@ describe("Summary Manager", () => {
 		}
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	class TestSummarizerClientElection
+		// eslint-disable-next-line import/no-deprecated
 		extends TypedEventEmitter<ISummarizerClientElectionEvents>
+		// eslint-disable-next-line import/no-deprecated
 		implements ISummarizerClientElection
 	{
 		public electedClientId: string | undefined;
@@ -208,24 +230,29 @@ describe("Summary Manager", () => {
 
 		public electClient(clientId: string | undefined) {
 			this.electedClientId = clientId;
+			// eslint-disable-next-line import/no-deprecated
 			this.emit("electedSummarizerChanged");
 		}
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	let clientElection: TestSummarizerClientElection;
 	let connectedState: TestConnectedState;
+	// eslint-disable-next-line import/no-deprecated
 	let summarizer: TestSummarizer;
 	let requestCalls = 0;
 	let requestDeferred = new Deferred<void>();
 
 	/**
-	 * Mocks the request Summarizer function by incrementing a call counter.
+	 *Mocks the request Summarizer function by incrementing a call counter.
 	 * The requestDeferred object must be resolved outside of this function
-	 * by calling completeSummarizerRequest() before this function will complete.
+	 *by calling completeSummarizerRequest() before this function will complete.
 	 * This is used to simulate delaying the request call for testing the
 	 * SummaryManager state machine timings.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	const requestSummarizer = async (): Promise<ISummarizer> => {
+		// eslint-disable-next-line import/no-deprecated
 		summarizer = new TestSummarizer();
 		requestCalls++;
 		requestDeferred = new Deferred();
@@ -234,8 +261,9 @@ describe("Summary Manager", () => {
 	};
 
 	/**
-	 * Completes the pending request Summarizer call.
+	 *Completes the pending request Summarizer call.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	const completeSummarizerRequest = () => requestDeferred.resolve();
 
 	function createSummaryManager({
@@ -246,12 +274,14 @@ describe("Summary Manager", () => {
 		if (connected) {
 			connectedState.connect();
 		}
+		// eslint-disable-next-line import/no-deprecated
 		clientElection = new TestSummarizerClientElection();
 		summaryManager = new SummaryManager(
 			clientElection,
 			connectedState,
 			summaryCollection,
 			mockLogger,
+			// eslint-disable-next-line import/no-deprecated
 			requestSummarizer,
 			throttler,
 			config,
@@ -294,6 +324,7 @@ describe("Summary Manager", () => {
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "should request summarizer");
 		assertRequests(1, "should have requested summarizer");
+		// eslint-disable-next-line import/no-deprecated
 		completeSummarizerRequest();
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -316,6 +347,7 @@ describe("Summary Manager", () => {
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "should request summarizer");
 		assertRequests(1, "should have requested summarizer");
+		// eslint-disable-next-line import/no-deprecated
 		completeSummarizerRequest();
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -338,6 +370,7 @@ describe("Summary Manager", () => {
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "should request summarizer");
 		assertRequests(1, "should have requested summarizer");
+		// eslint-disable-next-line import/no-deprecated
 		completeSummarizerRequest();
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -346,11 +379,13 @@ describe("Summary Manager", () => {
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "should restart itself");
 		assertRequests(2, "should have requested a new summarizer");
+		// eslint-disable-next-line import/no-deprecated
 		completeSummarizerRequest();
 		await flushPromises();
 		assertState(SummaryManagerState.Running, "should be running new summarizer");
 	});
 
+	// eslint-disable-next-line import/no-deprecated
 	describe("Start Summarizer Delay", () => {
 		it("Should wait for initial delay before first start", async () => {
 			mockDeltaManager.lastSequenceNumber = 999; // 999 < 1000, so do not bypass
@@ -368,6 +403,7 @@ describe("Summary Manager", () => {
 			clock.tick(1);
 			await flushPromises();
 			assertRequests(1, "should request summarizer after initial delay");
+			// eslint-disable-next-line import/no-deprecated
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -384,6 +420,7 @@ describe("Summary Manager", () => {
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "should enter starting state immediately");
 			assertRequests(1, "should request summarizer immediately, bypassing initial delay");
+			// eslint-disable-next-line import/no-deprecated
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -398,13 +435,13 @@ describe("Summary Manager", () => {
 			});
 
 			// Simulate disposing the summary manager in between (potential) initial delay and actually starting
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-unsafe-assignment
 			const summaryManager_delayBeforeCreatingSummarizer =
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 				(summaryManager as any).delayBeforeCreatingSummarizer.bind(summaryManager);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+			// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(summaryManager as any).delayBeforeCreatingSummarizer = async (...args) => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+				// eslint-disable-next-line import/no-deprecated, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 				const result = await summaryManager_delayBeforeCreatingSummarizer(args);
 				summaryManager.dispose();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -455,6 +492,7 @@ describe("Summary Manager", () => {
 			clientElection.electClient(thisClientId); // force trigger refresh
 			await flushPromises();
 			assertRequests(1, "should request summarizer, bypassing initial delay");
+			// eslint-disable-next-line import/no-deprecated
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -473,6 +511,7 @@ describe("Summary Manager", () => {
 			mockDeltaManager.emit("op", summaryOp);
 			await flushPromises();
 			assertRequests(1, "should request summarizer and run the last summary.");
+			// eslint-disable-next-line import/no-deprecated
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -490,8 +529,10 @@ describe("Summary Manager", () => {
 			mockDeltaManager.lastSequenceNumber = 10001;
 			connectedState.connect();
 			await flushPromises();
+			// eslint-disable-next-line import/no-deprecated
 			assertState(SummaryManagerState.Running, "Summarizer should be starting");
 			assertRequests(1, "Should begin without delay");
+			// eslint-disable-next-line import/no-deprecated
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "Should be running");
@@ -515,6 +556,7 @@ describe("Summary Manager", () => {
 			clock.tick(1);
 			await flushPromises();
 			assertRequests(1, "should request summarizer after throttler delay");
+			// eslint-disable-next-line import/no-deprecated
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -536,6 +578,7 @@ describe("Summary Manager", () => {
 			clock.tick(1);
 			await flushPromises();
 			assertRequests(1, "should request summarizer after both delays");
+			// eslint-disable-next-line import/no-deprecated
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
@@ -557,6 +600,7 @@ describe("Summary Manager", () => {
 			clock.tick(1);
 			await flushPromises();
 			assertRequests(1, "should request summarizer after both delays");
+			// eslint-disable-next-line import/no-deprecated
 			completeSummarizerRequest();
 			await flushPromises();
 			assertState(SummaryManagerState.Running, "summarizer should be running");
