@@ -875,7 +875,7 @@ describe("BlobManager", () => {
 				handleP = runtime.createBlob(blob, ac.signal);
 				await runtime.processAll();
 				ac.abort();
-			} catch (error: unknown) {
+			} catch {
 				assert.fail("abort after processing should not throw");
 			}
 			assert(handleP);

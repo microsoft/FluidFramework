@@ -79,7 +79,7 @@ export class OpDecompressor {
 				});
 				return true;
 			}
-		} catch (error) {
+		} catch {
 			return false;
 		}
 

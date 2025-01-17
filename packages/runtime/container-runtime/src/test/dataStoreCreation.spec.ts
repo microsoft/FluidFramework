@@ -139,7 +139,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await context.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize was successful.
@@ -163,7 +163,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await context.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
@@ -187,7 +187,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextA.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize was successful.
@@ -211,7 +211,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextB.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
@@ -235,7 +235,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextB.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize was successful.
@@ -256,7 +256,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextC.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize was successful.
@@ -280,7 +280,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextFake.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
@@ -304,7 +304,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextFake.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
@@ -328,7 +328,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextC.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
