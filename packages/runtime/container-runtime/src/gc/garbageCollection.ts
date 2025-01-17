@@ -948,11 +948,12 @@ export class GarbageCollector implements IGarbageCollector {
 					this.autoRecovery.requestFullGCOnNextRun();
 					break;
 				}
-				default:
+				default: {
 					throw DataProcessingError.create(
 						`Garbage collection message of unknown type ${gcMessageType}`,
 						"processMessage",
 					);
+				}
 			}
 		}
 	}

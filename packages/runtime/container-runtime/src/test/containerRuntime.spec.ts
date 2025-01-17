@@ -1900,12 +1900,15 @@ describe("Runtime", () => {
 					{
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
-								case "getLocalState":
+								case "getLocalState": {
 									return () => undefined;
-								case "pendingMessagesCount":
+								}
+								case "pendingMessagesCount": {
 									return 0;
-								default:
+								}
+								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
+								}
 							}
 						},
 					},
@@ -1942,14 +1945,17 @@ describe("Runtime", () => {
 					{
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
-								case "getLocalState":
+								case "getLocalState": {
 									return (): IPendingLocalState => ({
 										pendingStates,
 									});
-								case "pendingMessagesCount":
+								}
+								case "pendingMessagesCount": {
 									return 5;
-								default:
+								}
+								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
+								}
 							}
 						},
 					},
@@ -1987,14 +1993,17 @@ describe("Runtime", () => {
 					{
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
-								case "getLocalState":
+								case "getLocalState": {
 									return (): IPendingLocalState => ({
 										pendingStates,
 									});
-								case "pendingMessagesCount":
+								}
+								case "pendingMessagesCount": {
 									return 5;
-								default:
+								}
+								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
+								}
 							}
 						},
 					},
@@ -2058,14 +2067,17 @@ describe("Runtime", () => {
 					{
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
-								case "getLocalState":
+								case "getLocalState": {
 									return (): IPendingLocalState => ({
 										pendingStates,
 									});
-								case "pendingMessagesCount":
+								}
+								case "pendingMessagesCount": {
 									return 5;
-								default:
+								}
+								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
+								}
 							}
 						},
 					},

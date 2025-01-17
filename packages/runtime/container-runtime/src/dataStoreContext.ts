@@ -1281,7 +1281,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		switch (attachState) {
-			case AttachState.Attaching:
+			case AttachState.Attaching: {
 				assert(
 					this.attachState === AttachState.Detached,
 					0x14d /* "Should move from detached to attaching" */,
@@ -1295,7 +1295,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					this.emit("attaching");
 				}
 				break;
-			case AttachState.Attached:
+			}
+			case AttachState.Attached: {
 				// We can get called into here twice, as result of both container and data store being attached, if
 				// those processes overlapped, for example, in a flow like that one:
 				// 1. Container attach started
@@ -1318,8 +1319,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					}
 				}
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(attachState, "unreached");
+			}
 		}
 	}
 

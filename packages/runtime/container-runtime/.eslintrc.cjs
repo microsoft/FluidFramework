@@ -59,7 +59,7 @@ module.exports = {
 		"unicorn/prefer-number-properties": "error",
 		"unicorn/prefer-optional-catch-binding": "error",
 		"unicorn/prefer-spread": "error",
-		// "unicorn/switch-case-braces": "error",
+		"unicorn/switch-case-braces": "error",
 		// "unicorn/throw-new-error": "error",
 
 		// #endregion

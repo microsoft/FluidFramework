@@ -196,17 +196,21 @@ export class GCTelemetryTracker {
 
 		const timeout = (() => {
 			switch (nodeStateTracker?.state) {
-				case UnreferencedState.Inactive:
+				case UnreferencedState.Inactive: {
 					return this.configs.inactiveTimeoutMs;
-				case UnreferencedState.TombstoneReady:
+				}
+				case UnreferencedState.TombstoneReady: {
 					return this.configs.tombstoneTimeoutMs;
-				case UnreferencedState.SweepReady:
+				}
+				case UnreferencedState.SweepReady: {
 					return (
 						this.configs.tombstoneTimeoutMs &&
 						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
 					);
-				default:
+				}
+				default: {
 					return undefined;
+				}
 			}
 		})();
 		const { persistedGcFeatureMatrix, ...configs } = this.configs;

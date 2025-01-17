@@ -707,13 +707,16 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public reSubmit(type: string, content: unknown, localOpMetadata: unknown): void {
 		switch (type) {
 			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
+			case ContainerMessageType.Alias: {
 				this.parentContext.submitMessage(type, content, localOpMetadata);
 				return;
-			case ContainerMessageType.FluidDataStoreOp:
+			}
+			case ContainerMessageType.FluidDataStoreOp: {
 				return this.reSubmitChannelOp(type, content, localOpMetadata);
-			default:
+			}
+			default: {
 				assert(false, 0x907 /* unknown op type */);
+			}
 		}
 	}
 
@@ -757,14 +760,18 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public async applyStashedOp(content: unknown): Promise<unknown> {
 		const opContents = content as LocalContainerRuntimeMessage;
 		switch (opContents.type) {
-			case ContainerMessageType.Attach:
+			case ContainerMessageType.Attach: {
 				return this.applyStashedAttachOp(opContents.contents);
-			case ContainerMessageType.Alias:
+			}
+			case ContainerMessageType.Alias: {
 				return;
-			case ContainerMessageType.FluidDataStoreOp:
+			}
+			case ContainerMessageType.FluidDataStoreOp: {
 				return this.applyStashedChannelChannelOp(opContents.contents);
-			default:
+			}
+			default: {
 				assert(false, 0x908 /* unknon type of op */);
+			}
 		}
 	}
 
@@ -831,17 +838,21 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		switch (messageCollection.envelope.type) {
-			case ContainerMessageType.FluidDataStoreOp:
+			case ContainerMessageType.FluidDataStoreOp: {
 				this.processChannelMessages(messageCollection);
 				break;
-			case ContainerMessageType.Attach:
+			}
+			case ContainerMessageType.Attach: {
 				this.processAttachMessages(messageCollection);
 				break;
-			case ContainerMessageType.Alias:
+			}
+			case ContainerMessageType.Alias: {
 				this.processAliasMessages(messageCollection);
 				break;
-			default:
+			}
+			default: {
 				assert(false, 0x8e9 /* unreached */);
+			}
 		}
 	}
 

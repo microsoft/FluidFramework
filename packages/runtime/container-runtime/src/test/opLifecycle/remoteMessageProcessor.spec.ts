@@ -178,7 +178,7 @@ describe("RemoteMessageProcessor", () => {
 				ensureContentsDeserialized(inboundMessage);
 				const result = messageProcessor.process(inboundMessage, () => {});
 				switch (result?.type) {
-					case "fullBatch":
+					case "fullBatch": {
 						assert(
 							option.compressionAndChunking.chunking || outboundMessages.length === 1,
 							"Apart from chunking, expected fullBatch for single-message batch only (includes Grouped Batches)",
@@ -186,18 +186,21 @@ describe("RemoteMessageProcessor", () => {
 						batchStart = result.batchStart;
 						inboundMessages.push(...result.messages);
 						break;
-					case "batchStartingMessage":
+					}
+					case "batchStartingMessage": {
 						batchStart = result.batchStart;
 						inboundMessages.push(result.nextMessage);
 						break;
-					case "nextBatchMessage":
+					}
+					case "nextBatchMessage": {
 						assert(
 							batchStart !== undefined,
 							"batchStart should have been set from a prior message",
 						);
 						inboundMessages.push(result.nextMessage);
 						break;
-					default:
+					}
+					default: {
 						// These are leading chunks
 						assert(result === undefined, "unexpected result type");
 						assert(
@@ -205,6 +208,7 @@ describe("RemoteMessageProcessor", () => {
 							"undefined result only expected with chunking",
 						);
 						break;
+					}
 				}
 			}
 

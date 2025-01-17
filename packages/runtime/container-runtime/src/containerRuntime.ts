@@ -1034,15 +1034,18 @@ export class ContainerRuntime
 
 		let desiredIdCompressorMode: IdCompressorMode;
 		switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
-			case true:
+			case true: {
 				desiredIdCompressorMode = "on";
 				break;
-			case false:
+			}
+			case false: {
 				desiredIdCompressorMode = undefined;
 				break;
-			default:
+			}
+			default: {
 				desiredIdCompressorMode = enableRuntimeIdCompressor;
 				break;
+			}
 		}
 
 		// Enabling the IdCompressor is a one-way operation and we only want to
@@ -2633,9 +2636,10 @@ export class ContainerRuntime
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
+			case ContainerMessageType.Alias: {
 				return this.channelCollection.applyStashedOp(opContents);
-			case ContainerMessageType.IdAllocation:
+			}
+			case ContainerMessageType.IdAllocation: {
 				// IDs allocation ops in stashed state are ignored because the tip state of the compressor
 				// is serialized into the pending state. This is done because generation of new IDs during
 				// stashed op application (or, later, resubmit) must generate new IDs and if the compressor
@@ -2650,15 +2654,20 @@ export class ContainerRuntime
 					0x8f1 /* ID compressor should be in use */,
 				);
 				return;
-			case ContainerMessageType.DocumentSchemaChange:
+			}
+			case ContainerMessageType.DocumentSchemaChange: {
 				return;
-			case ContainerMessageType.BlobAttach:
+			}
+			case ContainerMessageType.BlobAttach: {
 				return;
-			case ContainerMessageType.Rejoin:
+			}
+			case ContainerMessageType.Rejoin: {
 				throw new Error("rejoin not expected here");
-			case ContainerMessageType.GC:
+			}
+			case ContainerMessageType.GC: {
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
+			}
 			default: {
 				const error = getUnknownMessageTypeError(
 					opContents.type,
@@ -3142,38 +3151,45 @@ export class ContainerRuntime
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
+			case ContainerMessageType.Alias: {
 				// Remove the metadata from the message before sending it to the channel collection. The metadata
 				// is added by the container runtime and is not part of the message that the channel collection and
 				// layers below it expect.
 				this.channelCollection.processMessages({ envelope: message, messagesContent, local });
 				break;
-			case ContainerMessageType.BlobAttach:
+			}
+			case ContainerMessageType.BlobAttach: {
 				this.blobManager.processBlobAttachMessage(message, local);
 				break;
-			case ContainerMessageType.IdAllocation:
+			}
+			case ContainerMessageType.IdAllocation: {
 				this.processIdCompressorMessages(contents as IdCreationRange[], savedOp);
 				break;
-			case ContainerMessageType.GC:
+			}
+			case ContainerMessageType.GC: {
 				this.garbageCollector.processMessages(
 					contents as GarbageCollectionMessage[],
 					message.timestamp,
 					local,
 				);
 				break;
-			case ContainerMessageType.ChunkedOp:
+			}
+			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
 				assert(false, 0x93d /* should not even get here */);
-			case ContainerMessageType.Rejoin:
+			}
+			case ContainerMessageType.Rejoin: {
 				break;
-			case ContainerMessageType.DocumentSchemaChange:
+			}
+			case ContainerMessageType.DocumentSchemaChange: {
 				this.documentsSchemaController.processDocumentSchemaMessages(
 					contents as IDocumentSchemaChangeMessage[],
 					local,
 					message.sequenceNumber,
 				);
 				break;
+			}
 			default: {
 				const error = getUnknownMessageTypeError(
 					message.type,
@@ -3543,8 +3559,9 @@ export class ContainerRuntime
 			case ContainerMessageType.GC: {
 				return false;
 			}
-			default:
+			default: {
 				break;
+			}
 		}
 		return true;
 	}
@@ -3879,13 +3896,16 @@ export class ContainerRuntime
 		}
 
 		switch (this.getNodeType(nodePath)) {
-			case GCNodeType.Blob:
+			case GCNodeType.Blob: {
 				return [blobManagerBasePath];
+			}
 			case GCNodeType.DataStore:
-			case GCNodeType.SubDataStore:
+			case GCNodeType.SubDataStore: {
 				return this.channelCollection.getDataStorePackagePath(nodePath);
-			default:
+			}
+			default: {
 				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
+			}
 		}
 	}
 
@@ -4580,27 +4600,30 @@ export class ContainerRuntime
 		};
 
 		switch (this.flushMode) {
-			case FlushMode.TurnBased:
+			case FlushMode.TurnBased: {
 				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
 				// batch at the end of the turn
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				Promise.resolve().then(flush);
 				break;
+			}
 
 			// FlushModeExperimental is experimental and not exposed directly in the runtime APIs
-			case FlushModeExperimental.Async as unknown as FlushMode:
+			case FlushModeExperimental.Async as unknown as FlushMode: {
 				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
 				// batch when all micro-tasks are complete.
 				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
 				setTimeout(flush, 0);
 				break;
+			}
 
-			default:
+			default: {
 				assert(
 					this._orderSequentiallyCalls > 0,
 					0x587 /* Unreachable unless running under orderSequentially */,
 				);
 				break;
+			}
 		}
 	}
 
@@ -4676,11 +4699,12 @@ export class ContainerRuntime
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
+			case ContainerMessageType.Alias: {
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
 				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
 				break;
+			}
 			case ContainerMessageType.IdAllocation: {
 				// Allocation ops are never resubmitted/rebased. This is because they require special handling to
 				// avoid being submitted out of order. For example, if the pending state manager contained
@@ -4691,20 +4715,24 @@ export class ContainerRuntime
 				// all pending IDs. The resubmitted allocation ops are then ignored here.
 				break;
 			}
-			case ContainerMessageType.BlobAttach:
+			case ContainerMessageType.BlobAttach: {
 				this.blobManager.reSubmit(opMetadata);
 				break;
-			case ContainerMessageType.Rejoin:
+			}
+			case ContainerMessageType.Rejoin: {
 				this.submit(message);
 				break;
-			case ContainerMessageType.GC:
+			}
+			case ContainerMessageType.GC: {
 				this.submit(message);
 				break;
-			case ContainerMessageType.DocumentSchemaChange:
+			}
+			case ContainerMessageType.DocumentSchemaChange: {
 				// There is no need to resend this message. Document schema controller will properly resend it again (if needed)
 				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
 				// send any ops, as some other client already changed schema.
 				break;
+			}
 			default: {
 				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
 				this.closeFn(error);
@@ -4717,13 +4745,15 @@ export class ContainerRuntime
 		// Need to parse from string for back-compat
 		const { type, contents } = this.parseLocalOpContent(content);
 		switch (type) {
-			case ContainerMessageType.FluidDataStoreOp:
+			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
-			default:
+			}
+			default: {
 				throw new Error(`Can't rollback ${type}`);
+			}
 		}
 	}
 
