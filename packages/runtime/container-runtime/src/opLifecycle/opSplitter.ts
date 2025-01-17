@@ -98,9 +98,7 @@ export class OpSplitter {
 	 * Splits the first op of a compressed batch in chunks, sends the chunks separately and
 	 * returns a new batch composed of the last chunk and the rest of the ops in the original batch.
 	 *
-	 * A compressed batch is formed by one large op at the first position, followed by a series of placeholder ops
-	 * which are used in order to reserve the sequence numbers for when the first op gets unrolled into the original
-	 * uncompressed ops at ingestion in the runtime.
+	 * A compressed batch is formed by one large op at the first position
 	 *
 	 * If the first op is too large, it can be chunked (split into smaller op) which can be sent individually over the wire
 	 * and accumulate at ingestion, until the last op in the chunk is processed, when the original op is unrolled.
