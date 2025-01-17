@@ -84,7 +84,7 @@ export function toDeltaManagerInternal(deltaManager: IDeltaManagerErased): IDelt
 // @alpha
 export function toFluidHandleErased<T>(handle: IFluidHandleInternal<T>): IFluidHandleErased<T>;
 
-// @alpha
+// @alpha @deprecated
 export function toFluidHandleInternal<T>(handle: IFluidHandle<T>): IFluidHandleInternal<T>;
 
 // (No @packageDocumentation comment for this package)

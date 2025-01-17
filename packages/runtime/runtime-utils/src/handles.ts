@@ -78,6 +78,8 @@ export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean {
 
 /**
  * Downcast an IFluidHandle to an IFluidHandleInternal.
+ * @deprecated - Deprecated only for testing purposes.
+ *
  * @legacy
  * @alpha
  */

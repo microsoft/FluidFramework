@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-deprecated */
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IFluidHandleContext,
