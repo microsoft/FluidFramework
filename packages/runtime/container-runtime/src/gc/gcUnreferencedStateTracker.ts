@@ -126,7 +126,9 @@ export class UnreferencedStateTracker {
 		this.updateTracking(currentReferenceTimestampMs);
 	}
 
-	/* Updates the unreferenced state based on the provided timestamp. */
+	/**
+	 * Updates the unreferenced state based on the provided timestamp.
+	 */
 	public updateTracking(currentReferenceTimestampMs: number): void {
 		const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
 
