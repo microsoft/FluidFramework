@@ -20,7 +20,8 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 /**
  * Interface for summary op messages with typed contents.
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 	type: MessageType.Summarize;
@@ -30,7 +31,8 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 /**
  * Interface for summary ack messages with typed contents.
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryAck;
@@ -40,7 +42,8 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 /**
  * Interface for summary nack messages with typed contents.
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryNack;
@@ -51,7 +54,8 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
  * A single summary which can be tracked as it goes through its life cycle.
  * The life cycle is: Local to Broadcast to Acked/Nacked.
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISummary {
 	readonly clientId: string;
@@ -63,7 +67,8 @@ export interface ISummary {
 /**
  * A single summary which has already been acked by the server.
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IAckedSummary {
 	readonly summaryOp: ISummaryOpMessage;
@@ -151,7 +156,8 @@ class Summary implements ISummary {
 /**
  * Watches summaries created by a specific client.
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IClientSummaryWatcher extends IDisposable {
 	watchSummary(clientSequenceNumber: number): ISummary;
@@ -221,7 +227,8 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 }
 /**
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type OpActionEventName =
 	| MessageType.Summarize
@@ -231,13 +238,15 @@ export type OpActionEventName =
 
 /**
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 /**
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISummaryCollectionOpEvents extends IEvent {
 	(event: OpActionEventName, listener: OpActionEventListener);
@@ -248,7 +257,8 @@ export interface ISummaryCollectionOpEvents extends IEvent {
  * are broadcast, acked and nacked.
  * It provides functionality for watching specific summaries.
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
 	// key: clientId

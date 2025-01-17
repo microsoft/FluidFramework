@@ -11,7 +11,8 @@ import { IConnectableRuntime, ISummaryCancellationToken } from "./summarizerType
 /**
  * Similar to AbortController, but using promise instead of events
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
 	stop(reason: SummarizerStopReason): void;

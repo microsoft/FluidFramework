@@ -16,7 +16,8 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 /**
  * Information from a snapshot needed to load BlobManager
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IBlobManagerLoadInfo {
 	ids?: string[];

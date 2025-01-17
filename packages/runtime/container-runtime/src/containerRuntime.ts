@@ -389,7 +389,8 @@ export type ISummaryConfiguration =
 
 /**
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
@@ -557,19 +558,22 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 /**
  * Error responses when requesting a deleted object will have this header set to true
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  *
  * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
  * to this was experimental and is no longer supported.
@@ -606,7 +610,8 @@ export enum CompressionAlgorithms {
 
 /**
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
 	minimumBatchSizeInBytes: Infinity,

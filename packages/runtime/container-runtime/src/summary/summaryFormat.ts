@@ -28,7 +28,8 @@ import { IDocumentSchema } from "./documentSchema.js";
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type OmitAttributesVersions<T> = Omit<
 	T,
@@ -38,7 +39,8 @@ export type OmitAttributesVersions<T> = Omit<
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes0 {
 	readonly snapshotFormatVersion?: undefined;
@@ -55,7 +57,8 @@ export interface IFluidDataStoreAttributes0 {
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes1
 	extends OmitAttributesVersions<IFluidDataStoreAttributes0> {
@@ -66,7 +69,8 @@ export interface IFluidDataStoreAttributes1
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IFluidDataStoreAttributes2
 	extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
@@ -91,7 +95,8 @@ export interface IFluidDataStoreAttributes2
  * @deprecated - This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  *
  */
 export type ReadFluidDataStoreAttributes =
@@ -129,7 +134,8 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 
 /**
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
@@ -159,7 +165,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 
 /**
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ICreateContainerMetadata {
 	/**
@@ -175,7 +182,8 @@ export interface ICreateContainerMetadata {
 /**
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
  * @legacy
- * @alpha
+ * @internal
+ * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
