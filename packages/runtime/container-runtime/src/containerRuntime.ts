@@ -92,6 +92,7 @@ import {
 	gcTreeKey,
 	IInboundSignalMessage,
 	type IRuntimeMessagesContent,
+	type ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -243,6 +244,7 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
+	type IDocumentSchemaFeatures,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
 
@@ -730,7 +732,7 @@ export const makeLegacySendBatchFn =
 		) => number,
 		deltaManager: Pick<IDeltaManager<unknown, unknown>, "flush">,
 	) =>
-	(batch: IBatch) => {
+	(batch: IBatch): number => {
 		// Default to negative one to match Container.submitBatch behavior
 		let clientSequenceNumber: number = -1;
 		for (const message of batch.messages) {
@@ -811,7 +813,7 @@ function lastMessageFromMetadata(metadata: IContainerRuntimeMetadata | undefined
  * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
  */
 export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
-	return (codePath: string) => {
+	return (codePath: string): void => {
 		logger.sendTelemetryEvent({
 			eventName: "LegacyMessageFormat",
 			details: { codePath, type },
@@ -1207,7 +1209,7 @@ export class ContainerRuntime
 		return this._storage;
 	}
 
-	public get containerRuntime() {
+	public get containerRuntime(): ContainerRuntime {
 		return this;
 	}
 
@@ -1259,9 +1261,13 @@ export class ContainerRuntime
 	 * has to deal with compressed ops as other clients might send them.
 	 * And in reverse, session schema can have compression Off, but feature gates / runtime options want it On.
 	 * In such case it will be off in session schema, however this client will propose change to schema, and once / if
-	 * this op rountrips, compression will be On. Client can't send compressed ops until it's change in schema.
+	 * this op roundtrips, compression will be On. Client can't send compressed ops until it's change in schema.
 	 */
-	public get sessionSchema() {
+	public get sessionSchema(): {
+		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
+			? true
+			: IDocumentSchemaFeatures[P];
+	} {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
@@ -1277,13 +1283,13 @@ export class ContainerRuntime
 	// In such case we have to process all ops, including those marked with savedOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
-	public get idCompressorMode() {
+	public get idCompressorMode(): IdCompressorMode {
 		return this.sessionSchema.idCompressorMode;
 	}
 	/**
-	 * See IContainerRuntimeBase.idCompressor() for details.
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
 	 */
-	public get idCompressor() {
+	public get idCompressor(): (IIdCompressor & IIdCompressorCore) | undefined {
 		// Expose ID Compressor only if it's On from the start.
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
 		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
@@ -1301,9 +1307,9 @@ export class ContainerRuntime
 	protected _loadIdCompressor: Promise<void> | undefined;
 
 	/**
-	 * See IContainerRuntimeBase.generateDocumentUniqueId() for details.
+	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
 	 */
-	public generateDocumentUniqueId() {
+	public generateDocumentUniqueId(): string | number {
 		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
 	}
 
@@ -1395,7 +1401,7 @@ export class ContainerRuntime
 	}
 
 	private _disposed = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
@@ -2144,7 +2150,7 @@ export class ContainerRuntime
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
-	public onSchemaChange(schema: IDocumentSchemaCurrent) {
+	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
 		this.logger.sendTelemetryEvent({
 			eventName: "SchemaChangeAccept",
 			sessionRuntimeSchema: JSON.stringify(schema),
@@ -2171,7 +2177,7 @@ export class ContainerRuntime
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-		) =>
+		): ISummarizerNodeWithGC =>
 			this.summarizerNode.createChild(
 				summarizeInternal,
 				id,
@@ -2181,18 +2187,21 @@ export class ContainerRuntime
 			);
 	}
 
-	public deleteChildSummarizerNode(id: string) {
+	public deleteChildSummarizerNode(id: string): void {
 		return this.summarizerNode.deleteChild(id);
 	}
 
-	/* IFluidParentContext APIs that should not be called on Root */
-	public makeLocallyVisible() {
+	// #region `IFluidParentContext` APIs that should not be called on Root
+
+	public makeLocallyVisible(): void {
 		assert(false, 0x8eb /* should not be called */);
 	}
 
-	public setChannelDirty(address: string) {
+	public setChannelDirty(address: string): void {
 		assert(false, 0x909 /* should not be called */);
 	}
+
+	// #endregion
 
 	/**
 	 * Initializes the state from the base snapshot this container runtime loaded from.
@@ -2491,7 +2500,7 @@ export class ContainerRuntime
 		fullTree: boolean,
 		trackState: boolean,
 		telemetryContext?: ITelemetryContext,
-	) {
+	): void {
 		this.addMetadataToSummary(summaryTree);
 
 		if (this._idCompressor) {
@@ -2684,7 +2693,7 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -2795,7 +2804,7 @@ export class ContainerRuntime
 		raiseConnectedEvent(this.mc.logger, this, connected, clientId);
 	}
 
-	public async notifyOpReplay(message: ISequencedDocumentMessage) {
+	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
 		await this.pendingStateManager.applyStashedOpsAt(message.sequenceNumber);
 	}
 
@@ -2804,7 +2813,7 @@ export class ContainerRuntime
 	 * @param messageCopy - Sequenced message for a distributed document.
 	 * @param local - true if the message was originally generated by the client receiving it.
 	 */
-	public process({ ...messageCopy }: ISequencedDocumentMessage, local: boolean) {
+	public process({ ...messageCopy }: ISequencedDocumentMessage, local: boolean): void {
 		// spread operator above ensure we make a shallow copy of message, as the processing flow will modify it.
 		// There might be multiple container instances receiving the same message.
 
@@ -3296,7 +3305,7 @@ export class ContainerRuntime
 		}
 	}
 
-	public processSignal(message: ISignalMessage, local: boolean) {
+	public processSignal(message: ISignalMessage, local: boolean): void {
 		const envelope = message.content as ISignalEnvelope;
 		const transformed: IInboundSignalMessage = {
 			clientId: message.clientId,
@@ -3595,7 +3604,7 @@ export class ContainerRuntime
 	 * Support for this option at container runtime is planned to be deprecated in the future.
 	 *
 	 */
-	public submitSignal(type: string, content: unknown, targetClientId?: string) {
+	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed();
 		const envelope = this.createNewSignalEnvelope(undefined /* address */, type, content);
 		return this.submitEnvelopedSignal(envelope, targetClientId);
@@ -3790,7 +3799,7 @@ export class ContainerRuntime
 	 * @param usedRoutes - The routes that are used in all nodes in this Container.
 	 * @see IGarbageCollectionRuntime.updateUsedRoutes
 	 */
-	public updateUsedRoutes(usedRoutes: readonly string[]) {
+	public updateUsedRoutes(usedRoutes: readonly string[]): void {
 		// Update our summarizer node's used routes. Updating used routes in summarizer node before
 		// summarizing is required and asserted by the the summarizer node. We are the root and are
 		// always referenced, so the used routes is only self-route (empty string).
@@ -3821,7 +3830,7 @@ export class ContainerRuntime
 	 *
 	 * @param tombstonedRoutes - Data store and attachment blob routes that are tombstones in this Container.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void {
 		const { dataStoreRoutes } = this.getDataStoreAndBlobManagerRoutes(tombstonedRoutes);
 		this.channelCollection.updateTombstonedRoutes(dataStoreRoutes);
 	}
@@ -3918,7 +3927,11 @@ export class ContainerRuntime
 	 * @param toPath - The absolute path of the outbound node that is referenced.
 	 * @param messageTimestampMs - The timestamp of the message that added the reference.
 	 */
-	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+	public addedGCOutboundRoute(
+		fromPath: string,
+		toPath: string,
+		messageTimestampMs?: number,
+	): void {
 		// This is always called when processing an op so messageTimestampMs should exist. Due to back-compat
 		// across the data store runtime / container runtime boundary, this may be undefined and if so, get
 		// the timestamp from the last processed message which should exist.
@@ -4410,7 +4423,7 @@ export class ContainerRuntime
 			| ContainerMessageType.Alias
 			| ContainerMessageType.Attach,
 		// TODO: better typing
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
@@ -4699,7 +4712,7 @@ export class ContainerRuntime
 	/**
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
-	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions) {
+	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);

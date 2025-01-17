@@ -107,7 +107,7 @@ export class RemoteMessageProcessor {
 		return this.opSplitter.chunks;
 	}
 
-	public clearPartialMessagesFor(clientId: string) {
+	public clearPartialMessagesFor(clientId: string): void {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 

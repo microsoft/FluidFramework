@@ -136,7 +136,7 @@ const summarizeErrors = {
 export type SummarizeErrorCode = keyof typeof summarizeErrors;
 
 // Helper functions to report failures and return.
-export const getFailMessage = (errorCode: SummarizeErrorCode) =>
+export const getFailMessage = (errorCode: SummarizeErrorCode): string =>
 	`${errorCode}: ${summarizeErrors[errorCode]}`;
 
 export class SummarizeResultBuilder {
@@ -161,7 +161,7 @@ export class SummarizeResultBuilder {
 		error: IRetriableFailureError,
 		submitFailureResult?: SubmitSummaryFailureData,
 		nackSummaryResult?: INackSummaryResult,
-	) {
+	): void {
 		assert(
 			!this.receivedSummaryAckOrNack.isCompleted,
 			0x25e /* "no reason to call fail if all promises have been completed" */,
@@ -576,7 +576,7 @@ export class SummaryGenerator {
 		}
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.summarizeTimer.clear();
 	}
 }
