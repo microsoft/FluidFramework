@@ -1,6 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "./api-extractor-base.esm.json",
+	"extends": "./api-extractor-report-base.esm.json",
 	// Use dummy value, forcing all uses to specify the appropriate (broadest of public.d.ts, beta.d.ts,
 	// or alpha.d.ts) rollup file.
 	"mainEntryPointFilePath": "set-mainEntryPointFilePath-directly-in-leaf-config-file",
@@ -8,20 +8,5 @@
 		// NOTE: "alpha" is not included to reduce noise since there are few users.
 		// Packages wanting alpha API reports can override this to opt in.
 		"reportVariants": ["public", "beta"]
-	},
-	"docModel": {
-		"enabled": false
-	},
-	"messages": {
-		"extractorMessageReporting": {
-			// Since we generate API reports for different release levels, it is possible (and valid) for `@link` tags
-			// to reference an API item that won't be visible at that level.
-			// For example, a public API may note that a newer feature is available in a beta release and link to that item.
-			// We want that to be possible, so we suppress this error for report generation.
-			// It will be enabled for `model` generation, which is used for generating API documentation for the entire suite.
-			"ae-unresolved-link": {
-				"logLevel": "none"
-			}
-		}
 	}
 }
