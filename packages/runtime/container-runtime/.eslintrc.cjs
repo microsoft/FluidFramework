@@ -54,6 +54,7 @@ module.exports = {
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
+		"unicorn/no-null": "error",
 		"unicorn/no-zero-fractions": "error",
 		"unicorn/prefer-node-protocol": "error",
 		"unicorn/prefer-number-properties": "error",
@@ -61,6 +62,18 @@ module.exports = {
 		"unicorn/prefer-spread": "error",
 		"unicorn/switch-case-braces": "error",
 		"unicorn/throw-new-error": "error",
+
+		// unicorn/consistent-destructuring
+		// unicorn/prefer-string-slice
+		// unicorn/consistent-function-scoping
+		// unicorn/no-negated-condition
+		// unicorn/no-lonely-if
+		// unicorn/no-new-array
+		// unicorn/prefer-includes
+		// unicorn/error-message
+		// unicorn/explicit-length-check
+
+		// unicorn/no-array-reduce
 
 		// #endregion
 	},
