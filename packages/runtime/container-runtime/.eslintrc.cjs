@@ -15,6 +15,10 @@ module.exports = {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
+		// False positives on non-array `push` methods.
+		// TODO: remove this override once this rule has been disabled in the root config.
+		"unicorn/no-array-push-push": "off",
+
 		// #region TODO:AB#3027: remove overrides and upgrade config to `recommended`
 
 		"@typescript-eslint/explicit-function-return-type": [
@@ -50,7 +54,6 @@ module.exports = {
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
-		// "unicorn/no-array-push-push": "error",
 		// "unicorn/no-zero-fractions": "error",
 		// "unicorn/prefer-node-protocol": "error",
 		// "unicorn/prefer-number-properties": "error",
