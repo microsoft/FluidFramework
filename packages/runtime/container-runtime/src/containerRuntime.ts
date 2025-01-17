@@ -4423,7 +4423,7 @@ export class ContainerRuntime
 			| ContainerMessageType.Alias
 			| ContainerMessageType.Attach,
 		// TODO: better typing
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		contents: any,
 		localOpMetadata: unknown = undefined,
 	): void {
