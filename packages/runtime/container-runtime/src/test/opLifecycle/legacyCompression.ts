@@ -6,9 +6,8 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { compress } from "lz4js";
 
-import { CompressionAlgorithms } from "../index.js";
-
-import type { BatchMessage, IBatch } from "./definitions.js";
+import { CompressionAlgorithms } from "../../index.js";
+import type { BatchMessage, IBatch } from "../../opLifecycle/index.js";
 
 /**
  * The code in this file recreates the legacy flow for batches that have multiple messages.

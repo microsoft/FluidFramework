@@ -19,7 +19,6 @@ import {
 	BatchManager,
 	type BatchMessage,
 	type BatchStartInfo,
-	compressMultipleMessageBatch,
 	ensureContentsDeserialized,
 	type IBatch,
 	type InboundMessageResult,
@@ -29,6 +28,8 @@ import {
 	OpSplitter,
 	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
+
+import { compressMultipleMessageBatch } from "./legacyCompression.js";
 
 describe("RemoteMessageProcessor", () => {
 	function getMessageProcessor(): RemoteMessageProcessor {
