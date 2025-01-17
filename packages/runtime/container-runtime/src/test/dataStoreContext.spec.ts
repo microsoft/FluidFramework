@@ -168,14 +168,14 @@ describe("Data Store Context Tests", () => {
 				try {
 					await localDataStoreContext.realize();
 					assert.fail("realize should have thrown an error due to empty pkg array");
-				} catch (e) {
-					assert(isFluidError(e), "Expected a valid Fluid Error to be thrown");
+				} catch (error) {
+					assert(isFluidError(error), "Expected a valid Fluid Error to be thrown");
 					assert.equal(
-						e.errorType,
+						error.errorType,
 						ContainerErrorTypes.dataProcessingError,
 						"Error should be a DataProcessingError",
 					);
-					const props = e.getTelemetryProperties();
+					const props = error.getTelemetryProperties();
 					assert.strictEqual(
 						(props.fullPackageName as Tagged<TelemetryBaseEventPropertyType>)?.value,
 						fullPackageName.join("/"),

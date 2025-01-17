@@ -358,12 +358,12 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 							runCoordinator.stop(stopReason);
 							this.close();
 						})
-						.catch((reason) => {
-							builder.fail("Failed to start summarizer", reason);
+						.catch((error) => {
+							builder.fail("Failed to start summarizer", error);
 						});
 				})
-				.catch((reason) => {
-					builder.fail("Failed to create cancellation token", reason);
+				.catch((error) => {
+					builder.fail("Failed to create cancellation token", error);
 				});
 
 			return builder.build();

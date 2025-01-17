@@ -3070,8 +3070,8 @@ export class ContainerRuntime
 			for (const { message } of messagesWithMetadata) {
 				this.emit("op", message, true /* runtimeMessage */);
 			}
-		} catch (e) {
-			error = e;
+		} catch (error_) {
+			error = error_;
 			throw error;
 		} finally {
 			if (locationInBatch.batchEnd) {
@@ -3382,8 +3382,8 @@ export class ContainerRuntime
 					checkpoint.rollback((message: BatchMessage) =>
 						this.rollback(message.contents, message.localOpMetadata),
 					);
-				} catch (err) {
-					const error2 = wrapError(err, (message) => {
+				} catch (error_) {
+					const error2 = wrapError(error_, (message) => {
 						return DataProcessingError.create(
 							`RollbackError: ${message}`,
 							"checkpointRollback",

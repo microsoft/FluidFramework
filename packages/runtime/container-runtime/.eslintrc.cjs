@@ -46,6 +46,19 @@ module.exports = {
 		"jsdoc/multiline-blocks": ["error", { noSingleLineBlocks: true }],
 		"jsdoc/require-description": ["error", { checkConstructors: false }],
 
+		"unicorn/catch-error-name": "error",
+		// "unicorn/new-for-builtins": "error",
+		// "unicorn/no-array-callback-reference": "error",
+		// "unicorn/no-array-for-each": "error",
+		// "unicorn/no-array-push-push": "error",
+		// "unicorn/no-zero-fractions": "error",
+		// "unicorn/prefer-node-protocol": "error",
+		// "unicorn/prefer-number-properties": "error",
+		// "unicorn/prefer-optional-catch-binding": "error",
+		// "unicorn/prefer-spread": "error",
+		// "unicorn/switch-case-braces": "error",
+		// "unicorn/throw-new-error": "error",
+
 		// #endregion
 	},
 	overrides: [

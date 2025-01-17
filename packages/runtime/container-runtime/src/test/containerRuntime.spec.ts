@@ -570,7 +570,7 @@ describe("Runtime", () => {
 									// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 									(containerRuntime as any).flush();
 								});
-							} catch (e) {
+							} catch (error_) {
 								// ignore
 							}
 						});
