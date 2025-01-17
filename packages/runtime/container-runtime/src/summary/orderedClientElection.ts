@@ -31,50 +31,72 @@ export type Immutable<T> = T extends ImmutablePrimitives
 				? ReadonlySet<Immutable<V>>
 				: { readonly [K in keyof T]: Immutable<T[K]> };
 
-/** Minimum information for a client tracked for election consideration. */
+/**
+ * Minimum information for a client tracked for election consideration.
+ */
 export interface ITrackedClient {
 	readonly clientId: string;
 	readonly sequenceNumber: number;
 	readonly client: Immutable<IClient>;
 }
 
-/** Common contract for link nodes within an OrderedClientCollection. */
+/**
+ * Common contract for link nodes within an OrderedClientCollection.
+ */
 export interface ILinkNode {
 	readonly sequenceNumber: number;
 	youngerClient: ILinkedClient | undefined;
 }
 
-/** Placeholder root node within an OrderedClientCollection; does not represent a client. */
+/**
+ * Placeholder root node within an OrderedClientCollection; does not represent a client.
+ */
 export interface IRootLinkNode extends ILinkNode {
 	readonly sequenceNumber: -1;
 	readonly olderClient: undefined;
 }
 
-/** Additional information required to keep track of the client within the doubly-linked list. */
+/**
+ * Additional information required to keep track of the client within the doubly-linked list.
+ */
 export interface ILinkedClient extends ILinkNode, ITrackedClient {
 	olderClient: LinkNode;
 }
 
-/** Any link node within OrderedClientCollection including the placeholder root node. */
+/**
+ * Any link node within OrderedClientCollection including the placeholder root node.
+ */
 export type LinkNode = IRootLinkNode | ILinkedClient;
 
-/** Events raised by an OrderedClientCollection. */
+/**
+ * Events raised by an OrderedClientCollection.
+ */
 export interface IOrderedClientCollectionEvents extends IEvent {
-	/** Event fires when client is being added. */
+	/**
+	 * Event fires when client is being added.
+	 */
 	(
 		event: "addClient" | "removeClient",
 		listener: (client: ILinkedClient, sequenceNumber: number) => void,
 	);
 }
 
-/** Contract for a sorted collection of all clients in the quorum. */
+/**
+ * Contract for a sorted collection of all clients in the quorum.
+ */
 export interface IOrderedClientCollection
 	extends IEventProvider<IOrderedClientCollectionEvents> {
-	/** Count of clients in the collection. */
+	/**
+	 * Count of clients in the collection.
+	 */
 	readonly count: number;
-	/** Pointer to the oldest client in the collection. */
+	/**
+	 * Pointer to the oldest client in the collection.
+	 */
 	readonly oldestClient: ILinkedClient | undefined;
-	/** Returns a sorted array of all the clients in the collection. */
+	/**
+	 * Returns a sorted array of all the clients in the collection.
+	 */
 	getAllClients(): ILinkedClient[];
 }
 
@@ -89,22 +111,28 @@ export class OrderedClientCollection
 	extends TypedEventEmitter<IOrderedClientCollectionEvents>
 	implements IOrderedClientCollection
 {
-	/** Collection of ALL clients currently in the quorum, with client ids as keys. */
+	/**
+	 * Collection of ALL clients currently in the quorum, with client ids as keys.
+	 */
 	private readonly clientMap = new Map<string, ILinkedClient>();
-	/** Placeholder head node of linked list, for simplified null checking. */
+	/**
+	 * Placeholder head node of linked list, for simplified null checking.
+	 */
 	private readonly rootNode: IRootLinkNode = {
 		sequenceNumber: -1,
 		olderClient: undefined,
 		youngerClient: undefined,
 	};
-	/** Pointer to end of linked list, for optimized client adds. */
+	/**
+	 * Pointer to end of linked list, for optimized client adds.
+	 */
 	private _youngestClient: LinkNode = this.rootNode;
 	private readonly logger: ITelemetryLoggerExt;
 
-	public get count() {
+	public get count(): number {
 		return this.clientMap.size;
 	}
-	public get oldestClient() {
+	public get oldestClient(): ILinkedClient | undefined {
 		return this.rootNode.youngerClient;
 	}
 
@@ -201,7 +229,9 @@ export class OrderedClientCollection
 		return removeClient;
 	}
 
-	/** Returns an array of all clients being tracked in order from oldest to newest. */
+	/**
+	 * Returns an array of all clients being tracked in order from oldest to newest.
+	 */
 	public getAllClients(): ILinkedClient[] {
 		const result: ILinkedClient[] = [];
 		let currClient: LinkNode = this.rootNode;
@@ -213,17 +243,27 @@ export class OrderedClientCollection
 	}
 }
 
-/** Events raised by an OrderedClientElection. */
+/**
+ * Events raised by an OrderedClientElection.
+ */
 export interface IOrderedClientElectionEvents extends IEvent {
-	/** Event fires when the currently elected client changes. */
+	/**
+	 * Event fires when the currently elected client changes.
+	 */
 	(
 		event: "election",
 		listener: (
-			/** Newly elected client. */
+			/**
+			 * Newly elected client.
+			 */
 			client: ITrackedClient | undefined,
-			/** Sequence number where election took place. */
+			/**
+			 * Sequence number where election took place.
+			 */
 			sequenceNumber: number,
-			/** Previously elected client. */
+			/**
+			 * Previously elected client.
+			 */
 			prevClient: ITrackedClient | undefined,
 		) => void,
 	);
@@ -235,7 +275,9 @@ export interface IOrderedClientElectionEvents extends IEvent {
  * @alpha
  */
 export interface ISerializedElection {
-	/** Sequence number at the time of the latest election. */
+	/**
+	 * Sequence number at the time of the latest election.
+	 */
 	readonly electionSequenceNumber: number;
 
 	/**
@@ -248,13 +290,19 @@ export interface ISerializedElection {
 	 */
 	readonly electedClientId: string | undefined;
 
-	/** Most recently elected parent client id. This is always an interactive client. */
+	/**
+	 * Most recently elected parent client id. This is always an interactive client.
+	 */
 	readonly electedParentId: string | undefined;
 }
 
-/** Contract for maintaining a deterministic client election based on eligibility. */
+/**
+ * Contract for maintaining a deterministic client election based on eligibility.
+ */
 export interface IOrderedClientElection extends IEventProvider<IOrderedClientElectionEvents> {
-	/** Count of eligible clients in the collection. */
+	/**
+	 * Count of eligible clients in the collection.
+	 */
 	readonly eligibleCount: number;
 
 	/**
@@ -266,17 +314,29 @@ export interface IOrderedClientElection extends IEventProvider<IOrderedClientEle
 	 * 2. the non-interactive summarizer client itself.
 	 */
 	readonly electedClient: ITrackedClient | undefined;
-	/** Currently elected parent client. This is always an interactive client. */
+	/**
+	 * Currently elected parent client. This is always an interactive client.
+	 */
 	readonly electedParent: ITrackedClient | undefined;
-	/** Sequence number of most recent election. */
+	/**
+	 * Sequence number of most recent election.
+	 */
 	readonly electionSequenceNumber: number;
-	/** Resets the currently elected client back to the oldest eligible client. */
+	/**
+	 * Resets the currently elected client back to the oldest eligible client.
+	 */
 	resetElectedClient(sequenceNumber: number): void;
-	/** Peeks at what the next elected client would be if incrementElectedClient were called. */
+	/**
+	 * Peeks at what the next elected client would be if incrementElectedClient were called.
+	 */
 	peekNextElectedClient(): ITrackedClient | undefined;
-	/** Returns a sorted array of all the eligible clients in the collection. */
+	/**
+	 * Returns a sorted array of all the eligible clients in the collection.
+	 */
 	getAllEligibleClients(): ITrackedClient[];
-	/** Serialize election data */
+	/**
+	 * Serialize election data
+	 */
 	serialize(): ISerializedElection;
 }
 
@@ -295,10 +355,10 @@ export class OrderedClientElection
 	private _electedParent: ILinkedClient | undefined;
 	private _electionSequenceNumber: number;
 
-	public get eligibleCount() {
+	public get eligibleCount(): number {
 		return this._eligibleCount;
 	}
-	public get electionSequenceNumber() {
+	public get electionSequenceNumber(): number {
 		return this._electionSequenceNumber;
 	}
 
@@ -338,17 +398,19 @@ export class OrderedClientElection
 	 *
 	 * vii. SummaryManager running on B spawns a summarizer client, B'. electedParent === B, electedClient === B'
 	 */
-	public get electedClient() {
+	public get electedClient(): ILinkedClient | undefined {
 		return this._electedClient;
 	}
-	public get electedParent() {
+	public get electedParent(): ILinkedClient | undefined {
 		return this._electedParent;
 	}
 
 	constructor(
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly orderedClientCollection: IOrderedClientCollection,
-		/** Serialized state from summary or current sequence number at time of load if new. */
+		/**
+		 * Serialized state from summary or current sequence number at time of load if new.
+		 */
 		initialState: ISerializedElection | number,
 		private readonly isEligibleFn: (c: ITrackedClient) => boolean,
 		private readonly recordPerformanceEvents: boolean = false,

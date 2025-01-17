@@ -85,7 +85,7 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "aefg");
 		client.insertTextLocal(1, "bcd");
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
-		const segment: ISegmentPrivate = segmentGroup.segments[0];
+		const segment = segmentGroup.segments[0];
 		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs
@@ -307,7 +307,7 @@ describe("client.rollback", () => {
 		);
 		client.annotateRangeLocal(2, 3, { foo: "bar" });
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
-		const segment: ISegmentPrivate = segmentGroup.segments[0];
+		const segment = segmentGroup.segments[0];
 		client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs
@@ -459,7 +459,7 @@ describe("client.rollback", () => {
 		);
 		client.removeRangeLocal(1, 4);
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
-		const segment: ISegmentPrivate = segmentGroup.segments[0];
+		const segment = segmentGroup.segments[0];
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs

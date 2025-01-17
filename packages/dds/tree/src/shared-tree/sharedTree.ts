@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -184,30 +184,6 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
 	assert(versions !== undefined, 0x90e /* Unknown format version */);
 	return versions;
-}
-
-/**
- * Build and return a forest of the requested type.
- */
-export function buildConfiguredForest(
-	type: ForestType,
-	schema: TreeStoredSchemaSubscription,
-	idCompressor: IIdCompressor,
-): IEditableForest {
-	switch (type) {
-		case ForestType.Optimized:
-			return buildChunkedForest(
-				makeTreeChunker(schema, defaultSchemaPolicy),
-				undefined,
-				idCompressor,
-			);
-		case ForestType.Reference:
-			return buildForest();
-		case ForestType.Expensive:
-			return buildForest(undefined, true);
-		default:
-			unreachableCase(type);
-	}
 }
 
 /**
@@ -460,7 +436,7 @@ export class SharedTree
 	): void {
 		assert(
 			!this.checkout.transaction.isInProgress(),
-			"Cannot submit a commit while a transaction is in progress",
+			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
 		if (isResubmit) {
 			return super.submitCommit(commit, schemaAndPolicy, isResubmit);
@@ -596,26 +572,70 @@ export interface SharedTreeFormatOptions {
 
 /**
  * Used to distinguish between different forest types.
+ * @remarks
+ * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
+ * @sealed @alpha
+ */
+export interface ForestType extends ErasedType<"ForestType"> {}
+
+/**
+ * Reference implementation of forest.
+ * @remarks
+ * A simple implementation with minimal complexity and moderate debuggability, validation and performance.
+ * @privateRemarks
+ * The "ObjectForest" forest type.
  * @alpha
  */
-export enum ForestType {
-	/**
-	 * The "ObjectForest" forest type.
-	 */
-	Reference = 0,
-	/**
-	 * The "ChunkedForest" forest type.
-	 */
-	Optimized = 1,
-	/**
-	 * The "ObjectForest" forest type with expensive asserts for debugging.
-	 */
-	Expensive = 2,
+export const ForestTypeReference = toForestType(() => buildForest());
+
+/**
+ * Optimized implementation of forest.
+ * @remarks
+ * A complex optimized forest implementation, which has minimal validation and debuggability to optimize for performance.
+ * Uses an internal representation optimized for size designed to scale to larger datasets with reduced overhead.
+ * @privateRemarks
+ * The "ChunkedForest" forest type.
+ * @alpha
+ */
+export const ForestTypeOptimized = toForestType(
+	(schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
+		buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), undefined, idCompressor),
+);
+
+/**
+ * Slow implementation of forest intended only for debugging.
+ * @remarks
+ * Includes validation with scales poorly.
+ * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
+ * @privateRemarks
+ * The "ObjectForest" forest type with expensive asserts for debugging.
+ * @alpha
+ */
+export const ForestTypeExpensiveDebug = toForestType(() => buildForest(undefined, true));
+
+type ForestFactory = (
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+) => IEditableForest;
+
+function toForestType(factory: ForestFactory): ForestType {
+	return factory as unknown as ForestType;
+}
+
+/**
+ * Build and return a forest of the requested type.
+ */
+export function buildConfiguredForest(
+	factory: ForestType,
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+): IEditableForest {
+	return (factory as unknown as ForestFactory)(schema, idCompressor);
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
-	forest: ForestType.Reference,
+	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,

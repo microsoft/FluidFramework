@@ -80,14 +80,14 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
-	public attachGraph() {
+	public attachGraph(): void {
 		if (!this.attached) {
 			this.attached = true;
 			this.onAttachGraph?.();
 		}
 	}
 
-	public bind(handle: IFluidHandleInternal) {
+	public bind(handle: IFluidHandleInternal): void {
 		throw new Error("Cannot bind to blob handle");
 	}
 }
@@ -96,7 +96,7 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "baseLogger" | "clientDetails"
+	"attachState" | "connected" | "baseLogger" | "clientDetails" | "disposed"
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
@@ -370,8 +370,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
-			async () => {
-				return this.getStorage().readBlob(storageId);
+			async (event) => {
+				return this.getStorage()
+					.readBlob(storageId)
+					.catch((error) => {
+						if (this.runtime.disposed) {
+							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+							event.cancel({ category: "generic" });
+						}
+
+						throw error;
+					});
 			},
 			{ end: true, cancel: "error" },
 		);
@@ -490,6 +499,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			(error) => {
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "UploadBlobReject",
+					// TODO: better typing
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					error,
 					localId,
 				});
@@ -587,7 +598,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * submitted to runtime while disconnected.
 	 * @param metadata - op metadata containing storage and/or local IDs
 	 */
-	public reSubmit(metadata: Record<string, unknown> | undefined) {
+	public reSubmit(metadata: Record<string, unknown> | undefined): void {
 		assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
 		const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
 		assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
@@ -604,7 +615,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return this.sendBlobAttachOp(localId, blobId);
 	}
 
-	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean) {
+	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean): void {
 		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
 		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
 
@@ -774,7 +785,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		throw error;
 	}
 
-	public setRedirectTable(table: Map<string, string>) {
+	public setRedirectTable(table: Map<string, string>): void {
 		assert(
 			this.runtime.attachState === AttachState.Detached,
 			0x252 /* "redirect table can only be set in detached container" */,

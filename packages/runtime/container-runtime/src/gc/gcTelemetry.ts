@@ -26,7 +26,9 @@ import { UnreferencedStateTracker } from "./gcUnreferencedStateTracker.js";
 
 type NodeUsageType = "Changed" | "Loaded" | "Revived" | "Realized";
 
-/** Properties that are common to IUnreferencedEventProps and INodeUsageProps */
+/**
+ * Properties that are common to IUnreferencedEventProps and INodeUsageProps
+ */
 interface ICommonProps {
 	usageType: NodeUsageType;
 	completedGCRuns: number;
@@ -36,12 +38,18 @@ interface ICommonProps {
 	additionalProps?: ITelemetryPropertiesExt;
 }
 
-/** The event that is logged when unreferenced node is used after a certain time. */
+/**
+ * The event that is logged when unreferenced node is used after a certain time.
+ */
 interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps {
-	/** The id that GC uses to track the node. May or may not match id */
+	/**
+	 * The id that GC uses to track the node. May or may not match id
+	 */
 	trackedId: string;
 	state: UnreferencedState;
-	/** The full path (in GC Path format) to the node in question */
+	/**
+	 * The full path (in GC Path format) to the node in question
+	 */
 	id: Tagged<string>;
 	fromId?: Tagged<string>;
 	type: GCNodeType;
@@ -54,21 +62,37 @@ interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps
 	timeout?: number;
 }
 
-/** Properties passed to nodeUsed function when a node is used. */
+/**
+ * Properties passed to nodeUsed function when a node is used.
+ */
 interface INodeUsageProps extends ICommonProps {
-	/** The full path (in GC Path format) to the node in question */
+	/**
+	 * The full path (in GC Path format) to the node in question
+	 */
 	id: string;
-	/** Latest timestamp received from the server, as a baseline for computing GC state/age */
+	/**
+	 * Latest timestamp received from the server, as a baseline for computing GC state/age
+	 */
 	currentReferenceTimestampMs: number;
-	/** The package path of the node. This may not be available if the node hasn't been loaded yet */
+	/**
+	 * The package path of the node. This may not be available if the node hasn't been loaded yet
+	 */
 	packagePath: readonly string[] | undefined;
-	/** In case of Revived - what node added the reference? */
+	/**
+	 * In case of Revived - what node added the reference?
+	 */
 	fromId?: string;
-	/** In case of Revived - was it revived due to autorecovery? */
+	/**
+	 * In case of Revived - was it revived due to autorecovery?
+	 */
 	autorecovery?: true;
-	/** URL (including query string) if this usage came from a request */
+	/**
+	 * URL (including query string) if this usage came from a request
+	 */
 	requestUrl?: string;
-	/** Original request headers if this usage came from a request or handle.get */
+	/**
+	 * Original request headers if this usage came from a request or handle.get
+	 */
 	requestHeaders?: string;
 }
 
@@ -160,7 +184,7 @@ export class GCTelemetryTracker {
 			isTombstoned,
 			...otherNodeUsageProps
 		}: INodeUsageProps,
-	) {
+	): void {
 		// Note: For SubDataStore Load usage, trackedId will be the DataStore's id, not the full path in question.
 		// This is necessary because the SubDataStore path may be unrecognized by GC (if suited for a custom request handler)
 		const nodeStateTracker = this.getNodeStateTracker(trackedId);
@@ -312,7 +336,7 @@ export class GCTelemetryTracker {
 		previousGCData: IGarbageCollectionData,
 		explicitReferences: Map<string, string[]>,
 		logger: ITelemetryLoggerExt,
-	) {
+	): void {
 		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
 			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
 			const explicitRoutes = explicitReferences.get(nodeId) ?? [];
@@ -356,7 +380,7 @@ export class GCTelemetryTracker {
 	 * Log events that are pending in pendingEventsQueue. This is called after GC runs in the summarizer client
 	 * so that the state of an unreferenced node is updated.
 	 */
-	public async logPendingEvents(logger: ITelemetryLoggerExt) {
+	public async logPendingEvents(logger: ITelemetryLoggerExt): Promise<void> {
 		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
 		// summary time they are then logged.
 		// Events generated:

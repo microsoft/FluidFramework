@@ -278,6 +278,7 @@ function checkRuntimeCompatibility(
 	}
 
 	if (unknownProperty !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const value = documentSchema[unknownProperty];
 		throw DataProcessingError.create(
 			msg,
@@ -286,6 +287,7 @@ function checkRuntimeCompatibility(
 			{
 				codeVersion: currentDocumentVersionSchema,
 				property: unknownProperty,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				value,
 				schemaName,
 			},
@@ -580,7 +582,11 @@ export class DocumentsSchemaController {
 		}
 	}
 
-	private validateSeqNumber(schemaSeqNumber: number, lastKnowSeqNumber, message: string) {
+	private validateSeqNumber(
+		schemaSeqNumber: number,
+		lastKnowSeqNumber: number,
+		message: string,
+	) {
 		if (!Number.isInteger(schemaSeqNumber) || !(schemaSeqNumber <= lastKnowSeqNumber)) {
 			throw DataProcessingError.create(
 				"DocSchema: Incorrect sequence number",
@@ -608,7 +614,7 @@ export class DocumentsSchemaController {
 		content: IDocumentSchemaChangeMessage,
 		local: boolean,
 		sequenceNumber: number,
-	) {
+	): boolean {
 		return this.processDocumentSchemaMessages([content], local, sequenceNumber);
 	}
 
@@ -624,7 +630,7 @@ export class DocumentsSchemaController {
 		contents: IDocumentSchemaChangeMessage[],
 		local: boolean,
 		sequenceNumber: number,
-	) {
+	): boolean {
 		for (const content of contents) {
 			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
 			this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
@@ -672,7 +678,7 @@ export class DocumentsSchemaController {
 		return true;
 	}
 
-	public onDisconnect() {
+	public onDisconnect(): void {
 		this.sendOp = true;
 	}
 }

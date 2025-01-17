@@ -43,6 +43,7 @@ import {
 
 function typeFromBatchedOp(op: IBatchMessage) {
 	assert(op.contents !== undefined);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return JSON.parse(op.contents).type as string;
 }
 
@@ -54,14 +55,14 @@ describe("Outbox", () => {
 		batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[];
 		batchesCompressed: IBatch[];
 		batchesSplit: IBatch[];
-		individualOpsSubmitted: any[];
+		individualOpsSubmitted: unknown[];
 		pendingOpContents: Partial<IPendingMessage & { batchStartCsn: number }>[];
 		opsSubmitted: number;
 		opsResubmitted: number;
 		isReentrant: boolean;
 	}
 	// state will be set to defaults in beforeEach
-	const state: State = {} as any;
+	const state: State = {} as unknown as State;
 
 	const mockLogger = new MockLogger();
 	const getMockDeltaManager = (): Partial<
@@ -80,7 +81,7 @@ describe("Outbox", () => {
 			>,
 			clientDetails: { capabilities: { interactive: true } },
 			updateDirtyContainerState: (_dirty: boolean) => {},
-			submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => {
+			submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
 				state.individualOpsSubmitted.push({ type, contents, batch, appData });
 				state.opsSubmitted++;
 				return state.opsSubmitted;
@@ -99,7 +100,7 @@ describe("Outbox", () => {
 		>,
 		clientDetails: { capabilities: { interactive: true } },
 		updateDirtyContainerState: (_dirty: boolean) => {},
-		submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => {
+		submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
 			state.individualOpsSubmitted.push({ type, contents, batch, appData });
 			state.opsSubmitted++;
 			return state.opsSubmitted;
@@ -232,7 +233,6 @@ describe("Outbox", () => {
 				params.opGroupingConfig ?? {
 					groupedBatchingEnabled: false,
 					opCountThreshold: Infinity,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			),
@@ -326,7 +326,6 @@ describe("Outbox", () => {
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
 				opCountThreshold: 2,
-				reentrantBatchGroupingEnabled: true,
 			},
 		});
 		currentSeqNumbers.referenceSequenceNumber = 0;
@@ -358,7 +357,6 @@ describe("Outbox", () => {
 			opGroupingConfig: {
 				groupedBatchingEnabled: true,
 				opCountThreshold: 3,
-				reentrantBatchGroupingEnabled: true,
 			},
 		});
 		// Flush 1 - resubmit multi-message batch including ID Allocation
@@ -1009,7 +1007,6 @@ describe("Outbox", () => {
 				opGroupingConfig: {
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 			});
 
@@ -1032,7 +1029,6 @@ describe("Outbox", () => {
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 			});
 
@@ -1057,7 +1053,6 @@ describe("Outbox", () => {
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 			});
 
@@ -1080,7 +1075,6 @@ describe("Outbox", () => {
 				opGroupingConfig: {
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 			});
 
@@ -1103,7 +1097,6 @@ describe("Outbox", () => {
 				opGroupingConfig: {
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 			});
 

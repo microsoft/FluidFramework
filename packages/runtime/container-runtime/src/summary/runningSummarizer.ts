@@ -23,6 +23,7 @@ import {
 	createChildLogger,
 	createChildMonitoringContext,
 	isFluidError,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ISummaryConfiguration } from "../containerRuntime.js";
@@ -163,7 +164,7 @@ export class RunningSummarizer
 		return summarizer;
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 	private stopping = false;
@@ -189,7 +190,9 @@ export class RunningSummarizer
 
 	private readonly runtimeListener;
 
-	/** The maximum number of summary attempts to do when submit summary fails. */
+	/**
+	 * The maximum number of summary attempts to do when submit summary fails.
+	 */
 	private readonly maxAttemptsForSubmitFailures: number;
 
 	/**
@@ -417,15 +420,19 @@ export class RunningSummarizer
 	 * but only if they're logging about that same summary.
 	 * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
 	 */
-	public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
+	public tryGetCorrelatedLogger = (
+		summaryOpRefSeq: number,
+	): ITelemetryLoggerExt | undefined =>
 		this.heuristicData.lastAttempt.refSequenceNumber === summaryOpRefSeq
 			? this.mc.logger
 			: undefined;
 
-	/** We only want a single heuristic runner micro-task (will provide better optimized grouping of ops) */
+	/**
+	 * We only want a single heuristic runner micro-task (will provide better optimized grouping of ops)
+	 */
 	private heuristicRunnerMicroTaskExists = false;
 
-	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean) {
+	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean): void {
 		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
 		if (runtimeMessage) {
@@ -680,7 +687,9 @@ export class RunningSummarizer
 		return resultsBuilder.build();
 	}
 
-	/** Heuristics summarize attempt. */
+	/**
+	 * Heuristics summarize attempt.
+	 */
 	private trySummarize(reason: SummarizeReason): void {
 		if (this.summarizingLock !== undefined) {
 			// lockedSummaryAction() will retry heuristic-based summary at the end of current attempt
@@ -896,7 +905,9 @@ export class RunningSummarizer
 		return resultsBuilder.build();
 	}
 
-	/** {@inheritdoc (ISummarizer:interface).summarizeOnDemand} */
+	/**
+	 * {@inheritdoc (ISummarizer:interface).summarizeOnDemand}
+	 */
 	public summarizeOnDemand(
 		options: IOnDemandSummarizeOptions,
 		resultsBuilder: SummarizeResultBuilder = new SummarizeResultBuilder(),
@@ -932,7 +943,9 @@ export class RunningSummarizer
 		return resultsBuilder.build();
 	}
 
-	/** {@inheritdoc (ISummarizer:interface).enqueueSummarize} */
+	/**
+	 * {@inheritdoc (ISummarizer:interface).enqueueSummarize}
+	 */
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		const { reason, afterSequenceNumber = 0, override = false, ...summarizeOptions } = options;
 		let overridden = false;

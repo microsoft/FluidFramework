@@ -77,6 +77,8 @@ export function serializeOpContents(contents: OutboundContainerRuntimeMessage): 
  * @returns the result of the action provided
  */
 export function getLongStack<T>(action: () => T, length: number = 50): T {
+	// TODO: better typing here
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 	const errorObj = Error as any;
 	if (
 		/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
@@ -90,11 +92,14 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 		return action();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 	const originalStackTraceLimit = errorObj.stackTraceLimit;
 	try {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		errorObj.stackTraceLimit = length;
 		return action();
 	} finally {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }
@@ -214,13 +219,13 @@ export class Outbox {
 		}
 	}
 
-	public submit(message: BatchMessage) {
+	public submit(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
-	public submitBlobAttach(message: BatchMessage) {
+	public submitBlobAttach(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
@@ -238,7 +243,7 @@ export class Outbox {
 		}
 	}
 
-	public submitIdAllocation(message: BatchMessage) {
+	public submitIdAllocation(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
@@ -267,7 +272,7 @@ export class Outbox {
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
 	 */
-	public flush(resubmittingBatchId?: BatchId) {
+	public flush(resubmittingBatchId?: BatchId): void {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
@@ -505,9 +510,13 @@ export class Outbox {
 	}
 
 	/**
-	 * @returns A checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
+	 * Gets a checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
 	 */
-	public getBatchCheckpoints() {
+	public getBatchCheckpoints(): {
+		mainBatch: IBatchCheckpoint;
+		idAllocationBatch: IBatchCheckpoint;
+		blobAttachBatch: IBatchCheckpoint;
+	} {
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();

@@ -30,10 +30,10 @@ describe("BatchManager", () => {
 		({
 			contents: generateStringOfSize(smallMessageSize),
 			type: ContainerMessageType.FluidDataStoreOp,
-		}) as any as BatchMessage;
+		}) as unknown as BatchMessage;
 
 	it("BatchManager: 'infinity' hard limit allows everything", () => {
-		const message = { contents: generateStringOfSize(1024) } as any as BatchMessage;
+		const message = { contents: generateStringOfSize(1024) } as unknown as BatchMessage;
 		const batchManager = new BatchManager({ ...defaultOptions, hardLimit: Infinity });
 
 		for (let i = 1; i <= 10; i++) {
@@ -159,7 +159,7 @@ describe("BatchManager", () => {
 				{
 					contents: undefined,
 					type: ContainerMessageType.FluidDataStoreOp,
-				} as any as BatchMessage,
+				} as unknown as BatchMessage,
 				/* reentrant */ false,
 			); // empty op
 		}

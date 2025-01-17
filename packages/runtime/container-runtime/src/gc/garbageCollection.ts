@@ -141,16 +141,22 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly summaryStateTracker: GCSummaryStateTracker;
 	private readonly telemetryTracker: GCTelemetryTracker;
 
-	/** For a given node path, returns the node's package path. */
+	/**
+	 * For a given node path, returns the node's package path.
+	 */
 	private readonly getNodePackagePath: (
 		nodePath: string,
 	) => Promise<readonly string[] | undefined>;
-	/** Returns the timestamp of the last summary generated for this container. */
+	/**
+	 * Returns the timestamp of the last summary generated for this container.
+	 */
 	private readonly getLastSummaryTimestampMs: () => number | undefined;
 
 	private readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 
-	/** Returns the count of data stores whose GC state updated since the last summary. */
+	/**
+	 * Returns the count of data stores whose GC state updated since the last summary.
+	 */
 	public get updatedDSCountSinceLastSummary(): number {
 		return this.summaryStateTracker.updatedDSCountSinceLastSummary;
 	}
@@ -338,7 +344,9 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 	}
 
-	/** API for ensuring the correct auto-recovery mitigations */
+	/**
+	 * API for ensuring the correct auto-recovery mitigations
+	 */
 	private readonly autoRecovery = (() => {
 		// This uses a hidden state machine for forcing fullGC as part of autorecovery,
 		// to regenerate the GC data for each node.
@@ -487,11 +495,17 @@ export class GarbageCollector implements IGarbageCollector {
 	 */
 	public async collectGarbage(
 		options: {
-			/** Logger to use for logging GC events */
+			/**
+			 * Logger to use for logging GC events
+			 */
 			logger?: ITelemetryLoggerExt;
-			/** True to run GC sweep phase after the mark phase */
+			/**
+			 * True to run GC sweep phase after the mark phase
+			 */
 			runSweep?: boolean;
-			/** True to generate full GC data */
+			/**
+			 * True to generate full GC data
+			 */
 			fullGC?: boolean;
 		},
 		telemetryContext?: ITelemetryContext,
@@ -534,11 +548,15 @@ export class GarbageCollector implements IGarbageCollector {
 			logger,
 			{ eventName: "GarbageCollection" },
 			async (event) => {
-				/** Pre-GC steps */
+				// #region Pre-GC steps
+
 				// Ensure that state has been initialized from the base snapshot data.
 				await this.initializeGCStateFromBaseSnapshotP;
 
-				/** GC step */
+				// #endregion
+
+				// #region GC step
+
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({
 					...gcStats,
@@ -549,7 +567,10 @@ export class GarbageCollector implements IGarbageCollector {
 					},
 				});
 
-				/** Post-GC steps */
+				// #endregion
+
+				// #region Post-GC steps
+
 				// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
 				// updates its state so that we don't send false positives based on intermediate state. For example, we may get
 				// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
@@ -559,6 +580,8 @@ export class GarbageCollector implements IGarbageCollector {
 				this.autoRecovery.onCompletedGCRun();
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
+
+				// #endregion
 
 				return gcStats;
 			},
@@ -903,7 +926,7 @@ export class GarbageCollector implements IGarbageCollector {
 		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,
-	) {
+	): void {
 		for (const gcMessage of messageContents) {
 			const gcMessageType = gcMessage.type;
 			switch (gcMessageType) {
@@ -991,7 +1014,7 @@ export class GarbageCollector implements IGarbageCollector {
 		request,
 		headerData,
 		additionalProps,
-	}: IGCNodeUpdatedProps) {
+	}: IGCNodeUpdatedProps): void {
 		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
 		// logging as nothing interesting would have happened worth logging.
 		if (!this.shouldRunGC || timestampMs === undefined) {
@@ -1093,7 +1116,7 @@ export class GarbageCollector implements IGarbageCollector {
 		toNodePath: string,
 		timestampMs: number,
 		autorecovery?: true,
-	) {
+	): void {
 		if (!this.shouldRunGC) {
 			return;
 		}
