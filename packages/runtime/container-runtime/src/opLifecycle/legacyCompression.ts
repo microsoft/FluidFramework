@@ -11,6 +11,11 @@ import { CompressionAlgorithms } from "../index.js";
 import type { BatchMessage, IBatch } from "./definitions.js";
 
 /**
+ * The code in this file recreates the legacy flow for batches that have multiple messages.
+ * It should not be removed since we still need to be able to read batches that were compressed with the old flow.
+ * */
+
+/**
  * Combine the batch's content strings into a single JSON string (a serialized array)
  */
 function serializeBatchContents(batch: IBatch): string {
@@ -22,6 +27,7 @@ function serializeBatchContents(batch: IBatch): string {
  * This is a helper function that replicates the now deprecated process for compressing a batch that creates empty placeholder messages.
  * It was added since the new process cannot compress a batch with multiple messages, it now only compresses individual messages (which can be a regular message or a grouped one).
  * But we need to ensure the current code still supports READING the old op format (where an old client compressed a multi-message batch)
+ * @internal
  * @param batch - batch with messages that are going to be compressed
  * @returns compresed batch with empty placeholder messages
  */
