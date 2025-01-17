@@ -78,7 +78,7 @@ export const createSummarizingWarning = (
  * @alpha
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
-	public get ISummarizer(): Summarizer {
+	public get ISummarizer(): this {
 		return this;
 	}
 
