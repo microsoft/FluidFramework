@@ -23,25 +23,19 @@ export async function checkNetworkInformation(
 		| string
 		| undefined;
 	const networkInfo = getNetworkInformationFromIP(clientIPAddress);
+	const privateLinkEnable = tenantInfo?.customData?.accountLinkIds ? true : false;
 	if (networkInfo.isPrivateLink) {
-		const accountLinkID = tenantInfo?.customData?.accountLinkID;
-		// eslint-disable-next-line unicorn/prefer-ternary
-		if (networkInfo.privateLinkId === accountLinkID) {
-			return { message: "This is a private link socket connection", shouldConnect: true };
-		} else {
-			return { message: "private link should not connect", shouldConnect: false };
-		}
+		return privateLinkEnable &&
+			networkInfo.privateLinkId === tenantInfo?.customData?.accountLinkIds
+			? { message: "This is a private link socket connection", shouldConnect: true }
+			: { message: "private link should not connect", shouldConnect: false };
 	} else {
-		const accountLinkID = tenantInfo?.customData?.accountLinkID;
-		// eslint-disable-next-line unicorn/prefer-ternary
-		if (accountLinkID) {
-			return {
-				message:
-					"This is a failed private link tenant socket connection from public network",
-				shouldConnect: false,
-			};
-		} else {
-			return { message: "public should connect", shouldConnect: true };
-		}
+		return privateLinkEnable
+			? {
+					message:
+						"This is a failed private link tenant socket connection from public network",
+					shouldConnect: false,
+			  }
+			: { message: "public should connect", shouldConnect: true };
 	}
 }

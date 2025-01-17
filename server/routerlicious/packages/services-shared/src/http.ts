@@ -56,11 +56,11 @@ export function validatePrivateLink(
 			const clientIPAddress = req.ip ? req.ip : "";
 			const result = getNetworkInformationFromIP(clientIPAddress);
 			const tenantInfo: ITenantConfig = await tenantManager.getTenantfromRiddler(tenantId);
-			const privateLinkEnable = tenantInfo?.customData?.accountLinkID ? true : false;
+			const privateLinkEnable = tenantInfo?.customData?.accountLinkIds ? true : false;
 			if (result.isPrivateLink) {
 				if (
 					privateLinkEnable &&
-					tenantInfo.customData.accountLinkID === result.privateLinkId
+					tenantInfo.customData.accountLinkIds === result.privateLinkId
 				) {
 					Lumberjack.info("This is a private link request", {
 						tenantId,
