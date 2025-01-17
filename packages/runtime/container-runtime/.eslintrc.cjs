@@ -65,6 +65,7 @@ module.exports = {
 		"unicorn/switch-case-braces": "error",
 		"unicorn/throw-new-error": "error",
 
+		// TODO:
 		// unicorn/consistent-function-scoping
 		// unicorn/no-negated-condition
 		// unicorn/no-lonely-if
@@ -72,8 +73,6 @@ module.exports = {
 		// unicorn/prefer-includes
 		// unicorn/error-message
 		// unicorn/explicit-length-check
-
-		// unicorn/no-array-reduce
 
 		// #endregion
 	},
