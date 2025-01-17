@@ -576,7 +576,7 @@ export class SummaryGenerator {
 		}
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.summarizeTimer.clear();
 	}
 }

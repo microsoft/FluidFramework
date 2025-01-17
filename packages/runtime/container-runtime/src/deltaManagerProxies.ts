@@ -59,11 +59,11 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.lastSequenceNumber;
 	}
 
-	public get lastMessage() {
+	public get lastMessage(): ISequencedDocumentMessage | undefined {
 		return this.deltaManager.lastMessage;
 	}
 
-	public get lastKnownSeqNumber() {
+	public get lastKnownSeqNumber(): number {
 		return this.deltaManager.lastKnownSeqNumber;
 	}
 
@@ -71,7 +71,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.initialSequenceNumber;
 	}
 
-	public get hasCheckpointSequenceNumber() {
+	public get hasCheckpointSequenceNumber(): boolean {
 		return this.deltaManager.hasCheckpointSequenceNumber;
 	}
 
@@ -196,6 +196,10 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 }
 
 export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
+	/**
+	 * {@inheritDoc BaseDeltaManagerProxy.minimumSequenceNumber}
+	 * @override
+	 */
 	public get minimumSequenceNumber(): number {
 		const minPendingSeqNum = this.pendingStateManager.minimumPendingMessageSequenceNumber;
 		/**
@@ -218,7 +222,11 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 		return this.deltaManager.minimumSequenceNumber;
 	}
 
-	public get lastMessage() {
+	/**
+	 * {@inheritDoc BaseDeltaManagerProxy.lastMessage}
+	 * @override
+	 */
+	public get lastMessage(): ISequencedDocumentMessage | undefined {
 		if (this.deltaManager.lastMessage === undefined) {
 			return this.deltaManager.lastMessage;
 		}

@@ -59,7 +59,7 @@ export class DeltaScheduler {
 		runtimeEventsEmitter.on("batchEnd", this.batchEnd);
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.deltaManager.inbound.off("idle", this.inboundQueueIdle);
 		this.runtimeEventsEmitter.off("batchBegin", this.batchBegin);
 		this.runtimeEventsEmitter.off("batchEnd", this.batchEnd);
