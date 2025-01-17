@@ -430,9 +430,7 @@ export interface INackSummaryResult {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
-
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
 			success: true;

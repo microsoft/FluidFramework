@@ -39,4 +39,3 @@ The following types in the `@fluidframework/container-runtime` are deprecated. T
 - ISummaryMetadataMessage
 - ISweepPhaseStats
 - Summarizer
-- SummarizeResultPart
