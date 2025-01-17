@@ -19,8 +19,7 @@ import { IDocumentSchemaChangeMessage } from "./summary/index.js";
 
 /**
  * @legacy
- * @internal
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @alpha
  */
 export enum ContainerMessageType {
 	// An op to be delivered to store

@@ -127,8 +127,7 @@ export enum RuntimeHeaders {
 /**
  * True if a tombstoned object should be returned without erroring
  * @legacy
- * @internal
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @alpha
  */
 export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in the enum above, but avoiding the breaking change
 

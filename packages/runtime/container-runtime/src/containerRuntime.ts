@@ -418,8 +418,7 @@ export type ISummaryConfiguration =
 
 /**
  * @legacy
- * @internal
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @alpha
  */
 export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "enabled",
@@ -596,16 +595,14 @@ export const DeletedResponseHeaderKey = "wasDeleted";
 /**
  * Tombstone error responses will have this header set to true
  * @legacy
- * @internal
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @alpha
  */
 
 export const TombstoneResponseHeaderKey = "isTombstoned";
 /**
  * Inactive error responses will have this header set to true
  * @legacy
- * @internal
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @alpha
  *
  * @deprecated this header is deprecated and will be removed in the future. The functionality corresponding
  * to this was experimental and is no longer supported.

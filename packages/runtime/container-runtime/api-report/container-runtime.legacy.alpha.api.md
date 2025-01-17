@@ -5,9 +5,50 @@
 ```ts
 
 // @alpha
+export const AllowTombstoneRequestHeaderKey = "allowTombstone";
+
+// @alpha
 export enum CompressionAlgorithms {
     // (undocumented)
     lz4 = "lz4"
+}
+
+// @alpha (undocumented)
+export enum ContainerMessageType {
+    // (undocumented)
+    Alias = "alias",
+    // (undocumented)
+    Attach = "attach",
+    // (undocumented)
+    BlobAttach = "blobAttach",
+    // (undocumented)
+    ChunkedOp = "chunkedOp",
+    DocumentSchemaChange = "schema",
+    // (undocumented)
+    FluidDataStoreOp = "component",
+    GC = "GC",
+    IdAllocation = "idAllocation",
+    // (undocumented)
+    Rejoin = "rejoin"
+}
+
+// @alpha (undocumented)
+export const DefaultSummaryConfiguration: ISummaryConfiguration;
+
+// @alpha
+export interface IAckedSummary {
+    // (undocumented)
+    readonly summaryAck: ISummaryAckMessage;
+    // (undocumented)
+    readonly summaryOp: ISummaryOpMessage;
+}
+
+// @alpha
+export interface IClientSummaryWatcher extends IDisposable {
+    // (undocumented)
+    waitFlushed(): Promise<IAckedSummary | undefined>;
+    // (undocumented)
+    watchSummary(clientSequenceNumber: number): ISummary;
 }
 
 // @alpha
@@ -44,11 +85,40 @@ export interface IGCRuntimeOptions {
     sweepGracePeriodMs?: number;
 }
 
+// @alpha @deprecated
+export const InactiveResponseHeaderKey = "isInactive";
+
+// @alpha
+export interface ISummary {
+    // (undocumented)
+    readonly clientId: string;
+    // (undocumented)
+    readonly clientSequenceNumber: number;
+    // (undocumented)
+    waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage>;
+    // (undocumented)
+    waitBroadcast(): Promise<ISummaryOpMessage>;
+}
+
+// @alpha
+export interface ISummaryAckMessage extends ISequencedDocumentMessage {
+    // (undocumented)
+    contents: ISummaryAck;
+    // (undocumented)
+    type: MessageType.SummaryAck;
+}
+
 // @alpha (undocumented)
 export interface ISummaryBaseConfiguration {
     initialSummarizerDelayMs: number;
     maxAckWaitTime: number;
     maxOpsSinceLastSummary: number;
+}
+
+// @alpha (undocumented)
+export interface ISummaryCollectionOpEvents extends IEvent {
+    // (undocumented)
+    (event: OpActionEventName, listener: OpActionEventListener): any;
 }
 
 // @alpha (undocumented)
@@ -80,6 +150,22 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     state: "enabled";
 }
 
+// @alpha
+export interface ISummaryNackMessage extends ISequencedDocumentMessage {
+    // (undocumented)
+    contents: ISummaryNack;
+    // (undocumented)
+    type: MessageType.SummaryNack;
+}
+
+// @alpha
+export interface ISummaryOpMessage extends ISequencedDocumentMessage {
+    // (undocumented)
+    contents: ISummaryContent;
+    // (undocumented)
+    type: MessageType.Summarize;
+}
+
 // @alpha (undocumented)
 export interface ISummaryRuntimeOptions {
     // @deprecated
@@ -101,6 +187,39 @@ export interface LoadContainerRuntimeParams {
     requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
     runtimeOptions?: IContainerRuntimeOptions;
 }
+
+// @alpha (undocumented)
+export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
+
+// @alpha (undocumented)
+export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @alpha
+export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLoggerExt);
+    // (undocumented)
+    addOpListener(listener: () => void): void;
+    createWatcher(clientId: string): IClientSummaryWatcher;
+    // (undocumented)
+    emit(event: OpActionEventName, ...args: Parameters<OpActionEventListener>): boolean;
+    // (undocumented)
+    get latestAck(): IAckedSummary | undefined;
+    // (undocumented)
+    get opsSinceLastAck(): number;
+    // (undocumented)
+    removeOpListener(listener: () => void): void;
+    // (undocumented)
+    removeWatcher(clientId: string): void;
+    // (undocumented)
+    setPendingAckTimerTimeoutCallback(maxAckWaitTime: number, timeoutCallback: () => void): void;
+    // (undocumented)
+    unsetPendingAckTimerTimeoutCallback(): void;
+    waitFlushed(): Promise<IAckedSummary | undefined>;
+    waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary>;
+}
+
+// @alpha
+export const TombstoneResponseHeaderKey = "isTombstoned";
 
 // (No @packageDocumentation comment for this package)
 
