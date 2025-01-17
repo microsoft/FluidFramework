@@ -249,7 +249,7 @@ const summarizationWithUnreferencedDataStoreAfterTime = async (clock: SinonFakeT
  *
  * NOTE: These tests speak of "Sweep" but simply use "tombstoneTimeoutMs" throughout, since sweepGracePeriod is set to 0.
  */
-describeCompat.only("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
+describeCompat("GC data store sweep tests", "NoCompat", (getTestObjectProvider) => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
