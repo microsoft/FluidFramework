@@ -324,7 +324,8 @@ export class Outbox {
 		}
 
 		const rawBatch = batchManager.popBatch(resubmittingBatchId);
-		const shouldGroup = this.params.groupingManager.shouldGroup(rawBatch);
+		const shouldGroup =
+			!disableGroupedBatching && this.params.groupingManager.shouldGroup(rawBatch);
 		if (batchManager.options.canRebase && rawBatch.hasReentrantOps === true && shouldGroup) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
@@ -414,7 +415,7 @@ export class Outbox {
 				this.params.config.compressionOptions.minimumBatchSizeInBytes >
 					batch.contentSizeInBytes ||
 				this.params.submitBatchFn === undefined) &&
-			this.params.groupingManager.shouldGroup(batch)
+			!this.params.groupingManager.shouldGroup(batch)
 		) {
 			// Nothing to do if the batch is empty or if compression is disabled or not supported, or if we don't need to compress
 			return batch;
