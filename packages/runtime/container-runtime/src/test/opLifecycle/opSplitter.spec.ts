@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
-import * as crypto from "crypto";
+import { strict as assert } from "node:assert";
+import * as crypto from "node:crypto";
 
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous/internal";

@@ -55,7 +55,7 @@ module.exports = {
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
 		"unicorn/no-zero-fractions": "error",
-		// "unicorn/prefer-node-protocol": "error",
+		"unicorn/prefer-node-protocol": "error",
 		// "unicorn/prefer-number-properties": "error",
 		// "unicorn/prefer-optional-catch-binding": "error",
 		// "unicorn/prefer-spread": "error",
@@ -73,7 +73,7 @@ module.exports = {
 				"@typescript-eslint/explicit-function-return-type": "off",
 
 				// Test files are run in node only so additional node libraries can be used.
-				"import/no-nodejs-modules": ["error", { allow: ["assert", "crypto"] }],
+				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
 			},
 		},
 	],

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";

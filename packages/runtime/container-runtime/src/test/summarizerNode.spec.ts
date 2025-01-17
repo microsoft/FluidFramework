@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
