@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	ContainerMessageType,
 	type InboundContainerRuntimeMessage,
 	type InboundSequencedContainerRuntimeMessage,
@@ -108,7 +107,7 @@ export class RemoteMessageProcessor {
 		return this.opSplitter.chunks;
 	}
 
-	public clearPartialMessagesFor(clientId: string) {
+	public clearPartialMessagesFor(clientId: string): void {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 
@@ -307,7 +306,6 @@ export function unpackRuntimeMessage(
 		(message.contents as { address?: unknown }).address !== undefined &&
 		(message.contents as { type?: unknown }).type === undefined
 	) {
-		// eslint-disable-next-line import/no-deprecated
 		message.type = ContainerMessageType.FluidDataStoreOp;
 		logLegacyCase("unpackRuntimeMessage_contentsWithAddress");
 	} else {

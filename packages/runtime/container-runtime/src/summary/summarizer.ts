@@ -45,7 +45,6 @@ import {
 	ISummarizerRuntime,
 	ISummarizingWarning,
 } from "./summarizerTypes.js";
-// eslint-disable-next-line import/no-deprecated
 import { SummaryCollection } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryGenerator.js";
 
@@ -65,14 +64,20 @@ export class SummarizingWarning
 		super(errorMessage);
 	}
 
-	static wrap(error: unknown, logged: boolean = false, logger: ITelemetryLoggerExt) {
+	static wrap(
+		error: unknown,
+		logged: boolean = false,
+		logger: ITelemetryLoggerExt,
+	): SummarizingWarning {
 		const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
 		return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
 	}
 }
 
-export const createSummarizingWarning = (errorMessage: string, logged: boolean) =>
-	new SummarizingWarning(errorMessage, logged);
+export const createSummarizingWarning = (
+	errorMessage: string,
+	logged: boolean,
+): SummarizingWarning => new SummarizingWarning(errorMessage, logged);
 
 /**
  * Summarizer is responsible for coordinating when to generate and send summaries.
@@ -85,7 +90,7 @@ export const createSummarizingWarning = (errorMessage: string, logged: boolean) 
 // eslint-disable-next-line import/no-deprecated
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	// eslint-disable-next-line import/no-deprecated
-	public get ISummarizer() {
+	public get ISummarizer(): this {
 		return this;
 	}
 
@@ -114,7 +119,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		// eslint-disable-next-line import/no-deprecated
 		private readonly internalsProvider: ISummarizerInternalsProvider,
 		handleContext: IFluidHandleContext,
-		// eslint-disable-next-line import/no-deprecated
+
 		public readonly summaryCollection: SummaryCollection,
 		private readonly runCoordinatorCreateFn: (
 			// eslint-disable-next-line import/no-deprecated
@@ -160,12 +165,11 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * the run promise, and also close the container.
 	 * @param reason - reason code for stopping
 	 */
-
-	public stop(reason: SummarizerStopReason) {
+	public stop(reason: SummarizerStopReason): void {
 		this.stopDeferred.resolve(reason);
 	}
 
-	public close() {
+	public close(): void {
 		// This will result in "summarizerClientDisconnected" stop reason recorded in telemetry,
 		// unless stop() was called earlier
 		this.dispose();
@@ -331,7 +335,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * properties.
 	 * Called by ContainerRuntime when it is disposed, as well as at the end the run().
 	 */
-	public dispose() {
+	public dispose(): void {
 		// Given that the call can come from own ContainerRuntime, ensure that we stop all the processes.
 
 		this.stop("summarizerClientDisconnected");
@@ -428,7 +432,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		return this.runningSummarizer.enqueueSummarize(options);
 	}
 
-	public recordSummaryAttempt?(summaryRefSeqNum?: number) {
+	public recordSummaryAttempt?(summaryRefSeqNum?: number): void {
 		this._heuristicData?.recordAttempt(summaryRefSeqNum);
 	}
 

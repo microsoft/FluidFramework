@@ -214,7 +214,7 @@ export class ContainerStorageAdapter
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
-		const maybeBlob: string | ArrayBufferLike | undefined = this.blobContents[id];
+		const maybeBlob = this.blobContents[id];
 		if (maybeBlob !== undefined) {
 			if (typeof maybeBlob === "string") {
 				const blob = stringToBuffer(maybeBlob, "utf8");
@@ -361,7 +361,7 @@ async function getBlobManagerTreeFromTree(
 	blobs: ISerializableBlobContents,
 	storage: Pick<IDocumentStorageService, "readBlob">,
 ): Promise<void> {
-	const id: string | undefined = tree.blobs[redirectTableBlobName];
+	const id = tree.blobs[redirectTableBlobName];
 	assert(id !== undefined, 0x9ce /* id is undefined in getBlobManagerTreeFromTree */);
 	const blob = await storage.readBlob(id);
 	// ArrayBufferLike will not survive JSON.stringify()
@@ -404,7 +404,7 @@ function getBlobManagerTreeFromTreeWithBlobContents(
 	tree: ISnapshotTreeWithBlobContents,
 	blobs: ISerializableBlobContents,
 ): void {
-	const id: string | undefined = tree.blobs[redirectTableBlobName];
+	const id = tree.blobs[redirectTableBlobName];
 	assert(
 		id !== undefined,
 		0x9cf /* id is undefined in getBlobManagerTreeFromTreeWithBlobContents */,

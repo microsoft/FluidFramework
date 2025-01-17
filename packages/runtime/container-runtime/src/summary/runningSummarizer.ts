@@ -23,6 +23,7 @@ import {
 	createChildLogger,
 	createChildMonitoringContext,
 	isFluidError,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ISummaryConfiguration } from "../containerRuntime.js";
@@ -58,11 +59,8 @@ import {
 	type IRetriableFailureError,
 } from "./summarizerTypes.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IAckedSummary,
-	// eslint-disable-next-line import/no-deprecated
 	IClientSummaryWatcher,
-	// eslint-disable-next-line import/no-deprecated
 	SummaryCollection,
 } from "./summaryCollection.js";
 import {
@@ -100,7 +98,7 @@ export class RunningSummarizer
 {
 	public static async start(
 		logger: ITelemetryBaseLogger,
-		// eslint-disable-next-line import/no-deprecated
+
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
 
@@ -109,7 +107,7 @@ export class RunningSummarizer
 		// eslint-disable-next-line import/no-deprecated
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
-		// eslint-disable-next-line import/no-deprecated
+
 		summaryCollection: SummaryCollection,
 		// eslint-disable-next-line import/no-deprecated
 		cancellationToken: ISummaryCancellationToken,
@@ -196,7 +194,7 @@ export class RunningSummarizer
 		return summarizer;
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 	private stopping = false;
@@ -238,7 +236,7 @@ export class RunningSummarizer
 
 	private constructor(
 		baseLogger: ITelemetryBaseLogger,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly summaryWatcher: IClientSummaryWatcher,
 		private readonly configuration: ISummaryConfiguration,
 		private readonly submitSummaryCallback: (
@@ -251,7 +249,7 @@ export class RunningSummarizer
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly heuristicData: ISummarizeHeuristicData,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly summaryCollection: SummaryCollection,
 		// eslint-disable-next-line import/no-deprecated
 		private readonly cancellationToken: ISummaryCancellationToken,
@@ -367,7 +365,6 @@ export class RunningSummarizer
 				: defaultMaxAttemptsForSubmitFailures;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	private async handleSummaryAck(ack: IAckedSummary) {
 		const refSequenceNumber = ack.summaryOp.referenceSequenceNumber;
 		const summaryLogger = this.tryGetCorrelatedLogger(refSequenceNumber) ?? this.mc.logger;
@@ -471,7 +468,9 @@ export class RunningSummarizer
 	 * but only if they're logging about that same summary.
 	 * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
 	 */
-	public tryGetCorrelatedLogger = (summaryOpRefSeq) =>
+	public tryGetCorrelatedLogger = (
+		summaryOpRefSeq: number,
+	): ITelemetryLoggerExt | undefined =>
 		this.heuristicData.lastAttempt.refSequenceNumber === summaryOpRefSeq
 			? this.mc.logger
 			: undefined;
@@ -481,7 +480,7 @@ export class RunningSummarizer
 	 */
 	private heuristicRunnerMicroTaskExists = false;
 
-	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean) {
+	public handleOp(op: ISequencedDocumentMessage, runtimeMessage: boolean): void {
 		this.heuristicData.lastOpSequenceNumber = op.sequenceNumber;
 
 		if (runtimeMessage) {

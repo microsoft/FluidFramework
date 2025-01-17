@@ -15,7 +15,6 @@ import {
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
-// eslint-disable-next-line import/no-deprecated
 import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export const summarizerClientType = "summarizer";
@@ -54,16 +53,16 @@ export class SummarizerClientElection
 	 */
 	private lastReportedSeq = 0;
 
-	public get electedClientId() {
+	public get electedClientId(): string | undefined {
 		return this.clientElection.electedClient?.clientId;
 	}
-	public get electedParentId() {
+	public get electedParentId(): string | undefined {
 		return this.clientElection.electedParent?.clientId;
 	}
 
 	constructor(
 		private readonly logger: ITelemetryLoggerExt,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
 		public readonly clientElection: IOrderedClientElection,
 		private readonly maxOpsSinceLastSummary: number,

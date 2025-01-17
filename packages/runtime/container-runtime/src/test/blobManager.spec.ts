@@ -110,7 +110,7 @@ export class MockRuntime
 
 	public disposed: boolean = false;
 
-	public get storage() {
+	public get storage(): IDocumentStorageService {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
 			: this.attachedStorage) as unknown as IDocumentStorageService;
@@ -119,7 +119,7 @@ export class MockRuntime
 	private processing = false;
 	public unprocessedBlobs = new Set();
 
-	public getStorage() {
+	public getStorage(): IDocumentStorageService {
 		return {
 			createBlob: async (blob) => {
 				if (this.processing) {
@@ -143,7 +143,7 @@ export class MockRuntime
 		} as unknown as IDocumentStorageService;
 	}
 
-	public sendBlobAttachOp(localId: string, blobId?: string) {
+	public sendBlobAttachOp(localId: string, blobId?: string): void {
 		this.ops.push({ metadata: { localId, blobId } });
 	}
 
@@ -156,13 +156,15 @@ export class MockRuntime
 		return P;
 	}
 
-	public async getBlob(blobHandle: IFluidHandleInternal<ArrayBufferLike>) {
+	public async getBlob(
+		blobHandle: IFluidHandleInternal<ArrayBufferLike>,
+	): Promise<ArrayBufferLike> {
 		const pathParts = blobHandle.absolutePath.split("/");
 		const blobId = pathParts[2];
 		return this.blobManager.getBlob(blobId);
 	}
 
-	public async getPendingLocalState() {
+	public async getPendingLocalState(): Promise<(unknown[] | IPendingBlobs | undefined)[]> {
 		const pendingBlobs = await this.blobManager.attachAndGetPendingBlobs();
 		return [[...this.ops], pendingBlobs];
 	}
@@ -181,7 +183,7 @@ export class MockRuntime
 	private handlePs: Promise<unknown>[] = [];
 	private readonly deletedBlobs: string[] = [];
 
-	public processOps() {
+	public processOps(): void {
 		assert(this.connected || this.ops.length === 0);
 		this.ops.forEach((op) =>
 			this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, true),
@@ -193,7 +195,7 @@ export class MockRuntime
 		resolve: boolean,
 		canRetry: boolean = false,
 		retryAfterSeconds?: number,
-	) {
+	): Promise<void> {
 		const blobPs = this.blobPs;
 		this.blobPs = [];
 		if (resolve) {
@@ -207,14 +209,14 @@ export class MockRuntime
 		await Promise.allSettled(blobPs).catch(() => {});
 	}
 
-	public async processHandles() {
+	public async processHandles(): Promise<void> {
 		const handlePs = this.handlePs;
 		this.handlePs = [];
 		const handles = (await Promise.all(handlePs)) as IFluidHandleInternal<ArrayBufferLike>[];
 		handles.forEach((handle) => handle.attachGraph());
 	}
 
-	public async processAll() {
+	public async processAll(): Promise<void> {
 		while (this.blobPs.length + this.handlePs.length + this.ops.length > 0) {
 			const p1 = this.processBlobs(true);
 			const p2 = this.processHandles();
@@ -225,7 +227,10 @@ export class MockRuntime
 		}
 	}
 
-	public async attach() {
+	public async attach(): Promise<{
+		ids: string[];
+		redirectTable: [string, string][] | undefined;
+	}> {
 		if (this.detachedStorage.blobs.size > 0) {
 			const table = new Map();
 			for (const [detachedId, blob] of this.detachedStorage.blobs) {
@@ -241,7 +246,7 @@ export class MockRuntime
 		return summary;
 	}
 
-	public async connect(delay = 0, processStashedWithRetry?: boolean) {
+	public async connect(delay = 0, processStashedWithRetry?: boolean): Promise<void> {
 		assert(!this.connected);
 		await new Promise<void>((resolve) => setTimeout(resolve, delay));
 		this.connected = true;
@@ -254,7 +259,7 @@ export class MockRuntime
 		ops.forEach((op) => this.blobManager.reSubmit((op as any).metadata));
 	}
 
-	public async processStashed(processStashedWithRetry?: boolean) {
+	public async processStashed(processStashedWithRetry?: boolean): Promise<void> {
 		const uploadP = this.blobManager.stashedBlobsUploadP;
 		this.processing = true;
 		if (processStashedWithRetry) {
@@ -270,20 +275,22 @@ export class MockRuntime
 		this.processing = false;
 	}
 
-	public disconnect() {
+	public disconnect(): void {
 		assert(this.connected);
 		this.connected = false;
 		this.emit("disconnected");
 	}
 
-	public async remoteUpload(blob: ArrayBufferLike) {
+	public async remoteUpload(
+		blob: ArrayBufferLike,
+	): Promise<{ metadata: { localId: string; blobId: string } }> {
 		const response = await this.storage.createBlob(blob);
 		const op = { metadata: { localId: uuid(), blobId: response.id } };
 		this.blobManager.processBlobAttachMessage(op as ISequencedMessageEnvelope, false);
 		return op;
 	}
 
-	public deleteBlob(blobHandle: IFluidHandleInternal<ArrayBufferLike>) {
+	public deleteBlob(blobHandle: IFluidHandleInternal<ArrayBufferLike>): void {
 		this.deletedBlobs.push(blobHandle.absolutePath);
 	}
 
@@ -292,7 +299,12 @@ export class MockRuntime
 	}
 }
 
-export const validateSummary = (runtime: MockRuntime) => {
+export const validateSummary = (
+	runtime: MockRuntime,
+): {
+	ids: string[];
+	redirectTable: [string, string][] | undefined;
+} => {
 	const summary = runtime.blobManager.summarize();
 	const ids: string[] = [];
 	let redirectTable: [string, string][] | undefined;

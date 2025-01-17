@@ -269,7 +269,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
 	 */
-	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean) {
+	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean): void {
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
@@ -294,7 +294,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	/**
 	 * Clears the work-in-progress state.
 	 */
-	public clearSummary() {
+	public clearSummary(): void {
 		this.wipSerializedUsedRoutes = undefined;
 		this.wipChildNodesUsedRoutes = undefined;
 		super.clearSummary();
@@ -411,7 +411,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param id - Initial id or path part of this node
 	 */
 
-	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string) {
+	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string): void {
 		super.maybeUpdateChildState(child, id);
 
 		// If GC has run on this node and summarization isn't complete, this.wipSerializedUsedRoutes will be defined.
@@ -464,7 +464,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
 	}
 
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: string[]): void {
 		// Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
 		// are in the same order.
 		this.usedRoutes = usedRoutes.sort();

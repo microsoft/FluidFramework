@@ -30,11 +30,8 @@ import {
 import { ISummaryConfigurationHeuristics } from "../containerRuntime.js";
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	ISummaryAckMessage,
-	// eslint-disable-next-line import/no-deprecated
 	ISummaryNackMessage,
-	// eslint-disable-next-line import/no-deprecated
 	ISummaryOpMessage,
 } from "./summaryCollection.js";
 import { SummarizeReason } from "./summaryGenerator.js";
@@ -420,7 +417,6 @@ export interface SubmitSummaryFailureData {
  */
 
 export interface IBroadcastSummaryResult {
-	// eslint-disable-next-line import/no-deprecated
 	readonly summarizeOp: ISummaryOpMessage;
 	readonly broadcastDuration: number;
 }
@@ -432,7 +428,6 @@ export interface IBroadcastSummaryResult {
  */
 
 export interface IAckSummaryResult {
-	// eslint-disable-next-line import/no-deprecated
 	readonly summaryAckOp: ISummaryAckMessage;
 	readonly ackNackDuration: number;
 }
@@ -444,7 +439,6 @@ export interface IAckSummaryResult {
  */
 
 export interface INackSummaryResult {
-	// eslint-disable-next-line import/no-deprecated
 	readonly summaryNackOp: ISummaryNackMessage;
 	readonly ackNackDuration: number;
 }

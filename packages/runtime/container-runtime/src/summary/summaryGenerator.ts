@@ -47,7 +47,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	type IRetriableFailureError,
 } from "./summarizerTypes.js";
-// eslint-disable-next-line import/no-deprecated
 import { IClientSummaryWatcher } from "./summaryCollection.js";
 
 export type raceTimerResult<T> =
@@ -149,7 +148,7 @@ const summarizeErrors = {
 export type SummarizeErrorCode = keyof typeof summarizeErrors;
 
 // Helper functions to report failures and return.
-export const getFailMessage = (errorCode: SummarizeErrorCode) =>
+export const getFailMessage = (errorCode: SummarizeErrorCode): string =>
 	`${errorCode}: ${summarizeErrors[errorCode]}`;
 
 export class SummarizeResultBuilder {
@@ -180,7 +179,7 @@ export class SummarizeResultBuilder {
 		submitFailureResult?: SubmitSummaryFailureData,
 		// eslint-disable-next-line import/no-deprecated
 		nackSummaryResult?: INackSummaryResult,
-	) {
+	): void {
 		assert(
 			!this.receivedSummaryAckOrNack.isCompleted,
 			0x25e /* "no reason to call fail if all promises have been completed" */,
@@ -243,7 +242,7 @@ export class SummaryGenerator {
 			// eslint-disable-next-line import/no-deprecated
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
-		// eslint-disable-next-line import/no-deprecated
+
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
@@ -615,7 +614,7 @@ export class SummaryGenerator {
 		}
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.summarizeTimer.clear();
 	}
 }

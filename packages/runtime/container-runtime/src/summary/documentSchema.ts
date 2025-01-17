@@ -636,7 +636,7 @@ export class DocumentsSchemaController {
 		content: IDocumentSchemaChangeMessage,
 		local: boolean,
 		sequenceNumber: number,
-	) {
+	): boolean {
 		return this.processDocumentSchemaMessages([content], local, sequenceNumber);
 	}
 
@@ -652,7 +652,7 @@ export class DocumentsSchemaController {
 		contents: IDocumentSchemaChangeMessage[],
 		local: boolean,
 		sequenceNumber: number,
-	) {
+	): boolean {
 		for (const content of contents) {
 			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
 			this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
@@ -701,7 +701,7 @@ export class DocumentsSchemaController {
 		return true;
 	}
 
-	public onDisconnect() {
+	public onDisconnect(): void {
 		this.sendOp = true;
 	}
 }

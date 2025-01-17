@@ -39,7 +39,6 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
 } from "./summarizerTypes.js";
-// eslint-disable-next-line import/no-deprecated
 import { SummaryCollection } from "./summaryCollection.js";
 
 const defaultInitialDelayMs = 5000;
@@ -112,11 +111,11 @@ export class SummaryManager
 	private summarizer?: ISummarizer;
 	private _disposed = false;
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
-	public get currentState() {
+	public get currentState(): SummaryManagerState {
 		return this.state;
 	}
 
@@ -125,7 +124,6 @@ export class SummaryManager
 		private readonly connectedState: IConnectedState,
 
 		private readonly summaryCollection: Pick<
-			// eslint-disable-next-line import/no-deprecated
 			SummaryCollection,
 			"opsSinceLastAck" | "addOpListener" | "removeOpListener"
 		>,
@@ -496,7 +494,7 @@ export class SummaryManager
 		return this.summarizer.enqueueSummarize(options);
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);

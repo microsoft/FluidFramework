@@ -14,7 +14,6 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
 
 import { estimateSocketSize } from "./batchManager.js";
@@ -25,13 +24,11 @@ export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
 }
 
 interface IChunkedContents {
-	// eslint-disable-next-line import/no-deprecated
 	readonly type: typeof ContainerMessageType.ChunkedOp;
 	readonly contents: IChunkedOp;
 }
 
 function isChunkedContents(contents: unknown): contents is IChunkedContents {
-	// eslint-disable-next-line import/no-deprecated
 	return (contents as Partial<IChunkedContents>)?.type === ContainerMessageType.ChunkedOp;
 }
 
@@ -66,7 +63,7 @@ export class OpSplitter {
 		return this.chunkMap;
 	}
 
-	public clearPartialChunks(clientId: string) {
+	public clearPartialChunks(clientId: string): void {
 		if (this.chunkMap.has(clientId)) {
 			this.chunkMap.delete(clientId);
 		}
@@ -245,7 +242,6 @@ const chunkToBatchMessage = (
 	metadata: Record<string, unknown> | undefined = undefined,
 ): BatchMessage => {
 	const payload: ContainerRuntimeChunkedOpMessage = {
-		// eslint-disable-next-line import/no-deprecated
 		type: ContainerMessageType.ChunkedOp,
 		contents: chunk,
 	};

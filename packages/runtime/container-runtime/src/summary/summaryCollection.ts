@@ -288,18 +288,18 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		return super.emit(event, ...args);
 	}
 
-	public get opsSinceLastAck() {
+	public get opsSinceLastAck(): number {
 		return (
 			this.deltaManager.lastSequenceNumber -
 			(this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber)
 		);
 	}
 
-	public addOpListener(listener: () => void) {
+	public addOpListener(listener: () => void): void {
 		this.deltaManager.on("op", listener);
 	}
 
-	public removeOpListener(listener: () => void) {
+	public removeOpListener(listener: () => void): void {
 		this.deltaManager.off("op", listener);
 	}
 
@@ -323,19 +323,19 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		return watcher;
 	}
 
-	public removeWatcher(clientId: string) {
+	public removeWatcher(clientId: string): void {
 		this.summaryWatchers.delete(clientId);
 	}
 
 	public setPendingAckTimerTimeoutCallback(
 		maxAckWaitTime: number,
 		timeoutCallback: () => void,
-	) {
+	): void {
 		this.maxAckWaitTime = maxAckWaitTime;
 		this.pendingAckTimerTimeoutCallback = timeoutCallback;
 	}
 
-	public unsetPendingAckTimerTimeoutCallback() {
+	public unsetPendingAckTimerTimeoutCallback(): void {
 		this.maxAckWaitTime = undefined;
 		this.pendingAckTimerTimeoutCallback = undefined;
 	}

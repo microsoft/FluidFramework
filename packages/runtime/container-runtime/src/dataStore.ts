@@ -19,7 +19,6 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelCollection } from "./channelCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { ContainerMessageType } from "./messageTypes.js";
 
 /**
@@ -138,7 +137,6 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			// eslint-disable-next-line import/no-deprecated
 			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
 		})
 			.catch((error) => {

@@ -68,12 +68,12 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		this._lastSuccessfulSummary = { ...attemptBaseline };
 	}
 
-	public updateWithLastSummaryAckInfo(lastSummary: Readonly<ISummarizeAttempt>) {
+	public updateWithLastSummaryAckInfo(lastSummary: Readonly<ISummarizeAttempt>): void {
 		this._lastAttempt = lastSummary;
 		this._lastSuccessfulSummary = { ...lastSummary };
 	}
 
-	public recordAttempt(refSequenceNumber?: number) {
+	public recordAttempt(refSequenceNumber?: number): void {
 		this._lastAttempt = {
 			refSequenceNumber: refSequenceNumber ?? this.lastOpSequenceNumber,
 			summaryTime: Date.now(),
@@ -84,7 +84,7 @@ export class SummarizeHeuristicData implements ISummarizeHeuristicData {
 		this.totalOpsSizeBefore = this.totalOpsSize;
 	}
 
-	public markLastAttemptAsSuccessful() {
+	public markLastAttemptAsSuccessful(): void {
 		this._lastSuccessfulSummary = { ...this.lastAttempt };
 
 		this.numNonRuntimeOps -= this.numNonRuntimeOpsBefore;
@@ -153,11 +153,11 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 		);
 	}
 
-	public start() {
+	public start(): void {
 		this.idleTimer?.start(this.idleTime);
 	}
 
-	public run() {
+	public run(): void {
 		for (const strategy of this.summarizeStrategies) {
 			if (strategy.shouldRunSummary(this.configuration, this.heuristicData)) {
 				return this.runSummarize(strategy.summarizeReason);
@@ -185,7 +185,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 		return weightedOpsSinceLastAck >= minOpsForLastSummaryAttempt;
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.idleTimer?.clear();
 	}
 }

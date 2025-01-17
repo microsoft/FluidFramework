@@ -62,7 +62,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * The reference sequence number of the most recent acked summary.
 	 * Returns 0 if there is not yet an acked summary.
 	 */
-	public get referenceSequenceNumber() {
+	public get referenceSequenceNumber(): number {
 		return this._lastSummaryReferenceSequenceNumber ?? 0;
 	}
 
@@ -326,7 +326,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * queue. We track this until we get an ack from the server for this summary.
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
 	 */
-	public completeSummary(proposalHandle: string) {
+	public completeSummary(proposalHandle: string): void {
 		this.completeSummaryCore(proposalHandle, false /* parentSkipRecursion */);
 	}
 
@@ -338,7 +338,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * In that case, the children will not have work-in-progress state.
 	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
-	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean) {
+	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean): void {
 		assert(
 			this.wipReferenceSequenceNumber !== undefined,
 			0x1a4 /* "Not tracking a summary" */,
@@ -371,7 +371,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		this.clearSummary();
 	}
 
-	public clearSummary() {
+	public clearSummary(): void {
 		this.wipReferenceSequenceNumber = undefined;
 		this.wipSummarizeCalled = false;
 		this.wipSkipRecursion = false;
@@ -486,7 +486,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 	}
 
-	public updateBaseSummaryState(snapshot: ISnapshotTree) {
+	public updateBaseSummaryState(snapshot: ISnapshotTree): void {
 		// Function deprecated. Empty declaration is kept around to compat failures.
 	}
 
@@ -621,7 +621,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 *
 	 */
 
-	protected maybeUpdateChildState(child: SummarizerNode, id: string) {
+	protected maybeUpdateChildState(child: SummarizerNode, id: string): void {
 		// If a summary is in progress, this child was created after the summary started. So, we need to update the
 		// child's summary state as well.
 		if (this.isSummaryInProgress()) {
@@ -635,7 +635,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 	}
 
-	protected addPendingSummary(key: string, pendingSummaryInfo: PendingSummaryInfo) {
+	protected addPendingSummary(key: string, pendingSummaryInfo: PendingSummaryInfo): void {
 		this.pendingSummaries.set(key, pendingSummaryInfo);
 	}
 

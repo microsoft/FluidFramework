@@ -126,8 +126,10 @@ export class UnreferencedStateTracker {
 		this.updateTracking(currentReferenceTimestampMs);
 	}
 
-	/* Updates the unreferenced state based on the provided timestamp. */
-	public updateTracking(currentReferenceTimestampMs: number) {
+	/**
+	 * Updates the unreferenced state based on the provided timestamp.
+	 */
+	public updateTracking(currentReferenceTimestampMs: number): void {
 		const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
 
 		// Below we will set the appropriate timer (or none). Any running timers are superceded by the new currentReferenceTimestampMs
@@ -180,7 +182,7 @@ export class UnreferencedStateTracker {
 	/**
 	 * Stop tracking this node. Reset the unreferenced timers and state, if any.
 	 */
-	public stopTracking() {
+	public stopTracking(): void {
 		this.clearTimers();
 		this._state = UnreferencedState.Active;
 	}
