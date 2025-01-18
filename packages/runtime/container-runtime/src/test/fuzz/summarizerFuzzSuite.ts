@@ -23,47 +23,62 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import type { SummarizerOperation } from "./fuzzUtils.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IMockContainerRuntimeForSummarizerOptions,
+	// eslint-disable-next-line import/no-deprecated
 	MockContainerRuntimeFactoryForSummarizer,
+	// eslint-disable-next-line import/no-deprecated
 	MockContainerRuntimeForSummarizer,
 } from "./summarizerFuzzMocks.js";
 
+// eslint-disable-next-line import/no-deprecated
 export interface SummarizerFuzzTestState extends BaseFuzzTestState {
+	// eslint-disable-next-line import/no-deprecated
 	containerRuntimeFactory: MockContainerRuntimeFactoryForSummarizer;
+	// eslint-disable-next-line import/no-deprecated
 	containerRuntime: MockContainerRuntimeForSummarizer;
 }
 
+// eslint-disable-next-line import/no-deprecated
 export interface SummarizerFuzzModel {
 	workloadName: string;
+	// eslint-disable-next-line import/no-deprecated
 	generatorFactory: () => AsyncGenerator<SummarizerOperation, SummarizerFuzzTestState>;
+	// eslint-disable-next-line import/no-deprecated
 	reducer: AsyncReducer<SummarizerOperation, SummarizerFuzzTestState>;
 }
 
 /**
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export interface SummarizerFuzzHarnessEvents {
 	/**
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	(event: "clientCreate", listener: (client: SummarizerFuzzTestState) => void);
 
 	/**
 	 * Raised after creating the initialState but prior to performing the fuzzActions..
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	(event: "testStart", listener: (initialState: SummarizerFuzzTestState) => void);
 
 	/**
 	 * Raised after all fuzzActions have been completed.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	(event: "testEnd", listener: (finalState: SummarizerFuzzTestState) => void);
 }
 
 /**
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export interface SummarizerFuzzSuiteOptions {
 	/**
 	 * Number of tests to generate for correctness modes (which are run in the PR gate).
@@ -71,10 +86,11 @@ export interface SummarizerFuzzSuiteOptions {
 	defaultTestCount: number;
 
 	/**
-	 * Event emitter which allows hooking into interesting points of Summarizer harness execution.
+	 *Event emitter which allows hooking into interesting points of Summarizer harness execution.
 	 * Test authors that want to subscribe to any of these events should create a `TypedEventEmitter`,
 	 * do so, and pass it in when creating the suite.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	emitter: TypedEventEmitter<SummarizerFuzzHarnessEvents>;
 
 	/**
@@ -92,11 +108,11 @@ export interface SummarizerFuzzSuiteOptions {
 	 *
 	 * ```typescript
 	 * // Runs only seed 42 for the given model.
-	 * createSummarizerFuzzSuite(model, { only: [42] });
+	 *createSummarizerFuzzSuite(model, { only: [42] });
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.only` syntax works. See {@link (createSummarizerFuzzSuite:namespace).only}.
+	 *If you prefer, a variant of the standard `.only` syntax works. See {@link (createSummarizerFuzzSuite:namespace).only}.
 	 */
 	only: Iterable<number>;
 
@@ -107,11 +123,11 @@ export interface SummarizerFuzzSuiteOptions {
 	 *
 	 * ```typescript
 	 * // Skips seed 42 for the given model.
-	 * createSummarizerFuzzSuite(model, { skip: [42] });
+	 *createSummarizerFuzzSuite(model, { skip: [42] });
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link (createSummarizerFuzzSuite:namespace).skip}.
+	 *If you prefer, a variant of the standard `.skip` syntax works. See {@link (createSummarizerFuzzSuite:namespace).skip}.
 	 */
 	skip: Iterable<number>;
 
@@ -123,28 +139,37 @@ export interface SummarizerFuzzSuiteOptions {
 	 */
 	saveFailures: false | { directory: string };
 
+	// eslint-disable-next-line import/no-deprecated
 	containerRuntimeOptions?: IMockContainerRuntimeForSummarizerOptions;
 
+	// eslint-disable-next-line import/no-deprecated
 	parseOperations: (serialized: string) => SummarizerOperation[];
 }
 
 /**
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export const defaultSummarizerFuzzSuiteOptions: SummarizerFuzzSuiteOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	emitter: new TypedEventEmitter(),
 	only: [],
 	skip: [],
 	saveFailures: false,
+	// eslint-disable-next-line import/no-deprecated
 	parseOperations: (serialized: string) => JSON.parse(serialized) as SummarizerOperation[],
 };
 
+// eslint-disable-next-line import/no-deprecated
 export function createSummarizerFuzzSuite(
+	// eslint-disable-next-line import/no-deprecated
 	model: SummarizerFuzzModel,
+	// eslint-disable-next-line import/no-deprecated
 	providedOptions?: Partial<SummarizerFuzzSuiteOptions>,
 ): void {
+	// eslint-disable-next-line import/no-deprecated
 	const options: SummarizerFuzzSuiteOptions = {
+		// eslint-disable-next-line import/no-deprecated
 		...defaultSummarizerFuzzSuiteOptions,
 		...providedOptions,
 	};
@@ -182,6 +207,7 @@ export function createSummarizerFuzzSuite(
 				const replayModel = {
 					...model,
 					// We lose some type safety here because the options interface isn't generic
+					// eslint-disable-next-line import/no-deprecated
 					generatorFactory: (): AsyncGenerator<SummarizerOperation, unknown> =>
 						asyncGeneratorFromArray(operations),
 				};
@@ -192,17 +218,21 @@ export function createSummarizerFuzzSuite(
 }
 
 /**
- * Runs the provided Summarizer fuzz model. All functionality is already assumed to be mixed in.
+ *Runs the provided Summarizer fuzz model. All functionality is already assumed to be mixed in.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 async function runTestForSeed(
+	// eslint-disable-next-line import/no-deprecated
 	model: SummarizerFuzzModel,
+	// eslint-disable-next-line import/no-deprecated
 	options: Omit<SummarizerFuzzSuiteOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
+	// eslint-disable-next-line import/no-deprecated
 ): Promise<SummarizerFuzzTestState> {
 	const random = makeRandom(seed);
+	// eslint-disable-next-line import/no-deprecated
 	const containerRuntimeFactory = new MockContainerRuntimeFactoryForSummarizer(
 		options.containerRuntimeOptions,
 	);
@@ -211,6 +241,7 @@ async function runTestForSeed(
 		new MockFluidDataStoreRuntime(),
 	);
 
+	// eslint-disable-next-line import/no-deprecated
 	const initialState: SummarizerFuzzTestState = {
 		containerRuntimeFactory,
 		random,
@@ -240,6 +271,7 @@ async function runTestForSeed(
 }
 
 function runTest(
+	// eslint-disable-next-line import/no-deprecated
 	model: SummarizerFuzzModel,
 	options: InternalOptions,
 	seed: number,
@@ -261,6 +293,7 @@ interface HasWorkloadName {
 
 function getSaveDirectory(
 	model: HasWorkloadName,
+	// eslint-disable-next-line import/no-deprecated
 	options: SummarizerFuzzSuiteOptions,
 ): string | undefined {
 	if (!options.saveFailures) {
@@ -272,6 +305,7 @@ function getSaveDirectory(
 
 function getSaveInfo(
 	model: HasWorkloadName,
+	// eslint-disable-next-line import/no-deprecated
 	options: SummarizerFuzzSuiteOptions,
 	seed: number,
 ): SaveInfo {
@@ -285,11 +319,13 @@ function getSaveInfo(
 	};
 }
 
+// eslint-disable-next-line import/no-deprecated
 type InternalOptions = Omit<SummarizerFuzzSuiteOptions, "only" | "skip"> & {
 	only: Set<number>;
 	skip: Set<number>;
 };
 
+// eslint-disable-next-line import/no-deprecated
 function isInternalOptions(options: SummarizerFuzzSuiteOptions): options is InternalOptions {
 	return options.only instanceof Set && options.skip instanceof Set;
 }

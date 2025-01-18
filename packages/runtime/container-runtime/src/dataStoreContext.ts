@@ -39,7 +39,9 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
+	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeFn,
+	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeParam,
 	FluidDataStoreRegistryEntry,
 	IContainerRuntimeBase,
@@ -53,6 +55,7 @@ import {
 	IProvideFluidDataStoreFactory,
 	ISummarizeInternalResult,
 	ISummarizeResult,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	channelsTreeName,
@@ -145,7 +148,7 @@ export interface IFluidDataStoreContextProps {
 	readonly parentContext: IFluidParentContext;
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
-
+	// eslint-disable-next-line import/no-deprecated
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	readonly pkg?: Readonly<string[]>;
 	readonly loadingGroupId?: string;
@@ -338,7 +341,7 @@ export abstract class FluidDataStoreContext
 	protected _baseSnapshot: ISnapshotTree | undefined;
 	protected _attachState: AttachState;
 	private _isInMemoryRoot: boolean = false;
-
+	// eslint-disable-next-line import/no-deprecated
 	protected readonly summarizerNode: ISummarizerNodeWithGC;
 	protected readonly mc: MonitoringContext;
 	private readonly thresholdOpsCounter: ThresholdCounter;
@@ -392,6 +395,7 @@ export abstract class FluidDataStoreContext
 		): Promise<ISummarizeInternalResult> =>
 			this.summarizeInternal(fullTree, trackState, telemetryContext);
 
+		// eslint-disable-next-line import/no-deprecated
 		this.summarizerNode = props.createSummarizerNodeFn(
 			thisSummarizeInternal,
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
@@ -717,7 +721,6 @@ export abstract class FluidDataStoreContext
 		);
 
 		// Wrap dds summaries in .channels subtree.
-
 		wrapSummaryInChannelsTree(summarizeResult);
 		const pathPartsForChildren = [channelsTreeName];
 
@@ -725,15 +728,12 @@ export abstract class FluidDataStoreContext
 		const { pkg } = await this.getInitialSnapshotDetails();
 		const isRoot = await this.isRoot();
 		const attributes = createAttributes(pkg, isRoot);
-
 		addBlobToSummary(summarizeResult, dataStoreAttributesBlobName, JSON.stringify(attributes));
 
 		// If we are not referenced, mark the summary tree as unreferenced. Also, update unreferenced blob
 		// size in the summary stats with the blobs size of this data store.
-
 		if (!this.summarizerNode.isReferenced()) {
 			summarizeResult.summary.unreferenced = true;
-
 			summarizeResult.stats.unreferencedBlobSize = summarizeResult.stats.totalBlobSize;
 		}
 
@@ -787,7 +787,6 @@ export abstract class FluidDataStoreContext
 	 */
 	public updateUsedRoutes(usedRoutes: string[]): void {
 		// Update the used routes in this data store's summarizer node.
-
 		this.summarizerNode.updateUsedRoutes(usedRoutes);
 
 		// If the channel doesn't exist yet (data store is not realized), the summarizer node will update it
@@ -831,9 +830,9 @@ export abstract class FluidDataStoreContext
 	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
-
+		// eslint-disable-next-line import/no-deprecated
 		// Summarizer clients should not submit messages.
-
+		// eslint-disable-next-line import/no-deprecated
 		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
 
 		this.parentContext.submitMessage(type, content, localOpMetadata);
@@ -856,9 +855,12 @@ export abstract class FluidDataStoreContext
 
 		this.summarizerNode.invalidate(latestSequenceNumber);
 
+		// eslint-disable-next-line import/no-deprecated
 		const channelSummarizerNode = this.summarizerNode.getChild(address);
 
+		// eslint-disable-next-line import/no-deprecated
 		if (channelSummarizerNode) {
+			// eslint-disable-next-line import/no-deprecated
 			channelSummarizerNode.invalidate(latestSequenceNumber); // TODO: lazy load problem?
 		}
 	}
@@ -1063,10 +1065,11 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Summarizer client should not have local changes. These changes can become part of the summary and can break
+	 *Summarizer client should not have local changes. These changes can become part of the summary and can break
 	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	protected identifyLocalChangeInSummarizer(eventName: string, type?: string): void {
 		if (
 			this.clientDetails.type !== summarizerClientType ||
@@ -1077,26 +1080,26 @@ export abstract class FluidDataStoreContext
 
 		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
 		// this is happening and which data stores do this. The eventual goal is to disallow local changes
-
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
 			eventName,
 			type,
-
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(30),
 		});
 		this.localChangesTelemetryCount--;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public getCreateChildSummarizerNodeFn(
 		id: string,
-
+		// eslint-disable-next-line import/no-deprecated
 		createParam: CreateChildSummarizerNodeParam,
 	) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+			// eslint-disable-next-line import/no-deprecated
 		): ISummarizerNodeWithGC =>
 			this.summarizerNode.createChild(
 				summarizeInternal,
@@ -1107,6 +1110,7 @@ export abstract class FluidDataStoreContext
 			);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public deleteChildSummarizerNode(id: string): void {
 		this.summarizerNode.deleteChild(id);
 	}
@@ -1285,8 +1289,9 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 			props.makeLocallyVisibleFn,
 		);
 
+		// eslint-disable-next-line import/no-deprecated
 		// Summarizer client should not create local data stores.
-
+		// eslint-disable-next-line import/no-deprecated
 		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
 
 		this.snapshotTree = props.snapshotTree;

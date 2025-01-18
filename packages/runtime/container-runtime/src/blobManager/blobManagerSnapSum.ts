@@ -17,7 +17,6 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
  * Information from a snapshot needed to load BlobManager
  * @internal
  */
-
 export interface IBlobManagerLoadInfo {
 	ids?: string[];
 	redirectTable?: [string, string][];
@@ -36,10 +35,12 @@ export const blobsTreeName = ".blobs";
  */
 export const loadBlobManagerLoadInfo = async (
 	context: Pick<IContainerContext, "baseSnapshot" | "storage" | "attachState">,
+	// eslint-disable-next-line import/no-deprecated
 ): Promise<IBlobManagerLoadInfo> => loadV1(context);
 
 const loadV1 = async (
 	context: Pick<IContainerContext, "baseSnapshot" | "storage" | "attachState">,
+	// eslint-disable-next-line import/no-deprecated
 ): Promise<IBlobManagerLoadInfo> => {
 	const blobsTree = context.baseSnapshot?.trees[blobsTreeName];
 
@@ -59,6 +60,7 @@ const loadV1 = async (
 };
 
 export const toRedirectTable = (
+	// eslint-disable-next-line import/no-deprecated
 	snapshot: IBlobManagerLoadInfo,
 	logger: ITelemetryLoggerExt,
 	attachState: AttachState,

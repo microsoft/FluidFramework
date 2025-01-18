@@ -119,6 +119,33 @@ export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
     readonly override?: boolean;
 }
 
+// @alpha @deprecated (undocumented)
+export interface IFluidDataStoreAttributes0 {
+    readonly isRootDataStore?: boolean;
+    // (undocumented)
+    pkg: string;
+    // (undocumented)
+    readonly snapshotFormatVersion?: undefined;
+    // (undocumented)
+    readonly summaryFormatVersion?: undefined;
+}
+
+// @alpha @deprecated (undocumented)
+export interface IFluidDataStoreAttributes1 extends OmitAttributesVersions<IFluidDataStoreAttributes0> {
+    // (undocumented)
+    readonly snapshotFormatVersion: "0.1";
+    // (undocumented)
+    readonly summaryFormatVersion?: undefined;
+}
+
+// @alpha @deprecated (undocumented)
+export interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFluidDataStoreAttributes1> {
+    readonly disableIsolatedChannels?: true;
+    readonly snapshotFormatVersion?: undefined;
+    // (undocumented)
+    readonly summaryFormatVersion: 2;
+}
+
 // @alpha (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
@@ -311,11 +338,17 @@ export interface LoadContainerRuntimeParams {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
+// @alpha @deprecated (undocumented)
+export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;
+
 // @alpha (undocumented)
 export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
 
 // @alpha (undocumented)
 export type OpActionEventName = MessageType.Summarize | MessageType.SummaryAck | MessageType.SummaryNack | "default";
+
+// @alpha @deprecated
+export type ReadFluidDataStoreAttributes = IFluidDataStoreAttributes0 | IFluidDataStoreAttributes1 | IFluidDataStoreAttributes2;
 
 // @alpha
 export interface SubmitSummaryFailureData {

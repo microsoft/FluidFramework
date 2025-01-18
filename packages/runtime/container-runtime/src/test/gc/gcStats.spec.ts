@@ -16,9 +16,12 @@ import {
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GarbageCollector,
+	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	IGCStats,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
@@ -26,6 +29,7 @@ import {
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
 	oneDayMs,
+	// eslint-disable-next-line import/no-deprecated
 	stableGCVersion,
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
@@ -63,14 +67,18 @@ describe("Garbage Collection Stats", () => {
 	function createGarbageCollector(
 		createParams: Partial<IGarbageCollectorCreateParams> = {},
 		gcBlobsMap: Map<string, unknown> = new Map(),
+		// eslint-disable-next-line import/no-deprecated
 		gcMetadata: IGCMetadata = {},
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
+		// eslint-disable-next-line import/no-deprecated
 		isSummarizerClient: boolean = true,
 	) {
 		const getNodeType = (nodePath: string) => {
 			if (nodePath.split("/").length !== 2) {
+				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.Other;
 			}
+			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.DataStore;
 		};
 
@@ -94,6 +102,7 @@ describe("Garbage Collection Stats", () => {
 			metadata = {
 				...metadata,
 				...gcMetadata,
+				// eslint-disable-next-line import/no-deprecated
 				gcFeature: gcMetadata.gcFeature ?? stableGCVersion,
 				summaryFormatVersion: 1,
 				message: undefined,
@@ -112,6 +121,7 @@ describe("Garbage Collection Stats", () => {
 				createContainerRuntimeVersion: pkgVersion,
 				createContainerTimestamp: Date.now(),
 			},
+			// eslint-disable-next-line import/no-deprecated
 			isSummarizerClient,
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
@@ -170,6 +180,7 @@ describe("Garbage Collection Stats", () => {
 	});
 
 	let garbageCollector: IGarbageCollector;
+	// eslint-disable-next-line import/no-deprecated
 	let initialStats: IGCStats;
 
 	/**

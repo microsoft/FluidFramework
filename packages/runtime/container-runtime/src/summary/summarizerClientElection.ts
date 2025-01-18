@@ -19,11 +19,15 @@ import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export const summarizerClientType = "summarizer";
 
+// eslint-disable-next-line import/no-deprecated
 export interface ISummarizerClientElectionEvents extends IEvent {
+	// eslint-disable-next-line import/no-deprecated
 	(event: "electedSummarizerChanged", handler: () => void): void;
 }
 
+// eslint-disable-next-line import/no-deprecated
 export interface ISummarizerClientElection
+	// eslint-disable-next-line import/no-deprecated
 	extends IEventProvider<ISummarizerClientElectionEvents> {
 	readonly electedClientId: string | undefined;
 	readonly electedParentId: string | undefined;
@@ -34,9 +38,11 @@ export interface ISummarizerClientElection
  * It will handle updating the elected client when a summary ack hasn't been seen
  * for some configured number of ops.
  */
-
+// eslint-disable-next-line import/no-deprecated
 export class SummarizerClientElection
+	// eslint-disable-next-line import/no-deprecated
 	extends TypedEventEmitter<ISummarizerClientElectionEvents>
+	// eslint-disable-next-line import/no-deprecated
 	implements ISummarizerClientElection
 {
 	/**
@@ -62,7 +68,6 @@ export class SummarizerClientElection
 
 	constructor(
 		private readonly logger: ITelemetryLoggerExt,
-
 		private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
 		public readonly clientElection: IOrderedClientElection,
 		private readonly maxOpsSinceLastSummary: number,
@@ -70,7 +75,6 @@ export class SummarizerClientElection
 		super();
 		// On every inbound op, if enough ops pass without seeing a summary ack (per elected client),
 		// elect a new client and log to telemetry.
-
 		this.summaryCollection.on("default", ({ sequenceNumber }) => {
 			const electedClientId = this.electedClientId;
 			if (electedClientId === undefined) {
@@ -103,7 +107,6 @@ export class SummarizerClientElection
 		});
 
 		// When a summary ack comes in, reset our op seq counter.
-
 		this.summaryCollection.on(MessageType.SummaryAck, (op) => {
 			this.lastSummaryAckSeqForClient = op.sequenceNumber;
 		});
@@ -120,7 +123,7 @@ export class SummarizerClientElection
 				this.clientElection.resetElectedClient(sequenceNumber);
 			}
 			// Election can trigger a change in SummaryManager state.
-
+			// eslint-disable-next-line import/no-deprecated
 			this.emit("electedSummarizerChanged");
 		});
 	}
@@ -142,7 +145,7 @@ export class SummarizerClientElection
 			// Very old clients back-compat
 			return true;
 		}
-
+		// eslint-disable-next-line import/no-deprecated
 		return SummarizerClientElection.clientDetailsPermitElection(details);
 	}
 

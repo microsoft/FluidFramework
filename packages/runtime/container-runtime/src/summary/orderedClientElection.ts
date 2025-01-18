@@ -273,7 +273,6 @@ export interface IOrderedClientElectionEvents extends IEvent {
  * Serialized state of IOrderedClientElection.
  * @internal
  */
-
 export interface ISerializedElection {
 	/**
 	 * Sequence number at the time of the latest election.
@@ -337,7 +336,7 @@ export interface IOrderedClientElection extends IEventProvider<IOrderedClientEle
 	/**
 	 * Serialize election data
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	serialize(): ISerializedElection;
 }
 
@@ -412,7 +411,7 @@ export class OrderedClientElection
 		/**
 		 * Serialized state from summary or current sequence number at time of load if new.
 		 */
-
+		// eslint-disable-next-line import/no-deprecated
 		initialState: ISerializedElection | number,
 		private readonly isEligibleFn: (c: ITrackedClient) => boolean,
 		private readonly recordPerformanceEvents: boolean = false,
@@ -490,7 +489,7 @@ export class OrderedClientElection
 			reason,
 		);
 		let change = false;
-
+		// eslint-disable-next-line import/no-deprecated
 		const isSummarizerClient = client?.client.details.type === summarizerClientType;
 		const prevClient = this._electedClient;
 		if (this._electedClient !== client) {
@@ -506,7 +505,7 @@ export class OrderedClientElection
 			this._electedClient = client;
 			change = true;
 		}
-
+		// eslint-disable-next-line import/no-deprecated
 		if (this._electedParent !== client && !isSummarizerClient) {
 			this.sendPerformanceEvent(
 				"InteractiveClientElected",
@@ -579,18 +578,19 @@ export class OrderedClientElection
 		this.sendPerformanceEvent("AddClient", client, sequenceNumber);
 		if (this.isEligibleFn(client)) {
 			this._eligibleCount++;
-
+			// eslint-disable-next-line import/no-deprecated
 			const newClientIsSummarizer = client.client.details.type === summarizerClientType;
-
+			// eslint-disable-next-line import/no-deprecated
 			const electedClientIsSummarizer =
 				this._electedClient?.client.details.type === summarizerClientType;
-
 			// Note that we allow a summarizer client to supersede an interactive client as elected client.
 			if (
 				this._electedClient === undefined ||
+				// eslint-disable-next-line import/no-deprecated
 				(!electedClientIsSummarizer && newClientIsSummarizer)
 			) {
 				this.tryElectingClient(client, sequenceNumber, "AddClient");
+				// eslint-disable-next-line import/no-deprecated
 			} else if (this._electedParent === undefined && !newClientIsSummarizer) {
 				// This is an odd case. If the _electedClient is set, the _electedParent should be as well.
 				this.tryElectingParent(client, sequenceNumber, "AddClient");
@@ -612,16 +612,14 @@ export class OrderedClientElection
 				// Removing the _electedClient. There are 2 possible cases:
 				if (this._electedParent !== client) {
 					// 1. The _electedClient is a summarizer that we've been allowing to finish its work.
-
 					// Let the _electedParent become the _electedClient so that it can start its own summarizer.
-
 					if (this._electedClient.client.details.type !== summarizerClientType) {
 						throw new UsageError("Elected client should be a summarizer client 1");
 					}
 					this.tryElectingClient(
 						this._electedParent,
 						sequenceNumber,
-
+						// eslint-disable-next-line import/no-deprecated
 						"RemoveSummarizerClient",
 					);
 				} else {
@@ -635,9 +633,7 @@ export class OrderedClientElection
 			} else if (this._electedParent === client) {
 				// Removing the _electedParent (but not _electedClient).
 				// Shift to the next oldest parent, but do not replace the _electedClient,
-
 				// which is a summarizer that is still doing work.
-
 				if (this._electedClient?.client.details.type !== summarizerClientType) {
 					throw new UsageError("Elected client should be a summarizer client 2");
 				}
@@ -665,7 +661,6 @@ export class OrderedClientElection
 			this.tryElectingClient(firstClient, sequenceNumber, "ResetElectedClient");
 		} else {
 			// The _electedClient is a summarizer and should not be replaced until it leaves the quorum.
-
 			// Changing the _electedParent will stop the summarizer.
 			this.tryElectingParent(firstClient, sequenceNumber, "ResetElectedClient");
 		}
@@ -678,6 +673,7 @@ export class OrderedClientElection
 		);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public serialize(): ISerializedElection {
 		return {
 			electionSequenceNumber: this.electionSequenceNumber,
@@ -701,7 +697,7 @@ export class OrderedClientElection
 				electedClientId: this.electedClient?.clientId,
 				electedParentId: this.electedParent?.clientId,
 				isEligible: client !== undefined ? this.isEligibleFn(client) : false,
-
+				// eslint-disable-next-line import/no-deprecated
 				isSummarizerClient: client?.client.details.type === summarizerClientType,
 				reason,
 			});

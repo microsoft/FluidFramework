@@ -61,7 +61,6 @@ interface IUnreferencedEventProps extends ICreateContainerMetadata, ICommonProps
 	unrefTime: number;
 	age: number;
 	// Expanding GC feature matrix. Without doing this, the configs cannot be logged in telemetry directly.
-
 	gcConfigs: Omit<IGarbageCollectorConfigs, "persistedGcFeatureMatrix"> & {
 		// eslint-disable-next-line import/no-deprecated
 		[K in keyof GCFeatureMatrix]: GCFeatureMatrix[K];
@@ -129,7 +128,7 @@ export class GCTelemetryTracker {
 	constructor(
 		private readonly mc: MonitoringContext,
 		private readonly configs: IGarbageCollectorConfigs,
-
+		// eslint-disable-next-line import/no-deprecated
 		private readonly isSummarizerClient: boolean,
 		// eslint-disable-next-line import/no-deprecated
 		private readonly createContainerMetadata: ICreateContainerMetadata,
@@ -222,7 +221,6 @@ export class GCTelemetryTracker {
 					return undefined;
 			}
 		})();
-
 		const { persistedGcFeatureMatrix, ...configs } = this.configs;
 		const unrefEventProps = {
 			trackedId,
@@ -237,7 +235,6 @@ export class GCTelemetryTracker {
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
 			...otherNodeUsageProps,
 			...this.createContainerMetadata,
-
 			gcConfigs: { ...configs, ...persistedGcFeatureMatrix },
 		} satisfies Omit<IUnreferencedEventProps, "state" | "usageType"> &
 			typeof otherNodeUsageProps;
@@ -264,12 +261,11 @@ export class GCTelemetryTracker {
 		this.loggedUnreferencedEvents.add(uniqueEventId);
 
 		// For summarizer client, queue the event so it is logged the next time GC runs if the event is still valid.
-
 		// For non-summarizer client, log the event now since GC won't run on it. This may result in false positives
 		// but it's a good signal nonetheless and we can consume it with a grain of salt.
 		// Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
 		// SweepReady errors are usages of Objects that will be deleted by GC Sweep!
-
+		// eslint-disable-next-line import/no-deprecated
 		if (this.isSummarizerClient) {
 			this.pendingEventsQueue.push({
 				...unrefEventProps, // Note: Contains some properties from INodeUsageProps as well
@@ -278,7 +274,6 @@ export class GCTelemetryTracker {
 			});
 		} else {
 			// For non-summarizer clients, only log "Loaded" type events since these objects may not be loaded in the
-
 			// summarizer clients if they are based off of user actions (such as scrolling to content for these objects)
 			// Events generated:
 			// InactiveObject_Loaded, SweepReadyObject_Loaded

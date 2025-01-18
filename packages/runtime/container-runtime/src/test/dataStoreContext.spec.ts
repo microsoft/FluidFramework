@@ -25,7 +25,9 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionData,
+	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeFn,
+	// eslint-disable-next-line import/no-deprecated
 	CreateSummarizerNodeSource,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
@@ -61,9 +63,11 @@ import {
 } from "../dataStoreContext.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
+	// eslint-disable-next-line import/no-deprecated
 	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
 	summarizerClientType,
@@ -72,6 +76,7 @@ import {
 describe("Data Store Context Tests", () => {
 	const dataStoreId = "Test1";
 	const emptyGCData: IGarbageCollectionData = { gcNodes: {} };
+	// eslint-disable-next-line import/no-deprecated
 	let createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 
 	describe("LocalFluidDataStoreContext", () => {
@@ -80,6 +85,7 @@ describe("Data Store Context Tests", () => {
 		let scope: FluidObject;
 		const makeLocallyVisibleFn = () => {};
 		let parentContext: IFluidParentContext;
+		// eslint-disable-next-line import/no-deprecated
 		let summarizerNode: IRootSummarizerNodeWithGC;
 
 		function createParentContext(
@@ -110,6 +116,7 @@ describe("Data Store Context Tests", () => {
 		}
 
 		beforeEach(async () => {
+			// eslint-disable-next-line import/no-deprecated
 			summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),
 				(() => undefined) as unknown as SummarizeInternalFn,
@@ -118,6 +125,7 @@ describe("Data Store Context Tests", () => {
 			);
 			summarizerNode.startSummary(0, createChildLogger(), 0);
 
+			// eslint-disable-next-line import/no-deprecated
 			createSummarizerNodeFn = (
 				summarizeInternal: SummarizeInternalFn,
 				getGCDataFn: () => Promise<IGarbageCollectionData>,
@@ -125,6 +133,7 @@ describe("Data Store Context Tests", () => {
 				summarizerNode.createChild(
 					summarizeInternal,
 					dataStoreId,
+					// eslint-disable-next-line import/no-deprecated
 					{ type: CreateSummarizerNodeSource.Local },
 					undefined,
 					getGCDataFn,
@@ -142,6 +151,7 @@ describe("Data Store Context Tests", () => {
 						parentContext,
 						storage,
 						scope,
+						// eslint-disable-next-line import/no-deprecated
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
@@ -160,6 +170,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -201,6 +212,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -257,6 +269,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -292,6 +305,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -346,6 +360,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -378,6 +393,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -385,6 +401,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
+						// eslint-disable-next-line import/no-deprecated
 						eventName: "FluidDataStoreContext:DataStoreCreatedInSummarizer",
 						fullPackageName: {
 							tag: TelemetryDataTag.CodeArtifact,
@@ -410,6 +427,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -424,6 +442,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
+						// eslint-disable-next-line import/no-deprecated
 						eventName: "FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer",
 						type: DataStoreMessageType.ChannelOp,
 						fluidDataStoreId: {
@@ -449,6 +468,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -466,7 +486,9 @@ describe("Data Store Context Tests", () => {
 				for (const event of mockLogger.events) {
 					if (
 						event.eventName ===
+							// eslint-disable-next-line import/no-deprecated
 							"FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer" ||
+						// eslint-disable-next-line import/no-deprecated
 						event.eventName === "FluidDataStoreContext:DataStoreCreatedInSummarizer"
 					) {
 						eventCount++;
@@ -484,6 +506,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -500,14 +523,17 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
 				});
 
 				// Get the summarizer node for this data store which tracks its referenced state.
+				// eslint-disable-next-line import/no-deprecated
 				const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
 				assert.strictEqual(
+					// eslint-disable-next-line import/no-deprecated
 					dataStoreSummarizerNode?.isReferenced(),
 					true,
 					"Data store should be referenced by default",
@@ -516,6 +542,7 @@ describe("Data Store Context Tests", () => {
 				// Update the used routes to not include route to the data store.
 				localDataStoreContext.updateUsedRoutes([]);
 				assert.strictEqual(
+					// eslint-disable-next-line import/no-deprecated
 					dataStoreSummarizerNode?.isReferenced(),
 					false,
 					"Data store should now be unreferenced",
@@ -524,6 +551,7 @@ describe("Data Store Context Tests", () => {
 				// Add the data store's route (empty string) to its used routes.
 				localDataStoreContext.updateUsedRoutes([""]);
 				assert.strictEqual(
+					// eslint-disable-next-line import/no-deprecated
 					dataStoreSummarizerNode?.isReferenced(),
 					true,
 					"Data store should now be referenced",
@@ -537,6 +565,7 @@ describe("Data Store Context Tests", () => {
 					parentContext,
 					storage,
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 					makeLocallyVisibleFn,
 					snapshotTree: undefined,
@@ -558,6 +587,7 @@ describe("Data Store Context Tests", () => {
 		let dataStoreAttributes: ReadFluidDataStoreAttributes;
 		const storage: Partial<IDocumentStorageService> = {};
 		let scope: FluidObject;
+		// eslint-disable-next-line import/no-deprecated
 		let summarizerNode: IRootSummarizerNodeWithGC;
 		let parentContext: IFluidParentContext;
 
@@ -586,6 +616,7 @@ describe("Data Store Context Tests", () => {
 
 		describe("Initialization - can correctly initialize and generate attributes", () => {
 			beforeEach(() => {
+				// eslint-disable-next-line import/no-deprecated
 				summarizerNode = createRootSummarizerNodeWithGC(
 					createChildLogger(),
 					(() => undefined) as unknown as SummarizeInternalFn,
@@ -594,6 +625,7 @@ describe("Data Store Context Tests", () => {
 				);
 				summarizerNode.startSummary(0, createChildLogger(), 0);
 
+				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn = (
 					summarizeInternal: SummarizeInternalFn,
 					getGCDataFn: () => Promise<IGarbageCollectionData>,
@@ -601,6 +633,7 @@ describe("Data Store Context Tests", () => {
 					summarizerNode.createChild(
 						summarizeInternal,
 						dataStoreId,
+						// eslint-disable-next-line import/no-deprecated
 						{ type: CreateSummarizerNodeSource.FromSummary },
 						// Disable GC for initialization tests.
 						{ gcDisabled: true },
@@ -650,6 +683,7 @@ describe("Data Store Context Tests", () => {
 							attachBlobs,
 						),
 						scope,
+						// eslint-disable-next-line import/no-deprecated
 						createSummarizerNodeFn,
 					});
 
@@ -692,6 +726,7 @@ describe("Data Store Context Tests", () => {
 						parentContext,
 						storage: storage as IDocumentStorageService,
 						scope,
+						// eslint-disable-next-line import/no-deprecated
 						createSummarizerNodeFn,
 						snapshot: undefined,
 					});
@@ -725,6 +760,7 @@ describe("Data Store Context Tests", () => {
 			}
 
 			beforeEach(() => {
+				// eslint-disable-next-line import/no-deprecated
 				summarizerNode = createRootSummarizerNodeWithGC(
 					createChildLogger(),
 					(() => undefined) as unknown as SummarizeInternalFn,
@@ -736,6 +772,7 @@ describe("Data Store Context Tests", () => {
 				);
 				summarizerNode.startSummary(0, createChildLogger(), 0);
 
+				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn = (
 					summarizeInternal: SummarizeInternalFn,
 					getGCDataFn: () => Promise<IGarbageCollectionData>,
@@ -743,6 +780,7 @@ describe("Data Store Context Tests", () => {
 					summarizerNode.createChild(
 						summarizeInternal,
 						dataStoreId,
+						// eslint-disable-next-line import/no-deprecated
 						{ type: CreateSummarizerNodeSource.FromSummary },
 						undefined,
 						getGCDataFn,
@@ -774,6 +812,7 @@ describe("Data Store Context Tests", () => {
 						attachBlobs,
 					),
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 				});
 
@@ -819,6 +858,7 @@ describe("Data Store Context Tests", () => {
 						attachBlobs,
 					),
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 				});
 
@@ -868,6 +908,7 @@ describe("Data Store Context Tests", () => {
 						attachBlobs,
 					),
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 				});
 
@@ -922,12 +963,15 @@ describe("Data Store Context Tests", () => {
 						attachBlobs,
 					),
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 				});
 
 				// Get the summarizer node for this data store which tracks its referenced state.
+				// eslint-disable-next-line import/no-deprecated
 				const dataStoreSummarizerNode = summarizerNode.getChild(dataStoreId);
 				assert.strictEqual(
+					// eslint-disable-next-line import/no-deprecated
 					dataStoreSummarizerNode?.isReferenced(),
 					true,
 					"Data store should be referenced by default",
@@ -936,6 +980,7 @@ describe("Data Store Context Tests", () => {
 				// Update the used routes to not include route to the data store.
 				remoteDataStoreContext.updateUsedRoutes([]);
 				assert.strictEqual(
+					// eslint-disable-next-line import/no-deprecated
 					dataStoreSummarizerNode?.isReferenced(),
 					false,
 					"Data store should now be unreferenced",
@@ -944,6 +989,7 @@ describe("Data Store Context Tests", () => {
 				// Add the data store's route (empty string) to its used routes.
 				remoteDataStoreContext.updateUsedRoutes([""]);
 				assert.strictEqual(
+					// eslint-disable-next-line import/no-deprecated
 					dataStoreSummarizerNode?.isReferenced(),
 					true,
 					"Data store should now be referenced",
@@ -997,6 +1043,7 @@ describe("Data Store Context Tests", () => {
 						attachBlobs,
 					),
 					scope,
+					// eslint-disable-next-line import/no-deprecated
 					createSummarizerNodeFn,
 				});
 
@@ -1028,6 +1075,7 @@ describe("Data Store Context Tests", () => {
 		let provideDsRuntimeWithFailingEntrypoint = false;
 
 		beforeEach(async () => {
+			// eslint-disable-next-line import/no-deprecated
 			const summarizerNode: IRootSummarizerNodeWithGC = createRootSummarizerNodeWithGC(
 				createChildLogger(),
 				(() => undefined) as unknown as SummarizeInternalFn,
@@ -1036,6 +1084,7 @@ describe("Data Store Context Tests", () => {
 			);
 			summarizerNode.startSummary(0, createChildLogger(), 0);
 
+			// eslint-disable-next-line import/no-deprecated
 			createSummarizerNodeFn = (
 				summarizeInternal: SummarizeInternalFn,
 				getGCDataFn: () => Promise<IGarbageCollectionData>,
@@ -1043,6 +1092,7 @@ describe("Data Store Context Tests", () => {
 				summarizerNode.createChild(
 					summarizeInternal,
 					dataStoreId,
+					// eslint-disable-next-line import/no-deprecated
 					{ type: CreateSummarizerNodeSource.Local },
 					undefined,
 					getGCDataFn,
@@ -1089,6 +1139,7 @@ describe("Data Store Context Tests", () => {
 						parentContext,
 						storage,
 						scope,
+						// eslint-disable-next-line import/no-deprecated
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
@@ -1112,6 +1163,7 @@ describe("Data Store Context Tests", () => {
 						parentContext,
 						storage,
 						scope,
+						// eslint-disable-next-line import/no-deprecated
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,
@@ -1147,6 +1199,7 @@ describe("Data Store Context Tests", () => {
 						parentContext,
 						storage,
 						scope,
+						// eslint-disable-next-line import/no-deprecated
 						createSummarizerNodeFn,
 						makeLocallyVisibleFn,
 						snapshotTree: undefined,

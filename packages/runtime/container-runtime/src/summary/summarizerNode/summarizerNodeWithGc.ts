@@ -7,9 +7,12 @@ import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IGarbageCollectionData,
+	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeParam,
 	IGarbageCollectionDetailsBase,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeConfigWithGC,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
@@ -22,18 +25,23 @@ import {
 
 import { cloneGCData, unpackChildNodesGCDetails } from "../../gc/index.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { SummarizerNode } from "./summarizerNode.js";
 import {
 	EscapedPath,
 	ICreateChildDetails,
 	IStartSummaryResult,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeRootContract,
 	PendingSummaryInfo,
 	ValidateSummaryResult,
 } from "./summarizerNodeUtils.js";
 
+// eslint-disable-next-line import/no-deprecated
 export interface IRootSummarizerNodeWithGC
+	// eslint-disable-next-line import/no-deprecated
 	extends ISummarizerNodeWithGC,
+		// eslint-disable-next-line import/no-deprecated
 		ISummarizerNodeRootContract {}
 
 // Extend PendingSummaryInfo to add used routes tracking it.
@@ -42,7 +50,7 @@ interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
 }
 
 /**
- * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
+ *Extends the functionality of SummarizerNode to manage this node's garbage collection data:
  *
  * - Adds a new API `getGCData` to return GC data of this node.
  *
@@ -51,10 +59,10 @@ interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
  * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
  * and to determine if the node's used state changed since last summary.
  *
- * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
+ *- Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
-
+// eslint-disable-next-line import/no-deprecated
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
 	// Tracks the work-in-progress used routes during summary.
 	private wipSerializedUsedRoutes: string | undefined;
@@ -88,12 +96,12 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 	/**
 	 * Do not call constructor directly.
-	 * Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
+	 *Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
 		logger: ITelemetryBaseLogger,
 		summarizeInternalFn: SummarizeInternalFn,
-
+		// eslint-disable-next-line import/no-deprecated
 		config: ISummarizerNodeConfigWithGC,
 		_summaryHandleId: EscapedPath,
 		changeSequenceNumber: number,
@@ -340,7 +348,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	}
 
 	/**
-	 * Override the createChild method to return an instance of SummarizerNodeWithGC.
+	 *Override the createChild method to return an instance of SummarizerNodeWithGC.
 	 */
 	public createChild(
 		/**
@@ -356,12 +364,14 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 * If it is from a base summary, it will assert that a summary has been seen.
 		 * Attach information if it is created from an attach op.
 		 */
-
+		// eslint-disable-next-line import/no-deprecated
 		createParam: CreateChildSummarizerNodeParam,
-
+		// eslint-disable-next-line import/no-deprecated
 		config: ISummarizerNodeConfigWithGC = {},
 		getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
+		// eslint-disable-next-line import/no-deprecated
 	): ISummarizerNodeWithGC {
+		// eslint-disable-next-line import/no-deprecated
 		assert(!this.children.has(id), 0x1b6 /* "Create SummarizerNode child already exists" */);
 		/**
 		 * Update the child node's base GC details from this node's current GC details instead of updating from the base
@@ -375,7 +385,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		};
 
 		const createDetails: ICreateChildDetails = this.getCreateDetailsForChild(id, createParam);
-
+		// eslint-disable-next-line import/no-deprecated
 		const child = new SummarizerNodeWithGC(
 			this.logger,
 			summarizeInternalFn,
@@ -410,7 +420,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param child - The child node whose state is to be updated.
 	 * @param id - Initial id or path part of this node
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string): void {
 		super.maybeUpdateChildState(child, id);
 
@@ -453,10 +463,11 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	}
 
 	/**
-	 * Override the getChild method to return an instance of SummarizerNodeWithGC.
+	 *Override the getChild method to return an instance of SummarizerNodeWithGC.
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	public getChild(id: string): ISummarizerNodeWithGC | undefined {
+		// eslint-disable-next-line import/no-deprecated
 		return this.children.get(id) as SummarizerNodeWithGC;
 	}
 
@@ -510,7 +521,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 /**
  * Creates a root summarizer node with GC functionality built-in.
- * @param logger - Logger to use within SummarizerNode
+ *@param logger - Logger to use within SummarizerNode
  * @param summarizeInternalFn - Function to generate summary
  * @param changeSequenceNumber - Sequence number of latest change to new node/subtree
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,
@@ -519,17 +530,19 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
  * @param getGCDataFn - Function to get the GC data of this node
  * @param baseGCDetailsP - Function to get the initial GC details of this node
  */
-
+// eslint-disable-next-line import/no-deprecated
 export const createRootSummarizerNodeWithGC = (
 	logger: ITelemetryBaseLogger,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,
-
+	// eslint-disable-next-line import/no-deprecated
 	config: ISummarizerNodeConfigWithGC = {},
 	getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 	getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
+	// eslint-disable-next-line import/no-deprecated
 ): IRootSummarizerNodeWithGC =>
+	// eslint-disable-next-line import/no-deprecated
 	new SummarizerNodeWithGC(
 		logger,
 		summarizeInternalFn,

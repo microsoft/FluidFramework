@@ -22,7 +22,6 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
  * @legacy
  * @alpha
  */
-
 export interface ISummaryOpMessage extends ISequencedDocumentMessage {
 	type: MessageType.Summarize;
 	contents: ISummaryContent;
@@ -33,7 +32,6 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
  * @legacy
  * @alpha
  */
-
 export interface ISummaryAckMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryAck;
 	contents: ISummaryAck;
@@ -44,7 +42,6 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
  * @legacy
  * @alpha
  */
-
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 	type: MessageType.SummaryNack;
 	contents: ISummaryNack;
@@ -59,9 +56,7 @@ export interface ISummaryNackMessage extends ISequencedDocumentMessage {
 export interface ISummary {
 	readonly clientId: string;
 	readonly clientSequenceNumber: number;
-
 	waitBroadcast(): Promise<ISummaryOpMessage>;
-
 	waitAckNack(): Promise<ISummaryAckMessage | ISummaryNackMessage>;
 }
 
@@ -72,7 +67,6 @@ export interface ISummary {
  */
 export interface IAckedSummary {
 	readonly summaryOp: ISummaryOpMessage;
-
 	readonly summaryAck: ISummaryAckMessage;
 }
 
@@ -98,7 +92,6 @@ class Summary implements ISummary {
 	private state = SummaryState.Local;
 
 	private _summaryOp?: ISummaryOpMessage;
-
 	private _summaryAckNack?: ISummaryAckMessage | ISummaryNackMessage;
 
 	private readonly defSummaryOp = new Deferred<void>();
@@ -123,7 +116,6 @@ class Summary implements ISummary {
 	public broadcast(op: ISummaryOpMessage): boolean {
 		assert(
 			this.state === SummaryState.Local,
-
 			0x175 /* "Can only broadcast if summarizer starts in local state" */,
 		);
 		this._summaryOp = op;
@@ -135,7 +127,6 @@ class Summary implements ISummary {
 	public ackNack(op: ISummaryAckMessage | ISummaryNackMessage): boolean {
 		assert(
 			this.state === SummaryState.Broadcast,
-
 			0x176 /* "Can only ack/nack if summarizer is in broadcasting state" */,
 		);
 		this._summaryAckNack = op;
@@ -162,10 +153,8 @@ class Summary implements ISummary {
  * @legacy
  * @alpha
  */
-
 export interface IClientSummaryWatcher extends IDisposable {
 	watchSummary(clientSequenceNumber: number): ISummary;
-
 	waitFlushed(): Promise<IAckedSummary | undefined>;
 }
 
@@ -173,7 +162,6 @@ export interface IClientSummaryWatcher extends IDisposable {
  * This class watches summaries created by a specific client.
  * It should be created and managed from a SummaryCollection.
  */
-
 class ClientSummaryWatcher implements IClientSummaryWatcher {
 	// key: clientSeqNum
 	private readonly localSummaries = new Map<number, Summary>();
@@ -185,7 +173,6 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 
 	public constructor(
 		public readonly clientId: string,
-
 		private readonly summaryCollection: SummaryCollection,
 	) {}
 
@@ -251,7 +238,6 @@ export type OpActionEventListener = (op: ISequencedDocumentMessage) => void;
  * @legacy
  * @alpha
  */
-
 export interface ISummaryCollectionOpEvents extends IEvent {
 	(event: OpActionEventName, listener: OpActionEventListener);
 }
@@ -273,7 +259,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	private lastSummaryTimestamp: number | undefined;
 	private maxAckWaitTime: number | undefined;
 	private pendingAckTimerTimeoutCallback: (() => void) | undefined;
-
 	private lastAck: IAckedSummary | undefined;
 
 	public get latestAck(): IAckedSummary | undefined {
@@ -312,7 +297,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	 * This will allow for local sent summaries to be better tracked.
 	 * @param clientId - client id for watcher
 	 */
-
 	public createWatcher(clientId: string): IClientSummaryWatcher {
 		const watcher = new ClientSummaryWatcher(clientId, this);
 		this.summaryWatchers.set(clientId, watcher);
@@ -340,7 +324,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	 * Returns a promise that resolves once all pending summary ops
 	 * have been acked or nacked.
 	 */
-
 	public async waitFlushed(): Promise<IAckedSummary | undefined> {
 		while (this.pendingSummaries.size > 0) {
 			// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -358,7 +341,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	 * @param referenceSequenceNumber - reference sequence number to wait for
 	 * @returns The latest acked summary
 	 */
-
 	public async waitSummaryAck(referenceSequenceNumber: number): Promise<IAckedSummary> {
 		while (
 			!this.lastAck ||
@@ -389,7 +371,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		switch (op.type) {
 			case MessageType.Summarize:
 				this.parseContent(op);
-
 				return this.handleSummaryOp(op as ISummaryOpMessage);
 			case MessageType.SummaryAck:
 			case MessageType.SummaryNack:
@@ -404,7 +385,6 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 					: this.handleSummaryNack(op as ISummaryNackMessage);
 			default: {
 				// If the difference between timestamp of current op and last summary op is greater than
-
 				// the maxAckWaitTime, then we need to inform summarizer to not wait and summarize
 				// immediately as we have already waited for maxAckWaitTime.
 				const lastOpTimestamp = op.timestamp;

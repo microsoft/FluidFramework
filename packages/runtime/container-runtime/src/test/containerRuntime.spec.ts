@@ -88,9 +88,11 @@ import {
 	PendingStateManager,
 } from "../pendingStateManager.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
 	neverCancelledSummaryToken,
 	recentBatchInfoBlobName,
+	// eslint-disable-next-line import/no-deprecated
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
 
@@ -1622,6 +1624,7 @@ describe("Runtime", () => {
 			});
 
 			it("summary fails if summary token is canceled", async () => {
+				// eslint-disable-next-line import/no-deprecated
 				const cancelledSummaryToken: ISummaryCancellationToken = {
 					cancelled: true,
 					waitCancelled: new Promise(() => {}),
@@ -1772,7 +1775,7 @@ describe("Runtime", () => {
 			 * it gets a snapshot which is older than the one corresponding to the ack.
 			 * This can happen in cases such as database rollbacks in server which results in deleting recent snapshots but
 			 * not the corresponding acks.
-			 * Summarizers should not close in this scenario. They should continue generating summaries.
+			 *Summarizers should not close in this scenario. They should continue generating summaries.
 			 */
 			it("Summary succeeds on receiving summary ack for a deleted snapshot", async () => {
 				// The latest snapshot version in storage.
@@ -1795,6 +1798,7 @@ describe("Runtime", () => {
 				// The version of the snapshot that was deleted say during DB rollback.
 				const deletedSnapshotId = "snapshot2";
 				// The properties of the ack corresponding to the deleted snapshot.
+				// eslint-disable-next-line import/no-deprecated
 				const deletedSnapshotAckOptions: IRefreshSummaryAckOptions = {
 					proposalHandle: "proposal1",
 					ackHandle: deletedSnapshotId,
@@ -2435,6 +2439,7 @@ describe("Runtime", () => {
 					(err: IFluidErrorBase) => {
 						assert(
 							err.message ===
+								// eslint-disable-next-line import/no-deprecated
 								"Summarizer client behind, loaded newer snapshot with loadingGroupId",
 							"summarizer client is behind",
 						);

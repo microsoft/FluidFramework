@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-deprecated
 import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
@@ -15,12 +16,13 @@ import { IConnectableRuntime, ISummaryCancellationToken } from "./summarizerType
  */
 // eslint-disable-next-line import/no-deprecated
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
+	// eslint-disable-next-line import/no-deprecated
 	stop(reason: SummarizerStopReason): void;
 }
 
 /**
  * Can be useful in testing as well as in places where caller does not use cancellation.
- * This object implements ISummaryCancellationToken interface but cancellation is never leveraged.
+ *This object implements ISummaryCancellationToken interface but cancellation is never leveraged.
  * @internal
  */
 // eslint-disable-next-line import/no-deprecated
@@ -34,10 +36,10 @@ export const neverCancelledSummaryToken: ISummaryCancellationToken = {
  * This provides promises that resolve as it starts or stops.  Stopping happens
  * when disconnected or if stop() is called.
  */
-
+// eslint-disable-next-line import/no-deprecated
 export class RunWhileConnectedCoordinator implements ICancellableSummarizerController {
 	private _cancelled = false;
-
+	// eslint-disable-next-line import/no-deprecated
 	private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
 	public get cancelled(): boolean {
@@ -45,22 +47,18 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 			assert(this.active(), 0x25d /* "We should never connect as 'read'" */);
 
 			// This check can't be enabled in current design due to lastSummary flow, where
-
 			// summarizer for closed container stays around and can produce one more summary.
-
 			// Currently we solve the problem of overlapping summarizer by doing wait in
-
+			// eslint-disable-next-line import/no-deprecated
 			// SummaryManager.createSummarizer()
 			// Better solution would involve these steps:
-
+			// eslint-disable-next-line import/no-deprecated
 			// 1. Summarizer selection logic should chose summarizing client (with clientType === "summarizer")
 			// if such client exists.
-
+			// eslint-disable-next-line import/no-deprecated
 			// 2. Summarizer should be updated about such changes (to update onBehalfOfClientId)
 			//
-
 			// assert(this.runtime.summarizerClientId === this.onBehalfOfClientId ||
-
 			//    this.runtime.summarizerClientId === this.runtime.clientId, "onBehalfOfClientId");
 		}
 
@@ -70,7 +68,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 	/**
 	 * Returns a promise that resolves once stopped either externally or by disconnect.
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	public get waitCancelled(): Promise<SummarizerStopReason> {
 		return this.stopDeferred.promise;
 	}
@@ -118,14 +116,13 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 			);
 			await Promise.race([waitConnected, this.waitCancelled]);
 		}
-
 		this.runtime.once("disconnected", () => this.stop("summarizerClientDisconnected"));
 	}
 
 	/**
 	 * Stops running.
 	 */
-
+	// eslint-disable-next-line import/no-deprecated
 	public stop(reason: SummarizerStopReason): void {
 		if (!this._cancelled) {
 			this._cancelled = true;
