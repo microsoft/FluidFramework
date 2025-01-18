@@ -120,6 +120,7 @@ describeCompat(
 						minimumBatchSizeInBytes: compression ? 1000 : Infinity,
 						compressionAlgorithm: CompressionAlgorithms.lz4,
 					},
+					enableGroupedBatching: compression, // Compression w/o grouping is not supported
 					chunkSizeInBytes: chunking ? 200 : Infinity,
 				},
 			};

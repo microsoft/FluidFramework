@@ -266,6 +266,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		};
 
+		//* TODO: Fix this test
 		itExpects(
 			`Batch with 4000 ops - ${enableGroupedBatching ? "grouped" : "regular"} batches`,
 			enableGroupedBatching
