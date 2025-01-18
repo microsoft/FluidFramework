@@ -6,14 +6,17 @@
 import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
 
 import {
-	IConfigRange,
-	IMergeTreeOperationRunnerConfig,
-	TestOperation,
+	type IConfigRange,
+	type IMergeTreeOperationRunnerConfig,
+	type TestOperation,
 	annotateRange,
 	doOverRange,
 	generateClientNames,
 	insertAtRefPos,
+	insertField,
+	obliterateField,
 	obliterateRange,
+	// obliterateRangeSided,
 	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
@@ -34,7 +37,7 @@ export const debugOptions: IConflictFarmConfig = {
 	operations: allOperations,
 	incrementalLog: true,
 	growthFunc: (input: number) => input * 2,
-	// resultsFilePostfix: `conflict-farm-with-obliterate-2.3.0.json`,
+	resultsFilePostfix: `conflict-farm-with-field-obliterate.json`,
 };
 
 export const defaultOptions: IConflictFarmConfig = {
@@ -81,6 +84,13 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 					operations: [...opts.operations, obliterateRange],
 				},
 			},
+			{
+				name: "obliterate fields",
+				config: {
+					...opts,
+					operations: [insertField, obliterateField],
+				},
+			},
 			// TODO: AB#15630
 			// {
 			// 	name: "obliterate with sided endpoints",
@@ -125,7 +135,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 	});
 }
 
-describeFuzz("MergeTree.Client", ({ testCount, stressMode }) => {
+describeFuzz.only("MergeTree.Client", ({ testCount, stressMode }) => {
 	const opts = stressMode === StressMode.Short ? defaultOptions : stressOptions;
 	// defaultOptions;
 	// debugOptions;

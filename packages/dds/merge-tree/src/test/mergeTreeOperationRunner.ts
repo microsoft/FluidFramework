@@ -8,18 +8,18 @@
 import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 
-import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IRandom } from "@fluid-private/stochastic-test-utils";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
-import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
+import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
-import { Side } from "../sequencePlace.js";
+import { Side, type InteriorSequencePlace } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
-import { TestClient } from "./testClient.js";
+import type { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
 
 export type TestOperation = (
@@ -28,6 +28,82 @@ export type TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => IMergeTreeOp | undefined;
+
+/**
+ * TBD: will be needed to avoid number chunks when chunk size \> 1
+ */
+// const insertAvoidNumber = (client: TestClient): number => {
+// 	let pos = 0;
+// 	for (let i = 0; i < client.getLength(); i++) {
+// 		if (Number.isNaN(Number(client.getText(i, i + 1)))) {
+// 			pos = i;
+// 		}
+// 	}
+// 	return pos;
+// };
+
+export const insertField: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	const numberText = random.string(2, "0123456789");
+	if (
+		// start is not a number
+		Number.isNaN(Number(client.getText(opStart, opStart + 1))) &&
+		// previous is not a number
+		(opStart === 0 ||
+			opStart >= client.getLength() ||
+			Number.isNaN(Number(client.getText(opStart - 1, opStart))))
+	) {
+		return client.insertTextLocal(opStart, numberText);
+	}
+};
+
+const numberRange = (
+	client: TestClient,
+	start: number,
+	end: number,
+): { startPos: number | undefined; endPos: number | undefined } => {
+	/**
+	 * TUESDAY: ADAPT THIS FOR 3 CHAR CHUNKS (and code for 2+ char chunks)
+	 * pos 		char before 		char after		outcome
+	 * 0		letter				number			pos, pos + 1
+	 * 1		number				letter			pos - 1, pos
+	 */
+	let startPos = 0;
+	for (let i = 0; i < client.getLength(); i++) {
+		if (!Number.isNaN(Number(client.getText(i, i + 1)))) {
+			startPos = i;
+			break;
+		}
+	}
+	return { startPos, endPos: startPos + 1 };
+};
+
+export const obliterateField: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	const { startPos, endPos } = numberRange(client, opStart, opEnd);
+
+	let endISP: InteriorSequencePlace | undefined;
+	if (startPos !== undefined && endPos !== undefined) {
+		if (endPos >= client.getLength())
+			endISP = { pos: client.getLength() - 1, side: Side.After };
+		return client.obliterateRangeLocal(
+			{ pos: startPos, side: Side.Before },
+			endISP ?? { pos: endPos, side: Side.After },
+		);
+	}
+	return client.obliterateRangeLocal(
+		{ pos: opStart, side: Side.Before },
+		{ pos: opEnd, side: Side.After },
+	);
+};
 
 export const removeRange: TestOperation = (
 	client: TestClient,
@@ -359,7 +435,7 @@ export function generateOperationMessagesForClients(
 		const sg = client.peekPendingSegmentGroups();
 		let op: IMergeTreeOp | undefined;
 		if (len === 0 || len < minLength) {
-			const text = client.longClientId!.repeat(random.integer(1, 3));
+			const text = client.longClientId as string;
 			op = client.insertTextLocal(random.integer(0, len), text);
 		} else {
 			let opIndex = random.integer(0, operations.length - 1);
