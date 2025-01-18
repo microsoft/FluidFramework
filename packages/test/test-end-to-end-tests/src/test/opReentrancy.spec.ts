@@ -204,6 +204,7 @@ describeCompat(
 					...testContainerConfig,
 					runtimeOptions: {
 						enableGroupedBatching,
+						compressionOptions: disabledCompressionConfig,
 					},
 				});
 
