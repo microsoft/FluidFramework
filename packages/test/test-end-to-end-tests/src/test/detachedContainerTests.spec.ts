@@ -16,10 +16,7 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { Loader } from "@fluidframework/container-loader/internal";
-import {
-	CompressionAlgorithms,
-	ContainerMessageType,
-} from "@fluidframework/container-runtime/internal";
+import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -96,12 +93,6 @@ describeCompat("Detached Container", "FullCompat", (getTestObjectProvider, apis)
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
-		runtimeOptions: {
-			compressionOptions: {
-				minimumBatchSizeInBytes: Infinity,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-		},
 	};
 
 	let provider: ITestObjectProvider;

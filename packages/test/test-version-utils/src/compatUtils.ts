@@ -9,6 +9,7 @@ import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/tes
 import {
 	DefaultSummaryConfiguration,
 	CompressionAlgorithms,
+	disabledCompressionConfig,
 	ICompressionRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
@@ -102,7 +103,7 @@ function filterRuntimeOptionsForVersion(
 	if (version.startsWith("1.")) {
 		options = {
 			// None of these features are supported by 1.3
-			compressionOptions: undefined,
+			compressionOptions: disabledCompressionConfig,
 			enableGroupedBatching: false,
 			enableRuntimeIdCompressor: undefined,
 			// Enable chunking.
