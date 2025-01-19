@@ -31,15 +31,26 @@ export async function checkNetworkInformation(
 			// Todo: fix the clusterHost logic to check undefined, and skip
 			if (clusterHost && Object.prototype.hasOwnProperty.call(accountLinkIds, clusterHost)) {
 				const accountLinkId = accountLinkIds[clusterHost];
-				return networkInfo.privateLinkId === accountLinkId ? { message: "This is a private link socket connection", shouldConnect: true } : {
-						message: "This private link should not be connected since the link id does not match",
-						shouldConnect: false,
-					};
+				return networkInfo.privateLinkId === accountLinkId
+					? { message: "This is a private link socket connection", shouldConnect: true }
+					: {
+							message:
+								"This private link should not be connected since the link id does not match",
+							shouldConnect: false,
+					  };
 			} else {
-				return { message: "This private link should not be connected since the cluster is not found", shouldConnect: false };
+				return {
+					message:
+						"This private link should not be connected since the cluster is not found",
+					shouldConnect: false,
+				};
 			}
 		} else {
-			return { message: "This private link should not be connected since the tenant is not private link enabled", shouldConnect: false };
+			return {
+				message:
+					"This private link should not be connected since the tenant is not private link enabled",
+				shouldConnect: false,
+			};
 		}
 	} else {
 		return privateLinkEnable

@@ -254,7 +254,11 @@ export function configureWebSocketServices(
 			};
 
 			if (enableNetworkCheck) {
-				const networkError = await checkNetworkInformation(tenantManager, clusterHost, socket);
+				const networkError = await checkNetworkInformation(
+					tenantManager,
+					clusterHost,
+					socket,
+				);
 				if (!networkError.shouldConnect) {
 					const nackMessage = createNackMessage(
 						404,
