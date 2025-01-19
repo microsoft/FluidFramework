@@ -104,6 +104,7 @@ export function configureWebSocketServices(
 	isTokenExpiryEnabled: boolean = false,
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
+	clusterHost: string | undefined = undefined,
 	enableNetworkCheck: boolean = false,
 	cache?: core.ICache,
 	connectThrottlerPerTenant?: core.IThrottler,
@@ -253,7 +254,7 @@ export function configureWebSocketServices(
 			};
 
 			if (enableNetworkCheck) {
-				const networkError = await checkNetworkInformation(tenantManager, socket);
+				const networkError = await checkNetworkInformation(tenantManager, clusterHost, socket);
 				if (!networkError.shouldConnect) {
 					const nackMessage = createNackMessage(
 						404,

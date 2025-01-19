@@ -15,6 +15,7 @@ import { getNetworkInformationFromIP } from "@fluidframework/server-services-cli
  */
 export async function checkNetworkInformation(
 	tenantManager: core.ITenantManager,
+	clusterHost: string | undefined = undefined,
 	socket: core.IWebSocket,
 ): Promise<{ message: string; shouldConnect: boolean }> {
 	const tenantId = socket?.handshake?.query?.tenantId as string | undefined;
@@ -25,10 +26,21 @@ export async function checkNetworkInformation(
 	const networkInfo = getNetworkInformationFromIP(clientIPAddress);
 	const privateLinkEnable = tenantInfo?.customData?.accountLinkIds ? true : false;
 	if (networkInfo.isPrivateLink) {
-		return privateLinkEnable &&
-			networkInfo.privateLinkId === tenantInfo?.customData?.accountLinkIds
-			? { message: "This is a private link socket connection", shouldConnect: true }
-			: { message: "private link should not connect", shouldConnect: false };
+		if (privateLinkEnable) {
+			const accountLinkIds = JSON.parse(tenantInfo?.customData?.accountLinkIds);
+			// Todo: fix the clusterHost logic to check undefined, and skip
+			if (clusterHost && Object.prototype.hasOwnProperty.call(accountLinkIds, clusterHost)) {
+				const accountLinkId = accountLinkIds[clusterHost];
+				return networkInfo.privateLinkId === accountLinkId ? { message: "This is a private link socket connection", shouldConnect: true } : {
+						message: "This private link should not be connected since the link id does not match",
+						shouldConnect: false,
+					};
+			} else {
+				return { message: "This private link should not be connected since the cluster is not found", shouldConnect: false };
+			}
+		} else {
+			return { message: "This private link should not be connected since the tenant is not private link enabled", shouldConnect: false };
+		}
 	} else {
 		return privateLinkEnable
 			? {
@@ -36,6 +48,6 @@ export async function checkNetworkInformation(
 						"This is a failed private link tenant socket connection from public network",
 					shouldConnect: false,
 			  }
-			: { message: "public should connect", shouldConnect: true };
+			: { message: "This public network should be connected", shouldConnect: true };
 	}
 }

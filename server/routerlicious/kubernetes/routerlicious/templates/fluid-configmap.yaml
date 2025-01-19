@@ -19,6 +19,7 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "clusterHost": "dev17-westus2-1.frs.azure.com",
         "config": {
             "configDumpEnabled": {{ .Values.config.configDumpEnabled }},
             "secretNamesToRedactInConfigDump": [

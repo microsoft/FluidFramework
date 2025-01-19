@@ -80,6 +80,7 @@ export class NexusRunner implements IRunner {
 		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
 		if (includeAppLogic) {
+			const clusterHost = this.config.get("clusterHost");
 			const maxNumberOfClientsPerDocument = this.config.get(
 				"nexus:maxNumberOfClientsPerDocument",
 			);
@@ -113,6 +114,7 @@ export class NexusRunner implements IRunner {
 				isTokenExpiryEnabled,
 				isClientConnectivityCountingEnabled,
 				isSignalUsageCountingEnabled,
+				clusterHost,
 				enableNetworkCheck,
 				this.redisCache,
 				this.socketConnectTenantThrottler,
