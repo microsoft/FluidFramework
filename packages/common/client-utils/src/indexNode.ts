@@ -28,3 +28,10 @@ export {
 } from "./typedEventEmitter.js";
 
 export { createEmitter } from "./events/index.js";
+
+export {
+	LayerCompatibilityManager,
+	type LayerCompatCheckResult,
+	type ICompatibilityDetails,
+	type IProvideCompatibilityDetails,
+} from "./layerCompat.js";

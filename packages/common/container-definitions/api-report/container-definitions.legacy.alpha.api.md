@@ -151,8 +151,6 @@ export interface IContainerContext {
     // (undocumented)
     pendingLocalState?: unknown;
     // (undocumented)
-    readonly pkgVersion?: string;
-    // (undocumented)
     readonly quorum: IQuorumClients;
     readonly scope: FluidObject;
     readonly snapshotWithContents?: ISnapshot;
@@ -166,6 +164,7 @@ export interface IContainerContext {
     readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
+    // @deprecated (undocumented)
     readonly supportedFeatures?: ReadonlyMap<string, unknown>;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
@@ -394,13 +393,10 @@ export interface IRuntime extends IDisposable {
     getEntryPoint(): Promise<FluidObject>;
     getPendingLocalState(props?: IGetPendingLocalStateProps): unknown;
     notifyOpReplay?(message: ISequencedDocumentMessage): Promise<void>;
-    // (undocumented)
-    readonly pkgVersion?: string;
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
     setConnectionState(connected: boolean, clientId?: string): any;
-    readonly supportedFeatures?: ReadonlyMap<string, unknown>;
 }
 
 // @alpha (undocumented)

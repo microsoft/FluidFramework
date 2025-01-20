@@ -5,7 +5,11 @@
 
 /* eslint-disable unicorn/consistent-function-scoping */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	performance,
+	type ICompatibilityDetails,
+} from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -38,12 +42,7 @@ import {
 	LogLevel,
 } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
-import {
-	assert,
-	checkLayerCompatibility,
-	isPromiseLike,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IClient,
 	IClientDetails,
@@ -145,6 +144,7 @@ import {
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
+import { RuntimeLayerCompatManager } from "./runtimeCompatManager.js";
 import {
 	type IPendingContainerState,
 	type IPendingDetachedContainerState,
@@ -167,12 +167,6 @@ const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
-
-/**
- * The current generation of the Loader. This is used to determine compatibility between other layers.
- * @internal
- */
-export const currentLoaderGeneration = 1;
 
 /**
  * @internal
@@ -503,60 +497,10 @@ export class Container
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
 
+	// The compatibility manager for the Runtime layer that validates it is compatible with the Loader.
+	private readonly runtimeLayerCompatManager: RuntimeLayerCompatManager;
+
 	private readonly mc: MonitoringContext;
-
-	/**
-	 * The current generation of the Loader layer. This is used to ensure compatibility between the Loader and
-	 * other layers.
-	 */
-	private readonly generation = currentLoaderGeneration;
-	/**
-	 * A list of features that the Runtime layer is required to support to be compatible with this Loader.
-	 */
-	private readonly requiredFeaturesFromRuntime: string[] = [];
-	/**
-	 * A list of features supported by the Loader layer. This is exposed to the Runtime layer which uses
-	 * it to determine if the Loader is compatible with the Runtime.
-	 */
-	private readonly supportedFeaturesForRuntime: Map<string, unknown> = new Map([
-		/**
-		 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
-		 * as a parameter to the `submitBatchFn` and `submitSummaryFn` functions.
-		 * This is then used to set the reference sequence numbers of the submitted ops in the DeltaManager.
-		 */
-		["referenceSequenceNumbers", true],
-	]);
-	private validateRuntimeCompatibility(
-		runtimeSupportedFeatures?: ReadonlyMap<string, unknown>,
-		runtimeVersion?: string,
-	): void {
-		if (runtimeSupportedFeatures === undefined) {
-			return;
-		}
-
-		const result = checkLayerCompatibility(
-			this.requiredFeaturesFromRuntime,
-			this.generation,
-			runtimeSupportedFeatures,
-		);
-		if (!result.compatible) {
-			const error = new UsageError("Runtime is not compatible with Loader", {
-				loaderVersion: pkgVersion,
-				runtimeVersion,
-				loaderGeneration: this.generation,
-				minSupportedGeneration: runtimeSupportedFeatures.get(
-					"minSupportedGeneration",
-				) as number,
-				isGenerationCompatible: result.generationCompatible,
-				unsupportedFeatures:
-					result.unsupportedFeatures.length === 0
-						? undefined
-						: JSON.stringify(result.unsupportedFeatures),
-			});
-			this.close(error);
-			throw error;
-		}
-	}
 
 	/**
 	 * Used by the RelativeLoader to spawn a new Container for the same document.  Used to create the summarizing client.
@@ -867,9 +811,6 @@ export class Container
 			protocolHandlerBuilder,
 		} = createProps;
 
-		/* This is the minimum generation of the Runtime this Loader supports. */
-		this.supportedFeaturesForRuntime.set("minSupportedGeneration", 1);
-
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
@@ -910,6 +851,10 @@ export class Container
 		};
 
 		this._containerId = uuid();
+
+		this.runtimeLayerCompatManager = new RuntimeLayerCompatManager((error) =>
+			this.dispose(error),
+		);
 
 		this.client = Container.setupClient(
 			this._containerId,
@@ -2523,7 +2468,7 @@ export class Container
 			() => this.connected,
 			this._deltaManager.clientDetails,
 			existing,
-			this.supportedFeaturesForRuntime,
+			this.runtimeLayerCompatManager.ICompatibilityDetails,
 			this.subLogger,
 			pendingLocalState,
 			snapshot,
@@ -2535,7 +2480,10 @@ export class Container
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 
-		this.validateRuntimeCompatibility(runtime.supportedFeatures, runtime.pkgVersion);
+		const maybeRuntimeCompatDetails = runtime as unknown as FluidObject<ICompatibilityDetails>;
+		this.runtimeLayerCompatManager.validateCompatibility(
+			maybeRuntimeCompatDetails.ICompatibilityDetails,
+		);
 
 		this._runtime = runtime;
 

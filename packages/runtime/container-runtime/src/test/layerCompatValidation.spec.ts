@@ -5,60 +5,34 @@
 
 import { strict as assert } from "assert";
 
-import {
-	ICriticalContainerError,
-	IContainerContext,
-} from "@fluidframework/container-definitions/internal";
+import { LayerCompatibilityManager } from "@fluid-internal/client-utils";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ContainerRuntime, currentRuntimeGeneration } from "../containerRuntime.js";
+import { LoaderLayerCompatManager } from "../loaderCompatManager.js";
 import { pkgVersion } from "../packageVersion.js";
 
-import { getMockContainerContext } from "./mockContainerContext.js";
+// Override to be able to modify the required features for Loader layer.
+type LoaderLayerCompatManagerWithInternals = Omit<
+	LoaderLayerCompatManager,
+	"loaderRequiredFeatures"
+> & {
+	loaderRequiredFeatures: string[];
+};
 
-describe("Layer compatibility", () => {
-	const mockProvideEntryPoint = async () => ({
-		myProp: "myValue",
+describe("Runtime Layer compatibility", () => {
+	let loaderCompatManager: LoaderLayerCompatManagerWithInternals;
+	beforeEach(() => {
+		loaderCompatManager = new LoaderLayerCompatManager(() => {});
 	});
 
-	// Override private types in container runtime to validate loader compatibility with
-	// mock required features.
-	type ContainerRuntimeWithPrivates = Omit<
-		ContainerRuntime,
-		"validateLoaderCompatibility" | "requiredFeaturesFromLoader"
-	> & {
-		requiredFeaturesFromLoader: string[];
-		validateLoaderCompatibility(
-			loaderSupportedFeatures?: ReadonlyMap<string, unknown>,
-			loaderVersion?: string,
-		): void;
-	};
-
-	const loaderVersion = "1.0.0";
-	let error: ICriticalContainerError | undefined;
-	const closeFn = (e?: ICriticalContainerError): void => {
-		error = e;
-	};
-
-	function getContainerContext(
-		loaderSupportedFeatures: Map<string, unknown>,
-	): IContainerContext {
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		return {
-			...getMockContainerContext({}, "mockClientId"),
-			closeFn,
-			supportedFeatures: loaderSupportedFeatures,
-			pkgVersion: loaderVersion,
-		} as IContainerContext;
-	}
-
 	function validateFailureProperties(
+		error: Error,
 		isGenerationCompatible: boolean,
-		minSupportedGeneration: number,
+		loaderGeneration: number,
 		unsupportedFeatures?: string[],
 	) {
-		assert(error !== undefined, "An error should have been thrown");
+		assert(error instanceof UsageError, "The error should be a UsageError");
 		assert.strictEqual(
 			error.errorType,
 			FluidErrorTypes.usageError,
@@ -70,24 +44,21 @@ describe("Layer compatibility", () => {
 			isGenerationCompatible,
 			"Generation compatibility not as expected",
 		);
+		assert.strictEqual(properties.version, pkgVersion, "Runtime version not as expected");
+		assert.strictEqual(properties.loaderVersion, pkgVersion, "Loader version not as expected");
 		assert.strictEqual(
-			properties.runtimeVersion,
-			pkgVersion,
-			"Runtime version not as expected",
-		);
-		assert.strictEqual(
-			properties.loaderVersion,
-			loaderVersion,
-			"Loader version not as expected",
-		);
-		assert.strictEqual(
-			properties.runtimeGeneration,
-			currentRuntimeGeneration,
+			properties.generation,
+			loaderCompatManager.generation,
 			"Runtime generation not as expected",
 		);
 		assert.strictEqual(
+			properties.loaderGeneration,
+			loaderGeneration,
+			"Loader generation not as expected",
+		);
+		assert.strictEqual(
 			properties.minSupportedGeneration,
-			minSupportedGeneration,
+			loaderCompatManager.loaderMinSupportedGeneration,
 			"Min supported generation not as expected",
 		);
 		assert.strictEqual(
@@ -95,67 +66,95 @@ describe("Layer compatibility", () => {
 			JSON.stringify(unsupportedFeatures),
 			"Unsupported features not as expected",
 		);
+		return true;
 	}
 
-	it("Runtime generation is compatible with Loader's minSupportedGeneration", async () => {
-		const loaderSupportedFeatures = new Map([["minSupportedGeneration", 1]]);
-		await assert.doesNotReject(
-			async () =>
-				ContainerRuntime.loadRuntime({
-					context: getContainerContext(loaderSupportedFeatures),
-					registryEntries: [],
-					existing: false,
-					provideEntryPoint: mockProvideEntryPoint,
-				}),
-			"Runtime should be compatible with Loader layer",
+	it("Runtime is compatible with old Loader (pre-enforcement)", () => {
+		// Older Loader will not have ICompatibilityDetails defined.
+		assert.doesNotThrow(
+			() =>
+				loaderCompatManager.validateCompatibility(undefined /* maybeLoaderCompatDetails */),
+			"Runtime should be compatible with older Loader",
 		);
-		assert.strictEqual(error, undefined, "No error should have been thrown");
 	});
 
-	it("Runtime generation is incompatible than Loader's minSupportedGeneration", async () => {
-		const minSupportedGeneration = 2;
-		const loaderSupportedFeatures = new Map([
-			["minSupportedGeneration", minSupportedGeneration],
-		]);
-		await assert.rejects(
-			async () =>
-				ContainerRuntime.loadRuntime({
-					context: getContainerContext(loaderSupportedFeatures),
-					registryEntries: [],
-					existing: false,
-					provideEntryPoint: mockProvideEntryPoint,
-				}),
-			(e: Error) => e.message === "Runtime is not compatible with Loader",
+	it("Runtime generation and features are compatible with Loader", () => {
+		loaderCompatManager.loaderRequiredFeatures = ["feature1", "feature2"];
+		const loaderCompatDetails = new LayerCompatibilityManager({
+			pkgVersion,
+			generation: loaderCompatManager.loaderMinSupportedGeneration,
+			supportedFeatures: new Set(loaderCompatManager.loaderRequiredFeatures),
+		});
+		assert.doesNotThrow(
+			() =>
+				loaderCompatManager.validateCompatibility(loaderCompatDetails.ICompatibilityDetails),
 			"Runtime should be compatible with Loader layer",
 		);
-		validateFailureProperties(false /* isGenerationCompatible */, minSupportedGeneration);
 	});
 
-	it("Runtime features are incompatible with Loader layer", async () => {
-		const minSupportedGeneration = 1;
-		const loaderSupportedFeatures = new Map<string, unknown>([
-			["minSupportedGeneration", minSupportedGeneration],
-			["feature1", true],
-		]);
-		const runtimeOnlyFeatures = ["feature2"];
-
-		const runtime = (await ContainerRuntime.loadRuntime({
-			context: getContainerContext(loaderSupportedFeatures),
-			registryEntries: [],
-			existing: false,
-			provideEntryPoint: mockProvideEntryPoint,
-		})) as unknown as ContainerRuntimeWithPrivates;
-
-		runtime.requiredFeaturesFromLoader = runtimeOnlyFeatures;
+	it("Runtime generation is incompatible with Loader", () => {
+		loaderCompatManager.loaderRequiredFeatures = ["feature1", "feature2"];
+		const loaderGeneration = loaderCompatManager.loaderMinSupportedGeneration - 1;
+		const loaderCompatDetails = new LayerCompatibilityManager({
+			pkgVersion,
+			generation: loaderGeneration,
+			supportedFeatures: new Set(loaderCompatManager.loaderRequiredFeatures),
+		});
 		assert.throws(
-			() => runtime.validateLoaderCompatibility(loaderSupportedFeatures, loaderVersion),
-			(e: Error) => e.message === "Runtime is not compatible with Loader",
+			() =>
+				loaderCompatManager.validateCompatibility(loaderCompatDetails.ICompatibilityDetails),
+			(e: Error) =>
+				validateFailureProperties(e, false /* isGenerationCompatible */, loaderGeneration),
+			"Runtime should be incompatible with Loader layer",
 		);
+	});
 
-		validateFailureProperties(
-			true /* isGenerationCompatible */,
-			minSupportedGeneration,
-			runtimeOnlyFeatures,
+	it("Runtime features are incompatible with Loader", () => {
+		const requiredFeatures = ["feature2", "feature3"];
+		loaderCompatManager.loaderRequiredFeatures = requiredFeatures;
+
+		const loaderCompatDetails = new LayerCompatibilityManager({
+			pkgVersion,
+			generation: loaderCompatManager.loaderMinSupportedGeneration,
+			supportedFeatures: new Set(),
+		});
+
+		assert.throws(
+			() =>
+				loaderCompatManager.validateCompatibility(loaderCompatDetails.ICompatibilityDetails),
+			(e: Error) =>
+				validateFailureProperties(
+					e,
+					true /* isGenerationCompatible */,
+					loaderCompatManager.loaderMinSupportedGeneration,
+					requiredFeatures,
+				),
+			"Runtime should be compatible with Loader layer",
+		);
+	});
+
+	it("Runtime generation and features are both incompatible with Loader", () => {
+		const loaderGeneration = loaderCompatManager.loaderMinSupportedGeneration - 1;
+		const requiredFeatures = ["feature2"];
+		loaderCompatManager.loaderRequiredFeatures = requiredFeatures;
+
+		const loaderCompatDetails = new LayerCompatibilityManager({
+			pkgVersion,
+			generation: loaderGeneration,
+			supportedFeatures: new Set(),
+		});
+
+		assert.throws(
+			() =>
+				loaderCompatManager.validateCompatibility(loaderCompatDetails.ICompatibilityDetails),
+			(e: Error) =>
+				validateFailureProperties(
+					e,
+					false /* isGenerationCompatible */,
+					loaderGeneration,
+					requiredFeatures,
+				),
+			"Runtime should be compatible with Loader layer",
 		);
 	});
 });

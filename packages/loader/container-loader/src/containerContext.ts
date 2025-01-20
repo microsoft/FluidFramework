@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	ICompatibilityDetails,
+	IProvideCompatibilityDetails,
+} from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -30,13 +34,21 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { pkgVersion } from "./packageVersion.js";
-
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
  */
-export class ContainerContext implements IContainerContext {
-	public readonly pkgVersion = pkgVersion;
+export class ContainerContext implements IContainerContext, IProvideCompatibilityDetails {
+	/**
+	 * @deprecated - This has been replaced by ICompatibilityDetails.
+	 */
+	public readonly supportedFeatures: ReadonlyMap<string, unknown> = new Map([
+		/**
+		 * This version of the loader accepts `referenceSequenceNumber`, provided by the container runtime,
+		 * as a parameter to the `submitBatchFn` and `submitSummaryFn` functions.
+		 * This is then used to set the reference sequence numbers of the submitted ops in the DeltaManager.
+		 */
+		["referenceSequenceNumbers", true],
+	]);
 
 	public get clientId(): string | undefined {
 		return this._getClientId();
@@ -55,6 +67,10 @@ export class ContainerContext implements IContainerContext {
 	 */
 	public get connected(): boolean {
 		return this._getConnected();
+	}
+
+	public get ICompatibilityDetails(): ICompatibilityDetails {
+		return this.compatDetails;
 	}
 
 	constructor(
@@ -104,7 +120,7 @@ export class ContainerContext implements IContainerContext {
 		private readonly _getConnected: () => boolean,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
-		public readonly supportedFeatures: ReadonlyMap<string, unknown>,
+		private readonly compatDetails: ICompatibilityDetails,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 		public readonly snapshotWithContents?: ISnapshot,

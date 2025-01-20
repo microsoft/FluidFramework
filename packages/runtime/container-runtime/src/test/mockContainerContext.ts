@@ -5,7 +5,11 @@
 
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
-import { ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	type IConfigProviderBase,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	IDocumentStorageService,
@@ -39,13 +43,13 @@ export const configProvider = (
 export const getMockContainerContext = (
 	params: {
 		settings?: Record<string, ConfigTypes>;
-		logger?;
+		logger?: ITelemetryBaseLogger;
 		mockStorage?: Partial<IDocumentStorageService>;
 		loadedFromVersion?: IVersion;
 		baseSnapshot?: ISnapshotTree;
 		submitFn?: (
 			type: MessageType,
-			contents: any,
+			contents: object,
 			batch: boolean,
 			metadata?: unknown,
 		) => number;
