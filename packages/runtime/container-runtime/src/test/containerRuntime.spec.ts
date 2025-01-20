@@ -5,14 +5,24 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	LayerCompatibilityManager,
+	stringToBuffer,
+	type ICompatibilityDetails,
+	type IProvideCompatibilityDetails,
+} from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
 	IContainerContext,
 } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { ConfigTypes, FluidObject, IResponse } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	FluidObject,
+	IConfigProviderBase,
+	IResponse,
+} from "@fluidframework/core-interfaces";
 import {
 	ISignalEnvelope,
 	type IErrorBase,
@@ -89,8 +99,6 @@ import {
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
 
-import { configProvider, getMockContainerContext } from "./mockContainerContext.js";
-
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
 	id: string,
@@ -161,9 +169,11 @@ function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime)
 	} as ChannelCollection;
 }
 
-const mockClientId = "mockClientId";
-
 describe("Runtime", () => {
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	});
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let submittedOps: any[] = [];
 	let submittedSignals: ISignalEnvelopeWithClientIds[] = [];
@@ -188,10 +198,14 @@ describe("Runtime", () => {
 		clock.restore();
 	});
 
-	const mockProvideEntryPoint = async () => ({
-		myProp: "myValue",
-	});
+	const mockClientId = "mockClientId";
 
+	// Mock the storage layer so "submitSummary" works.
+	const defaultMockStorage: Partial<IDocumentStorageService> = {
+		uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
+			return "fakeHandle";
+		},
+	};
 	const getMockContext = (
 		params: {
 			settings?: Record<string, ConfigTypes>;
@@ -202,30 +216,64 @@ describe("Runtime", () => {
 		} = {},
 		clientId: string = mockClientId,
 	): Partial<IContainerContext> => {
-		return getMockContainerContext(
-			{
-				...params,
-				submitFn: (
-					_type: MessageType,
-					contents: object,
-					_batch: boolean,
-					metadata?: unknown,
-				) => {
-					submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
-					return opFakeSequenceNumber++;
-				},
-				submitSignalFn: (content: unknown, targetClientId?: string) => {
-					assert(isSignalEnvelope(content), "Invalid signal envelope");
-					submittedSignals.push({
-						envelope: content,
-						clientId,
-						targetClientId,
-					}); // Note: this object shape is for testing only. Not representative of real signals.
-				},
+		const {
+			settings = {},
+			logger = new MockLogger(),
+			mockStorage = defaultMockStorage,
+			loadedFromVersion,
+			baseSnapshot,
+		} = params;
+
+		const mockContext = {
+			attachState: AttachState.Attached,
+			deltaManager: new MockDeltaManager(),
+			audience: new MockAudience(),
+			quorum: new MockQuorumClients(),
+			taggedLogger: mixinMonitoringContext(logger, configProvider(settings)).logger,
+			clientDetails: { capabilities: { interactive: true } },
+			closeFn: (_error?: ICriticalContainerError): void => {},
+			updateDirtyContainerState: (_dirty: boolean) => {},
+			getLoadedFromVersion: () => loadedFromVersion,
+			submitFn: (
+				_type: MessageType,
+				contents: object,
+				_batch: boolean,
+				metadata?: unknown,
+			) => {
+				submittedOps.push({ ...contents, metadata }); // Note: this object shape is for testing only. Not representative of real ops.
+				return opFakeSequenceNumber++;
+			},
+			submitSignalFn: (content: unknown, targetClientId?: string) => {
+				assert(isSignalEnvelope(content), "Invalid signal envelope");
+				submittedSignals.push({
+					envelope: content,
+					clientId,
+					targetClientId,
+				}); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId,
-		);
+			connected: true,
+			storage: mockStorage as IDocumentStorageService,
+			baseSnapshot,
+		} satisfies Partial<IContainerContext>;
+
+		// Update the delta manager's last message which is used for validation during summarization.
+		mockContext.deltaManager.lastMessage = {
+			clientId: mockClientId,
+			type: MessageType.Operation,
+			sequenceNumber: 0,
+			timestamp: Date.now(),
+			minimumSequenceNumber: 0,
+			referenceSequenceNumber: 0,
+			clientSequenceNumber: 0,
+			contents: undefined,
+		};
+		return mockContext;
 	};
+
+	const mockProvideEntryPoint = async () => ({
+		myProp: "myValue",
+	});
 
 	describe("Container Runtime", () => {
 		describe("IdCompressor", () => {
@@ -1482,7 +1530,8 @@ describe("Runtime", () => {
 
 			const localGetMockContext = (
 				features?: ReadonlyMap<string, unknown>,
-			): Partial<IContainerContext> => {
+				compatibilityDetails?: ICompatibilityDetails,
+			): Partial<IContainerContext & IProvideCompatibilityDetails> => {
 				return {
 					attachState: AttachState.Attached,
 					deltaManager: new MockDeltaManager(),
@@ -1494,6 +1543,7 @@ describe("Runtime", () => {
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
 					getLoadedFromVersion: () => undefined,
+					ICompatibilityDetails: compatibilityDetails,
 				};
 			};
 
@@ -1534,6 +1584,31 @@ describe("Runtime", () => {
 				const runtime = await ContainerRuntime.loadRuntime({
 					context: localGetMockContext(
 						new Map([["referenceSequenceNumbers", true]]),
+					) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
+				mockLogger.assertMatchNone([
+					{
+						eventName: "ContainerRuntime:FlushModeFallback",
+						category: "error",
+					},
+				]);
+			});
+
+			it("Loader supported for async FlushMode with ICompatibilityDetails", async () => {
+				const runtime = await ContainerRuntime.loadRuntime({
+					context: localGetMockContext(
+						undefined,
+						new LayerCompatibilityManager({
+							pkgVersion: "0.1.0",
+							generation: 1,
+							supportedFeatures: new Set(),
+						}),
 					) as IContainerContext,
 					registryEntries: [],
 					existing: false,

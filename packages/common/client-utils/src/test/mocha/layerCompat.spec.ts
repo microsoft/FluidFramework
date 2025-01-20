@@ -80,7 +80,7 @@ describe("checkLayerCompatibility", () => {
 		const expectedResults: LayerCompatCheckResult = {
 			isCompatible: false,
 			isGenerationCompatible: false,
-			unsupportedFeatures: [],
+			unsupportedFeatures: undefined,
 		};
 
 		assert.deepStrictEqual(

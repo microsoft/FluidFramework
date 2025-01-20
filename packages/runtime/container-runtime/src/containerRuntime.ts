@@ -1814,7 +1814,7 @@ export class ContainerRuntime
 		// predates ICompatibilityDetails.
 		const referenceSequenceNumbersSupported =
 			maybeLoaderCompatDetails.ICompatibilityDetails === undefined
-				? supportedFeatures?.get("referenceSequenceNumbers") !== true
+				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (
 			this.runtimeOptions.flushMode ===
