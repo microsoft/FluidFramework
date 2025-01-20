@@ -38,7 +38,7 @@ describe("Runtime Layer compatibility", () => {
 			FluidErrorTypes.usageError,
 			"Error type should be usageError",
 		);
-		const properties = (error as UsageError).getTelemetryProperties();
+		const properties = error.getTelemetryProperties();
 		assert.strictEqual(
 			properties.isGenerationCompatible,
 			isGenerationCompatible,
