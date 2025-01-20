@@ -1100,10 +1100,10 @@ export class ContainerRuntime
 				runtime.onSchemaChange(schema);
 			},
 		);
-		assert(
-			!compressionLz4 || enableGroupedBatching,
-			"If compression is on, op grouping has to be on",
-		);
+
+		if (compressionLz4 && !enableGroupedBatching) {
+			throw new UsageError("If compression is enabled, op grouping must be enabled too");
+		}
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
