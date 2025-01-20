@@ -4,6 +4,7 @@
  */
 
 import fsPromises from "fs/promises";
+import type { MakeDirectoryOptions } from "fs";
 import * as git from "@fluidframework/gitresources";
 
 export enum Constants {
@@ -102,6 +103,10 @@ export interface IFileSystemManagerFactory {
 export interface IFileSystemManagerFactories {
 	defaultFileSystemManagerFactory: IFileSystemManagerFactory;
 	ephemeralFileSystemManagerFactory?: IFileSystemManagerFactory;
+}
+
+export interface IFileSystemMakeDirectoryOptions extends MakeDirectoryOptions {
+	simplifiedCustomData?: string;
 }
 
 export interface IStorageRoutingId {

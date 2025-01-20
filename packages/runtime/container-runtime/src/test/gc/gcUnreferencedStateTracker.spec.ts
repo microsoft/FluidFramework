@@ -9,22 +9,36 @@ import { SinonFakeTimers, SinonSpy, spy, useFakeTimers } from "sinon";
 
 import { UnreferencedState, UnreferencedStateTracker } from "../../gc/index.js";
 
-/** Schema for steps taken to test unreferenced state progression / tracking */
+/**
+ * Schema for steps taken to test unreferenced state progression / tracking
+ */
 type Steps = [
 	{
-		/** Start time (used as both local time and currentReferenceTimestampMs) */
+		/**
+		 * Start time (used as both local time and currentReferenceTimestampMs)
+		 */
 		time: number;
-		/** Expected initial state */
+		/**
+		 * Expected initial state
+		 */
 		state: UnreferencedState;
-		/** Configured sweepGracePeriodMs - defaults to 10ms for these tests */
+		/**
+		 * Configured sweepGracePeriodMs - defaults to 10ms for these tests
+		 */
 		sweepGracePeriodMs?: number;
 	},
 	...{
-		/** Local time of the next step */
+		/**
+		 * Local time of the next step
+		 */
 		time: number;
-		/** If defined, call updateTracking with this as currentReferenceTimestampMs */
+		/**
+		 * If defined, call updateTracking with this as currentReferenceTimestampMs
+		 */
 		updateWith?: number;
-		/** Expected new state (after calling updateTracking if applicable) */
+		/**
+		 * Expected new state (after calling updateTracking if applicable)
+		 */
 		state: UnreferencedState;
 	}[],
 ];
@@ -255,6 +269,7 @@ describe("Garbage Collection Tests", () => {
 				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
 			const timerClearSpy: SinonSpy = spy((tracker as any).inactiveTimer, "clear");
 			// At T10 we had 15 to go based on server timestamps, so Timer is set to 25
 			clock.tick(6); // at T16 (9 to go)
