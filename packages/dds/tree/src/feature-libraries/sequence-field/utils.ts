@@ -942,13 +942,45 @@ function getCrossFieldKeysForMarkEffect(
 			// An insert behaves like a move where the source and destination are at the same location.
 			// An insert can become a move when after rebasing.
 			return [
-				[CrossFieldTarget.Source, effect.revision, effect.id, count],
-				[CrossFieldTarget.Destination, effect.revision, effect.id, count],
+				{
+					key: {
+						target: CrossFieldTarget.Source,
+						revision: effect.revision,
+						localId: effect.id,
+					},
+					count,
+				},
+				{
+					key: {
+						target: CrossFieldTarget.Destination,
+						revision: effect.revision,
+						localId: effect.id,
+					},
+					count,
+				},
 			];
 		case "MoveOut":
-			return [[CrossFieldTarget.Source, effect.revision, effect.id, count]];
+			return [
+				{
+					key: {
+						target: CrossFieldTarget.Source,
+						revision: effect.revision,
+						localId: effect.id,
+					},
+					count,
+				},
+			];
 		case "MoveIn":
-			return [[CrossFieldTarget.Destination, effect.revision, effect.id, count]];
+			return [
+				{
+					key: {
+						target: CrossFieldTarget.Destination,
+						revision: effect.revision,
+						localId: effect.id,
+					},
+					count,
+				},
+			];
 		case "AttachAndDetach":
 			return [
 				...getCrossFieldKeysForMarkEffect(effect.attach, count),
