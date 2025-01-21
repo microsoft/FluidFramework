@@ -23,6 +23,7 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	subtractChangeAtomIds,
 	replaceAtomRevisions,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,

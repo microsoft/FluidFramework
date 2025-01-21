@@ -207,7 +207,7 @@ export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
 	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
 }
 
-function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
+export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
 	const cmp = compareRevisions(a.revision, b.revision);
 	if (cmp !== 0) {
 		return cmp * Number.POSITIVE_INFINITY;

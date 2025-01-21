@@ -4,7 +4,7 @@
  */
 
 import {
-	compareRevisions,
+	subtractChangeAtomIds,
 	type ChangeAtomId,
 	type ChangesetLocalId,
 	type FieldKey,
@@ -92,12 +92,7 @@ function subtractCrossFieldKeys(a: CrossFieldKey, b: CrossFieldKey): number {
 		return cmpTarget * Number.POSITIVE_INFINITY;
 	}
 
-	const cmpRevision = compareRevisions(a.revision, b.revision);
-	if (cmpRevision !== 0) {
-		return cmpRevision * Number.POSITIVE_INFINITY;
-	}
-
-	return a.localId - b.localId;
+	return subtractChangeAtomIds(a, b);
 }
 
 export interface CrossFieldKey extends ChangeAtomId {

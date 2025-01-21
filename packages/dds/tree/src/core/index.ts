@@ -196,6 +196,7 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	subtractChangeAtomIds,
 	replaceAtomRevisions,
 	replaceChange,
 	type RebaseStats,
