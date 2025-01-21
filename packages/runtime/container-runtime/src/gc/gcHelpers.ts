@@ -22,9 +22,7 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
 	gcVersionUpgradeToV4Key,
-	// eslint-disable-next-line import/no-deprecated
 	nextGCVersion,
-	// eslint-disable-next-line import/no-deprecated
 	stableGCVersion,
 } from "./gcDefinitions.js";
 import {
@@ -45,14 +43,11 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 /**
  * Indicates what GC version is in effect for new GC data being written in this session
  */
-// eslint-disable-next-line import/no-deprecated
 export function getGCVersionInEffect(configProvider: IConfigProvider): number {
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	return configProvider.getBoolean(gcVersionUpgradeToV4Key) === true
-		? // eslint-disable-next-line import/no-deprecated
-			nextGCVersion
-		: // eslint-disable-next-line import/no-deprecated
-			stableGCVersion;
+		? nextGCVersion
+		: stableGCVersion;
 }
 
 /**

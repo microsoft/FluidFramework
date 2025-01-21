@@ -6,11 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	ISummarizeEventProps,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerEvents,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerObservabilityProps,
-	// eslint-disable-next-line import/no-deprecated
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -87,9 +84,7 @@ export const defaultMaxAttemptsForSubmitFailures = 5;
  * track of summaries that it is generating as they are broadcast and acked/nacked.
  *This object is created and controlled by Summarizer object.
  */
-// eslint-disable-next-line import/no-deprecated
 export class RunningSummarizer
-	// eslint-disable-next-line import/no-deprecated
 	extends TypedEventEmitter<ISummarizerEvents>
 	implements IDisposable
 {
@@ -105,13 +100,10 @@ export class RunningSummarizer
 		summaryCollection: SummaryCollection,
 		// eslint-disable-next-line import/no-deprecated
 		cancellationToken: ISummaryCancellationToken,
-		// eslint-disable-next-line import/no-deprecated
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		// eslint-disable-next-line import/no-deprecated
 		runtime: ISummarizerRuntime,
-		// eslint-disable-next-line import/no-deprecated
 	): Promise<RunningSummarizer> {
-		// eslint-disable-next-line import/no-deprecated
 		const summarizer = new RunningSummarizer(
 			logger,
 			summaryWatcher,
@@ -121,7 +113,6 @@ export class RunningSummarizer
 			heuristicData,
 			summaryCollection,
 			cancellationToken,
-			// eslint-disable-next-line import/no-deprecated
 			stopSummarizerCallback,
 			runtime,
 		);
@@ -155,7 +146,6 @@ export class RunningSummarizer
 		// Update heuristic counts
 		// By the time we get here, there are potentially ops missing from the heuristic summary counts
 		// Examples of where this could happen:
-		// eslint-disable-next-line import/no-deprecated
 		// 1. Op is processed during the time that we are initiating the RunningSummarizer instance but before we
 		//    listen for the op events (will get missed by the handlers in the current workflow)
 		// 2. Op was sequenced after the last time we summarized (op sequence number > summarize ref sequence number)
@@ -236,7 +226,6 @@ export class RunningSummarizer
 		private readonly summaryCollection: SummaryCollection,
 		// eslint-disable-next-line import/no-deprecated
 		private readonly cancellationToken: ISummaryCancellationToken,
-		// eslint-disable-next-line import/no-deprecated
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
 		// eslint-disable-next-line import/no-deprecated
 		private readonly runtime: ISummarizerRuntime,
@@ -284,7 +273,6 @@ export class RunningSummarizer
 
 		this.pendingAckTimer = new PromiseTimer(maxAckWaitTime, () => {
 			// Note: summarizeCount (from ChildLogger definition) may be 0,
-			// eslint-disable-next-line import/no-deprecated
 			// since this code path is hit when RunningSummarizer first starts up,
 			// before this instance has kicked off a new summarize run.
 			this.mc.logger.sendErrorEvent({
@@ -309,7 +297,6 @@ export class RunningSummarizer
 		});
 
 		const immediatelyRefreshLatestSummaryAck =
-			// eslint-disable-next-line import/no-deprecated
 			this.mc.config.getBoolean("Fluid.Summarizer.immediatelyRefreshLatestSummaryAck") ?? true;
 		this.generator = new SummaryGenerator(
 			this.pendingAckTimer,
@@ -338,7 +325,6 @@ export class RunningSummarizer
 		// tweak this as per telemetry data until we arrive at a stable number.
 		// If its set to a number higher than `defaultMaxAttemptsForSubmitFailures`, it will be ignored.
 		const overrideMaxAttempts = this.mc.config.getNumber(
-			// eslint-disable-next-line import/no-deprecated
 			"Fluid.Summarizer.AttemptsForSubmitFailures",
 		);
 		this.maxAttemptsForSubmitFailures =
@@ -354,7 +340,6 @@ export class RunningSummarizer
 		const summaryAckHandle = ack.summaryAck.contents.handle;
 		while (this.summarizingLock !== undefined) {
 			summaryLogger.sendTelemetryEvent({
-				// eslint-disable-next-line import/no-deprecated
 				eventName: "RefreshAttemptWithSummarizerRunning",
 				referenceSequenceNumber: refSequenceNumber,
 				proposalHandle: summaryOpHandle,
@@ -577,7 +562,6 @@ export class RunningSummarizer
 		if (waitStartResult.result === "done" && waitStartResult.value !== undefined) {
 			this.heuristicData.updateWithLastSummaryAckInfo({
 				refSequenceNumber: waitStartResult.value.summaryOp.referenceSequenceNumber,
-				// eslint-disable-next-line import/no-deprecated
 				// This will be the Summarizer starting point so only use timestamps from client's machine.
 				summaryTime: Date.now(),
 				summarySequenceNumber: waitStartResult.value.summaryOp.sequenceNumber,
@@ -834,7 +818,6 @@ export class RunningSummarizer
 			error = ackNackResult.error;
 			failureMessage = ackNackResult.message;
 			retryAfterSeconds = error.retryAfterSeconds;
-			// eslint-disable-next-line import/no-deprecated
 			const eventProps: ISummarizeEventProps & ISummarizerObservabilityProps = {
 				result: status,
 				currentAttempt,
@@ -886,7 +869,6 @@ export class RunningSummarizer
 			status = ackNackResult.success ? "success" : "failure";
 			error = ackNackResult.success ? undefined : ackNackResult.error;
 			failureMessage = ackNackResult.success ? undefined : ackNackResult.message;
-			// eslint-disable-next-line import/no-deprecated
 			const eventProps: ISummarizeEventProps & ISummarizerObservabilityProps = {
 				result: status,
 				currentAttempt,
@@ -916,7 +898,6 @@ export class RunningSummarizer
 				error,
 				failureMessage,
 			};
-			// eslint-disable-next-line import/no-deprecated
 			this.stopSummarizerCallback("failToSummarize");
 		}
 		return results;
@@ -956,9 +937,7 @@ export class RunningSummarizer
 	): ISummarizeResults {
 		if (this.stopping) {
 			resultsBuilder.fail(
-				// eslint-disable-next-line import/no-deprecated
 				"RunningSummarizer stopped or disposed",
-				// eslint-disable-next-line import/no-deprecated
 				new RetriableSummaryError("RunningSummarizer stopped or disposed"),
 			);
 			return resultsBuilder.build();
@@ -1052,9 +1031,7 @@ export class RunningSummarizer
 	private disposeEnqueuedSummary(): void {
 		if (this.enqueuedSummary !== undefined) {
 			this.enqueuedSummary.resultsBuilder.fail(
-				// eslint-disable-next-line import/no-deprecated
 				"RunningSummarizer stopped or disposed",
-				// eslint-disable-next-line import/no-deprecated
 				new RetriableSummaryError("RunningSummarizer stopped or disposed"),
 			);
 			this.enqueuedSummary = undefined;

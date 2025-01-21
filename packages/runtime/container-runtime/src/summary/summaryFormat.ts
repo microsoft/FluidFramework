@@ -138,12 +138,10 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	/**
 	 * @deprecated - used by old (prior to 2.0 RC3) runtimes
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly message?: ISummaryMetadataMessage;
 	/**
 	 * The last message processed at the time of summary. Only primitive property types are added to the summary.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly lastMessage?: ISummaryMetadataMessage;
 	/**
 	 * True if channels are not isolated in .channels subtrees, otherwise isolated.
@@ -197,7 +195,6 @@ export type ISummaryMetadataMessage = Pick<
  */
 export const extractSummaryMetadataMessage = (
 	message?: ISequencedDocumentMessage,
-	// eslint-disable-next-line import/no-deprecated
 ): ISummaryMetadataMessage | undefined =>
 	message === undefined
 		? undefined
@@ -211,7 +208,6 @@ export const extractSummaryMetadataMessage = (
 				type: message.type,
 			};
 
-// eslint-disable-next-line import/no-deprecated
 export function getMetadataFormatVersion(metadata?: IContainerRuntimeMetadata): number {
 	/**
 	 * Version 2+: Introduces runtime sequence number for data verification.
@@ -230,12 +226,10 @@ export const aliasBlobName = ".aliases";
 export const metadataBlobName = ".metadata";
 export const chunksBlobName = ".chunks";
 export const recentBatchInfoBlobName = ".recentBatchInfo";
-// eslint-disable-next-line import/no-deprecated
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const idCompressorBlobName = ".idCompressor";
 export const blobHeadersBlobName = blobNameForBlobHeaders;
 
-// eslint-disable-next-line import/no-deprecated
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
 }

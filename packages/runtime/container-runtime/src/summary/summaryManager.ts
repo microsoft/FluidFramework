@@ -5,9 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerEvents,
-	// eslint-disable-next-line import/no-deprecated
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -28,14 +26,12 @@ import { IThrottler } from "../throttler.js";
 
 // eslint-disable-next-line import/no-deprecated
 import { Summarizer } from "./summarizer.js";
-// eslint-disable-next-line import/no-deprecated
 import { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
 	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizeResults,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
@@ -54,7 +50,6 @@ export enum SummaryManagerState {
 // and thus they are not raised today to parent container as error.
 // If this needs to be changed in future, we should re-evaluate what and how we raise to summarizer
 type StopReason = Extract<
-	// eslint-disable-next-line import/no-deprecated
 	SummarizerStopReason,
 	"parentNotConnected" | "notElectedParent" | "notElectedClient"
 >;
@@ -97,7 +92,6 @@ export interface ISummaryManagerConfig {
  * stopping existing summarizer client.
  */
 export class SummaryManager
-	// eslint-disable-next-line import/no-deprecated
 	extends TypedEventEmitter<ISummarizerEvents>
 	implements IDisposable
 {
@@ -106,7 +100,6 @@ export class SummaryManager
 	private readonly initialDelayMs: number;
 	private latestClientId: string | undefined;
 	private state = SummaryManagerState.Off;
-	// eslint-disable-next-line import/no-deprecated
 	private summarizer?: ISummarizer;
 	private _disposed = false;
 
@@ -119,7 +112,6 @@ export class SummaryManager
 	}
 
 	constructor(
-		// eslint-disable-next-line import/no-deprecated
 		private readonly clientElection: ISummarizerClientElection,
 		private readonly connectedState: IConnectedState,
 		private readonly summaryCollection: Pick<
@@ -131,7 +123,6 @@ export class SummaryManager
 		 * Creates summarizer by asking interactive container to spawn summarizing container and
 		 *get back its Summarizer instance.
 		 */
-		// eslint-disable-next-line import/no-deprecated
 		private readonly createSummarizerFn: () => Promise<ISummarizer>,
 		private readonly startThrottler: IThrottler,
 		{
@@ -162,9 +153,7 @@ export class SummaryManager
 	 * a window between construction and starting where the caller can attach listeners.
 	 */
 	public start(): void {
-		// eslint-disable-next-line import/no-deprecated
 		this.clientElection.on("electedSummarizerChanged", this.refreshSummarizer);
-		// eslint-disable-next-line import/no-deprecated
 		this.refreshSummarizer();
 	}
 
@@ -173,12 +162,10 @@ export class SummaryManager
 		// If we have a summarizer, it should have been either cancelled on disconnected by now.
 		// But because of lastSummary process, it can still hang around, so there is not much we can
 		// check or assert.
-		// eslint-disable-next-line import/no-deprecated
 		this.refreshSummarizer();
 	};
 
 	private readonly handleDisconnected = (): void => {
-		// eslint-disable-next-line import/no-deprecated
 		this.refreshSummarizer();
 	};
 
@@ -217,7 +204,6 @@ export class SummaryManager
 		return { shouldSummarize: true };
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	private readonly refreshSummarizer = (): void => {
 		// Transition states depending on shouldSummarize, which is a calculated property
 		// that is only true if this client is connected and is the elected summarizer.
@@ -257,7 +243,6 @@ export class SummaryManager
 
 		assert(this.summarizer === undefined, 0x262 /* "Old summarizer is still working!" */);
 
-		// eslint-disable-next-line import/no-deprecated
 		this.delayBeforeCreatingSummarizer()
 			.then(async (startWithInitialDelay: boolean) => {
 				if (this.disposed) {
@@ -286,7 +271,6 @@ export class SummaryManager
 				assert(this.state === SummaryManagerState.Starting, 0x263 /* "Expected: starting" */);
 				this.state = SummaryManagerState.Running;
 
-				// eslint-disable-next-line import/no-deprecated
 				const summarizer = await this.createSummarizerFn();
 				this.summarizer = summarizer;
 				this.setupForwardedEvents();
@@ -318,14 +302,12 @@ export class SummaryManager
 
 				return PerformanceEvent.timedExecAsync(
 					this.logger,
-					// eslint-disable-next-line import/no-deprecated
 					{ eventName: "RunningSummarizer", attempt: this.startThrottler.numAttempts },
 					async () => summarizer.run(clientId),
 				);
 			})
 			.then((reason: string) => {
 				this.logger.sendTelemetryEvent({
-					// eslint-disable-next-line import/no-deprecated
 					eventName: "EndingSummarizer",
 					reason,
 				});
@@ -333,7 +315,6 @@ export class SummaryManager
 			.catch((error) => {
 				this.logger.sendTelemetryEvent(
 					{
-						// eslint-disable-next-line import/no-deprecated
 						eventName: "EndingSummarizer",
 						reason: "exception",
 					},
@@ -357,7 +338,6 @@ export class SummaryManager
 						error?.errorType === DriverErrorTypes.offlineError ? "generic" : "error";
 					this.logger.sendTelemetryEvent(
 						{
-							// eslint-disable-next-line import/no-deprecated
 							eventName: "SummarizerException",
 							category,
 						},
@@ -379,7 +359,6 @@ export class SummaryManager
 			});
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	private stop(reason: SummarizerStopReason): void {
 		if (!SummaryManager.isStartingOrRunning(this.state)) {
 			return;
@@ -396,7 +375,6 @@ export class SummaryManager
 	 * @returns `true`, if creation is delayed due to heuristics (not many ops to summarize).
 	 * `false` if summarizer should start immediately due to too many unsummarized ops.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	private async delayBeforeCreatingSummarizer(): Promise<boolean> {
 		// throttle creation of new summarizer containers to prevent spamming the server with websocket connections
 		let delayMs = this.startThrottler.getDelay();
@@ -404,7 +382,6 @@ export class SummaryManager
 		// We have been elected the summarizer. Some day we may be able to summarize with a live document but for
 		// now we play it safe and launch a second copy.
 		this.logger.sendTelemetryEvent({
-			// eslint-disable-next-line import/no-deprecated
 			eventName: "CreatingSummarizer",
 			throttlerDelay: delayMs,
 			initialDelay: this.initialDelayMs,
@@ -472,7 +449,6 @@ export class SummaryManager
 	}
 
 	public dispose(): void {
-		// eslint-disable-next-line import/no-deprecated
 		this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
