@@ -177,7 +177,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	public enterNode(index: number): void {
 		// assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
 		const siblings = this.getField();
-		assert(index in siblings, 0x405 /* child must exist at index */);
+		assert(index in siblings, "a child does not exist at the specified index, check the status of a node using `Tree.status()`");
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
 		this.index = index;
