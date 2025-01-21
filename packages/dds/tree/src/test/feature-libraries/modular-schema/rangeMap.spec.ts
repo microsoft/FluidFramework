@@ -5,17 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { RangeMap } from "../../../util/index.js";
+import { newIntegerRangeMap, type RangeMap } from "../../../util/index.js";
 
-function newRangeMap(): RangeMap<string> {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-	return new RangeMap<string>();
+function newRangeMap(): RangeMap<number, string> {
+	return newIntegerRangeMap<string>();
 }
 
 describe("RangeMap", () => {
 	it("query on empty map returns undefined", () => {
 		const map = newRangeMap();
-		const entry = map.get(5, 4);
+		const entry = map.getFirst(5, 4);
 		assert.deepEqual(entry, { start: 5, length: 4, value: undefined });
 	});
 
@@ -26,22 +25,22 @@ describe("RangeMap", () => {
 		map.set(3, 4, "a");
 
 		// Read keys 0-2
-		const entryBefore = map.get(0, 3);
+		const entryBefore = map.getFirst(0, 3);
 		assert.deepEqual(entryBefore, { start: 0, length: 3, value: undefined });
 
 		// Read keys 1-3
-		const entryBeginning = map.get(1, 3);
+		const entryBeginning = map.getFirst(1, 3);
 		assert.deepEqual(entryBeginning, { start: 1, length: 2, value: undefined });
 
 		// Read keys 2-7
-		const entryWhole = map.get(2, 6);
+		const entryWhole = map.getFirst(2, 6);
 		assert.deepEqual(entryWhole, { start: 2, length: 1, value: undefined });
 
-		const entryEnd = map.get(6, 2);
+		const entryEnd = map.getFirst(6, 2);
 		assert.deepEqual(entryEnd, { start: 6, length: 1, value: "a" });
 
 		// Read key 7
-		const entryAfter = map.get(7, 1);
+		const entryAfter = map.getFirst(7, 1);
 		assert.deepEqual(entryAfter, { start: 7, length: 1, value: undefined });
 	});
 
@@ -55,19 +54,19 @@ describe("RangeMap", () => {
 		map.set(6, 1, "b");
 
 		// Read key 3
-		const entryFirst = map.get(3, 1);
+		const entryFirst = map.getFirst(3, 1);
 		assert.deepEqual(entryFirst, { start: 3, length: 1, value: "a" });
 
 		// Read keys 5-7
-		const entrySecond = map.get(5, 3);
+		const entrySecond = map.getFirst(5, 3);
 		assert.deepEqual(entrySecond, { start: 5, length: 1, value: undefined });
 
 		// Read keys 4-5
-		const entryBetween = map.get(4, 2);
+		const entryBetween = map.getFirst(4, 2);
 		assert.deepEqual(entryBetween, { start: 4, length: 2, value: undefined });
 
 		// Read keys 3-6
-		const entryBoth = map.get(3, 4);
+		const entryBoth = map.getFirst(3, 4);
 		assert.deepEqual(entryBoth, { start: 3, length: 1, value: "a" });
 	});
 
@@ -89,25 +88,25 @@ describe("RangeMap", () => {
 		// Set keys 1-7
 		map.set(1, 7, "e");
 
-		const entry0 = map.get(0, 8);
+		const entry0 = map.getFirst(0, 8);
 		assert.deepEqual(entry0, { start: 0, length: 1, value: "a" });
 
-		const entry1 = map.get(1, 1);
+		const entry1 = map.getFirst(1, 1);
 		assert.deepEqual(entry1, { start: 1, length: 1, value: "e" });
 
-		const entry3 = map.get(3, 2);
+		const entry3 = map.getFirst(3, 2);
 		assert.deepEqual(entry3, { start: 3, length: 2, value: "e" });
 
-		const entry5 = map.get(5, 1);
+		const entry5 = map.getFirst(5, 1);
 		assert.deepEqual(entry5, { start: 5, length: 1, value: "e" });
 
-		const entry6 = map.get(6, 1);
+		const entry6 = map.getFirst(6, 1);
 		assert.deepEqual(entry6, { start: 6, length: 1, value: "e" });
 
-		const entry7 = map.get(7, 2);
+		const entry7 = map.getFirst(7, 2);
 		assert.deepEqual(entry7, { start: 7, length: 1, value: "e" });
 
-		const entry8 = map.get(8, 1);
+		const entry8 = map.getFirst(8, 1);
 		assert.deepEqual(entry8, { start: 8, length: 1, value: "d" });
 	});
 
@@ -120,13 +119,13 @@ describe("RangeMap", () => {
 		// Set keys 4-6
 		map.set(4, 3, "b");
 
-		const entry1 = map.get(1, 10);
+		const entry1 = map.getFirst(1, 10);
 		assert.deepEqual(entry1, { start: 1, length: 3, value: "a" });
 
-		const entry4 = map.get(4, 8);
+		const entry4 = map.getFirst(4, 8);
 		assert.deepEqual(entry4, { start: 4, length: 3, value: "b" });
 
-		const entry7 = map.get(7, 4);
+		const entry7 = map.getFirst(7, 4);
 		assert.deepEqual(entry7, { start: 7, length: 4, value: "a" });
 	});
 
@@ -137,7 +136,7 @@ describe("RangeMap", () => {
 			// Delete keys 3-6 from an empty map
 			map.delete(3, 4);
 
-			assert.deepEqual(map.getAllEntries(), []);
+			assert.deepEqual(map.entries(), []);
 		});
 
 		it("delete range spanning one entry", () => {
@@ -149,7 +148,7 @@ describe("RangeMap", () => {
 			// Delete keys 3-6
 			map.delete(3, 4);
 
-			assert.deepEqual(map.getAllEntries(), [{ start: 2, length: 1, value: "a" }]);
+			assert.deepEqual(map.entries(), [{ start: 2, length: 1, value: "a" }]);
 		});
 
 		it("delete range spanning multiple entries", () => {
@@ -167,7 +166,7 @@ describe("RangeMap", () => {
 			// Delete keys 4-8
 			map.delete(4, 5);
 
-			assert.deepEqual(map.getAllEntries(), [
+			assert.deepEqual(map.entries(), [
 				{ start: 2, length: 2, value: "a" },
 				{ start: 9, length: 4, value: "c" },
 			]);
@@ -185,7 +184,7 @@ describe("RangeMap", () => {
 			// Delete keys 2-5
 			map.delete(2, 4);
 
-			assert.deepEqual(map.getAllEntries(), [{ start: 7, length: 3, value: "b" }]);
+			assert.deepEqual(map.entries(), [{ start: 7, length: 3, value: "b" }]);
 		});
 
 		it("delete range at startpoint of an entry", () => {
@@ -200,7 +199,7 @@ describe("RangeMap", () => {
 			// Delete keys 4-6
 			map.delete(4, 3);
 
-			assert.deepEqual(map.getAllEntries(), [
+			assert.deepEqual(map.entries(), [
 				{ start: 2, length: 2, value: "a" },
 				{ start: 7, length: 3, value: "b" },
 			]);
@@ -218,7 +217,7 @@ describe("RangeMap", () => {
 			// Delete keys 5-8
 			map.delete(5, 4);
 
-			assert.deepEqual(map.getAllEntries(), [
+			assert.deepEqual(map.entries(), [
 				{ start: 2, length: 3, value: "a" },
 				{ start: 9, length: 1, value: "b" },
 			]);
@@ -233,7 +232,7 @@ describe("RangeMap", () => {
 			// Delete keys 4-6
 			map.delete(4, 3);
 
-			assert.deepEqual(map.getAllEntries(), [
+			assert.deepEqual(map.entries(), [
 				{ start: 2, length: 2, value: "a" },
 				{ start: 7, length: 1, value: "a" },
 			]);

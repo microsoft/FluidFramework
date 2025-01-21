@@ -102,11 +102,11 @@ export class SummaryManager
 	private summarizer?: ISummarizer;
 	private _disposed = false;
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
-	public get currentState() {
+	public get currentState(): SummaryManagerState {
 		return this.state;
 	}
 
@@ -156,7 +156,7 @@ export class SummaryManager
 		this.refreshSummarizer();
 	}
 
-	private readonly handleConnected = (clientId: string) => {
+	private readonly handleConnected = (clientId: string): void => {
 		this.latestClientId = clientId;
 		// If we have a summarizer, it should have been either cancelled on disconnected by now.
 		// But because of lastSummary process, it can still hang around, so there is not much we can
@@ -164,11 +164,13 @@ export class SummaryManager
 		this.refreshSummarizer();
 	};
 
-	private readonly handleDisconnected = () => {
+	private readonly handleDisconnected = (): void => {
 		this.refreshSummarizer();
 	};
 
-	private static readonly isStartingOrRunning = (state: SummaryManagerState) =>
+	private static readonly isStartingOrRunning = (
+		state: SummaryManagerState,
+	): state is SummaryManagerState.Starting | SummaryManagerState.Running =>
 		state === SummaryManagerState.Starting || state === SummaryManagerState.Running;
 
 	private getShouldSummarizeState(): ShouldSummarizeState {
@@ -201,7 +203,7 @@ export class SummaryManager
 		return { shouldSummarize: true };
 	}
 
-	private readonly refreshSummarizer = () => {
+	private readonly refreshSummarizer = (): void => {
 		// Transition states depending on shouldSummarize, which is a calculated property
 		// that is only true if this client is connected and is the elected summarizer.
 		const shouldSummarizeState = this.getShouldSummarizeState();
@@ -234,7 +236,7 @@ export class SummaryManager
 		}
 	};
 
-	private startSummarization() {
+	private startSummarization(): void {
 		assert(this.state === SummaryManagerState.Off, 0x261 /* "Expected: off" */);
 		this.state = SummaryManagerState.Starting;
 
@@ -330,6 +332,7 @@ export class SummaryManager
 					// If failure happened on container load, we may not yet realized that socket disconnected, so check
 					// offlineError.
 					const category =
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						error?.errorType === DriverErrorTypes.offlineError ? "generic" : "error";
 					this.logger.sendTelemetryEvent(
 						{
@@ -354,7 +357,7 @@ export class SummaryManager
 			});
 	}
 
-	private stop(reason: SummarizerStopReason) {
+	private stop(reason: SummarizerStopReason): void {
 		if (!SummaryManager.isStartingOrRunning(this.state)) {
 			return;
 		}
@@ -404,9 +407,9 @@ export class SummaryManager
 
 		if (delayMs > 0) {
 			let timer;
-			let resolveOpPromiseFn;
+			let resolveOpPromiseFn: (value: void | PromiseLike<void>) => void;
 			// Create a listener that will break the delay if we've exceeded the initial delay ops count.
-			const opsListenerFn = () => {
+			const opsListenerFn = (): void => {
 				if (this.summaryCollection.opsSinceLastAck >= this.opsToBypassInitialDelay) {
 					clearTimeout(timer);
 					resolveOpPromiseFn();
@@ -443,7 +446,7 @@ export class SummaryManager
 		return this.summarizer.enqueueSummarize(options);
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.clientElection.off("electedSummarizerChanged", this.refreshSummarizer);
 		this.connectedState.off("connected", this.handleConnected);
 		this.connectedState.off("disconnected", this.handleDisconnected);
@@ -451,9 +454,9 @@ export class SummaryManager
 		this._disposed = true;
 	}
 
-	private readonly forwardedEvents = new Map<any, () => void>();
+	private readonly forwardedEvents = new Map<string, () => void>();
 
-	private setupForwardedEvents() {
+	private setupForwardedEvents(): void {
 		[
 			"summarize",
 			"summarizeAllAttemptsFailed",
@@ -461,16 +464,21 @@ export class SummaryManager
 			"summarizerStart",
 			"summarizerStartupFailed",
 		].forEach((event) => {
-			const listener = (...args: any[]) => {
+			const listener = (...args: any[]): void => {
 				this.emit(event, ...args);
 			};
+			// TODO: better typing here
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.summarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
 		});
 	}
 
-	private cleanupForwardedEvents() {
-		this.forwardedEvents.forEach((listener, event) => this.summarizer?.off(event, listener));
+	private cleanupForwardedEvents(): void {
+		this.forwardedEvents.forEach((listener, event) =>
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			this.summarizer?.off(event as any, listener),
+		);
 		this.forwardedEvents.clear();
 	}
 }

@@ -275,7 +275,7 @@ describe("Runtime", () => {
 		// get rid of all properties with undefined values.
 		const summarySchema = JSON.parse(
 			JSON.stringify(controller.summarizeDocumentSchema(100 /* refSeq */)),
-		);
+		) as IDocumentSchemaCurrent;
 		if (!explicitSchemaControl) {
 			assert.deepEqual(summarySchema, validConfig, "summarized schema as expected");
 		} else if (existing) {
@@ -406,6 +406,7 @@ describe("Runtime", () => {
 			() => {}, // onSchemaChange
 		);
 
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
 		assert.deepEqual((controller2 as any).documentSchema, schema);
 
 		// updates with old refSeq should fail silently.
