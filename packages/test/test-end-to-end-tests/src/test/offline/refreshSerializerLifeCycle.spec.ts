@@ -28,10 +28,9 @@ import {
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
-import { wrapObjectAndOverride } from "../mocking.js";
+import { wrapObjectAndOverride } from "../../mocking.js";
 
-// eslint-disable-next-line import/no-internal-modules
-import { loadContainerWithDeferredConnection } from "./offline/offlineTestsUtils.js";
+import { loadContainerOffline } from "./offlineTestsUtils.js";
 
 const testConfigs = generatePairwiseOptions({
 	savedOps: [true, false],
@@ -223,7 +222,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			// have a data store with groupId
 			let container2: IContainerExperimental;
 			if (testConfig.loadOffline) {
-				const offlineObject = await loadContainerWithDeferredConnection(
+				const offlineObject = await loadContainerOffline(
 					testContainerConfig,
 					provider,
 					{ url },

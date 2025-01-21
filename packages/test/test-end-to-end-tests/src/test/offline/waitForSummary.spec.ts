@@ -102,6 +102,7 @@ describeCompat(
 			url = await container.getAbsoluteUrl("");
 			dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 			map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
+			// force write connection.
 			map1.set("1", "1");
 		});
 
@@ -128,6 +129,7 @@ describeCompat(
 				testContainerConfig,
 				summaryVersion,
 			);
+			// intentionally not loading from new summary
 			const container2 = await loader.resolve({ url }, pendingOps);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
