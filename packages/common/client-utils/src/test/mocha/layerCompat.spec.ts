@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	checkLayerCompatibility,
-	type ILayerCompatibilityDetails,
+	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 	type LayerCompatCheckResult,
 } from "../../layerCompat.js";
@@ -15,7 +15,7 @@ import {
 const pkgVersion = "1.0.0";
 
 describe("checkLayerCompatibility", () => {
-	it("should return not compatible when other layer doesn't support ILayerCompatibilityDetails", () => {
+	it("should return not compatible when other layer doesn't support ILayerCompatDetails", () => {
 		const compatSupportRequirementsLayer1: ILayerCompatSupportRequirements = {
 			requiredFeatures: ["feature1", "feature2"],
 			minSupportedGeneration: 1,
@@ -39,7 +39,7 @@ describe("checkLayerCompatibility", () => {
 			minSupportedGeneration: 1,
 		};
 
-		const compatDetailsLayer2: ILayerCompatibilityDetails = {
+		const compatDetailsLayer2: ILayerCompatDetails = {
 			pkgVersion,
 			generation: 1,
 			supportedFeatures: new Set(["feature1", "feature2"]),
@@ -60,7 +60,7 @@ describe("checkLayerCompatibility", () => {
 			minSupportedGeneration: 2,
 		};
 		// Layer 2 has lower generation (1) than the minimum supported generation of Layer 1 (2).
-		const compatDetailsLayer2: ILayerCompatibilityDetails = {
+		const compatDetailsLayer2: ILayerCompatDetails = {
 			pkgVersion,
 			generation: 1,
 			supportedFeatures: new Set(["feature1", "feature2"]),
@@ -89,7 +89,7 @@ describe("checkLayerCompatibility", () => {
 			minSupportedGeneration: 1,
 		};
 		// Layer 2 doesn't support feature2.
-		const compatDetailsLayer2: ILayerCompatibilityDetails = {
+		const compatDetailsLayer2: ILayerCompatDetails = {
 			pkgVersion,
 			generation: 1,
 			supportedFeatures: new Set(["feature1", "feature3"]),
@@ -118,7 +118,7 @@ describe("checkLayerCompatibility", () => {
 			minSupportedGeneration: 2,
 		};
 		// Layer 2 doesn't support feature1 or feature2.
-		const compatDetailsLayer2: ILayerCompatibilityDetails = {
+		const compatDetailsLayer2: ILayerCompatDetails = {
 			pkgVersion,
 			generation: 1,
 			supportedFeatures: new Set(["feature3"]),

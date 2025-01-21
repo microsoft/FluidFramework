@@ -5,7 +5,7 @@
 
 import {
 	checkLayerCompatibility,
-	type ILayerCompatibilityDetails,
+	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
@@ -14,9 +14,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
- * The compatibility details to be exposed to the Runtime layer.
+ * Loader's compatibility details that is exposed to the Runtime layer.
  */
-export const LoaderCompatDetails: ILayerCompatibilityDetails = {
+export const LoaderCompatDetails: ILayerCompatDetails = {
 	/**
 	 * The package version of the Loader layer.
 	 */
@@ -50,7 +50,7 @@ export const RuntimeSupportRequirements: ILayerCompatSupportRequirements = {
  * Validates that the Runtime layer is compatible with the Loader.
  */
 export function validateRuntimeCompatibility(
-	maybeRuntimeCompatDetails: ILayerCompatibilityDetails | undefined,
+	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(

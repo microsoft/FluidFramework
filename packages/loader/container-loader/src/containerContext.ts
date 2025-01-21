@@ -4,8 +4,8 @@
  */
 
 import type {
-	ILayerCompatibilityDetails,
-	IProvideLayerCompatibilityDetails,
+	ILayerCompatDetails,
+	IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -34,12 +34,14 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import { LoaderCompatDetails } from "./layerCompatState.js";
+
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
  */
-export class ContainerContext implements IContainerContext, IProvideLayerCompatibilityDetails {
+export class ContainerContext implements IContainerContext, IProvideLayerCompatDetails {
 	/**
-	 * @deprecated - This has been replaced by ILayerCompatibilityDetails.
+	 * @deprecated - This has been replaced by ILayerCompatDetails.
 	 */
 	public readonly supportedFeatures: ReadonlyMap<string, unknown> = new Map([
 		/**
@@ -69,8 +71,8 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompati
 		return this._getConnected();
 	}
 
-	public get ILayerCompatibilityDetails(): ILayerCompatibilityDetails {
-		return this.compatDetails;
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return LoaderCompatDetails;
 	}
 
 	constructor(
@@ -120,7 +122,6 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompati
 		private readonly _getConnected: () => boolean,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
-		private readonly compatDetails: ILayerCompatibilityDetails,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 		public readonly snapshotWithContents?: ISnapshot,

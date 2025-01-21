@@ -8,7 +8,7 @@
 import {
 	TypedEventEmitter,
 	performance,
-	type ILayerCompatibilityDetails,
+	type ILayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -127,7 +127,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
-import { LoaderCompatDetails, validateRuntimeCompatibility } from "./layerCompatState.js";
+import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
 import {
@@ -2460,7 +2460,6 @@ export class Container
 			() => this.connected,
 			this._deltaManager.clientDetails,
 			existing,
-			LoaderCompatDetails,
 			this.subLogger,
 			pendingLocalState,
 			snapshot,
@@ -2472,11 +2471,9 @@ export class Container
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 
-		const maybeRuntimeCompatDetails =
-			runtime as unknown as FluidObject<ILayerCompatibilityDetails>;
-		validateRuntimeCompatibility(
-			maybeRuntimeCompatDetails.ILayerCompatibilityDetails,
-			(error) => this.dispose(error),
+		const maybeRuntimeCompatDetails = runtime as unknown as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
+			this.dispose(error),
 		);
 
 		this._runtime = runtime;

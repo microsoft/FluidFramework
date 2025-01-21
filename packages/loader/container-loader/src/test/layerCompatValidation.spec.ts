@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type {
-	ILayerCompatibilityDetails,
+	ILayerCompatDetails,
 	ILayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
@@ -75,7 +75,7 @@ describe("Runtime Layer compatibility", () => {
 	}
 
 	it("Loader is compatible with old Runtime (pre-enforcement)", () => {
-		// Older Runtime will not have ILayerCompatibilityDetails defined.
+		// Older Runtime will not have ILayerCompatDetails defined.
 		assert.doesNotThrow(
 			() => validateRuntimeCompatibility(undefined /* maybeRuntimeCompatDetails */, () => {}),
 			"Loader should be compatible with older Loader",
@@ -85,7 +85,7 @@ describe("Runtime Layer compatibility", () => {
 	it("Loader generation and features are compatible with Runtime", () => {
 		(RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
 			["feature1", "feature2"];
-		const runtimeCompatDetails: ILayerCompatibilityDetails = {
+		const runtimeCompatDetails: ILayerCompatDetails = {
 			pkgVersion,
 			generation: RuntimeSupportRequirements.minSupportedGeneration,
 			supportedFeatures: new Set(RuntimeSupportRequirements.requiredFeatures),
@@ -100,7 +100,7 @@ describe("Runtime Layer compatibility", () => {
 		(RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
 			["feature1", "feature2"];
 		const runtimeGeneration = RuntimeSupportRequirements.minSupportedGeneration - 1;
-		const runtimeCompatDetails: ILayerCompatibilityDetails = {
+		const runtimeCompatDetails: ILayerCompatDetails = {
 			pkgVersion,
 			generation: runtimeGeneration,
 			supportedFeatures: new Set(RuntimeSupportRequirements.requiredFeatures),
@@ -119,7 +119,7 @@ describe("Runtime Layer compatibility", () => {
 		(RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
 			requiredFeatures;
 
-		const runtimeCompatDetails: ILayerCompatibilityDetails = {
+		const runtimeCompatDetails: ILayerCompatDetails = {
 			pkgVersion,
 			generation: runtimeGeneration,
 			supportedFeatures: new Set(),
@@ -144,7 +144,7 @@ describe("Runtime Layer compatibility", () => {
 		(RuntimeSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
 			requiredFeatures;
 
-		const runtimeCompatDetails: ILayerCompatibilityDetails = {
+		const runtimeCompatDetails: ILayerCompatDetails = {
 			pkgVersion,
 			generation: runtimeGeneration,
 			supportedFeatures: new Set(),

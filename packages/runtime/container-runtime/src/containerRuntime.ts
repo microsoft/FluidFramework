@@ -6,8 +6,8 @@
 import {
 	Trace,
 	TypedEventEmitter,
-	type ILayerCompatibilityDetails,
-	type IProvideLayerCompatibilityDetails,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -175,7 +175,7 @@ import {
 	type GarbageCollectionMessage,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
-import { CompatDetailsForLoader, validateLoaderCompatibility } from "./layerCompatState.js";
+import { RuntimeCompatDetails, validateLoaderCompatibility } from "./layerCompatState.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeDocumentSchemaMessage,
@@ -928,7 +928,7 @@ export class ContainerRuntime
 		// eslint-disable-next-line import/no-deprecated
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext,
-		IProvideLayerCompatibilityDetails
+		IProvideLayerCompatDetails
 {
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
@@ -1542,8 +1542,8 @@ export class ContainerRuntime
 	 */
 	private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>;
 
-	public get ILayerCompatibilityDetails(): ILayerCompatibilityDetails {
-		return CompatDetailsForLoader;
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return RuntimeCompatDetails;
 	}
 
 	>>>>>>> 32ed194ea6 (
@@ -1618,12 +1618,8 @@ export class ContainerRuntime
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
-		const maybeLoaderCompatDetails =
-			context as unknown as FluidObject<ILayerCompatibilityDetails>;
-		validateLoaderCompatibility(
-			maybeLoaderCompatDetails.ILayerCompatibilityDetails,
-			this.disposeFn,
-		);
+		const maybeLoaderCompatDetails = context as unknown as FluidObject<ILayerCompatDetails>;
+		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
 
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
 		const runtimeOptions = {
@@ -1809,10 +1805,10 @@ export class ContainerRuntime
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
 
-		// If the context has ILayerCompatibilityDetails, it supports referenceSequenceNumbers since that features
-		// predates ILayerCompatibilityDetails.
+		// If the context has ILayerCompatDetails, it supports referenceSequenceNumbers since that features
+		// predates ILayerCompatDetails.
 		const referenceSequenceNumbersSupported =
-			maybeLoaderCompatDetails.ILayerCompatibilityDetails === undefined
+			maybeLoaderCompatDetails.ILayerCompatDetails === undefined
 				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (

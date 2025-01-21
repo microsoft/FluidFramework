@@ -25,22 +25,20 @@ export type LayerCompatCheckResult =
 /**
  * @internal
  */
-export const ILayerCompatibilityDetails: keyof IProvideLayerCompatibilityDetails =
-	"ILayerCompatibilityDetails";
+export const ILayerCompatDetails: keyof IProvideLayerCompatDetails = "ILayerCompatDetails";
 
 /**
  * @internal
  */
-export interface IProvideLayerCompatibilityDetails {
-	readonly ILayerCompatibilityDetails: ILayerCompatibilityDetails;
+export interface IProvideLayerCompatDetails {
+	readonly ILayerCompatDetails: ILayerCompatDetails;
 }
 
 /**
  * This interface is used to communicate the compatibility details of a layer to another layer.
  * @internal
  */
-export interface ILayerCompatibilityDetails
-	extends Partial<IProvideLayerCompatibilityDetails> {
+export interface ILayerCompatDetails extends Partial<IProvideLayerCompatDetails> {
 	/**
 	 * A list of features supported by the layer at a particular layer boundary. This is used to check if these
 	 * set of features satisfy the requirements of another layer.
@@ -63,14 +61,14 @@ export interface ILayerCompatibilityDetails
  * used for backwards compatibility to allow older layers to work before compatibility enforcement was introduced.
  * @internal
  */
-export const defaultLayerCompatibilityDetails: ILayerCompatibilityDetails = {
+export const defaultLayerCompatibilityDetails: ILayerCompatDetails = {
 	supportedFeatures: new Set(),
 	generation: 0, // 0 is reserved for layers before compatibility enforcement was introduced.
 	pkgVersion: "unknown",
 };
 
 /**
- * The requirements that a layer needs to meet to be compatible with another layer.
+ * The requirements that a layer needs another layer to support for them to be compatible.
  * @internal
  */
 export interface ILayerCompatSupportRequirements {
@@ -95,7 +93,7 @@ export interface ILayerCompatSupportRequirements {
  */
 export function checkLayerCompatibility(
 	compatSupportRequirementsLayer1: ILayerCompatSupportRequirements,
-	compatDetailsLayer2: ILayerCompatibilityDetails | undefined,
+	compatDetailsLayer2: ILayerCompatDetails | undefined,
 ): LayerCompatCheckResult {
 	const compatDetailsWithCompat = compatDetailsLayer2 ?? defaultLayerCompatibilityDetails;
 	let isCompatible = true;
