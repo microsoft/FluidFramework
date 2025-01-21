@@ -4,7 +4,7 @@
  */
 
 /**
- * A browser friendly assert library.
+ * Asserts the specified condition.
  *
  * @param condition - The condition that should be true, if the condition is false an error will be thrown.
  * Only use this API when `false` indicates a logic error in the problem and thus a bug that should be fixed.
@@ -15,9 +15,9 @@
  * @remarks
  * Use this instead of the node 'assert' package, which requires polyfills and has a big impact on bundle sizes.
  *
- * Asserts using this API will be included in all configurations: there is no option to disable or optimize them out.
+ * Assertions using this API will be included in all configurations: there is no option to disable or optimize them out.
  * Thus this API is suitable for detecting conditions that should terminate the application and produce a useful diagnostic message.
- * It can be used to ensure bad states are detected early and avoid data corruption or harder to debug errors.
+ * It can be used to ensure bad states are detected early and to avoid data corruption or harder to debug errors.
  *
  * In cases where the assert is very unlikely to have an impact on production code but is still useful as documentation and for debugging, consider using `debugAssert` instead
  * to optimize bundle size.
@@ -45,9 +45,9 @@ export function assert(condition: boolean, message: string | number): asserts co
  * @param predicate - A pure function that should return true if the condition holds, or a string or object describing the condition that failed.
  * This function will only be run in some configurations so it should be pure, and only used to detect bugs (when debugAssert are enabled), and must not be relied on to enforce the condition is true: for that use {@link assert}.
  * @remarks
- * Remarks optimizing the asserts out of the bundle requires a bundler like webpack which leverages `__PURE__` annotations like https://webpack.js.org/guides/tree-shaking/#mark-a-function-call-as-side-effect-free.
+ * Optimizing the asserts out of the bundle requires a bundler like webpack which leverages `__PURE__` annotations like https://webpack.js.org/guides/tree-shaking/#mark-a-function-call-as-side-effect-free.
  *
- * Exceptions thrown by this function must never be caught in production code as that will result in different behavior when testing and when running optimized builds.
+ * Exceptions thrown by this function must never be caught in production code, as that will result in different behavior when testing and when running optimized builds.
  * The `predicate` function must be pure (have no side-effects) to ensure that the behavior of code is the same regardless of if the asserts are disabled, enabled or optimized out.
  *
  * These asserts are disabled by default, even in debug builds to ensure that by default code will be tested as production runs, with them disabled.
@@ -60,6 +60,7 @@ export function assert(condition: boolean, message: string | number): asserts co
  * 1. Make it easy to compile debug asserts fully out of production builds.
  * For webpack this happens by default, avoiding the need for customers to do special configuration.
  * This is important for both performance and bundle size.
+ *
  * 2. Make it easy to test (both manually and automated) with and without the predicates running.
  * This ensures it is possible to benefit from the asserts when enabled, but also test with them disabled to ensure this disablement doesn't cause bugs.
  *
