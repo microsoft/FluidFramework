@@ -67,6 +67,7 @@ export class RangeMap<K, V> {
 
 					result.push({ start, length: overlappingLength, value });
 					nextKey = this.offsetKey(lastEntryKey, 1);
+					remainingLength -= overlappingLength;
 				}
 			}
 		}
@@ -78,14 +79,16 @@ export class RangeMap<K, V> {
 			}
 
 			const [key, { length: entryLength, value }] = entry;
-			const lastEntryKey = this.offsetKey(key, entryLength);
 			if (this.gt(key, lastQueryKey)) {
 				break;
 			}
+
 			const overlappingLength = Math.min(remainingLength, entryLength);
 			result.push({ start: key, length: overlappingLength, value });
+
+			const lastEntryKey = this.offsetKey(key, entryLength);
 			nextKey = this.offsetKey(lastEntryKey, 1);
-			remainingLength -= entryLength;
+			remainingLength -= overlappingLength;
 		}
 
 		return result;
