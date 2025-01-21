@@ -12,7 +12,7 @@ import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 describe(`Presence with AzureClient`, () => {
 	const numClients = 5;
-	assert(numClients > 0, "Must have at least one client");
+	assert(numClients > 1, "Must have at least two clients");
 	let children: ChildProcess[] = [];
 	const connectTimeoutMs = 10_000;
 
