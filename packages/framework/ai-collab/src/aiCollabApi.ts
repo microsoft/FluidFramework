@@ -122,7 +122,7 @@ export interface AiCollabSuccessResponse {
 	/**
 	 * The diffs that the AI collaboration performed on the SharedTree.
 	 */
-	readonly diffs: Diff[];
+	readonly diffs: Difference[];
 }
 
 /**
@@ -188,29 +188,74 @@ export interface TokenLimits {
 }
 
 /**
- * An operation that ai-collab performed on a SharedTree.
+ * Represents a path through a tree of objects.
+ * number values represent array indices whereas string values represent object keys.
  *
  * @alpha
  */
-export interface Diff {
-	/**
-	 * The id to find the node in the SharedTree.
-	 */
-	id: string;
-	/**
-	 * The type of operation that was performed on the SharedTree.
-	 */
-	type: "insert" | "remove" | "modify" | "move";
-	/**
-	 * The path to the node in the SharedTree.
-	 */
-	destination: string;
-	/**
-	 * The new value of the node in the SharedTree.
-	 */
-	newValue?: string;
-	/**
-	 * The old value of the node in the SharedTree.
-	 */
-	oldValue?: string;
+export type ObjectPath = (string | number)[];
+
+/**
+ * Represents a create operation between two branches of a tree.
+ * Meaning that an attribute (a shared tree node) was identified as being created.
+ *
+ * @alpha
+ */
+export interface DifferenceCreate {
+	type: "CREATE";
+	path: ObjectPath;
+	value: unknown;
 }
+
+/**
+ * Represents a remove operation between two branches of a tree.
+ * Meaning that an attribute (a shared tree node) was identified as being deleted.
+ * When using object ids, removes are idenitified by an object with a given id no longer existing.
+ *
+ * @alpha
+ */
+export interface DifferenceRemove {
+	type: "REMOVE";
+	path: ObjectPath;
+	oldValue: unknown;
+	objectId?: string | number | undefined;
+}
+
+/**
+ * Represents a change operation between two branches of a tree.
+ * Meaning that an attribute (a shared tree node) was identified as being changed from one value to another.
+ *
+ * @alpha
+ */
+export interface DifferenceChange {
+	type: "CHANGE";
+	path: ObjectPath;
+	value: unknown;
+	oldValue: unknown;
+	objectId?: string | number | undefined;
+}
+
+/**
+ * Represents a move operation between two branches of a tree.
+ * Meaning that an object (shared tree node) was identified as being moved from one index to another based on its unique id.
+ *
+ * @alpha
+ */
+export interface DifferenceMove {
+	type: "MOVE";
+	path: ObjectPath;
+	newIndex: number;
+	value: unknown;
+	objectId?: string | number | undefined;
+}
+
+/**
+ * Union for all possible difference types.
+ *
+ * @alpha
+ */
+export type Difference =
+	| DifferenceCreate
+	| DifferenceRemove
+	| DifferenceChange
+	| DifferenceMove;

@@ -19,12 +19,13 @@ import { z } from "zod";
 
 import type {
 	AiCollabOptions,
-	Diff,
+	Difference,
 	AiCollabSuccessResponse,
 	AiCollabErrorResponse,
 	OpenAiClientOptions,
 	TokenLimits,
 	TokenUsage,
+	ObjectPath,
 } from "../aiCollabApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
@@ -167,11 +168,44 @@ export async function generateTreeEdits(
 	}
 
 	// Transform editLog into diffs
-	const diffs: Diff[] = editLog.map((log, index) => ({
-		id: `diff-${index}`,
-		type: log.edit.type,
-		path: log.edit.explanation,
-	}));
+	const diffs: Difference[] = editLog.map((log) => {
+		switch (log.edit.type) {
+			case "move": {
+				return {
+					type: "MOVE",
+					path: log.edit.destination as unknown as ObjectPath,
+					newIndex: log.edit.source as unknown as number,
+					value: log.edit.source as unknown as number,
+					objectId: log.edit.source as unknown as string,
+				};
+			}
+			case "insert": {
+				return {
+					type: "CREATE",
+					path: log.edit.destination as unknown as ObjectPath,
+					value: log.edit.content as unknown as TreeNode,
+				};
+			}
+			case "modify": {
+				return {
+					type: "CHANGE",
+					path: log.edit.target as unknown as ObjectPath,
+					value: log.edit.modification as unknown as TreeNode,
+					oldValue: log.edit.modification as unknown as TreeNode,
+				};
+			}
+			case "remove": {
+				return {
+					type: "REMOVE",
+					path: log.edit.source as unknown as ObjectPath,
+					oldValue: log.edit.source as unknown as TreeNode,
+				};
+			}
+			default: {
+				return fail("Unknown edit type");
+			}
+		}
+	});
 
 	if (options.dumpDebugLog ?? false) {
 		console.log(DEBUG_LOG.join("\n\n"));

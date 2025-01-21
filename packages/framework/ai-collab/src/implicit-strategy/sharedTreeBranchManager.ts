@@ -20,12 +20,12 @@ import {
 } from "@fluidframework/tree/alpha";
 import type { z } from "zod";
 
+import type { Difference, ObjectPath } from "../aiCollabApi.js";
+
 import {
 	createMergableDiffSeries,
 	createMergableIdDiffSeries,
 	sharedTreeDiff,
-	type Difference,
-	type ObjectPath,
 } from "./sharedTreeDiff.js";
 import { isTreeMapNode, isTreeArrayNode, sharedTreeTraverse } from "./utils.js";
 

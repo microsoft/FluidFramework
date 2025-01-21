@@ -9,7 +9,6 @@ import {
 	aiCollab,
 	type AiCollabErrorResponse,
 	type AiCollabSuccessResponse,
-	type Diff,
 	type Difference,
 	type DifferenceChange,
 	type DifferenceMove,
@@ -37,8 +36,6 @@ import {
 import { Tree, type TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useState, type ReactNode, type SetStateAction } from "react";
-
-import { DiffViewer } from "./DiffViewer";
 
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
@@ -72,7 +69,6 @@ export function TaskCard(props: {
 	useSharedTreeRerender({ sharedTreeNode: props.sharedTreeTask, logId: "TaskCard" });
 
 	const [branchDifferences, setBranchDifferences] = useState(props.branchDifferences);
-	const [diffs, setDiffs] = useState<Diff[]>([]);
 
 	const deleteTask = (): void => {
 		const taskIndex = props.sharedTreeTaskGroup.tasks.indexOf(props.sharedTreeTask);
@@ -192,7 +188,6 @@ export function TaskCard(props: {
 			}
 
 			// 3. Handle the response from the ai collaboration
-			setDiffs(response.diffs);
 			const taskDifferences = new SharedTreeBranchManager({
 				nodeIdAttributeName: "id",
 			}).compare(
@@ -362,7 +357,6 @@ export function TaskCard(props: {
 			)}
 
 			<Stack direction="row" sx={{ mb: 2 }}>
-				<DiffViewer diffs={diffs} />
 				<TextField
 					id="input-description-label-id"
 					label="Description"
