@@ -954,7 +954,9 @@ export class ContainerRuntime
 			gcOptions = {},
 			loadSequenceNumberVerification = "close",
 			flushMode = defaultFlushMode,
-			compressionOptions = defaultCompressionConfig,
+			compressionOptions = runtimeOptions.enableGroupedBatching === false
+				? disabledCompressionConfig // Compression must be disabled if Grouping is disabled
+				: defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,

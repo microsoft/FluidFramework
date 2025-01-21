@@ -69,7 +69,6 @@ import { ChannelCollection } from "../channelCollection.js";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
-	disabledCompressionConfig,
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
@@ -1168,7 +1167,6 @@ describe("Runtime", () => {
 			beforeEach(async () => {
 				const runtimeOptions: IContainerRuntimeOptionsInternal = {
 					enableGroupedBatching: false,
-					compressionOptions: disabledCompressionConfig,
 				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
@@ -1458,11 +1456,14 @@ describe("Runtime", () => {
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
 				flushMode: FlushMode.TurnBased,
-				compressionOptions: disabledCompressionConfig,
+				compressionOptions: {
+					minimumBatchSizeInBytes: 614400,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: undefined,
-				enableGroupedBatching: false,
+				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
@@ -2660,7 +2661,6 @@ describe("Runtime", () => {
 				droppedSignals = [];
 				const runtimeOptions: IContainerRuntimeOptionsInternal = {
 					enableGroupedBatching: false,
-					compressionOptions: disabledCompressionConfig,
 				};
 				containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3234,7 +3234,6 @@ describe("Runtime", () => {
 					remoteLogger = new MockLogger();
 					const runtimeOptions: IContainerRuntimeOptionsInternal = {
 						enableGroupedBatching: false,
-						compressionOptions: disabledCompressionConfig,
 					};
 					remoteContainerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext(

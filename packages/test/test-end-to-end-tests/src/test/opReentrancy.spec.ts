@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { disabledCompressionConfig } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
@@ -137,7 +136,6 @@ describeCompat(
 					...testContainerConfig,
 					runtimeOptions: {
 						enableGroupedBatching,
-						compressionOptions: disabledCompressionConfig,
 					},
 				});
 
@@ -204,7 +202,6 @@ describeCompat(
 					...testContainerConfig,
 					runtimeOptions: {
 						enableGroupedBatching,
-						compressionOptions: disabledCompressionConfig,
 					},
 				});
 
