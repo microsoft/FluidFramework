@@ -16,7 +16,6 @@ import {
 	insertField,
 	obliterateField,
 	obliterateRange,
-	// obliterateRangeSided,
 	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
@@ -135,7 +134,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 	});
 }
 
-describeFuzz.only("MergeTree.Client", ({ testCount, stressMode }) => {
+describeFuzz("MergeTree.Client", ({ testCount, stressMode }) => {
 	const opts = stressMode === StressMode.Short ? defaultOptions : stressOptions;
 	// defaultOptions;
 	// debugOptions;

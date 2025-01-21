@@ -29,26 +29,13 @@ export type TestOperation = (
 	random: IRandom,
 ) => IMergeTreeOp | undefined;
 
-/**
- * TBD: will be needed to avoid number chunks when chunk size \> 1
- */
-// const insertAvoidNumber = (client: TestClient): number => {
-// 	let pos = 0;
-// 	for (let i = 0; i < client.getLength(); i++) {
-// 		if (Number.isNaN(Number(client.getText(i, i + 1)))) {
-// 			pos = i;
-// 		}
-// 	}
-// 	return pos;
-// };
-
 export const insertField: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const numberText = random.string(2, "0123456789");
+	const numberText = random.string(5, "0123456789");
 	if (
 		// start is not a number
 		Number.isNaN(Number(client.getText(opStart, opStart + 1))) &&
@@ -64,22 +51,12 @@ export const insertField: TestOperation = (
 const numberRange = (
 	client: TestClient,
 	start: number,
-	end: number,
 ): { startPos: number | undefined; endPos: number | undefined } => {
-	/**
-	 * TUESDAY: ADAPT THIS FOR 3 CHAR CHUNKS (and code for 2+ char chunks)
-	 * pos 		char before 		char after		outcome
-	 * 0		letter				number			pos, pos + 1
-	 * 1		number				letter			pos - 1, pos
-	 */
-	let startPos = 0;
-	for (let i = 0; i < client.getLength(); i++) {
-		if (!Number.isNaN(Number(client.getText(i, i + 1)))) {
-			startPos = i;
-			break;
-		}
+	let startPos = start;
+	while (startPos > 0 && !Number.isNaN(Number(client.getText(startPos, startPos + 1)))) {
+		startPos--;
 	}
-	return { startPos, endPos: startPos + 1 };
+	return { startPos, endPos: startPos + 4 };
 };
 
 export const obliterateField: TestOperation = (
@@ -88,7 +65,7 @@ export const obliterateField: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const { startPos, endPos } = numberRange(client, opStart, opEnd);
+	const { startPos, endPos } = numberRange(client, opStart);
 
 	let endISP: InteriorSequencePlace | undefined;
 	if (startPos !== undefined && endPos !== undefined) {
