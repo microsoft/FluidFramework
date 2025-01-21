@@ -10,10 +10,11 @@ import { type ClientSessionId } from "@fluidframework/presence/alpha";
 export interface MessageFromChild {
 	event: "attendeeDisconnected" | "attendeeJoined" | "ready" | "disconnectedSelf";
 	sessionId: ClientSessionId;
+	containerId?: string;
 }
 
 export interface MessageToChild {
 	command: "connect" | "disconnectSelf";
-	containerId: string;
-	user: AzureUser;
+	containerId: string | undefined;
+	user?: AzureUser;
 }

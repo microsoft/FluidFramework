@@ -31,8 +31,8 @@ import { configProvider } from "../utils.js";
 
 import { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
-type MessageFromParent = Required<MessageToChild>;
-type MessageToParent = Required<MessageFromChild>;
+type MessageFromParent = MessageToChild;
+type MessageToParent = MessageFromChild;
 
 const connectTimeoutMs = 10_000;
 
@@ -45,8 +45,8 @@ if (useAzure && endPoint === undefined) {
 	throw new Error("Azure Fluid Relay service endpoint is missing");
 }
 
-const getPresenceContainer = async (
-	id: string,
+const getOrCreatePresenceContainer = async (
+	id: string | undefined,
 	user: AzureUser,
 	config?: ReturnType<typeof configProvider>,
 	scopes?: ScopeType[],
@@ -76,8 +76,17 @@ const getPresenceContainer = async (
 		},
 	};
 
-	const containerId = id;
-	const { container, services } = await client.getContainer(containerId, schema, "2");
+	let container: IFluidContainer;
+	let services: AzureContainerServices;
+	let containerId: string;
+
+	if (id === undefined) {
+		({ container, services } = await client.createContainer(schema, "2"));
+		containerId = await container.attach();
+	} else {
+		containerId = id;
+		({ container, services } = await client.getContainer(containerId, schema, "2"));
+	}
 
 	if (container.connectionState !== ConnectionState.Connected) {
 		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
@@ -102,23 +111,24 @@ const getPresenceContainer = async (
 		containerId,
 	};
 };
-
 // Ensure process.send is available
 assert(process.send);
 const send: (msg: MessageToParent) => void = process.send.bind(process);
-
 function setupMessageHandler(): void {
+	let presence: IPresence | undefined;
+	let container: IFluidContainer | undefined;
+	let containerId: string;
 	process.on("message", (msg: MessageFromParent) => {
 		(async () => {
-			let presence: IPresence | undefined;
-			let container: IFluidContainer | undefined;
-			if (msg.command === "connect" && msg.containerId && msg.user) {
-				const { container: c, presence: p } = await getPresenceContainer(
-					msg.containerId,
-					msg.user,
-				);
+			if (msg.command === "connect" && msg.user) {
+				const {
+					container: c,
+					presence: p,
+					containerId: id,
+				} = await getOrCreatePresenceContainer(msg.containerId, msg.user);
 				container = c;
 				presence = p;
+				containerId = id;
 
 				presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
 					const m: MessageToParent = {
@@ -136,7 +146,7 @@ function setupMessageHandler(): void {
 				});
 
 				// Signal ready
-				send({ event: "ready", sessionId: presence?.getMyself().sessionId });
+				send({ event: "ready", containerId, sessionId: presence?.getMyself().sessionId });
 			} else if (msg.command === "disconnectSelf" && container && presence) {
 				container.disconnect();
 				send({
