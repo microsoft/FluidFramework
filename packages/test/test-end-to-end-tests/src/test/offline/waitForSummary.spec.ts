@@ -226,12 +226,17 @@ describeCompat(
 				container,
 				testContainerConfig,
 			);
-			const pendingOps = await new Promise<string | undefined>((resolve, reject) =>
-				container.on("op", (op) => {
-					if (op.type === "summarize") {
-						resolve(container.closeAndGetPendingLocalState?.());
-					}
-				}),
+			const pendingOps = await timeoutAwait(
+				new Promise<string | undefined>((resolve, reject) =>
+					container.on("op", (op) => {
+						if (op.type === "summarize") {
+							resolve(container.closeAndGetPendingLocalState?.());
+						}
+					}),
+				),
+				{
+					errorMsg: "Timeout on waiting for summarize op",
+				},
 			);
 			await waitForSummaryPromise;
 			assert.ok(pendingOps);
