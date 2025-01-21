@@ -111,9 +111,12 @@ const getOrCreatePresenceContainer = async (
 		containerId,
 	};
 };
-// Ensure process.send is available
-assert(process.send);
-const send: (msg: MessageToParent) => void = process.send.bind(process);
+let send: (msg: MessageToParent) => void;
+if (process.send) {
+	send = process.send.bind(process);
+} else {
+	throw new Error("process.send is not defined");
+}
 function setupMessageHandler(): void {
 	let presence: IPresence | undefined;
 	let container: IFluidContainer | undefined;
