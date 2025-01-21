@@ -32,7 +32,7 @@ import {
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 
-import { loadContainerWithDeferredConnection, getPendingOps } from "./offlineTestsUtils.js";
+import { loadContainerOffline, generatePendingState } from "./offlineTestsUtils.js";
 
 const loadSummarizerAndSummarize = async (
 	provider: ITestObjectProvider,
@@ -111,7 +111,7 @@ describeCompat(
 				container,
 				testContainerConfig,
 			);
-			const pendingOps = await getPendingOps(
+			const pendingOps = await generatePendingState(
 				testContainerConfig,
 				provider,
 				false, // Don't send ops from first container instance before closing
@@ -134,9 +134,9 @@ describeCompat(
 			await waitForContainerConnection(container2);
 			await provider.ensureSynchronized();
 
-			assert.strictEqual(map2.get("1"), "1");
-			assert.strictEqual(map2.get("2"), "2");
-			assert.strictEqual(map2.get("stashed"), "stashed");
+			assert.strictEqual(map2.get("1"), "1", "failed to get key 1");
+			assert.strictEqual(map2.get("2"), "2", "failed to get key 2");
+			assert.strictEqual(map2.get("stashed"), "stashed", "failed to get stashed key");
 		});
 
 		it("load offline with blob redirect table", async function () {
@@ -165,13 +165,13 @@ describeCompat(
 
 			// should be able to load entirely offline
 			const stashBlob = await timeoutAwait(
-				getPendingOps(testContainerConfig, provider, true),
+				generatePendingState(testContainerConfig, provider, true),
 				{
 					errorMsg: "Timeout on waiting for stashBlob",
 				},
 			);
 			await timeoutAwait(
-				loadContainerWithDeferredConnection(testContainerConfig, provider, { url }, stashBlob),
+				loadContainerOffline(testContainerConfig, provider, { url }, stashBlob),
 				{
 					errorMsg: "Timeout on waiting for loadOffline",
 				},
@@ -214,8 +214,8 @@ describeCompat(
 			const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 			await waitForContainerConnection(container3);
 			await provider.ensureSynchronized();
-			assert.strictEqual(map1.get("2"), "2");
-			assert.strictEqual(map3.get("2"), "2");
+			assert.strictEqual(map1.get("2"), "2", "failed to get key 2 on map1");
+			assert.strictEqual(map3.get("2"), "2", "failed to get key 2 on map3");
 		});
 
 		it("can stash between summary op and ack", async function () {

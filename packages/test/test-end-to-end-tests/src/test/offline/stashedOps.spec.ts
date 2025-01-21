@@ -63,7 +63,7 @@ import {
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
-import { getPendingOps, loadContainerWithDeferredConnection } from "./offlineTestsUtils.js";
+import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -220,7 +220,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends op", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance
@@ -273,7 +273,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		let sessionId;
 
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance
@@ -345,7 +345,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("connects in write mode and resends op when loaded with no delta connection", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance
@@ -388,7 +388,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	].forEach(({ name, getMap }) => {
 		it(`doesn't resend successful op (${name})`, async function () {
 			const map = await getMapFromProvider(getMap);
-			const pendingOps = await getPendingOps(
+			const pendingOps = await generatePendingState(
 				testContainerConfig,
 				provider,
 				true, // Do send ops from first container instance before closing
@@ -431,7 +431,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		it(`resends delete op and can set after (${name})`, async function () {
 			const map = await getMapFromProvider(getMap);
-			const pendingOps = await getPendingOps(
+			const pendingOps = await generatePendingState(
 				testContainerConfig,
 				provider,
 				false, // Don't send ops from first container instance before closing
@@ -457,7 +457,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		it(`resends a lot of ops (${name})`, async function () {
 			const map = await getMapFromProvider(getMap);
-			const pendingOps = await getPendingOps(
+			const pendingOps = await generatePendingState(
 				testContainerConfig,
 				provider,
 				false, // Don't send ops from first container instance before closing
@@ -491,7 +491,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		it(`doesn't resend a lot of successful ops (${name})`, async function () {
 			const map = await getMapFromProvider(getMap);
-			const pendingOps = await getPendingOps(
+			const pendingOps = await generatePendingState(
 				testContainerConfig,
 				provider,
 				true, // Do send ops from first container instance before closing
@@ -519,7 +519,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends all shared directory ops", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -551,7 +551,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends batched ops", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -586,7 +586,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("doesn't resend successful batched ops", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			true, // Do send ops from first container instance before closing
@@ -613,7 +613,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("resends chunked op", async function () {
 		const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -644,7 +644,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("doesn't resend successful chunked op", async function () {
 		const bigString = "a".repeat(container1.deltaManager.maxMessageSize);
 
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			true, // Do send ops from first container instance before closing
@@ -674,7 +674,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
 		await provider.ensureSynchronized();
 
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -698,7 +698,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("successful map clear no resend", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			true, // Do send ops from first container instance before closing
@@ -729,7 +729,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends string insert op", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -750,7 +750,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("doesn't resend successful string insert op", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			true, // Do send ops from first container instance before closing
@@ -771,7 +771,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends string remove op", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -792,7 +792,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("doesn't resend successful string remove op", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			true, // Do send ops from first container instance before closing
@@ -815,7 +815,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends string annotate op", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -836,7 +836,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("doesn't resend successful string annotate op", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			true, // Do send ops from first container instance before closing
@@ -859,7 +859,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("resends marker ops", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -923,7 +923,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	it("resends attach op", async function () {
 		const newMapId = "newMap";
 		let id;
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -964,7 +964,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("doesn't resend successful attach op", async function () {
 		const newMapId = "newMap";
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			true, // Do send ops from first container instance before closing
@@ -993,7 +993,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("resends DDS attach op", async function () {
 		const newMapId = "newMap";
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -1174,7 +1174,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	);
 
 	it("can make changes offline and resubmit them", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -1184,7 +1184,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		);
 
-		const container2 = await loadContainerWithDeferredConnection(
+		const container2 = await loadContainerOffline(
 			testContainerConfig,
 			provider,
 			{ url },
@@ -1224,7 +1224,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("fails when session time expires using stashed time", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -1244,7 +1244,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("can make changes offline and stash them", async function () {
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -1254,7 +1254,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		);
 
-		const { container: container2 } = await loadContainerWithDeferredConnection(
+		const { container: container2 } = await loadContainerOffline(
 			testContainerConfig,
 			provider,
 			{ url },
@@ -1277,13 +1277,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// get stashed ops from this container without connecting.  Superset of pendingOps
 		const morePendingOps = await container2.closeAndGetPendingLocalState?.();
 
-		const { container: container3, connect: connect3 } =
-			await loadContainerWithDeferredConnection(
-				testContainerConfig,
-				provider,
-				{ url },
-				morePendingOps,
-			);
+		const { container: container3, connect: connect3 } = await loadContainerOffline(
+			testContainerConfig,
+			provider,
+			{ url },
+			morePendingOps,
+		);
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
@@ -1321,7 +1320,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		"waits for previous container's leave message after rehydration",
 		[{ eventName: "fluid:telemetry:Container:connectedStateRejected" }],
 		async () => {
-			const pendingOps = await getPendingOps(
+			const pendingOps = await generatePendingState(
 				testContainerConfig,
 				provider,
 				false, // Don't send ops from first container instance before closing
@@ -1390,11 +1389,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
-		const container = await loadContainerWithDeferredConnection(
-			testContainerConfig,
-			provider,
-			{ url },
-		);
+		const container = await loadContainerOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
@@ -1486,12 +1481,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await pendingOpsP;
 
 		// we are able to load from the pending ops even though we abort
-		await loadContainerWithDeferredConnection(
-			testContainerConfig,
-			provider,
-			{ url },
-			pendingOps,
-		);
+		await loadContainerOffline(testContainerConfig, provider, { url }, pendingOps);
 	});
 
 	it("close while uploading multiple blob", async function () {
@@ -1525,11 +1515,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("load offline from stashed ops with pending blob", async function () {
-		const container = await loadContainerWithDeferredConnection(
-			testContainerConfig,
-			provider,
-			{ url },
-		);
+		const container = await loadContainerOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
@@ -1541,7 +1527,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const stashedChanges = await stashedChangesP;
 
-		const container3 = await loadContainerWithDeferredConnection(
+		const container3 = await loadContainerOffline(
 			testContainerConfig,
 			provider,
 			{ url },
@@ -1570,11 +1556,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("stashed changes with blobs", async function () {
-		const container = await loadContainerWithDeferredConnection(
-			testContainerConfig,
-			provider,
-			{ url },
-		);
+		const container = await loadContainerOffline(testContainerConfig, provider, { url });
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
@@ -1607,7 +1589,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const newMapId = "newMap";
 		let id;
 		// stash attach op
-		const pendingOps = await getPendingOps(
+		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
 			false, // Don't send ops from first container instance before closing
@@ -1632,7 +1614,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		// load offline; new datastore should be accessible
-		const container2 = await loadContainerWithDeferredConnection(
+		const container2 = await loadContainerOffline(
 			testContainerConfig,
 			provider,
 			{ url },
@@ -1905,7 +1887,7 @@ describeCompat(
 		itExpects(
 			`Single-Threaded Fork: Closes (ForkedContainerError) when ops are submitted with different clientId from pendingLocalState (via Counter DDS)`,
 			[
-				// Temp Container from getPendingOps
+				// Temp Container from generatePendingState
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "generic",
@@ -1918,7 +1900,7 @@ describeCompat(
 			],
 			async function () {
 				const incrementValue = 3;
-				const pendingLocalState = await getPendingOps(
+				const pendingLocalState = await generatePendingState(
 					testContainerConfig_noSummarizer,
 					provider,
 					"afterReconnect", // Send ops after reconnecting, to ensure a different clientId
@@ -1971,7 +1953,7 @@ describeCompat(
 					this.skip();
 				}
 				const incrementValue = 3;
-				const pendingLocalState = await getPendingOps(
+				const pendingLocalState = await generatePendingState(
 					testContainerConfig_noSummarizer,
 					provider,
 					false, // Don't send ops from first container instance before closing
@@ -2084,7 +2066,7 @@ describeCompat(
 		itExpects(
 			`Single-Threaded Forks: Closes (ForkedContainerError) when hydrating twice and submitting in serial (via Counter DDS)`,
 			[
-				// Temp Container from getPendingOps
+				// Temp Container from generatePendingState
 				{
 					eventName: "fluid:telemetry:Container:ContainerClose",
 					category: "generic",
@@ -2097,7 +2079,7 @@ describeCompat(
 			],
 			async function () {
 				const incrementValue = 3;
-				const pendingLocalState = await getPendingOps(
+				const pendingLocalState = await generatePendingState(
 					testContainerConfig_noSummarizer,
 					provider,
 					false, // Don't send ops from first container instance before closing

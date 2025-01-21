@@ -19,8 +19,7 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
-import { getPendingOps } from "./offlineTestsUtils.js";
+import { generatePendingState } from "./offlineTestsUtils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -84,7 +83,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 		});
 
 		it("handles container with pending ops to be sent out", async function () {
-			const pendingOps = await getPendingOps(
+			const pendingOps = await generatePendingState(
 				testContainerConfig,
 				provider,
 				false,
@@ -103,7 +102,7 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 		});
 
 		it("handles container with pending ops not to be sent out", async function () {
-			const pendingOps = await getPendingOps(
+			const pendingOps = await generatePendingState(
 				testContainerConfig,
 				provider,
 				false,

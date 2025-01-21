@@ -29,7 +29,7 @@ type SharedObjCallback = (
 /**
  * load container, pause, create (local) ops from callback, then optionally send ops before closing container
  */
-export const getPendingOps = async (
+export const generatePendingState = async (
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
 	send: false | true | "afterReconnect",
@@ -85,7 +85,7 @@ export const getPendingOps = async (
  * @param pendingLocalState - (Optional) custom PendingLocalState to load from. Defaults to using getPendingOps helper if omitted.
  * @returns A container instance with a connect function to unblock the Driver (simulating coming back from offline)
  */
-export async function loadContainerWithDeferredConnection(
+export async function loadContainerOffline(
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
 	request: IRequest,
@@ -125,7 +125,7 @@ export async function loadContainerWithDeferredConnection(
 	const container = await loader.resolve(
 		request,
 		pendingLocalState ??
-			(await getPendingOps(testContainerConfig, testObjectProvider, false /* send */)),
+			(await generatePendingState(testContainerConfig, testObjectProvider, false /* send */)),
 	);
 	return { container, connect: () => p.resolve(undefined) };
 }
