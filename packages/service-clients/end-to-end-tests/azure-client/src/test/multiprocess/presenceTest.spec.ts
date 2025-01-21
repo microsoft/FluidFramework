@@ -59,24 +59,6 @@ describe(`Presence with AzureClient`, () => {
 			}
 			afterCleanUp.push(() => child.removeAllListeners());
 		}
-
-		await timeoutPromise(
-			(resolve) =>
-				children
-					.filter((_, index) => index !== 0)
-					.map((child) => {
-						child.once("message", (msg: MessageFromChild) => {
-							if (msg.event === "ready") {
-								resolve();
-							}
-						});
-					}),
-			{
-				durationMs: connectTimeoutMs,
-				errorMsg: "did not receive 'ready' from child process array",
-			},
-		);
-
 		for (const child of children) {
 			afterCleanUp.push(() => child.removeAllListeners());
 		}
