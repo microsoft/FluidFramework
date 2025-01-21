@@ -1214,13 +1214,6 @@ export class ContainerRuntime
 		return this;
 	}
 
-	private readonly submitFn: (
-		type: MessageType,
-		contents: unknown,
-		batch: boolean,
-		appData?: unknown,
-	) => number;
-
 	private readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
@@ -1611,8 +1604,11 @@ export class ContainerRuntime
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
-		this.submitFn = submitFn;
-		this.submitSummaryFn = submitSummaryFn;
+		// back-compat: ADO #1385: Make this call unconditional in the future
+
+		this.submitSummaryFn =
+			submitSummaryFn ??
+			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
 		this.submitSignalFn = submitSignalFn;
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
@@ -1928,7 +1924,7 @@ export class ContainerRuntime
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
 
-		const legacySendBatchFn = makeLegacySendBatchFn(this.submitFn, this.innerDeltaManager);
+		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
@@ -4608,10 +4604,7 @@ export class ContainerRuntime
 		// System message should not be sent in the middle of the batch.
 		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
 
-		// back-compat: ADO #1385: Make this call unconditional in the future
-		return this.submitSummaryFn !== undefined
-			? this.submitSummaryFn(contents, referenceSequenceNumber)
-			: this.submitFn(MessageType.Summarize, contents, false);
+		return this.submitSummaryFn(contents, referenceSequenceNumber);
 	}
 
 	/**
