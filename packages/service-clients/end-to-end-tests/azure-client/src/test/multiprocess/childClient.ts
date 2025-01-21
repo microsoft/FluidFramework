@@ -146,7 +146,7 @@ function setupMessageHandler(): void {
 				});
 
 				// Signal ready
-				send({ event: "ready", containerId, sessionId: presence?.getMyself().sessionId });
+				send({ event: "ready", containerId, sessionId: presence.getMyself().sessionId });
 			} else if (msg.command === "disconnectSelf" && container && presence) {
 				container.disconnect();
 				send({
