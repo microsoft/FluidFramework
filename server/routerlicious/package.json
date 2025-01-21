@@ -114,12 +114,15 @@
 	},
 	"pnpm": {
 		"commentsOverrides": [
-			"@types/node is overridden to v18 to ensure all packages are building using the v18 types."
+			"@types/node is overridden to v18 to ensure all packages are building using the v18 types.",
+      "oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently."
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.39",
 			"qs": "^6.11.0",
-			"socket.io-parser": "^4.2.4"
+			"socket.io-parser": "^4.2.4",
+      "oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
+			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is a peer dependency because of build tools. The package is not needed because it's only used for compilation. It's not needed at runtime.",
