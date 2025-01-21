@@ -32,7 +32,7 @@ PACKAGE SELECTION FLAGS
       --branch=<value>                [default: main] Select only packages that have been changed when compared to this
                                       base branch. Can only be used with --changed.
       --changed                       Select packages that have changed when compared to a base branch. Use the --branch
-                                      option to specify a different base branch. Cannot be used --all.
+                                      option to specify a different base branch. Cannot be used with --all.
       --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
       --packages                      Run on all independent packages in the repo. Cannot be used with --all.
       --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
