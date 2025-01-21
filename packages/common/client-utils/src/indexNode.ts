@@ -32,6 +32,7 @@ export { createEmitter } from "./events/index.js";
 export {
 	checkLayerCompatibility,
 	type LayerCompatCheckResult,
-	type ICompatibilityDetails,
-	type IProvideCompatibilityDetails,
+	type ILayerCompatibilityDetails,
+	type IProvideLayerCompatibilityDetails,
+	type ILayerCompatSupportRequirements,
 } from "./layerCompat.js";

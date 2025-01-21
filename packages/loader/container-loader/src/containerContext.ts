@@ -4,8 +4,8 @@
  */
 
 import type {
-	ICompatibilityDetails,
-	IProvideCompatibilityDetails,
+	ILayerCompatibilityDetails,
+	IProvideLayerCompatibilityDetails,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -37,9 +37,9 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
  */
-export class ContainerContext implements IContainerContext, IProvideCompatibilityDetails {
+export class ContainerContext implements IContainerContext, IProvideLayerCompatibilityDetails {
 	/**
-	 * @deprecated - This has been replaced by ICompatibilityDetails.
+	 * @deprecated - This has been replaced by ILayerCompatibilityDetails.
 	 */
 	public readonly supportedFeatures: ReadonlyMap<string, unknown> = new Map([
 		/**
@@ -69,7 +69,7 @@ export class ContainerContext implements IContainerContext, IProvideCompatibilit
 		return this._getConnected();
 	}
 
-	public get ICompatibilityDetails(): ICompatibilityDetails {
+	public get ILayerCompatibilityDetails(): ILayerCompatibilityDetails {
 		return this.compatDetails;
 	}
 
@@ -120,7 +120,7 @@ export class ContainerContext implements IContainerContext, IProvideCompatibilit
 		private readonly _getConnected: () => boolean,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
-		private readonly compatDetails: ICompatibilityDetails,
+		private readonly compatDetails: ILayerCompatibilityDetails,
 		public readonly taggedLogger: ITelemetryLoggerExt,
 		public readonly pendingLocalState?: unknown,
 		public readonly snapshotWithContents?: ISnapshot,

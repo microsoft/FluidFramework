@@ -6,8 +6,8 @@
 import {
 	Trace,
 	TypedEventEmitter,
-	type ICompatibilityDetails,
-	type IProvideCompatibilityDetails,
+	type ILayerCompatibilityDetails,
+	type IProvideLayerCompatibilityDetails,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -175,7 +175,7 @@ import {
 	type GarbageCollectionMessage,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
-import { LoaderLayerCompatManager } from "./loaderCompatManager.js";
+import { CompatDetailsForLoader, validateLoaderCompatibility } from "./layerCompatState.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeDocumentSchemaMessage,
@@ -928,7 +928,7 @@ export class ContainerRuntime
 		// eslint-disable-next-line import/no-deprecated
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext,
-		IProvideCompatibilityDetails
+		IProvideLayerCompatibilityDetails
 {
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
@@ -1542,10 +1542,8 @@ export class ContainerRuntime
 	 */
 	private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>;
 
-	// The compatibility manager for the Loader layer that validates it is compatible with the Runtime.
-	private readonly loaderLayerCompatManager: LoaderLayerCompatManager;
-	public get ICompatibilityDetails(): ICompatibilityDetails {
-		return this.loaderLayerCompatManager;
+	public get ILayerCompatibilityDetails(): ILayerCompatibilityDetails {
+		return CompatDetailsForLoader;
 	}
 
 	>>>>>>> 32ed194ea6 (
@@ -1620,10 +1618,11 @@ export class ContainerRuntime
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
-		this.loaderLayerCompatManager = new LoaderLayerCompatManager(this.disposeFn);
-		const maybeLoaderCompatDetails = context as unknown as FluidObject<ICompatibilityDetails>;
-		this.loaderLayerCompatManager.validateCompatibility(
-			maybeLoaderCompatDetails.ICompatibilityDetails,
+		const maybeLoaderCompatDetails =
+			context as unknown as FluidObject<ILayerCompatibilityDetails>;
+		validateLoaderCompatibility(
+			maybeLoaderCompatDetails.ILayerCompatibilityDetails,
+			this.disposeFn,
 		);
 
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
@@ -1810,10 +1809,10 @@ export class ContainerRuntime
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
 
-		// If the context has ICompatibilityDetails, it supports referenceSequenceNumbers since that features
-		// predates ICompatibilityDetails.
+		// If the context has ILayerCompatibilityDetails, it supports referenceSequenceNumbers since that features
+		// predates ILayerCompatibilityDetails.
 		const referenceSequenceNumbersSupported =
-			maybeLoaderCompatDetails.ICompatibilityDetails === undefined
+			maybeLoaderCompatDetails.ILayerCompatibilityDetails === undefined
 				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (

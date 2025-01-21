@@ -19,27 +19,28 @@ export type LayerCompatCheckResult =
 			 * The features that are required by the layer but are not supported by the other layer. This will only
 			 * be set if there are unsupported features.
 			 */
-			readonly unsupportedFeatures: string[] | undefined;
+			readonly unsupportedFeatures: readonly string[] | undefined;
 	  };
 
 /**
  * @internal
  */
-export const ICompatibilityDetails: keyof IProvideCompatibilityDetails =
-	"ICompatibilityDetails";
+export const ILayerCompatibilityDetails: keyof IProvideLayerCompatibilityDetails =
+	"ILayerCompatibilityDetails";
 
 /**
  * @internal
  */
-export interface IProvideCompatibilityDetails {
-	readonly ICompatibilityDetails: ICompatibilityDetails;
+export interface IProvideLayerCompatibilityDetails {
+	readonly ILayerCompatibilityDetails: ILayerCompatibilityDetails;
 }
 
 /**
  * This interface is used to communicate the compatibility details of a layer to another layer.
  * @internal
  */
-export interface ICompatibilityDetails extends Partial<IProvideCompatibilityDetails> {
+export interface ILayerCompatibilityDetails
+	extends Partial<IProvideLayerCompatibilityDetails> {
 	/**
 	 * A list of features supported by the layer at a particular layer boundary. This is used to check if these
 	 * set of features satisfy the requirements of another layer.
@@ -58,6 +59,21 @@ export interface ICompatibilityDetails extends Partial<IProvideCompatibilityDeta
 }
 
 /**
+ * The requirements that a layer needs to meet to be compatible with another layer.
+ * @internal
+ */
+export interface ILayerCompatSupportRequirements {
+	/**
+	 * The minimum supported generation the other layer needs to be at.
+	 */
+	readonly minSupportedGeneration: number;
+	/**
+	 * The features that the other layer needs to support.
+	 */
+	readonly requiredFeatures: readonly string[];
+}
+
+/**
  * Checks compatibility of a layer with another layer (layer2).
  * @param minSupportedGeneration - The minimum supported generation layer2 needs to be at.
  * @param requiredFeatures - The features that layer2 needs to support.
@@ -68,8 +84,8 @@ export interface ICompatibilityDetails extends Partial<IProvideCompatibilityDeta
  */
 export function checkLayerCompatibility(
 	minSupportedGeneration: number,
-	requiredFeatures: string[],
-	compatDetailsLayer2: ICompatibilityDetails | undefined,
+	requiredFeatures: readonly string[],
+	compatDetailsLayer2: ILayerCompatibilityDetails | undefined,
 ): LayerCompatCheckResult {
 	// If the other doesn't have compat details, then the layers are not compatible.
 	if (compatDetailsLayer2 === undefined) {

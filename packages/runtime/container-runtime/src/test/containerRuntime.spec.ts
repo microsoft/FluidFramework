@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import {
 	stringToBuffer,
-	type ICompatibilityDetails,
-	type IProvideCompatibilityDetails,
+	type ILayerCompatibilityDetails,
+	type IProvideLayerCompatibilityDetails,
 } from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
@@ -1529,8 +1529,8 @@ describe("Runtime", () => {
 
 			const localGetMockContext = (
 				features?: ReadonlyMap<string, unknown>,
-				compatibilityDetails?: ICompatibilityDetails,
-			): Partial<IContainerContext & IProvideCompatibilityDetails> => {
+				compatibilityDetails?: ILayerCompatibilityDetails,
+			): Partial<IContainerContext & IProvideLayerCompatibilityDetails> => {
 				return {
 					attachState: AttachState.Attached,
 					deltaManager: new MockDeltaManager(),
@@ -1542,7 +1542,7 @@ describe("Runtime", () => {
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
 					getLoadedFromVersion: () => undefined,
-					ICompatibilityDetails: compatibilityDetails,
+					ILayerCompatibilityDetails: compatibilityDetails,
 				};
 			};
 
@@ -1599,8 +1599,8 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("Loader supported for async FlushMode with ICompatibilityDetails", async () => {
-				const compatDetails: ICompatibilityDetails = {
+			it("Loader supported for async FlushMode with ILayerCompatibilityDetails", async () => {
+				const compatDetails: ILayerCompatibilityDetails = {
 					pkgVersion: "0.1.0",
 					generation: 1,
 					supportedFeatures: new Set(),

@@ -8,7 +8,7 @@
 import {
 	TypedEventEmitter,
 	performance,
-	type ICompatibilityDetails,
+	type ILayerCompatibilityDetails,
 } from "@fluid-internal/client-utils";
 import {
 	AttachState,
@@ -127,6 +127,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { LoaderCompatDetails, validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
 import {
@@ -144,7 +145,6 @@ import {
 	protocolHandlerShouldProcessSignal,
 } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
-import { RuntimeLayerCompatManager } from "./runtimeCompatManager.js";
 import {
 	type IPendingContainerState,
 	type IPendingDetachedContainerState,
@@ -496,10 +496,6 @@ export class Container
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
-
-	// The compatibility manager for the Runtime layer that validates it is compatible with the Loader.
-	private readonly runtimeLayerCompatManager: RuntimeLayerCompatManager;
-
 	private readonly mc: MonitoringContext;
 
 	/**
@@ -851,10 +847,6 @@ export class Container
 		};
 
 		this._containerId = uuid();
-
-		this.runtimeLayerCompatManager = new RuntimeLayerCompatManager((error) =>
-			this.dispose(error),
-		);
 
 		this.client = Container.setupClient(
 			this._containerId,
@@ -2468,7 +2460,7 @@ export class Container
 			() => this.connected,
 			this._deltaManager.clientDetails,
 			existing,
-			this.runtimeLayerCompatManager,
+			LoaderCompatDetails,
 			this.subLogger,
 			pendingLocalState,
 			snapshot,
@@ -2480,9 +2472,11 @@ export class Container
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 
-		const maybeRuntimeCompatDetails = runtime as unknown as FluidObject<ICompatibilityDetails>;
-		this.runtimeLayerCompatManager.validateCompatibility(
-			maybeRuntimeCompatDetails.ICompatibilityDetails,
+		const maybeRuntimeCompatDetails =
+			runtime as unknown as FluidObject<ILayerCompatibilityDetails>;
+		validateRuntimeCompatibility(
+			maybeRuntimeCompatDetails.ILayerCompatibilityDetails,
+			(error) => this.dispose(error),
 		);
 
 		this._runtime = runtime;
