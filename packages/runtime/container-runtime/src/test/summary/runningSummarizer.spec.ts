@@ -300,7 +300,7 @@ describe("Runtime", () => {
 					(reason) => {
 						stopCall++;
 					},
-					mockRuntime as any as ISummarizerRuntime,
+					mockRuntime as unknown as ISummarizerRuntime,
 				);
 			};
 
@@ -787,7 +787,7 @@ describe("Runtime", () => {
 							maxAttempts,
 							0,
 							`Summarization should not have been attempted more than ${maxAttempts} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 
@@ -850,7 +850,7 @@ describe("Runtime", () => {
 							maxAttempts,
 							0,
 							`Summarization should not have been attempted more than ${maxAttempts} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 
@@ -890,7 +890,7 @@ describe("Runtime", () => {
 							maxAttemptsOverride,
 							0,
 							`Summarization should not have been attempted more than ${maxAttemptsOverride} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 				}
@@ -972,7 +972,7 @@ describe("Runtime", () => {
 							`Summarization should not have been attempted more than ${
 								maxAttempts + 1
 							} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 				}
@@ -1164,6 +1164,7 @@ describe("Runtime", () => {
 						"should be nack",
 					);
 					assert(
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 						JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
 						"summary nack error should be test-nack",
 					);
@@ -1684,6 +1685,7 @@ describe("Runtime", () => {
 					await emitNextOp(summaryConfig.maxOps + 1);
 					await emitNack();
 
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const { error, ...eventProps } = await summarizePromiseP;
 					assert.strictEqual(eventProps.result, "failure");
 					assert.strictEqual(eventProps.currentAttempt, 1);
@@ -1720,6 +1722,7 @@ describe("Runtime", () => {
 					// Nack failures are attempted defaultMaxAttempts times. Each attempt should emit "summarize" event.
 					for (let attemptNumber = 1; attemptNumber <= defaultMaxAttempts; attemptNumber++) {
 						await emitNack(retryAfterSeconds);
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 						const { error, ...eventProps } = await summarizePromiseP;
 						assert.strictEqual(eventProps.result, "failure");
 						assert.strictEqual(eventProps.currentAttempt, attemptNumber);
@@ -1763,6 +1766,7 @@ describe("Runtime", () => {
 						attemptNumber <= defaultMaxAttemptsForSubmitFailures;
 						attemptNumber++
 					) {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 						const { error, ...eventProps } = await summarizePromiseP;
 						assert.strictEqual(eventProps.result, "failure");
 						assert.strictEqual(eventProps.currentAttempt, attemptNumber);

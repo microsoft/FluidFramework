@@ -55,14 +55,21 @@ export class SummarizingWarning
 		super(errorMessage);
 	}
 
-	static wrap(error: any, logged: boolean = false, logger: ITelemetryLoggerExt) {
-		const newErrorFn = (errMsg: string) => new SummarizingWarning(errMsg, logged);
+	static wrap(
+		error: unknown,
+		logged: boolean = false,
+		logger: ITelemetryLoggerExt,
+	): SummarizingWarning {
+		const newErrorFn = (errMsg: string): SummarizingWarning =>
+			new SummarizingWarning(errMsg, logged);
 		return wrapErrorAndLog<SummarizingWarning>(error, newErrorFn, logger);
 	}
 }
 
-export const createSummarizingWarning = (errorMessage: string, logged: boolean) =>
-	new SummarizingWarning(errorMessage, logged);
+export const createSummarizingWarning = (
+	errorMessage: string,
+	logged: boolean,
+): SummarizingWarning => new SummarizingWarning(errorMessage, logged);
 
 /**
  * Summarizer is responsible for coordinating when to generate and send summaries.
@@ -72,7 +79,7 @@ export const createSummarizingWarning = (errorMessage: string, logged: boolean) 
  * @alpha
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
-	public get ISummarizer() {
+	public get ISummarizer(): this {
 		return this;
 	}
 
@@ -84,12 +91,14 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
 	constructor(
-		/** Reference to runtime that created this object.
+		/**
+		 * Reference to runtime that created this object.
 		 * i.e. runtime with clientType === "summarizer"
 		 */
 		private readonly runtime: ISummarizerRuntime,
 		private readonly configurationGetter: () => ISummaryConfiguration,
-		/** Represents an object that can generate summary.
+		/**
+		 * Represents an object that can generate summary.
 		 * In practical terms, it's same runtime (this.runtime) with clientType === "summarizer".
 		 */
 		private readonly internalsProvider: ISummarizerInternalsProvider,
@@ -134,11 +143,11 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * the run promise, and also close the container.
 	 * @param reason - reason code for stopping
 	 */
-	public stop(reason: SummarizerStopReason) {
+	public stop(reason: SummarizerStopReason): void {
 		this.stopDeferred.resolve(reason);
 	}
 
-	public close() {
+	public close(): void {
 		// This will result in "summarizerClientDisconnected" stop reason recorded in telemetry,
 		// unless stop() was called earlier
 		this.dispose();
@@ -259,7 +268,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		this._heuristicData = new SummarizeHeuristicData(
 			this.runtime.deltaManager.lastSequenceNumber,
 			{
-				/** summary attempt baseline for heuristics */
+				/**
+				 * summary attempt baseline for heuristics
+				 */
 				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
 				summaryTime: Date.now(),
 			} as const,
@@ -289,7 +300,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 * properties.
 	 * Called by ContainerRuntime when it is disposed, as well as at the end the run().
 	 */
-	public dispose() {
+	public dispose(): void {
 		// Given that the call can come from own ContainerRuntime, ensure that we stop all the processes.
 		this.stop("summarizerClientDisconnected");
 
@@ -372,23 +383,25 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		return this.runningSummarizer.enqueueSummarize(options);
 	}
 
-	public recordSummaryAttempt?(summaryRefSeqNum?: number) {
+	public recordSummaryAttempt?(summaryRefSeqNum?: number): void {
 		this._heuristicData?.recordAttempt(summaryRefSeqNum);
 	}
 
-	private readonly forwardedEvents = new Map<any, () => void>();
+	private readonly forwardedEvents = new Map<string, () => void>();
 
-	private setupForwardedEvents() {
+	private setupForwardedEvents(): void {
 		["summarize", "summarizeAllAttemptsFailed"].forEach((event) => {
-			const listener = (...args: any[]) => {
+			const listener = (...args: any[]): void => {
 				this.emit(event, ...args);
 			};
+			// TODO: better typing here
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.runningSummarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
 		});
 	}
 
-	private cleanupForwardedEvents() {
+	private cleanupForwardedEvents(): void {
 		this.forwardedEvents.forEach((listener, event) =>
 			this.runningSummarizer?.off(event, listener),
 		);

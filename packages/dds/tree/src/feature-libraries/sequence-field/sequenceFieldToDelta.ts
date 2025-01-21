@@ -8,7 +8,6 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
@@ -25,12 +24,12 @@ import {
 	getInputCellId,
 	isAttachAndDetachEffect,
 } from "./utils.js";
-import type { ToDelta } from "../modular-schema/index.js";
+import type { FieldChangeDelta, ToDelta } from "../modular-schema/index.js";
 
 export function sequenceFieldToDelta(
 	change: MarkList,
 	deltaFromChild: ToDelta,
-): DeltaFieldChanges {
+): FieldChangeDelta {
 	const local: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];
@@ -187,7 +186,7 @@ export function sequenceFieldToDelta(
 		}
 		local.pop();
 	}
-	const delta: Mutable<DeltaFieldChanges> = {};
+	const delta: Mutable<FieldChangeDelta> = {};
 	if (local.length > 0) {
 		delta.local = local;
 	}

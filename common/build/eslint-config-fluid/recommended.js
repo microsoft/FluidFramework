@@ -47,7 +47,7 @@ module.exports = {
 		"unicorn/empty-brace-spaces": "off",
 
 		// Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
-		//            significant performance regression [node 14 x64].
+		// significant performance regression [node 14 x64].
 		"unicorn/no-for-loop": "off",
 
 		/**
@@ -150,13 +150,13 @@ module.exports = {
 
 		/**
 		 * Disallows calling any variable that is typed as any. The arguments to, and return value of calling an
-		 * any typed variable are not checked at all by TypeScript.
+		 * `any`-typed variable are not checked at all by TypeScript.
 		 */
 		"@typescript-eslint/no-unsafe-call": "error",
 
 		/**
 		 * Disallows member access on any variable that is typed as any. The arguments to, and return value of
-		 * calling an any typed variable are not checked at all by TypeScript.
+		 * calling an `any`-typed variable are not checked at all by TypeScript.
 		 */
 		"@typescript-eslint/no-unsafe-member-access": "error",
 

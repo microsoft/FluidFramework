@@ -8,7 +8,9 @@ import { validatePrecondition } from "@fluidframework/telemetry-utils/internal";
 
 import { UnreferencedState } from "./gcDefinitions.js";
 
-/** A wrapper around common-utils Timer that requires the timeout when calling start/restart */
+/**
+ * A wrapper around common-utils Timer that requires the timeout when calling start/restart
+ */
 class TimerWithNoDefaultTimeout extends Timer {
 	constructor(private readonly callback: () => void) {
 		// The default timeout/handlers will never be used since start/restart pass overrides below
@@ -17,7 +19,7 @@ class TimerWithNoDefaultTimeout extends Timer {
 		});
 	}
 
-	start(timeoutMs: number) {
+	start(timeoutMs: number): void {
 		super.start(timeoutMs, this.callback);
 	}
 
@@ -26,9 +28,13 @@ class TimerWithNoDefaultTimeout extends Timer {
 	}
 }
 
-/** The collection of UnreferencedStateTrackers for all unreferenced nodes. Ensures stopTracking is called when deleting */
+/**
+ * The collection of UnreferencedStateTrackers for all unreferenced nodes. Ensures stopTracking is called when deleting
+ */
 export class UnreferencedStateTrackerMap extends Map<string, UnreferencedStateTracker> {
-	/** Delete the given key, and stop tracking if that node was actually unreferenced */
+	/**
+	 * Delete the given key, and stop tracking if that node was actually unreferenced
+	 */
 	delete(key: string): boolean {
 		// Stop tracking so as to clear out any running timers.
 		this.get(key)?.stopTracking();
@@ -47,22 +53,36 @@ export class UnreferencedStateTracker {
 		return this._state;
 	}
 
-	/** Timer to indicate when an unreferenced object is considered Inactive */
+	/**
+	 * Timer to indicate when an unreferenced object is considered Inactive
+	 */
 	private readonly inactiveTimer: TimerWithNoDefaultTimeout;
-	/** Timer to indicate when an unreferenced object is Tombstone-Ready */
+	/**
+	 * Timer to indicate when an unreferenced object is Tombstone-Ready
+	 */
 	private readonly tombstoneTimer: TimerWithNoDefaultTimeout;
-	/** Timer to indicate when an unreferenced object is Sweep-Ready */
+	/**
+	 * Timer to indicate when an unreferenced object is Sweep-Ready
+	 */
 	private readonly sweepTimer: TimerWithNoDefaultTimeout;
 
 	constructor(
 		public readonly unreferencedTimestampMs: number,
-		/** The time after which node transitions to Inactive state. */
+		/**
+		 * The time after which node transitions to Inactive state.
+		 */
 		private readonly inactiveTimeoutMs: number,
-		/** The current reference timestamp used to track how long this node has been unreferenced for. */
+		/**
+		 * The current reference timestamp used to track how long this node has been unreferenced for.
+		 */
 		currentReferenceTimestampMs: number,
-		/** The time after which node transitions to TombstoneReady state; undefined if session expiry is disabled. */
+		/**
+		 * The time after which node transitions to TombstoneReady state; undefined if session expiry is disabled.
+		 */
 		private readonly tombstoneTimeoutMs: number | undefined,
-		/** The delay from TombstoneReady to SweepReady (only applies if tombstoneTimeoutMs is defined) */
+		/**
+		 * The delay from TombstoneReady to SweepReady (only applies if tombstoneTimeoutMs is defined)
+		 */
 		private readonly sweepGracePeriodMs: number,
 	) {
 		validatePrecondition(
@@ -106,8 +126,10 @@ export class UnreferencedStateTracker {
 		this.updateTracking(currentReferenceTimestampMs);
 	}
 
-	/* Updates the unreferenced state based on the provided timestamp. */
-	public updateTracking(currentReferenceTimestampMs: number) {
+	/**
+	 * Updates the unreferenced state based on the provided timestamp.
+	 */
+	public updateTracking(currentReferenceTimestampMs: number): void {
 		const unreferencedDurationMs = currentReferenceTimestampMs - this.unreferencedTimestampMs;
 
 		// Below we will set the appropriate timer (or none). Any running timers are superceded by the new currentReferenceTimestampMs
@@ -151,14 +173,16 @@ export class UnreferencedStateTracker {
 		this.inactiveTimer.restart(this.inactiveTimeoutMs - unreferencedDurationMs);
 	}
 
-	private clearTimers() {
+	private clearTimers(): void {
 		this.inactiveTimer.clear();
 		this.tombstoneTimer.clear();
 		this.sweepTimer.clear();
 	}
 
-	/** Stop tracking this node. Reset the unreferenced timers and state, if any. */
-	public stopTracking() {
+	/**
+	 * Stop tracking this node. Reset the unreferenced timers and state, if any.
+	 */
+	public stopTracking(): void {
 		this.clearTimers();
 		this._state = UnreferencedState.Active;
 	}
