@@ -89,10 +89,12 @@ function filterRuntimeOptionsForVersion(
 
 	// These is the "maximum" config.
 	const {
-		compressionOptions = {
-			minimumBatchSizeInBytes: 200,
-			compressionAlgorithm: CompressionAlgorithms.lz4,
-		},
+		compressionOptions = options.enableGroupedBatching === false
+			? disabledCompressionConfig
+			: {
+					minimumBatchSizeInBytes: 200,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
 		enableGroupedBatching = true,
 		enableRuntimeIdCompressor = "on",
 		// Some t9s tests timeout with small settings. This is likely due to too many ops going through.
