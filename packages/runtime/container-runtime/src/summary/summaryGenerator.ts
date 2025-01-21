@@ -136,7 +136,7 @@ const summarizeErrors = {
 export type SummarizeErrorCode = keyof typeof summarizeErrors;
 
 // Helper functions to report failures and return.
-export const getFailMessage = (errorCode: SummarizeErrorCode) =>
+export const getFailMessage = (errorCode: SummarizeErrorCode): string =>
 	`${errorCode}: ${summarizeErrors[errorCode]}`;
 
 export class SummarizeResultBuilder {
@@ -161,7 +161,7 @@ export class SummarizeResultBuilder {
 		error: IRetriableFailureError,
 		submitFailureResult?: SubmitSummaryFailureData,
 		nackSummaryResult?: INackSummaryResult,
-	) {
+	): void {
 		assert(
 			!this.receivedSummaryAckOrNack.isCompleted,
 			0x25e /* "no reason to call fail if all promises have been completed" */,
@@ -284,7 +284,7 @@ export class SummaryGenerator {
 			properties?: SummaryGeneratorTelemetry,
 			submitFailureResult?: SubmitSummaryFailureData,
 			nackSummaryResult?: INackSummaryResult,
-		) => {
+		): void => {
 			// Report any failure as an error unless it was due to cancellation (like "disconnected" error)
 			// If failure happened on upload, we may not yet realized that socket disconnected, so check
 			// offlineError too.
@@ -561,7 +561,7 @@ export class SummaryGenerator {
 		return initialProps;
 	}
 
-	private summarizeTimerHandler(time: number, count: number) {
+	private summarizeTimerHandler(time: number, count: number): void {
 		this.logger.sendPerformanceEvent({
 			eventName: "SummarizeTimeout",
 			timeoutTime: time,
@@ -576,7 +576,7 @@ export class SummaryGenerator {
 		}
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.summarizeTimer.clear();
 	}
 }

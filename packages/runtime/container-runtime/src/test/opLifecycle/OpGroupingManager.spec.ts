@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
@@ -227,7 +228,7 @@ describe("OpGroupingManager", () => {
 						},
 					],
 				},
-			} as any;
+			} as unknown as ISequencedDocumentMessage;
 
 			assert.strictEqual(isGroupedBatch(op), true);
 			const result = opGroupingManager.ungroupOp(op);
@@ -265,7 +266,7 @@ describe("OpGroupingManager", () => {
 			const op = {
 				clientSequenceNumber: 10,
 				contents: "1",
-			} as any;
+			} as unknown as ISequencedDocumentMessage;
 
 			assert.strictEqual(isGroupedBatch(op), false);
 			assert.throws(() => opGroupingManager.ungroupOp(op));
@@ -282,7 +283,7 @@ describe("OpGroupingManager", () => {
 			const op = {
 				clientSequenceNumber: 10,
 				contents: "1",
-			} as any;
+			} as unknown as ISequencedDocumentMessage;
 
 			assert.strictEqual(isGroupedBatch(op), false);
 			assert.throws(() => opGroupingManager.ungroupOp(op));
@@ -314,7 +315,7 @@ describe("OpGroupingManager", () => {
 						},
 					],
 				},
-			} as any;
+			} as unknown as ISequencedDocumentMessage;
 			const opGroupingManager = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: false,

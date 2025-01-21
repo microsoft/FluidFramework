@@ -35,6 +35,7 @@ import {
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
 	channelsTreeName,
+	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -579,7 +580,7 @@ describe("Data Store Context Tests", () => {
 			parentContext = {
 				IFluidDataStoreRegistry: registry,
 				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
-				containerRuntime: parentContext as any,
+				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
 			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 		});
 
@@ -1118,14 +1119,16 @@ describe("Data Store Context Tests", () => {
 					});
 
 					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
-					await localDataStoreContext.attachRuntime(factory, dataStore).catch((error) => {
-						assert.strictEqual(
-							error.message,
-							"Registry does not contain entry for the package",
-							"Unexpected exception thrown",
-						);
-						exceptionOccurred = true;
-					});
+					await localDataStoreContext
+						.attachRuntime(factory, dataStore)
+						.catch((error: Error) => {
+							assert.strictEqual(
+								error.message,
+								"Registry does not contain entry for the package",
+								"Unexpected exception thrown",
+							);
+							exceptionOccurred = true;
+						});
 					assert.strictEqual(
 						exceptionOccurred,
 						true,
@@ -1151,14 +1154,16 @@ describe("Data Store Context Tests", () => {
 					});
 
 					const dataStore = await factory.instantiateDataStore(localDataStoreContext, false);
-					await localDataStoreContext.attachRuntime(factory, dataStore).catch((error) => {
-						assert.strictEqual(
-							error.message,
-							"Simulating failure when initializing EntryPoint",
-							"Unexpected exception thrown",
-						);
-						exceptionOccurred = true;
-					});
+					await localDataStoreContext
+						.attachRuntime(factory, dataStore)
+						.catch((error: Error) => {
+							assert.strictEqual(
+								error.message,
+								"Simulating failure when initializing EntryPoint",
+								"Unexpected exception thrown",
+							);
+							exceptionOccurred = true;
+						});
 					assert.strictEqual(
 						exceptionOccurred,
 						true,

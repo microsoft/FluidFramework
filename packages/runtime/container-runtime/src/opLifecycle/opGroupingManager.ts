@@ -6,7 +6,10 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IBatch, type BatchMessage } from "./definitions.js";
 
@@ -24,8 +27,11 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
-function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
-	return opContents?.type === OpGroupingManager.groupedBatchOp;
+function isGroupContents(opContents: unknown): opContents is IGroupedBatchMessageContents {
+	return (
+		(opContents as Partial<IGroupedBatchMessageContents>)?.type ===
+		OpGroupingManager.groupedBatchOp
+	);
 }
 
 export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
@@ -38,7 +44,7 @@ export interface OpGroupingManagerConfig {
 
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(
 		private readonly config: OpGroupingManagerConfig,

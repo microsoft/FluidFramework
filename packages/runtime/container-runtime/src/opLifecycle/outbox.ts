@@ -77,6 +77,8 @@ export function serializeOpContents(contents: OutboundContainerRuntimeMessage): 
  * @returns the result of the action provided
  */
 export function getLongStack<T>(action: () => T, length: number = 50): T {
+	// TODO: better typing here
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
 	const errorObj = Error as any;
 	if (
 		/* eslint-disable @typescript-eslint/prefer-nullish-coalescing */
@@ -90,11 +92,14 @@ export function getLongStack<T>(action: () => T, length: number = 50): T {
 		return action();
 	}
 
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 	const originalStackTraceLimit = errorObj.stackTraceLimit;
 	try {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		errorObj.stackTraceLimit = length;
 		return action();
 	} finally {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		errorObj.stackTraceLimit = originalStackTraceLimit;
 	}
 }
@@ -171,7 +176,7 @@ export class Outbox {
 	 * last message processed by the ContainerRuntime. In the absence of op reentrancy, this
 	 * pair will remain stable during a single JS turn during which the batch is being built up.
 	 */
-	private maybeFlushPartialBatch() {
+	private maybeFlushPartialBatch(): void {
 		const mainBatchSeqNums = this.mainBatch.sequenceNumbers;
 		const blobAttachSeqNums = this.blobAttachBatch.sequenceNumbers;
 		const idAllocSeqNums = this.idAllocationBatch.sequenceNumbers;
@@ -214,25 +219,25 @@ export class Outbox {
 		}
 	}
 
-	public submit(message: BatchMessage) {
+	public submit(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.mainBatch, message);
 	}
 
-	public submitBlobAttach(message: BatchMessage) {
+	public submitBlobAttach(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.blobAttachBatch, message);
 	}
 
-	public submitIdAllocation(message: BatchMessage) {
+	public submitIdAllocation(message: BatchMessage): void {
 		this.maybeFlushPartialBatch();
 
 		this.addMessageToBatchManager(this.idAllocationBatch, message);
 	}
 
-	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage) {
+	private addMessageToBatchManager(batchManager: BatchManager, message: BatchMessage): void {
 		if (
 			!batchManager.push(
 				message,
@@ -255,7 +260,7 @@ export class Outbox {
 	 * @param resubmittingBatchId - If defined, indicates this is a resubmission of a batch
 	 * with the given Batch ID, which must be preserved
 	 */
-	public flush(resubmittingBatchId?: BatchId) {
+	public flush(resubmittingBatchId?: BatchId): void {
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
@@ -265,7 +270,7 @@ export class Outbox {
 		this.flushAll(resubmittingBatchId);
 	}
 
-	private flushAll(resubmittingBatchId?: BatchId) {
+	private flushAll(resubmittingBatchId?: BatchId): void {
 		// If we're resubmitting and all batches are empty, we need to flush an empty batch.
 		// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
 		// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
@@ -292,7 +297,7 @@ export class Outbox {
 		);
 	}
 
-	private flushEmptyBatch(resubmittingBatchId: BatchId) {
+	private flushEmptyBatch(resubmittingBatchId: BatchId): void {
 		const referenceSequenceNumber =
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
@@ -318,7 +323,7 @@ export class Outbox {
 		batchManager: BatchManager,
 		disableGroupedBatching: boolean = false,
 		resubmittingBatchId?: BatchId,
-	) {
+	): void {
 		if (batchManager.empty) {
 			return;
 		}
@@ -365,7 +370,7 @@ export class Outbox {
 	 *
 	 * @param rawBatch - the batch to be rebased
 	 */
-	private rebase(rawBatch: IBatch, batchManager: BatchManager) {
+	private rebase(rawBatch: IBatch, batchManager: BatchManager): void {
 		assert(!this.rebasing, 0x6fb /* Reentrancy */);
 		assert(batchManager.options.canRebase, 0x9a7 /* BatchManager does not support rebase */);
 
@@ -450,7 +455,7 @@ export class Outbox {
 	 * @param batch - batch to be sent
 	 * @returns the clientSequenceNumber of the start of the batch, or undefined if nothing was sent
 	 */
-	private sendBatch(batch: IBatch) {
+	private sendBatch(batch: IBatch): number | undefined {
 		const length = batch.messages.length;
 		if (length === 0) {
 			return undefined; // Nothing submitted
@@ -498,7 +503,11 @@ export class Outbox {
 	/**
 	 * Gets a checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
 	 */
-	public getBatchCheckpoints() {
+	public getBatchCheckpoints(): {
+		mainBatch: IBatchCheckpoint;
+		idAllocationBatch: IBatchCheckpoint;
+		blobAttachBatch: IBatchCheckpoint;
+	} {
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
