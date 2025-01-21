@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type AzureUser } from "@fluidframework/azure-client/internal";
+import type { AzureUser } from "@fluidframework/azure-client/internal";
 // eslint-disable-next-line import/no-internal-modules
-import { type ClientSessionId } from "@fluidframework/presence/alpha";
+import type { ClientSessionId } from "@fluidframework/presence/alpha";
 
 export interface MessageFromChild {
 	event: "attendeeDisconnected" | "attendeeJoined" | "ready" | "disconnectedSelf";
