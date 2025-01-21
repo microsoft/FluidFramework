@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	describeCompat,
 	describeInstallVersions,
@@ -129,14 +128,10 @@ const compressionSuite = (getProvider) => {
 				}
 				await setupContainers({
 					compressionOptions: {
-						minimumBatchSizeInBytes: option.compressionAndChunking.compression
-							? 10
-							: Number.POSITIVE_INFINITY,
+						minimumBatchSizeInBytes: option.compression ? 10 : Number.POSITIVE_INFINITY,
 						compressionAlgorithm: CompressionAlgorithms.lz4,
 					},
-					chunkSizeInBytes: option.compressionAndChunking.chunking
-						? 100
-						: Number.POSITIVE_INFINITY,
+					chunkSizeInBytes: option.chunking ? 100 : Number.POSITIVE_INFINITY,
 					enableGroupedBatching: option.grouping,
 				});
 				const values = [
