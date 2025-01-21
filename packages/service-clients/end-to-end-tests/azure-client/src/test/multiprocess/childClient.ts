@@ -45,6 +45,10 @@ if (useAzure && endPoint === undefined) {
 	throw new Error("Azure Fluid Relay service endpoint is missing");
 }
 
+let presence: IPresence;
+let container: IFluidContainer;
+let containerId: string;
+
 const getOrCreatePresenceContainer = async (
 	id: string | undefined,
 	user: AzureUser,
@@ -75,11 +79,7 @@ const getOrCreatePresenceContainer = async (
 			presence: ExperimentalPresenceManager,
 		},
 	};
-
-	let container: IFluidContainer;
 	let services: AzureContainerServices;
-	let containerId: string;
-
 	if (id === undefined) {
 		({ container, services } = await client.createContainer(schema, "2"));
 		containerId = await container.attach();
@@ -100,7 +100,7 @@ const getOrCreatePresenceContainer = async (
 		"Container is not attached after attach is called",
 	);
 
-	const presence = acquirePresenceViaDataObject(
+	presence = acquirePresenceViaDataObject(
 		container.initialObjects.presence as ExperimentalPresenceDO,
 	);
 	return {
@@ -117,47 +117,45 @@ if (process.send) {
 } else {
 	throw new Error("process.send is not defined");
 }
+
+async function messageHandler(msg: MessageFromParent): Promise<void> {
+	if (msg.command === "connect" && msg.user) {
+		const {
+			container: c,
+			presence: p,
+			containerId: id,
+		} = await getOrCreatePresenceContainer(msg.containerId, msg.user);
+		container = c;
+		presence = p;
+		containerId = id;
+
+		presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
+			const m: MessageToParent = {
+				event: "attendeeJoined",
+				sessionId: attendee.sessionId,
+			};
+			send(m);
+		});
+		presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
+			const m: MessageToParent = {
+				event: "attendeeDisconnected",
+				sessionId: attendee.sessionId,
+			};
+			send(m);
+		});
+		send({ event: "ready", containerId, sessionId: presence.getMyself().sessionId });
+	} else if (msg.command === "disconnectSelf" && container && presence) {
+		container.disconnect();
+		send({
+			event: "disconnectedSelf",
+			sessionId: presence.getMyself().sessionId,
+		});
+	}
+}
+
 function setupMessageHandler(): void {
-	let presence: IPresence | undefined;
-	let container: IFluidContainer | undefined;
-	let containerId: string;
 	process.on("message", (msg: MessageFromParent) => {
-		(async () => {
-			if (msg.command === "connect" && msg.user) {
-				const {
-					container: c,
-					presence: p,
-					containerId: id,
-				} = await getOrCreatePresenceContainer(msg.containerId, msg.user);
-				container = c;
-				presence = p;
-				containerId = id;
-
-				presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
-					const m: MessageToParent = {
-						event: "attendeeJoined",
-						sessionId: attendee.sessionId,
-					};
-					send(m);
-				});
-				presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
-					const m: MessageToParent = {
-						event: "attendeeDisconnected",
-						sessionId: attendee.sessionId,
-					};
-					send(m);
-				});
-
-				// Signal ready
-				send({ event: "ready", containerId, sessionId: presence.getMyself().sessionId });
-			} else if (msg.command === "disconnectSelf" && container && presence) {
-				container.disconnect();
-				send({
-					event: "disconnectedSelf",
-					sessionId: presence.getMyself().sessionId,
-				});
-			}
-		})().catch((error) => {
+		messageHandler(msg).catch((error) => {
 			console.error("Error in child client", error);
 		});
 	});
