@@ -108,28 +108,12 @@ const compressionSuite = (getProvider) => {
 			assert.strictEqual(remoteMap.get("testKey"), value);
 		});
 
-		const messageGenerationOptions = generatePairwiseOptions<{
-			/** chunking cannot happen without compression */
-			compressionAndChunking:
-				| {
-						compression: false;
-						chunking: false;
-				  }
-				| {
-						compression: true;
-						chunking: boolean;
-				  };
-			grouping: boolean;
-		}>({
-			compressionAndChunking: [
-				{ compression: false, chunking: false },
-				{ compression: true, chunking: false },
-				{ compression: true, chunking: true },
-			],
-			grouping: [true, false],
-		}).filter((option) => !option.compressionAndChunking.compression || option.grouping);
-
-		messageGenerationOptions.forEach((option) => {
+		[
+			{ compression: false, grouping: true, chunking: false },
+			{ compression: false, grouping: false, chunking: false },
+			{ compression: true, grouping: true, chunking: true },
+			{ compression: true, grouping: true, chunking: false },
+		].forEach((option) => {
 			it(`Correctly processes messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, async function () {
 				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
