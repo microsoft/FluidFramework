@@ -12,4 +12,5 @@ export const Constants = Object.freeze({
 	getDeltasThrottleIdPrefix: "getDeltas",
 	getSessionThrottleIdPrefix: "getSession",
 	generalRestCallThrottleIdPrefix: "generalRestCall",
+	nexusRestThrottleIdSuffix: "NexusRest",
 });

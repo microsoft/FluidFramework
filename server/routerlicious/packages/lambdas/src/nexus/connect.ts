@@ -600,19 +600,13 @@ function setUpSignalListenerForRoomBroadcasting(
 ): () => void {
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
 		const { signalRoom, signalContent } = broadcastSignal;
-		// TODO: delete
-		Lumberjack.info("Signal listener for room broadcasting received signal");
 		// No-op if the room (collab session) that signal came in from is different
 		// than the current room. We reuse websockets so there could be multiple rooms
 		// that we are sending the signal to, and we don't want to do that.
 		if (signalRoom.documentId === room.documentId && signalRoom.tenantId === room.tenantId) {
 			try {
 				const runtimeMessage = createRuntimeMessage(signalContent);
-				// TODO: delete
-				Lumberjack.info("Broadcasting signal from external API 1");
 				try {
-					// TODO: delete
-					Lumberjack.info("Broadcasting signal from external API 2");
 					socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
 				} catch (error) {
 					const errorMsg = `Failed to broadcast signal from external API.`;
@@ -775,14 +769,15 @@ export async function connectDocument(
 			clients,
 			lambdaDependencies,
 		);
-
-		const disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
-			socket,
-			room,
-			lambdaDependencies,
-		);
-		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
-
+		let disposeSignalListenerForRoomBroadcasting: () => void;
+		if(lambdaDependencies.collaborationSessionEventEmitter &&  lambdaDependencies.collaborationSessionEventEmitter.listenerCount("broadcastSignal") === 0){
+				disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
+				socket,
+				room,
+				lambdaDependencies,
+			);
+			connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
+		}
 		const result = {
 			connection: connectedMessage,
 			connectVersions,

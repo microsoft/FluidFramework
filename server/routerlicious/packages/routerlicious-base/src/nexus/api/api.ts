@@ -29,7 +29,7 @@ export function create(
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
-		throttleIdSuffix: "NexusRest",
+		throttleIdSuffix: Constants.nexusRestThrottleIdSuffix,
 	};
 	const generalTenantThrottler = tenantThrottlers?.get(Constants.generalRestCallThrottleIdPrefix);
 
