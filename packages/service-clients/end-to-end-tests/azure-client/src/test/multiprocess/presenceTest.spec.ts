@@ -16,7 +16,6 @@ import {
 	ExperimentalPresenceManager,
 	type ExperimentalPresenceDO,
 	type IPresence,
-	// type ISessionClient,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/alpha";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -24,7 +23,7 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { createAzureClient } from "../AzureClientFactory.js";
 import { configProvider } from "../utils.js";
 
-import { MessageFromChild, MessageToChild } from "./messageTypes.js";
+import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 describe(`Presence with AzureClient`, () => {
 	const numClients = 5;
