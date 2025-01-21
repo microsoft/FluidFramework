@@ -285,7 +285,7 @@ export const selectionFlags = {
 	}),
 	changed: Flags.boolean({
 		description:
-			"Select packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used --all.",
+			"Select packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with --all.",
 		exclusive: ["all"],
 		required: false,
 		default: false,
