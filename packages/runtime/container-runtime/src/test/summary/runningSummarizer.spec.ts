@@ -35,12 +35,9 @@ import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IGeneratedSummaryStats,
 	ISummarizeHeuristicData,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
-	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
 	RetriableSummaryError,
-	// eslint-disable-next-line import/no-deprecated
 	RunningSummarizer,
 	SubmitSummaryResult,
 	SummarizeHeuristicData,
@@ -51,7 +48,7 @@ import {
 import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import/no-deprecated, import/no-internal-modules
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../summary/runningSummarizer.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {
@@ -74,7 +71,6 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
-		// eslint-disable-next-line import/no-deprecated
 		describe("RunningSummarizer", () => {
 			let stopCall: number;
 			let runCount: number;
@@ -84,7 +80,6 @@ describe("Runtime", () => {
 			let settings = {};
 			let mockDeltaManager: MockDeltaManager;
 			let summaryCollection: SummaryCollection;
-			// eslint-disable-next-line import/no-deprecated
 			let summarizer: RunningSummarizer;
 			const summarizerClientId = "test";
 			let lastRefSeq = 0;
@@ -95,7 +90,6 @@ describe("Runtime", () => {
 			const summaryCommon = {
 				maxAckWaitTime: 120000, // 2 min
 				maxOpsSinceLastSummary: 7000,
-				// eslint-disable-next-line import/no-deprecated
 				initialSummarizerDelayMs: 0,
 			};
 			const summaryConfig: ISummaryConfiguration = {
@@ -275,18 +269,15 @@ describe("Runtime", () => {
 				} as const;
 			}
 
-			// eslint-disable-next-line import/no-deprecated
 			const startRunningSummarizer = async (
 				disableHeuristics?: boolean,
 				submitSummaryCallback: () => Promise<SubmitSummaryResult> = successfulSubmitSummary,
-				// eslint-disable-next-line import/no-deprecated
 				cancellationToken: ISummaryCancellationToken = neverCancelledSummaryToken,
 			): Promise<void> => {
 				heuristicData = new SummarizeHeuristicData(0, {
 					refSequenceNumber: 0,
 					summaryTime: Date.now(),
 				});
-				// eslint-disable-next-line import/no-deprecated
 				summarizer = await RunningSummarizer.start(
 					mockLogger,
 					summaryCollection.createWatcher(summarizerClientId),
@@ -305,12 +296,10 @@ describe("Runtime", () => {
 					heuristicData,
 					summaryCollection,
 					cancellationToken,
-					// eslint-disable-next-line import/no-deprecated
 					// stopSummarizerCallback
 					(reason) => {
 						stopCall++;
 					},
-					// eslint-disable-next-line import/no-deprecated
 					mockRuntime as unknown as ISummarizerRuntime,
 				);
 			};
@@ -345,7 +334,6 @@ describe("Runtime", () => {
 
 			describe("Summary Schedule", () => {
 				beforeEach(async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 				});
 
@@ -557,7 +545,6 @@ describe("Runtime", () => {
 				});
 
 				it("Should not summarize on non-runtime op before threshold is reached", async () => {
-					// eslint-disable-next-line import/no-deprecated
 					// Creating RunningSummarizer starts heuristics automatically
 					await emitNoOp(1);
 					await tickAndFlushPromises(summaryConfig.minIdleTime);
@@ -647,7 +634,6 @@ describe("Runtime", () => {
 					}
 					mockLogger.assertMatch(
 						expectedEvents,
-						// eslint-disable-next-line import/no-deprecated
 						`Summarizer attempt ${attemptNumber} did not fail as expected`,
 					);
 
@@ -655,7 +641,6 @@ describe("Runtime", () => {
 					assert.strictEqual(
 						stopCall,
 						finalAttempt ? 1 : 0,
-						// eslint-disable-next-line import/no-deprecated
 						`Summarizer should${
 							finalAttempt ? "" : " not"
 						} have stopped after ${totalAttempts} attempts`,
@@ -686,7 +671,6 @@ describe("Runtime", () => {
 				};
 
 				it(`should not retry when summary attempt succeeds`, async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 
 					await emitNextOp();
@@ -696,12 +680,10 @@ describe("Runtime", () => {
 
 					await emitAck();
 					assertRunCounts(1, 0, `The run count should still be 1`);
-					// eslint-disable-next-line import/no-deprecated
 					assert.strictEqual(stopCall, 0, "Summarizer should not have stopped");
 				});
 
 				it(`should retry once when summary attempt fails with summary op timeout`, async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 
 					// This should run a summarization because max ops has reached.
@@ -726,7 +708,6 @@ describe("Runtime", () => {
 				});
 
 				it(`should retry once when summary attempt fails with summary ack timeout`, async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 
 					// This should run a summarization because max ops has reached.
@@ -765,7 +746,6 @@ describe("Runtime", () => {
 					const titleStage = stage === "submit" ? "nack" : stage;
 
 					it(`should attempt 1 time only on failure without retry specified at ${titleStage} stage`, async () => {
-						// eslint-disable-next-line import/no-deprecated
 						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
 							submitSummaryCallback(stage, undefined /* retryAfterSeconds */),
 						);
@@ -783,7 +763,6 @@ describe("Runtime", () => {
 
 					it(`should attempt ${maxAttempts} times on failure with retryAfterSeconds at ${titleStage} stage`, async () => {
 						const retryAfterSeconds = 5;
-						// eslint-disable-next-line import/no-deprecated
 						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
 							submitSummaryCallback(stage, retryAfterSeconds),
 						);
@@ -827,7 +806,6 @@ describe("Runtime", () => {
 						const retryAfterSeconds = 5;
 						let currentStage: SummaryStage = stage;
 
-						// eslint-disable-next-line import/no-deprecated
 						await startRunningSummarizer(undefined /* disableHeuristics */, async () => {
 							if (currentStage === "submit") {
 								return successfulSubmitSummary();
@@ -882,10 +860,8 @@ describe("Runtime", () => {
 							stage === "submit"
 								? defaultMaxAttempts
 								: defaultMaxAttemptsForSubmitFailures - 1;
-						// eslint-disable-next-line import/no-deprecated
 						settings["Fluid.Summarizer.AttemptsForSubmitFailures"] = maxAttemptsOverride;
 
-						// eslint-disable-next-line import/no-deprecated
 						await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
 							submitSummaryCallback(stage, retryAfterSeconds),
 						);
@@ -934,7 +910,6 @@ describe("Runtime", () => {
 						const retryAfterSeconds = 5;
 						let currentStage: SummaryStage = maxAttempts === 1 ? "submit" : "generate";
 
-						// eslint-disable-next-line import/no-deprecated
 						await startRunningSummarizer(undefined /* disableHeuristics */, async () => {
 							if (currentStage === "submit") {
 								return successfulSubmitSummary();
@@ -1005,7 +980,6 @@ describe("Runtime", () => {
 				it("Should not retry last summary", async () => {
 					const stage: SummaryStage = "base";
 					const retryAfterSeconds = 10;
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer(undefined /* disableHeuristics */, async () =>
 						submitSummaryCallback(stage, retryAfterSeconds),
 					);
@@ -1043,7 +1017,6 @@ describe("Runtime", () => {
 				const summarizeReason = `onDemand/${reason}`;
 
 				beforeEach(async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 				});
 
@@ -1266,7 +1239,6 @@ describe("Runtime", () => {
 				const summarizeReason = `enqueuedSummary/enqueue;${reason}`;
 
 				beforeEach(async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 				});
 
@@ -1530,7 +1502,6 @@ describe("Runtime", () => {
 					emitBroadcast(summaryTimestamp);
 
 					let startStatus: "starting" | "started" | "failed" = "starting";
-					// eslint-disable-next-line import/no-deprecated
 					startRunningSummarizer().then(
 						() => {
 							startStatus = "started";
@@ -1543,7 +1514,6 @@ describe("Runtime", () => {
 					assert.strictEqual(
 						startStatus,
 						"starting",
-						// eslint-disable-next-line import/no-deprecated
 						"RunningSummarizer should still be starting since outstanding summary op",
 					);
 
@@ -1552,7 +1522,6 @@ describe("Runtime", () => {
 					assert.strictEqual(
 						startStatus,
 						"starting",
-						// eslint-disable-next-line import/no-deprecated
 						"RunningSummarizer should still be starting since timestamp is within maxAckWaitTime",
 					);
 
@@ -1567,7 +1536,6 @@ describe("Runtime", () => {
 					assert.strictEqual(
 						startStatus,
 						"started",
-						// eslint-disable-next-line import/no-deprecated
 						"RunningSummarizer should be started from the above op",
 					);
 
@@ -1604,7 +1572,6 @@ describe("Runtime", () => {
 
 			describe("Disabled Heuristics", () => {
 				it("Should not summarize after time or ops", async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer(true /* disableHeuristics */);
 
 					await emitNextOp(summaryConfig.maxOps + 1);
@@ -1624,7 +1591,6 @@ describe("Runtime", () => {
 				});
 
 				it("Should not summarize before closing", async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer(true /* disableHeuristics */);
 
 					await emitNextOp(summaryConfig.minOpsForLastSummaryAttempt);
@@ -1643,7 +1609,6 @@ describe("Runtime", () => {
 					emitBroadcast(summaryTimestamp);
 
 					let startStatus: "starting" | "started" | "failed" = "starting";
-					// eslint-disable-next-line import/no-deprecated
 					startRunningSummarizer(true /* disableHeuristics */).then(
 						() => {
 							startStatus = "started";
@@ -1656,7 +1621,6 @@ describe("Runtime", () => {
 					assert.strictEqual(
 						startStatus,
 						"starting",
-						// eslint-disable-next-line import/no-deprecated
 						"RunningSummarizer should still be starting since outstanding summary op",
 					);
 
@@ -1665,7 +1629,6 @@ describe("Runtime", () => {
 					assert.strictEqual(
 						startStatus,
 						"starting",
-						// eslint-disable-next-line import/no-deprecated
 						"RunningSummarizer should still be starting since timestamp is within maxAckWaitTime",
 					);
 
@@ -1680,7 +1643,6 @@ describe("Runtime", () => {
 					assert.strictEqual(
 						startStatus,
 						"started",
-						// eslint-disable-next-line import/no-deprecated
 						"RunningSummarizer should be started from the above op",
 					);
 
@@ -1704,7 +1666,6 @@ describe("Runtime", () => {
 				}
 
 				it("should emit summarize event with success result", async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 					const summarizePromiseP = getSummarizeEventPromise();
 
@@ -1718,7 +1679,6 @@ describe("Runtime", () => {
 				});
 
 				it("should emit summarize event with failed result", async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 					const summarizePromiseP = getSummarizeEventPromise();
 
@@ -1733,7 +1693,6 @@ describe("Runtime", () => {
 				});
 
 				it("should emit summarize event with canceled result", async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer(
 						undefined /* disableHeuristics */,
 						undefined /* submitSummaryCallback */,
@@ -1754,7 +1713,6 @@ describe("Runtime", () => {
 				});
 
 				it("should emit summarize event for every attempt with nack failure", async () => {
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer();
 					const retryAfterSeconds = 5;
 					let summarizePromiseP = getSummarizeEventPromise();
@@ -1794,7 +1752,6 @@ describe("Runtime", () => {
 						return failedResult as SubmitSummaryResult;
 					};
 
-					// eslint-disable-next-line import/no-deprecated
 					await startRunningSummarizer(
 						undefined /* disableHeuristics */,
 						submitSummaryCallback,

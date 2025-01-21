@@ -11,7 +11,6 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	IOrderedClientCollection,
 	IOrderedClientElection,
-	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
 	ITrackedClient,
 	OrderedClientCollection,
@@ -122,7 +121,6 @@ describe("Ordered Client Collection", () => {
 		let electionEventCount = 0;
 		function createOrderedClientElection(
 			initialClients: [id: string, seq: number, int: boolean][] = [],
-			// eslint-disable-next-line import/no-deprecated
 			initialState?: ISerializedElection,
 		): IOrderedClientElection {
 			createOrderedClientCollection(initialClients);

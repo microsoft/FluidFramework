@@ -7,9 +7,7 @@ import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerEvents,
-	// eslint-disable-next-line import/no-deprecated
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -20,14 +18,11 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	IConnectedEvents,
 	IConnectedState,
-	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
 	ISummaryCollectionOpEvents,
 	OrderedClientCollection,
 	OrderedClientElection,
-	// eslint-disable-next-line import/no-deprecated
 	SummarizerClientElection,
 	SummaryManager,
 	summarizerClientType,
@@ -35,7 +30,6 @@ import {
 
 import { TestQuorumClients } from "./testQuorumClients.js";
 
-// eslint-disable-next-line import/no-deprecated
 describe("Summarizer Client Election", () => {
 	const maxOps = 1000;
 	const testQuorum = new TestQuorumClients();
@@ -46,10 +40,8 @@ describe("Summarizer Client Election", () => {
 		},
 	};
 	const mockLogger = new MockLogger();
-	// eslint-disable-next-line import/no-deprecated
 	let refreshSummarizerCallCount = 0;
 	const summaryCollectionEmitter = new TypedEventEmitter<ISummaryCollectionOpEvents>();
-	// eslint-disable-next-line import/no-deprecated
 	let election: SummarizerClientElection;
 	let summaryManager: SummaryManager;
 
@@ -78,7 +70,6 @@ describe("Summarizer Client Election", () => {
 		}
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	class TestSummarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 		private notImplemented(): never {
 			throw Error("not implemented");
@@ -92,7 +83,6 @@ describe("Summarizer Client Election", () => {
 		constructor() {
 			super();
 		}
-		// eslint-disable-next-line import/no-deprecated
 		public async setSummarizer() {
 			this.notImplemented();
 		}
@@ -104,7 +94,6 @@ describe("Summarizer Client Election", () => {
 		public stop(reason?: string): void {
 			this.stopDeferred.resolve(reason);
 		}
-		// eslint-disable-next-line import/no-deprecated
 		public async run(onBehalfOf: string): Promise<SummarizerStopReason> {
 			this.onBehalfOf = onBehalfOf;
 			this.state = "running";
@@ -126,7 +115,6 @@ describe("Summarizer Client Election", () => {
 	}
 
 	let connectedState: TestConnectedState;
-	// eslint-disable-next-line import/no-deprecated
 	let summarizer: TestSummarizer;
 
 	const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
@@ -156,9 +144,7 @@ describe("Summarizer Client Election", () => {
 		testQuorum.removeClient(clientId);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	const requestSummarizer = async (): Promise<ISummarizer> => {
-		// eslint-disable-next-line import/no-deprecated
 		summarizer = new TestSummarizer();
 		const parentId = election.electedParentId;
 		const clientId = `${parentId}-summarizer`;
@@ -180,13 +166,11 @@ describe("Summarizer Client Election", () => {
 
 	function createElection(
 		initialClients: [id: string, seq: number, int: boolean][] = [],
-		// eslint-disable-next-line import/no-deprecated
 		initialState?: ISerializedElection,
 	) {
 		for (const [id, seq, int] of initialClients) {
 			addClient(id, seq, int);
 		}
-		// eslint-disable-next-line import/no-deprecated
 		election = new SummarizerClientElection(
 			mockLogger.toTelemetryLogger(),
 			summaryCollectionEmitter,
@@ -194,7 +178,6 @@ describe("Summarizer Client Election", () => {
 				mockLogger.toTelemetryLogger(),
 				new OrderedClientCollection(mockLogger, testDeltaManager, testQuorum),
 				initialState ?? currentSequenceNumber,
-				// eslint-disable-next-line import/no-deprecated
 				SummarizerClientElection.isClientEligible,
 			),
 			maxOps,
@@ -205,7 +188,6 @@ describe("Summarizer Client Election", () => {
 			connectedState,
 			summaryCollection,
 			mockLogger,
-			// eslint-disable-next-line import/no-deprecated
 			requestSummarizer,
 			throttler,
 			{
@@ -214,11 +196,9 @@ describe("Summarizer Client Election", () => {
 			},
 		);
 		summaryManager.start();
-		// eslint-disable-next-line import/no-deprecated
 		election.on("electedSummarizerChanged", () => {
 			connectedState.clientId = election.electedParentId;
 		});
-		// eslint-disable-next-line import/no-deprecated
 		election.on("shouldSummarizeStateChanged", () => refreshSummarizerCallCount++);
 	}
 	function defaultOp(opCount = 1) {

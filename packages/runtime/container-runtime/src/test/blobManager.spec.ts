@@ -40,7 +40,6 @@ import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
-	// eslint-disable-next-line import/no-deprecated
 	IBlobManagerLoadInfo,
 	IBlobManagerRuntime,
 	blobManagerBasePath,
@@ -87,7 +86,6 @@ export class MockRuntime
 	public readonly clientDetails: IClientDetails = { capabilities: { interactive: true } };
 	constructor(
 		public mc: MonitoringContext,
-		// eslint-disable-next-line import/no-deprecated
 		snapshot: IBlobManagerLoadInfo = {},
 		attached = false,
 		stashed: unknown[] = [[], {}],

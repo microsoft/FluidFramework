@@ -11,7 +11,6 @@ import {
 	urlToGCNodePath,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../gc/gcHelpers.js";
-// eslint-disable-next-line import/no-deprecated
 import { GCFeatureMatrix } from "../../gc/index.js";
 
 describe("Garbage Collection Helpers Tests", () => {
@@ -62,7 +61,6 @@ describe("Garbage Collection Helpers Tests", () => {
 
 	describe("shouldAllowGcSweep", () => {
 		const testCases: {
-			// eslint-disable-next-line import/no-deprecated
 			persisted: GCFeatureMatrix;
 			current: number | undefined;
 			expectedShouldAllowValue: boolean;

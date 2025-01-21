@@ -21,12 +21,9 @@ import {
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GarbageCollector,
-	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
-	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata_Deprecated,
 	IGCRuntimeOptions,
 	IGarbageCollectionRuntime,
@@ -40,17 +37,14 @@ import {
 	gcGenerationOptionName,
 	gcTestModeKey,
 	gcVersionUpgradeToV4Key,
-	// eslint-disable-next-line import/no-deprecated
 	nextGCVersion,
 	oneDayMs,
 	runSessionExpiryKey,
-	// eslint-disable-next-line import/no-deprecated
 	stableGCVersion,
 	disableThrowOnTombstoneLoadKey,
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
-// eslint-disable-next-line import/no-deprecated
 import { IContainerRuntimeMetadata } from "../../summary/index.js";
 
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
@@ -81,13 +75,10 @@ describe("Garbage Collection configurations", () => {
 	let gc: GcWithPrivates | undefined;
 
 	const createGcWithPrivateMembers = (
-		// eslint-disable-next-line import/no-deprecated
 		gcMetadata?: IGCMetadata,
 		gcOptions?: IGCRuntimeOptions,
-		// eslint-disable-next-line import/no-deprecated
 		isSummarizerClient?: boolean,
 	): GcWithPrivates => {
-		// eslint-disable-next-line import/no-deprecated
 		const metadata: IContainerRuntimeMetadata | undefined = gcMetadata && {
 			summaryFormatVersion: 1,
 			message: undefined,
@@ -97,7 +88,6 @@ describe("Garbage Collection configurations", () => {
 			{ metadata, gcOptions },
 			undefined /* gcBlobsMap */,
 			undefined /* closeFn */,
-			// eslint-disable-next-line import/no-deprecated
 			isSummarizerClient,
 		) as GcWithPrivates;
 	};
@@ -109,15 +99,12 @@ describe("Garbage Collection configurations", () => {
 			IGarbageCollectionState | IGarbageCollectionDetailsBase | string[]
 		> = new Map(),
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
-		// eslint-disable-next-line import/no-deprecated
 		isSummarizerClient: boolean = true,
 	) {
 		const getNodeType = (nodePath: string) => {
 			if (nodePath.split("/").length !== 2) {
-				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.Other;
 			}
-			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.DataStore;
 		};
 
@@ -148,7 +135,6 @@ describe("Garbage Collection configurations", () => {
 				createContainerRuntimeVersion: pkgVersion,
 				createContainerTimestamp: Date.now(),
 			},
-			// eslint-disable-next-line import/no-deprecated
 			isSummarizerClient,
 			readAndParseBlob: async <T>(id: string) => gcBlobsMap.get(id) as T,
 			getNodePackagePath: async (nodeId: string) => testPkgPath,
@@ -239,7 +225,6 @@ describe("Garbage Collection configurations", () => {
 			assert.equal(gc.configs.tombstoneTimeoutMs, 123, "tombstoneTimeoutMs incorrect");
 		});
 		it("Metadata Roundtrip", () => {
-			// eslint-disable-next-line import/no-deprecated
 			const inputMetadata: IGCMetadata = {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
@@ -251,11 +236,9 @@ describe("Garbage Collection configurations", () => {
 				[gcGenerationOptionName]: 2, // 2 should not replace already-persisted value of 1
 			});
 			const outputMetadata = gc.getMetadata();
-			// eslint-disable-next-line import/no-deprecated
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
 				sweepEnabled: false, // Hardcoded, not used
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: stableGCVersion,
 			};
 			assert.deepEqual(
@@ -265,7 +248,6 @@ describe("Garbage Collection configurations", () => {
 			);
 		});
 		it("Metadata Roundtrip - old file with tombstoneGeneration", () => {
-			// eslint-disable-next-line import/no-deprecated
 			const inputMetadata: IGCMetadata = {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
@@ -277,11 +259,9 @@ describe("Garbage Collection configurations", () => {
 				[gcGenerationOptionName]: 2, // Will not be persisted - legacy file will only ever be stamped with tombstoneGeneration
 			});
 			const outputMetadata = gc.getMetadata();
-			// eslint-disable-next-line import/no-deprecated
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
 				sweepEnabled: false, // Hardcoded, not used
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: stableGCVersion,
 			};
 			assert.deepEqual(
@@ -291,7 +271,6 @@ describe("Garbage Collection configurations", () => {
 			);
 		});
 		it("Metadata Roundtrip transition to gcGeneration from tombstoneGeneration", () => {
-			// eslint-disable-next-line import/no-deprecated
 			const inputMetadata: IGCMetadata = {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
@@ -306,11 +285,9 @@ describe("Garbage Collection configurations", () => {
 				gcTombstoneGeneration: 1, // Legacy - will not be persisted but is ok to pass in
 			});
 			const outputMetadata = gc.getMetadata();
-			// eslint-disable-next-line import/no-deprecated
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
 				sweepEnabled: false, // Hardcoded, not used
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: stableGCVersion,
 			};
 			assert.deepEqual(
@@ -321,7 +298,6 @@ describe("Garbage Collection configurations", () => {
 		});
 		it("Metadata Roundtrip with GC version upgrade to v4 enabled", () => {
 			configProvider.set(gcVersionUpgradeToV4Key, true);
-			// eslint-disable-next-line import/no-deprecated
 			const inputMetadata: IGCMetadata = {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
@@ -331,11 +307,9 @@ describe("Garbage Collection configurations", () => {
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
 			const outputMetadata = gc.getMetadata();
-			// eslint-disable-next-line import/no-deprecated
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
 				sweepEnabled: false, // Hardcoded, not used
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: nextGCVersion,
 			};
 			assert.deepEqual(
@@ -346,7 +320,6 @@ describe("Garbage Collection configurations", () => {
 		});
 		it("Metadata Roundtrip with GC version upgrade to v4 disabled", () => {
 			configProvider.set(gcVersionUpgradeToV4Key, false);
-			// eslint-disable-next-line import/no-deprecated
 			const inputMetadata: IGCMetadata = {
 				sweepEnabled: true, // ignored
 				gcFeature: 1,
@@ -356,11 +329,9 @@ describe("Garbage Collection configurations", () => {
 			};
 			gc = createGcWithPrivateMembers(inputMetadata);
 			const outputMetadata = gc.getMetadata();
-			// eslint-disable-next-line import/no-deprecated
 			const expectedOutputMetadata: IGCMetadata = {
 				...inputMetadata,
 				sweepEnabled: false, // Hardcoded, not used
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: stableGCVersion,
 			};
 			assert.deepEqual(
@@ -383,7 +354,6 @@ describe("Garbage Collection configurations", () => {
 			assert(gc.configs.tombstoneTimeoutMs !== undefined, "tombstoneTimeoutMs incorrect");
 			assert.equal(
 				gc.configs.gcVersionInEffect,
-				// eslint-disable-next-line import/no-deprecated
 				stableGCVersion,
 				"gcVersionInEffect incorrect",
 			);
@@ -438,10 +408,8 @@ describe("Garbage Collection configurations", () => {
 			assert(!gc.configs.sweepEnabled, "sweepEnabled incorrect");
 		});
 		it("Metadata Roundtrip", () => {
-			// eslint-disable-next-line import/no-deprecated
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				tombstoneTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
@@ -459,10 +427,8 @@ describe("Garbage Collection configurations", () => {
 		});
 		it("Metadata Roundtrip with GC version upgrade to v4 enabled", () => {
 			configProvider.set(gcVersionUpgradeToV4Key, true);
-			// eslint-disable-next-line import/no-deprecated
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: nextGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				tombstoneTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
@@ -477,10 +443,8 @@ describe("Garbage Collection configurations", () => {
 			);
 		});
 		it("Metadata Roundtrip transition to gcGeneration from tombstoneGeneration", () => {
-			// eslint-disable-next-line import/no-deprecated
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false, // hardcoded, not used
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				tombstoneTimeoutMs: defaultSessionExpiryDurationMs + 6 * oneDayMs,
@@ -512,13 +476,10 @@ describe("Garbage Collection configurations", () => {
 		// Config sources for Session Expiry:
 		// 1. defaultSessionExpiryDurationMs in code
 		// 2. IGCRuntimeOptions.sessionExpiryTimeoutMs
-		// eslint-disable-next-line import/no-deprecated
 		// 3. IGCMetadata.sessionExpiryTimeoutMs
 		// 4. "Fluid.GarbageCollection.TestOverride.SessionExpiryMs" setting
 		// Config sources for Tombstone Timeout:
-		// eslint-disable-next-line import/no-deprecated
 		// 1. IGCMetadata.tombstoneTimeoutMs
-		// eslint-disable-next-line import/no-deprecated
 		// 2. IGCMetadata_Deprecated.sweepTimeoutMs (backfill from before two-stage sweep)
 		// 3. Computed from Session Expiry, fixed upper bound for Snapshot Expiry and a fixed buffer (on create, or to backfill existing)
 		// 4. "Fluid.GarbageCollection.TestOverride.TombstoneTimeoutMs" setting (only applicable on create)
@@ -568,7 +529,6 @@ describe("Garbage Collection configurations", () => {
 				"tombstoneTimeoutMs incorrect",
 			);
 		});
-		// eslint-disable-next-line import/no-deprecated
 		it("IGCMetadata.sessionExpiryTimeoutMs, backfill tombstoneTimeoutMs", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 1337); // Should be ignored
 			gc = createGcWithPrivateMembers({ sessionExpiryTimeoutMs: 456 } /* metadata */);
@@ -580,7 +540,6 @@ describe("Garbage Collection configurations", () => {
 				"tombstoneTimeoutMs incorrect",
 			);
 		});
-		// eslint-disable-next-line import/no-deprecated
 		it("IGCMetadata.sessionExpiryTimeoutMs and IGCMetadata.tombstoneTimeoutMs", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 1337); // Should be ignored
 			gc = createGcWithPrivateMembers(
@@ -590,7 +549,6 @@ describe("Garbage Collection configurations", () => {
 			assert.equal(gc.sessionExpiryTimer.defaultTimeout, 456, "sessionExpiryTimer incorrect");
 			assert.equal(gc.configs.tombstoneTimeoutMs, 789, "tombstoneTimeoutMs incorrect");
 		});
-		// eslint-disable-next-line import/no-deprecated
 		it("IGCMetadata.tombstoneTimeoutMs only", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 1337); // Should be ignored
 			// This could happen if you used TestOverride.TombstoneTimeoutMs but had SessionExpiry disabled, then loaded that container.
@@ -603,10 +561,8 @@ describe("Garbage Collection configurations", () => {
 			assert.equal(gc.sessionExpiryTimer, undefined, "sessionExpiryTimer incorrect");
 			assert.equal(gc.configs.tombstoneTimeoutMs, 789, "tombstoneTimeoutMs incorrect");
 		});
-		// eslint-disable-next-line import/no-deprecated
 		it("IGCMetadata.tombstoneTimeoutMs - backfill from sweepTimeoutMs", () => {
 			configProvider.set(testOverrideTombstoneTimeoutKey, 1337); // Should be ignored
-			// eslint-disable-next-line import/no-deprecated
 			const metadata: IGCMetadata & IGCMetadata_Deprecated = {
 				sweepTimeoutMs: 789, // Snapshot was generated by code built before the rename
 			};
@@ -672,10 +628,8 @@ describe("Garbage Collection configurations", () => {
 				"tombstoneTimeoutMs incorrect",
 			);
 
-			// eslint-disable-next-line import/no-deprecated
 			const expectedMetadata: IGCMetadata = {
 				sweepEnabled: false,
-				// eslint-disable-next-line import/no-deprecated
 				gcFeature: stableGCVersion,
 				sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 				tombstoneTimeoutMs: expectedTombstoneTimeoutMs,
@@ -712,7 +666,6 @@ describe("Garbage Collection configurations", () => {
 
 		describe("shouldRunGC", () => {
 			it("shouldRunGC should be true when gcVersionInEffect is newer than gcVersionInBaseSnapshot", () => {
-				// eslint-disable-next-line import/no-deprecated
 				const gcVersionInBaseSnapshot = stableGCVersion - 1;
 				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
 				assert.equal(gc.configs.gcAllowed, true, "PRECONDITION: gcAllowed set incorrectly");
@@ -723,7 +676,6 @@ describe("Garbage Collection configurations", () => {
 				);
 			});
 			it("shouldRunGC should be true when gcVersionInEffect is older than gcVersionInBaseSnapshot", () => {
-				// eslint-disable-next-line import/no-deprecated
 				const gcVersionInBaseSnapshot = nextGCVersion + 1;
 				gc = createGcWithPrivateMembers({ gcFeature: gcVersionInBaseSnapshot });
 				assert.equal(gc.configs.gcAllowed, true, "PRECONDITION: gcAllowed set incorrectly");
@@ -770,7 +722,6 @@ describe("Garbage Collection configurations", () => {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					gc = createGcWithPrivateMembers(
 						{
-							// eslint-disable-next-line import/no-deprecated
 							gcFeature: testCase.gcAllowed_doc ? stableGCVersion : 0,
 							gcFeatureMatrix: { gcGeneration: 1 },
 							sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
@@ -911,7 +862,6 @@ describe("Garbage Collection configurations", () => {
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ enableGCSweep: true, [gcThrowOnTombstoneLoadOptionName_old]: false },
-				// eslint-disable-next-line import/no-deprecated
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, true, "throwOnTombstoneLoad incorrect");
@@ -921,7 +871,6 @@ describe("Garbage Collection configurations", () => {
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ enableGCSweep: true },
-				// eslint-disable-next-line import/no-deprecated
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");
@@ -931,7 +880,6 @@ describe("Garbage Collection configurations", () => {
 			gc = createGcWithPrivateMembers(
 				undefined /* metadata */,
 				{ enableGCSweep: undefined },
-				// eslint-disable-next-line import/no-deprecated
 				false /* isSummarizerClient */,
 			);
 			assert.equal(gc.configs.throwOnTombstoneLoad, false, "throwOnTombstoneLoad incorrect");

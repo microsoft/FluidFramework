@@ -6,11 +6,10 @@
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 
 import { baseModel, summarizerOperationGenerator } from "./fuzzUtils.js";
-// eslint-disable-next-line import/no-deprecated
 import { createSummarizerFuzzSuite } from "./summarizerFuzzSuite.js";
 
 /**
- *Summarizer fuzz test should test that we eventually recover and send a summary successfully.
+ * Summarizer fuzz test should test that we eventually recover and send a summary successfully.
  * For DDS, we test for eventual consistency. For summarizer, we could test for eventual recovery.
  * After performing operations (i.e. disconnects, summaryNacks, ops from other clients, etc.) we should:
  * - start a fresh summarizer
@@ -18,7 +17,6 @@ import { createSummarizerFuzzSuite } from "./summarizerFuzzSuite.js";
  * If the system doesn't recover properly, then we have a bug to fix.
  */
 
-// eslint-disable-next-line import/no-deprecated
 describe("Summarizer fuzz testing", () => {
 	const model = {
 		...baseModel,
@@ -29,7 +27,6 @@ describe("Summarizer fuzz testing", () => {
 				summarizerOperationGenerator({
 					weights: {
 						reconnect: 1,
-						// eslint-disable-next-line import/no-deprecated
 						newSummarizer: 1,
 						summaryNack: 1,
 						submitOp: 1,
@@ -38,7 +35,6 @@ describe("Summarizer fuzz testing", () => {
 			),
 	};
 
-	// eslint-disable-next-line import/no-deprecated
 	createSummarizerFuzzSuite(model, {
 		defaultTestCount: 25,
 	});

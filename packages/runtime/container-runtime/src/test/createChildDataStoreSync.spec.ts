@@ -15,7 +15,6 @@ import {
 	IFluidParentContext,
 	type NamedFluidDataStoreRegistryEntries,
 	type IContainerRuntimeBase,
-	// eslint-disable-next-line import/no-deprecated
 	type ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
@@ -58,9 +57,7 @@ describe("createChildDataStore", () => {
 
 	const createContext = (namedEntries?: NamedFluidDataStoreRegistryEntries) => {
 		const registry = createRegistry(namedEntries);
-		// eslint-disable-next-line import/no-deprecated
 		const createSummarizerNodeFn = () =>
-			// eslint-disable-next-line import/no-deprecated
 			new Proxy({} as unknown as ISummarizerNodeWithGC, { get: throwNYI });
 		const storage = new Proxy({} as unknown as IDocumentStorageService, { get: throwNYI });
 
@@ -75,7 +72,6 @@ describe("createChildDataStore", () => {
 							entryPoint: channel.entryPoint,
 							trySetAlias: throwNYI,
 						}),
-						// eslint-disable-next-line import/no-deprecated
 						createSummarizerNodeFn,
 						id: "child",
 						makeLocallyVisibleFn: throwNYI,
@@ -92,7 +88,6 @@ describe("createChildDataStore", () => {
 
 		const context = new testContext(
 			{
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn,
 				id: "parent",
 				parentContext,

@@ -38,7 +38,6 @@ describe("Runtime", () => {
 				minOpsForLastSummaryAttempt: 50,
 				maxAckWaitTime: 120000, // 2 min
 				maxOpsSinceLastSummary: 7000,
-				// eslint-disable-next-line import/no-deprecated
 				initialSummarizerDelayMs: 0,
 				minIdleTime: 5000, // 5 sec (idle)
 				maxIdleTime: 5000, // 5 sec (idle)
@@ -71,7 +70,6 @@ describe("Runtime", () => {
 				maxOps = defaultSummaryConfig.maxOps,
 				maxAckWaitTime = defaultSummaryConfig.maxAckWaitTime,
 				maxOpsSinceLastSummary = defaultSummaryConfig.maxOpsSinceLastSummary,
-				// eslint-disable-next-line import/no-deprecated
 				initialSummarizerDelayMs = defaultSummaryConfig.initialSummarizerDelayMs,
 				minOpsForLastSummaryAttempt = defaultSummaryConfig.minOpsForLastSummaryAttempt,
 				run = true,
@@ -97,7 +95,6 @@ describe("Runtime", () => {
 					maxOps,
 					maxAckWaitTime,
 					maxOpsSinceLastSummary,
-					// eslint-disable-next-line import/no-deprecated
 					initialSummarizerDelayMs,
 					minOpsForLastSummaryAttempt,
 					minIdleTime,

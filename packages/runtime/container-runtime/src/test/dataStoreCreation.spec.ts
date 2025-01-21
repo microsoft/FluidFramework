@@ -8,9 +8,7 @@ import { strict as assert } from "assert";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeFn,
-	// eslint-disable-next-line import/no-deprecated
 	CreateSummarizerNodeSource,
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
@@ -24,7 +22,6 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
-// eslint-disable-next-line import/no-deprecated
 import { createRootSummarizerNodeWithGC } from "../summary/index.js";
 
 describe("Data Store Creation Tests", () => {
@@ -52,7 +49,6 @@ describe("Data Store Creation Tests", () => {
 		const dataStoreAName = "dataStoreA";
 		const dataStoreBName = "dataStoreB";
 		const dataStoreCName = "dataStoreC";
-		// eslint-disable-next-line import/no-deprecated
 		let getCreateSummarizerNodeFn: (id: string) => CreateChildSummarizerNodeFn;
 
 		// Helper function that creates a FluidDataStoreRegistryEntry with the registry entries
@@ -116,16 +112,13 @@ describe("Data Store Creation Tests", () => {
 				baseLogger: createChildLogger(),
 				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
 			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
-			// eslint-disable-next-line import/no-deprecated
 			const summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),
 				(() => {}) as unknown as SummarizeInternalFn,
 				0,
 				0,
 			);
-			// eslint-disable-next-line import/no-deprecated
 			getCreateSummarizerNodeFn = (id: string) => (si: SummarizeInternalFn) =>
-				// eslint-disable-next-line import/no-deprecated
 				summarizerNode.createChild(si, id, { type: CreateSummarizerNodeSource.Local });
 		});
 
@@ -139,7 +132,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
@@ -164,7 +156,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
@@ -189,7 +180,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
@@ -214,7 +204,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
@@ -239,7 +228,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
@@ -261,7 +249,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
@@ -286,7 +273,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
@@ -311,7 +297,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,
@@ -336,7 +321,6 @@ describe("Data Store Creation Tests", () => {
 				parentContext,
 				storage,
 				scope,
-				// eslint-disable-next-line import/no-deprecated
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
 				makeLocallyVisibleFn,
 				snapshotTree: undefined,

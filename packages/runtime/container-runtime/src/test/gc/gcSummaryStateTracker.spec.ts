@@ -13,11 +13,9 @@ import {
 
 import {
 	GCSummaryStateTracker,
-	// eslint-disable-next-line import/no-deprecated
 	IGCStats,
 	IGarbageCollectionState,
 	gcStateBlobKey,
-	// eslint-disable-next-line import/no-deprecated
 	nextGCVersion,
 } from "../../gc/index.js";
 
@@ -43,9 +41,7 @@ describe("GCSummaryStateTracker tests", () => {
 			// Creates a summary state tracker and initialize it.
 			summaryStateTracker = new GCSummaryStateTracker({
 				gcAllowed: true,
-				// eslint-disable-next-line import/no-deprecated
 				gcVersionInBaseSnapshot: nextGCVersion,
-				// eslint-disable-next-line import/no-deprecated
 				gcVersionInEffect: nextGCVersion,
 			});
 
@@ -151,7 +147,6 @@ describe("GCSummaryStateTracker tests", () => {
 
 	it("updates state updated data store count correctly", async () => {
 		const updatedDataStoreCount = 10;
-		// eslint-disable-next-line import/no-deprecated
 		const gcStats: IGCStats = {
 			nodeCount: 0,
 			unrefNodeCount: 0,
@@ -172,9 +167,7 @@ describe("GCSummaryStateTracker tests", () => {
 
 		const summaryStateTracker = new GCSummaryStateTracker({
 			gcAllowed: true,
-			// eslint-disable-next-line import/no-deprecated
 			gcVersionInBaseSnapshot: nextGCVersion,
-			// eslint-disable-next-line import/no-deprecated
 			gcVersionInEffect: nextGCVersion,
 		});
 

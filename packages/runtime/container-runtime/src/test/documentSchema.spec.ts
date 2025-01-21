@@ -7,11 +7,8 @@ import { strict as assert } from "assert";
 
 import { pkgVersion } from "../packageVersion.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	DocumentsSchemaController,
-	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaCurrent,
-	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaFeatures,
 } from "../summary/index.js";
 
@@ -24,7 +21,6 @@ function arrayToProp(arr: string[]) {
 }
 
 describe("Runtime", () => {
-	// eslint-disable-next-line import/no-deprecated
 	const validConfig: IDocumentSchemaCurrent = {
 		version: 1,
 		refSeq: 0,
@@ -36,7 +32,6 @@ describe("Runtime", () => {
 		},
 	};
 
-	// eslint-disable-next-line import/no-deprecated
 	const features: IDocumentSchemaFeatures = {
 		explicitSchemaControl: true,
 		compressionLz4: true,
@@ -46,11 +41,9 @@ describe("Runtime", () => {
 	};
 
 	function createController(config: unknown) {
-		// eslint-disable-next-line import/no-deprecated
 		return new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
-			// eslint-disable-next-line import/no-deprecated
 			config as IDocumentSchemaCurrent, // old schema,
 			features,
 			() => {}, // onSchemaChange
@@ -65,7 +58,6 @@ describe("Runtime", () => {
 		const controller = createController(validConfig);
 		assert.throws(() =>
 			controller.processDocumentSchemaMessages(
-				// eslint-disable-next-line import/no-deprecated
 				[config as IDocumentSchemaCurrent],
 				false, // local
 				100,
@@ -114,7 +106,6 @@ describe("Runtime", () => {
 	});
 
 	it("disallowed versions", () => {
-		// eslint-disable-next-line import/no-deprecated
 		const controller = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
@@ -141,7 +132,6 @@ describe("Runtime", () => {
 	});
 
 	it("change disallowed versions", () => {
-		// eslint-disable-next-line import/no-deprecated
 		const controller = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
@@ -169,7 +159,6 @@ describe("Runtime", () => {
 		assert.deepEqual(controller.sessionSchema.runtime.disallowedVersions, ["aaa", "bbb"]);
 
 		// Some runtime that drops one version, and adds another version to disallowed list
-		// eslint-disable-next-line import/no-deprecated
 		const controller2 = new DocumentsSchemaController(
 			true, // existing,
 			300, // snapshotSequenceNumber
@@ -202,7 +191,6 @@ describe("Runtime", () => {
 		]);
 
 		// Some runtime that only processes document schema op
-		// eslint-disable-next-line import/no-deprecated
 		const controller3 = new DocumentsSchemaController(
 			true, // existing,
 			500, // snapshotSequenceNumber
@@ -245,7 +233,6 @@ describe("Runtime", () => {
 
 	function testSimpleCases(explicitSchemaControl: boolean, existing: boolean) {
 		const featuresModified = { ...features, explicitSchemaControl };
-		// eslint-disable-next-line import/no-deprecated
 		const controller = new DocumentsSchemaController(
 			existing, // existing,
 			0, // snapshotSequenceNumber
@@ -288,7 +275,6 @@ describe("Runtime", () => {
 		// get rid of all properties with undefined values.
 		const summarySchema = JSON.parse(
 			JSON.stringify(controller.summarizeDocumentSchema(100 /* refSeq */)),
-			// eslint-disable-next-line import/no-deprecated
 		) as IDocumentSchemaCurrent;
 		if (!explicitSchemaControl) {
 			assert.deepEqual(summarySchema, validConfig, "summarized schema as expected");
@@ -357,9 +343,7 @@ describe("Runtime", () => {
 		);
 	});
 
-	// eslint-disable-next-line import/no-deprecated
 	function testExistingDocNoChangesInSchema(schema: IDocumentSchemaCurrent) {
-		// eslint-disable-next-line import/no-deprecated
 		const controller = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
@@ -381,7 +365,6 @@ describe("Runtime", () => {
 	});
 
 	it("Existing document, changes required; race conditions", () => {
-		// eslint-disable-next-line import/no-deprecated
 		const controller = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
@@ -415,7 +398,6 @@ describe("Runtime", () => {
 		assert(schema !== undefined);
 		assert(schema.refSeq === 200);
 
-		// eslint-disable-next-line import/no-deprecated
 		const controller2 = new DocumentsSchemaController(
 			true, // existing,
 			300, // snapshotSequenceNumber
@@ -471,7 +453,6 @@ describe("Runtime", () => {
 		 * Start with no schema in a document.
 		 * There should be no ops sent.
 		 */
-		// eslint-disable-next-line import/no-deprecated
 		const controller = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
@@ -488,7 +469,6 @@ describe("Runtime", () => {
 		 * validate that we can summarize, load new client from that summary and it also will not send any ops
 		 */
 		const newSchema = controller.summarizeDocumentSchema(100);
-		// eslint-disable-next-line import/no-deprecated
 		const controller2 = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
@@ -511,7 +491,6 @@ describe("Runtime", () => {
 		 * Now let's see if we can change schema.
 		 */
 		let schemaChanged = false;
-		// eslint-disable-next-line import/no-deprecated
 		const controller3 = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
@@ -536,7 +515,6 @@ describe("Runtime", () => {
 		); // sequenceNumber
 		assert(schemaChanged, "schema changed");
 		assert(controller3.sessionSchema.runtime.idCompressorMode === "on");
-		// eslint-disable-next-line import/no-deprecated
 		const schema = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
 		assert(schema.runtime.idCompressorMode === "on", "now on");
 
@@ -547,7 +525,6 @@ describe("Runtime", () => {
 		 * This client will want to flip groupedBatching, but it will process someone else op first...
 		 */
 		schemaChanged = false;
-		// eslint-disable-next-line import/no-deprecated
 		const controller4 = new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
@@ -573,7 +550,6 @@ describe("Runtime", () => {
 		);
 
 		// Validate same summaries by two clients.
-		// eslint-disable-next-line import/no-deprecated
 		const schema2 = controller3.summarizeDocumentSchema(200) as IDocumentSchemaCurrent;
 		assert.deepEqual(schema, schema2, "same summaries");
 	});

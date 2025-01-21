@@ -30,40 +30,29 @@ import { v4 as uuid } from "uuid";
 
 import { type ISummaryConfiguration } from "../../index.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IConnectableRuntime,
 	type IConnectedEvents,
 	type IConnectedState,
 	type IGeneratedSummaryStats,
-	// eslint-disable-next-line import/no-deprecated
 	type IRefreshSummaryAckOptions,
-	// eslint-disable-next-line import/no-deprecated
 	type ISubmitSummaryOptions,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerClientElection,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerClientElectionEvents,
-	// eslint-disable-next-line import/no-deprecated
 	type ISummarizerInternalsProvider,
-	// eslint-disable-next-line import/no-deprecated
 	type ISummarizerRuntime,
 	RunWhileConnectedCoordinator,
 	type SubmitSummaryResult,
-	// eslint-disable-next-line import/no-deprecated
 	Summarizer,
 	SummaryCollection,
 	SummaryManager,
 } from "../../summary/index.js";
 import type { IThrottler } from "../../throttler.js";
 
-// eslint-disable-next-line import/no-deprecated
 export class MockContainerRuntimeFactoryForSummarizer extends MockContainerRuntimeFactoryForReconnection {
 	override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		_?: { minimumSequenceNumber?: number },
-		// eslint-disable-next-line import/no-deprecated
 	): MockContainerRuntimeForSummarizer {
-		// eslint-disable-next-line import/no-deprecated
 		const containerRuntime = new MockContainerRuntimeForSummarizer(
 			dataStoreRuntime,
 			this,
@@ -74,7 +63,6 @@ export class MockContainerRuntimeFactoryForSummarizer extends MockContainerRunti
 	}
 }
 
-// eslint-disable-next-line import/no-deprecated
 export interface IMockContainerRuntimeForSummarizerOptions
 	extends IMockContainerRuntimeOptions {
 	summaryConfiguration?: ISummaryConfiguration;
@@ -87,28 +75,22 @@ const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	initialSummarizerDelayMs: 5 * 1000, // 5 secs.
 };
 
-// eslint-disable-next-line import/no-deprecated
 export class MockContainerRuntimeForSummarizer
 	extends MockContainerRuntimeForReconnection
-	// eslint-disable-next-line import/no-deprecated
 	implements ISummarizerRuntime, ISummarizerInternalsProvider
 {
 	public readonly baseLogger = createChildLogger();
 	public readonly summarizerClientId: string | undefined;
-	// eslint-disable-next-line import/no-deprecated
 	public readonly summarizer: Summarizer;
 
 	private readonly summaryManager: SummaryManager;
 	private readonly connectedState: MockConnectedState;
 	private readonly summaryCollection: SummaryCollection;
-	// eslint-disable-next-line import/no-deprecated
 	private readonly summarizerClientElection: MockSummarizerClientElection;
 
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
-		// eslint-disable-next-line import/no-deprecated
 		factory: MockContainerRuntimeFactoryForSummarizer,
-		// eslint-disable-next-line import/no-deprecated
 		runtimeOptions: IMockContainerRuntimeForSummarizerOptions = {},
 	) {
 		// trackRemoteOps is needed for replaying all ops on creating new ContainerRuntime
@@ -118,7 +100,6 @@ export class MockContainerRuntimeForSummarizer
 			this.emit("op", message);
 		});
 
-		// eslint-disable-next-line import/no-deprecated
 		this.summarizerClientElection = new MockSummarizerClientElection(this.clientId);
 		this.connectedState = new MockConnectedState(this.baseLogger, this.clientId);
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.baseLogger);
@@ -128,15 +109,12 @@ export class MockContainerRuntimeForSummarizer
 			...runtimeOptions.summaryConfiguration,
 		};
 
-		// eslint-disable-next-line import/no-deprecated
 		this.summarizer = new Summarizer(
 			this /* summarizerRuntime */,
 			() => summaryConfiguration /* configurationGetter */,
-			// eslint-disable-next-line import/no-deprecated
 			this /* ISummarizerInternalsProvider */,
 			{} as unknown as IFluidHandleContext /* handleContext */,
 			this.summaryCollection,
-			// eslint-disable-next-line import/no-deprecated
 			async (runtime: IConnectableRuntime) =>
 				RunWhileConnectedCoordinator.create(runtime, () => this.deltaManager.active),
 		);
@@ -161,7 +139,7 @@ export class MockContainerRuntimeForSummarizer
 	}
 
 	/**
-	 *Call on the Summarizer object to summarize
+	 * Call on the Summarizer object to summarize
 	 */
 	public async summarize(): Promise<void> {
 		const result = this.summarizer.summarizeOnDemand({
@@ -175,7 +153,6 @@ export class MockContainerRuntimeForSummarizer
 		]);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const handle = uuid();
 		const summaryMessage: ISummaryContent = {
@@ -259,7 +236,6 @@ export class MockContainerRuntimeForSummarizer
 		});
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		// Do nothing
 	}
@@ -285,11 +261,8 @@ export class MockContainerRuntimeForSummarizer
 	}
 }
 
-// eslint-disable-next-line import/no-deprecated
 class MockSummarizerClientElection
-	// eslint-disable-next-line import/no-deprecated
 	extends TypedEventEmitter<ISummarizerClientElectionEvents>
-	// eslint-disable-next-line import/no-deprecated
 	implements ISummarizerClientElection
 {
 	public electedClientId: string | undefined;

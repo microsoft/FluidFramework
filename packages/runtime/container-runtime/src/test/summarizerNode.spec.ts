@@ -9,34 +9,25 @@ import { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeParam,
-	// eslint-disable-next-line import/no-deprecated
 	CreateSummarizerNodeSource,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNode,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-// eslint-disable-next-line import/no-deprecated
 import { IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
-		// eslint-disable-next-line import/no-deprecated
 		describe("Summarizer Node", () => {
 			const names = ["root", "mid", "leaf"] as const;
 			const ids = ["rootId", "midId", "leafId"] as const;
-			// eslint-disable-next-line import/no-deprecated
 			let rootNode: IRootSummarizerNode;
-			// eslint-disable-next-line import/no-deprecated
 			let midNode: ISummarizerNode | undefined;
-			// eslint-disable-next-line import/no-deprecated
 			let leafNode: ISummarizerNode | undefined;
 
 			const logger = createChildLogger();
@@ -65,13 +56,11 @@ describe("Runtime", () => {
 				refSeq,
 				...config
 			}: Partial<
-				// eslint-disable-next-line import/no-deprecated
 				ISummarizerNodeConfig & {
 					changeSeq: number;
 					refSeq: number;
 				}
 			> = {}) {
-				// eslint-disable-next-line import/no-deprecated
 				rootNode = createRootSummarizerNode(
 					logger,
 					getSummarizeInternalFn(0),
@@ -82,18 +71,14 @@ describe("Runtime", () => {
 			}
 
 			function createMid(
-				// eslint-disable-next-line import/no-deprecated
 				createParam: CreateChildSummarizerNodeParam,
-				// eslint-disable-next-line import/no-deprecated
 				config?: ISummarizerNodeConfig,
 			) {
 				midNode = rootNode.createChild(getSummarizeInternalFn(1), ids[1], createParam, config);
 			}
 
 			function createLeaf(
-				// eslint-disable-next-line import/no-deprecated
 				createParam: CreateChildSummarizerNodeParam,
-				// eslint-disable-next-line import/no-deprecated
 				config?: ISummarizerNodeConfig,
 			) {
 				leafNode = midNode?.createChild(
@@ -150,10 +135,8 @@ describe("Runtime", () => {
 			describe("Create Child", () => {
 				it("Should fail to create child with same id", () => {
 					createRoot();
-					// eslint-disable-next-line import/no-deprecated
 					createMid({ type: CreateSummarizerNodeSource.Local });
 					expectThrow(
-						// eslint-disable-next-line import/no-deprecated
 						() => createMid({ type: CreateSummarizerNodeSource.Local }),
 						"create child",
 						"child node with same id already exists",
@@ -265,9 +248,7 @@ describe("Runtime", () => {
 
 				it("summary validation should fail if summarize not called on child node", async () => {
 					createRoot();
-					// eslint-disable-next-line import/no-deprecated
 					createMid({ type: CreateSummarizerNodeSource.Local });
-					// eslint-disable-next-line import/no-deprecated
 					createLeaf({ type: CreateSummarizerNodeSource.Local });
 					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
@@ -294,9 +275,7 @@ describe("Runtime", () => {
 
 				it("summary validation should fail if summarize not called on leaf node", async () => {
 					createRoot();
-					// eslint-disable-next-line import/no-deprecated
 					createMid({ type: CreateSummarizerNodeSource.Local });
-					// eslint-disable-next-line import/no-deprecated
 					createLeaf({ type: CreateSummarizerNodeSource.Local });
 					rootNode.startSummary(11, logger, 0);
 					await rootNode.summarize(false);
