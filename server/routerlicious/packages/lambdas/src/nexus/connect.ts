@@ -597,8 +597,15 @@ function setUpSignalListenerForRoomBroadcasting(
 	socket: IWebSocket,
 	room: IRoom,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
-): () => void {
+): (() => void) | undefined {
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
+		if (
+			!collaborationSessionEventEmitter ||
+			collaborationSessionEventEmitter.listenerCount("broadcastSignal") > 0
+		) {
+			return;
+		}
+
 		const { signalRoom, signalContent } = broadcastSignal;
 		// No-op if the room (collab session) that signal came in from is different
 		// than the current room. We reuse websockets so there could be multiple rooms
@@ -769,15 +776,15 @@ export async function connectDocument(
 			clients,
 			lambdaDependencies,
 		);
-		let disposeSignalListenerForRoomBroadcasting: () => void;
-		if(lambdaDependencies.collaborationSessionEventEmitter &&  lambdaDependencies.collaborationSessionEventEmitter.listenerCount("broadcastSignal") === 0){
-				disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
-				socket,
-				room,
-				lambdaDependencies,
-			);
-			connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
-		}
+
+		const disposeSignalListenerForRoomBroadcasting = setUpSignalListenerForRoomBroadcasting(
+			socket,
+			room,
+			lambdaDependencies,
+		);
+
+		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
+
 		const result = {
 			connection: connectedMessage,
 			connectVersions,
@@ -802,7 +809,7 @@ export async function connectDocument(
 			connectVersions,
 			details: messageClient,
 			dispose: (): void => {
-				disposeSignalListenerForRoomBroadcasting();
+				disposeSignalListenerForRoomBroadcasting?.();
 				disposeOrdererConnectionListener();
 			},
 		};

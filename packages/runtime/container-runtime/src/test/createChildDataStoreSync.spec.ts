@@ -36,7 +36,7 @@ describe("createChildDataStore", () => {
 		public setAttachState = throwNYI;
 		public getAttachSummary = throwNYI;
 		public getAttachGCData = throwNYI;
-		protected channel = new Proxy({} as any as IFluidDataStoreChannel, { get: throwNYI });
+		protected channel = new Proxy({} as unknown as IFluidDataStoreChannel, { get: throwNYI });
 		protected channelP = new LazyPromise(async () => this.channel);
 	};
 
@@ -58,8 +58,8 @@ describe("createChildDataStore", () => {
 	const createContext = (namedEntries?: NamedFluidDataStoreRegistryEntries) => {
 		const registry = createRegistry(namedEntries);
 		const createSummarizerNodeFn = () =>
-			new Proxy({} as any as ISummarizerNodeWithGC, { get: throwNYI });
-		const storage = new Proxy({} as any as IDocumentStorageService, { get: throwNYI });
+			new Proxy({} as unknown as ISummarizerNodeWithGC, { get: throwNYI });
+		const storage = new Proxy({} as unknown as IDocumentStorageService, { get: throwNYI });
 
 		const parentContext = {
 			clientDetails: {

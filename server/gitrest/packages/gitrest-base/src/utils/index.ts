@@ -12,6 +12,7 @@ export {
 	IFileSystemManagerFactories,
 	IFileSystemManagerFactory,
 	IFileSystemManagerParams,
+	IFileSystemMakeDirectoryOptions,
 	IFileSystemPromises,
 	IRepoManagerParams,
 	IRepositoryManager,

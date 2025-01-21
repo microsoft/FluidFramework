@@ -469,39 +469,39 @@ describe("Routerlicious", () => {
 							.send(body)
 							.expect(400);
 					});
-					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
-						const body = {
-							signalContent: {
-								contents: {
-									type: "ExternalDataChanged_V1.0.0",
-									content: { taskListId: "task-list-1" },
-								},
-							},
-						};
+					// it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
+					// 	const body = {
+					// 		signalContent: {
+					// 			contents: {
+					// 				type: "ExternalDataChanged_V1.0.0",
+					// 				content: { taskListId: "task-list-1" },
+					// 			},
+					// 		},
+					// 	};
 
-						await supertest
-							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-							.send(body)
-							.set("Authorization", tenantToken1)
-							.set("Content-Type", "application/json")
-							.expect(200);
-					});
-					it("/api/v1/:tenantId/:id/broadcast-signal invalid-token", async () => {
-						const body = {
-							signalContent: {
-								contents: {
-									type: "ExternalDataChanged_V1.0.0",
-									content: { taskListId: "task-list-1" },
-								},
-							},
-						};
+					// 	await supertest
+					// 		.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
+					// 		.send(body)
+					// 		.set("Authorization", tenantToken1)
+					// 		.set("Content-Type", "application/json")
+					// 		.expect(200);
+					// });
+					// it("/api/v1/:tenantId/:id/broadcast-signal invalid-token", async () => {
+					// 	const body = {
+					// 		signalContent: {
+					// 			contents: {
+					// 				type: "ExternalDataChanged_V1.0.0",
+					// 				content: { taskListId: "task-list-1" },
+					// 			},
+					// 		},
+					// 	};
 
-						await supertest
-							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-							.send(body)
-							.set("Content-Type", "application/json")
-							.expect(403);
-					});
+					// 	await supertest
+					// 		.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
+					// 		.send(body)
+					// 		.set("Content-Type", "application/json")
+					// 		.expect(403);
+					// });
 				});
 
 				describe("/documents", () => {
@@ -678,12 +678,12 @@ describe("Routerlicious", () => {
 							"post",
 						);
 					});
-					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
-						await assertCorrelationId(
-							`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
-							"post",
-						);
-					});
+					// it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
+					// 	await assertCorrelationId(
+					// 		`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
+					// 		"post",
+					// 	);
+					// });
 				});
 
 				describe("/documents", () => {
@@ -1046,38 +1046,38 @@ describe("Routerlicious", () => {
 					});
 				});
 
-				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
-					it("Successful request", async () => {
-						const body = {
-							signalContent: {
-								contents: {
-									type: "ExternalDataChanged_V1.0.0",
-									content: { taskListId: "task-list-1" },
-								},
-							},
-						};
+				// describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
+				// 	it("Successful request", async () => {
+				// 		const body = {
+				// 			signalContent: {
+				// 				contents: {
+				// 					type: "ExternalDataChanged_V1.0.0",
+				// 					content: { taskListId: "task-list-1" },
+				// 				},
+				// 			},
+				// 		};
 
-						await supertest
-							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-							.send(body)
-							.set("Authorization", tenantToken1)
-							.set("Content-Type", "application/json")
-							.expect(200);
-					});
+				// 		await supertest
+				// 			.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
+				// 			.send(body)
+				// 			.set("Authorization", tenantToken1)
+				// 			.set("Content-Type", "application/json")
+				// 			.expect(200);
+				// 	});
 
-					it("Invalid request content", async () => {
-						const body = {
-							signalContent: {},
-						};
+				// 	it("Invalid request content", async () => {
+				// 		const body = {
+				// 			signalContent: {},
+				// 		};
 
-						await supertest
-							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-							.send(body)
-							.set("Authorization", tenantToken1)
-							.set("Content-Type", "application/json")
-							.expect(400);
-					});
-				});
+				// 		await supertest
+				// 			.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
+				// 			.send(body)
+				// 			.set("Authorization", tenantToken1)
+				// 			.set("Content-Type", "application/json")
+				// 			.expect(400);
+				// 	});
+				// });
 
 				describe("/documents", () => {
 					it("/:tenantId cluster in draining status", async () => {

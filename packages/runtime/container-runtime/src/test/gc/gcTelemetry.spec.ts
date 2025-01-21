@@ -334,7 +334,9 @@ describe("GC Telemetry Tracker", () => {
 			);
 		});
 
-		/** Tests that validate either the relevant events are logged as expected. */
+		/**
+		 * Tests that validate either the relevant events are logged as expected.
+		 */
 		const unreferencedPhasesEventTests = (
 			timeout: number,
 			mode: "inactive" | "tombstone" | "sweep",

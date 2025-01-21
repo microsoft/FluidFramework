@@ -12,6 +12,7 @@ import { createSectionForApiItem } from "../default-implementations/index.js";
 
 import {
 	type DocumentationSuiteConfiguration,
+	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults,
 } from "./DocumentationSuite.js";
 import {
@@ -89,7 +90,7 @@ export interface ApiItemTransformationConfiguration
  */
 export interface ApiItemTransformationOptions
 	extends ApiItemTransformationConfigurationBase,
-		Partial<DocumentationSuiteConfiguration>,
+		DocumentationSuiteOptions,
 		LoggingConfiguration {
 	/**
 	 * Optional overrides for the default transformations.

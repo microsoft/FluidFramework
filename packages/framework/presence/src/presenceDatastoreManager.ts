@@ -115,11 +115,11 @@ function mergeGeneralDatastoreMessageContent(
 		const mergedData = queueDatastore[workspaceName] ?? {};
 
 		// Iterate over each value manager and its data, merging it as needed.
-		for (const valueManagerKey of Object.keys(workspaceData)) {
-			for (const [clientSessionId, value] of objectEntries(workspaceData[valueManagerKey])) {
-				mergedData[valueManagerKey] ??= {};
-				const oldData = mergedData[valueManagerKey][clientSessionId];
-				mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
+		for (const [valueManagerKey, valueManagerValue] of objectEntries(workspaceData)) {
+			for (const [clientSessionId, value] of objectEntries(valueManagerValue)) {
+				const mergeObject = (mergedData[valueManagerKey] ??= {});
+				const oldData = mergeObject[clientSessionId];
+				mergeObject[clientSessionId] = mergeValueDirectory(
 					oldData,
 					value,
 					0, // local values do not need a time shift

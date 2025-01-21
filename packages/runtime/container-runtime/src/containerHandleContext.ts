@@ -14,7 +14,7 @@ export interface IContainerHandleContextRuntime {
 }
 
 export class ContainerFluidHandleContext implements IFluidHandleContext {
-	public get IFluidHandleContext() {
+	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
 	}
 	public readonly absolutePath: string;
@@ -37,7 +37,7 @@ export class ContainerFluidHandleContext implements IFluidHandleContext {
 		throw new Error("can't attach container runtime form within container!");
 	}
 
-	public get isAttached() {
+	public get isAttached(): boolean {
 		return this.runtime.attachState !== AttachState.Detached;
 	}
 

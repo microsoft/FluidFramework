@@ -59,13 +59,13 @@ export class DeltaScheduler {
 		runtimeEventsEmitter.on("batchEnd", this.batchEnd);
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.deltaManager.inbound.off("idle", this.inboundQueueIdle);
 		this.runtimeEventsEmitter.off("batchBegin", this.batchBegin);
 		this.runtimeEventsEmitter.off("batchEnd", this.batchEnd);
 	}
 
-	private readonly batchBegin = (message: ISequencedDocumentMessage) => {
+	private readonly batchBegin = (message: ISequencedDocumentMessage): void => {
 		if (!this.processingStartTime) {
 			this.processingStartTime = performance.now();
 		}
@@ -84,7 +84,7 @@ export class DeltaScheduler {
 		}
 	};
 
-	private readonly batchEnd = (error: any, message: ISequencedDocumentMessage) => {
+	private readonly batchEnd = (error: unknown, message: ISequencedDocumentMessage): void => {
 		if (this.schedulingLog) {
 			this.schedulingLog.numberOfBatchesProcessed++;
 			this.schedulingLog.lastSequenceNumber = message.sequenceNumber;
@@ -137,7 +137,7 @@ export class DeltaScheduler {
 		}
 	};
 
-	private readonly inboundQueueIdle = () => {
+	private readonly inboundQueueIdle = (): void => {
 		if (this.schedulingLog) {
 			// Add the time taken for processing the final ops to the total processing time in the
 			// telemetry log object.

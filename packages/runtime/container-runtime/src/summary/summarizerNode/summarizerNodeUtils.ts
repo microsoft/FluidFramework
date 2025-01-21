@@ -12,18 +12,28 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 export interface IRefreshSummaryResult {
-	/** Tells whether this summary is tracked by this client. */
+	/**
+	 * Tells whether this summary is tracked by this client.
+	 */
 	isSummaryTracked: boolean;
-	/** Tells whether this summary is newer than the latest one tracked by this client. */
+	/**
+	 * Tells whether this summary is newer than the latest one tracked by this client.
+	 */
 	isSummaryNewer: boolean;
 }
 
 export interface IStartSummaryResult {
-	/** The number of summarizerNodes at the start of the summary. */
+	/**
+	 * The number of summarizerNodes at the start of the summary.
+	 */
 	nodes: number;
-	/** The number of summarizerNodes in the wrong state. */
+	/**
+	 * The number of summarizerNodes in the wrong state.
+	 */
 	invalidNodes: number;
-	/** The invalid sequence numbers and their values. It should be in the format of validateSequenceNumber-nodeSequenceNumber */
+	/**
+	 * The invalid sequence numbers and their values. It should be in the format of validateSequenceNumber-nodeSequenceNumber
+	 */
 	mismatchNumbers: Set<string>;
 }
 
@@ -38,14 +48,20 @@ export type ValidateSummaryResult =
 	  }
 	| {
 			success: false;
-			/** The failure reason */
+			/**
+			 * The failure reason
+			 */
 			reason: string;
-			/** id of the node that failed during validation */
+			/**
+			 * id of the node that failed during validation
+			 */
 			id: {
 				tag: TelemetryDataTag.CodeArtifact;
 				value: string | undefined;
 			};
-			/** If the error can be retried, time to wait before retrying */
+			/**
+			 * If the error can be retried, time to wait before retrying
+			 */
 			retryAfterSeconds?: number;
 	  };
 
@@ -64,7 +80,9 @@ export interface ISummarizerNodeRootContract {
 	): Promise<IRefreshSummaryResult>;
 }
 
-/** Class to build paths for nodes in a tree with escaped special characters */
+/**
+ * Class to build paths for nodes in a tree with escaped special characters
+ */
 export class EscapedPath {
 	private constructor(public readonly path: string) {}
 
@@ -88,7 +106,9 @@ export class EscapedPath {
 	}
 }
 export interface PendingSummaryInfo {
-	/** The sequence number at which the summary was created. */
+	/**
+	 * The sequence number at which the summary was created.
+	 */
 	referenceSequenceNumber: number;
 }
 
@@ -96,19 +116,31 @@ export interface PendingSummaryInfo {
  * Represents the details needed to create a child summarizer node.
  */
 export interface ICreateChildDetails {
-	/** Sequence number of latest known change to the node */
+	/**
+	 * Sequence number of latest known change to the node
+	 */
 	changeSequenceNumber: number;
-	/** A unique id of this child to be logged when sending telemetry. */
+	/**
+	 * A unique id of this child to be logged when sending telemetry.
+	 */
 	telemetryNodeId: string;
-	/** Summary handle for child node */
+	/**
+	 * Summary handle for child node
+	 */
 	summaryHandleId: EscapedPath;
-	/** the reference sequence number of the last successful summary. */
+	/**
+	 * the reference sequence number of the last successful summary.
+	 */
 	lastSummaryReferenceSequenceNumber: number | undefined;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
-	/** Tree to use to find children subtrees */
+	/**
+	 * Tree to use to find children subtrees
+	 */
 	childrenTree: T;
-	/** Additional path part where children are isolated */
+	/**
+	 * Additional path part where children are isolated
+	 */
 	childrenPathPart: string | undefined;
 }

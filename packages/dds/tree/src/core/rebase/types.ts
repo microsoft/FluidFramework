@@ -13,7 +13,7 @@ import { Type } from "@sinclair/typebox";
 import {
 	type Brand,
 	type NestedMap,
-	type RangeMap,
+	RangeMap,
 	brand,
 	brandedNumberType,
 	brandedStringType,
@@ -68,10 +68,6 @@ export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | Chang
 /**
  */
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
-
-/**
- */
-export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 
 /**
  * @returns true iff `a` and `b` are the same.
@@ -203,4 +199,36 @@ export function mintCommit<TChange>(
 		change,
 		parent,
 	};
+}
+
+export type ChangeAtomIdRangeMap<V> = RangeMap<ChangeAtomId, V>;
+
+export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
+}
+
+export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
+	const cmp = compareRevisions(a.revision, b.revision);
+	if (cmp !== 0) {
+		return cmp * Number.POSITIVE_INFINITY;
+	}
+
+	return a.localId - b.localId;
+}
+
+export function compareRevisions(
+	a: RevisionTag | undefined,
+	b: RevisionTag | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	} else if (a < b) {
+		return -1;
+	} else if (a > b) {
+		return 1;
+	}
+
+	return 0;
 }

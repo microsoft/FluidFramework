@@ -22,11 +22,17 @@ import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
 // eslint-disable-next-line unused-imports/no-unused-imports -- Used by "@link" comment annotation below
 import { serializeOpContents } from "./outbox.js";
 
-/** Info about the batch we learn when we process the first message */
+/**
+ * Info about the batch we learn when we process the first message
+ */
 export interface BatchStartInfo {
-	/** Batch ID, if present */
+	/**
+	 * Batch ID, if present
+	 */
 	readonly batchId: string | undefined;
-	/** clientId that sent this batch. Used to compute Batch ID if needed */
+	/**
+	 * clientId that sent this batch. Used to compute Batch ID if needed
+	 */
 	readonly clientId: string;
 	/**
 	 * Client Sequence Number of the Grouped Batch message, or the first message in the ungrouped batch.
@@ -101,7 +107,7 @@ export class RemoteMessageProcessor {
 		return this.opSplitter.chunks;
 	}
 
-	public clearPartialMessagesFor(clientId: string) {
+	public clearPartialMessagesFor(clientId: string): void {
 		this.opSplitter.clearPartialChunks(clientId);
 	}
 

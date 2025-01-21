@@ -6,6 +6,7 @@
 		"rootDir": "./src",
 		"outDir": "./dist",
 		"composite": true,
+		"types": ["node"],
 	},
 	"include": ["src/**/*"],
 }

@@ -7,6 +7,7 @@ import { strict as assert } from "assert";
 
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidDataStoreRegistry } from "../dataStoreRegistry.js";
 
@@ -22,7 +23,8 @@ describe("Data Store Registry Creation Tests", () => {
 		try {
 			new FluidDataStoreRegistry(entries as NamedFluidDataStoreRegistryEntries);
 			assert.fail();
-		} catch (error: any) {
+		} catch (error: unknown) {
+			assert(isFluidError(error));
 			assert.strictEqual(error.errorType, ContainerErrorTypes.usageError);
 			assert.strictEqual(error.message, "Duplicate entry names exist");
 		}

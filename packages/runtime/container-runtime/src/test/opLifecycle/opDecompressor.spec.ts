@@ -58,7 +58,7 @@ function generateCompressedBatchMessage(length: number): ISequencedDocumentMessa
 		...messageBase,
 		// TODO: It's not clear if this shallow clone is required, as opposed to just setting "batch" to false.
 
-		metadata: { ...(messageBase.metadata as any), batch: true },
+		metadata: { ...(messageBase.metadata as object), batch: true },
 	};
 }
 

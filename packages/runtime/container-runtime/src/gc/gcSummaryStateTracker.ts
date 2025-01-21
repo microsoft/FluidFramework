@@ -61,7 +61,9 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called during GC initialization. Initialize the latest summary data from the base snapshot data.
 	 */
-	public initializeBaseState(baseSnapshotData: IGarbageCollectionSnapshotData | undefined) {
+	public initializeBaseState(
+		baseSnapshotData: IGarbageCollectionSnapshotData | undefined,
+	): void {
 		if (baseSnapshotData === undefined) {
 			return;
 		}
@@ -228,7 +230,7 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called to update the state from a GC run's stats. Used to update the count of data stores whose state updated.
 	 */
-	public updateStateFromGCRunStats(stats: IGCStats) {
+	public updateStateFromGCRunStats(stats: IGCStats): void {
 		this.updatedDSCountSinceLastSummary += stats.updatedDataStoreCount;
 	}
 }

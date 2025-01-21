@@ -87,7 +87,7 @@ export function generateGCConfigs(
 		tombstoneTimeoutMs =
 			testOverrideTombstoneTimeoutMs ?? computeTombstoneTimeout(sessionExpiryTimeoutMs);
 
-		const gcGeneration = createParams.gcOptions[gcGenerationOptionName];
+		const gcGeneration = createParams.gcOptions[gcGenerationOptionName] as number;
 		if (gcGeneration !== undefined) {
 			persistedGcFeatureMatrix = { gcGeneration };
 		}
@@ -116,9 +116,9 @@ export function generateGCConfigs(
 			: sweepAllowed && createParams.gcOptions.enableGCSweep === true;
 
 	// Override inactive timeout if test config or gc options to override it is set.
-	const inactiveTimeoutMs =
+	const inactiveTimeoutMs: number =
 		mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
-		createParams.gcOptions.inactiveTimeoutMs ??
+		(createParams.gcOptions.inactiveTimeoutMs as number) ??
 		defaultInactiveTimeoutMs;
 
 	// Inactive timeout must be greater than tombstone timeout since a node goes from active -> inactive -> sweep ready.
