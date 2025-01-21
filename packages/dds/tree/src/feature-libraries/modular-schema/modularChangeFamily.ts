@@ -3107,7 +3107,7 @@ function getFieldsForCrossFieldKey(
 	count: number,
 ): FieldId[] {
 	return changeset.crossFieldKeys
-		.get(key, count)
+		.getAll(key, count)
 		.map(({ value: fieldId }) => normalizeFieldId(fieldId, changeset.nodeAliases));
 }
 

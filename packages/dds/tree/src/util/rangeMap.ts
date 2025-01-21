@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
 /**
@@ -48,50 +48,35 @@ export class RangeMap<K, V> {
 		this.tree.clear();
 	}
 
-	public get(start: K, length: number): RangeQueryEntry<K, V>[] {
-		const result: RangeQueryEntry<K, V>[] = [];
+	/**
+	 * Retrieves the values for all keys in the query range.
+	 *
+	 * @param start - The first key in the range being queried
+	 * @param length  - The length of the query range
+	 * @returns A list of entries, each describing the value for some subrange of the query.
+	 * The entries are in the same order as the keys, and there is an entry for every key with a non `undefined` value.
+	 */
+	public getAll(start: K, length: number): RangeQueryEntry<K, V>[] {
+		const entries = this.getIntersectingEntries(start, length);
+		if (entries.length === 0) {
+			return entries;
+		}
+
+		const firstEntry = entries[0] ?? oob();
+		const lengthBefore = this.subtractKeys(start, firstEntry.start);
+		if (lengthBefore > 0) {
+			entries[0] = { ...firstEntry, start, length: firstEntry.length - lengthBefore };
+		}
+
+		const lastEntry = entries[entries.length - 1] ?? oob();
+		const lastEntryKey = this.offsetKey(lastEntry.start, lastEntry.length - 1);
 		const lastQueryKey = this.offsetKey(start, length - 1);
-
-		let nextKey = start;
-		let remainingLength = length;
-		{
-			const entry = this.tree.getPairOrNextLower(start);
-			if (entry !== undefined) {
-				const [key, { length: entryLength, value }] = entry;
-				const lastEntryKey = this.offsetKey(key, entryLength);
-				if (this.ge(lastEntryKey, start)) {
-					const overlappingLength = Math.min(
-						this.subtractKeys(lastEntryKey, start) + 1,
-						length,
-					);
-
-					result.push({ start, length: overlappingLength, value });
-					nextKey = this.offsetKey(lastEntryKey, 1);
-					remainingLength -= overlappingLength;
-				}
-			}
+		const lengthAfter = this.subtractKeys(lastEntryKey, lastQueryKey);
+		if (lengthAfter > 0) {
+			entries[entries.length - 1] = { ...lastEntry, length: lastEntry.length - lengthAfter };
 		}
 
-		while (remainingLength > 0) {
-			const entry = this.tree.getPairOrNextHigher(nextKey);
-			if (entry === undefined) {
-				break;
-			}
-
-			const [key, { length: entryLength, value }] = entry;
-			if (this.gt(key, lastQueryKey)) {
-				break;
-			}
-
-			const overlappingLength = Math.min(remainingLength, entryLength);
-			result.push({ start: key, length: overlappingLength, value });
-
-			const lastEntryKey = this.offsetKey(key, entryLength);
-			nextKey = this.offsetKey(lastEntryKey, 1);
-			remainingLength -= overlappingLength;
-		}
-
-		return result;
+		return entries;
 	}
 
 	/**
