@@ -12,7 +12,6 @@ import {
 	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
-	IBatchMessage,
 	IContainerContext,
 	IGetPendingLocalStateProps,
 	ILoader,
@@ -1221,12 +1220,7 @@ export class ContainerRuntime
 		batch: boolean,
 		appData?: unknown,
 	) => number;
-	/**
-	 * Although current IContainerContext guarantees submitBatchFn, it is not available on older loaders.
-	 */
-	private readonly submitBatchFn:
-		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
-		| undefined;
+
 	private readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
@@ -1618,7 +1612,6 @@ export class ContainerRuntime
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
 		this.submitFn = submitFn;
-		this.submitBatchFn = submitBatchFn;
 		this.submitSummaryFn = submitSummaryFn;
 		this.submitSignalFn = submitSignalFn;
 
@@ -1701,7 +1694,7 @@ export class ContainerRuntime
 
 		const opSplitter = new OpSplitter(
 			chunks,
-			this.submitBatchFn,
+			submitBatchFn,
 			runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
@@ -1940,7 +1933,7 @@ export class ContainerRuntime
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
-			submitBatchFn: this.submitBatchFn,
+			submitBatchFn,
 			legacySendBatchFn,
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
