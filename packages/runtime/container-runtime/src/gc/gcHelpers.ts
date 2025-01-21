@@ -162,7 +162,7 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
 export function concatGarbageCollectionData(
 	gcData1: IGarbageCollectionData,
 	gcData2: IGarbageCollectionData,
-) {
+): IGarbageCollectionData {
 	const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
 	for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
 		if (combinedGCData.gcNodes[id] === undefined) {
@@ -221,7 +221,9 @@ export async function getGCDataFromSnapshot(
  * @param gcDetails - The GC details of a node.
  * @returns A map of GC details of each children of the the given node.
  */
-export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase) {
+export function unpackChildNodesGCDetails(
+	gcDetails: IGarbageCollectionDetailsBase,
+): Map<string, IGarbageCollectionDetailsBase> {
 	const childGCDetailsMap: Map<string, IGarbageCollectionDetailsBase> = new Map();
 
 	// If GC data is not available, bail out.
@@ -292,7 +294,7 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
  */
-function trimLeadingAndTrailingSlashes(str: string) {
+function trimLeadingAndTrailingSlashes(str: string): string {
 	return str.replace(/^\/+|\/+$/g, "");
 }
 

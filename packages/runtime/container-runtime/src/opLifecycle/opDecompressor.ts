@@ -7,7 +7,10 @@ import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 
 import { CompressionAlgorithms } from "../containerRuntime.js";
@@ -30,9 +33,11 @@ interface IPackedContentsContents {
  */
 export class OpDecompressor {
 	private activeBatch = false;
+	// TODO: better typing
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private rootMessageContents: any | undefined;
 	private processedCount = 0;
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpDecompressor" });
@@ -81,7 +86,7 @@ export class OpDecompressor {
 		return false;
 	}
 
-	public get currentlyUnrolling() {
+	public get currentlyUnrolling(): boolean {
 		return this.activeBatch;
 	}
 
@@ -120,8 +125,8 @@ export class OpDecompressor {
 		);
 		const decompressedMessage = decompress(contents);
 		const intoString = Uint8ArrayToString(decompressedMessage);
-		const asObj = JSON.parse(intoString);
-		this.rootMessageContents = asObj;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		this.rootMessageContents = JSON.parse(intoString);
 	}
 
 	/**
@@ -132,6 +137,7 @@ export class OpDecompressor {
 		assert(this.currentlyUnrolling, 0x942 /* not currently unrolling */);
 		assert(this.rootMessageContents !== undefined, 0x943 /* missing rootMessageContents */);
 		assert(
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			this.rootMessageContents.length > this.processedCount,
 			0x944 /* no more content to unroll */,
 		);
@@ -140,6 +146,7 @@ export class OpDecompressor {
 
 		if (batchMetadata === false || this.isSingleMessageBatch) {
 			// End of compressed batch
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			const returnMessage = newMessage(message, this.rootMessageContents[this.processedCount]);
 
 			this.activeBatch = false;
@@ -150,6 +157,7 @@ export class OpDecompressor {
 			return returnMessage;
 		} else if (batchMetadata === true) {
 			// Start of compressed batch
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			return newMessage(message, this.rootMessageContents[this.processedCount++]);
 		}
 
@@ -157,6 +165,7 @@ export class OpDecompressor {
 		assert(message.contents === undefined, 0x512 /* Expecting empty message */);
 
 		// Continuation of compressed batch
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		return newMessage(message, this.rootMessageContents[this.processedCount++]);
 	}
 }
@@ -164,7 +173,7 @@ export class OpDecompressor {
 // We should not be mutating the input message nor its metadata
 const newMessage = (
 	originalMessage: ISequencedDocumentMessage,
-	contents: any,
+	contents: unknown,
 ): ISequencedDocumentMessage => ({
 	...originalMessage,
 	contents,
@@ -172,7 +181,5 @@ const newMessage = (
 	// TODO: It should already be the case that we're not modifying any metadata, not clear if/why this shallow clone should be required.
 
 	metadata:
-		originalMessage.metadata === undefined
-			? undefined
-			: { ...(originalMessage.metadata as any) },
+		originalMessage.metadata === undefined ? undefined : { ...originalMessage.metadata },
 });
