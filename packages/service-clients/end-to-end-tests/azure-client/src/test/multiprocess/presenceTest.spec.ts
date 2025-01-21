@@ -30,7 +30,7 @@ describe(`Presence with AzureClient`, () => {
 		afterCleanUp.length = 0;
 	});
 
-	beforeEach(async () => {
+	beforeEach("setup", async () => {
 		// Create inital child process
 		let containerId: string | undefined;
 		for (let i = 0; i < numClients; i++) {
