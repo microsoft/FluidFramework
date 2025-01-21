@@ -76,7 +76,6 @@ import {
 import { v4 as uuid } from "uuid";
 
 import {
-	// eslint-disable-next-line import/no-deprecated
 	DeletedResponseHeaderKey,
 	RuntimeHeaderData,
 	defaultRuntimeHeaderData,
@@ -97,12 +96,10 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-// eslint-disable-next-line import/no-deprecated
 import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
 import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
@@ -988,7 +985,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			// The requested data store has been deleted by gc. Create a 404 response exception.
 			throw responseToException(
 				createResponseError(404, "DataStore was deleted", originalRequest, {
-					// eslint-disable-next-line import/no-deprecated
 					[DeletedResponseHeaderKey]: true,
 				}),
 				originalRequest,
@@ -1478,7 +1474,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * Called by GC to determine if a node is for a data store or for an object within a data store (for e.g. DDS).
 	 * @returns the GC node type if the node belongs to a data store or object within data store, undefined otherwise.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	public getGCNodeType(nodePath: string): GCNodeType | undefined {
 		const pathParts = nodePath.split("/");
 		if (!this.contexts.has(pathParts[1])) {
@@ -1488,10 +1483,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// Data stores paths are of the format "/dataStoreId".
 		// Sub data store paths are of the format "/dataStoreId/subPath/...".
 		if (pathParts.length === 2) {
-			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.DataStore;
 		}
-		// eslint-disable-next-line import/no-deprecated
 		return GCNodeType.SubDataStore;
 	}
 
@@ -1556,7 +1549,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 export function getSummaryForDatastores(
 	snapshot: ISnapshotTree | undefined,
-	// eslint-disable-next-line import/no-deprecated
 	metadata?: IContainerRuntimeMetadata,
 ): ISnapshotTree | undefined {
 	if (!snapshot) {

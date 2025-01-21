@@ -51,7 +51,6 @@ import {
 	getStorageIds,
 	summarizeBlobManagerState,
 	toRedirectTable,
-	// eslint-disable-next-line import/no-deprecated
 	type IBlobManagerLoadInfo,
 } from "./blobManagerSnapSum.js";
 
@@ -188,7 +187,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	constructor(props: {
 		readonly routeContext: IFluidHandleContext;
-		// eslint-disable-next-line import/no-deprecated
 		snapshot: IBlobManagerLoadInfo;
 		readonly getStorage: () => IDocumentStorageService;
 		/**
