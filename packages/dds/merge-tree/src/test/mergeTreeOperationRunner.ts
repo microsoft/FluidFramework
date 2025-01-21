@@ -412,7 +412,7 @@ export function generateOperationMessagesForClients(
 		const sg = client.peekPendingSegmentGroups();
 		let op: IMergeTreeOp | undefined;
 		if (len === 0 || len < minLength) {
-			const text = client.longClientId as string;
+			const text = client.longClientId!.repeat(random.integer(1, 3));
 			op = client.insertTextLocal(random.integer(0, len), text);
 		} else {
 			let opIndex = random.integer(0, operations.length - 1);
