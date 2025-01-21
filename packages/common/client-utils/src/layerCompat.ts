@@ -59,6 +59,17 @@ export interface ILayerCompatibilityDetails
 }
 
 /**
+ * This is the default compatibility details for a layer when it doesn't provide any compatibility details. This is
+ * used for backwards compatibility to allow older layers to work before compatibility enforcement was introduced.
+ * @internal
+ */
+export const defaultLayerCompatibilityDetails: ILayerCompatibilityDetails = {
+	supportedFeatures: new Set(),
+	generation: 0, // 0 is reserved for layers before compatibility enforcement was introduced.
+	pkgVersion: "unknown",
+};
+
+/**
  * The requirements that a layer needs to meet to be compatible with another layer.
  * @internal
  */
@@ -74,42 +85,35 @@ export interface ILayerCompatSupportRequirements {
 }
 
 /**
- * Checks compatibility of a layer with another layer (layer2).
- * @param minSupportedGeneration - The minimum supported generation layer2 needs to be at.
- * @param requiredFeatures - The features that layer2 needs to support.
- * @param compatDetails - The compatibility details of the layer2.
+ * Checks compatibility of a layer (layer1) with another layer (layer2).
+ * @param compatSupportRequirementsLayer1 - The requirements from layer1 that layer2 needs to meet.
+ * @param compatDetailsLayer2 - The compatibility details of the layer2. If this is undefined, then the
+ * default compatibility details are used for backwards compatibility.
  * @returns The result of the compatibility check.
  *
  * @internal
  */
 export function checkLayerCompatibility(
-	minSupportedGeneration: number,
-	requiredFeatures: readonly string[],
+	compatSupportRequirementsLayer1: ILayerCompatSupportRequirements,
 	compatDetailsLayer2: ILayerCompatibilityDetails | undefined,
 ): LayerCompatCheckResult {
-	// If the other doesn't have compat details, then the layers are not compatible.
-	if (compatDetailsLayer2 === undefined) {
-		return {
-			isCompatible: false,
-			isGenerationCompatible: false,
-			unsupportedFeatures: requiredFeatures,
-		};
-	}
-
+	const compatDetailsWithCompat = compatDetailsLayer2 ?? defaultLayerCompatibilityDetails;
 	let isCompatible = true;
 	let isGenerationCompatible = true;
 	const unsupportedFeatures: string[] = [];
 
 	// If the other layer's generation is less than the required minimum supported generation,
 	//  then layers are not compatible.
-	if (compatDetailsLayer2.generation < minSupportedGeneration) {
+	if (
+		compatDetailsWithCompat.generation < compatSupportRequirementsLayer1.minSupportedGeneration
+	) {
 		isCompatible = false;
 		isGenerationCompatible = false;
 	}
 
 	// All required features must be supported by the other for them to be compatible.
-	for (const feature of requiredFeatures) {
-		if (!compatDetailsLayer2.supportedFeatures.has(feature)) {
+	for (const feature of compatSupportRequirementsLayer1.requiredFeatures) {
+		if (!compatDetailsWithCompat.supportedFeatures.has(feature)) {
 			isCompatible = false;
 			unsupportedFeatures.push(feature);
 		}

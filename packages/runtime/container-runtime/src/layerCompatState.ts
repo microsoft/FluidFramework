@@ -38,9 +38,10 @@ export const LoaderSupportRequirements: ILayerCompatSupportRequirements = {
 	/**
 	 * Minimum generation that Loader must be at to be compatible with Runtime.
 	 */
-	minSupportedGeneration: 1,
+	minSupportedGeneration: 0,
 	/**
-	 * The features that the Loader must support to be compatible with Runtime.
+	 * The features that the Loader must support to be compatible with Runtime. Note that 0 is used here for
+	 * Loader layers before the introduction of the layer compatibility enforcement.
 	 */
 	requiredFeatures: [],
 };
@@ -52,16 +53,8 @@ export function validateLoaderCompatibility(
 	maybeLoaderCompatDetails: ILayerCompatibilityDetails | undefined,
 	disposeFn: (error?: ICriticalContainerError) => void,
 ): void {
-	// For backwards compatibility - until required features are added, Loader is considered
-	// to be compatible. This is to allow Runtime to work with existing Loaders. Once we start
-	// enforcing layer compatibility, we will add required features or remove this check.
-	if (LoaderSupportRequirements.requiredFeatures.length === 0) {
-		return;
-	}
-
 	const layerCheckResult = checkLayerCompatibility(
-		LoaderSupportRequirements.minSupportedGeneration,
-		LoaderSupportRequirements.requiredFeatures,
+		LoaderSupportRequirements,
 		maybeLoaderCompatDetails,
 	);
 	if (!layerCheckResult.isCompatible) {
