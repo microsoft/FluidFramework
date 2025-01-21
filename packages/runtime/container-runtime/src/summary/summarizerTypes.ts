@@ -97,13 +97,11 @@ export interface ISummarizerInternalsProvider {
 	/**
 	 * Encapsulates the work to walk the internals of the running container to generate a summary
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 
 	/**
 	 * Callback whenever a new SummaryAck is received, to update internal tracking state
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
 }
 
@@ -176,7 +174,6 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	/**
 	 * Tells when summary process should be cancelled
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly cancellationToken: ISummaryCancellationToken;
 	/**
 	 * Summarization may be attempted multiple times. This tells whether this is the final summarization attempt.
@@ -487,7 +484,6 @@ export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**
 	 *Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly ISummarizer?: ISummarizer;
 
 	/*

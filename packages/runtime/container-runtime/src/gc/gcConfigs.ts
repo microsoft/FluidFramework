@@ -17,7 +17,6 @@ import {
 	GCFeatureMatrix,
 	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
-	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata_Deprecated,
 	IGCRuntimeOptions,
 	IGarbageCollectorConfigs,
@@ -31,7 +30,6 @@ import {
 	runSessionExpiryKey,
 	disableThrowOnTombstoneLoadKey,
 } from "./gcDefinitions.js";
-// eslint-disable-next-line import/no-deprecated
 import { getGCVersion, getGCVersionInEffect, shouldAllowGcSweep } from "./gcHelpers.js";
 
 /**
@@ -50,7 +48,6 @@ export function generateGCConfigs(
 		// eslint-disable-next-line import/no-deprecated
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
-		// eslint-disable-next-line import/no-deprecated
 		isSummarizerClient: boolean;
 	},
 ): IGarbageCollectorConfigs {
@@ -71,13 +68,11 @@ export function generateGCConfigs(
 	 */
 	if (createParams.existing) {
 		const metadata = createParams.metadata;
-		// eslint-disable-next-line import/no-deprecated
 		gcVersionInBaseSnapshot = getGCVersion(metadata);
 		// Existing documents which did not have metadata blob or had GC disabled have GC version as 0. GC will be
 		// disabled for these documents.
 		gcAllowed = gcVersionInBaseSnapshot !== 0;
 		sessionExpiryTimeoutMs = metadata?.sessionExpiryTimeoutMs;
-		// eslint-disable-next-line import/no-deprecated
 		const legacyPersistedSweepTimeoutMs = (metadata as IGCMetadata_Deprecated)?.sweepTimeoutMs;
 		tombstoneTimeoutMs =
 			metadata?.tombstoneTimeoutMs ??
@@ -151,7 +146,6 @@ export function generateGCConfigs(
 	const throwOnTombstoneLoad =
 		mc.config.getBoolean(disableThrowOnTombstoneLoadKey) !== true &&
 		sweepEnabled &&
-		// eslint-disable-next-line import/no-deprecated
 		!createParams.isSummarizerClient;
 
 	return {
@@ -166,7 +160,6 @@ export function generateGCConfigs(
 		inactiveTimeoutMs,
 		persistedGcFeatureMatrix,
 		gcVersionInBaseSnapshot,
-		// eslint-disable-next-line import/no-deprecated
 		gcVersionInEffect: getGCVersionInEffect(mc.config),
 		throwOnTombstoneLoad,
 	};

@@ -77,7 +77,6 @@ import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
-	// eslint-disable-next-line import/no-deprecated
 	CreateChildSummarizerNodeParam,
 	FlushMode,
 	FlushModeExperimental,
@@ -93,7 +92,6 @@ import {
 	gcTreeKey,
 	IInboundSignalMessage,
 	type IRuntimeMessagesContent,
-	// eslint-disable-next-line import/no-deprecated
 	type ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -158,7 +156,6 @@ import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import {
 	DeltaManagerPendingOpsProxy,
-	// eslint-disable-next-line import/no-deprecated
 	DeltaManagerSummarizerProxy,
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
@@ -228,14 +225,12 @@ import {
 	IOnDemandSummarizeOptions,
 	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
-	// eslint-disable-next-line import/no-deprecated
 	IRootSummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
 	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeResults,
-	// eslint-disable-next-line import/no-deprecated
 	ISummarizer,
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
@@ -251,16 +246,13 @@ import {
 	SubmitSummaryResult,
 	// eslint-disable-next-line import/no-deprecated
 	Summarizer,
-	// eslint-disable-next-line import/no-deprecated
 	SummarizerClientElection,
 	SummaryCollection,
 	SummaryManager,
 	aliasBlobName,
 	chunksBlobName,
 	recentBatchInfoBlobName,
-	// eslint-disable-next-line import/no-deprecated
 	createRootSummarizerNodeWithGC,
-	// eslint-disable-next-line import/no-deprecated
 	electedSummarizerBlobName,
 	extractSummaryMetadataMessage,
 	idCompressorBlobName,
@@ -310,7 +302,6 @@ export interface ISummaryBaseConfiguration {
 	/**
 	 * Delay before first attempt to spawn summarizing container.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	initialSummarizerDelayMs: number;
 
 	/**
@@ -461,7 +452,6 @@ export interface ISummaryRuntimeOptions {
 	 * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
 	 *{@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	initialSummarizerDelayMs?: number;
 }
 
@@ -712,7 +702,6 @@ export const defaultPendingOpsRetryDelayMs = 1000;
  * of the current system, we should close the summarizer and let it recover.
  * This delay's goal is to prevent tight restart loops
  */
-// eslint-disable-next-line import/no-deprecated
 const defaultCloseSummarizerDelayMs = 5000; // 5 seconds
 
 /**
@@ -785,7 +774,6 @@ const summarizerRequestUrl = "_summarizer";
 /**
  * Create and retrieve the summmarizer
  */
-// eslint-disable-next-line import/no-deprecated
 async function createSummarizer(loader: ILoader, url: string): Promise<ISummarizer> {
 	const request: IRequest = {
 		headers: {
@@ -801,7 +789,6 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	};
 
 	const resolvedContainer = await loader.resolve(request);
-	// eslint-disable-next-line import/no-deprecated
 	let fluidObject: FluidObject<ISummarizer> | undefined;
 
 	// Older containers may not have the "getEntryPoint" API
@@ -821,12 +808,9 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 		fluidObject = response.value;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	if (fluidObject?.ISummarizer === undefined) {
-		// eslint-disable-next-line import/no-deprecated
 		throw new UsageError("Fluid object does not implement ISummarizer");
 	}
-	// eslint-disable-next-line import/no-deprecated
 	return fluidObject.ISummarizer;
 }
 
@@ -1020,7 +1004,6 @@ export class ContainerRuntime
 			chunks,
 			recentBatchInfo,
 			metadata,
-			// eslint-disable-next-line import/no-deprecated
 			electedSummarizerData,
 			aliases,
 			serializedIdCompressor,
@@ -1201,7 +1184,6 @@ export class ContainerRuntime
 			context,
 			registry,
 			metadata,
-			// eslint-disable-next-line import/no-deprecated
 			electedSummarizerData,
 			chunks ?? [],
 			aliases ?? [],
@@ -1387,7 +1369,6 @@ export class ContainerRuntime
 	// internal logger for ContainerRuntime. Use this.logger for stores, summaries, etc.
 	private readonly mc: MonitoringContext;
 
-	// eslint-disable-next-line import/no-deprecated
 	private readonly summarizerClientElection?: SummarizerClientElection;
 	/**
 	 * summaryManager will only be created if this client is permitted to spawn a summarizing client
@@ -1397,7 +1378,6 @@ export class ContainerRuntime
 	private readonly summaryManager?: SummaryManager;
 	private readonly summaryCollection: SummaryCollection;
 
-	// eslint-disable-next-line import/no-deprecated
 	private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
 	private readonly logger: ITelemetryLoggerExt;
@@ -1459,7 +1439,6 @@ export class ContainerRuntime
 	private emitDirtyDocumentEvent = true;
 	private readonly disableAttachReorder: boolean | undefined;
 	private readonly useDeltaManagerOpsProxy: boolean;
-	// eslint-disable-next-line import/no-deprecated
 	private readonly closeSummarizerDelayMs: number;
 	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _signalTracking: IPerfSignalReport = {
@@ -1516,21 +1495,15 @@ export class ContainerRuntime
 			: 0;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	private readonly initialSummarizerDelayMs: number;
-	// eslint-disable-next-line import/no-deprecated
 	private getInitialSummarizerDelayMs(): number {
-		// eslint-disable-next-line import/no-deprecated
 		// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
 		//   to ISummaryConfiguration in 0.60.
-		// eslint-disable-next-line import/no-deprecated
 		if (this.runtimeOptions.summaryOptions.initialSummarizerDelayMs !== undefined) {
-			// eslint-disable-next-line import/no-deprecated
 			return this.runtimeOptions.summaryOptions.initialSummarizerDelayMs;
 		}
 		return this.summaryConfiguration.state !== "disabled"
-			? // eslint-disable-next-line import/no-deprecated
-				this.summaryConfiguration.initialSummarizerDelayMs
+			? this.summaryConfiguration.initialSummarizerDelayMs
 			: 0;
 	}
 
@@ -1569,7 +1542,6 @@ export class ContainerRuntime
 	/**
 	 * Whether this client is the summarizer client itself (type is summarizerClientType)
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	private readonly isSummarizerClient: boolean;
 
 	/**
@@ -1690,7 +1662,6 @@ export class ContainerRuntime
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
 		this.clientDetails = clientDetails;
-		// eslint-disable-next-line import/no-deprecated
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		this._getClientId = () => context.clientId;
@@ -1712,7 +1683,6 @@ export class ContainerRuntime
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-		// eslint-disable-next-line import/no-deprecated
 		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
 		let loadSummaryNumber: number;
@@ -1742,7 +1712,6 @@ export class ContainerRuntime
 		this._connected = connected;
 
 		this.mc.logger.sendTelemetryEvent({
-			// eslint-disable-next-line import/no-deprecated
 			eventName: "GCFeatureMatrix",
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
@@ -1798,7 +1767,6 @@ export class ContainerRuntime
 		this.useDeltaManagerOpsProxy =
 			this.mc.config.getBoolean("Fluid.ContainerRuntime.DeltaManagerOpsProxy") === true;
 		// The summarizerDeltaManager Proxy is used to lie to the summarizer to convince it is in the right state as a summarizer client.
-		// eslint-disable-next-line import/no-deprecated
 		const summarizerDeltaManagerProxy = new DeltaManagerSummarizerProxy(
 			this.innerDeltaManager,
 		);
@@ -1824,7 +1792,6 @@ export class ContainerRuntime
 
 		this.summariesDisabled = this.isSummariesDisabled();
 		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
-		// eslint-disable-next-line import/no-deprecated
 		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
 
 		this.maxConsecutiveReconnects =
@@ -1879,7 +1846,6 @@ export class ContainerRuntime
 			existing,
 			metadata,
 			createContainerMetadata: this.createContainerMetadata,
-			// eslint-disable-next-line import/no-deprecated
 			isSummarizerClient: this.isSummarizerClient,
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
@@ -1896,11 +1862,8 @@ export class ContainerRuntime
 			baseSnapshot === undefined || metadata?.disableIsolatedChannels === true
 				? undefined
 				: loadedFromSequenceNumber;
-		// eslint-disable-next-line import/no-deprecated
 		this.summarizerNode = createRootSummarizerNodeWithGC(
-			// eslint-disable-next-line import/no-deprecated
 			createChildLogger({ logger: this.logger, namespace: "SummarizerNode" }),
-			// eslint-disable-next-line import/no-deprecated
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
 			async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
 				this.summarizeInternal(fullTree, trackState, telemetryContext),
@@ -2065,14 +2028,10 @@ export class ContainerRuntime
 			});
 		}
 
-		// eslint-disable-next-line import/no-deprecated
 		const closeSummarizerDelayOverride = this.mc.config.getNumber(
-			// eslint-disable-next-line import/no-deprecated
 			"Fluid.ContainerRuntime.Test.CloseSummarizerDelayOverrideMs",
 		);
-		// eslint-disable-next-line import/no-deprecated
 		this.closeSummarizerDelayMs =
-			// eslint-disable-next-line import/no-deprecated
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
 		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
 
@@ -2092,36 +2051,28 @@ export class ContainerRuntime
 				this.innerDeltaManager,
 				this._quorum,
 			);
-			// eslint-disable-next-line import/no-deprecated
 			const orderedClientElectionForSummarizer = new OrderedClientElection(
 				orderedClientLogger,
 				orderedClientCollection,
-				// eslint-disable-next-line import/no-deprecated
 				electedSummarizerData ?? this.innerDeltaManager.lastSequenceNumber,
-				// eslint-disable-next-line import/no-deprecated
 				SummarizerClientElection.isClientEligible,
 				this.mc.config.getBoolean(
 					"Fluid.ContainerRuntime.OrderedClientElection.EnablePerformanceEvents",
 				),
 			);
 
-			// eslint-disable-next-line import/no-deprecated
 			this.summarizerClientElection = new SummarizerClientElection(
 				orderedClientLogger,
 				this.summaryCollection,
-				// eslint-disable-next-line import/no-deprecated
 				orderedClientElectionForSummarizer,
 				this.maxOpsSinceLastSummary,
 			);
 
-			// eslint-disable-next-line import/no-deprecated
 			if (this.isSummarizerClient) {
 				// eslint-disable-next-line import/no-deprecated
 				this._summarizer = new Summarizer(
-					// eslint-disable-next-line import/no-deprecated
 					this /* ISummarizerRuntime */,
 					() => this.summaryConfiguration,
-					// eslint-disable-next-line import/no-deprecated
 					this /* ISummarizerInternalsProvider */,
 					this.handleContext,
 					this.summaryCollection,
@@ -2134,9 +2085,7 @@ export class ContainerRuntime
 							() => this.innerDeltaManager.active,
 						),
 				);
-				// eslint-disable-next-line import/no-deprecated
 			} else if (SummarizerClientElection.clientDetailsPermitElection(this.clientDetails)) {
-				// eslint-disable-next-line import/no-deprecated
 				// Only create a SummaryManager and SummarizerClientElection
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = (): void => {
@@ -2165,7 +2114,6 @@ export class ContainerRuntime
 					this, // IConnectedState
 					this.summaryCollection,
 					this.logger,
-					// eslint-disable-next-line import/no-deprecated
 					this.formCreateSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
@@ -2174,7 +2122,6 @@ export class ContainerRuntime
 						formExponentialFn({ coefficient: 20, initialDelay: 0 }),
 					),
 					{
-						// eslint-disable-next-line import/no-deprecated
 						initialDelayMs: this.initialSummarizerDelayMs,
 					},
 				);
@@ -2217,7 +2164,6 @@ export class ContainerRuntime
 				...featureGatesForTelemetry,
 				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
-				// eslint-disable-next-line import/no-deprecated
 				closeSummarizerDelayOverride,
 			}),
 			telemetryDocumentId: this.telemetryDocumentId,
@@ -2229,11 +2175,9 @@ export class ContainerRuntime
 		BindBatchTracker(this, this.logger);
 
 		this.entryPoint = new LazyPromise(async () => {
-			// eslint-disable-next-line import/no-deprecated
 			if (this.isSummarizerClient) {
 				assert(
 					this._summarizer !== undefined,
-					// eslint-disable-next-line import/no-deprecated
 					0x5bf /* Summarizer object is undefined in a summarizer client */,
 				);
 				return this._summarizer;
@@ -2267,16 +2211,13 @@ export class ContainerRuntime
 		}
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public getCreateChildSummarizerNodeFn(
 		id: string,
-		// eslint-disable-next-line import/no-deprecated
 		createParam: CreateChildSummarizerNodeParam,
 	) {
 		return (
 			summarizeInternal: SummarizeInternalFn,
 			getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
-			// eslint-disable-next-line import/no-deprecated
 		): ISummarizerNodeWithGC =>
 			this.summarizerNode.createChild(
 				summarizeInternal,
@@ -2287,7 +2228,6 @@ export class ContainerRuntime
 			);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	public deleteChildSummarizerNode(id: string): void {
 		return this.summarizerNode.deleteChild(id);
 	}
@@ -2425,9 +2365,7 @@ export class ContainerRuntime
 			// another snapshot from which the summarizer loaded and it is behind, then just give up as
 			// the summarizer state is not up to date.
 			// This should be a recoverable scenario and shouldn't happen as we should process the ack first.
-			// eslint-disable-next-line import/no-deprecated
 			if (this.isSummarizerClient) {
-				// eslint-disable-next-line import/no-deprecated
 				throw new Error("Summarizer client behind, loaded newer snapshot with loadingGroupId");
 			}
 
@@ -2630,11 +2568,9 @@ export class ContainerRuntime
 		}
 
 		if (this.summarizerClientElection) {
-			// eslint-disable-next-line import/no-deprecated
 			const electedSummarizerContent = JSON.stringify(
 				this.summarizerClientElection?.serialize(),
 			);
-			// eslint-disable-next-line import/no-deprecated
 			addBlobToSummary(summaryTree, electedSummarizerBlobName, electedSummarizerContent);
 		}
 
@@ -4130,7 +4066,6 @@ export class ContainerRuntime
 			const countBefore = this.pendingMessagesCount;
 			// The timeout for waiting for pending ops can be overridden via configurations.
 			const pendingOpsTimeout =
-				// eslint-disable-next-line import/no-deprecated
 				this.mc.config.getNumber("Fluid.Summarizer.waitForPendingOpsTimeoutMs") ??
 				defaultPendingOpsWaitTimeoutMs;
 			await new Promise<void>((resolve, reject) => {
@@ -4217,7 +4152,6 @@ export class ContainerRuntime
 						referenceSequenceNumber: summaryRefSeqNum,
 						minimumSequenceNumber,
 						error: new RetriableSummaryError(
-							// eslint-disable-next-line import/no-deprecated
 							`Summarizer node state inconsistent with summarizer state.`,
 						),
 					};
@@ -4477,7 +4411,6 @@ export class ContainerRuntime
 		// the summarizer.
 		if (
 			finalAttempt &&
-			// eslint-disable-next-line import/no-deprecated
 			this.mc.config.getBoolean("Fluid.Summarizer.SkipFailingIncorrectSummary")
 		) {
 			const error = DataProcessingError.create(
@@ -4499,7 +4432,6 @@ export class ContainerRuntime
 			// The retry delay when there are pending ops can be overridden via config so that we can adjust it
 			// based on telemetry while we decide on a stable number.
 			const retryDelayMs =
-				// eslint-disable-next-line import/no-deprecated
 				this.mc.config.getNumber("Fluid.Summarizer.PendingOpsRetryDelayMs") ??
 				defaultPendingOpsRetryDelayMs;
 			const error = new RetriableSummaryError(
@@ -4786,9 +4718,7 @@ export class ContainerRuntime
 		opMetadata: Record<string, unknown> | undefined,
 	): void {
 		assert(
-			// eslint-disable-next-line import/no-deprecated
 			!this.isSummarizerClient,
-			// eslint-disable-next-line import/no-deprecated
 			0x8f2 /* Summarizer never reconnects so should never resubmit */,
 		);
 		switch (message.type) {
@@ -4851,7 +4781,6 @@ export class ContainerRuntime
 	// eslint-disable-next-line import/no-deprecated
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
-		// eslint-disable-next-line import/no-deprecated
 		// proposalHandle is always passed from RunningSummarizer.
 		assert(proposalHandle !== undefined, 0x766 /* proposalHandle should be available */);
 		const result = await this.summarizerNode.refreshLatestSummary(
@@ -4989,7 +4918,6 @@ export class ContainerRuntime
 			return;
 		}
 
-		// eslint-disable-next-line import/no-deprecated
 		await delay(this.closeSummarizerDelayMs);
 		this._summarizer?.stop("latestSummaryStateStale");
 		this.disposeFn();
@@ -5054,7 +4982,6 @@ export class ContainerRuntime
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
-		// eslint-disable-next-line import/no-deprecated
 		if (this.isSummarizerClient) {
 			return this.summarizer.summarizeOnDemand(options);
 		} else if (this.summaryManager !== undefined) {
@@ -5068,7 +4995,6 @@ export class ContainerRuntime
 	}
 
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
-		// eslint-disable-next-line import/no-deprecated
 		if (this.isSummarizerClient) {
 			return this.summarizer.enqueueSummarize(options);
 		} else if (this.summaryManager !== undefined) {
@@ -5084,10 +5010,8 @@ export class ContainerRuntime
 	/**
 	 *Forms a function that will create and retrieve a Summarizer.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {
-			// eslint-disable-next-line import/no-deprecated
 			return createSummarizer(loader, `/${summarizerRequestUrl}`);
 		};
 	}

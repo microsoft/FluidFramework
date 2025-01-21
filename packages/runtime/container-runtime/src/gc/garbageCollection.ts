@@ -141,7 +141,6 @@ export class GarbageCollector implements IGarbageCollector {
 	private completedRuns = 0;
 
 	private readonly runtime: IGarbageCollectionRuntime;
-	// eslint-disable-next-line import/no-deprecated
 	private readonly isSummarizerClient: boolean;
 
 	private readonly summaryStateTracker: GCSummaryStateTracker;
@@ -169,7 +168,6 @@ export class GarbageCollector implements IGarbageCollector {
 
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
-		// eslint-disable-next-line import/no-deprecated
 		this.isSummarizerClient = createParams.isSummarizerClient;
 		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
@@ -222,7 +220,6 @@ export class GarbageCollector implements IGarbageCollector {
 		this.telemetryTracker = new GCTelemetryTracker(
 			this.mc,
 			this.configs,
-			// eslint-disable-next-line import/no-deprecated
 			this.isSummarizerClient,
 			createParams.createContainerMetadata,
 			(nodeId: string) => this.runtime.getNodeType(nodeId),
@@ -1056,7 +1053,6 @@ export class GarbageCollector implements IGarbageCollector {
 		// Any time we log a Tombstone Loaded error (via Telemetry Tracker),
 		// we want to also trigger autorecovery to avoid the object being deleted
 		// Note: We don't need to trigger on "Changed" because any change will cause the object
-		// eslint-disable-next-line import/no-deprecated
 		// to be loaded by the Summarizer, and auto-recovery will be triggered then.
 		if (isTombstoned && reason === "Loaded") {
 			// Note that when a DataStore and its DDS are all loaded, each will trigger AutoRecovery for itself.

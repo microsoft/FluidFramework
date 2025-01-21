@@ -128,7 +128,6 @@ export class GCTelemetryTracker {
 	constructor(
 		private readonly mc: MonitoringContext,
 		private readonly configs: IGarbageCollectorConfigs,
-		// eslint-disable-next-line import/no-deprecated
 		private readonly isSummarizerClient: boolean,
 		// eslint-disable-next-line import/no-deprecated
 		private readonly createContainerMetadata: ICreateContainerMetadata,
@@ -265,7 +264,6 @@ export class GCTelemetryTracker {
 		// but it's a good signal nonetheless and we can consume it with a grain of salt.
 		// Inactive errors are usages of Objects that are unreferenced for at least a period of 7 days.
 		// SweepReady errors are usages of Objects that will be deleted by GC Sweep!
-		// eslint-disable-next-line import/no-deprecated
 		if (this.isSummarizerClient) {
 			this.pendingEventsQueue.push({
 				...unrefEventProps, // Note: Contains some properties from INodeUsageProps as well

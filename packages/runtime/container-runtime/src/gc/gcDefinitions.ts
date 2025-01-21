@@ -38,12 +38,10 @@ export type GCVersion = number;
 /**
  * The stable/default version of GC Data
  */
-// eslint-disable-next-line import/no-deprecated
 export const stableGCVersion: GCVersion = 3;
 /**
  * The next version of GC Data, to bump to in case we need to regenerate all GC Data across all files.
  */
-// eslint-disable-next-line import/no-deprecated
 export const nextGCVersion: GCVersion = 4;
 
 /**
@@ -75,7 +73,6 @@ export const disableThrowOnTombstoneLoadKey =
 /**
  * Config key to enable GC version upgrade.
  */
-// eslint-disable-next-line import/no-deprecated
 export const gcVersionUpgradeToV4Key = "Fluid.GarbageCollection.GCVersionUpgradeToV4";
 
 // One day in milliseconds.
@@ -124,7 +121,6 @@ export type GCFeatureMatrix =
  *Deprecated properties formerly included in @see IGCMetadata.
  * These may be found in old snapshots, so we need to support them for backwards compatibility.
  */
-// eslint-disable-next-line import/no-deprecated
 export interface IGCMetadata_Deprecated {
 	/**
 	 * How long to wait after an object is unreferenced before deleting it via GC Sweep
@@ -149,7 +145,6 @@ export interface IGCMetadata {
 	 * - A value of 0 or undefined means GC is disabled.
 	 * - A value greater than 0 means GC is enabled.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly gcFeature?: GCVersion;
 
 	/**
@@ -163,7 +158,6 @@ export interface IGCMetadata {
 	 *
 	 * Guidance is that if no value is provided at runtime, it should result in the current default behavior.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly gcFeatureMatrix?: GCFeatureMatrix;
 	/**
 	 * Tells whether the GC sweep phase is enabled for this container.
@@ -384,7 +378,6 @@ export interface IGarbageCollectionRuntime {
 	/**
 	 * Returns the type of the GC node.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	getNodeType(nodePath: string): GCNodeType;
 	/**
 	 * Called when the runtime should close because of an error.
@@ -424,7 +417,6 @@ export interface IGarbageCollector {
 			fullGC?: boolean;
 		},
 		telemetryContext?: ITelemetryContext,
-		// eslint-disable-next-line import/no-deprecated
 	): Promise<IGCStats | undefined>;
 	/**
 	 * Summarizes the GC data and returns it as a summary tree.
@@ -437,7 +429,6 @@ export interface IGarbageCollector {
 	/**
 	 * Returns the garbage collector specific metadata to be written into the summary.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	getMetadata(): IGCMetadata;
 	/**
 	 * Returns the GC details generated from the base snapshot.
@@ -485,7 +476,6 @@ export interface IGCNodeUpdatedProps {
 	/**
 	 * Type and path of the updated node
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	node: { type: (typeof GCNodeType)["DataStore" | "Blob"]; path: string };
 	/**
 	 * Whether the node (or a subpath) was loaded or changed.
@@ -527,7 +517,6 @@ export interface IGarbageCollectorCreateParams {
 	// eslint-disable-next-line import/no-deprecated
 	readonly createContainerMetadata: ICreateContainerMetadata;
 	readonly baseSnapshot: ISnapshotTree | undefined;
-	// eslint-disable-next-line import/no-deprecated
 	readonly isSummarizerClient: boolean;
 	readonly getNodePackagePath: (nodePath: string) => Promise<readonly string[] | undefined>;
 	readonly getLastSummaryTimestampMs: () => number | undefined;
@@ -626,17 +615,14 @@ export interface IGarbageCollectorConfigs {
 	/**
 	 * @see GCFeatureMatrix.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
 	/**
 	 * The version of GC in the base snapshot.
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly gcVersionInBaseSnapshot: GCVersion | undefined;
 	/**
 	 * The current version of GC data in the running code
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly gcVersionInEffect: GCVersion;
 	/**
 	 * If true, throw an error when a tombstone data store is retrieved

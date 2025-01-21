@@ -19,15 +19,11 @@ import { ISummaryCollectionOpEvents } from "./summaryCollection.js";
 
 export const summarizerClientType = "summarizer";
 
-// eslint-disable-next-line import/no-deprecated
 export interface ISummarizerClientElectionEvents extends IEvent {
-	// eslint-disable-next-line import/no-deprecated
 	(event: "electedSummarizerChanged", handler: () => void): void;
 }
 
-// eslint-disable-next-line import/no-deprecated
 export interface ISummarizerClientElection
-	// eslint-disable-next-line import/no-deprecated
 	extends IEventProvider<ISummarizerClientElectionEvents> {
 	readonly electedClientId: string | undefined;
 	readonly electedParentId: string | undefined;
@@ -38,11 +34,8 @@ export interface ISummarizerClientElection
  * It will handle updating the elected client when a summary ack hasn't been seen
  * for some configured number of ops.
  */
-// eslint-disable-next-line import/no-deprecated
 export class SummarizerClientElection
-	// eslint-disable-next-line import/no-deprecated
 	extends TypedEventEmitter<ISummarizerClientElectionEvents>
-	// eslint-disable-next-line import/no-deprecated
 	implements ISummarizerClientElection
 {
 	/**
@@ -123,7 +116,6 @@ export class SummarizerClientElection
 				this.clientElection.resetElectedClient(sequenceNumber);
 			}
 			// Election can trigger a change in SummaryManager state.
-			// eslint-disable-next-line import/no-deprecated
 			this.emit("electedSummarizerChanged");
 		});
 	}
@@ -145,7 +137,6 @@ export class SummarizerClientElection
 			// Very old clients back-compat
 			return true;
 		}
-		// eslint-disable-next-line import/no-deprecated
 		return SummarizerClientElection.clientDetailsPermitElection(details);
 	}
 
