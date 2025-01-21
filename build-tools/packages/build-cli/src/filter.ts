@@ -29,7 +29,7 @@ export interface PackageSelectionCriteria {
 	releaseGroupRoots: ReleaseGroup[];
 
 	/**
-	 * If set, only selects the single package in this directory.
+	 * Selects a package rooted in a directory.
 	 */
 	directory?: string[];
 
