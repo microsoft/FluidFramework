@@ -10,10 +10,10 @@ Replace 'any' in return type for several APIs
 To improve type safety of the Fluid Framework legacy+alpha API surface,
 we're moving away from using the `any` type in favor of `unknown`.
 
-We mostly expect that any changes required in consumers of these APIs will be limited to having to provide explicit types
+We expect that any changes required in consumers of these APIs will be limited to having to provide explicit types
 when calling any of the APIs whose return value changed to `unknown`, like `IFluidSerializer.parse()`.
 
-So code that looked like this:
+In summary, code that looked like this:
 
 ```typescript
 // 'myVariable' ended up typed as 'any' here and TypeScript would not do any type-safety checks on it.

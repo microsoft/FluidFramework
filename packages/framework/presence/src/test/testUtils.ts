@@ -39,7 +39,7 @@ export function createInstanceOf<T>(): T {
 export function generateBasicClientJoin(
 	fixedTime: number,
 	{
-		clientSessionId = "seassionId-2",
+		clientSessionId = "sessionId-2",
 		clientConnectionId = "client2",
 		updateProviders = ["client0", "client1", "client3"],
 		connectionOrder = 0,

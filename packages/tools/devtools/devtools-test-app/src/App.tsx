@@ -88,7 +88,7 @@ function useContainerInfo(
 		getSharedFluidData().then((containerInfo) => {
 			if (getContainerIdFromLocation(window.location) !== containerInfo.containerId) {
 				window.location.hash = containerInfo.containerId;
-				document.title = `Devtoolsl Example test app - ${containerInfo.containerId}`;
+				document.title = `Devtools Example Test App - ${containerInfo.containerId}`;
 			}
 
 			setSharedContainerInfo(containerInfo);

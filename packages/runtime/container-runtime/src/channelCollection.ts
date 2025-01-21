@@ -130,7 +130,7 @@ export const AllowTombstoneRequestHeaderKey = "allowTombstone"; // Belongs in th
 type PendingAliasResolve = (success: boolean) => void;
 
 interface FluidDataStoreMessage {
-	content: any;
+	content: unknown;
 	type: string;
 }
 
@@ -217,7 +217,7 @@ function wrapContextForInnerChannel(
 ): IFluidParentContext {
 	const context = wrapContext(parentContext);
 
-	context.submitMessage = (type: string, content: any, localOpMetadata: unknown) => {
+	context.submitMessage = (type: string, content: unknown, localOpMetadata: unknown) => {
 		const fluidDataStoreContent: FluidDataStoreMessage = {
 			content,
 			type,
@@ -247,7 +247,7 @@ function wrapContextForInnerChannel(
 /**
  * Returns the type of the given local data store from its package path.
  */
-export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext) {
+export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext): string {
 	return localDataStore.packagePath[localDataStore.packagePath.length - 1];
 }
 
@@ -392,11 +392,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * Not clear when it would be called and what it should do.
 	 * Currently this API is called by context only for root data stores.
 	 */
-	public makeVisibleAndAttachGraph() {
+	public makeVisibleAndAttachGraph(): void {
 		this.parentContext.makeLocallyVisible();
 	}
 
-	private processAttachMessages(messageCollection: IRuntimeMessageCollection) {
+	private processAttachMessages(messageCollection: IRuntimeMessageCollection): void {
 		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as InboundAttachMessage;
@@ -595,7 +595,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		this.contexts.bind(id);
 	}
 
-	protected submitAttachChannelOp(localContext: LocalFluidDataStoreContext) {
+	protected submitAttachChannelOp(localContext: LocalFluidDataStoreContext): void {
 		const message = this.generateAttachMessage(localContext);
 		this.pendingAttach.set(localContext.id, message);
 		this.parentContext.submitMessage(ContainerMessageType.Attach, message, undefined);
@@ -651,21 +651,18 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.createDataStoreId(),
 			pkg,
 			LocalDetachedFluidDataStoreContext,
-			undefined, // props
 			loadingGroupId,
 		);
 	}
 
 	public createDataStoreContext(
 		pkg: Readonly<string[]>,
-		props?: any,
 		loadingGroupId?: string,
 	): IFluidDataStoreContextInternal {
 		return this.createContext(
 			this.createDataStoreId(),
 			pkg,
 			LocalFluidDataStoreContext,
-			props,
 			loadingGroupId,
 		);
 	}
@@ -674,9 +671,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		id: string,
 		pkg: Readonly<string[]>,
 		contextCtor: new (props: ILocalDetachedFluidDataStoreContextProps) => T,
-		createProps?: any,
 		loadingGroupId?: string,
-	) {
+	): T {
 		assert(loadingGroupId !== "", 0x974 /* loadingGroupId should not be the empty string */);
 		const context = new contextCtor({
 			id,
@@ -689,7 +685,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}),
 			makeLocallyVisibleFn: () => this.makeDataStoreLocallyVisible(id),
 			snapshotTree: undefined,
-			createProps,
 			loadingGroupId,
 			channelToDataStoreFn: (channel: IFluidDataStoreChannel) =>
 				channelToDataStore(
@@ -704,12 +699,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return context;
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = () => this.disposeOnce.value;
+	public readonly dispose = (): void => this.disposeOnce.value;
 
-	public reSubmit(type: string, content: any, localOpMetadata: unknown) {
+	public reSubmit(type: string, content: unknown, localOpMetadata: unknown): void {
 		switch (type) {
 			case ContainerMessageType.Attach:
 			case ContainerMessageType.Alias:
@@ -722,7 +717,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	protected reSubmitChannelOp(type: string, content: any, localOpMetadata: unknown) {
+	protected reSubmitChannelOp(type: string, content: unknown, localOpMetadata: unknown): void {
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and throw an error. If there are local changes for a
@@ -740,7 +735,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		context.reSubmit(innerContents.type, innerContents.content, localOpMetadata);
 	}
 
-	public rollback(type: string, content: any, localOpMetadata: unknown) {
+	public rollback(type: string, content: unknown, localOpMetadata: unknown): void {
 		assert(type === ContainerMessageType.FluidDataStoreOp, 0x8e8 /* type */);
 		const envelope = content as IEnvelope;
 		const context = this.contexts.get(envelope.address);
@@ -773,7 +768,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	protected async applyStashedChannelChannelOp(envelope: IEnvelope) {
+	protected async applyStashedChannelChannelOp(envelope: IEnvelope): Promise<unknown> {
 		const context = this.contexts.get(envelope.address);
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 		// corruption in case the data store that stashed the op is deleted.
@@ -784,7 +779,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return context.applyStashedOp(envelope.contents);
 	}
 
-	private async applyStashedAttachOp(message: IAttachMessage) {
+	private async applyStashedAttachOp(message: IAttachMessage): Promise<void> {
 		const { id, snapshot } = message;
 
 		// build the snapshot from the summary in the attach message
@@ -859,7 +854,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		this.processMessages({
 			envelope: message,
 			messagesContent: [
@@ -884,7 +879,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		let currentMessagesContent: IRuntimeMessagesContent[] = [];
 
 		// Helper that sends the current bunch of messages to the data store. It validates that the data stores exists.
-		const sendBunchedMessages = () => {
+		const sendBunchedMessages = (): void => {
 			// Current message state will be undefined for the first message in the list.
 			if (currentMessageState === undefined) {
 				return;
@@ -1049,7 +1044,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		callSite: string,
 		requestHeaderData?: RuntimeHeaderData,
 		originalRequest?: IRequest,
-	) {
+	): boolean {
 		const dataStoreNodePath = `/${id}`;
 		if (!this.isDataStoreDeleted(dataStoreNodePath)) {
 			return false;
@@ -1068,7 +1063,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				})
 				.then(
 					(pkg) => ({ pkg, error: undefined }),
-					(error) => ({ pkg: undefined, error }),
+					(error: Error) => ({ pkg: undefined, error }),
 				)
 				.then(({ pkg, error }) => {
 					this.mc.logger.sendTelemetryEvent(
@@ -1101,9 +1096,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		return true;
 	}
 
-	public processSignal(messageArg: IInboundSignalMessage, local: boolean) {
+	public processSignal(messageArg: IInboundSignalMessage, local: boolean): void {
 		const envelope = messageArg.content as IEnvelope;
 		const fluidDataStoreId = envelope.address;
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const message = { ...messageArg, content: envelope.contents };
 		const context = this.contexts.get(fluidDataStoreId);
 		// If the data store has been deleted, log an error and ignore this message. This helps prevent document
@@ -1127,7 +1123,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		context.processSignal(message, local);
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
 				context.setConnectionState(connected, clientId);
@@ -1337,7 +1333,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * After GC has run, called to notify this Container's data stores of routes that are used in it.
 	 * @param usedRoutes - The routes that are used in all data stores in this Container.
 	 */
-	public updateUsedRoutes(usedRoutes: readonly string[]) {
+	public updateUsedRoutes(usedRoutes: readonly string[]): void {
 		// Get a map of data store ids to routes used in it.
 		const usedDataStoreRoutes = unpackChildNodesUsedRoutes(usedRoutes);
 
@@ -1355,7 +1351,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		}
 	}
 
-	public deleteChild(dataStoreId: string) {
+	public deleteChild(dataStoreId: string): void {
 		const dataStoreContext = this.contexts.get(dataStoreId);
 		assert(dataStoreContext !== undefined, 0x2d7 /* No data store with specified id */);
 
@@ -1427,7 +1423,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 *
 	 * @param tombstonedRoutes - The routes that are tombstones in all data stores in this Container.
 	 */
-	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]) {
+	public updateTombstonedRoutes(tombstonedRoutes: readonly string[]): void {
 		const tombstonedDataStoresSet: Set<string> = new Set();
 		for (const route of tombstonedRoutes) {
 			const pathParts = route.split("/");
@@ -1592,7 +1588,7 @@ export function detectOutboundReferences(
 	const outboundPaths: string[] = [];
 	let ddsAddress: string | undefined;
 
-	function recursivelyFindHandles(obj: unknown) {
+	function recursivelyFindHandles(obj: unknown): void {
 		if (typeof obj === "object" && obj !== null) {
 			for (const [key, value] of Object.entries(obj)) {
 				// If 'value' is a serialized IFluidHandle, it represents a new outbound route.
@@ -1604,7 +1600,7 @@ export function detectOutboundReferences(
 				// the address of the DDS is stored in a property called "address".  This is not ideal.
 				// An alternative would be for the op envelope to include the absolute path (built up as it is submitted)
 				if (key === "address" && ddsAddress === undefined) {
-					ddsAddress = value;
+					ddsAddress = value as string | undefined;
 				}
 
 				recursivelyFindHandles(value);
@@ -1641,7 +1637,7 @@ export class ChannelCollectionFactory<T extends ChannelCollection = ChannelColle
 		this.IFluidDataStoreRegistry = new FluidDataStoreRegistry(registryEntries);
 	}
 
-	public get IFluidDataStoreFactory() {
+	public get IFluidDataStoreFactory(): ChannelCollectionFactory<T> {
 		return this;
 	}
 

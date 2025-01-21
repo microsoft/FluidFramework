@@ -67,15 +67,14 @@ describe("Dehydrate Container", () => {
 
 		assert.strictEqual(Object.keys(baseSnapshot.trees).length, 2, "2 trees should be there");
 		assert.strictEqual(
-			Object.keys(baseSnapshot.trees[".protocol"]?.blobs).length,
+			Object.keys(baseSnapshot.trees[".protocol"].blobs).length,
 			2,
 			"2 protocol blobs should be there.",
 		);
 
 		// Validate the ".component" blob.
-		const defaultDataStoreBlobId: string | undefined =
-			baseSnapshot.trees.default?.blobs[".component"];
-		const defaultDataStoreBlob: string | undefined = snapshotBlobs[defaultDataStoreBlobId];
+		const defaultDataStoreBlobId = baseSnapshot.trees.default.blobs[".component"];
+		const defaultDataStoreBlob = snapshotBlobs[defaultDataStoreBlobId];
 		assert.strict(defaultDataStoreBlob, "defaultDataStoreBlob undefined");
 		assert.strictEqual(
 			JSON.parse(defaultDataStoreBlob),
@@ -84,9 +83,8 @@ describe("Dehydrate Container", () => {
 		);
 
 		// Validate "root" sub-tree.
-		const rootAttributesBlobId: string | undefined =
-			baseSnapshot.trees.default.trees.root?.blobs.attributes;
-		const rootAttributesBlob: string | undefined = snapshotBlobs[rootAttributesBlobId];
+		const rootAttributesBlobId = baseSnapshot.trees.default.trees.root.blobs.attributes;
+		const rootAttributesBlob = snapshotBlobs[rootAttributesBlobId];
 		assert.strict(rootAttributesBlob, "rootAttributesBlob undefined");
 		assert.strictEqual(
 			JSON.parse(rootAttributesBlob),
@@ -94,28 +92,28 @@ describe("Dehydrate Container", () => {
 			"The root sub-tree's content is incorrect",
 		);
 		assert.strictEqual(
-			baseSnapshot.trees.default?.trees.root?.unreferenced,
+			baseSnapshot.trees.default.trees.root.unreferenced,
 			undefined,
 			"The root sub-tree should not be marked as unreferenced",
 		);
 
 		// Validate "unref" sub-tree.
 		assert.strictEqual(
-			baseSnapshot.trees.default?.trees.unref?.unreferenced,
+			baseSnapshot.trees.default.trees.unref.unreferenced,
 			true,
 			"The unref sub-tree should be marked as unreferenced",
 		);
 
 		// Validate "groupId" sub-tree.
 		assert.strictEqual(
-			baseSnapshot.trees.default?.trees.groupId?.groupId,
+			baseSnapshot.trees.default.trees.groupId.groupId,
 			"group",
 			"The groupId sub-tree should have a groupId",
 		);
 
 		// Validate "groupId" sub-tree.
 		assert.strictEqual(
-			baseSnapshot.trees.default?.trees.groupId?.groupId,
+			baseSnapshot.trees.default.trees.groupId.groupId,
 			"group",
 			"The groupId sub-tree should have a groupId",
 		);

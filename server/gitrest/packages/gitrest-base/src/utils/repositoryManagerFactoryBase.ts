@@ -12,6 +12,7 @@ import {
 	Constants,
 	IFileSystemManager,
 	IFileSystemManagerFactories,
+	IFileSystemManagerParams,
 	IRepoManagerParams,
 	IRepositoryManager,
 	IRepositoryManagerFactory,
@@ -42,7 +43,11 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 	) => Promise<IRepositoryManager>;
 	// Cache repositories to allow for reuse
 	protected readonly repositoryCache = new Map<string, TRepo>();
-	protected abstract initGitRepo(fs: IFileSystemManager, gitdir: string): Promise<TRepo>;
+	protected abstract initGitRepo(
+		fs: IFileSystemManager,
+		gitdir: string,
+		fsParams: IFileSystemManagerParams | undefined,
+	): Promise<TRepo>;
 	protected abstract openGitRepo(gitdir: string): Promise<TRepo>;
 	protected abstract createRepoManager(
 		fileSystemManager: IFileSystemManager,
@@ -81,7 +86,11 @@ export abstract class RepositoryManagerFactoryBase<TRepo> implements IRepository
 			lumberjackBaseProperties: Record<string, any>,
 		) => {
 			// Create and then cache the repository
-			const repository = await this.initGitRepo(fileSystemManager, gitdir);
+			const repository = await this.initGitRepo(
+				fileSystemManager,
+				gitdir,
+				params.fileSystemManagerParams,
+			);
 			this.repositoryCache.set(repoPath, repository);
 			Lumberjack.info("Created a new repo", {
 				...lumberjackBaseProperties,

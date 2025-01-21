@@ -82,10 +82,10 @@ export class BatchManager {
 	private batchContentSize = 0;
 	private hasReentrantOps = false;
 
-	public get length() {
+	public get length(): number {
 		return this.pendingBatch.length;
 	}
-	public get contentSizeInBytes() {
+	public get contentSizeInBytes(): number {
 		return this.batchContentSize;
 	}
 
@@ -139,7 +139,7 @@ export class BatchManager {
 		return true;
 	}
 
-	public get empty() {
+	public get empty(): boolean {
 		return this.pendingBatch.length === 0;
 	}
 

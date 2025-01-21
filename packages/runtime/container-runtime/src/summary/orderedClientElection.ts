@@ -129,10 +129,10 @@ export class OrderedClientCollection
 	private _youngestClient: LinkNode = this.rootNode;
 	private readonly logger: ITelemetryLoggerExt;
 
-	public get count() {
+	public get count(): number {
 		return this.clientMap.size;
 	}
-	public get oldestClient() {
+	public get oldestClient(): ILinkedClient | undefined {
 		return this.rootNode.youngerClient;
 	}
 
@@ -355,10 +355,10 @@ export class OrderedClientElection
 	private _electedParent: ILinkedClient | undefined;
 	private _electionSequenceNumber: number;
 
-	public get eligibleCount() {
+	public get eligibleCount(): number {
 		return this._eligibleCount;
 	}
-	public get electionSequenceNumber() {
+	public get electionSequenceNumber(): number {
 		return this._electionSequenceNumber;
 	}
 
@@ -398,10 +398,10 @@ export class OrderedClientElection
 	 *
 	 * vii. SummaryManager running on B spawns a summarizer client, B'. electedParent === B, electedClient === B'
 	 */
-	public get electedClient() {
+	public get electedClient(): ILinkedClient | undefined {
 		return this._electedClient;
 	}
-	public get electedParent() {
+	public get electedParent(): ILinkedClient | undefined {
 		return this._electedParent;
 	}
 
@@ -679,7 +679,7 @@ export class OrderedClientElection
 		sequenceNumber: number,
 		forceSend: boolean = false,
 		reason?: string,
-	) {
+	): void {
 		if (this.recordPerformanceEvents || forceSend) {
 			this.logger.sendPerformanceEvent({
 				eventName,

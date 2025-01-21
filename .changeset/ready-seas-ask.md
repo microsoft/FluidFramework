@@ -5,13 +5,16 @@
 "section": deprecation
 ---
 
-Deprecation Notice: Events Interfaces Migrated to `@fluidframework/core-interfaces`
+Events-related interfaces have been moved to core-interfaces
 
-The following interfaces and types are now deprecated in `@fluidframework/tree`. It is recommended to import them from either `@fluidframework/core-interfaces` or `fluid-framework`.
+The following interfaces and types have been moved from the `@fluidframework/tree` package into the
+`@fluidframework/core-interfaces` package. As such, they are now deprecated in the `@fluidframework/tree` package.
 
 - Listeners
 - IsListener
 - Listenable
 - Off
 
-These deprecated interfaces are planned for removal from `@fluidframework/tree` package in Fluid Framework 3.0 release.
+Users should now import them from either `@fluidframework/core-interfaces` or `fluid-framework`.
+
+These deprecated interfaces will be removed from the `@fluidframework/tree` package in Fluid Framework v3.0.

@@ -23,7 +23,7 @@ describe("Throttler", () => {
 	after(() => clock.restore());
 	afterEach(() => clock.reset());
 
-	function assertAscending(array: readonly number[]) {
+	function assertAscending(array: readonly number[]): void {
 		if (array.length < 1) {
 			return;
 		}
@@ -58,13 +58,13 @@ describe("Throttler", () => {
 		maxDelayMs: number;
 		delayFn: (numAttempts: number) => number;
 		expectedDelays: number[];
-	}) {
+	}): void {
 		describe(message, () => {
 			beforeEach(() => {
 				throttler = new Throttler(delayWindowMs, maxDelayMs, delayFn);
 			});
 			const expectedMaxAttempts = expectedDelays.length;
-			const expectedDelayAt = (attempt: number) =>
+			const expectedDelayAt = (attempt: number): number =>
 				attempt >= expectedMaxAttempts ? maxDelayMs : expectedDelays[attempt];
 
 			it("Should initially have zero delay", () => {

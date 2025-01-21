@@ -150,13 +150,13 @@ module.exports = {
 
 		/**
 		 * Disallows calling any variable that is typed as any. The arguments to, and return value of calling an
-		 * any typed variable are not checked at all by TypeScript.
+		 * `any`-typed variable are not checked at all by TypeScript.
 		 */
 		"@typescript-eslint/no-unsafe-call": "error",
 
 		/**
 		 * Disallows member access on any variable that is typed as any. The arguments to, and return value of
-		 * calling an any typed variable are not checked at all by TypeScript.
+		 * calling an `any`-typed variable are not checked at all by TypeScript.
 		 */
 		"@typescript-eslint/no-unsafe-member-access": "error",
 

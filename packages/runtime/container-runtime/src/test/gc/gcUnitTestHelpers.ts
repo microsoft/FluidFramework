@@ -10,7 +10,11 @@ import { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
  * Creates a test config provider with the ability to set configs values and clear all config values.
  * @internal
  */
-export const createTestConfigProvider = () => {
+export const createTestConfigProvider = (): {
+	getRawConfig: (name: string) => ConfigTypes;
+	set: (key: string, value: ConfigTypes) => void;
+	clear: () => void;
+} => {
 	const settings: Record<string, ConfigTypes> = {};
 	return {
 		getRawConfig: (name: string): ConfigTypes => settings[name],

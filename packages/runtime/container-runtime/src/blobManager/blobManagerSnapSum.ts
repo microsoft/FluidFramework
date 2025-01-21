@@ -116,7 +116,7 @@ const summarizeV1 = (
 export const getStorageIds = (
 	redirectTable: Map<string, string | undefined>,
 	attachState: AttachState,
-) => {
+): Set<string> => {
 	const ids = new Set<string | undefined>(redirectTable.values());
 
 	// If we are detached, we will not have storage IDs, only undefined

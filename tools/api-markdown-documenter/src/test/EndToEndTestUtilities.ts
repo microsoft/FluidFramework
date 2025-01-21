@@ -12,6 +12,7 @@ import { expect } from "chai";
 import { compare } from "dir-compare";
 
 import {
+	ApiItemUtilities,
 	FolderDocumentPlacement,
 	HierarchyKind,
 	type FolderHierarchyConfiguration,
@@ -99,55 +100,54 @@ export namespace HierarchyConfigurations {
 		[ApiItemKind.Variable]: HierarchyKind.Document,
 	};
 
-	// TODO
-	// const insideFolderOptions: FolderHierarchyConfiguration = {
-	// 	kind: HierarchyKind.Folder,
-	// 	documentPlacement: FolderDocumentPlacement.Inside,
-	// };
-	// /**
-	//  * "Deep" hierarchy: All "parent" API items generate hierarchy. All other items are rendered as documents under their parent hierarchy.
-	//  * @remarks Leads to many documents, but each document is likely to be relatively small.
-	//  */
-	// export const deep: HierarchyOptions = {
-	// 	// Items that introduce folder hierarchy:
-	// 	[ApiItemKind.Namespace]: insideFolderOptions,
-	// 	[ApiItemKind.Package]: insideFolderOptions,
-	// 	[ApiItemKind.Class]: insideFolderOptions,
-	// 	[ApiItemKind.Enum]: insideFolderOptions,
-	// 	[ApiItemKind.Interface]: insideFolderOptions,
-	// 	[ApiItemKind.TypeAlias]: insideFolderOptions,
+	const insideFolderOptions: FolderHierarchyConfiguration = {
+		kind: HierarchyKind.Folder,
+		documentPlacement: FolderDocumentPlacement.Inside,
+	};
+	/**
+	 * "Deep" hierarchy: All "parent" API items generate hierarchy. All other items are rendered as documents under their parent hierarchy.
+	 * @remarks Leads to many documents, but each document is likely to be relatively small.
+	 */
+	export const deep: HierarchyOptions = {
+		// Items that introduce folder hierarchy:
+		[ApiItemKind.Namespace]: insideFolderOptions,
+		[ApiItemKind.Package]: insideFolderOptions,
+		[ApiItemKind.Class]: insideFolderOptions,
+		[ApiItemKind.Enum]: insideFolderOptions,
+		[ApiItemKind.Interface]: insideFolderOptions,
+		[ApiItemKind.TypeAlias]: insideFolderOptions,
 
-	// 	// Items that get their own document, but do not introduce folder hierarchy:
-	// 	[ApiItemKind.CallSignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.Constructor]: HierarchyKind.Document,
-	// 	[ApiItemKind.ConstructSignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.EnumMember]: HierarchyKind.Document,
-	// 	[ApiItemKind.Function]: HierarchyKind.Document,
-	// 	[ApiItemKind.IndexSignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.Method]: HierarchyKind.Document,
-	// 	[ApiItemKind.MethodSignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.Property]: HierarchyKind.Document,
-	// 	[ApiItemKind.PropertySignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.Variable]: HierarchyKind.Document,
+		// Items that get their own document, but do not introduce folder hierarchy:
+		[ApiItemKind.CallSignature]: HierarchyKind.Document,
+		[ApiItemKind.Constructor]: HierarchyKind.Document,
+		[ApiItemKind.ConstructSignature]: HierarchyKind.Document,
+		[ApiItemKind.EnumMember]: HierarchyKind.Document,
+		[ApiItemKind.Function]: HierarchyKind.Document,
+		[ApiItemKind.IndexSignature]: HierarchyKind.Document,
+		[ApiItemKind.Method]: HierarchyKind.Document,
+		[ApiItemKind.MethodSignature]: HierarchyKind.Document,
+		[ApiItemKind.Property]: HierarchyKind.Document,
+		[ApiItemKind.PropertySignature]: HierarchyKind.Document,
+		[ApiItemKind.Variable]: HierarchyKind.Document,
 
-	// 	getDocumentName: (apiItem, config): string => {
-	// 		switch (apiItem.kind) {
-	// 			case ApiItemKind.Model:
-	// 			case ApiItemKind.Package:
-	// 			case ApiItemKind.Namespace:
-	// 			case ApiItemKind.Class:
-	// 			case ApiItemKind.Enum:
-	// 			case ApiItemKind.Interface:
-	// 			case ApiItemKind.TypeAlias: {
-	// 				return "index";
-	// 			}
-	// 			default: {
-	// 				// Let the system generate a unique name that accounts for folder hierarchy.
-	// 				return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
-	// 			}
-	// 		}
-	// 	},
-	// };
+		getDocumentName: (apiItem, config): string => {
+			switch (apiItem.kind) {
+				case ApiItemKind.Model:
+				case ApiItemKind.Package:
+				case ApiItemKind.Namespace:
+				case ApiItemKind.Class:
+				case ApiItemKind.Enum:
+				case ApiItemKind.Interface:
+				case ApiItemKind.TypeAlias: {
+					return "index";
+				}
+				default: {
+					// Let the system generate a unique name that accounts for folder hierarchy.
+					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
+				}
+			}
+		},
+	};
 }
 
 /**
