@@ -1545,7 +1545,7 @@ export class ContainerRuntime
 	// The compatibility manager for the Loader layer that validates it is compatible with the Runtime.
 	private readonly loaderLayerCompatManager: LoaderLayerCompatManager;
 	public get ICompatibilityDetails(): ICompatibilityDetails {
-		return this.loaderLayerCompatManager.ICompatibilityDetails;
+		return this.loaderLayerCompatManager;
 	}
 
 	>>>>>>> 32ed194ea6 (

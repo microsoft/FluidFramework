@@ -4,7 +4,7 @@
  */
 
 import {
-	LayerCompatibilityManager,
+	checkLayerCompatibility,
 	type ICompatibilityDetails,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
@@ -16,22 +16,30 @@ import { pkgVersion } from "./packageVersion.js";
  * This class manages the state and validation to ensure that the Runtime layer is compatible with the Loader layer.
  * @internal
  */
-export class LoaderLayerCompatManager extends LayerCompatibilityManager {
-	// Minimum generation that Loader must be at to be compatible with Runtime.
+export class LoaderLayerCompatManager implements ICompatibilityDetails {
+	/**
+	 * The current package version of the Runtime layer.
+	 */
+	public readonly pkgVersion = pkgVersion;
+	/**
+	 * The current generation of the Runtime layer.
+	 */
+	public readonly generation = 1;
+	/**
+	 * The features supported by the Runtime layer across Runtime / Loader boundary.
+	 */
+	public readonly supportedFeatures: ReadonlySet<string> = new Set();
+
+	/**
+	 * Minimum generation that Loader must be at to be compatible with Runtime.
+	 */
 	public readonly loaderMinSupportedGeneration = 1;
-	// The features that the Loader must support to be compatible with Runtime.
+	/**
+	 * The features that the Loader must support to be compatible with Runtime.
+	 */
 	public readonly loaderRequiredFeatures: string[] = [];
 
-	public constructor(private readonly disposeFn: (error?: ICriticalContainerError) => void) {
-		super({
-			// The current package version of the Runtime layer.
-			pkgVersion,
-			// The current generation of the Runtime layer.
-			generation: 1,
-			// The features supported by the Runtime layer across Runtime <-> Loader boundary.
-			supportedFeatures: new Set(),
-		});
-	}
+	public constructor(private readonly disposeFn: (error?: ICriticalContainerError) => void) {}
 
 	/**
 	 * Validates that the Loader layer is compatible with the Runtime.
@@ -46,7 +54,7 @@ export class LoaderLayerCompatManager extends LayerCompatibilityManager {
 			return;
 		}
 
-		const layerCheckResult = super.checkCompatibility(
+		const layerCheckResult = checkLayerCompatibility(
 			this.loaderMinSupportedGeneration,
 			this.loaderRequiredFeatures,
 			maybeLoaderCompatDetails,

@@ -2468,7 +2468,7 @@ export class Container
 			() => this.connected,
 			this._deltaManager.clientDetails,
 			existing,
-			this.runtimeLayerCompatManager.ICompatibilityDetails,
+			this.runtimeLayerCompatManager,
 			this.subLogger,
 			pendingLocalState,
 			snapshot,

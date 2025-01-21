@@ -4,8 +4,9 @@
  */
 
 import {
-	LayerCompatibilityManager,
+	checkLayerCompatibility,
 	type ICompatibilityDetails,
+	// type IProvideCompatibilityDetails,
 } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -16,22 +17,30 @@ import { pkgVersion } from "./packageVersion.js";
  * This class manages the state and validation to ensure that the Loader layer is compatible with the Runtime layer.
  * @internal
  */
-export class RuntimeLayerCompatManager extends LayerCompatibilityManager {
-	// Minimum generation that Runtime must be at to be compatible with Loader.
+export class RuntimeLayerCompatManager implements ICompatibilityDetails {
+	/**
+	 * The current package version of the Loader layer.
+	 */
+	public readonly pkgVersion = pkgVersion;
+	/**
+	 * The current generation of the Loader layer.
+	 */
+	public readonly generation = 1;
+	/**
+	 * The features supported by the Loader layer across Loader / Runtime boundary.
+	 */
+	public readonly supportedFeatures: ReadonlySet<string> = new Set();
+
+	/**
+	 * Minimum generation that Runtime must be at to be compatible with Loader.
+	 */
 	public readonly runtimeMinSupportedGeneration = 1;
-	// The features that the Runtime must support to be compatible with Loader.
+	/**
+	 * The features that the Runtime must support to be compatible with Loader.
+	 */
 	public readonly runtimeRequiredFeatures: string[] = [];
 
-	public constructor(private readonly disposeFn: (error?: ICriticalContainerError) => void) {
-		super({
-			// The current package version of the Loader layer.
-			pkgVersion,
-			// The current generation of the Loader layer.
-			generation: 1,
-			// The features supported by the Loader layer across Loader <-> Runtime boundary.
-			supportedFeatures: new Set(),
-		});
-	}
+	public constructor(private readonly disposeFn: (error?: ICriticalContainerError) => void) {}
 
 	/**
 	 * Validates that the Runtime layer is compatible with the Loader.
@@ -46,7 +55,7 @@ export class RuntimeLayerCompatManager extends LayerCompatibilityManager {
 			return;
 		}
 
-		const layerCheckResult = super.checkCompatibility(
+		const layerCheckResult = checkLayerCompatibility(
 			this.runtimeMinSupportedGeneration,
 			this.runtimeRequiredFeatures,
 			maybeRuntimeCompatDetails,

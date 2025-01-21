@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { LayerCompatibilityManager } from "@fluid-internal/client-utils";
+import type { ICompatibilityDetails } from "@fluid-internal/client-utils";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -80,14 +80,13 @@ describe("Runtime Layer compatibility", () => {
 
 	it("Runtime generation and features are compatible with Loader", () => {
 		loaderCompatManager.loaderRequiredFeatures = ["feature1", "feature2"];
-		const loaderCompatDetails = new LayerCompatibilityManager({
+		const loaderCompatDetails: ICompatibilityDetails = {
 			pkgVersion,
 			generation: loaderCompatManager.loaderMinSupportedGeneration,
 			supportedFeatures: new Set(loaderCompatManager.loaderRequiredFeatures),
-		});
+		};
 		assert.doesNotThrow(
-			() =>
-				loaderCompatManager.validateCompatibility(loaderCompatDetails.ICompatibilityDetails),
+			() => loaderCompatManager.validateCompatibility(loaderCompatDetails),
 			"Runtime should be compatible with Loader layer",
 		);
 	});
@@ -95,14 +94,13 @@ describe("Runtime Layer compatibility", () => {
 	it("Runtime generation is incompatible with Loader", () => {
 		loaderCompatManager.loaderRequiredFeatures = ["feature1", "feature2"];
 		const loaderGeneration = loaderCompatManager.loaderMinSupportedGeneration - 1;
-		const loaderCompatDetails = new LayerCompatibilityManager({
+		const loaderCompatDetails: ICompatibilityDetails = {
 			pkgVersion,
 			generation: loaderGeneration,
 			supportedFeatures: new Set(loaderCompatManager.loaderRequiredFeatures),
-		});
+		};
 		assert.throws(
-			() =>
-				loaderCompatManager.validateCompatibility(loaderCompatDetails.ICompatibilityDetails),
+			() => loaderCompatManager.validateCompatibility(loaderCompatDetails),
 			(e: Error) =>
 				validateFailureProperties(e, false /* isGenerationCompatible */, loaderGeneration),
 			"Runtime should be incompatible with Loader layer",
@@ -113,15 +111,14 @@ describe("Runtime Layer compatibility", () => {
 		const requiredFeatures = ["feature2", "feature3"];
 		loaderCompatManager.loaderRequiredFeatures = requiredFeatures;
 
-		const loaderCompatDetails = new LayerCompatibilityManager({
+		const loaderCompatDetails: ICompatibilityDetails = {
 			pkgVersion,
 			generation: loaderCompatManager.loaderMinSupportedGeneration,
 			supportedFeatures: new Set(),
-		});
+		};
 
 		assert.throws(
-			() =>
-				loaderCompatManager.validateCompatibility(loaderCompatDetails.ICompatibilityDetails),
+			() => loaderCompatManager.validateCompatibility(loaderCompatDetails),
 			(e: Error) =>
 				validateFailureProperties(
 					e,
@@ -138,15 +135,14 @@ describe("Runtime Layer compatibility", () => {
 		const requiredFeatures = ["feature2"];
 		loaderCompatManager.loaderRequiredFeatures = requiredFeatures;
 
-		const loaderCompatDetails = new LayerCompatibilityManager({
+		const loaderCompatDetails: ICompatibilityDetails = {
 			pkgVersion,
 			generation: loaderGeneration,
 			supportedFeatures: new Set(),
-		});
+		};
 
 		assert.throws(
-			() =>
-				loaderCompatManager.validateCompatibility(loaderCompatDetails.ICompatibilityDetails),
+			() => loaderCompatManager.validateCompatibility(loaderCompatDetails),
 			(e: Error) =>
 				validateFailureProperties(
 					e,

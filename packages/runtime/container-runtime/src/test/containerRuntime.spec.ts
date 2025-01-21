@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	LayerCompatibilityManager,
 	stringToBuffer,
 	type ICompatibilityDetails,
 	type IProvideCompatibilityDetails,
@@ -1601,15 +1600,13 @@ describe("Runtime", () => {
 			});
 
 			it("Loader supported for async FlushMode with ICompatibilityDetails", async () => {
+				const compatDetails: ICompatibilityDetails = {
+					pkgVersion: "0.1.0",
+					generation: 1,
+					supportedFeatures: new Set(),
+				};
 				const runtime = await ContainerRuntime.loadRuntime({
-					context: localGetMockContext(
-						undefined,
-						new LayerCompatibilityManager({
-							pkgVersion: "0.1.0",
-							generation: 1,
-							supportedFeatures: new Set(),
-						}),
-					) as IContainerContext,
+					context: localGetMockContext(undefined, compatDetails) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
