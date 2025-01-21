@@ -6,9 +6,9 @@
 import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
 
 import {
-	type IConfigRange,
-	type IMergeTreeOperationRunnerConfig,
-	type TestOperation,
+	IConfigRange,
+	IMergeTreeOperationRunnerConfig,
+	TestOperation,
 	annotateRange,
 	doOverRange,
 	generateClientNames,
@@ -36,7 +36,7 @@ export const debugOptions: IConflictFarmConfig = {
 	operations: allOperations,
 	incrementalLog: true,
 	growthFunc: (input: number) => input * 2,
-	resultsFilePostfix: `conflict-farm-with-field-obliterate.json`,
+	// resultsFilePostfix: `conflict-farm-with-obliterate-2.3.0.json`,
 };
 
 export const defaultOptions: IConflictFarmConfig = {

@@ -8,18 +8,18 @@
 import { strict as assert } from "node:assert";
 import * as fs from "node:fs";
 
-import type { IRandom } from "@fluid-private/stochastic-test-utils";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { IRandom } from "@fluid-private/stochastic-test-utils";
+import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import type { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
-import { type IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
+import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
 import { _dirname } from "./dirname.cjs";
-import type { TestClient } from "./testClient.js";
+import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
 
 export type TestOperation = (
