@@ -57,11 +57,11 @@ describe("Runtime", () => {
 				assert(snapshot === undefined);
 				snapshot = getSummaryForDatastores(undefined, disabledMetadata);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, undefined);
+				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree, undefined);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, enabledMetadata);
+				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree, enabledMetadata);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, disabledMetadata);
+				snapshot = getSummaryForDatastores(null as unknown as ISnapshotTree, disabledMetadata);
 				assert(snapshot === undefined);
 			});
 
@@ -115,7 +115,7 @@ describe("Runtime", () => {
 				assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
 				assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");
 				// Put in variable to avoid type-narrowing bug
-				const nonDataStore1: ISnapshotTree | undefined = snapshot.trees[nonDataStorePaths[0]];
+				const nonDataStore1 = snapshot.trees[nonDataStorePaths[0]];
 				assert.strictEqual(
 					nonDataStore1?.id,
 					"lower-non-datastore-1",

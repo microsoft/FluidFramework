@@ -335,7 +335,8 @@ declare namespace InternalTypes {
 }
 export { InternalTypes }
 
-export { IsListener }
+// @public @deprecated
+export type IsListener<T> = IsListener_2<T>;
 
 // @alpha
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
@@ -439,9 +440,11 @@ export interface JsonValidator {
 // @public
 export type LazyItem<Item = unknown> = Item | (() => Item);
 
-export { Listenable }
+// @public @deprecated
+export type Listenable<T extends object> = Listenable_2<T>;
 
-export { Listeners }
+// @public @deprecated
+export type Listeners<T extends object> = Listeners_2<T>;
 
 // @public @sealed
 export interface MakeNominal {
@@ -507,7 +510,8 @@ type ObjectFromSchemaRecordUnsafe<T extends Unenforced<RestrictiveStringRecord<I
     -readonly [Property in keyof T]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 };
 
-export { Off }
+// @public @deprecated
+export type Off = Off_2;
 
 // @alpha
 export interface ParseOptions<TCustom> {
@@ -810,7 +814,7 @@ export const TreeBeta: {
 // @alpha @sealed
 export interface TreeBranch extends IDisposable {
     dispose(error?: Error): void;
-    readonly events: Listenable<TreeBranchEvents>;
+    readonly events: Listenable_2<TreeBranchEvents>;
     fork(): TreeBranch;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     merge(branch: TreeBranch, disposeMerged?: boolean): void;
@@ -971,7 +975,7 @@ export enum TreeStatus {
 // @public @sealed
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly compatibility: SchemaCompatibilityStatus;
-    readonly events: Listenable<TreeViewEvents>;
+    readonly events: Listenable_2<TreeViewEvents>;
     initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
@@ -982,7 +986,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 // @alpha @sealed
 export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> extends Omit<TreeView<ReadSchema<TSchema>>, "root" | "initialize">, TreeBranch {
     // (undocumented)
-    readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
+    readonly events: Listenable_2<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
     // (undocumented)

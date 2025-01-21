@@ -67,7 +67,6 @@ export {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 	MockLogger,
-	MockLogger2,
 } from "./mockLogger.js";
 export { ThresholdCounter } from "./thresholdCounter.js";
 export {

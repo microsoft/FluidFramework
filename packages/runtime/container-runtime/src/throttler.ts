@@ -16,9 +16,13 @@ export interface IThrottler {
 	 */
 	readonly numAttempts: number;
 
-	/** Width of sliding delay window in milliseconds. */
+	/**
+	 * Width of sliding delay window in milliseconds.
+	 */
 	readonly delayWindowMs: number;
-	/** Maximum delay allowed in milliseconds. */
+	/**
+	 * Maximum delay allowed in milliseconds.
+	 */
 	readonly maxDelayMs: number;
 	/**
 	 * Delay function used to calculate what the delay should be.
@@ -35,7 +39,7 @@ export interface IThrottler {
 export class Throttler implements IThrottler {
 	private startTimes: number[] = [];
 
-	public get numAttempts() {
+	public get numAttempts(): number {
 		return this.startTimes.length;
 	}
 
@@ -51,16 +55,20 @@ export class Throttler implements IThrottler {
 	 * Latest attempt time after compensating for the delay time itself
 	 * by adding the delay time to the actual time.
 	 */
-	public get latestAttemptTime() {
+	public get latestAttemptTime(): number | undefined {
 		return this.startTimes.length > 0
 			? this.startTimes[this.startTimes.length - 1]
 			: undefined;
 	}
 
 	constructor(
-		/** Width of sliding delay window in milliseconds. */
+		/**
+		 * Width of sliding delay window in milliseconds.
+		 */
 		public readonly delayWindowMs: number,
-		/** Maximum delay allowed in milliseconds. */
+		/**
+		 * Maximum delay allowed in milliseconds.
+		 */
 		public readonly maxDelayMs: number,
 		/**
 		 * Delay function used to calculate what the delay should be.
@@ -70,7 +78,7 @@ export class Throttler implements IThrottler {
 		public readonly delayFn: (numAttempts: number) => number,
 	) {}
 
-	public getDelay() {
+	public getDelay(): number {
 		const now = Date.now();
 
 		const latestAttemptTime = this.latestAttemptTime;
@@ -131,7 +139,9 @@ export const formExponentialFn =
 				: coefficient * Math.pow(multiplier, numAttempts) + offset,
 		);
 
-/** f(n) = C x (B^(n+A)) + F = (C x B^A) x B^n + F */
+/**
+ * f(n) = C x (B^(n+A)) + F = (C x B^A) x B^n + F
+ */
 export const formExponentialFnWithAttemptOffset = (
 	attemptOffset: number,
 	{
@@ -140,7 +150,7 @@ export const formExponentialFnWithAttemptOffset = (
 		offset = 0,
 		initialDelay = undefined as number | undefined,
 	} = {},
-) =>
+): IThrottler["delayFn"] =>
 	formExponentialFn({
 		multiplier,
 		coefficient: coefficient * Math.pow(multiplier, attemptOffset),
@@ -160,11 +170,13 @@ export const formLinearFn =
 	(numAttempts) =>
 		Math.max(0, coefficient * numAttempts + offset);
 
-/** f(n) = C x (n+A) + F = C x n + (C x A + F) */
+/**
+ * f(n) = C x (n+A) + F = C x n + (C x A + F)
+ */
 export const formLinearFnWithAttemptOffset = (
 	attemptOffset: number,
 	{ coefficient = 1, offset = 0 } = {},
-) =>
+): IThrottler["delayFn"] =>
 	formLinearFn({
 		coefficient,
 		offset: coefficient * attemptOffset + offset,

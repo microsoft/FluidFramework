@@ -5,7 +5,6 @@
 
 import { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
@@ -142,16 +141,22 @@ export class GarbageCollector implements IGarbageCollector {
 	private readonly summaryStateTracker: GCSummaryStateTracker;
 	private readonly telemetryTracker: GCTelemetryTracker;
 
-	/** For a given node path, returns the node's package path. */
+	/**
+	 * For a given node path, returns the node's package path.
+	 */
 	private readonly getNodePackagePath: (
 		nodePath: string,
 	) => Promise<readonly string[] | undefined>;
-	/** Returns the timestamp of the last summary generated for this container. */
+	/**
+	 * Returns the timestamp of the last summary generated for this container.
+	 */
 	private readonly getLastSummaryTimestampMs: () => number | undefined;
 
 	private readonly submitMessage: (message: ContainerRuntimeGCMessage) => void;
 
-	/** Returns the count of data stores whose GC state updated since the last summary. */
+	/**
+	 * Returns the count of data stores whose GC state updated since the last summary.
+	 */
 	public get updatedDSCountSinceLastSummary(): number {
 		return this.summaryStateTracker.updatedDSCountSinceLastSummary;
 	}
@@ -227,7 +232,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 				try {
 					// For newer documents, GC data should be present in the GC tree in the root of the snapshot.
-					const gcSnapshotTree: ISnapshotTree | undefined = baseSnapshot.trees[gcTreeKey];
+					const gcSnapshotTree = baseSnapshot.trees[gcTreeKey];
 					if (gcSnapshotTree === undefined) {
 						// back-compat - Older documents get their gc data reset for simplicity as there are few of them
 						// incremental gc summary will not work with older gc data as well
@@ -339,7 +344,9 @@ export class GarbageCollector implements IGarbageCollector {
 		});
 	}
 
-	/** API for ensuring the correct auto-recovery mitigations */
+	/**
+	 * API for ensuring the correct auto-recovery mitigations
+	 */
 	private readonly autoRecovery = (() => {
 		// This uses a hidden state machine for forcing fullGC as part of autorecovery,
 		// to regenerate the GC data for each node.
@@ -414,7 +421,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Initialize the GC state if not already initialized. If GC state is already initialized, update the unreferenced
 	 * state tracking as per the current reference timestamp.
 	 */
-	private async initializeOrUpdateGCState() {
+	private async initializeOrUpdateGCState(): Promise<void> {
 		const currentReferenceTimestampMs = this.runtime.getCurrentReferenceTimestampMs();
 		if (currentReferenceTimestampMs === undefined) {
 			return;
@@ -488,11 +495,17 @@ export class GarbageCollector implements IGarbageCollector {
 	 */
 	public async collectGarbage(
 		options: {
-			/** Logger to use for logging GC events */
+			/**
+			 * Logger to use for logging GC events
+			 */
 			logger?: ITelemetryLoggerExt;
-			/** True to run GC sweep phase after the mark phase */
+			/**
+			 * True to run GC sweep phase after the mark phase
+			 */
 			runSweep?: boolean;
-			/** True to generate full GC data */
+			/**
+			 * True to generate full GC data
+			 */
 			fullGC?: boolean;
 		},
 		telemetryContext?: ITelemetryContext,
@@ -535,11 +548,15 @@ export class GarbageCollector implements IGarbageCollector {
 			logger,
 			{ eventName: "GarbageCollection" },
 			async (event) => {
-				/** Pre-GC steps */
+				// #region Pre-GC steps
+
 				// Ensure that state has been initialized from the base snapshot data.
 				await this.initializeGCStateFromBaseSnapshotP;
 
-				/** GC step */
+				// #endregion
+
+				// #region GC step
+
 				const gcStats = await this.runGC(fullGC, currentReferenceTimestampMs, logger);
 				event.end({
 					...gcStats,
@@ -550,7 +567,10 @@ export class GarbageCollector implements IGarbageCollector {
 					},
 				});
 
-				/** Post-GC steps */
+				// #endregion
+
+				// #region Post-GC steps
+
 				// Log pending unreferenced events such as a node being used after inactive. This is done after GC runs and
 				// updates its state so that we don't send false positives based on intermediate state. For example, we may get
 				// reference to an unreferenced node from another unreferenced node which means the node wasn't revived.
@@ -560,6 +580,8 @@ export class GarbageCollector implements IGarbageCollector {
 				this.autoRecovery.onCompletedGCRun();
 				this.newReferencesSinceLastRun.clear();
 				this.completedRuns++;
+
+				// #endregion
 
 				return gcStats;
 			},
@@ -700,7 +722,7 @@ export class GarbageCollector implements IGarbageCollector {
 		gcResult: IGCResult,
 		tombstoneReadyNodes: Set<string>,
 		sweepReadyNodes: Set<string>,
-	) {
+	): void {
 		/**
 		 * Under "Test Mode", unreferenced nodes are immediately deleted without waiting for them to be sweep-ready.
 		 *
@@ -904,7 +926,7 @@ export class GarbageCollector implements IGarbageCollector {
 		messageContents: GarbageCollectionMessage[],
 		messageTimestampMs: number,
 		local: boolean,
-	) {
+	): void {
 		for (const gcMessage of messageContents) {
 			const gcMessageType = gcMessage.type;
 			switch (gcMessageType) {
@@ -946,7 +968,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 *
 	 * @param sweepReadyNodeIds - The ids of nodes that are ready to be deleted.
 	 */
-	private deleteSweepReadyNodes(sweepReadyNodeIds: readonly string[]) {
+	private deleteSweepReadyNodes(sweepReadyNodeIds: readonly string[]): void {
 		// Use a set for lookup because its much faster than array or map.
 		const sweepReadyNodesSet: Set<string> = new Set(sweepReadyNodeIds);
 
@@ -992,7 +1014,7 @@ export class GarbageCollector implements IGarbageCollector {
 		request,
 		headerData,
 		additionalProps,
-	}: IGCNodeUpdatedProps) {
+	}: IGCNodeUpdatedProps): void {
 		// If there is no reference timestamp to work with, no ops have been processed after creation. If so, skip
 		// logging as nothing interesting would have happened worth logging.
 		if (!this.shouldRunGC || timestampMs === undefined) {
@@ -1063,7 +1085,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
 	 * before running GC next.
 	 */
-	private triggerAutoRecovery(nodePath: string) {
+	private triggerAutoRecovery(nodePath: string): void {
 		// If sweep isn't enabled, auto-recovery isn't needed since its purpose is to prevent this object from being
 		// deleted. It also would end up sending a GC op which can break clients running FF version 1.x.
 		if (!this.configs.sweepEnabled) {
@@ -1094,7 +1116,7 @@ export class GarbageCollector implements IGarbageCollector {
 		toNodePath: string,
 		timestampMs: number,
 		autorecovery?: true,
-	) {
+	): void {
 		if (!this.shouldRunGC) {
 			return;
 		}
@@ -1173,7 +1195,7 @@ export class GarbageCollector implements IGarbageCollector {
 			updatedAttachmentBlobCount: 0,
 		};
 
-		const updateNodeStats = (nodeId: string, isReferenced: boolean) => {
+		const updateNodeStats = (nodeId: string, isReferenced: boolean): void => {
 			markPhaseStats.nodeCount++;
 			// If there is no previous GC data, every node's state is generated and is considered as updated.
 			// Otherwise, find out if any node went from referenced to unreferenced or vice-versa.
