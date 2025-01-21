@@ -34,8 +34,8 @@ describe(`Presence with AzureClient`, () => {
 		// Create inital child process
 		let containerId: string | undefined;
 		for (let i = 0; i < numClients; i++) {
-			const user = { id: `test-user-id-${i + 1}`, name: `test-user-name-${i + 1}` };
-			const child = fork("./lib/test/multiprocess/childClient.js", [`child${i + 1}`]);
+			const user = { id: `test-user-id-${i}`, name: `test-user-name-${i}` };
+			const child = fork("./lib/test/multiprocess/childClient.js", [`child${i}`]);
 			children.push(child);
 			// Send connect command to child
 			const message: MessageToChild = { command: "connect", containerId, user };
