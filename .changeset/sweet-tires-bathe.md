@@ -5,6 +5,9 @@
 "section": legacy
 ---
 
-Removed SummarizerStopReason, ISummarizeEventProps, and ISummarizerEvents
+Summarizer-related types have been moved to container-runtime-definitions
 
-`SummarizerStopReason`, `ISummarizeEventProps`, and `ISummarizerEvents` have all been removed from the `"@fluidframework/container-runtime"` package. Please migrate all uses of these APIs to their respective copies in the `"@fluidframework/container-runtime-definitions"` package.
+`SummarizerStopReason`, `ISummarizeEventProps`, and `ISummarizerEvents` have all been moved from the
+`"@fluidframework/container-runtime"` package to `@fluidframework/container-runtime-definitions`.
+
+Users should now import them from `@fluidframework/container-runtime-definitions`.
