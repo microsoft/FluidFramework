@@ -284,7 +284,7 @@ export class SummaryGenerator {
 			properties?: SummaryGeneratorTelemetry,
 			submitFailureResult?: SubmitSummaryFailureData,
 			nackSummaryResult?: INackSummaryResult,
-		) => {
+		): void => {
 			// Report any failure as an error unless it was due to cancellation (like "disconnected" error)
 			// If failure happened on upload, we may not yet realized that socket disconnected, so check
 			// offlineError too.
@@ -561,7 +561,7 @@ export class SummaryGenerator {
 		return initialProps;
 	}
 
-	private summarizeTimerHandler(time: number, count: number) {
+	private summarizeTimerHandler(time: number, count: number): void {
 		this.logger.sendPerformanceEvent({
 			eventName: "SummarizeTimeout",
 			timeoutTime: time,

@@ -73,7 +73,7 @@ export class OpSplitter {
 		clientId: string,
 		chunkedContent: IChunkedOp,
 		originalMessage: ISequencedDocumentMessage,
-	) {
+	): void {
 		let map = this.chunkMap.get(clientId);
 		if (map === undefined) {
 			map = [];
