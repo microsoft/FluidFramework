@@ -311,7 +311,7 @@ export class ModularChangeFamily
 		);
 
 		// Currently no field kinds require making changes to cross-field keys during composition, so we can just merge the two tables.
-		const composedCrossFieldKeys = RangeMap.mergeMaps(
+		const composedCrossFieldKeys = RangeMap.union(
 			change1.crossFieldKeys,
 			change2.crossFieldKeys,
 		);

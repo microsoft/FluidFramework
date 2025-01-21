@@ -185,7 +185,7 @@ export class RangeMap<K, V> {
 	/**
 	 * Returns a new map which contains the entries from both input maps.
 	 */
-	public static mergeMaps<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
+	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
 		assert(
 			a.offsetKey === b.offsetKey && a.subtractKeys === b.subtractKeys,
 			"Maps should have the same behavior",

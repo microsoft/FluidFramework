@@ -103,7 +103,6 @@ export function getMoveEffect(
 	addDependency: boolean = true,
 ): RangeQueryResult<ChangeAtomId, MoveEffect> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
-	assert(result.length === count, "Queried range has multiple values");
 	return result.value !== undefined
 		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) }
 		: result;
@@ -177,12 +176,12 @@ function getFirstMoveEffectLength(
 	effects: MoveEffectTable,
 ): number {
 	if (isMoveMark(markEffect)) {
-		return effects.get(
+		return getMoveEffect(
+			effects,
 			getCrossFieldTargetFromMove(markEffect),
 			markEffect.revision,
 			markEffect.id,
 			count,
-			true,
 		).length;
 	} else if (isAttachAndDetachEffect(markEffect)) {
 		return Math.min(
