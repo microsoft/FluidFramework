@@ -85,7 +85,7 @@ export const getPendingOps = async (
  * @param pendingLocalState - (Optional) custom PendingLocalState to load from. Defaults to using getPendingOps helper if omitted.
  * @returns A container instance with a connect function to unblock the Driver (simulating coming back from offline)
  */
-export async function loadOffline(
+export async function loadContainerWithDeferredConnection(
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
 	request: IRequest,

@@ -63,7 +63,7 @@ import {
 import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/internal";
 
-import { getPendingOps, loadOffline } from "./offlineTestsUtils.js";
+import { getPendingOps, loadContainerWithDeferredConnection } from "./offlineTestsUtils.js";
 
 const mapId = "map";
 const stringId = "sharedStringKey";
@@ -1184,7 +1184,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		);
 
-		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
+		const container2 = await loadContainerWithDeferredConnection(
+			testContainerConfig,
+			provider,
+			{ url },
+			pendingOps,
+		);
 		const dataStore2 = (await container2.container.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
@@ -1249,7 +1254,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 			},
 		);
 
-		const { container: container2 } = await loadOffline(
+		const { container: container2 } = await loadContainerWithDeferredConnection(
 			testContainerConfig,
 			provider,
 			{ url },
@@ -1272,12 +1277,13 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		// get stashed ops from this container without connecting.  Superset of pendingOps
 		const morePendingOps = await container2.closeAndGetPendingLocalState?.();
 
-		const { container: container3, connect: connect3 } = await loadOffline(
-			testContainerConfig,
-			provider,
-			{ url },
-			morePendingOps,
-		);
+		const { container: container3, connect: connect3 } =
+			await loadContainerWithDeferredConnection(
+				testContainerConfig,
+				provider,
+				{ url },
+				morePendingOps,
+			);
 		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
 		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
@@ -1384,7 +1390,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		if (provider.driver.type === "odsp") {
 			this.skip();
 		}
-		const container = await loadOffline(testContainerConfig, provider, { url });
+		const container = await loadContainerWithDeferredConnection(
+			testContainerConfig,
+			provider,
+			{ url },
+		);
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
@@ -1476,7 +1486,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const pendingOps = await pendingOpsP;
 
 		// we are able to load from the pending ops even though we abort
-		await loadOffline(testContainerConfig, provider, { url }, pendingOps);
+		await loadContainerWithDeferredConnection(
+			testContainerConfig,
+			provider,
+			{ url },
+			pendingOps,
+		);
 	});
 
 	it("close while uploading multiple blob", async function () {
@@ -1510,7 +1525,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("load offline from stashed ops with pending blob", async function () {
-		const container = await loadOffline(testContainerConfig, provider, { url });
+		const container = await loadContainerWithDeferredConnection(
+			testContainerConfig,
+			provider,
+			{ url },
+		);
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
@@ -1522,7 +1541,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		const stashedChanges = await stashedChangesP;
 
-		const container3 = await loadOffline(
+		const container3 = await loadContainerWithDeferredConnection(
 			testContainerConfig,
 			provider,
 			{ url },
@@ -1551,7 +1570,11 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	it("stashed changes with blobs", async function () {
-		const container = await loadOffline(testContainerConfig, provider, { url });
+		const container = await loadContainerWithDeferredConnection(
+			testContainerConfig,
+			provider,
+			{ url },
+		);
 		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
@@ -1609,7 +1632,12 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 
 		// load offline; new datastore should be accessible
-		const container2 = await loadOffline(testContainerConfig, provider, { url }, pendingOps);
+		const container2 = await loadContainerWithDeferredConnection(
+			testContainerConfig,
+			provider,
+			{ url },
+			pendingOps,
+		);
 		{
 			const entryPoint = (await container2.container.getEntryPoint()) as ITestFluidObject;
 			const containerRuntime = entryPoint.context

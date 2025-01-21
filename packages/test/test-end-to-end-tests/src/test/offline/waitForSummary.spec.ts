@@ -32,10 +32,9 @@ import {
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
 
-// eslint-disable-next-line import/no-internal-modules
-import { loadOffline, getPendingOps } from "./offline/offlineTestsUtils.js";
+import { loadContainerWithDeferredConnection, getPendingOps } from "./offlineTestsUtils.js";
 
-const waitForSummary = async (
+const loadSummarizerAndSummarize = async (
 	provider: ITestObjectProvider,
 	container: IContainer,
 	testContainerConfig: ITestContainerConfig,
@@ -107,7 +106,11 @@ describeCompat(
 		});
 
 		it("works with summary while offline", async function () {
-			const summaryVersion = await waitForSummary(provider, container, testContainerConfig);
+			const summaryVersion = await loadSummarizerAndSummarize(
+				provider,
+				container,
+				testContainerConfig,
+			);
 			const pendingOps = await getPendingOps(
 				testContainerConfig,
 				provider,
@@ -119,7 +122,12 @@ describeCompat(
 			);
 
 			map1.set("2", "2");
-			await waitForSummary(provider, container, testContainerConfig, summaryVersion);
+			await loadSummarizerAndSummarize(
+				provider,
+				container,
+				testContainerConfig,
+				summaryVersion,
+			);
 			const container2 = await loader.resolve({ url }, pendingOps);
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
@@ -148,9 +156,12 @@ describeCompat(
 			await timeoutAwait(provider.ensureSynchronized(), {
 				errorMsg: "Timeout on waiting for ensureSynchronized",
 			});
-			await timeoutAwait(waitForSummary(provider, container, testContainerConfig), {
-				errorMsg: "Timeout on waiting for summary",
-			});
+			await timeoutAwait(
+				loadSummarizerAndSummarize(provider, container, testContainerConfig),
+				{
+					errorMsg: "Timeout on waiting for summary",
+				},
+			);
 
 			// should be able to load entirely offline
 			const stashBlob = await timeoutAwait(
@@ -159,15 +170,22 @@ describeCompat(
 					errorMsg: "Timeout on waiting for stashBlob",
 				},
 			);
-			await timeoutAwait(loadOffline(testContainerConfig, provider, { url }, stashBlob), {
-				errorMsg: "Timeout on waiting for loadOffline",
-			});
+			await timeoutAwait(
+				loadContainerWithDeferredConnection(testContainerConfig, provider, { url }, stashBlob),
+				{
+					errorMsg: "Timeout on waiting for loadOffline",
+				},
+			);
 		});
 
 		it("applies stashed ops with no saved ops", async function () {
 			// We want to test the case where we stash ops based on the sequence number of the snapshot we load from
 			// So step 1 is to complete a summary so we can load from it.
-			const summaryVersion = await waitForSummary(provider, container, testContainerConfig);
+			const summaryVersion = await loadSummarizerAndSummarize(
+				provider,
+				container,
+				testContainerConfig,
+			);
 
 			// avoid our join op being saved (so saved ops is empty and the map op below has the right ref seq)
 			const headers: IRequestHeader = {
@@ -201,7 +219,11 @@ describeCompat(
 		});
 
 		it("can stash between summary op and ack", async function () {
-			const waitForSummaryPromise = waitForSummary(provider, container, testContainerConfig);
+			const waitForSummaryPromise = loadSummarizerAndSummarize(
+				provider,
+				container,
+				testContainerConfig,
+			);
 			const pendingOps = await new Promise<string | undefined>((resolve, reject) =>
 				container.on("op", (op) => {
 					if (op.type === "summarize") {

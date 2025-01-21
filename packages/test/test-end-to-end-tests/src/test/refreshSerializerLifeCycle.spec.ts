@@ -31,7 +31,7 @@ import {
 import { wrapObjectAndOverride } from "../mocking.js";
 
 // eslint-disable-next-line import/no-internal-modules
-import { loadOffline } from "./offline/offlineTestsUtils.js";
+import { loadContainerWithDeferredConnection } from "./offline/offlineTestsUtils.js";
 
 const testConfigs = generatePairwiseOptions({
 	savedOps: [true, false],
@@ -223,7 +223,7 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			// have a data store with groupId
 			let container2: IContainerExperimental;
 			if (testConfig.loadOffline) {
-				const offlineObject = await loadOffline(
+				const offlineObject = await loadContainerWithDeferredConnection(
 					testContainerConfig,
 					provider,
 					{ url },
