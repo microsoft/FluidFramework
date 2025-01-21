@@ -332,10 +332,7 @@ function matchObjects(
 	expected: ITelemetryPropertiesExt,
 ): boolean {
 	for (const [expectedKey, expectedValue] of Object.entries(expected)) {
-		const actualValue:
-			| TelemetryEventPropertyTypeExt
-			| Tagged<TelemetryEventPropertyTypeExt>
-			| undefined = actual[expectedKey];
+		const actualValue = actual[expectedKey];
 		if (
 			!Array.isArray(expectedValue) &&
 			expectedValue !== null &&
