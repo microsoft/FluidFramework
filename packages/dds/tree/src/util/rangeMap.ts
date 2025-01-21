@@ -85,7 +85,7 @@ export class RangeMap<K, V> {
 	 * @param start - The first key in the query range.
 	 * @param length - The length of the query range.
 	 * @returns A RangeQueryResult containing the value associated with `start`,
-	 * and the number of consecutive keys with that same value.
+	 * and the number of consecutive keys with that same value (at least 1, at most `length`).
 	 */
 	public getFirst(start: K, length: number): RangeQueryResult<K, V> {
 		{
