@@ -114,7 +114,7 @@ const compressionSuite = (getProvider) => {
 			{ compression: true, grouping: true, chunking: true },
 			{ compression: true, grouping: true, chunking: false },
 		].forEach((option) => {
-			it(`Correctly processes messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, async function () {
+			it(`Correctly processes messages: compression [${option.compression}] chunking [${option.chunking}] grouping [${option.grouping}]`, async function () {
 				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
