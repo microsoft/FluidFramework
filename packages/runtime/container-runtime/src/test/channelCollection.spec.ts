@@ -57,7 +57,7 @@ describe("Runtime", () => {
 				assert(snapshot === undefined);
 				snapshot = getSummaryForDatastores(undefined, disabledMetadata);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(undefined as unknown as ISnapshotTree, undefined);
+				snapshot = getSummaryForDatastores(undefined, undefined);
 				assert(snapshot === undefined);
 				snapshot = getSummaryForDatastores(
 					undefined as unknown as ISnapshotTree,
