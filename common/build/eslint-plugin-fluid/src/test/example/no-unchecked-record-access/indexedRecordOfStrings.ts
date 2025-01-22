@@ -94,3 +94,41 @@ aImplicitType.length; // ok: aImplicitType is the continuation of the inferred t
 
 extendedIndexedRecordOfStrings.a.length; // ok: Accessing string property of extendedIndexedRecordOfStrings is allowed
 extendedIndexedRecordOfStrings.b.length; // defect: Accessing length of index property 'b', but 'b' might not be present
+
+
+interface NestedIndexSignatureType {
+	[WorkspaceAddress: string]: {
+		[StateValueManagerKey: string]: {
+			[ClientSessionId: string]: string;
+		};
+	};
+}
+
+function TestNullish(
+	base: NestedIndexSignatureType | undefined,
+	newData: NestedIndexSignatureType,
+): NestedIndexSignatureType {
+	const baseDatastore = base ?? {};
+	for (const [newDataKey, newDataValue] of Object.entries(newData)) {
+		const mergedData = baseDatastore[newDataKey] ?? {};
+		for (const valueManagerKey of Object.keys(newDataValue)) {
+			for (const [nestedDataKey, value] of Object.entries(newDataValue[valueManagerKey])) {
+				mergedData[valueManagerKey] ??= {};
+				const oldData = mergedData[valueManagerKey][nestedDataKey];
+				mergedData[valueManagerKey][nestedDataKey] = "";
+			}
+		}
+		baseDatastore[newDataKey] = mergedData;
+	}
+	return baseDatastore;
+}
+
+// Test else case
+const key = "test"
+const datastore: NestedIndexSignatureType = {};
+if (key in datastore) {
+	// Nothing to do
+} else {
+	datastore[key] = {};
+}
+datastore[key][key] = {};
