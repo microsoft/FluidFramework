@@ -1,29 +1,12 @@
-/*
-    This configuration is specifically constructed to be used as a "linter" configuration.
-    Here we are specifically looking to ensure that generated entrypoints are correct.
-*/
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "./api-extractor-base.json",
-	"apiReport": {
-		// Don't generate API report in lint pass
-		"enabled": false
-	},
+	"extends": "./api-extractor-base.esm.json",
 	"docModel": {
-		// Don't generate doc-model in lint pass
-		"enabled": false
-	},
-	"dtsRollup": {
-		// Don't generate rollups in lint pass
-		"enabled": false
-	},
-	"tsdocMetadata": {
-		// Don't generate docs metadata in lint pass
 		"enabled": false
 	},
 	"messages": {
 		"extractorMessageReporting": {
-			// Since we lint entrypoints at different release levels, it is possible (and valid) for `@link` tags
+			// Since we generate API reports for different release levels, it is possible (and valid) for `@link` tags
 			// to reference an API item that won't be visible at that level.
 			// For example, a public API may note that a newer feature is available in a beta release and link to that item.
 			// We want that to be possible, so we suppress this error for report generation.
