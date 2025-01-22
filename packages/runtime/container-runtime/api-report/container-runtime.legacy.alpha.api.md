@@ -36,6 +36,9 @@ export enum ContainerMessageType {
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
 // @alpha (undocumented)
+export const disabledCompressionConfig: ICompressionRuntimeOptions;
+
+// @alpha (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly alreadyEnqueued?: undefined;
 }) | (ISummarizeResults & {

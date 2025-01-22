@@ -606,7 +606,8 @@ export enum CompressionAlgorithms {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
 	minimumBatchSizeInBytes: Infinity,
@@ -1349,7 +1350,7 @@ export class ContainerRuntime
 	/**
 	 * summaryManager will only be created if this client is permitted to spawn a summarizing client
 	 * It is created only by interactive client, i.e. summarizer client, as well as non-interactive bots
-	 *do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
+	 * do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
 	 */
 	private readonly summaryManager?: SummaryManager;
 	private readonly summaryCollection: SummaryCollection;
@@ -1430,7 +1431,7 @@ export class ContainerRuntime
 	};
 
 	/**
-	 *Summarizer is responsible for coordinating when to send generate and send summaries.
+	 * Summarizer is responsible for coordinating when to send generate and send summaries.
 	 * It is the main entry point for summary work.
 	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
 	 */
@@ -3720,7 +3721,7 @@ export class ContainerRuntime
 		 */
 		fullTree?: boolean;
 		/**
-		 *True to track the state for this summary in the SummarizerNodes; defaults to true
+		 * True to track the state for this summary in the SummarizerNodes; defaults to true
 		 */
 		trackState?: boolean;
 		/**
@@ -3970,9 +3971,9 @@ export class ContainerRuntime
 	/**
 	 * Generates the summary tree, uploads it to storage, and then submits the summarize op.
 	 * This is intended to be called by the summarizer, since it is the implementation of
-	 *ISummarizerInternalsProvider.submitSummary.
+	 * ISummarizerInternalsProvider.submitSummary.
 	 * It takes care of state management at the container level, including pausing inbound
-	 *op processing, updating SummarizerNode state tracking, and garbage collection.
+	 * op processing, updating SummarizerNode state tracking, and garbage collection.
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
@@ -4730,7 +4731,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 *Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
+	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
@@ -4961,7 +4962,7 @@ export class ContainerRuntime
 	}
 
 	/**
-	 *Forms a function that will create and retrieve a Summarizer.
+	 * Forms a function that will create and retrieve a Summarizer.
 	 */
 	private formCreateSummarizerFn(loader: ILoader) {
 		return async () => {

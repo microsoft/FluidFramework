@@ -120,7 +120,7 @@ export class SummaryManager
 		parentLogger: ITelemetryBaseLogger,
 		/**
 		 * Creates summarizer by asking interactive container to spawn summarizing container and
-		 *get back its Summarizer instance.
+		 * get back its Summarizer instance.
 		 */
 		private readonly createSummarizerFn: () => Promise<ISummarizer>,
 		private readonly startThrottler: IThrottler,

@@ -51,9 +51,9 @@ export interface IRootSummarizerNode extends ISummarizerNode, ISummarizerNodeRoo
  * (work in progress) summary. Then all nodes will call summarize to summaries their
  * individual parts. Once completed and uploaded to storage, the root node will call
  * completeSummary or clearSummary to clear the WIP summary tracking state if something
- *went wrong. The SummarizerNodes will track all pending summaries that have been
+ * went wrong. The SummarizerNodes will track all pending summaries that have been
  * recorded by the completeSummary call. When one of them is acked, the root node should
- *call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
+ * call refreshLatestSummary to inform the tree of SummarizerNodes of the new baseline
  * latest successful summary.
  */
 export class SummarizerNode implements IRootSummarizerNode {
@@ -92,7 +92,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 	/**
 	 * Do not call constructor directly.
-	 *Use createRootSummarizerNode to create root node, or createChild to create child nodes.
+	 * Use createRootSummarizerNode to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
 		baseLogger: ITelemetryBaseLogger,
@@ -652,7 +652,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 
 /**
  * Creates a root summarizer node.
- *@param logger - Logger to use within SummarizerNode
+ * @param logger - Logger to use within SummarizerNode
  * @param summarizeInternalFn - Function to generate summary
  * @param changeSequenceNumber - Sequence number of latest change to new node/subtree
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,

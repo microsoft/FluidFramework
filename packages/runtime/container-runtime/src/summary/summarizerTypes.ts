@@ -468,13 +468,13 @@ export type EnqueueSummarizeResult =
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**
-	 *Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
+	 * Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
 	 */
 	readonly ISummarizer?: ISummarizer;
 
 	/*
 	 * Asks summarizer to move to exit.
-	 *Summarizer will finish current processes, which may take a while.
+	 * Summarizer will finish current processes, which may take a while.
 	 * For example, summarizer may complete last summary before exiting.
 	 */
 	stop(reason: SummarizerStopReason): void;

@@ -18,7 +18,7 @@ export interface ICancellableSummarizerController extends ISummaryCancellationTo
 
 /**
  * Can be useful in testing as well as in places where caller does not use cancellation.
- *This object implements ISummaryCancellationToken interface but cancellation is never leveraged.
+ * This object implements ISummaryCancellationToken interface but cancellation is never leveraged.
  * @internal
  */
 export const neverCancelledSummaryToken: ISummaryCancellationToken = {

@@ -1082,7 +1082,7 @@ export class GarbageCollector implements IGarbageCollector {
 	 * prevent it from being deleted by Sweep (after the Grace Period).
 	 *
 	 * Submit a GC op indicating that the Tombstone with the given path has been loaded.
-	 *Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
+	 * Broadcasting this information in the op stream allows the Summarizer to reset unreferenced state
 	 * before running GC next.
 	 */
 	private triggerAutoRecovery(nodePath: string): void {

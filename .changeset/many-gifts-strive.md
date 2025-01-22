@@ -11,7 +11,6 @@ The following types in the `@fluidframework/container-runtime` are deprecated. T
 
 - currentDocumentVersionSchema
 - DeletedResponseHeaderKey
-- disabledCompressionConfig
 - DocumentSchemaValueType
 - DocumentsSchemaController
 - GCFeatureMatrix

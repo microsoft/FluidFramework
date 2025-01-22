@@ -42,7 +42,7 @@ interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
 }
 
 /**
- *Extends the functionality of SummarizerNode to manage this node's garbage collection data:
+ * Extends the functionality of SummarizerNode to manage this node's garbage collection data:
  *
  * - Adds a new API `getGCData` to return GC data of this node.
  *
@@ -87,7 +87,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 	/**
 	 * Do not call constructor directly.
-	 *Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
+	 * Use createRootSummarizerNodeWithGC to create root node, or createChild to create child nodes.
 	 */
 	public constructor(
 		logger: ITelemetryBaseLogger,
@@ -338,7 +338,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	}
 
 	/**
-	 *Override the createChild method to return an instance of SummarizerNodeWithGC.
+	 * Override the createChild method to return an instance of SummarizerNodeWithGC.
 	 */
 	public createChild(
 		/**
@@ -447,7 +447,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	}
 
 	/**
-	 *Override the getChild method to return an instance of SummarizerNodeWithGC.
+	 * Override the getChild method to return an instance of SummarizerNodeWithGC.
 	 */
 	public getChild(id: string): ISummarizerNodeWithGC | undefined {
 		return this.children.get(id) as SummarizerNodeWithGC;
@@ -503,7 +503,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 
 /**
  * Creates a root summarizer node with GC functionality built-in.
- *@param logger - Logger to use within SummarizerNode
+ * @param logger - Logger to use within SummarizerNode
  * @param summarizeInternalFn - Function to generate summary
  * @param changeSequenceNumber - Sequence number of latest change to new node/subtree
  * @param referenceSequenceNumber - Reference sequence number of last acked summary,

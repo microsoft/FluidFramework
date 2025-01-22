@@ -112,14 +112,14 @@ export type GCFeatureMatrix =
 	  };
 
 /**
- *Deprecated properties formerly included in @see IGCMetadata.
+ * Deprecated properties formerly included in @see IGCMetadata.
  * These may be found in old snapshots, so we need to support them for backwards compatibility.
  */
 export interface IGCMetadata_Deprecated {
 	/**
 	 * How long to wait after an object is unreferenced before deleting it via GC Sweep
 	 *
-	 *@deprecated Replaced by @see IGCMetadata.tombstoneTimeoutMs
+	 * @deprecated Replaced by @see IGCMetadata.tombstoneTimeoutMs
 	 */
 	readonly sweepTimeoutMs?: number;
 }

@@ -186,7 +186,7 @@ export type ISummaryMetadataMessage = Pick<
 >;
 
 /**
- *Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
+ * Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
  * added to the metadata blob in summary.
  */
 export const extractSummaryMetadataMessage = (
