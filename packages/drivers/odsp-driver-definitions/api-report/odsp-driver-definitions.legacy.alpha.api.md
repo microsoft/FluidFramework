@@ -37,6 +37,7 @@ export interface ICacheEntry extends IEntry {
 
 // @alpha (undocumented)
 export interface ICollabSessionOptions {
+    displayName?: string;
     // @deprecated
     forceAccessTokenViaAuthorizationHeader?: boolean;
     // @deprecated
@@ -73,10 +74,12 @@ export interface IOdspErrorAugmentations {
 
 // @alpha (undocumented)
 export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
+    appName?: string;
     // (undocumented)
     codeHint?: {
         containerPackageName?: string;
     };
+    context?: string;
     // (undocumented)
     dataStorePath?: string;
     // (undocumented)

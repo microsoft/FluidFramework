@@ -8,7 +8,7 @@
  */
 
 export {
-	doesItemRequireOwnDocument,
+	createQualifiedDocumentNameForApiItem,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
@@ -20,9 +20,9 @@ export {
 	getDefaultValueBlock,
 	getDeprecatedBlock,
 	getExampleBlocks,
+	getFileSafeNameForApiItem,
 	getModifiers,
 	getModifierTags,
-	getQualifiedApiItemName,
 	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,

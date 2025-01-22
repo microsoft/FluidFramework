@@ -37,7 +37,7 @@ export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & Expe
 
 // @alpha @sealed
 export interface IPresence {
-    readonly events: ISubscribable<PresenceEvents>;
+    readonly events: Listenable<PresenceEvents>;
     getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
     getAttendees(): ReadonlySet<ISessionClient>;
     getMyself(): ISessionClient;
@@ -58,7 +58,7 @@ export function Latest<T extends object, Key extends string = string>(initialVal
 // @alpha
 export function LatestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
     [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T>, LatestMapValueManager<T, Keys>>;
+}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapValueManager<T, Keys>>;
 
 // @alpha @sealed
 export interface LatestMapItemRemovedClientData<K extends string | number> {
@@ -89,7 +89,7 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
     clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>>;
     clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
     readonly controls: BroadcastControls;
-    readonly events: ISubscribable<LatestMapValueManagerEvents<T, Keys>>;
+    readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
     readonly local: ValueMap<Keys, T>;
 }
 
@@ -123,7 +123,7 @@ export interface LatestValueManager<T> {
     clientValue(client: ISessionClient): LatestValueData<T>;
     clientValues(): IterableIterator<LatestValueClientData<T>>;
     readonly controls: BroadcastControls;
-    readonly events: ISubscribable<LatestValueManagerEvents<T>>;
+    readonly events: Listenable<LatestValueManagerEvents<T>>;
     get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T> & JsonDeserialized<T>);
 }
@@ -141,19 +141,25 @@ export interface LatestValueMetadata {
 }
 
 // @alpha @sealed
-export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationEvents<E>> {
-    broadcast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
-    unicast<K extends string & keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, targetClient: ISessionClient, ...args: Parameters<E[K]>): void;
+export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
+    broadcast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
+    unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetClient: ISessionClient, ...args: Parameters<E[K]>): void;
+}
+
+// @alpha @sealed
+export interface NotificationListenable<TListeners extends InternalUtilityTypes.NotificationListeners<TListeners>> {
+    off<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(notificationName: K, listener: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>) => void): void;
+    on<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(notificationName: K, listener: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>) => void): Off;
 }
 
 // @alpha
-export function Notifications<T extends InternalUtilityTypes.NotificationEvents<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriptions<T>>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
+export function Notifications<T extends InternalUtilityTypes.NotificationListeners<T>, Key extends string = string>(initialSubscriptions: Partial<NotificationSubscriptions<T>>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<T>>;
 
 // @alpha @sealed
-export interface NotificationsManager<T extends InternalUtilityTypes.NotificationEvents<T>> {
+export interface NotificationsManager<T extends InternalUtilityTypes.NotificationListeners<T>> {
     readonly emit: NotificationEmitter<T>;
-    readonly events: ISubscribable<NotificationsManagerEvents>;
-    readonly notifications: NotificationSubscribable<T>;
+    readonly events: Listenable<NotificationsManagerEvents>;
+    readonly notifications: NotificationListenable<T>;
 }
 
 // @alpha @sealed (undocumented)
@@ -163,13 +169,8 @@ export interface NotificationsManagerEvents {
 }
 
 // @alpha @sealed
-export interface NotificationSubscribable<E extends InternalUtilityTypes.NotificationEvents<E>> {
-    on<K extends keyof InternalUtilityTypes.NotificationEvents<E>>(notificationName: K, listener: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void): () => void;
-}
-
-// @alpha @sealed
-export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationEvents<E>> = {
-    [K in string & keyof InternalUtilityTypes.NotificationEvents<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
+export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationListeners<E>> = {
+    [K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
 };
 
 // @alpha @sealed (undocumented)

@@ -3,232 +3,307 @@
  * Licensed under the MIT License.
  */
 
-import { oob } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
+import { BTree } from "@tylerbu/sorted-btree-es6";
 
 /**
- * A map keyed on integers allowing reading and writing contiguous ranges of integer keys.
- *
- * TODO: We should avoid the direct exposure of RangeEntry. AB#7414
+ * RangeMap represents a mapping from keys of type K to values of type V or undefined.
+ * The set of all possible keys is assumed to be fully ordered,
+ * and for each key there should be a single next higher key.
+ * The values for a range of consecutive keys can be changed or queried in a single operation.
+ * The structure of the keys is described by the `offsetKey` and `subtractKeys` functions provided in the constructor.
  */
-export type RangeMap<T> = RangeEntry<T>[];
+export class RangeMap<K, V> {
+	private tree: BTree<K, RangeEntry<V>>;
 
-export interface RangeEntry<T> {
-	start: number;
-	length: number;
-	value: T;
+	/**
+	 * @param offsetKey - Function which returns a new key which is `offset` keys after `key`.
+	 * When `offset` is negative, the returned key should come before `key`.
+	 *
+	 * @param subtractKeys - Function which returns the difference between `b` and `a`.
+	 * Offsetting `b` by this difference should return `a`.
+	 * The difference can be infinite if `a` cannot be reached from `b` by offsetting,
+	 * but the difference should still be positive if `a` is larger than `b` and negative if smaller.
+	 */
+	public constructor(
+		private readonly offsetKey: (key: K, offset: number) => K,
+		private readonly subtractKeys: (a: K, b: K) => number,
+	) {
+		this.tree = new BTree(undefined, subtractKeys);
+	}
+
+	/**
+	 * Retrieves all entries from the RangeMap.
+	 */
+	public entries(): RangeQueryEntry<K, V>[] {
+		const entries: RangeQueryEntry<K, V>[] = [];
+		for (const [start, entry] of this.tree.entries()) {
+			entries.push({ start, length: entry.length, value: entry.value });
+		}
+
+		return entries;
+	}
+
+	public clear(): void {
+		this.tree.clear();
+	}
+
+	/**
+	 * Retrieves the values for all keys in the query range.
+	 *
+	 * @param start - The first key in the range being queried
+	 * @param length  - The length of the query range
+	 * @returns A list of entries, each describing the value for some subrange of the query.
+	 * The entries are in the same order as the keys, and there is an entry for every key with a non `undefined` value.
+	 */
+	public getAll(start: K, length: number): RangeQueryEntry<K, V>[] {
+		const entries = this.getIntersectingEntries(start, length);
+		if (entries.length === 0) {
+			return entries;
+		}
+
+		const firstEntry = entries[0] ?? oob();
+		const lengthBefore = this.subtractKeys(start, firstEntry.start);
+		if (lengthBefore > 0) {
+			entries[0] = { ...firstEntry, start, length: firstEntry.length - lengthBefore };
+		}
+
+		const lastEntry = entries[entries.length - 1] ?? oob();
+		const lastEntryKey = this.offsetKey(lastEntry.start, lastEntry.length - 1);
+		const lastQueryKey = this.offsetKey(start, length - 1);
+		const lengthAfter = this.subtractKeys(lastEntryKey, lastQueryKey);
+		if (lengthAfter > 0) {
+			entries[entries.length - 1] = { ...lastEntry, length: lastEntry.length - lengthAfter };
+		}
+
+		return entries;
+	}
+
+	/**
+	 * Retrieves the value for some prefix of the query range.
+	 *
+	 * @param start - The first key in the query range.
+	 * @param length - The length of the query range.
+	 * @returns A RangeQueryResult containing the value associated with `start`,
+	 * and the number of consecutive keys with that same value (at least 1, at most `length`).
+	 */
+	public getFirst(start: K, length: number): RangeQueryResult<K, V> {
+		{
+			// We first check for an entry with a key less than or equal to `start`.
+			const entry = this.tree.getPairOrNextLower(start);
+			if (entry !== undefined) {
+				const entryKey = entry[0];
+				const { value, length: entryLength } = entry[1];
+
+				const entryLastKey = this.offsetKey(entryKey, entryLength - 1);
+				const overlappingLength = Math.min(this.subtractKeys(entryLastKey, start) + 1, length);
+				if (overlappingLength > 0) {
+					return { value, start, length: overlappingLength };
+				}
+			}
+		}
+
+		{
+			// There is no value associated with `start`.
+			// Now we need to determine how many of the following keys are also undefined.
+			const key = this.tree.nextHigherKey(start);
+			if (key !== undefined) {
+				const entryKey = key;
+
+				const lastQueryKey = this.offsetKey(start, length - 1);
+				if (this.le(entryKey, lastQueryKey)) {
+					return { value: undefined, start, length: this.subtractKeys(entryKey, start) };
+				}
+			}
+
+			return { value: undefined, start, length };
+		}
+	}
+
+	/**
+	 * Sets the value for a specified range.
+	 *
+	 * @param start - The first key in the range being set.
+	 * @param length - The length of the range.
+	 * @param value - The value to associate with the range.
+	 */
+	public set(start: K, length: number, value: V | undefined): void {
+		this.delete(start, length);
+		if (value !== undefined) {
+			this.tree.set(start, { value, length });
+		}
+	}
+
+	/**
+	 * Deletes values within a specified range, updating or removing existing entries.
+	 *
+	 * 1. If an entry is completely included in the deletion range, the whole entry will be deleted
+	 * e.g.: map = [[1, 2], [4, 6]], delete range: [3, 6]
+	 * map becomes [[1, 2]] after deletion
+	 * (Note: the notation [a, b] represents start = a, end = b for simpler visualization, instead of `b`
+	 * representing the length)
+	 *
+	 * 2. If an entry is partially overlapped with the deletion range, the start or end point will be shifted
+	 * e.g.: map = [[1, 2], [4, 6]], delete range: [2, 4]
+	 * map becomes [[1, 1], [5, 6]] after deletion
+	 *
+	 * 3. If an entry completely includes the deletion range, the original entry may be split into two.
+	 * e.g.: map = [[1, 6]], delete range: [2, 4]
+	 * map becomes [[1, 1], [5, 6]]
+	 *
+	 * @param start - The start of the range to delete (inclusive).
+	 * @param length - The length of the range to delete.
+	 */
+	public delete(start: K, length: number): void {
+		const lastDeleteKey = this.offsetKey(start, length - 1);
+		for (const { start: key, length: entryLength, value } of this.getIntersectingEntries(
+			start,
+			length,
+		)) {
+			this.tree.delete(key);
+			const lengthBefore = this.subtractKeys(start, key);
+			if (lengthBefore > 0) {
+				// A portion of this entry comes before the deletion range, so we reinsert that portion.
+				this.tree.set(key, { length: lengthBefore, value });
+			}
+
+			const lastEntryKey = this.offsetKey(key, entryLength - 1);
+			const lengthAfter = this.subtractKeys(lastEntryKey, lastDeleteKey);
+			if (lengthAfter > 0) {
+				// A portion of this entry comes after the deletion range, so we reinsert that portion.
+				this.tree.set(this.offsetKey(lastDeleteKey, 1), { length: lengthAfter, value });
+			}
+		}
+	}
+
+	public clone(): RangeMap<K, V> {
+		const cloned = new RangeMap<K, V>(this.offsetKey, this.subtractKeys);
+		cloned.tree = this.tree.clone();
+		return cloned;
+	}
+
+	/**
+	 * Returns a new map which contains the entries from both input maps.
+	 */
+	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
+		assert(
+			a.offsetKey === b.offsetKey && a.subtractKeys === b.subtractKeys,
+			"Maps should have the same behavior",
+		);
+
+		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys);
+
+		// TODO: Is there a good pattern that lets us make `tree` readonly?
+		merged.tree = a.tree.clone();
+		for (const [key, value] of b.tree.entries()) {
+			// TODO: Handle key collisions
+			merged.tree.set(key, value);
+		}
+
+		return merged;
+	}
+
+	private getIntersectingEntries(start: K, length: number): RangeQueryEntry<K, V>[] {
+		const entries: RangeQueryEntry<K, V>[] = [];
+		const lastQueryKey = this.offsetKey(start, length - 1);
+		{
+			const entry = this.tree.getPairOrNextLower(start);
+			if (entry !== undefined) {
+				const key = entry[0];
+				const { length: entryLength, value } = entry[1];
+				const lastEntryKey = this.offsetKey(key, entryLength - 1);
+				if (this.ge(lastEntryKey, start)) {
+					entries.push({ start: key, length: entryLength, value });
+				}
+			}
+		}
+
+		{
+			let entry = this.tree.nextHigherPair(start);
+			while (entry !== undefined) {
+				const key = entry[0];
+				if (this.gt(key, lastQueryKey)) {
+					break;
+				}
+
+				const { length: entryLength, value } = entry[1];
+				const lastEntryKey = this.offsetKey(key, entryLength - 1);
+
+				entries.push({ start: key, length: entryLength, value });
+				entry = this.tree.nextHigherPair(lastEntryKey);
+			}
+		}
+
+		return entries;
+	}
+
+	private gt(a: K, b: K): boolean {
+		return this.subtractKeys(a, b) > 0;
+	}
+
+	private ge(a: K, b: K): boolean {
+		return this.subtractKeys(a, b) >= 0;
+	}
+
+	private lt(a: K, b: K): boolean {
+		return this.subtractKeys(a, b) < 0;
+	}
+
+	private le(a: K, b: K): boolean {
+		return this.subtractKeys(a, b) <= 0;
+	}
 }
 
 /**
- * The result of a query about a range of keys.
+ * Represents a contiguous range of values in the RangeMap.
  */
-export interface RangeQueryResult<T> {
+interface RangeEntry<V> {
 	/**
-	 * The value of the first key in the query range.
+	 * The length of the range.
 	 */
-	value: T | undefined;
+	readonly length: number;
 
 	/**
-	 * The length of the prefix of the query range which have the same value.
+	 * The value associated with this range.
+	 */
+	readonly value: V;
+}
+
+/**
+ * Describes the result of a range query, including the value and length of the matching prefix.
+ */
+export interface RangeQueryResult<K, V> {
+	/**
+	 * The key for the first element in the range.
+	 */
+	readonly start: K;
+
+	/**
+	 * The value of the first key in the query range.
+	 * If no matching range is found, this will be undefined.
+	 */
+	readonly value: V | undefined;
+
+	/**
+	 * The length of the prefix of the query range which has the same value.
 	 * For example, if a RangeMap has the same value for keys 5, 6, and 7,
 	 * a query about the range [5, 10] would give a result with length 3.
 	 */
-	length: number;
+	readonly length: number;
 }
 
-/**
- * See comments on `RangeQueryResult`.
- */
-export function getFromRangeMap<T>(
-	map: RangeMap<T>,
-	start: number,
-	length: number,
-): RangeQueryResult<T> {
-	for (const range of map) {
-		if (range.start > start) {
-			return { value: undefined, length: Math.min(range.start - start, length) };
-		}
-
-		const lastRangeKey = range.start + range.length - 1;
-		if (lastRangeKey >= start) {
-			// This range contains `start`.
-			const overlapLength = lastRangeKey - start + 1;
-			return { value: range.value, length: Math.min(overlapLength, length) };
-		}
-	}
-
-	// There were no entries intersecting the query range, so the entire query range has undefined value.
-	return { value: undefined, length };
+export interface RangeQueryEntry<K, V> extends RangeQueryResult<K, V> {
+	readonly value: V;
 }
 
-export function getFirstEntryFromRangeMap<T>(
-	map: RangeMap<T>,
-	start: number,
-	length: number,
-): RangeEntry<T> | undefined {
-	const lastQueryKey = start + length - 1;
-	for (const range of map) {
-		if (range.start > lastQueryKey) {
-			// We've passed the end of the query range.
-			break;
-		}
-
-		const lastRangeKey = range.start + range.length - 1;
-		if (lastRangeKey >= start) {
-			return range;
-		}
-	}
-
-	return undefined;
+export function newIntegerRangeMap<V>(): RangeMap<number, V> {
+	return new RangeMap(offsetInteger, subtractIntegers);
 }
 
-/**
- * Sets the keys from `start` to `start + length - 1` to `value`.
- */
-export function setInRangeMap<T>(
-	map: RangeMap<T>,
-	start: number,
-	length: number,
-	value: T,
-): void {
-	const end = start + length - 1;
-	const newEntry: RangeEntry<T> = { start, length, value };
-
-	let iBefore = -1;
-	let iAfter = map.length;
-	for (const [i, entry] of map.entries()) {
-		const entryLastKey = entry.start + entry.length - 1;
-		if (entryLastKey < start) {
-			iBefore = i;
-		} else if (entry.start > end) {
-			iAfter = i;
-			break;
-		}
-	}
-
-	const numOverlappingEntries = iAfter - iBefore - 1;
-	if (numOverlappingEntries === 0) {
-		map.splice(iAfter, 0, newEntry);
-		return;
-	}
-
-	const iFirst = iBefore + 1;
-	const firstEntry = map[iFirst] ?? oob();
-	const iLast = iAfter - 1;
-	const lastEntry = map[iLast] ?? oob();
-	const lengthBeforeFirst = start - firstEntry.start;
-	const lastEntryKey = lastEntry.start + lastEntry.length - 1;
-	const lengthAfterLast = lastEntryKey - end;
-
-	if (lengthBeforeFirst > 0 && lengthAfterLast > 0 && iFirst === iLast) {
-		// The new entry fits in the middle of an existing entry.
-		// We replace the existing entry with:
-		// 1) the portion which comes before `newEntry`
-		// 2) `newEntry`
-		// 3) the portion which comes after `newEntry`
-		map.splice(iFirst, 1, { ...firstEntry, length: lengthBeforeFirst }, newEntry, {
-			...lastEntry,
-			start: end + 1,
-			length: lengthAfterLast,
-		});
-		return;
-	}
-
-	if (lengthBeforeFirst > 0) {
-		map[iFirst] = { ...firstEntry, length: lengthBeforeFirst };
-
-		// The entry at `iFirst` is no longer overlapping with `newEntry`.
-		iBefore = iFirst;
-	}
-
-	if (lengthAfterLast > 0) {
-		map[iLast] = {
-			...lastEntry,
-			start: end + 1,
-			length: lengthAfterLast,
-		};
-
-		// The entry at `iLast` is no longer overlapping with `newEntry`.
-		iAfter = iLast;
-	}
-
-	const numContainedEntries = iAfter - iBefore - 1;
-	map.splice(iBefore + 1, numContainedEntries, newEntry);
+function offsetInteger(key: number, offset: number): number {
+	return key + offset;
 }
 
-/**
- * Delete the keys from `start` to `start + length - 1`
- *
- * 1. If an entry is completely included in the deletion range, the whole entry will be deleted
- * e.g.: map = [[1, 2], [4, 6]], delete range: [3, 6]
- * map becomes [[1, 2]] after deletion
- * (Note: the notation [a, b] represents start = a, end = b for simpler visiualization, instead of `b`
- * representing the length)
- *
- * 2. If an entry is partially overlapped with the deletion range, the start or end point will be shifted
- * e.g.: map = [[1, 2], [4, 6]], delete range: [2, 4]
- * map becomes [[1, 1], [5, 6]] after deletion
- *
- * 3. If an entry completely includes the deletion range, the original entry may be split into two.
- * e.g.: map = [[1, 6]], delete range: [2, 4]
- * map becomes [[1, 1], [5, 6]]
- *
- * TODO: We may find ways to mitigate the code duplication between set and delete, and we need to better
- * document the API.  AB#7413
- */
-export function deleteFromRangeMap<T>(map: RangeMap<T>, start: number, length: number): void {
-	const end = start + length - 1;
-
-	let iBefore = -1;
-	let iAfter = map.length;
-
-	for (const [i, entry] of map.entries()) {
-		const entryLastKey = entry.start + entry.length - 1;
-		if (entryLastKey < start) {
-			iBefore = i;
-		} else if (entry.start > end) {
-			iAfter = i;
-			break;
-		}
-	}
-
-	const numOverlappingEntries = iAfter - iBefore - 1;
-
-	if (numOverlappingEntries === 0) {
-		// No entry will be removed
-		return;
-	}
-
-	const iFirst = iBefore + 1;
-	const iLast = iAfter - 1;
-
-	// Update or remove the overlapping entries
-	for (let i = iFirst; i <= iLast; ++i) {
-		const entry = map[i] ?? oob();
-		const entryLastKey = entry.start + entry.length - 1;
-		let isDirty = false;
-
-		// If the entry lies within the range to be deleted, remove it
-		if (entry.start >= start && entryLastKey <= end) {
-			map.splice(i, 1);
-		} else {
-			// If the entry partially or completely overlaps with the range to be deleted
-			if (entry.start < start) {
-				// Update the endpoint and length of the portion before the range to be deleted
-				const lengthBefore = start - entry.start;
-				map[i] = { ...entry, length: lengthBefore };
-				isDirty = true;
-			}
-
-			if (entryLastKey > end) {
-				// Update the startpoint and length of the portion after the range to be deleted
-				const newStart = end + 1;
-				const newLength = entryLastKey - end;
-				map.splice(isDirty ? i + 1 : i, isDirty ? 0 : 1, {
-					start: newStart,
-					length: newLength,
-					value: entry.value,
-				});
-			}
-		}
-	}
+function subtractIntegers(a: number, b: number): number {
+	return a - b;
 }

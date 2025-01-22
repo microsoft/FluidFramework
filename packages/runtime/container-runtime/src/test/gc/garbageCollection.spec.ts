@@ -134,7 +134,9 @@ describe("Garbage Collection Tests", () => {
 		return sweepReadyRoutes;
 	}
 
-	/** More concise signature for calling IGarbageCollector.nodeUpdated */
+	/**
+	 * More concise signature for calling {@link IGarbageCollector.nodeUpdated}.
+	 */
 	function nodeUpdated(
 		garbageCollector: IGarbageCollector,
 		path: string,
@@ -153,7 +155,7 @@ describe("Garbage Collection Tests", () => {
 	function createGarbageCollector(
 		params: {
 			createParams?: Partial<IGarbageCollectorCreateParams>;
-			gcBlobsMap?: Map<string, any>;
+			gcBlobsMap?: Map<string, unknown>;
 			gcMetadata?: IGCMetadata;
 			closeFn?: (error?: ICriticalContainerError) => void;
 			isSummarizerClient?: boolean;
@@ -333,11 +335,13 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	it("Private Autorecovery API", () => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const autoRecovery: {
 			useFullGC: () => boolean;
 			requestFullGCOnNextRun: () => void;
 			onCompletedGCRun: () => void;
 			onSummaryAck: () => void;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} = createGarbageCollector().autoRecovery as any;
 
 		assert.equal(autoRecovery.useFullGC(), false, "Expect false by default");
@@ -461,9 +465,9 @@ describe("Garbage Collection Tests", () => {
 
 			// Simulate GC Data with a route missing (nodes[0] is referenced but missing here)
 			// We'll return this from getGCData unless fullGC is passed in.
-			const corruptedGCData: IGarbageCollectionData = JSON.parse(
+			const corruptedGCData = JSON.parse(
 				JSON.stringify(defaultGCData),
-			);
+			) as IGarbageCollectionData;
 			corruptedGCData.gcNodes["/"] = [nodes[1]];
 
 			// getGCData set up to return the corrupted data unless fullGC is true
@@ -526,7 +530,6 @@ describe("Garbage Collection Tests", () => {
 						type: GarbageCollectionMessageType.TombstoneLoaded,
 						nodePath: nodes[0],
 					},
-					compatDetails: { behavior: "Ignore" },
 				} satisfies ContainerRuntimeGCMessage,
 				"submitted message not as expected",
 			);
@@ -1240,7 +1243,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				snapshotTree.blobs[metadataBlobName] = metadataBlobId;
 
-				const gcBlobsMap: Map<string, any> = new Map();
+				const gcBlobsMap: Map<string, unknown> = new Map();
 				gcBlobsMap.set(gcBlobId, gcState);
 				gcBlobsMap.set(gcTombstoneBlobId, tombstones);
 				gcBlobsMap.set(gcDeletedBlobId, deletedBlobs);
@@ -1257,7 +1260,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: baseGCVersion,
 				};
 				let snapshotTree: ISnapshotTree;
-				let gcBlobsMap: Map<string, any> | undefined;
+				let gcBlobsMap: Map<string, unknown> | undefined;
 				if (gcStateInBaseSnapshot) {
 					const snapshotWithGCState = getSnapshotWithGCVersion(baseGCVersion);
 					snapshotTree = snapshotWithGCState.snapshotTree;
@@ -1387,7 +1390,7 @@ describe("Garbage Collection Tests", () => {
 			it("starts with empty GC state when there is no GC state in base snapshot", async () => {
 				const garbageCollector = createGCOverride(
 					stableGCVersion,
-					false /** gcStateInBaseSnapshot */,
+					false /* gcStateInBaseSnapshot */,
 				);
 
 				const baseSnapshotData = await garbageCollector.baseSnapshotDataP;
@@ -2217,61 +2220,21 @@ describe("Garbage Collection Tests", () => {
 		assert.strictEqual(garbageCollector.deletedNodes.size, 0, "Expecting 0 deleted nodes");
 	});
 
-	describe("Future GC op type compatibility", () => {
+	it("process remote op with unrecognized type", async () => {
+		const garbageCollector = createGarbageCollector();
 		const gcMessageFromFuture: Record<string, unknown> = {
 			type: "FUTURE_MESSAGE",
 			hello: "HELLO",
 		};
-
-		let garbageCollector: IGarbageCollector;
-		beforeEach(async () => {
-			garbageCollector = createGarbageCollector({
-				createParams: { gcOptions: { enableGCSweep: true } },
-			});
-		});
-
-		it("can submit GC op compat behavior", async () => {
-			const gcWithPrivates = garbageCollector as GcWithPrivates;
-			const containerRuntimeGCMessage: Omit<ContainerRuntimeGCMessage, "type" | "contents"> & {
-				type: string;
-				contents: any;
-			} = {
-				type: ContainerMessageType.GC,
-				contents: gcMessageFromFuture,
-				compatDetails: { behavior: "Ignore" },
-			};
-
-			assert.doesNotThrow(
-				() =>
-					gcWithPrivates.submitMessage(containerRuntimeGCMessage as ContainerRuntimeGCMessage),
-				"Cannot submit GC message with compatDetails",
-			);
-		});
-
-		it("process remote op with unrecognized type and 'Ignore' compat behavior", async () => {
-			assert.throws(
-				() =>
-					garbageCollector.processMessages(
-						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
-						Date.now(),
-						false /* local */,
-					),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
-
-		it("process remote op with unrecognized type and no compat behavior", async () => {
-			assert.throws(
-				() =>
-					garbageCollector.processMessages(
-						[gcMessageFromFuture as unknown as GarbageCollectionMessage],
-						Date.now(),
-						false /* local */,
-					),
-				(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
-				"Garbage collection message of unknown type FROM_THE_FUTURE",
-			);
-		});
+		assert.throws(
+			() =>
+				garbageCollector.processMessages(
+					[gcMessageFromFuture as unknown as GarbageCollectionMessage],
+					Date.now(),
+					false /* local */,
+				),
+			(error: IErrorBase) => error.errorType === ContainerErrorTypes.dataProcessingError,
+			"Garbage collection message of unknown type FUTURE_MESSAGE",
+		);
 	});
 });

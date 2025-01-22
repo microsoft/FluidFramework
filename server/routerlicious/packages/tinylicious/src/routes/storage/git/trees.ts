@@ -102,7 +102,7 @@ export function create(store: nconf.Provider): Router {
 		const treeP = createTree(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.body,
 		);
 
@@ -114,7 +114,7 @@ export function create(store: nconf.Provider): Router {
 		const treeP = getTree(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params.sha,
 			request.query.recursive === "1",
 			useCache,

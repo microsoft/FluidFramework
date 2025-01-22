@@ -40,7 +40,7 @@ import { v4 as uuid } from "uuid";
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
 	public packagePath: readonly string[] = undefined as any;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();
 	public clientDetails: IClientDetails;

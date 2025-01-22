@@ -72,6 +72,9 @@ interface PackageDependency {
 	depClass: "prod" | "dev" | "peer";
 }
 
+/**
+ * @deprecated Should not be used outside the build-tools package.
+ */
 export class Package {
 	private static packageCount: number = 0;
 	private static readonly chalkColor = [
@@ -505,6 +508,8 @@ export class Packages {
  * The package.json is always sorted using sort-package-json.
  *
  * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export function updatePackageJsonFile(
 	packagePath: string,
@@ -526,6 +531,8 @@ export function updatePackageJsonFile(
  * indentation.
  *
  * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export function readPackageJsonAndIndent(
 	pathToJson: string,
@@ -556,6 +563,8 @@ function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: str
  * The package.json is always sorted using sort-package-json.
  *
  * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export async function updatePackageJsonFileAsync(
 	packagePath: string,

@@ -1,5 +1,92 @@
 # @fluidframework/runtime-definitions
 
+## 2.20.0
+
+### Minor Changes
+
+-   The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed ([#22996](https://github.com/microsoft/FluidFramework/pull/22996)) [bd243fb292](https://github.com/microsoft/FluidFramework/commit/bd243fb2927915d87c42486e21ee0c990962a9a7)
+
+    `ContainerRuntime.createDataStoreWithProps` and `IContainerRuntimeBase.createDataStoreWithProps`
+    were [deprecated in version 0.25.0](https://github.com/microsoft/FluidFramework/blob/main/BREAKING.md#icontainerruntimebase_createdatastorewithprops-is-removed) and have been removed.
+
+    Replace uses of these APIs with `PureDataObjectFactory.createInstanceWithDataStore` and pass in props via the `initialState`
+    parameter.
+
+    These changes were originally announced in version 0.25.0. See the following issues for more details:
+
+    -   [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
+    -   [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+### Minor Changes
+
+-   Synchronous Child Datastore Creation ([#23143](https://github.com/microsoft/FluidFramework/pull/23143)) [3426b434df](https://github.com/microsoft/FluidFramework/commit/3426b434dfa06de3ee1a60a5f0d605cd312f2c58)
+
+    #### Overview
+
+    This feature introduces a new pattern for creating datastores synchronously within the Fluid Framework. It allows for the synchronous creation of a child datastore from an existing datastore, provided that the child datastore is available synchronously via the existing datastore's registry and that the child's factory supports synchronous creation. This method also ensures strong typing for the consumer.
+
+    In this context, "child" refers specifically to the organization of factories and registries, not to any hierarchical or hosting relationship between datastores. The parent datastore does not control the runtime behaviors of the child datastore beyond its creation.
+
+    The synchronous creation of child datastores enhances the flexibility of datastore management within the Fluid Framework. It ensures type safety and provides a different way to manage datastores within a container. However, it is important to consider the overhead associated with datastores, as they are stored, summarized, garbage collected, loaded, and referenced independently. This overhead should be justified by the scenario's requirements.
+
+    Datastores offer increased capabilities, such as the ability to reference them via handles, allowing multiple references to exist and enabling those references to be moved, swapped, or changed. Additionally, datastores are garbage collected after becoming unreferenced, which can simplify final cleanup across clients. This is in contrast to subdirectories in a shared directory, which do not have native capabilities for referencing or garbage collection but are very low overhead to create.
+
+    Synchronous creation relies on both the factory and the datastore to support it. This means that asynchronous operations, such as resolving handles, some browser API calls, consensus-based operations, or other asynchronous tasks, cannot be performed during the creation flow. Therefore, synchronous child datastore creation is best limited to scenarios where the existing asynchronous process cannot be used, such as when a new datastore must be created in direct response to synchronous user input.
+
+    #### Key Benefits
+
+    -   **Synchronous Creation**: Allows for the immediate creation of child datastores without waiting for asynchronous operations.
+    -   **Strong Typing**: Ensures type safety and better developer experience by leveraging TypeScript's type system.
+
+    #### Use Cases
+
+    ##### Example 1: Creating a Child Datastore
+
+    In this example, we demonstrate how to support creating a child datastore synchronously from a parent datastore.
+
+    ```typescript
+    /**
+     * This is the parent DataObject, which is also a datastore. It has a
+     * synchronous method to create child datastores, which could be called
+     * in response to synchronous user input, like a key press.
+     */
+    class ParentDataObject extends DataObject {
+    	createChild(name: string): ChildDataStore {
+    		assert(
+    			this.context.createChildDataStore !== undefined,
+    			"this.context.createChildDataStore",
+    		);
+
+    		const { entrypoint } = this.context.createChildDataStore(
+    			ChildDataStoreFactory.instance,
+    		);
+    		const dir = this.root.createSubDirectory("children");
+    		dir.set(name, entrypoint.handle);
+    		entrypoint.setProperty("childValue", name);
+
+    		return entrypoint;
+    	}
+
+    	getChild(name: string): IFluidHandle<ChildDataStore> | undefined {
+    		const dir = this.root.getSubDirectory("children");
+    		return dir?.get<IFluidHandle<ChildDataStore>>(name);
+    	}
+    }
+    ```
+
+    For a complete example see the following test:
+    https://github.com/microsoft/FluidFramework/blob/main/packages/test/local-server-tests/src/test/synchronousDataStoreCreation.spec.ts
+
 ## 2.10.0
 
 ### Minor Changes

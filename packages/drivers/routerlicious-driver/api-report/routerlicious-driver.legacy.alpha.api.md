@@ -5,6 +5,9 @@
 ```ts
 
 // @alpha
+export function createRouterliciousDocumentServiceFactory(tokenProvider: ITokenProvider): IDocumentServiceFactory;
+
+// @alpha
 export interface IRouterliciousResolvedUrl extends IResolvedUrl {
     createAsEphemeral?: boolean;
     routerliciousResolvedUrl: true;

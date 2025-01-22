@@ -1,3 +1,25 @@
 #!/usr/bin/env node
 const mod = require("../dist/assignTestPorts.js");
-mod.writePortMapFile();
+
+const firstArg = process.argv[2];
+
+if (firstArg === "--help" || firstArg === "-h" || (firstArg !== undefined && !Number.isInteger(firstArg)) ) {
+	console.log(
+		"Usage: assign-test-ports [initialPort]\n\n" +
+		"Assigns a port to each package in the current pnpm workspace so they can run jest/puppeteer\n" +
+		"tests concurrently without port conflicts, and writes the port mapping to a file.\n\n" +
+		"The initial port is optional and defaults to 9000.\n\n" +
+		"The port mapping file is written to the OS' temporary storage folder (e.g. /tmp/testportmap.json)."
+	);
+	process.exit(0);
+}
+
+// We used to hardcode port 8081 as the initial one
+// but as of 2024-11-25 port 8084 is used by something in the build agent image.
+// If a package that has jest tests ends up assigned that port,
+// jest will fail to start.
+// So try to use a port range where nothing will be listening.
+const initialPortString = firstArg ?? "9000";
+
+const initialPort = Number.parseInt(initialPortString, 10);
+mod.writePortMapFile(initialPort);
