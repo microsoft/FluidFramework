@@ -215,11 +215,6 @@ extends:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
-              # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
-              # used in a few places in the pipeline to push custom telemetry to Kusto.
-              - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
-                readonly: true
             steps:
               # Setup
               - checkout: self
@@ -258,7 +253,7 @@ extends:
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
-                      absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
+                      pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
                     Publish Parameters:
@@ -428,7 +423,7 @@ extends:
                           script: |
                             set -eu -o pipefail
                             echo "Build Directory is ${{ parameters.buildDirectory }}";
-                            BUNDLE_SIZE_TESTS_DIR="${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests";
+                            BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
                             echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
                             ls -la $BUNDLE_SIZE_TESTS_DIR;
 
@@ -436,18 +431,19 @@ extends:
                         parameters:
                           devFeedUrl: $(ado-feeds-dev)
                           officeFeedUrl: $(ado-feeds-office)
+                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
                       - task: Bash@3
                         displayName: Write bundle sizes measurements to Aria/Kusto
                         inputs:
                           targetType: inline
-                          workingDirectory: $(absolutePathToTelemetryGenerator)
+                          workingDirectory: $(pathToTelemetryGenerator)
                           script: |
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                            ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -823,15 +819,12 @@ extends:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
                 readonly: true
-              - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
-                readonly: true
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
                   devFeedUrl: $(ado-feeds-dev)
                   officeFeedUrl: $(ado-feeds-office)
-                  isCheckoutNeeded: true
+                  pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
               - task: Bash@3
                 displayName: Get stage timing and result data from ADO
                 env:
@@ -856,9 +849,9 @@ extends:
                   WORK_FOLDER: $(pipelineTelemetryWorkdir)
                 inputs:
                   targetType: inline
-                  workingDirectory: $(absolutePathToTelemetryGenerator)
+                  workingDirectory: $(pathToTelemetryGenerator)
                   script: |
                     set -eu -o pipefail
                     echo "Listing files in '$WORK_FOLDER'"
                     ls -laR $WORK_FOLDER;
-                    node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+                    npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
