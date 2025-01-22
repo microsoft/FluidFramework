@@ -95,7 +95,6 @@ aImplicitType.length; // ok: aImplicitType is the continuation of the inferred t
 extendedIndexedRecordOfStrings.a.length; // ok: Accessing string property of extendedIndexedRecordOfStrings is allowed
 extendedIndexedRecordOfStrings.b.length; // defect: Accessing length of index property 'b', but 'b' might not be present
 
-
 interface NestedIndexSignatureType {
 	[WorkspaceAddress: string]: {
 		[StateValueManagerKey: string]: {
@@ -124,7 +123,7 @@ function TestNullish(
 }
 
 // Test else case
-const key = "test"
+const key = "test";
 const datastore: NestedIndexSignatureType = {};
 if (key in datastore) {
 	// Nothing to do
