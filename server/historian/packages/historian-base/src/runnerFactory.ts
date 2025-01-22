@@ -33,6 +33,7 @@ export class HistorianResources implements core.IResources {
 		public readonly denyList?: historianServices.IDenyList,
 		public readonly ephemeralDocumentTTLSec?: number,
 		public readonly readinessCheck?: core.IReadinessCheck,
+		public readonly simplifiedCustomDataRetriever?: historianServices.ISimplifiedCustomDataRetriever,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -205,6 +206,9 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			tenantManager,
 			gitCache,
 		);
+		const simplifiedCustomDataRetriever =
+			customizations?.simplifiedCustomDataRetriever ??
+			new historianServices.SimplifiedCustomDataRetriever();
 
 		// Token revocation
 		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
@@ -231,6 +235,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			denyList,
 			ephemeralDocumentTTLSec,
 			customizations?.readinessCheck,
+			simplifiedCustomDataRetriever,
 		);
 	}
 }
@@ -252,6 +257,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.denyList,
 			resources.ephemeralDocumentTTLSec,
 			resources.readinessCheck,
+			resources.simplifiedCustomDataRetriever,
 		);
 	}
 }

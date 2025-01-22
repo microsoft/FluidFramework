@@ -39,7 +39,6 @@ describe("RemoteMessageProcessor", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: Infinity,
-					reentrantBatchGroupingEnabled: false,
 				},
 				logger,
 			),
@@ -90,7 +89,7 @@ describe("RemoteMessageProcessor", () => {
 	}
 
 	const messageGenerationOptions = generatePairwiseOptions<{
-		/** chunking cannot happen without compression */
+		// chunking cannot happen without compression
 		compressionAndChunking:
 			| {
 					compression: false;
@@ -130,7 +129,6 @@ describe("RemoteMessageProcessor", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				);

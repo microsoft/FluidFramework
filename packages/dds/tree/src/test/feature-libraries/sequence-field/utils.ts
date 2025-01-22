@@ -12,7 +12,6 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
@@ -29,6 +28,7 @@ import {
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
 	setInCrossFieldMap,
@@ -63,11 +63,10 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
-	type RangeMap,
+	RangeMap,
 	brand,
 	fail,
 	fakeIdAllocator,
-	getFromRangeMap,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,
@@ -493,7 +492,7 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: SF.Changeset): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset): FieldChangeDelta {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
@@ -861,7 +860,8 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			if (addDependency) {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
+			const rangeMap = getMap(target).get(revision) ?? new RangeMap<T>();
+			return rangeMap.get(id, count);
 		},
 		set: (
 			target: CrossFieldTarget,
@@ -871,10 +871,8 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			value: T,
 			invalidateDependents: boolean,
 		) => {
-			if (
-				invalidateDependents &&
-				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
-			) {
+			const queries = getQueries(target).get(revision);
+			if (invalidateDependents && queries?.get(id, count).value !== undefined) {
 				table.isInvalidated = true;
 			}
 			setInCrossFieldMap(getMap(target), revision, id, count, value);

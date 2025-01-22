@@ -26,11 +26,13 @@ import { IDocumentStorageService } from "@fluidframework/driver-definitions/inte
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	LoggingError,
+	MockLogger,
 	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+import Sinon from "sinon";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -101,6 +103,8 @@ export class MockRuntime
 			closeContainer: () => (this.closed = true),
 		});
 	}
+
+	public disposed: boolean = false;
 
 	public get storage() {
 		return (this.attachState === AttachState.Detached
@@ -299,6 +303,7 @@ export const validateSummary = (runtime: MockRuntime) => {
 
 describe("BlobManager", () => {
 	const handlePs: Promise<IFluidHandle<ArrayBufferLike>>[] = [];
+	const mockLogger = new MockLogger();
 	let runtime: MockRuntime;
 	let createBlob: (blob: ArrayBufferLike, signal?: AbortSignal) => Promise<void>;
 	let waitForBlob: (blob: ArrayBufferLike) => Promise<void>;
@@ -309,7 +314,10 @@ describe("BlobManager", () => {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
-		mc = mixinMonitoringContext(createChildLogger(), configProvider(injectedSettings));
+		mc = mixinMonitoringContext(
+			createChildLogger({ logger: mockLogger }),
+			configProvider(injectedSettings),
+		);
 		runtime = new MockRuntime(mc);
 		handlePs.length = 0;
 
@@ -343,6 +351,7 @@ describe("BlobManager", () => {
 	afterEach(async () => {
 		assert((runtime.blobManager as any).pendingBlobs.size === 0);
 		injectedSettings = {};
+		mockLogger.clear();
 	});
 
 	it("empty snapshot", () => {
@@ -694,6 +703,34 @@ describe("BlobManager", () => {
 		assert.strictEqual(runtime.blobManager.allBlobsAttached, true);
 	});
 
+	it("runtime disposed during readBlob - log no error", async () => {
+		const someId = "someId";
+		(runtime.blobManager as any).setRedirection(someId, undefined); // To appease an assert
+
+		// Mock storage.readBlob to dispose the runtime and throw an error
+		Sinon.stub(runtime.storage, "readBlob").callsFake(async (_id: string) => {
+			runtime.disposed = true;
+			throw new Error("BOOM!");
+		});
+
+		await assert.rejects(
+			async () => runtime.blobManager.getBlob(someId),
+			(e: Error) => e.message === "BOOM!",
+			"Expected getBlob to throw with test error message",
+		);
+		assert(runtime.disposed, "Runtime should be disposed");
+		mockLogger.assertMatchNone(
+			[{ category: "error" }],
+			"Should not have logged any errors",
+			undefined,
+			false /* clearEventsAfterCheck */,
+		);
+		mockLogger.assertMatch(
+			[{ category: "generic", eventName: "BlobManager:AttachmentReadBlob_cancel" }],
+			"Expected the _cancel event to be logged with 'generic' category",
+		);
+	});
+
 	describe("Abort Signal", () => {
 		it("abort before upload", async () => {
 			await runtime.attach();
@@ -868,7 +905,9 @@ describe("BlobManager", () => {
 	describe("Garbage Collection", () => {
 		let redirectTable: Map<string, string | undefined>;
 
-		/** Creates a blob with the given content and returns its local and storage id. */
+		/**
+		 * Creates a blob with the given content and returns its local and storage id.
+		 */
 		async function createBlobAndGetIds(content: string) {
 			// For a given blob's GC node id, returns the blob id.
 			const getBlobIdFromGCNodeId = (gcNodeId: string) => {

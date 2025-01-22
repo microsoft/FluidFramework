@@ -29,6 +29,7 @@ export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	type FieldChangeHandler,
+	type FieldChangeDelta,
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type NodeChangeComposer,
@@ -41,6 +42,7 @@ export {
 	type ToDelta,
 	NodeAttachState,
 	type FieldChangeEncodingContext,
+	type NestedChangesIndices,
 } from "./fieldChangeHandler.js";
 export type {
 	CrossFieldKeyRange,
@@ -77,4 +79,17 @@ export type {
 export {
 	getAllowedContentDiscrepancies,
 	isRepoSuperset,
+	type AllowedTypeDiscrepancy,
+	type FieldKindDiscrepancy,
+	type ValueSchemaDiscrepancy,
+	type FieldDiscrepancy,
+	type NodeDiscrepancy,
+	type NodeKindDiscrepancy,
+	type NodeFieldsDiscrepancy,
+	type LinearExtension,
+	type Realizer,
+	fieldRealizer,
+	PosetComparisonResult,
+	comparePosetElements,
+	posetLte,
 } from "./discrepancies.js";

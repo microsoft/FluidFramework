@@ -5,7 +5,7 @@
 
 # Use a direct sha256 hash to ensure we are always using the same version of the base image.
 # This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
-FROM node:18.17.1-buster-slim@sha256:cb2a746612c2564d3bd0f871174618337af9d0f4d895df6a623fd7a69ca6e5bd AS base
+FROM node:18.20.5-bookworm-slim@sha256:c4a278056a0f79abf472d912bbf5af6c874126ae450faad9df52069e9ad78335 AS base
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -35,6 +35,7 @@ WORKDIR /usr/src/server
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY scripts/*.* ./scripts/
+COPY .npmrc ./
 COPY patches/*.* ./patches/
 
 COPY packages/gitresources/package*.json packages/gitresources/
@@ -60,10 +61,11 @@ COPY packages/tinylicious/package*.json packages/tinylicious/
 
 RUN corepack enable
 
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
+# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
-RUN pnpm install --unsafe-perm
+# TODO: AB#26779: This Workaround (passing --no-frozen-lockfile) should be removed when possible.
+RUN pnpm install --unsafe-perm --no-frozen-lockfile
 
 # And now copy over our actual code and build
 COPY . .

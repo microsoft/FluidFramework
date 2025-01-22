@@ -305,7 +305,6 @@ describe("Runtime", () => {
 			};
 
 			before(() => {
-				// eslint-disable-next-line import/no-named-as-default-member
 				clock = sinon.useFakeTimers();
 			});
 
@@ -788,7 +787,7 @@ describe("Runtime", () => {
 							maxAttempts,
 							0,
 							`Summarization should not have been attempted more than ${maxAttempts} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 
@@ -851,7 +850,7 @@ describe("Runtime", () => {
 							maxAttempts,
 							0,
 							`Summarization should not have been attempted more than ${maxAttempts} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 
@@ -891,7 +890,7 @@ describe("Runtime", () => {
 							maxAttemptsOverride,
 							0,
 							`Summarization should not have been attempted more than ${maxAttemptsOverride} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 				}
@@ -973,7 +972,7 @@ describe("Runtime", () => {
 							`Summarization should not have been attempted more than ${
 								maxAttempts + 1
 							} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 				}

@@ -4,42 +4,23 @@
  */
 
 import {
-	AzureClient,
-	AzureContainerServices,
-	AzureLocalConnectionConfig,
-} from "@fluidframework/azure-client";
-import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
 	Notifications,
 	type ISessionClient,
 } from "@fluidframework/presence/alpha";
-// eslint-disable-next-line import/no-internal-modules
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
-import { SharedMap } from "fluid-framework/legacy";
 
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
-
-const user = {
-	id: "1234567890",
-	name: "Test User",
-};
-
-const connectionConfig: AzureLocalConnectionConfig = {
-	type: "local",
-	tokenProvider: new InsecureTokenProvider("fooBar", user),
-	endpoint: "http://localhost:7070",
-};
 
 // Define the schema of our Container.
 // This includes the DataObjects we support and any initial DataObjects we want created
 // when the Container is first created.
 const containerSchema = {
 	initialObjects: {
-		map1: SharedMap,
 		// A Presence Manager object temporarily needs to be placed within container schema
 		// https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
 		presence: ExperimentalPresenceManager,
@@ -54,12 +35,8 @@ export type PresenceTrackerSchema = typeof containerSchema;
  * @remarks We wrap this in an async function so we can await Fluid's async calls.
  */
 async function start() {
-	const clientProps = {
-		connection: connectionConfig,
-	};
-	const client = new AzureClient(clientProps);
+	const client = new TinyliciousClient();
 	let container: IFluidContainer<PresenceTrackerSchema>;
-	let services: AzureContainerServices;
 
 	let id: string;
 
@@ -67,7 +44,7 @@ async function start() {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(containerSchema, "2"));
+		({ container } = await client.createContainer(containerSchema, "2"));
 
 		// If the app is in a `createNew` state, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
@@ -78,7 +55,7 @@ async function start() {
 		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container, services } = await client.getContainer(id, containerSchema, "2"));
+		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
 	document.title = id;
@@ -110,11 +87,12 @@ async function start() {
 	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
-	renderControlPanel(controlPanelDiv);
-	const slider = document.getElementById("mouse-latency") as HTMLInputElement;
+	const focusTracker = new FocusTracker(presence, appPresence);
+	const mouseTracker = new MouseTracker(presence, appPresence);
 
-	const focusTracker = new FocusTracker(presence, appPresence, services.audience);
-	const mouseTracker = new MouseTracker(presence, appPresence, services.audience, slider);
+	renderControlPanel(mouseTracker, controlPanelDiv);
+	renderFocusPresence(focusTracker, focusDiv);
+	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
 
 	const { reactions } = notifications.props;
 
@@ -148,8 +126,9 @@ async function start() {
 		},
 	);
 
-	renderFocusPresence(focusTracker, focusDiv);
-	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
+	// Setting "fluidStarted" is just for our test automation
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	window["fluidStarted"] = true;
 }
 
 start().catch(console.error);

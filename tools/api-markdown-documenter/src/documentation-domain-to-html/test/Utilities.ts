@@ -9,14 +9,14 @@ import type { Nodes as HastNodes } from "hast";
 import type { DocumentationNode } from "../../documentation-domain/index.js";
 import { documentationNodeToHtml } from "../ToHtml.js";
 import { createTransformationContext } from "../TransformationContext.js";
-import type { TransformationConfig } from "../configuration/index.js";
+import type { TransformationConfiguration } from "../configuration/index.js";
 
 /**
  * Tests transforming an individual {@link DocumentationNode} to HTML.
  */
 export function testTransformation(
 	node: DocumentationNode,
-	config?: Partial<TransformationConfig>,
+	config?: Partial<TransformationConfiguration>,
 ): HastNodes {
 	return documentationNodeToHtml(node, createTransformationContext(config));
 }
@@ -28,7 +28,7 @@ export function testTransformation(
 export function assertTransformation(
 	input: DocumentationNode,
 	expected: HastNodes,
-	transformationConfig?: TransformationConfig,
+	transformationConfig?: TransformationConfiguration,
 ): void {
 	const actual = testTransformation(input, transformationConfig);
 	expect(actual).to.deep.equal(expected);

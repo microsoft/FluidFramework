@@ -57,6 +57,7 @@ import {
 	brand,
 	idAllocatorFromMaxId,
 	nestedMapFromFlatList,
+	newTupleBTree,
 	setInNestedMap,
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
@@ -87,11 +88,11 @@ import {
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	newCrossFieldKeyTable,
-	newTupleBTree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
+	FieldChangeDelta,
 	FieldChangeEncodingContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -139,7 +140,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): DeltaFieldChanges => ({
+	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
 		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
 	}),
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
@@ -148,7 +149,7 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
 	isEmpty: (change) => false,
-	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0]]),
+	getNestedChanges: (change) => (change === undefined ? [] : [[change, 0, 0]]),
 	createEmpty: () => undefined,
 	getCrossFieldKeys: (_change) => [],
 };
@@ -1047,26 +1048,19 @@ describe("ModularChangeFamily", () => {
 
 	describe("intoDelta", () => {
 		it("fieldChanges", () => {
-			const nodeDelta: DeltaFieldChanges = {
-				local: [
-					{
-						count: 1,
-						fields: new Map([
-							[
-								fieldA,
-								{
-									local: [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }],
-								},
-							],
-						]),
-					},
-				],
-			};
+			const nodeDelta: DeltaFieldChanges = [
+				{
+					count: 1,
+					fields: new Map([
+						[fieldA, [{ count: 1, detach: { minor: 0 }, attach: { minor: 1 } }]],
+					]),
+				},
+			];
 
 			const expectedDelta: DeltaRoot = {
 				fields: new Map([
 					[fieldA, nodeDelta],
-					[fieldB, { local: [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }] }],
+					[fieldB, [{ count: 1, detach: { minor: 1 }, attach: { minor: 2 } }]],
 				]),
 			};
 

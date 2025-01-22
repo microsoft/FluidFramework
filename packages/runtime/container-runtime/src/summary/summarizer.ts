@@ -84,12 +84,14 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	private readonly stopDeferred = new Deferred<SummarizerStopReason>();
 
 	constructor(
-		/** Reference to runtime that created this object.
+		/**
+		 * Reference to runtime that created this object.
 		 * i.e. runtime with clientType === "summarizer"
 		 */
 		private readonly runtime: ISummarizerRuntime,
 		private readonly configurationGetter: () => ISummaryConfiguration,
-		/** Represents an object that can generate summary.
+		/**
+		 * Represents an object that can generate summary.
 		 * In practical terms, it's same runtime (this.runtime) with clientType === "summarizer".
 		 */
 		private readonly internalsProvider: ISummarizerInternalsProvider,
@@ -259,7 +261,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		this._heuristicData = new SummarizeHeuristicData(
 			this.runtime.deltaManager.lastSequenceNumber,
 			{
-				/** summary attempt baseline for heuristics */
+				/**
+				 * summary attempt baseline for heuristics
+				 */
 				refSequenceNumber: this.runtime.deltaManager.initialSequenceNumber,
 				summaryTime: Date.now(),
 			} as const,

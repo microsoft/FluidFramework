@@ -3,14 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type {
-	HasListeners,
-	IEmitter,
-	IFluidHandle,
-	Listenable,
-} from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
 	IChannelFactory,
@@ -23,6 +17,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
+	type GraphCommit,
 	type IEditableForest,
 	type ITreeCursor,
 	type JsonableTree,
@@ -56,6 +51,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 import {
+	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
 	type ExplicitCoreCodecVersions,
 	SharedTreeCore,
@@ -85,12 +81,7 @@ import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js"
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import {
-	type CheckoutEvents,
-	type TreeCheckout,
-	type BranchableTree,
-	createTreeCheckout,
-} from "./treeCheckout.js";
+import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 import { breakingClass, fail, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -196,30 +187,6 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 }
 
 /**
- * Build and return a forest of the requested type.
- */
-export function buildConfiguredForest(
-	type: ForestType,
-	schema: TreeStoredSchemaSubscription,
-	idCompressor: IIdCompressor,
-): IEditableForest {
-	switch (type) {
-		case ForestType.Optimized:
-			return buildChunkedForest(
-				makeTreeChunker(schema, defaultSchemaPolicy),
-				undefined,
-				idCompressor,
-			);
-		case ForestType.Reference:
-			return buildForest();
-		case ForestType.Expensive:
-			return buildForest(undefined, true);
-		default:
-			unreachableCase(type);
-	}
-}
-
-/**
  * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
  * TODO: detail compatibility requirements.
@@ -229,9 +196,6 @@ export class SharedTree
 	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
 	implements ISharedTree
 {
-	private readonly _events: Listenable<CheckoutEvents> &
-		IEmitter<CheckoutEvents> &
-		HasListeners<CheckoutEvents>;
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
@@ -241,7 +205,7 @@ export class SharedTree
 		id: string,
 		runtime: IFluidDataStoreRuntime,
 		attributes: IChannelAttributes,
-		optionsParam: SharedTreeOptions,
+		optionsParam: SharedTreeOptionsInternal,
 		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		if (runtime.idCompressor === undefined) {
@@ -330,7 +294,6 @@ export class SharedTree
 			),
 			changeEnricher,
 		);
-		this._events = createEmitter<CheckoutEvents>();
 		const localBranch = this.getLocalBranch();
 		this.checkout = createTreeCheckout(
 			runtime.idCompressor,
@@ -342,11 +305,11 @@ export class SharedTree
 				schema,
 				forest,
 				fieldBatchCodec,
-				events: this._events,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
 				logger: this.logger,
 				breaker: this.breaker,
+				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 			},
 		);
 
@@ -368,10 +331,10 @@ export class SharedTree
 				this.commitEnricher.commitTransaction();
 			}
 		});
-		this.checkout.events.on("beforeBatch", (newCommits) => {
-			if (this.isAttached()) {
+		this.checkout.events.on("beforeBatch", (event) => {
+			if (event.type === "append" && this.isAttached()) {
 				if (this.checkout.transaction.isInProgress()) {
-					this.commitEnricher.addTransactionCommits(newCommits);
+					this.commitEnricher.addTransactionCommits(event.newCommits);
 				}
 			}
 		});
@@ -440,8 +403,7 @@ export class SharedTree
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
-		this.checkout.setTipRevisionForLoadedData(this.trunkHeadRevision);
-		this._events.emit("afterBatch", []);
+		this.checkout.load();
 	}
 
 	protected override didAttach(): void {
@@ -465,6 +427,27 @@ export class SharedTree
 			0x674 /* Unexpected transaction is open while applying stashed ops */,
 		);
 		super.applyStashedOp(...args);
+	}
+
+	protected override submitCommit(
+		commit: GraphCommit<SharedTreeChange>,
+		schemaAndPolicy: ClonableSchemaAndPolicy,
+		isResubmit: boolean,
+	): void {
+		assert(
+			!this.checkout.transaction.isInProgress(),
+			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
+		);
+		if (isResubmit) {
+			return super.submitCommit(commit, schemaAndPolicy, isResubmit);
+		}
+
+		// Refrain from submitting new commits until they are validated by the checkout.
+		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
+		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
+		this.checkout.onCommitValid(commit, () =>
+			super.submitCommit(commit, schemaAndPolicy, isResubmit),
+		);
 	}
 }
 
@@ -549,6 +532,9 @@ export type SharedTreeOptions = Partial<ICodecOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
+export interface SharedTreeOptionsInternal extends SharedTreeOptions {
+	disposeForksAfterTransaction?: boolean;
+}
 /**
  * Configuration options for SharedTree's internal tree storage.
  * @alpha
@@ -586,28 +572,73 @@ export interface SharedTreeFormatOptions {
 
 /**
  * Used to distinguish between different forest types.
+ * @remarks
+ * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
+ * @sealed @alpha
+ */
+export interface ForestType extends ErasedType<"ForestType"> {}
+
+/**
+ * Reference implementation of forest.
+ * @remarks
+ * A simple implementation with minimal complexity and moderate debuggability, validation and performance.
+ * @privateRemarks
+ * The "ObjectForest" forest type.
  * @alpha
  */
-export enum ForestType {
-	/**
-	 * The "ObjectForest" forest type.
-	 */
-	Reference = 0,
-	/**
-	 * The "ChunkedForest" forest type.
-	 */
-	Optimized = 1,
-	/**
-	 * The "ObjectForest" forest type with expensive asserts for debugging.
-	 */
-	Expensive = 2,
+export const ForestTypeReference = toForestType(() => buildForest());
+
+/**
+ * Optimized implementation of forest.
+ * @remarks
+ * A complex optimized forest implementation, which has minimal validation and debuggability to optimize for performance.
+ * Uses an internal representation optimized for size designed to scale to larger datasets with reduced overhead.
+ * @privateRemarks
+ * The "ChunkedForest" forest type.
+ * @alpha
+ */
+export const ForestTypeOptimized = toForestType(
+	(schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
+		buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), undefined, idCompressor),
+);
+
+/**
+ * Slow implementation of forest intended only for debugging.
+ * @remarks
+ * Includes validation with scales poorly.
+ * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
+ * @privateRemarks
+ * The "ObjectForest" forest type with expensive asserts for debugging.
+ * @alpha
+ */
+export const ForestTypeExpensiveDebug = toForestType(() => buildForest(undefined, true));
+
+type ForestFactory = (
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+) => IEditableForest;
+
+function toForestType(factory: ForestFactory): ForestType {
+	return factory as unknown as ForestType;
 }
 
-export const defaultSharedTreeOptions: Required<SharedTreeOptions> = {
+/**
+ * Build and return a forest of the requested type.
+ */
+export function buildConfiguredForest(
+	factory: ForestType,
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+): IEditableForest {
+	return (factory as unknown as ForestFactory)(schema, idCompressor);
+}
+
+export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
-	forest: ForestType.Reference,
+	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
+	disposeForksAfterTransaction: true,
 };
 
 /**
@@ -622,7 +653,7 @@ export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
 		packageVersion: "0.0.0",
 	};
 
-	public constructor(private readonly options: SharedTreeOptions = {}) {}
+	public constructor(private readonly options: SharedTreeOptionsInternal = {}) {}
 
 	public async load(
 		runtime: IFluidDataStoreRuntime,
@@ -672,7 +703,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 			break;
 		case FieldKinds.forbidden.identifier:
 			kind = FieldKind.Optional;
-			assert(schema.types.size === 0, "invalid forbidden field");
+			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
 		default:
 			fail("invalid field kind");
@@ -693,7 +724,10 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		return { kind: NodeKind.Object, fields };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
-		assert(schema.mapFields.kind === FieldKinds.optional.identifier, "Invalid map schema");
+		assert(
+			schema.mapFields.kind === FieldKinds.optional.identifier,
+			0xa95 /* Invalid map schema */,
+		);
 		return { kind: NodeKind.Map, allowedTypes: schema.mapFields.types };
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
