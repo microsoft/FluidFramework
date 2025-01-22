@@ -22,11 +22,26 @@ import type { Props } from "@theme/NavbarItem/DocsVersionDropdownNavbarItem";
 import DropdownNavbarItem from "@theme/NavbarItem/DropdownNavbarItem";
 import React from "react";
 
+/**
+ * Gets the documentation page marked as the main/landing page for a version,
+ * identified by the mainDocId property.
+ *
+ * @param version - The version object to get the main doc from
+ * @returns The main documentation page for this version
+ */
 function getVersionMainDoc(version: GlobalVersion): GlobalDoc {
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return version.docs.find((doc) => doc.id === version.mainDocId)!;
 }
 
+/**
+ * When navigating between versions, attempts to keep the user on the same page.
+ * If the current page doesn't exist in the target version, falls back to that version's main page.
+ *
+ * @param version - The version being navigated to
+ * @param activeDocContext - Information about the currently viewed documentation
+ * @returns Either the equivalent page in the target version, or that version's main page
+ */
 function getVersionTargetDoc(
 	version: GlobalVersion,
 	activeDocContext: ActiveDocContext,
@@ -120,7 +135,6 @@ export default function DocsVersionDropdownNavbarItem({
 				aria-label="Select documentation version"
 				role="combobox"
 				aria-haspopup="listbox"
-				aria-expanded="false"
 			/>
 		</div>
 	);
