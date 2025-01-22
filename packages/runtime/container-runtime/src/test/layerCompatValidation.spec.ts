@@ -94,9 +94,9 @@ describe("Runtime Layer compatibility", () => {
 			LoaderSupportRequirements.minSupportedGeneration,
 			"Min supported generation not as expected",
 		);
-		assert.strictEqual(
+		assert.deepStrictEqual(
 			properties.unsupportedFeatures,
-			JSON.stringify(unsupportedFeatures),
+			unsupportedFeatures,
 			"Unsupported features not as expected",
 		);
 		return true;
@@ -211,7 +211,7 @@ describe("Runtime Layer compatibility", () => {
 	/**
 	 * These tests validates that the Runtime layer compatibility is correctly enforced during container runtime creation.
 	 */
-	describe("Container Runtime create", () => {
+	describe("Container Runtime creation", () => {
 		const mockProvideEntryPoint = async () => ({
 			myProp: "myValue",
 		});
@@ -287,7 +287,7 @@ describe("Runtime Layer compatibility", () => {
 						false /* isGenerationCompatible */,
 						loaderGeneration,
 					),
-				"Loader with generation >= minSupportedGeneration should be incompatible",
+				"Loader with generation < minSupportedGeneration should be incompatible",
 			);
 		});
 	});

@@ -92,9 +92,9 @@ describe("Runtime Layer compatibility", () => {
 			RuntimeSupportRequirements.minSupportedGeneration,
 			"Min supported generation not as expected",
 		);
-		assert.strictEqual(
+		assert.deepStrictEqual(
 			properties.unsupportedFeatures,
-			JSON.stringify(unsupportedFeatures),
+			unsupportedFeatures,
 			"Unsupported features not as expected",
 		);
 		return true;
@@ -214,7 +214,7 @@ describe("Runtime Layer compatibility", () => {
 	/**
 	 * These tests validates that the Loader layer compatibility is correctly enforced during container creation.
 	 */
-	describe("Container create", () => {
+	describe("Container creation", () => {
 		function getCodeLoader(compatibilityDetails?: ILayerCompatDetails): ICodeDetailsLoader {
 			return {
 				load: async () => {

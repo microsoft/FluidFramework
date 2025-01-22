@@ -66,7 +66,7 @@ export function validateRuntimeCompatibility(
 				runtimeGeneration: maybeRuntimeCompatDetails?.generation,
 				minSupportedGeneration: RuntimeSupportRequirements.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
-				unsupportedFeatures: JSON.stringify(layerCheckResult.unsupportedFeatures),
+				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),
 		});
 		disposeFn(error);
