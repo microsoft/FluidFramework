@@ -1665,5 +1665,6 @@ export const shortCodeMap = {
 	"0xaab": "must be segment leaf",
 	"0xaac": "must have removedClient ids",
 	"0xaad": "Local client should be 'Disconnected' before adding new connection.",
-	"0xaae": "Maps should have the same behavior"
+	"0xaae": "Maps should have the same behavior",
+	"0xaaf": "Unexpected undefined code point"
 };
