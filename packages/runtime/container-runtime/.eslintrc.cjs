@@ -16,7 +16,7 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// False positives on non-array `push` methods.
-		// TODO: remove this override once this rule has been disabled in the root config.
+		// TODO:AB#28686: remove this override once this rule has been disabled in the root config.
 		"unicorn/no-array-push-push": "off",
 
 		// #region TODO:AB#3027: remove overrides and upgrade config to `recommended`

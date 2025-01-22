@@ -33,7 +33,7 @@ module.exports = {
 		"unicorn/prefer-module": "off",
 		"unicorn/prefer-negative-index": "off",
 
-		// TODO: remove this override once this rule has been disabled in the root config.
+		// TODO:AB#28686: remove this override once this rule has been disabled in the root config.
 		"unicorn/no-array-push-push": "off",
 
 		// This package is exclusively used in a Node.js context
