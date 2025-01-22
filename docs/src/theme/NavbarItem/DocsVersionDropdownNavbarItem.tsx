@@ -63,6 +63,12 @@ type AccessibleLinkProps = LinkLikeNavbarItemProps & {
  * Its inner layout and contents were updated to better suite our needs, but the underlying styling and inner
  * components remain unchanged.
  *
+ * Wrapper can't intercept the version items because they're generated inside
+ * DocsVersionDropdownNavbarItem using internal hooks (useVersions, useActiveVersion).
+ * By the time props reach our wrapper, it's too late to modify the items for accessibility.
+ * Full component implementation needed to access these hooks and transform items before
+ * they're passed to Docusaurus's dropdown components.
+ *
  * See {@link https://docusaurus.io/docs/swizzling/ | here} for more information on swizzling.
  */
 export default function DocsVersionDropdownNavbarItem({
