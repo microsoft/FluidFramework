@@ -45,7 +45,7 @@ export class TestFluidObject implements ITestFluidObject {
 
 	public root!: ISharedMap;
 	private readonly innerHandle: IFluidHandle<this>;
-	private initializeP: Promise<void> | undefined;
+	private initializationPromise: Promise<void> | undefined;
 
 	/**
 	 * Creates a new TestFluidObject.
@@ -104,11 +104,8 @@ export class TestFluidObject implements ITestFluidObject {
 			this.root = (await this.runtime.getChannel("root")) as ISharedMap;
 		};
 
-		if (this.initializeP === undefined) {
-			this.initializeP = doInitialization();
-		}
-
-		return this.initializeP;
+		this.initializationPromise ??= doInitialization();
+		return this.initializationPromise;
 	}
 }
 
