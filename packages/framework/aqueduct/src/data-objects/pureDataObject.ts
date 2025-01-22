@@ -58,7 +58,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initProps?: I["InitialState"];
 
-	private initializationPromise: Promise<void> | undefined;
+	#initializationPromise: Promise<void> | undefined;
 
 	public get id(): string {
 		return this.runtime.id;
@@ -124,8 +124,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * and need a fully initialized object, then you can call this API to ensure object is fully initialized.
 	 */
 	public async finishInitialization(existing: boolean): Promise<void> {
-		this.initializationPromise ??= this.initializeInternal(existing);
-		return this.initializationPromise;
+		this.#initializationPromise ??= this.initializeInternal(existing);
+		return this.#initializationPromise;
 	}
 
 	/**
