@@ -105,6 +105,7 @@
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"eslint": "~8.55.0",
+		"fluid-framework": "^1.4.0",
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
