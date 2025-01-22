@@ -272,6 +272,11 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 
 	beforeEach("setup", async function () {
 		provider = getTestObjectProvider({ syncSummarizer: true });
+		/**
+		 * Note that these tests use fake timers and will fail when run with real services. The reason is because GC uses
+		 * op timestamps to keep track of how much time has passed. With real services, the op timestamps are real and
+		 * they will not move with the fake timers.
+		 */
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
