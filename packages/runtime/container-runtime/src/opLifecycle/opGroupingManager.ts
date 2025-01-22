@@ -157,7 +157,7 @@ export class OpGroupingManager {
 		return (
 			// Grouped batching must be enabled
 			this.config.groupedBatchingEnabled &&
-			// The number of ops in the batch must surpass the configured threshold
+			// The number of ops in the batch must be 2 or more
 			// or be empty (to allow for empty batches to be grouped)
 			batch.messages.length !== 1
 			// Support for reentrant batches will be on by default
