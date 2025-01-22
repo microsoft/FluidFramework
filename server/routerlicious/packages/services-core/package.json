@@ -28,7 +28,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --dir . -v",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -44,9 +44,9 @@
 		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.52.0-315632",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@5.0.0",
 		"@types/mocha": "^10.0.1",
@@ -70,46 +70,39 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_CombinedProducer": {
+			"InterfaceDeclaration_IOrdererManager": {
 				"forwardCompat": false
 			},
-			"Class_MongoManager": {
+			"InterfaceDeclaration_IProducer": {
 				"forwardCompat": false
 			},
-			"Class_TokenRevocationError": {
+			"ClassDeclaration_CombinedProducer": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IOrdererConnection": {
+				"forwardCompat": false
+			},
+			"InterfaceDeclaration_IContext": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_MongoManager": {
+				"forwardCompat": false
+			},
+			"ClassDeclaration_TokenRevokedError": {
 				"backCompat": false
 			},
-			"Class_TokenRevokedError": {
+			"ClassDeclaration_TokenRevocationError": {
 				"backCompat": false
 			},
-			"ClassStatics_TokenRevocationError": {
+			"InterfaceDeclaration_IBoxcarMessage": {
 				"backCompat": false
 			},
-			"ClassStatics_TokenRevokedError": {
-				"backCompat": false
-			},
-			"Interface_IBoxcarMessage": {
-				"backCompat": false
-			},
-			"Interface_IContext": {
+			"InterfaceDeclaration_ITenantConfig": {
 				"forwardCompat": false
 			},
-			"Interface_IOrdererConnection": {
-				"forwardCompat": false
-			},
-			"Interface_IOrdererManager": {
-				"forwardCompat": false
-			},
-			"Interface_IProducer": {
-				"forwardCompat": false
-			},
-			"Interface_ITenantConfig": {
-				"forwardCompat": false
-			},
-			"Interface_ITenantManager": {
+			"InterfaceDeclaration_ITenantManager": {
 				"forwardCompat": false
 			}
-		},
-		"entrypoint": "public"
+		}
 	}
 }

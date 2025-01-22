@@ -963,7 +963,9 @@ export class ContainerRuntime
 			gcOptions = {},
 			loadSequenceNumberVerification = "close",
 			flushMode = defaultFlushMode,
-			compressionOptions = defaultCompressionConfig,
+			compressionOptions = runtimeOptions.enableGroupedBatching === false
+				? disabledCompressionConfig // Compression must be disabled if Grouping is disabled
+				: defaultCompressionConfig,
 			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
 			enableRuntimeIdCompressor,
 			chunkSizeInBytes = defaultChunkSizeInBytes,
@@ -1145,6 +1147,10 @@ export class ContainerRuntime
 				runtime.onSchemaChange(schema);
 			},
 		);
+
+		if (compressionLz4 && !enableGroupedBatching) {
+			throw new UsageError("If compression is enabled, op grouping must be enabled too");
+		}
 
 		const featureGatesForTelemetry: Record<string, boolean | number | undefined> = {};
 
@@ -1759,7 +1765,7 @@ export class ContainerRuntime
 			existing,
 			metadata,
 			createContainerMetadata: this.createContainerMetadata,
-			isSummarizerClient: this._summarizer !== undefined,
+			isSummarizerClient,
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),

@@ -35,7 +35,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
 		"tsc:watch": "tsc --watch",
-		"typetests:gen": "flub generate typetests --dir . -v",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -65,9 +65,9 @@
 		"events_pkg": "npm:events@^3.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.52.0-315632",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/protocol-base-previous": "npm:@fluidframework/protocol-base@5.0.0",
 		"@microsoft/api-extractor": "^7.45.1",
@@ -84,7 +84,6 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {},
-		"entrypoint": "public"
+		"broken": {}
 	}
 }
