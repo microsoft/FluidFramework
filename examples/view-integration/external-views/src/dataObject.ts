@@ -3,13 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import type { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	FluidObject,
+	IEvent,
+	IEventProvider,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/legacy";
+import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
+import { MapFactory, type ISharedMap, type IValueChanged } from "@fluidframework/map/legacy";
+import type {
+	IFluidDataStoreChannel,
+	IFluidDataStoreContext,
+	IFluidDataStoreFactory,
+} from "@fluidframework/runtime-definitions/legacy";
+
+export interface IDiceRollerEvents extends IEvent {
+	(event: "diceRolled", listener: () => void);
+}
 
 /**
  * IDiceRoller describes the public API surface for our dice roller data object.
  */
-export interface IDiceRoller extends EventEmitter {
+export interface IDiceRoller {
+	readonly handle: IFluidHandle<FluidObject>;
+	readonly events: IEventProvider<IDiceRollerEvents>;
 	/**
 	 * Get the dice value as a number.
 	 */
@@ -19,59 +39,84 @@ export interface IDiceRoller extends EventEmitter {
 	 * Roll the dice.  Will cause a "diceRolled" event to be emitted.
 	 */
 	roll: () => void;
-
-	/**
-	 * The diceRolled event will fire whenever someone rolls the device, either locally or remotely.
-	 */
-	on(event: "diceRolled", listener: () => void): this;
 }
 
-// The root is map-like, so we'll use this key for storing the value.
+const mapId = "dice-map";
+const mapFactory = new MapFactory();
+const diceRollerSharedObjectRegistry = new Map<string, IChannelFactory>([
+	[mapFactory.type, mapFactory],
+]);
+
+// We'll use this key for storing the value.
 const diceValueKey = "diceValue";
 
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-export class DiceRoller extends DataObject implements IDiceRoller {
-	/**
-	 * initializingFirstTime is run only once by the first client to create the DataObject.  Here we use it to
-	 * initialize the state of the DataObject.
-	 */
-	protected async initializingFirstTime() {
-		this.root.set(diceValueKey, 1);
+class DiceRoller implements IDiceRoller {
+	public get value() {
+		const value = this.map.get(diceValueKey);
+		assert(typeof value === "number", "Bad dice value");
+		return value;
 	}
 
-	/**
-	 * hasInitialized is run by each client as they load the DataObject.  Here we use it to set up usage of the
-	 * DataObject, by registering an event listener for dice rolls.
-	 */
-	protected async hasInitialized() {
-		this.root.on("valueChanged", (changed) => {
+	private readonly _events = new TypedEventEmitter<IDiceRollerEvents>();
+	public get events(): IEventProvider<IDiceRollerEvents> {
+		return this._events;
+	}
+
+	public constructor(
+		public readonly handle: IFluidHandle<FluidObject>,
+		private readonly map: ISharedMap,
+	) {
+		this.map.on("valueChanged", (changed: IValueChanged) => {
 			if (changed.key === diceValueKey) {
 				// When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
-				this.emit("diceRolled");
+				this._events.emit("diceRolled");
 			}
 		});
 	}
 
-	public get value() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return this.root.get(diceValueKey);
-	}
-
 	public readonly roll = () => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
-		this.root.set(diceValueKey, rollValue);
+		this.map.set(diceValueKey, rollValue);
 	};
 }
 
-/**
- * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
- * and the constructor it will call.  In this scenario, the third and fourth arguments are not used.
- */
-export const DiceRollerInstantiationFactory = new DataObjectFactory(
-	"dice-roller",
-	DiceRoller,
-	[],
-	{},
-);
+export class DiceRollerFactory implements IFluidDataStoreFactory {
+	public get type(): string {
+		throw new Error("Do not use the type on the data store factory");
+	}
+
+	public get IFluidDataStoreFactory(): IFluidDataStoreFactory {
+		return this;
+	}
+
+	public async instantiateDataStore(
+		context: IFluidDataStoreContext,
+		existing: boolean,
+	): Promise<IFluidDataStoreChannel> {
+		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
+			context,
+			diceRollerSharedObjectRegistry,
+			existing,
+			async () => instance,
+		);
+
+		let map: ISharedMap;
+		if (existing) {
+			map = (await runtime.getChannel(mapId)) as ISharedMap;
+		} else {
+			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
+			map.set(diceValueKey, 1);
+			map.bindToContext();
+		}
+
+		assert(runtime.entryPoint !== undefined, "EntryPoint was undefined");
+		const handle = runtime.entryPoint;
+
+		const instance = new DiceRoller(handle, map);
+
+		return runtime;
+	}
+}

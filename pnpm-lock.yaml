@@ -5671,18 +5671,57 @@ importers:
       '@fluid-example/example-utils':
         specifier: workspace:~
         version: link:../../utils/example-utils
+      '@fluid-internal/client-utils':
+        specifier: workspace:^
+        version: link:../../../packages/common/client-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:^
+        version: link:../../../packages/loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../../packages/runtime/container-runtime
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:^
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:^
+        version: link:../../../packages/common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:^
+        version: link:../../../packages/runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:^
+        version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/local-driver':
+        specifier: workspace:^
+        version: link:../../../packages/drivers/local-driver
+      '@fluidframework/map':
+        specifier: workspace:^
+        version: link:../../../packages/dds/map
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:^
+        version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:^
+        version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/server-local-server':
+        specifier: ^5.0.0
+        version: 5.0.0
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:^
+        version: link:../../../packages/drivers/tinylicious-driver
       css-loader:
         specifier: ^7.1.2
         version: 7.1.2(webpack@5.97.1)
@@ -5695,6 +5734,9 @@ importers:
       style-loader:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.97.1)
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -35304,14 +35346,6 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.7.9:
-    dependencies:
-      follow-redirects: 1.15.9
-      form-data: 4.0.1
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
   axios@1.7.9(debug@4.3.7):
     dependencies:
       follow-redirects: 1.15.9(debug@4.3.7)
@@ -37748,14 +37782,12 @@ snapshots:
 
   fn.name@1.1.0: {}
 
-  follow-redirects@1.15.9: {}
-
   follow-redirects@1.15.9(debug@4.3.7):
     dependencies:
       debug: 4.3.7
 
   follow-redirects@1.15.9(debug@4.4.0):
-    dependencies:
+    optionalDependencies:
       debug: 4.4.0(supports-color@8.1.1)
 
   for-each@0.3.3:
@@ -38415,7 +38447,7 @@ snapshots:
   http-proxy@1.18.1:
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.9
+      follow-redirects: 1.15.9(debug@4.4.0)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -44474,7 +44506,7 @@ snapshots:
 
   wait-on@8.0.1:
     dependencies:
-      axios: 1.7.9
+      axios: 1.7.9(debug@4.4.0)
       joi: 17.13.3
       lodash: 4.17.21
       minimist: 1.2.8
