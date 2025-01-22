@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "node:assert";
 
 import {
@@ -361,6 +362,7 @@ export class IdCompressorTestNetwork {
 				ids: {
 					firstGenCount: 1,
 					count: numIds,
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					requestedClusterSize: this.getCompressor(Client.Client1)[
 						// eslint-disable-next-line @typescript-eslint/dot-notation
 						"nextRequestedClusterSize"
@@ -548,6 +550,7 @@ export class IdCompressorTestNetwork {
 
 		const maxLogLength = sequencedLogs
 			.map(([_, data]) => data.length)
+			// eslint-disable-next-line unicorn/no-array-reduce
 			.reduce((p, n) => Math.max(p, n));
 
 		function getNextLogWithEntryAt(logsIndex: number, entryIndex: number): number | undefined {
@@ -700,8 +703,8 @@ export function roundtrip(
 ] {
 	// preserve the capacity request as this property is normally private and resets
 	// to a default on construction (deserialization)
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	const capacity = compressor["nextRequestedClusterSize"];
+	// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-assignment
+	const capacity: number = compressor["nextRequestedClusterSize"];
 	if (withSession) {
 		const serialized = compressor.serialize(withSession);
 		const roundtripped = IdCompressor.deserialize(serialized);

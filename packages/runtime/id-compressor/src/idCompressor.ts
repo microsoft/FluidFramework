@@ -202,7 +202,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
 	 * {@inheritdoc IIdCompressorCore.beginGhostSession}
 	 */
-	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void) {
+	public beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void {
 		this.startGhostSession(ghostSessionId);
 		try {
 			ghostSessionCallback();
@@ -554,7 +554,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			!this.ongoingGhostSession,
 			0x8a9 /* IdCompressor should not be operated normally when in a ghost session */,
 		);
-		const { normalizer, finalSpace, sessions } = this;
+		const { normalizer, finalSpace, sessions, localGenCount, logger, nextRangeBaseGenCount } =
+			this;
 		const sessionIndexMap = new Map<Session, number>();
 		let sessionIndex = 0;
 		for (const session of sessions.sessions()) {
@@ -568,7 +569,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			? 1 + // generated ID count
 				1 + // next range base genCount
 				1 + // count of normalizer pairs
-				this.normalizer.idRanges.size * 2 // pairs
+				normalizer.idRanges.size * 2 // pairs
 			: 0;
 		// Layout size, in 8 byte increments
 		const totalSize =
@@ -603,8 +604,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		if (hasLocalState) {
-			index = writeNumber(serializedFloat, index, this.localGenCount);
-			index = writeNumber(serializedFloat, index, this.nextRangeBaseGenCount);
+			index = writeNumber(serializedFloat, index, localGenCount);
+			index = writeNumber(serializedFloat, index, nextRangeBaseGenCount);
 			index = writeNumber(serializedFloat, index, normalizer.idRanges.size);
 			for (const [leadingGenCount, count] of normalizer.idRanges.entries()) {
 				index = writeNumber(serializedFloat, index, leadingGenCount);
@@ -613,7 +614,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 
 		assert(index === totalSize, 0x75b /* Serialized size was incorrectly calculated. */);
-		this.logger?.sendTelemetryEvent({
+		logger?.sendTelemetryEvent({
 			eventName: "RuntimeIdCompressor:SerializedIdCompressorSize",
 			size: serializedFloat.byteLength,
 			clusterCount: finalSpace.clusters.length,

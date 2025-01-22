@@ -10,7 +10,7 @@ import { v4 } from "uuid";
 import { LocalCompressedId, NumericUuid } from "./identifiers.js";
 import { SessionId, StableId } from "./types/index.js";
 
-const hexadecimalCharCodes = [..."09afAF"].map((c) => c.charCodeAt(0)) as [
+const hexadecimalCharCodes = [..."09afAF"].map((c) => c.codePointAt(0)) as [
 	zero: number,
 	nine: number,
 	a: number,
@@ -99,7 +99,9 @@ export function isStableId(str: string): str is StableId {
 			}
 
 			default: {
-				if (!isHexadecimalCharacter(str.charCodeAt(i))) {
+				const codePoint = str.codePointAt(i);
+				assert(codePoint !== undefined, "Unexpected undefined code point");
+				if (!isHexadecimalCharacter(codePoint)) {
 					return false;
 				}
 				break;

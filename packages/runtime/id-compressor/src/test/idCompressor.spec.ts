@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable import/no-nodejs-modules */
 import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
@@ -357,6 +358,7 @@ describe("IdCompressor", () => {
 			assert.deepEqual(ids3, [3, -5]);
 			assert.deepEqual(range3.ids?.localIdRanges, [[5, 1]]);
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			(range3 as any).ids.requestedClusterSize = 4;
 			const ids4 = generateCompressedIds(compressor, 2);
 			compressor.finalizeCreationRange(range3);
@@ -470,7 +472,9 @@ describe("IdCompressor", () => {
 				() => compressor.finalizeCreationRange(batchRange),
 				(e: Error) =>
 					e.message === "Ranges finalized out of order" &&
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(e as any).expectedStart === -4 &&
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(e as any).actualStart === -1,
 			);
 		});
@@ -485,7 +489,9 @@ describe("IdCompressor", () => {
 				() => compressor.finalizeCreationRange(secondRange),
 				(e: Error) =>
 					e.message === "Ranges finalized out of order" &&
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(e as any).expectedStart === -1 &&
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 					(e as any).actualStart === -2,
 			);
 		});
@@ -1086,7 +1092,7 @@ describe("IdCompressor", () => {
 				const opSpaceIds = network.allocateAndSendIds(Client.Client1, 1);
 				// Mimic sending a reference to an ID that hasn't been acked yet, such as in a slow network
 				const id = opSpaceIds[0];
-				const getSessionNormalizedId = () =>
+				const getSessionNormalizedId = (): SessionSpaceCompressedId =>
 					compressor2.normalizeToSessionSpace(id, compressor1.localSessionId);
 				assert.throws(
 					getSessionNormalizedId,
@@ -1217,7 +1223,8 @@ describe("IdCompressor", () => {
 			});
 
 			itNetwork("can finalize a range when the current cluster is full", 5, (network) => {
-				const clusterCapacity = network.getCompressor(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				const clusterCapacity: number = network.getCompressor(
 					Client.Client1,
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 				)["nextRequestedClusterSize"];
@@ -1228,7 +1235,8 @@ describe("IdCompressor", () => {
 			});
 
 			itNetwork("can finalize a range that spans multiple clusters", 5, (network) => {
-				const clusterCapacity = network.getCompressor(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				const clusterCapacity: number = network.getCompressor(
 					Client.Client1,
 					// eslint-disable-next-line @typescript-eslint/dot-notation
 				)["nextRequestedClusterSize"];
@@ -1309,7 +1317,8 @@ describe("IdCompressor", () => {
 				"can resume a session and interact with multiple other clients",
 				3,
 				(network) => {
-					const clusterSize = network.getCompressor(
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+					const clusterSize: number = network.getCompressor(
 						Client.Client1,
 						// eslint-disable-next-line @typescript-eslint/dot-notation
 					)["nextRequestedClusterSize"];
@@ -1384,7 +1393,7 @@ function createNetworkTestFunction(
 function describeNetwork(
 	title: string,
 	its: (itFunc: NetworkTestFunction & NetworkTestFunctionWithCapacity) => void,
-) {
+): void {
 	describe(title, () => {
 		its(createNetworkTestFunction(false));
 	});

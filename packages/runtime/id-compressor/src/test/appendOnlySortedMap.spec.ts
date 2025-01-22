@@ -5,6 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
+// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "node:assert";
 
 import { AppendOnlySortedMap } from "../appendOnlySortedMap.js";
@@ -12,7 +13,7 @@ import { compareFiniteNumbers } from "../utilities.js";
 
 import { assertNotUndefined } from "./testCommon.js";
 
-function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
+function runAppendOnlyMapTests(mapBuilder: () => AppendOnlySortedMap<number, number>): void {
 	it("detects out-of-order keys", () => {
 		const map = mapBuilder();
 		map.append(0, 0);

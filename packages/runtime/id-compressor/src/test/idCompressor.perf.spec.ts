@@ -105,7 +105,7 @@ describe("IdCompressor Perf", () => {
 		fail("no ID found in log");
 	}
 
-	function benchmarkWithFlag(creator: (flag: boolean) => void) {
+	function benchmarkWithFlag(creator: (flag: boolean) => void): void {
 		for (const flag of [true, false]) {
 			creator(flag);
 		}
@@ -236,7 +236,7 @@ describe("IdCompressor Perf", () => {
 				for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
 					network.allocateAndSendIds(
 						localClient,
-						// eslint-disable-next-line @typescript-eslint/dot-notation
+						// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-argument
 						perfCompressor["nextRequestedClusterSize"],
 					);
 					network.allocateAndSendIds(
