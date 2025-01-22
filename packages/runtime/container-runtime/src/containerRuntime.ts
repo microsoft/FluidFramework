@@ -627,7 +627,6 @@ export enum CompressionAlgorithms {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
 	minimumBatchSizeInBytes: Infinity,
