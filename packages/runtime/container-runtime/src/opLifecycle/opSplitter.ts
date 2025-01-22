@@ -63,7 +63,7 @@ export class OpSplitter {
 		return this.chunkMap;
 	}
 
-	public clearPartialChunks(clientId: string) {
+	public clearPartialChunks(clientId: string): void {
 		if (this.chunkMap.has(clientId)) {
 			this.chunkMap.delete(clientId);
 		}
@@ -73,7 +73,7 @@ export class OpSplitter {
 		clientId: string,
 		chunkedContent: IChunkedOp,
 		originalMessage: ISequencedDocumentMessage,
-	) {
+	): void {
 		let map = this.chunkMap.get(clientId);
 		if (map === undefined) {
 			map = [];
