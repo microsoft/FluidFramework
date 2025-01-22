@@ -15,7 +15,10 @@ import type {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
+import {
+	FluidErrorTypes,
+	type ITelemetryBaseProperties,
+} from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
@@ -60,7 +63,9 @@ describe("Runtime Layer compatibility", () => {
 			FluidErrorTypes.usageError,
 			"Error type should be usageError",
 		);
-		const properties = error.getTelemetryProperties();
+		const telemetryProps = error.getTelemetryProperties();
+		assert(typeof telemetryProps.errorDetails === "string", "Error details should be present");
+		const properties = JSON.parse(telemetryProps.errorDetails) as ITelemetryBaseProperties;
 		assert.strictEqual(
 			properties.isGenerationCompatible,
 			isGenerationCompatible,

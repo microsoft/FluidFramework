@@ -59,13 +59,15 @@ export function validateLoaderCompatibility(
 	);
 	if (!layerCheckResult.isCompatible) {
 		const error = new UsageError("Runtime is not compatible with Loader", {
-			runtimeVersion: RuntimeCompatDetails.pkgVersion,
-			loaderVersion: maybeLoaderCompatDetails?.pkgVersion,
-			runtimeGeneration: RuntimeCompatDetails.generation,
-			loaderGeneration: maybeLoaderCompatDetails?.generation,
-			minSupportedGeneration: LoaderSupportRequirements.minSupportedGeneration,
-			isGenerationCompatible: layerCheckResult.isGenerationCompatible,
-			unsupportedFeatures: JSON.stringify(layerCheckResult.unsupportedFeatures),
+			errorDetails: JSON.stringify({
+				runtimeVersion: RuntimeCompatDetails.pkgVersion,
+				loaderVersion: maybeLoaderCompatDetails?.pkgVersion,
+				runtimeGeneration: RuntimeCompatDetails.generation,
+				loaderGeneration: maybeLoaderCompatDetails?.generation,
+				minSupportedGeneration: LoaderSupportRequirements.minSupportedGeneration,
+				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
+				unsupportedFeatures: JSON.stringify(layerCheckResult.unsupportedFeatures),
+			}),
 		});
 		disposeFn(error);
 		throw error;
