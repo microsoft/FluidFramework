@@ -45,6 +45,8 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"css-loader": "^7.1.2",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
 		"style-loader": "^4.0.0"
 	},
 	"devDependencies": {
@@ -57,6 +59,8 @@
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/node": "^18.19.0",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"expect-puppeteer": "^9.0.2",
