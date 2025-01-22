@@ -32,7 +32,7 @@ interface IPackedContentsContents {
  * 4. An individually compressed op will have undefined batch metadata and compression set to true
  *
  * Compressed batches are always a single message but this class is able to receive a compressed batch with multiple messages
- * because we need that functionality for back compat
+ * because we need that functionality for back compat.
  */
 export class OpDecompressor {
 	private activeBatch = false;
