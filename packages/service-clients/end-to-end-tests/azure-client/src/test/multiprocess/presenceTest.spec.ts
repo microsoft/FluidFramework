@@ -72,25 +72,23 @@ describe(`Presence with AzureClient`, () => {
 	});
 
 	it("announces 'attendeeJoined' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
-		const waitForJoined = children
-			.filter((_, index) => index !== 0)
-			.map(async (child, index) =>
-				timeoutPromise(
-					(resolve) => {
-						child.on("message", (msg: MessageFromChild) => {
-							if (msg.event === "attendeeJoined") {
-								resolve();
-							}
-						});
-					},
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: `Attendee[${index}] Joined Timeout`,
-					},
-				),
-			);
-
-		await Promise.all(waitForJoined);
+		let attendeesJoined = 0;
+		await timeoutPromise(
+			(resolve) => {
+				children[0].on("message", (msg: MessageFromChild) => {
+					if (msg.event === "attendeeJoined") {
+						attendeesJoined++;
+						if (attendeesJoined === numClients - 1) {
+							resolve();
+						}
+					}
+				});
+			},
+			{
+				durationMs: connectTimeoutMs,
+				errorMsg: "did not receive all 'attendeeJoined' events",
+			},
+		);
 
 		children[0].send({ command: "disconnectSelf" });
 		// Wait for child processes to receive attendeeDisconnected event
