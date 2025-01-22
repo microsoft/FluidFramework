@@ -1,6 +1,6 @@
 # TestNamespace
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a) &gt; [TestNamespace](./test-suite-a/testnamespace-namespace)
+[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestNamespace](./test-suite-a/testnamespace-namespace/)
 
 Test Namespace
 
@@ -50,82 +50,31 @@ const foo = {
 
 | Enum | Description |
 | --- | --- |
-| [TestEnum](./test-suite-a/testnamespace-namespace#testenum-enum) | Test Enum |
+| [TestEnum](./test-suite-a/testnamespace-namespace/testenum-enum) | Test Enum |
 
 ## Types
 
 | TypeAlias | Description |
 | --- | --- |
-| [TestTypeAlias](./test-suite-a/testnamespace-namespace#testtypealias-typealias) | Test Type-Alias |
+| [TestTypeAlias](./test-suite-a/testnamespace-namespace/testtypealias-typealias) | Test Type-Alias |
 
 ## Functions
 
 | Function | Return Type | Description |
 | --- | --- | --- |
-| [testFunction(testParameter)](./test-suite-a/testnamespace-namespace#testfunction-function) | number | Test function |
+| [testFunction(testParameter)](./test-suite-a/testnamespace-namespace/#testfunction-function) | number | Test function |
 
 ## Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
 | --- | --- | --- | --- | --- |
-| [TestConst](./test-suite-a/testnamespace-namespace#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| [TestConst](./test-suite-a/testnamespace-namespace/#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
 
 ## Namespaces
 
 | Namespace | Description |
 | --- | --- |
-| [TestSubNamespace](./test-suite-a/testnamespace-namespace/testsubnamespace-namespace) | Test sub-namespace |
-
-## Enumeration Details
-
-### TestEnum {#testenum-enum}
-
-Test Enum
-
-#### Signature {#testenum-signature}
-
-```typescript
-enum TestEnum
-```
-
-#### Flags
-
-| Flag | Description |
-| --- | --- |
-| [TestEnumValue1](./test-suite-a/testnamespace-namespace#testenum-testenumvalue1-enummember) | Test enum value 1 |
-| [TestEnumValue2](./test-suite-a/testnamespace-namespace#testenum-testenumvalue2-enummember) | Test enum value 2 |
-
-##### TestEnumValue1 {#testenum-testenumvalue1-enummember}
-
-Test enum value 1
-
-###### Signature {#testenumvalue1-signature}
-
-```typescript
-TestEnumValue1 = 0
-```
-
-##### TestEnumValue2 {#testenum-testenumvalue2-enummember}
-
-Test enum value 2
-
-###### Signature {#testenumvalue2-signature}
-
-```typescript
-TestEnumValue2 = 1
-```
-
-## Type Details
-
-### TestTypeAlias {#testtypealias-typealias}
-
-Test Type-Alias
-
-#### Signature {#testtypealias-signature}
-
-```typescript
-type TestTypeAlias = boolean;
-```
+| [TestSubNamespace](./test-suite-a/testnamespace-namespace/testsubnamespace-namespace/) | Test sub-namespace |
 
 ## Function Details
 
