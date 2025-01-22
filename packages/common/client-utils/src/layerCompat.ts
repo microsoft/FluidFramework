@@ -96,7 +96,6 @@ export function checkLayerCompatibility(
 	compatDetailsLayer2: ILayerCompatDetails | undefined,
 ): LayerCompatCheckResult {
 	const compatDetailsLayer2ToUse = compatDetailsLayer2 ?? defaultLayerCompatDetails;
-	let isCompatible = true;
 	let isGenerationCompatible = true;
 	const unsupportedFeatures: string[] = [];
 
@@ -106,22 +105,20 @@ export function checkLayerCompatibility(
 		compatDetailsLayer2ToUse.generation <
 		compatSupportRequirementsLayer1.minSupportedGeneration
 	) {
-		isCompatible = false;
 		isGenerationCompatible = false;
 	}
 
 	// All features required by layer1 must be supported by layer2 to be compatible.
 	for (const feature of compatSupportRequirementsLayer1.requiredFeatures) {
 		if (!compatDetailsLayer2ToUse.supportedFeatures.has(feature)) {
-			isCompatible = false;
 			unsupportedFeatures.push(feature);
 		}
 	}
 
-	return isCompatible
-		? { isCompatible }
+	return isGenerationCompatible && unsupportedFeatures.length === 0
+		? { isCompatible: true }
 		: {
-				isCompatible,
+				isCompatible: false,
 				isGenerationCompatible,
 				unsupportedFeatures: unsupportedFeatures.length > 0 ? unsupportedFeatures : undefined,
 			};
