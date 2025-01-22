@@ -145,7 +145,10 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 		unreferenced: summary.unreferenced,
 		groupId: summary.groupId,
 	};
-	for (const [key, summaryObject] of Object.entries(summary.tree)) {
+	const keys = Object.keys(summary.tree);
+	for (const key of keys) {
+		const summaryObject = summary.tree[key];
+
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
 				const innerSnapshot = convertSummaryToSnapshotAndBlobs(summaryObject);

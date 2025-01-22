@@ -121,7 +121,7 @@ export class SnapshotLoader {
 				if (specAsBuggyFormat.removedClient !== undefined) {
 					spec.removedClientIds ??= [specAsBuggyFormat.removedClient];
 				}
-				assert(spec.removedClientIds !== undefined, "must have removedClient ids");
+				assert(spec.removedClientIds !== undefined, 0xaac /* must have removedClient ids */);
 				overwriteInfo<IRemovalInfo>(seg, {
 					removedSeq: spec.removedSeq,
 					removedClientIds: spec.removedClientIds.map((id) =>

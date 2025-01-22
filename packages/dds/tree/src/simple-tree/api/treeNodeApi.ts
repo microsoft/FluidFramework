@@ -174,7 +174,7 @@ export const treeNodeApi: TreeNodeApi = {
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail(`Could not find stored key '${field}' in schema.`),
+									fail("Could not find stored key in schema."),
 							),
 						);
 						listener({ changedProperties });

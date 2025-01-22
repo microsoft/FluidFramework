@@ -14,6 +14,7 @@ import {
 import { ILoaderOptions } from "@fluidframework/container-loader/internal";
 import {
 	CompressionAlgorithms,
+	disabledCompressionConfig,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
@@ -116,7 +117,7 @@ export function generateRuntimeOptions(
 		explicitSchemaControl: [true, false],
 	};
 
-	return generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
+	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
 		applyOverrides(runtimeOptionsMatrix, {
 			...overrides,
 			gcOptions: undefined,
@@ -124,6 +125,20 @@ export function generateRuntimeOptions(
 		}),
 		seed,
 	);
+
+	// Override compressionOptions to disable it if Grouped Batching is disabled
+	pairwiseOptions.map((options) => {
+		if (options.enableGroupedBatching === false) {
+			(
+				options as {
+					// Remove readonly modifier to allow overriding
+					-readonly [P in keyof IContainerRuntimeOptionsInternal]: IContainerRuntimeOptionsInternal[P];
+				}
+			).compressionOptions = disabledCompressionConfig;
+		}
+	});
+
+	return pairwiseOptions;
 }
 
 export function generateConfigurations(
