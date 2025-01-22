@@ -196,11 +196,15 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	subtractChangeAtomIds,
 	replaceAtomRevisions,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	isAncestor,
+	type ChangeAtomIdRangeMap,
+	newChangeAtomIdRangeMap,
+	compareRevisions,
 } from "./rebase/index.js";
 
 export {

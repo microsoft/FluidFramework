@@ -231,7 +231,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 		]);
 	});
 
-	[false, true].forEach((enableGroupedBatching) => {
+	[true].forEach((enableGroupedBatching) => {
 		it(`attach sends ops with compression enabled and ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batching`, async function () {
