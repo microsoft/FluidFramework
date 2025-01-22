@@ -463,7 +463,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									LinkNode.createFromPlainText(
 										"bar",
-										"./test-package/testnamespace-namespace#bar-variable",
+										"./test-package/testnamespace-namespace/#bar-variable",
 									),
 								]),
 								new TableBodyCellNode([CodeSpanNode.createFromPlainText("Beta")]), // Alert
@@ -478,7 +478,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									LinkNode.createFromPlainText(
 										"foo",
-										"./test-package/testnamespace-namespace#foo-variable",
+										"./test-package/testnamespace-namespace/#foo-variable",
 									),
 								]),
 								TableBodyCellNode.Empty, // No alert for `@public`
@@ -576,7 +576,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expectedPackageDocument = new DocumentNode({
 			apiItem: model.packages[0],
-			documentPath: "test-package",
+			documentPath: "test-package/index",
 			children: [
 				new SectionNode(
 					[
@@ -585,7 +585,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							new ParagraphNode([
 								LinkNode.createFromPlainText("Packages", "./"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "./test-package"),
+								LinkNode.createFromPlainText("test-package", "./test-package/"),
 							]),
 						]),
 
@@ -623,7 +623,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							new ParagraphNode([
 								LinkNode.createFromPlainText("Packages", "./"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "./test-package"),
+								LinkNode.createFromPlainText("test-package", "./test-package/"),
 								new PlainTextNode(" > "),
 								LinkNode.createFromPlainText(
 									"entry-point-a",
@@ -641,7 +641,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 											new TableBodyCellNode([
 												LinkNode.createFromPlainText(
 													"hello",
-													"./test-package#hello-variable",
+													"./test-package/#hello-variable",
 												),
 											]),
 											new TableBodyCellNode([
@@ -709,7 +709,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							new ParagraphNode([
 								LinkNode.createFromPlainText("Packages", "./"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "./test-package"),
+								LinkNode.createFromPlainText("test-package", "./test-package/"),
 								new PlainTextNode(" > "),
 								LinkNode.createFromPlainText(
 									"entry-point-b",
@@ -727,7 +727,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 											new TableBodyCellNode([
 												LinkNode.createFromPlainText(
 													"world",
-													"./test-package#world-variable",
+													"./test-package/#world-variable",
 												),
 											]),
 											TableBodyCellNode.Empty, // Type
