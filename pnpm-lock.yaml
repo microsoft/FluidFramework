@@ -5674,9 +5674,6 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:^
         version: link:../../../packages/common/client-utils
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -5722,18 +5719,12 @@ importers:
       '@fluidframework/tinylicious-driver':
         specifier: workspace:^
         version: link:../../../packages/drivers/tinylicious-driver
-      css-loader:
-        specifier: ^7.1.2
-        version: 7.1.2(webpack@5.97.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
-      style-loader:
-        specifier: ^4.0.0
-        version: 4.0.0(webpack@5.97.1)
       uuid:
         specifier: ^9.0.0
         version: 9.0.1
