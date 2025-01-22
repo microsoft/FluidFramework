@@ -174,7 +174,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	public onConnectionAdded(clientConnectionId: ClientConnectionId): void {
 		assert(
 			this.selfAttendee.getConnectionStatus() === SessionClientStatus.Disconnected,
-			"Local client should be 'Disconnected' before adding new connection.",
+			0xaad /* Local client should be 'Disconnected' before adding new connection. */,
 		);
 
 		this.datastore.clientToSessionId[clientConnectionId] = {

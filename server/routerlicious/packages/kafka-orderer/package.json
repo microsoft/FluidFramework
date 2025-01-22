@@ -24,7 +24,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --dir . -v",
+		"typetests:gen": "fluid-type-test-generator",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -32,9 +32,9 @@
 		"@fluidframework/server-services-core": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "0.52.0-315632",
+		"@fluid-tools/build-cli": "^0.38.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "0.52.0-315632",
+		"@fluidframework/build-tools": "^0.38.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-kafka-orderer-previous": "npm:@fluidframework/server-kafka-orderer@5.0.0",
 		"@types/node": "^18.19.39",
@@ -54,10 +54,9 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_KafkaOrdererConnection": {
+			"ClassDeclaration_KafkaOrdererConnection": {
 				"forwardCompat": false
 			}
-		},
-		"entrypoint": "public"
+		}
 	}
 }

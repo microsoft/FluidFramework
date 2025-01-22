@@ -132,7 +132,7 @@ export function makeV2CodecHelpers(
 						context,
 					);
 				case NoopMarkType:
-					fail(`Mark type: ${type} should not be encoded.`);
+					fail("Mark type: NoopMarkType should not be encoded.");
 				default:
 					unreachableCase(type);
 			}

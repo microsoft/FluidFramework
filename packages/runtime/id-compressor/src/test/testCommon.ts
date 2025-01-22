@@ -44,6 +44,7 @@ export type LocalCompressedId = number & {
 } & SessionSpaceCompressedId; // Same brand as CompressedId, as local IDs are always locally normalized
 
 /**
+ * Returns true if the supplied ID is a final ID.
  * @returns true if the supplied ID is a final ID.
  */
 export function isFinalId(id: CompressedId): id is FinalCompressedId {
@@ -51,6 +52,7 @@ export function isFinalId(id: CompressedId): id is FinalCompressedId {
 }
 
 /**
+ * Returns true if the supplied ID is a local ID.
  * @returns true if the supplied ID is a local ID.
  */
 export function isLocalId(id: CompressedId): id is LocalCompressedId {
@@ -91,7 +93,9 @@ export function incrementStableId(stableId: StableId, offset: number): StableId 
 	return stableIdFromNumericUuid(offsetNumericUuid(numericUuidFromStableId(stableId), offset));
 }
 
-/** An immutable view of an `IdCompressor` */
+/**
+ * An immutable view of an `IdCompressor`
+ */
 export type ReadonlyIdCompressor = Omit<
 	IdCompressor,
 	| "generateCompressedId"

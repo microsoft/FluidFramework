@@ -40,6 +40,11 @@ export interface FlubConfig {
 
 	/**
 	 * Configuration for assert tagging.
+	 * @remarks
+	 * Some of this applies to the root where flub is being run,
+	 * and some of it applies to the specific package being processed.
+	 * @privateRemarks
+	 * It seems like having each package have its own configuration would be simpler.
 	 */
 	assertTagging?: AssertTaggingConfig;
 
@@ -212,12 +217,16 @@ export interface PolicyConfig {
 	publicPackageRequirements?: PackageRequirements;
 }
 
+/**
+ * Used by `TagAssertsCommand`.
+ */
 export interface AssertTaggingConfig {
-	assertionFunctions: { [functionName: string]: number };
-
 	/**
 	 * An array of paths under which assert tagging applies to. If this setting is provided, only packages whose paths
 	 * match the regular expressions in this setting will be assert-tagged.
+	 *
+	 * This is used from the root where flub is run.
+	 * TODO: this should be replaced by package selection flags passed to the command.
 	 */
 	enabledPaths?: RegExp[];
 }

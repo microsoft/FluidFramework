@@ -5,9 +5,9 @@
 
 /* eslint-disable import/no-nodejs-modules */
 
-import { strict as assert } from "assert";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
-import path from "path";
+import { strict as assert } from "node:assert";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
 import { SessionId, createIdCompressor } from "../../index.js";
 
@@ -77,7 +77,7 @@ function takeSnapshot(data: string, suffix: string = ""): void {
 		writeFileSync(fullFile, data);
 	} else {
 		assert(exists, `test snapshot file does not exist: "${fullFile}"`);
-		const pastData = readFileSync(fullFile, "utf-8");
+		const pastData = readFileSync(fullFile, "utf8");
 		assert.equal(data, pastData, `snapshot different for "${currentTestName}"`);
 	}
 }

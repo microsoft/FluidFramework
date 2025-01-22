@@ -19,3 +19,6 @@ export type {
 	ScriptRequirement,
 } from "./config.js";
 export type { knownReleaseGroups, ReleaseGroup, ReleasePackage } from "./releaseGroups.js";
+
+// Exported for use in config files.
+export type { AssertTaggingPackageConfig } from "./commands/generate/assertTags.js";

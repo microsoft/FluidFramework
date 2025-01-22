@@ -1,5 +1,9 @@
 # @fluid-private/test-loader-utils
 
+## 2.20.0
+
+Dependency updates only.
+
 ## 2.13.0
 
 Dependency updates only.
