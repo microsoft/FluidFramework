@@ -231,7 +231,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 		]);
 	});
 
-	[false, true].forEach((enableGroupedBatching) => {
+	[true].forEach((enableGroupedBatching) => {
 		it(`attach sends ops with compression enabled and ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batching`, async function () {
@@ -385,7 +385,8 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
 		const dataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 		const blob = stringToBuffer("some different yet still random text", "utf-8");
-
+		await waitForContainerConnection(container1);
+		await waitForContainerConnection(container2);
 		// pause so the ops are in flight at the same time
 		await provider.opProcessingController.pauseProcessing();
 

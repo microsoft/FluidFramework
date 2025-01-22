@@ -1,5 +1,26 @@
 # @fluidframework/runtime-definitions
 
+## 2.20.0
+
+### Minor Changes
+
+-   The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed ([#22996](https://github.com/microsoft/FluidFramework/pull/22996)) [bd243fb292](https://github.com/microsoft/FluidFramework/commit/bd243fb2927915d87c42486e21ee0c990962a9a7)
+
+    `ContainerRuntime.createDataStoreWithProps` and `IContainerRuntimeBase.createDataStoreWithProps`
+    were [deprecated in version 0.25.0](https://github.com/microsoft/FluidFramework/blob/main/BREAKING.md#icontainerruntimebase_createdatastorewithprops-is-removed) and have been removed.
+
+    Replace uses of these APIs with `PureDataObjectFactory.createInstanceWithDataStore` and pass in props via the `initialState`
+    parameter.
+
+    These changes were originally announced in version 0.25.0. See the following issues for more details:
+
+    -   [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
+    -   [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
+
+## 2.13.0
+
+Dependency updates only.
+
 ## 2.12.0
 
 Dependency updates only.

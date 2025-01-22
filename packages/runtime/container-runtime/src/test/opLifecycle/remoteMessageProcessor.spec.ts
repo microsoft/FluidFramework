@@ -39,7 +39,6 @@ describe("RemoteMessageProcessor", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: Infinity,
-					reentrantBatchGroupingEnabled: false,
 				},
 				logger,
 			),
@@ -90,7 +89,7 @@ describe("RemoteMessageProcessor", () => {
 	}
 
 	const messageGenerationOptions = generatePairwiseOptions<{
-		/** chunking cannot happen without compression */
+		// chunking cannot happen without compression
 		compressionAndChunking:
 			| {
 					compression: false;
@@ -130,7 +129,6 @@ describe("RemoteMessageProcessor", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				);
@@ -389,8 +387,11 @@ describe("RemoteMessageProcessor", () => {
 		);
 
 		// We checked messages in the previous assert, now clear them since they're not included in expectedInfo
-		const clearMessages = (result: any) => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const clearMessages = (result: any): InboundMessageResult => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			delete result.messages;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 			delete result.nextMessage;
 			return result as InboundMessageResult;
 		};
@@ -433,7 +434,7 @@ describe("RemoteMessageProcessor", () => {
 				() => {
 					inboundMessages.map((message) => processor.process(message, () => {}));
 				},
-				(e: any) => {
+				(e: Error) => {
 					return e.message === "0x9d6";
 				},
 				"unexpected batch end marker should trigger assert",
@@ -467,7 +468,7 @@ describe("RemoteMessageProcessor", () => {
 				() => {
 					inboundMessages.map((message) => processor.process(message, () => {}));
 				},
-				(e: any) => {
+				(e: Error) => {
 					return e.message === "0x9d5";
 				},
 				"unexpected batch start marker should trigger assert",
