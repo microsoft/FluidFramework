@@ -2,21 +2,23 @@
 
 ## Table of contents
 
--   [Configs and feature gates for solving the 1MB limit.](#configs-and-feature-gates-for-solving-the-1mb-limit)
-    -   [Table of contents](#table-of-contents)
-    -   [Introduction](#introduction)
-        -   [How batching works](#how-batching-works)
-    -   [Compression](#compression)
-    -   [Grouped batching](#grouped-batching)
-        -   [Changes in op semantics](#changes-in-op-semantics)
-    -   [Chunking for compression](#chunking-for-compression)
-    -   [Configuration](#configuration)
-    -   [Note about performance and latency](#note-about-performance-and-latency)
-    -   [How it works](#how-it-works)
-    -   [How it works (Grouped Batching disabled)](#how-it-works-grouped-batching-disabled)
-    -   [How the overall op flow works](#how-the-overall-op-flow-works)
-        -   [Outbound](#outbound)
-        -   [Inbound](#inbound)
+- [Configs and feature gates for solving the 1MB limit.](#configs-and-feature-gates-for-solving-the-1mb-limit)
+  - [Table of contents](#table-of-contents)
+  - [Introduction](#introduction)
+    - [How batching works](#how-batching-works)
+  - [Compression](#compression)
+    - [Single message batch update](#single-message-batch-update)
+  - [Grouped batching](#grouped-batching)
+    - [Changes in op semantics](#changes-in-op-semantics)
+  - [Chunking for compression](#chunking-for-compression)
+  - [Configuration](#configuration)
+  - [Note about performance and latency](#note-about-performance-and-latency)
+  - [How it works](#how-it-works)
+  - [How it works (Grouped Batching disabled) -Outdated-](#how-it-works-grouped-batching-disabled--outdated-)
+    - [Outdated - Main code no longer creates empty ops](#outdated---main-code-no-longer-creates-empty-ops)
+  - [How the overall op flow works](#how-the-overall-op-flow-works)
+    - [Outbound](#outbound)
+    - [Inbound](#inbound)
 
 ## Introduction
 
@@ -69,6 +71,10 @@ Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate`
 
 Compressing a batch yields a batch with the same number of messages. It compresses all the content, shifting the compressed payload into the first op,
 leaving the rest of the batch's messages as empty placeholders to reserve sequence numbers for the compressed messages.
+
+### Single message batch update
+
+Compression has been updated to only receive and compress batches containing a single message. While it remains possible to read compressed batches with empty operations, the system will no longer write them. Therefore, if grouping is disabled, compression must also be disabled.
 
 ## Grouped batching
 
@@ -200,7 +206,9 @@ Ungrouped batch:
 +-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
 
-## How it works (Grouped Batching disabled)
+## How it works (Grouped Batching disabled) -Outdated-
+
+### Outdated - Main code no longer creates empty ops
 
 If we have a batch with a size larger than the configured minimum required for compression (in the example let’s say it’s 850 bytes), as following:
 
