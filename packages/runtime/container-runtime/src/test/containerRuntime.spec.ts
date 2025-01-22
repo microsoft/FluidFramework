@@ -1464,7 +1464,7 @@ describe("Runtime", () => {
 				maxBatchSizeInBytes: 700 * 1024,
 				chunkSizeInBytes: 204800,
 				enableRuntimeIdCompressor: undefined,
-				enableGroupedBatching: false,
+				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
 			};
 			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
