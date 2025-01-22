@@ -41,7 +41,7 @@
 			// We want that to be possible, so we suppress this error for report generation.
 			// It will be enabled for `model` generation, which is used for generating API documentation for the entire suite.
 			//
-			// Also note that links with implicit (unanotated) package name specifiers don't currently resolve correctly
+			// Also note that links with implicit (unannotated) package name specifiers don't currently resolve correctly
 			// when their members are bundled.
 			// See https://github.com/microsoft/rushstack/issues/3521
 			// Omit this check from the cross-package lint step.
