@@ -2060,7 +2060,8 @@ export class ContainerRuntime
 		}
 
 		// logging hardware telemetry
-		this.mc.logger.sendTelemetryEvent({
+		this.baseLogger.send({
+			category: "generic",
 			eventName: "DeviceSpec",
 			...getDeviceSpec(),
 		});
@@ -2073,7 +2074,7 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
-			options: JSON.stringify(runtimeOptions),
+			options: JSON.stringify(baseRuntimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
