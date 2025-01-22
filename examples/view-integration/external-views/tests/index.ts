@@ -22,7 +22,7 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 import { DiceRollerView } from "../src/view.js";
-import type { IDiceRoller } from "../src/dataObject.js";
+import type { IDiceRoller } from "../src/interface.js";
 
 const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID

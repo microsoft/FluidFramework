@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
@@ -14,30 +14,7 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
-
-export interface IDiceRollerEvents extends IEvent {
-	(event: "diceRolled", listener: () => void);
-}
-
-/**
- * IDiceRoller describes the public API surface for our dice roller data object.
- */
-export interface IDiceRoller {
-	/**
-	 * Object that events for changes to the dice value.
-	 */
-	readonly events: IEventProvider<IDiceRollerEvents>;
-
-	/**
-	 * Get the dice value as a number.
-	 */
-	readonly value: number;
-
-	/**
-	 * Roll the dice.  Will cause a "diceRolled" event to be emitted.
-	 */
-	roll: () => void;
-}
+import type { IDiceRoller, IDiceRollerEvents } from "./interface.js";
 
 const mapId = "dice-map";
 const mapFactory = new MapFactory();

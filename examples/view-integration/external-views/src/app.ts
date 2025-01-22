@@ -19,7 +19,7 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 
 import { DiceRollerContainerRuntimeFactory } from "./containerCode.js";
-import type { IDiceRoller } from "./dataObject.js";
+import type { IDiceRoller } from "./interface.js";
 import { DiceRollerView } from "./view.js";
 
 const updateTabForId = (id: string) => {
