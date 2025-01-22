@@ -21,6 +21,7 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
@@ -38,11 +39,11 @@ variables:
   value: true
 
 stages:
-  # Run Azure Client FRS Tests
+  # Run Azure Client AFR Tests
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_azure_client_frs
-      stageDisplayName: e2e - azure client with frs
+      stageDisplayName: e2e - azure-client with AFR
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
@@ -59,7 +60,7 @@ stages:
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_azure_client_local_server
-      stageDisplayName: e2e - azure client with azure local service
+      stageDisplayName: e2e - azure-client with Azure local service
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
@@ -76,7 +77,7 @@ stages:
   - template: templates/include-test-real-service.yml
     parameters:
       stageId: e2e_odsp_client_odsp_server
-      stageDisplayName: e2e - odsp client with odsp service
+      stageDisplayName: e2e - odsp-client with ODSP service
       poolBuild: Small-eastus2
       testPackage: ${{ variables.testOdspPackage }}
       testWorkspace: ${{ variables.testWorkspace }}

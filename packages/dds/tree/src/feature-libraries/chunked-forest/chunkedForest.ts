@@ -4,10 +4,13 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import type { Listenable } from "@fluidframework/core-interfaces";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 import {
 	type Anchor,
 	AnchorSet,
+	type AnnouncedVisitor,
 	type DeltaVisitor,
 	type DetachedField,
 	type FieldAnchor,
@@ -24,15 +27,23 @@ import {
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	aboveRootPlaceholder,
+	combineVisitors,
 	detachedFieldAsKey,
 	mapCursorField,
 	rootFieldKey,
+	type ChunkedCursor,
+	type TreeChunk,
 } from "../../core/index.js";
-import { createEmitter, type Listenable } from "../../events/index.js";
-import { assertValidRange, brand, fail, getOrAddEmptyToMap } from "../../util/index.js";
+import {
+	assertValidRange,
+	brand,
+	fail,
+	getLast,
+	getOrAddEmptyToMap,
+	hasSome,
+} from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import type { ChunkedCursor, TreeChunk } from "./chunk.js";
 import { type IChunker, basicChunkTree, chunkTree } from "./chunkTree.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
@@ -53,6 +64,7 @@ interface StackNode {
 export class ChunkedForest implements IEditableForest {
 	private activeVisitor?: DeltaVisitor;
 
+	private readonly deltaVisitors: Set<() => AnnouncedVisitor> = new Set();
 	readonly #events = createEmitter<ForestEvents>();
 	public readonly events: Listenable<ForestEvents> = this.#events;
 
@@ -83,6 +95,14 @@ export class ChunkedForest implements IEditableForest {
 		this.anchors.forget(anchor);
 	}
 
+	public registerAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.add(visitor);
+	}
+
+	public deregisterAnnouncedVisitor(visitor: () => AnnouncedVisitor): void {
+		this.deltaVisitors.delete(visitor);
+	}
+
 	public acquireVisitor(): DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
@@ -93,15 +113,15 @@ export class ChunkedForest implements IEditableForest {
 			this.roots = this.roots.clone();
 		}
 
-		const visitor = {
+		const forestVisitor = {
 			forest: this,
 			// Current location in the tree, as a non-shared BasicChunk (TODO: support in-place modification of other chunk formats when possible).
 			// Start above root detached sequences.
 			mutableChunkStack: [] as StackNode[],
 			mutableChunk: this.roots as BasicChunk | undefined,
 			getParent(): StackNode {
-				assert(this.mutableChunkStack.length > 0, 0x532 /* invalid access to root's parent */);
-				return this.mutableChunkStack[this.mutableChunkStack.length - 1] ?? oob();
+				assert(hasSome(this.mutableChunkStack), 0x532 /* invalid access to root's parent */);
+				return getLast(this.mutableChunkStack);
 			},
 			free(): void {
 				this.mutableChunk = undefined;
@@ -262,8 +282,15 @@ export class ChunkedForest implements IEditableForest {
 				this.mutableChunk = top.mutableChunk;
 			},
 		};
-		this.activeVisitor = visitor;
-		return visitor;
+
+		const announcedVisitors: AnnouncedVisitor[] = [];
+		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
+		const combinedVisitor = combineVisitors(
+			[forestVisitor, ...announcedVisitors],
+			announcedVisitors,
+		);
+		this.activeVisitor = combinedVisitor;
+		return combinedVisitor;
 	}
 
 	private nextDetachedFieldIdentifier = 0;

@@ -60,7 +60,8 @@ export class Collection<T> implements ICollection<T> {
 		return readStream(this.db.createValueStream());
 	}
 
-	public findOne(query: any): Promise<T> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public findOne(query: any): Promise<T | null> {
 		return this.findOneInternal(query);
 	}
 
@@ -103,7 +104,7 @@ export class Collection<T> implements ICollection<T> {
 	}
 
 	public async insertMany(values: any[], ordered: boolean): Promise<void> {
-		const batchValues = [];
+		const batchValues: { type: "put"; key: string; value: any }[] = [];
 		values.forEach((value) => {
 			batchValues.push({
 				type: "put",
@@ -141,9 +142,12 @@ export class Collection<T> implements ICollection<T> {
 		return value;
 	}
 
-	private async findOneInternal(query: any): Promise<T> {
+	private async findOneInternal(query: any): Promise<T | null> {
 		const values = await this.findInternal(query);
-		return values.length > 0 ? values[0] : null;
+		if (values.length <= 0) {
+			return null;
+		}
+		return values[0];
 	}
 
 	// Generate an insertion key for a value based on index structure.
@@ -157,7 +161,7 @@ export class Collection<T> implements ICollection<T> {
 			return v;
 		}
 
-		const values = [];
+		const values: any[] = [];
 		this.property.indexes.forEach((key) => {
 			const innerValue = getValueByKey(value, key);
 			// Leveldb does lexicographic comparison. We need to encode a number for numeric comparison.
@@ -171,7 +175,7 @@ export class Collection<T> implements ICollection<T> {
 		const isRange = this.property.limit !== undefined;
 		const indexes = this.property.indexes;
 		const indexLen = isRange ? indexes.length - 1 : indexes.length;
-		const queryValues = [];
+		const queryValues: any[] = [];
 		for (let i = 0; i < indexLen; ++i) {
 			const queryValue = query[indexes[i]];
 			if (queryValue !== undefined) {
@@ -181,7 +185,8 @@ export class Collection<T> implements ICollection<T> {
 			}
 		}
 		const key = queryValues.join("!");
-		if (isRange) {
+		// Property limit check is redundant with `isRange` value, but it helps with type checking.
+		if (isRange && this.property.limit !== undefined) {
 			const rangeKey = indexes[indexes.length - 1];
 			const from =
 				query[rangeKey] && query[rangeKey].$gt > 0 ? Number(query[rangeKey].$gt) + 1 : 1;

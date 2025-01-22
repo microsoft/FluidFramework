@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/oldest-client-observer",
-	"version": "2.11.0",
+	"version": "2.20.0",
 	"description": "Data object to determine if the local client is the oldest amongst connected clients",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -114,13 +114,13 @@
 		"@fluidframework/driver-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",

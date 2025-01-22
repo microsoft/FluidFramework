@@ -35,43 +35,6 @@ declare type old_as_current_for_Class_BaseSegment = requireAssignableTo<TypeOnly
 declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<TypeOnly<current.BaseSegment>, TypeOnly<old.BaseSegment>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_Client": {"forwardCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_Class_Client = requireAssignableTo<TypeOnly<old.Client>, TypeOnly<current.Client>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_Client": {"backCompat": false}
- */
-declare type current_as_old_for_Class_Client = requireAssignableTo<TypeOnly<current.Client>, TypeOnly<old.Client>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_CollaborationWindow": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_CollaborationWindow = requireAssignableTo<TypeOnly<old.CollaborationWindow>, TypeOnly<current.CollaborationWindow>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_CollaborationWindow": {"backCompat": false}
- */
-declare type current_as_old_for_Class_CollaborationWindow = requireAssignableTo<TypeOnly<current.CollaborationWindow>, TypeOnly<old.CollaborationWindow>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -98,66 +61,6 @@ declare type old_as_current_for_Class_Marker = requireAssignableTo<TypeOnly<old.
  */
 // @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Marker = requireAssignableTo<TypeOnly<current.Marker>, TypeOnly<old.Marker>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_MergeNode": {"forwardCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_Class_MergeNode = requireAssignableTo<TypeOnly<old.MergeNode>, TypeOnly<current.MergeNode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_MergeNode": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_Class_MergeNode = requireAssignableTo<TypeOnly<current.MergeNode>, TypeOnly<old.MergeNode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_PropertiesManager": {"forwardCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_Class_PropertiesManager = requireAssignableTo<TypeOnly<old.PropertiesManager>, TypeOnly<current.PropertiesManager>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_PropertiesManager": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_Class_PropertiesManager = requireAssignableTo<TypeOnly<current.PropertiesManager>, TypeOnly<old.PropertiesManager>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_SegmentGroupCollection": {"forwardCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_Class_SegmentGroupCollection = requireAssignableTo<TypeOnly<old.SegmentGroupCollection>, TypeOnly<current.SegmentGroupCollection>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_SegmentGroupCollection": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_Class_SegmentGroupCollection = requireAssignableTo<TypeOnly<current.SegmentGroupCollection>, TypeOnly<old.SegmentGroupCollection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -230,24 +133,6 @@ declare type current_as_old_for_ClassStatics_BaseSegment = requireAssignableTo<T
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassStatics_Client": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_Client = requireAssignableTo<TypeOnly<typeof current.Client>, TypeOnly<typeof old.Client>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_CollaborationWindow": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_CollaborationWindow = requireAssignableTo<TypeOnly<typeof current.CollaborationWindow>, TypeOnly<typeof old.CollaborationWindow>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "ClassStatics_LocalReferenceCollection": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_LocalReferenceCollection = requireAssignableTo<TypeOnly<typeof current.LocalReferenceCollection>, TypeOnly<typeof old.LocalReferenceCollection>>
@@ -261,36 +146,6 @@ declare type current_as_old_for_ClassStatics_LocalReferenceCollection = requireA
  */
 // @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_Marker = requireAssignableTo<TypeOnly<typeof current.Marker>, TypeOnly<typeof old.Marker>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_MergeNode": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_ClassStatics_MergeNode = requireAssignableTo<TypeOnly<typeof current.MergeNode>, TypeOnly<typeof old.MergeNode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_PropertiesManager": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_ClassStatics_PropertiesManager = requireAssignableTo<TypeOnly<typeof current.PropertiesManager>, TypeOnly<typeof old.PropertiesManager>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_SegmentGroupCollection": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_ClassStatics_SegmentGroupCollection = requireAssignableTo<TypeOnly<typeof current.SegmentGroupCollection>, TypeOnly<typeof old.SegmentGroupCollection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -320,24 +175,6 @@ declare type current_as_old_for_ClassStatics_TrackingGroup = requireAssignableTo
  * "ClassStatics_TrackingGroupCollection": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_TrackingGroupCollection = requireAssignableTo<TypeOnly<typeof current.TrackingGroupCollection>, TypeOnly<typeof old.TrackingGroupCollection>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_PropertiesRollback": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_PropertiesRollback = requireAssignableTo<TypeOnly<old.PropertiesRollback>, TypeOnly<current.PropertiesRollback>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_PropertiesRollback": {"backCompat": false}
- */
-declare type current_as_old_for_Enum_PropertiesRollback = requireAssignableTo<TypeOnly<current.PropertiesRollback>, TypeOnly<old.PropertiesRollback>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -425,9 +262,27 @@ declare type current_as_old_for_Function_revertMergeTreeDeltaRevertibles = requi
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_AttributionPolicy": {"backCompat": false}
+ * "Function_segmentIsRemoved": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_AttributionPolicy = requireAssignableTo<TypeOnly<current.AttributionPolicy>, TypeOnly<old.AttributionPolicy>>
+declare type current_as_old_for_Function_segmentIsRemoved = requireAssignableTo<TypeOnly<typeof current.segmentIsRemoved>, TypeOnly<typeof old.segmentIsRemoved>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_AdjustParams": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_AdjustParams = requireAssignableTo<TypeOnly<old.AdjustParams>, TypeOnly<current.AdjustParams>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_AdjustParams": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_AdjustParams = requireAssignableTo<TypeOnly<current.AdjustParams>, TypeOnly<old.AdjustParams>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -473,24 +328,6 @@ declare type old_as_current_for_Interface_IAttributionCollectionSpec = requireAs
  * "Interface_IAttributionCollectionSpec": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IAttributionCollectionSpec = requireAssignableTo<TypeOnly<current.IAttributionCollectionSpec<never>>, TypeOnly<old.IAttributionCollectionSpec<never>>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IClientEvents": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IClientEvents = requireAssignableTo<TypeOnly<old.IClientEvents>, TypeOnly<current.IClientEvents>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IClientEvents": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IClientEvents = requireAssignableTo<TypeOnly<current.IClientEvents>, TypeOnly<old.IClientEvents>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -571,6 +408,7 @@ declare type current_as_old_for_Interface_IMarkerDef = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IMergeNodeCommon": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IMergeNodeCommon = requireAssignableTo<TypeOnly<old.IMergeNodeCommon>, TypeOnly<current.IMergeNodeCommon>>
 
 /*
@@ -580,7 +418,26 @@ declare type old_as_current_for_Interface_IMergeNodeCommon = requireAssignableTo
  * typeValidation.broken:
  * "Interface_IMergeNodeCommon": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IMergeNodeCommon = requireAssignableTo<TypeOnly<current.IMergeNodeCommon>, TypeOnly<old.IMergeNodeCommon>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IMergeTreeAnnotateAdjustMsg": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IMergeTreeAnnotateAdjustMsg = requireAssignableTo<TypeOnly<old.IMergeTreeAnnotateAdjustMsg>, TypeOnly<current.IMergeTreeAnnotateAdjustMsg>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IMergeTreeAnnotateAdjustMsg": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IMergeTreeAnnotateAdjustMsg = requireAssignableTo<TypeOnly<current.IMergeTreeAnnotateAdjustMsg>, TypeOnly<old.IMergeTreeAnnotateAdjustMsg>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -599,24 +456,6 @@ declare type old_as_current_for_Interface_IMergeTreeAnnotateMsg = requireAssigna
  * "Interface_IMergeTreeAnnotateMsg": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IMergeTreeAnnotateMsg = requireAssignableTo<TypeOnly<current.IMergeTreeAnnotateMsg>, TypeOnly<old.IMergeTreeAnnotateMsg>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IMergeTreeAttributionOptions": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IMergeTreeAttributionOptions = requireAssignableTo<TypeOnly<old.IMergeTreeAttributionOptions>, TypeOnly<current.IMergeTreeAttributionOptions>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IMergeTreeAttributionOptions": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IMergeTreeAttributionOptions = requireAssignableTo<TypeOnly<current.IMergeTreeAttributionOptions>, TypeOnly<old.IMergeTreeAttributionOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -824,26 +663,9 @@ declare type current_as_old_for_Interface_IMergeTreeSegmentDelta = requireAssign
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_IMergeTreeTextHelper": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IMergeTreeTextHelper = requireAssignableTo<TypeOnly<old.IMergeTreeTextHelper>, TypeOnly<current.IMergeTreeTextHelper>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IMergeTreeTextHelper": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IMergeTreeTextHelper = requireAssignableTo<TypeOnly<current.IMergeTreeTextHelper>, TypeOnly<old.IMergeTreeTextHelper>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IMoveInfo": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IMoveInfo = requireAssignableTo<TypeOnly<old.IMoveInfo>, TypeOnly<current.IMoveInfo>>
 
 /*
@@ -899,6 +721,7 @@ declare type current_as_old_for_Interface_IRelativePosition = requireAssignableT
  * typeValidation.broken:
  * "Interface_IRemovalInfo": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IRemovalInfo = requireAssignableTo<TypeOnly<old.IRemovalInfo>, TypeOnly<current.IRemovalInfo>>
 
 /*
@@ -908,6 +731,7 @@ declare type old_as_current_for_Interface_IRemovalInfo = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_IRemovalInfo": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IRemovalInfo = requireAssignableTo<TypeOnly<current.IRemovalInfo>, TypeOnly<old.IRemovalInfo>>
 
 /*
@@ -1016,25 +840,6 @@ declare type current_as_old_for_Interface_MergeTreeRevertibleDriver = requireAss
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_ObliterateInfo": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ObliterateInfo = requireAssignableTo<TypeOnly<old.ObliterateInfo>, TypeOnly<current.ObliterateInfo>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ObliterateInfo": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_Interface_ObliterateInfo = requireAssignableTo<TypeOnly<current.ObliterateInfo>, TypeOnly<old.ObliterateInfo>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ReferencePosition": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ReferencePosition = requireAssignableTo<TypeOnly<old.ReferencePosition>, TypeOnly<current.ReferencePosition>>
@@ -1046,27 +851,7 @@ declare type old_as_current_for_Interface_ReferencePosition = requireAssignableT
  * typeValidation.broken:
  * "Interface_ReferencePosition": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ReferencePosition = requireAssignableTo<TypeOnly<current.ReferencePosition>, TypeOnly<old.ReferencePosition>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_SegmentGroup": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_SegmentGroup = requireAssignableTo<TypeOnly<old.SegmentGroup>, TypeOnly<current.SegmentGroup>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_SegmentGroup": {"backCompat": false}
- */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_Interface_SegmentGroup = requireAssignableTo<TypeOnly<current.SegmentGroup>, TypeOnly<old.SegmentGroup>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

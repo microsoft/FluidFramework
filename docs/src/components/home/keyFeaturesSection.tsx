@@ -8,10 +8,6 @@ import React from "react";
 import { KeyFeatureCard } from "./keyFeatureCard";
 import { PageSection } from "./pageSection";
 
-import EasyToUseImage from "@site/static/assets/home/easy-to-use.png";
-import OpenSourecImage from "@site/static/assets/home/open-source.png";
-import PerformanceImage from "@site/static/assets/home/performance.png";
-
 import "@site/src/css/home/keyFeaturesSection.css";
 
 const easyToUseText =
@@ -38,7 +34,7 @@ function KeyFeaturesCardGrid(): JSX.Element {
 	return (
 		<div className="ffcom-key-features-card-grid">
 			<KeyFeatureCard
-				imageSrc={EasyToUseImage}
+				imageSrc="https://storage.fluidframework.com/static/images/website/home/easy-to-use.png"
 				imageAltText="Easy to use"
 				bodyLabel="Easy to use"
 				bodyText={easyToUseText}
@@ -46,7 +42,7 @@ function KeyFeaturesCardGrid(): JSX.Element {
 				learnMoreLinkAltText="Fluid Framework Quick Start"
 			/>
 			<KeyFeatureCard
-				imageSrc={OpenSourecImage}
+				imageSrc="https://storage.fluidframework.com/static/images/website/home/open-source.png"
 				imageAltText="Open source"
 				bodyLabel="Open Source"
 				bodyText={openSourceText}
@@ -54,7 +50,7 @@ function KeyFeaturesCardGrid(): JSX.Element {
 				learnMoreLinkAltText="Community"
 			/>
 			<KeyFeatureCard
-				imageSrc={PerformanceImage}
+				imageSrc="https://storage.fluidframework.com/static/images/website/home/performance.png"
 				imageAltText="Industry-leading speed and performance"
 				bodyLabel="Industry-leading speed & performance"
 				bodyText={performanceText}

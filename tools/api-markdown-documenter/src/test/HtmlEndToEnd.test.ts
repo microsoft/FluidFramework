@@ -3,137 +3,113 @@
  * Licensed under the MIT License.
  */
 
-import * as Path from "node:path";
-import { fileURLToPath } from "node:url";
+import Path from "node:path";
 
-import { ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
-import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
+import { ReleaseTag, type ApiModel } from "@microsoft/api-extractor-model";
 
-import { type RenderDocumentAsHtmlConfig, renderDocumentAsHtml } from "../renderers/index.js";
+import { HtmlRenderer, loadModel } from "../index.js";
+
 import {
-	endToEndTests,
-	type ApiModelTestOptions,
-	type EndToEndTestConfig,
-} from "./EndToEndTests.js";
-import type { DocumentNode } from "../documentation-domain/index.js";
-
-const dirname = Path.dirname(fileURLToPath(import.meta.url));
+	compareDocumentationSuiteSnapshot,
+	HierarchyConfigurations,
+	snapshotsDirectoryPath as snapshotsDirectoryPathBase,
+	testDataDirectoryPath,
+	testTemporaryDirectoryPath as testTemporaryDirectoryPathBase,
+} from "./EndToEndTestUtilities.js";
 
 /**
  * Temp directory under which all tests that generate files will output their contents.
  */
-const testTemporaryDirectoryPath = Path.resolve(dirname, "test_temp", "html");
+const testTemporaryDirectoryPath = Path.resolve(testTemporaryDirectoryPathBase, "html");
 
 /**
  * Snapshot directory to which generated test data will be copied.
  * Relative to lib/test
  */
-const snapshotsDirectoryPath = Path.resolve(
-	dirname,
-	"..",
-	"..",
-	"src",
-	"test",
-	"snapshots",
-	"html",
-);
+const snapshotsDirectoryPath = Path.resolve(snapshotsDirectoryPathBase, "html");
 
-// Relative to lib/test
-const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "test", "test-data");
+const apiModels: string[] = ["simple-suite-test"];
 
-const apiModels: ApiModelTestOptions[] = [
-	{
-		modelName: "simple-suite-test",
-		directoryPath: Path.resolve(testDataDirectoryPath, "simple-suite-test"),
-	},
-	// TODO: add other models
-];
-
-const testConfigs: EndToEndTestConfig<RenderDocumentAsHtmlConfig>[] = [
-	/**
-	 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
-	 */
-	{
-		testName: "default-config",
-		transformConfig: {
+const testConfigs = new Map<
+	string,
+	Omit<HtmlRenderer.RenderApiModelOptions, "apiModel" | "outputDirectoryPath">
+>([
+	[
+		"default-config",
+		{
 			uriRoot: ".",
 		},
-		renderConfig: {},
-	},
+	],
 
-	/**
-	 * A sample "flat" configuration, which renders every item kind under a package to the package parent document.
-	 */
-	{
-		testName: "flat-config",
-		transformConfig: {
+	// A sample "flat" configuration, which renders every item kind under a package to the package parent document.
+	[
+		"flat-config",
+		{
 			uriRoot: "docs",
 			includeBreadcrumb: true,
 			includeTopLevelDocumentHeading: false,
-			documentBoundaries: [], // Render everything to package documents
-			hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+			hierarchy: HierarchyConfigurations.flat,
 			minimumReleaseLevel: ReleaseTag.Beta, // Only include `@public` and `beta` items in the docs suite
 		},
-		renderConfig: {},
-	},
+	],
 
-	/**
-	 * A sample "sparse" configuration, which renders every item kind to its own document.
-	 */
-	{
-		testName: "sparse-config",
-		transformConfig: {
+	// A sample "sparse" configuration, which renders every item kind to its own document.
+	[
+		"sparse-config",
+		{
 			uriRoot: "docs",
 			includeBreadcrumb: false,
 			includeTopLevelDocumentHeading: true,
-			// Render everything to its own document
-			documentBoundaries: [
-				ApiItemKind.CallSignature,
-				ApiItemKind.Class,
-				ApiItemKind.ConstructSignature,
-				ApiItemKind.Constructor,
-				ApiItemKind.Enum,
-				ApiItemKind.EnumMember,
-				ApiItemKind.Function,
-				ApiItemKind.IndexSignature,
-				ApiItemKind.Interface,
-				ApiItemKind.Method,
-				ApiItemKind.MethodSignature,
-				ApiItemKind.Namespace,
-				ApiItemKind.Property,
-				ApiItemKind.PropertySignature,
-				ApiItemKind.TypeAlias,
-				ApiItemKind.Variable,
-			],
-			hierarchyBoundaries: [], // No additional hierarchy beyond the package level
+			hierarchy: HierarchyConfigurations.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
 			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
-		},
-		renderConfig: {
 			startingHeadingLevel: 2,
 		},
-	},
-];
+	],
 
-async function renderDocumentToFile(
-	document: DocumentNode,
-	renderConfig: RenderDocumentAsHtmlConfig,
-	outputDirectoryPath: string,
-): Promise<void> {
-	const renderedDocument = renderDocumentAsHtml(document, renderConfig);
+	// A sample "deep" configuration.
+	// All "parent" API items generate hierarchy.
+	// All other items are rendered as documents under their parent hierarchy.
+	[
+		"deep-config",
+		{
+			uriRoot: "",
+			hierarchy: HierarchyConfigurations.deep,
+		},
+	],
+]);
 
-	const filePath = Path.join(outputDirectoryPath, `${document.documentPath}.html`);
-	await FileSystem.writeFileAsync(filePath, renderedDocument, {
-		convertLineEndings: NewlineKind.Lf,
-		ensureFolderExists: true,
-	});
-}
+describe("HTML end-to-end tests", () => {
+	for (const modelName of apiModels) {
+		// Input directory for the model
+		const modelDirectoryPath = Path.join(testDataDirectoryPath, modelName);
 
-endToEndTests<RenderDocumentAsHtmlConfig>({
-	suiteName: "Markdown End-to-End Tests",
-	temporaryOutputDirectoryPath: testTemporaryDirectoryPath,
-	snapshotsDirectoryPath,
-	render: renderDocumentToFile,
-	apiModels,
-	testConfigs,
+		describe(`API model: ${modelName}`, () => {
+			let apiModel: ApiModel;
+			before(async () => {
+				apiModel = await loadModel({ modelDirectoryPath });
+			});
+
+			for (const [configName, inputConfig] of testConfigs) {
+				const temporaryOutputPath = Path.join(
+					testTemporaryDirectoryPath,
+					modelName,
+					configName,
+				);
+				const snapshotPath = Path.join(snapshotsDirectoryPath, modelName, configName);
+
+				it(configName, async () => {
+					const options: HtmlRenderer.RenderApiModelOptions = {
+						...inputConfig,
+						apiModel,
+						outputDirectoryPath: temporaryOutputPath,
+					};
+
+					await HtmlRenderer.renderApiModel(options);
+
+					await compareDocumentationSuiteSnapshot(snapshotPath, temporaryOutputPath);
+				});
+			}
+		});
+	}
 });

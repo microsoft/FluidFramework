@@ -47,6 +47,7 @@ export {
 	detachedFieldAsKey,
 	keyAsDetachedField,
 	visitDelta,
+	createAnnouncedVisitor,
 	combineVisitors,
 	announceDelta,
 	applyDelta,
@@ -66,8 +67,6 @@ export {
 	forEachField,
 	type PathRootPrefix,
 	deltaForRootInitialization,
-	emptyFieldChanges,
-	isEmptyFieldChanges,
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,
@@ -98,6 +97,11 @@ export {
 	type DeltaFieldChanges,
 	type ExclusiveMapTree,
 	deepCopyMapTree,
+	type TreeChunk,
+	dummyRoot,
+	cursorChunk,
+	tryGetChunk,
+	type ChunkedCursor,
 } from "./tree/index.js";
 
 export {
@@ -192,18 +196,28 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	subtractChangeAtomIds,
 	replaceAtomRevisions,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
+	isAncestor,
+	type ChangeAtomIdRangeMap,
+	newChangeAtomIdRangeMap,
+	compareRevisions,
 } from "./rebase/index.js";
 
 export {
 	type Adapters,
 	AdaptedViewSchema,
-	Compatibility,
 	type TreeAdapter,
 	AllowedUpdateType,
 } from "./schema-view/index.js";
 
-export { type Revertible, RevertibleStatus, type RevertibleFactory } from "./revertible.js";
+export {
+	type Revertible,
+	RevertibleStatus,
+	type RevertibleFactory,
+	type RevertibleAlphaFactory,
+	type RevertibleAlpha,
+} from "./revertible.js";

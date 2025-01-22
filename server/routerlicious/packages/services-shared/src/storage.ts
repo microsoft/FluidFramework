@@ -50,14 +50,15 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly tenantManager: ITenantManager,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
-		private readonly storageNameAssigner: IStorageNameAllocator,
+		private readonly storageNameAssigner: IStorageNameAllocator | undefined,
 		private readonly ephemeralDocumentTTLSec: number = 60 * 60 * 24, // 24 hours in seconds
 	) {}
 
 	/**
 	 * Retrieves database details for the given document
 	 */
-	public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async getDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
 		return this.documentRepository.readOne({ tenantId, documentId });
 	}
 
@@ -314,10 +315,10 @@ export class DocumentStorage implements IDocumentStorage {
 		}
 	}
 
-	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
+	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null> {
 		const versions = await this.getVersions(tenantId, documentId, 1);
 		if (!versions.length) {
-			return null as unknown as ICommit;
+			return null;
 		}
 
 		const latest = versions[0];
@@ -359,7 +360,7 @@ export class DocumentStorage implements IDocumentStorage {
 				cache: {
 					blobs: [],
 					commits: [],
-					refs: { [documentId]: null as unknown as string },
+					refs: {},
 					trees: [],
 				},
 				code: null as unknown as string,

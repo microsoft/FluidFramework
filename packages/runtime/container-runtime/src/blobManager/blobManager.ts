@@ -80,14 +80,14 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 		this.absolutePath = generateHandleContextPath(path, this.routeContext);
 	}
 
-	public attachGraph() {
+	public attachGraph(): void {
 		if (!this.attached) {
 			this.attached = true;
 			this.onAttachGraph?.();
 		}
 	}
 
-	public bind(handle: IFluidHandleInternal) {
+	public bind(handle: IFluidHandleInternal): void {
 		throw new Error("Cannot bind to blob handle");
 	}
 }
@@ -96,7 +96,7 @@ export class BlobHandle extends FluidHandleBase<ArrayBufferLike> {
 // the contract explicit and reduces the amount of mocking required for tests.
 export type IBlobManagerRuntime = Pick<
 	IContainerRuntime,
-	"attachState" | "connected" | "baseLogger" | "clientDetails"
+	"attachState" | "connected" | "baseLogger" | "clientDetails" | "disposed"
 > &
 	TypedEventEmitter<IContainerRuntimeEvents>;
 
@@ -329,7 +329,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		);
 	}
 
-	private createAbortError(pending?: PendingBlob) {
+	private createAbortError(pending?: PendingBlob): LoggingError {
 		return new LoggingError("uploadBlob aborted", {
 			acked: pending?.acked,
 			uploadTime: pending?.uploadTime,
@@ -370,8 +370,17 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
 			{ eventName: "AttachmentReadBlob", id: storageId },
-			async () => {
-				return this.getStorage().readBlob(storageId);
+			async (event) => {
+				return this.getStorage()
+					.readBlob(storageId)
+					.catch((error) => {
+						if (this.runtime.disposed) {
+							// If the runtime is disposed, this is not an error we care to track, it's expected behavior.
+							event.cancel({ category: "generic" });
+						}
+
+						throw error;
+					});
 			},
 			{ end: true, cancel: "error" },
 		);
@@ -445,7 +454,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		};
 		this.pendingBlobs.set(localId, pendingEntry);
 
-		const abortListener = () => {
+		const abortListener = (): void => {
 			if (!pendingEntry.acked) {
 				pendingEntry.handleP.reject(this.createAbortError(pendingEntry));
 			}
@@ -490,6 +499,8 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			(error) => {
 				this.mc.logger.sendTelemetryEvent({
 					eventName: "UploadBlobReject",
+					// TODO: better typing
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					error,
 					localId,
 				});
@@ -506,11 +517,11 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * Set up a mapping in the redirect table from fromId to toId. Also, notify the runtime that a reference is added
 	 * which is required for GC.
 	 */
-	private setRedirection(fromId: string, toId: string | undefined) {
+	private setRedirection(fromId: string, toId: string | undefined): void {
 		this.redirectTable.set(fromId, toId);
 	}
 
-	private deletePendingBlobMaybe(id: string) {
+	private deletePendingBlobMaybe(id: string): void {
 		if (this.pendingBlobs.has(id)) {
 			const entry = this.pendingBlobs.get(id);
 			if (entry?.attached && entry?.acked) {
@@ -519,13 +530,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		}
 	}
 
-	private deletePendingBlob(id: string) {
+	private deletePendingBlob(id: string): void {
 		if (this.pendingBlobs.delete(id) && !this.hasPendingBlobs) {
 			this.emit("noPendingBlobs");
 		}
 	}
 
-	private onUploadResolve(localId: string, response: ICreateBlobResponseWithTTL) {
+	private onUploadResolve(
+		localId: string,
+		response: ICreateBlobResponseWithTTL,
+	): ICreateBlobResponseWithTTL | undefined {
 		const entry = this.pendingBlobs.get(localId);
 		if (entry === undefined && this.pendingStashedBlobs.has(localId)) {
 			// The blob was already processed and deleted. This can happen if the blob was reuploaded by
@@ -587,7 +601,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * submitted to runtime while disconnected.
 	 * @param metadata - op metadata containing storage and/or local IDs
 	 */
-	public reSubmit(metadata: Record<string, unknown> | undefined) {
+	public reSubmit(metadata: Record<string, unknown> | undefined): void {
 		assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
 		const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
 		assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
@@ -604,7 +618,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		return this.sendBlobAttachOp(localId, blobId);
 	}
 
-	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean) {
+	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean): void {
 		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
 		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
 
@@ -694,16 +708,20 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 
 	/**
 	 * Delete blobs with the given routes from the redirect table.
+	 *
+	 * @remarks
 	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<blobId>`. The blob ids are all local ids.
 	 * Deleting the blobs involves 2 steps:
+	 *
 	 * 1. The redirect table entry for the local ids are deleted.
+	 *
 	 * 2. If the storage ids corresponding to the deleted local ids are not in-use anymore, the redirect table entries
 	 * for the storage ids are deleted as well.
 	 *
 	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
 	 * will remove them the next summary. The service would them delete them some time in the future.
 	 */
-	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]) {
+	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]): void {
 		if (blobRoutes.length === 0) {
 			return;
 		}
@@ -753,7 +771,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	 * Verifies that the blob with given id is not deleted, i.e., it has not been garbage collected. If the blob is GC'd,
 	 * log an error and throw if necessary.
 	 */
-	private verifyBlobNotDeleted(blobId: string) {
+	private verifyBlobNotDeleted(blobId: string): void {
 		if (!this.isBlobDeleted(getGCNodePathFromBlobId(blobId))) {
 			return;
 		}
@@ -774,7 +792,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		throw error;
 	}
 
-	public setRedirectTable(table: Map<string, string>) {
+	public setRedirectTable(table: Map<string, string>): void {
 		assert(
 			this.runtime.attachState === AttachState.Detached,
 			0x252 /* "redirect table can only be set in detached container" */,
@@ -841,7 +859,7 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 										},
 										{ once: true },
 									);
-									const onBlobAttached = (attachedEntry) => {
+									const onBlobAttached = (attachedEntry): void => {
 										if (attachedEntry === entry) {
 											this.off("blobAttached", onBlobAttached);
 											resolve();
@@ -891,12 +909,13 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
  * This path must match the path of the blob handle returned by the createBlob API because blobs are marked
  * referenced by storing these handles in a referenced DDS.
  */
-const getGCNodePathFromBlobId = (blobId: string) => `/${blobManagerBasePath}/${blobId}`;
+const getGCNodePathFromBlobId = (blobId: string): string =>
+	`/${blobManagerBasePath}/${blobId}`;
 
 /**
  * For a given GC node path, return the blobId. The node path is of the format `/<basePath>/<blobId>`.
  */
-const getBlobIdFromGCNodePath = (nodePath: string) => {
+const getBlobIdFromGCNodePath = (nodePath: string): string => {
 	const pathParts = nodePath.split("/");
 	assert(areBlobPathParts(pathParts), 0x5bd /* Invalid blob node path */);
 	return pathParts[2];

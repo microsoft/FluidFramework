@@ -6,23 +6,8 @@
 import React from "react";
 
 import { CardWithBlur } from "@site/src/components/card";
-import Dice1 from "@site/static/assets/dice/1.png";
-import Dice2 from "@site/static/assets/dice/2.png";
-import Dice3 from "@site/static/assets/dice/3.png";
-import Dice4 from "@site/static/assets/dice/4.png";
-import Dice5 from "@site/static/assets/dice/5.png";
-import Dice6 from "@site/static/assets/dice/6.png";
 
 type DiceValue = 1 | 2 | 3 | 4 | 5 | 6;
-
-const diceImages = {
-	1: Dice1,
-	2: Dice2,
-	3: Dice3,
-	4: Dice4,
-	5: Dice5,
-	6: Dice6,
-} as const;
 
 import "@site/src/css/mockDiceRoller.css";
 
@@ -95,7 +80,7 @@ function DiceRollerCard({
 	containerId,
 	onClick,
 }: DiceRollerCardProps): React.ReactElement {
-	const imageUrl = diceImages[diceValue];
+	const imageUrl = `https://storage.fluidframework.com/static/images/website/dice/${diceValue}.png`;
 	return (
 		<CardWithBlur>
 			<div className="ffcom-dice-roller-card ">

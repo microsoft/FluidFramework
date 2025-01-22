@@ -27,7 +27,7 @@
 		"format": "npm run prettier:fix",
 		"lint": "npm run prettier && npm run eslint",
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
-		"perf": "mocha --config ./.mocharc.cjs --v8-expose-gc --timeout 999999 --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
+		"perf": "cross-env FLUID_TEST_VERBOSE=1 mocha --config ./.mocharc.cjs --v8-expose-gc --timeout 999999 --perfMode --fgrep @Benchmark --reporter ./dist/MochaReporter.js \"./dist/**/*.tests.js\"",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"test": "npm run test:mocha",
@@ -38,28 +38,26 @@
 	"dependencies": {
 		"chai": "^4.2.0",
 		"chalk": "^4.1.2",
-		"easy-table": "^1.1.1",
+		"easy-table": "^1.2.0",
 		"mocha": "^10.0.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0"
 	},
 	"devDependencies": {
-		"@fluid-internal/mocha-test-setup": "~2.0.0-rc.3.0.3",
+		"@fluid-internal/mocha-test-setup": "^2.12.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@microsoft/api-extractor": "^7.45.1",
-		"@types/benchmark": "^2.1.0",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@microsoft/api-extractor": "^7.48.1",
 		"@types/chai": "^4.3.4",
-		"@types/easy-table": "^0.0.32",
-		"@types/mocha": "^9.1.1",
-		"@types/node": "^14.18.0",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
-		"cross-env": "^7.0.2",
+		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
-		"rimraf": "^2.6.2",
-		"typescript": "~5.1.6"
+		"rimraf": "^4.4.0",
+		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392"
+	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a"
 }

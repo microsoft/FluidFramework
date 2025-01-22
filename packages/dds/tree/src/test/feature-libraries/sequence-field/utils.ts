@@ -11,14 +11,15 @@ import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
+	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
+	newChangeAtomIdRangeMap,
 	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
@@ -27,6 +28,7 @@ import { SequenceField as SF } from "../../../feature-libraries/index.js";
 import {
 	CrossFieldTarget,
 	setInCrossFieldMap,
+	type FieldChangeDelta,
 	type InvertNodeManager,
 	type NodeId,
 	type RebaseRevisionMetadata,
@@ -60,7 +62,6 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
-	type RangeMap,
 	type RangeQueryResult,
 	brand,
 	fail,
@@ -85,11 +86,10 @@ import {
 	NoopMarkType,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/types.js";
-import {
-	getFirstFromCrossFieldMap,
-	type ComposeNodeManager,
-	type DetachedNodeEntry,
-	type RebaseNodeManager,
+import type {
+	ComposeNodeManager,
+	DetachedNodeEntry,
+	RebaseNodeManager,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 
@@ -451,7 +451,7 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: SF.Changeset): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset): FieldChangeDelta {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
@@ -793,7 +793,10 @@ function newInvertManager(): TestInvertManager {
 			this.isInvalidated = true;
 		},
 
-		invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<DetachedNodeEntry> {
+		invertAttach(
+			attachId: ChangeAtomId,
+			count: number,
+		): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
 			throw new Error("Function not implemented.");
 		},
 	};
@@ -808,8 +811,8 @@ function newComposeManager(): TestComposeManager {
 		getChangesForBaseDetach(
 			baseDetachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<NodeId> {
-			return getFirstFromCrossFieldMap(this.nodeChangeTable, baseDetachId, count);
+		): RangeQueryResult<ChangeAtomId, NodeId> {
+			return this.nodeChangeTable.getFirst(baseDetachId, count);
 		},
 
 		composeBaseAttach(
@@ -833,7 +836,7 @@ function newRebaseManager(): TestRebaseManager {
 		getNewChangesForBaseAttach(
 			baseAttachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<DetachedNodeEntry> {
+		): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
 			throw new Error("Function not implemented.");
 		},
 
@@ -857,9 +860,9 @@ interface TestRebaseManager extends RebaseNodeManager, TestNodeManager {}
 
 interface TestNodeManager {
 	isInvalidated: boolean;
-	nodeChangeTable: Map<RevisionTag | undefined, RangeMap<NodeId>>;
+	nodeChangeTable: ChangeAtomIdRangeMap<NodeId>;
 }
 
 function newTestNodeManager(): TestNodeManager {
-	return { isInvalidated: false, nodeChangeTable: new Map() };
+	return { isInvalidated: false, nodeChangeTable: newChangeAtomIdRangeMap() };
 }

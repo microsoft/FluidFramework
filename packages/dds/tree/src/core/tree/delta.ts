@@ -101,6 +101,22 @@ export interface Root<TTree = ProtoNode> {
 	 * The ordering has no significance.
 	 */
 	readonly refreshers?: readonly DetachedNodeBuild<TTree>[];
+	/**
+	 * Changes to apply to detached nodes.
+	 * The ordering has no significance.
+	 *
+	 * Nested changes for a root that is undergoing a rename should be listed under the starting name.
+	 * For example, if one wishes to change a tree which is being renamed from ID A to ID B,
+	 * then the changes should be listed under ID A.
+	 */
+	readonly global?: readonly DetachedNodeChanges[];
+	/**
+	 * Detached roots whose associated ID needs to be updated.
+	 * The ordering has no significance.
+	 * Note that the renames may need to be performed in a specific order to avoid collisions.
+	 * This ordering problem is left to the consumer of this format.
+	 */
+	readonly rename?: readonly DetachedNodeRename[];
 }
 
 /**
@@ -202,30 +218,9 @@ export interface DetachedNodeRename {
 }
 
 /**
- * Represents the changes to perform on a given field.
+ * Represents a list of changes to the nodes in the field.
+ * The index of each mark within the range of nodes, before
+ * applying any of the changes, is not represented explicitly.
+ * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
  */
-export interface FieldChanges {
-	/**
-	 * Represents a list of changes to the nodes in the field.
-	 * The index of each mark within the range of nodes, before
-	 * applying any of the changes, is not represented explicitly.
-	 * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
-	 */
-	readonly local?: readonly Mark[];
-	/**
-	 * Changes to apply to detached nodes.
-	 * The ordering has no significance.
-	 *
-	 * Nested changes for a root that is undergoing a rename should be listed under the starting name.
-	 * For example, if one wishes to change a tree which is being renamed from ID A to ID B,
-	 * then the changes should be listed under ID A.
-	 */
-	readonly global?: readonly DetachedNodeChanges[];
-	/**
-	 * Detached whose associated ID needs to be updated.
-	 * The ordering has no significance.
-	 * Note that the renames may need to be performed in a specific order to avoid collisions.
-	 * This ordering problem is left to the consumer of this format.
-	 */
-	readonly rename?: readonly DetachedNodeRename[];
-}
+export type FieldChanges = readonly Mark[];

@@ -10,7 +10,6 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
@@ -20,6 +19,7 @@ import {
 	tagRollbackInverse,
 } from "../../../core/index.js";
 import {
+	type FieldChangeDelta,
 	type NodeChangeComposer,
 	type NodeChangeRebaser,
 	type NodeId,
@@ -106,7 +106,7 @@ const OptionalChange = {
 function toDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta = TestNodeId.deltaFromChild,
-): DeltaFieldChanges {
+): FieldChangeDelta {
 	return optionalFieldIntoDelta(change, deltaFromChild);
 }
 
@@ -265,7 +265,8 @@ function composeWrapped(
 }
 
 function isWrappedChangeEmpty(change: WrappedChangeset): boolean {
-	return !isDeltaVisible(toDeltaWrapped(makeAnonChange(change)));
+	const delta = toDeltaWrapped(makeAnonChange(change)).local;
+	return delta === undefined || !isDeltaVisible(delta);
 }
 
 function assertWrappedChangesetsEquivalent(
@@ -525,7 +526,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 				const inv = invertWrapped(change, tag1, true);
 				const actual = composeWrapped(change, tagRollbackInverse(inv, tag1, change.revision));
 				const delta = toDeltaWrapped(makeAnonChange(actual));
-				assert.equal(isDeltaVisible(delta), false);
+				assert.equal(isDeltaVisible(delta.local), false);
 			});
 		}
 	});
@@ -540,7 +541,7 @@ function runSingleEditRebaseAxiomSuite(initialState: OptionalFieldTestState) {
 				);
 				const actual = composeWrapped(inv, change);
 				const delta = toDeltaWrapped(makeAnonChange(actual));
-				assert.equal(isDeltaVisible(delta), false);
+				assert.equal(isDeltaVisible(delta.local), false);
 			});
 		}
 	});

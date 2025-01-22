@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-end-to-end-tests",
-	"version": "2.11.0",
+	"version": "2.20.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -31,11 +31,12 @@
 		"test": "npm run test:realsvc",
 		"test:coverage": "c8 npm test",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
-		"test:realsvc:azure": "cross-env FLUID_CLIENT=azure npm run test:realsvc:azure:run",
+		"test:realsvc:azure": "cross-env FLUID_CLIENT=azure npm run test:realsvc:azure:run -- --driver=r11s --r11sEndpointName=frs",
 		"test:realsvc:azure:run": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout 20000 --config src/test/.mocharc.cjs",
 		"test:realsvc:run": "mocha lib/test --config src/test/.mocharc.cjs",
-		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7071 test:realsvc:azure:run",
+		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7071 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
+		"test:realsvc:tinylicious:run": "npm run test:realsvc:azure:run -- --driver=t9s",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc"
 	},
 	"c8": {
@@ -62,6 +63,7 @@
 		"@fluid-experimental/data-objects": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/azure-client-legacy": "npm:@fluidframework/azure-client@^1.2.0",
@@ -95,8 +97,8 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",

@@ -36,13 +36,13 @@
 			rgba(255, 255, 255, 0.9) 19.21%,
 			rgba(255, 255, 255, 0.1) 94.15%
 		),
-		url("@site/static/assets/home/banner-light.png");
+		url("https://storage.fluidframework.com/static/images/website/home/banner-light.png");
 }
 
 /* Dark mode override */
 [data-theme="dark"] .ffcom-banner {
 	background-image: linear-gradient(90.5deg, rgba(0, 0, 0, 0.8) 19.21%, rgba(0, 0, 0, 0.3)),
-		url("@site/static/assets/home/banner-dark.png");
+		url("https://storage.fluidframework.com/static/images/website/home/banner-dark.png");
 }
 
 .ffcom-video-container {

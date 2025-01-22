@@ -44,13 +44,11 @@ parameters:
 variables:
   - group: doc-versions
   - group: storage-vars
+  - group: ado-feeds
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: shouldRetainGuardianAssets
-    value: ${{ or(
-      eq(parameters.guardianAssetRetentionOverride, 'force'),
-      and(eq(parameters.guardianAssetRetentionOverride, 'default'))
-      )}}
+    value: ${{ eq(parameters.guardianAssetRetentionOverride, 'default') }}
   - name: deploymentToken
     ${{ if eq( parameters['deployEnvironment'], 'new' ) }}:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
@@ -105,7 +103,6 @@ stages:
 
     - job: build_site
       displayName: 'Build website'
-      dependsOn: upload_json
       pool: Large-eastus2
       steps:
         - checkout: self
@@ -133,6 +130,8 @@ stages:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
+          env:
+            INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
 
         # Run the tests
         - task: Npm@1
@@ -266,7 +265,7 @@ stages:
 
 - stage: deploy
   displayName: 'Deploy website'
-  pool: Small
+  pool: Small-eastus2
   dependsOn: ['build', 'guardian']
   variables:
     deployOverrideVar: ${{ parameters.deployOverride }}

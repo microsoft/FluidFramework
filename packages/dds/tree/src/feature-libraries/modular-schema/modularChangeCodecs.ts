@@ -32,6 +32,7 @@ import {
 	brand,
 	fail,
 	idAllocatorFromMaxId,
+	newTupleBTree,
 } from "../../util/index.js";
 import {
 	type FieldBatchCodec,
@@ -55,21 +56,18 @@ import {
 	type EncodedNodeChangeset,
 	type EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
-import type {
-	ChangeAtomIdBTree,
-	FieldChangeMap,
-	FieldChangeset,
-	FieldId,
-	ModularChangeset,
-	NodeChangeset,
-	NodeId,
+import {
+	newCrossFieldRangeTable,
+	type ChangeAtomIdBTree,
+	type FieldChangeMap,
+	type FieldChangeset,
+	type FieldId,
+	type ModularChangeset,
+	type NodeChangeset,
+	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import {
-	newCrossFieldKeyTable,
-	newNodeRenameTable,
-	newTupleBTree,
-} from "./modularChangeFamily.js";
+import { newNodeRenameTable } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -280,8 +278,8 @@ function makeModularChangeCodec(
 				fieldChangeset,
 			);
 
-			for (const crossFieldKey of crossFieldKeys) {
-				decoded.crossFieldKeys.set(crossFieldKey, fieldId);
+			for (const { key, count } of crossFieldKeys) {
+				decoded.crossFieldKeys.set(key, count, fieldId);
 			}
 
 			const fieldKey: FieldKey = brand<FieldKey>(field.fieldKey);
@@ -492,7 +490,7 @@ function makeModularChangeCodec(
 				nodeRenames: newNodeRenameTable(), // XXX
 				nodeToParent: newTupleBTree(),
 				nodeAliases: newTupleBTree(),
-				crossFieldKeys: newCrossFieldKeyTable(),
+				crossFieldKeys: newCrossFieldRangeTable(),
 			};
 
 			decoded.fieldChanges = decodeFieldChangesFromJson(

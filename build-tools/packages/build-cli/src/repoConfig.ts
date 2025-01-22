@@ -18,8 +18,12 @@ const defaults = new Map([
  */
 export const getRunPolicyCheckDefault = (
 	releaseGroupOrPackage: ReleaseGroup | ReleasePackage,
-	branch: string,
+	branch: string | undefined,
 ): boolean => {
+	if (branch === undefined) {
+		return false;
+	}
+
 	for (const [branchPattern, shouldRunPolicy] of defaults) {
 		if (minimatch(branch, branchPattern) === true) {
 			return shouldRunPolicy.includes(releaseGroupOrPackage);

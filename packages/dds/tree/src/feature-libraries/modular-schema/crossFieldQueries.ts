@@ -3,34 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeAtomId, RevisionTag } from "../../core/index.js";
-import {
-	type RangeMap,
-	type RangeQueryResult,
-	getFromRangeMap,
-	getOrAddInMap,
-	setInRangeMap,
-} from "../../util/index.js";
+import type {
+	ChangeAtomId,
+	ChangeAtomIdRangeMap,
+	ChangesetLocalId,
+	RevisionTag,
+} from "../../core/index.js";
+import type { RangeQueryResult } from "../../util/index.js";
 import type { NodeId } from "./modularChangeTypes.js";
 
-export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
+export type CrossFieldMap<T> = ChangeAtomIdRangeMap<T>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
 
 export function setInCrossFieldMap<T>(
 	map: CrossFieldMap<T>,
-	{ revision, localId }: ChangeAtomId,
+	id: ChangeAtomId,
 	count: number,
 	value: T,
 ): void {
-	setInRangeMap(getOrAddInMap(map, revision, []), localId, count, value);
+	map.set(id, count, value);
 }
 
 export function getFirstFromCrossFieldMap<T>(
 	map: CrossFieldMap<T>,
-	{ revision, localId }: ChangeAtomId,
+	id: ChangeAtomId,
 	count: number,
-): RangeQueryResult<T> {
-	return getFromRangeMap(map.get(revision) ?? [], localId, count);
+): RangeQueryResult<ChangeAtomId, T> {
+	return map.getFirst(id, count);
 }
 
 /**
@@ -42,11 +41,17 @@ export enum CrossFieldTarget {
 
 export interface InvertNodeManager {
 	invertDetach(detachId: ChangeAtomId, count: number, nodeChanges: NodeId | undefined): void;
-	invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<DetachedNodeEntry>;
+	invertAttach(
+		attachId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
 }
 
 export interface ComposeNodeManager {
-	getChangesForBaseDetach(baseDetachId: ChangeAtomId, count: number): RangeQueryResult<NodeId>;
+	getChangesForBaseDetach(
+		baseDetachId: ChangeAtomId,
+		count: number,
+	): RangeQueryResult<ChangeAtomId, NodeId>;
 
 	composeBaseAttach(
 		baseAttachId: ChangeAtomId,
@@ -61,7 +66,7 @@ export interface RebaseNodeManager<T = unknown> {
 	getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<DetachedNodeEntry<T>>;
+	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry<T>>;
 
 	// XXX: We need to know if a detach is no longer happening with in field
 	rebaseOverDetach(

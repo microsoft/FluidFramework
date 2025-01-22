@@ -3,16 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	areEqualChangeAtomIds,
 } from "../../core/index.js";
-import type { Mutable } from "../../util/index.js";
+import { getLast, hasSome, type Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import { type MarkList, NoopMarkType } from "./types.js";
 import {
@@ -21,12 +20,12 @@ import {
 	getDetachedNodeId,
 	getInputCellId,
 } from "./utils.js";
-import type { ToDelta } from "../modular-schema/index.js";
+import type { FieldChangeDelta, ToDelta } from "../modular-schema/index.js";
 
 export function sequenceFieldToDelta(
 	change: MarkList,
 	deltaFromChild: ToDelta,
-): DeltaFieldChanges {
+): FieldChangeDelta {
 	const local: DeltaMark[] = [];
 	const global: DeltaDetachedNodeChanges[] = [];
 	const rename: DeltaDetachedNodeRename[] = [];
@@ -109,8 +108,8 @@ export function sequenceFieldToDelta(
 		}
 	}
 	// Remove trailing no-op marks
-	while (local.length > 0) {
-		const lastMark = local[local.length - 1] ?? oob();
+	while (hasSome(local)) {
+		const lastMark = getLast(local);
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||
@@ -120,7 +119,7 @@ export function sequenceFieldToDelta(
 		}
 		local.pop();
 	}
-	const delta: Mutable<DeltaFieldChanges> = {};
+	const delta: Mutable<FieldChangeDelta> = {};
 	if (local.length > 0) {
 		delta.local = local;
 	}

@@ -7,6 +7,10 @@ import { strict as assert } from "assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import {
@@ -25,14 +29,12 @@ import {
 	ISummarizer,
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
-	ISummarizerEvents,
 	ISummarizerRuntime,
 	ISummaryManagerConfig,
 	ISummaryOpMessage,
 	RunningSummarizer,
 	SummarizeHeuristicData,
 	Summarizer,
-	SummarizerStopReason,
 	SummaryCollection,
 	SummaryManager,
 	SummaryManagerState,
@@ -175,7 +177,7 @@ describe("Summary Manager", () => {
 				neverCancelledSummaryToken,
 				// stopSummarizerCallback
 				(reason) => {},
-				mockRuntime as any as ISummarizerRuntime,
+				mockRuntime as unknown as ISummarizerRuntime,
 			);
 			await Promise.all([this.stopDeferred.promise, this.runDeferred.promise]);
 			await runningSummarizer.waitStop(true);
@@ -231,7 +233,9 @@ describe("Summary Manager", () => {
 		return summarizer;
 	};
 
-	/** Completes the pending request Summarizer call. */
+	/**
+	 * Completes the pending request Summarizer call.
+	 */
 	const completeSummarizerRequest = () => requestDeferred.resolve();
 
 	function createSummaryManager({
@@ -274,7 +278,7 @@ describe("Summary Manager", () => {
 		clock.reset();
 
 		// Make sure we don't accidentally reuse the same summary manager across tests
-		summaryManager = undefined as any;
+		summaryManager = undefined as unknown as SummaryManager;
 	});
 
 	it("Should become summarizer if connected, then elected; stop summarizer after disconnect", async () => {
@@ -394,10 +398,13 @@ describe("Summary Manager", () => {
 			});
 
 			// Simulate disposing the summary manager in between (potential) initial delay and actually starting
-			const summaryManager_delayBeforeCreatingSummarizer = (
-				summaryManager as any
-			).delayBeforeCreatingSummarizer.bind(summaryManager);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const summaryManager_delayBeforeCreatingSummarizer =
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+				(summaryManager as any).delayBeforeCreatingSummarizer.bind(summaryManager);
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(summaryManager as any).delayBeforeCreatingSummarizer = async (...args) => {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
 				const result = await summaryManager_delayBeforeCreatingSummarizer(args);
 				summaryManager.dispose();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
