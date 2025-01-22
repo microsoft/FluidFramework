@@ -7327,9 +7327,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-plugin-deprecation:
-        specifier: ~2.0.0
-        version: 2.0.0(eslint@8.55.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -12560,9 +12557,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-plugin-deprecation:
-        specifier: ~2.0.0
-        version: 2.0.0(eslint@8.55.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -19768,12 +19762,6 @@ packages:
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
 
-  '@typescript-eslint/utils@6.21.0':
-    resolution: {integrity: sha512-NfWVaC8HP9T8cbKQxHcsJBY5YE1O33+jpMwN45qzWWaPDZgLIbo12toGMWnmhvCpd3sIxkpDw3Wv1B3dYrbDQQ==}
-    engines: {node: ^16.0.0 || >=18.0.0}
-    peerDependencies:
-      eslint: ^7.0.0 || ^8.0.0
-
   '@typescript-eslint/utils@6.7.5':
     resolution: {integrity: sha512-pfRRrH20thJbzPPlPc4j0UNGvH1PjPlhlCMq4Yx7EGjV7lvEeGX0U6MJYe8+SyFutWgSHsdbJ3BXzZccYggezA==}
     engines: {node: ^16.0.0 || >=18.0.0}
@@ -21778,12 +21766,6 @@ packages:
     engines: {node: 10.* || 12.* || >= 14.*}
     peerDependencies:
       eslint: '>=2.0.0 <= 8.x'
-
-  eslint-plugin-deprecation@2.0.0:
-    resolution: {integrity: sha512-OAm9Ohzbj11/ZFyICyR5N6LbOIvQMp7ZU2zI7Ej0jIc8kiGUERXPNMfw2QqqHD1ZHtjMub3yPZILovYEYucgoQ==}
-    peerDependencies:
-      eslint: ^7.0.0 || ^8.0.0
-      typescript: ^4.2.4 || ^5.0.0
 
   eslint-plugin-eslint-comments@3.2.0:
     resolution: {integrity: sha512-0jkOl0hfojIHHmEHgmNdqv4fmh7300NdpA9FFpF7zaoLvB/QeXOGNLIo86oAveJFrfB1p05kC8hpEMHM8DwWVQ==}
@@ -34499,20 +34481,6 @@ snapshots:
       - supports-color
       - typescript
 
-  '@typescript-eslint/utils@6.21.0(eslint@8.55.0)(typescript@5.4.5)':
-    dependencies:
-      '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
-      '@types/json-schema': 7.0.15
-      '@types/semver': 7.5.8
-      '@typescript-eslint/scope-manager': 6.21.0
-      '@typescript-eslint/types': 6.21.0
-      '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.4.5)
-      eslint: 8.55.0
-      semver: 7.6.3
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   '@typescript-eslint/utils@6.7.5(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
@@ -36852,16 +36820,6 @@ snapshots:
   eslint-plugin-chai-expect@3.0.0(eslint@8.55.0):
     dependencies:
       eslint: 8.55.0
-
-  eslint-plugin-deprecation@2.0.0(eslint@8.55.0)(typescript@5.4.5):
-    dependencies:
-      '@typescript-eslint/utils': 6.21.0(eslint@8.55.0)(typescript@5.4.5)
-      eslint: 8.55.0
-      tslib: 2.8.1
-      tsutils: 3.21.0(typescript@5.4.5)
-      typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
 
   eslint-plugin-eslint-comments@3.2.0(eslint@8.55.0):
     dependencies:
