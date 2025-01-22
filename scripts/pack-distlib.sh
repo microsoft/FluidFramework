@@ -8,8 +8,10 @@ echo "Preparing nested lib/dist directories for publishing..."
 mkdir -p nested_lib_dist
 
 # Find all lib/dist directories, excluding those in node_modules
+# directories_to_publish.txt contains the list of all lib and dist directories to be published
+# so they can be later used on test jobs.
+# This is in order to avoid running the build job on test jobs and parallelize them.
 find $WORKING_DIRECTORY -type d \( -name "lib" -o -name "dist" \) ! -path "*/node_modules/*" > nested_lib_dist/directories_to_publish.txt
-find $WORKING_DIRECTORY -type f \( -name "*.tsbuildinfo" -o -name "*.build.log" \) >> nested_lib_dist/directories_to_publish.txt
 
 echo "Directories to publish:"
 cat nested_lib_dist/directories_to_publish.txt
