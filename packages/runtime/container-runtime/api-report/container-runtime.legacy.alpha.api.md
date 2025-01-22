@@ -41,7 +41,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration;
 // @alpha @deprecated
 export const DeletedResponseHeaderKey = "wasDeleted";
 
-// @alpha @deprecated (undocumented)
+// @alpha (undocumented)
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
 // @alpha @deprecated
