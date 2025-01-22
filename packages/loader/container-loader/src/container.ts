@@ -496,6 +496,7 @@ export class Container
 	private readonly detachedBlobStorage: IDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: ProtocolHandlerBuilder;
 	private readonly client: IClient;
+
 	private readonly mc: MonitoringContext;
 
 	/**
@@ -2471,7 +2472,7 @@ export class Container
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
 
-		const maybeRuntimeCompatDetails = runtime as unknown as FluidObject<ILayerCompatDetails>;
+		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
 		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
 			this.dispose(error),
 		);

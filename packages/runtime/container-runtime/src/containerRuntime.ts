@@ -1618,7 +1618,7 @@ export class ContainerRuntime
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
-		const maybeLoaderCompatDetails = context as unknown as FluidObject<ILayerCompatDetails>;
+		const maybeLoaderCompatDetails = context as FluidObject<ILayerCompatDetails>;
 		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
 
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object

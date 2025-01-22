@@ -32,7 +32,7 @@ export const RuntimeCompatDetails: ILayerCompatDetails = {
 };
 
 /**
- * The requirements that the Loader layer must meet to be compatible with the Runtime.
+ * The requirements that the Loader layer must meet to be compatible with this Runtime.
  */
 export const LoaderSupportRequirements: ILayerCompatSupportRequirements = {
 	/**
@@ -59,9 +59,9 @@ export function validateLoaderCompatibility(
 	);
 	if (!layerCheckResult.isCompatible) {
 		const error = new UsageError("Runtime is not compatible with Loader", {
-			version: RuntimeCompatDetails.pkgVersion,
+			runtimeVersion: RuntimeCompatDetails.pkgVersion,
 			loaderVersion: maybeLoaderCompatDetails?.pkgVersion,
-			generation: RuntimeCompatDetails.generation,
+			runtimeGeneration: RuntimeCompatDetails.generation,
 			loaderGeneration: maybeLoaderCompatDetails?.generation,
 			minSupportedGeneration: LoaderSupportRequirements.minSupportedGeneration,
 			isGenerationCompatible: layerCheckResult.isGenerationCompatible,

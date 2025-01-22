@@ -30,6 +30,23 @@ describe("checkLayerCompatibility", () => {
 			isGenerationCompatible: false,
 			unsupportedFeatures: compatSupportRequirementsLayer1.requiredFeatures,
 		};
+		assert.deepStrictEqual(result, expectedResults, "Layers should not be compatible");
+	});
+
+	it("should return compatible when other layer doesn't support ILayerCompatDetails (back compat)", () => {
+		// For backwards compatibility, the minSupportedGeneration is 0 and there are no required features.
+		const compatSupportRequirementsLayer1: ILayerCompatSupportRequirements = {
+			requiredFeatures: [],
+			minSupportedGeneration: 0,
+		};
+
+		const result: LayerCompatCheckResult = checkLayerCompatibility(
+			compatSupportRequirementsLayer1,
+			undefined /* compatDetailsLayer2 */,
+		);
+		const expectedResults: LayerCompatCheckResult = {
+			isCompatible: true,
+		};
 		assert.deepStrictEqual(result, expectedResults, "Layers should be compatible");
 	});
 
@@ -42,7 +59,7 @@ describe("checkLayerCompatibility", () => {
 		const compatDetailsLayer2: ILayerCompatDetails = {
 			pkgVersion,
 			generation: 1,
-			supportedFeatures: new Set(["feature1", "feature2"]),
+			supportedFeatures: new Set(["feature1", "feature2", "feature3"]),
 		};
 		const result: LayerCompatCheckResult = checkLayerCompatibility(
 			compatSupportRequirementsLayer1,
