@@ -36,8 +36,9 @@ const render = (diceRoller: IDiceRoller) => {
 	appRoot.render(createElement(DiceRollerView, { diceRoller }));
 };
 
-const tokenProvider = createInsecureTinyliciousTestTokenProvider();
 const urlResolver = createInsecureTinyliciousTestUrlResolver();
+const tokenProvider = createInsecureTinyliciousTestTokenProvider();
+const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
 const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory());
 
 async function start(): Promise<void> {
@@ -48,7 +49,7 @@ async function start(): Promise<void> {
 		const container = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
-			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
+			documentServiceFactory,
 			codeLoader,
 		});
 		groceryList = (await container.getEntryPoint()) as IDiceRoller;
@@ -62,7 +63,7 @@ async function start(): Promise<void> {
 		const container = await loadExistingContainer({
 			request: { url: id },
 			urlResolver,
-			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
+			documentServiceFactory,
 			codeLoader,
 		});
 		groceryList = (await container.getEntryPoint()) as IDiceRoller;

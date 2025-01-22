@@ -14,6 +14,7 @@ import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/legacy";
+
 import type { IDiceRoller, IDiceRollerEvents } from "./interface.js";
 
 const mapId = "dice-map";
