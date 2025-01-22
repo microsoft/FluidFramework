@@ -163,8 +163,8 @@ export abstract class BaseDeltaManagerProxy
 
 /**
  * Proxy to the real IDeltaManager for restricting certain access to layers below container runtime in summarizer clients:
- *- Summarizer client should be read-only to layers below the container runtime to restrict local changes.
- *- Summarizer client should not be active to layers below the container runtime to restrict local changes.
+ * - Summarizer client should be read-only to layers below the container runtime to restrict local changes.
+ * - Summarizer client should not be active to layers below the container runtime to restrict local changes.
  */
 export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 	public get active(): boolean {

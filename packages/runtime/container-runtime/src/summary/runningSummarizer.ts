@@ -78,11 +78,11 @@ export const defaultMaxAttempts = 2;
 export const defaultMaxAttemptsForSubmitFailures = 5;
 
 /**
- *An instance of RunningSummarizer manages the heuristics for summarizing.
- *Until disposed, the instance of RunningSummarizer can assume that it is
+ * An instance of RunningSummarizer manages the heuristics for summarizing.
+ * Until disposed, the instance of RunningSummarizer can assume that it is
  * in a state of running, meaning it is connected and initialized.  It keeps
  * track of summaries that it is generating as they are broadcast and acked/nacked.
- *This object is created and controlled by Summarizer object.
+ * This object is created and controlled by Summarizer object.
  */
 export class RunningSummarizer
 	extends TypedEventEmitter<ISummarizerEvents>
@@ -430,8 +430,8 @@ export class RunningSummarizer
 	}
 
 	/**
-	 *RunningSummarizer's logger includes the sequenced index of the current summary on each event.
-	 *If some other Summarizer code wants that event on their logs they can get it here,
+	 * RunningSummarizer's logger includes the sequenced index of the current summary on each event.
+	 * If some other Summarizer code wants that event on their logs they can get it here,
 	 * but only if they're logging about that same summary.
 	 * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
 	 */

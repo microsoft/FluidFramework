@@ -31,7 +31,7 @@ import {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type GCVersion = number;
 
@@ -94,7 +94,7 @@ export const defaultSweepGracePeriodMs = 1 * oneDayMs; // 1 day
  * @see IGCMetadata.gcFeatureMatrix and @see gcGenerationOptionName
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type GCFeatureMatrix =
 	| {
@@ -118,14 +118,14 @@ export type GCFeatureMatrix =
 	  };
 
 /**
- *Deprecated properties formerly included in @see IGCMetadata.
+ * Deprecated properties formerly included in @see IGCMetadata.
  * These may be found in old snapshots, so we need to support them for backwards compatibility.
  */
 export interface IGCMetadata_Deprecated {
 	/**
 	 * How long to wait after an object is unreferenced before deleting it via GC Sweep
 	 *
-	 *@deprecated Replaced by @see IGCMetadata.tombstoneTimeoutMs
+	 * @deprecated Replaced by @see IGCMetadata.tombstoneTimeoutMs
 	 */
 	readonly sweepTimeoutMs?: number;
 }
@@ -135,7 +135,7 @@ export interface IGCMetadata_Deprecated {
  *
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IGCMetadata {
 	/**
@@ -186,7 +186,7 @@ export interface IGCMetadata {
  * The statistics of the system state after a garbage collection mark phase run.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IMarkPhaseStats {
 	/**
@@ -231,7 +231,7 @@ export interface IMarkPhaseStats {
  * The statistics of the system state after a garbage collection sweep phase run.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISweepPhaseStats {
 	/**
@@ -264,7 +264,7 @@ export interface ISweepPhaseStats {
  * The statistics of the system state after a garbage collection run.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
 
@@ -272,7 +272,7 @@ export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {}
  * The types of GC nodes in the GC reference graph.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const GCNodeType = {
 	// Nodes that are for data stores.
@@ -288,7 +288,7 @@ export const GCNodeType = {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 

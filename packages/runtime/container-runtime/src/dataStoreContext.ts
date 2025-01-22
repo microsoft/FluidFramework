@@ -1054,7 +1054,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 *Summarizer client should not have local changes. These changes can become part of the summary and can break
+	 * Summarizer client should not have local changes. These changes can become part of the summary and can break
 	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */

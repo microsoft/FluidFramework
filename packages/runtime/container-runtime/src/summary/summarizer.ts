@@ -76,12 +76,12 @@ export const createSummarizingWarning = (
 ): SummarizingWarning => new SummarizingWarning(errorMessage, logged);
 
 /**
- *Summarizer is responsible for coordinating when to generate and send summaries.
+ * Summarizer is responsible for coordinating when to generate and send summaries.
  * It is the main entry point for summary work.
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	public get ISummarizer(): this {
@@ -229,7 +229,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	/**
 	 * Should we try to run a last summary for the given stop reason?
 	 * Currently only allows "parentNotConnected"
-	 *@param stopReason - SummarizerStopReason
+	 * @param stopReason - SummarizerStopReason
 	 * @returns `true` if the stop reason can run a last summary, otherwise `false`.
 	 */
 	public static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean {
@@ -239,13 +239,13 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	private _heuristicData: ISummarizeHeuristicData | undefined;
 
 	/**
-	 *Put the summarizer in a started state, including creating and initializing the RunningSummarizer.
+	 * Put the summarizer in a started state, including creating and initializing the RunningSummarizer.
 	 * The start request can come either from the SummaryManager (in the auto-summarize case) or from the user
 	 * (in the on-demand case).
 	 * @param onBehalfOf - ID of the client that requested that the summarizer start
 	 * @param runCoordinator - cancellation token
-	 *@param newConfig - Summary configuration to override the existing config when invoking the RunningSummarizer.
-	 *@returns A promise that is fulfilled when the RunningSummarizer is ready.
+	 * @param newConfig - Summary configuration to override the existing config when invoking the RunningSummarizer.
+	 * @returns A promise that is fulfilled when the RunningSummarizer is ready.
 	 */
 	private async start(
 		onBehalfOf: string,

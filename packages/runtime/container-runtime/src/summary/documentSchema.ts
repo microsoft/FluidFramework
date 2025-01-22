@@ -15,7 +15,7 @@ import { pkgVersion } from "../packageVersion.js";
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
@@ -45,7 +45,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  * In the future that could be interpolated to more areas, including DDSs used, and even possibly - application
  * schema.
  *
- *Runtime will ignore any properties at the root that it does not understand (i.e. IDocumentSchema.app), but will
+ * Runtime will ignore any properties at the root that it does not understand (i.e. IDocumentSchema.app), but will
  * stop (and fail session) on any unknown properties within "runtime" sub-tree.
  *
  * In most cases values preserved in the document will not dictate if such features should be enabled in a given session.
@@ -60,7 +60,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  *
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
@@ -76,25 +76,25 @@ export interface IDocumentSchema {
 
 /**
  * Content of the type=ContainerMessageType.DocumentSchemaChange ops.
- *The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
+ * The meaning of refSeq field is different in such messages (compared to other usages of IDocumentSchemaCurrent)
  * ContainerMessageType.DocumentSchemaChange messages use CAS (Compare-and-swap) semantics, and convey
  * regSeq of last known schema change (known to a client proposing schema change).
  * @see ContainerRuntimeDocumentSchemaMessage
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
 /**
  * Settings that this session would like to have, based on options and feature gates.
  *
- *WARNING: This type is used to infer IDocumentSchemaCurrent type!
+ * WARNING: This type is used to infer IDocumentSchemaCurrent type!
  * Any changes here (including renaming of properties) are potentially changing document format and should be considered carefully!
  *
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
@@ -107,7 +107,7 @@ export interface IDocumentSchemaFeatures {
 
 	/**
 	 * List of disallowed versions of the runtime.
-	 *This option is sticky. Once a version of runtime is added to this list (when supplied to DocumentsSchemaController's constructor)
+	 * This option is sticky. Once a version of runtime is added to this list (when supplied to DocumentsSchemaController's constructor)
 	 * it will be added to the list of disallowed versions and stored in document metadata.
 	 * Each runtime checks if its version is in this list on container open. If it is, it immediately exits with error message
 	 * indicating to the user that this version is no longer supported.
@@ -121,11 +121,11 @@ export interface IDocumentSchemaFeatures {
 /**
  * Current version known properties that define document schema
  * This must be bumped whenever the format of document schema or protocol for changing the current document schema changes.
- *Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
+ * Ex: adding a new configuration property (under IDocumentSchema.runtime) does not require changing this version.
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const currentDocumentVersionSchema = 1;
 
@@ -133,7 +133,7 @@ export const currentDocumentVersionSchema = 1;
  * Current document schema.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IDocumentSchemaCurrent = {
@@ -419,7 +419,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * Whenver document schema does not match future schema, controller will send an op that attempts to changs documents schema to
  * future schema.
  *
- *Users of this class need to use DocumentsSchemaController.sessionSchema to determine what features can be used.
+ * Users of this class need to use DocumentsSchemaController.sessionSchema to determine what features can be used.
  *
  * There are two modes this class can operate:
  * 1) Legacy mode. In such mode it does not issue any ops to change document schema. Any changes happen implicitly,
@@ -443,7 +443,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  *
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  * @sealed
  */
 export class DocumentsSchemaController {
@@ -468,7 +468,7 @@ export class DocumentsSchemaController {
 	public sessionSchema: IDocumentSchemaCurrent;
 
 	/**
-	 *Constructs DocumentsSchemaController that controls current schema and processes around it, including changes in schema.
+	 * Constructs DocumentsSchemaController that controls current schema and processes around it, including changes in schema.
 	 * @param existing - Is the document existing document, or a new doc.
 	 * @param documentMetadataSchema - current document's schema, if present.
 	 * @param features - features of the document schema that current session wants to see enabled.

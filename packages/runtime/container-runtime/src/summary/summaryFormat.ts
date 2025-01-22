@@ -132,7 +132,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 // eslint-disable-next-line import/no-deprecated
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
@@ -165,7 +165,7 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ICreateContainerMetadata {
 	/**
@@ -182,7 +182,7 @@ export interface ICreateContainerMetadata {
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,
@@ -196,7 +196,7 @@ export type ISummaryMetadataMessage = Pick<
 >;
 
 /**
- *Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
+ * Extracts the properties from an ISequencedDocumentMessage as defined by ISummaryMetadataMessage. This message is
  * added to the metadata blob in summary.
  */
 export const extractSummaryMetadataMessage = (

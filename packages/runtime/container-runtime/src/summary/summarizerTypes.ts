@@ -41,7 +41,7 @@ import { SummarizeReason } from "./summaryGenerator.js";
  * @param T - cancellation reason type
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ICancellationToken<T> {
 	/**
@@ -59,7 +59,7 @@ export interface ICancellationToken<T> {
  * Similar to AbortSignal, but using promise instead of events
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
@@ -67,7 +67,7 @@ export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>
  * Data required to update internal tracking state after receiving a Summary Ack.
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IRefreshSummaryAckOptions {
 	/**
@@ -91,7 +91,7 @@ export interface IRefreshSummaryAckOptions {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISummarizerInternalsProvider {
 	/**
@@ -116,7 +116,7 @@ export interface ISummarizingWarning extends ContainerWarning {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IConnectableRuntime {
 	readonly disposed: boolean;
@@ -128,7 +128,7 @@ export interface IConnectableRuntime {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISummarizerRuntime extends IConnectableRuntime {
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -164,7 +164,7 @@ export interface ISummarizeOptions {
 /**
  * @legacy
  * @alpha
- * @deprecated - This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	/**
@@ -482,13 +482,13 @@ export type EnqueueSummarizeResult =
  */
 export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
 	/**
-	 *Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
+	 * Allows {@link ISummarizer} to be used with our {@link @fluidframework/core-interfaces#FluidObject} pattern.
 	 */
 	readonly ISummarizer?: ISummarizer;
 
 	/*
 	 * Asks summarizer to move to exit.
-	 *Summarizer will finish current processes, which may take a while.
+	 * Summarizer will finish current processes, which may take a while.
 	 * For example, summarizer may complete last summary before exiting.
 	 */
 	stop(reason: SummarizerStopReason): void;
