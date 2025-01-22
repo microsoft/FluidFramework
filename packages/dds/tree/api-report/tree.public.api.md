@@ -58,29 +58,6 @@ export const CustomizedTyping: unique symbol;
 export type CustomizedTyping = typeof CustomizedTyping;
 
 // @public @sealed
-export interface Customizer<TSchema extends ImplicitAllowedTypes> {
-    custom<T extends Partial<CustomTypes>>(): CustomizedSchemaTyping<TSchema, {
-        [Property in keyof CustomTypes]: Property extends keyof T ? T[Property] extends CustomTypes[Property] ? T[Property] : GetTypes<TSchema>[Property] : GetTypes<TSchema>[Property];
-    }>;
-    relaxed(): CustomizedSchemaTyping<TSchema, {
-        input: TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes ? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema> ? InsertableTypedNode<TSchemaInner> : never : never;
-        readWrite: TreeNodeFromImplicitAllowedTypes<TSchema>;
-        output: TreeNodeFromImplicitAllowedTypes<TSchema>;
-    }>;
-    simplified<T extends TreeNodeFromImplicitAllowedTypes<TSchema>>(): CustomizedSchemaTyping<TSchema, {
-        input: T;
-        readWrite: T;
-        output: T;
-    }>;
-    simplifiedUnrestricted<T extends TreeNode | TreeLeafValue>(): CustomizedSchemaTyping<TSchema, {
-        input: T;
-        readWrite: T;
-        output: T;
-    }>;
-    strict(): CustomizedSchemaTyping<TSchema, StrictTypes<TSchema>>;
-}
-
-// @public @sealed
 export interface CustomTypes {
     readonly input: unknown;
     readonly output: TreeLeafValue | TreeNode;

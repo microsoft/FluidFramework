@@ -102,13 +102,13 @@ export const CustomizedTyping: unique symbol;
 // @public
 export type CustomizedTyping = typeof CustomizedTyping;
 
-// @public @sealed
+// @alpha @sealed
 export interface Customizer<TSchema extends ImplicitAllowedTypes> {
     custom<T extends Partial<CustomTypes>>(): CustomizedSchemaTyping<TSchema, {
         [Property in keyof CustomTypes]: Property extends keyof T ? T[Property] extends CustomTypes[Property] ? T[Property] : GetTypes<TSchema>[Property] : GetTypes<TSchema>[Property];
     }>;
     relaxed(): CustomizedSchemaTyping<TSchema, {
-        input: TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes ? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema> ? InsertableTypedNode<TSchemaInner> : never : never;
+        input: TreeNodeSchema extends TSchema ? InsertableContent : TSchema extends TreeNodeSchema ? InsertableTypedNode<TSchema> : TSchema extends AllowedTypes ? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema> ? InsertableTypedNode<TSchemaInner> : never : never;
         readWrite: TreeNodeFromImplicitAllowedTypes<TSchema>;
         output: TreeNodeFromImplicitAllowedTypes<TSchema>;
     }>;
@@ -314,7 +314,7 @@ type _InlineTrick = 0;
 export type Input<T extends never> = T;
 
 // @alpha
-export type Insertable<TSchema extends ImplicitAllowedTypes | UnsafeUnknownSchema> = TSchema extends ImplicitAllowedTypes ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : InsertableContent;
+export type Insertable<TSchema extends ImplicitAllowedTypes> = InsertableTreeNodeFromImplicitAllowedTypes<TSchema>;
 
 // @alpha
 export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;

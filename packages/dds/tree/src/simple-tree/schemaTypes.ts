@@ -671,7 +671,7 @@ export function customizeSchemaTyping<TSchema extends ImplicitAllowedTypes>(
 
 /**
  * Utility for customizing the types used for data matching a given schema.
- * @sealed @public
+ * @sealed @alpha
  */
 export interface Customizer<TSchema extends ImplicitAllowedTypes> {
 	/**
