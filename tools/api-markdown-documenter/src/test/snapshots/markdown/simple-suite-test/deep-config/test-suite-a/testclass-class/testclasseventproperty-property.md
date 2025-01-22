@@ -1,6 +1,6 @@
 # testClassEventProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/) &gt; [testClassEventProperty](/test-suite-a/testclass-class/testclasseventproperty-property)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestClass](/test-suite-a/testclass-class) &gt; [testClassEventProperty](/test-suite-a/testclass-class/testclasseventproperty-property)
 
 Test class event property
 

@@ -87,8 +87,10 @@ function getLinkUrlForApiItem(
 	// Omit "index" file name from path generated in links.
 	// This can be considered an optimization in most cases, but some documentation systems also special-case
 	// "index" files, so this can also prevent issues in some cases.
-	if (documentPath === "index" || documentPath.endsWith("/index")) {
-		documentPath = documentPath.slice(0, documentPath.length - "index".length);
+	if (documentPath === "index") {
+		documentPath = "";
+	} else if (documentPath.endsWith("/index")) {
+		documentPath = documentPath.slice(0, documentPath.length - "/index".length);
 	}
 
 	// Don't bother with heading ID if we are linking to the root item of a document

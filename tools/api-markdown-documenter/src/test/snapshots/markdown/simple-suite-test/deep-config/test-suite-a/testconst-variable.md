@@ -1,6 +1,6 @@
 # testConst
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testConst](/test-suite-a/testconst-variable)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [testConst](/test-suite-a/testconst-variable)
 
 Test Constant
 

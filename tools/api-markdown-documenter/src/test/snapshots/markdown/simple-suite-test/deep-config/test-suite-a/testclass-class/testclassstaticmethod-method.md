@@ -1,6 +1,6 @@
 # testClassStaticMethod
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/) &gt; [testClassStaticMethod(foo)](/test-suite-a/testclass-class/testclassstaticmethod-method)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestClass](/test-suite-a/testclass-class) &gt; [testClassStaticMethod(foo)](/test-suite-a/testclass-class/testclassstaticmethod-method)
 
 Test class static method
 

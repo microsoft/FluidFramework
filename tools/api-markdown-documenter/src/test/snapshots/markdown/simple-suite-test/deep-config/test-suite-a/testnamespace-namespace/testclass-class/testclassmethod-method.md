@@ -1,6 +1,6 @@
 # testClassMethod
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestClass](/test-suite-a/testnamespace-namespace/testclass-class/) &gt; [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class/testclassmethod-method)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace) &gt; [TestClass](/test-suite-a/testnamespace-namespace/testclass-class) &gt; [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class/testclassmethod-method)
 
 Test class method
 

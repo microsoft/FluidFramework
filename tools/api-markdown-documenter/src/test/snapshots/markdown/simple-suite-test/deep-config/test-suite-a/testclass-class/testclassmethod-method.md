@@ -1,6 +1,6 @@
 # testClassMethod
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/) &gt; [testClassMethod(input)](/test-suite-a/testclass-class/testclassmethod-method)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestClass](/test-suite-a/testclass-class) &gt; [testClassMethod(input)](/test-suite-a/testclass-class/testclassmethod-method)
 
 Test class method
 

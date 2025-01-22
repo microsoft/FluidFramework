@@ -1,6 +1,6 @@
 # TestConst
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestConst](/test-suite-a/testnamespace-namespace/testconst-variable)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace) &gt; [TestConst](/test-suite-a/testnamespace-namespace/testconst-variable)
 
 Test Constant
 

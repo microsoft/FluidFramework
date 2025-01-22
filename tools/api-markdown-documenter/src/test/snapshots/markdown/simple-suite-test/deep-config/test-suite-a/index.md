@@ -1,6 +1,6 @@
 # test-suite-a
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/)
+[Packages](/) &gt; [test-suite-a](/test-suite-a)
 
 Test package
 
@@ -22,7 +22,7 @@ And an ordered list for good measure!
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
-- Good link (no alias): [TestClass](/test-suite-a/testclass-class/)
+- Good link (no alias): [TestClass](/test-suite-a/testclass-class)
 
 - Good link (with alias): [function alias text](/test-suite-a/testfunction-function)
 
@@ -42,40 +42,40 @@ const foo = bar;
 
 | Interface | Description |
 | --- | --- |
-| [TestEmptyInterface](/test-suite-a/testemptyinterface-interface/) | An empty interface |
-| [TestInterface](/test-suite-a/testinterface-interface/) | Test interface |
-| [TestInterfaceExtendingOtherInterfaces](/test-suite-a/testinterfaceextendingotherinterfaces-interface/) | Test interface that extends other interfaces |
-| [TestInterfaceWithIndexSignature](/test-suite-a/testinterfacewithindexsignature-interface/) | An interface with an index signature. |
-| [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/) | Test interface with generic type parameter |
+| [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) | An empty interface |
+| [TestInterface](/test-suite-a/testinterface-interface) | Test interface |
+| [TestInterfaceExtendingOtherInterfaces](/test-suite-a/testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+| [TestInterfaceWithIndexSignature](/test-suite-a/testinterfacewithindexsignature-interface) | An interface with an index signature. |
+| [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
 ## Classes
 
 | Class | Description |
 | --- | --- |
-| [TestAbstractClass](/test-suite-a/testabstractclass-class/) | A test abstract class. |
-| [TestClass](/test-suite-a/testclass-class/) | Test class |
+| [TestAbstractClass](/test-suite-a/testabstractclass-class) | A test abstract class. |
+| [TestClass](/test-suite-a/testclass-class) | Test class |
 
 ## Enumerations
 
 | Enum | Description |
 | --- | --- |
-| [TestEnum](/test-suite-a/testenum-enum/) | Test Enum |
+| [TestEnum](/test-suite-a/testenum-enum) | Test Enum |
 
 ## Types
 
 | TypeAlias | Description |
 | --- | --- |
-| [TestMappedType](/test-suite-a/testmappedtype-typealias/) | Test Mapped Type, using [TestEnum](/test-suite-a/testenum-enum/) |
-| [TypeAlias](/test-suite-a/typealias-typealias/) | Test Type-Alias |
+| [TestMappedType](/test-suite-a/testmappedtype-typealias) | Test Mapped Type, using [TestEnum](/test-suite-a/testenum-enum) |
+| [TypeAlias](/test-suite-a/typealias-typealias) | Test Type-Alias |
 
 ## Functions
 
 | Function | Alerts | Return Type | Description |
 | --- | --- | --- | --- |
 | [testFunction(testParameter, testOptionalParameter)](/test-suite-a/testfunction-function) | `Alpha` | TTypeParameter | Test function |
-| [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum/); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](/test-suite-a/testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](/test-suite-a/testemptyinterface-interface/) &amp; [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)&lt;number&gt; | Test function that returns an inline type |
-| [testFunctionReturningUnionType()](/test-suite-a/testfunctionreturninguniontype-function) |  | string \| [TestInterface](/test-suite-a/testinterface-interface/) | Test function that returns an inline type |
+| [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); } | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](/test-suite-a/testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
+| [testFunctionReturningUnionType()](/test-suite-a/testfunctionreturninguniontype-function) |  | string \| [TestInterface](/test-suite-a/testinterface-interface) | Test function that returns an inline type |
 
 ## Variables
 
@@ -88,5 +88,5 @@ const foo = bar;
 
 | Namespace | Description |
 | --- | --- |
-| [TestModule](/test-suite-a/testmodule-namespace/) |  |
-| [TestNamespace](/test-suite-a/testnamespace-namespace/) | Test Namespace |
+| [TestModule](/test-suite-a/testmodule-namespace) |  |
+| [TestNamespace](/test-suite-a/testnamespace-namespace) | Test Namespace |

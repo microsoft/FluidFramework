@@ -1,6 +1,6 @@
 # TestEnumValue3
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestEnum](/test-suite-a/testenum-enum/) &gt; [TestEnumValue3](/test-suite-a/testenum-enum/testenumvalue3-enummember)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestEnum](/test-suite-a/testenum-enum) &gt; [TestEnumValue3](/test-suite-a/testenum-enum/testenumvalue3-enummember)
 
 Test enum value 3 (default)
 

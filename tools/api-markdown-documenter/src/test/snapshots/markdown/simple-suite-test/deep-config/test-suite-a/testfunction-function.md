@@ -1,6 +1,6 @@
 # testFunction
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testFunction(testParameter, testOptionalParameter)](/test-suite-a/testfunction-function)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [testFunction(testParameter, testOptionalParameter)](/test-suite-a/testfunction-function)
 
 Test function
 
@@ -16,11 +16,11 @@ export declare function testFunction<TTypeParameter extends TestInterface = Test
 
 | Parameter | Constraint | Default | Description |
 | --- | --- | --- | --- |
-| TTypeParameter | [TestInterface](/test-suite-a/testinterface-interface/) | [TestInterface](/test-suite-a/testinterface-interface/) | A test type parameter |
+| TTypeParameter | [TestInterface](/test-suite-a/testinterface-interface) | [TestInterface](/test-suite-a/testinterface-interface) | A test type parameter |
 
 ## Remarks {#testfunction-remarks}
 
-This is a test [link](/test-suite-a/testinterface-interface/) to another API member
+This is a test [link](/test-suite-a/testinterface-interface) to another API member
 
 ## Parameters {#testfunction-parameters}
 

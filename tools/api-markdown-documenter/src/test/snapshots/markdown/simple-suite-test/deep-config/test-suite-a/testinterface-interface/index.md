@@ -1,6 +1,6 @@
 # TestInterface
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestInterface](/test-suite-a/testinterface-interface)
 
 Test interface
 
@@ -18,7 +18,7 @@ Here are some remarks about the interface
 
 | ConstructSignature | Return Type | Description |
 | --- | --- | --- |
-| [new (): TestInterface](/test-suite-a/testinterface-interface/_new_-constructsignature) | [TestInterface](/test-suite-a/testinterface-interface/) | Test construct signature. |
+| [new (): TestInterface](/test-suite-a/testinterface-interface/_new_-constructsignature) | [TestInterface](/test-suite-a/testinterface-interface) | Test construct signature. |
 
 ## Events
 

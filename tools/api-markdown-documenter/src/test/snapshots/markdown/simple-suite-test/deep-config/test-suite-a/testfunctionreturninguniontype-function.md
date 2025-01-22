@@ -1,6 +1,6 @@
 # testFunctionReturningUnionType
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testFunctionReturningUnionType()](/test-suite-a/testfunctionreturninguniontype-function)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [testFunctionReturningUnionType()](/test-suite-a/testfunctionreturninguniontype-function)
 
 Test function that returns an inline type
 
@@ -14,4 +14,4 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type:** string \| [TestInterface](/test-suite-a/testinterface-interface/)
+**Return type:** string \| [TestInterface](/test-suite-a/testinterface-interface)

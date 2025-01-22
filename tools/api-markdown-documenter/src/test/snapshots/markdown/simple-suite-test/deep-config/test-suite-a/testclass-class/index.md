@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestClass](/test-suite-a/testclass-class)
 
 Test class
 
@@ -10,7 +10,7 @@ Test class
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 
-**Extends:** [TestAbstractClass](/test-suite-a/testabstractclass-class/)
+**Extends:** [TestAbstractClass](/test-suite-a/testabstractclass-class)
 
 ### Type Parameters
 
@@ -51,7 +51,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [abstractPropertyGetter](/test-suite-a/testclass-class/abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias/) | A test abstract getter property. |
+| [abstractPropertyGetter](/test-suite-a/testclass-class/abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
 | [testClassGetterProperty](/test-suite-a/testclass-class/testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
@@ -65,4 +65,4 @@ Here are some remarks about the class
 
 ## See Also {#testclass-see-also}
 
-[TestAbstractClass](/test-suite-a/testabstractclass-class/)
+[TestAbstractClass](/test-suite-a/testabstractclass-class)

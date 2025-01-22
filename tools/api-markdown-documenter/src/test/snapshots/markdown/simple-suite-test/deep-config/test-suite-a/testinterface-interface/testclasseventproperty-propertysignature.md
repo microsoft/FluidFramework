@@ -1,6 +1,6 @@
 # testClassEventProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestInterface](/test-suite-a/testinterface-interface) &gt; [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature)
 
 Test interface event property
 

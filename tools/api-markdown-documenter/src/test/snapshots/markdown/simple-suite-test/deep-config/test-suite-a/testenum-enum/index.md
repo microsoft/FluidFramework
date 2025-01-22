@@ -1,6 +1,6 @@
 # TestEnum
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestEnum](/test-suite-a/testenum-enum/)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestEnum](/test-suite-a/testenum-enum)
 
 Test Enum
 

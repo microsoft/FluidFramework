@@ -1,6 +1,6 @@
 # TestAbstractClass
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestAbstractClass](/test-suite-a/testabstractclass-class/)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [TestAbstractClass](/test-suite-a/testabstractclass-class)
 
 A test abstract class.
 
@@ -20,8 +20,8 @@ export declare abstract class TestAbstractClass
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [abstractPropertyGetter](/test-suite-a/testabstractclass-class/abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias/) | A test abstract getter property. |
-| [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property) | `readonly` | [TestEnum](/test-suite-a/testenum-enum/) | A test protected property. |
+| [abstractPropertyGetter](/test-suite-a/testabstractclass-class/abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
+| [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property) | `readonly` | [TestEnum](/test-suite-a/testenum-enum) | A test protected property. |
 
 ## Methods
 

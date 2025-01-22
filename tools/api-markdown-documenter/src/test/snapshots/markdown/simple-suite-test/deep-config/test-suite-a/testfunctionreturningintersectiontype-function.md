@@ -1,6 +1,6 @@
 # testFunctionReturningIntersectionType
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testFunctionReturningIntersectionType()](/test-suite-a/testfunctionreturningintersectiontype-function)
+[Packages](/) &gt; [test-suite-a](/test-suite-a) &gt; [testFunctionReturningIntersectionType()](/test-suite-a/testfunctionreturningintersectiontype-function)
 
 Test function that returns an inline type
 
@@ -18,4 +18,4 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type:** [TestEmptyInterface](/test-suite-a/testemptyinterface-interface/) &amp; [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)&lt;number&gt;
+**Return type:** [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)&lt;number&gt;
