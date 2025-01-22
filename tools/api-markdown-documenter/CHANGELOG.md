@@ -55,7 +55,7 @@ const apiModel = await loadModel({
 
 await MarkdownRenderer.renderApiModel({
 	apiModel,
-	uriRoot: "",
+	uriRoot: "", // Note: this parameter is also now optional. Default: "".
 	outputDirectoryPath,
 });
 ```
