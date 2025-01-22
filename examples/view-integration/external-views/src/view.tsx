@@ -32,10 +32,8 @@ export const DiceRollerView: FC<IDiceRollerViewProps> = ({
 
 	return (
 		<div style={{ textAlign: "center" }}>
-			<div style={{ fontSize: "200px", color }}>
-				{ diceChar }
-			</div>
-			<button style={{ fontSize: "50px" }} onClick={ diceRoller.roll }>
+			<div style={{ fontSize: "200px", color }}>{diceChar}</div>
+			<button style={{ fontSize: "50px" }} onClick={diceRoller.roll}>
 				Roll
 			</button>
 		</div>

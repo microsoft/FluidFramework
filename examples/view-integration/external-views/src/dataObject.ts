@@ -4,12 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	FluidObject,
-	IEvent,
-	IEventProvider,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/legacy";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/legacy";
@@ -28,8 +23,11 @@ export interface IDiceRollerEvents extends IEvent {
  * IDiceRoller describes the public API surface for our dice roller data object.
  */
 export interface IDiceRoller {
-	readonly handle: IFluidHandle<FluidObject>;
+	/**
+	 * Object that events for changes to the dice value.
+	 */
 	readonly events: IEventProvider<IDiceRollerEvents>;
+
 	/**
 	 * Get the dice value as a number.
 	 */
@@ -47,34 +45,30 @@ const diceRollerSharedObjectRegistry = new Map<string, IChannelFactory>([
 	[mapFactory.type, mapFactory],
 ]);
 
-// We'll use this key for storing the value.
-const diceValueKey = "diceValue";
+// This key is where we store the value in the ISharedMap.
+const diceValueKey = "dice-value";
 
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
 class DiceRoller implements IDiceRoller {
-	public get value() {
-		const value = this.map.get(diceValueKey);
-		assert(typeof value === "number", "Bad dice value");
-		return value;
-	}
-
 	private readonly _events = new TypedEventEmitter<IDiceRollerEvents>();
 	public get events(): IEventProvider<IDiceRollerEvents> {
 		return this._events;
 	}
 
-	public constructor(
-		public readonly handle: IFluidHandle<FluidObject>,
-		private readonly map: ISharedMap,
-	) {
+	public constructor(private readonly map: ISharedMap) {
 		this.map.on("valueChanged", (changed: IValueChanged) => {
 			if (changed.key === diceValueKey) {
-				// When we see the dice value change, we'll emit the diceRolled event we specified in our interface.
 				this._events.emit("diceRolled");
 			}
 		});
+	}
+
+	public get value() {
+		const value = this.map.get(diceValueKey);
+		assert(typeof value === "number", "Bad dice value");
+		return value;
 	}
 
 	public readonly roll = () => {
@@ -112,10 +106,7 @@ export class DiceRollerFactory implements IFluidDataStoreFactory {
 			map.bindToContext();
 		}
 
-		assert(runtime.entryPoint !== undefined, "EntryPoint was undefined");
-		const handle = runtime.entryPoint;
-
-		const instance = new DiceRoller(handle, map);
+		const instance = new DiceRoller(map);
 
 		return runtime;
 	}
