@@ -32,7 +32,7 @@ const apiModel = await loadModel({
 
 const transformConfig = {
 	apiModel,
-	uriRoot: ".",
+	uriRoot: "",
 };
 
 await MarkdownRenderer.renderApiModel(transformConfig, {}, { outputDirectoryPath });
@@ -53,7 +53,7 @@ const apiModel = await loadModel({
 
 await MarkdownRenderer.renderApiModel({
 	apiModel,
-	uriRoot: ".",
+	uriRoot: "",
 	outputDirectoryPath,
 });
 ```

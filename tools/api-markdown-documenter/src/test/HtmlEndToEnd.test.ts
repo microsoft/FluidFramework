@@ -37,7 +37,7 @@ const testConfigs = new Map<
 	[
 		"default-config",
 		{
-			uriRoot: ".",
+			uriRoot: "",
 		},
 	],
 

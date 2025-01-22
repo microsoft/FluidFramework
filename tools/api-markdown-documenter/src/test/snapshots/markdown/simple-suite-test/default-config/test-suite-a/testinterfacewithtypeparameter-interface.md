@@ -1,6 +1,6 @@
 # TestInterfaceWithTypeParameter
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestInterfaceWithTypeParameter](./test-suite-a/testinterfacewithtypeparameter-interface)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)
 
 Test interface with generic type parameter
 
@@ -24,7 +24,7 @@ Here are some remarks about the interface
 
 | Property | Type | Description |
 | --- | --- | --- |
-| [testProperty](./test-suite-a/testinterfacewithtypeparameter-interface#testproperty-propertysignature) | T | A test interface property using generic type parameter |
+| [testProperty](/test-suite-a/testinterfacewithtypeparameter-interface#testproperty-propertysignature) | T | A test interface property using generic type parameter |
 
 ## Property Details
 
