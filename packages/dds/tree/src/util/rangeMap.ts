@@ -188,7 +188,7 @@ export class RangeMap<K, V> {
 	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
 		assert(
 			a.offsetKey === b.offsetKey && a.subtractKeys === b.subtractKeys,
-			"Maps should have the same behavior",
+			0xaae /* Maps should have the same behavior */,
 		);
 
 		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys);

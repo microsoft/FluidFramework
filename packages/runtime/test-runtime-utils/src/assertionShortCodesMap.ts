@@ -614,7 +614,6 @@ export const shortCodeMap = {
 	"0x402": "pendingIds is empty",
 	"0x403": "Removed complete op id does not match",
 	"0x404": "Optional fields only support a single child node",
-	"0x405": "child must exist at index",
 	"0x406": "can only nextNode when in Nodes",
 	"0x408": "PathNode must be alive",
 	"0x409": "PathNode must not be disposed",
@@ -1665,5 +1664,6 @@ export const shortCodeMap = {
 	"0xaaa": "All local changes should be applied to the trunk before loading from summary",
 	"0xaab": "must be segment leaf",
 	"0xaac": "must have removedClient ids",
-	"0xaad": "Local client should be 'Disconnected' before adding new connection."
+	"0xaad": "Local client should be 'Disconnected' before adding new connection.",
+	"0xaae": "Maps should have the same behavior"
 };
