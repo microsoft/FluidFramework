@@ -57,11 +57,11 @@ export interface ILayerCompatDetails extends Partial<IProvideLayerCompatDetails>
 }
 
 /**
- * This is the default compatibility details for a layer when it doesn't provide any compatibility details. This is
- * used for backwards compatibility to allow older layers to work before compatibility enforcement was introduced.
+ * This is the default compat details for a layer when it doesn't provide any compat details. This is used for
+ * backwards compatibility to allow older layers to work before compatibility enforcement was introduced.
  * @internal
  */
-export const defaultLayerCompatibilityDetails: ILayerCompatDetails = {
+export const defaultLayerCompatDetails: ILayerCompatDetails = {
 	supportedFeatures: new Set(),
 	generation: 0, // 0 is reserved for layers before compatibility enforcement was introduced.
 	pkgVersion: "unknown",
@@ -95,7 +95,7 @@ export function checkLayerCompatibility(
 	compatSupportRequirementsLayer1: ILayerCompatSupportRequirements,
 	compatDetailsLayer2: ILayerCompatDetails | undefined,
 ): LayerCompatCheckResult {
-	const compatDetailsWithCompat = compatDetailsLayer2 ?? defaultLayerCompatibilityDetails;
+	const compatDetailsLayer2ToUse = compatDetailsLayer2 ?? defaultLayerCompatDetails;
 	let isCompatible = true;
 	let isGenerationCompatible = true;
 	const unsupportedFeatures: string[] = [];
@@ -103,7 +103,8 @@ export function checkLayerCompatibility(
 	// If the other layer's generation is less than the required minimum supported generation,
 	//  then layers are not compatible.
 	if (
-		compatDetailsWithCompat.generation < compatSupportRequirementsLayer1.minSupportedGeneration
+		compatDetailsLayer2ToUse.generation <
+		compatSupportRequirementsLayer1.minSupportedGeneration
 	) {
 		isCompatible = false;
 		isGenerationCompatible = false;
@@ -111,7 +112,7 @@ export function checkLayerCompatibility(
 
 	// All required features must be supported by the other for them to be compatible.
 	for (const feature of compatSupportRequirementsLayer1.requiredFeatures) {
-		if (!compatDetailsWithCompat.supportedFeatures.has(feature)) {
+		if (!compatDetailsLayer2ToUse.supportedFeatures.has(feature)) {
 			isCompatible = false;
 			unsupportedFeatures.push(feature);
 		}
