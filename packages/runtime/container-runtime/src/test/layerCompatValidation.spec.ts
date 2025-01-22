@@ -21,6 +21,7 @@ import {
 	MockAudience,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
+import Sinon from "sinon";
 
 import { ContainerRuntime } from "../containerRuntime.js";
 import {
@@ -130,6 +131,7 @@ describe("Runtime Layer compatibility", () => {
 		});
 
 		it("Runtime generation is incompatible with Loader", () => {
+			const disposeFn = Sinon.fake();
 			(LoaderSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
 				["feature1", "feature2"];
 			const loaderGeneration = LoaderSupportRequirements.minSupportedGeneration - 1;
@@ -139,14 +141,16 @@ describe("Runtime Layer compatibility", () => {
 				supportedFeatures: new Set(LoaderSupportRequirements.requiredFeatures),
 			};
 			assert.throws(
-				() => validateLoaderCompatibility(loaderCompatDetails, () => {}),
+				() => validateLoaderCompatibility(loaderCompatDetails, disposeFn),
 				(e: Error) =>
 					validateFailureProperties(e, false /* isGenerationCompatible */, loaderGeneration),
 				"Runtime should be incompatible with Loader layer",
 			);
+			assert(disposeFn.calledOnce, "Dispose should be called");
 		});
 
 		it("Runtime features are incompatible with Loader", () => {
+			const disposeFn = Sinon.fake();
 			const requiredFeatures = ["feature2", "feature3"];
 			(LoaderSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
 				requiredFeatures;
@@ -158,7 +162,7 @@ describe("Runtime Layer compatibility", () => {
 			};
 
 			assert.throws(
-				() => validateLoaderCompatibility(loaderCompatDetails, () => {}),
+				() => validateLoaderCompatibility(loaderCompatDetails, disposeFn),
 				(e: Error) =>
 					validateFailureProperties(
 						e,
@@ -168,9 +172,11 @@ describe("Runtime Layer compatibility", () => {
 					),
 				"Runtime should be compatible with Loader layer",
 			);
+			assert(disposeFn.calledOnce, "Dispose should be called");
 		});
 
 		it("Runtime generation and features are both incompatible with Loader", () => {
+			const disposeFn = Sinon.fake();
 			const loaderGeneration = LoaderSupportRequirements.minSupportedGeneration - 1;
 			const requiredFeatures = ["feature2"];
 			(LoaderSupportRequirements as ILayerCompatSupportRequirementsOverride).requiredFeatures =
@@ -183,7 +189,7 @@ describe("Runtime Layer compatibility", () => {
 			};
 
 			assert.throws(
-				() => validateLoaderCompatibility(loaderCompatDetails, () => {}),
+				() => validateLoaderCompatibility(loaderCompatDetails, disposeFn),
 				(e: Error) =>
 					validateFailureProperties(
 						e,
@@ -193,6 +199,7 @@ describe("Runtime Layer compatibility", () => {
 					),
 				"Runtime should be compatible with Loader layer",
 			);
+			assert(disposeFn.calledOnce, "Dispose should be called");
 		});
 	});
 

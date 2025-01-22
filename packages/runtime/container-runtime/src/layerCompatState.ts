@@ -47,7 +47,7 @@ export const LoaderSupportRequirements: ILayerCompatSupportRequirements = {
 };
 
 /**
- * Validates that the Loader layer is compatible with the Runtime.
+ * Validates that the Loader layer is compatible with this Runtime.
  */
 export function validateLoaderCompatibility(
 	maybeLoaderCompatDetails: ILayerCompatDetails | undefined,
