@@ -37,7 +37,7 @@ describe(`Presence with AzureClient`, () => {
 			const user = { id: `test-user-id-${i}`, name: `test-user-name-${i}` };
 			//
 			const child = fork("./lib/test/multiprocess/childClient.js", [
-				`child${i}` /* only used as an identifier for parent process */,
+				`child${i}` /* identifier passed to child process */,
 			]);
 			children.push(child);
 			// Send connect command to child
@@ -62,7 +62,11 @@ describe(`Presence with AzureClient`, () => {
 			}
 			afterCleanUp.push(() => child.removeAllListeners());
 		}
-		for (const child of children) {
+
+		for (const [index, child] of children.entries()) {
+			child.on("error", (error) => {
+				assert.fail(`Child${index} process errored: ${error.message}`);
+			});
 			afterCleanUp.push(() => child.removeAllListeners());
 		}
 	});
