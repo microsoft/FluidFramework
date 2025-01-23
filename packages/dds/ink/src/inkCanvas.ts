@@ -35,11 +35,11 @@ class Vector {
 	) {}
 
 	public length(): number {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
+		return Math.hypot(this.x, this.y);
 	}
 }
 
-function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]) {
+function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]): void {
 	if (points.length === 0) {
 		return;
 	}
@@ -59,7 +59,7 @@ function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]) {
 	context.fill();
 }
 
-function drawCircle(context: CanvasRenderingContext2D, center: IPoint, radius: number) {
+function drawCircle(context: CanvasRenderingContext2D, center: IPoint, radius: number): void {
 	context.beginPath();
 	context.moveTo(center.x, center.y);
 	context.arc(center.x, center.y, radius, 0, Math.PI * 2);
@@ -142,11 +142,11 @@ export class InkCanvas {
 		this.sizeCanvasBackingStore();
 	}
 
-	public setPenColor(color: IColor) {
+	public setPenColor(color: IColor): void {
 		this.currentPen.color = color;
 	}
 
-	public replay() {
+	public replay(): void {
 		this.clearCanvas();
 
 		const strokes = this.model.getStrokes();
@@ -158,12 +158,12 @@ export class InkCanvas {
 		}
 	}
 
-	public clear() {
+	public clear(): void {
 		this.model.clear();
 		this.redraw();
 	}
 
-	public sizeCanvasBackingStore() {
+	public sizeCanvasBackingStore(): void {
 		const canvasBoundingClientRect = this.canvas.getBoundingClientRect();
 		// Scale the canvas size to match the physical pixel to avoid blurriness
 		const scale = window.devicePixelRatio;
@@ -176,7 +176,7 @@ export class InkCanvas {
 		this.redraw();
 	}
 
-	private handlePointerDown(evt: PointerEvent) {
+	private handlePointerDown(evt: PointerEvent): void {
 		// We will accept pen down or mouse left down as the start of a stroke.
 		if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
 			const strokeId = this.model.createStroke(this.currentPen).id;
@@ -188,23 +188,25 @@ export class InkCanvas {
 		}
 	}
 
-	private handlePointerMove(evt: PointerEvent) {
+	private handlePointerMove(evt: PointerEvent): void {
 		if (this.localActiveStrokeMap.has(evt.pointerId)) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 			const evts = (evt as any)?.getCoalescedEvents() ?? ([evt] as PointerEvent[]);
 			for (const e of evts) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				this.appendPointerEventToStroke(e);
 			}
 		}
 	}
 
-	private handlePointerUp(evt: PointerEvent) {
+	private handlePointerUp(evt: PointerEvent): void {
 		if (this.localActiveStrokeMap.has(evt.pointerId)) {
 			this.appendPointerEventToStroke(evt);
 			this.localActiveStrokeMap.delete(evt.pointerId);
 		}
 	}
 
-	private appendPointerEventToStroke(evt: PointerEvent) {
+	private appendPointerEventToStroke(evt: PointerEvent): void {
 		const strokeId = this.localActiveStrokeMap.get(evt.pointerId);
 		if (strokeId === undefined) {
 			throw new Error("Unexpected pointer ID trying to append to stroke");
@@ -218,7 +220,7 @@ export class InkCanvas {
 		this.model.appendPointToStroke(inkPt, strokeId);
 	}
 
-	private animateStroke(stroke: IInkStroke, operationIndex: number, startTime: number) {
+	private animateStroke(stroke: IInkStroke, operationIndex: number, startTime: number): void {
 		if (operationIndex >= stroke.points.length) {
 			return;
 		}
@@ -238,11 +240,11 @@ export class InkCanvas {
 	/**
 	 * Clears the canvas
 	 */
-	private clearCanvas() {
+	private clearCanvas(): void {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	}
 
-	private redraw() {
+	private redraw(): void {
 		this.clearCanvas();
 
 		const strokes = this.model.getStrokes();
@@ -256,14 +258,14 @@ export class InkCanvas {
 		}
 	}
 
-	private drawStrokeSegment(pen: IPen, current: IInkPoint, previous: IInkPoint) {
+	private drawStrokeSegment(pen: IPen, current: IInkPoint, previous: IInkPoint): void {
 		// TODO Consider save/restore context
 		// TODO Consider half-pixel offset
 		this.context.fillStyle = `rgb(${pen.color.r}, ${pen.color.g}, ${pen.color.b})`;
 		drawShapes(this.context, previous, current, pen);
 	}
 
-	private handleStylus(operation: IStylusOperation) {
+	private handleStylus(operation: IStylusOperation): void {
 		// Render the dirty stroke
 		const dirtyStrokeId = operation.id;
 		const stroke = this.model.getStroke(dirtyStrokeId);

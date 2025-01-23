@@ -78,10 +78,10 @@ enum SummaryState {
 }
 
 class Summary implements ISummary {
-	public static createLocal(clientId: string, clientSequenceNumber: number) {
+	public static createLocal(clientId: string, clientSequenceNumber: number): Summary {
 		return new Summary(clientId, clientSequenceNumber);
 	}
-	public static createFromOp(op: ISummaryOpMessage) {
+	public static createFromOp(op: ISummaryOpMessage): Summary {
 		// TODO: Verify whether this should be able to handle server-generated ops (with null clientId)
 
 		const summary = new Summary(op.clientId as string, op.clientSequenceNumber);
@@ -97,10 +97,10 @@ class Summary implements ISummary {
 	private readonly defSummaryOp = new Deferred<void>();
 	private readonly defSummaryAck = new Deferred<void>();
 
-	public get summaryOp() {
+	public get summaryOp(): ISummaryOpMessage | undefined {
 		return this._summaryOp;
 	}
-	public get summaryAckNack() {
+	public get summaryAckNack(): ISummaryAckMessage | ISummaryNackMessage | undefined {
 		return this._summaryAckNack;
 	}
 
@@ -113,7 +113,7 @@ class Summary implements ISummary {
 		return this.state === SummaryState.Acked;
 	}
 
-	public broadcast(op: ISummaryOpMessage) {
+	public broadcast(op: ISummaryOpMessage): boolean {
 		assert(
 			this.state === SummaryState.Local,
 			0x175 /* "Can only broadcast if summarizer starts in local state" */,
@@ -124,7 +124,7 @@ class Summary implements ISummary {
 		return true;
 	}
 
-	public ackNack(op: ISummaryAckMessage | ISummaryNackMessage) {
+	public ackNack(op: ISummaryAckMessage | ISummaryNackMessage): boolean {
 		assert(
 			this.state === SummaryState.Broadcast,
 			0x176 /* "Can only ack/nack if summarizer is in broadcasting state" */,
@@ -167,7 +167,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	private readonly localSummaries = new Map<number, Summary>();
 	private _disposed = false;
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
@@ -193,8 +193,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	 * Waits until all of the pending summaries in the underlying SummaryCollection
 	 * are acked/nacked.
 	 */
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
-	public waitFlushed() {
+	public async waitFlushed(): Promise<IAckedSummary | undefined> {
 		return this.summaryCollection.waitFlushed();
 	}
 
@@ -202,7 +201,7 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	 * Gets a watched summary or returns undefined if not watched.
 	 * @param clientSequenceNumber - client sequence number of sent summary op
 	 */
-	public tryGetSummary(clientSequenceNumber: number) {
+	public tryGetSummary(clientSequenceNumber: number): Summary | undefined {
 		return this.localSummaries.get(clientSequenceNumber);
 	}
 
@@ -210,11 +209,11 @@ class ClientSummaryWatcher implements IClientSummaryWatcher {
 	 * Starts watching a summary made by this client.
 	 * @param summary - summary to start watching
 	 */
-	public setSummary(summary: Summary) {
+	public setSummary(summary: Summary): void {
 		this.localSummaries.set(summary.clientSequenceNumber, summary);
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.summaryCollection.removeWatcher(this.clientId);
 		this._disposed = true;
 	}
@@ -270,18 +269,18 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		return super.emit(event, ...args);
 	}
 
-	public get opsSinceLastAck() {
+	public get opsSinceLastAck(): number {
 		return (
 			this.deltaManager.lastSequenceNumber -
 			(this.lastAck?.summaryAck.sequenceNumber ?? this.deltaManager.initialSequenceNumber)
 		);
 	}
 
-	public addOpListener(listener: () => void) {
+	public addOpListener(listener: () => void): void {
 		this.deltaManager.on("op", listener);
 	}
 
-	public removeOpListener(listener: () => void) {
+	public removeOpListener(listener: () => void): void {
 		this.deltaManager.off("op", listener);
 	}
 
@@ -304,19 +303,19 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		return watcher;
 	}
 
-	public removeWatcher(clientId: string) {
+	public removeWatcher(clientId: string): void {
 		this.summaryWatchers.delete(clientId);
 	}
 
 	public setPendingAckTimerTimeoutCallback(
 		maxAckWaitTime: number,
 		timeoutCallback: () => void,
-	) {
+	): void {
 		this.maxAckWaitTime = maxAckWaitTime;
 		this.pendingAckTimerTimeoutCallback = timeoutCallback;
 	}
 
-	public unsetPendingAckTimerTimeoutCallback() {
+	public unsetPendingAckTimerTimeoutCallback(): void {
 		this.maxAckWaitTime = undefined;
 		this.pendingAckTimerTimeoutCallback = undefined;
 	}
@@ -352,7 +351,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		return this.lastAck;
 	}
 
-	private parseContent(op: ISequencedDocumentMessage) {
+	private parseContent(op: ISequencedDocumentMessage): void {
 		// This should become unconditional once (Loader LTS) reaches 2.4 or later
 		// There will be a long time of needing both cases, until LTS catches up to the change.
 		// That said, we may instead move to listen for "op" events from ContainerRuntime,
@@ -366,15 +365,16 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 	 * Handler for ops; only handles ops relating to summaries.
 	 * @param op - op message to handle
 	 */
-	private handleOp(opArg: ISequencedDocumentMessage) {
+	private handleOp(opArg: ISequencedDocumentMessage): void {
 		const op = { ...opArg };
 
 		switch (op.type) {
-			case MessageType.Summarize:
+			case MessageType.Summarize: {
 				this.parseContent(op);
 				return this.handleSummaryOp(op as ISummaryOpMessage);
+			}
 			case MessageType.SummaryAck:
-			case MessageType.SummaryNack:
+			case MessageType.SummaryNack: {
 				// Old files (prior to PR #10077) may not contain this info
 				if (op.data !== undefined) {
 					op.contents = JSON.parse(op.data);
@@ -384,6 +384,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 				return op.type === MessageType.SummaryAck
 					? this.handleSummaryAck(op as ISummaryAckMessage)
 					: this.handleSummaryNack(op as ISummaryNackMessage);
+			}
 			default: {
 				// If the difference between timestamp of current op and last summary op is greater than
 				// the maxAckWaitTime, then we need to inform summarizer to not wait and summarize
@@ -403,7 +404,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		}
 	}
 
-	private handleSummaryOp(op: ISummaryOpMessage) {
+	private handleSummaryOp(op: ISummaryOpMessage): void {
 		let summary: Summary | undefined;
 
 		// Check if summary already being watched, broadcast if so
@@ -429,7 +430,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		this.emit(MessageType.Summarize, op);
 	}
 
-	private handleSummaryAck(op: ISummaryAckMessage) {
+	private handleSummaryAck(op: ISummaryAckMessage): void {
 		const seq = op.contents.summaryProposal.summarySequenceNumber;
 		const summary = this.pendingSummaries.get(seq);
 		// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- optional chain is not logically equivalent
@@ -472,7 +473,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		}
 	}
 
-	private handleSummaryNack(op: ISummaryNackMessage) {
+	private handleSummaryNack(op: ISummaryNackMessage): void {
 		const seq = op.contents.summaryProposal.summarySequenceNumber;
 		const summary = this.pendingSummaries.get(seq);
 		if (summary) {

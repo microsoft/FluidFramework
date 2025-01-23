@@ -20,7 +20,7 @@ export class FluidDataStoreRegistry implements IFluidDataStoreRegistry {
 		FluidDataStoreRegistryEntry | Promise<FluidDataStoreRegistryEntry>
 	>;
 
-	public get IFluidDataStoreRegistry() {
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this;
 	}
 
