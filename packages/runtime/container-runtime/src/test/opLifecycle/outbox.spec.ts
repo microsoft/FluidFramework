@@ -498,7 +498,7 @@ describe("Outbox", () => {
 		);
 	});
 
-	it("Compress only if compression and grouping are enabled", () => {
+	it("Compress if compression and grouping are enabled", () => {
 		const outbox = getOutbox({
 			context: getMockContext(),
 			compressionOptions: {

@@ -101,15 +101,20 @@ export class OpSplitter {
 	 *
 	 * A compressed batch is formed by one large op at the first position.
 	 *
-	 * If the first op is too large, it can be chunked (split into smaller op) which can be sent individually over the wire
+	 * If the op is too large, it can be chunked (split into smaller op) which can be sent individually over the wire
 	 * and accumulate at ingestion, until the last op in the chunk is processed, when the original op is unrolled.
 	 *
-	 * This method will send the first N - 1 chunks separately and use the last chunk as the first message in the result batch
-	 * and then appends the original placeholder ops. This will ensure that the batch semantics of the original (non-compressed) batch
-	 * are preserved, as the original chunked op will be unrolled by the runtime when the first message in the batch is processed
-	 * (as it is the last chunk).
+	 * This method will send the first N - 1 chunks separately and use the last chunk as the first message in the result batch.
+	 * This will ensure that the batch semantics of the original (non-compressed) batch are preserved, as the original chunked op
+	 * will be unrolled by the runtime when the first message in the batch is processed (as it is the last chunk).
 	 *
-	 * To illustrate, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
+	 * To handle legacy compressed batches with empty placeholders this method can attach the empty placeholder ops at the end
+	 * of the result batch, ensuring that the batch semantics are preserved.
+	 *
+	 * To illustrate the current functionality, if the input is `[largeOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
+	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4]` will be returned.
+	 *
+	 * With the legacy code, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4, emptyOp, emptyOp]` will be returned.
 	 *
 	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.

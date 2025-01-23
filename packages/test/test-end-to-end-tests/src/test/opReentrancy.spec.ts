@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
+import { disabledCompressionConfig } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
@@ -40,11 +40,7 @@ describeCompat(
 			fluidDataObjectType: DataObjectFactoryType.Test,
 			registry,
 			runtimeOptions: {
-				compressionOptions: {
-					// Compression is always disabled for these tests
-					minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
-				},
+				compressionOptions: disabledCompressionConfig,
 			},
 		};
 		let provider: ITestObjectProvider;
