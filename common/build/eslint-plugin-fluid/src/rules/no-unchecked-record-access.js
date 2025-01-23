@@ -45,19 +45,6 @@ module.exports = {
 				return;
 			}
 
-			const parentNode = node.parent;
-			if (parentNode.type === "MemberExpression") {
-				const grandParent = parentNode.parent;
-
-				if (
-					grandParent?.type === "AssignmentExpression" &&
-					grandParent.operator === "??=" &&
-					parentNode === grandParent.left
-				) {
-					return;
-				}
-			}
-
 			if (propertyHasBeenChecked(node, context)) {
 				return;
 			}
@@ -66,6 +53,7 @@ module.exports = {
 			 * Cases when this lint rule should report a defect
 			 */
 
+			const parentNode = node.parent;
 			if (parentNode.type === "VariableDeclarator") {
 				if (
 					parentNode.init === node &&
@@ -312,7 +300,14 @@ function isUndefinableIndexSignatureType(parserServices, node) {
 	}
 }
 
-// Helper function to traverse up the code until the scope ends and checks if the property access has been checked for undefined
+/**
+ * Traverses up the AST from a property access node to check if the property has been properly guarded against being undefined.
+ * Looks for safety checks like optional chaining, null checks, 'in' operator usage, etc.
+ *
+ * @param {MemberExpression} node - The AST node representing the property access to check
+ * @param {RuleContext} context - ESLint rule context containing scope and AST information
+ * @returns {boolean} True if the property access has been properly checked for undefined, false otherwise
+ */
 function propertyHasBeenChecked(node, context) {
 	const baseObj = getBaseObject(node);
 	const currentKeyNode = node.property;
