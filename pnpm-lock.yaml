@@ -307,7 +307,7 @@ importers:
         version: 0.0.1
       next:
         specifier: ^14.2.8
-        version: 14.2.20(@babel/core@7.26.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0)
+        version: 14.2.20(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0)
       notistack:
         specifier: ^3.0.1
         version: 3.0.1(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -12986,6 +12986,9 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      fluid-framework:
+        specifier: ^1.4.0
+        version: 1.4.0
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
@@ -13044,9 +13047,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      fluid-framework:
-        specifier: ^1.4.0
-        version: 1.4.0
       nock:
         specifier: ^13.3.3
         version: 13.5.6
@@ -40480,7 +40480,7 @@ snapshots:
 
   netmask@2.0.2: {}
 
-  next@14.2.20(@babel/core@7.26.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0):
+  next@14.2.20(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0):
     dependencies:
       '@next/env': 14.2.20
       '@swc/helpers': 0.5.5
@@ -40490,7 +40490,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(@babel/core@7.26.0)(babel-plugin-macros@3.1.0)(react@18.3.1)
+      styled-jsx: 5.1.1(babel-plugin-macros@3.1.0)(react@18.3.1)
     optionalDependencies:
       '@next/swc-darwin-arm64': 14.2.20
       '@next/swc-darwin-x64': 14.2.20
@@ -43064,12 +43064,11 @@ snapshots:
     dependencies:
       webpack: 5.97.1(webpack-cli@5.1.4)
 
-  styled-jsx@5.1.1(@babel/core@7.26.0)(babel-plugin-macros@3.1.0)(react@18.3.1):
+  styled-jsx@5.1.1(babel-plugin-macros@3.1.0)(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
     optionalDependencies:
-      '@babel/core': 7.26.0
       babel-plugin-macros: 3.1.0
 
   stylis@4.2.0: {}
