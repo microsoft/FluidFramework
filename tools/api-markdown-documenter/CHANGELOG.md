@@ -5,6 +5,8 @@
 -   The default suite structure has been updated as follows:
     -   `Package` and `Namespace` items now generate documents _inside_ of their own folder hierarchy, yielding documents named "index".
     -   `Enum` and `TypeAlias` items now generate their own documents (rather than being rendered as sections under their parent document).
+-   `uriRoot` parameter is now optional.
+    The default value is "".
 
 ### ⚠ BREAKING CHANGES
 
@@ -53,7 +55,7 @@ const apiModel = await loadModel({
 
 await MarkdownRenderer.renderApiModel({
 	apiModel,
-	uriRoot: "",
+	uriRoot: "", // Note: this parameter is also now optional. Default: "".
 	outputDirectoryPath,
 });
 ```
