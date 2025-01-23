@@ -141,6 +141,7 @@ import {
 	blobsTreeName,
 	isBlobPath,
 	loadBlobManagerLoadInfo,
+	// eslint-disable-next-line import/no-deprecated
 	type IBlobManagerLoadInfo,
 } from "./blobManager/index.js";
 import {
@@ -158,9 +159,11 @@ import {
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GarbageCollector,
 	IGCRuntimeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IGCStats,
 	IGarbageCollector,
 	gcGenerationOptionName,
@@ -201,26 +204,38 @@ import {
 	PendingStateManager,
 } from "./pendingStateManager.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	DocumentsSchemaController,
 	EnqueueSummarizeResult,
 	IBaseSummarizeResult,
+	// eslint-disable-next-line import/no-deprecated
 	IConnectableRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	ICreateContainerMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaChangeMessage,
+	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
 	IOnDemandSummarizeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
 	IRootSummarizerNodeWithGC,
+	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
+	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeResults,
 	ISummarizer,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	ISummaryMetadataMessage,
 	IdCompressorMode,
 	OrderedClientCollection,
@@ -228,6 +243,7 @@ import {
 	RetriableSummaryError,
 	RunWhileConnectedCoordinator,
 	SubmitSummaryResult,
+	// eslint-disable-next-line import/no-deprecated
 	Summarizer,
 	SummarizerClientElection,
 	SummaryCollection,
@@ -243,6 +259,7 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
+	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaFeatures,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
@@ -565,6 +582,7 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
  * Error responses when requesting a deleted object will have this header set to true
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
@@ -807,7 +825,9 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
  * Please see addMetadataToSummary() as well
  */
 function lastMessageFromMetadata(
+	// eslint-disable-next-line import/no-deprecated
 	metadata: IContainerRuntimeMetadata | undefined,
+	// eslint-disable-next-line import/no-deprecated
 ): ISummaryMetadataMessage | undefined {
 	return metadata?.documentSchema?.runtime?.explicitSchemaControl
 		? metadata?.lastMessage
@@ -897,7 +917,9 @@ export class ContainerRuntime
 	implements
 		IContainerRuntime,
 		IRuntime,
+		// eslint-disable-next-line import/no-deprecated
 		ISummarizerRuntime,
+		// eslint-disable-next-line import/no-deprecated
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext
 {
@@ -1000,7 +1022,9 @@ export class ContainerRuntime
 			tryFetchBlob<ReturnType<DuplicateBatchDetector["getRecentBatchInfoForSummary"]>>(
 				recentBatchInfoBlobName,
 			),
+			// eslint-disable-next-line import/no-deprecated
 			tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
+			// eslint-disable-next-line import/no-deprecated
 			tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
 			tryFetchBlob<[string, string][]>(aliasBlobName),
 			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
@@ -1135,6 +1159,7 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		// eslint-disable-next-line import/no-deprecated
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
@@ -1272,9 +1297,11 @@ export class ContainerRuntime
 	 * this op roundtrips, compression will be On. Client can't send compressed ops until it's change in schema.
 	 */
 	public get sessionSchema(): {
+		// eslint-disable-next-line import/no-deprecated
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
-			: IDocumentSchemaFeatures[P];
+			: // eslint-disable-next-line import/no-deprecated
+				IDocumentSchemaFeatures[P];
 	} {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
@@ -1427,6 +1454,7 @@ export class ContainerRuntime
 	 * It is the main entry point for summary work.
 	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private readonly _summarizer?: Summarizer;
 	private readonly deltaScheduler: DeltaScheduler;
 	private readonly inboundBatchAggregator: InboundBatchAggregator;
@@ -1442,10 +1470,12 @@ export class ContainerRuntime
 	/**
 	 * The last message processed at the time of the last summary.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
 	private readonly summariesDisabled: boolean;
 
+	// eslint-disable-next-line import/no-deprecated
 	private readonly createContainerMetadata: ICreateContainerMetadata;
 	/**
 	 * The summary number of the next summary that will be generated for this container. This is incremented every time
@@ -1501,7 +1531,9 @@ export class ContainerRuntime
 	protected constructor(
 		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
+		// eslint-disable-next-line import/no-deprecated
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
@@ -1510,9 +1542,11 @@ export class ContainerRuntime
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
@@ -2001,12 +2035,14 @@ export class ContainerRuntime
 			);
 
 			if (isSummarizerClient) {
+				// eslint-disable-next-line import/no-deprecated
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
 					() => summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
 					this.handleContext,
 					summaryCollection,
+					// eslint-disable-next-line import/no-deprecated
 					async (runtime: IConnectableRuntime) =>
 						RunWhileConnectedCoordinator.create(
 							runtime,
@@ -2116,6 +2152,7 @@ export class ContainerRuntime
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "SchemaChangeAccept",
@@ -2439,6 +2476,7 @@ export class ContainerRuntime
 		// Is document schema explicit control on?
 		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
 
+		// eslint-disable-next-line import/no-deprecated
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
 			// Increment the summary number for the next summary that will be generated.
@@ -2452,7 +2490,8 @@ export class ContainerRuntime
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
 			message: explicitSchemaControl
-				? ({ sequenceNumber: -1 } as unknown as ISummaryMetadataMessage)
+				? // eslint-disable-next-line import/no-deprecated
+					({ sequenceNumber: -1 } as unknown as ISummaryMetadataMessage)
 				: message,
 			lastMessage: explicitSchemaControl ? message : undefined,
 			documentSchema,
@@ -3145,6 +3184,7 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.DocumentSchemaChange: {
 				this.documentsSchemaController.processDocumentSchemaMessages(
+					// eslint-disable-next-line import/no-deprecated
 					contents as IDocumentSchemaChangeMessage[],
 					local,
 					message.sequenceNumber,
@@ -3842,10 +3882,13 @@ export class ContainerRuntime
 	 * Returns the type of the GC node. Currently, there are nodes that belong to the root ("/"), data stores or
 	 * blob manager.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public getNodeType(nodePath: string): GCNodeType {
 		if (isBlobPath(nodePath)) {
+			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.Blob;
 		}
+		// eslint-disable-next-line import/no-deprecated
 		return this.channelCollection.getGCNodeType(nodePath) ?? GCNodeType.Other;
 	}
 
@@ -3861,10 +3904,13 @@ export class ContainerRuntime
 		}
 
 		switch (this.getNodeType(nodePath)) {
+			// eslint-disable-next-line import/no-deprecated
 			case GCNodeType.Blob: {
 				return [blobManagerBasePath];
 			}
+			// eslint-disable-next-line import/no-deprecated
 			case GCNodeType.DataStore:
+			// eslint-disable-next-line import/no-deprecated
 			case GCNodeType.SubDataStore: {
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			}
@@ -3916,6 +3962,7 @@ export class ContainerRuntime
 			fullGC?: boolean;
 		},
 		telemetryContext?: ITelemetryContext,
+		// eslint-disable-next-line import/no-deprecated
 	): Promise<IGCStats | undefined> {
 		return this.garbageCollector.collectGarbage(options, telemetryContext);
 	}
@@ -3958,6 +4005,7 @@ export class ContainerRuntime
 	 * op processing, updating SummarizerNode state tracking, and garbage collection.
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
 			cancellationToken,
@@ -4720,6 +4768,7 @@ export class ContainerRuntime
 	/**
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
