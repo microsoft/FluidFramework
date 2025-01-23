@@ -305,7 +305,7 @@ export class GarbageCollector implements IGarbageCollector {
 						),
 					);
 				}
-				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+				gcNodes[nodeId] = [...nodeData.outboundRoutes];
 			}
 			this.gcDataFromLastRun = { gcNodes };
 		});
@@ -324,7 +324,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 			const gcNodes: { [id: string]: string[] } = {};
 			for (const [nodeId, nodeData] of Object.entries(baseSnapshotData.gcState.gcNodes)) {
-				gcNodes[nodeId] = Array.from(nodeData.outboundRoutes);
+				gcNodes[nodeId] = [...nodeData.outboundRoutes];
 			}
 			// Run GC on the nodes in the base summary to get the routes used in each node in the container.
 			// This is an optimization for space (vs performance) wherein we don't need to store the used routes of
@@ -410,7 +410,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// Initialize the tombstone state from the snapshot. Also, notify the runtime of tombstone routes.
 		if (baseSnapshotData.tombstones !== undefined) {
 			// Create a copy since we are writing from a source we don't control
-			this.tombstones = Array.from(baseSnapshotData.tombstones);
+			this.tombstones = [...baseSnapshotData.tombstones];
 			this.runtime.updateTombstonedRoutes(this.tombstones);
 		}
 
@@ -838,16 +838,14 @@ export class GarbageCollector implements IGarbageCollector {
 		 */
 		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
 		const newOutboundRoutesSinceLastRun: string[] = [];
-		this.newReferencesSinceLastRun.forEach(
-			(outboundRoutes: string[], sourceNodeId: string) => {
-				if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
-					gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
-				} else {
-					gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
-				}
-				newOutboundRoutesSinceLastRun.push(...outboundRoutes);
-			},
-		);
+		for (const [sourceNodeId, outboundRoutes] of this.newReferencesSinceLastRun) {
+			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
+				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
+			} else {
+				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
+			}
+			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
+		}
 
 		/**
 		 * Run GC on the above reference graph starting with root and all new outbound routes. This will generate a
@@ -950,11 +948,12 @@ export class GarbageCollector implements IGarbageCollector {
 					this.autoRecovery.requestFullGCOnNextRun();
 					break;
 				}
-				default:
+				default: {
 					throw DataProcessingError.create(
 						`Garbage collection message of unknown type ${gcMessageType}`,
 						"processMessage",
 					);
+				}
 			}
 		}
 	}
@@ -975,7 +974,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// The ids in the sweep-ready nodes do not contain DDS node ids. This is an optimization to reduce the size
 		// of the GC op. Since GC applies to data store only, all its DDSes are deleted along with it. So, get the
 		// DDS nodes ID from the unreferenced nodes state.
-		const allSweepReadyNodeIds = Array.from(sweepReadyNodeIds);
+		const allSweepReadyNodeIds = [...sweepReadyNodeIds];
 		for (const [id] of this.unreferencedNodesState) {
 			// Ignore data store nodes since they would already be in the list.
 			const pathParts = id.split("/");

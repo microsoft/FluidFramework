@@ -617,9 +617,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 		// In case we have pending summaries on the parent, let's initialize it on the child.
 		if (child._lastSummaryReferenceSequenceNumber !== undefined) {
-			this.pendingSummaries.forEach((pendingSummaryInfo, proposedHandle) => {
+			for (const [proposedHandle, pendingSummaryInfo] of this.pendingSummaries.entries()) {
 				child.addPendingSummary(proposedHandle, pendingSummaryInfo);
-			});
+			}
 		}
 	}
 
