@@ -521,17 +521,19 @@ export class SummaryGenerator {
 		initialProps: SummaryGeneratorTelemetry,
 	): SummaryGeneratorTelemetry {
 		switch (summaryData.stage) {
-			case "base":
+			case "base": {
 				return initialProps;
+			}
 
-			case "generate":
+			case "generate": {
 				return {
 					...initialProps,
 					...summaryData.summaryStats,
 					generateDuration: summaryData.generateDuration,
 				};
+			}
 
-			case "upload":
+			case "upload": {
 				return {
 					...initialProps,
 					...summaryData.summaryStats,
@@ -539,8 +541,9 @@ export class SummaryGenerator {
 					handle: summaryData.handle,
 					uploadDuration: summaryData.uploadDuration,
 				};
+			}
 
-			case "submit":
+			case "submit": {
 				return {
 					...initialProps,
 					...summaryData.summaryStats,
@@ -553,9 +556,11 @@ export class SummaryGenerator {
 					nonRuntimeOpsSinceLastSummary: this.heuristicData.numNonRuntimeOps,
 					runtimeOpsSinceLastSummary: this.heuristicData.numRuntimeOps,
 				};
+			}
 
-			default:
+			default: {
 				assert(true, 0x397 /* Unexpected summary stage */);
+			}
 		}
 
 		return initialProps;
