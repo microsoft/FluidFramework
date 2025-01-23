@@ -628,6 +628,9 @@ export interface CustomTypes {
 	 * @remarks
 	 * Due to https://github.com/microsoft/TypeScript/issues/43826 we cannot set the desired setter type.
 	 * Instead we can only control the types of the read+write property and the type of a readonly property.
+	 *
+	 * For recursive types using {@link SchemaFactory.objectRecursive}, support for using `never` to remove setters is limited:
+	 * When the customized schema is wrapped in an {@link FieldSchema}, the setter will not be fully removed.
 	 */
 	readonly readWrite: TreeLeafValue | TreeNode;
 	/**

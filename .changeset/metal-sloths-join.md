@@ -22,3 +22,6 @@ Two cases which were actually possible to disallow and should be disallowed for 
 
 This fix only applies to [`SchemaFactory.object`](https://fluidframework.com/docs/api/v2/fluid-framework/schemafactory-class#object-method).
 [`SchemaFactory.objectRecursive`](https://fluidframework.com/docs/api/v2/fluid-framework/schemafactory-class#objectrecursive-method) was unable to be updated to match due to TypeScript limitations on recursive types.
+
+An `@alpha` API, `customizeSchemaTyping` has been added to allow control over the types generated from schema.
+For example code relying on the unsound typing fixed above can restore the behavior using `customizeSchemaTyping`:

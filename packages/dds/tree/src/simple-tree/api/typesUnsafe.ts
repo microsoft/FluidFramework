@@ -138,6 +138,8 @@ export type ObjectFromSchemaRecordUnsafe<
 	T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
 > =
 	// Due to https://github.com/microsoft/TypeScript/issues/43826 we can not set the desired setter type.
+	// Attempts to implement this in the cleaner way ObjectFromSchemaRecord uses cause recursive types to fail to compile.
+	// Supporting explicit field schema wrapping CustomizedSchemaTyping here breaks compilation of recursive cases as well.
 	{
 		-readonly [Property in keyof T as [T[Property]] extends [
 			CustomizedSchemaTyping<
@@ -149,8 +151,8 @@ export type ObjectFromSchemaRecordUnsafe<
 				}
 			>,
 		]
-			? never
-			: Property]: AssignableTreeFieldFromImplicitFieldUnsafe<T[Property]>; //
+			? never // Remove readWrite version for cases using CustomizedSchemaTyping to set readWrite to never.
+			: Property]: AssignableTreeFieldFromImplicitFieldUnsafe<T[Property]>;
 	} & {
 		readonly [Property in keyof T as [T[Property]] extends [
 			CustomizedSchemaTyping<
@@ -162,23 +164,10 @@ export type ObjectFromSchemaRecordUnsafe<
 				}
 			>,
 		]
-			? Property
+			? // Inverse of the conditional above: only include readonly fields when not including the readWrite one. This is required to make recursive types compile.
+				Property
 			: never]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
 	};
-
-// {
-// 	-readonly [Property in keyof T as never extends AssignableTreeFieldFromImplicitFieldUnsafe<
-// 		T[Property]
-// 	>
-// 		? never
-// 		: Property]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
-// } & {
-// 	readonly [Property in keyof T as never extends AssignableTreeFieldFromImplicitFieldUnsafe<
-// 		T[Property]
-// 	>
-// 		? Property
-// 		: never]: TreeFieldFromImplicitFieldUnsafe<T[Property]>;
-// };
 
 /**
  * {@link Unenforced} version of `AssignableTreeFieldFromImplicitField`.
