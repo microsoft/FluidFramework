@@ -357,12 +357,12 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 							runCoordinator.stop(stopReason);
 							this.close();
 						})
-						.catch((reason) => {
-							builder.fail("Failed to start summarizer", reason);
+						.catch((error) => {
+							builder.fail("Failed to start summarizer", error);
 						});
 				})
-				.catch((reason) => {
-					builder.fail("Failed to create cancellation token", reason);
+				.catch((error) => {
+					builder.fail("Failed to create cancellation token", error);
 				});
 
 			return builder.build();
@@ -389,7 +389,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	private readonly forwardedEvents = new Map<string, () => void>();
 
 	private setupForwardedEvents(): void {
-		["summarize", "summarizeAllAttemptsFailed"].forEach((event) => {
+		for (const event of ["summarize", "summarizeAllAttemptsFailed"]) {
 			const listener = (...args: any[]): void => {
 				this.emit(event, ...args);
 			};
@@ -397,13 +397,13 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.runningSummarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
-		});
+		}
 	}
 
 	private cleanupForwardedEvents(): void {
-		this.forwardedEvents.forEach((listener, event) =>
-			this.runningSummarizer?.off(event, listener),
-		);
+		for (const [event, listener] of this.forwardedEvents.entries()) {
+			this.runningSummarizer?.off(event, listener);
+		}
 		this.forwardedEvents.clear();
 	}
 }

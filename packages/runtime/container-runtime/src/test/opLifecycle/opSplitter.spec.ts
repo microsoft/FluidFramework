@@ -5,8 +5,8 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { strict as assert } from "assert";
-import * as crypto from "crypto";
+import { strict as assert } from "node:assert";
+import * as crypto from "node:crypto";
 
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous/internal";
@@ -136,7 +136,7 @@ describe("OpSplitter", () => {
 		opSplitter.processChunk(chunks[1]);
 
 		const otherOpSplitter = new OpSplitter(
-			Array.from(opSplitter.chunks),
+			[...opSplitter.chunks],
 			mockSubmitBatchFn,
 			0,
 			maxBatchSizeInBytes,
@@ -326,7 +326,7 @@ describe("OpSplitter", () => {
 	});
 
 	describe("Compressed batches", () => {
-		[false, true].forEach((extraOp) => {
+		for (const extraOp of [false, true]) {
 			it(`Split compressed batch with multiple messages with${
 				extraOp ? "" : "out"
 			} extra empty op.`, () => {
@@ -449,7 +449,7 @@ describe("OpSplitter", () => {
 					]),
 				);
 			});
-		});
+		}
 	});
 	const assertSameMessage = (result: ISequencedDocumentMessage, original: BatchMessage) => {
 		assert.deepStrictEqual(result.contents, JSON.parse(original.contents!));
@@ -469,7 +469,7 @@ describe("OpSplitter", () => {
 			value: crypto.randomBytes(contentSizeInBytes / 2).toString("hex"),
 		};
 		return {
-			referenceSequenceNumber: Infinity,
+			referenceSequenceNumber: Number.POSITIVE_INFINITY,
 			metadata: { meta: "data" },
 			compression: CompressionAlgorithms.lz4,
 			contents: JSON.stringify(contents),

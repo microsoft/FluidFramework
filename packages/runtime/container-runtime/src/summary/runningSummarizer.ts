@@ -475,10 +475,12 @@ export class RunningSummarizer
 		switch (op.type) {
 			case MessageType.Summarize:
 			case MessageType.SummaryAck:
-			case MessageType.SummaryNack:
+			case MessageType.SummaryNack: {
 				return false;
-			default:
+			}
+			default: {
 				return runtimeMessage || this.nonRuntimeOpCanTriggerSummary();
+			}
 		}
 	}
 

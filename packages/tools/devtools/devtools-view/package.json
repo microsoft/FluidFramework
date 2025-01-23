@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.20.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
@@ -56,7 +56,7 @@
 		"test": "npm run test:jest",
 		"test:coverage": "npm run test:jest:coverage",
 		"test:jest": "pnpm test:jest:cjs && echo skip per fluentui issue 30778 - pnpm test:jest:esm",
-		"test:jest:cjs": "jest --roots ./dist",
+		"test:jest:cjs": "jest --ci --roots ./dist",
 		"test:jest:coverage": "jest --coverage --ci",
 		"test:jest:esm": "cross-env NODE_OPTIONS=--experimental-vm-modules jest --roots ./lib",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:jest",
