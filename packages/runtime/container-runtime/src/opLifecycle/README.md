@@ -14,7 +14,7 @@
   - [Configuration](#configuration)
   - [Note about performance and latency](#note-about-performance-and-latency)
   - [How it works](#how-it-works)
-  - [Legacy begavior - How it works (Grouped Batching disabled)](#legacy-begavior---how-it-works-grouped-batching-disabled)
+  - [Legacy behavior - How it used to work (Compression+Chunking without Grouped Batching)](#legacy-behavior---how-it-used-to-work-compressionchunking-without-grouped-batching)
     - [IMPORTANT - As of 2.20.0, we no longer compress ungrouped batches, but we do need to read such ops - read on to learn what these legacy ops look like](#important---as-of-2200-we-no-longer-compress-ungrouped-batches-but-we-do-need-to-read-such-ops---read-on-to-learn-what-these-legacy-ops-look-like)
   - [How the overall op flow works](#how-the-overall-op-flow-works)
     - [Outbound](#outbound)
@@ -66,8 +66,6 @@ The purpose for enabling grouped batching before compression is to eliminate the
 
 Grouped batching is only relevant for `FlushMode.TurnBased`, since `OpGroupingManagerConfig.opCountThreshold` defaults to 2. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
-Grouped Batching can be disabled by setting `IContainerRuntimeOptions.enableGroupedBatching` to `false`.
-
 See [below](#how-it-works) for an example.
 
 ### Changes in op semantics
@@ -93,7 +91,7 @@ Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate`
 
 ### Only single-message batches are compressed
 
-The batch to compress has to have only one message and it yields a batch with a single message. It compresses all the content, storing the compressed payload into the first op.
+The batch to compress has to have only one message and it yields a batch with a single message. It compresses all the content, replacing the op's original contents with the compressed payload and the appropriate metadata to indicate it's compressed.
 
 Compression is only enabled if Grouped Batching is enabled.
 
@@ -209,7 +207,7 @@ Ungrouped batch:
 +-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
 
-## Legacy begavior - How it works (Grouped Batching disabled)
+## Legacy behavior - How it used to work (Compression+Chunking without Grouped Batching)
 
 ### IMPORTANT - As of 2.20.0, we no longer compress ungrouped batches, but we do need to read such ops - read on to learn what these legacy ops look like
 
