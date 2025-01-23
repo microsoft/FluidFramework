@@ -134,6 +134,7 @@ jobs:
           version: 18.17.1
       - task: Npm@1
         displayName: Install npm 6
+        retryCountOnTaskFailure: 4
         inputs:
           command: 'custom'
           customCommand: 'install --global npm@^6'
@@ -199,6 +200,7 @@ jobs:
       # Install test and logger package
       - task: Npm@1
         displayName: 'npm install'
+        retryCountOnTaskFailure: 4
         inputs:
           command: 'custom'
           workingDir: ${{ parameters.testWorkspace }}
@@ -238,6 +240,7 @@ jobs:
           # Install extra dependencies for test files
           - task: Npm@1
             displayName: 'npm install - extra dependencies for test files'
+            retryCountOnTaskFailure: 4
             inputs:
               command: 'custom'
               workingDir: ${{ parameters.testWorkspace }}
