@@ -202,6 +202,7 @@ stages:
             version: 18.17.1
         - task: Npm@1
           displayName: Install npm 6
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'custom'
             customCommand: 'install --global npm@^6'
