@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestClass](./test-suite-a/testclass-class)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class)
 
 Test class
 
@@ -10,7 +10,7 @@ Test class
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 
-**Extends:** [TestAbstractClass](./test-suite-a/testabstractclass-class)
+**Extends:** [TestAbstractClass](/test-suite-a/testabstractclass-class)
 
 ### Type Parameters
 
@@ -27,41 +27,41 @@ Here are some remarks about the class
 
 | Constructor | Description |
 | --- | --- |
-| [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](./test-suite-a/testclass-class#_constructor_-constructor) | Test class constructor |
+| [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](/test-suite-a/testclass-class#_constructor_-constructor) | Test class constructor |
 
 ## Static Properties
 
 | Property | Type | Description |
 | --- | --- | --- |
-| [testClassStaticProperty](./test-suite-a/testclass-class#testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
+| [testClassStaticProperty](/test-suite-a/testclass-class#testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
 
 ## Static Methods
 
 | Method | Return Type | Description |
 | --- | --- | --- |
-| [testClassStaticMethod(foo)](./test-suite-a/testclass-class#testclassstaticmethod-method) | string | Test class static method |
+| [testClassStaticMethod(foo)](/test-suite-a/testclass-class#testclassstaticmethod-method) | string | Test class static method |
 
 ## Events
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [testClassEventProperty](./test-suite-a/testclass-class#testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
+| [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
 
 ## Properties
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [abstractPropertyGetter](./test-suite-a/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](./test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
-| [testClassGetterProperty](./test-suite-a/testclass-class#testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
-| [testClassProperty](./test-suite-a/testclass-class#testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
+| [abstractPropertyGetter](/test-suite-a/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
+| [testClassGetterProperty](/test-suite-a/testclass-class#testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
+| [testClassProperty](/test-suite-a/testclass-class#testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
 ## Methods
 
 | Method | Modifiers | Return Type | Description |
 | --- | --- | --- | --- |
-| [publicAbstractMethod()](./test-suite-a/testclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
-| [testClassMethod(input)](./test-suite-a/testclass-class#testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](./test-suite-a/testclass-class#virtualmethod-method) |  | number | Overrides [virtualMethod()](./test-suite-a/testabstractclass-class#virtualmethod-method). |
+| [publicAbstractMethod()](/test-suite-a/testclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
+| [testClassMethod(input)](/test-suite-a/testclass-class#testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
+| [virtualMethod()](/test-suite-a/testclass-class#virtualmethod-method) |  | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method). |
 
 ## Constructor Details
 
@@ -83,10 +83,10 @@ Here are some remarks about the constructor
 
 | Parameter | Type | Description |
 | --- | --- | --- |
-| privateProperty | number | See [TestAbstractClass](./test-suite-a/testabstractclass-class)'s constructor. |
-| protectedProperty | [TestEnum](./test-suite-a/testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href="./test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a>.</p> |
-| testClassProperty | TTypeParameterB | See [testClassProperty](./test-suite-a/testclass-class#testclassproperty-property). |
-| testClassEventProperty | () =&gt; void | See [testClassEventProperty](./test-suite-a/testclass-class#testclasseventproperty-property). |
+| privateProperty | number | See [TestAbstractClass](/test-suite-a/testabstractclass-class)'s constructor. |
+| protectedProperty | [TestEnum](/test-suite-a/testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href="/test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a>.</p> |
+| testClassProperty | TTypeParameterB | See [testClassProperty](/test-suite-a/testclass-class#testclassproperty-property). |
+| testClassEventProperty | () =&gt; void | See [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property). |
 
 ## Event Details
 
@@ -118,7 +118,7 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](./test-suite-a/testmappedtype-typealias)
+**Type:** [TestMappedType](/test-suite-a/testmappedtype-typealias)
 
 ### testClassGetterProperty {#testclassgetterproperty-property}
 
@@ -233,7 +233,7 @@ static testClassStaticMethod(foo: number): string;
 
 ### virtualMethod {#virtualmethod-method}
 
-Overrides [virtualMethod()](./test-suite-a/testabstractclass-class#virtualmethod-method).
+Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method).
 
 #### Signature {#virtualmethod-signature}
 
@@ -248,4 +248,4 @@ protected virtualMethod(): number;
 
 ## See Also {#testclass-see-also}
 
-[TestAbstractClass](./test-suite-a/testabstractclass-class)
+[TestAbstractClass](/test-suite-a/testabstractclass-class)
