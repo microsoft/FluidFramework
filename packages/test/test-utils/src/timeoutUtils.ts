@@ -6,12 +6,6 @@
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type * as Mocha from "mocha";
 
-// @deprecated this value is no longer used
-/**
- * @internal
- */
-export const defaultTimeoutDurationMs = 250;
-
 const timeBuffer = 15; // leave 15 ms leeway for finish processing
 
 // TestTimeout class that manages tracking of test timeout. It creates a timer when timeout is in effect,
