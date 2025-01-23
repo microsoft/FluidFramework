@@ -149,6 +149,9 @@
 			},
 			"InterfaceDeclaration_ITenantDocument": {
 				"backCompat": false
+			},
+			"VariableDeclaration_Constants": {
+				"forwardCompat": false
 			}
 		}
 	}
