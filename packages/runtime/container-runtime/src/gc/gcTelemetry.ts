@@ -196,17 +196,21 @@ export class GCTelemetryTracker {
 
 		const timeout = (() => {
 			switch (nodeStateTracker?.state) {
-				case UnreferencedState.Inactive:
+				case UnreferencedState.Inactive: {
 					return this.configs.inactiveTimeoutMs;
-				case UnreferencedState.TombstoneReady:
+				}
+				case UnreferencedState.TombstoneReady: {
 					return this.configs.tombstoneTimeoutMs;
-				case UnreferencedState.SweepReady:
+				}
+				case UnreferencedState.SweepReady: {
 					return (
 						this.configs.tombstoneTimeoutMs &&
 						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
 					);
-				default:
+				}
+				default: {
 					return undefined;
+				}
 			}
 		})();
 		const { persistedGcFeatureMatrix, ...configs } = this.configs;
@@ -411,10 +415,8 @@ export class GCTelemetryTracker {
 			const active =
 				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
-				const pkg = await this.getNodePackagePath(eventProps.id.value);
-				const fromPkg = eventProps.fromId
-					? await this.getNodePackagePath(eventProps.fromId.value)
-					: undefined;
+				const pkg = await this.getNodePackagePath(id.value);
+				const fromPkg = fromId ? await this.getNodePackagePath(fromId.value) : undefined;
 				const event = {
 					eventName: `${state}Object_${usageType}`,
 					id,
