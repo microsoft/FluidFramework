@@ -14,9 +14,8 @@ import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
-// Define the schema of our Container.
-// This includes the DataObjects we support and any initial DataObjects we want created
-// when the Container is first created.
+// Define the schema of the Fluid container.
+// This example uses the presence features only, so only that data object is added.
 const containerSchema = {
 	initialObjects: {
 		// A Presence Manager object temporarily needs to be placed within container schema
@@ -56,24 +55,30 @@ async function start() {
 		({ container } = await client.getContainer(id, containerSchema, "2"));
 	}
 
-	document.title = id;
-
+	// Retrieve a reference to the presence APIs via the data object.
 	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
+
+	// Get the states workspace for the tracker data. This workspace will be created if it doesn't exist.
+	// We create it with no states; we will pass the workspace to the Mouse and Focus trackers, and they will create value
+	// managers within the workspace to track and share individual pieces of state.
 	const appPresence = presence.getStates("name:trackerData", {});
 
-	// update the browser URL and the window title with the actual container ID
+	// Update the browser URL and the window title with the actual container ID
 	location.hash = id;
 	document.title = id;
 
-	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
-	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
-	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
+	// Initialize the trackers
 	const focusTracker = new FocusTracker(presence, appPresence);
 	const mouseTracker = new MouseTracker(presence, appPresence);
 
-	renderControlPanel(mouseTracker, controlPanelDiv);
+	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	renderFocusPresence(focusTracker, focusDiv);
+
+	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
+
+	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
+	renderControlPanel(mouseTracker, controlPanelDiv);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation
