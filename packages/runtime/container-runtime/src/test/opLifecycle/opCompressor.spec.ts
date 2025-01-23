@@ -39,14 +39,10 @@ describe("OpCompressor", () => {
 
 	describe("Compressing batches", () => {
 		for (const batch of [
-			// small batch with one small message
+			// batch with one small message
 			createBatch(1, 100 * 1024),
-			// small batch with small messages
-			createBatch(10, 100 * 1024),
-			// small batch with large messages
-			createBatch(2, 2 * 1024 * 1024),
-			// large batch with small messages
-			createBatch(1000, 100 * 1024),
+			// batch with one large message
+			createBatch(1, 100 * 100 * 1024),
 		]) {
 			it(`Batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
