@@ -6,14 +6,13 @@
 import {
 	acquirePresenceViaDataObject,
 	ExperimentalPresenceManager,
-	Notifications,
-	type ISessionClient,
 } from "@fluidframework/presence/alpha";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
+import { initializeReactions } from "./reactions.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 // Define the schema of the Fluid container.
@@ -64,23 +63,6 @@ async function start() {
 	// We create it with no states; we will pass the workspace to the Mouse and Focus trackers, and they will create value
 	// managers within the workspace to track and share individual pieces of state.
 	const appPresence = presence.getStates("name:trackerData", {});
-	const notificationsWorkspace = presence.getNotifications("name:reactions", {});
-	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
-	const notifications: typeof notificationsWorkspace = notificationsWorkspace;
-
-	notifications.add(
-		"reactions",
-		Notifications<
-			// Below explicit generic specification should not be required.
-			{
-				send: (reaction: string, intensity: "normal" | "intense") => void;
-			},
-			"reactions"
-		>(
-			// A default handler is not required
-			{},
-		),
-	);
 
 	// Update the browser URL and the window title with the actual container ID
 	location.hash = id;
@@ -90,43 +72,14 @@ async function start() {
 	const focusTracker = new FocusTracker(presence, appPresence);
 	const mouseTracker = new MouseTracker(presence, appPresence);
 
+	// Initialize reactions
+	initializeReactions(presence, mouseTracker);
+
 	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	renderFocusPresence(focusTracker, focusDiv);
 
 	const mouseContentDiv = document.getElementById("mouse-position") as HTMLDivElement;
 	renderMousePresence(mouseTracker, focusTracker, mouseContentDiv);
-
-	const { reactions } = notifications.props;
-
-	document.body.addEventListener("click", (e) => {
-		reactions.emit.broadcast("send", "❤️", "normal");
-	});
-
-	document.body.addEventListener("keypress", (e) => {
-		reactions.emit.broadcast("send", e.key, "intense");
-	});
-
-	reactions.notifications.on(
-		"send",
-		// eslint-disable-next-line @typescript-eslint/no-shadow
-		(client: ISessionClient, reaction: string, intensity: string) => {
-			const clientPosition = mouseTracker.cursor.clientValue(client).value;
-			const reactionDiv = document.createElement("div");
-			reactionDiv.className = "reaction";
-			reactionDiv.style.position = "absolute";
-			reactionDiv.style.left = `${clientPosition.x}px`;
-			reactionDiv.style.top = `${clientPosition.y}px`;
-			if (intensity === "intense") {
-				reactionDiv.style.fontSize = "xxx-large";
-			}
-			reactionDiv.textContent = reaction;
-			document.body.appendChild(reactionDiv);
-
-			setTimeout(() => {
-				reactionDiv.remove();
-			}, 1000);
-		},
-	);
 
 	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
 	renderControlPanel(mouseTracker, controlPanelDiv);

@@ -103,4 +103,11 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	public setAllowableLatency(latency: number | undefined): void {
 		this.cursor.controls.allowableUpdateLatencyMs = latency;
 	}
+
+	/**
+	 * The most recent mouse position of the provided client.
+	 */
+	public getClientMousePosition(client: ISessionClient): IMousePosition {
+		return this.cursor.clientValue(client).value;
+	}
 }
