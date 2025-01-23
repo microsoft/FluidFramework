@@ -450,7 +450,7 @@ export interface ISummaryRuntimeOptions {
 	 * Delay before first attempt to spawn summarizing container.
 	 *
 	 * @deprecated Use {@link ISummaryRuntimeOptions.summaryConfigOverrides}'s
-	 *{@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
+	 * {@link ISummaryBaseConfiguration.initialSummarizerDelayMs} instead.
 	 */
 	initialSummarizerDelayMs?: number;
 }
