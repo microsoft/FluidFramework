@@ -139,8 +139,14 @@ describe("presence-tracker", () => {
 		// While this test passes, it's a false pass because the first client is always failing to see more than one
 		// client. See previous test.
 		it.skip("First client shows one client connected when second client leaves", async () => {
-			// Navigate the second client away; use the tinylicious default URL
-			await page2.goto("http://localhost:7070", { waitUntil: "load" });
+			// Navigate the second client away.
+			const response = await page2.goto(globals.PATH, { waitUntil: "load" });
+
+			// Verify that a navigation happened. Protecting against this behavior from the puppeteer docs:
+			//    "Navigation to about:blank or navigation to the same URL with a different hash will succeed and
+			//    return null."
+			// We want to make sure a real navigation happened.
+			expect(response).not.toBe(null);
 
 			// Get the client list from the first browser; it should have a single element.
 			const elementHandle = await page.waitForFunction(() =>
