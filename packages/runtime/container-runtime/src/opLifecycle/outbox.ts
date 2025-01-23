@@ -141,7 +141,9 @@ export class Outbox {
 			this.params.config.compressionOptions.minimumBatchSizeInBytes !==
 			Number.POSITIVE_INFINITY;
 		// We need to allow infinite size batches if we enable compression
-		const hardLimit = isCompressionEnabled ? Infinity : this.params.config.maxBatchSizeInBytes;
+		const hardLimit = isCompressionEnabled
+			? Number.POSITIVE_INFINITY
+			: this.params.config.maxBatchSizeInBytes;
 
 		this.mainBatch = new BatchManager({
 			hardLimit,

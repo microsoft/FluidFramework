@@ -707,13 +707,16 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public reSubmit(type: string, content: unknown, localOpMetadata: unknown): void {
 		switch (type) {
 			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
+			case ContainerMessageType.Alias: {
 				this.parentContext.submitMessage(type, content, localOpMetadata);
 				return;
-			case ContainerMessageType.FluidDataStoreOp:
+			}
+			case ContainerMessageType.FluidDataStoreOp: {
 				return this.reSubmitChannelOp(type, content, localOpMetadata);
-			default:
+			}
+			default: {
 				assert(false, 0x907 /* unknown op type */);
+			}
 		}
 	}
 
@@ -757,14 +760,18 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public async applyStashedOp(content: unknown): Promise<unknown> {
 		const opContents = content as LocalContainerRuntimeMessage;
 		switch (opContents.type) {
-			case ContainerMessageType.Attach:
+			case ContainerMessageType.Attach: {
 				return this.applyStashedAttachOp(opContents.contents);
-			case ContainerMessageType.Alias:
+			}
+			case ContainerMessageType.Alias: {
 				return;
-			case ContainerMessageType.FluidDataStoreOp:
+			}
+			case ContainerMessageType.FluidDataStoreOp: {
 				return this.applyStashedChannelChannelOp(opContents.contents);
-			default:
+			}
+			default: {
 				assert(false, 0x908 /* unknon type of op */);
+			}
 		}
 	}
 
@@ -821,7 +828,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			// if the client is not detached put in the pending attach list
 			// so that on ack of the stashed op, the context is found.
 			// detached client don't send ops, so should not expect and ack.
-			this.pendingAttach.set(message.id, message);
+			this.pendingAttach.set(id, message);
 		}
 	}
 
@@ -831,17 +838,21 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 */
 	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		switch (messageCollection.envelope.type) {
-			case ContainerMessageType.FluidDataStoreOp:
+			case ContainerMessageType.FluidDataStoreOp: {
 				this.processChannelMessages(messageCollection);
 				break;
-			case ContainerMessageType.Attach:
+			}
+			case ContainerMessageType.Attach: {
 				this.processAttachMessages(messageCollection);
 				break;
-			case ContainerMessageType.Alias:
+			}
+			case ContainerMessageType.Alias: {
 				this.processAliasMessages(messageCollection);
 				break;
-			default:
+			}
+			default: {
 				assert(false, 0x8e9 /* unreached */);
+			}
 		}
 	}
 
@@ -874,7 +885,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	 * @param messageCollection - The collection of messages to process.
 	 */
 	private processChannelMessages(messageCollection: IRuntimeMessageCollection): void {
-		const { messagesContent, local } = messageCollection;
+		const { envelope, messagesContent, local } = messageCollection;
 		let currentMessageState: { address: string; type: string } | undefined;
 		let currentMessagesContent: IRuntimeMessagesContent[] = [];
 
@@ -888,7 +899,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			assert(!!currentContext, 0xa66 /* Context not found */);
 
 			currentContext.processMessages({
-				envelope: { ...messageCollection.envelope, type: currentMessageState.type },
+				envelope: { ...envelope, type: currentMessageState.type },
 				messagesContent: currentMessagesContent,
 				local,
 			});
@@ -916,11 +927,11 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 				throw DataProcessingError.create(
 					"No context for op",
 					"processFluidDataStoreOp",
-					messageCollection.envelope as ISequencedDocumentMessage,
+					envelope as ISequencedDocumentMessage,
 					{
 						local,
 						messageDetails: JSON.stringify({
-							type: messageCollection.envelope.type,
+							type: envelope.type,
 							contentType: typeof contents,
 						}),
 						...tagCodeArtifacts({ address }),
@@ -948,16 +959,12 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			this.gcNodeUpdated({
 				node: { type: "DataStore", path: `/${address}` },
 				reason: "Changed",
-				timestampMs: messageCollection.envelope.timestamp,
+				timestampMs: envelope.timestamp,
 				packagePath: context.isLoaded ? context.packagePath : undefined,
 			});
 
 			detectOutboundReferences(address, contextContents, (fromPath: string, toPath: string) =>
-				this.parentContext.addedGCOutboundRoute(
-					fromPath,
-					toPath,
-					messageCollection.envelope.timestamp,
-				),
+				this.parentContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp),
 			);
 		}
 
@@ -1200,7 +1207,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			},
 		);
 		// Get the outbound routes (aliased data stores) and add a GC node for this channel.
-		builder.addNode("/", Array.from(this.aliasedDataStores));
+		builder.addNode("/", [...this.aliasedDataStores]);
 		return builder.getGCData();
 	}
 
@@ -1412,7 +1419,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 			this.deleteChild(dataStoreId);
 		}
-		return Array.from(sweepReadyDataStoreRoutes);
+		return [...sweepReadyDataStoreRoutes];
 	}
 
 	/**
@@ -1613,7 +1620,9 @@ export function detectOutboundReferences(
 	// GC node paths are all absolute paths, hence the "" prefix.
 	// e.g. this will yield "/dataStoreId/ddsId"
 	const fromPath = ["", address, ddsAddress].join("/");
-	outboundPaths.forEach((toPath) => addedOutboundReference(fromPath, toPath));
+	for (const toPath of outboundPaths) {
+		addedOutboundReference(fromPath, toPath);
+	}
 }
 
 /**
