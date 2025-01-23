@@ -110,7 +110,7 @@ export function concatGarbageCollectionStates(
 	const combinedGCNodes: { [id: string]: IGarbageCollectionNodeData } = {};
 	for (const [nodeId, nodeData] of Object.entries(gcState1.gcNodes)) {
 		combinedGCNodes[nodeId] = {
-			outboundRoutes: Array.from(nodeData.outboundRoutes),
+			outboundRoutes: [...nodeData.outboundRoutes],
 			unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
 		};
 	}
@@ -119,7 +119,7 @@ export function concatGarbageCollectionStates(
 		let combineNodeData = combinedGCNodes[nodeId];
 		if (combineNodeData === undefined) {
 			combineNodeData = {
-				outboundRoutes: Array.from(nodeData.outboundRoutes),
+				outboundRoutes: [...nodeData.outboundRoutes],
 				unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
 			};
 		} else {
@@ -154,7 +154,7 @@ export function concatGarbageCollectionStates(
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		clonedGCNodes[id] = Array.from(outboundRoutes);
+		clonedGCNodes[id] = [...outboundRoutes];
 	}
 	return {
 		gcNodes: clonedGCNodes,
@@ -171,7 +171,7 @@ export function concatGarbageCollectionData(
 	const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
 	for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
 		if (combinedGCData.gcNodes[id] === undefined) {
-			combinedGCData.gcNodes[id] = Array.from(routes);
+			combinedGCData.gcNodes[id] = [...routes];
 		} else {
 			const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]];
 			combinedGCData.gcNodes[id] = [...new Set(combinedRoutes)];

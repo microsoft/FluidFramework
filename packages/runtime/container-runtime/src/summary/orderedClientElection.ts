@@ -639,7 +639,9 @@ export class OrderedClientElection
 	}
 
 	public getAllEligibleClients(): ITrackedClient[] {
-		return this.orderedClientCollection.getAllClients().filter(this.isEligibleFn);
+		return this.orderedClientCollection
+			.getAllClients()
+			.filter((client) => this.isEligibleFn(client));
 	}
 
 	/**
