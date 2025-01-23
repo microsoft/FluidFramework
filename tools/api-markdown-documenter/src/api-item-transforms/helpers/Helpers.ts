@@ -391,7 +391,7 @@ export function createBreadcrumbParagraph(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): ParagraphNode {
-	// #region Get ordered ancestry of document items
+	// #region Get hierarchy of document items
 
 	const breadcrumbLinks: Link[] = [getLinkForApiItem(apiItem, config)];
 

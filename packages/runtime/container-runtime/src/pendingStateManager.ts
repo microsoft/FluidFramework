@@ -56,16 +56,22 @@ export interface IPendingMessage {
 		 * Or, -1 if it was never submitted (and clientId will be a random uuid)
 		 */
 		batchStartCsn: number;
-		/** length of the batch (how many runtime messages here) */
+		/**
+		 * length of the batch (how many runtime messages here)
+		 */
 		length: number;
-		/** If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored */
+		/**
+		 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
+		 */
 		ignoreBatchId?: boolean;
 	};
 }
 
 type Patch<T, U> = U & Omit<T, keyof U>;
 
-/** First version of the type (pre-dates batchInfo) */
+/**
+ * First version of the type (pre-dates batchInfo)
+ */
 type IPendingMessageV0 = Patch<IPendingMessage, { batchInfo?: undefined }>;
 
 /**
@@ -82,7 +88,9 @@ export interface IPendingLocalState {
 	pendingStates: IPendingMessage[];
 }
 
-/** Info needed to replay/resubmit a pending message */
+/**
+ * Info needed to replay/resubmit a pending message
+ */
 export type PendingMessageResubmitData = Pick<
 	IPendingMessage,
 	"content" | "localOpMetadata" | "opMetadata"
@@ -98,7 +106,9 @@ export interface IRuntimeStateHandler {
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 	const content = JSON.parse(message.content);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
@@ -131,6 +141,28 @@ function scrubAndStringify(
 	return JSON.stringify(scrubbed);
 }
 
+/**
+ * Finds and returns the index where the strings diverge, and the character at that index in each string (or undefined if not applicable)
+ */
+export function findFirstCharacterMismatched(
+	a: string,
+	b: string,
+): [index: number, charA?: string, charB?: string] {
+	const minLength = Math.min(a.length, b.length);
+	for (let i = 0; i < minLength; i++) {
+		if (a[i] !== b[i]) {
+			return [i, a[i], b[i]];
+		}
+	}
+
+	// Since we didn't return in the loop, the shorter string must be a prefix of the other.
+	// If they're the same length, return -1 to indicate they're identical.
+	// Otherwise, the next character of the longer one is where they differ. No need to return that next character.
+	return a.length === b.length
+		? [-1, undefined, undefined]
+		: [minLength, a[minLength], b[minLength]];
+}
+
 function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
 	return {
 		...message,
@@ -148,9 +180,13 @@ function withoutLocalOpMetadata(message: IPendingMessage): IPendingMessage {
  * It verifies that all the ops are acked, are received in the right order and batch information is correct.
  */
 export class PendingStateManager implements IDisposable {
-	/** Messages that will need to be resubmitted if not ack'd before the next reconnection */
+	/**
+	 * Messages that will need to be resubmitted if not ack'd before the next reconnection
+	 */
 	private readonly pendingMessages = new Deque<IPendingMessage>();
-	/** Messages stashed from a previous container, now being rehydrated. Need to be resubmitted. */
+	/**
+	 * Messages stashed from a previous container, now being rehydrated. Need to be resubmitted.
+	 */
 	private readonly initialMessages = new Deque<IPendingMessageFromStash>();
 
 	/**
@@ -163,7 +199,9 @@ export class PendingStateManager implements IDisposable {
 		this.pendingMessages.clear();
 	});
 
-	/** Used to ensure we don't replay ops on the same connection twice */
+	/**
+	 * Used to ensure we don't replay ops on the same connection twice
+	 */
 	private clientIdFromLastReplay: string | undefined;
 
 	/**
@@ -206,18 +244,18 @@ export class PendingStateManager implements IDisposable {
 			);
 			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
-		this.pendingMessages.toArray().forEach((message) => {
+		for (const message of this.pendingMessages.toArray()) {
 			if (
 				snapshotSequenceNumber !== undefined &&
 				message.referenceSequenceNumber < snapshotSequenceNumber
 			) {
 				throw new LoggingError("trying to stash ops older than our latest snapshot");
 			}
-		});
+		}
 		return {
 			pendingStates: [
 				...newSavedOps,
-				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
+				...this.pendingMessages.toArray().map((message) => withoutLocalOpMetadata(message)),
 			],
 		};
 	}
@@ -232,10 +270,10 @@ export class PendingStateManager implements IDisposable {
 		}
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = () => this.disposeOnce.value;
+	public readonly dispose = (): void => this.disposeOnce.value;
 
 	/**
 	 * The given batch has been flushed, and needs to be tracked locally until the corresponding
@@ -249,7 +287,7 @@ export class PendingStateManager implements IDisposable {
 		batch: BatchMessage[],
 		clientSequenceNumber: number | undefined,
 		ignoreBatchId?: boolean,
-	) {
+	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
 		// In the typical case where the batch was actually sent, use the clientId and clientSequenceNumber.
@@ -288,7 +326,7 @@ export class PendingStateManager implements IDisposable {
 	 * Applies stashed ops at their reference sequence number so they are ready to be ACKed or resubmitted
 	 * @param seqNum - Sequence number at which to apply ops. Will apply all ops if seqNum is undefined.
 	 */
-	public async applyStashedOpsAt(seqNum?: number) {
+	public async applyStashedOpsAt(seqNum?: number): Promise<void> {
 		// apply stashed ops at sequence number
 		while (!this.initialMessages.isEmpty()) {
 			if (seqNum !== undefined) {
@@ -459,7 +497,17 @@ export class PendingStateManager implements IDisposable {
 			const messageContent = buildPendingMessageContent(message);
 
 			// Stringified content should match
+			// If it doesn't, collect as much info about the difference as possible (privacy-wise) and log it
 			if (pendingMessage.content !== messageContent) {
+				const [pendingLength, incomingLength] = [
+					pendingMessage.content.length,
+					messageContent.length,
+				];
+				const [mismatchStartIndex, pendingChar, incomingChar] = findFirstCharacterMismatched(
+					pendingMessage.content,
+					messageContent,
+				);
+
 				const pendingContentObj = JSON.parse(
 					pendingMessage.content,
 				) as LocalContainerRuntimeMessage;
@@ -467,6 +515,7 @@ export class PendingStateManager implements IDisposable {
 					messageContent,
 				) as InboundContainerRuntimeMessage;
 
+				// Compare inner contents object, since that both should be { type, contents }
 				const contentsMatch =
 					pendingContentObj.contents === incomingContentObj.contents ||
 					(pendingContentObj.contents !== undefined &&
@@ -480,6 +529,11 @@ export class PendingStateManager implements IDisposable {
 						pendingContentScrubbed: scrubAndStringify(pendingContentObj),
 						incomingContentScrubbed: scrubAndStringify(incomingContentObj),
 						contentsMatch,
+						pendingLength,
+						incomingLength,
+						mismatchStartIndex,
+						pendingChar,
+						incomingChar,
 					},
 				});
 
@@ -497,7 +551,7 @@ export class PendingStateManager implements IDisposable {
 	/**
 	 * Check if the incoming batch matches the batch info for the next pending message.
 	 */
-	private onLocalBatchBegin(batchStart: BatchStartInfo, batchLength?: number) {
+	private onLocalBatchBegin(batchStart: BatchStartInfo, batchLength?: number): void {
 		// Get the next message from the pending queue. Verify a message exists.
 		const pendingMessage = this.pendingMessages.peekFront();
 		assert(
@@ -556,7 +610,7 @@ export class PendingStateManager implements IDisposable {
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 */
-	public replayPendingStates() {
+	public replayPendingStates(): void {
 		assert(
 			this.stateHandler.connected(),
 			0x172 /* "The connection state is not consistent with the runtime" */,
@@ -600,7 +654,7 @@ export class PendingStateManager implements IDisposable {
 			/**
 			 * We must preserve the distinct batches on resubmit.
 			 * Note: It is not possible for the PendingStateManager to receive a partially acked batch. It will
-			 * either receive the whole batch ack or nothing at all.  @see ScheduleManager for how this works.
+			 * either receive the whole batch ack or nothing at all. See {@link InboundBatchAggregator} for how this works.
 			 */
 			if (batchMetadataFlag === undefined) {
 				// Single-message batch
@@ -667,7 +721,9 @@ export class PendingStateManager implements IDisposable {
 	}
 }
 
-/** For back-compat if trying to apply stashed ops that pre-date batchInfo */
+/**
+ * For back-compat if trying to apply stashed ops that pre-date batchInfo
+ */
 function patchbatchInfo(
 	message: IPendingMessageFromStash,
 ): asserts message is IPendingMessage {

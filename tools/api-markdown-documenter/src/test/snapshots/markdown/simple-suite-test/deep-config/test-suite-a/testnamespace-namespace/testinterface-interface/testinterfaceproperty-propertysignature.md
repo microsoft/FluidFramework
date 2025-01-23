@@ -1,6 +1,6 @@
 # testInterfaceProperty
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestNamespace](./test-suite-a/testnamespace-namespace/) &gt; [TestInterface](./test-suite-a/testnamespace-namespace/testinterface-interface/) &gt; [testInterfaceProperty](./test-suite-a/testnamespace-namespace/testinterface-interface/testinterfaceproperty-propertysignature)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestInterface](/test-suite-a/testnamespace-namespace/testinterface-interface/) &gt; [testInterfaceProperty](/test-suite-a/testnamespace-namespace/testinterface-interface/testinterfaceproperty-propertysignature)
 
 Test interface property
 

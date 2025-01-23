@@ -1,6 +1,6 @@
 # TestEnumValue1
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestEnum](./test-suite-a/testenum-enum/) &gt; [TestEnumValue1](./test-suite-a/testenum-enum/testenumvalue1-enummember)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestEnum](/test-suite-a/testenum-enum/) &gt; [TestEnumValue1](/test-suite-a/testenum-enum/testenumvalue1-enummember)
 
 Test enum value 1 (string)
 

@@ -1,6 +1,6 @@
 # testConstWithEmptyDeprecatedBlock
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [testConstWithEmptyDeprecatedBlock](./test-suite-a/testconstwithemptydeprecatedblock-variable)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testConstWithEmptyDeprecatedBlock](/test-suite-a/testconstwithemptydeprecatedblock-variable)
 
 I have a `@deprecated` tag with an empty comment block.
 

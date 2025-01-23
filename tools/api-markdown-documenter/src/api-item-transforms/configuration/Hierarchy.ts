@@ -44,11 +44,11 @@ export enum HierarchyKind {
  * @sealed
  * @public
  */
-export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends HierarchyKind> {
+export interface DocumentationHierarchyConfigurationBase {
 	/**
 	 * {@inheritDoc HierarchyKind}
 	 */
-	readonly kind: THierarchyKind;
+	readonly kind: HierarchyKind;
 }
 
 /**
@@ -57,8 +57,12 @@ export interface DocumentationHierarchyConfigurationBase<THierarchyKind extends 
  * @sealed
  * @public
  */
-export type SectionHierarchyConfiguration =
-	DocumentationHierarchyConfigurationBase<HierarchyKind.Section>;
+export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+	/**
+	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
+	 */
+	readonly kind: HierarchyKind.Section;
+}
 
 /**
  * The corresponding API item will get its own document, in the folder for an ancestor of the API item.
@@ -66,8 +70,12 @@ export type SectionHierarchyConfiguration =
  * @sealed
  * @public
  */
-export type DocumentHierarchyConfiguration =
-	DocumentationHierarchyConfigurationBase<HierarchyKind.Document>;
+export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+	/**
+	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
+	 */
+	readonly kind: HierarchyKind.Document;
+}
 
 /**
  * Placement of the API item's document relative to its generated folder.
@@ -78,12 +86,12 @@ export enum FolderDocumentPlacement {
 	/**
 	 * The document is placed inside its folder.
 	 */
-	Inside = "inside",
+	Inside = "Inside",
 
 	/**
 	 * The document is placed outside (adjacent to) its folder.
 	 */
-	Outside = "outside",
+	Outside = "Outside",
 }
 
 /**
@@ -92,16 +100,19 @@ export enum FolderDocumentPlacement {
  * @sealed
  * @public
  */
-export type FolderHierarchyConfiguration =
-	DocumentationHierarchyConfigurationBase<HierarchyKind.Folder> & {
-		/**
-		 * Placement of the API item's document relative to its generated folder.
-		 *
-		 * @defaultValue {@link FolderDocumentPlacement.Outside}
-		 * @privateRemarks TODO: change default to `inside`
-		 */
-		readonly documentPlacement: FolderDocumentPlacement;
-	};
+export interface FolderHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+	/**
+	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
+	 */
+	readonly kind: HierarchyKind.Folder;
+
+	/**
+	 * Placement of the API item's document relative to its generated folder.
+	 *
+	 * @defaultValue {@link FolderDocumentPlacement.Inside}
+	 */
+	readonly documentPlacement: FolderDocumentPlacement;
+}
 
 /**
  * API item hierarchy configuration.
@@ -133,7 +144,7 @@ const defaultDocumentHierarchyOptions = {
  */
 const defaultFolderHierarchyOptions = {
 	kind: HierarchyKind.Folder,
-	documentPlacement: FolderDocumentPlacement.Outside, // TODO: inside
+	documentPlacement: FolderDocumentPlacement.Inside,
 } satisfies FolderHierarchyConfiguration;
 
 /**
@@ -145,7 +156,7 @@ export type HierarchyConfiguration = {
 	/**
 	 * Hierarchy configuration for the API item kind.
 	 */
-	[Kind in Exclude<
+	readonly [Kind in Exclude<
 		ValidApiItemKind,
 		ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package
 	>]: DocumentationHierarchyConfiguration;
@@ -157,7 +168,7 @@ export type HierarchyConfiguration = {
 	 * Always its own document. Never introduces folder hierarchy.
 	 * This is an important invariant, as it ensures that there is always at least one document in the output.
 	 */
-	[ApiItemKind.Model]: DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.Model]: DocumentHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `Package` API item kind.
@@ -168,7 +179,7 @@ export type HierarchyConfiguration = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+	readonly [ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `EntryPoint` API item kind.
@@ -181,7 +192,7 @@ export type HierarchyConfiguration = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.EntryPoint]: DocumentHierarchyConfiguration;
 
 	/**
 	 * {@inheritDoc HierarchyOptions.getDocumentName}
@@ -210,7 +221,7 @@ export type HierarchyOptions = {
 	/**
 	 * Hierarchy configuration for the API item kind.
 	 */
-	[Kind in Exclude<
+	readonly [Kind in Exclude<
 		ValidApiItemKind,
 		ApiItemKind.Model | ApiItemKind.EntryPoint | ApiItemKind.Package
 	>]?: HierarchyKind | DocumentationHierarchyConfiguration;
@@ -222,7 +233,7 @@ export type HierarchyOptions = {
 	 * Always its own document. Never introduces folder hierarchy.
 	 * This is an important invariant, as it ensures that there is always at least one document in the output.
 	 */
-	[ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.Model]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `Package` API item kind.
@@ -233,7 +244,7 @@ export type HierarchyOptions = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.Package]?:
+	readonly [ApiItemKind.Package]?:
 		| HierarchyKind.Document
 		| HierarchyKind.Folder
 		| DocumentHierarchyConfiguration
@@ -250,7 +261,7 @@ export type HierarchyOptions = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	[ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
+	readonly [ApiItemKind.EntryPoint]?: HierarchyKind.Document | DocumentHierarchyConfiguration;
 
 	/**
 	 * Generate the desired document name for the provided `ApiItem`.
@@ -293,11 +304,10 @@ export namespace DefaultHierarchyConfigurations {
 	export function getDocumentName(apiItem: ApiItem, config: HierarchyConfiguration): string {
 		const kind = getApiItemKind(apiItem);
 		switch (kind) {
-			case ApiItemKind.Model: {
-				return "index";
-			}
+			case ApiItemKind.Model:
+			case ApiItemKind.Namespace:
 			case ApiItemKind.Package: {
-				return getUnscopedPackageName(apiItem as ApiPackage);
+				return "index";
 			}
 			default: {
 				// Let the system generate a unique name that accounts for folder hierarchy.
@@ -340,10 +350,10 @@ const defaultHierarchyOptions = {
 
 	// Items that get their own document, but do not introduce folder hierarchy:
 	[ApiItemKind.Class]: HierarchyKind.Document,
-	[ApiItemKind.Enum]: HierarchyKind.Section, // TODO: HierarchyKind.Document
+	[ApiItemKind.Enum]: HierarchyKind.Document,
 	[ApiItemKind.EntryPoint]: HierarchyKind.Document,
 	[ApiItemKind.Interface]: HierarchyKind.Document,
-	[ApiItemKind.TypeAlias]: HierarchyKind.Section, // TODO: HierarchyKind.Document
+	[ApiItemKind.TypeAlias]: HierarchyKind.Document,
 
 	// Items that get a section under the document representing an ancestor of the API item:
 	[ApiItemKind.CallSignature]: HierarchyKind.Section,

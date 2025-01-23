@@ -1,6 +1,6 @@
 # virtualMethod
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestAbstractClass](./test-suite-a/testabstractclass-class/) &gt; [virtualMethod()](./test-suite-a/testabstractclass-class/virtualmethod-method)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestAbstractClass](/test-suite-a/testabstractclass-class/) &gt; [virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method)
 
 A test `@virtual` method.
 

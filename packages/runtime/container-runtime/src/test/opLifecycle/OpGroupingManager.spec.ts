@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
@@ -57,30 +58,26 @@ describe("OpGroupingManager", () => {
 		const options: ConfigOption[] = [
 			{ enabled: false, expectedResult: false },
 			{ enabled: true, tooSmall: true, expectedResult: false },
-			{ enabled: true, reentrant: true, expectedResult: false },
-			{ enabled: true, reentrant: true, reentryEnabled: true, expectedResult: true },
+			{ enabled: true, reentrant: true, expectedResult: true },
 			{ enabled: true, expectedResult: true },
 		];
 
-		options.forEach((option) => {
+		for (const option of options) {
 			it(`shouldGroup: groupedBatchingEnabled [${option.enabled}] tooSmall [${
 				option.tooSmall === true
-			}] reentrant [${option.reentrant === true}] reentryEnabled [${
-				option.reentryEnabled === true
-			}]`, () => {
+			}] reentrant [${option.reentrant === true}]`, () => {
 				assert.strictEqual(
 					new OpGroupingManager(
 						{
 							groupedBatchingEnabled: option.enabled,
 							opCountThreshold: option.tooSmall === true ? 10 : 2,
-							reentrantBatchGroupingEnabled: option.reentryEnabled ?? false,
 						},
 						mockLogger,
 					).shouldGroup(createBatch(5, option.reentrant)),
 					option.expectedResult,
 				);
 			});
-		});
+		}
 	});
 
 	describe("groupBatch", () => {
@@ -90,7 +87,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: false,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5));
@@ -102,7 +98,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).groupBatch(createBatch(5));
@@ -123,7 +118,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).groupBatch(createBatch(5, false, false, batchId));
@@ -137,7 +131,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: false,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).createEmptyGroupedBatch("resubmittingBatchId", 0);
@@ -150,7 +143,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
@@ -169,7 +161,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: false,
 				},
 				mockLogger,
 			).shouldGroup({
@@ -187,7 +178,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 10,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5));
@@ -200,7 +190,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true));
@@ -213,7 +202,6 @@ describe("OpGroupingManager", () => {
 					{
 						groupedBatchingEnabled: true,
 						opCountThreshold: 2,
-						reentrantBatchGroupingEnabled: false,
 					},
 					mockLogger,
 				).groupBatch(createBatch(5, false, true, "batchId"));
@@ -227,7 +215,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -248,7 +235,7 @@ describe("OpGroupingManager", () => {
 						},
 					],
 				},
-			} as any;
+			} as unknown as ISequencedDocumentMessage;
 
 			assert.strictEqual(isGroupedBatch(op), true);
 			const result = opGroupingManager.ungroupOp(op);
@@ -280,7 +267,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: true,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -288,7 +274,7 @@ describe("OpGroupingManager", () => {
 			const op = {
 				clientSequenceNumber: 10,
 				contents: "1",
-			} as any;
+			} as unknown as ISequencedDocumentMessage;
 
 			assert.strictEqual(isGroupedBatch(op), false);
 			assert.throws(() => opGroupingManager.ungroupOp(op));
@@ -299,7 +285,6 @@ describe("OpGroupingManager", () => {
 				{
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);
@@ -307,7 +292,7 @@ describe("OpGroupingManager", () => {
 			const op = {
 				clientSequenceNumber: 10,
 				contents: "1",
-			} as any;
+			} as unknown as ISequencedDocumentMessage;
 
 			assert.strictEqual(isGroupedBatch(op), false);
 			assert.throws(() => opGroupingManager.ungroupOp(op));
@@ -339,12 +324,11 @@ describe("OpGroupingManager", () => {
 						},
 					],
 				},
-			} as any;
+			} as unknown as ISequencedDocumentMessage;
 			const opGroupingManager = new OpGroupingManager(
 				{
 					groupedBatchingEnabled: false,
 					opCountThreshold: 2,
-					reentrantBatchGroupingEnabled: true,
 				},
 				mockLogger,
 			);

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/tablebench",
-	"version": "2.13.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Table focused benchmarks",
 	"homepage": "https://fluidframework.com",
@@ -68,7 +68,7 @@
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/id-compressor": "workspace:~",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",

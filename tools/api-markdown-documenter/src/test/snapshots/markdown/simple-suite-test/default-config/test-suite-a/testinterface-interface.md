@@ -1,6 +1,6 @@
 # TestInterface
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a) &gt; [TestInterface](./test-suite-a/testinterface-interface)
+[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestInterface](./test-suite-a/testinterface-interface)
 
 Test interface
 

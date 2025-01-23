@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
@@ -90,6 +90,7 @@ describe("Hardware Stats", () => {
 	});
 
 	it("should generate correct hardware stats with null navigator", async () => {
+		// eslint-disable-next-line unicorn/no-null
 		const navigator = null;
 		setNavigator(navigator);
 		// testing function

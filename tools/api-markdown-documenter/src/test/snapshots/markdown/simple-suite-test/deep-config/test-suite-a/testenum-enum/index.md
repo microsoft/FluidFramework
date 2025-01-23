@@ -1,6 +1,6 @@
 # TestEnum
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestEnum](./test-suite-a/testenum-enum/)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestEnum](/test-suite-a/testenum-enum/)
 
 Test Enum
 
@@ -36,9 +36,9 @@ const bar = TestEnum.TestEnumValue2
 
 | Flag | Description |
 | --- | --- |
-| [TestEnumValue1](./test-suite-a/testenum-enum/testenumvalue1-enummember) | Test enum value 1 (string) |
-| [TestEnumValue2](./test-suite-a/testenum-enum/testenumvalue2-enummember) | Test enum value 2 (number) |
-| [TestEnumValue3](./test-suite-a/testenum-enum/testenumvalue3-enummember) | Test enum value 3 (default) |
+| [TestEnumValue1](/test-suite-a/testenum-enum/testenumvalue1-enummember) | Test enum value 1 (string) |
+| [TestEnumValue2](/test-suite-a/testenum-enum/testenumvalue2-enummember) | Test enum value 2 (number) |
+| [TestEnumValue3](/test-suite-a/testenum-enum/testenumvalue3-enummember) | Test enum value 3 (default) |
 
 Test enum value 1 (string)
 

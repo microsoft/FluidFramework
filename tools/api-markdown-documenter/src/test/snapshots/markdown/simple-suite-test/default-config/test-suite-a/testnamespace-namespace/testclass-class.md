@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a) &gt; [TestNamespace](./test-suite-a/testnamespace-namespace) &gt; [TestClass](./test-suite-a/testnamespace-namespace/testclass-class)
+[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestNamespace](./test-suite-a/testnamespace-namespace/) &gt; [TestClass](./test-suite-a/testnamespace-namespace/testclass-class)
 
 Test class
 

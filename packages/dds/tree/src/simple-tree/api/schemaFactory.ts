@@ -40,6 +40,7 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
+	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -106,7 +107,8 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
  *
  * @alpha
  */
-export interface SchemaFactoryObjectOptions {
+export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -152,7 +154,9 @@ export interface SchemaFactoryObjectOptions {
 	allowUnknownOptionalFields?: boolean;
 }
 
-export const defaultSchemaFactoryObjectOptions: Required<SchemaFactoryObjectOptions> = {
+export const defaultSchemaFactoryObjectOptions: Required<
+	Omit<SchemaFactoryObjectOptions, "metadata">
+> = {
 	allowUnknownOptionalFields: false,
 };
 
@@ -258,6 +262,8 @@ export type ScopedSchemaName<
  * Also for consistency, if keeping the current approach to detecting `POJO Emulation` mode it might make sense to make explicitly named Maps and Arrays do the detection the same as how object does it.
  *
  * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
+ *
+ * @see {@link SchemaFactoryAlpha}
  *
  * @sealed @public
  */
@@ -403,6 +409,8 @@ export class SchemaFactory<
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
+	 * @param allowedTypes - The types that may appear as values in the map.
+	 *
 	 * @remarks
 	 * The unique identifier for this Map is defined as a function of the provided types.
 	 * It is still scoped to this SchemaBuilder, but multiple calls with the same arguments will return the same schema object, providing somewhat structural typing.
@@ -439,6 +447,7 @@ export class SchemaFactory<
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 *
 	 * @example
 	 * ```typescript
@@ -459,6 +468,8 @@ export class SchemaFactory<
 	>;
 
 	/**
+	 * {@link SchemaFactory.map} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
@@ -533,11 +544,14 @@ export class SchemaFactory<
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
+			undefined,
 		);
 	}
 
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
+	 *
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @remarks
 	 * The identifier for this Array is defined as a function of the provided types.
@@ -585,6 +599,7 @@ export class SchemaFactory<
 	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @example
 	 * ```typescript
@@ -607,6 +622,8 @@ export class SchemaFactory<
 	>;
 
 	/**
+	 * {@link SchemaFactory.array} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */

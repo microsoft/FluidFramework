@@ -6,7 +6,10 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IBatch, type BatchMessage } from "./definitions.js";
 
@@ -24,8 +27,11 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
-function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
-	return opContents?.type === OpGroupingManager.groupedBatchOp;
+function isGroupContents(opContents: unknown): opContents is IGroupedBatchMessageContents {
+	return (
+		(opContents as Partial<IGroupedBatchMessageContents>)?.type ===
+		OpGroupingManager.groupedBatchOp
+	);
 }
 
 export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
@@ -35,12 +41,11 @@ export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
 export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
 	readonly opCountThreshold: number;
-	readonly reentrantBatchGroupingEnabled: boolean;
 }
 
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(
 		private readonly config: OpGroupingManagerConfig,
@@ -156,9 +161,8 @@ export class OpGroupingManager {
 			this.config.groupedBatchingEnabled &&
 			// The number of ops in the batch must surpass the configured threshold
 			// or be empty (to allow for empty batches to be grouped)
-			(batch.messages.length === 0 || batch.messages.length >= this.config.opCountThreshold) &&
-			// Support for reentrant batches must be explicitly enabled
-			(this.config.reentrantBatchGroupingEnabled || batch.hasReentrantOps !== true)
+			(batch.messages.length === 0 || batch.messages.length >= this.config.opCountThreshold)
+			// Support for reentrant batches will be on by default
 		);
 	}
 }

@@ -6,7 +6,9 @@
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
+	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	EncodedRevisionTag,
@@ -14,7 +16,6 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import type { IdAllocator, Invariant } from "../../util/index.js";
-import type { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
@@ -25,6 +26,24 @@ export type NestedChangesIndices = [
 	number | undefined /* inputIndex */,
 	number | undefined /* outputIndex */,
 ][];
+
+/**
+ * The return value of calling {@link FieldChangeHandler.intoDelta}.
+ */
+export interface FieldChangeDelta {
+	/**
+	 * {@inheritdoc DeltaFieldChanges}
+	 */
+	readonly local?: DeltaFieldChanges;
+	/**
+	 * {@inheritdoc DeltaRoot.global}
+	 */
+	readonly global?: readonly DeltaDetachedNodeChanges[];
+	/**
+	 * {@inheritdoc DeltaRoot.rename}
+	 */
+	readonly rename?: readonly DeltaDetachedNodeRename[];
+}
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -45,11 +64,7 @@ export interface FieldChangeHandler<
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
-	intoDelta(
-		change: TChangeset,
-		deltaFromChild: ToDelta,
-		idAllocator: MemoizedIdRangeAllocator,
-	): DeltaFieldChanges;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): FieldChangeDelta;
 	/**
 	 * Returns the set of removed roots that should be in memory for the given change to be applied.
 	 * A removed root is relevant if any of the following is true:

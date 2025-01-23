@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a) &gt; [TestClass](./test-suite-a/testclass-class)
+[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestClass](./test-suite-a/testclass-class)
 
 Test class
 
@@ -51,7 +51,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | --- | --- | --- | --- |
-| [abstractPropertyGetter](./test-suite-a/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](./test-suite-a#testmappedtype-typealias) | A test abstract getter property. |
+| [abstractPropertyGetter](./test-suite-a/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](./test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
 | [testClassGetterProperty](./test-suite-a/testclass-class#testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](./test-suite-a/testclass-class#testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
@@ -84,7 +84,7 @@ Here are some remarks about the constructor
 | Parameter | Type | Description |
 | --- | --- | --- |
 | privateProperty | number | See [TestAbstractClass](./test-suite-a/testabstractclass-class)'s constructor. |
-| protectedProperty | [TestEnum](./test-suite-a#testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href="./test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a>.</p> |
+| protectedProperty | [TestEnum](./test-suite-a/testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href="./test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a>.</p> |
 | testClassProperty | TTypeParameterB | See [testClassProperty](./test-suite-a/testclass-class#testclassproperty-property). |
 | testClassEventProperty | () =&gt; void | See [testClassEventProperty](./test-suite-a/testclass-class#testclasseventproperty-property). |
 
@@ -118,7 +118,7 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](./test-suite-a#testmappedtype-typealias)
+**Type:** [TestMappedType](./test-suite-a/testmappedtype-typealias)
 
 ### testClassGetterProperty {#testclassgetterproperty-property}
 

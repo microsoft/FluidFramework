@@ -1,6 +1,6 @@
 # (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestInterface](./test-suite-a/testinterface-interface/) &gt; [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](./test-suite-a/testinterface-interface/_call_-callsignature)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestInterface](/test-suite-a/testinterface-interface/) &gt; [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](/test-suite-a/testinterface-interface/_call_-callsignature)
 
 Test interface event call signature
 

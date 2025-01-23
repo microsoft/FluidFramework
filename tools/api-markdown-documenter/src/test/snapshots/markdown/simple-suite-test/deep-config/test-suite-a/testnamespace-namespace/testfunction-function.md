@@ -1,6 +1,6 @@
 # testFunction
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestNamespace](./test-suite-a/testnamespace-namespace/) &gt; [testFunction(testParameter)](./test-suite-a/testnamespace-namespace/testfunction-function)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [testFunction(testParameter)](/test-suite-a/testnamespace-namespace/testfunction-function)
 
 Test function
 

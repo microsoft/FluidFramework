@@ -1,6 +1,6 @@
 # testFunctionReturningInlineType
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [testFunctionReturningInlineType()](./test-suite-a/testfunctionreturninginlinetype-function)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function)
 
 Test function that returns an inline type
 
@@ -17,4 +17,4 @@ export declare function testFunctionReturningInlineType(): {
 
 An inline type
 
-**Return type:** {     foo: number;     bar: [TestEnum](./test-suite-a/testenum-enum/); }
+**Return type:** {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum/); }
