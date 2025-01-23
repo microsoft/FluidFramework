@@ -263,6 +263,8 @@ export type ScopedSchemaName<
  *
  * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
  *
+ * @see {@link SchemaFactoryAlpha}
+ *
  * @sealed @public
  */
 export class SchemaFactory<

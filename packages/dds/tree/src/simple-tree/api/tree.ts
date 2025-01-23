@@ -467,6 +467,10 @@ export interface TreeBranch extends IDisposable {
  * Doing that would however complicate trivial "hello world" style example slightly, as well as be a breaking API change.
  * It also seems more complex to handle invalidation with that pattern.
  * Thus this design was chosen at the risk of apps blindly accessing `root` then breaking unexpectedly when the document is incompatible.
+ *
+ * @see {@link TreeViewAlpha}
+ * @see {@link asTreeViewAlpha}
+ *
  * @sealed @public
  */
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {

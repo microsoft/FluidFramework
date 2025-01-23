@@ -282,7 +282,7 @@ export const splitOp = (
 	for (let chunkId = 1; chunkId <= chunkCount; chunkId++) {
 		const chunk: IChunkedOp = {
 			chunkId,
-			contents: op.contents.substr(offset, chunkSizeInBytes),
+			contents: op.contents.slice(offset, offset + chunkSizeInBytes),
 			totalChunks: chunkCount,
 		};
 

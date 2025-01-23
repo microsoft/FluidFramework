@@ -134,7 +134,7 @@ export class SummarizeHeuristicRunner implements ISummarizeHeuristicRunner {
 			this.configuration.runtimeOpWeight,
 			this.configuration.nonRuntimeOpWeight,
 		);
-		const pToMaxOps = (weightedNumOfOps * 1.0) / this.configuration.maxOps;
+		const pToMaxOps = (weightedNumOfOps * 1) / this.configuration.maxOps;
 
 		if (pToMaxOps >= 1) {
 			return minIdleTime;

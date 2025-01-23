@@ -1,6 +1,6 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "./api-extractor-base.esm.json",
+	"extends": "./api-extractor-report-base.esm.json",
 	// Use dummy value, forcing all uses to specify the appropriate (broadest of public.d.ts, beta.d.ts,
 	// or alpha.d.ts) rollup file.
 	"mainEntryPointFilePath": "set-mainEntryPointFilePath-directly-in-leaf-config-file",
@@ -8,8 +8,5 @@
 		// NOTE: "alpha" is not included to reduce noise since there are few users.
 		// Packages wanting alpha API reports can override this to opt in.
 		"reportVariants": ["public", "beta"]
-	},
-	"docModel": {
-		"enabled": false
 	}
 }

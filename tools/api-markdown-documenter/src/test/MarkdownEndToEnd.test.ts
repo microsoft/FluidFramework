@@ -37,7 +37,7 @@ const testConfigs = new Map<
 	[
 		"default-config",
 		{
-			uriRoot: ".",
+			uriRoot: "",
 		},
 	],
 
@@ -73,7 +73,6 @@ const testConfigs = new Map<
 	[
 		"deep-config",
 		{
-			uriRoot: "",
 			hierarchy: HierarchyConfigurations.deep,
 		},
 	],

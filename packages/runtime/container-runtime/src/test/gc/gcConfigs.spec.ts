@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IErrorBase } from "@fluidframework/core-interfaces";
@@ -718,7 +718,7 @@ describe("Garbage Collection configurations", () => {
 					expectedSweepEnabled: true,
 				},
 			];
-			testCases.forEach((testCase, index) => {
+			for (const testCase of testCases) {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					gc = createGcWithPrivateMembers(
 						{
@@ -742,7 +742,7 @@ describe("Garbage Collection configurations", () => {
 						`sweepEnabled not set as expected`,
 					);
 				});
-			});
+			}
 		});
 		describe("inactiveTimeoutMs", () => {
 			beforeEach(() => {
@@ -761,7 +761,7 @@ describe("Garbage Collection configurations", () => {
 				{ option: 456, expectedResult: 456 },
 				{ expectedResult: defaultInactiveTimeoutMs },
 			];
-			testCases.forEach((testCase) => {
+			for (const testCase of testCases) {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					configProvider.set(
 						"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs",
@@ -776,7 +776,7 @@ describe("Garbage Collection configurations", () => {
 						"inactiveTimeoutMs not set as expected",
 					);
 				});
-			});
+			}
 			it("inactiveTimeout must not be greater than tombstoneTimeout", () => {
 				configProvider.set(
 					"Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs",
@@ -800,7 +800,7 @@ describe("Garbage Collection configurations", () => {
 				{ option: 0, expectedResult: 0 },
 				{ option: undefined, expectedResult: defaultSweepGracePeriodMs },
 			];
-			testCases.forEach((testCase) => {
+			for (const testCase of testCases) {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					gc = createGcWithPrivateMembers(
 						{} /* metadata */,
@@ -810,7 +810,7 @@ describe("Garbage Collection configurations", () => {
 					);
 					assert.equal(gc.configs.sweepGracePeriodMs, testCase.expectedResult);
 				});
-			});
+			}
 			it("sweepGracePeriodMs must be non-negative", () => {
 				assert.throws(
 					() => {
@@ -837,7 +837,7 @@ describe("Garbage Collection configurations", () => {
 				{ option: true, expectedResult: true },
 				{ expectedResult: false },
 			];
-			testCases.forEach((testCase) => {
+			for (const testCase of testCases) {
 				it(`Test Case ${JSON.stringify(testCase)}`, () => {
 					configProvider.set(gcTestModeKey, testCase.setting);
 					gc = createGcWithPrivateMembers(undefined /* metadata */, {
@@ -849,7 +849,7 @@ describe("Garbage Collection configurations", () => {
 						"testMode not set as expected",
 					);
 				});
-			});
+			}
 		});
 	});
 

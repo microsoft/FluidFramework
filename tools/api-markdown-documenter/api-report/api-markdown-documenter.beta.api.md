@@ -52,18 +52,19 @@ export { ApiItemKind }
 export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
     readonly defaultSectionLayout: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly transformations: ApiItemTransformations;
+    readonly uriRoot: string;
 }
 
 // @public @sealed
 export interface ApiItemTransformationConfigurationBase {
     readonly apiModel: ApiModel;
-    readonly uriRoot: string;
 }
 
 // @public
 export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, DocumentationSuiteOptions, LoggingConfiguration {
     readonly defaultSectionLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly transformations?: Partial<ApiItemTransformations>;
+    readonly uriRoot?: string | undefined;
 }
 
 // @public

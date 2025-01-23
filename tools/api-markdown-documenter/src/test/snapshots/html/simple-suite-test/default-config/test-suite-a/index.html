@@ -7,7 +7,7 @@
     <section>
       <h1>test-suite-a</h1>
       <section>
-        <p><a href="./">Packages</a> > <a href="./test-suite-a">test-suite-a</a></p>
+        <p><a href="/">Packages</a> > <a href="/test-suite-a/">test-suite-a</a></p>
       </section>
       <section>
         <p>Test package</p>
@@ -23,8 +23,8 @@
           <p>2. List item 2</p>
           <p>3. List item 3</p>
           <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
-          <p>- Good link (no alias): <a href="./test-suite-a/testclass-class">TestClass</a></p>
-          <p>- Good link (with alias): <a href="./test-suite-a#testfunction-function">function alias text</a></p>
+          <p>- Good link (no alias): <a href="/test-suite-a/testclass-class">TestClass</a></p>
+          <p>- Good link (with alias): <a href="/test-suite-a/#testfunction-function">function alias text</a></p>
           <p>- Bad link (no alias): <span><i>InvalidItem</i></span></p>
           <p>- Bad link (with alias): <span><i>even though I link to an invalid item, I would still like this text to be rendered</i></span></p>
         </p>
@@ -46,23 +46,23 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href="./test-suite-a/testemptyinterface-interface">TestEmptyInterface</a></td>
+              <td><a href="/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a></td>
               <td>An empty interface</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a/testinterface-interface">TestInterface</a></td>
+              <td><a href="/test-suite-a/testinterface-interface">TestInterface</a></td>
               <td>Test interface</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a/testinterfaceextendingotherinterfaces-interface">TestInterfaceExtendingOtherInterfaces</a></td>
+              <td><a href="/test-suite-a/testinterfaceextendingotherinterfaces-interface">TestInterfaceExtendingOtherInterfaces</a></td>
               <td>Test interface that extends other interfaces</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a/testinterfacewithindexsignature-interface">TestInterfaceWithIndexSignature</a></td>
+              <td><a href="/test-suite-a/testinterfacewithindexsignature-interface">TestInterfaceWithIndexSignature</a></td>
               <td>An interface with an index signature.</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a></td>
+              <td><a href="/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a></td>
               <td>Test interface with generic type parameter</td>
             </tr>
           </tbody>
@@ -79,11 +79,11 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href="./test-suite-a/testabstractclass-class">TestAbstractClass</a></td>
+              <td><a href="/test-suite-a/testabstractclass-class">TestAbstractClass</a></td>
               <td>A test abstract class.</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a/testclass-class">TestClass</a></td>
+              <td><a href="/test-suite-a/testclass-class">TestClass</a></td>
               <td>Test class</td>
             </tr>
           </tbody>
@@ -100,7 +100,7 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href="./test-suite-a#testenum-enum">TestEnum</a></td>
+              <td><a href="/test-suite-a/testenum-enum">TestEnum</a></td>
               <td>Test Enum</td>
             </tr>
           </tbody>
@@ -117,11 +117,11 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href="./test-suite-a#testmappedtype-typealias">TestMappedType</a></td>
-              <td>Test Mapped Type, using <a href="./test-suite-a#testenum-enum">TestEnum</a></td>
+              <td><a href="/test-suite-a/testmappedtype-typealias">TestMappedType</a></td>
+              <td>Test Mapped Type, using <a href="/test-suite-a/testenum-enum">TestEnum</a></td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a#typealias-typealias">TypeAlias</a></td>
+              <td><a href="/test-suite-a/typealias-typealias">TypeAlias</a></td>
               <td>Test Type-Alias</td>
             </tr>
           </tbody>
@@ -140,27 +140,27 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href="./test-suite-a#testfunction-function">testFunction(testParameter, testOptionalParameter)</a></td>
+              <td><a href="/test-suite-a/#testfunction-function">testFunction(testParameter, testOptionalParameter)</a></td>
               <td><code>Alpha</code></td>
               <td><span>TTypeParameter</span></td>
               <td>Test function</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a#testfunctionreturninginlinetype-function">testFunctionReturningInlineType()</a></td>
+              <td><a href="/test-suite-a/#testfunctionreturninginlinetype-function">testFunctionReturningInlineType()</a></td>
               <td></td>
-              <td><span>{ foo: number; bar: <a href="./test-suite-a#testenum-enum">TestEnum</a>; }</span></td>
+              <td><span>{ foo: number; bar: <a href="/test-suite-a/testenum-enum">TestEnum</a>; }</span></td>
               <td>Test function that returns an inline type</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a#testfunctionreturningintersectiontype-function">testFunctionReturningIntersectionType()</a></td>
+              <td><a href="/test-suite-a/#testfunctionreturningintersectiontype-function">testFunctionReturningIntersectionType()</a></td>
               <td><code>Deprecated</code></td>
-              <td><span><a href="./test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="./test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></span></td>
+              <td><span><a href="/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></span></td>
               <td>Test function that returns an inline type</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a#testfunctionreturninguniontype-function">testFunctionReturningUnionType()</a></td>
+              <td><a href="/test-suite-a/#testfunctionreturninguniontype-function">testFunctionReturningUnionType()</a></td>
               <td></td>
-              <td><span>string | <a href="./test-suite-a/testinterface-interface">TestInterface</a></span></td>
+              <td><span>string | <a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
               <td>Test function that returns an inline type</td>
             </tr>
           </tbody>
@@ -180,14 +180,14 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href="./test-suite-a#testconst-variable">testConst</a></td>
+              <td><a href="/test-suite-a/#testconst-variable">testConst</a></td>
               <td><code>Beta</code></td>
               <td><code>readonly</code></td>
               <td></td>
               <td>Test Constant</td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a#testconstwithemptydeprecatedblock-variable">testConstWithEmptyDeprecatedBlock</a></td>
+              <td><a href="/test-suite-a/#testconstwithemptydeprecatedblock-variable">testConstWithEmptyDeprecatedBlock</a></td>
               <td><code>Deprecated</code></td>
               <td><code>readonly</code></td>
               <td><span>string</span></td>
@@ -207,141 +207,15 @@
           </thead>
           <tbody>
             <tr>
-              <td><a href="./test-suite-a/testmodule-namespace">TestModule</a></td>
+              <td><a href="/test-suite-a/testmodule-namespace/">TestModule</a></td>
               <td></td>
             </tr>
             <tr>
-              <td><a href="./test-suite-a/testnamespace-namespace">TestNamespace</a></td>
+              <td><a href="/test-suite-a/testnamespace-namespace/">TestNamespace</a></td>
               <td>Test Namespace</td>
             </tr>
           </tbody>
         </table>
-      </section>
-      <section>
-        <h2>Enumeration Details</h2>
-        <section>
-          <h3 id="testenum-enum">TestEnum</h3>
-          <section>
-            <p>Test Enum</p>
-          </section>
-          <section>
-            <h4 id="testenum-signature">Signature</h4><code>export declare enum TestEnum</code>
-          </section>
-          <section>
-            <h4 id="testenum-remarks">Remarks</h4>
-            <p>Here are some remarks about the enum</p>
-          </section>
-          <section>
-            <h4 id="testenum-examples">Examples</h4>
-            <section>
-              <h5 id="testenum-example1">Example 1</h5>
-              <p>
-                <p>Some example</p><code>const foo = TestEnum.TestEnumValue1</code>
-              </p>
-            </section>
-            <section>
-              <h5 id="testenum-example2">Example 2</h5>
-              <p>
-                <p>Another example</p><code>const bar = TestEnum.TestEnumValue2</code>
-              </p>
-            </section>
-          </section>
-          <section>
-            <h4>Flags</h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>Flag</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td><a href="./test-suite-a#testenum-testenumvalue1-enummember">TestEnumValue1</a></td>
-                  <td>Test enum value 1 (string)</td>
-                </tr>
-                <tr>
-                  <td><a href="./test-suite-a#testenum-testenumvalue2-enummember">TestEnumValue2</a></td>
-                  <td>Test enum value 2 (number)</td>
-                </tr>
-                <tr>
-                  <td><a href="./test-suite-a#testenum-testenumvalue3-enummember">TestEnumValue3</a></td>
-                  <td>Test enum value 3 (default)</td>
-                </tr>
-              </tbody>
-            </table>
-          </section>
-          <section>
-            <section>
-              <h5 id="testenum-testenumvalue1-enummember">TestEnumValue1</h5>
-              <section>
-                <p>Test enum value 1 (string)</p>
-              </section>
-              <section>
-                <h6 id="testenumvalue1-signature">Signature</h6><code>TestEnumValue1 = "test-enum-value-1"</code>
-              </section>
-              <section>
-                <h6 id="testenumvalue1-remarks">Remarks</h6>
-                <p>Here are some remarks about the enum value</p>
-              </section>
-            </section>
-            <section>
-              <h5 id="testenum-testenumvalue2-enummember">TestEnumValue2</h5>
-              <section>
-                <p>Test enum value 2 (number)</p>
-              </section>
-              <section>
-                <h6 id="testenumvalue2-signature">Signature</h6><code>TestEnumValue2 = 3</code>
-              </section>
-              <section>
-                <h6 id="testenumvalue2-remarks">Remarks</h6>
-                <p>Here are some remarks about the enum value</p>
-              </section>
-            </section>
-            <section>
-              <h5 id="testenum-testenumvalue3-enummember">TestEnumValue3</h5>
-              <section>
-                <p>Test enum value 3 (default)</p>
-              </section>
-              <section>
-                <h6 id="testenumvalue3-signature">Signature</h6><code>TestEnumValue3 = 4</code>
-              </section>
-              <section>
-                <h6 id="testenumvalue3-remarks">Remarks</h6>
-                <p>Here are some remarks about the enum value</p>
-              </section>
-            </section>
-          </section>
-        </section>
-      </section>
-      <section>
-        <h2>Type Details</h2>
-        <section>
-          <h3 id="testmappedtype-typealias">TestMappedType</h3>
-          <section>
-            <p>Test Mapped Type, using <a href="./test-suite-a#testenum-enum">TestEnum</a></p>
-          </section>
-          <section>
-            <h4 id="testmappedtype-signature">Signature</h4><code>export type TestMappedType = {<br>[K in TestEnum]: boolean;<br>};</code>
-          </section>
-          <section>
-            <h4 id="testmappedtype-remarks">Remarks</h4>
-            <p>Here are some remarks about the mapped type</p>
-          </section>
-        </section>
-        <section>
-          <h3 id="typealias-typealias">TypeAlias</h3>
-          <section>
-            <p>Test Type-Alias</p>
-          </section>
-          <section>
-            <h4 id="typealias-signature">Signature</h4><code>export type TypeAlias = string;</code>
-          </section>
-          <section>
-            <h4 id="typealias-remarks">Remarks</h4>
-            <p>Here are some remarks about the type alias</p>
-          </section>
-        </section>
       </section>
       <section>
         <h2>Function Details</h2>
@@ -368,8 +242,8 @@
                   <tbody>
                     <tr>
                       <td>TTypeParameter</td>
-                      <td><span><a href="./test-suite-a/testinterface-interface">TestInterface</a></span></td>
-                      <td><span><a href="./test-suite-a/testinterface-interface">TestInterface</a></span></td>
+                      <td><span><a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
+                      <td><span><a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
                       <td>A test type parameter</td>
                     </tr>
                   </tbody>
@@ -379,7 +253,7 @@
           </section>
           <section>
             <h4 id="testfunction-remarks">Remarks</h4>
-            <p>This is a test <a href="./test-suite-a/testinterface-interface">link</a> to another API member</p>
+            <p>This is a test <a href="/test-suite-a/testinterface-interface">link</a> to another API member</p>
           </section>
           <section>
             <h4 id="testfunction-parameters">Parameters</h4>
@@ -429,7 +303,7 @@
           <section>
             <h4 id="testfunctionreturninginlinetype-returns">Returns</h4>
             <p>An inline type</p>
-            <p><span><b>Return type: </b></span><span>{ foo: number; bar: <a href="./test-suite-a#testenum-enum">TestEnum</a>; }</span></p>
+            <p><span><b>Return type: </b></span><span>{ foo: number; bar: <a href="/test-suite-a/testenum-enum">TestEnum</a>; }</span></p>
           </section>
         </section>
         <section>
@@ -438,7 +312,7 @@
             <p>Test function that returns an inline type</p>
           </section>
           <section>
-            <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span><br><span><p><i>This is a test deprecation notice. Here is a </i><a href="./test-suite-a#testfunctionreturninguniontype-function"><i>link</i></a><i> to something else!</i></p></span></p>
+            <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span><br><span><p><i>This is a test deprecation notice. Here is a </i><a href="/test-suite-a/#testfunctionreturninguniontype-function"><i>link</i></a><i> to something else!</i></p></span></p>
           </section>
           <section>
             <h4 id="testfunctionreturningintersectiontype-signature">Signature</h4><code>export declare function testFunctionReturningIntersectionType(): TestEmptyInterface &#x26; TestInterfaceWithTypeParameter&#x3C;number>;</code>
@@ -446,7 +320,7 @@
           <section>
             <h4 id="testfunctionreturningintersectiontype-returns">Returns</h4>
             <p>an intersection type</p>
-            <p><span><b>Return type: </b></span><span><a href="./test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="./test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></span></p>
+            <p><span><b>Return type: </b></span><span><a href="/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></span></p>
           </section>
         </section>
         <section>
@@ -460,7 +334,7 @@
           <section>
             <h4 id="testfunctionreturninguniontype-returns">Returns</h4>
             <p>A union type</p>
-            <p><span><b>Return type: </b></span><span>string | <a href="./test-suite-a/testinterface-interface">TestInterface</a></span></p>
+            <p><span><b>Return type: </b></span><span>string | <a href="/test-suite-a/testinterface-interface">TestInterface</a></span></p>
           </section>
         </section>
       </section>

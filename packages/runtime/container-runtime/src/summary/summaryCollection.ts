@@ -369,11 +369,12 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		const op = { ...opArg };
 
 		switch (op.type) {
-			case MessageType.Summarize:
+			case MessageType.Summarize: {
 				this.parseContent(op);
 				return this.handleSummaryOp(op as ISummaryOpMessage);
+			}
 			case MessageType.SummaryAck:
-			case MessageType.SummaryNack:
+			case MessageType.SummaryNack: {
 				// Old files (prior to PR #10077) may not contain this info
 				if (op.data !== undefined) {
 					op.contents = JSON.parse(op.data);
@@ -383,6 +384,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 				return op.type === MessageType.SummaryAck
 					? this.handleSummaryAck(op as ISummaryAckMessage)
 					: this.handleSummaryNack(op as ISummaryNackMessage);
+			}
 			default: {
 				// If the difference between timestamp of current op and last summary op is greater than
 				// the maxAckWaitTime, then we need to inform summarizer to not wait and summarize

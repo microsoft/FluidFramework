@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
@@ -103,7 +103,7 @@ describe("GC Telemetry Tracker", () => {
 	 * just unreferenced.
 	 */
 	function markNodesUnreferenced(nodeIds: string[]) {
-		nodeIds.forEach((nodeId) => {
+		for (const nodeId of nodeIds) {
 			unreferencedNodesState.set(
 				nodeId,
 				new UnreferencedStateTracker(
@@ -114,12 +114,12 @@ describe("GC Telemetry Tracker", () => {
 					sweepGracePeriodMs,
 				),
 			);
-		});
+		}
 	}
 
 	// Mock node loaded and changed activity for the given nodes.
 	function mockNodeChanges(nodeIds: string[]) {
-		nodeIds.forEach((id) => {
+		for (const id of nodeIds) {
 			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Loaded",
@@ -136,7 +136,7 @@ describe("GC Telemetry Tracker", () => {
 				completedGCRuns: 0,
 				isTombstoned: false,
 			});
-		});
+		}
 	}
 
 	// Mock node revived activity for the given nodes.

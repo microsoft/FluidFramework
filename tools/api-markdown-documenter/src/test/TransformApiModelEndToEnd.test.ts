@@ -18,7 +18,7 @@ const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel
 	[
 		"default-config",
 		{
-			uriRoot: ".",
+			uriRoot: "",
 		},
 	],
 

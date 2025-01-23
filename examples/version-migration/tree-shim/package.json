@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/tree-shim",
-	"version": "2.20.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Migrating from legacy SharedTree to new SharedTree using a tree shim.",
 	"homepage": "https://fluidframework.com",
@@ -32,8 +32,8 @@
 		"start:test": "webpack serve --config webpack.test.cjs",
 		"start:tinylicious": "start-server-and-test tinylicious 7070 start",
 		"test": "npm run test:jest",
-		"test:jest": "jest",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
+		"test:jest": "jest --ci",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

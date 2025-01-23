@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.20.0",
+	"version": "2.21.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -99,7 +99,7 @@
 		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
 		"test:jest": "assign-test-ports && pnpm puppeteer browsers install chrome-headless-shell && pnpm -r --no-sort --stream --no-bail test:jest --color",
 		"test:jest:bail": "assign-test-ports && pnpm puppeteer browsers install chrome-headless-shell && pnpm -r --no-sort --stream test:jest",
-		"test:jest:report": "assign-test-ports && pnpm puppeteer browsers install chrome-headless-shell && pnpm -r --no-sort --stream --no-bail --workspace-concurrency=4 test:jest --ci",
+		"test:jest:report": "assign-test-ports && pnpm puppeteer browsers install chrome-headless-shell && pnpm -r --no-sort --stream --no-bail --workspace-concurrency=4 test:jest",
 		"test:memory-profiling:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/memoryProfilingOutput/**\" memoryProfilingOutput",
 		"test:memory-profiling:report": "pnpm run -r --no-sort --stream --no-bail test:memory-profiling:report -- --reporterOptions reportDir=./memoryProfilingOutput",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",

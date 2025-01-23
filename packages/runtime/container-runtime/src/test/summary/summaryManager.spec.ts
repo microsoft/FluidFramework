@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
@@ -129,7 +129,7 @@ describe("Summary Manager", () => {
 
 	class TestSummarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 		private notImplemented(): never {
-			throw Error("not implemented");
+			throw new Error("not implemented");
 		}
 		public onBehalfOf: string | undefined;
 		public state: "notStarted" | "running" | "stopped" = "notStarted";

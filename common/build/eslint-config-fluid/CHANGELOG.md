@@ -1,5 +1,9 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.7.2](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.2)
+
+Disabled the [unicorn/no-array-push-push](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/main/docs/rules/no-array-push-push.md) rule, which reports false positives for methods named "push" on non-array objects.
+
 ## [5.6.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.6.0)
 
 ### New config for use with Biome linter

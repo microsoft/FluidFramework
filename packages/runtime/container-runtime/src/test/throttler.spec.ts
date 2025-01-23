@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import sinon from "sinon";
 
@@ -72,12 +72,13 @@ describe("Throttler", () => {
 			});
 
 			it("Should increase as expected with instant failures", () => {
-				for (const expectedDelay of expectedDelays.concat([
+				for (const expectedDelay of [
+					...expectedDelays,
 					maxDelayMs,
 					maxDelayMs,
 					maxDelayMs,
 					maxDelayMs,
-				])) {
+				]) {
 					assert.strictEqual(getDelayAndTick(), expectedDelay);
 				}
 			});

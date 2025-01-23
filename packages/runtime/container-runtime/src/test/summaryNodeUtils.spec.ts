@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 // eslint-disable-next-line import/no-internal-modules
 import { EscapedPath } from "../summary/summarizerNode/summarizerNodeUtils.js";

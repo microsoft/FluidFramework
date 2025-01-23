@@ -414,7 +414,7 @@ export const DefaultSummaryConfiguration: ISummaryConfiguration = {
 
 	nonRuntimeOpWeight: 0.1,
 
-	runtimeOpWeight: 1.0,
+	runtimeOpWeight: 1,
 
 	nonRuntimeHeuristicThreshold: 20,
 };
@@ -611,7 +611,7 @@ export enum CompressionAlgorithms {
  * @alpha
  */
 export const disabledCompressionConfig: ICompressionRuntimeOptions = {
-	minimumBatchSizeInBytes: Infinity,
+	minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
 	compressionAlgorithm: CompressionAlgorithms.lz4,
 };
 
@@ -1036,15 +1036,18 @@ export class ContainerRuntime
 
 		let desiredIdCompressorMode: IdCompressorMode;
 		switch (mc.config.getBoolean("Fluid.ContainerRuntime.IdCompressorEnabled")) {
-			case true:
+			case true: {
 				desiredIdCompressorMode = "on";
 				break;
-			case false:
+			}
+			case false: {
 				desiredIdCompressorMode = undefined;
 				break;
-			default:
+			}
+			default: {
 				desiredIdCompressorMode = enableRuntimeIdCompressor;
 				break;
+			}
 		}
 
 		// Enabling the IdCompressor is a one-way operation and we only want to
@@ -1120,7 +1123,7 @@ export class ContainerRuntime
 		};
 
 		const compressionLz4 =
-			compressionOptions.minimumBatchSizeInBytes !== Infinity &&
+			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
 		const documentSchemaController = new DocumentsSchemaController(
@@ -1634,9 +1637,12 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
+		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getClientId = () => context.clientId;
+		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
+			// eslint-disable-next-line unicorn/consistent-destructuring
 			if (context.getAbsoluteUrl === undefined) {
 				throw new Error("Driver does not implement getAbsoluteUrl");
 			}
@@ -1795,6 +1801,7 @@ export class ContainerRuntime
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
 
+		// eslint-disable-next-line unicorn/consistent-destructuring
 		if (context.attachState === AttachState.Attached) {
 			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 			if (
@@ -2094,17 +2101,17 @@ export class ContainerRuntime
 					},
 				);
 				// Forward events from SummaryManager
-				[
+				for (const eventName of [
 					"summarize",
 					"summarizeAllAttemptsFailed",
 					"summarizerStop",
 					"summarizerStart",
 					"summarizerStartupFailed",
-				].forEach((eventName) => {
+				]) {
 					this.summaryManager?.on(eventName, (...args: any[]) => {
 						this.emit(eventName, ...args);
 					});
-				});
+				}
 
 				this.summaryManager.start();
 			}
@@ -2639,9 +2646,10 @@ export class ContainerRuntime
 		switch (opContents.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
+			case ContainerMessageType.Alias: {
 				return this.channelCollection.applyStashedOp(opContents);
-			case ContainerMessageType.IdAllocation:
+			}
+			case ContainerMessageType.IdAllocation: {
 				// IDs allocation ops in stashed state are ignored because the tip state of the compressor
 				// is serialized into the pending state. This is done because generation of new IDs during
 				// stashed op application (or, later, resubmit) must generate new IDs and if the compressor
@@ -2656,15 +2664,20 @@ export class ContainerRuntime
 					0x8f1 /* ID compressor should be in use */,
 				);
 				return;
-			case ContainerMessageType.DocumentSchemaChange:
+			}
+			case ContainerMessageType.DocumentSchemaChange: {
 				return;
-			case ContainerMessageType.BlobAttach:
+			}
+			case ContainerMessageType.BlobAttach: {
 				return;
-			case ContainerMessageType.Rejoin:
+			}
+			case ContainerMessageType.Rejoin: {
 				throw new Error("rejoin not expected here");
-			case ContainerMessageType.GC:
+			}
+			case ContainerMessageType.GC: {
 				// GC op is only sent in summarizer which should never have stashed ops.
 				throw new LoggingError("GC op not expected to be stashed in summarizer");
+			}
 			default: {
 				const error = getUnknownMessageTypeError(
 					opContents.type,
@@ -2987,11 +3000,11 @@ export class ContainerRuntime
 		let error: unknown;
 		try {
 			if (!runtimeBatch) {
-				messagesWithMetadata.forEach(({ message }) => {
+				for (const { message } of messagesWithMetadata) {
 					this.ensureNoDataModelChanges(() => {
 						this.observeNonRuntimeMessage(message);
 					});
-				});
+				}
 				return;
 			}
 
@@ -3076,8 +3089,8 @@ export class ContainerRuntime
 			for (const { message } of messagesWithMetadata) {
 				this.emit("op", message, true /* runtimeMessage */);
 			}
-		} catch (e) {
-			error = e;
+		} catch (error_) {
+			error = error_;
 			throw error;
 		} finally {
 			if (locationInBatch.batchEnd) {
@@ -3148,38 +3161,45 @@ export class ContainerRuntime
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
+			case ContainerMessageType.Alias: {
 				// Remove the metadata from the message before sending it to the channel collection. The metadata
 				// is added by the container runtime and is not part of the message that the channel collection and
 				// layers below it expect.
 				this.channelCollection.processMessages({ envelope: message, messagesContent, local });
 				break;
-			case ContainerMessageType.BlobAttach:
+			}
+			case ContainerMessageType.BlobAttach: {
 				this.blobManager.processBlobAttachMessage(message, local);
 				break;
-			case ContainerMessageType.IdAllocation:
+			}
+			case ContainerMessageType.IdAllocation: {
 				this.processIdCompressorMessages(contents as IdCreationRange[], savedOp);
 				break;
-			case ContainerMessageType.GC:
+			}
+			case ContainerMessageType.GC: {
 				this.garbageCollector.processMessages(
 					contents as GarbageCollectionMessage[],
 					message.timestamp,
 					local,
 				);
 				break;
-			case ContainerMessageType.ChunkedOp:
+			}
+			case ContainerMessageType.ChunkedOp: {
 				// From observability POV, we should not expose the rest of the system (including "op" events on object) to these messages.
 				// Also resetReconnectCount() would be wrong - see comment that was there before this change was made.
 				assert(false, 0x93d /* should not even get here */);
-			case ContainerMessageType.Rejoin:
+			}
+			case ContainerMessageType.Rejoin: {
 				break;
-			case ContainerMessageType.DocumentSchemaChange:
+			}
+			case ContainerMessageType.DocumentSchemaChange: {
 				this.documentsSchemaController.processDocumentSchemaMessages(
 					contents as IDocumentSchemaChangeMessage[],
 					local,
 					message.sequenceNumber,
 				);
 				break;
+			}
 			default: {
 				const error = getUnknownMessageTypeError(
 					message.type,
@@ -3246,7 +3266,11 @@ export class ContainerRuntime
 	 * Updates signal telemetry including emitting telemetry events.
 	 */
 	private processSignalForTelemetry(envelope: ISignalEnvelope): void {
-		const { clientBroadcastSignalSequenceNumber } = envelope;
+		const {
+			clientBroadcastSignalSequenceNumber,
+			contents: envelopeContents,
+			address: envelopeAddress,
+		} = envelope;
 		if (clientBroadcastSignalSequenceNumber === undefined) {
 			return;
 		}
@@ -3291,8 +3315,8 @@ export class ContainerRuntime
 			};
 			// Only log `contents.type` when address is for container to avoid
 			// chance that contents type is customer data.
-			if (envelope.address === undefined) {
-				details.contentsType = envelope.contents.type; // Type of signal that was received out of order.
+			if (envelopeAddress === undefined) {
+				details.contentsType = envelopeContents.type; // Type of signal that was received out of order.
 			}
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "SignalOutOfOrder",
@@ -3388,8 +3412,8 @@ export class ContainerRuntime
 					checkpoint.rollback((message: BatchMessage) =>
 						this.rollback(message.contents, message.localOpMetadata),
 					);
-				} catch (err) {
-					const error2 = wrapError(err, (message) => {
+				} catch (error_) {
+					const error2 = wrapError(error_, (message) => {
 						return DataProcessingError.create(
 							`RollbackError: ${message}`,
 							"checkpointRollback",
@@ -3549,8 +3573,9 @@ export class ContainerRuntime
 			case ContainerMessageType.GC: {
 				return false;
 			}
-			default:
+			default: {
 				break;
+			}
 		}
 		return true;
 	}
@@ -3834,8 +3859,10 @@ export class ContainerRuntime
 		const { dataStoreRoutes, blobManagerRoutes } =
 			this.getDataStoreAndBlobManagerRoutes(sweepReadyRoutes);
 
-		const deletedRoutes = this.channelCollection.deleteSweepReadyNodes(dataStoreRoutes);
-		return deletedRoutes.concat(this.blobManager.deleteSweepReadyNodes(blobManagerRoutes));
+		return [
+			...this.channelCollection.deleteSweepReadyNodes(dataStoreRoutes),
+			...this.blobManager.deleteSweepReadyNodes(blobManagerRoutes),
+		];
 	}
 
 	/**
@@ -3883,13 +3910,16 @@ export class ContainerRuntime
 		}
 
 		switch (this.getNodeType(nodePath)) {
-			case GCNodeType.Blob:
+			case GCNodeType.Blob: {
 				return [blobManagerBasePath];
+			}
 			case GCNodeType.DataStore:
-			case GCNodeType.SubDataStore:
+			case GCNodeType.SubDataStore: {
 				return this.channelCollection.getDataStorePackagePath(nodePath);
-			default:
+			}
+			default: {
 				assert(false, 0x2de /* "Package path requested for unsupported node type." */);
+			}
 		}
 	}
 
@@ -3979,6 +4009,7 @@ export class ContainerRuntime
 	 */
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
+			cancellationToken,
 			fullTree = false,
 			finalAttempt = false,
 			summaryLogger,
@@ -4098,7 +4129,7 @@ export class ContainerRuntime
 					eventName: "LatestSummaryRefSeqNumMismatch",
 					details: {
 						...startSummaryResult,
-						mismatchNumbers: Array.from(startSummaryResult.mismatchNumbers),
+						mismatchNumbers: [...startSummaryResult.mismatchNumbers],
 					},
 				});
 
@@ -4122,7 +4153,7 @@ export class ContainerRuntime
 				// summarizer to reconnect in the future.
 				// Also checking for cancellation is a must as summary process may be abandoned for other reasons,
 				// like loss of connectivity for main (interactive) client.
-				if (options.cancellationToken.cancelled) {
+				if (cancellationToken.cancelled) {
 					return { continue: false, error: "disconnected" };
 				}
 				// That said, we rely on submitSystemMessage() that today only works in connected state.
@@ -4263,10 +4294,7 @@ export class ContainerRuntime
 
 			let handle: string;
 			try {
-				handle = await this.storage.uploadSummaryWithContext(
-					summarizeResult.summary,
-					summaryContext,
-				);
+				handle = await this.storage.uploadSummaryWithContext(summaryTree, summaryContext);
 			} catch (error) {
 				return {
 					stage: "generate",
@@ -4584,27 +4612,30 @@ export class ContainerRuntime
 		};
 
 		switch (this.flushMode) {
-			case FlushMode.TurnBased:
+			case FlushMode.TurnBased: {
 				// When in TurnBased flush mode the runtime will buffer operations in the current turn and send them as a single
 				// batch at the end of the turn
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				Promise.resolve().then(flush);
 				break;
+			}
 
 			// FlushModeExperimental is experimental and not exposed directly in the runtime APIs
-			case FlushModeExperimental.Async as unknown as FlushMode:
+			case FlushModeExperimental.Async as unknown as FlushMode: {
 				// When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
 				// batch when all micro-tasks are complete.
 				// Compared to TurnBased, this flush mode will capture more ops into the same batch.
 				setTimeout(flush, 0);
 				break;
+			}
 
-			default:
+			default: {
 				assert(
 					this._orderSequentiallyCalls > 0,
 					0x587 /* Unreachable unless running under orderSequentially */,
 				);
 				break;
+			}
 		}
 	}
 
@@ -4680,11 +4711,12 @@ export class ContainerRuntime
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp:
 			case ContainerMessageType.Attach:
-			case ContainerMessageType.Alias:
+			case ContainerMessageType.Alias: {
 				// For Operations, call resubmitDataStoreOp which will find the right store
 				// and trigger resubmission on it.
 				this.channelCollection.reSubmit(message.type, message.contents, localOpMetadata);
 				break;
+			}
 			case ContainerMessageType.IdAllocation: {
 				// Allocation ops are never resubmitted/rebased. This is because they require special handling to
 				// avoid being submitted out of order. For example, if the pending state manager contained
@@ -4695,20 +4727,24 @@ export class ContainerRuntime
 				// all pending IDs. The resubmitted allocation ops are then ignored here.
 				break;
 			}
-			case ContainerMessageType.BlobAttach:
+			case ContainerMessageType.BlobAttach: {
 				this.blobManager.reSubmit(opMetadata);
 				break;
-			case ContainerMessageType.Rejoin:
+			}
+			case ContainerMessageType.Rejoin: {
 				this.submit(message);
 				break;
-			case ContainerMessageType.GC:
+			}
+			case ContainerMessageType.GC: {
 				this.submit(message);
 				break;
-			case ContainerMessageType.DocumentSchemaChange:
+			}
+			case ContainerMessageType.DocumentSchemaChange: {
 				// There is no need to resend this message. Document schema controller will properly resend it again (if needed)
 				// on a first occasion (any ops sent after reconnect). There is a good chance, though, that it will not want to
 				// send any ops, as some other client already changed schema.
 				break;
+			}
 			default: {
 				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
 				this.closeFn(error);
@@ -4721,13 +4757,15 @@ export class ContainerRuntime
 		// Need to parse from string for back-compat
 		const { type, contents } = this.parseLocalOpContent(content);
 		switch (type) {
-			case ContainerMessageType.FluidDataStoreOp:
+			case ContainerMessageType.FluidDataStoreOp: {
 				// For operations, call rollbackDataStoreOp which will find the right store
 				// and trigger rollback on it.
 				this.channelCollection.rollback(type, contents, localOpMetadata);
 				break;
-			default:
+			}
+			default: {
 				throw new Error(`Can't rollback ${type}`);
+			}
 		}
 	}
 
@@ -4840,6 +4878,7 @@ export class ContainerRuntime
 					snapshotTree = snapshot.snapshotTree;
 				} else {
 					const versions = await this.storage.getVersions(
+						// eslint-disable-next-line unicorn/no-null
 						null,
 						1,
 						scenarioName,

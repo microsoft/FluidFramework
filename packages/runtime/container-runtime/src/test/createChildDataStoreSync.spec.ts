@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
@@ -119,10 +119,10 @@ describe("createChildDataStore", () => {
 		try {
 			context.createChildDataStore(factory);
 			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e));
-			assert(e.errorType === FluidErrorTypes.usageError);
-			assert(e.getTelemetryProperties().noCreateDataStore === true);
+		} catch (error) {
+			assert(isFluidError(error));
+			assert(error.errorType === FluidErrorTypes.usageError);
+			assert(error.getTelemetryProperties().noCreateDataStore === true);
 		}
 	});
 
@@ -132,10 +132,10 @@ describe("createChildDataStore", () => {
 		try {
 			context.createChildDataStore(factory);
 			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e));
-			assert(e.errorType === FluidErrorTypes.usageError);
-			assert(e.getTelemetryProperties().isUndefined === true);
+		} catch (error) {
+			assert(isFluidError(error));
+			assert(error.errorType === FluidErrorTypes.usageError);
+			assert(error.getTelemetryProperties().isUndefined === true);
 		}
 	});
 
@@ -146,10 +146,10 @@ describe("createChildDataStore", () => {
 		try {
 			context.createChildDataStore(factory);
 			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e));
-			assert(e.errorType === FluidErrorTypes.usageError);
-			assert(e.getTelemetryProperties().diffInstance === true);
+		} catch (error) {
+			assert(isFluidError(error));
+			assert(error.errorType === FluidErrorTypes.usageError);
+			assert(error.getTelemetryProperties().diffInstance === true);
 		}
 	});
 

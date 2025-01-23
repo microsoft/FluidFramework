@@ -22,10 +22,10 @@ export const createTestConfigProvider = (): {
 			settings[key] = value;
 		},
 		clear: () => {
-			Object.keys(settings).forEach((key) => {
+			for (const key of Object.keys(settings)) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete settings[key];
-			});
+			}
 		},
 	};
 };

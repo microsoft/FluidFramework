@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
@@ -97,7 +97,7 @@ describe("Runtime", () => {
 			): void {
 				try {
 					fn();
-					throw Error(`${failMsg}: Expected to fail`);
+					throw new Error(`${failMsg}: Expected to fail`);
 				} catch (error: unknown) {
 					assert(
 						expectedErrors.some((e) => e === (error as ILoggingError).message),
@@ -114,7 +114,7 @@ describe("Runtime", () => {
 			): Promise<void> {
 				try {
 					await fn();
-					throw Error(`${failMsg}: Expected to reject`);
+					throw new Error(`${failMsg}: Expected to reject`);
 				} catch (error: unknown) {
 					assert(
 						expectedErrors.some((e) => e === (error as ILoggingError).message),

@@ -5,9 +5,9 @@
 
 /* eslint-disable import/no-nodejs-modules */
 
-import { strict as assert } from "assert";
-import { mkdirSync, readFileSync } from "fs";
-import path from "path";
+import { strict as assert } from "node:assert";
+import { mkdirSync, readFileSync } from "node:fs";
+import path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {

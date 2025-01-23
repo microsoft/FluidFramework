@@ -165,7 +165,9 @@ export class RemoteMessageProcessor {
 			// We should be awaiting a new batch (batchInProgress false)
 			assert(!this.batchInProgress, 0x9d3 /* Grouped batch interrupting another batch */);
 			const batchId = asBatchMetadata(message.metadata)?.batchId;
-			const groupedMessages = this.opGroupingManager.ungroupOp(message).map(unpack);
+			const groupedMessages = this.opGroupingManager
+				.ungroupOp(message)
+				.map((innerMessage) => unpack(innerMessage));
 
 			return {
 				type: "fullBatch",

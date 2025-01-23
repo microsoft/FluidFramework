@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/collaborative-textarea",
-	"version": "2.20.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "A minimal example using the react collaborative-textarea",
 	"homepage": "https://fluidframework.com",
@@ -39,8 +39,8 @@
 		"start": "webpack serve --config webpack.config.cjs",
 		"start:test": "webpack serve --config webpack.test.cjs",
 		"test": "npm run test:jest",
-		"test:jest": "jest",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
+		"test:jest": "jest --ci",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

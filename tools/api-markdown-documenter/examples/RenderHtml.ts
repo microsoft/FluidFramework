@@ -15,6 +15,5 @@ const apiModel = await loadModel({
 
 await HtmlRenderer.renderApiModel({
 	apiModel,
-	uriRoot: ".",
 	outputDirectoryPath,
 });

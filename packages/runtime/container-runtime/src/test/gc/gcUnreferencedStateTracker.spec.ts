@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SinonFakeTimers, SinonSpy, spy, useFakeTimers } from "sinon";
 
@@ -84,7 +84,10 @@ describe("Garbage Collection Tests", () => {
 				start.sweepGracePeriodMs ?? 10 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, start.state, `Wrong starting state`);
-			steps.forEach(({ time: advanceClockTo, updateWith, state: expectedState }, index) => {
+			for (const [
+				index,
+				{ time: advanceClockTo, updateWith, state: expectedState },
+			] of steps.entries()) {
 				assert(
 					advanceClockTo > clock.now,
 					"INVALID TEST CASE: steps must move forward in time, following start",
@@ -96,7 +99,7 @@ describe("Garbage Collection Tests", () => {
 				}
 
 				assert.equal(tracker.state, expectedState, `Wrong state at step ${index + 1}`); // 0-indexed including start
-			});
+			}
 		}
 
 		/**
@@ -202,11 +205,11 @@ describe("Garbage Collection Tests", () => {
 			},
 		];
 
-		testCases.forEach((testCase) => {
+		for (const testCase of testCases) {
 			it(testCase.name, () => {
 				runTestCase(testCase.steps);
 			});
-		});
+		}
 
 		it("Non-zero unreferencedTimestampMs properly offsets", () => {
 			tracker = new UnreferencedStateTracker(
