@@ -621,7 +621,7 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
 
 // @alpha
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLoggerExt);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryBaseLogger);
     // (undocumented)
     addOpListener(listener: () => void): void;
     createWatcher(clientId: string): IClientSummaryWatcher;
