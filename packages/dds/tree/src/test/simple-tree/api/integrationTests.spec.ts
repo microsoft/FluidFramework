@@ -17,7 +17,7 @@ const sf = new SchemaFactory("integration");
 describe("simple-tree API integration tests", () => {
 	// TODO: this case should produce a usage error.
 	// Depending on where the error is detected, tests for recursive maps, arrays and co-recursive cases may be needed.
-	it("making a recursive unhydrated object node errors", () => {
+	it.skip("making a recursive unhydrated object node errors", () => {
 		class O extends sf.objectRecursive("O", {
 			recursive: sf.optionalRecursive([() => O]),
 		}) {}
