@@ -49,7 +49,8 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		/**
 		 * A states workspace that the MouseTracker will use to share mouse positions with other session clients.
 		 */
-		readonly statesWorkspace: PresenceStates<any>,
+		// eslint-disable-next-line @typescript-eslint/ban-types -- empty object is the correct typing
+		readonly statesWorkspace: PresenceStates<{}>,
 	) {
 		super();
 
