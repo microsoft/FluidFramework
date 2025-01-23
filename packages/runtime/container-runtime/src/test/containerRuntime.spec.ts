@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
@@ -377,7 +377,7 @@ describe("Runtime", () => {
 				assert.strictEqual(containerRuntime.isDirty, false);
 			});
 
-			[true, undefined].forEach((enableOfflineLoad) =>
+			for (const enableOfflineLoad of [true, undefined])
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
@@ -436,16 +436,15 @@ describe("Runtime", () => {
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
 					}
-				}),
-			);
+				});
 		});
 
-		describe("orderSequentially", () =>
-			[
+		describe("orderSequentially", () => {
+			for (const flushMode of [
 				FlushMode.TurnBased,
 				FlushMode.Immediate,
 				FlushModeExperimental.Async as unknown as FlushMode,
-			].forEach((flushMode: FlushMode) => {
+			]) {
 				const fakeClientId = "fakeClientId";
 
 				describe(`orderSequentially with flush mode: ${
@@ -570,7 +569,7 @@ describe("Runtime", () => {
 									// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 									(containerRuntime as any).flush();
 								});
-							} catch (e) {
+							} catch {
 								// ignore
 							}
 						});
@@ -687,14 +686,15 @@ describe("Runtime", () => {
 						);
 					});
 				});
-			}));
+			}
+		});
 
-		describe("orderSequentially with rollback", () =>
-			[
+		describe("orderSequentially with rollback", () => {
+			for (const flushMode of [
 				FlushMode.TurnBased,
 				FlushMode.Immediate,
 				FlushModeExperimental.Async as unknown as FlushMode,
-			].forEach((flushMode: FlushMode) => {
+			]) {
 				describe(`orderSequentially with flush mode: ${
 					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
 				}`, () => {
@@ -755,7 +755,8 @@ describe("Runtime", () => {
 						assert.strictEqual(containerErrors.length, 0);
 					});
 				});
-			}));
+			}
+		});
 
 		describe("Dirty flag", () => {
 			const sandbox = createSandbox();
@@ -1543,14 +1544,14 @@ describe("Runtime", () => {
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 			};
 
-			[
+			for (const features of [
 				undefined,
 				new Map([["referenceSequenceNumbers", false]]),
 				new Map([
 					["other", true],
 					["feature", true],
 				]),
-			].forEach((features) => {
+			]) {
 				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
 					const runtime = await ContainerRuntime.loadRuntime({
 						context: localGetMockContext(features) as IContainerContext,
@@ -1568,7 +1569,7 @@ describe("Runtime", () => {
 						},
 					]);
 				});
-			});
+			}
 
 			it("Loader supported for async FlushMode", async () => {
 				const runtime = await ContainerRuntime.loadRuntime({
@@ -1899,12 +1900,15 @@ describe("Runtime", () => {
 					{
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
-								case "getLocalState":
+								case "getLocalState": {
 									return () => undefined;
-								case "pendingMessagesCount":
+								}
+								case "pendingMessagesCount": {
 									return 0;
-								default:
+								}
+								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
+								}
 							}
 						},
 					},
@@ -1941,14 +1945,17 @@ describe("Runtime", () => {
 					{
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
-								case "getLocalState":
+								case "getLocalState": {
 									return (): IPendingLocalState => ({
 										pendingStates,
 									});
-								case "pendingMessagesCount":
+								}
+								case "pendingMessagesCount": {
 									return 5;
-								default:
+								}
+								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
+								}
 							}
 						},
 					},
@@ -1986,14 +1993,17 @@ describe("Runtime", () => {
 					{
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
-								case "getLocalState":
+								case "getLocalState": {
 									return (): IPendingLocalState => ({
 										pendingStates,
 									});
-								case "pendingMessagesCount":
+								}
+								case "pendingMessagesCount": {
 									return 5;
-								default:
+								}
+								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
+								}
 							}
 						},
 					},
@@ -2057,14 +2067,17 @@ describe("Runtime", () => {
 					{
 						get: (_t, p: keyof PendingStateManager, _r) => {
 							switch (p) {
-								case "getLocalState":
+								case "getLocalState": {
 									return (): IPendingLocalState => ({
 										pendingStates,
 									});
-								case "pendingMessagesCount":
+								}
+								case "pendingMessagesCount": {
 									return 5;
-								default:
+								}
+								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
+								}
 							}
 						},
 					},
@@ -2082,7 +2095,7 @@ describe("Runtime", () => {
 		});
 
 		describe("Duplicate Batch Detection", () => {
-			[undefined, true].forEach((enableOfflineLoad) => {
+			for (const enableOfflineLoad of [undefined, true]) {
 				it(`DuplicateBatchDetector enablement matches Offline load (${enableOfflineLoad ? "ENABLED" : "DISABLED"})`, async () => {
 					const containerRuntime = await ContainerRuntime.loadRuntime({
 						context: getMockContext({
@@ -2128,7 +2141,7 @@ describe("Runtime", () => {
 						"Expected duplicate batch detection to match Offline Load enablement",
 					);
 				});
-			});
+			}
 
 			it("Can roundrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection requires OfflineLoad enabled
@@ -2280,6 +2293,7 @@ describe("Runtime", () => {
 					{
 						clientId: "X",
 						clientSequenceNumber: -1,
+						// eslint-disable-next-line unicorn/no-null
 						contents: null,
 						minimumSequenceNumber: 0,
 						referenceSequenceNumber: -1,
@@ -2290,6 +2304,7 @@ describe("Runtime", () => {
 					{
 						clientId: "Y",
 						clientSequenceNumber: -1,
+						// eslint-disable-next-line unicorn/no-null
 						contents: null,
 						minimumSequenceNumber: 0,
 						referenceSequenceNumber: -1,
@@ -2480,6 +2495,7 @@ describe("Runtime", () => {
 					url: "/missingDataStore",
 				});
 				// Mock Datastore runtime will return null when requested for "/".
+				// eslint-disable-next-line unicorn/no-null
 				assert.strictEqual(datastore1, null, "resolveHandle should work fine");
 
 				// Now try to get snapshot for missing data store again from container runtime. It should be returned
@@ -2542,6 +2558,7 @@ describe("Runtime", () => {
 					url: "/missingDataStore",
 				});
 				// Mock Datastore runtime will return null when requested for "/".
+				// eslint-disable-next-line unicorn/no-null
 				assert.strictEqual(missingDataStore, null, "resolveHandle should work fine");
 			});
 
@@ -2588,7 +2605,7 @@ describe("Runtime", () => {
 					{ sequenceNumber: 3 },
 					{ sequenceNumber: 4 },
 				] as unknown as ISequencedMessageEnvelope[];
-				envelopes.forEach((envelope) => {
+				for (const envelope of envelopes) {
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
 					missingDataStoreContext.processMessages({
 						envelope,
@@ -2597,7 +2614,7 @@ describe("Runtime", () => {
 						],
 						local: false,
 					});
-				});
+				}
 
 				// Set it to seq number of partial fetched snapshot so that it is returned successfully by container runtime.
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
