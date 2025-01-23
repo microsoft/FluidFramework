@@ -21,7 +21,9 @@ import {
 import { RuntimeHeaderData } from "../containerRuntime.js";
 import { ContainerRuntimeGCMessage } from "../messageTypes.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	ICreateContainerMetadata,
 	IRefreshSummaryResult,
 } from "../summary/index.js";
@@ -494,7 +496,9 @@ export interface IGarbageCollectorCreateParams {
 	readonly gcOptions: IGCRuntimeOptions;
 	readonly baseLogger: ITelemetryLoggerExt;
 	readonly existing: boolean;
+	// eslint-disable-next-line import/no-deprecated
 	readonly metadata: IContainerRuntimeMetadata | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	readonly createContainerMetadata: ICreateContainerMetadata;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly isSummarizerClient: boolean;

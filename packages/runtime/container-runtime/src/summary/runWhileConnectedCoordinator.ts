@@ -6,12 +6,14 @@
 import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { IConnectableRuntime, ISummaryCancellationToken } from "./summarizerTypes.js";
 
 /**
  * Similar to AbortController, but using promise instead of events
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
 	stop(reason: SummarizerStopReason): void;
 }
@@ -21,6 +23,7 @@ export interface ICancellableSummarizerController extends ISummaryCancellationTo
  * This object implements ISummaryCancellationToken interface but cancellation is never leveraged.
  * @internal
  */
+// eslint-disable-next-line import/no-deprecated
 export const neverCancelledSummaryToken: ISummaryCancellationToken = {
 	cancelled: false,
 	waitCancelled: new Promise(() => {}),
@@ -63,6 +66,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 	}
 
 	public static async create(
+		// eslint-disable-next-line import/no-deprecated
 		runtime: IConnectableRuntime,
 		active: () => boolean,
 	): Promise<RunWhileConnectedCoordinator> {
@@ -72,6 +76,7 @@ export class RunWhileConnectedCoordinator implements ICancellableSummarizerContr
 	}
 
 	protected constructor(
+		// eslint-disable-next-line import/no-deprecated
 		private readonly runtime: IConnectableRuntime,
 		private readonly active: () => boolean,
 	) {}

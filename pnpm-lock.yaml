@@ -307,7 +307,7 @@ importers:
         version: 0.0.1
       next:
         specifier: ^14.2.8
-        version: 14.2.20(@babel/core@7.26.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0)
+        version: 14.2.20(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0)
       notistack:
         specifier: ^3.0.1
         version: 3.0.1(csstype@3.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -7327,9 +7327,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-plugin-deprecation:
-        specifier: ~2.0.0
-        version: 2.0.0(eslint@8.55.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -12560,9 +12557,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      eslint-plugin-deprecation:
-        specifier: ~2.0.0
-        version: 2.0.0(eslint@8.55.0)(typescript@5.4.5)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -12940,7 +12934,7 @@ importers:
         version: link:../../azure-client
       '@fluidframework/azure-client-legacy':
         specifier: npm:@fluidframework/azure-client@^1.2.0
-        version: '@fluidframework/azure-client@1.2.0(encoding@0.1.13)(fluid-framework@packages+framework+fluid-framework)'
+        version: '@fluidframework/azure-client@1.2.0(encoding@0.1.13)(fluid-framework@1.4.0)'
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -12992,6 +12986,9 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      fluid-framework:
+        specifier: ^1.4.0
+        version: 1.4.0
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
@@ -15525,6 +15522,9 @@ importers:
       recharts:
         specifier: ^2.7.2
         version: 2.14.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      scheduler:
+        specifier: ^0.20.0
+        version: 0.20.2
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -17703,6 +17703,9 @@ packages:
   '@fluidframework/matrix@2.13.0':
     resolution: {integrity: sha512-2n3ewjzXFD8jcrQFrM3y9tEnv/H1LVO9EhEoN7D8sNwZNxE+3nNTRf1pOxdrrkrcmPUHYoq9CT4feMF72vqy0Q==}
 
+  '@fluidframework/merge-tree@1.4.0':
+    resolution: {integrity: sha512-UJq7AfD52bp8ecoJLxArGI8506hTFjkNYLU2TXj08Fn8pi6MYN8WBMrCgAGJ47P7ytP1YfXOOWLzeT2ODuYJYw==}
+
   '@fluidframework/merge-tree@2.13.0':
     resolution: {integrity: sha512-MzGR0hXebEVpFG64hL0h40ua7V8ZTpTbDmNzDqhXlKHW/c5RAcxr6v3jdMNs9S7SQwTVmBMyf+jLDtoPMKJnBg==}
 
@@ -17768,6 +17771,9 @@ packages:
 
   '@fluidframework/runtime-utils@2.13.0':
     resolution: {integrity: sha512-8e0EeWINuNfy1NwVlwymggIowtO2i6funhyko7ByY9QAJ3q4eHt5f3mTSGXWdH+YB0GrSFHN+hfapXaLOHFRGg==}
+
+  '@fluidframework/sequence@1.4.0':
+    resolution: {integrity: sha512-KV/BNdALIgKhlivGv7U4NRCRrDWLIgWEVB2Q/oSNdKF5kUgoQnl+iIQLQcpC8dGAB7YQyCHFZVi4glanyEPF5Q==}
 
   '@fluidframework/sequence@2.13.0':
     resolution: {integrity: sha512-mV/IYX7mhZUfOdpiTDe3hDn5Ln4z8ort1qSjt5s/GCxyeCHS1NaMZDnygHrdiocUoaVi1cYZl1h7wdl3jduLsw==}
@@ -19755,12 +19761,6 @@ packages:
     engines: {node: ^12.22.0 || ^14.17.0 || >=16.0.0}
     peerDependencies:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
-
-  '@typescript-eslint/utils@6.21.0':
-    resolution: {integrity: sha512-NfWVaC8HP9T8cbKQxHcsJBY5YE1O33+jpMwN45qzWWaPDZgLIbo12toGMWnmhvCpd3sIxkpDw3Wv1B3dYrbDQQ==}
-    engines: {node: ^16.0.0 || >=18.0.0}
-    peerDependencies:
-      eslint: ^7.0.0 || ^8.0.0
 
   '@typescript-eslint/utils@6.7.5':
     resolution: {integrity: sha512-pfRRrH20thJbzPPlPc4j0UNGvH1PjPlhlCMq4Yx7EGjV7lvEeGX0U6MJYe8+SyFutWgSHsdbJ3BXzZccYggezA==}
@@ -21767,12 +21767,6 @@ packages:
     peerDependencies:
       eslint: '>=2.0.0 <= 8.x'
 
-  eslint-plugin-deprecation@2.0.0:
-    resolution: {integrity: sha512-OAm9Ohzbj11/ZFyICyR5N6LbOIvQMp7ZU2zI7Ej0jIc8kiGUERXPNMfw2QqqHD1ZHtjMub3yPZILovYEYucgoQ==}
-    peerDependencies:
-      eslint: ^7.0.0 || ^8.0.0
-      typescript: ^4.2.4 || ^5.0.0
-
   eslint-plugin-eslint-comments@3.2.0:
     resolution: {integrity: sha512-0jkOl0hfojIHHmEHgmNdqv4fmh7300NdpA9FFpF7zaoLvB/QeXOGNLIo86oAveJFrfB1p05kC8hpEMHM8DwWVQ==}
     engines: {node: '>=6.5.0'}
@@ -22216,6 +22210,9 @@ packages:
 
   flatted@3.3.2:
     resolution: {integrity: sha512-AiwGJM8YcNOaobumgtng+6NHuOqC3A7MixFeDafM3X9cIUM+xUXoS5Vfgf+OihAYe20fxqNM9yPBXJzRtZ/4eA==}
+
+  fluid-framework@1.4.0:
+    resolution: {integrity: sha512-Alq2+bwmIrYBZFh/8IynI4mfHvKExLahD1wQ1/4G0PiFYVtI6k2vpRVBofXijTJYq81y3WHN7ytzycW4g/JJrQ==}
 
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
@@ -30104,7 +30101,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/azure-client@1.2.0(encoding@0.1.13)(fluid-framework@packages+framework+fluid-framework)':
+  '@fluidframework/azure-client@1.2.0(encoding@0.1.13)(fluid-framework@1.4.0)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -30120,7 +30117,7 @@ snapshots:
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/server-services-client': 0.1036.5002
       axios: 0.28.1(debug@4.4.0)
-      fluid-framework: link:packages/framework/fluid-framework
+      fluid-framework: 1.4.0
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -30806,6 +30803,23 @@ snapshots:
       - debug
       - supports-color
 
+  '@fluidframework/merge-tree@1.4.0':
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-utils': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore-definitions': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+      '@fluidframework/shared-object-base': 1.4.0
+      '@fluidframework/telemetry-utils': 1.4.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
   '@fluidframework/merge-tree@2.13.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.13.0
@@ -31064,6 +31078,24 @@ snapshots:
       '@fluidframework/driver-utils': 2.13.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.13.0
       '@fluidframework/telemetry-utils': 2.13.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  '@fluidframework/sequence@1.4.0':
+    dependencies:
+      '@fluidframework/common-definitions': 0.20.1
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/container-utils': 1.4.0
+      '@fluidframework/core-interfaces': 1.4.0
+      '@fluidframework/datastore-definitions': 1.4.0
+      '@fluidframework/merge-tree': 1.4.0
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      '@fluidframework/runtime-definitions': 1.4.0
+      '@fluidframework/runtime-utils': 1.4.0
+      '@fluidframework/shared-object-base': 1.4.0
+      '@fluidframework/telemetry-utils': 1.4.0
+      uuid: 8.3.2
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -34449,20 +34481,6 @@ snapshots:
       - supports-color
       - typescript
 
-  '@typescript-eslint/utils@6.21.0(eslint@8.55.0)(typescript@5.4.5)':
-    dependencies:
-      '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
-      '@types/json-schema': 7.0.15
-      '@types/semver': 7.5.8
-      '@typescript-eslint/scope-manager': 6.21.0
-      '@typescript-eslint/types': 6.21.0
-      '@typescript-eslint/typescript-estree': 6.21.0(typescript@5.4.5)
-      eslint: 8.55.0
-      semver: 7.6.3
-    transitivePeerDependencies:
-      - supports-color
-      - typescript
-
   '@typescript-eslint/utils@6.7.5(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@eslint-community/eslint-utils': 4.4.1(eslint@8.55.0)
@@ -36803,16 +36821,6 @@ snapshots:
     dependencies:
       eslint: 8.55.0
 
-  eslint-plugin-deprecation@2.0.0(eslint@8.55.0)(typescript@5.4.5):
-    dependencies:
-      '@typescript-eslint/utils': 6.21.0(eslint@8.55.0)(typescript@5.4.5)
-      eslint: 8.55.0
-      tslib: 2.8.1
-      tsutils: 3.21.0(typescript@5.4.5)
-      typescript: 5.4.5
-    transitivePeerDependencies:
-      - supports-color
-
   eslint-plugin-eslint-comments@3.2.0(eslint@8.55.0):
     dependencies:
       escape-string-regexp: 1.0.5
@@ -37405,6 +37413,18 @@ snapshots:
   flatted@2.0.2: {}
 
   flatted@3.3.2: {}
+
+  fluid-framework@1.4.0:
+    dependencies:
+      '@fluidframework/container-definitions': 1.4.0
+      '@fluidframework/container-loader': 1.4.0
+      '@fluidframework/driver-definitions': 1.4.0
+      '@fluidframework/fluid-static': 1.4.0
+      '@fluidframework/map': 1.4.0
+      '@fluidframework/sequence': 1.4.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
 
   fn.name@1.1.0: {}
 
@@ -40460,7 +40480,7 @@ snapshots:
 
   netmask@2.0.2: {}
 
-  next@14.2.20(@babel/core@7.26.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0):
+  next@14.2.20(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.82.0):
     dependencies:
       '@next/env': 14.2.20
       '@swc/helpers': 0.5.5
@@ -40470,7 +40490,7 @@ snapshots:
       postcss: 8.4.31
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(@babel/core@7.26.0)(babel-plugin-macros@3.1.0)(react@18.3.1)
+      styled-jsx: 5.1.1(babel-plugin-macros@3.1.0)(react@18.3.1)
     optionalDependencies:
       '@next/swc-darwin-arm64': 14.2.20
       '@next/swc-darwin-x64': 14.2.20
@@ -43044,12 +43064,11 @@ snapshots:
     dependencies:
       webpack: 5.97.1(webpack-cli@5.1.4)
 
-  styled-jsx@5.1.1(@babel/core@7.26.0)(babel-plugin-macros@3.1.0)(react@18.3.1):
+  styled-jsx@5.1.1(babel-plugin-macros@3.1.0)(react@18.3.1):
     dependencies:
       client-only: 0.0.1
       react: 18.3.1
     optionalDependencies:
-      '@babel/core': 7.26.0
       babel-plugin-macros: 3.1.0
 
   stylis@4.2.0: {}
