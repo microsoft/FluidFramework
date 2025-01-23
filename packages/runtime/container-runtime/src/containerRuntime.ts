@@ -12,7 +12,6 @@ import {
 	type IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import {
-	IBatchMessage,
 	IContainerContext,
 	IGetPendingLocalStateProps,
 	ILoader,
@@ -142,6 +141,7 @@ import {
 	blobsTreeName,
 	isBlobPath,
 	loadBlobManagerLoadInfo,
+	// eslint-disable-next-line import/no-deprecated
 	type IBlobManagerLoadInfo,
 } from "./blobManager/index.js";
 import {
@@ -159,9 +159,11 @@ import {
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GarbageCollector,
 	IGCRuntimeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IGCStats,
 	IGarbageCollector,
 	gcGenerationOptionName,
@@ -202,26 +204,38 @@ import {
 	PendingStateManager,
 } from "./pendingStateManager.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	DocumentsSchemaController,
 	EnqueueSummarizeResult,
 	IBaseSummarizeResult,
+	// eslint-disable-next-line import/no-deprecated
 	IConnectableRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	ICreateContainerMetadata,
+	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaChangeMessage,
+	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaCurrent,
 	IEnqueueSummarizeOptions,
 	IGenerateSummaryTreeResult,
 	IGeneratedSummaryStats,
 	IOnDemandSummarizeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
 	IRootSummarizerNodeWithGC,
+	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
+	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeResults,
 	ISummarizer,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	ISummaryMetadataMessage,
 	IdCompressorMode,
 	OrderedClientCollection,
@@ -229,6 +243,7 @@ import {
 	RetriableSummaryError,
 	RunWhileConnectedCoordinator,
 	SubmitSummaryResult,
+	// eslint-disable-next-line import/no-deprecated
 	Summarizer,
 	SummarizerClientElection,
 	SummaryCollection,
@@ -244,6 +259,7 @@ import {
 	rootHasIsolatedChannels,
 	summarizerClientType,
 	wrapSummaryInChannelsTree,
+	// eslint-disable-next-line import/no-deprecated
 	type IDocumentSchemaFeatures,
 } from "./summary/index.js";
 import { Throttler, formExponentialFn } from "./throttler.js";
@@ -388,6 +404,12 @@ export type ISummaryConfiguration =
 	| ISummaryConfigurationDisableSummarizer
 	| ISummaryConfigurationDisableHeuristics
 	| ISummaryConfigurationHeuristics;
+
+export function isSummariesDisabled(
+	config: ISummaryConfiguration,
+): config is ISummaryConfigurationDisableSummarizer {
+	return config.state === "disabled";
+}
 
 /**
  * @legacy
@@ -560,6 +582,7 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
  * Error responses when requesting a deleted object will have this header set to true
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const DeletedResponseHeaderKey = "wasDeleted";
 /**
@@ -802,7 +825,9 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
  * Please see addMetadataToSummary() as well
  */
 function lastMessageFromMetadata(
+	// eslint-disable-next-line import/no-deprecated
 	metadata: IContainerRuntimeMetadata | undefined,
+	// eslint-disable-next-line import/no-deprecated
 ): ISummaryMetadataMessage | undefined {
 	return metadata?.documentSchema?.runtime?.explicitSchemaControl
 		? metadata?.lastMessage
@@ -877,6 +902,10 @@ export async function loadContainerRuntime(
 	return ContainerRuntime.loadRuntime(params);
 }
 
+const defaultMaxConsecutiveReconnects = 7;
+
+const defaultTelemetrySignalSampleCount = 100;
+
 /**
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * It will define the store level mappings.
@@ -888,7 +917,9 @@ export class ContainerRuntime
 	implements
 		IContainerRuntime,
 		IRuntime,
+		// eslint-disable-next-line import/no-deprecated
 		ISummarizerRuntime,
+		// eslint-disable-next-line import/no-deprecated
 		ISummarizerInternalsProvider,
 		IProvideFluidHandleContext
 {
@@ -991,7 +1022,9 @@ export class ContainerRuntime
 			tryFetchBlob<ReturnType<DuplicateBatchDetector["getRecentBatchInfoForSummary"]>>(
 				recentBatchInfoBlobName,
 			),
+			// eslint-disable-next-line import/no-deprecated
 			tryFetchBlob<IContainerRuntimeMetadata>(metadataBlobName),
+			// eslint-disable-next-line import/no-deprecated
 			tryFetchBlob<ISerializedElection>(electedSummarizerBlobName),
 			tryFetchBlob<[string, string][]>(aliasBlobName),
 			tryFetchBlob<SerializedIdCompressorWithNoSession>(idCompressorBlobName),
@@ -1126,6 +1159,7 @@ export class ContainerRuntime
 			compressionOptions.minimumBatchSizeInBytes !== Number.POSITIVE_INFINITY &&
 			compressionOptions.compressionAlgorithm === "lz4";
 
+		// eslint-disable-next-line import/no-deprecated
 		const documentSchemaController = new DocumentsSchemaController(
 			existing,
 			protocolSequenceNumber,
@@ -1224,18 +1258,6 @@ export class ContainerRuntime
 		return this;
 	}
 
-	private readonly submitFn: (
-		type: MessageType,
-		contents: unknown,
-		batch: boolean,
-		appData?: unknown,
-	) => number;
-	/**
-	 * Although current IContainerContext guarantees submitBatchFn, it is not available on older loaders.
-	 */
-	private readonly submitBatchFn:
-		| ((batch: IBatchMessage[], referenceSequenceNumber?: number) => number)
-		| undefined;
 	private readonly submitSummaryFn: (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
@@ -1275,9 +1297,11 @@ export class ContainerRuntime
 	 * this op roundtrips, compression will be On. Client can't send compressed ops until it's change in schema.
 	 */
 	public get sessionSchema(): {
+		// eslint-disable-next-line import/no-deprecated
 		[P in keyof IDocumentSchemaFeatures]?: IDocumentSchemaFeatures[P] extends boolean
 			? true
-			: IDocumentSchemaFeatures[P];
+			: // eslint-disable-next-line import/no-deprecated
+				IDocumentSchemaFeatures[P];
 	} {
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
@@ -1294,9 +1318,6 @@ export class ContainerRuntime
 	// In such case we have to process all ops, including those marked with savedOp === true.
 	private readonly skipSavedCompressorOps: boolean;
 
-	public get idCompressorMode(): IdCompressorMode {
-		return this.sessionSchema.idCompressorMode;
-	}
 	/**
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.idCompressor}
 	 */
@@ -1305,7 +1326,7 @@ export class ContainerRuntime
 		// If container uses delayed mode, then we can only expose generateDocumentUniqueId() and nothing else.
 		// That's because any other usage will require immidiate loading of ID Compressor in next sessions in order
 		// to reason over such things as session ID space.
-		if (this.idCompressorMode === "on") {
+		if (this.sessionSchema.idCompressorMode === "on") {
 			assert(this._idCompressor !== undefined, 0x8ea /* compressor should have been loaded */);
 			return this._idCompressor;
 		}
@@ -1313,7 +1334,7 @@ export class ContainerRuntime
 
 	/**
 	 * True if we have ID compressor loading in-flight (async operation). Useful only for
-	 * this.idCompressorMode === "delayed" mode
+	 * this.sessionSchema.idCompressorMode === "delayed" mode
 	 */
 	protected _loadIdCompressor: Promise<void> | undefined;
 
@@ -1357,14 +1378,10 @@ export class ContainerRuntime
 	 * do not create it (see SummarizerClientElection.clientDetailsPermitElection() for details)
 	 */
 	private readonly summaryManager?: SummaryManager;
-	private readonly summaryCollection: SummaryCollection;
 
 	private readonly summarizerNode: IRootSummarizerNodeWithGC;
 
-	private readonly logger: ITelemetryLoggerExt;
-
 	private readonly maxConsecutiveReconnects: number;
-	private readonly defaultMaxConsecutiveReconnects = 7;
 
 	private _orderSequentiallyCalls: number = 0;
 	private readonly _flushMode: FlushMode;
@@ -1418,10 +1435,8 @@ export class ContainerRuntime
 
 	private dirtyContainer: boolean;
 	private emitDirtyDocumentEvent = true;
-	private readonly disableAttachReorder: boolean | undefined;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
-	private readonly defaultTelemetrySignalSampleCount = 100;
 	private readonly _signalTracking: IPerfSignalReport = {
 		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
@@ -1439,6 +1454,7 @@ export class ContainerRuntime
 	 * It is the main entry point for summary work.
 	 * It is created only by summarizing container (i.e. one with clientType === "summarizer")
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private readonly _summarizer?: Summarizer;
 	private readonly deltaScheduler: DeltaScheduler;
 	private readonly inboundBatchAggregator: InboundBatchAggregator;
@@ -1454,37 +1470,12 @@ export class ContainerRuntime
 	/**
 	 * The last message processed at the time of the last summary.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private messageAtLastSummary: ISummaryMetadataMessage | undefined;
 
-	private get summarizer(): Summarizer {
-		assert(this._summarizer !== undefined, 0x257 /* "This is not summarizing container" */);
-		return this._summarizer;
-	}
-
 	private readonly summariesDisabled: boolean;
-	private isSummariesDisabled(): boolean {
-		return this.summaryConfiguration.state === "disabled";
-	}
 
-	private readonly maxOpsSinceLastSummary: number;
-	private getMaxOpsSinceLastSummary(): number {
-		return this.summaryConfiguration.state !== "disabled"
-			? this.summaryConfiguration.maxOpsSinceLastSummary
-			: 0;
-	}
-
-	private readonly initialSummarizerDelayMs: number;
-	private getInitialSummarizerDelayMs(): number {
-		// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
-		//   to ISummaryConfiguration in 0.60.
-		if (this.runtimeOptions.summaryOptions.initialSummarizerDelayMs !== undefined) {
-			return this.runtimeOptions.summaryOptions.initialSummarizerDelayMs;
-		}
-		return this.summaryConfiguration.state !== "disabled"
-			? this.summaryConfiguration.initialSummarizerDelayMs
-			: 0;
-	}
-
+	// eslint-disable-next-line import/no-deprecated
 	private readonly createContainerMetadata: ICreateContainerMetadata;
 	/**
 	 * The summary number of the next summary that will be generated for this container. This is incremented every time
@@ -1517,11 +1508,6 @@ export class ContainerRuntime
 	private readonly telemetryDocumentId: string;
 
 	/**
-	 * Whether this client is the summarizer client itself (type is summarizerClientType)
-	 */
-	private readonly isSummarizerClient: boolean;
-
-	/**
 	 * The id of the version used to initially load this runtime, or undefined if it's newly created.
 	 */
 	private readonly loadedFromVersionId: string | undefined;
@@ -1541,27 +1527,26 @@ export class ContainerRuntime
 		expiry: { policy: "absolute", durationMs: 60000 },
 	});
 
-	/**
-	 * The options to apply to this ContainerRuntime instance (including internal options hidden from the public API)
-	 */
-	private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>;
-
 	/***/
 	protected constructor(
 		context: IContainerContext,
 		private readonly registry: IFluidDataStoreRegistry,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly metadata: IContainerRuntimeMetadata | undefined,
+		// eslint-disable-next-line import/no-deprecated
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		runtimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
+		baseRuntimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
+		// eslint-disable-next-line import/no-deprecated
 		blobManagerSnapshot: IBlobManagerLoadInfo,
 		private readonly _storage: IDocumentStorageService,
 		private readonly createIdCompressor: () => Promise<IIdCompressor & IIdCompressorCore>,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
@@ -1569,11 +1554,11 @@ export class ContainerRuntime
 			request: IRequest,
 			runtime: IContainerRuntime,
 		) => Promise<IResponse>,
-		private readonly summaryConfiguration: ISummaryConfiguration = {
+		summaryConfiguration: ISummaryConfiguration = {
 			// the defaults
 			...DefaultSummaryConfiguration,
 			// the runtime configuration overrides
-			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
+			...baseRuntimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
 		recentBatchInfo?: [number, string][],
 	) {
@@ -1600,13 +1585,12 @@ export class ContainerRuntime
 		} = context;
 
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
-		this.runtimeOptions = {
+		const runtimeOptions = {
 			flushMode: defaultFlushMode,
-			...runtimeOptions,
+			...baseRuntimeOptions,
 		};
-		this.logger = createChildLogger({ logger: this.baseLogger });
 		this.mc = createChildMonitoringContext({
-			logger: this.logger,
+			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
 		});
 
@@ -1626,16 +1610,17 @@ export class ContainerRuntime
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
-		this.submitFn = submitFn;
-		this.submitBatchFn = submitBatchFn;
-		this.submitSummaryFn = submitSummaryFn;
+		// back-compat: ADO #1385: Make this call unconditional in the future
+		this.submitSummaryFn =
+			submitSummaryFn ??
+			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
 		this.submitSignalFn = submitSignalFn;
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
 		// Values are generally expected to be set from the runtime side.
 		this.options = options ?? {};
 		this.clientDetails = clientDetails;
-		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
+		const isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getClientId = () => context.clientId;
@@ -1659,7 +1644,7 @@ export class ContainerRuntime
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
+		this.closeFn = isSummarizerClient ? this.disposeFn : closeFn;
 
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
@@ -1692,15 +1677,11 @@ export class ContainerRuntime
 			metadataValue: JSON.stringify(metadata?.gcFeatureMatrix),
 			inputs: JSON.stringify({
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				gcOptions_gcGeneration: this.runtimeOptions.gcOptions[gcGenerationOptionName],
+				gcOptions_gcGeneration: runtimeOptions.gcOptions[gcGenerationOptionName],
 			}),
 		});
 
 		this.telemetryDocumentId = metadata?.telemetryDocumentId ?? uuid();
-
-		this.disableAttachReorder = this.mc.config.getBoolean(
-			"Fluid.ContainerRuntime.disableAttachOpReorder",
-		);
 
 		const opGroupingManager = new OpGroupingManager(
 			{
@@ -1713,7 +1694,7 @@ export class ContainerRuntime
 
 		const opSplitter = new OpSplitter(
 			chunks,
-			this.submitBatchFn,
+			submitBatchFn,
 			runtimeOptions.chunkSizeInBytes,
 			runtimeOptions.maxBatchSizeInBytes,
 			this.mc.logger,
@@ -1736,7 +1717,7 @@ export class ContainerRuntime
 				isAttached: () => this.attachState !== AttachState.Detached,
 			},
 			pendingRuntimeState?.pending,
-			this.logger,
+			this.baseLogger,
 		);
 
 		let outerDeltaManager: IDeltaManagerFull;
@@ -1762,28 +1743,36 @@ export class ContainerRuntime
 
 		this.handleContext = new ContainerFluidHandleContext("", this);
 
-		if (this.summaryConfiguration.state === "enabled") {
-			this.validateSummaryHeuristicConfiguration(this.summaryConfiguration);
+		if (summaryConfiguration.state === "enabled") {
+			this.validateSummaryHeuristicConfiguration(summaryConfiguration);
 		}
 
-		this.summariesDisabled = this.isSummariesDisabled();
-		this.maxOpsSinceLastSummary = this.getMaxOpsSinceLastSummary();
-		this.initialSummarizerDelayMs = this.getInitialSummarizerDelayMs();
+		this.summariesDisabled = isSummariesDisabled(summaryConfiguration);
+		const { maxOpsSinceLastSummary = 0, initialSummarizerDelayMs = 0 } = isSummariesDisabled(
+			summaryConfiguration,
+		)
+			? {}
+			: {
+					...summaryConfiguration,
+					initialSummarizerDelayMs:
+						// back-compat: initialSummarizerDelayMs was moved from ISummaryRuntimeOptions
+						//   to ISummaryConfiguration in 0.60.
+						runtimeOptions.summaryOptions.initialSummarizerDelayMs ??
+						summaryConfiguration.initialSummarizerDelayMs,
+				};
 
 		this.maxConsecutiveReconnects =
-			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ??
-			this.defaultMaxConsecutiveReconnects;
+			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
 
 		if (
-			this.runtimeOptions.flushMode ===
-				(FlushModeExperimental.Async as unknown as FlushMode) &&
+			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
 			supportedFeatures?.get("referenceSequenceNumbers") !== true
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
 			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
 			this._flushMode = FlushMode.TurnBased;
 		} else {
-			this._flushMode = this.runtimeOptions.flushMode;
+			this._flushMode = runtimeOptions.flushMode;
 		}
 		this.offlineEnabled =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ?? false;
@@ -1817,13 +1806,13 @@ export class ContainerRuntime
 
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
-			gcOptions: this.runtimeOptions.gcOptions,
+			gcOptions: runtimeOptions.gcOptions,
 			baseSnapshot,
 			baseLogger: this.mc.logger,
 			existing,
 			metadata,
 			createContainerMetadata: this.createContainerMetadata,
-			isSummarizerClient: this.isSummarizerClient,
+			isSummarizerClient,
 			getNodePackagePath: async (nodePath: string) => this.getGCNodePackagePath(nodePath),
 			getLastSummaryTimestampMs: () => this.messageAtLastSummary?.timestamp,
 			readAndParseBlob: async <T>(id: string) => readAndParse<T>(this.storage, id),
@@ -1840,7 +1829,7 @@ export class ContainerRuntime
 				? undefined
 				: loadedFromSequenceNumber;
 		this.summarizerNode = createRootSummarizerNodeWithGC(
-			createChildLogger({ logger: this.logger, namespace: "SummarizerNode" }),
+			createChildLogger({ logger: this.baseLogger, namespace: "SummarizerNode" }),
 			// Summarize function to call when summarize is called. Summarizer node always tracks summary state.
 			async (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext) =>
 				this.summarizeInternal(fullTree, trackState, telemetryContext),
@@ -1935,25 +1924,25 @@ export class ContainerRuntime
 		this.deltaScheduler = new DeltaScheduler(
 			this.innerDeltaManager,
 			this,
-			createChildLogger({ logger: this.logger, namespace: "DeltaScheduler" }),
+			createChildLogger({ logger: this.baseLogger, namespace: "DeltaScheduler" }),
 		);
 
 		this.inboundBatchAggregator = new InboundBatchAggregator(
 			this.innerDeltaManager,
 			() => this.clientId,
-			createChildLogger({ logger: this.logger, namespace: "InboundBatchAggregator" }),
+			createChildLogger({ logger: this.baseLogger, namespace: "InboundBatchAggregator" }),
 		);
 
 		const disablePartialFlush = this.mc.config.getBoolean(
 			"Fluid.ContainerRuntime.DisablePartialFlush",
 		);
 
-		const legacySendBatchFn = makeLegacySendBatchFn(this.submitFn, this.innerDeltaManager);
+		const legacySendBatchFn = makeLegacySendBatchFn(submitFn, this.innerDeltaManager);
 
 		this.outbox = new Outbox({
 			shouldSend: () => this.canSendOps(),
 			pendingStateManager: this.pendingStateManager,
-			submitBatchFn: this.submitBatchFn,
+			submitBatchFn,
 			legacySendBatchFn,
 			compressor: new OpCompressor(this.mc.logger),
 			splitter: opSplitter,
@@ -2010,7 +1999,7 @@ export class ContainerRuntime
 		);
 		this.closeSummarizerDelayMs =
 			closeSummarizerDelayOverride ?? defaultCloseSummarizerDelayMs;
-		this.summaryCollection = new SummaryCollection(this.deltaManager, this.logger);
+		const summaryCollection = new SummaryCollection(this.deltaManager, this.baseLogger);
 
 		this.dirtyContainer =
 			this.attachState !== AttachState.Attached || this.hasPendingMessages();
@@ -2020,7 +2009,7 @@ export class ContainerRuntime
 			this.mc.logger.sendTelemetryEvent({ eventName: "SummariesDisabled" });
 		} else {
 			const orderedClientLogger = createChildLogger({
-				logger: this.logger,
+				logger: this.baseLogger,
 				namespace: "OrderedClientElection",
 			});
 			const orderedClientCollection = new OrderedClientCollection(
@@ -2040,18 +2029,20 @@ export class ContainerRuntime
 
 			this.summarizerClientElection = new SummarizerClientElection(
 				orderedClientLogger,
-				this.summaryCollection,
+				summaryCollection,
 				orderedClientElectionForSummarizer,
-				this.maxOpsSinceLastSummary,
+				maxOpsSinceLastSummary,
 			);
 
-			if (this.isSummarizerClient) {
+			if (isSummarizerClient) {
+				// eslint-disable-next-line import/no-deprecated
 				this._summarizer = new Summarizer(
 					this /* ISummarizerRuntime */,
-					() => this.summaryConfiguration,
+					() => summaryConfiguration,
 					this /* ISummarizerInternalsProvider */,
 					this.handleContext,
-					this.summaryCollection,
+					summaryCollection,
+					// eslint-disable-next-line import/no-deprecated
 					async (runtime: IConnectableRuntime) =>
 						RunWhileConnectedCoordinator.create(
 							runtime,
@@ -2064,31 +2055,31 @@ export class ContainerRuntime
 				// Only create a SummaryManager and SummarizerClientElection
 				// if summaries are enabled and we are not the summarizer client.
 				const defaultAction = (): void => {
-					if (this.summaryCollection.opsSinceLastAck > this.maxOpsSinceLastSummary) {
+					if (summaryCollection.opsSinceLastAck > maxOpsSinceLastSummary) {
 						this.mc.logger.sendTelemetryEvent({ eventName: "SummaryStatus:Behind" });
 						// unregister default to no log on every op after falling behind
 						// and register summary ack handler to re-register this handler
 						// after successful summary
-						this.summaryCollection.once(MessageType.SummaryAck, () => {
+						summaryCollection.once(MessageType.SummaryAck, () => {
 							this.mc.logger.sendTelemetryEvent({
 								eventName: "SummaryStatus:CaughtUp",
 							});
 							// we've caught up, so re-register the default action to monitor for
 							// falling behind, and unregister ourself
-							this.summaryCollection.on("default", defaultAction);
+							summaryCollection.on("default", defaultAction);
 						});
-						this.summaryCollection.off("default", defaultAction);
+						summaryCollection.off("default", defaultAction);
 					}
 				};
 
-				this.summaryCollection.on("default", defaultAction);
+				summaryCollection.on("default", defaultAction);
 
 				// Create the SummaryManager and mark the initial state
 				this.summaryManager = new SummaryManager(
 					this.summarizerClientElection,
 					this, // IConnectedState
-					this.summaryCollection,
-					this.logger,
+					summaryCollection,
+					this.baseLogger,
 					this.formCreateSummarizerFn(loader),
 					new Throttler(
 						60 * 1000, // 60 sec delay window
@@ -2097,7 +2088,7 @@ export class ContainerRuntime
 						formExponentialFn({ coefficient: 20, initialDelay: 0 }),
 					),
 					{
-						initialDelayMs: this.initialSummarizerDelayMs,
+						initialDelayMs: initialSummarizerDelayMs,
 					},
 				);
 				// Forward events from SummaryManager
@@ -2118,7 +2109,8 @@ export class ContainerRuntime
 		}
 
 		// logging hardware telemetry
-		this.logger.sendTelemetryEvent({
+		this.baseLogger.send({
+			category: "generic",
 			eventName: "DeviceSpec",
 			...getDeviceSpec(),
 		});
@@ -2131,13 +2123,12 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
-			options: JSON.stringify(runtimeOptions),
+			options: JSON.stringify(baseRuntimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
-			idCompressorMode: this.idCompressorMode,
+			idCompressorMode: this.sessionSchema.idCompressorMode,
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 			featureGates: JSON.stringify({
 				...featureGatesForTelemetry,
-				disableAttachReorder: this.disableAttachReorder,
 				disablePartialFlush,
 				closeSummarizerDelayOverride,
 			}),
@@ -2146,15 +2137,11 @@ export class ContainerRuntime
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 		});
 
-		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.logger);
-		BindBatchTracker(this, this.logger);
+		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
+		BindBatchTracker(this, this.baseLogger);
 
 		this.entryPoint = new LazyPromise(async () => {
-			if (this.isSummarizerClient) {
-				assert(
-					this._summarizer !== undefined,
-					0x5bf /* Summarizer object is undefined in a summarizer client */,
-				);
+			if (this._summarizer !== undefined) {
 				return this._summarizer;
 			}
 			return provideEntryPoint(this);
@@ -2165,8 +2152,9 @@ export class ContainerRuntime
 		this.skipSavedCompressorOps = pendingRuntimeState?.pendingIdCompressorState !== undefined;
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public onSchemaChange(schema: IDocumentSchemaCurrent): void {
-		this.logger.sendTelemetryEvent({
+		this.mc.logger.sendTelemetryEvent({
 			eventName: "SchemaChangeAccept",
 			sessionRuntimeSchema: JSON.stringify(schema),
 		});
@@ -2223,8 +2211,8 @@ export class ContainerRuntime
 	 */
 	private async initializeBaseState(): Promise<void> {
 		if (
-			this.idCompressorMode === "on" ||
-			(this.idCompressorMode === "delayed" && this.connected)
+			this.sessionSchema.idCompressorMode === "on" ||
+			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
 		) {
 			this._idCompressor = await this.createIdCompressor();
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
@@ -2298,7 +2286,7 @@ export class ContainerRuntime
 			},
 		);
 
-		this.logger.sendTelemetryEvent({
+		this.mc.logger.sendTelemetryEvent({
 			eventName: "GroupIdSnapshotFetched",
 			details: JSON.stringify({
 				fromCache: loadedFromCache,
@@ -2339,7 +2327,7 @@ export class ContainerRuntime
 			// another snapshot from which the summarizer loaded and it is behind, then just give up as
 			// the summarizer state is not up to date.
 			// This should be a recoverable scenario and shouldn't happen as we should process the ack first.
-			if (this.isSummarizerClient) {
+			if (this._summarizer !== undefined) {
 				throw new Error("Summarizer client behind, loaded newer snapshot with loadingGroupId");
 			}
 
@@ -2410,7 +2398,7 @@ export class ContainerRuntime
 					return {
 						status: 200,
 						mimeType: "fluid/object",
-						value: this.summarizer,
+						value: this._summarizer,
 					};
 				}
 				return create404Response(request);
@@ -2488,6 +2476,7 @@ export class ContainerRuntime
 		// Is document schema explicit control on?
 		const explicitSchemaControl = documentSchema?.runtime.explicitSchemaControl;
 
+		// eslint-disable-next-line import/no-deprecated
 		const metadata: IContainerRuntimeMetadata = {
 			...this.createContainerMetadata,
 			// Increment the summary number for the next summary that will be generated.
@@ -2501,7 +2490,8 @@ export class ContainerRuntime
 			// last message's sequence number.
 			// See also lastMessageFromMetadata()
 			message: explicitSchemaControl
-				? ({ sequenceNumber: -1 } as unknown as ISummaryMetadataMessage)
+				? // eslint-disable-next-line import/no-deprecated
+					({ sequenceNumber: -1 } as unknown as ISummaryMetadataMessage)
 				: message,
 			lastMessage: explicitSchemaControl ? message : undefined,
 			documentSchema,
@@ -2660,7 +2650,7 @@ export class ContainerRuntime
 				// before applying the rest of the stashed ops. This would accomplish the same thing but with
 				// better performance in future incremental stashed state creation.
 				assert(
-					this.idCompressorMode !== undefined,
+					this.sessionSchema.idCompressorMode !== undefined,
 					0x8f1 /* ID compressor should be in use */,
 				);
 				return;
@@ -2692,7 +2682,7 @@ export class ContainerRuntime
 	private async loadIdCompressor(): Promise<void | undefined> {
 		if (
 			this._idCompressor === undefined &&
-			this.idCompressorMode !== undefined &&
+			this.sessionSchema.idCompressorMode !== undefined &&
 			this._loadIdCompressor === undefined
 		) {
 			this._loadIdCompressor = this.createIdCompressor()
@@ -2707,7 +2697,7 @@ export class ContainerRuntime
 					this._idCompressor = compressor;
 				})
 				.catch((error) => {
-					this.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
+					this.mc.logger.sendErrorEvent({ eventName: "IdCompressorDelayedLoad" }, error);
 					throw error;
 				});
 		}
@@ -2723,7 +2713,7 @@ export class ContainerRuntime
 			0x978 /* this.clientId does not match Audience */,
 		);
 
-		if (connected && this.idCompressorMode === "delayed") {
+		if (connected && this.sessionSchema.idCompressorMode === "delayed") {
 			// eslint-disable-next-line @typescript-eslint/no-floating-promises
 			this.loadIdCompressor();
 		}
@@ -2845,7 +2835,7 @@ export class ContainerRuntime
 		// or something different, like a system message.
 		const hasModernRuntimeMessageEnvelope = messageCopy.type === MessageType.Operation;
 		const savedOp = (messageCopy.metadata as ISavedOpMetadata)?.savedOp;
-		const logLegacyCase = getSingleUseLegacyLogCallback(this.logger, messageCopy.type);
+		const logLegacyCase = getSingleUseLegacyLogCallback(this.mc.logger, messageCopy.type);
 
 		let runtimeBatch: boolean =
 			hasModernRuntimeMessageEnvelope || isUnpackedRuntimeMessage(messageCopy);
@@ -3194,6 +3184,7 @@ export class ContainerRuntime
 			}
 			case ContainerMessageType.DocumentSchemaChange: {
 				this.documentsSchemaController.processDocumentSchemaMessages(
+					// eslint-disable-next-line import/no-deprecated
 					contents as IDocumentSchemaChangeMessage[],
 					local,
 					message.sequenceNumber,
@@ -3226,7 +3217,7 @@ export class ContainerRuntime
 				// put it in a pending queue and delay finalization.
 				if (this._idCompressor === undefined) {
 					assert(
-						this.idCompressorMode !== undefined,
+						this.sessionSchema.idCompressorMode !== undefined,
 						0x93c /* id compressor should be enabled */,
 					);
 					this.pendingIdCompressorOps.push(range);
@@ -3618,7 +3609,7 @@ export class ContainerRuntime
 
 			// We should not track the round trip of a new signal in the case we are already tracking one.
 			if (
-				clientBroadcastSignalSequenceNumber % this.defaultTelemetrySignalSampleCount === 1 &&
+				clientBroadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1 &&
 				this._signalTracking.roundTripSignalSequenceNumber === undefined
 			) {
 				this._signalTracking.signalTimestamp = Date.now();
@@ -3891,10 +3882,13 @@ export class ContainerRuntime
 	 * Returns the type of the GC node. Currently, there are nodes that belong to the root ("/"), data stores or
 	 * blob manager.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public getNodeType(nodePath: string): GCNodeType {
 		if (isBlobPath(nodePath)) {
+			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.Blob;
 		}
+		// eslint-disable-next-line import/no-deprecated
 		return this.channelCollection.getGCNodeType(nodePath) ?? GCNodeType.Other;
 	}
 
@@ -3910,10 +3904,13 @@ export class ContainerRuntime
 		}
 
 		switch (this.getNodeType(nodePath)) {
+			// eslint-disable-next-line import/no-deprecated
 			case GCNodeType.Blob: {
 				return [blobManagerBasePath];
 			}
+			// eslint-disable-next-line import/no-deprecated
 			case GCNodeType.DataStore:
+			// eslint-disable-next-line import/no-deprecated
 			case GCNodeType.SubDataStore: {
 				return this.channelCollection.getDataStorePackagePath(nodePath);
 			}
@@ -3965,6 +3962,7 @@ export class ContainerRuntime
 			fullGC?: boolean;
 		},
 		telemetryContext?: ITelemetryContext,
+		// eslint-disable-next-line import/no-deprecated
 	): Promise<IGCStats | undefined> {
 		return this.garbageCollector.collectGarbage(options, telemetryContext);
 	}
@@ -4007,6 +4005,7 @@ export class ContainerRuntime
 	 * op processing, updating SummarizerNode state tracking, and garbage collection.
 	 * @param options - options controlling how the summary is generated or submitted
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public async submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult> {
 		const {
 			cancellationToken,
@@ -4548,7 +4547,7 @@ export class ContainerRuntime
 			// on this callback to do actual sending.
 			const schemaChangeMessage = this.documentsSchemaController.maybeSendSchemaMessage();
 			if (schemaChangeMessage) {
-				this.logger.sendTelemetryEvent({
+				this.mc.logger.sendTelemetryEvent({
 					eventName: "SchemaChangeProposal",
 					refSeq: schemaChangeMessage.refSeq,
 					version: schemaChangeMessage.version,
@@ -4652,10 +4651,7 @@ export class ContainerRuntime
 		// System message should not be sent in the middle of the batch.
 		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
 
-		// back-compat: ADO #1385: Make this call unconditional in the future
-		return this.submitSummaryFn !== undefined
-			? this.submitSummaryFn(contents, referenceSequenceNumber)
-			: this.submitFn(MessageType.Summarize, contents, false);
+		return this.submitSummaryFn(contents, referenceSequenceNumber);
 	}
 
 	/**
@@ -4705,7 +4701,7 @@ export class ContainerRuntime
 		opMetadata: Record<string, unknown> | undefined,
 	): void {
 		assert(
-			!this.isSummarizerClient,
+			this._summarizer === undefined,
 			0x8f2 /* Summarizer never reconnects so should never resubmit */,
 		);
 		switch (message.type) {
@@ -4772,6 +4768,7 @@ export class ContainerRuntime
 	/**
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
@@ -4976,8 +4973,8 @@ export class ContainerRuntime
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
-		if (this.isSummarizerClient) {
-			return this.summarizer.summarizeOnDemand(options);
+		if (this._summarizer !== undefined) {
+			return this._summarizer.summarizeOnDemand(options);
 		} else if (this.summaryManager !== undefined) {
 			return this.summaryManager.summarizeOnDemand(options);
 		} else {
@@ -4989,8 +4986,8 @@ export class ContainerRuntime
 	}
 
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
-		if (this.isSummarizerClient) {
-			return this.summarizer.enqueueSummarize(options);
+		if (this._summarizer !== undefined) {
+			return this._summarizer.enqueueSummarize(options);
 		} else if (this.summaryManager !== undefined) {
 			return this.summaryManager.enqueueSummarize(options);
 		} else {
