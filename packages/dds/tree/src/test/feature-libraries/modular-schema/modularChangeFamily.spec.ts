@@ -74,12 +74,13 @@ import {
 import { type ValueChangeset, valueField } from "./basicRebasers.js";
 import { ajvValidator } from "../../codec/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
-import type {
-	ChangeAtomIdBTree,
-	CrossFieldKeyTable,
-	FieldChangeMap,
-	FieldId,
-	NodeChangeset,
+import {
+	newCrossFieldKeyTable,
+	type ChangeAtomIdBTree,
+	type CrossFieldKeyTable,
+	type FieldChangeMap,
+	type FieldId,
+	type NodeChangeset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeTypes.js";
 import {
@@ -87,7 +88,6 @@ import {
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
-	newCrossFieldKeyTable,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
@@ -971,9 +971,6 @@ describe("ModularChangeFamily", () => {
 			const actualRollback = family.invert(change1, true, revisionForInvert);
 			const actualUndo = family.invert(change1, false, revisionForInvert);
 
-			actualRollback.crossFieldKeys.unfreeze();
-			actualUndo.crossFieldKeys.unfreeze();
-
 			const expectedRollback: ModularChangeset = {
 				...Change.empty(),
 				destroys: newTupleBTree([
@@ -1570,10 +1567,10 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 			);
 
 			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
-			for (const key of crossFieldKeys) {
-				const prevId = change.crossFieldKeys.get(key);
+			for (const { key, count } of crossFieldKeys) {
+				const prevId = change.crossFieldKeys.getFirst(key, count)?.value;
 				assert(prevId !== undefined, "Should be an entry for each cross-field key");
-				crossFieldKeyTable.set(key, remapFieldId(prevId));
+				crossFieldKeyTable.set(key, count, remapFieldId(prevId));
 			}
 		}
 
