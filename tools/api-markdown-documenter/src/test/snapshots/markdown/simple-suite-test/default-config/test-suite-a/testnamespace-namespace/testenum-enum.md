@@ -1,6 +1,6 @@
 # TestEnum
 
-[Packages](./) &gt; [test-suite-a](./test-suite-a/) &gt; [TestNamespace](./test-suite-a/testnamespace-namespace/) &gt; [TestEnum](./test-suite-a/testnamespace-namespace/testenum-enum)
+[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum)
 
 Test Enum
 
@@ -14,8 +14,8 @@ enum TestEnum
 
 | Flag | Description |
 | --- | --- |
-| [TestEnumValue1](./test-suite-a/testnamespace-namespace/testenum-enum#testenumvalue1-enummember) | Test enum value 1 |
-| [TestEnumValue2](./test-suite-a/testnamespace-namespace/testenum-enum#testenumvalue2-enummember) | Test enum value 2 |
+| [TestEnumValue1](/test-suite-a/testnamespace-namespace/testenum-enum#testenumvalue1-enummember) | Test enum value 1 |
+| [TestEnumValue2](/test-suite-a/testnamespace-namespace/testenum-enum#testenumvalue2-enummember) | Test enum value 2 |
 
 ### TestEnumValue1 {#testenumvalue1-enummember}
 
