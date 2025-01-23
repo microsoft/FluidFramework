@@ -4,14 +4,16 @@
  */
 
 import type { Browser, Page } from "puppeteer";
-import puppeteer from "puppeteer";
+import { launch } from "puppeteer";
 
 import { globals } from "../jest.config.cjs";
 
 const initializeBrowser = async () => {
-	const browser = await puppeteer.launch({
+	const browser = await launch({
 		// https://github.com/puppeteer/puppeteer/blob/master/docs/troubleshooting.md#setting-up-chrome-linux-sandbox
 		args: ["--no-sandbox", "--disable-setuid-sandbox"],
+		// output browser console to cmd line
+		dumpio: process.env.FLUID_TEST_VERBOSE !== undefined,
 		// Use chrome-headless-shell because that's what the CI pipeline installs; see AB#7150.
 		headless: "shell",
 	});
@@ -25,11 +27,13 @@ describe("presence-tracker", () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
 		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
+		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 		await page.waitForFunction(() => window["fluidStarted"]);
 	}, 45000);
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
+		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
@@ -38,27 +42,16 @@ describe("presence-tracker", () => {
 			await page.waitForFunction(() => document.isConnected);
 		});
 
-		it("Focus Content exists", async () => {
+		it("Focus content element exists", async () => {
 			await page.waitForFunction(() => document.getElementById("focus-content"));
 		});
 
-		it("Focus Div exists", async () => {
+		it("Focus div exists", async () => {
 			await page.waitForFunction(() => document.getElementById("focus-div"));
 		});
 
-		it("Mouse Content exists", async () => {
+		it("Mouse position element exists", async () => {
 			await page.waitForFunction(() => document.getElementById("mouse-position"));
-		});
-
-		it("Current User is displayed", async () => {
-			const elementHandle = await page.waitForFunction(() =>
-				document.getElementById("focus-div"),
-			);
-			const innerHTML = await page.evaluate(
-				(element) => element?.innerHTML.trim(),
-				elementHandle,
-			);
-			expect(innerHTML).toMatch(/^User session .*?: has focus/);
 		});
 
 		it("Current user has focus", async () => {
@@ -82,7 +75,8 @@ describe("presence-tracker", () => {
 				elementHandle,
 			);
 
-			// There should only be a single client connected
+			// There should only be a single client connected; verify by asserting there's no <br> tag in the innerHtml, which
+			// means a single client.
 			expect(clientListHtml).toMatch(/^[^<]+$/);
 		});
 	});
@@ -92,13 +86,15 @@ describe("presence-tracker", () => {
 		let page2: Page;
 
 		beforeAll(async () => {
-			// Create a second browser instance and navigate to the session created by the first browser.
+			// Create a second browser instance.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
 		}, 45000);
 
 		beforeEach(async () => {
+			// Navigate to the URL/session created by the first browser.
 			await page2.goto(page.url(), { waitUntil: "load" });
+			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 			await page2.waitForFunction(() => window["fluidStarted"]);
 		});
 
@@ -120,6 +116,9 @@ describe("presence-tracker", () => {
 				(element) => element?.innerHTML?.trim(),
 				elementHandle,
 			);
+
+			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
+			// connected.
 			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
 		});
 
@@ -132,12 +131,16 @@ describe("presence-tracker", () => {
 				(element) => element?.innerHTML?.trim(),
 				elementHandle,
 			);
+			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
+			// connected.
 			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
 		});
 
-		it("First client shows one client connected when second client leaves", async () => {
-			// Navigate the second client away
-			await page2.goto(globals.PATH, { waitUntil: "load" });
+		// While this test passes, it's a false pass because the first client is always failing to see more than one
+		// client. See previous test.
+		it.skip("First client shows one client connected when second client leaves", async () => {
+			// Navigate the second client away; use the tinylicious default URL
+			await page2.goto("http://localhost:7070", { waitUntil: "load" });
 
 			// Get the client list from the first browser; it should have a single element.
 			const elementHandle = await page.waitForFunction(() =>

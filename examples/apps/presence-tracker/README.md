@@ -9,12 +9,13 @@ positions, mouse pointer positions, and object selection.
 In this example, presence is used to share both mouse position within the application window and the focus state of the
 application.
 
-This implementation visualizes the Container in a standalone application, rather than using the webpack-fluid-loader
-environment that most of our examples use. This implementation relies on
-[Tinylicious](/server/routerlicious/packages/tinylicious), so there are a few extra steps to get started. We bring our
+This implementation visualizes the Container in a standalone application, rather than using the `webpack-fluid-loader`
+environment that many of our examples use. This implementation relies on
+[Tinylicious](/server/routerlicious/packages/tinylicious) as the Fluid service, so it is invoked in the background
+automatically when running the scripts . We bring our
 own view that we bind to the data in the container.
 
-<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -27,7 +28,6 @@ You can run this example using the following steps:
 1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
       `pnpm run build:fast --nolint @fluid-example/presence-tracker`
-1. In a separate terminal, start a Tinylicious server by following the instructions in [Tinylicious](https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious).
 1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
@@ -36,8 +36,8 @@ You can run this example using the following steps:
 
 ## Tests
 
-The tests in this example require that tinylicious be running. The tests run against the "real app" running in Webpack's
-dev server and tinylicious is triggered in the background as part of the test invocation.
+The tests in this example require that tinylicious be running. The tests execute against the "real app" running in Webpack's
+dev server; tinylicious is triggered in the background as part of the test invocation.
 
 ### Multiple browser clients
 

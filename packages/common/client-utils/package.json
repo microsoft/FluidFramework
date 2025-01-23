@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.20.0",
+	"version": "2.21.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -93,7 +93,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha && npm run test:jest",
 		"test:coverage": "c8 npm test",
-		"test:jest": "jest",
+		"test:jest": "jest --ci",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit",
 		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit",

@@ -37,7 +37,7 @@ const testConfigs = new Map<
 	[
 		"default-config",
 		{
-			uriRoot: ".",
+			uriRoot: "",
 		},
 	],
 
@@ -67,17 +67,15 @@ const testConfigs = new Map<
 		},
 	],
 
-	// TODO
-	// // A sample "deep" configuration.
-	// // All "parent" API items generate hierarchy.
-	// // All other items are rendered as documents under their parent hierarchy.
-	// [
-	// 	"deep-config",
-	// 	{
-	// 		uriRoot: ".",
-	// 		hierarchy: HierarchyConfigurations.deep,
-	// 	},
-	// ],
+	// A sample "deep" configuration.
+	// All "parent" API items generate hierarchy.
+	// All other items are rendered as documents under their parent hierarchy.
+	[
+		"deep-config",
+		{
+			hierarchy: HierarchyConfigurations.deep,
+		},
+	],
 ]);
 
 describe("HTML end-to-end tests", () => {

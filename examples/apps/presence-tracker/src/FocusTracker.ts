@@ -13,32 +13,62 @@ import type {
 } from "@fluidframework/presence/alpha";
 import { Latest, SessionClientStatus } from "@fluidframework/presence/alpha";
 
+/**
+ * IFocusState is the data that individual session clients share via presence.
+ */
+export interface IFocusState {
+	readonly hasFocus: boolean;
+}
+
+/**
+ * Definitions of the events that the FocusTracker raises.
+ */
 export interface IFocusTrackerEvents extends IEvent {
+	/**
+	 * The focusChanged event is emitted any time the FocusTracker detects a change in focus in any client, local or
+	 * remote.
+	 */
 	(event: "focusChanged", listener: (focusState: IFocusState) => void): void;
 }
 
-export interface IFocusState {
-	hasFocus: boolean;
-}
-
+/**
+ * The FocusTracker class tracks the focus state of all connected sessions using the Fluid Framework presence features.
+ * Focus state is tracked automatically by the class instance. As the focus state of connected sessions change, the
+ * FocusTracker emits a "focusChanged" event
+ */
 export class FocusTracker extends TypedEventEmitter<IFocusTrackerEvents> {
+	/**
+	 * A value manager that tracks the latest focus state of connected session clients.
+	 */
 	private readonly focus: LatestValueManager<IFocusState>;
 
 	constructor(
 		private readonly presence: IPresence,
-		// eslint-disable-next-line @typescript-eslint/ban-types
-		statesWorkspace: PresenceStates<{}>,
+
+		/**
+		 * A states workspace that the FocusTracker will use to share focus states with other session clients.
+		 */
+		readonly statesWorkspace: PresenceStates<any>,
 	) {
 		super();
 
-		statesWorkspace.add("focus", Latest({ hasFocus: window.document.hasFocus() }));
+		// Create a Latest value manager to track the focus state. The value is initialized with current focus state of the
+		// window.
+		statesWorkspace.add(
+			"focus",
+			Latest<IFocusState>({ hasFocus: window.document.hasFocus() }),
+		);
+
+		// Save a reference to the value manager for easy access within the FocusTracker.
 		this.focus = statesWorkspace.props.focus;
 
+		// When the focus value manager is updated, the FocusTracker should emit the focusChanged event.
 		this.focus.events.on("updated", ({ client, value }) => {
 			this.emit("focusChanged", this.focus.local);
 		});
 
-		// Alert all connected clients that there has been a change to this client's focus state
+		// Listen to the local focus and blur events. On each event, update the local focus state in the value manager, then
+		// emit the focusChanged event with the local data.
 		window.addEventListener("focus", () => {
 			this.focus.local = {
 				hasFocus: true,

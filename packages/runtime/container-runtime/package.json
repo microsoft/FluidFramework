@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/container-runtime",
-	"version": "2.20.0",
+	"version": "2.21.0",
 	"description": "Fluid container runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -203,6 +203,7 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/double-ended-queue": "^2.1.0",
+		"@types/lz4js": "^0.2.0",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",

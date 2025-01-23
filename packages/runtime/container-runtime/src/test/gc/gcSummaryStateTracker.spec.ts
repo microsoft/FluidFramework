@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -48,7 +48,7 @@ describe("GCSummaryStateTracker tests", () => {
 			summaryStateTracker.initializeBaseState({
 				gcState: initialGCState,
 				tombstones: initialTombstones,
-				deletedNodes: Array.from(initialDeletedNodes),
+				deletedNodes: [...initialDeletedNodes],
 			});
 		});
 
@@ -97,7 +97,7 @@ describe("GCSummaryStateTracker tests", () => {
 		it("does incremental summary when only tombstone state changes", async () => {
 			// Summarize with the same GC state and deleted nodes but different tombstone state as in the initial.
 			// state. The tombstone state should be summarized as a summary handle.
-			const newTombstones: string[] = Array.from([...initialTombstones, nodes[2]]);
+			const newTombstones: string[] = [...initialTombstones, nodes[2]];
 			const summary = summaryStateTracker.summarize(
 				true /* trackState */,
 				initialGCState,

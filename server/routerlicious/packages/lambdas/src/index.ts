@@ -36,6 +36,7 @@ export {
 } from "./scribe";
 export { ScriptoriumLambda, ScriptoriumLambdaFactory } from "./scriptorium";
 export {
+	circuitBreakerOptions,
 	createNackMessage,
 	createRoomJoinMessage,
 	createRoomLeaveMessage,
@@ -44,6 +45,7 @@ export {
 	isDocumentSessionValid,
 	isDocumentValid,
 	IRuntimeSignalEnvelope,
+	LambdaCircuitBreaker,
 	logCommonSessionEndMetrics,
 	NoOpLambda,
 	NoOpLambdaCheckpointConfiguration,
