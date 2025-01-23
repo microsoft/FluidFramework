@@ -32,7 +32,7 @@
 		"start:client:test": "webpack serve --config webpack.test.cjs",
 		"test": "npm run test:jest",
 		"test:jest": "jest --ci",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --passWithNoTests",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci --passWithNoTests",
 		"tinylicious": "tinylicious",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
