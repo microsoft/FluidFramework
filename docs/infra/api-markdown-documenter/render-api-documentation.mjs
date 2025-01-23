@@ -80,12 +80,20 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,
 		hierarchy: {
+			[ApiItemKind.Model]: HierarchyKind.Document,
+			[ApiItemKind.Namespace]: HierarchyKind.Folder,
+			[ApiItemKind.Package]: HierarchyKind.Folder,
 			getDocumentName: (apiItem, hierarchyConfig) => {
 				switch (apiItem.kind) {
 					case ApiItemKind.Model:
+						// We inject a custom landing page ("index.mdx") for a curated package reference.
+						// So we will give the auto-generated / complete model page its own separate document.
 						return "package-reference";
+
+					case ApiItemKind.Namespace:
 					case ApiItemKind.Package:
-						return ApiItemUtilities.getUnscopedPackageName(apiItem);
+						// Namespace and package items generate documents within their own folder.
+						return "index";
 					default:
 						let documentName = ApiItemUtilities.createQualifiedDocumentNameForApiItem(
 							apiItem,
@@ -106,8 +114,6 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 						return documentName;
 				}
 			},
-			[ApiItemKind.Enum]: HierarchyKind.Document,
-			[ApiItemKind.TypeAlias]: HierarchyKind.Document,
 		},
 		newlineKind: "lf",
 		uriRoot: uriRootDir,
