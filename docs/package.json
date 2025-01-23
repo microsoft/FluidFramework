@@ -70,7 +70,7 @@
 		"@docusaurus/tsconfig": "^3.6.2",
 		"@docusaurus/types": "^3.6.2",
 		"@easyops-cn/docusaurus-search-local": "^0.45.0",
-		"@fluid-tools/api-markdown-documenter": "file:../tools/api-markdown-documenter",
+		"@fluid-tools/api-markdown-documenter": "^0.18.0",
 		"@fluid-tools/markdown-magic": "file:../tools/markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/eslint-config-fluid": "^5.5.1",
