@@ -86,8 +86,8 @@ export class OpCompressor {
 		try {
 			// Yields a valid JSON array, since each message.contents is already serialized to JSON
 			return `[${batch.messages.map(({ contents }) => contents).join(",")}]`;
-		} catch (e: unknown) {
-			if ((e as Partial<Error>).message === "Invalid string length") {
+		} catch (newError: unknown) {
+			if ((newError as Partial<Error>).message === "Invalid string length") {
 				// This is how JSON.stringify signals that
 				// the content size exceeds its capacity
 				const error = new UsageError("Payload too large");
@@ -102,7 +102,7 @@ export class OpCompressor {
 				throw error;
 			}
 
-			throw e;
+			throw newError;
 		}
 	}
 }

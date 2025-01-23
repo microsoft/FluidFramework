@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -62,7 +62,7 @@ describe("OpGroupingManager", () => {
 			{ enabled: true, expectedResult: true },
 		];
 
-		options.forEach((option) => {
+		for (const option of options) {
 			it(`shouldGroup: groupedBatchingEnabled [${option.enabled}] tooSmall [${
 				option.tooSmall === true
 			}] reentrant [${option.reentrant === true}]`, () => {
@@ -80,7 +80,7 @@ describe("OpGroupingManager", () => {
 					option.expectedResult,
 				);
 			});
-		});
+		}
 	});
 
 	describe("groupBatch", () => {

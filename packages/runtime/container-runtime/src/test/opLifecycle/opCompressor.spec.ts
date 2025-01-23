@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
@@ -37,13 +37,17 @@ describe("OpCompressor", () => {
 		new Array(sizeInBytes + 1).join("0");
 	const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
 
-	describe("Compressing batches", () =>
-		[
-			// batch with one small message
+	describe("Compressing batches", () => {
+		for (const batch of [
+			// small batch with one small message
 			createBatch(1, 100 * 1024),
-			// batch with one large message
-			createBatch(1, 10 * 1024 * 1024),
-		].forEach((batch) => {
+			// small batch with small messages
+			createBatch(10, 100 * 1024),
+			// small batch with large messages
+			createBatch(2, 2 * 1024 * 1024),
+			// large batch with small messages
+			createBatch(1000, 100 * 1024),
+		]) {
 			it(`Batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
@@ -52,15 +56,16 @@ describe("OpCompressor", () => {
 				assert.strictEqual(compressedBatch.messages[0].compression, "lz4");
 				assert.strictEqual(compressedBatch.messages[0].metadata?.flag, true);
 			}).timeout(3000);
-		}));
+		}
+	});
 
-	describe("Unsupported batches", () =>
-		[
+	describe("Unsupported batches", () => {
+		for (const batch of [
 			// large batch with small messages
 			createBatch(6000, 100 * 1024),
 			// small batch with large messages
 			createBatch(6, 100 * 1024 * 1024),
-		].forEach((batch) => {
+		]) {
 			it(`Not compressing batch of ${batch.messages.length} ops of total size ${toMB(
 				batch.contentSizeInBytes,
 			)} MB`, () => {
@@ -78,5 +83,6 @@ describe("OpCompressor", () => {
 					"Expected error was not thrown",
 				);
 			});
-		}));
+		}
+	});
 });

@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export {
-	wrapDocumentService,
-	wrapDocumentServiceFactory,
-	wrapDocumentStorageService,
-} from "./DriverWrappers.js";
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export {
@@ -53,7 +48,6 @@ export {
 	SummaryInfo,
 } from "./TestSummaryUtils.js";
 export {
-	defaultTimeoutDurationMs,
 	timeoutAwait,
 	timeoutPromise,
 	type TimeoutDurationOption,
