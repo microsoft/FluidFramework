@@ -98,7 +98,7 @@ export class GCSummaryStateTracker {
 		// Serialize and write deleted nodes, if any. This is done irrespective of whether sweep is enabled or not so
 		// to identify deleted nodes' usage.
 		const serializedDeletedNodes =
-			deletedNodes.size > 0 ? JSON.stringify(Array.from(deletedNodes).sort()) : undefined;
+			deletedNodes.size > 0 ? JSON.stringify([...deletedNodes].sort()) : undefined;
 		// Serialize and write tombstones, if any.
 		const serializedTombstones =
 			tombstones.length > 0 ? JSON.stringify(tombstones.sort()) : undefined;

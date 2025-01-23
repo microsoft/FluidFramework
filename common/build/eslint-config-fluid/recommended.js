@@ -44,6 +44,11 @@ module.exports = {
 			},
 		],
 
+		// #region `unicorn` rule overrides
+
+		// False positives on non-array `push` methods.
+		"unicorn/no-array-push-push": "off",
+
 		"unicorn/empty-brace-spaces": "off",
 
 		// Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
@@ -107,6 +112,8 @@ module.exports = {
 		 * The rule seems to crash on some of our code
 		 */
 		"unicorn/expiring-todo-comments": "off",
+
+		// #endregion
 
 		/**
 		 * Disallows the `any` type.

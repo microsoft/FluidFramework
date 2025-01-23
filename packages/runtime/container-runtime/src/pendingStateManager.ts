@@ -244,18 +244,18 @@ export class PendingStateManager implements IDisposable {
 			);
 			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
-		this.pendingMessages.toArray().forEach((message) => {
+		for (const message of this.pendingMessages.toArray()) {
 			if (
 				snapshotSequenceNumber !== undefined &&
 				message.referenceSequenceNumber < snapshotSequenceNumber
 			) {
 				throw new LoggingError("trying to stash ops older than our latest snapshot");
 			}
-		});
+		}
 		return {
 			pendingStates: [
 				...newSavedOps,
-				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
+				...this.pendingMessages.toArray().map((message) => withoutLocalOpMetadata(message)),
 			],
 		};
 	}

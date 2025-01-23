@@ -100,7 +100,7 @@ export function isStableId(str: string): str is StableId {
 
 			default: {
 				const codePoint = str.codePointAt(i);
-				assert(codePoint !== undefined, "Unexpected undefined code point");
+				assert(codePoint !== undefined, 0xaaf /* Unexpected undefined code point */);
 				if (!isHexadecimalCharacter(codePoint)) {
 					return false;
 				}
