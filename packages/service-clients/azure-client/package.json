@@ -111,7 +111,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.13.0",
+		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.20.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
