@@ -45,6 +45,7 @@ module.exports = {
 				return;
 			}
 
+			// Skip if the property has been checked (e.g., with optional chaining). Please see isDefined() for exhaustive list.
 			if (propertyHasBeenChecked(node, context)) {
 				return;
 			}
