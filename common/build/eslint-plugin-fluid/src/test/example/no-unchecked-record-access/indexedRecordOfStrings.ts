@@ -96,9 +96,9 @@ extendedIndexedRecordOfStrings.a.length; // ok: Accessing string property of ext
 extendedIndexedRecordOfStrings.b.length; // defect: Accessing length of index property 'b', but 'b' might not be present
 
 interface NestedIndexSignatureType {
-	[WorkspaceAddress: string]: {
-		[StateValueManagerKey: string]: {
-			[ClientSessionId: string]: string;
+	[FirstNestedKey: string]: {
+		[SecondNestedKey: string]: {
+			[ThirdNestedKey: string]: string;
 		};
 	};
 }
@@ -113,7 +113,7 @@ function TestNullish(
 		for (const valueManagerKey of Object.keys(newDataValue)) {
 			for (const [nestedDataKey, value] of Object.entries(newDataValue[valueManagerKey])) {
 				mergedData[valueManagerKey] ??= {};
-				const oldData = mergedData[valueManagerKey][nestedDataKey];
+				const oldData = mergedData[valueManagerKey][nestedDataKey]; // ok: Accessing nested property nestedDataKey of mergedData[valueManagerKey] is allowed becauuse its assied using ??=
 				mergedData[valueManagerKey][nestedDataKey] = "";
 			}
 		}
@@ -130,4 +130,4 @@ if (key in datastore) {
 } else {
 	datastore[key] = {};
 }
-datastore[key][key] = {};
+datastore[key][key] = {}; // ok: Accessing nested property key of datastore[key] is allowed because it is assigned in the else case

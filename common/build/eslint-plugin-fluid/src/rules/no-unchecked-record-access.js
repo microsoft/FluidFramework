@@ -320,15 +320,15 @@ function propertyHasBeenChecked(node, context) {
 
 	while (current) {
 		if (
-			current.optional ||
-			current.type === "ChainExpression" ||
-			current.type === "TSNonNullExpression"
+			current.optional || // Check for optional chaining (?.)
+			current.type === "ChainExpression" || // Check for nullish coalescing operator (??)
+			current.type === "TSNonNullExpression" // Check for non-null assertion (!)
 		) {
 			return true;
 		}
 
 		const parent = current.parent;
-		if (!parent) break;
+		if (parent === null) break;
 
 		// Handle Object.entries/keys loops
 		if (parent.type === "ForOfStatement") {
@@ -384,7 +384,7 @@ function propertyHasBeenChecked(node, context) {
 		const containingBlock = findContainingBlock(current);
 		if (containingBlock) {
 			for (const stmt of containingBlock.body) {
-				if (stmt.range && stmt.range[0] > current.range[0]) break; // Only check statements before current node
+				if (stmt.range[0] > current.range[0]) break; // Only check statements before current node
 				if (
 					stmt.type === "IfStatement" &&
 					stmt.test?.type === "BinaryExpression" &&
@@ -442,32 +442,6 @@ function nodesAreEquivalent(a, b) {
 		default:
 			return false;
 	}
-}
-
-function findStatementContaining(block, node) {
-	return block.body.find((stmt) => isNodeContainedIn(stmt, node));
-}
-
-function isNodeContainedIn(root, target) {
-	if (root === target) return true;
-	if (typeof root !== "object" || !root) return false;
-
-	// Handle circular references and avoid infinite recursion
-	const processedNodes = new Set();
-
-	function traverse(node) {
-		if (!node || typeof node !== "object") return false;
-		if (node === target) return true;
-		if (processedNodes.has(node)) return false;
-
-		processedNodes.add(node);
-
-		return Object.entries(node)
-			.filter(([key]) => key !== "parent") // Skip parent references
-			.some(([_, child]) => traverse(child));
-	}
-
-	return traverse(root);
 }
 
 // Helper function to get the type of a node
@@ -657,6 +631,14 @@ function checkElseBlockAssignsKey(elseBlock, baseObjName, keyNode, context) {
 	let assignsKey = false;
 	const keyValue = getKeyValue(keyNode, context);
 
+	/**
+	 * Recursively traverses an AST node to check if a specific key is assigned to the base object
+	 * within the node's subtree.
+	 *
+	 * @param {Object} node - The AST node to traverse
+	 * @returns {boolean} true if the key is assigned to the base object in this subtree,
+	 * false otherwise. The traversal stops when an assignment is found.
+	 */
 	const traverseNode = (node) => {
 		if (
 			node.type === "AssignmentExpression" &&
