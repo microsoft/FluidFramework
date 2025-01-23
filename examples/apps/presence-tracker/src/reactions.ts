@@ -28,7 +28,11 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		Notifications<
 			// This explicit generic type specification will not be required in the future.
 			{
-				send: (reaction: string, intensity: "normal" | "intense") => void;
+				send: (
+					// position: IMousePosition,
+					reaction: string,
+					intensity: "normal" | "intense",
+				) => void;
 			},
 			"reactions"
 		>(
@@ -39,34 +43,48 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 	);
 
 	document.body.addEventListener("click", (e) => {
-		reactions.emit.broadcast("send", "❤️", "normal");
+		reactions.emit.broadcast(
+			"send",
+			// mouseTracker.getClientMousePosition(presence.getMyself()),
+			"❤️",
+			"normal",
+		);
 	});
 
 	document.body.addEventListener("keypress", (e) => {
-		reactions.emit.broadcast("send", e.key, "intense");
+		reactions.emit.broadcast(
+			"send",
+			// mouseTracker.getClientMousePosition(presence.getMyself()),
+			e.key,
+			"intense",
+		);
 	});
 
 	// Extract a reference to the value manager we just created.
 	const { reactions } = notifications.props;
 
-	reactions.notifications.on(
-		"send",
-		(client: ISessionClient, reaction: string, intensity: string) => {
-			const clientPosition = mouseTracker.getClientMousePosition(client);
-			const reactionDiv = document.createElement("div");
-			reactionDiv.className = "reaction";
-			reactionDiv.style.position = "absolute";
-			reactionDiv.style.left = `${clientPosition.x}px`;
-			reactionDiv.style.top = `${clientPosition.y}px`;
-			if (intensity === "intense") {
-				reactionDiv.style.fontSize = "xxx-large";
-			}
-			reactionDiv.textContent = reaction;
-			document.body.appendChild(reactionDiv);
+	reactions.notifications.on("send", onReaction);
 
-			setTimeout(() => {
-				reactionDiv.remove();
-			}, 1000);
-		},
-	);
+	function onReaction(
+		client: ISessionClient,
+		// position: IMousePosition,
+		reaction: string,
+		intensity: string,
+	): void {
+		const position = mouseTracker.getClientMousePosition(client);
+		const reactionDiv = document.createElement("div");
+		reactionDiv.className = "reaction";
+		reactionDiv.style.position = "absolute";
+		reactionDiv.style.left = `${position.x}px`;
+		reactionDiv.style.top = `${position.y}px`;
+		if (intensity === "intense") {
+			reactionDiv.style.fontSize = "xxx-large";
+		}
+		reactionDiv.textContent = reaction;
+		document.body.appendChild(reactionDiv);
+
+		setTimeout(() => {
+			reactionDiv.remove();
+		}, 1000);
+	}
 }
