@@ -68,23 +68,22 @@ export class DiceRollerFactory implements IFluidDataStoreFactory {
 		context: IFluidDataStoreContext,
 		existing: boolean,
 	): Promise<IFluidDataStoreChannel> {
+		let map: ISharedMap;
 		const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 			context,
 			diceRollerSharedObjectRegistry,
 			existing,
-			async () => instance,
+			async () => {
+				map ??= (await runtime.getChannel(mapId)) as ISharedMap;
+				return new DiceRoller(map);
+			},
 		);
 
-		let map: ISharedMap;
-		if (existing) {
-			map = (await runtime.getChannel(mapId)) as ISharedMap;
-		} else {
+		if (!existing) {
 			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
 			map.set(diceValueKey, 1);
 			map.bindToContext();
 		}
-
-		const instance = new DiceRoller(map);
 
 		return runtime;
 	}
