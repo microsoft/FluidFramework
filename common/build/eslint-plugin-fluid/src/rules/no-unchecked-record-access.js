@@ -39,8 +39,6 @@ module.exports = {
 
 		// Main function to run on every member access (e.g., obj.a or obj["a"])
 		function checkPropertyAccess(node) {
-			const fullName = getFullName(node);
-
 			if (!isIndexSignatureType(parserServices, node)) {
 				return;
 			}
@@ -50,11 +48,13 @@ module.exports = {
 				return;
 			}
 
+			const fullName = getFullName(node);
+			const parentNode = node.parent;
+
 			/*
 			 * Cases when this lint rule should report a defect
 			 */
 
-			const parentNode = node.parent;
 			if (parentNode.type === "VariableDeclarator") {
 				if (
 					parentNode.init === node &&
