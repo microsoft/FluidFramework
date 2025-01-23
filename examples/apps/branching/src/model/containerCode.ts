@@ -13,13 +13,13 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { DiceRollerFactory } from "./diceRoller.js";
+import { GroceryListFactory } from "./groceryList.js";
 
-const diceRollerId = "dice-roller";
-const diceRollerRegistryKey = "dice-roller";
-const diceRollerFactory = new DiceRollerFactory();
+const groceryListId = "grocery-list";
+const groceryListRegistryKey = "grocery-list";
+const groceryListFactory = new GroceryListFactory();
 
-export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
+export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 	public get IRuntimeFactory(): IRuntimeFactory {
 		return this;
 	}
@@ -30,19 +30,22 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 	): Promise<IRuntime> {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
-		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, diceRollerId);
+		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, groceryListId);
 
 		const runtime = await loadContainerRuntime({
 			context,
-			registryEntries: new Map([[diceRollerRegistryKey, Promise.resolve(diceRollerFactory)]]),
+			registryEntries: new Map([
+				[groceryListRegistryKey, Promise.resolve(groceryListFactory)],
+			]),
 			provideEntryPoint,
 			existing,
 		});
 
 		if (!existing) {
-			const diceRoller = await runtime.createDataStore(diceRollerRegistryKey);
-			await diceRoller.trySetAlias(diceRollerId);
+			const groceryList = await runtime.createDataStore(groceryListRegistryKey);
+			await groceryList.trySetAlias(groceryListId);
 		}
+		// Any onLoad work would happen here, none needed so far though.
 
 		return runtime;
 	}

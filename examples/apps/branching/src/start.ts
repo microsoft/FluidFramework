@@ -18,11 +18,11 @@ import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory } from "./containerCode.js";
-import type { IDiceRoller } from "./interface.js";
-import { DiceRollerView } from "./view.js";
+import { GroceryListContainerRuntimeFactory } from "./model/index.js";
+import type { IGroceryList } from "./modelInterfaces.js";
+import { AppView, DebugView } from "./view/index.js";
 
-const updateTabForId = (id: string): void => {
+const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -30,29 +30,33 @@ const updateTabForId = (id: string): void => {
 	document.title = id;
 };
 
-const render = (diceRoller: IDiceRoller): void => {
+const render = (groceryList: IGroceryList) => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	const appRoot = createRoot(appDiv);
-	appRoot.render(createElement(DiceRollerView, { diceRoller }));
+	appRoot.render(createElement(AppView, { groceryList }));
+
+	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
+	const debugDiv = document.getElementById("debug") as HTMLDivElement;
+	const debugRoot = createRoot(debugDiv);
+	debugRoot.render(createElement(DebugView, { groceryList }));
 };
 
-const urlResolver = createInsecureTinyliciousTestUrlResolver();
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();
-const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
-const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory());
+const urlResolver = createInsecureTinyliciousTestUrlResolver();
+const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory());
 
 async function start(): Promise<void> {
 	let id: string;
-	let diceRoller: IDiceRoller;
+	let groceryList: IGroceryList;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
-			documentServiceFactory,
+			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+		groceryList = (await container.getEntryPoint()) as IGroceryList;
 		await container.attach(createTinyliciousTestCreateNewRequest());
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url not available on attached container");
@@ -63,13 +67,13 @@ async function start(): Promise<void> {
 		const container = await loadExistingContainer({
 			request: { url: id },
 			urlResolver,
-			documentServiceFactory,
+			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+		groceryList = (await container.getEntryPoint()) as IGroceryList;
 	}
 
-	render(diceRoller);
+	render(groceryList);
 	updateTabForId(id);
 }
 

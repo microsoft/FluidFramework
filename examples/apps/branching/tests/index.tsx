@@ -17,14 +17,15 @@ import {
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
-import { DiceRollerContainerRuntimeFactory } from "../src/containerCode.js";
 import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
-import { DiceRollerView } from "../src/view.js";
-import type { IDiceRoller } from "../src/interface.js";
 
-const updateTabForId = (id: string): void => {
+import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
+import type { IGroceryList } from "../src/modelInterfaces.js";
+import { AppView, DebugView } from "../src/view/index.js";
+
+const updateTabForId = (id: string) => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -34,15 +35,15 @@ const updateTabForId = (id: string): void => {
 
 const urlResolver = new LocalResolver();
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
-const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory());
+const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory());
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
+export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	let id: string;
-	let diceRoller: IDiceRoller;
+	let groceryList: IGroceryList;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
@@ -51,7 +52,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+		groceryList = (await container.getEntryPoint()) as IGroceryList;
 		const documentId = uuid();
 		await container.attach(createLocalResolverCreateNewRequest(documentId));
 		if (container.resolvedUrl === undefined) {
@@ -67,18 +68,27 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+		groceryList = (await container.getEntryPoint()) as IGroceryList;
 	}
 
-	const render = (diceRoller: IDiceRoller) => {
-		const appRoot = createRoot(element);
-		appRoot.render(createElement(DiceRollerView, { diceRoller }));
+	const appDiv = document.createElement("div");
+	const debugDiv = document.createElement("div");
+
+	const render = (groceryList: IGroceryList) => {
+		const appRoot = createRoot(appDiv);
+		appRoot.render(createElement(AppView, { groceryList }));
+
+		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
+		const debugRoot = createRoot(debugDiv);
+		debugRoot.render(createElement(DebugView, { groceryList }));
 	};
 
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(diceRoller);
+	render(groceryList);
+
+	element.append(appDiv, debugDiv);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation
@@ -88,7 +98,7 @@ async function createContainerAndRenderInElement(element: HTMLDivElement): Promi
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup(): Promise<void> {
+async function setup() {
 	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
 	if (leftElement === null) {
 		throw new Error("sbs-left does not exist");
