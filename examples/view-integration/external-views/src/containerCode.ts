@@ -43,7 +43,6 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 			const diceRoller = await runtime.createDataStore(diceRollerRegistryKey);
 			await diceRoller.trySetAlias(diceRollerId);
 		}
-		// Any onLoad work would happen here, none needed so far though.
 
 		return runtime;
 	}

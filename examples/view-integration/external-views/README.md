@@ -2,7 +2,7 @@
 
 The **external-views** example has a dice and a button. Clicking the button re-rolls the dice and persists the value in a SharedMap.
 
-This example demonstrates the external-views pattern.  In this pattern, the container code (containerCode.ts) establishes the model and controller logic (the DiceRoller, diceRoller.ts) but it does not establish the view code (view.tsx) or its binding to the model/controller.  This step is instead left up to the consumer of the container to do (here, in app.ts).
+This example demonstrates the external-views pattern.  In this pattern, the container code (containerCode.ts) establishes the model and controller logic (the DiceRoller, diceRoller.ts) but it does not establish the view code (view.tsx) or its binding to the model/controller.  This step is instead left up to the consumer of the container to do (for this example, in app.ts).
 
 This is distinct from the container-views pattern, where the container brings a view and its binding to the model/controller as well.  Although it can sometimes be convenient to have a view provided by the container, the container-views pattern may result in less view flexibility (depending on what is exposed to the container consumer) and larger-than-necessary bundle size (especially for headless usage).  The external-views pattern is therefore recommended over the container-views pattern for general use.
 

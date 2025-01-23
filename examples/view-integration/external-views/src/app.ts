@@ -22,7 +22,7 @@ import { DiceRollerContainerRuntimeFactory } from "./containerCode.js";
 import type { IDiceRoller } from "./interface.js";
 import { DiceRollerView } from "./view.js";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -30,7 +30,7 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const render = (diceRoller: IDiceRoller) => {
+const render = (diceRoller: IDiceRoller): void => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	const appRoot = createRoot(appDiv);
 	appRoot.render(createElement(DiceRollerView, { diceRoller }));
@@ -43,7 +43,7 @@ const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory())
 
 async function start(): Promise<void> {
 	let id: string;
-	let groceryList: IDiceRoller;
+	let diceRoller: IDiceRoller;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
@@ -52,7 +52,7 @@ async function start(): Promise<void> {
 			documentServiceFactory,
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IDiceRoller;
+		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 		await container.attach(createTinyliciousTestCreateNewRequest());
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url not available on attached container");
@@ -66,10 +66,10 @@ async function start(): Promise<void> {
 			documentServiceFactory,
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IDiceRoller;
+		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	}
 
-	render(groceryList);
+	render(diceRoller);
 	updateTabForId(id);
 }
 

@@ -24,7 +24,7 @@ import { v4 as uuid } from "uuid";
 import { DiceRollerView } from "../src/view.js";
 import type { IDiceRoller } from "../src/interface.js";
 
-const updateTabForId = (id: string) => {
+const updateTabForId = (id: string): void => {
 	// Update the URL with the actual ID
 	location.hash = id;
 
@@ -40,7 +40,7 @@ const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory())
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
-export async function createContainerAndRenderInElement(element: HTMLDivElement) {
+async function createContainerAndRenderInElement(element: HTMLDivElement): Promise<void> {
 	let id: string;
 	let diceRoller: IDiceRoller;
 
@@ -88,7 +88,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 /**
  * For local testing we have two div's that we are rendering into independently.
  */
-async function setup() {
+async function setup(): Promise<void> {
 	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
 	if (leftElement === null) {
 		throw new Error("sbs-left does not exist");
