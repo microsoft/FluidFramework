@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/debugger",
-	"version": "2.20.0",
+	"version": "2.20.1",
 	"description": "Fluid Debugger - a tool to play through history of a file",
 	"homepage": "https://fluidframework.com",
 	"repository": {
