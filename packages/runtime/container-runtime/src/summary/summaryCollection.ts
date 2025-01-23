@@ -5,7 +5,11 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEvent,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
@@ -15,7 +19,10 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Interface for summary op messages with typed contents.
@@ -284,12 +291,14 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		this.deltaManager.off("op", listener);
 	}
 
+	private readonly logger: ITelemetryLoggerExt;
 	public constructor(
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		private readonly logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 	) {
 		super();
 		this.deltaManager.on("op", (op) => this.handleOp(op));
+		this.logger = createChildLogger({ logger });
 	}
 
 	/**
