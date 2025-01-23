@@ -1036,9 +1036,6 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../../packages/common/client-utils
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../packages/common/container-definitions
@@ -1054,9 +1051,15 @@ importers:
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-static
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../packages/framework/presence
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../../packages/service-clients/tinylicious-client
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
@@ -1127,6 +1130,9 @@ importers:
       source-map-loader:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.97.1)
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
