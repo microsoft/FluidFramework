@@ -35,28 +35,64 @@ export const insertField: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const numberText = random.string(5, "0123456789");
-	if (
-		// start is not a number
-		Number.isNaN(Number(client.getText(opStart, opStart + 1))) &&
-		// previous is not a number
-		(opStart === 0 ||
-			opStart >= client.getLength() ||
-			Number.isNaN(Number(client.getText(opStart - 1, opStart))))
-	) {
-		return client.insertTextLocal(opStart, numberText);
+	let finalText = "{";
+	const numberText: string = (client.longClientId!.codePointAt(0)! % 10).toString().repeat(5);
+	// eslint-disable-next-line unicorn/prefer-spread
+	finalText = finalText.concat(numberText, "}");
+	if (getFieldEndpoints(client, opStart, opEnd) === undefined) {
+		return client.insertTextLocal(opStart, finalText);
 	}
 };
 
-const numberRange = (
+const posInField = (
 	client: TestClient,
-	start: number,
-): { startPos: number | undefined; endPos: number | undefined } => {
-	let startPos = start;
-	while (startPos > 0 && !Number.isNaN(Number(client.getText(startPos, startPos + 1)))) {
+	pos: number,
+): { startPos: number; endPos: number } | undefined => {
+	if (
+		pos >= client.getLength() ||
+		(!Number.isInteger(Number(client.getText(pos, pos + 1))) &&
+			client.getText(pos, pos + 1) !== "{" &&
+			client.getText(pos, pos + 1) !== "}")
+	) {
+		return undefined;
+	}
+
+	let startPos = pos;
+	let endPos = pos;
+	// will need to walk in both directions if i do a variable length field, and comment what im doing regardless
+	while (
+		startPos > 0 &&
+		client.getText(startPos, startPos + 1) !== "{" &&
+		client.getText(startPos, startPos + 1) !== "}" &&
+		Number.isInteger(Number(client.getText(startPos, startPos + 1)))
+	) {
 		startPos--;
 	}
-	return { startPos, endPos: startPos + 4 };
+
+	while (
+		endPos < client.getLength() &&
+		client.getText(startPos, startPos + 1) !== "{" &&
+		client.getText(startPos, startPos + 1) !== "}" &&
+		Number.isInteger(Number(client.getText(endPos, endPos + 1)))
+	) {
+		endPos++;
+	}
+
+	return { startPos, endPos };
+};
+
+const getFieldEndpoints = (
+	client: TestClient,
+	start: number,
+	end: number,
+): { startPos: number; endPos: number } | undefined => {
+	const startField = posInField(client, start);
+	const endField = posInField(client, end);
+
+	if (startField === undefined && endField === undefined) {
+		return undefined;
+	}
+	return startField ?? endField;
 };
 
 export const obliterateField: TestOperation = (
@@ -65,20 +101,27 @@ export const obliterateField: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const { startPos, endPos } = numberRange(client, opStart);
+	const fieldEndpoints = getFieldEndpoints(client, opStart, opEnd);
 
 	let endISP: InteriorSequencePlace | undefined;
-	if (startPos !== undefined && endPos !== undefined) {
-		if (endPos >= client.getLength())
+	if (fieldEndpoints !== undefined) {
+		const { startPos, endPos } = fieldEndpoints;
+		if (endPos >= client.getLength()) {
 			endISP = { pos: client.getLength() - 1, side: Side.After };
+		}
+		// i think this should take care of the word case (insert+obliterate concurrently)
+		insertField(client, startPos, endPos, random);
 		return client.obliterateRangeLocal(
 			{ pos: startPos, side: Side.Before },
 			endISP ?? { pos: endPos, side: Side.After },
 		);
 	}
+	if (opEnd >= client.getLength()) {
+		endISP = { pos: client.getLength() - 1, side: Side.After };
+	}
 	return client.obliterateRangeLocal(
 		{ pos: opStart, side: Side.Before },
-		{ pos: opEnd, side: Side.After },
+		endISP ?? { pos: opEnd, side: Side.After },
 	);
 };
 
@@ -413,11 +456,24 @@ export function generateOperationMessagesForClients(
 		let op: IMergeTreeOp | undefined;
 		if (len === 0 || len < minLength) {
 			const text = client.longClientId!.repeat(random.integer(1, 3));
-			op = client.insertTextLocal(random.integer(0, len), text);
+			let pos = random.integer(0, len);
+			const fieldEndpoints = posInField(client, pos);
+
+			if (fieldEndpoints !== undefined) {
+				pos = 0;
+			}
+			op = client.insertTextLocal(pos, text);
 		} else {
 			let opIndex = random.integer(0, operations.length - 1);
-			const start = random.integer(0, len - 1);
-			const end = random.integer(start + 1, len);
+			let start = random.integer(0, len - 1);
+			let end = random.integer(start + 1, len);
+			const fieldEndpoints = getFieldEndpoints(client, start, end);
+
+			if (fieldEndpoints !== undefined) {
+				const { startPos, endPos } = fieldEndpoints;
+				start = startPos;
+				end = endPos;
+			}
 
 			for (let y = 0; y < operations.length && op === undefined; y++) {
 				op = operations[opIndex](client, start, end, random);
