@@ -32,22 +32,22 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
-// @alpha
+// @alpha @deprecated
 export const currentDocumentVersionSchema = 1;
 
 // @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
-// @alpha
+// @alpha @deprecated
 export const DeletedResponseHeaderKey = "wasDeleted";
 
 // @alpha (undocumented)
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
-// @alpha
+// @alpha @deprecated
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export class DocumentsSchemaController {
     constructor(existing: boolean, snapshotSequenceNumber: number, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
@@ -73,7 +73,7 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly overridden?: undefined;
 };
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type GCFeatureMatrix = {
     gcGeneration?: number;
     tombstoneGeneration?: undefined;
@@ -81,7 +81,7 @@ export type GCFeatureMatrix = {
     tombstoneGeneration: number;
 };
 
-// @alpha
+// @alpha @deprecated
 export const GCNodeType: {
     readonly DataStore: "DataStore";
     readonly SubDataStore: "SubDataStore";
@@ -89,10 +89,10 @@ export const GCNodeType: {
     readonly Other: "Other";
 };
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type GCVersion = number;
 
 // @alpha
@@ -121,7 +121,7 @@ export interface IBaseSummarizeResult {
     readonly stage: "base";
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IBlobManagerLoadInfo {
     // (undocumented)
     ids?: string[];
@@ -137,13 +137,13 @@ export interface IBroadcastSummaryResult {
     readonly summarizeOp: ISummaryOpMessage;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
     // (undocumented)
     stop(reason: SummarizerStopReason): void;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ICancellationToken<T> {
     readonly cancelled: boolean;
     readonly waitCancelled: Promise<T>;
@@ -163,7 +163,7 @@ export interface ICompressionRuntimeOptions {
     readonly minimumBatchSizeInBytes: number;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IConnectableRuntime {
     // (undocumented)
     readonly clientId: string | undefined;
@@ -175,7 +175,7 @@ export interface IConnectableRuntime {
     once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
     readonly disableIsolatedChannels?: true;
     // (undocumented)
@@ -205,7 +205,7 @@ export interface IContainerRuntimeOptions {
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ICreateContainerMetadata {
     createContainerRuntimeVersion?: string;
     createContainerTimestamp?: number;
@@ -214,7 +214,7 @@ export interface ICreateContainerMetadata {
 // @alpha
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
-// @alpha
+// @alpha @deprecated
 export interface IDocumentSchema {
     // (undocumented)
     refSeq: number;
@@ -224,10 +224,10 @@ export interface IDocumentSchema {
     version: number;
 }
 
-// @alpha
+// @alpha @deprecated
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
-// @alpha
+// @alpha @deprecated
 export type IDocumentSchemaCurrent = {
     version: 1;
     refSeq: number;
@@ -236,7 +236,7 @@ export type IDocumentSchemaCurrent = {
     };
 };
 
-// @alpha
+// @alpha @deprecated
 export interface IDocumentSchemaFeatures {
     // (undocumented)
     compressionLz4: boolean;
@@ -282,7 +282,7 @@ export interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFlui
     readonly summaryFormatVersion: 2;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IGCMetadata {
     readonly gcFeature?: GCVersion;
     readonly gcFeatureMatrix?: GCFeatureMatrix;
@@ -301,7 +301,7 @@ export interface IGCRuntimeOptions {
     sweepGracePeriodMs?: number;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {
 }
 
@@ -324,7 +324,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly summaryTree: ISummaryTree;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IMarkPhaseStats {
     attachmentBlobCount: number;
     dataStoreCount: number;
@@ -354,7 +354,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly retryOnFailure?: boolean;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IRefreshSummaryAckOptions {
     readonly ackHandle: string;
     readonly proposalHandle: string | undefined;
@@ -368,7 +368,7 @@ export interface IRetriableFailureError extends Error {
     readonly retryAfterSeconds?: number;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ISerializedElection {
     readonly electedClientId: string | undefined;
     readonly electedParentId: string | undefined;
@@ -383,7 +383,7 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
     readonly submitOpDuration: number;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
     readonly finalAttempt?: boolean;
@@ -416,13 +416,13 @@ export interface ISummarizeResults {
     readonly summarySubmitted: Promise<SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>>;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISummarizerInternalsProvider {
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     readonly baseLogger: ITelemetryBaseLogger;
@@ -466,7 +466,7 @@ export interface ISummaryBaseConfiguration {
     maxOpsSinceLastSummary: number;
 }
 
-// @alpha
+// @alpha @deprecated
 export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 // @alpha (undocumented)
@@ -504,7 +504,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     state: "enabled";
 }
 
-// @alpha
+// @alpha @deprecated
 export type ISummaryMetadataMessage = Pick<ISequencedDocumentMessage, "clientId" | "clientSequenceNumber" | "minimumSequenceNumber" | "referenceSequenceNumber" | "sequenceNumber" | "timestamp" | "type">;
 
 // @alpha
@@ -530,7 +530,7 @@ export interface ISummaryRuntimeOptions {
     summaryConfigOverrides?: ISummaryConfiguration;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ISweepPhaseStats {
     deletedAttachmentBlobCount: number;
     deletedDataStoreCount: number;
@@ -584,7 +584,7 @@ export interface SubmitSummaryFailureData {
 // @alpha
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
-// @alpha
+// @alpha @deprecated
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
     constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
