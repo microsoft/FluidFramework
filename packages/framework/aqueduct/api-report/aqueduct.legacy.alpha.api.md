@@ -94,6 +94,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
     get IFluidHandle(): IFluidHandleInternal<this>;
     get IFluidLoadable(): this;
     initializeInternal(existing: boolean): Promise<void>;
+    // @deprecated (undocumented)
+    protected initializeP: Promise<void> | undefined;
     protected initializingFirstTime(props?: I["InitialState"]): Promise<void>;
     protected initializingFromExisting(): Promise<void>;
     // (undocumented)

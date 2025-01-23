@@ -60,6 +60,15 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	#initializationPromise: Promise<void> | undefined;
 
+	/**
+	 * @deprecated `initializeP` has no defined behavior and should not be used for anything.
+	 * @privateRemarks
+	 * This API is left over from a rename of `#initializationPromise` and is not used in internally.
+	 * For unknown reasons this API was exposed as a protected member with no documented behavior nor any usage or clear use-case.
+	 * It is kept as a deprecated API to avoid breaking changes, though nothing should be using it.
+	 */
+	protected initializeP: Promise<void> | undefined;
+
 	public get id(): string {
 		return this.runtime.id;
 	}
