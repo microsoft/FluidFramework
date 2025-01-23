@@ -79,14 +79,14 @@ export class OpDecompressor {
 				});
 				return true;
 			}
-		} catch (err) {
+		} catch {
 			return false;
 		}
 
 		return false;
 	}
 
-	public get currentlyUnrolling() {
+	public get currentlyUnrolling(): boolean {
 		return this.activeBatch;
 	}
 

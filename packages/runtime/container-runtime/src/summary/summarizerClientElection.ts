@@ -51,10 +51,10 @@ export class SummarizerClientElection
 	 */
 	private lastReportedSeq = 0;
 
-	public get electedClientId() {
+	public get electedClientId(): string | undefined {
 		return this.clientElection.electedClient?.clientId;
 	}
-	public get electedParentId() {
+	public get electedParentId(): string | undefined {
 		return this.clientElection.electedParent?.clientId;
 	}
 

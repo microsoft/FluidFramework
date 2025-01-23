@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
+import assert from "node:assert";
 
 import {
 	ContainerErrorTypes,
@@ -561,7 +561,10 @@ describe("Pending State Manager", () => {
 					{ input: ["xy", "xxx"], expected: [1, "y", "x"] },
 					{ input: ["xyz", "xyz"], expected: [-1] },
 				];
-				testCases.forEach(({ input: [a, b], expected: [i, charA, charB] }) => {
+				for (const {
+					input: [a, b],
+					expected: [i, charA, charB],
+				} of testCases) {
 					assert.deepEqual(
 						findFirstCharacterMismatched(a, b),
 						[i, charA, charB],
@@ -572,7 +575,7 @@ describe("Pending State Manager", () => {
 						[i, charB, charA],
 						`Failed input: "${b}", "${a}"`,
 					);
-				});
+				}
 			});
 		});
 

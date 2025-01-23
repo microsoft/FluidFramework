@@ -134,9 +134,13 @@ export class GCTelemetryTracker {
 	) {}
 
 	/**
-	 * Returns whether an event should be logged for a node that isn't active anymore. This does not apply to
-	 * tombstoned nodes for which an event is always logged. Some scenarios where we won't log:
+	 * Returns whether an event should be logged for a node that isn't active anymore.
+	 *
+	 * @remarks
+	 * This does not apply to tombstoned nodes for which an event is always logged. Some scenarios where we won't log:
+	 *
 	 * 1. When a DDS is changed. The corresponding data store's event will be logged instead.
+	 *
 	 * 2. An event is logged only once per container instance per event per node.
 	 */
 	private shouldLogNonActiveEvent(
@@ -144,7 +148,7 @@ export class GCTelemetryTracker {
 		usageType: NodeUsageType,
 		nodeStateTracker: UnreferencedStateTracker,
 		uniqueEventId: string,
-	) {
+	): boolean {
 		if (nodeStateTracker.state === UnreferencedState.Active) {
 			return false;
 		}
@@ -184,7 +188,7 @@ export class GCTelemetryTracker {
 			isTombstoned,
 			...otherNodeUsageProps
 		}: INodeUsageProps,
-	) {
+	): void {
 		// Note: For SubDataStore Load usage, trackedId will be the DataStore's id, not the full path in question.
 		// This is necessary because the SubDataStore path may be unrecognized by GC (if suited for a custom request handler)
 		const nodeStateTracker = this.getNodeStateTracker(trackedId);
@@ -192,17 +196,21 @@ export class GCTelemetryTracker {
 
 		const timeout = (() => {
 			switch (nodeStateTracker?.state) {
-				case UnreferencedState.Inactive:
+				case UnreferencedState.Inactive: {
 					return this.configs.inactiveTimeoutMs;
-				case UnreferencedState.TombstoneReady:
+				}
+				case UnreferencedState.TombstoneReady: {
 					return this.configs.tombstoneTimeoutMs;
-				case UnreferencedState.SweepReady:
+				}
+				case UnreferencedState.SweepReady: {
 					return (
 						this.configs.tombstoneTimeoutMs &&
 						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
 					);
-				default:
+				}
+				default: {
 					return undefined;
+				}
 			}
 		})();
 		const { persistedGcFeatureMatrix, ...configs } = this.configs;
@@ -289,7 +297,7 @@ export class GCTelemetryTracker {
 		nodeType: GCNodeType,
 		usageType: NodeUsageType,
 		packagePath?: readonly string[],
-	) {
+	): void {
 		// This will log the following events:
 		// GC_Tombstone_DataStore_Requested, GC_Tombstone_DataStore_Changed, GC_Tombstone_DataStore_Revived
 		// GC_Tombstone_SubDataStore_Requested, GC_Tombstone_SubDataStore_Changed, GC_Tombstone_SubDataStore_Revived
@@ -336,7 +344,7 @@ export class GCTelemetryTracker {
 		previousGCData: IGarbageCollectionData,
 		explicitReferences: Map<string, string[]>,
 		logger: ITelemetryLoggerExt,
-	) {
+	): void {
 		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
 			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
 			const explicitRoutes = explicitReferences.get(nodeId) ?? [];
@@ -380,7 +388,7 @@ export class GCTelemetryTracker {
 	 * Log events that are pending in pendingEventsQueue. This is called after GC runs in the summarizer client
 	 * so that the state of an unreferenced node is updated.
 	 */
-	public async logPendingEvents(logger: ITelemetryLoggerExt) {
+	public async logPendingEvents(logger: ITelemetryLoggerExt): Promise<void> {
 		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
 		// summary time they are then logged.
 		// Events generated:
@@ -407,10 +415,8 @@ export class GCTelemetryTracker {
 			const active =
 				nodeStateTracker === undefined || nodeStateTracker.state === UnreferencedState.Active;
 			if ((usageType === "Revived") === active) {
-				const pkg = await this.getNodePackagePath(eventProps.id.value);
-				const fromPkg = eventProps.fromId
-					? await this.getNodePackagePath(eventProps.fromId.value)
-					: undefined;
+				const pkg = await this.getNodePackagePath(id.value);
+				const fromPkg = fromId ? await this.getNodePackagePath(fromId.value) : undefined;
 				const event = {
 					eventName: `${state}Object_${usageType}`,
 					id,

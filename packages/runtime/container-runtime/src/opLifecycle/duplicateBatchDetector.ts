@@ -84,13 +84,13 @@ export class DuplicateBatchDetector {
 	 * Batches that started before the MSN are not at risk for a sequenced duplicate to arrive,
 	 * since the batch start has been processed by all clients, and local batches are deduped and the forked client would close.
 	 */
-	private clearOldBatchIds(msn: number) {
-		this.batchIdsBySeqNum.forEach((batchId, sequenceNumber) => {
+	private clearOldBatchIds(msn: number): void {
+		for (const [sequenceNumber, batchId] of this.batchIdsBySeqNum) {
 			if (sequenceNumber < msn) {
 				this.batchIdsBySeqNum.delete(sequenceNumber);
 				this.batchIdsAll.delete(batchId);
 			}
-		});
+		}
 	}
 
 	/**

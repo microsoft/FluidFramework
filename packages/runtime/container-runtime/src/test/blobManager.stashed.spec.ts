@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
@@ -19,7 +19,7 @@ import {
 	IContainerHandleContextRuntime,
 } from "../containerHandleContext.js";
 
-export const failProxy = <T extends object>(handler: Partial<T> = {}) => {
+export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 	const proxy: T = new Proxy<T>(handler as T, {
 		get: (t, p, r) => {
 			if (p === "then") {

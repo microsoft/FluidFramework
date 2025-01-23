@@ -112,7 +112,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 * @param id - Optional name of the Ink; will be assigned a unique ID if not provided
 	 * @returns Newly create Ink object (but not attached yet)
 	 */
-	public static create(runtime: IFluidDataStoreRuntime, id?: string) {
+	public static create(runtime: IFluidDataStoreRuntime, id?: string): Ink {
 		return runtime.createChannel(id, InkFactory.Type) as Ink;
 	}
 
@@ -120,7 +120,7 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	 * Get a factory for Ink to register with the data store.
 	 * @returns A factory that creates and loads Ink
 	 */
-	public static getFactory() {
+	public static getFactory(): InkFactory {
 		return new InkFactory();
 	}
 

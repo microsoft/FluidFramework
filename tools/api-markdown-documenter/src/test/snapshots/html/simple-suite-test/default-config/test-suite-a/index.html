@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <section>
+      <h1>test-suite-a</h1>
+      <section>
+        <p><a href="/">Packages</a> > <a href="/test-suite-a/">test-suite-a</a></p>
+      </section>
+      <section>
+        <p>Test package</p>
+      </section>
+      <section>
+        <h2 id="test-suite-a-remarks">Remarks</h2>
+        <p>
+          <p>This remarks block includes a bulleted list!</p>
+          <p>- Bullet 1</p>
+          <p>- Bullet 2</p>
+          <p>And an ordered list for good measure!</p>
+          <p>1. List item 1</p>
+          <p>2. List item 2</p>
+          <p>3. List item 3</p>
+          <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
+          <p>- Good link (no alias): <a href="/test-suite-a/testclass-class">TestClass</a></p>
+          <p>- Good link (with alias): <a href="/test-suite-a/#testfunction-function">function alias text</a></p>
+          <p>- Bad link (no alias): <span><i>InvalidItem</i></span></p>
+          <p>- Bad link (with alias): <span><i>even though I link to an invalid item, I would still like this text to be rendered</i></span></p>
+        </p>
+      </section>
+      <section>
+        <h2 id="test-suite-a-example">Example</h2>
+        <p>
+          <p>A test example</p><code>const foo = bar;</code>
+        </p>
+      </section>
+      <section>
+        <h2>Interfaces</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Interface</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a></td>
+              <td>An empty interface</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/testinterface-interface">TestInterface</a></td>
+              <td>Test interface</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/testinterfaceextendingotherinterfaces-interface">TestInterfaceExtendingOtherInterfaces</a></td>
+              <td>Test interface that extends other interfaces</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/testinterfacewithindexsignature-interface">TestInterfaceWithIndexSignature</a></td>
+              <td>An interface with an index signature.</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a></td>
+              <td>Test interface with generic type parameter</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Classes</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Class</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="/test-suite-a/testabstractclass-class">TestAbstractClass</a></td>
+              <td>A test abstract class.</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/testclass-class">TestClass</a></td>
+              <td>Test class</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Enumerations</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Enum</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="/test-suite-a/testenum-enum">TestEnum</a></td>
+              <td>Test Enum</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Types</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>TypeAlias</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="/test-suite-a/testmappedtype-typealias">TestMappedType</a></td>
+              <td>Test Mapped Type, using <a href="/test-suite-a/testenum-enum">TestEnum</a></td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/typealias-typealias">TypeAlias</a></td>
+              <td>Test Type-Alias</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Functions</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Function</th>
+              <th>Alerts</th>
+              <th>Return Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="/test-suite-a/#testfunction-function">testFunction(testParameter, testOptionalParameter)</a></td>
+              <td><code>Alpha</code></td>
+              <td><span>TTypeParameter</span></td>
+              <td>Test function</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/#testfunctionreturninginlinetype-function">testFunctionReturningInlineType()</a></td>
+              <td></td>
+              <td><span>{ foo: number; bar: <a href="/test-suite-a/testenum-enum">TestEnum</a>; }</span></td>
+              <td>Test function that returns an inline type</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/#testfunctionreturningintersectiontype-function">testFunctionReturningIntersectionType()</a></td>
+              <td><code>Deprecated</code></td>
+              <td><span><a href="/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></span></td>
+              <td>Test function that returns an inline type</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/#testfunctionreturninguniontype-function">testFunctionReturningUnionType()</a></td>
+              <td></td>
+              <td><span>string | <a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
+              <td>Test function that returns an inline type</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Variables</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Alerts</th>
+              <th>Modifiers</th>
+              <th>Type</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="/test-suite-a/#testconst-variable">testConst</a></td>
+              <td><code>Beta</code></td>
+              <td><code>readonly</code></td>
+              <td></td>
+              <td>Test Constant</td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/#testconstwithemptydeprecatedblock-variable">testConstWithEmptyDeprecatedBlock</a></td>
+              <td><code>Deprecated</code></td>
+              <td><code>readonly</code></td>
+              <td><span>string</span></td>
+              <td>I have a <code>@deprecated</code> tag with an empty comment block.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Namespaces</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Namespace</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a href="/test-suite-a/testmodule-namespace/">TestModule</a></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td><a href="/test-suite-a/testnamespace-namespace/">TestNamespace</a></td>
+              <td>Test Namespace</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Function Details</h2>
+        <section>
+          <h3 id="testfunction-function">testFunction</h3>
+          <section>
+            <p>Test function</p>
+          </section>
+          <section><span><b>WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.</b></span></section>
+          <section>
+            <h4 id="testfunction-signature">Signature</h4><code>export declare function testFunction&#x3C;TTypeParameter extends TestInterface = TestInterface>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;</code>
+            <p>
+              <section>
+                <h5>Type Parameters</h5>
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Parameter</th>
+                      <th>Constraint</th>
+                      <th>Default</th>
+                      <th>Description</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>TTypeParameter</td>
+                      <td><span><a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
+                      <td><span><a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
+                      <td>A test type parameter</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </section>
+            </p>
+          </section>
+          <section>
+            <h4 id="testfunction-remarks">Remarks</h4>
+            <p>This is a test <a href="/test-suite-a/testinterface-interface">link</a> to another API member</p>
+          </section>
+          <section>
+            <h4 id="testfunction-parameters">Parameters</h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Parameter</th>
+                  <th>Modifiers</th>
+                  <th>Type</th>
+                  <th>Description</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>testParameter</td>
+                  <td></td>
+                  <td><span>TTypeParameter</span></td>
+                  <td>A test parameter</td>
+                </tr>
+                <tr>
+                  <td>testOptionalParameter</td>
+                  <td>optional</td>
+                  <td><span>TTypeParameter</span></td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+          <section>
+            <h4 id="testfunction-returns">Returns</h4>
+            <p>The provided parameter</p>
+            <p><span><b>Return type: </b></span><span>TTypeParameter</span></p>
+          </section>
+          <section>
+            <h4 id="testfunction-throws">Throws</h4>
+            <p>An Error when something bad happens.</p>
+          </section>
+        </section>
+        <section>
+          <h3 id="testfunctionreturninginlinetype-function">testFunctionReturningInlineType</h3>
+          <section>
+            <p>Test function that returns an inline type</p>
+          </section>
+          <section>
+            <h4 id="testfunctionreturninginlinetype-signature">Signature</h4><code>export declare function testFunctionReturningInlineType(): {<br>foo: number;<br>bar: TestEnum;<br>};</code>
+          </section>
+          <section>
+            <h4 id="testfunctionreturninginlinetype-returns">Returns</h4>
+            <p>An inline type</p>
+            <p><span><b>Return type: </b></span><span>{ foo: number; bar: <a href="/test-suite-a/testenum-enum">TestEnum</a>; }</span></p>
+          </section>
+        </section>
+        <section>
+          <h3 id="testfunctionreturningintersectiontype-function">testFunctionReturningIntersectionType</h3>
+          <section>
+            <p>Test function that returns an inline type</p>
+          </section>
+          <section>
+            <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span><br><span><p><i>This is a test deprecation notice. Here is a </i><a href="/test-suite-a/#testfunctionreturninguniontype-function"><i>link</i></a><i> to something else!</i></p></span></p>
+          </section>
+          <section>
+            <h4 id="testfunctionreturningintersectiontype-signature">Signature</h4><code>export declare function testFunctionReturningIntersectionType(): TestEmptyInterface &#x26; TestInterfaceWithTypeParameter&#x3C;number>;</code>
+          </section>
+          <section>
+            <h4 id="testfunctionreturningintersectiontype-returns">Returns</h4>
+            <p>an intersection type</p>
+            <p><span><b>Return type: </b></span><span><a href="/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></span></p>
+          </section>
+        </section>
+        <section>
+          <h3 id="testfunctionreturninguniontype-function">testFunctionReturningUnionType</h3>
+          <section>
+            <p>Test function that returns an inline type</p>
+          </section>
+          <section>
+            <h4 id="testfunctionreturninguniontype-signature">Signature</h4><code>export declare function testFunctionReturningUnionType(): string | TestInterface;</code>
+          </section>
+          <section>
+            <h4 id="testfunctionreturninguniontype-returns">Returns</h4>
+            <p>A union type</p>
+            <p><span><b>Return type: </b></span><span>string | <a href="/test-suite-a/testinterface-interface">TestInterface</a></span></p>
+          </section>
+        </section>
+      </section>
+      <section>
+        <h2>Variable Details</h2>
+        <section>
+          <h3 id="testconst-variable">testConst</h3>
+          <section>
+            <p>Test Constant</p>
+          </section>
+          <section><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></section>
+          <section>
+            <h4 id="testconst-signature">Signature</h4><code>testConst = 42</code>
+          </section>
+          <section>
+            <h4 id="testconst-remarks">Remarks</h4>
+            <p>Here are some remarks about the variable</p>
+          </section>
+        </section>
+        <section>
+          <h3 id="testconstwithemptydeprecatedblock-variable">testConstWithEmptyDeprecatedBlock</h3>
+          <section>
+            <p>I have a <code>@deprecated</code> tag with an empty comment block.</p>
+          </section>
+          <section>
+            <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span><br><span><p></p></span></p>
+          </section>
+          <section>
+            <h4 id="testconstwithemptydeprecatedblock-signature">Signature</h4><code>testConstWithEmptyDeprecatedBlock: string</code>
+            <p><span><span><b>Type: </b></span><span>string</span></span></p>
+          </section>
+        </section>
+      </section>
+    </section>
+  </body>
+</html>
