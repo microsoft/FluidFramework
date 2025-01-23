@@ -230,6 +230,7 @@ export {
 	type DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
 	type StrictTypesUnsafe,
 	type AssignableTreeFieldFromImplicitFieldUnsafe,
+	type SchemaUnionToIntersection,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

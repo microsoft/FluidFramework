@@ -19,6 +19,7 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	type AllowedTypes,
+	type CustomizedSchemaTyping,
 	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
 	type DefaultTreeNodeFromImplicitAllowedTypes,
 	type FieldSchema,
@@ -30,6 +31,7 @@ import {
 	type InsertableTypedNode,
 	type NodeBuilderData,
 	type NodeFromSchema,
+	type SchemaUnionToIntersection,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -74,6 +76,24 @@ describe("schemaTypes", () => {
 			type _check5 = requireTrue<areSafelyAssignable<N2, TreeNode | TreeLeafValue>>;
 			type _check6 = requireTrue<
 				areSafelyAssignable<N3, TreeNode | TreeLeafValue | undefined>
+			>;
+		}
+
+		// CustomSchemaIntersection
+		{
+			type Original = A | B;
+			type Custom = CustomizedSchemaTyping<Original, { input: 1; output: 2; readWrite: 3 }>;
+			type OriginalIntersection = UnionToIntersection<Original>;
+			type CustomIntersection = UnionToIntersection<Custom>;
+
+			type OriginalSchemaIntersection = SchemaUnionToIntersection<Original>;
+			type CustomSchemaIntersection = SchemaUnionToIntersection<Custom>;
+
+			type _check1 = requireTrue<areSafelyAssignable<OriginalIntersection, never>>;
+			type _check2 = requireTrue<areSafelyAssignable<CustomIntersection, never>>;
+			type _check3 = requireTrue<areSafelyAssignable<OriginalSchemaIntersection, never>>;
+			type _check4 = requireTrue<
+				areSafelyAssignable<CustomSchemaIntersection, CustomSchemaIntersection>
 			>;
 		}
 

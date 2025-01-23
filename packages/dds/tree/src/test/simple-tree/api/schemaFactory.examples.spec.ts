@@ -15,6 +15,8 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 	customizeSchemaTyping,
+	type GetTypes,
+	type Customizer,
 } from "../../../simple-tree/index.js";
 import { TreeFactory } from "../../../treeFactory.js";
 import {
@@ -189,5 +191,60 @@ describe("Class based end to end example", () => {
 
 		// @ts-expect-error custom typing violation does not build, but runs without error
 		const invalid = new Specific({ s: "x" });
+	});
+
+	it("relaxed union", () => {
+		const runtimeDeterminedSchema = schema.string as
+			| typeof schema.string
+			| typeof schema.number;
+		class Strict extends schema.object("Strict", {
+			s: runtimeDeterminedSchema,
+		}) {}
+
+		class Relaxed extends schema.object("Relaxed", {
+			s: customizeSchemaTyping(runtimeDeterminedSchema).relaxed(),
+		}) {}
+
+		class RelaxedArray extends schema.object("Relaxed", {
+			s: customizeSchemaTyping([runtimeDeterminedSchema]).relaxed(),
+		}) {}
+
+		const customizer = customizeSchemaTyping(runtimeDeterminedSchema);
+		{
+			const field = customizer.relaxed();
+			type Field = typeof field;
+			type X = GetTypes<Field>;
+		}
+
+		{
+			const field = customizeSchemaTyping(runtimeDeterminedSchema).relaxed();
+			type Field = typeof field;
+			type X = GetTypes<Field>;
+		}
+
+		const customizerArray = customizeSchemaTyping([runtimeDeterminedSchema]);
+		{
+			const field = customizerArray.relaxed();
+			type Field = typeof field;
+			type X = GetTypes<Field>["input"];
+		}
+
+		type XXX = GetTypes<typeof Relaxed.info.s>;
+
+		type F2 = GetTypes<ReturnType<(typeof customizer)["relaxed"]>>;
+		type X2 = GetTypes<ReturnType<Customizer<typeof runtimeDeterminedSchema>["relaxed"]>>;
+
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		const s = new Strict({ s: "x" });
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		s.s = "Y";
+
+		const r = new Relaxed({ s: "x" });
+		r.s = "Y";
+		const ra = new RelaxedArray({ s: "x" });
+		ra.s = "Y";
+
+		// @ts-expect-error custom typing violation does not build, but runs without error
+		const invalid = new Strict({ s: "x" });
 	});
 });

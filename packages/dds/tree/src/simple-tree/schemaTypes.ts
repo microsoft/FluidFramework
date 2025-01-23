@@ -546,12 +546,26 @@ export type TreeFieldFromImplicitField<TSchema extends ImplicitFieldSchema = Fie
  */
 export type InsertableTreeFieldFromImplicitField<
 	TSchemaInput extends ImplicitFieldSchema,
-	TSchema = UnionToIntersection<TSchemaInput>,
+	TSchema = [TSchemaInput] extends [CustomizedSchemaTyping<unknown, CustomTypes>]
+		? TSchemaInput
+		: SchemaUnionToIntersection<TSchemaInput>,
 > = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
 	? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
 	: [TSchema] extends [ImplicitAllowedTypes]
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
 		: never;
+
+/**
+ * {@link UnionToIntersection} except it does not distribute over {@link CustomizedSchemaTyping}s when the original type is a union.
+ * @privateRemarks
+ * This is a workaround for TypeScript distributing over intersections over unions when distributing extends over unions.
+ * @system @public
+ */
+export type SchemaUnionToIntersection<T> = [T] extends [
+	CustomizedSchemaTyping<unknown, CustomTypes>,
+]
+	? T
+	: UnionToIntersection<T>;
 
 /**
  * {@inheritdoc (UnsafeUnknownSchema:type)}
@@ -597,8 +611,9 @@ export type CustomizedTyping = typeof CustomizedTyping;
 /**
  * Collection of schema aware types.
  * @remarks
- * This type is only uses as a type constraint.
+ * This type is only used as a type constraint.
  * It's fields are similar to an unordered set of generic type parameters.
+ * {@link customizeSchemaTyping} applies this to {@link ImplicitAllowedTypes} via {@link CustomizedSchemaTyping}.
  * @sealed @public
  */
 export interface CustomTypes {
@@ -624,6 +639,9 @@ export interface CustomTypes {
 }
 
 /**
+ * Type annotation which overrides the default schema derived types with customized ones.
+ * @remarks
+ * See {@link customizeSchemaTyping} for more information.
  * @system @public
  */
 export type CustomizedSchemaTyping<TSchema, TCustom extends CustomTypes> = TSchema & {
@@ -651,16 +669,35 @@ export interface StrictTypes<
 }
 
 /**
- * Default strict policy.
- *
- * @typeparam TSchema - The schema to process
- * @typeparam TInput - Internal: do not specify.
- * @typeparam TOutput - Internal: do not specify.
+ * Customizes the types associated with `TSchema`
  * @remarks
- * Handles input types contravariantly so any input which might be invalid is rejected.
+ * By default, the types used when constructing, reading and writing tree nodes are derived from the schema.
+ * In some cases, it may be desirable to override these types with carefully selected alternatives.
+ * This utility allows for that customization.
+ * Note that this customization is only used for typing, and does not affect the runtime behavior at all.
+ *
+ * This can be used for a wide variety of purposes, including (but not limited to):
+ *
+ * 1. Implementing better typing for a runtime extensible set of types (e.g. a polymorphic collection).
+ * This is commonly needed when implementing containers which don't directly reference their child types, and can be done using {@link Customizer.simplified}.
+ * 2. Adding type brands to specific values to increase type safety.
+ * This can be done using {@link Customizer.simplified}.
+ * 3. Adding some (compile time only) constraints to values, like enum style unions.
+ * This can be done using {@link Customizer.simplified}.
+ * 4. Making fields readonly (for the current client).
+ * This can be done using {@link Customizer.custom} with `{ readWrite: never; }`.
+ * 5. Opting into more [compleat and less sound](https://en.wikipedia.org/wiki/Soundness#Relation_to_completeness) typing.
+ * {@link Customizer.relaxed} is an example of this.
+ *
+ * For this customization to be used, the resulting schema must be used as `ImplicitAllowedTypes`.
+ * For example applying this to a single type, then using that type in an array of allowed types will have no effect:
+ * in such a case the customization must instead be applied to the array of allowed types.
+ * @privateRemarks
+ * Once this API is more stable/final, the examples in tests such as openPolymorphism.spec.ts and schemaFactory.examples.spec.ts
+ * should be copied into examples here, or somehow linked.
  * @alpha
  */
-export function customizeSchemaTyping<TSchema extends ImplicitAllowedTypes>(
+export function customizeSchemaTyping<const TSchema extends ImplicitAllowedTypes>(
 	schema: TSchema,
 ): Customizer<TSchema> {
 	// This function just does type branding, and duplicating the typing here to avoid any would just make it harder to maintain not easier:
@@ -691,11 +728,13 @@ export interface Customizer<TSchema extends ImplicitAllowedTypes> {
 		{
 			input: TreeNodeSchema extends TSchema
 				? InsertableContent
-				: TSchema extends TreeNodeSchema
+				: // This intentionally distributes unions over the conditional to get covariant type handling.
+					TSchema extends TreeNodeSchema
 					? InsertableTypedNode<TSchema>
-					: TSchema extends AllowedTypes
+					: // This intentionally distributes unions over the conditional to get covariant type handling.
+						TSchema extends AllowedTypes
 						? TSchema[number] extends LazyItem<infer TSchemaInner extends TreeNodeSchema>
-							? InsertableTypedNode<TSchemaInner>
+							? InsertableTypedNode<TSchemaInner, TSchemaInner>
 							: never
 						: never;
 			readWrite: TreeNodeFromImplicitAllowedTypes<TSchema>;
@@ -994,6 +1033,8 @@ export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaC
  *
  * One special case this makes is if the result of NodeFromSchema contains TreeNode, this must be an under constrained schema, so the result is set to never.
  * Note that applying UnionToIntersection on the result of NodeFromSchema<T> does not work since it breaks booleans.
+ *
+ * Some internal code may use second parameter to opt out of contravariant behavior, but this is not a stable API.
  *
  * @public
  */

@@ -28,6 +28,7 @@ import {
 	FieldKind,
 	type NodeSchemaMetadata,
 	type GetTypes,
+	type SchemaUnionToIntersection,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -43,12 +44,7 @@ import {
 	getOrCreateInnerNode,
 } from "./core/index.js";
 import { mapTreeFromNodeData, type InsertableContent } from "./toMapTree.js";
-import {
-	type RestrictiveStringRecord,
-	fail,
-	type FlattenKeys,
-	type UnionToIntersection,
-} from "../util/index.js";
+import { type RestrictiveStringRecord, fail, type FlattenKeys } from "../util/index.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
@@ -85,7 +81,7 @@ export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFie
  */
 export type AssignableTreeFieldFromImplicitField<
 	TSchemaInput extends ImplicitFieldSchema,
-	TSchema = UnionToIntersection<TSchemaInput>,
+	TSchema = SchemaUnionToIntersection<TSchemaInput>,
 > = [TSchema] extends [FieldSchema<infer Kind, infer Types>]
 	? ApplyKindAssignment<GetTypes<Types>["readWrite"], Kind>
 	: [TSchema] extends [ImplicitAllowedTypes]

@@ -172,6 +172,7 @@ export {
 	type CustomizedSchemaTyping,
 	CustomizedTyping,
 	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+	type SchemaUnionToIntersection,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,

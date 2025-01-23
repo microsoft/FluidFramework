@@ -89,4 +89,42 @@ import type {
 		areSafelyAssignable<UnionToIntersection<{ x: 1 | 2 } | { x: 2 | 3 }>, { x: 2 }>
 	>;
 	type _check4 = requireTrue<areSafelyAssignable<UnionToIntersection<1>, 1>>;
+
+	type _check5 = requireTrue<
+		areSafelyAssignable<UnionToIntersection<readonly [1 | 2]>, readonly [1 | 2]>
+	>;
+
+	{
+		type intersectedUnion = ({ a: 1 } | { b: 2 }) & { foo: 1 };
+		type convertedx = UnionToIntersection<intersectedUnion>;
+		type converted = UnionToIntersection2<intersectedUnion>;
+		type _check6 = requireTrue<areSafelyAssignable<converted, intersectedUnion>>;
+
+		type UnionToIntersection2<T> = T extends T ? T : never;
+
+		type _check8 = requireTrue<
+			areSafelyAssignable<
+				({ a: 1 } | { b: 2 }) & { foo: 1 },
+				({ a: 1 } & { foo: 1 }) | ({ b: 2 } & { foo: 1 })
+			>
+		>;
+
+		type _check9 = requireTrue<
+			areSafelyAssignable<
+				({ a: 1 } | { a: 2 }) & { foo: 1 },
+				({ a: 1 } & { foo: 1 }) | ({ a: 2 } & { foo: 1 })
+			>
+		>;
+
+		type _check10 = requireTrue<
+			areSafelyAssignable<
+				{ a: 1 | 2 } & { foo: 1 },
+				({ a: 1 } & { foo: 1 }) | ({ a: 2 } & { foo: 1 })
+			>
+		>;
+	}
+
+	type _check7 = requireTrue<
+		areSafelyAssignable<UnionToIntersection<{ a: 1 } & { b: 2 }>, { a: 1 } & { b: 2 }>
+	>;
 }

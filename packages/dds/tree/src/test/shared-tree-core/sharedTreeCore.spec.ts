@@ -273,9 +273,9 @@ describe("SharedTreeCore", () => {
 		});
 
 		const sf = new SchemaFactory("0x4a6 repro");
-		const TestNode = sf.objectRecursive("test node", {
+		class TestNode extends sf.objectRecursive("test node", {
 			child: sf.optionalRecursive([() => TestNode, sf.number]),
-		});
+		}) {}
 
 		const tree2 = await factory.load(
 			dataStoreRuntime2,

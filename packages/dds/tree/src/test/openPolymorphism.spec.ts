@@ -83,110 +83,143 @@ class TextItem
 }
 
 describe("Open Polymorphism design pattern examples and tests for them", () => {
-	it("mutable static registry", () => {
-		// -------------
-		// Registry for items. If using this pattern, this would typically be defined alongside the Item interface.
+	describe("mutable static registry", () => {
+		it("without customizeSchemaTyping", () => {
+			// -------------
+			// Registry for items. If using this pattern, this would typically be defined alongside the Item interface.
 
-		/**
-		 * Item type registry.
-		 * @remarks
-		 * This doesn't have to be a mutable static.
-		 * For example libraries could export their implementations instead of adding them when imported,
-		 * then the top level code which pulls in all the libraries could aggregate the item types.
-		 *
-		 * TODO: document (and enforce/detect) when how late it is safe to modify array's used as allowed types.
-		 * These docs should ideally align with how late lazy type lambdas are evaluated (when the tree configuration is constructed, or an instance is made, which ever is first? Maybe define schema finalization?)
-		 */
-		const ItemTypes: ItemSchema[] = [];
+			/**
+			 * Item type registry.
+			 * @remarks
+			 * This doesn't have to be a mutable static.
+			 * For example libraries could export their implementations instead of adding them when imported,
+			 * then the top level code which pulls in all the libraries could aggregate the item types.
+			 *
+			 * TODO: document (and enforce/detect) when how late it is safe to modify array's used as allowed types.
+			 * These docs should ideally align with how late lazy type lambdas are evaluated (when the tree configuration is constructed, or an instance is made, which ever is first? Maybe define schema finalization?)
+			 */
+			const ItemTypes: ItemSchema[] = [];
 
-		// -------------
-		// Library using an Item
+			// -------------
+			// Library using an Item
 
-		class Container extends sf.array("Container", ItemTypes) {}
+			class Container extends sf.array("Container", ItemTypes) {}
 
-		// -------------
-		// Library defining an item
+			// -------------
+			// Library defining an item
 
-		ItemTypes.push(TextItem);
+			ItemTypes.push(TextItem);
 
-		// -------------
-		// Example use of container with generic code and down casting
+			// -------------
+			// Example use of container with generic code and down casting
 
-		const container = new Container();
+			const container = new Container();
 
-		// If we don't do anything special, the insertable type is never, so a cast is required to insert content.
-		container.insertAtStart(new TextItem({ text: "", location: { x: 0, y: 0 } }) as never);
+			// If we don't do anything special, the insertable type is never, so a cast is required to insert content.
+			// See example using customizeSchemaTyping for how to avoid this.
+			container.insertAtStart(new TextItem({ text: "", location: { x: 0, y: 0 } }) as never);
 
-		// Items read from the container are typed as Item and have thew expected APIs:
-		const first = container[0];
-		first.foo();
-		first.location.x += 1;
+			// Items read from the container are typed as Item and have thew expected APIs:
+			const first = container[0];
+			first.foo();
+			first.location.x += 1;
 
-		// Down casting works as normal.
-		if (Tree.is(first, TextItem)) {
-			assert.equal(first.text, "foo");
-		}
-	});
+			// Down casting works as normal.
+			if (Tree.is(first, TextItem)) {
+				assert.equal(first.text, "foo");
+			}
+		});
 
-	it("mutable static registry, error cases", () => {
-		const ItemTypes: ItemSchema[] = [];
-		class Container extends sf.array("Container", ItemTypes) {}
+		it("error cases", () => {
+			const ItemTypes: ItemSchema[] = [];
+			class Container extends sf.array("Container", ItemTypes) {}
 
-		// Not added to registry
-		// ItemTypes.push(TextItem);
+			// Not added to registry
+			// ItemTypes.push(TextItem);
 
-		const container = new Container();
+			const container = new Container();
 
-		// Should error due to out of schema content
-		assert.throws(
-			() =>
-				container.insertAtStart(new TextItem({ text: "", location: { x: 0, y: 0 } }) as never),
-			validateUsageError(/schema/),
-		);
+			// Should error due to out of schema content
+			assert.throws(
+				() =>
+					container.insertAtStart(
+						new TextItem({ text: "", location: { x: 0, y: 0 } }) as never,
+					),
+				validateUsageError(/schema/),
+			);
 
-		// Modifying registration too late should error
-		assert.throws(() => ItemTypes.push(TextItem));
-	});
+			// Modifying registration too late should error
+			assert.throws(() => ItemTypes.push(TextItem));
+		});
 
-	it("mutable static registry, recursive case", () => {
-		const ItemTypes: ItemSchema[] = [];
+		it("recursive case", () => {
+			const ItemTypes: ItemSchema[] = [];
 
-		// Example recursive item implementation
-		class Container extends sf.array("Container", ItemTypes) {}
-		class ContainerItem extends sf.object("ContainerItem", {
-			...itemFields,
-			container: Container,
-		}) {
-			public static readonly description = "Text";
-			public static default(): TextItem {
-				return new TextItem({ text: "", location: { x: 0, y: 0 } });
+			// Example recursive item implementation
+			class Container extends sf.array("Container", ItemTypes) {}
+			class ContainerItem extends sf.object("ContainerItem", {
+				...itemFields,
+				container: Container,
+			}) {
+				public static readonly description = "Text";
+				public static default(): TextItem {
+					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				}
+
+				public foo(): void {}
 			}
 
-			public foo(): void {}
-		}
+			ItemTypes.push(ContainerItem);
 
-		ItemTypes.push(ContainerItem);
+			const container = new Container();
 
-		const container = new Container();
+			container.insertAtStart(
+				new ContainerItem({ container: [], location: { x: 0, y: 0 } }) as never,
+			);
+		});
 
-		container.insertAtStart(
-			new ContainerItem({ container: [], location: { x: 0, y: 0 } }) as never,
-		);
-	});
+		it("safer editing API with customizeSchemaTyping", () => {
+			const ItemTypes: ItemSchema[] = [];
+			class Container extends sf.object("Container", {
+				// Here we force the insertable type to be `Item`, allowing for a potentially unsafe (runtime checked against the schema registrations) insertion of any Item type.
+				// This avoids the issue from the first example where the insertable type is `never`.
+				child: sf.optional(customizeSchemaTyping(ItemTypes).simplified<Item>()),
+			}) {}
 
-	it("mutable static registry, safer editing API", () => {
-		const ItemTypes: ItemSchema[] = [];
-		class Container extends sf.object("Container", {
-			child: sf.optional(customizeSchemaTyping(ItemTypes).simplified<Item>()),
-		}) {}
+			ItemTypes.push(TextItem);
 
-		ItemTypes.push(TextItem);
+			const container = new Container({ child: undefined });
+			const container2 = new Container({ child: TextItem.default() });
 
-		const container = new Container({ child: undefined });
-		const container2 = new Container({ child: TextItem.default() });
+			// Enabled by customizeSchemaTyping
+			container.child = TextItem.default();
+			container.child = undefined;
 
-		// Enabled by customizeSchemaTyping
-		container.child = TextItem.default();
-		container.child = undefined;
+			// Allowed at compile time, but not allowed by schema:
+			class DisallowedItem
+				extends sf.object("DisallowedItem", { ...itemFields })
+				implements Item
+			{
+				public foo(): void {}
+			}
+
+			// Invalid TreeNodes are rejected at runtime even if allowed at compile time:
+			assert.throws(
+				() => {
+					container.child = new DisallowedItem({ location: { x: 0, y: 0 } });
+				},
+				validateUsageError(/Invalid schema/),
+			);
+
+			// Invalid insertable content is rejected.
+			// Different use of customizeSchemaTyping could have allowed this at compile time by not including TreeNode in Item.
+			assert.throws(
+				() => {
+					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					container.child = {} as Item;
+				},
+				validateUsageError(/incompatible with all of the types allowed by the schema/),
+			);
+		});
 	});
 });

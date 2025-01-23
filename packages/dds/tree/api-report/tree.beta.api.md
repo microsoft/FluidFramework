@@ -28,7 +28,7 @@ Kind
 ] extends [FieldKind.Required] ? T : [Kind] extends [FieldKind.Optional] ? T | undefined : [Kind] extends [FieldKind.Identifier] ? DefaultsAreOptional extends true ? T | undefined : T : never;
 
 // @public
-export type AssignableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindAssignment<GetTypes<Types>["readWrite"], Kind> : [TSchema] extends [ImplicitAllowedTypes] ? GetTypes<TSchema>["readWrite"] : never;
+export type AssignableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = SchemaUnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindAssignment<GetTypes<Types>["readWrite"], Kind> : [TSchema] extends [ImplicitAllowedTypes] ? GetTypes<TSchema>["readWrite"] : never;
 
 // @public
 export type AssignableTreeFieldFromImplicitFieldUnsafe<TSchema extends Unenforced<ImplicitFieldSchema>> = TSchema extends FieldSchemaUnsafe<infer Kind, infer Types> ? ApplyKindAssignment<GetTypesUnsafe<Types>["readWrite"], Kind> : GetTypesUnsafe<TSchema>["readWrite"];
@@ -46,7 +46,7 @@ export interface CommitMetadata {
     readonly kind: CommitKind;
 }
 
-// @public (undocumented)
+// @public
 export type CustomizedSchemaTyping<TSchema, TCustom extends CustomTypes> = TSchema & {
     [CustomizedTyping]: TCustom;
 };
@@ -175,7 +175,7 @@ export type InsertableObjectFromSchemaRecordUnsafe<T extends Unenforced<Restrict
 };
 
 // @public
-export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : never;
+export type InsertableTreeFieldFromImplicitField<TSchemaInput extends ImplicitFieldSchema, TSchema = [TSchemaInput] extends [CustomizedSchemaTyping<unknown, CustomTypes>] ? TSchemaInput : SchemaUnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchema<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TSchema> : never;
 
 // @public
 export type InsertableTreeFieldFromImplicitFieldUnsafe<TSchemaInput extends Unenforced<ImplicitFieldSchema>, TSchema = UnionToIntersection<TSchemaInput>> = [TSchema] extends [FieldSchemaUnsafe<infer Kind, infer Types>] ? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<Types>, Kind, true> : [TSchema] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema> : never;
@@ -470,6 +470,11 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     readonly scope: TScope;
     readonly string: TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>;
 }
+
+// @public
+export type SchemaUnionToIntersection<T> = [T] extends [
+CustomizedSchemaTyping<unknown, CustomTypes>
+] ? T : UnionToIntersection<T>;
 
 // @public
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
