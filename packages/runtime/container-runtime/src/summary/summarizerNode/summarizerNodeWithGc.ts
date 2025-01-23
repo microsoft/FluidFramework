@@ -51,7 +51,7 @@ interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
  * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
  * and to determine if the node's used state changed since last summary.
  *
- * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
+ *- Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
