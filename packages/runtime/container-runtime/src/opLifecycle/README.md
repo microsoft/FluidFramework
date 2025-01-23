@@ -6,16 +6,16 @@
   - [Table of contents](#table-of-contents)
   - [Introduction](#introduction)
     - [How batching works](#how-batching-works)
-  - [Compression](#compression)
-    - [Single message batch update](#single-message-batch-update)
   - [Grouped batching](#grouped-batching)
     - [Changes in op semantics](#changes-in-op-semantics)
+  - [Compression](#compression)
+    - [Only single-message batches are compressed](#only-single-message-batches-are-compressed)
   - [Chunking for compression](#chunking-for-compression)
   - [Configuration](#configuration)
   - [Note about performance and latency](#note-about-performance-and-latency)
   - [How it works](#how-it-works)
-  - [How it works (Grouped Batching disabled) -Outdated-](#how-it-works-grouped-batching-disabled--outdated-)
-    - [Outdated - Main code no longer creates empty ops](#outdated---main-code-no-longer-creates-empty-ops)
+  - [Legacy begavior - How it works (Grouped Batching disabled)](#legacy-begavior---how-it-works-grouped-batching-disabled)
+    - [IMPORTANT - As of 2.20.0, we no longer compress ungrouped batches, but we do need to read such ops - read on to learn what these legacy ops look like](#important---as-of-2200-we-no-longer-compress-ungrouped-batches-but-we-do-need-to-read-such-ops---read-on-to-learn-what-these-legacy-ops-look-like)
   - [How the overall op flow works](#how-the-overall-op-flow-works)
     - [Outbound](#outbound)
     - [Inbound](#inbound)
@@ -58,6 +58,28 @@ What this means is that `FlushMode.Immediate` will send each op in its own paylo
 
 As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into the 1MB socket limit.
 
+## Grouped batching
+
+With Grouped Batching enabled (it's on by default), all batch messages are combined under a single "grouped" message _before compression_. Upon receiving this new "grouped" message, the batch messages will be extracted, and they each will be given the same sequence number - that of the parent "grouped" message.
+
+The purpose for enabling grouped batching before compression is to eliminate the empty placeholder messages in the chunks. These empty messages are not free to transmit, can trigger service throttling, and in extreme cases can _still_ result in a batch too large (from empty op envelopes alone).
+
+Grouped batching is only relevant for `FlushMode.TurnBased`, since `OpGroupingManagerConfig.opCountThreshold` defaults to 2. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
+
+Grouped Batching can be disabled by setting `IContainerRuntimeOptions.enableGroupedBatching` to `false`.
+
+See [below](#how-it-works) for an example.
+
+### Changes in op semantics
+
+Grouped Batching changed a couple of expectations around message structure and runtime layer expectations. Specifically:
+
+-   Batch messages observed at the runtime layer no longer match messages seen at the loader layer (i.e. grouped form at loader layer, ungrouped form at runtime layer)
+-   Once the ContainerRuntime ungroups the batch, the client sequence numbers on the resulting messages can only be used to order messages with that batch (having the same sequenceNumber)
+-   Messages within the same batch now all share the same sequence number
+-   All ops in a batch must also have the same reference sequence number to ensure eventualy consistency of the model. The runtime will "rebase" ops in a batch with different ref sequence number to satisfy that requirement.
+    -   What causes ops in a single JS turn (and thus in a batch) to have different reference sequence number? "Op reentrancy", where changes are made to a DDS inside a DDS 'onChanged' event handler.
+
 ## Compression
 
 **Compression targets payloads which exceed the max batch size and it is enabled by default.**. The `IContainerRuntimeOptions.compressionOptions` property, of type `ICompressionRuntimeOptions` is the configuration governing how compression works.
@@ -69,34 +91,15 @@ As `FlushMode.TurnBased` accumulates ops, it is the most vulnerable to run into 
 
 Compression is relevant for both `FlushMode.TurnBased` and `FlushMode.Immediate` as it only targets the contents of the ops and not the number of ops in a batch. Compression is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
 
-Compressing a batch yields a batch with the same number of messages. It compresses all the content, shifting the compressed payload into the first op,
-leaving the rest of the batch's messages as empty placeholders to reserve sequence numbers for the compressed messages.
+### Only single-message batches are compressed
 
-### Single message batch update
+The batch to compress has to have only one message and it yields a batch with a single message. It compresses all the content, storing the compressed payload into the first op.
 
-Compression has been updated to only receive and compress batches containing a single message. While it remains possible to read compressed batches with empty operations, the system will no longer write them. Therefore, if grouping is disabled, compression must also be disabled.
+Compression is only enabled if Grouped Batching is enabled.
 
-## Grouped batching
+Legacy compressed batches could contain multiple messages, compressing all the content and shifting the compressed payload into the first op, leaving the rest of the batch's messages as empty placeholders to reserve sequence numbers for the compressed messages.
 
-With Grouped Batching enabled (it's on by default), all batch messages are combined under a single "grouped" message _before compression_. Upon receiving this new "grouped" message, the batch messages will be extracted, and they each will be given the same sequence number - that of the parent "grouped" message.
-
-The purpose for enabling grouped batching before compression is to eliminate the empty placeholder messages in the chunks. These empty messages are not free to transmit, can trigger service throttling, and in extreme cases can _still_ result in a batch too large (from empty op envelopes alone).
-
-Grouped batching is only relevant for `FlushMode.TurnBased`, since `OpGroupingManagerConfig.opCountThreshold` defaults to 2. Grouped batching is opaque to the server and implementations of the Fluid protocol do not need to alter their behavior to support this client feature.
-
-Grouped Batching can be disabled by setting `IContainerRuntimeOptions.enableGroupedBatching` to `false`.
-
-See [below](#how-grouped-batching-works) for an example.
-
-### Changes in op semantics
-
-Grouped Batching changed a couple of expectations around message structure and runtime layer expectations. Specifically:
-
--   Batch messages observed at the runtime layer no longer match messages seen at the loader layer (i.e. grouped form at loader layer, ungrouped form at runtime layer)
--   Once the ContainerRuntime ungroups the batch, the client sequence numbers on the resulting messages can only be used to order messages with that batch (having the same sequenceNumber)
--   Messages within the same batch now all share the same sequence number
--   All ops in a batch must also have the same reference sequence number to ensure eventualy consistency of the model. The runtime will "rebase" ops in a batch with different ref sequence number to satisfy that requirement.
-    -   What causes ops in a single JS turn (and thus in a batch) to have different reference sequence number? "Op reentrancy", where changes are made to a DDS inside a DDS 'onChanged' event handler.
+While it remains possible to read compressed batches with empty ops, the system will no longer create said type of batches.
 
 ## Chunking for compression
 
@@ -206,9 +209,9 @@ Ungrouped batch:
 +-----------------+-----------------+-----------------+-----------------+-----------------+
 ```
 
-## How it works (Grouped Batching disabled) -Outdated-
+## Legacy begavior - How it works (Grouped Batching disabled)
 
-### Outdated - Main code no longer creates empty ops
+### IMPORTANT - As of 2.20.0, we no longer compress ungrouped batches, but we do need to read such ops - read on to learn what these legacy ops look like
 
 If we have a batch with a size larger than the configured minimum required for compression (in the example let’s say it’s 850 bytes), as following:
 
@@ -319,7 +322,7 @@ stateDiagram-v2
     groupBatch --> if_compression
 	flushInternal --> if_compression
     if_compression --> post
-	if_compression --> compress: if compression is enabled
+	if_compression --> compress: if compression and grouped batching are enabled
 	compress --> post
 	compress --> opSplitter.split: if the compressed payload is larger than the chunk size
 	opSplitter.split --> post
