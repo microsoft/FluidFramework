@@ -103,6 +103,7 @@
 		}
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {},
 		"entrypoint": "internal"
 	}

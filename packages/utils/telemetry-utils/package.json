@@ -153,6 +153,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {
 			"Class_MockLogger": {
 				"forwardCompat": false

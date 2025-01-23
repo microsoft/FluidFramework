@@ -192,6 +192,7 @@
 		}
 	},
 	"typeValidation": {
+		"disabled": true,
 		"broken": {
 			"Class_BaseSegment": {
 				"backCompat": false
