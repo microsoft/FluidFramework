@@ -62,7 +62,7 @@ export function validatePrivateLink(
 				if (privateLinkEnable) {
 					const accountLinkIds = JSON.parse(tenantInfo?.customData?.accountLinkIds);
 					if (Object.prototype.hasOwnProperty.call(accountLinkIds, clusterHost)) {
-						const accountLinkId = accountLinkIds[clusterHost];
+						const accountLinkId = String(accountLinkIds[clusterHost]);
 						if (result.privateLinkId === accountLinkId) {
 							Lumberjack.info("This is a private link request", {
 								tenantId,
@@ -73,7 +73,7 @@ export function validatePrivateLink(
 								Promise.reject(
 									new NetworkError(
 										400,
-										`This private link should not be connected since the link id does not match`,
+										`This private link should not be connected since the link id ${result.privateLinkId} does not match ${accountLinkId}`,
 									),
 								),
 								res,

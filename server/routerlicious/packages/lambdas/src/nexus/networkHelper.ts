@@ -30,7 +30,7 @@ export async function checkNetworkInformation(
 			const accountLinkIds = JSON.parse(tenantInfo?.customData?.accountLinkIds);
 			// Todo: fix the clusterHost logic to check undefined, and skip
 			if (clusterHost && Object.prototype.hasOwnProperty.call(accountLinkIds, clusterHost)) {
-				const accountLinkId = accountLinkIds[clusterHost];
+				const accountLinkId = String(accountLinkIds[clusterHost]);
 				return networkInfo.privateLinkId === accountLinkId
 					? { message: "This is a private link socket connection", shouldConnect: true }
 					: {
