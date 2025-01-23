@@ -30,8 +30,8 @@
 		"prepack": "npm run webpack",
 		"start": "webpack serve",
 		"test": "npm run test:jest",
-		"test:jest": "jest",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
+		"test:jest": "jest --ci",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

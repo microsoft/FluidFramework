@@ -6,6 +6,7 @@
 import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -520,7 +521,12 @@ export function ReportOpPerfTelemetry(
 	clientId: string | undefined,
 	deltaManager: IDeltaManagerFull,
 	containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
-	logger: ITelemetryLoggerExt,
+	logger: ITelemetryBaseLogger,
 ): void {
-	new OpPerfTelemetry(clientId, deltaManager, containerRuntimeEvents, logger);
+	new OpPerfTelemetry(
+		clientId,
+		deltaManager,
+		containerRuntimeEvents,
+		createChildLogger({ logger }),
+	);
 }
