@@ -1550,16 +1550,14 @@ describe("Runtime", () => {
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 			};
 
-			[
+			for (const features of [
 				undefined,
 				new Map([["referenceSequenceNumbers", false]]),
 				new Map([
 					["other", true],
 					["feature", true],
 				]),
-			];
-			)
-			{
+			]) {
 				it("Loader not supported for async FlushMode, fallback to TurnBased", async () => {
 					const runtime = await ContainerRuntime.loadRuntime({
 						context: localGetMockContext(features) as IContainerContext,

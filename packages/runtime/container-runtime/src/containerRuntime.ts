@@ -1534,25 +1534,10 @@ export class ContainerRuntime
 		expiry: { policy: "absolute", durationMs: 60000 },
 	});
 
-	<<<<<<<
-	HEAD;
-	=======
-	/**
-	 * The options to apply to this ContainerRuntime instance (including internal options hidden from the public API)
-	 */
-	private readonly runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>;
-
 	public get ILayerCompatDetails(): ILayerCompatDetails {
 		return RuntimeCompatDetails;
 	}
 
-	>>>>>>> 32ed194ea6 (
-	Added;
-	generation;
-	and;
-	supported;
-	features;
-	)
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1610,13 +1595,8 @@ export class ContainerRuntime
 			snapshotWithContents,
 		} = context;
 
-		this.clientDetails = clientDetails;
-		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
-
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
-		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-		this.closeFn = this.isSummarizerClient ? this.disposeFn : closeFn;
 
 		const maybeLoaderCompatDetails = context as FluidObject<ILayerCompatDetails>;
 		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
@@ -1626,7 +1606,6 @@ export class ContainerRuntime
 			flushMode: defaultFlushMode,
 			...baseRuntimeOptions,
 		};
-
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
@@ -1679,14 +1658,9 @@ export class ContainerRuntime
 		this.on("dirty", () => context.updateDirtyContainerState(true));
 		this.on("saved", () => context.updateDirtyContainerState(false));
 
-		<<<<<<< HEAD
-		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
-		this.disposeFn = disposeFn ?? closeFn
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
-		this.closeFn = isSummarizerClient ? this.disposeFn : closeFn
+		this.closeFn = isSummarizerClient ? this.disposeFn : closeFn;
 
-		=======
->>>>>>> 9f61bb7170 (testing)
 		let loadSummaryNumber: number;
 		// Get the container creation metadata. For new container, we initialize these. For existing containers,
 		// get the values from the metadata blob.
@@ -1812,8 +1786,7 @@ export class ContainerRuntime
 				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (
-			this.runtimeOptions.flushMode ===
-				(FlushModeExperimental.Async as unknown as FlushMode) &&
+			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
 			!referenceSequenceNumbersSupported
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
