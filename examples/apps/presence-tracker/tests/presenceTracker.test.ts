@@ -27,11 +27,13 @@ describe("presence-tracker", () => {
 		// Wait for the page to load first before running any tests
 		// so this time isn't attributed to the first test
 		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
+		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 		await page.waitForFunction(() => window["fluidStarted"]);
 	}, 45000);
 
 	beforeEach(async () => {
 		await page.goto(globals.PATH, { waitUntil: "load" });
+		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 		await page.waitForFunction(() => window["fluidStarted"]);
 	});
 
@@ -40,27 +42,16 @@ describe("presence-tracker", () => {
 			await page.waitForFunction(() => document.isConnected);
 		});
 
-		it("Focus Content exists", async () => {
+		it("Focus content element exists", async () => {
 			await page.waitForFunction(() => document.getElementById("focus-content"));
 		});
 
-		it("Focus Div exists", async () => {
+		it("Focus div exists", async () => {
 			await page.waitForFunction(() => document.getElementById("focus-div"));
 		});
 
-		it("Mouse Content exists", async () => {
+		it("Mouse position element exists", async () => {
 			await page.waitForFunction(() => document.getElementById("mouse-position"));
-		});
-
-		it("Current User is displayed", async () => {
-			const elementHandle = await page.waitForFunction(() =>
-				document.getElementById("focus-div"),
-			);
-			const innerHTML = await page.evaluate(
-				(element) => element?.innerHTML.trim(),
-				elementHandle,
-			);
-			expect(innerHTML).toMatch(/^User session .*?: has focus/);
 		});
 
 		it("Current user has focus", async () => {
@@ -84,7 +75,8 @@ describe("presence-tracker", () => {
 				elementHandle,
 			);
 
-			// There should only be a single client connected
+			// There should only be a single client connected; verify by asserting there's no <br> tag in the innerHtml, which
+			// means a single client.
 			expect(clientListHtml).toMatch(/^[^<]+$/);
 		});
 	});
@@ -94,13 +86,15 @@ describe("presence-tracker", () => {
 		let page2: Page;
 
 		beforeAll(async () => {
-			// Create a second browser instance and navigate to the session created by the first browser.
+			// Create a second browser instance.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
 		}, 45000);
 
 		beforeEach(async () => {
+			// Navigate to the URL/session created by the first browser.
 			await page2.goto(page.url(), { waitUntil: "load" });
+			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 			await page2.waitForFunction(() => window["fluidStarted"]);
 		});
 
@@ -122,6 +116,9 @@ describe("presence-tracker", () => {
 				(element) => element?.innerHTML?.trim(),
 				elementHandle,
 			);
+
+			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
+			// connected.
 			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
 		});
 
@@ -134,6 +131,8 @@ describe("presence-tracker", () => {
 				(element) => element?.innerHTML?.trim(),
 				elementHandle,
 			);
+			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
+			// connected.
 			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
 		});
 

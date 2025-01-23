@@ -32,7 +32,7 @@
 		"start:client": "webpack serve",
 		"start:tinylicious": "tinylicious",
 		"test": "npm run test:jest",
-		"test:jest": "start-server-and-test \"tinylicious > /dev/null\" 7070 test:jest:run",
+		"test:jest": "cross-env logger__level=crit start-server-and-test tinylicious 7070 test:jest:run",
 		"test:jest:run": "jest --detectOpenHandles",
 		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --detectOpenHandles",
 		"tinylicious": "tinylicious",
