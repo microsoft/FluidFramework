@@ -4528,6 +4528,9 @@ importers:
       '@fluidframework/container-runtime-definitions':
         specifier: workspace:~
         version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map
