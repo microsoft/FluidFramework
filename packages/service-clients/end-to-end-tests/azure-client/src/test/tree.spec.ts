@@ -20,6 +20,7 @@ import {
 	SchemaFactory,
 	type TreeView,
 } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules -- Need asTreeViewAlpha to test it
 import { asTreeViewAlpha } from "fluid-framework/alpha";
 
 import {

@@ -11,6 +11,7 @@ import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { AxiosResponse } from "axios";
 import { ContainerSchema, type IFluidContainer } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules -- Need SharedMap to test it
 import { type ISharedMap, SharedMap } from "fluid-framework/legacy";
 
 import {

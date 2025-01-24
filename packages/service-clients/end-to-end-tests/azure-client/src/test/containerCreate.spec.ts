@@ -18,6 +18,7 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { AxiosResponse } from "axios";
 import { ContainerSchema, type IFluidContainer } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules -- Need SharedMap to test it
 import { SharedMap } from "fluid-framework/legacy";
 import { SharedMap as SharedMapLegacy } from "fluid-framework-legacy";
 import type { SinonSandbox } from "sinon";
