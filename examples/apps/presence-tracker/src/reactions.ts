@@ -48,11 +48,11 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		),
 	);
 
-	// Send a "heart" reaction to all clients on click.
+	// Send a reaction to all clients on click.
 	document.body.addEventListener("click", (e) => {
 		// Get the current reaction value
-		const reactionDiv = document.getElementById("reactions-config") as HTMLDivElement;
-		const reactionValue = reactionDiv.getAttribute("data-value");
+		const selectedReaction = document.getElementById("selected-reaction") as HTMLSpanElement;
+		const reactionValue = selectedReaction.textContent;
 
 		// TODO: Check that we're connected before sending.
 		reactions.emit.broadcast(

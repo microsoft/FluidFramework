@@ -11,7 +11,7 @@ import { MouseTracker } from "./MouseTracker.js";
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
 	const wrapperDiv = document.createElement("div");
 	wrapperDiv.style.textAlign = "left";
-	wrapperDiv.style.margin = "70px";
+	wrapperDiv.style.margin = "10px";
 	div.appendChild(wrapperDiv);
 
 	const focusDiv = document.createElement("div");
@@ -85,22 +85,35 @@ export function renderControlPanel(mouseTracker: MouseTracker, controlPanel: HTM
 	controlPanel.appendChild(slider);
 	controlPanel.appendChild(sliderLabel);
 
-	const reactionsConfigDiv = document.createElement("div");
-	reactionsConfigDiv.id = "reactions-config";
-
-	const picker = new Picker();
-	reactionsConfigDiv.appendChild(picker);
-	controlPanel.appendChild(reactionsConfigDiv);
-
-	controlPanel
-		.querySelector("emoji-picker")
-		?.addEventListener("emoji-click", (event: Event & { detail?: any }) => {
-			reactionsConfigDiv.setAttribute("data-value", event.detail?.unicode);
-		});
-
 	slider.addEventListener("input", (e) => {
 		sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
 		const target = e.target as HTMLInputElement;
 		mouseTracker.setAllowableLatency(parseInt(target.value, 10));
 	});
+
+	const reactionsConfigDiv = document.createElement("div");
+	reactionsConfigDiv.id = "reactions-config";
+	const reactionLabelDiv = document.createElement("div");
+	reactionLabelDiv.style.marginTop = "10px";
+	reactionLabelDiv.style.marginBottom = "10px";
+	reactionLabelDiv.textContent = "Selected reaction:";
+	reactionsConfigDiv.appendChild(reactionLabelDiv);
+
+	// This span element contains the selected emoji
+	const selectedSpan = document.createElement("span");
+	selectedSpan.id = "selected-reaction";
+	selectedSpan.textContent = "❤️";
+	reactionLabelDiv.appendChild(selectedSpan);
+
+	// Create the emoji-picker element and add it to the panel
+	const picker = new Picker();
+	reactionsConfigDiv.appendChild(picker);
+	controlPanel.appendChild(reactionsConfigDiv);
+
+	// Update the selected reaction emoji when the picker is clicked
+	controlPanel
+		.querySelector("emoji-picker")
+		?.addEventListener("emoji-click", (event: Event & { detail?: any }) => {
+			selectedSpan.textContent = event.detail?.unicode;
+		});
 }
