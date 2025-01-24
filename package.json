@@ -405,7 +405,8 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch"
+			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch",
+			"emoji-picker-element": "patches/emoji-picker-element.patch"
 		}
 	}
 }

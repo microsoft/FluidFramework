@@ -18,26 +18,8 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusDiv.id = "focus-div";
 	focusDiv.style.fontSize = "14px";
 
-	const focusMessageDiv = document.createElement("div");
-	focusMessageDiv.id = "message-div";
-	focusMessageDiv.textContent = "Click to focus";
-	focusMessageDiv.style.position = "absolute";
-	focusMessageDiv.style.top = "50px";
-	focusMessageDiv.style.left = "10px";
-	focusMessageDiv.style.color = "red";
-	focusMessageDiv.style.fontWeight = "bold";
-	focusMessageDiv.style.fontSize = "18px";
-	focusMessageDiv.style.border = "2px solid red";
-	focusMessageDiv.style.padding = "10px";
-	focusMessageDiv.style.display = "none";
-	wrapperDiv.appendChild(focusMessageDiv);
-
 	const onFocusChanged = (focusState: IFocusState) => {
 		focusDiv.innerHTML = getFocusPresencesString("<br>", focusTracker);
-		const { hasFocus } = focusState;
-
-		// hasFocus === true should hide the message
-		focusMessageDiv.style.display = hasFocus ? "none" : "";
 	};
 
 	onFocusChanged({ hasFocus: window.document.hasFocus() });

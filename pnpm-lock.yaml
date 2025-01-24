@@ -22,6 +22,9 @@ patchedDependencies:
   '@microsoft/api-extractor@7.47.8':
     hash: ldzfpsbo3oeejrejk775zxplmi
     path: patches/@microsoft__api-extractor@7.47.8.patch
+  emoji-picker-element:
+    hash: 5a2u6enr2pgcyqkk3gd76xtaiu
+    path: patches/emoji-picker-element.patch
 
 importers:
 
@@ -1062,7 +1065,7 @@ importers:
         version: link:../../../packages/service-clients/tinylicious-client
       emoji-picker-element:
         specifier: ^1.26.0
-        version: 1.26.0
+        version: 1.26.0(patch_hash=5a2u6enr2pgcyqkk3gd76xtaiu)
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
@@ -36735,7 +36738,7 @@ snapshots:
 
   emittery@0.13.1: {}
 
-  emoji-picker-element@1.26.0: {}
+  emoji-picker-element@1.26.0(patch_hash=5a2u6enr2pgcyqkk3gd76xtaiu): {}
 
   emoji-regex@10.4.0: {}
 
