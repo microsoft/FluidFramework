@@ -39,7 +39,7 @@ export const insertField: TestOperation = (
 	const numberText: string = (client.longClientId!.codePointAt(0)! % 10)
 		.toString()
 		.repeat(chunkLength);
-	if (getFieldEndpoints(client, opStart, opEnd) === undefined) {
+	if (posInField(client, opStart) === undefined) {
 		return client.insertTextLocal(opStart, `{${numberText}}`);
 	}
 };
@@ -109,12 +109,17 @@ export const obliterateField: TestOperation = (
 		if (endPos >= client.getLength()) {
 			endISP = { pos: client.getLength() - 1, side: Side.After };
 		}
-		// Concurrent to the obliterate, replace the same range with new text.
-		insertField(client, startPos, endPos, random);
-		return client.obliterateRangeLocal(
-			{ pos: startPos, side: Side.Before },
-			endISP ?? { pos: endPos, side: Side.After },
-		);
+		// Obliterate text bewteen the separators, but avoid the case where the obliterate range is zero length.
+		if (endPos - startPos > 1) {
+			// Concurrent to the obliterate, replace the same range with new text.
+			// TODO: Address issues with insert after obliterate.
+			insertField(client, startPos + 1, endPos, random);
+			const op = client.obliterateRangeLocal(
+				{ pos: startPos + 1, side: Side.Before },
+				endISP ?? { pos: endPos - 1, side: Side.After },
+			);
+			return op;
+		}
 	}
 	if (opEnd >= client.getLength()) {
 		endISP = { pos: client.getLength() - 1, side: Side.After };
