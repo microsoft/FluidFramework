@@ -35,12 +35,12 @@ export const insertField: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	let finalText = "{";
-	const numberText: string = (client.longClientId!.codePointAt(0)! % 10).toString().repeat(5);
-	// eslint-disable-next-line unicorn/prefer-spread
-	finalText = finalText.concat(numberText, "}");
+	const chunkLength = random.integer(1, 10);
+	const numberText: string = (client.longClientId!.codePointAt(0)! % 10)
+		.toString()
+		.repeat(chunkLength);
 	if (getFieldEndpoints(client, opStart, opEnd) === undefined) {
-		return client.insertTextLocal(opStart, finalText);
+		return client.insertTextLocal(opStart, `{${numberText}}`);
 	}
 };
 
@@ -59,21 +59,21 @@ const posInField = (
 
 	let startPos = pos;
 	let endPos = pos;
-	// will need to walk in both directions if i do a variable length field, and comment what im doing regardless
+	// To find the start and end separators, walk backwards and forwards until the desired character is found.
 	while (
 		startPos > 0 &&
 		client.getText(startPos, startPos + 1) !== "{" &&
-		client.getText(startPos, startPos + 1) !== "}" &&
-		Number.isInteger(Number(client.getText(startPos, startPos + 1)))
+		(client.getText(startPos, startPos + 1) === "}" ||
+			Number.isInteger(Number(client.getText(startPos, startPos + 1))))
 	) {
 		startPos--;
 	}
 
 	while (
 		endPos < client.getLength() &&
-		client.getText(startPos, startPos + 1) !== "{" &&
-		client.getText(startPos, startPos + 1) !== "}" &&
-		Number.isInteger(Number(client.getText(endPos, endPos + 1)))
+		client.getText(endPos, endPos + 1) !== "}" &&
+		(client.getText(endPos, endPos + 1) === "{" ||
+			Number.isInteger(Number(client.getText(endPos, endPos + 1))))
 	) {
 		endPos++;
 	}
@@ -109,7 +109,7 @@ export const obliterateField: TestOperation = (
 		if (endPos >= client.getLength()) {
 			endISP = { pos: client.getLength() - 1, side: Side.After };
 		}
-		// i think this should take care of the word case (insert+obliterate concurrently)
+		// Concurrent to the obliterate, replace the same range with new text.
 		insertField(client, startPos, endPos, random);
 		return client.obliterateRangeLocal(
 			{ pos: startPos, side: Side.Before },
@@ -129,7 +129,15 @@ export const removeRange: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
-) => client.removeRangeLocal(opStart, opEnd);
+) => {
+	const fieldEndpoints = getFieldEndpoints(client, opStart, opEnd);
+	if (fieldEndpoints === undefined) {
+		return client.removeRangeLocal(opStart, opEnd);
+	} else {
+		const { startPos, endPos } = fieldEndpoints;
+		return client.removeRangeLocal(startPos, endPos + 1);
+	}
+};
 
 export const obliterateRange: TestOperation = (
 	client: TestClient,
@@ -169,8 +177,16 @@ export const annotateRange: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
+	let start: number | undefined;
+	let end: number | undefined;
+	const fieldEndpoints = getFieldEndpoints(client, opStart, opEnd);
+	if (fieldEndpoints !== undefined) {
+		start = fieldEndpoints.startPos;
+		end = fieldEndpoints.endPos + 1;
+	}
+
 	if (random.bool()) {
-		return client.annotateRangeLocal(opStart, opEnd, {
+		return client.annotateRangeLocal(start ?? opStart, end ?? opEnd, {
 			[random.integer(1, 5)]: client.longClientId,
 		});
 	} else {

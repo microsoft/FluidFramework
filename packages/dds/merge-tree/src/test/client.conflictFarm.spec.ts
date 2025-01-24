@@ -15,7 +15,7 @@ import {
 	insertAtRefPos,
 	insertField,
 	obliterateField,
-	// obliterateRange,
+	obliterateRange,
 	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
@@ -72,23 +72,22 @@ const clientNames = generateClientNames();
 function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): void {
 	doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
 		for (const { name, config } of [
-			// {
-			// 	name: "applyOpsDuringGeneration",
-			// 	config: { ...opts, applyOpDuringGeneration: true },
-			// },
-			// {
-			// 	name: "obliterate with number endpoints",
-			// 	config: {
-			// 		...opts,
-			// 		operations: [...opts.operations, obliterateRange],
-			// 	},
-			// },
+			{
+				name: "applyOpsDuringGeneration",
+				config: { ...opts, applyOpDuringGeneration: true },
+			},
+			{
+				name: "obliterate with number endpoints",
+				config: {
+					...opts,
+					operations: [...opts.operations, obliterateRange],
+				},
+			},
 			{
 				name: "obliterate fields",
 				config: {
 					...opts,
-					// eslint-disable-next-line jsdoc/multiline-blocks
-					operations: [/** ...opts.operations, */ insertField, obliterateField],
+					operations: [...opts.operations, insertField, obliterateField],
 					// applyOpDuringGeneration: true,
 				},
 			},
@@ -136,7 +135,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 	});
 }
 
-describeFuzz.only("MergeTree.Client", ({ testCount, stressMode }) => {
+describeFuzz("MergeTree.Client", ({ testCount, stressMode }) => {
 	const opts = stressMode === StressMode.Short ? defaultOptions : stressOptions;
 	// defaultOptions;
 	// debugOptions;
