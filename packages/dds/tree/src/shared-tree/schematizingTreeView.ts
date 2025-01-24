@@ -511,7 +511,7 @@ export function requireSchema(
 	schemaPolicy: FullSchemaPolicy,
 ): CheckoutFlexTreeView {
 	const slots = checkout.forest.anchors.slots;
-	assert(!slots.has(ContextSlot), 0x8c2 /* Cannot create second view from checkout */);
+	assert(!slots.has(ViewSlot), 0x8c2 /* Cannot create second view from checkout */);
 
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
