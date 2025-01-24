@@ -180,53 +180,49 @@ export class AppData extends DataObject {
 
 		// TODO: Maybe include example handle
 
-		class LeafSchema extends builder.object("leaf-item", {
-			leafField: [builder.boolean, builder.handle, builder.string],
+		class LeafSchema extends builder.object("item-two-second-first", {
+			twoFirstSecondFirst: [builder.boolean, builder.handle, builder.string],
 		}) {}
 
-		class ChildSchema extends builder.object("child-item", {
-			childField: [builder.string, builder.boolean],
-			childData: builder.optional(LeafSchema),
+		class TwoFirst extends builder.object("root-node-item-two-first", {
+			twoFirstFirst: [builder.string, builder.boolean],
+			twoFirstSecond: builder.optional(LeafSchema),
 		}) {}
 
-		class RootNodeTwoItemTwo extends builder.object("root-node-two-item-two", {
-			childrenOne: builder.array(ChildSchema),
-			childrenTwo: builder.number,
+		class RootNodeItemTwo extends builder.object("root-node-item-two", {
+			twoFirst: [builder.array(TwoFirst), builder.boolean],
+			twoSecond: builder.number,
 		}) {}
 
-		class RootNodeTwoItem extends builder.object("root-node-item", {
-			childrenOne: builder.number,
-			childrenTwo: RootNodeTwoItemTwo,
+		class RootNodeItem extends builder.object("root-node-item", {
+			one: [builder.number, builder.string],
+			two: RootNodeItemTwo,
 		}) {}
 
-		class RootNodeOne extends builder.object("root-node-one", {
-			leafField: [builder.boolean, builder.handle, builder.string],
-		}) {}
-
-		class RootNodeTwo extends builder.object("root-node-two", {
-			childField: builder.optional(RootNodeTwoItem),
+		class RootNode extends builder.object("root-node", {
+			rootNode: builder.optional([RootNodeItem, builder.string]),
 		}) {}
 
 		const config = new TreeViewConfiguration({
-			schema: [RootNodeOne, RootNodeTwo, builder.string, builder.number],
+			schema: [RootNode, builder.string, builder.number],
 		});
 		const view = sharedTree.viewWith(config);
 		view.initialize({
-			childField: {
-				childrenOne: 42,
-				childrenTwo: {
-					childrenOne: [
+			rootNode: {
+				one: 42,
+				two: {
+					twoFirst: [
 						{
-							childField: false,
-							childData: {
-								leafField: "leaf data",
+							twoFirstFirst: false,
+							twoFirstSecond: {
+								twoFirstSecondFirst: "leaf value",
 							},
 						},
 						{
-							childField: true,
+							twoFirstFirst: true,
 						},
 					],
-					childrenTwo: 123,
+					twoSecond: 123,
 				},
 			},
 		});

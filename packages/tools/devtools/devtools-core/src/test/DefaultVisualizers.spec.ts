@@ -1730,7 +1730,7 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
-	it.only("SharedTree: Renders multiple allowed types in SharedTree's root field", async () => {
+	it("SharedTree: Renders multiple allowed types in SharedTree's root field", async () => {
 		const factory = SharedTree.getFactory();
 		const builder = new SchemaFactory("shared-tree-test");
 
@@ -1788,6 +1788,65 @@ describe("DefaultVisualizers unit tests", () => {
 		};
 
 		expect(result).to.deep.equal(expected);
+	});
+
+	it.only("Test", async () => {
+		const factory = SharedTree.getFactory();
+		const builder = new SchemaFactory("shared-tree-test");
+
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		);
+
+		class LeafSchema extends builder.object("item-two-second-first", {
+			twoFirstSecondFirst: [builder.boolean, builder.handle, builder.string],
+		}) {}
+
+		class TwoFirst extends builder.object("root-node-item-two-first", {
+			twoFirstFirst: [builder.string, builder.boolean],
+			twoFirstSecond: builder.optional(LeafSchema),
+		}) {}
+
+		class RootNodeItemTwo extends builder.object("root-node-item-two", {
+			twoFirst: [builder.array(TwoFirst), builder.boolean],
+			twoSecond: builder.number,
+		}) {}
+
+		class RootNodeItem extends builder.object("root-node-item", {
+			one: [builder.number, builder.string],
+			two: RootNodeItemTwo,
+		}) {}
+
+		class RootNode extends builder.object("root-node", {
+			rootNode: builder.optional([RootNodeItem, builder.string]),
+		}) {}
+
+		const config = new TreeViewConfiguration({
+			schema: [RootNode, builder.string, builder.number],
+		});
+		const view = sharedTree.viewWith(config);
+		view.initialize({
+			rootNode: {
+				one: 42,
+				two: {
+					twoFirst: [
+						{
+							twoFirstFirst: false,
+							twoFirstSecond: {
+								twoFirstSecondFirst: "leaf value",
+							},
+						},
+						{
+							twoFirstFirst: true,
+						},
+					],
+					twoSecond: 123,
+				},
+			},
+		});
+
+		await visualizeSharedTree(sharedTree as unknown as ISharedObject, visualizeChildData);
 	});
 
 	it("Unknown SharedObject", async () => {

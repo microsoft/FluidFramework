@@ -28,6 +28,7 @@ import { EditType } from "../CommonInterfaces.js";
 
 import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
+	concatenateTypes,
 	determineNodeKind,
 	toVisualTree,
 	visualizeSharedTreeBySchema,
@@ -272,14 +273,15 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	}
 
 	// Schema of the tree node.
-	const treeSchema = sharedTree.exportSimpleSchema();
+	const treeDefinitions = sharedTree.exportSimpleSchema().definitions;
+	const allowedTypes = concatenateTypes(sharedTree.exportSimpleSchema().allowedTypes);
 
 	// Create a root field visualization that shows the allowed types at the root
 	const visualTreeRepresentation: VisualSharedTreeNode = await visualizeSharedTreeBySchema(
 		treeView,
-		treeSchema,
+		treeDefinitions,
+		allowedTypes,
 		visualizeChildData,
-		true,
 	);
 
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
