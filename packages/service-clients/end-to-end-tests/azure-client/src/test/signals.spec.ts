@@ -9,9 +9,9 @@ import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-
 import { type AzureUser, ScopeType } from "@fluidframework/azure-client/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { type ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import type { AxiosResponse } from "axios";
+import { type ContainerSchema, type IFluidContainer } from "fluid-framework";
 
 import {
 	createAzureClient,

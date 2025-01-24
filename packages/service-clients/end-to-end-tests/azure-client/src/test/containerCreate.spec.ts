@@ -14,12 +14,12 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map/internal";
-import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { AxiosResponse } from "axios";
+import { ContainerSchema, type IFluidContainer } from "fluid-framework";
+import { SharedMap } from "fluid-framework/legacy";
+import { SharedMap as SharedMapLegacy } from "fluid-framework-legacy";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
 

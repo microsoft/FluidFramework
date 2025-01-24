@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { TreeViewConfiguration, SchemaFactory, type TreeView } from "@fluidframework/tree";
 import {
@@ -18,6 +17,7 @@ import {
 	type Revertible,
 } from "@fluidframework/tree/internal";
 import type { AxiosResponse } from "axios";
+import { ContainerSchema, type IFluidContainer } from "fluid-framework";
 
 import {
 	createAzureClient,
@@ -298,7 +298,6 @@ for (const testOpts of testMatrix) {
 
 			it("can listen to events on a recursive tree", async () => {
 				class Doll extends sf.objectRecursive("Matryoshka", {
-					// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 					nested: sf.optionalRecursive([() => Doll]),
 				}) {}
 

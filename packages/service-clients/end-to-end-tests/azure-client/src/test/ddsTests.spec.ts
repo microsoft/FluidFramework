@@ -8,10 +8,10 @@ import { strict as assert } from "node:assert";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
-import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { AxiosResponse } from "axios";
+import { ContainerSchema, type IFluidContainer } from "fluid-framework";
+import { type ISharedMap, SharedMap } from "fluid-framework/legacy";
 
 import {
 	createAzureClient,

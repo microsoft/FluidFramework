@@ -5,8 +5,8 @@
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { IMember } from "@fluidframework/fluid-static";
-import { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import { IMember } from "fluid-framework";
+import { type ISharedMap, IValueChanged } from "fluid-framework/legacy";
 
 export const waitForMember = async (
 	audience: IAzureAudience,
