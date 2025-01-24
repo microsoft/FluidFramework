@@ -35,7 +35,7 @@ module.exports = {
 			"error",
 			{
 				// So we can import SharedMap
-				allow: [...permittedImports, "fluid-framework/legacy"],
+				allow: [...permittedImports, "fluid-framework/legacy", "fluid-framework/alpha"],
 			},
 		],
 	},

@@ -8,16 +8,19 @@ import { strict as assert } from "node:assert";
 import { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { TreeViewConfiguration, SchemaFactory, type TreeView } from "@fluidframework/tree";
+import type { AxiosResponse } from "axios";
 import {
-	asTreeViewAlpha,
+	ContainerSchema,
+	type IFluidContainer,
 	SharedTree,
 	Tree,
 	TreeStatus,
 	type Revertible,
-} from "@fluidframework/tree/internal";
-import type { AxiosResponse } from "axios";
-import { ContainerSchema, type IFluidContainer } from "fluid-framework";
+	TreeViewConfiguration,
+	SchemaFactory,
+	type TreeView,
+} from "fluid-framework";
+import { asTreeViewAlpha } from "fluid-framework/alpha";
 
 import {
 	createAzureClient,

@@ -76,7 +76,6 @@
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree": "workspace:~",
 		"axios": "^1.7.7",
 		"cross-env": "^7.0.3",
 		"fluid-framework": "workspace:~",
