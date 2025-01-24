@@ -5,7 +5,7 @@
 
 import assert from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import { stringToBuffer, type IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IRuntime,
@@ -49,7 +49,7 @@ const codeLoader: ICodeDetailsLoader = {
 							return this;
 						},
 						async instantiateRuntime(context, existing): Promise<IRuntime> {
-							return failSometimeProxy<IRuntime>({
+							return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>({
 								createSummary: () => ({
 									tree: {},
 									type: SummaryType.Tree,
@@ -58,6 +58,7 @@ const codeLoader: ICodeDetailsLoader = {
 								getPendingLocalState: () => ({
 									pending: [],
 								}),
+								ILayerCompatDetails: undefined,
 							});
 						},
 					},

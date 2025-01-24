@@ -224,7 +224,8 @@
 	"typeValidation": {
 		"broken": {
 			"Class_ContainerRuntime": {
-				"backCompat": false
+				"backCompat": false,
+				"forwardCompat": false
 			},
 			"Class_DocumentsSchemaController": {
 				"forwardCompat": false
