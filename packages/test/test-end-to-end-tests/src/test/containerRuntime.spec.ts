@@ -176,7 +176,15 @@ describeCompat(
 		for (const explicitSchemaControl of choices) {
 			for (const compression of choices) {
 				for (const chunking of choices) {
-					it(`test explicitSchemaControl = ${explicitSchemaControl}, compression = ${compression}, chunking = ${chunking}`, async () => {
+					it(`test explicitSchemaControl = ${explicitSchemaControl}, compression = ${compression}, chunking = ${chunking}`, async function () {
+						// Skip this test for FRS and ODSP as its timing is flaky.
+						// This test is covering client logic and the coverage from other drivers/endpoints is sufficient.
+						if (
+							provider.driver.type === "odsp" ||
+							(provider.driver.type === "r11s" && provider.driver.endpointName === "frs")
+						) {
+							this.skip();
+						}
 						await testSchemaControl(explicitSchemaControl, compression, chunking);
 					});
 				}
