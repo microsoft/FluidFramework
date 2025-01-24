@@ -6,6 +6,7 @@
 /**
  * Copied over from common/build/eslint-config-fluid/minimal-deprecated.js,
  * since we need to add more entries in this package but don't want to lose these.
+ * TODO: once the base config exports this list as a reusable constant, use that instead.
  */
 const permittedImports = [
 	// Within Fluid Framework allow import of '/internal' from other FF packages.
