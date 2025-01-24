@@ -72,7 +72,6 @@ async function start() {
 	const focusTracker = new FocusTracker(presence, appPresence);
 	const mouseTracker = new MouseTracker(presence, appPresence);
 
-	// Initialize reactions
 	initializeReactions(presence, mouseTracker);
 
 	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
