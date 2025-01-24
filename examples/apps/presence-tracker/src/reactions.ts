@@ -63,17 +63,6 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		);
 	});
 
-	// On keypress, send the corresponding key as a reaction to all clients.
-	// document.body.addEventListener("keypress", (e) => {
-	// 	// TODO: Check that we're connected before sending.
-	// 	reactions.emit.broadcast(
-	// 		"reaction",
-	// 		mouseTracker.getClientMousePosition(presence.getMyself()),
-	// 		e.key,
-	// 		"intense",
-	// 	);
-	// });
-
 	// Extract a reference to the value manager we just created.
 	const { reactions } = notifications.props;
 
