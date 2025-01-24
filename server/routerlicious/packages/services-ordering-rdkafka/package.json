@@ -24,7 +24,7 @@
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -38,9 +38,9 @@
 		"sillyname": "^0.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-ordering-rdkafka-previous": "npm:@fluidframework/server-services-ordering-rdkafka@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
@@ -66,9 +66,10 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_RdkafkaConsumer": {
+			"Class_RdkafkaConsumer": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }
