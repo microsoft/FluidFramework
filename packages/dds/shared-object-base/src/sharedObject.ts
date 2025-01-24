@@ -894,16 +894,9 @@ export interface ISharedObjectKind<TSharedObject> {
  * @legacy
  * @alpha
  */
-export function createDataObjectKind<
-	T extends IDataObjectKind,
-	TInstance = T extends new (
-		arg: never,
-	) => infer X
-		? X
-		: T extends IDataObjectKind<infer I>
-			? I
-			: unknown,
->(factory: T): T & SharedObjectKind<T extends IDataObjectKind<infer I> ? I : unknown> {
+export function createDataObjectKind<T extends IDataObjectKind>(
+	factory: T,
+): T & SharedObjectKind<T extends IDataObjectKind<infer I> ? I : unknown> {
 	return factory as T & SharedObjectKind<T extends IDataObjectKind<infer I> ? I : unknown>;
 }
 
