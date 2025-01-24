@@ -53,7 +53,7 @@ export function assert(condition: boolean, message: string | number): asserts co
  * The `predicate` function must be pure (have no side-effects) to ensure that the behavior of code is the same regardless of if the asserts are disabled, enabled or optimized out.
  *
  * These asserts are disabled by default, even in debug builds to ensure that by default code will be tested as production runs, with them disabled.
- * Additionally this ensures that apps that use a bundler which does not remove `__PURE__` will not incur the runtime cost of calling the predicate.
+ * Additionally, this ensures that apps that use a bundler which does not remove `__PURE__` will not incur the runtime cost of calling the predicate.
  * These asserts can be can be enabled by calling `configureDebugAsserts(true)`: see {@link configureDebugAsserts}.
  *
  * @privateRemarks
