@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { Picker } from "emoji-picker-element";
+
 import { FocusTracker, type IFocusState } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 
@@ -100,6 +102,19 @@ export function renderControlPanel(mouseTracker: MouseTracker, controlPanel: HTM
 	sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
 	controlPanel.appendChild(slider);
 	controlPanel.appendChild(sliderLabel);
+
+	const reactionsConfigDiv = document.createElement("div");
+	reactionsConfigDiv.id = "reactions-config";
+
+	const picker = new Picker();
+	reactionsConfigDiv.appendChild(picker);
+	controlPanel.appendChild(reactionsConfigDiv);
+
+	controlPanel
+		.querySelector("emoji-picker")
+		?.addEventListener("emoji-click", (event: Event & { detail?: any }) => {
+			reactionsConfigDiv.setAttribute("data-value", event.detail?.unicode);
+		});
 
 	slider.addEventListener("input", (e) => {
 		sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;

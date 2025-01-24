@@ -6,8 +6,13 @@
 import { Notifications } from "@fluidframework/presence/alpha";
 import type { IPresence, ISessionClient } from "@fluidframework/presence/alpha";
 
-import type { MouseTracker } from "./MouseTracker.js";
+import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
 
+/**
+ * Initializes reactions support for the app. Initialization will create a presence Notifications workspace and connect
+ * relevant event handlers. Reaction elements are added to the DOM in response to incoming notifications. These DOM
+ * elenents are automatically removed after a timeout.
+ */
 export function initializeReactions(presence: IPresence, mouseTracker: MouseTracker) {
 	// Create a notifications workspace to send reactions-related notifications. This workspace will be created if it
 	// doesn't exist. We create it with no notifications. We then add the Notifications value manager. You can also
@@ -28,9 +33,10 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		Notifications<
 			// This explicit generic type specification will not be required in the future.
 			{
-				send: (
-					// position: IMousePosition,
-					reaction: string,
+				reaction: (
+					// In the future, we'll be able to use IMousePosition here.
+					position: { x: number; y: number },
+					value: string,
 					intensity: "normal" | "intense",
 				) => void;
 			},
@@ -42,49 +48,59 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		),
 	);
 
+	// Send a "heart" reaction to all clients on click.
 	document.body.addEventListener("click", (e) => {
+		// Get the current reaction value
+		const reactionDiv = document.getElementById("reactions-config") as HTMLDivElement;
+		const reactionValue = reactionDiv.getAttribute("data-value");
+
+		// TODO: Check that we're connected before sending.
 		reactions.emit.broadcast(
-			"send",
-			// mouseTracker.getClientMousePosition(presence.getMyself()),
-			"❤️",
+			"reaction",
+			mouseTracker.getClientMousePosition(presence.getMyself()),
+			reactionValue ?? "?",
 			"normal",
 		);
 	});
 
-	document.body.addEventListener("keypress", (e) => {
-		reactions.emit.broadcast(
-			"send",
-			// mouseTracker.getClientMousePosition(presence.getMyself()),
-			e.key,
-			"intense",
-		);
-	});
+	// On keypress, send the corresponding key as a reaction to all clients.
+	// document.body.addEventListener("keypress", (e) => {
+	// 	// TODO: Check that we're connected before sending.
+	// 	reactions.emit.broadcast(
+	// 		"reaction",
+	// 		mouseTracker.getClientMousePosition(presence.getMyself()),
+	// 		e.key,
+	// 		"intense",
+	// 	);
+	// });
 
 	// Extract a reference to the value manager we just created.
 	const { reactions } = notifications.props;
 
-	reactions.notifications.on("send", onReaction);
+	reactions.notifications.on("reaction", onReaction);
+}
 
-	function onReaction(
-		client: ISessionClient,
-		// position: IMousePosition,
-		reaction: string,
-		intensity: string,
-	): void {
-		const position = mouseTracker.getClientMousePosition(client);
-		const reactionDiv = document.createElement("div");
-		reactionDiv.className = "reaction";
-		reactionDiv.style.position = "absolute";
-		reactionDiv.style.left = `${position.x}px`;
-		reactionDiv.style.top = `${position.y}px`;
-		if (intensity === "intense") {
-			reactionDiv.style.fontSize = "xxx-large";
-		}
-		reactionDiv.textContent = reaction;
-		document.body.appendChild(reactionDiv);
-
-		setTimeout(() => {
-			reactionDiv.remove();
-		}, 1000);
+/**
+ * Renders reactions to the window using absolute positioning.
+ */
+function onReaction(
+	client: ISessionClient,
+	position: IMousePosition,
+	value: string,
+	intensity: string,
+): void {
+	const reactionDiv = document.createElement("div");
+	reactionDiv.className = "reaction";
+	reactionDiv.style.position = "absolute";
+	reactionDiv.style.left = `${position.x}px`;
+	reactionDiv.style.top = `${position.y}px`;
+	if (intensity === "intense") {
+		reactionDiv.style.fontSize = "xxx-large";
 	}
+	reactionDiv.textContent = value;
+	document.body.appendChild(reactionDiv);
+
+	setTimeout(() => {
+		reactionDiv.remove();
+	}, 1000);
 }
