@@ -13031,15 +13031,9 @@ importers:
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../framework/fluid-static
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../dds/map
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -13053,9 +13047,6 @@ importers:
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../framework/aqueduct
       '@fluidframework/azure-client-previous':
         specifier: npm:@fluidframework/azure-client@2.13.0
         version: '@fluidframework/azure-client@2.13.0(encoding@0.1.13)'
@@ -13077,9 +13068,6 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../test/test-utils
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../dds/tree
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
@@ -13107,6 +13095,9 @@ importers:
       eslint-config-prettier:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../framework/fluid-framework
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
