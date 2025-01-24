@@ -27,7 +27,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 	private closed = false;
 	private contextError = undefined;
 
-	public headUpdatedAfterResume = false; // used to track whether the head has been updated after a resume event, so that we allow moving out of order only once during resume.
+	public headUpdatedAfterResume = true; // used to track whether the head has been updated after a resume event, so that we allow moving out of order only once during resume.
 
 	constructor(
 		private readonly routingKey: IRoutingKey,
@@ -59,13 +59,19 @@ export class DocumentContext extends EventEmitter implements IContext {
 	}
 
 	/**
+	 * TODO
+	 */
+	public setStateToPause() {
+		this.headUpdatedAfterResume = false;
+	}
+
+	/**
 	 * Updates the head offset for the context.
 	 */
-	public setHead(head: IQueuedMessage, resumeBackToOffset?: number | undefined) {
+	public setHead(head: IQueuedMessage) {
 		assert(
-			head.offset > this.head.offset ||
-				(head.offset === resumeBackToOffset && !this.headUpdatedAfterResume),
-			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or equal to the resume offset ${resumeBackToOffset} if not yet resumed (headUpdatedAfterResume: ${this.headUpdatedAfterResume}). Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			head.offset > this.head.offset || !this.headUpdatedAfterResume,
+			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or headUpdatedAfterResume should be false (${this.headUpdatedAfterResume}). Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 		);
 
 		// If head is moving backwards
@@ -82,26 +88,32 @@ export class DocumentContext extends EventEmitter implements IContext {
 				);
 				return false;
 			}
-			Lumberjack.info("Allowing the document context head to move to the specified offset", {
-				resumeBackToOffset,
-				currentHeadOffset: this.head.offset,
-				documentId: this.routingKey.documentId,
-			});
+
+			// allow moving backwards
+			Lumberjack.info(
+				"Allowing the document context head to move to the specified offset, and setting headUpdatedAfterResume to true",
+				{
+					newHeadOffset: head.offset,
+					currentHeadOffset: this.head.offset,
+					documentId: this.routingKey.documentId,
+				},
+			);
+
+			// if (!this.headUpdatedAfterResume) { // TODO do we need to resumeBackToOffset !== undefined check here? i.e. if 2 docs emitted pause, will this be defined for both docs?
+			// 	Lumberjack.info("Setting headUpdatedAfterResume to true", {
+			// 		resumeBackToOffset,
+			// 		newHeadOffset: head.offset,
+			// 		currentHeadOffset: this.head.offset,
+			// 		documentId: this.routingKey.documentId,
+			// 	});
+			this.headUpdatedAfterResume = true;
+			// }
 		}
 
 		// When moving back to a state where head and tail differ we set the tail to be the old head, as in the
 		// constructor, to make tail represent the inclusive top end of the checkpoint range.
 		if (!this.hasPendingWork()) {
 			this.tailInternal = this.getLatestTail();
-		}
-
-		if (!this.headUpdatedAfterResume && resumeBackToOffset !== undefined) {
-			Lumberjack.info("Setting headUpdatedAfterResume to true", {
-				resumeBackToOffset,
-				currentHeadOffset: this.head.offset,
-				documentId: this.routingKey.documentId,
-			});
-			this.headUpdatedAfterResume = true;
 		}
 
 		this.headInternal = head;
@@ -127,6 +139,14 @@ export class DocumentContext extends EventEmitter implements IContext {
 	}
 
 	public error(error: any, errorData: IContextErrorData) {
+		if (this.closed) {
+			// don't emit errors after closing
+			Lumberjack.info("Skipping emitting error since the documentContext is already closed", {
+				documentId: this.routingKey.documentId,
+				tenantId: this.routingKey.tenantId,
+			});
+			return;
+		}
 		this.contextError = error;
 		Lumberjack.verbose("Emitting error from documentContext");
 		this.emit("error", error, errorData);
