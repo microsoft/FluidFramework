@@ -11,7 +11,7 @@ import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
 /**
  * Initializes reactions support for the app. Initialization will create a presence Notifications workspace and connect
  * relevant event handlers. Reaction elements are added to the DOM in response to incoming notifications. These DOM
- * elenents are automatically removed after a timeout.
+ * elements are automatically removed after a timeout.
  */
 export function initializeReactions(presence: IPresence, mouseTracker: MouseTracker) {
 	// Create a notifications workspace to send reactions-related notifications. This workspace will be created if it
