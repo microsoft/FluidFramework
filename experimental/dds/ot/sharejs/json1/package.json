@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/sharejs-json1",
-	"version": "2.20.0",
+	"version": "2.20.1",
 	"description": "Distributed data structure for hosting ottypes",
 	"homepage": "https://fluidframework.com",
 	"repository": {

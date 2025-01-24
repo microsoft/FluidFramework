@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/todo",
-	"version": "2.20.0",
+	"version": "2.20.1",
 	"private": true,
 	"description": "Simple todo canvas.",
 	"homepage": "https://fluidframework.com",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/counter",
-	"version": "2.20.0",
+	"version": "2.20.1",
 	"description": "Counter DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
