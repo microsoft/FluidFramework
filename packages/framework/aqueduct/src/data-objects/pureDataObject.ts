@@ -58,14 +58,12 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initProps?: I["InitialState"];
 
-	#initializationPromise: Promise<void> | undefined;
-
 	/**
-	 * @deprecated `initializeP` has no defined behavior and should not be used for anything.
+	 * Internal implementation detail.
+	 * Subclasses should not use this.
 	 * @privateRemarks
-	 * This API is left over from a rename of `#initializationPromise` and is not used in internally.
-	 * For unknown reasons this API was exposed as a protected member with no documented behavior nor any usage or clear use-case.
-	 * It is kept as a deprecated API to avoid breaking changes, though nothing should be using it.
+	 * For unknown reasons this API was exposed as a protected member with no documented behavior nor any external usage or clear use-case.
+	 * Ideally a breaking change would be made to replace this with a better named private property like `#initializationPromise` when permitted.
 	 */
 	protected initializeP: Promise<void> | undefined;
 
@@ -133,8 +131,8 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * and need a fully initialized object, then you can call this API to ensure object is fully initialized.
 	 */
 	public async finishInitialization(existing: boolean): Promise<void> {
-		this.#initializationPromise ??= this.initializeInternal(existing);
-		return this.#initializationPromise;
+		this.initializeP ??= this.initializeInternal(existing);
+		return this.initializeP;
 	}
 
 	/**
