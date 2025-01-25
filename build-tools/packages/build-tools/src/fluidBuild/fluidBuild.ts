@@ -6,11 +6,11 @@
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 
+import { Stopwatch } from "@fluid-tools/build-infrastructure";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { commonOptions } from "./commonOptions";
-import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { options, parseOptions } from "./options";
 
@@ -19,18 +19,11 @@ const { log, errorLog: error, warning: warn } = defaultLogger;
 parseOptions(process.argv);
 
 async function main() {
-	const timer = new Timer(commonOptions.timer);
-	// const resolvedRoot = await getResolvedFluidRoot(true);
+	const timer = new Stopwatch(commonOptions.timer);
 	const repo = new FluidRepoBuild(process.cwd());
 	log(`Build Root: ${repo.root}`);
 
-	// Load the packages
-	// const repo = new FluidRepoBuild({
-	// 	repoRoot: resolvedRoot,
-	// 	gitRepo: new GitRepo(resolvedRoot),
-	// 	fluidBuildConfig: getFluidBuildConfig(resolvedRoot),
-	// });
-	timer.time("Package scan completed");
+	timer.log("Package scan completed");
 
 	// Set matched package based on options filter
 	const matched = repo.setMatched(options);
@@ -96,7 +89,7 @@ async function main() {
 			process.exit(-11);
 		}
 		spinner.succeed("Build graph created.");
-		timer.time("Build graph creation completed");
+		timer.log("Build graph creation completed");
 
 		// Check install
 		if (!(await buildGraph.checkInstall())) {
