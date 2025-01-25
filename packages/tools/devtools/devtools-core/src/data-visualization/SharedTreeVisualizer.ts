@@ -157,16 +157,6 @@ export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
 /**
  * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
  */
-// function getObjectAllowedTypes(schema: SimpleObjectNodeSchema): string {
-// 	const result: string[] = [];
-
-// 	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
-// 		const fieldTypes = treeFieldSimpleSchema.allowedTypes;
-// 		result.push(`${fieldKey} : ${concatenateTypes(fieldTypes)}`);
-// 	}
-
-// 	return `{ ${result.join(", ")} }`;
-// }
 
 /**
  * Returns the schema & fields of the node.
@@ -191,7 +181,7 @@ async function visualizeVerboseNodeFields(
 	return fields;
 }
 
-function getObjectAllowedTypes(schema: SimpleObjectNodeSchema): Record<string, string> {
+function storeObjectAllowedTypes(schema: SimpleObjectNodeSchema): Record<string, string> {
 	const result: Record<string, string> = {};
 
 	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
@@ -211,7 +201,7 @@ async function visualizeObjectNode(
 	allowedTypes: string,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const objectAllowedTypes = getObjectAllowedTypes(
+	const objectAllowedTypes = storeObjectAllowedTypes(
 		treeDefinitions.get(tree.type) as SimpleObjectNodeSchema,
 	);
 

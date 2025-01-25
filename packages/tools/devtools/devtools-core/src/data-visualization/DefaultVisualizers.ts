@@ -274,6 +274,11 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 
 	// Schema of the tree node.
 	const treeDefinitions = sharedTree.exportSimpleSchema().definitions;
+	/**
+	 * {@link visualizeSharedTreeBySchema} passes `allowedTypes` into co-recursive functions while constructing the visual representation.
+	 * Since the {@link SimpleTreeSchema.allowedTypes} of each children node is only accessible at the parent field level,
+	 * each node's allowed types are computed at the parent field level.
+	 */
 	const allowedTypes = concatenateTypes(sharedTree.exportSimpleSchema().allowedTypes);
 
 	// Create a root field visualization that shows the allowed types at the root
