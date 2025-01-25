@@ -179,50 +179,58 @@ export class AppData extends DataObject {
 		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
 
 		// TODO: Maybe include example handle
-
-		class LeafSchema extends builder.object("item-two-second-first", {
-			twoFirstSecondFirst: [builder.boolean, builder.handle, builder.string],
+		class LeafNodeSchema extends builder.object("leaf-node", {
+			value: [builder.boolean, builder.handle, builder.string],
 		}) {}
 
-		class TwoFirst extends builder.object("root-node-item-two-first", {
-			twoFirstFirst: [builder.string, builder.boolean],
-			twoFirstSecond: builder.optional(LeafSchema),
+		class ArrayNodeSchema extends builder.object("array-node", {
+			value: [builder.string, builder.boolean],
+			childLeaf: builder.optional(LeafNodeSchema),
 		}) {}
 
-		class RootNodeItemTwo extends builder.object("root-node-item-two", {
-			twoFirst: [builder.array(TwoFirst), builder.boolean],
-			twoSecond: builder.number,
+		class BranchNodeSchema extends builder.object("branch-node", {
+			arrayOrHandleNode: [builder.array(ArrayNodeSchema), builder.handle],
+			numericLeafNode: builder.number,
 		}) {}
 
-		class RootNodeItem extends builder.object("root-node-item", {
-			one: [builder.number, builder.string],
-			two: RootNodeItemTwo,
+		class MainBranchA extends builder.object("main-object-a", {
+			numericLeafNode: builder.number,
+			objectNode: BranchNodeSchema,
 		}) {}
 
-		class RootNode extends builder.object("root-node", {
-			rootNode: builder.optional([RootNodeItem, builder.string]),
+		class MainBranchB extends builder.object("main-object-b", {
+			numericLeafNode: builder.number,
+			booleanValue: builder.boolean,
+		}) {}
+
+		class RootFieldA extends builder.object("root-field-a", {
+			value: [builder.boolean, builder.handle, builder.string],
+		}) {}
+
+		class RootFieldB extends builder.object("root-field-b", {
+			mainObjectNode: builder.optional([MainBranchA, MainBranchB]),
 		}) {}
 
 		const config = new TreeViewConfiguration({
-			schema: [RootNode, builder.string, builder.number],
+			schema: [RootFieldA, RootFieldB, builder.string, builder.number],
 		});
 		const view = sharedTree.viewWith(config);
 		view.initialize({
-			rootNode: {
-				one: 42,
-				two: {
-					twoFirst: [
+			mainObjectNode: {
+				numericLeafNode: 42,
+				objectNode: {
+					arrayOrHandleNode: [
 						{
-							twoFirstFirst: false,
-							twoFirstSecond: {
-								twoFirstSecondFirst: "leaf value",
+							value: false,
+							childLeaf: {
+								value: "hello world!",
 							},
 						},
 						{
-							twoFirstFirst: true,
+							value: true,
 						},
 					],
-					twoSecond: 123,
+					numericLeafNode: 123,
 				},
 			},
 		});

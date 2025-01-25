@@ -215,8 +215,6 @@ async function visualizeObjectNode(
 		treeDefinitions.get(tree.type) as SimpleObjectNodeSchema,
 	);
 
-	console.log("objectAllowedTypes", objectAllowedTypes);
-
 	return {
 		schema: {
 			schemaName: tree.type,
