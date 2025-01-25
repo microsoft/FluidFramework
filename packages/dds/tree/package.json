@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.20.0",
+	"version": "2.21.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -186,7 +186,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.13.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.20.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",

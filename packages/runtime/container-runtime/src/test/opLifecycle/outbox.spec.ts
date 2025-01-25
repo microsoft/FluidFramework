@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
@@ -43,6 +43,7 @@ import {
 
 function typeFromBatchedOp(op: IBatchMessage) {
 	assert(op.contents !== undefined);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return JSON.parse(op.contents).type as string;
 }
 
@@ -54,14 +55,14 @@ describe("Outbox", () => {
 		batchesSubmitted: { messages: IBatchMessage[]; referenceSequenceNumber?: number }[];
 		batchesCompressed: IBatch[];
 		batchesSplit: IBatch[];
-		individualOpsSubmitted: any[];
+		individualOpsSubmitted: unknown[];
 		pendingOpContents: Partial<IPendingMessage & { batchStartCsn: number }>[];
 		opsSubmitted: number;
 		opsResubmitted: number;
 		isReentrant: boolean;
 	}
 	// state will be set to defaults in beforeEach
-	const state: State = {} as any;
+	const state: State = {} as unknown as State;
 
 	const mockLogger = new MockLogger();
 	const getMockDeltaManager = (): Partial<
@@ -80,7 +81,7 @@ describe("Outbox", () => {
 			>,
 			clientDetails: { capabilities: { interactive: true } },
 			updateDirtyContainerState: (_dirty: boolean) => {},
-			submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => {
+			submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
 				state.individualOpsSubmitted.push({ type, contents, batch, appData });
 				state.opsSubmitted++;
 				return state.opsSubmitted;
@@ -99,7 +100,7 @@ describe("Outbox", () => {
 		>,
 		clientDetails: { capabilities: { interactive: true } },
 		updateDirtyContainerState: (_dirty: boolean) => {},
-		submitFn: (type: MessageType, contents: any, batch: boolean, appData?: any) => {
+		submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
 			state.individualOpsSubmitted.push({ type, contents, batch, appData });
 			state.opsSubmitted++;
 			return state.opsSubmitted;
@@ -129,21 +130,19 @@ describe("Outbox", () => {
 	const getMockPendingStateManager = (): Partial<PendingStateManager> => ({
 		// Similar implementation as the real PSM - queue each message 1-by-1
 		onFlushBatch: (batch: BatchMessage[], clientSequenceNumber: number | undefined): void => {
-			batch.forEach(
-				({
-					contents: content = "",
+			for (const {
+				contents: content = "",
+				referenceSequenceNumber,
+				metadata: opMetadata,
+				localOpMetadata,
+			} of batch)
+				state.pendingOpContents.push({
+					content,
 					referenceSequenceNumber,
-					metadata: opMetadata,
+					opMetadata,
 					localOpMetadata,
-				}) =>
-					state.pendingOpContents.push({
-						content,
-						referenceSequenceNumber,
-						opMetadata,
-						localOpMetadata,
-						batchStartCsn: clientSequenceNumber ?? -1,
-					}),
-			);
+					batchStartCsn: clientSequenceNumber ?? -1,
+				});
 		},
 	});
 
@@ -231,7 +230,7 @@ describe("Outbox", () => {
 			groupingManager: new OpGroupingManager(
 				params.opGroupingConfig ?? {
 					groupedBatchingEnabled: false,
-					opCountThreshold: Infinity,
+					opCountThreshold: Number.POSITIVE_INFINITY,
 				},
 				mockLogger,
 			),
@@ -805,7 +804,7 @@ describe("Outbox", () => {
 		]);
 	});
 
-	[
+	for (const ops of [
 		[
 			{
 				...createMessage(ContainerMessageType.IdAllocation, "0"),
@@ -834,7 +833,7 @@ describe("Outbox", () => {
 				referenceSequenceNumber: 1,
 			},
 		],
-	].forEach((ops: BatchMessage[]) => {
+	]) {
 		it("Flushes all batches when an out of order message is detected in either flows", () => {
 			const outbox = getOutbox({ context: getMockContext() });
 			for (const op of ops) {
@@ -860,7 +859,7 @@ describe("Outbox", () => {
 				},
 			]);
 		});
-	});
+	}
 
 	it("Does not flush the batch when an out of order message is detected, if configured", () => {
 		const outbox = getOutbox({

@@ -1,5 +1,9 @@
 # @fluid-internal/app-insights-logger
 
+## 2.20.0
+
+Dependency updates only.
+
 ## 2.13.0
 
 Dependency updates only.

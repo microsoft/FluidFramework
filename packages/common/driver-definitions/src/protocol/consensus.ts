@@ -49,46 +49,6 @@ export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedP
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
 /**
- * @deprecated This type is now unused and will be removed
- * Events fired by a Quorum in response to client tracking.
- * @internal
- *
- */
-export interface IQuorumClientsEvents {
-	(event: "addMember", listener: (clientId: string, details: ISequencedClient) => void);
-	(event: "removeMember", listener: (clientId: string) => void);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(event: "error", listener: (message: any) => void);
-}
-
-/**
- * Events fired by a Quorum in response to proposal tracking.
- * @internal
- * @deprecated This type is now unused and will be removed
- */
-export interface IQuorumProposalsEvents {
-	(event: "addProposal", listener: (proposal: ISequencedProposal) => void);
-	(
-		event: "approveProposal",
-		listener: (
-			sequenceNumber: number,
-			key: string,
-			value: unknown,
-			approvalSequenceNumber: number,
-		) => void,
-	);
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	(event: "error", listener: (message: any) => void): void;
-}
-
-/**
- * All events fired by {@link IQuorum}, both client tracking and proposal tracking.
- * @internal
- * @deprecated This type is now unused and will be removed
- */
-export type IQuorumEvents = IQuorumClientsEvents & IQuorumProposalsEvents;
-
-/**
  * Interface for tracking clients in the Quorum.
  * @public
  */
