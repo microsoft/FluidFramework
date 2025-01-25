@@ -9,8 +9,7 @@
  *
  * @internal
  */
-export type IsomorphicPerformance = Partial<Performance> &
-	Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
+export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "now">;
 
 /**
  * This exported "performance" member masks the built-in globalThis.performance object
