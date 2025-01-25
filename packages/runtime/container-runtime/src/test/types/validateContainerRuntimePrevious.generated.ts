@@ -22,6 +22,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_ContainerRuntime": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ContainerRuntime = requireAssignableTo<TypeOnly<old.ContainerRuntime>, TypeOnly<current.ContainerRuntime>>
 
 /*
@@ -31,6 +32,7 @@ declare type old_as_current_for_Class_ContainerRuntime = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_ContainerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ContainerRuntime = requireAssignableTo<TypeOnly<current.ContainerRuntime>, TypeOnly<old.ContainerRuntime>>
 
 /*
@@ -85,6 +87,7 @@ declare type current_as_old_for_Class_SummaryCollection = requireAssignableTo<Ty
  * typeValidation.broken:
  * "ClassStatics_ContainerRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ContainerRuntime = requireAssignableTo<TypeOnly<typeof current.ContainerRuntime>, TypeOnly<typeof old.ContainerRuntime>>
 
 /*
@@ -742,6 +745,7 @@ declare type current_as_old_for_Interface_ISubmitSummaryOptions = requireAssigna
  * typeValidation.broken:
  * "Interface_ISummarizeEventProps": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISummarizeEventProps = requireAssignableTo<TypeOnly<old.ISummarizeEventProps>, TypeOnly<current.ISummarizeEventProps>>
 
 /*
@@ -751,6 +755,7 @@ declare type old_as_current_for_Interface_ISummarizeEventProps = requireAssignab
  * typeValidation.broken:
  * "Interface_ISummarizeEventProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISummarizeEventProps = requireAssignableTo<TypeOnly<current.ISummarizeEventProps>, TypeOnly<old.ISummarizeEventProps>>
 
 /*
@@ -814,6 +819,7 @@ declare type current_as_old_for_Interface_ISummarizeResults = requireAssignableT
  * typeValidation.broken:
  * "Interface_ISummarizerEvents": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISummarizerEvents = requireAssignableTo<TypeOnly<old.ISummarizerEvents>, TypeOnly<current.ISummarizerEvents>>
 
 /*
@@ -823,6 +829,7 @@ declare type old_as_current_for_Interface_ISummarizerEvents = requireAssignableT
  * typeValidation.broken:
  * "Interface_ISummarizerEvents": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ISummarizerEvents = requireAssignableTo<TypeOnly<current.ISummarizerEvents>, TypeOnly<old.ISummarizerEvents>>
 
 /*
@@ -1426,6 +1433,7 @@ declare type current_as_old_for_TypeAlias_SummarizeResultPart = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_SummarizerStopReason": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_SummarizerStopReason = requireAssignableTo<TypeOnly<old.SummarizerStopReason>, TypeOnly<current.SummarizerStopReason>>
 
 /*
@@ -1435,6 +1443,7 @@ declare type old_as_current_for_TypeAlias_SummarizerStopReason = requireAssignab
  * typeValidation.broken:
  * "TypeAlias_SummarizerStopReason": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_SummarizerStopReason = requireAssignableTo<TypeOnly<current.SummarizerStopReason>, TypeOnly<old.SummarizerStopReason>>
 
 /*

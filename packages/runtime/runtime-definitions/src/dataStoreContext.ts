@@ -137,7 +137,7 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	 */
 	(
 		event: "batchEnd",
-		listener: (error: any, op: Omit<ISequencedDocumentMessage, "contents">) => void,
+		listener: (error: unknown, op: Omit<ISequencedDocumentMessage, "contents">) => void,
 	);
 	/**
 	 * Indicates that an incoming op has been processed.
@@ -217,15 +217,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
-	 * @deprecated 0.16 Issue #1537, #3631
-	 */
-	_createDataStoreWithProps(
-		pkg: Readonly<string | string[]>,
-		props?: any,
-		id?: string,
-	): Promise<IDataStore>;
-
-	/**
 	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
 	 * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
 	 * storage (file). Storing the entryPoint handle (or any other handle inside the data store, e.g. for DDS) into an
@@ -286,14 +277,14 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Generates a new ID that is guaranteed to be unique across all sessions for this container.
-	 * It could be in compact form (non-negative integer, oppotunistic), but it could also be UUID string.
+	 * It could be in compact form (non-negative integer, opportunistic), but it could also be UUID string.
 	 * UUIDs generated will have low entropy in groups and will compress well.
 	 * It can be leveraged anywhere in container where container unique IDs are required, i.e. any place
 	 * that uses uuid() and stores result in container is likely candidate to start leveraging this API.
 	 * If you always want to convert to string, instead of doing String(generateDocumentUniqueId()), consider
 	 * doing encodeCompactIdToString(generateDocumentUniqueId()).
 	 *
-	 * For more details, please see IIdCompressor.generateDocumentUniqueId()
+	 * @see {@link @fluidframework/id-compressor#IIdCompressor.generateDocumentUniqueId}
 	 */
 	generateDocumentUniqueId(): number | string;
 
@@ -301,7 +292,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Api to fetch the snapshot from the service for a loadingGroupIds.
 	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
 	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
-	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 * @returns snapshotTree and the sequence number of the snapshot.
 	 */
 	getSnapshotForLoadingGroupId(
 		loadingGroupIds: string[],
@@ -391,8 +382,10 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	reSubmit(type: string, content: any, localOpMetadata: unknown);
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
 
 	/**
@@ -401,6 +394,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	rollback?(type: string, content: any, localOpMetadata: unknown): void;
 
 	/**
@@ -448,6 +442,7 @@ export interface IPendingMessagesState {
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
 		Partial<IProvideFluidDataStoreRegistry> {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
@@ -500,6 +495,7 @@ export interface IFluidParentContext
 	 * the server. This will be sent back when this message is received back from the server. This is also sent if
 	 * we are asked to resubmit the message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	submitMessage(type: string, content: any, localOpMetadata: unknown): void;
 
 	/**
@@ -587,6 +583,9 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
+	// Seems like this can be removed now; the issues mentioned in the @deprecated tag are about _createDataStoreWithProps
+	// which we finally removed in FF 2.20 (https://github.com/microsoft/FluidFramework/pull/22996).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly createProps?: any;
 
 	/**

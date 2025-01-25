@@ -30,6 +30,7 @@ import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
 import { checkForKnownServerFarmType, getApiRoot } from "./../odspUrlHelper.js";
 import {
 	INewFileInfo,
+	appendNavParam,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
@@ -63,6 +64,7 @@ export async function createNewFluidFile(
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
+	resolvedUrl?: IOdspResolvedUrl,
 ): Promise<IOdspResolvedUrl> {
 	// Check for valid filename before the request to create file is actually made.
 	if (isInvalidFileName(newFileInfo.filename)) {
@@ -110,6 +112,21 @@ export async function createNewFluidFile(
 	});
 	fileEntry.docId = odspResolvedUrl.hashedDocumentId;
 	fileEntry.resolvedUrl = odspResolvedUrl;
+
+	odspResolvedUrl.context = resolvedUrl?.context;
+	odspResolvedUrl.appName = resolvedUrl?.appName;
+	odspResolvedUrl.codeHint = resolvedUrl?.codeHint;
+
+	if (shareLinkInfo?.createLink?.link) {
+		let newWebUrl = shareLinkInfo.createLink.link.webUrl;
+		newWebUrl = appendNavParam(
+			newWebUrl,
+			odspResolvedUrl,
+			odspResolvedUrl.dataStorePath ?? "/",
+			odspResolvedUrl.codeHint?.containerPackageName,
+		);
+		shareLinkInfo.createLink.link.webUrl = newWebUrl;
+	}
 
 	odspResolvedUrl.shareLinkInfo = shareLinkInfo;
 	odspResolvedUrl.pendingRename = pendingRename;

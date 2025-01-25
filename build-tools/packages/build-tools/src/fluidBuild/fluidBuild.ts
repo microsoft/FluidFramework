@@ -4,11 +4,13 @@
  */
 
 import chalk from "picocolors";
+import { Spinner } from "picospinner";
 
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { commonOptions } from "./commonOptions";
+import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
 import { FluidRepoBuild } from "./fluidRepoBuild";
 import { options, parseOptions } from "./options";
 
@@ -79,24 +81,21 @@ async function main() {
 	let failureSummary = "";
 	let exitCode = 0;
 	if (options.buildTaskNames.length !== 0) {
-		log(
-			`Symlink in ${
-				options.fullSymlink
-					? "full"
-					: options.fullSymlink === false
-						? "isolated"
-						: "non-dependent"
-			} mode`,
-		);
+		if (options.fullSymlink !== undefined) {
+			log(chalk.yellow(`Symlink in ${options.fullSymlink ? "full" : "isolated"} mode`));
+		}
 
 		// build the graph
 		let buildGraph: BuildGraph;
+		const spinner = new Spinner("Creating build graph...");
 		try {
+			spinner.start();
 			buildGraph = repo.createBuildGraph(options.buildTaskNames);
 		} catch (e: unknown) {
 			error((e as Error).message);
 			process.exit(-11);
 		}
+		spinner.succeed("Build graph created.");
 		timer.time("Build graph creation completed");
 
 		// Check install

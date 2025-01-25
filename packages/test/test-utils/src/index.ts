@@ -3,11 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export {
-	wrapDocumentService,
-	wrapDocumentServiceFactory,
-	wrapDocumentStorageService,
-} from "./DriverWrappers.js";
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export {
@@ -15,7 +10,12 @@ export {
 	LocalCodeLoader,
 	SupportedExportInterfaces,
 } from "./localCodeLoader.js";
-export { createAndAttachContainer, createLoader } from "./localLoader.js";
+export {
+	createAndAttachContainer,
+	createLoader,
+	createLoaderProps,
+	createAndAttachContainerUsingProps,
+} from "./localLoader.js";
 export { retryWithEventualValue } from "./retry.js";
 export { createTestConfigProvider, ITestConfigProvider } from "./TestConfigs.js";
 export {
@@ -48,7 +48,6 @@ export {
 	SummaryInfo,
 } from "./TestSummaryUtils.js";
 export {
-	defaultTimeoutDurationMs,
 	timeoutAwait,
 	timeoutPromise,
 	type TimeoutDurationOption,

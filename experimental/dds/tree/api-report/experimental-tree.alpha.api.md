@@ -420,11 +420,22 @@ export interface InternalizedChange {
 }
 
 // @alpha
+export interface IRevertible {
+    discard(): any;
+    revert(): any;
+}
+
+// @alpha
 export interface ISharedTreeEvents extends ISharedObjectEvents {
     // (undocumented)
     (event: 'committedEdit', listener: EditCommittedHandler): any;
     // (undocumented)
     (event: 'appliedSequencedEdit', listener: SequencedEditAppliedHandler): any;
+}
+
+// @alpha
+export interface IUndoConsumer {
+    pushToCurrentOperation(revertible: IRevertible): any;
 }
 
 // @alpha
@@ -719,6 +730,13 @@ export interface SharedTreeOptions_0_1_1 {
 // @alpha
 export interface SharedTreeSummaryBase {
     readonly version: WriteFormat;
+}
+
+// @alpha
+export class SharedTreeUndoRedoHandler {
+    constructor(stackManager: IUndoConsumer);
+    attachTree(tree: SharedTree): void;
+    detachTree(tree: SharedTree): void;
 }
 
 // @alpha

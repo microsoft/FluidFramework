@@ -92,6 +92,8 @@ import {
 	CursorLocationType,
 	type RevertibleAlpha,
 	type RevertibleAlphaFactory,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeRename,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -120,7 +122,6 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	type ITransaction,
 	type ITreeCheckoutFork,
 } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -129,8 +130,11 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { SharedTreeOptions } from "../shared-tree/sharedTree.js";
+import type {
+	SharedTreeOptions,
+	SharedTreeOptionsInternal,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../shared-tree/sharedTree.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -152,6 +156,9 @@ import type { Client } from "@fluid-private/test-dds-utils";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
+import type { Transactor } from "../shared-tree-core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 // Testing utilities
 
@@ -456,8 +463,8 @@ export function spyOnMethod(
 /**
  * Determines whether or not the given delta has a visible impact on the document tree.
  */
-export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
-	for (const mark of delta.local ?? []) {
+export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boolean {
+	for (const mark of fieldChanges ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
 		}
@@ -475,7 +482,7 @@ export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
+export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
 	assert.deepStrictEqual(a, b);
 }
 
@@ -511,10 +518,11 @@ export class SharedTreeTestFactory extends SharedTreeFactory {
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
 	 */
 	public constructor(
-		private readonly onCreate: (tree: SharedTree) => void,
-		private readonly onLoad?: (tree: SharedTree) => void,
+		protected readonly onCreate: (tree: SharedTree) => void,
+		protected readonly onLoad?: (tree: SharedTree) => void,
+		options: SharedTreeOptionsInternal = {},
 	) {
-		super({ jsonValidator: typeboxValidator });
+		super({ ...options, jsonValidator: typeboxValidator });
 	}
 
 	public override async load(
@@ -999,15 +1007,22 @@ export function defaultRevInfosFromChanges(
 	return revInfos;
 }
 
+export interface DeltaParams {
+	detachedFieldIndex?: DetachedFieldIndex;
+	revision?: RevisionTag;
+	global?: readonly DeltaDetachedNodeChanges[];
+	rename?: readonly DeltaDetachedNodeRename[];
+	build?: readonly DeltaDetachedNodeBuild[];
+	destroy?: readonly DeltaDetachedNodeDestruction[];
+}
+
 export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
-	detachedFieldIndex?: DetachedFieldIndex,
-	revision?: RevisionTag,
-	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DeltaDetachedNodeDestruction[],
+	params?: DeltaParams,
 ): void {
-	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
+	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
+	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
 	applyDelta(
 		rootDelta,
 		revision,
@@ -1020,12 +1035,10 @@ export function applyTestDelta(
 export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
-	detachedFieldIndex?: DetachedFieldIndex,
-	revision?: RevisionTag,
-	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DeltaDetachedNodeDestruction[],
+	params?: DeltaParams,
 ): void {
-	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
+	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
+	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
 	announceDelta(
 		rootDelta,
 		revision,
@@ -1037,10 +1050,18 @@ export function announceTestDelta(
 
 export function rootFromDeltaFieldMap(
 	delta: DeltaFieldMap,
+	global?: readonly DeltaDetachedNodeChanges[],
+	rename?: readonly DeltaDetachedNodeRename[],
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): Mutable<DeltaRoot> {
 	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (global !== undefined) {
+		rootDelta.global = global;
+	}
+	if (rename !== undefined) {
+		rootDelta.rename = rename;
+	}
 	if (build !== undefined) {
 		rootDelta.build = build;
 	}
@@ -1219,7 +1240,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		}
 		return this.options.editor;
 	}
-	public get transaction(): ITransaction {
+	public get transaction(): Transactor {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
 	public get events(): Listenable<CheckoutEvents> {

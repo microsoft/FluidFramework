@@ -155,7 +155,9 @@ export class BuildPackage extends PackageBase<FluidBuildPackageJson> {
  *
  * The package.json is always sorted using sort-package-json.
  *
- * @deprecated Use the functions in build-infrastructure instead.
+ * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export function updatePackageJsonFile(
 	packagePath: string,
@@ -176,7 +178,9 @@ export function updatePackageJsonFile(
  * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
  * indentation.
  *
- * @deprecated Use the functions in build-infrastructure instead.
+ * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export function readPackageJsonAndIndent(
 	pathToJson: string,
@@ -206,7 +210,9 @@ function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: str
  * @remarks
  * The package.json is always sorted using sort-package-json.
  *
- * @deprecated Use the functions in build-infrastructure instead.
+ * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export async function updatePackageJsonFileAsync(
 	packagePath: string,

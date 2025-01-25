@@ -42,6 +42,8 @@ import type {
 	requireTrue,
 	UnionToIntersection,
 } from "../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { objectSchema } from "../../simple-tree/objectNode.js";
 import { validateUsageError } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
@@ -215,6 +217,28 @@ describe("schemaTypes", () => {
 			// boolean is sometimes a union of true and false, so it can break in its owns special ways
 			type I13 = InsertableField<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
+		}
+
+		// NodeFromSchema
+		{
+			class Simple extends schema.object("A", { x: [schema.number] }) {}
+			class Customized extends schema.object("B", { x: [schema.number] }) {
+				public customized = true;
+			}
+
+			// Class that implements both TreeNodeSchemaNonClass and TreeNodeSchemaNonClass
+			class CustomizedBoth extends objectSchema("B", { x: [schema.number] }, true, false) {
+				public customized = true;
+			}
+
+			type TA = NodeFromSchema<typeof Simple>;
+			type _checkA = requireAssignableTo<TA, Simple>;
+
+			type TB = NodeFromSchema<typeof Customized>;
+			type _checkB = requireAssignableTo<TB, Customized>;
+
+			type TC = NodeFromSchema<typeof CustomizedBoth>;
+			type _checkC = requireAssignableTo<TC, CustomizedBoth>;
 		}
 	}
 

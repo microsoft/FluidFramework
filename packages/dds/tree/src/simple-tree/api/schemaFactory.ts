@@ -18,6 +18,9 @@ import {
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
+// This import is required for intellisense in @link doc comments on mouseover in VSCode.
+// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+import type { TreeAlpha } from "../../shared-tree/index.js";
 
 import {
 	booleanSchema,
@@ -37,6 +40,7 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
+	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -74,6 +78,7 @@ import type {
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
 import { isLazy } from "../flexList.js";
+
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -96,6 +101,64 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 			unreachableCase(value);
 	}
 }
+
+/**
+ * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ *
+ * @alpha
+ */
+export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
+	/**
+	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
+	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
+	 * that has upgraded the document's schema to include those optional fields.
+	 *
+	 * @defaultValue `false`
+	 * @remarks
+	 * The advantage of enabling this option is that it allows an application ecosystem with staged rollout to more quickly
+	 * upgrade documents to include schema for new optional features.
+	 *
+	 * However, it does come with trade-offs that applications should weigh carefully when it comes to interactions between
+	 * code and documents.
+	 * When opening such documents, the API presented is still determined by the view schema.
+	 * This can have implications on the behavior of edits or code which uses portions of the view schema,
+	 * since this may inadvertently drop data which is present in those optional fields in the document schema.
+	 *
+	 * Consider the following example:
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactory("com.example");
+	 * class PersonView extends sf.object("Person", { name: sf.string }, { allowUnknownOptionalFields: true }) {}
+	 * class PersonStored extends sf.object("Person", { name: sf.string, nickname: sf.optional(sf.string) }) {}
+	 *
+	 * // Say we have a document which uses `PersonStored` in its schema, and application code constructs
+	 * // a tree view using `PersonView`. If the application for some reason had implemented a function like this:
+	 * function clonePerson(a: PersonView): PersonView {
+	 * 	return new PersonView({ name: a.name });
+	 * }
+	 * // ...or even like this:
+	 * function clonePerson(a: PersonView): PersonView {
+	 *  return new PersonView({ ...a})
+	 * }
+	 * // Then the alleged clone wouldn't actually clone the entire person in either case, it would drop the nickname.
+	 * ```
+	 *
+	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
+	 * {@link TreeAlpha.(importVerbose:2)|import}/{@link TreeAlpha.(exportVerbose:2)|export} APIs with persistent keys.
+	 *
+	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
+	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
+	 * reaches into a node (either by accessing its fields, spreading it, or some other means) that this problem arises.
+	 */
+	allowUnknownOptionalFields?: boolean;
+}
+
+export const defaultSchemaFactoryObjectOptions: Required<
+	Omit<SchemaFactoryObjectOptions, "metadata">
+> = {
+	allowUnknownOptionalFields: false,
+};
 
 /**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
@@ -199,6 +262,8 @@ export type ScopedSchemaName<
  * Also for consistency, if keeping the current approach to detecting `POJO Emulation` mode it might make sense to make explicitly named Maps and Arrays do the detection the same as how object does it.
  *
  * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
+ *
+ * @see {@link SchemaFactoryAlpha}
  *
  * @sealed @public
  */
@@ -333,11 +398,18 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(this.scoped(name), fields, true);
+		return objectSchema(
+			this.scoped(name),
+			fields,
+			true,
+			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
+		);
 	}
 
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 *
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 *
 	 * @remarks
 	 * The unique identifier for this Map is defined as a function of the provided types.
@@ -375,6 +447,7 @@ export class SchemaFactory<
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 *
 	 * @example
 	 * ```typescript
@@ -395,6 +468,8 @@ export class SchemaFactory<
 	>;
 
 	/**
+	 * {@link SchemaFactory.map} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
@@ -469,11 +544,14 @@ export class SchemaFactory<
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
+			undefined,
 		);
 	}
 
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
+	 *
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @remarks
 	 * The identifier for this Array is defined as a function of the provided types.
@@ -521,6 +599,7 @@ export class SchemaFactory<
 	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @example
 	 * ```typescript
@@ -543,6 +622,8 @@ export class SchemaFactory<
 	>;
 
 	/**
+	 * {@link SchemaFactory.array} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */
@@ -726,11 +807,20 @@ export class SchemaFactory<
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
-	>(name: Name, t: T) {
+	>(
+		name: Name,
+		t: T,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		false,
+		T
+	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,

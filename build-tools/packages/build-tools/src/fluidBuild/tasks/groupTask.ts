@@ -33,7 +33,7 @@ export class GroupTask extends Task {
 				if (prevTask !== undefined) {
 					const leafTasks = new Set<LeafTask>();
 					prevTask.collectLeafTasks(leafTasks);
-					task.addDependentLeafTasks(leafTasks.values());
+					task.addDependentLeafTasks(leafTasks);
 				}
 				prevTask = task;
 			}

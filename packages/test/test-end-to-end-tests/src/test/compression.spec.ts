@@ -7,7 +7,6 @@ import { strict as assert } from "assert";
 // eslint-disable-next-line import/no-nodejs-modules
 import * as crypto from "crypto";
 
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	describeCompat,
 	describeInstallVersions,
@@ -16,6 +15,7 @@ import {
 import {
 	CompressionAlgorithms,
 	type IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
@@ -48,7 +48,7 @@ const compressionSuite = (getProvider) => {
 		});
 
 		async function setupContainers(
-			runtimeOptions: IContainerRuntimeOptions = defaultRuntimeOptions,
+			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
 		) {
 			const containerConfig: ITestContainerConfig = {
 				registry: [["mapKey", SharedMap.getFactory()]],
@@ -107,29 +107,13 @@ const compressionSuite = (getProvider) => {
 			assert.strictEqual(remoteMap.get("testKey"), value);
 		});
 
-		const messageGenerationOptions = generatePairwiseOptions<{
-			/** chunking cannot happen without compression */
-			compressionAndChunking:
-				| {
-						compression: false;
-						chunking: false;
-				  }
-				| {
-						compression: true;
-						chunking: boolean;
-				  };
-			grouping: boolean;
-		}>({
-			compressionAndChunking: [
-				{ compression: false, chunking: false },
-				{ compression: true, chunking: false },
-				{ compression: true, chunking: true },
-			],
-			grouping: [true, false],
-		});
-
-		messageGenerationOptions.forEach((option) => {
-			it(`Correctly processes messages: compression [${option.compressionAndChunking.compression}] chunking [${option.compressionAndChunking.chunking}] grouping [${option.grouping}]`, async function () {
+		[
+			{ compression: false, grouping: true, chunking: false },
+			{ compression: false, grouping: false, chunking: false },
+			{ compression: true, grouping: true, chunking: true },
+			{ compression: true, grouping: true, chunking: false },
+		].forEach((option) => {
+			it(`Correctly processes messages: compression [${option.compression}] chunking [${option.chunking}] grouping [${option.grouping}]`, async function () {
 				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
@@ -144,14 +128,10 @@ const compressionSuite = (getProvider) => {
 				}
 				await setupContainers({
 					compressionOptions: {
-						minimumBatchSizeInBytes: option.compressionAndChunking.compression
-							? 10
-							: Number.POSITIVE_INFINITY,
+						minimumBatchSizeInBytes: option.compression ? 10 : Number.POSITIVE_INFINITY,
 						compressionAlgorithm: CompressionAlgorithms.lz4,
 					},
-					chunkSizeInBytes: option.compressionAndChunking.chunking
-						? 100
-						: Number.POSITIVE_INFINITY,
+					chunkSizeInBytes: option.chunking ? 100 : Number.POSITIVE_INFINITY,
 					enableGroupedBatching: option.grouping,
 				});
 				const values = [

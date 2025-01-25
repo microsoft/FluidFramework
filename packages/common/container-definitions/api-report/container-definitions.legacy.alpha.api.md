@@ -109,6 +109,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly disposed?: boolean;
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    getContainerPackageInfo?(): IContainerPackageInfo | undefined;
     getEntryPoint(): Promise<FluidObject>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
@@ -163,7 +164,7 @@ export interface IContainerContext {
     readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly supportedFeatures?: ReadonlyMap<string, unknown>;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;
@@ -195,6 +196,11 @@ export interface IContainerLoadMode {
     // (undocumented)
     opsBeforeReturn?: undefined | "cached" | "all";
 }
+
+// @alpha
+export type IContainerPolicies = {
+    maxClientLeaveWaitTime?: number;
+};
 
 // @public
 export type ICriticalContainerError = IErrorBase_2;
