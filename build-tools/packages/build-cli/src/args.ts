@@ -32,7 +32,7 @@ export const findPackageOrReleaseGroup = (
 	if (isMonoRepoKind(name)) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const group = context.repo.releaseGroups.get(name as ReleaseGroupName);
-		return context.repo.packages.get()
+		return context.repo.packages.get();
 	}
 
 	return (
