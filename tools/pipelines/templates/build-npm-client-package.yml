@@ -559,6 +559,9 @@ extends:
               - name: absolutePathToTelemetryGenerator
                 value: $(Build.SourcesDirectory)/tools/telemetry-generator
                 readonly: true
+              # We already run CodeQL in the main build job, so we don't need to run it again here.
+              - name: DisableCodeQL
+                value: true
             steps:
               # Setup
               - checkout: self
@@ -706,6 +709,9 @@ extends:
                 - name: absolutePathToTelemetryGenerator
                   value: $(Build.SourcesDirectory)/tools/telemetry-generator
                   readonly: true
+                # We already run CodeQL in the main build job, so we don't need to run it again here.
+                - name: DisableCodeQL
+                  value: true
               steps:
                 # Setup
                 - checkout: self
