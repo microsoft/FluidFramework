@@ -4,7 +4,6 @@
  */
 
 import path from "node:path";
-import type { IPackage } from "@fluid-tools/build-infrastructure";
 
 /**
  * Given a package, returns the name that should be used for the previous version of the package to generate type tests.
@@ -15,7 +14,7 @@ import type { IPackage } from "@fluid-tools/build-infrastructure";
  * generation and the generation code that mostly lives in build-cli. Long term this function should move to build-cli
  * or a third library package and be used by fluid-build and build-cli.
  */
-export function getTypeTestPreviousPackageDetails(pkg: IPackage): {
+export function getTypeTestPreviousPackageDetails(pkg: { name: string; directory: string }): {
 	name: string;
 	packageJsonPath: string;
 } {

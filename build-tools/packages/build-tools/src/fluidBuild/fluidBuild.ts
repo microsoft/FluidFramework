@@ -8,7 +8,6 @@ import { Spinner } from "picospinner";
 
 import { Stopwatch } from "@fluid-tools/build-infrastructure";
 import { defaultLogger } from "../common/logging";
-import { Timer } from "../common/timer";
 import { BuildGraph, BuildResult } from "./buildGraph";
 import { commonOptions } from "./commonOptions";
 import { FluidRepoBuild } from "./fluidRepoBuild";
@@ -38,7 +37,7 @@ async function main() {
 			error(`uninstall failed`);
 			process.exit(-8);
 		}
-		timer.time("Uninstall completed", true);
+		timer.log("Uninstall completed", true);
 
 		if (!options.install) {
 			let errorStep: string | undefined = undefined;
@@ -63,7 +62,7 @@ async function main() {
 			error(`Install failed`);
 			process.exit(-5);
 		}
-		timer.time("Install completed", true);
+		timer.log("Install completed", true);
 	}
 
 	// Symlink check
@@ -96,12 +95,12 @@ async function main() {
 			error("Dependency not installed. Use --install to fix.");
 			process.exit(-10);
 		}
-		timer.time("Check install completed");
+		timer.log("Check install completed");
 
 		// Run the build
 		const buildResult = await buildGraph.build(timer);
 		const buildStatus = buildResultString(buildResult);
-		const elapsedTime = timer.time();
+		const elapsedTime = timer.log();
 		if (commonOptions.timer) {
 			const totalElapsedTime = buildGraph.totalElapsedTime;
 			const concurrency = buildGraph.totalElapsedTime / elapsedTime;
