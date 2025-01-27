@@ -113,7 +113,7 @@ function TestNullish(
 		for (const valueManagerKey of Object.keys(newDataValue)) {
 			for (const [nestedDataKey, value] of Object.entries(newDataValue[valueManagerKey])) {
 				mergedData[valueManagerKey] ??= {};
-				const oldData = mergedData[valueManagerKey][nestedDataKey]; // ok: Accessing nested property nestedDataKey of mergedData[valueManagerKey] is allowed becauuse its assied using ??=
+				const oldData = mergedData[valueManagerKey][nestedDataKey]; // ok: Accessing nested property nestedDataKey of mergedData[valueManagerKey] is allowed because it's accessed using ??=
 				mergedData[valueManagerKey][nestedDataKey] = "";
 			}
 		}
