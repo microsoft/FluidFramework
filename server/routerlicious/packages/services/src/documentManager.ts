@@ -12,12 +12,12 @@ import {
 	IDocumentStaticProperties,
 	ICache,
 } from "@fluidframework/server-services-core";
-import { generateToken } from "@fluidframework/server-services-utils";
 import {
 	Lumberjack,
 	getLumberBaseProperties,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
+import { getRefreshTokenIfNeededCallback } from "./tenant";
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
@@ -122,13 +122,21 @@ export class DocumentManager implements IDocumentManager {
 	}
 
 	private async getBasicRestWrapper(tenantId: string, documentId: string) {
-		const key = await this.tenantManager.getKey(tenantId);
+		const scopes = [ScopeType.DocRead];
+		const accessToken = await this.tenantManager.signToken(tenantId, documentId, scopes);
 		const getDefaultHeaders = () => {
-			const jwtToken = generateToken(tenantId, documentId, key, [ScopeType.DocRead]);
 			return {
-				Authorization: `Basic ${jwtToken}`,
+				Authorization: `Basic ${accessToken}`,
 			};
 		};
+
+		const refreshTokenIfNeeded = getRefreshTokenIfNeededCallback(
+			this.tenantManager,
+			documentId,
+			tenantId,
+			scopes,
+			"documentManager",
+		);
 
 		const restWrapper = new BasicRestWrapper(
 			this.internalAlfredUrl,
@@ -141,6 +149,7 @@ export class DocumentManager implements IDocumentManager {
 			getDefaultHeaders /* refreshDefaultHeaders */,
 			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+			refreshTokenIfNeeded /* refreshTokenIfNeeded */,
 		);
 		return restWrapper;
 	}

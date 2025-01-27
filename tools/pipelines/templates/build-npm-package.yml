@@ -68,8 +68,8 @@ parameters:
   default: false
 
 - name: buildNumberInPatch
-  type: string
-  default:
+  type: boolean
+  default: false
 
 - name: publishOverride
   type: string
@@ -211,16 +211,9 @@ extends:
             variables:
               - group: ado-feeds
               - group: storage-vars
-              - name: releaseBuildVar
-                value: '$[variables.releaseBuild]'
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
-              # Absolute path to the folder that contains the source code for the telemetry-generator package, which is
-              # used in a few places in the pipeline to push custom telemetry to Kusto.
-              - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
-                readonly: true
             steps:
               # Setup
               - checkout: self
@@ -241,7 +234,6 @@ extends:
 
                     echo "
                     Pipeline Variables:
-                      releaseBuild=$(releaseBuildVar)
 
                     Override Parameters:
                       packageTypesOverride=${{ parameters.packageTypesOverride }}
@@ -260,7 +252,7 @@ extends:
                       TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
-                      absolutePathToTelemetryGenerator=$(absolutePathToTelemetryGenerator)
+                      pathToTelemetryGenerator=$(pathToTelemetryGenerator)
                       BuildReason=${{ variables['Build.Reason'] }}
 
                     Publish Parameters:
@@ -335,7 +327,7 @@ extends:
                   - template: /tools/pipelines/templates/include-set-package-version.yml@self
                     parameters:
                       buildDirectory: '${{ parameters.buildDirectory }}'
-                      buildNumberInPatch: '${{ parameters.buildNumberInPatch }}'
+                      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
                       buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
@@ -361,17 +353,10 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                          # Don't run with coverage if the task is a PR and the task is a tinylicious service and stress test. We don't include coverage for these tests in our baseline coverage stats, so we don't need to run them with coverage here too.
                           testCoverage: ${{
                             and(
                               parameters.testCoverage,
-                              or(
-                                ne(variables['Build.Reason'], 'PullRequest'),
-                                and(
-                                  not(contains(taskTestStep, 'realsvc:tinylicious')),
-                                  not(contains(taskTestStep, 'stress:tinylicious'))
-                                )
-                              )
+                              ne(variables['Build.Reason'], 'PullRequest')
                             )}}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
@@ -491,7 +476,7 @@ extends:
                   # Copy files so all artifacts we publish end up under the same parent folder.
                   # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
                   - task: CopyFiles@2
-                    displayName: Copy _api-extractor-temp files to artifact staging directory
+                    displayName: Copy bundleAnalysis files to artifact staging directory
                     inputs:
                       sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
@@ -522,7 +507,7 @@ extends:
                           script: |
                             set -eu -o pipefail
                             echo "Build Directory is ${{ parameters.buildDirectory }}";
-                            BUNDLE_SIZE_TESTS_DIR="${{ parameters.buildDirectory }}/artifacts/bundleAnalysis/@fluid-example/bundle-size-tests";
+                            BUNDLE_SIZE_TESTS_DIR="$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests";
                             echo "Contents of $BUNDLE_SIZE_TESTS_DIR:";
                             ls -la $BUNDLE_SIZE_TESTS_DIR;
 
@@ -530,18 +515,19 @@ extends:
                         parameters:
                           devFeedUrl: $(ado-feeds-dev)
                           officeFeedUrl: $(ado-feeds-office)
+                          pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
                       - task: Bash@3
                         displayName: Write bundle sizes measurements to Aria/Kusto
                         inputs:
                           targetType: inline
-                          workingDirectory: $(absolutePathToTelemetryGenerator)
+                          workingDirectory: $(pathToTelemetryGenerator)
                           script: |
                             set -eu -o pipefail
                             echo "Writing the following performance tests results to Aria/Kusto"
                             echo "Report Size:"
-                            ls -la '../../examples/utils/bundle-size-tests/bundleAnalysis/report.json';
-                            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/bundleSizeHandler.js --dir '../../artifacts/bundleAnalysis/@fluid-example/bundle-size-tests';
+                            ls -la '$(Build.SourcesDirectory)/examples/utils/bundle-size-tests/bundleAnalysis/report.json';
+                            npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/bundleSizeHandler.js" --dir '$(Build.ArtifactStagingDirectory)/bundleAnalysis/@fluid-example/bundle-size-tests';
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -651,7 +637,7 @@ extends:
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
-        - template: include-publish-npm-package.yml
+        - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
@@ -685,15 +671,12 @@ extends:
               - name: pipelineTelemetryWorkdir
                 value: $(Pipeline.Workspace)/pipelineTelemetryWorkdir/timingOutput
                 readonly: true
-              - name: absolutePathToTelemetryGenerator
-                value: $(Build.SourcesDirectory)/tools/telemetry-generator
-                readonly: true
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
                   devFeedUrl: $(ado-feeds-dev)
                   officeFeedUrl: $(ado-feeds-office)
-                  isCheckoutNeeded: true
+                  pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
               - task: Bash@3
                 displayName: Get stage timing and result data from ADO
                 env:
@@ -718,9 +701,9 @@ extends:
                   WORK_FOLDER: $(pipelineTelemetryWorkdir)
                 inputs:
                   targetType: inline
-                  workingDirectory: $(absolutePathToTelemetryGenerator)
+                  workingDirectory: $(pathToTelemetryGenerator)
                   script: |
                     set -eu -o pipefail
                     echo "Listing files in '$WORK_FOLDER'"
                     ls -laR $WORK_FOLDER;
-                    node --require @ff-internal/aria-logger bin/run --handlerModule "$(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js" --dir "$WORK_FOLDER";
+                    npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";

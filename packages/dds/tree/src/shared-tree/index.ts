@@ -9,13 +9,17 @@ export {
 	type SharedTreeOptions,
 	SharedTree,
 	getBranch,
-	ForestType,
+	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
 	type ForestOptions,
+	type ITreeInternal,
+	ForestTypeOptimized,
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
 } from "./sharedTree.js";
 
 export {
@@ -39,11 +43,21 @@ export type { ISharedTreeEditor, ISchemaEditor } from "./sharedTreeEditBuilder.j
 export {
 	treeApi as Tree,
 	type TreeApi,
+	type RunTransaction,
+} from "./treeApi.js";
+
+export {
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,
-	type RunTransaction,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
 	rollback,
-} from "./treeApi.js";
+} from "./transactionTypes.js";
 
 export { TreeAlpha } from "./treeApiAlpha.js";
 

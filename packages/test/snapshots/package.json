@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-snapshots",
-	"version": "2.11.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Comprehensive test of snapshot logic.",
 	"homepage": "https://fluidframework.com",
@@ -93,7 +93,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",

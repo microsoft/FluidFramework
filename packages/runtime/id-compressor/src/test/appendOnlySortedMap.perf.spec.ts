@@ -9,13 +9,15 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { AppendOnlySortedMap } from "../appendOnlySortedMap.js";
 import { compareFiniteNumbers } from "../utilities.js";
 
-function runAppendOnlyMapPerfTests(mapBuilder: () => AppendOnlySortedMap<number, number>) {
+function runAppendOnlyMapPerfTests(
+	mapBuilder: () => AppendOnlySortedMap<number, number>,
+): void {
 	const type = BenchmarkType.Measurement;
 	let map: AppendOnlySortedMap<number, number>;
 	let rand: IRandom;
 	const keyChoices: number[] = [];
 	let localChoice = 0;
-	const before = () => {
+	const before = (): void => {
 		rand = makeRandom(42);
 		map = mapBuilder();
 		let curKey = 0;

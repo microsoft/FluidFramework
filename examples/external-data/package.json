@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-data",
-	"version": "2.11.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Integrating an external data source with Fluid data.",
 	"homepage": "https://fluidframework.com",
@@ -72,7 +72,7 @@
 		"@fluidframework/tinylicious-driver": "workspace:~",
 		"cors": "^2.8.4",
 		"css-loader": "^7.1.2",
-		"express": "^4.21.1",
+		"express": "^4.21.2",
 		"lodash.isequal": "^4.5.0",
 		"node-fetch": "^2.6.9",
 		"react": "^18.3.1",

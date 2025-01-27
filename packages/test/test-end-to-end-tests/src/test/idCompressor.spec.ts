@@ -902,7 +902,7 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 	});
 
 	it("Newly connected container synchronizes from summary", async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7931
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7931
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}

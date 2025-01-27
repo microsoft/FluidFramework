@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type {
+	ISummarizerEvents,
+	SummarizerStopReason,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { ISequencedClient } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
@@ -16,12 +20,10 @@ import {
 	IConnectedState,
 	ISerializedElection,
 	ISummarizer,
-	ISummarizerEvents,
 	ISummaryCollectionOpEvents,
 	OrderedClientCollection,
 	OrderedClientElection,
 	SummarizerClientElection,
-	SummarizerStopReason,
 	SummaryManager,
 	summarizerClientType,
 } from "../../summary/index.js";
@@ -70,7 +72,7 @@ describe("Summarizer Client Election", () => {
 
 	class TestSummarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 		private notImplemented(): never {
-			throw Error("not implemented");
+			throw new Error("not implemented");
 		}
 		public onBehalfOf: string | undefined;
 		public state: "notStarted" | "running" | "stopped" = "notStarted";

@@ -5,7 +5,11 @@
 
 /* eslint-disable unicorn/consistent-function-scoping */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	performance,
+	type ILayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -22,13 +26,13 @@ import {
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
 	IGetPendingLocalStateProps,
-	IHostLoader,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
 	IDeltaManager,
 	ReadOnlyInfo,
+	type ILoader,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -67,6 +71,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ConnectionMode,
+	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -122,6 +127,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
 import {
@@ -716,6 +722,14 @@ export class Container
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
 		return this._loadedCodeDetails;
+	}
+
+	/**
+	 * Get the package info for the code details that were used to load the container.
+	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
+	 */
+	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
+		return getPackageName(this._loadedCodeDetails);
 	}
 
 	private _loadedModule: IFluidModuleWithDetails | undefined;
@@ -2394,7 +2408,7 @@ export class Container
 
 		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
 		// are set. Global requests will still go directly to the loader
-		const maybeLoader: FluidObject<IHostLoader> = this.scope;
+		const maybeLoader: FluidObject<ILoader> = this.scope;
 		const loader = new RelativeLoader(this, maybeLoader.ILoader);
 
 		const loadCodeResult = await PerformanceEvent.timedExecAsync(
@@ -2452,11 +2466,19 @@ export class Container
 			snapshot,
 		);
 
-		this._runtime = await PerformanceEvent.timedExecAsync(
+		const runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
+
+		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
+			this.dispose(error),
+		);
+
+		this._runtime = runtime;
+
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;

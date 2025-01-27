@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/odspsnapshotfetch-perftestapp",
-	"version": "2.11.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Benchmark binary vs. json download",
 	"homepage": "https://fluidframework.com",
@@ -43,7 +43,7 @@
 		"@fluidframework/odsp-urlresolver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tool-utils": "workspace:~",
-		"express": "^4.21.1",
+		"express": "^4.21.2",
 		"webpack-dev-server": "~4.15.2"
 	},
 	"devDependencies": {

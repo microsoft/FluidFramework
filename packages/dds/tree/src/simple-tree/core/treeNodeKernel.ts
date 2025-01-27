@@ -6,12 +6,13 @@
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable, Off } from "@fluidframework/core-interfaces";
-import type { TreeNode, Unhydrated } from "./types.js";
+import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 import {
 	anchorSlot,
 	type AnchorEvents,
 	type AnchorNode,
 	type AnchorSet,
+	type TreeValue,
 	type UpPath,
 } from "../../core/index.js";
 import {
@@ -145,7 +146,7 @@ export class TreeNodeKernel {
 
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
 			// Unhydrated case
-			mapTreeNodeToProxy.set(innerNode, node);
+			unhydratedFlexTreeNodeToTreeNodeInternal.set(innerNode, node);
 			// Register for change events from the unhydrated flex node.
 			// These will be fired if the unhydrated node is edited, and will also be forwarded later to the hydrated node.
 			this.#hydrationState = {
@@ -157,7 +158,7 @@ export class TreeNodeKernel {
 
 					let n: UnhydratedFlexTreeNode | undefined = innerNode;
 					while (n !== undefined) {
-						const treeNode = mapTreeNodeToProxy.get(n);
+						const treeNode = unhydratedFlexTreeNodeToTreeNodeInternal.get(n);
 						if (treeNode !== undefined) {
 							const kernel = getKernel(treeNode);
 							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
@@ -199,7 +200,7 @@ export class TreeNodeKernel {
 	private hydrate(anchorNode: AnchorNode): void {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
-		mapTreeNodeToProxy.delete(this.#hydrationState.innerNode);
+		unhydratedFlexTreeNodeToTreeNodeInternal.delete(this.#hydrationState.innerNode);
 		this.#hydrationState = this.createHydratedState(anchorNode);
 
 		// If needed, register forwarding emitters for events from before hydration
@@ -388,9 +389,20 @@ type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 export type InnerNode = FlexTreeNode | UnhydratedFlexTreeNode;
 
 /**
- * {@inheritdoc proxyToMapTreeNode}
+ * Associates a given {@link UnhydratedFlexTreeNode} with a {@link TreeNode}.
  */
-export const mapTreeNodeToProxy = new WeakMap<UnhydratedFlexTreeNode, TreeNode>();
+const unhydratedFlexTreeNodeToTreeNodeInternal = new WeakMap<
+	UnhydratedFlexTreeNode,
+	TreeNode
+>();
+/**
+ * Retrieves the {@link TreeNode} associated with the given {@link UnhydratedFlexTreeNode} if any.
+ */
+export const unhydratedFlexTreeNodeToTreeNode =
+	unhydratedFlexTreeNodeToTreeNodeInternal as Pick<
+		WeakMap<UnhydratedFlexTreeNode, TreeNode>,
+		"get"
+	>;
 
 /**
  * An anchor slot which associates an anchor with its corresponding TreeNode, if there is one.
@@ -399,15 +411,6 @@ export const mapTreeNodeToProxy = new WeakMap<UnhydratedFlexTreeNode, TreeNode>(
  * FlexTree already has this assumption, and we also assume there is a single simple-tree per FlexTree, so this is valid.
  */
 export const proxySlot = anchorSlot<TreeNode>();
-
-/**
- * Retrieves the node associated with the given MapTreeNode node if any.
- */
-export function tryGetTreeNodeFromMapNode(
-	flexNode: UnhydratedFlexTreeNode,
-): TreeNode | undefined {
-	return mapTreeNodeToProxy.get(flexNode);
-}
 
 export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
 	const treeNode = anchorNode.slots.get(proxySlot);
@@ -447,4 +450,37 @@ export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): T
 export function getOrCreateInnerNode(treeNode: TreeNode, allowFreed = false): InnerNode {
 	const kernel = getKernel(treeNode);
 	return kernel.getOrCreateInnerNode(allowFreed);
+}
+
+/**
+ * Gets a flex node from an anchor node
+ */
+function flexNodeFromAnchor(anchorNode: AnchorNode): FlexTreeNode {
+	// the proxy is bound to an anchor node, but it may or may not have an actual flex node yet
+	const flexNode = anchorNode.slots.get(flexTreeSlot);
+	if (flexNode !== undefined) {
+		return flexNode; // If it does have a flex node, return it...
+	} // ...otherwise, the flex node must be created
+	const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+	const cursor = context.checkout.forest.allocateCursor("getFlexNode");
+	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
+	const newFlexNode = makeTree(context, cursor);
+	cursor.free();
+	return newFlexNode;
+}
+
+/**
+ * Gets a tree node from an anchor node
+ */
+export function treeNodeFromAnchor(anchorNode: AnchorNode): TreeNode | TreeValue {
+	const cached = anchorNode.slots.get(proxySlot);
+	if (cached !== undefined) {
+		return cached;
+	}
+
+	const flexNode = flexNodeFromAnchor(anchorNode);
+	const classSchema = getTreeNodeSchemaFromHydratedFlexNode(flexNode);
+	return typeof classSchema === "function"
+		? new classSchema(flexNode as unknown as InternalTreeNode)
+		: (classSchema as { create(data: FlexTreeNode): TreeValue }).create(flexNode);
 }

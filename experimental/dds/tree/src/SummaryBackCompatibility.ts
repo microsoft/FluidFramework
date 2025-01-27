@@ -28,7 +28,7 @@ import {
 export function deserialize(jsonSummary: string, serializer: IFluidSerializer): SharedTreeSummaryBase {
 	let summary: Partial<SharedTreeSummaryBase>;
 	try {
-		summary = serializer.parse(jsonSummary);
+		summary = serializer.parse(jsonSummary) as Partial<SharedTreeSummaryBase>;
 	} catch {
 		fail('Json syntax error in Summary');
 	}

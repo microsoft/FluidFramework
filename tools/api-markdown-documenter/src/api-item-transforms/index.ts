@@ -8,7 +8,9 @@
  */
 
 export {
+	createQualifiedDocumentNameForApiItem,
 	doesItemRequireOwnDocument,
+	doesItemKindRequireOwnDocument,
 	filterItems,
 	getHeadingForApiItem,
 	getLinkForApiItem,
@@ -16,12 +18,22 @@ export {
 } from "./ApiItemTransformUtilities.js";
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfigurationBase,
 	type ApiItemTransformationOptions,
-	type DefaultDocumentationSuiteOptions,
+	type ApiItemTransformations,
+	type DefaultDocumentationSuiteConfiguration,
+	type DocumentHierarchyConfiguration,
+	type DocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
-	type DocumentBoundaries,
+	FolderDocumentPlacement,
+	type FolderHierarchyConfiguration,
 	getApiItemTransformationConfigurationWithDefaults,
-	type HierarchyBoundaries,
+	type DocumentationHierarchyConfiguration,
+	type DocumentationHierarchyConfigurationBase,
+	HierarchyKind,
+	type HierarchyConfiguration,
+	type HierarchyOptions,
+	type SectionHierarchyConfiguration,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
 } from "./configuration/index.js";
@@ -41,3 +53,4 @@ export {
 export { transformTsdocNode } from "./TsdocNodeTransforms.js";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 export { transformApiModel } from "./TransformApiModel.js";
+export { checkForDuplicateDocumentPaths } from "./Utilities.js";

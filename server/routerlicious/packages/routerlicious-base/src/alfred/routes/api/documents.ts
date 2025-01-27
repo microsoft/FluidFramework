@@ -39,6 +39,8 @@ import {
 	NetworkError,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
+	createFluidServiceNetworkError,
+	InternalErrorCode,
 } from "@fluidframework/server-services-client";
 import {
 	getLumberBaseProperties,
@@ -101,8 +103,7 @@ async function generateCreateDocumentResponseBody(
 		if (token === undefined) {
 			throw new NetworkError(400, "Authorization header is missing or malformed");
 		}
-		const tenantKey = await tenantManager.getKey(tenantId);
-		newDocumentAccessToken = getCreationToken(token, tenantKey, documentId);
+		newDocumentAccessToken = await getCreationToken(tenantManager, token, documentId);
 	}
 	let newDocumentSession: ISession | undefined;
 	if (enableDiscovery) {
@@ -256,6 +257,21 @@ export function create(
 		}),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
+			// Reject create document request if cluster is in draining process.
+			if (
+				clusterDrainingChecker &&
+				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
+					Lumberjack.error("Failed to get cluster draining status", undefined, error);
+					return false;
+				}))
+			) {
+				Lumberjack.info("Cluster is in draining process. Reject create document request.");
+				const error = createFluidServiceNetworkError(503, {
+					message: "Server is unavailable. Please retry create document later.",
+					internalErrorCode: InternalErrorCode.ClusterDraining,
+				});
+				handleResponse(Promise.reject(error), response);
+			}
 			// Tenant and document
 			const tenantId = request.params.tenantId;
 			// If enforcing server generated document id, ignore id parameter
@@ -387,6 +403,25 @@ export function create(
 			);
 			// Tracks the different stages of getSessionMetric
 			const connectionTrace = new StageTrace<string>("GetSession");
+			// Reject get session request on existing, inactive sessions if cluster is in draining process.
+			if (
+				clusterDrainingChecker &&
+				(await clusterDrainingChecker.isClusterDraining().catch((error) => {
+					Lumberjack.error("Failed to get cluster draining status", undefined, error);
+					return false;
+				}))
+			) {
+				Lumberjack.info("Cluster is in draining process. Reject get session request.");
+				connectionTrace?.stampStage("ClusterIsDraining");
+				const error = createFluidServiceNetworkError(503, {
+					message: "Server is unavailable. Please retry session discovery later.",
+					internalErrorCode: InternalErrorCode.ClusterDraining,
+				});
+				handleResponse(Promise.reject(error), response);
+			}
+			connectionTrace?.stampStage("ClusterDrainingChecked");
+			const readDocumentRetryDelay: number = config.get("getSession:readDocumentRetryDelay");
+			const readDocumentMaxRetries: number = config.get("getSession:readDocumentMaxRetries");
 
 			const session = getSession(
 				externalOrdererUrl,
@@ -400,6 +435,8 @@ export function create(
 				clusterDrainingChecker,
 				ephemeralDocumentTTLSec,
 				connectionTrace,
+				readDocumentRetryDelay,
+				readDocumentMaxRetries,
 			);
 
 			const onSuccess = (result: ISession): void => {

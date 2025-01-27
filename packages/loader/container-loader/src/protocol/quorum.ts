@@ -222,14 +222,6 @@ export class QuorumProposals
 	}
 
 	/**
-	 * Returns additional data about the approved consensus value
-	 * @deprecated Removed in recent protocol-definitions.  Use get() instead.
-	 */
-	public getApprovalData(key: string): ICommittedProposal | undefined {
-		return this.values.get(key);
-	}
-
-	/**
 	 * Proposes a new value. Returns a promise that will either:
 	 * - Resolve when the proposal is accepted
 	 * - Reject if the proposal fails to send or if the QuorumProposals is disposed
@@ -503,14 +495,6 @@ export class Quorum extends TypedEventEmitter<IQuorum["on"]> implements IQuorum 
 	 */
 	public get(key: string): unknown {
 		return this.quorumProposals.get(key);
-	}
-
-	/**
-	 * Returns additional data about the approved consensus value
-	 * @deprecated Removed in recent protocol-definitions.  Use get() instead.
-	 */
-	public getApprovalData(key: string): ICommittedProposal | undefined {
-		return this.quorumProposals.getApprovalData(key);
 	}
 
 	/**

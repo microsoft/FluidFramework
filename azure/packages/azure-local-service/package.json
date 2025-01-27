@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-local-service",
-	"version": "2.11.0",
+	"version": "2.21.0",
 	"description": "Local implementation of the Azure Fluid Relay service for testing/development use",
 	"homepage": "https://fluidframework.com",
 	"repository": {

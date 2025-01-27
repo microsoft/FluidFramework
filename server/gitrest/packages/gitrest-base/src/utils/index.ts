@@ -4,6 +4,7 @@
  */
 
 export {
+	isIStorageRoutingId,
 	Constants,
 	GitObjectType,
 	IExternalWriterConfig,
@@ -11,6 +12,7 @@ export {
 	IFileSystemManagerFactories,
 	IFileSystemManagerFactory,
 	IFileSystemManagerParams,
+	IFileSystemMakeDirectoryOptions,
 	IFileSystemPromises,
 	IRepoManagerParams,
 	IRepositoryManager,

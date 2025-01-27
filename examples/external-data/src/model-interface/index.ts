@@ -4,8 +4,8 @@
  */
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { SharedString } from "@fluidframework/sequence/internal";
+import { IResolvedUrl } from "@fluidframework/driver-definitions/legacy";
+import { SharedString } from "@fluidframework/sequence/legacy";
 
 /**
  * Interface for interacting with external task data stored in root {@link @fluidframework/map#SharedDirectory}.

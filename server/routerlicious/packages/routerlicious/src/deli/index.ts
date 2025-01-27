@@ -162,6 +162,7 @@ export async function deliCreate(
 			redisConfig.enableClustering,
 			redisConfig.slotsRefreshTimeout,
 		);
+	// The socketioredispublisher handles redis connection graceful shutdown
 	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
 	publisher.on("error", (err) => {
 		winston.error("Error with Redis Publisher:", err);
@@ -204,7 +205,7 @@ export async function deliCreate(
 		localCheckpointEnabled,
 	);
 
-	return new DeliLambdaFactory(
+	const deliLambdaFactory = new DeliLambdaFactory(
 		operationsDbManager,
 		documentRepository,
 		checkpointService,
@@ -216,6 +217,15 @@ export async function deliCreate(
 		serviceConfiguration,
 		customizations?.clusterDrainingChecker,
 	);
+
+	deliLambdaFactory.on("dispose", () => {
+		broadcasterLambda.close();
+		publisher.close().catch((error) => {
+			Lumberjack.error("Error closing publisher", undefined, error);
+		});
+	});
+
+	return deliLambdaFactory;
 }
 
 export async function create(

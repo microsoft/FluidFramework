@@ -5,7 +5,22 @@
 
 # Use a direct sha256 hash to ensure we are always using the same version of the base image.
 # This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
-FROM node:18.17.1-buster-slim@sha256:cb2a746612c2564d3bd0f871174618337af9d0f4d895df6a623fd7a69ca6e5bd AS base
+FROM node:18.20.5-bookworm-slim@sha256:c4a278056a0f79abf472d912bbf5af6c874126ae450faad9df52069e9ad78335 AS runnerbase
+
+ARG SETVERSION_VERSION=dev
+ENV SETVERSION_VERSION=$SETVERSION_VERSION
+
+ARG SETVERSION_CODEVERSION=dev
+ENV SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
+
+ARG INTERDEPENDENCY_RANGE=^
+ENV INTERDEPENDENCY_RANGE=$INTERDEPENDENCY_RANGE
+
+ARG RELEASE_GROUP=server
+ENV RELEASE_GROUP=$RELEASE_GROUP
+
+ARG BUILD_ROOT=/usr/FluidFramework
+ARG ROUTERLICIOUS_ROOT=$BUILD_ROOT/server/routerlicious
 
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
@@ -20,20 +35,25 @@ RUN apt-get update && apt-get install -y \
     ca-certificates
 
 # Add Tini
-ENV TINI_VERSION v0.18.0
+ENV TINI_VERSION=v0.18.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-# There are some packages outside the routerlicious folder that we need to build, so we copy the package to the /usr directory
-WORKDIR /usr
-COPY --from=root packages/tools/changelog-generator-wrapper/package*.json packages/tools/changelog-generator-wrapper/
+FROM runnerbase AS base
 
-# Copy over and build the server
-WORKDIR /usr/src/server
+# Routerlicious's root release directory has a 'file:' devDependency on this package. Despite it not being used in the docker
+# container, we thus copy just the package.json there to ensure this dependency is resolvable. This won't be persisted in the runner image anyway.
+WORKDIR $BUILD_ROOT
+COPY --from=root packages/tools/changelog-generator-wrapper/package.json packages/tools/changelog-generator-wrapper/
+
+# Copy over and build the server. We use the same directory structure as outside of the docker container to ensure flub works smoothly.
+WORKDIR $ROUTERLICIOUS_ROOT
 
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY package*.json ./
 COPY pnpm*.yaml ./
+COPY .npmrc ./
+COPY lerna.json ./
 COPY scripts/*.* ./scripts/
 COPY patches/*.* ./patches/
 
@@ -58,22 +78,47 @@ COPY packages/test-utils/package*.json packages/test-utils/
 COPY packages/protocol-base/package*.json packages/protocol-base/
 COPY packages/tinylicious/package*.json packages/tinylicious/
 
+ENV PNPM_HOME="/pnpm"
+# Add package dependency's executables to the PATH. We also add global pnpm executables by including $PNPM_HOME,
+# though it's not leveraged currently.
+ENV PATH="$PNPM_HOME:$ROUTERLICIOUS_ROOT/node_modules/.bin:$PATH"
 RUN corepack enable
 
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' accout so we
+# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
-RUN pnpm install --unsafe-perm
+# Using a cache mount for the pnpm store improves the incremental docker build.
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store\
+    pnpm install --unsafe-perm
 
 # And now copy over our actual code and build
 COPY . .
 
-# Switch to the server folder and build
-WORKDIR /usr/src/server
-RUN npm run ci:build
+# Copy over fluid config files to allow flub versioning to work
+WORKDIR $BUILD_ROOT
+COPY --from=root fluidBuild.config.cjs ./fluidBuild.base.config.cjs
+COPY --from=root ./server/routerlicious/fluidBuild.docker.config.cjs fluidBuild.config.cjs
+WORKDIR $ROUTERLICIOUS_ROOT
+ENV _FLUID_ROOT_=$BUILD_ROOT
+COPY --from=root /scripts/update-package-version.sh ./scripts/update-package-version.sh
+RUN chmod +x ./scripts/update-package-version.sh
+RUN set -eu;\
+if [ "$SETVERSION_VERSION" != "dev" ]; then\
+    echo "Setting package version: $SETVERSION_VERSION";\
+    ./scripts/update-package-version.sh;\
+else\
+    echo "Skipping package version for dev build.";\
+fi
+
+RUN pnpm run ci:build
 
 # Build that alfred uses
-FROM base AS runner
+FROM runnerbase AS runner
+
+WORKDIR /usr/src/server
+
+COPY --from=base $ROUTERLICIOUS_ROOT/node_modules ./node_modules
+COPY --from=base $ROUTERLICIOUS_ROOT/packages ./packages
 
 # Expose the port the app runs under
 EXPOSE 3000

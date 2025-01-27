@@ -148,4 +148,17 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	shareLinkInfo?: ShareLinkInfoType;
 
 	isClpCompliantApp?: boolean;
+
+	/**
+	 * Context for given resolved URL. The context of a resolved URL is a string that contains
+	 * the resolved URL and the data store path of the resolved URL.
+	 */
+	context?: string;
+
+	/**
+	 * Name of the application that owns the URL. This hint is used by link handling logic which determines which
+	 * app to redirect to when user navigates directly to the link.
+	 * Can be ommited in case it is not necessary for the link handling logic.
+	 */
+	appName?: string;
 }
