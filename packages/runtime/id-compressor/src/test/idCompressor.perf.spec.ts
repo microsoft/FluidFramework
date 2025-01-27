@@ -94,17 +94,18 @@ describe("IdCompressor Perf", () => {
 		const log = network.getIdLog(client);
 		for (let i = log.length - 1; i > 0; i--) {
 			const { id, originatingClient } = log[i];
-			if (originatingClient === client) {
-				if ((eagerFinal && isFinalId(id)) || (!eagerFinal && isLocalId(id))) {
-					assert(eagerFinal === isFinalId(id), "Not local/final as requested.");
-					return id;
-				}
+			if (
+				originatingClient === client &&
+				((eagerFinal && isFinalId(id)) || (!eagerFinal && isLocalId(id)))
+			) {
+				assert(eagerFinal === isFinalId(id), "Not local/final as requested.");
+				return id;
 			}
 		}
 		fail("no ID found in log");
 	}
 
-	function benchmarkWithFlag(creator: (flag: boolean) => void) {
+	function benchmarkWithFlag(creator: (flag: boolean) => void): void {
 		for (const flag of [true, false]) {
 			creator(flag);
 		}
@@ -235,7 +236,7 @@ describe("IdCompressor Perf", () => {
 				for (let clusterCount = 0; clusterCount < 5; clusterCount++) {
 					network.allocateAndSendIds(
 						localClient,
-						// eslint-disable-next-line @typescript-eslint/dot-notation
+						// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-argument
 						perfCompressor["nextRequestedClusterSize"],
 					);
 					network.allocateAndSendIds(

@@ -4,6 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentMessage,
@@ -112,7 +113,7 @@ export class MockContainerRuntimeForSummarizer
 			this /* summarizerRuntime */,
 			() => summaryConfiguration /* configurationGetter */,
 			this /* ISummarizerInternalsProvider */,
-			{} as any /* handleContext */,
+			{} as unknown as IFluidHandleContext /* handleContext */,
 			this.summaryCollection,
 			async (runtime: IConnectableRuntime) =>
 				RunWhileConnectedCoordinator.create(runtime, () => this.deltaManager.active),
@@ -130,18 +131,22 @@ export class MockContainerRuntimeForSummarizer
 	}
 
 	private nackScheduled = false;
-	/** Prepare a SummaryNack to be sent by the server */
-	public prepareSummaryNack() {
+	/**
+	 * Prepare a SummaryNack to be sent by the server
+	 */
+	public prepareSummaryNack(): void {
 		this.nackScheduled = true;
 	}
 
-	/** Call on the Summarizer object to summarize */
-	public async summarize() {
+	/**
+	 * Call on the Summarizer object to summarize
+	 */
+	public async summarize(): Promise<void> {
 		const result = this.summarizer.summarizeOnDemand({
 			reason: "fuzzTest",
 			retryOnFailure: false,
 		});
-		return Promise.all([
+		await Promise.all([
 			result.summarySubmitted,
 			result.summaryOpBroadcasted,
 			result.receivedSummaryAckOrNack,
@@ -235,19 +240,19 @@ export class MockContainerRuntimeForSummarizer
 		// Do nothing
 	}
 
-	public setConnectedState(value: boolean) {
+	public setConnectedState(value: boolean): void {
 		super.setConnectedState(value);
 
 		this.connectedState.setConnectedState(value, this.clientId);
 		this.summarizerClientElection.setClientId(this.clientId);
 	}
 
-	public closeFn() {
+	public closeFn(): void {
 		this.disposeFn();
 	}
 
 	public disposed: boolean = false;
-	public disposeFn() {
+	public disposeFn(): void {
 		this.connected = false;
 		this.disposed = true;
 		this.summaryManager.dispose();
