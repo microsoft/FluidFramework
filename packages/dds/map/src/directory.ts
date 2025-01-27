@@ -807,7 +807,7 @@ export class SharedDirectory
 			const handler = this.messageHandlers.get(op.type);
 			assert(
 				handler !== undefined,
-				"Missing message handler for message type: op may be from a newer version",
+				0x00e /* "Missing message handler for message type: op may be from a newer version */,
 			);
 			handler.process(message, op, local, localOpMetadata);
 		}

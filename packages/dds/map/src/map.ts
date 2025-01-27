@@ -300,7 +300,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					local,
 					localOpMetadata,
 				),
-				"Map received Invalid op, possibly from a never version",
+				"Map received an unrecognized op, possibly from a newer version",
 			);
 		}
 	}

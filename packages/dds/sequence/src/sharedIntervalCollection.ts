@@ -177,7 +177,7 @@ export class SharedIntervalCollection
 					message,
 					localOpMetadata,
 				),
-				"SharedIntervalCollection received Invalid op, possibly from a newer version",
+				"SharedIntervalCollection received an unrecognized op, possibly from a newer version",
 			);
 		}
 	}
