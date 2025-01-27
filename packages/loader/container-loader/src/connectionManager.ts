@@ -11,7 +11,7 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { DisconnectReason } from "@fluidframework/core-interfaces/internal";
+import { DisconnectReason, isDisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode, IClient, IClientDetails } from "@fluidframework/driver-definitions";
 import {
@@ -440,26 +440,23 @@ export class ConnectionManager implements IConnectionManager {
 		this._reconnectMode = ReconnectMode.Never;
 
 		this._outbound.clear();
+		let disconnectReasonParam: DisconnectReason;
+		let error: ICriticalContainerError | undefined;
+		if (isDisconnectReason(disconnectReasonOrError)) {
+			error = typeof errorOrSwitchToReadonly === "boolean" ? undefined : errorOrSwitchToReadonly
+			disconnectReasonParam = disconnectReasonOrError;
+		} else {
+			error = disconnectReasonOrError;
+			disconnectReasonParam = DisconnectReason.Unknown;
+		}
 
 		const finalSwitchToReadonly =
-			typeof errorOrSwitchToReadonly === "boolean"
-				? errorOrSwitchToReadonly
-				: switchToReadonly;
-
-		const error: ICriticalContainerError | undefined =
-			typeof errorOrSwitchToReadonly === "boolean" &&
-			disconnectReasonOrError !== undefined &&
-			typeof disconnectReasonOrError !== "string"
-				? disconnectReasonOrError
-				: undefined;
+			typeof errorOrSwitchToReadonly === "boolean" ? errorOrSwitchToReadonly : switchToReadonly;
 
 		const disconnectReason: IConnectionStateChangeReason = {
 			text: "Closing DeltaManager",
 			error,
-			disconnectReason:
-				typeof disconnectReasonOrError === "string"
-					? disconnectReasonOrError
-					: DisconnectReason.Unknown,
+			disconnectReason: disconnectReasonParam
 		};
 
 		const oldReadonlyValue = this.readonly;

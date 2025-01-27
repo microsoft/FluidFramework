@@ -19,6 +19,7 @@ import {
 import {
 	DisconnectReason,
 	IThrottlingWarning,
+	isDisconnectReason,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
@@ -774,17 +775,14 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this._closed = true;
 
 		let finalError: ICriticalContainerError | undefined;
-		let disconnectReason: DisconnectReason | undefined;
+		let disconnectReason: DisconnectReason;
 
-		if (
-			typeof errorOrReason === "string" &&
-			Object.values(DisconnectReason).some((reason) => errorOrReason.includes(reason))
-		) {
+		if (isDisconnectReason(errorOrReason)) {
 			finalError = error;
 			disconnectReason = errorOrReason;
 		} else {
-			finalError = typeof errorOrReason === "object" ? errorOrReason : undefined;
-			disconnectReason = undefined;
+			finalError = errorOrReason;
+			disconnectReason = DisconnectReason.Unknown;
 		}
 
 		this.connectionManager.dispose(disconnectReason, finalError, true /* switchToReadonly */);

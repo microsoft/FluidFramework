@@ -30,7 +30,7 @@ export type DisconnectReason = (typeof DisconnectReason)[keyof typeof Disconnect
  * @legacy
  * @alpha
  */
-export const isDisconnectReason = (value: unknown): boolean =>
+export const isDisconnectReason = (value: unknown): value is DisconnectReason =>
 	value !== undefined &&
 	typeof value === "string" &&
 	Object.values(DisconnectReason).includes(value as DisconnectReason);
