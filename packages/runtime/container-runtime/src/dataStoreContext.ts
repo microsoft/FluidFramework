@@ -605,30 +605,6 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * back-compat ADO 21575: This is temporary and will be removed once the compat requirement across Runtime and
-	 * Datastore boundary is satisfied.
-	 * Process the messages to maintain backwards compatibility. The `processMessages` function is added to
-	 * IFluidDataStoreChannel in 2.5.0. For channels before that, call `process` for each message.
-	 */
-	private processMessagesCompat(
-		channel: IFluidDataStoreChannel,
-		messageCollection: IRuntimeMessageCollection,
-	): void {
-		if (channel.processMessages === undefined) {
-			const { envelope, messagesContent, local } = messageCollection;
-			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-				channel.process(
-					{ ...envelope, contents, clientSequenceNumber },
-					local,
-					localOpMetadata,
-				);
-			}
-		} else {
-			channel.processMessages(messageCollection);
-		}
-	}
-
-	/**
 	 * Process messages for this data store. The messages here are contiguous messages for this data store in a batch.
 	 * @param messageCollection - The collection of messages to process.
 	 */
@@ -643,7 +619,7 @@ export abstract class FluidDataStoreContext
 
 		if (this.loaded) {
 			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
-			this.processMessagesCompat(this.channel, messageCollection);
+			this.channel.processMessages(messageCollection);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
 			assert(
@@ -881,7 +857,7 @@ export abstract class FluidDataStoreContext
 		for (const messageCollection of this.pendingMessagesState.messageCollections) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
 			if (messageCollection.envelope.sequenceNumber > baseSequenceNumber) {
-				this.processMessagesCompat(channel, messageCollection);
+				channel.processMessages(messageCollection);
 			}
 		}
 
