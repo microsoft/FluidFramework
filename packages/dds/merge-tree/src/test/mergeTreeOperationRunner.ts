@@ -111,13 +111,11 @@ export const obliterateField: TestOperation = (
 		}
 		// Obliterate text bewteen the separators, but avoid the case where the obliterate range is zero length.
 		if (endPos - startPos > 1) {
-			// Concurrent to the obliterate, replace the same range with new text.
-			// TODO: Address issues with insert after obliterate.
-			insertField(client, startPos + 1, endPos, random);
 			const op = client.obliterateRangeLocal(
 				{ pos: startPos + 1, side: Side.Before },
 				endISP ?? { pos: endPos - 1, side: Side.After },
 			);
+			insertField(client, startPos + 1, endPos, random);
 			return op;
 		}
 	}
@@ -197,7 +195,7 @@ export const annotateRange: TestOperation = (
 	} else {
 		const max = random.pick([undefined, random.integer(-10, 100)]);
 		const min = random.pick([undefined, random.integer(-100, 10)]);
-		return client.annotateAdjustRangeLocal(opStart, opEnd, {
+		return client.annotateAdjustRangeLocal(start ?? opStart, end ?? opEnd, {
 			[random.integer(0, 2).toString()]: {
 				delta: random.integer(-5, 5),
 				min: (min ?? max ?? 0) > (max ?? 0) ? undefined : min,
@@ -230,9 +228,20 @@ export const insertAtRefPos: TestOperation = (
 		const text = client.longClientId!.repeat(random.integer(1, 3));
 		const seg = random.pick(segs);
 		const movedOrRemoved = toRemovalInfo(seg) ?? toMoveInfo(seg);
+		const randomOffset = random.integer(0, seg.cachedLength - 1);
+		const initialPos = client.getPosition(seg) + randomOffset;
+		const endpoints = posInField(client, initialPos);
+
+		let offset = randomOffset;
+		if (endpoints !== undefined) {
+			const startSeg = client.getContainingSegment(endpoints.startPos);
+			assert(startSeg.offset !== undefined, "offset should be defined");
+			offset = startSeg.offset;
+		}
+
 		const lref = client.createLocalReferencePosition(
 			seg,
-			movedOrRemoved ? 0 : random.integer(0, seg.cachedLength - 1),
+			movedOrRemoved ? 0 : offset,
 			movedOrRemoved
 				? ReferenceType.SlideOnRemove
 				: random.pick([
