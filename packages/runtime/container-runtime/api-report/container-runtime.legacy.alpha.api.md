@@ -54,8 +54,6 @@ export class DocumentsSchemaController {
     // (undocumented)
     onDisconnect(): void;
     processDocumentSchemaMessages(contents: IDocumentSchemaChangeMessage[], local: boolean, sequenceNumber: number): boolean;
-    // @deprecated
-    processDocumentSchemaOp(content: IDocumentSchemaChangeMessage, local: boolean, sequenceNumber: number): boolean;
     // (undocumented)
     sessionSchema: IDocumentSchemaCurrent;
     // (undocumented)

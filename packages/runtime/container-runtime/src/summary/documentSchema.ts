@@ -615,23 +615,6 @@ export class DocumentsSchemaController {
 	}
 
 	/**
-	 * Process document schema change message
-	 * Called by ContainerRuntime whenever it sees document schema messages.
-	 * @param content - content of the message
-	 * @param local - whether op is local
-	 * @param sequenceNumber - sequence number of the op
-	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
-	 * @deprecated It has been replaced by processDocumentSchemaMessages instead.
-	 */
-	public processDocumentSchemaOp(
-		content: IDocumentSchemaChangeMessage,
-		local: boolean,
-		sequenceNumber: number,
-	): boolean {
-		return this.processDocumentSchemaMessages([content], local, sequenceNumber);
-	}
-
-	/**
 	 * Process document schema change messages
 	 * Called by ContainerRuntime whenever it sees document schema messages.
 	 * @param contents - contents of the messages
