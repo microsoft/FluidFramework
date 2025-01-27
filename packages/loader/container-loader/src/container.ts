@@ -41,7 +41,10 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { DisconnectReason, type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import {
+	DisconnectReason,
+	type ISignalEnvelope,
+} from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IClient,
