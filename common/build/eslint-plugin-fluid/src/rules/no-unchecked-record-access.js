@@ -379,17 +379,17 @@ function propertyHasBeenChecked(node, context) {
 		// Additional check for 'in' checks in the same scope
 		const containingBlock = findContainingBlock(current);
 		if (containingBlock) {
-			for (const stmt of containingBlock.body) {
-				if (stmt.range[0] > current.range[0]) break; // Only check statements before current node
+			for (const statement of containingBlock.body) {
+				if (statement.range[0] > current.range[0]) break; // Only check statements before current node
 				if (
-					stmt.type === "IfStatement" &&
-					stmt.test?.type === "BinaryExpression" &&
-					stmt.test.operator === "in"
+					statement.type === "IfStatement" &&
+					statement.test?.type === "BinaryExpression" &&
+					statement.test.operator === "in"
 				) {
-					const testBase = getBaseObject(stmt.test.right);
-					const testKey = stmt.test.left;
+					const testBase = getBaseObject(statement.test.right);
+					const testKey = statement.test.left;
 					if (testBase === baseObj && nodesAreEquivalent(testKey, currentKeyNode)) {
-						const elseBlock = stmt.alternate;
+						const elseBlock = statement.alternate;
 						if (
 							elseBlock &&
 							checkElseBlockAssignsKey(elseBlock, testBase, testKey, context)
@@ -677,8 +677,8 @@ function checkElseBlockAssignsKey(elseBlock, baseObjName, keyNode, context) {
 
 	// Traverse the else block
 	if (elseBlock.type === "BlockStatement") {
-		for (const stmt of elseBlock.body) {
-			if (traverseNode(stmt)) break;
+		for (const statement of elseBlock.body) {
+			if (traverseNode(statement)) break;
 		}
 	} else {
 		traverseNode(elseBlock);
