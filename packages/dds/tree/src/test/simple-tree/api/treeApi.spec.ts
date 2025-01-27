@@ -1191,6 +1191,19 @@ describe("treeNodeApi", () => {
 					type _checkClone = requireFalse<isAssignableTo<typeof clone.property, string>>;
 				}
 			}
+			{
+				// Ensure that non-class-based "POJO-mode" objects don't preserve extra properties in their types (and therefore don't preserve them in the clone).
+				const property = "property" as const;
+				const extraProperty = "extra" as const;
+				const hasProperty = schema.object("test", { [property]: schema.string });
+				const withExtraProperty = { [extraProperty]: "test", [property]: "test" };
+				const input = new hasProperty(withExtraProperty);
+				const clone = TreeBeta.clone<NodeFromSchema<typeof hasProperty>>(input);
+				type _check = requireTrue<isAssignableTo<typeof clone, { [property]: string }>>;
+				type _checkExtra = requireFalse<
+					isAssignableTo<typeof clone, { [property]: string; [extraProperty]: string }>
+				>;
+			}
 		}
 
 		describe("test-trees", () => {
