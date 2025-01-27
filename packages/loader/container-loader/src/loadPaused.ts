@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
-import { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
@@ -96,7 +95,7 @@ export async function loadContainerPaused(
 		const error = new GenericError(
 			"Cannot satisfy request to pause the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
 		);
-		container.close(error, DisconnectReason.Unknown);
+		container.close(error);
 		throw error;
 	}
 
@@ -140,7 +139,7 @@ export async function loadContainerPaused(
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		.catch((error: any) => {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			container.close(error, DisconnectReason.Unknown);
+			container.close(error);
 			throw error;
 		})
 		.finally(() => {

@@ -389,50 +389,12 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	dispose(error?: ICriticalContainerError): void;
 
 	/**
-	 * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
-	 * The container is not expected to be used anymore once it is disposed.
-	 *
-	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - If the container is being disposed due to error, this provides details about the error that
-	 * resulted in disposing it.
-	 */
-	dispose(error: ICriticalContainerError, disconnectReason: "Corruption"): void;
-
-	/**
-	 * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
-	 * The container is not expected to be used anymore once it is disposed.
-	 *
-	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - If the container is being disposed due to error, this provides details about the error that
-	 * resulted in disposing it.
-	 */
-	dispose(error?: ICriticalContainerError, disconnectReason?: "Expected" | "Unknown"): void;
-
-	/**
 	 * Closes the container.
 	 *
 	 * @param error - If the container is being closed due to error, this provides details about the error that
 	 * resulted in closing it.
 	 */
 	close(error?: ICriticalContainerError): void;
-
-	/**
-	 * Closes the container.
-	 *
-	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - If the container is being closed due to error, this provides details about the error that
-	 * resulted in closing it.
-	 */
-	close(error: ICriticalContainerError, disconnectReason: "Corruption"): void;
-
-	/**
-	 * Closes the container.
-	 *
-	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - If the container is being closed due to error, this provides details about the error that
-	 * resulted in closing it.
-	 */
-	close(error?: ICriticalContainerError, disconnectReason?: "Expected" | "Unknown"): void;
 
 	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.
@@ -764,10 +726,6 @@ export interface IContainerLoadMode {
  * @internal
  */
 export interface ILoaderHeader {
-	/**
-	 * @deprecated This header has been deprecated and will be removed in a future release
-	 */
-	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
 	[LoaderHeader.reconnect]: boolean;

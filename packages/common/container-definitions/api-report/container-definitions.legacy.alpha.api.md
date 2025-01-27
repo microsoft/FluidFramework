@@ -99,8 +99,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
     close(error?: ICriticalContainerError): void;
-    close(error: ICriticalContainerError, disconnectReason: "Corruption"): void;
-    close(error?: ICriticalContainerError, disconnectReason?: "Expected" | "Unknown"): void;
     readonly closed: boolean;
     connect(): void;
     readonly connectionState: ConnectionState;
@@ -108,8 +106,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
-    dispose(error: ICriticalContainerError, disconnectReason: "Corruption"): void;
-    dispose(error?: ICriticalContainerError, disconnectReason?: "Expected" | "Unknown"): void;
     readonly disposed?: boolean;
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
