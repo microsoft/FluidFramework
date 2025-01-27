@@ -15,4 +15,4 @@ This prevents data loss and corruption scenarios like a summary client using old
 
 If updating applications using SharedMap, SharedIntervalCollection and AttributableMap use a newer version which adds Ops types in the future,
 old clients which are old enough to be from before this fix will ignore the new ops instead of erroring.
-Therefor is may be useful to ensure this update is deplored as widely as possible before migrating any top newer versions which add new op formats to these DDSes.
+Therefore it may be useful to ensure this update is deployed as widely as possible before migrating any to newer versions which add new op formats to these DDSes.

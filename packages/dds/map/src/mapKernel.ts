@@ -445,9 +445,9 @@ export class MapKernel {
 	 *
 	 * @remarks
 	 * When this returns false and the caller doesn't handle the op itself, then the op could be from a different version of this code.
-	 * In such a case, not applying the op would result in this client becoming out of sync with clients that do handel the op
+	 * In such a case, not applying the op would result in this client becoming out of sync with clients that do handle the op
 	 * and could result in data corruption or data loss as well.
-	 * Therefor, in such cases the caller should typically throw an error, ensuring that this client treats the situation as data corruption
+	 * Therefore, in such cases the caller should typically throw an error, ensuring that this client treats the situation as data corruption
 	 * (since its data no longer matches what other clients think the data should be) and will avoid overriding document content or misleading the users into thinking their current state is accurate.
 	 */
 	public tryProcessMessage(
