@@ -34,7 +34,9 @@ import { getViewForForkedBranch, hydrate } from "../utils.js";
 import {
 	brand,
 	type areSafelyAssignable,
+	type isAssignableTo,
 	type requireAssignableTo,
+	type requireFalse,
 	type requireTrue,
 } from "../../../util/index.js";
 
@@ -1131,7 +1133,7 @@ describe("treeNodeApi", () => {
 		});
 
 		// Compile-time test: ensure that the return type of clone is the same as the input type for common cases (nodes, primitives, undefined).
-		function preservesTypesWhenCloning(
+		function _preservesTypesWhenCloning(
 			primitiveOrNode: string | TestPoint,
 			maybePrimitive: string | undefined,
 			maybeNode: TestPoint | undefined,
@@ -1157,6 +1159,10 @@ describe("treeNodeApi", () => {
 				type _check = requireAssignableTo<typeof node, TestPoint>;
 			}
 			{
+				const clone = TreeBeta.clone<TestPoint>(new TestPoint({ x: 0, y: 0 }));
+				type _check = requireAssignableTo<typeof clone, TestPoint>;
+			}
+			{
 				const primitive = TreeBeta.clone(maybePrimitive);
 				type _check = requireAssignableTo<typeof primitive, string | undefined>;
 			}
@@ -1167,6 +1173,23 @@ describe("treeNodeApi", () => {
 			{
 				const clone = TreeBeta.clone(primitiveOrNode);
 				type _check = requireAssignableTo<typeof clone, string | TestPoint>;
+			}
+			class HasProperty extends schema.object("hasProperty", {}) {
+				public property?: string;
+			}
+			{
+				const clone = TreeBeta.clone(new HasProperty({}));
+				type _check = requireAssignableTo<typeof clone, HasProperty>;
+			}
+			{
+				const input = new HasProperty({});
+				if (input.property !== undefined) {
+					const clone = TreeBeta.clone(input);
+					// Ensure that the output of clone does not assume that `property` is the same as it was on the input of clone
+					// (because `property` was not cloned - it's merely a JS property, not a SharedTree field).
+					type _checkCloned = requireTrue<isAssignableTo<typeof input.property, string>>;
+					type _checkClone = requireFalse<isAssignableTo<typeof clone.property, string>>;
+				}
 			}
 		}
 
