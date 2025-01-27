@@ -160,6 +160,13 @@ class LatestValueManagerImpl<T, Key extends string>
 	}
 }
 
+function shallowClone<T extends object>(source: T): T {
+	if (Array.isArray(source)) {
+		return [...source] as T; // preserves array
+	}
+	return { ...source };
+}
+
 /**
  * Factory for creating a {@link LatestValueManager}.
  *
@@ -178,7 +185,7 @@ export function Latest<T extends object, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: { ...initialValue },
+		value: shallowClone(initialValue),
 	};
 	const factory = (
 		key: Key,
