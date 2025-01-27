@@ -63,6 +63,7 @@
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@fluidframework/server-services-telemetry": "workspace:~",
 		"axios": "^1.7.7",
 		"crc-32": "1.2.0",
 		"debug": "^4.3.4",

@@ -26,16 +26,16 @@ importers:
         version: file:../../packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@microsoft/api-documenter':
         specifier: ^7.21.6
-        version: 7.22.21
+        version: 7.22.21(@types/node@18.19.39)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
@@ -71,13 +71,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -117,13 +117,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -223,13 +223,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -332,13 +332,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -423,13 +423,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)(webpack-cli@5.1.4)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)(webpack-cli@5.1.4)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -562,13 +562,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -623,13 +623,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -735,13 +735,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -880,13 +880,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1058,13 +1058,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1137,6 +1137,9 @@ importers:
       '@fluidframework/protocol-definitions':
         specifier: ^3.2.0
         version: 3.2.0
+      '@fluidframework/server-services-telemetry':
+        specifier: workspace:~
+        version: link:../services-telemetry
       axios:
         specifier: ^1.7.7
         version: 1.7.7(debug@4.3.4)
@@ -1164,13 +1167,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1197,7 +1200,7 @@ importers:
         version: 9.0.2
       axios-mock-adapter:
         specifier: ^1.19.0
-        version: 1.21.5(axios@1.7.7)
+        version: 1.21.5(axios@1.7.7(debug@4.3.4))
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -1258,13 +1261,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1331,13 +1334,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1407,13 +1410,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1468,13 +1471,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1595,13 +1598,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1683,13 +1686,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1789,13 +1792,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1916,13 +1919,13 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.38.0
-        version: 0.38.0(@types/node@18.19.39)
+        version: 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -2268,9 +2271,6 @@ packages:
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@aws-sdk/client-sts': ^3.568.0
-    peerDependenciesMeta:
-      '@aws-sdk/client-sts':
-        optional: true
 
   '@aws-sdk/credential-provider-node@3.470.0':
     resolution: {integrity: sha512-paySXwzGxBVU+2cVUkRIXafKhYhtO2fJJ3MotR6euvRONK/dta+bhEc5Z4QnTo/gNLoELK/QUC0EGoF+oPfk8g==}
@@ -2305,9 +2305,6 @@ packages:
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@aws-sdk/client-sts': ^3.568.0
-    peerDependenciesMeta:
-      '@aws-sdk/client-sts':
-        optional: true
 
   '@aws-sdk/credential-providers@3.470.0':
     resolution: {integrity: sha512-aCI/z6L+LwPSUHTsf27WMs3Z7Dfg1idgEOtf0dCkk+T1SZnJA0D/JS0KjQag9rIuqYQsxewx6RCIHus5WJ3czA==}
@@ -2402,9 +2399,6 @@ packages:
     engines: {node: '>=16.0.0'}
     peerDependencies:
       '@aws-sdk/client-sso-oidc': ^3.568.0
-    peerDependenciesMeta:
-      '@aws-sdk/client-sso-oidc':
-        optional: true
 
   '@aws-sdk/types@3.468.0':
     resolution: {integrity: sha512-rx/9uHI4inRbp2tw3Y4Ih4PNZkVj32h7WneSg3MVgVjAoVD5Zti9KhS5hkvsBxfgmQmg0AQbE+b1sy5WGAgntA==}
@@ -2583,7 +2577,6 @@ packages:
 
   '@fluid-private/changelog-generator-wrapper@file:../../packages/tools/changelog-generator-wrapper':
     resolution: {directory: ../../packages/tools/changelog-generator-wrapper, type: directory}
-    name: '@fluid-private/changelog-generator-wrapper'
 
   '@fluid-tools/build-cli@0.38.0':
     resolution: {integrity: sha512-QvfpjBidx9+bCsSIeqsZiRLg/dDmYrMZeJvAq6zRxhUynnA74koIIt2hbp0cP4MWbDWxMCMUvgLpzJHKuVVslA==}
@@ -8766,8 +8759,8 @@ snapshots:
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
-      '@aws-sdk/client-sts': 3.569.0
+      '@aws-sdk/client-sso-oidc': 3.569.0
+      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-host-header': 3.567.0
@@ -8861,8 +8854,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
-      '@aws-sdk/client-sts': 3.569.0
+      '@aws-sdk/client-sso-oidc': 3.569.0
+      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.568.0
@@ -8919,11 +8912,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.569.0(@aws-sdk/client-sts@3.569.0)':
+  '@aws-sdk/client-sso-oidc@3.569.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.569.0
+      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-host-header': 3.567.0
@@ -8962,7 +8955,6 @@ snapshots:
       '@smithy/util-utf8': 2.3.0
       tslib: 2.6.2
     transitivePeerDependencies:
-      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso@3.470.0':
@@ -9096,11 +9088,11 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/client-sts@3.569.0':
+  '@aws-sdk/client-sts@3.569.0(@aws-sdk/client-sso-oidc@3.569.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
+      '@aws-sdk/client-sso-oidc': 3.569.0
       '@aws-sdk/core': 3.567.0
       '@aws-sdk/credential-provider-node': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)
       '@aws-sdk/middleware-host-header': 3.567.0
@@ -9139,6 +9131,7 @@ snapshots:
       '@smithy/util-utf8': 2.3.0
       tslib: 2.6.2
     transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/core@3.468.0':
@@ -9226,7 +9219,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.568.0(@aws-sdk/client-sso-oidc@3.569.0)(@aws-sdk/client-sts@3.569.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.569.0
+      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
       '@aws-sdk/credential-provider-env': 3.568.0
       '@aws-sdk/credential-provider-process': 3.568.0
       '@aws-sdk/credential-provider-sso': 3.568.0(@aws-sdk/client-sso-oidc@3.569.0)
@@ -9330,7 +9323,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.568.0(@aws-sdk/client-sts@3.569.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.569.0
+      '@aws-sdk/client-sts': 3.569.0(@aws-sdk/client-sso-oidc@3.569.0)
       '@aws-sdk/types': 3.567.0
       '@smithy/property-provider': 2.2.0
       '@smithy/types': 2.12.0
@@ -9571,7 +9564,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.568.0(@aws-sdk/client-sso-oidc@3.569.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.569.0(@aws-sdk/client-sts@3.569.0)
+      '@aws-sdk/client-sso-oidc': 3.569.0
       '@aws-sdk/types': 3.567.0
       '@smithy/property-provider': 2.2.0
       '@smithy/shared-ini-file-loader': 2.4.0
@@ -9884,10 +9877,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluid-tools/build-cli@0.38.0(@types/node@18.19.39)':
+  '@fluid-tools/build-cli@0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)':
     dependencies:
       '@fluid-tools/version-tools': 0.38.0
-      '@fluidframework/build-tools': 0.38.0(@types/node@18.19.39)
+      '@fluidframework/build-tools': 0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/bundle-size-tools': 0.38.0(webpack-cli@5.1.4)
       '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
       '@oclif/core': 3.26.5
@@ -9895,12 +9888,12 @@ snapshots:
       '@oclif/plugin-commands': 3.3.1
       '@oclif/plugin-help': 6.0.21
       '@oclif/plugin-not-found': 3.1.7
-      '@octokit/core': 4.2.4
+      '@octokit/core': 4.2.4(encoding@0.1.13)
       '@rushstack/node-core-library': 3.63.0(@types/node@18.19.39)
       async: 3.2.5
       chalk: 2.4.2
       change-case: 3.1.0
-      danger: 11.3.1
+      danger: 11.3.1(encoding@0.1.13)
       date-fns: 2.30.0
       debug: 4.3.4(supports-color@8.1.1)
       execa: 5.1.1
@@ -9913,64 +9906,7 @@ snapshots:
       jssm: 5.89.2
       latest-version: 5.1.0
       minimatch: 7.4.6
-      node-fetch: 2.7.0
-      npm-check-updates: 16.14.20
-      oclif: 4.10.1
-      prettier: 3.2.5
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      replace-in-file: 7.1.0
-      resolve.exports: 2.0.2
-      semver: 7.6.0
-      semver-utils: 1.1.4
-      simple-git: 3.19.1
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 6.0.1
-      table: 6.8.1
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - aws-crt
-      - bluebird
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-
-  '@fluid-tools/build-cli@0.38.0(@types/node@18.19.39)(webpack-cli@5.1.4)':
-    dependencies:
-      '@fluid-tools/version-tools': 0.38.0
-      '@fluidframework/build-tools': 0.38.0(@types/node@18.19.39)(webpack-cli@5.1.4)
-      '@fluidframework/bundle-size-tools': 0.38.0(webpack-cli@5.1.4)
-      '@microsoft/api-extractor': 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
-      '@oclif/core': 3.26.5
-      '@oclif/plugin-autocomplete': 3.0.16
-      '@oclif/plugin-commands': 3.3.1
-      '@oclif/plugin-help': 6.0.21
-      '@oclif/plugin-not-found': 3.1.7
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.39)
-      async: 3.2.5
-      chalk: 2.4.2
-      change-case: 3.1.0
-      danger: 11.3.1
-      date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
-      execa: 5.1.1
-      fs-extra: 9.1.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.0.0
-      inquirer: 8.2.5
-      json5: 2.2.3
-      jssm: 5.89.2
-      latest-version: 5.1.0
-      minimatch: 7.4.6
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
       npm-check-updates: 16.14.20
       oclif: 4.10.1
       prettier: 3.2.5
@@ -10013,55 +9949,17 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.38.0(@types/node@18.19.39)':
+  '@fluidframework/build-tools@0.38.0(@types/node@18.19.39)(encoding@0.1.13)(webpack-cli@5.1.4)':
     dependencies:
       '@fluid-tools/version-tools': 0.38.0
       '@fluidframework/bundle-size-tools': 0.38.0(webpack-cli@5.1.4)
       '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
+      '@octokit/core': 4.2.4(encoding@0.1.13)
       '@rushstack/node-core-library': 3.63.0(@types/node@18.19.39)
       async: 3.2.5
       chalk: 2.4.2
       cosmiconfig: 8.3.6(typescript@5.1.6)
-      danger: 11.3.1
-      date-fns: 2.30.0
-      debug: 4.3.4(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 9.1.0
-      glob: 7.2.3
-      ignore: 5.3.0
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      picomatch: 2.3.1
-      rimraf: 4.4.1
-      semver: 7.6.0
-      sort-package-json: 1.57.0
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      typescript: 5.1.6
-      yaml: 2.3.4
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - encoding
-      - esbuild
-      - supports-color
-      - uglify-js
-      - webpack-cli
-
-  '@fluidframework/build-tools@0.38.0(@types/node@18.19.39)(webpack-cli@5.1.4)':
-    dependencies:
-      '@fluid-tools/version-tools': 0.38.0
-      '@fluidframework/bundle-size-tools': 0.38.0(webpack-cli@5.1.4)
-      '@manypkg/get-packages': 2.2.0
-      '@octokit/core': 4.2.4
-      '@rushstack/node-core-library': 3.63.0(@types/node@18.19.39)
-      async: 3.2.5
-      chalk: 2.4.2
-      cosmiconfig: 8.3.6(typescript@5.1.6)
-      danger: 11.3.1
+      danger: 11.3.1(encoding@0.1.13)
       date-fns: 2.30.0
       debug: 4.3.4(supports-color@8.1.1)
       detect-indent: 6.1.0
@@ -10128,19 +10026,19 @@ snapshots:
       '@rushstack/eslint-patch': 1.4.0
       '@rushstack/eslint-plugin': 0.13.1(eslint@8.55.0)(typescript@5.1.6)
       '@rushstack/eslint-plugin-security': 0.7.1(eslint@8.55.0)(typescript@5.1.6)
-      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5)(eslint@8.55.0)(typescript@5.1.6)
+      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5)(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
       eslint-plugin-react-hooks: 4.6.0(eslint@8.55.0)
       eslint-plugin-tsdoc: 0.2.17
       eslint-plugin-unicorn: 48.0.1(eslint@8.55.0)
-      eslint-plugin-unused-imports: 3.0.0(@typescript-eslint/eslint-plugin@6.7.5)(eslint@8.55.0)
+      eslint-plugin-unused-imports: 3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)
     transitivePeerDependencies:
       - eslint
       - eslint-import-resolver-node
@@ -10655,11 +10553,11 @@ snapshots:
       jju: 1.4.0
       read-yaml-file: 1.1.0
 
-  '@microsoft/api-documenter@7.22.21':
+  '@microsoft/api-documenter@7.22.21(@types/node@18.19.39)':
     dependencies:
-      '@microsoft/api-extractor-model': 7.27.3
+      '@microsoft/api-extractor-model': 7.27.3(@types/node@18.19.39)
       '@microsoft/tsdoc': 0.14.2
-      '@rushstack/node-core-library': 3.59.4
+      '@rushstack/node-core-library': 3.59.4(@types/node@18.19.39)
       '@rushstack/ts-command-line': 4.15.1
       colors: 1.2.5
       js-yaml: 3.13.1
@@ -10667,11 +10565,11 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/api-extractor-model@7.27.3':
+  '@microsoft/api-extractor-model@7.27.3(@types/node@18.19.39)':
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@microsoft/tsdoc-config': 0.16.2
-      '@rushstack/node-core-library': 3.59.4
+      '@rushstack/node-core-library': 3.59.4(@types/node@18.19.39)
     transitivePeerDependencies:
       - '@types/node'
 
@@ -10840,11 +10738,11 @@ snapshots:
 
   '@octokit/auth-token@3.0.4': {}
 
-  '@octokit/core@3.6.0':
+  '@octokit/core@3.6.0(encoding@0.1.13)':
     dependencies:
       '@octokit/auth-token': 2.5.0
-      '@octokit/graphql': 4.8.0
-      '@octokit/request': 5.6.3
+      '@octokit/graphql': 4.8.0(encoding@0.1.13)
+      '@octokit/request': 5.6.3(encoding@0.1.13)
       '@octokit/request-error': 2.1.0
       '@octokit/types': 6.41.0
       before-after-hook: 2.2.3
@@ -10852,11 +10750,11 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  '@octokit/core@4.2.4':
+  '@octokit/core@4.2.4(encoding@0.1.13)':
     dependencies:
       '@octokit/auth-token': 3.0.4
-      '@octokit/graphql': 5.0.6
-      '@octokit/request': 6.2.8
+      '@octokit/graphql': 5.0.6(encoding@0.1.13)
+      '@octokit/request': 6.2.8(encoding@0.1.13)
       '@octokit/request-error': 3.0.3
       '@octokit/types': 9.3.2
       before-after-hook: 2.2.3
@@ -10876,17 +10774,17 @@ snapshots:
       is-plain-object: 5.0.0
       universal-user-agent: 6.0.1
 
-  '@octokit/graphql@4.8.0':
+  '@octokit/graphql@4.8.0(encoding@0.1.13)':
     dependencies:
-      '@octokit/request': 5.6.3
+      '@octokit/request': 5.6.3(encoding@0.1.13)
       '@octokit/types': 6.41.0
       universal-user-agent: 6.0.1
     transitivePeerDependencies:
       - encoding
 
-  '@octokit/graphql@5.0.6':
+  '@octokit/graphql@5.0.6(encoding@0.1.13)':
     dependencies:
-      '@octokit/request': 6.2.8
+      '@octokit/request': 6.2.8(encoding@0.1.13)
       '@octokit/types': 9.3.2
       universal-user-agent: 6.0.1
     transitivePeerDependencies:
@@ -10896,18 +10794,18 @@ snapshots:
 
   '@octokit/openapi-types@18.1.1': {}
 
-  '@octokit/plugin-paginate-rest@2.21.3(@octokit/core@3.6.0)':
+  '@octokit/plugin-paginate-rest@2.21.3(@octokit/core@3.6.0(encoding@0.1.13))':
     dependencies:
-      '@octokit/core': 3.6.0
+      '@octokit/core': 3.6.0(encoding@0.1.13)
       '@octokit/types': 6.41.0
 
-  '@octokit/plugin-request-log@1.0.4(@octokit/core@3.6.0)':
+  '@octokit/plugin-request-log@1.0.4(@octokit/core@3.6.0(encoding@0.1.13))':
     dependencies:
-      '@octokit/core': 3.6.0
+      '@octokit/core': 3.6.0(encoding@0.1.13)
 
-  '@octokit/plugin-rest-endpoint-methods@5.16.2(@octokit/core@3.6.0)':
+  '@octokit/plugin-rest-endpoint-methods@5.16.2(@octokit/core@3.6.0(encoding@0.1.13))':
     dependencies:
-      '@octokit/core': 3.6.0
+      '@octokit/core': 3.6.0(encoding@0.1.13)
       '@octokit/types': 6.41.0
       deprecation: 2.3.1
 
@@ -10923,34 +10821,34 @@ snapshots:
       deprecation: 2.3.1
       once: 1.4.0
 
-  '@octokit/request@5.6.3':
+  '@octokit/request@5.6.3(encoding@0.1.13)':
     dependencies:
       '@octokit/endpoint': 6.0.12
       '@octokit/request-error': 2.1.0
       '@octokit/types': 6.41.0
       is-plain-object: 5.0.0
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
       universal-user-agent: 6.0.1
     transitivePeerDependencies:
       - encoding
 
-  '@octokit/request@6.2.8':
+  '@octokit/request@6.2.8(encoding@0.1.13)':
     dependencies:
       '@octokit/endpoint': 7.0.6
       '@octokit/request-error': 3.0.3
       '@octokit/types': 9.3.2
       is-plain-object: 5.0.0
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
       universal-user-agent: 6.0.1
     transitivePeerDependencies:
       - encoding
 
-  '@octokit/rest@18.12.0':
+  '@octokit/rest@18.12.0(encoding@0.1.13)':
     dependencies:
-      '@octokit/core': 3.6.0
-      '@octokit/plugin-paginate-rest': 2.21.3(@octokit/core@3.6.0)
-      '@octokit/plugin-request-log': 1.0.4(@octokit/core@3.6.0)
-      '@octokit/plugin-rest-endpoint-methods': 5.16.2(@octokit/core@3.6.0)
+      '@octokit/core': 3.6.0(encoding@0.1.13)
+      '@octokit/plugin-paginate-rest': 2.21.3(@octokit/core@3.6.0(encoding@0.1.13))
+      '@octokit/plugin-request-log': 1.0.4(@octokit/core@3.6.0(encoding@0.1.13))
+      '@octokit/plugin-rest-endpoint-methods': 5.16.2(@octokit/core@3.6.0(encoding@0.1.13))
     transitivePeerDependencies:
       - encoding
 
@@ -11048,7 +10946,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@rushstack/node-core-library@3.59.4':
+  '@rushstack/node-core-library@3.59.4(@types/node@18.19.39)':
     dependencies:
       colors: 1.2.5
       fs-extra: 7.0.1
@@ -11057,10 +10955,11 @@ snapshots:
       resolve: 1.22.8
       semver: 7.3.8
       z-schema: 5.0.5
+    optionalDependencies:
+      '@types/node': 18.19.39
 
   '@rushstack/node-core-library@3.63.0(@types/node@18.19.39)':
     dependencies:
-      '@types/node': 18.19.39
       colors: 1.2.5
       fs-extra: 7.0.1
       import-lazy: 4.0.0
@@ -11068,10 +10967,11 @@ snapshots:
       resolve: 1.22.8
       semver: 7.5.4
       z-schema: 5.0.5
+    optionalDependencies:
+      '@types/node': 18.19.39
 
   '@rushstack/node-core-library@5.3.0(@types/node@18.19.39)':
     dependencies:
-      '@types/node': 18.19.39
       ajv: 8.13.0
       ajv-draft-04: 1.0.0(ajv@8.13.0)
       ajv-formats: 3.0.1(ajv@8.13.0)
@@ -11080,6 +10980,8 @@ snapshots:
       jju: 1.4.0
       resolve: 1.22.8
       semver: 7.5.4
+    optionalDependencies:
+      '@types/node': 18.19.39
 
   '@rushstack/rig-package@0.5.2':
     dependencies:
@@ -11089,8 +10991,9 @@ snapshots:
   '@rushstack/terminal@0.12.2(@types/node@18.19.39)':
     dependencies:
       '@rushstack/node-core-library': 5.3.0(@types/node@18.19.39)
-      '@types/node': 18.19.39
       supports-color: 8.1.1
+    optionalDependencies:
+      '@types/node': 18.19.39
 
   '@rushstack/tree-pattern@0.3.1': {}
 
@@ -12028,7 +11931,7 @@ snapshots:
     dependencies:
       '@types/node': 18.19.39
 
-  '@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5)(eslint@8.55.0)(typescript@5.1.6)':
+  '@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)':
     dependencies:
       '@eslint-community/regexpp': 4.10.0
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
@@ -12043,6 +11946,7 @@ snapshots:
       natural-compare: 1.4.0
       semver: 7.6.0
       ts-api-utils: 1.0.3(typescript@5.1.6)
+    optionalDependencies:
       typescript: 5.1.6
     transitivePeerDependencies:
       - supports-color
@@ -12063,6 +11967,7 @@ snapshots:
       '@typescript-eslint/visitor-keys': 6.7.5
       debug: 4.3.4(supports-color@8.1.1)
       eslint: 8.55.0
+    optionalDependencies:
       typescript: 5.1.6
     transitivePeerDependencies:
       - supports-color
@@ -12084,6 +11989,7 @@ snapshots:
       debug: 4.3.4(supports-color@8.1.1)
       eslint: 8.55.0
       ts-api-utils: 1.0.3(typescript@5.1.6)
+    optionalDependencies:
       typescript: 5.1.6
     transitivePeerDependencies:
       - supports-color
@@ -12101,6 +12007,7 @@ snapshots:
       is-glob: 4.0.3
       semver: 7.6.0
       tsutils: 3.21.0(typescript@5.1.6)
+    optionalDependencies:
       typescript: 5.1.6
     transitivePeerDependencies:
       - supports-color
@@ -12114,6 +12021,7 @@ snapshots:
       is-glob: 4.0.3
       semver: 7.6.0
       ts-api-utils: 1.0.3(typescript@5.1.6)
+    optionalDependencies:
       typescript: 5.1.6
     transitivePeerDependencies:
       - supports-color
@@ -12309,11 +12217,11 @@ snapshots:
       indent-string: 4.0.0
 
   ajv-draft-04@1.0.0(ajv@8.13.0):
-    dependencies:
+    optionalDependencies:
       ajv: 8.13.0
 
   ajv-formats@3.0.1(ajv@8.13.0):
-    dependencies:
+    optionalDependencies:
       ajv: 8.13.0
 
   ajv-keywords@3.5.2(ajv@6.12.6):
@@ -12507,7 +12415,7 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  axios-mock-adapter@1.21.5(axios@1.7.7):
+  axios-mock-adapter@1.21.5(axios@1.7.7(debug@4.3.4)):
     dependencies:
       axios: 1.7.7(debug@4.3.4)
       fast-deep-equal: 3.1.3
@@ -13131,6 +13039,7 @@ snapshots:
       js-yaml: 4.1.0
       parse-json: 5.2.0
       path-type: 4.0.0
+    optionalDependencies:
       typescript: 5.1.6
 
   crc-32@1.2.0:
@@ -13162,11 +13071,11 @@ snapshots:
 
   culvert@0.1.2: {}
 
-  danger@11.3.1:
+  danger@11.3.1(encoding@0.1.13):
     dependencies:
       '@gitbeaker/core': 35.8.1
       '@gitbeaker/node': 35.8.1
-      '@octokit/rest': 18.12.0
+      '@octokit/rest': 18.12.0(encoding@0.1.13)
       async-retry: 1.2.3
       chalk: 2.4.2
       commander: 2.20.3
@@ -13186,10 +13095,10 @@ snapshots:
       lodash.keys: 4.2.0
       lodash.mapvalues: 4.6.0
       lodash.memoize: 4.1.2
-      memfs-or-file-map-to-github-branch: 1.2.1
+      memfs-or-file-map-to-github-branch: 1.2.1(encoding@0.1.13)
       micromatch: 4.0.8
       node-cleanup: 2.1.2
-      node-fetch: 2.7.0
+      node-fetch: 2.7.0(encoding@0.1.13)
       override-require: 1.1.1
       p-limit: 2.3.0
       parse-diff: 0.7.1
@@ -13227,6 +13136,7 @@ snapshots:
   debug@4.3.4(supports-color@8.1.1):
     dependencies:
       ms: 2.1.2
+    optionalDependencies:
       supports-color: 8.1.1
 
   decamelize@4.0.0: {}
@@ -13577,13 +13487,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5)(eslint-plugin-i@2.29.1)(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
       is-core-module: 2.13.1
@@ -13594,13 +13504,14 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
+  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
-      '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       debug: 3.2.7
+    optionalDependencies:
+      '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5)(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -13610,13 +13521,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.0
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5)(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       get-tsconfig: 4.7.2
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -13694,11 +13605,12 @@ snapshots:
       semver: 7.6.0
       strip-indent: 3.0.0
 
-  eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.7.5)(eslint@8.55.0):
+  eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0):
     dependencies:
-      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5)(eslint@8.55.0)(typescript@5.1.6)
       eslint: 8.55.0
       eslint-rule-composer: 0.3.0
+    optionalDependencies:
+      '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)
 
   eslint-rule-composer@0.3.0: {}
 
@@ -13992,7 +13904,7 @@ snapshots:
   fn.name@1.1.0: {}
 
   follow-redirects@1.15.6(debug@4.3.4):
-    dependencies:
+    optionalDependencies:
       debug: 4.3.4(supports-color@8.1.1)
 
   for-each@0.3.3:
@@ -14166,7 +14078,7 @@ snapshots:
   git-hooks-list@3.1.0: {}
 
   git-node-fs@1.0.0(js-git@0.7.8):
-    dependencies:
+    optionalDependencies:
       js-git: 0.7.8
 
   git-sha1@0.1.2: {}
@@ -15232,9 +15144,9 @@ snapshots:
 
   media-typer@0.3.0: {}
 
-  memfs-or-file-map-to-github-branch@1.2.1:
+  memfs-or-file-map-to-github-branch@1.2.1(encoding@0.1.13):
     dependencies:
-      '@octokit/rest': 18.12.0
+      '@octokit/rest': 18.12.0(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
 
@@ -15524,9 +15436,11 @@ snapshots:
 
   node-cleanup@2.1.2: {}
 
-  node-fetch@2.7.0:
+  node-fetch@2.7.0(encoding@0.1.13):
     dependencies:
       whatwg-url: 5.0.0
+    optionalDependencies:
+      encoding: 0.1.13
 
   node-gyp-build@4.6.0: {}
 
@@ -17601,8 +17515,9 @@ snapshots:
       tapable: 2.2.1
       terser-webpack-plugin: 5.3.10(webpack@5.94.0)
       watchpack: 2.4.2
-      webpack-cli: 5.1.4(webpack@5.94.0)
       webpack-sources: 3.2.3
+    optionalDependencies:
+      webpack-cli: 5.1.4(webpack@5.94.0)
     transitivePeerDependencies:
       - '@swc/core'
       - esbuild
