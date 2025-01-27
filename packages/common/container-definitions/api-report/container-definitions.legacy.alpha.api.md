@@ -108,7 +108,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     disconnect(): void;
     dispose(error?: ICriticalContainerError): void;
-    dispose(disconnectReason: "Corruption", error: ICriticalContainerError): void;
+    dispose(error: ICriticalContainerError, disconnectReason: "Corruption"): void;
     dispose(error?: ICriticalContainerError, disconnectReason?: "Expected" | "Unknown"): void;
     readonly disposed?: boolean;
     forceReadonly?(readonly: boolean): any;
