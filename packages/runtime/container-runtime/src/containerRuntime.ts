@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { Trace, TypedEventEmitter } from "@fluid-internal/client-utils";
+import {
+	Trace,
+	TypedEventEmitter,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -170,6 +175,7 @@ import {
 	type GarbageCollectionMessage,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
+import { RuntimeCompatDetails, validateLoaderCompatibility } from "./layerCompatState.js";
 import {
 	ContainerMessageType,
 	type ContainerRuntimeDocumentSchemaMessage,
@@ -921,7 +927,8 @@ export class ContainerRuntime
 		ISummarizerRuntime,
 		// eslint-disable-next-line import/no-deprecated
 		ISummarizerInternalsProvider,
-		IProvideFluidHandleContext
+		IProvideFluidHandleContext,
+		IProvideLayerCompatDetails
 {
 	/**
 	 * Load the stores from a snapshot and returns the runtime.
@@ -1527,6 +1534,10 @@ export class ContainerRuntime
 		expiry: { policy: "absolute", durationMs: 60000 },
 	});
 
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return RuntimeCompatDetails;
+	}
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1583,6 +1594,12 @@ export class ContainerRuntime
 			supportedFeatures,
 			snapshotWithContents,
 		} = context;
+
+		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
+		this.disposeFn = disposeFn ?? closeFn;
+
+		const maybeLoaderCompatDetails = context as FluidObject<ILayerCompatDetails>;
+		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
 
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
 		const runtimeOptions = {
@@ -1641,8 +1658,6 @@ export class ContainerRuntime
 		this.on("dirty", () => context.updateDirtyContainerState(true));
 		this.on("saved", () => context.updateDirtyContainerState(false));
 
-		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
-		this.disposeFn = disposeFn ?? closeFn;
 		// In cases of summarizer, we want to dispose instead since consumer doesn't interact with this container
 		this.closeFn = isSummarizerClient ? this.disposeFn : closeFn;
 
@@ -1764,9 +1779,15 @@ export class ContainerRuntime
 		this.maxConsecutiveReconnects =
 			this.mc.config.getNumber(maxConsecutiveReconnectsKey) ?? defaultMaxConsecutiveReconnects;
 
+		// If the context has ILayerCompatDetails, it supports referenceSequenceNumbers since that features
+		// predates ILayerCompatDetails.
+		const referenceSequenceNumbersSupported =
+			maybeLoaderCompatDetails.ILayerCompatDetails === undefined
+				? supportedFeatures?.get("referenceSequenceNumbers") === true
+				: true;
 		if (
 			runtimeOptions.flushMode === (FlushModeExperimental.Async as unknown as FlushMode) &&
-			supportedFeatures?.get("referenceSequenceNumbers") !== true
+			!referenceSequenceNumbersSupported
 		) {
 			// The loader does not support reference sequence numbers, falling back on FlushMode.TurnBased
 			this.mc.logger.sendErrorEvent({ eventName: "FlushModeFallback" });
