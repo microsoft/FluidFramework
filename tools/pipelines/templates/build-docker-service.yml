@@ -438,6 +438,7 @@ extends:
                   containerCommand: npm run ci:test:coverage
                   volumes:
                     $(hostPathToTestResultsArtifact):${{ parameters.containerBaseDir }}/nyc
+
               - task: PublishCodeCoverageResults@2
                 displayName: Publish Code Coverage
                 inputs:
@@ -557,12 +558,6 @@ extends:
             - serviceConnection: $(containerRegistryConnection)
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
           outputs:
-          - output: pipelineArtifact
-            displayName: 'Publish Artifact - test results folder'
-            targetPath: ${{ variables.testPackageDir }}/nyc
-            artifactName: 'test-results-all-test'
-            publishLocation: 'pipeline'
-            condition: succeededOrFailed()
           - ${{ if eq(parameters.pack, true) }}:
             - output: pipelineArtifact
               displayName: 'Publish Artifact - pack'
