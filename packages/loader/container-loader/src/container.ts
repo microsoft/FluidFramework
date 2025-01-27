@@ -5,7 +5,11 @@
 
 /* eslint-disable unicorn/consistent-function-scoping */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	performance,
+	type ILayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -37,10 +41,7 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import {
-	DisconnectReason,
-	type ISignalEnvelope,
-} from "@fluidframework/core-interfaces/internal";
+import { DisconnectReason, type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IClient,
@@ -126,6 +127,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
 import {
@@ -2470,11 +2472,19 @@ export class Container
 			snapshot,
 		);
 
-		this._runtime = await PerformanceEvent.timedExecAsync(
+		const runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
+
+		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
+			this.dispose(error),
+		);
+
+		this._runtime = runtime;
+
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;
