@@ -4,6 +4,7 @@
  */
 
 import { bufferToString } from "@fluid-internal/client-utils";
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -169,11 +170,14 @@ export class SharedIntervalCollection
 		localOpMetadata: unknown,
 	) {
 		if (message.type === MessageType.Operation) {
-			this.intervalCollections.tryProcessMessage(
-				message.contents as IMapOperation,
-				local,
-				message,
-				localOpMetadata,
+			assert(
+				this.intervalCollections.tryProcessMessage(
+					message.contents as IMapOperation,
+					local,
+					message,
+					localOpMetadata,
+				),
+				"SharedIntervalCollection received Invalid op, possibly from a never version",
 			);
 		}
 	}

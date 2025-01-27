@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -293,7 +294,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata);
+			assert(
+				this.kernel.tryProcessMessage(
+					message.contents as IMapOperation,
+					local,
+					localOpMetadata,
+				),
+				"Map received Invalid op, possibly from a never version",
+			);
 		}
 	}
 

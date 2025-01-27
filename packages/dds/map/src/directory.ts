@@ -805,7 +805,10 @@ export class SharedDirectory
 		if (message.type === MessageType.Operation) {
 			const op: IDirectoryOperation = message.contents as IDirectoryOperation;
 			const handler = this.messageHandlers.get(op.type);
-			assert(handler !== undefined, 0x00e /* Missing message handler for message type */);
+			assert(
+				handler !== undefined,
+				"Missing message handler for message type: op may be from a newer version",
+			);
 			handler.process(message, op, local, localOpMetadata);
 		}
 	}
