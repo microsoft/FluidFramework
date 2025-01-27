@@ -7,16 +7,6 @@
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
-// @alpha
-export const DisconnectReason: {
-    readonly Expected: "Expected";
-    readonly Corruption: "Corruption";
-    readonly Unknown: "Unknown";
-};
-
-// @alpha
-export type DisconnectReason = (typeof DisconnectReason)[keyof typeof DisconnectReason];
-
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
@@ -344,9 +334,6 @@ export interface IResponse {
     // (undocumented)
     value: any;
 }
-
-// @alpha
-export const isDisconnectReason: (value: unknown) => value is DisconnectReason;
 
 // @public
 export type IsListener<TListener> = TListener extends (...args: any[]) => void ? true : false;

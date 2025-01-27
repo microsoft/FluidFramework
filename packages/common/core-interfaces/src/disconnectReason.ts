@@ -7,7 +7,7 @@
  * Potential reasons for disconnect events emitted by {@link @fluidframework/container-definitions#IContainer}.
  *
  * @legacy
- * @alpha
+ * @internal
  */
 export const DisconnectReason = {
 	Expected: "Expected",
@@ -18,7 +18,7 @@ export const DisconnectReason = {
 /**
  * {@inheritDoc (DisconnectReason:variable)}
  * @legacy
- * @alpha
+ * @internal
  */
 export type DisconnectReason = (typeof DisconnectReason)[keyof typeof DisconnectReason];
 
@@ -28,7 +28,7 @@ export type DisconnectReason = (typeof DisconnectReason)[keyof typeof Disconnect
  * @param value - The value to check
  * @returns True if the value is a valid DisconnectReason, false otherwise
  * @legacy
- * @alpha
+ * @internal
  */
 export const isDisconnectReason = (value: unknown): value is DisconnectReason =>
 	value !== undefined &&
