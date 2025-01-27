@@ -182,6 +182,14 @@ export class RangeMap<K, V> {
 		return cloned;
 	}
 
+	public mapEntries(mapKey: (key: K) => K, mapValue: (value: V) => V): RangeMap<K, V> {
+		const result = new RangeMap<K, V>(this.offsetKey, this.subtractKeys);
+		for (const entry of this.entries()) {
+			result.set(mapKey(entry.start), entry.length, mapValue(entry.value));
+		}
+		return result;
+	}
+
 	/**
 	 * Returns a new map which contains the entries from both input maps.
 	 */

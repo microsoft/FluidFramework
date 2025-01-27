@@ -42,6 +42,7 @@ import {
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeRename,
 	newChangeAtomIdRangeMap,
+	offsetChangeAtomId,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -89,7 +90,6 @@ import {
 	type CrossFieldKey,
 	type CrossFieldKeyRange,
 	type CrossFieldKeyTable,
-	type CrossFieldRangeTable,
 	type FieldChange,
 	type FieldChangeMap,
 	type FieldChangeset,
@@ -1611,10 +1611,8 @@ export class ModularChangeFamily
 
 			// We've updated all references to old node IDs, so we no longer need an alias table.
 			nodeAliases: newTupleBTree(),
-			crossFieldKeys: replaceCrossRangeTableRevisions(
-				change.crossFieldKeys,
-				oldRevisions,
-				newRevision,
+			crossFieldKeys: change.crossFieldKeys.mapEntries(
+				(key) => replaceCrossFieldKeyRevision(key, oldRevisions, newRevision),
 				(id) =>
 					replaceFieldIdRevision(
 						normalizeFieldId(id, change.nodeAliases),
@@ -1787,25 +1785,16 @@ export class ModularChangeFamily
 	}
 }
 
-function replaceCrossRangeTableRevisions<T>(
-	table: CrossFieldRangeTable<T>,
+function replaceCrossFieldKeyRevision(
+	key: CrossFieldKey,
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
-	replaceValueRevisions: (value: T) => T,
-): CrossFieldRangeTable<T> {
-	const updated: CrossFieldRangeTable<T> = newCrossFieldRangeTable();
-	for (const entry of table.entries()) {
-		const key = entry.start;
-		const updatedKey: CrossFieldKey = {
-			target: key.target,
-			revision: replaceRevision(key.revision, oldRevisions, newRevision),
-			localId: key.localId,
-		};
-
-		updated.set(updatedKey, entry.length, replaceValueRevisions(entry.value));
-	}
-
-	return updated;
+): CrossFieldKey {
+	return {
+		target: key.target,
+		revision: replaceRevision(key.revision, oldRevisions, newRevision),
+		localId: key.localId,
+	};
 }
 
 function replaceRevision(
@@ -3086,23 +3075,13 @@ function attachIdFromDetachId(
 	detachId: ChangeAtomId,
 	count: number,
 ): ChangeAtomId {
-	const entry = renames.oldToNewId.getFirst(
-		{
-			target: CrossFieldTarget.Source,
-			revision: detachId.revision,
-			localId: detachId.localId,
-		},
-		1,
-	);
-
+	const entry = renames.oldToNewId.getFirst(detachId, 1);
 	if (entry.value === undefined) {
 		return detachId;
 	}
 
-	const id = entry.start.localId;
-	const entryCount = entry.length;
 	assert(
-		id === detachId.localId && entryCount === count,
+		entry.length === count,
 		"XXX: Handle the case where the ID range maps into multiple blocks",
 	);
 
@@ -3110,7 +3089,8 @@ function attachIdFromDetachId(
 }
 
 export function newNodeRenameTable(): NodeRenameTable {
-	return { newToOldId: newCrossFieldRangeTable(), oldToNewId: newCrossFieldRangeTable() };
+	// XXX: These tables should be maps from key ranges to value ranges.
+	return { newToOldId: newChangeAtomIdRangeMap(), oldToNewId: newChangeAtomIdRangeMap() };
 }
 
 function mergeRenameTables(
@@ -3136,7 +3116,58 @@ function renameNodes(
 	newId: ChangeAtomId,
 	count: number,
 ): void {
-	// XXX
+	const oldEntry = renames.newToOldId.getFirst(oldId, count);
+	const newEntry = renames.oldToNewId.getFirst(newId, count);
+	const countToRename = Math.min(newEntry.length, oldEntry.length);
+
+	let adjustedOldId = oldId;
+	if (oldEntry.value !== undefined) {
+		adjustedOldId = oldEntry.value;
+		deleteNodeRenameEntry(renames, oldEntry.value, oldId, countToRename);
+	}
+
+	let adjustedNewId = newId;
+	if (newEntry.value !== undefined) {
+		adjustedNewId = newEntry.value;
+		deleteNodeRenameEntry(renames, newId, newEntry.value, countToRename);
+	}
+
+	if (!areEqualChangeAtomIdOpts(adjustedOldId, adjustedNewId)) {
+		setNodeRenameEntry(renames, adjustedOldId, adjustedNewId, countToRename);
+	}
+
+	if (countToRename < count) {
+		renameNodes(
+			renames,
+			offsetChangeAtomId(oldId, countToRename),
+			offsetChangeAtomId(newId, countToRename),
+			count - countToRename,
+		);
+	}
+}
+
+/**
+ * Deletes the entry renaming the ID range of length `count` from `oldId` to `newId`.
+ * This function assumes that such an entry exists.
+ */
+function deleteNodeRenameEntry(
+	renames: NodeRenameTable,
+	oldId: ChangeAtomId,
+	newId: ChangeAtomId,
+	count: number,
+): void {
+	renames.oldToNewId.delete(oldId, count);
+	renames.newToOldId.delete(newId, count);
+}
+
+function setNodeRenameEntry(
+	renames: NodeRenameTable,
+	oldId: ChangeAtomId,
+	newId: ChangeAtomId,
+	count: number,
+): void {
+	renames.oldToNewId.set(oldId, count, newId);
+	renames.newToOldId.set(newId, count, oldId);
 }
 
 function replaceRenameTableRevision(
@@ -3144,17 +3175,13 @@ function replaceRenameTableRevision(
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
 ): NodeRenameTable {
-	const oldToNewId = replaceCrossRangeTableRevisions(
-		renames.oldToNewId,
-		oldRevisions,
-		newRevision,
+	const oldToNewId = renames.oldToNewId.mapEntries(
+		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
 		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
 	);
 
-	const newToOldId = replaceCrossRangeTableRevisions(
-		renames.newToOldId,
-		oldRevisions,
-		newRevision,
+	const newToOldId = renames.newToOldId.mapEntries(
+		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
 		(id) => replaceAtomRevisions(id, oldRevisions, newRevision),
 	);
 

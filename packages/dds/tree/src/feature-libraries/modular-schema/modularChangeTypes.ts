@@ -6,6 +6,7 @@
 import {
 	subtractChangeAtomIds,
 	type ChangeAtomId,
+	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -79,8 +80,8 @@ export interface ModularChangeset extends HasFieldChanges {
 }
 
 export interface NodeRenameTable {
-	oldToNewId: CrossFieldRangeTable<ChangeAtomId>;
-	newToOldId: CrossFieldRangeTable<ChangeAtomId>;
+	oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
+	newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
 }
 
 export interface RootRange {
