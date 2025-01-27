@@ -3,20 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { describeFuzz, makeRandom, StressMode } from "@fluid-private/stochastic-test-utils";
+import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import {
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,
 	TestOperation,
-	annotateRange,
 	doOverRange,
 	generateClientNames,
-	insertAtRefPos,
-	obliterateRange,
-	removeRange,
 	runMergeTreeOperationRunner,
 } from "./mergeTreeOperationRunner.js";
+import {
+	annotateWithField,
+	insertAvoidField,
+	insertField,
+	obliterateField,
+	removeWithField,
+} from "./obliterateOperations.js";
 import { TestClient } from "./testClient.js";
 
 interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
@@ -24,42 +27,19 @@ interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
 	clients: IConfigRange;
 }
 
-const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
-
-export const debugOptions: IConflictFarmConfig = {
-	minLength: { min: 1, max: 512 },
-	clients: { min: 1, max: 8 },
-	opsPerRoundRange: { min: 1, max: 128 },
-	rounds: 8,
-	operations: allOperations,
-	incrementalLog: true,
-	growthFunc: (input: number) => input * 2,
-	// resultsFilePostfix: `conflict-farm-with-obliterate-2.3.0.json`,
-};
+const allOperations: TestOperation[] = [
+	removeWithField,
+	annotateWithField,
+	insertAvoidField,
+	insertField,
+	obliterateField,
+];
 
 export const defaultOptions: IConflictFarmConfig = {
 	minLength: { min: 1, max: 512 },
 	clients: { min: 1, max: 8 },
 	opsPerRoundRange: { min: 1, max: 128 },
 	rounds: 8,
-	operations: allOperations,
-	growthFunc: (input: number) => input * 2,
-};
-
-export const longOptions: IConflictFarmConfig = {
-	minLength: { min: 1, max: 512 },
-	clients: { min: 1, max: 32 },
-	opsPerRoundRange: { min: 1, max: 512 },
-	rounds: 32,
-	operations: allOperations,
-	growthFunc: (input: number) => input * 2,
-};
-
-export const stressOptions: IConflictFarmConfig = {
-	minLength: { min: 1, max: 512 },
-	clients: { min: 1, max: 32 },
-	opsPerRoundRange: { min: 1, max: 128 },
-	rounds: 32,
 	operations: allOperations,
 	growthFunc: (input: number) => input * 2,
 };
@@ -71,24 +51,13 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 	doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
 		for (const { name, config } of [
 			{
-				name: "applyOpsDuringGeneration",
-				config: { ...opts, applyOpDuringGeneration: true },
-			},
-			{
-				name: "obliterate with number endpoints",
+				name: "obliterate with exact range replacement",
 				config: {
 					...opts,
-					operations: [...opts.operations, obliterateRange],
+					// TODO: ensure that obliterate and inserts are not separated before enabling this
+					// applyOpDuringGeneration: true,
 				},
 			},
-			// TODO: AB#15630
-			// {
-			// 	name: "obliterate with sided endpoints",
-			// 	config: {
-			// 		...opts,
-			// 		operations: [...opts.operations, obliterateRange, obliterateRangeSided],
-			// 	},
-			// },
 		])
 			it(`${name}: ConflictFarm_${minLength}`, async () => {
 				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
@@ -125,23 +94,18 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 	});
 }
 
-describeFuzz("MergeTree.Client", ({ testCount, stressMode }) => {
-	const opts = stressMode === StressMode.Short ? defaultOptions : stressOptions;
-	// defaultOptions;
-	// debugOptions;
-	// longOptions;
-
+describeFuzz("MergeTree.Client Obliterate", ({ testCount, stressMode }) => {
 	if (testCount > 1) {
 		doOverRange(
 			{ min: 0, max: testCount - 1 },
 			(x) => x + 1,
 			(seed) => {
 				describe(`with seed ${seed}`, () => {
-					runConflictFarmTests(opts, seed);
+					runConflictFarmTests(defaultOptions, seed);
 				});
 			},
 		);
 	} else {
-		runConflictFarmTests(opts);
+		runConflictFarmTests(defaultOptions);
 	}
 });
