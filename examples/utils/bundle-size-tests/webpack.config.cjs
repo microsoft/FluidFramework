@@ -72,6 +72,7 @@ module.exports = {
 		azureClient: "./src/azureClient",
 		connectionState: "./src/connectionState",
 		containerRuntime: "./src/containerRuntime",
+		debugAssert: "./src/debugAssert",
 		fluidFramework: "./src/fluidFramework",
 		loader: "./src/loader",
 		map: "./src/map",
