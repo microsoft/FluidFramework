@@ -396,7 +396,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * @param error - If the container is being disposed due to error, this provides details about the error that
 	 * resulted in disposing it.
 	 */
-	dispose(disconnectReason: "Corruption", error: ICriticalContainerError): void;
+	dispose(error: ICriticalContainerError, disconnectReason: "Corruption"): void;
 
 	/**
 	 * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
