@@ -22,7 +22,7 @@ import {
 } from "./obliterateOperations.js";
 import { TestClient } from "./testClient.js";
 
-interface IConflictFarmConfig extends IMergeTreeOperationRunnerConfig {
+interface IObliterateFarmConfig extends IMergeTreeOperationRunnerConfig {
 	minLength: IConfigRange;
 	clients: IConfigRange;
 }
@@ -35,7 +35,7 @@ const allOperations: TestOperation[] = [
 	obliterateField,
 ];
 
-export const defaultOptions: IConflictFarmConfig = {
+export const defaultOptions: IObliterateFarmConfig = {
 	minLength: { min: 1, max: 512 },
 	clients: { min: 1, max: 8 },
 	opsPerRoundRange: { min: 1, max: 128 },
@@ -47,7 +47,7 @@ export const defaultOptions: IConflictFarmConfig = {
 // Generate a list of single character client names, support up to 69 clients
 const clientNames = generateClientNames();
 
-function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): void {
+function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number): void {
 	doOverRange(opts.minLength, opts.growthFunc, (minLength) => {
 		for (const { name, config } of [
 			{
@@ -59,7 +59,7 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 				},
 			},
 		])
-			it(`${name}: ConflictFarm_${minLength}`, async () => {
+			it(`${name}: ObliterateFarm_${minLength}`, async () => {
 				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
 
 				const clients: TestClient[] = [
@@ -94,18 +94,18 @@ function runConflictFarmTests(opts: IConflictFarmConfig, extraSeed?: number): vo
 	});
 }
 
-describeFuzz("MergeTree.Client Obliterate", ({ testCount, stressMode }) => {
+describeFuzz("MergeTree.Client Obliterate", ({ testCount }) => {
 	if (testCount > 1) {
 		doOverRange(
 			{ min: 0, max: testCount - 1 },
 			(x) => x + 1,
 			(seed) => {
 				describe(`with seed ${seed}`, () => {
-					runConflictFarmTests(defaultOptions, seed);
+					runObliterateFarmTests(defaultOptions, seed);
 				});
 			},
 		);
 	} else {
-		runConflictFarmTests(defaultOptions);
+		runObliterateFarmTests(defaultOptions);
 	}
 });
