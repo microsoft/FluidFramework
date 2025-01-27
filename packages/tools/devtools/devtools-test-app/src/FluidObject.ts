@@ -203,16 +203,12 @@ export class AppData extends DataObject {
 			booleanValue: builder.boolean,
 		}) {}
 
-		class RootFieldA extends builder.object("root-field-a", {
-			value: [builder.boolean, builder.handle, builder.string],
-		}) {}
-
-		class RootFieldB extends builder.object("root-field-b", {
+		class RootField extends builder.object("root-field-b", {
 			mainObjectNode: builder.optional([MainBranchA, MainBranchB]),
 		}) {}
 
 		const config = new TreeViewConfiguration({
-			schema: [RootFieldA, RootFieldB, builder.string, builder.number],
+			schema: [RootField, builder.number],
 		});
 		const view = sharedTree.viewWith(config);
 		view.initialize({
