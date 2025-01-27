@@ -9,6 +9,7 @@ import type {
 	IEventProvider,
 	IRequest,
 } from "@fluidframework/core-interfaces";
+import type { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import type {
 	IClient,
 	IClientDetails,
@@ -387,26 +388,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * resulted in disposing it.
 	 */
 	dispose(error?: ICriticalContainerError): void;
-
-	/**
-	 * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
-	 * The container is not expected to be used anymore once it is disposed.
-	 *
-	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - If the container is being disposed due to error, this provides details about the error that
-	 * resulted in disposing it.
-	 */
-	dispose(disconnectReason: "Corruption", error: ICriticalContainerError): void;
-
-	/**
-	 * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.
-	 * The container is not expected to be used anymore once it is disposed.
-	 *
-	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - If the container is being disposed due to error, this provides details about the error that
-	 * resulted in disposing it.
-	 */
-	dispose(disconnectReason: "Expected" | "Unknown", error?: ICriticalContainerError): void;
+	dispose(error?: ICriticalContainerError, disconnectReason?: DisconnectReason): void;
 
 	/**
 	 * Closes the container.
@@ -415,24 +397,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * resulted in closing it.
 	 */
 	close(error?: ICriticalContainerError): void;
-
-	/**
-	 * Closes the container.
-	 *
-	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - If the container is being closed due to error, this provides details about the error that
-	 * resulted in closing it.
-	 */
-	close(disconnectReason: "Corruption", error: ICriticalContainerError): void;
-
-	/**
-	 * Closes the container.
-	 *
-	 * @param disconnectReason - The reason for disconnecting the container
-	 * @param error - If the container is being closed due to error, this provides details about the error that
-	 * resulted in closing it.
-	 */
-	close(disconnectReason: "Expected" | "Unknown", error?: ICriticalContainerError): void;
+	close(error?: ICriticalContainerError, disconnectReason?: DisconnectReason): void;
 
 	/**
 	 * Propose new code details that define the code to be loaded for this container's runtime.
@@ -764,6 +729,10 @@ export interface IContainerLoadMode {
  * @internal
  */
 export interface ILoaderHeader {
+	/**
+	 * @deprecated This header has been deprecated and will be removed in a future release
+	 */
+	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
 	[LoaderHeader.reconnect]: boolean;

@@ -46,7 +46,7 @@ class MockContainer
 		this.emit("attached");
 	}
 
-	public dispose(errorOrReason?: IErrorBase | DisconnectReason, error?: IErrorBase): void {
+	public dispose(error?: IErrorBase, disconnectReason?: DisconnectReason): void {
 		this.emit("disposed");
 	}
 

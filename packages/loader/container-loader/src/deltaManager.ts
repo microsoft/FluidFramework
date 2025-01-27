@@ -19,7 +19,6 @@ import {
 import {
 	DisconnectReason,
 	IThrottlingWarning,
-	isDisconnectReason,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
@@ -426,7 +425,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				},
 				error,
 			);
-			this.close(DisconnectReason.Unknown, normalizeError(error));
+			this.close(normalizeError(error));
 		});
 		const props: IConnectionManagerFactoryArgs = {
 			incomingOpHandler: (messages: ISequencedDocumentMessage[], reason: string) => {
@@ -434,7 +433,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.enqueueMessages(messages, reason);
 				} catch (error) {
 					this.logger.sendErrorEvent({ eventName: "EnqueueMessages_Exception" }, error);
-					this.close(DisconnectReason.Unknown, normalizeError(error));
+					this.close(normalizeError(error));
 				}
 			},
 			signalHandler: (signals: ISignalMessage[]) => {
@@ -444,8 +443,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			},
 			reconnectionDelayHandler: (delayMs: number, error: unknown) =>
 				this.emitDelayInfo(this.deltaStreamDelayId, delayMs, error),
-			closeHandler: (error: ICriticalContainerError | undefined) =>
-				this.close(DisconnectReason.Unknown, error),
+			closeHandler: (error: ICriticalContainerError | undefined) => this.close(error),
 			disconnectHandler: (reason: IConnectionStateChangeReason) =>
 				this.disconnectHandler(reason),
 			connectHandler: (connection: IConnectionDetailsInternal) =>
@@ -470,7 +468,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		this._inbound.on("error", (error) => {
 			this.close(
-				DisconnectReason.Unknown,
 				DataProcessingError.wrapIfUnrecognized(
 					error,
 					"deltaManagerInboundErrorHandler",
@@ -492,7 +489,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		});
 
 		this._inboundSignal.on("error", (error) => {
-			this.close(DisconnectReason.Unknown, normalizeError(error));
+			this.close(normalizeError(error));
 		});
 
 		// Initially, all queues are created paused.
@@ -766,28 +763,17 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - close cannot be called after dispose
 	 */
 	public close(
-		errorOrReason?: ICriticalContainerError | DisconnectReason,
 		error?: ICriticalContainerError,
+		disconnectReason: DisconnectReason = DisconnectReason.Unknown,
 	): void {
 		if (this._closed) {
 			return;
 		}
 		this._closed = true;
 
-		let finalError: ICriticalContainerError | undefined;
-		let disconnectReason: DisconnectReason;
-
-		if (isDisconnectReason(errorOrReason)) {
-			finalError = error;
-			disconnectReason = errorOrReason;
-		} else {
-			finalError = errorOrReason;
-			disconnectReason = DisconnectReason.Unknown;
-		}
-
-		this.connectionManager.dispose(disconnectReason, finalError, true /* switchToReadonly */);
+		this.connectionManager.dispose(error, true /* switchToReadonly */, disconnectReason);
 		this.clearQueues();
-		this.emit("closed", finalError);
+		this.emit("closed", error);
 	}
 
 	/**
@@ -799,8 +785,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - dispose can be called after closure
 	 */
 	public dispose(
-		disconnectReason?: DisconnectReason,
 		error?: Error | ICriticalContainerError,
+		disconnectReason: DisconnectReason = DisconnectReason.Unknown,
 	): void {
 		if (this._disposed) {
 			return;
@@ -812,7 +798,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this._disposed = true;
 		this._closed = true; // We consider "disposed" as a further state than "closed"
 
-		this.connectionManager.dispose(disconnectReason, error, false /* switchToReadonly */);
+		this.connectionManager.dispose(error, false /* switchToReadonly */, disconnectReason);
 		this.clearQueues();
 
 		// This needs to be the last thing we do (before removing listeners), as it causes
@@ -1014,7 +1000,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 								driverVersion: undefined,
 							},
 						);
-						this.close(DisconnectReason.Unknown, error);
+						this.close(error);
 					}
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
@@ -1198,7 +1184,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			);
 		} catch (error) {
 			this.logger.sendErrorEvent({ eventName: "GetDeltas_Exception" }, error);
-			this.close(DisconnectReason.Unknown, normalizeError(error));
+			this.close(normalizeError(error));
 		} finally {
 			this.refreshDelayInfo(this.deltaStorageDelayId);
 			this.fetchReason = undefined;

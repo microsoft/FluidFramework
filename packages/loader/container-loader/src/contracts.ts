@@ -127,13 +127,12 @@ export interface IConnectionManager {
 	/**
 	 * Disposed connection manager
 	 */
+	dispose(error?: ICriticalContainerError, switchToReadonly?: boolean): void;
 	dispose(
-		disconnectReason?: DisconnectReason,
 		error?: ICriticalContainerError,
 		switchToReadonly?: boolean,
+		disconnectReason?: DisconnectReason,
 	): void;
-	dispose(error?: ICriticalContainerError, switchToReadonly?: boolean): void;
-
 	get connectionMode(): ConnectionMode;
 }
 

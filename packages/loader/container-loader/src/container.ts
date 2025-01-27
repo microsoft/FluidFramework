@@ -5,11 +5,7 @@
 
 /* eslint-disable unicorn/consistent-function-scoping */
 
-import {
-	TypedEventEmitter,
-	performance,
-	type ILayerCompatDetails,
-} from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -130,7 +126,6 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
-import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
 import {
@@ -429,8 +424,8 @@ export class Container
 								// Note: We could only dispose the container instead of just close but that would
 								// the telemetry where users sometimes search for ContainerClose event to look
 								// for load failures. So not removing this at this time.
-								container.close(DisconnectReason.Unknown, err);
-								container.dispose(DisconnectReason.Unknown, err);
+								container.close(err);
+								container.dispose(err);
 								onClosed(err);
 							},
 						);
@@ -795,7 +790,7 @@ export class Container
 				},
 				error,
 			);
-			this.close(DisconnectReason.Unknown, normalizeError(error));
+			this.close(normalizeError(error));
 		});
 
 		const {
@@ -976,7 +971,7 @@ export class Container
 					this.clientsWhoShouldHaveLeft.add(clientId);
 				},
 				onCriticalError: (error: unknown) => {
-					this.close(DisconnectReason.Unknown, normalizeError(error));
+					this.close(normalizeError(error));
 				},
 			},
 			this.deltaManager,
@@ -1062,33 +1057,21 @@ export class Container
 	}
 
 	public dispose(
-		errorOrReason?: ICriticalContainerError | DisconnectReason,
 		error?: ICriticalContainerError,
+		reason: DisconnectReason = DisconnectReason.Unknown,
 	): void {
-		if (typeof errorOrReason === "string") {
-			// Called as dispose(disconnectReason, error)
-			this.verifyClosedAfter(() => this._deltaManager.dispose(errorOrReason, error));
-		} else {
-			// Called as dispose(error)
-			this.verifyClosedAfter(() => this._deltaManager.dispose(undefined, errorOrReason));
-		}
+		this.verifyClosedAfter(() => this._deltaManager.dispose(error, reason));
 	}
 
 	public close(
-		errorOrReason?: ICriticalContainerError | DisconnectReason,
 		error?: ICriticalContainerError,
+		reason: DisconnectReason = DisconnectReason.Unknown,
 	): void {
 		// 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
-		if (typeof errorOrReason === "string") {
-			// Called as close(disconnectReason, error)
-			this.verifyClosedAfter(() => this._deltaManager.close(errorOrReason, error));
-		} else {
-			// Called as close(error)
-			this.verifyClosedAfter(() => this._deltaManager.close(undefined, errorOrReason));
-		}
+		this.verifyClosedAfter(() => this._deltaManager.close(error, reason));
 	}
 
 	private verifyClosedAfterCalls = 0;
@@ -1157,7 +1140,7 @@ export class Container
 
 			// There is no user for summarizer, so we need to ensure dispose is called
 			if (this.client.details.type === summarizerClientType) {
-				this.dispose(DisconnectReason.Unknown, error);
+				this.dispose(error);
 			}
 		}
 	}
@@ -1225,7 +1208,7 @@ export class Container
 			notifyImminentClosure: true,
 			stopBlobAttachingSignal,
 		});
-		this.close(DisconnectReason.Expected);
+		this.close();
 		return pendingState;
 	}
 
@@ -1325,7 +1308,7 @@ export class Container
 
 					const normalizeErrorAndClose = (error: unknown): IFluidErrorBase => {
 						const newError = normalizeError(error);
-						this.close(DisconnectReason.Unknown, newError);
+						this.close(newError);
 						// add resolved URL on error object so that host has the ability to find this document and delete it
 						newError.addTelemetryProperties({
 							resolvedUrl: this.service?.resolvedUrl?.url,
@@ -1570,7 +1553,7 @@ export class Container
 
 		// pre-0.58 error message: existingContextDoesNotSatisfyIncomingProposal
 		const error = new GenericError("Existing context does not satisfy incoming proposal");
-		this.close(DisconnectReason.Unknown, error);
+		this.close(error);
 	}
 
 	/**
@@ -1963,7 +1946,7 @@ export class Container
 				}
 				this.processCodeProposal().catch((error) => {
 					const normalizedError = normalizeError(error);
-					this.close(DisconnectReason.Unknown, normalizedError);
+					this.close(normalizedError);
 					throw error;
 				});
 			}
@@ -2283,7 +2266,7 @@ export class Container
 					undefined /* error */,
 					{ messageType: type },
 				);
-				this.close(DisconnectReason.Unknown, newError);
+				this.close(newError);
 				return -1;
 			}
 		}
@@ -2472,8 +2455,8 @@ export class Container
 			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 				this.submitBatch(batch, referenceSequenceNumber),
 			(content, targetClientId) => this.submitSignal(content, targetClientId),
-			(error?: ICriticalContainerError) => this.dispose(DisconnectReason.Unknown, error),
-			(error?: ICriticalContainerError) => this.close(DisconnectReason.Unknown, error),
+			(error?: ICriticalContainerError) => this.dispose(error),
+			(error?: ICriticalContainerError) => this.close(error),
 			this.updateDirtyContainerState,
 			this.getAbsoluteUrl,
 			() => this.resolvedUrl?.id,
@@ -2487,19 +2470,11 @@ export class Container
 			snapshot,
 		);
 
-		const runtime = await PerformanceEvent.timedExecAsync(
+		this._runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
-
-		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
-			this.dispose(error),
-		);
-
-		this._runtime = runtime;
-
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;

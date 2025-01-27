@@ -535,7 +535,7 @@ describe("Loader", () => {
 				}));
 
 				// Dispose will trigger abort
-				deltaManager.dispose(DisconnectReason.Expected);
+				deltaManager.dispose(undefined, DisconnectReason.Expected);
 				await flushPromises();
 
 				mockLogger.assertMatch([
