@@ -16,7 +16,10 @@ import {
 	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import {
+	DisconnectReason,
+	IThrottlingWarning,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -759,13 +762,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - close emits "closed"
 	 * - close cannot be called after dispose
 	 */
-	public close(error?: ICriticalContainerError): void {
+	public close(
+		error?: ICriticalContainerError,
+		disconnectReason: DisconnectReason = DisconnectReason.Unknown,
+	): void {
 		if (this._closed) {
 			return;
 		}
 		this._closed = true;
 
-		this.connectionManager.dispose(error, true /* switchToReadonly */);
+		this.connectionManager.dispose(error, true /* switchToReadonly */, disconnectReason);
 		this.clearQueues();
 		this.emit("closed", error);
 	}
@@ -778,7 +784,10 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	 * - dispose will remove all listeners
 	 * - dispose can be called after closure
 	 */
-	public dispose(error?: Error | ICriticalContainerError): void {
+	public dispose(
+		error?: Error | ICriticalContainerError,
+		disconnectReason: DisconnectReason = DisconnectReason.Unknown,
+	): void {
 		if (this._disposed) {
 			return;
 		}
@@ -789,7 +798,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		this._disposed = true;
 		this._closed = true; // We consider "disposed" as a further state than "closed"
 
-		this.connectionManager.dispose(error, false /* switchToReadonly */);
+		this.connectionManager.dispose(error, false /* switchToReadonly */, disconnectReason);
 		this.clearQueues();
 
 		// This needs to be the last thing we do (before removing listeners), as it causes

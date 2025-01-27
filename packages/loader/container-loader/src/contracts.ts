@@ -12,6 +12,7 @@ import {
 	IConnectionDetails,
 } from "@fluidframework/container-definitions/internal";
 import { IErrorBase, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { ConnectionMode, IClientDetails } from "@fluidframework/driver-definitions";
 import {
 	IContainerPackageInfo,
@@ -31,6 +32,7 @@ export enum ReconnectMode {
 export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
 	text: string;
 	error?: T;
+	disconnectReason?: DisconnectReason;
 }
 
 /**
@@ -126,7 +128,11 @@ export interface IConnectionManager {
 	 * Disposed connection manager
 	 */
 	dispose(error?: ICriticalContainerError, switchToReadonly?: boolean): void;
-
+	dispose(
+		error?: ICriticalContainerError,
+		switchToReadonly?: boolean,
+		disconnectReason?: DisconnectReason,
+	): void;
 	get connectionMode(): ConnectionMode;
 }
 

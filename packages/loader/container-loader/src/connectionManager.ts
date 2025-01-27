@@ -11,6 +11,7 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
+import { DisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode, IClient, IClientDetails } from "@fluidframework/driver-definitions";
 import {
@@ -425,7 +426,11 @@ export class ConnectionManager implements IConnectionManager {
 		});
 	}
 
-	public dispose(error?: ICriticalContainerError, switchToReadonly: boolean = true): void {
+	public dispose(
+		error?: ICriticalContainerError,
+		switchToReadonly: boolean = true,
+		reason: DisconnectReason = DisconnectReason.Unknown,
+	): void {
 		if (this._disposed) {
 			return;
 		}
@@ -439,6 +444,7 @@ export class ConnectionManager implements IConnectionManager {
 		const disconnectReason: IConnectionStateChangeReason = {
 			text: "Closing DeltaManager",
 			error,
+			disconnectReason: reason,
 		};
 
 		const oldReadonlyValue = this.readonly;
