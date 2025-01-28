@@ -57,7 +57,6 @@ steps:
   inputs:
     targetType: 'inline'
     workingDirectory: ${{ parameters.pathForTelemetryGeneratorInstall }}
-    # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
     script: |
       set -eu -o pipefail
 
