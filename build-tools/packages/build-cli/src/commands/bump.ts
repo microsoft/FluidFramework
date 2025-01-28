@@ -80,7 +80,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 		}),
 		onlyUpdateWorkspaceDeps: Flags.boolean({
 			description:
-				'Controls the behavior for updating dependencies in a package. If "true", matching dependencies are only updated if they use the "workspace:" protocol will be updated. If "false", they are updated regardless of what their version specifier says. Only exists to allow use of the old behavior (when the flag is "false").',
+				'Controls the behavior for updating dependencies in a package. If "true", matching dependencies are only updated if they use the "workspace:" protocol. If "false", they are updated regardless of what their version specifier says. This flag only exists to allow use of the old behavior (by passing `--no-onlyUpdateWorkspaceDeps).',
 			default: true,
 		}),
 		commit: checkFlags.commit,
