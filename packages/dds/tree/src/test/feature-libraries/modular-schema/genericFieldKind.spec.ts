@@ -17,7 +17,6 @@ import {
 	testRevisionTagCodec,
 } from "../../utils.js";
 import {
-	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type NodeId,
 	type RebaseRevisionMetadata,
@@ -30,6 +29,7 @@ import { testSnapshots } from "./genericFieldSnapshots.test.js";
 // eslint-disable-next-line import/no-internal-modules
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import { failComposeManager, failInvertManager, failRebaseManager } from "./nodeQueryUtils.js";
+import type { DeltaFieldChanges } from "../../../core/index.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
@@ -177,13 +177,11 @@ describe("GenericField", () => {
 			[2, nodeChange2],
 		]);
 
-		const expected: FieldChangeDelta = {
-			local: [
-				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
-				{ count: 1 },
-				{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
-			],
-		};
+		const expected: DeltaFieldChanges = [
+			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange1) },
+			{ count: 1 },
+			{ count: 1, fields: TestNodeId.deltaFromChild(nodeChange2) },
+		];
 
 		const actual = genericChangeHandler.intoDelta(input, TestNodeId.deltaFromChild);
 		assert.deepEqual(actual, expected);

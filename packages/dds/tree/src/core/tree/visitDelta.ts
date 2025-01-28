@@ -85,7 +85,7 @@ export function visitDelta(
 ): void {
 	const detachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
 	const attachPassRoots: Map<ForestRootId, Delta.FieldMap> = new Map();
-	const rootTransfers: Delta.DetachedNodeRename[] = [...(delta.renames ?? [])];
+	const rootTransfers: Delta.DetachedNodeRename[] = [];
 	const rootDestructions: Delta.DetachedNodeDestruction[] = [];
 	const refreshers: NestedMap<Major, Minor, ITreeCursorSynchronous> = new Map();
 	delta.refreshers?.forEach(({ id: { major, minor }, trees }) => {

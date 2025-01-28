@@ -10,11 +10,11 @@ import {
 	Multiplicity,
 	type RevisionTag,
 	replaceAtomRevisions,
+	type DeltaFieldChanges,
 } from "../../core/index.js";
 import { type IdAllocator, fail } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	FieldChangeDelta,
 	FieldChangeHandler,
 	NestedChangesIndices,
 	NodeChangeComposer,
@@ -47,7 +47,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			return newGenericChangeset([[index, change]]);
 		},
 	},
-	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {
+	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): DeltaFieldChanges => {
 		let nodeIndex = 0;
 		const markList: DeltaMark[] = [];
 		for (const [index, nodeChange] of change.entries()) {
@@ -59,7 +59,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
 			nodeIndex += 1;
 		}
-		return { local: markList };
+		return markList;
 	},
 	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,

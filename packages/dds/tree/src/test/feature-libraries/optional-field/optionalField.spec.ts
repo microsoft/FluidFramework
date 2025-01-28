@@ -7,6 +7,7 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	type ChangeAtomId,
+	type DeltaFieldChanges,
 	type TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
@@ -48,7 +49,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../modular-schema/nodeQueryUtils.js";
 import type {
-	FieldChangeDelta,
 	NestedChangesIndices,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -670,44 +670,32 @@ describe("optionalField", () => {
 	describe("IntoDelta", () => {
 		it("can be converted to a delta when field was empty", () => {
 			const outerNodeId = makeDetachedNodeId(tag, 41);
-			const expected: FieldChangeDelta = {
-				global: [
-					{
-						id: outerNodeId,
-						fields: TestNodeId.deltaFromChild(nodeChange1),
-					},
-				],
-				local: [{ count: 1, attach: outerNodeId }],
-			};
+			const expected: DeltaFieldChanges = [{ count: 1, attach: outerNodeId }];
 
 			const actual = optionalFieldIntoDelta(change1.change, TestNodeId.deltaFromChild);
 			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("can be converted to a delta when restoring content", () => {
-			const expected: FieldChangeDelta = {
-				local: [
-					{
-						count: 1,
-						attach: { major: revertChange2.revision, minor: 2 },
-						detach: { major: revertChange2.revision, minor: 42 },
-					},
-				],
-			};
+			const expected: DeltaFieldChanges = [
+				{
+					count: 1,
+					attach: { major: revertChange2.revision, minor: 2 },
+					detach: { major: revertChange2.revision, minor: 42 },
+				},
+			];
 
 			const actual = optionalFieldIntoDelta(revertChange2.change, TestNodeId.deltaFromChild);
 			assertFieldChangesEqual(actual, expected);
 		});
 
 		it("can be converted to a delta with only child changes", () => {
-			const expected: FieldChangeDelta = {
-				local: [
-					{
-						count: 1,
-						fields: TestNodeId.deltaFromChild(nodeChange2),
-					},
-				],
-			};
+			const expected: DeltaFieldChanges = [
+				{
+					count: 1,
+					fields: TestNodeId.deltaFromChild(nodeChange2),
+				},
+			];
 			assertFieldChangesEqual(
 				optionalFieldIntoDelta(change4.change, TestNodeId.deltaFromChild),
 				expected,

@@ -2035,18 +2035,25 @@ export function intoDelta(
 ): DeltaRoot {
 	const change = taggedChange.change;
 	const rootDelta: Mutable<DeltaRoot> = {};
-	const global: DeltaDetachedNodeChanges[] = [];
-	const rename: DeltaDetachedNodeRename[] = [];
 
 	if (!hasConflicts(change)) {
 		// If there are no constraint violations, then tree changes apply.
-		const fieldDeltas = intoDeltaImpl(
-			change.fieldChanges,
-			change.nodeChanges,
-			fieldKinds,
-			global,
-			rename,
-		);
+		const fieldDeltas = intoDeltaImpl(change.fieldChanges, change.nodeChanges, fieldKinds);
+
+		const global: DeltaDetachedNodeChanges[] = [];
+		const rename: DeltaDetachedNodeRename[] = [];
+		for (const {
+			start: oldId,
+			value: newId,
+			length,
+		} of change.nodeRenames.oldToNewId.entries()) {
+			rename.push({
+				count: length,
+				oldId: makeDetachedNodeId(oldId.revision, oldId.localId),
+				newId: makeDetachedNodeId(newId.revision, newId.localId),
+			});
+		}
+
 		if (fieldDeltas.size > 0) {
 			rootDelta.fields = fieldDeltas;
 		}
@@ -2076,20 +2083,6 @@ export function intoDelta(
 		rootDelta.refreshers = copyDetachedNodes(change.refreshers);
 	}
 
-	const renames: DetachedNodeRename[] = [];
-	for (const {
-		start: oldId,
-		value: newId,
-		length,
-	} of change.nodeRenames.oldToNewId.entries()) {
-		renames.push({
-			count: length,
-			oldId: makeDetachedNodeId(oldId.revision, oldId.localId),
-			newId: makeDetachedNodeId(newId.revision, newId.localId),
-		});
-	}
-
-	rootDelta.renames = renames;
 	return rootDelta;
 }
 
@@ -2118,28 +2111,20 @@ function intoDeltaImpl(
 	change: FieldChangeMap,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	global: DeltaDetachedNodeChanges[],
-	rename: DeltaDetachedNodeRename[],
 ): Map<FieldKey, DeltaFieldChanges> {
 	const delta: Map<FieldKey, DeltaFieldChanges> = new Map();
 
 	for (const [field, fieldChange] of change) {
-		const {
-			local: fieldChanges,
-			global: fieldGlobal,
-			rename: fieldRename,
-		} = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
+		const fieldDelta = getChangeHandler(fieldKinds, fieldChange.fieldKind).intoDelta(
 			fieldChange.change,
 			(childChange): DeltaFieldMap => {
 				const nodeChange = nodeChangeFromId(nodeChanges, childChange);
-				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds, global, rename);
+				return deltaFromNodeChange(nodeChange, nodeChanges, fieldKinds);
 			},
 		);
-		if (fieldChanges !== undefined && fieldChanges.length > 0) {
-			delta.set(field, fieldChanges);
+		if (fieldDelta !== undefined && fieldDelta.length > 0) {
+			delta.set(field, fieldDelta);
 		}
-		fieldGlobal?.forEach((c) => global.push(c));
-		fieldRename?.forEach((r) => rename.push(r));
 	}
 	return delta;
 }
@@ -2148,11 +2133,9 @@ function deltaFromNodeChange(
 	change: NodeChangeset,
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
-	global: DeltaDetachedNodeChanges[],
-	rename: DeltaDetachedNodeRename[],
 ): DeltaFieldMap {
 	if (change.fieldChanges !== undefined) {
-		return intoDeltaImpl(change.fieldChanges, nodeChanges, fieldKinds, global, rename);
+		return intoDeltaImpl(change.fieldChanges, nodeChanges, fieldKinds);
 	}
 	// TODO: update the API to allow undefined to be returned here
 	return new Map();
@@ -3132,7 +3115,9 @@ function renameNodes(
 		deleteNodeRenameEntry(renames, newId, newEntry.value, countToRename);
 	}
 
-	if (!areEqualChangeAtomIdOpts(adjustedOldId, adjustedNewId)) {
+	// If `newId` had previously been renamed to `oldId` then we are renaming the node back to its original name
+	// and do not need to have a rename entry.
+	if (!areEqualChangeAtomIds(adjustedOldId, newId)) {
 		setNodeRenameEntry(renames, adjustedOldId, adjustedNewId, countToRename);
 	}
 

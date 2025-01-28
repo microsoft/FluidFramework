@@ -5,12 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
-import {
-	type DeltaDetachedNodeChanges,
-	type DeltaDetachedNodeRename,
-	type DeltaMark,
-	areEqualChangeAtomIds,
-} from "../../core/index.js";
+import type { DeltaFieldChanges, DeltaMark } from "../../core/index.js";
 import { getLast, hasSome, type Mutable } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
 import { type MarkList, NoopMarkType } from "./types.js";
@@ -20,37 +15,28 @@ import {
 	getDetachedNodeId,
 	getInputCellId,
 } from "./utils.js";
-import type { FieldChangeDelta, ToDelta } from "../modular-schema/index.js";
+import type { ToDelta } from "../modular-schema/index.js";
 
 export function sequenceFieldToDelta(
 	change: MarkList,
 	deltaFromChild: ToDelta,
-): FieldChangeDelta {
-	const local: DeltaMark[] = [];
-	const global: DeltaDetachedNodeChanges[] = [];
-	const rename: DeltaDetachedNodeRename[] = [];
+): DeltaFieldChanges {
+	const deltaMarks: DeltaMark[] = [];
 
 	for (const mark of change) {
 		const deltaMark: Mutable<DeltaMark> = { count: mark.count };
 		const inputCellId = getInputCellId(mark);
 		const changes = mark.changes;
-		if (changes !== undefined) {
+		if (changes !== undefined && inputCellId === undefined) {
 			const nestedDelta = deltaFromChild(changes);
 			if (nestedDelta.size > 0) {
-				if (inputCellId === undefined) {
-					deltaMark.fields = nestedDelta;
-				} else {
-					global.push({
-						id: nodeIdFromChangeAtom(inputCellId),
-						fields: nestedDelta,
-					});
-				}
+				deltaMark.fields = nestedDelta;
 			}
 		}
 		if (!areInputCellsEmpty(mark) && !areOutputCellsEmpty(mark)) {
 			// Since each cell is associated with exactly one node,
 			// the cell starting end ending populated means the cell content has not changed.
-			local.push(deltaMark);
+			deltaMarks.push(deltaMark);
 		} else {
 			const type = mark.type;
 			// Inline into `switch(mark.type)` once we upgrade to TS 4.7
@@ -59,41 +45,19 @@ export function sequenceFieldToDelta(
 					const newDetachId = getDetachedNodeId(mark);
 					if (inputCellId === undefined) {
 						deltaMark.detach = nodeIdFromChangeAtom(newDetachId);
-						local.push(deltaMark);
-					} else {
-						const oldId = nodeIdFromChangeAtom(inputCellId);
-						// Removal of already removed content is only a no-op if the detach IDs are different.
-						if (!areEqualChangeAtomIds(inputCellId, newDetachId)) {
-							rename.push({
-								count: mark.count,
-								oldId,
-								newId: nodeIdFromChangeAtom(newDetachId),
-							});
-						}
-						// In all cases, the nested changes apply
-						if (deltaMark.fields) {
-							global.push({
-								id: oldId,
-								fields: deltaMark.fields,
-							});
-						}
+						deltaMarks.push(deltaMark);
 					}
 					break;
 				}
 				case "Insert": {
 					const buildId = nodeIdFromChangeAtom({ revision: mark.revision, localId: mark.id });
 					deltaMark.attach = buildId;
-					if (deltaMark.fields) {
-						// Nested changes are represented on the node in its starting location
-						global.push({ id: buildId, fields: deltaMark.fields });
-						delete deltaMark.fields;
-					}
-					local.push(deltaMark);
+					deltaMarks.push(deltaMark);
 					break;
 				}
 				case NoopMarkType:
 					if (inputCellId === undefined) {
-						local.push(deltaMark);
+						deltaMarks.push(deltaMark);
 					}
 					break;
 				case "Rename":
@@ -108,8 +72,8 @@ export function sequenceFieldToDelta(
 		}
 	}
 	// Remove trailing no-op marks
-	while (hasSome(local)) {
-		const lastMark = getLast(local);
+	while (hasSome(deltaMarks)) {
+		const lastMark = getLast(deltaMarks);
 		if (
 			lastMark.attach !== undefined ||
 			lastMark.detach !== undefined ||
@@ -117,17 +81,8 @@ export function sequenceFieldToDelta(
 		) {
 			break;
 		}
-		local.pop();
+		deltaMarks.pop();
 	}
-	const delta: Mutable<FieldChangeDelta> = {};
-	if (local.length > 0) {
-		delta.local = local;
-	}
-	if (global.length > 0) {
-		delta.global = global;
-	}
-	if (rename.length > 0) {
-		delta.rename = rename;
-	}
-	return delta;
+
+	return deltaMarks;
 }

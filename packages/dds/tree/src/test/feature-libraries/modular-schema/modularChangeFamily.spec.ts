@@ -92,7 +92,6 @@ import {
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 import type {
 	EncodedNodeChangeset,
-	FieldChangeDelta,
 	FieldChangeEncodingContext,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
@@ -140,9 +139,9 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	rebaser: singleNodeRebaser,
 	codecsFactory: (revisionTagCodec) => makeCodecFamily([[1, singleNodeCodec]]),
 	editor: singleNodeEditor,
-	intoDelta: (change, deltaFromChild): FieldChangeDelta => ({
-		local: [{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined }],
-	}),
+	intoDelta: (change, deltaFromChild): DeltaFieldChanges => [
+		{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined },
+	],
 	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
 		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
 

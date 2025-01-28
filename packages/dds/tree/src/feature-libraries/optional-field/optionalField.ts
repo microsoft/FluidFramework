@@ -9,8 +9,8 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
 	type ChangesetLocalId,
-	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
+	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionTag,
 	areEqualChangeAtomIds,
@@ -39,7 +39,6 @@ import {
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	type NestedChangesIndices,
-	type FieldChangeDelta,
 } from "../modular-schema/index.js";
 
 import type {
@@ -657,9 +656,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): FieldChangeDelta {
-	const delta: Mutable<FieldChangeDelta> = {};
-
+): DeltaFieldChanges {
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
 
@@ -673,40 +670,17 @@ export function optionalFieldIntoDelta(
 		markIsANoop = false;
 	}
 
-	if (change.moves.length > 0) {
-		delta.rename = change.moves.map(([src, dst]) => ({
-			count: 1,
-			oldId: nodeIdFromChangeAtom(src),
-			newId: nodeIdFromChangeAtom(dst),
-		}));
-	}
-
 	if (change.childChanges.length > 0) {
-		const globals: DeltaDetachedNodeChanges[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			const childDelta = deltaFromChild(childChange);
-			if (id !== "self") {
-				const fields = childDelta;
-				globals.push({
-					id: { major: id.revision, minor: id.localId },
-					fields,
-				});
-			} else {
+			if (id === "self") {
 				mark.fields = childDelta;
 				markIsANoop = false;
 			}
 		}
-
-		if (globals.length > 0) {
-			delta.global = globals;
-		}
 	}
 
-	if (!markIsANoop) {
-		delta.local = [mark];
-	}
-
-	return delta;
+	return !markIsANoop ? [mark] : [];
 }
 
 export const optionalChangeHandler: FieldChangeHandler<

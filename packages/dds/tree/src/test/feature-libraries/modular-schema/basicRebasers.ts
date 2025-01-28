@@ -6,9 +6,12 @@
 import { type TUnsafe, Type } from "@sinclair/typebox";
 
 import { makeCodecFamily } from "../../../codec/index.js";
-import { makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
 import {
-	type FieldChangeDelta,
+	makeDetachedNodeId,
+	Multiplicity,
+	type DeltaFieldChanges,
+} from "../../../core/index.js";
+import {
 	type FieldChangeEncodingContext,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
@@ -16,7 +19,7 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import { fail, type Mutable } from "../../../util/index.js";
+import { fail } from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -82,16 +85,15 @@ export const valueHandler = {
 		]),
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 
-	intoDelta: (change): FieldChangeDelta => {
-		const delta: Mutable<FieldChangeDelta> = {};
+	intoDelta: (change): DeltaFieldChanges => {
 		if (change !== 0) {
 			// We use the new and old numbers as the node ids.
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
 			const detach = makeDetachedNodeId(undefined, change.old);
 			const attach = makeDetachedNodeId(undefined, change.new);
-			delta.local = [{ count: 1, attach, detach }];
+			return [{ count: 1, attach, detach }];
 		}
-		return delta;
+		return [];
 	},
 
 	relevantRemovedRoots: (change) => [],

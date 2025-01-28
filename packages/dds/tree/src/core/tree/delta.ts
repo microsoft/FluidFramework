@@ -85,8 +85,6 @@ export interface Root<TTree = ProtoNode> {
 	 */
 	readonly build?: readonly DetachedNodeBuild<TTree>[];
 
-	readonly renames?: readonly DetachedNodeRename[];
-
 	/**
 	 * New detached nodes to be destroyed.
 	 * The ordering has no significance.

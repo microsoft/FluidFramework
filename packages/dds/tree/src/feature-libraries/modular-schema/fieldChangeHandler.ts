@@ -6,9 +6,7 @@
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
-	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	EncodedRevisionTag,
@@ -32,24 +30,6 @@ export type NestedChangesIndices = [
 ][];
 
 /**
- * The return value of calling {@link FieldChangeHandler.intoDelta}.
- */
-export interface FieldChangeDelta {
-	/**
-	 * {@inheritdoc DeltaFieldChanges}
-	 */
-	readonly local?: DeltaFieldChanges;
-	/**
-	 * {@inheritdoc DeltaRoot.global}
-	 */
-	readonly global?: readonly DeltaDetachedNodeChanges[];
-	/**
-	 * {@inheritdoc DeltaRoot.rename}
-	 */
-	readonly rename?: readonly DeltaDetachedNodeRename[];
-}
-
-/**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
  * implement a unified ChangeFamily supporting documents with multiple field kinds.
  */
@@ -68,7 +48,7 @@ export interface FieldChangeHandler<
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
-	intoDelta(change: TChangeset, deltaFromChild: ToDelta): FieldChangeDelta;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): DeltaFieldChanges;
 	/**
 	 * Returns the set of removed roots that should be in memory for the given change to be applied.
 	 * A removed root is relevant if any of the following is true:

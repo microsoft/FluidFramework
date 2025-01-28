@@ -158,7 +158,6 @@ import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 // Testing utilities
 
@@ -482,7 +481,7 @@ export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boo
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
+export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
 	assert.deepStrictEqual(a, b);
 }
 
