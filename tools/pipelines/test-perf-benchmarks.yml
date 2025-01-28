@@ -106,7 +106,7 @@ stages:
           # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          devFeedUrl: $(ado-feeds-dev)
+          downloadFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
@@ -242,7 +242,7 @@ stages:
           # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          devFeedUrl: $(ado-feeds-dev)
+          downloadFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
@@ -378,7 +378,7 @@ stages:
           # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          devFeedUrl: $(ado-feeds-dev)
+          downloadFeedUrl: $(ado-feeds-dev)
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
@@ -527,7 +527,7 @@ stages:
             # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
-            devFeedUrl: $(ado-feeds-dev)
+            downloadFeedUrl: $(ado-feeds-dev)
             officeFeedUrl: $(ado-feeds-office)
             testFilesPath: $(testFilesPath)
             testWorkspace: $(testWorkspace)
