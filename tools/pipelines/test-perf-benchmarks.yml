@@ -103,10 +103,10 @@ stages:
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
-          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+          # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          downloadFeedUrl: $(ado-feeds-dev)
+          downloadFeedUrl: $(ado-feeds-ff-download-only)
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
@@ -239,10 +239,10 @@ stages:
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
-          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+          # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          downloadFeedUrl: $(ado-feeds-dev)
+          downloadFeedUrl: $(ado-feeds-ff-download-only)
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
@@ -375,10 +375,10 @@ stages:
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
-          # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+          # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          downloadFeedUrl: $(ado-feeds-dev)
+          downloadFeedUrl: $(ado-feeds-ff-download-only)
           officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
@@ -524,10 +524,10 @@ stages:
         steps:
         - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
           parameters:
-            # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
+            # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
-            downloadFeedUrl: $(ado-feeds-dev)
+            downloadFeedUrl: $(ado-feeds-ff-download-only)
             officeFeedUrl: $(ado-feeds-office)
             testFilesPath: $(testFilesPath)
             testWorkspace: $(testWorkspace)
