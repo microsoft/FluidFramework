@@ -14,7 +14,7 @@ Bumps the version of a release group or package to the next minor, major, or pat
 USAGE
   $ flub bump PACKAGE_OR_RELEASE_GROUP [-v | --quiet] [-t major|minor|patch | --exact <value>] [--scheme
     semver|internal|virtualPatch | ] [--exactDepType ^|~||workspace:*|workspace:^|workspace:~] [-d
-    ^|~||workspace:*|workspace:^|workspace:~] [--onlyUpdateWorkspaceDeps] [-x | --install | --commit |  |  | ]
+    ^|~||workspace:*|workspace:^|workspace:~] [--updateAllDeps] [-x | --install | --commit |  |  | ]
 
 ARGUMENTS
   PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
@@ -37,12 +37,13 @@ FLAGS
                                        dependencies.
                                        <options: ^|~||workspace:*|workspace:^|workspace:~>
       --[no-]install                   Update lockfiles by running 'npm install' automatically.
-      --onlyUpdateWorkspaceDeps        Controls the behavior for updating dependencies in a package. If "true", matching
-                                       dependencies are only updated if they use the "workspace:" protocol will be
-                                       updated. If "false", they are updated regardless of what their version specifier
-                                       says. Only exists to allow use of the old behavior (when the flag is "false").
       --scheme=<option>                Override the version scheme used by the release group or package.
                                        <options: semver|internal|virtualPatch>
+      --updateAllDeps                  Controls the behavior for updating dependencies in a package. If not passed (the
+                                       default), matching dependencies are only updated if they use the "workspace:"
+                                       protocol. If passed, they are updated regardless of what their version specifier
+                                       says. This flag only exists to allow use of the old behavior (by passing
+                                       `--updateAllDeps).
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
