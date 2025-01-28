@@ -7,20 +7,19 @@ import assert from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	toIDeltaManagerFull,
 	createAndAttachContainer,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+
+import { generatePendingState } from "./offlineTestsUtils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -30,12 +29,6 @@ const mapId = "map";
 
 const lots = 30;
 const testValue = "test value";
-
-type MapCallback = (
-	container: IContainer,
-	dataStore: ITestFluidObject,
-	map: ISharedMap,
-) => void | Promise<void>;
 
 describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
@@ -48,43 +41,6 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 				"Fluid.Container.enableOfflineLoad": true,
 			}),
 		},
-	};
-
-	// load container, pause, create (local) ops from callback, then optionally send ops before closing container
-	const getPendingOps = async (args: ITestObjectProvider, send: boolean, cb: MapCallback) => {
-		const container: IContainerExperimental =
-			await args.loadTestContainer(testContainerConfig);
-		await waitForContainerConnection(container);
-		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
-
-		[...Array(lots).keys()].map((i) =>
-			dataStore.root.set(`make sure csn is > 1 so it doesn't hide bugs ${i}`, i),
-		);
-
-		await args.ensureSynchronized();
-		await args.opProcessingController.pauseProcessing(container);
-		const deltaManagerFull = toIDeltaManagerFull(
-			toDeltaManagerInternal(dataStore.runtime.deltaManager),
-		);
-		assert(deltaManagerFull.outbound.paused);
-
-		await cb(container, dataStore, map);
-
-		let pendingState: string | undefined;
-		if (send) {
-			pendingState = await container.getPendingLocalState?.();
-			assert.strictEqual(container.closed, false);
-			await args.ensureSynchronized();
-			container.close();
-		} else {
-			pendingState = await container.closeAndGetPendingLocalState?.();
-		}
-
-		args.opProcessingController.resumeProcessing();
-
-		assert.ok(pendingState);
-		return pendingState;
 	};
 
 	let provider: ITestObjectProvider;
@@ -127,9 +83,15 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 		});
 
 		it("handles container with pending ops to be sent out", async function () {
-			const pendingOps = await getPendingOps(provider, false, (c, d, map) => {
-				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
-			});
+			const pendingOps = await generatePendingState(
+				testContainerConfig,
+				provider,
+				false,
+				async (c, d) => {
+					const map = await d.getSharedObject<ISharedMap>(mapId);
+					[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+				},
+			);
 
 			// load container with pending ops, which should resend the ops not sent by previous container
 			const container2 = await loader.resolve({ url }, pendingOps);
@@ -140,9 +102,15 @@ describeCompat("Container dirty flag", "NoCompat", (getTestObjectProvider, apis)
 		});
 
 		it("handles container with pending ops not to be sent out", async function () {
-			const pendingOps = await getPendingOps(provider, true, (c, d, map) => {
-				[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
-			});
+			const pendingOps = await generatePendingState(
+				testContainerConfig,
+				provider,
+				false,
+				async (c, d) => {
+					const map = await d.getSharedObject<ISharedMap>(mapId);
+					[...Array(lots).keys()].map((i) => map.set(i.toString(), i));
+				},
+			);
 
 			// send a bunch from first container that should not be overwritten
 			[...Array(lots).keys()].map((i) => map1.set(i.toString(), testValue));
