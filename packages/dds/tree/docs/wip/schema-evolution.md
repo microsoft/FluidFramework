@@ -568,16 +568,16 @@ The API has yet to be designed, but will conform as much as possible to existing
 This table enumerates the kinds of [changes](#the-evolution-of-schema) to a SharedTree application schema that developers are expected to make and the [shortcuts](#schema-change-shortcuts) that can be used to accomplish them without resorting to a [staged rollout migration](#migration).
 For each, it lists in what ways the change is compatible with clients using the old or the new schema and whether or not SharedTree currently exposes an API for the shortcut.
 
-| Schema Change                        | Old Client (Read) | Old Client (Write) | New Client (Read) | New Client (Write) | Stored schema change? | SharedTree Shortcut API Available |
-|--------------------------------------|-----------------------|-------------------|--------------------|-------------------|--------------------|--------------------|
-| Add Allowed Type                     | ⚠️ Clients must _preemptively_ include "Unknown" type in the view schema | ✅ | ✅ | ✅ | 💾 Yes | ⌛ |
-| Remove Allowed Type                  | ✅ | ✅ | ✔ Include "Unknown" type in the view schema | ✅ | Not necessary | ⌛ |
-| Change Node Type ID                  | ✅ | ✅ | ✔ Clients provide alias in the view schema | ✔ Clients provide alias in the view schema | Not necessary | ⌛ |
-| Rename Field Key                     | ✅ | ✅ | ✔ Clients provide alias in the view schema | ✔ Clients provide alias in the view schema | Not necessary | ✅ |
-| Add Non-Required Field               | ⚠️ Clients must _preemptively_ enable flag in the view schema | ✅ | ✅ | ✅ | 💾 Yes | ✅ |
-| Remove Non-Required Field            | ✅ | ✅ | ✔ Clients must enable flag in the view schema | ✅ | Not necessary | ✅ |
-| Add Required Field                   | ✅ | ❌ Requires staged rollout | ✅ | ✅ | 💾 Yes | ❌ |
-| Remove Required Field                | ❌ Requires staged rollout | ✅ | ✅ | ✅ | Not necessary | ❌ |
-| Map Node <-> "Optional" Object Node† | ✅ | ✅ | ✅ | ✅ | Not necessary | ⌛ |
+| View Schema Change                   | Old Client (Read) | Old Client (Write) | New Client (Read) | New Client (Write) | Does the stored schema have to change? | _If_ the stored schema is changed, might the data have to change too? | SharedTree Shortcut API Available |
+|--------------------------------------|-|-|-|-|-|-|-|
+| Add Allowed Type                     | ⚠️ Clients must _preemptively_ include "Unknown" type in the view schema | ✅ | ✅ | ✅ | 💾 Yes | No | ⌛ |
+| Remove Allowed Type                  | ✅ | ✅ | ✔ Include "Unknown" type in the view schema | ✅ | No | ❗ Yes | ⌛ |
+| Change Node Type ID                  | ✅ | ✅ | ✔ Clients provide alias in the view schema | ✔ Clients provide alias in the view schema | No | ❗ Yes | ⌛ |
+| Rename Field Key                     | ✅ | ✅ | ✔ Clients provide alias in the view schema | ✔ Clients provide alias in the view schema | No | ❗ Yes | ✅ |
+| Add Non-Required Field               | ⚠️ Clients must _preemptively_ enable flag in the view schema | ✅ | ✅ | ✅ | 💾 Yes | No | ✅ |
+| Remove Non-Required Field            | ✅ | ✅ | ✔ Clients must enable flag in the view schema | ✅ | No | ❗ Yes | ✅ |
+| Add Required Field                   | ✅ | ❌ Requires staged rollout | ✅ | ✅ | 💾 Yes | ❗ Yes | ❌ |
+| Remove Required Field                | ❌ Requires staged rollout | ✅ | ✅ | ✅ | 💾 Yes | ❗ Yes | ❌ |
+| Map Node <-> "Optional" Object Node† | ✅ | ✅ | ✅ | ✅ | No | No | ⌛ |
 
 > †For an object node to be converted to a map node (or visa versa) without a staged rollout migration, every field of the object must be an optional field.
