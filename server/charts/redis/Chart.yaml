@@ -1,5 +1,0 @@
- ## Generated from a tool - do not edit directly
-name: redis
-version: 0.1.0
-description: Redis with persistence disabled
-home: https://github.com/microsoft/FluidFramework

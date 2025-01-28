@@ -1,9 +1,0 @@
-**/node_modules
-**/dist
-**/lib
-**/nyc
-**/*.tsbuildinfo
-
-.vscode
-kubernetes
-.gitignore

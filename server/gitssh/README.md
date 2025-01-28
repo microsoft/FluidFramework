@@ -1,3 +1,0 @@
-# gitssh
-
-Coming Soon...
