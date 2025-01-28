@@ -189,8 +189,8 @@ export class AppData extends DataObject {
 		}) {}
 
 		class BranchNodeSchema extends builder.object("branch-node", {
-			arrayOrHandleNode: [builder.array(ArrayNodeSchema), builder.handle],
-			numericLeafNode: builder.number,
+			arrayOrHandleNode: builder.optional([builder.array(ArrayNodeSchema), builder.handle]),
+			numericLeafNode: builder.optional(builder.number),
 		}) {}
 
 		class MainBranchA extends builder.object("main-object-a", {
