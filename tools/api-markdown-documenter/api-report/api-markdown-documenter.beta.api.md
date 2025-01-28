@@ -434,7 +434,7 @@ function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiMod
 function getModifierTags(apiItem: ApiItem): ReadonlySet<string>;
 
 // @public
-function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
+function getReleaseTag(apiItem: ApiItem): ReleaseTag;
 
 // @public
 function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;

@@ -25,7 +25,7 @@ import {
 	ApiStaticMixin,
 	type Excerpt,
 	type IResolveDeclarationReferenceResult,
-	type ReleaseTag,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import {
 	type DocDeclarationReference,
@@ -243,12 +243,17 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  *
  * @param apiItem - The API item whose documentation is being queried.
  *
- * @returns The associated release tag, if it exists. Otherwise, `undefined`.
+ * @returns The associated release tag, if it exists. Will return `None` if no tag is present.
+ *
+ * @privateRemarks
+ * TODO: No one should really use this. They should use `getEffectiveReleaseTag` instead.
+ * This includes the docs we generate - we shouldn't label an interface member as `@public` if the interface itself is
+ * `@beta`, for example, even if that's that member is directly tagged `@public`.
  *
  * @public
  */
-export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
-	return (apiItem as Partial<ApiReleaseTagMixin>).releaseTag;
+export function getReleaseTag(apiItem: ApiItem): ReleaseTag {
+	return (apiItem as Partial<ApiReleaseTagMixin>).releaseTag ?? ReleaseTag.None;
 }
 
 /**

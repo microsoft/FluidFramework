@@ -362,12 +362,16 @@ export function doesItemRequireOwnDocument(
 	return doesItemKindRequireOwnDocument(itemKind, hierarchyConfig);
 }
 
+// TODO: move to `ApiItemUtilities`.
 /**
  * TODO
  */
-export function getEffectiveReleaseTag(apiItem: ApiItem): ReleaseTag {
-	// The lack of a release tag is treated as public
-	const myReleaseTag = getReleaseTag(apiItem) ?? ReleaseTag.Public;
+export function getEffectiveReleaseTag(apiItem: ApiItem): Exclude<ReleaseTag, ReleaseTag.None> {
+	let myReleaseTag = getReleaseTag(apiItem);
+	if (myReleaseTag === ReleaseTag.None) {
+		// The lack of a release tag is treated as public
+		myReleaseTag = ReleaseTag.Public;
+	}
 
 	const parent = getFilteredParent(apiItem);
 	if (parent === undefined) {
@@ -430,15 +434,15 @@ export function shouldItemBeIncluded(
 		return false;
 	}
 
-	// Check if this item, or any of its ancestors, is explicitly excluded by the user config.
-	// If so, this item will not be included.
-	let currentItem: ApiItem | undefined = apiItem;
-	while (currentItem !== undefined) {
-		if (config.exclude(currentItem)) {
-			return false;
-		}
-		currentItem = getFilteredParent(currentItem);
-	}
+	// // Check if this item, or any of its ancestors, is explicitly excluded by the user config.
+	// // If so, this item will not be included.
+	// let currentItem: ApiItem | undefined = apiItem;
+	// while (currentItem !== undefined) {
+	// 	if (config.exclude(currentItem)) {
+	// 		return false;
+	// 	}
+	// 	currentItem = getFilteredParent(currentItem);
+	// }
 
 	return true;
 }
