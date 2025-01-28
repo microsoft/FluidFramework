@@ -409,17 +409,40 @@ function propertyHasBeenChecked(node, context) {
 }
 
 function isUndefinedNode(node) {
+    return (
+        (node.type === "Identifier" && node.name === "undefined") ||
+        (node.type === "UnaryExpression" && node.operator === "void")  // Accept any void expression
+    );
+}
+
+/**
+ * Helper to safely validate that a value is an AST node
+ */
+function isNode(node) {
 	return (
-		(node.type === "Identifier" && node.name === "undefined") ||
-		(node.type === "UnaryExpression" &&
-			node.operator === "void" &&
-			node.argument?.type === "Literal" &&
-			node.argument.value === 0)
+		node !== null &&
+		node !== undefined &&
+		typeof node === "object" &&
+		"type" in node &&
+		typeof node.type === "string" &&
+		"parent" in node &&
+		(node.type === "Identifier" ||
+			node.type === "Literal" ||
+			node.type === "MemberExpression" ||
+			node.type === "BinaryExpression")
 	);
 }
 
+/**
+ * Compares two AST nodes for structural equivalence.
+ * Uses strict validation of nodes and their required properties.
+ *
+ * @param {Node} a - First AST node to compare
+ * @param {Node} b - Second AST node to compare
+ * @returns {boolean} True if nodes are structurally equivalent, false otherwise
+ */
 function nodesAreEquivalent(a, b) {
-	if (!a || !b) return false;
+	if (!isNode(a) || !isNode(b)) return false;
 	if (a.type !== b.type) return false;
 
 	switch (a.type) {
@@ -435,6 +458,13 @@ function nodesAreEquivalent(a, b) {
 
 		case "Literal":
 			return a.value === b.value;
+
+		case "BinaryExpression":
+			return (
+				a.operator === b.operator &&
+				nodesAreEquivalent(a.left, b.left) &&
+				nodesAreEquivalent(a.right, b.right)
+			);
 
 		default:
 			return false;

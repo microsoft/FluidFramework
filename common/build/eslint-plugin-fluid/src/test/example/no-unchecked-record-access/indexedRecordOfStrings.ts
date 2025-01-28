@@ -142,3 +142,15 @@ if (key in datastore) {
 	datastore[key] = {};
 }
 datastore[key][key] = {}; // ok: Accessing nested property key of datastore[key] is allowed because it is assigned in the else case
+
+if (indexedRecordOfStrings.a !== void(0)) {
+	indexedRecordOfStrings.a.length; // ok: Within a presence check, 'a' is guaranteed to be defined
+}
+
+if (indexedRecordOfStrings.a !== void(1)) {
+	indexedRecordOfStrings.a.length; // ok: Within a presence check, 'a' is guaranteed to be defined
+}
+
+if (indexedRecordOfStrings.a !== void 0) {
+	indexedRecordOfStrings.a.length; // ok: Within a presence check, 'a' is guaranteed to be defined
+}
