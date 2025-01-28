@@ -14,8 +14,8 @@ To exclude such items, I could provide the following in my configuration:
 
 ```typescript
 exclude: (apiItem) => {
-    return ApiItemUtilities.hasModifierTag(apiItem, "@hideDocs");
-}
+	return ApiItemUtilities.hasModifierTag(apiItem, "@hideDocs");
+};
 ```
 
 ### ⚠ BREAKING CHANGES
