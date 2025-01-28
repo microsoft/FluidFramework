@@ -28,7 +28,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -79,9 +79,9 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-shared-previous": "npm:@fluidframework/server-services-shared@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
@@ -104,6 +104,7 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "public"
 	}
 }
