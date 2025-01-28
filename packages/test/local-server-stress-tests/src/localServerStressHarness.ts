@@ -30,20 +30,7 @@ import {
 	saveOpsToFile,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
-import type { MinimizationTransform } from "./minification.js";
-import { FuzzTestMinimizer } from "./minification.js";
-
-import {
-	createLocalResolverCreateNewRequest,
-	LocalDocumentServiceFactory,
-	LocalResolver,
-} from "@fluidframework/local-driver/internal";
-import {
-	ILocalDeltaConnectionServer,
-	LocalDeltaConnectionServer,
-} from "@fluidframework/server-local-server";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type {
 	ICodeDetailsLoader,
 	IContainer,
@@ -55,21 +42,26 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	createLocalResolverCreateNewRequest,
+	LocalDocumentServiceFactory,
+	LocalResolver,
+} from "@fluidframework/local-driver/internal";
+import {
+	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
+} from "@fluidframework/server-local-server";
+import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
+
+import { FuzzTestMinimizer } from "./minification.js";
+import type { MinimizationTransform } from "./minification.js";
 
 const isOperationType = <O extends BaseOperation>(
 	type: O["type"],
 	op: BaseOperation,
 ): op is O => op.type === type;
-
-/**
- * @internal
- */
-export interface DDSRandom extends IRandom {
-	handle(): IFluidHandle;
-}
 
 export interface Client {
 	container: IContainer;
@@ -714,7 +706,7 @@ export function mixinSynchronization<
 
 			await Promise.all(
 				connectedClients.map(
-					(c) =>
+					async (c) =>
 						new Promise<void>((resolve) =>
 							c.container.isDirty ? c.container.once("saved", () => resolve()) : resolve(),
 						),
@@ -974,7 +966,7 @@ export async function runTestForSeed<TOperation extends BaseOperation>(
 
 	options.emitter.emit("testStart", initialState);
 
-	let operationCount = 0;
+	const operationCount = 0;
 	const generator = model.generatorFactory();
 	const finalState = await performFuzzActionsAsync(
 		generator,
