@@ -9,10 +9,13 @@ import {
 	validatePrecondition,
 } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { IContainerRuntimeMetadata } from "../summary/index.js";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
 	IGCMetadata_Deprecated,
 	IGCRuntimeOptions,
@@ -42,6 +45,7 @@ export function generateGCConfigs(
 	mc: MonitoringContext,
 	createParams: {
 		gcOptions: IGCRuntimeOptions;
+		// eslint-disable-next-line import/no-deprecated
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
 		isSummarizerClient: boolean;
@@ -50,7 +54,9 @@ export function generateGCConfigs(
 	let gcAllowed: boolean = true;
 	let sessionExpiryTimeoutMs: number | undefined;
 	let tombstoneTimeoutMs: number | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	let gcVersionInBaseSnapshot: GCVersion | undefined;
 
 	/**
@@ -87,7 +93,7 @@ export function generateGCConfigs(
 		tombstoneTimeoutMs =
 			testOverrideTombstoneTimeoutMs ?? computeTombstoneTimeout(sessionExpiryTimeoutMs);
 
-		const gcGeneration = createParams.gcOptions?.[gcGenerationOptionName];
+		const gcGeneration = createParams.gcOptions[gcGenerationOptionName] as number;
 		if (gcGeneration !== undefined) {
 			persistedGcFeatureMatrix = { gcGeneration };
 		}
@@ -116,9 +122,9 @@ export function generateGCConfigs(
 			: sweepAllowed && createParams.gcOptions.enableGCSweep === true;
 
 	// Override inactive timeout if test config or gc options to override it is set.
-	const inactiveTimeoutMs =
+	const inactiveTimeoutMs: number =
 		mc.config.getNumber("Fluid.GarbageCollection.TestOverride.InactiveTimeoutMs") ??
-		createParams.gcOptions.inactiveTimeoutMs ??
+		(createParams.gcOptions.inactiveTimeoutMs as number) ??
 		defaultInactiveTimeoutMs;
 
 	// Inactive timeout must be greater than tombstone timeout since a node goes from active -> inactive -> sweep ready.
@@ -169,7 +175,7 @@ export function generateGCConfigs(
  *
  * If there is no Session Expiry timeout, GC can never guarantee an object won't be revived, so return undefined.
  */
-function computeTombstoneTimeout(
+export function computeTombstoneTimeout(
 	sessionExpiryTimeoutMs: number | undefined,
 ): number | undefined {
 	const bufferMs = oneDayMs;

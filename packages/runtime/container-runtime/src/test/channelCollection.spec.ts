@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
@@ -57,11 +57,17 @@ describe("Runtime", () => {
 				assert(snapshot === undefined);
 				snapshot = getSummaryForDatastores(undefined, disabledMetadata);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, undefined);
+				snapshot = getSummaryForDatastores(undefined, undefined);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, enabledMetadata);
+				snapshot = getSummaryForDatastores(
+					undefined as unknown as ISnapshotTree,
+					enabledMetadata,
+				);
 				assert(snapshot === undefined);
-				snapshot = getSummaryForDatastores(null as any, disabledMetadata);
+				snapshot = getSummaryForDatastores(
+					undefined as unknown as ISnapshotTree,
+					disabledMetadata,
+				);
 				assert(snapshot === undefined);
 			});
 
@@ -115,7 +121,7 @@ describe("Runtime", () => {
 				assert.strictEqual(snapshot.id, "channels-id", "Should be lower-level");
 				assert.strictEqual(Object.keys(snapshot.trees).length, 4, "Should have 4 datastores");
 				// Put in variable to avoid type-narrowing bug
-				const nonDataStore1: ISnapshotTree | undefined = snapshot.trees[nonDataStorePaths[0]];
+				const nonDataStore1 = snapshot.trees[nonDataStorePaths[0]];
 				assert.strictEqual(
 					nonDataStore1?.id,
 					"lower-non-datastore-1",
@@ -166,6 +172,7 @@ describe("Runtime", () => {
 								url: "routeD",
 							},
 						],
+						// eslint-disable-next-line unicorn/no-null
 						deadEnd: null,
 						number: 1,
 						nothing: undefined,
@@ -186,6 +193,7 @@ describe("Runtime", () => {
 				);
 			});
 			it("null contents", () => {
+				// eslint-disable-next-line unicorn/no-null
 				detectOutboundReferences("foo", null, () => {
 					assert.fail("Should not be called");
 				});

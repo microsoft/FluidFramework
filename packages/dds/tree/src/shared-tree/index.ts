@@ -9,7 +9,7 @@ export {
 	type SharedTreeOptions,
 	SharedTree,
 	getBranch,
-	ForestType,
+	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
@@ -17,6 +17,9 @@ export {
 	defaultSharedTreeOptions,
 	type ForestOptions,
 	type ITreeInternal,
+	ForestTypeOptimized,
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
 } from "./sharedTree.js";
 
 export {
