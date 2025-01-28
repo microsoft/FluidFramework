@@ -128,7 +128,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	 * Initialization happens on demand, only on as-needed bases.
 	 * In most cases you should allow factory/object to decide when to finish initialization.
 	 * But if you are supplying your own implementation of DataStoreRuntime factory and overriding some methods
-	 * and need a fully initialized object, then you can call this API to ensure object is fully initialized.
+	 * and need a fully initialized object, then you can await this API to ensure object is fully initialized.
 	 */
 	public async finishInitialization(existing: boolean): Promise<void> {
 		this.initializeP ??= this.initializeInternal(existing);
