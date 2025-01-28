@@ -1,5 +1,0 @@
- ## Generated from a tool - do not edit directly
-name: kafka
-version: 0.2.0
-description: Kafka for Fluid
-home: https://github.com/microsoft/FluidFramework

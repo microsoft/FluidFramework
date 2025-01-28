@@ -38,12 +38,6 @@ Here's the list of Lerna managed release groups:
     -   [./examples](./examples) (Not published, live in the `@fluid-example/` namespace)
 -   azure (Rooted in [./azure](./azure). Configured by [azure/lerna.json](azure/lerna.json))
     -   [Packages](./azure/packages) (Published in the `@fluidframework/` namespace)
--   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
-    -   [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
--   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
-    -   [Packages](./server/gitrest/packages) (Published in the `@fluidframework/` namespace)
--   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/lerna.json](./server/historian/lerna.json))
-    -   [Packages](./server/historian/packages) (Published in the `@fluidframework/` namespace)
 
 Here's a list of other sets of other packages (each package within these groups is versioned independently,
 forming its own release group):
@@ -84,12 +78,6 @@ npm run build:fast
 ```
 
 See also: [Contributing](#Contributing)
-
-### Other Build Requirements
-
--   Building [server/Routerlicious](./server/routerlicious/README.md)
-    -   Refer to that package's README for additional requirements.
-    -   Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server` (e.g. `fluid-build --symlink:full`).
 
 #### On Windows
 

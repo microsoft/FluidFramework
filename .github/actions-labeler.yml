@@ -51,9 +51,6 @@
 "area: runtime":
   - packages/runtime/**
 
-"area: server":
-  - server/**
-
 "area: tests":
   - packages/test/**
 

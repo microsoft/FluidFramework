@@ -18,7 +18,7 @@
     "build:fast": "fluid-build --root .",
     "build:full": "npm run build:genver && npm run build:full:compile && npm run lint && npm run build:docs",
     "build:full:compile": "lerna run build:full:compile --stream",
-    "build:gendocs": "copyfiles server/routerlicious/_api-extractor-temp/** ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
+    "build:gendocs": "copyfiles ./_api-extractor-temp/doc-models/ -f -V && cd docs && npm run build",
     "build:genver": "lerna run build:genver --stream --parallel",
     "bump-version": "fluid-bump-version --root .",
     "bundle-analysis:collect": "npm run webpack:profile && fluid-collect-bundle-analyses",
@@ -30,7 +30,6 @@
     "clean": "lerna run clean --stream --parallel && npm run clean:docs && npm run clean:nyc",
     "clean:docs": "rimraf **/_api-extractor-temp docs/api/*/**",
     "clean:nyc": "rimraf nyc/**",
-    "clean:r11s": "cd server/routerlicious && npm run clean",
     "postinstall": "npm run postinstall:lerna",
     "layer-check": "fluid-layer-check --info build-tools/packages/build-tools/data/layerInfo.json",
     "lerna": "lerna",
@@ -46,10 +45,6 @@
     "postinstall:lerna:win32": "npm run pre-lerna-install:win32 && (lerna bootstrap --strict --hoist & npm run post-lerna-install:win32)",
     "pre-lerna-install:default": "[ -f package-lock.json ] && mv package-lock.json package-lock.json.bak; [ -f lerna-package-lock.json ] && mv lerna-package-lock.json package-lock.json; exit 0",
     "pre-lerna-install:win32": "if exist package-lock.json move package-lock.json package-lock.json.bak && if exist lerna-package-lock.json move lerna-package-lock.json package-lock.json",
-    "restart": "cd server/routerlicious && npm run restart",
-    "start:docker": "docker-compose -f server/docker-compose.yml up",
-    "stop:docker": "docker-compose -f server/docker-compose.yml down",
-    "stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
     "test": "npm run test:mocha && npm run test:jest && npm run test:types && npm run test:realsvc",
     "test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
     "test:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/nyc/**\" nyc",
@@ -135,23 +130,13 @@
       "protocol-def": "common/lib/protocol-definitions",
       "azure": "azure",
       "build-tools": "build-tools",
-      "server": "server/routerlicious",
       "client": {
         "directory": "",
         "ignoredDirs": []
       },
       "tools": [
-        "tools/benchmark",
-        "server/tinylicious"
-      ],
-      "services": {
-        "directory": "server",
-        "ignoredDirs": [
-          "routerlicious",
-          "tinylicious",
-          "azure-local-service"
-        ]
-      }
+        "tools/benchmark"
+      ]
     },
     "policy": {
       "dependencies": {
@@ -173,8 +158,6 @@
         "common/build/build-common",
         "common/build/eslint-config-fluid",
         "docs",
-        "server/gitrest",
-        "server/historian",
         "tools/bundle-size-tools",
         "tools/getkeys",
         "tools/telemetry-generator",
