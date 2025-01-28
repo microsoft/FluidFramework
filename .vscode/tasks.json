@@ -68,36 +68,6 @@
                     "fileLocation": "absolute"
                 },
             ]
-        },
-        {
-            "label": "Start tinylicious",
-            "detail": "Starts the tinylicious server from the /server/tinylicious folder. Run the 'Stop tinylicious' task to stop it.",
-            "type": "process",
-            "command": "npm",
-            "args": [
-                "run",
-                "start"
-            ],
-            "group": "none",
-            "options": {
-                "cwd": "${workspaceRoot}/server/tinylicious"
-            },
-            "problemMatcher": []
-        },
-        {
-            "label": "Stop tinylicious",
-            "detail": "Stops the tinylicious server from the /server/tinylicious folder.",
-            "type": "process",
-            "command": "npm",
-            "args": [
-                "run",
-                "stop"
-            ],
-            "group": "none",
-            "options": {
-                "cwd": "${workspaceRoot}/server/tinylicious"
-            },
-            "problemMatcher": []
         }
     ]
 }

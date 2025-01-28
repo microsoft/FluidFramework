@@ -293,15 +293,6 @@
                     "Protocol-Utils"
                 ]
             },
-            "Server-Libs": {
-                "dirs": [
-                    "server/routerlicious/packages/"
-                ],
-                "deps": [
-                    "Protocol-Utils",
-                    "Server-Shared-Utils"
-                ]
-            },
             "Server-Tools": {
                 "packages": [
                     "tinylicious"

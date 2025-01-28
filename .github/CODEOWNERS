@@ -34,7 +34,6 @@
 /packages/utils/                                                          @microsoft/fluid-cr-infra
 /packages/utils/odsp-doclib-utils/                                        @microsoft/fluid-cr-odsp
 /packages/utils/telemetry-utils/                                          @microsoft/fluid-cr-telemetry
-/server/                                                                  @microsoft/fluid-cr-server
 /tools/                                                                   @microsoft/fluid-cr-infra
 /tools/pipelines/build-azure.yml                                          @microsoft/fluid-cr-framework
 
