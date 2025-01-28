@@ -431,7 +431,7 @@ export function shouldItemBeIncluded(
 ): boolean {
 	const releaseTag = getEffectiveReleaseLevel(apiItem);
 
-	// If the item has a release tag that is lower than the minimum release level, it should be not be included.
+	// If the item has a release tag that is more restrictive than the minimum release level, it should not be included.
 	if (releaseTag < config.minimumReleaseLevel) {
 		return false;
 	}
