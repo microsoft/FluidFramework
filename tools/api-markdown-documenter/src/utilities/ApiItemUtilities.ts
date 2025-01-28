@@ -246,7 +246,7 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  * @privateRemarks
  * TODO: No one should really use this. They should use `getEffectiveReleaseTag` instead.
  * This includes the docs we generate - we shouldn't label an interface member as `@public` if the interface itself is
- * `@beta`, for example, even if that's that member is directly tagged `@public`.
+ * `@beta`, for example, even if that member is directly tagged `@public`.
  *
  * @public
  */
