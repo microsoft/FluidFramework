@@ -66,6 +66,11 @@ DESCRIPTION
 
   Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry
   purposes.
+  Which functions and which of their augments get tagging depends on the configuration which is specified in the package
+  being tagged.
+  Configuration is searched by walking from each package's directory up to its parents recursively looking for the first
+  file matching one of ["assertTagging.config.mjs"].
+  The format of the configuration is specified by the "AssertTaggingPackageConfig" type.
 ```
 
 _See code: [src/commands/generate/assertTags.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/assertTags.ts)_

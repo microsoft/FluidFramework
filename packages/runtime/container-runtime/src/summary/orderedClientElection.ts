@@ -273,6 +273,7 @@ export interface IOrderedClientElectionEvents extends IEvent {
  * Serialized state of IOrderedClientElection.
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ISerializedElection {
 	/**
@@ -638,7 +639,9 @@ export class OrderedClientElection
 	}
 
 	public getAllEligibleClients(): ITrackedClient[] {
-		return this.orderedClientCollection.getAllClients().filter(this.isEligibleFn);
+		return this.orderedClientCollection
+			.getAllClients()
+			.filter((client) => this.isEligibleFn(client));
 	}
 
 	/**

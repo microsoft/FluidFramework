@@ -29,7 +29,7 @@ export class FinalSpace {
 		return this.clusterList[this.clusterList.length - 1];
 	}
 
-	public addCluster(newCluster: IdCluster) {
+	public addCluster(newCluster: IdCluster): void {
 		const lastCluster = this.getLastCluster();
 		assert(
 			lastCluster === undefined ||
@@ -40,7 +40,7 @@ export class FinalSpace {
 	}
 
 	/**
-	 * @returns the upper bound (exclusive) of finalized IDs in final space, i.e. one greater than the last final ID in the last cluster.
+	 * Gets the upper bound (exclusive) of finalized IDs in final space, i.e. one greater than the last final ID in the last cluster.
 	 * Note: this does not include allocated but unfinalized space in clusters.
 	 */
 	public getFinalizedIdLimit(): FinalCompressedId {
@@ -51,7 +51,7 @@ export class FinalSpace {
 	}
 
 	/**
-	 * @returns the upper bound (exclusive) of allocated IDs in final space, i.e. one greater than the last final ID in the last cluster.
+	 * Gets the upper bound (exclusive) of allocated IDs in final space, i.e. one greater than the last final ID in the last cluster.
 	 * Note: this does includes all allocated IDs in clusters.
 	 */
 	public getAllocatedIdLimit(): FinalCompressedId {
@@ -62,8 +62,9 @@ export class FinalSpace {
 	}
 
 	public equals(other: FinalSpace): boolean {
-		for (const [index, value] of Object.entries(this.clusterList)) {
-			if (!clustersEqual(value, other.clusterList[index])) {
+		for (let i = 0; i < this.clusterList.length; i++) {
+			const cluster = this.clusterList[i] as IdCluster;
+			if (!clustersEqual(cluster, other.clusterList[i] as IdCluster)) {
 				return false;
 			}
 		}

@@ -5,7 +5,11 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IDisposable, IEvent } from "@fluidframework/core-interfaces";
+import {
+	IDisposable,
+	IEvent,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
 	IDocumentMessage,
@@ -15,7 +19,10 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Interface for summary op messages with typed contents.
@@ -284,12 +291,14 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		this.deltaManager.off("op", listener);
 	}
 
+	private readonly logger: ITelemetryLoggerExt;
 	public constructor(
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		private readonly logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 	) {
 		super();
 		this.deltaManager.on("op", (op) => this.handleOp(op));
+		this.logger = createChildLogger({ logger });
 	}
 
 	/**
@@ -369,11 +378,12 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		const op = { ...opArg };
 
 		switch (op.type) {
-			case MessageType.Summarize:
+			case MessageType.Summarize: {
 				this.parseContent(op);
 				return this.handleSummaryOp(op as ISummaryOpMessage);
+			}
 			case MessageType.SummaryAck:
-			case MessageType.SummaryNack:
+			case MessageType.SummaryNack: {
 				// Old files (prior to PR #10077) may not contain this info
 				if (op.data !== undefined) {
 					op.contents = JSON.parse(op.data);
@@ -383,6 +393,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 				return op.type === MessageType.SummaryAck
 					? this.handleSummaryAck(op as ISummaryAckMessage)
 					: this.handleSummaryNack(op as ISummaryNackMessage);
+			}
 			default: {
 				// If the difference between timestamp of current op and last summary op is greater than
 				// the maxAckWaitTime, then we need to inform summarizer to not wait and summarize
