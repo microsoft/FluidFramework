@@ -429,7 +429,7 @@ extends:
 
                       - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                         parameters:
-                          devFeedUrl: $(ado-feeds-dev)
+                          downloadFeedUrl: $(ado-feeds-dev)
                           officeFeedUrl: $(ado-feeds-office)
                           pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
@@ -830,7 +830,7 @@ extends:
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
-                  devFeedUrl: $(ado-feeds-dev)
+                  downloadFeedUrl: $(ado-feeds-dev)
                   officeFeedUrl: $(ado-feeds-office)
                   pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
               - task: Bash@3
