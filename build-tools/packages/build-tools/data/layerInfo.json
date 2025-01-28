@@ -6,8 +6,7 @@
                 "dotSameRank": true,
                 "packages": [
                     "@fluidframework/common-definitions",
-                    "@fluidframework/core-interfaces",
-                    "@fluidframework/gitresources"
+                    "@fluidframework/core-interfaces"
                 ]
             },
             "Protocol-Definitions": {
@@ -49,21 +48,11 @@
                     "Base-Definitions"
                 ]
             },
-            "Protocol-Utils": {
-                "packages": [
-                    "@fluidframework/protocol-base"
-                ],
-                "deps": [
-                    "Base-Utils",
-                    "Protocol-Definitions"
-                ]
-            },
             "Driver-Utils": {
                 "packages": [
                     "@fluidframework/driver-utils"
                 ],
                 "deps": [
-                    "Protocol-Utils",
                     "Driver-Definitions",
                     "Telemetry-Utils"
                 ]
@@ -84,8 +73,7 @@
                 ],
                 "deps": [
                     "Driver-Definitions",
-                    "Driver-Utils",
-                    "Server-Shared-Utils"
+                    "Driver-Utils"
                 ]
             },
             "Tool-Utils": {
@@ -183,8 +171,6 @@
                     "Framework",
                     "Loader",
                     "Routerlicious-Driver",
-                    "Server-Libs",
-                    "Server-Shared-Utils",
                     "Test-Utils"
                 ]
             },
@@ -239,8 +225,7 @@
                     "Container-Definitions",
                     "Framework",
                     "Runtime",
-                    "Routerlicious-Driver",
-                    "Server-Shared-Utils"
+                    "Routerlicious-Driver"
                 ]
             },
             "UberPackage": {
@@ -258,16 +243,12 @@
                 ],
                 "deps": [
                     "Protocol-Definitions",
-                    "Server-Shared-Utils",
                     "Test-Utils"
                 ]
             },
             "Azure-Service": {
                 "packages": [
                     "@fluidframework/azure-local-service"
-                ],
-                "deps": [
-                    "Server-Tools"
                 ]
             },
             "Azure-Examples": {
@@ -283,26 +264,6 @@
             }
         }
     },
-    "Server": {
-        "layers": {
-            "Server-Shared-Utils": {
-                "packages": [
-                    "@fluidframework/server-services-client"
-                ],
-                "deps": [
-                    "Protocol-Utils"
-                ]
-            },
-            "Server-Tools": {
-                "packages": [
-                    "tinylicious"
-                ],
-                "deps": [
-                    "Server-Libs"
-                ]
-            }
-        }
-    },
     "Routerlicious": {
         "dot": false,
         "layers": {
@@ -313,16 +274,7 @@
                     "@fluidframework/tinylicious-driver"
                 ],
                 "deps": [
-                    "Driver",
-                    "Server-Shared-Utils"
-                ]
-            },
-            "Routerlicious-Server": {
-                "packages": [
-                    "@fluidframework/server-routerlicious"
-                ],
-                "deps": [
-                    "Server-Libs"
+                    "Driver"
                 ]
             }
         }
