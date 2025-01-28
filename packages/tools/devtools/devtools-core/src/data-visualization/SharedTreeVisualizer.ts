@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { FieldKind } from "@fluidframework/tree";
 import type {
+	SimpleFieldSchema,
 	SimpleMapNodeSchema,
 	SimpleNodeSchema,
 	SimpleObjectNodeSchema,
+	SimpleTreeSchema,
 	VerboseTree,
 	VerboseTreeNode,
 } from "@fluidframework/tree/internal";
@@ -148,15 +151,25 @@ export function toVisualTree(tree: VisualSharedTreeNode): VisualChildNode {
 }
 
 /**
- * Concatenrate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
+ * Concatenate allowed types for `ObjectNodeStoredSchema` and `MapNodeStoredSchema`.
  */
 export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
 	return [...fieldTypes].join(" | ");
 }
 
 /**
- * Returns the allowed fields & types for the object fields (e.g., `foo : string | number, bar: boolean`)
+ * Extract {@link FieldKind} from the schema.
  */
+export function extractKind(schema: SimpleTreeSchema | SimpleFieldSchema): string {
+	const allowedTypesPrefix =
+		schema.kind === FieldKind.Optional
+			? "optional | "
+			: schema.kind === FieldKind.Required
+				? "required | "
+				: "identifier | ";
+
+	return `${allowedTypesPrefix}${[...schema.allowedTypes].join(" | ")}`;
+}
 
 /**
  * Returns the schema & fields of the node.
@@ -185,8 +198,8 @@ function storeObjectAllowedTypes(schema: SimpleObjectNodeSchema): Record<string,
 	const result: Record<string, string> = {};
 
 	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
-		const fieldTypes = treeFieldSimpleSchema.allowedTypes;
-		result[fieldKey] = concatenateTypes(fieldTypes);
+		result[fieldKey] =
+			`${extractKind(treeFieldSimpleSchema)} ${concatenateTypes(treeFieldSimpleSchema.allowedTypes)}`;
 	}
 
 	return result;

@@ -194,12 +194,12 @@ export class AppData extends DataObject {
 		}) {}
 
 		class MainBranchA extends builder.object("main-object-a", {
-			numericLeafNode: builder.number,
+			numericLeafNode: builder.optional(builder.number),
 			objectNode: BranchNodeSchema,
 		}) {}
 
 		class MainBranchB extends builder.object("main-object-b", {
-			numericLeafNode: builder.number,
+			numericLeafNode: builder.optional(builder.number),
 			booleanValue: builder.boolean,
 		}) {}
 

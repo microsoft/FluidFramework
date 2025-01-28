@@ -30,6 +30,11 @@ export interface SharedTreeSchemaNode {
 	schemaName: string;
 
 	/**
+	 * TODO
+	 */
+	fieldKind?: string;
+
+	/**
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
 	 * - InternalNode: `Record<string, string>`.
 	 */
