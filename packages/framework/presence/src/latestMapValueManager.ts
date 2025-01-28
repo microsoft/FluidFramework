@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
+
+import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
+import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { ValueManager } from "./internalTypes.js";
-import type { LatestValueControls } from "./latestValueControls.js";
-import { LatestValueControl } from "./latestValueControls.js";
+import { objectEntries, objectKeys } from "./internalUtils.js";
 import type {
 	LatestValueClientData,
 	LatestValueData,
@@ -18,11 +22,9 @@ import { brandIVM } from "./valueManager.js";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
-import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
+} from "@fluidframework/presence/internal/core-interfaces";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
 /**
  * Collection of latest known values for a specific client.
@@ -188,10 +190,13 @@ export interface ValueMap<K extends string | number, V> {
 class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	private countDefined: number;
 	public constructor(
-		private readonly value: InternalTypes.MapValueState<T>,
+		private readonly value: InternalTypes.MapValueState<T, K>,
 		private readonly localUpdate: (
-			updates: InternalTypes.MapValueState<T>,
-			forceUpdate: boolean,
+			updates: InternalTypes.MapValueState<
+				T,
+				// This should be `K`, but will only work if properties are optional.
+				string | number
+			>,
 		) => void,
 	) {
 		// All initial items are expected to be defined.
@@ -199,9 +204,14 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		this.countDefined = Object.keys(value.items).length;
 	}
 
+	/**
+	 * Note: caller must ensure key exists in this.value.items.
+	 */
 	private updateItem(key: K, value: InternalTypes.ValueOptionalState<T>["value"]): void {
 		this.value.rev += 1;
-		const item = this.value.items[key];
+		// Caller is required to ensure key exists.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const item = this.value.items[key]!;
 		item.rev += 1;
 		item.timestamp = Date.now();
 		if (value === undefined) {
@@ -210,7 +220,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 			item.value = value;
 		}
 		const update = { rev: this.value.rev, items: { [key]: item } };
-		this.localUpdate(update, /* forceUpdate */ false);
+		this.localUpdate(update);
 	}
 
 	public clear(): void {
@@ -233,10 +243,9 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		) => void,
 		thisArg?: unknown,
 	): void {
-		for (const [key, item] of Object.entries(this.value.items)) {
+		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				// TODO: see about typing InternalTypes.MapValueState with K
-				callbackfn(item.value, key as K, this);
+				callbackfn(item.value, key, this);
 			}
 		}
 	}
@@ -259,9 +268,9 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	}
 	public keys(): IterableIterator<K> {
 		const keys: K[] = [];
-		for (const [key, item] of Object.entries(this.value.items)) {
+		for (const [key, item] of objectEntries(this.value.items)) {
 			if (item.value !== undefined) {
-				keys.push(key as K);
+				keys.push(key);
 			}
 		}
 		return keys[Symbol.iterator]();
@@ -283,12 +292,12 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	/**
 	 * Events for LatestMap value manager.
 	 */
-	readonly events: ISubscribable<LatestMapValueManagerEvents<T, Keys>>;
+	readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
 
 	/**
 	 * Controls for management of sending updates.
 	 */
-	readonly controls: LatestValueControls;
+	readonly controls: BroadcastControls;
 
 	/**
 	 * Current value map for this client.
@@ -296,7 +305,6 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	readonly local: ValueMap<Keys, T>;
 	/**
 	 * Iterable access to remote clients' map of values.
-	 * @remarks This is not yet implemented.
 	 */
 	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
 	/**
@@ -315,26 +323,28 @@ class LatestMapValueManagerImpl<
 	Keys extends string | number = string | number,
 > implements
 		LatestMapValueManager<T, Keys>,
-		Required<ValueManager<T, InternalTypes.MapValueState<T>>>
+		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
 	public readonly events = createEmitter<LatestMapValueManagerEvents<T, Keys>>();
-	public readonly controls: LatestValueControl;
+	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
 		private readonly key: RegistrationKey,
 		private readonly datastore: StateDatastore<
 			RegistrationKey,
-			InternalTypes.MapValueState<T>
+			InternalTypes.MapValueState<T, Keys>
 		>,
-		public readonly value: InternalTypes.MapValueState<T>,
-		controlSettings: LatestValueControls,
+		public readonly value: InternalTypes.MapValueState<T, Keys>,
+		controlSettings: BroadcastControlSettings | undefined,
 	) {
-		this.controls = new LatestValueControl(controlSettings);
+		this.controls = new OptionalBroadcastControl(controlSettings);
 
 		this.local = new ValueMapImpl<T, Keys>(
 			value,
-			(updates: InternalTypes.MapValueState<T>, forceUpdate: boolean) => {
-				datastore.localUpdate(key, updates, forceUpdate);
+			(updates: InternalTypes.MapValueState<T, Keys>) => {
+				datastore.localUpdate(key, updates, {
+					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
+				});
 			},
 		);
 	}
@@ -343,7 +353,7 @@ class LatestMapValueManagerImpl<
 
 	public *clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const clientSessionId of Object.keys(allKnownStates.states)) {
+		for (const clientSessionId of objectKeys(allKnownStates.states)) {
 			if (clientSessionId !== allKnownStates.self) {
 				const client = this.datastore.lookupClient(clientSessionId);
 				const items = this.clientValue(client);
@@ -354,7 +364,7 @@ class LatestMapValueManagerImpl<
 
 	public clients(): ISessionClient[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		return Object.keys(allKnownStates.states)
+		return objectKeys(allKnownStates.states)
 			.filter((clientSessionId) => clientSessionId !== allKnownStates.self)
 			.map((clientSessionId) => this.datastore.lookupClient(clientSessionId));
 	}
@@ -362,15 +372,15 @@ class LatestMapValueManagerImpl<
 	public clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
-		if (!(clientSessionId in allKnownStates.states)) {
+		const clientStateMap = allKnownStates.states[clientSessionId];
+		if (clientStateMap === undefined) {
 			throw new Error("No entry for client");
 		}
-		const clientStateMap = allKnownStates.states[clientSessionId];
 		const items = new Map<Keys, LatestValueData<T>>();
-		for (const [key, item] of Object.entries(clientStateMap.items)) {
+		for (const [key, item] of objectEntries(clientStateMap.items)) {
 			const value = item.value;
 			if (value !== undefined) {
-				items.set(key as Keys, {
+				items.set(key, {
 					value,
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
@@ -382,20 +392,23 @@ class LatestMapValueManagerImpl<
 	public update<SpecificSessionClientId extends ClientSessionId>(
 		client: SpecificSessionClient<SpecificSessionClientId>,
 		_received: number,
-		value: InternalTypes.MapValueState<T>,
+		value: InternalTypes.MapValueState<T, string | number>,
 	): void {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId: SpecificSessionClientId = client.sessionId;
-		if (!(clientSessionId in allKnownStates.states)) {
+		const currentState = (allKnownStates.states[clientSessionId] ??=
 			// New client - prepare new client state directory
-			allKnownStates.states[clientSessionId] = { rev: value.rev, items: {} };
-		}
-		const currentState = allKnownStates.states[clientSessionId];
+			{
+				rev: value.rev,
+				items: {} as unknown as InternalTypes.MapValueState<T, Keys>["items"],
+			});
 		// Accumulate individual update keys
 		const updatedItemKeys: Keys[] = [];
-		for (const [key, item] of Object.entries(value.items)) {
-			if (!(key in currentState.items) || currentState.items[key].rev < item.rev) {
-				updatedItemKeys.push(key as Keys);
+		for (const [key, item] of objectEntries(value.items)) {
+			// TODO: Key validation needs to be added here.
+			const validKey = key as Keys;
+			if (!(key in currentState.items) || currentState.items[validKey].rev < item.rev) {
+				updatedItemKeys.push(validKey);
 			}
 		}
 
@@ -412,7 +425,8 @@ class LatestMapValueManagerImpl<
 			items: new Map<Keys, LatestValueData<T>>(),
 		};
 		for (const key of updatedItemKeys) {
-			const item = value.items[key];
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const item = value.items[key]!;
 			const hadPriorValue = currentState.items[key]?.value;
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
@@ -450,47 +464,45 @@ export function LatestMap<
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	},
-	controls?: LatestValueControls,
+	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
-	InternalTypes.MapValueState<T>,
+	InternalTypes.MapValueState<T, Keys>,
 	LatestMapValueManager<T, Keys>
 > {
 	const timestamp = Date.now();
-	const value: InternalTypes.MapValueState<T> = { rev: 0, items: {} };
+	const value: InternalTypes.MapValueState<
+		T,
+		// This should be `Keys`, but will only work if properties are optional.
+		string | number
+	> = { rev: 0, items: {} };
 	// LatestMapValueManager takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
-		for (const key of Object.keys(initialValues)) {
-			value.items[key] = { rev: 0, timestamp, value: initialValues[key as Keys] };
+		for (const key of objectKeys(initialValues)) {
+			value.items[key] = { rev: 0, timestamp, value: initialValues[key] };
 		}
 	}
-	const controlSettings = controls
-		? { ...controls }
-		: {
-				allowableUpdateLatency: 60,
-				forcedRefreshInterval: 0,
-			};
 	const factory = (
 		key: RegistrationKey,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
 			RegistrationKey,
-			InternalTypes.MapValueState<T>
+			InternalTypes.MapValueState<T, Keys>
 		>,
 	): {
-		value: typeof value;
+		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestMapValueManager<T, Keys>>;
 	} => ({
-		value,
+		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<
 			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
 			T,
-			InternalTypes.MapValueState<T>
+			InternalTypes.MapValueState<T, Keys>
 		>(
 			new LatestMapValueManagerImpl(
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				controlSettings,
+				controls,
 			),
 		),
 	});

@@ -24,7 +24,7 @@ import {
 } from "../leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "../../events/index.js";
+import type { Off } from "@fluidframework/core-interfaces";
 import {
 	getKernel,
 	isTreeNode,
@@ -168,29 +168,29 @@ export const treeNodeApi: TreeNodeApi = {
 			case "nodeChanged": {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
-					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						const changedProperties = new Set(
 							Array.from(
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail(`Could not find stored key '${field}' in schema.`),
+									fail("Could not find stored key in schema."),
 							),
 						);
 						listener({ changedProperties });
 					});
 				} else if (nodeSchema.kind === NodeKind.Array) {
-					return kernel.on("childrenChangedAfterBatch", () => {
+					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
 				} else {
-					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						listener({ changedProperties: changedFields });
 					});
 				}
 			}
 			case "treeChanged": {
-				return kernel.on("subtreeChangedAfterBatch", () => listener({}));
+				return kernel.events.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default:
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);

@@ -5,19 +5,30 @@
 
 export {
 	type ApiItemTransformationConfiguration,
+	type ApiItemTransformationConfigurationBase,
+	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./Configuration.js";
 export {
-	// Consumers should not use this, it exists externally for documentation purposes only.
-	type DefaultDocumentationSuiteOptions,
-	type DocumentBoundaries,
+	type DocumentationSuiteConfiguration,
+	type DefaultDocumentationSuiteConfiguration,
 	type DocumentationSuiteOptions,
-	getDocumentationSuiteOptionsWithDefaults,
-	type HierarchyBoundaries,
-} from "./DocumentationSuiteOptions.js";
+	getDocumentationSuiteConfigurationWithDefaults as getDocumentationSuiteOptionsWithDefaults,
+} from "./DocumentationSuite.js";
 export {
-	type ApiItemTransformationOptions,
-	getApiItemTransformationOptionsWithDefaults,
+	type DocumentationHierarchyConfiguration,
+	type DocumentationHierarchyConfigurationBase,
+	type DocumentHierarchyConfiguration,
+	FolderDocumentPlacement,
+	type FolderHierarchyConfiguration,
+	type HierarchyConfiguration,
+	type HierarchyOptions,
+	HierarchyKind,
+	type SectionHierarchyConfiguration,
+} from "./Hierarchy.js";
+export {
+	type ApiItemTransformations,
+	getApiItemTransformationsWithDefaults,
 	type TransformApiItemWithChildren,
 	type TransformApiItemWithoutChildren,
-} from "./TransformationOptions.js";
+} from "./Transformations.js";

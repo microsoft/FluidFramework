@@ -8,27 +8,41 @@
  *
  * The primary purpose of this package is to provide a common way to organize npm packages into groups called release
  * groups, and leverages workspaces functionality provided by package managers like npm, yarn, and pnpm to manage
- * interdependencies between packages across a Fluid repo. It then provides APIs to select, filter, and work with those
- * package groups.
+ * interdependencies between packages across a BuildProject. It then provides APIs to select, filter, and work with
+ * those package groups.
  *
  * @module default entrypoint
  */
 
+export {
+	getAllDependencies,
+	loadBuildProject,
+} from "./buildProject.js";
 export {
 	type ReleaseGroupDefinition,
 	type WorkspaceDefinition,
 	type IFluidBuildDir,
 	type IFluidBuildDirs,
 	type IFluidBuildDirEntry,
-	type IFluidRepoLayout,
-	FLUIDREPO_CONFIG_VERSION,
-	getFluidRepoLayout,
+	type BuildProjectConfig as BuildProjectLayout,
+	BUILDPROJECT_CONFIG_VERSION,
+	getBuildProjectConfig,
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
+export {
+	getFiles,
+	findGitRootSync,
+	getMergeBaseRemote,
+	getRemote,
+	getChangedSinceRef,
+} from "./git.js";
+export { PackageBase } from "./package.js";
+export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
+export { createPackageManager } from "./packageManagers.js";
 export type {
 	AdditionalPackageProps,
 	Installable,
-	IFluidRepo,
+	IBuildProject,
 	IPackage,
 	IReleaseGroup,
 	IWorkspace,
@@ -43,30 +57,4 @@ export type {
 	IPackageManager,
 } from "./types.js";
 export { isIPackage, isIReleaseGroup } from "./types.js";
-
-// export {
-// 	filterPackages,
-// 	type FilterablePackage,
-// 	selectAndFilterPackages,
-// 	type GlobString,
-// 	AllPackagesSelectionCriteria,
-// 	EmptySelectionCriteria,
-// 	type PackageSelectionCriteria,
-// 	type PackageFilterOptions,
-// } from "./filter.js";
-// export {
-// 	FluidRepo as FluidRepoBase,
-// 	getAllDependenciesInRepo,
-// 	loadFluidRepo,
-// } from "./fluidRepo.js";
-// export {
-// 	getFiles,
-// 	findGitRootSync,
-// 	getMergeBaseRemote,
-// 	getRemote,
-// 	getChangedSinceRef,
-// } from "./git.js";
-// export { PackageBase } from "./package.js";
-// export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
-// export { createPackageManager } from "./packageManagers.js";
-// export { setVersion } from "./versions.js";
+export { setVersion } from "./versions.js";

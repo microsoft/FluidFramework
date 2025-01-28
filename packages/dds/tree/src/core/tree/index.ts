@@ -94,6 +94,7 @@ export {
 	type AnnouncedVisitor,
 	announceDelta,
 	applyDelta,
+	createAnnouncedVisitor,
 	combineVisitors,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
@@ -103,12 +104,18 @@ export { SparseNode, getDescendant } from "./sparseTree.js";
 
 export {
 	deltaForRootInitialization,
-	emptyFieldChanges,
-	isEmptyFieldChanges,
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,
 } from "./deltaUtil.js";
+
+export {
+	type TreeChunk,
+	dummyRoot,
+	cursorChunk,
+	tryGetChunk,
+	type ChunkedCursor,
+} from "./chunk.js";
 
 export { DetachedFieldIndex } from "./detachedFieldIndex.js";
 export { type ForestRootId } from "./detachedFieldIndexTypes.js";

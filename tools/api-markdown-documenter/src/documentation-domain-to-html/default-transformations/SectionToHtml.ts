@@ -9,9 +9,10 @@
  */
 import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
+
 import type { SectionNode } from "../../documentation-domain/index.js";
-import type { TransformationContext } from "../TransformationContext.js";
 import { documentationNodeToHtml, documentationNodesToHtml } from "../ToHtml.js";
+import type { TransformationContext } from "../TransformationContext.js";
 
 /**
  * Transform a {@link SectionNode} to HTML.

@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type Adapters,
-	Compatibility,
 	EmptyKey,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -22,7 +21,7 @@ import {
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
-	getAllowedContentIncompatibilities,
+	getAllowedContentDiscrepancies,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -49,7 +48,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
 		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
 			this.rootFieldSchemaData = schema;
-			this.events.emit("afterSchemaChange", this);
+			this._events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -64,7 +63,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
 			this.nodeSchemaData.set(name, storedSchema);
-			this.events.emit("afterSchemaChange", this);
+			this._events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -116,14 +115,10 @@ describe("Schema Evolution Examples", () => {
 	 * (since adapters are not implemented yet, and they are the nice way to handle that).
 	 */
 	it("basic usage", () => {
-		// Collect our view schema.
-		// This will represent our view schema for a simple canvas application.
-		const viewCollection = toStoredSchema(root);
-
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
 		// Compose all the view information together.
-		const view = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection);
+		const view = new ViewSchema(defaultSchemaPolicy, adapters, root);
 
 		// Now lets imagine using this application on a new empty document.
 		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
@@ -138,18 +133,8 @@ describe("Schema Evolution Examples", () => {
 			// Sadly for our application, we did not allow empty roots in our view schema,
 			// nor did we provide an adapter capable of handling empty roots.
 			// This means our application is unable to view this document.
-			assertEnumEqual(Compatibility, compat.read, Compatibility.Incompatible);
-
-			// And since the view schema currently excludes empty roots, its also incompatible for writing:
-			assertEnumEqual(Compatibility, compat.write, Compatibility.Incompatible);
-
-			// Additionally even updating the document schema can't save this app,
-			// since the new schema would be incompatible with the existing document content.
-			assertEnumEqual(
-				Compatibility,
-				compat.writeAllowingStoredSchemaUpdates,
-				Compatibility.Incompatible,
-			);
+			// And since the view schema currently excludes empty roots, its also incompatible for upgrading:
+			assert.deepEqual(compat, { canView: false, canUpgrade: false, isEquivalent: false });
 
 			// This is where the app would inform the user that the document
 			// is not compatible with their version of the application.
@@ -165,25 +150,16 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const viewCollection2 = toStoredSchema(tolerantRoot);
-			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
+			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, tolerantRoot);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
 
 			// The adjusted view schema can be used read this document, no adapters needed.
-			assertEnumEqual(Compatibility, compat.read, Compatibility.Compatible);
+			assert.equal(compat.canUpgrade, true);
 
 			// However the document just has its empty root schema,
 			// so the app could make changes that could not be written back.
-			assertEnumEqual(Compatibility, compat.write, Compatibility.Incompatible);
-
-			// However, it is possible to update the schema in the document to match our schema
-			// (since the existing data in compatible with our schema)
-			assertEnumEqual(
-				Compatibility,
-				compat.writeAllowingStoredSchemaUpdates,
-				Compatibility.Compatible,
-			);
+			assert.equal(compat.canView, false);
 
 			// The app can consider this compatible and proceed if it is ok with updating schema on write.
 			// There are a few approaches apps might want to take here, but we will assume one that seems reasonable:
@@ -212,11 +188,12 @@ describe("Schema Evolution Examples", () => {
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			const report = getAllowedContentIncompatibilities(viewCollection2, stored);
+			const report = Array.from(
+				getAllowedContentDiscrepancies(toStoredSchema(tolerantRoot), stored),
+			);
 			assert.deepEqual(report, []);
-			assertEnumEqual(Compatibility, compatNew.read, Compatibility.Compatible);
 			// It is now possible to write our date into the document.
-			assertEnumEqual(Compatibility, compatNew.write, Compatibility.Compatible);
+			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
 
@@ -231,18 +208,11 @@ describe("Schema Evolution Examples", () => {
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3 = toStoredSchema(builder.optional(canvas2));
-			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
+			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, builder.optional(canvas2));
 
 			// With this new schema, we can load the document just like before:
 			const compat2 = view3.checkCompatibility(stored);
-			assertEnumEqual(Compatibility, compat2.read, Compatibility.Compatible);
-			assertEnumEqual(Compatibility, compat2.write, Compatibility.Incompatible);
-			assertEnumEqual(
-				Compatibility,
-				compat2.writeAllowingStoredSchemaUpdates,
-				Compatibility.Compatible,
-			);
+			assert.deepEqual(compat2, { canView: false, canUpgrade: true, isEquivalent: false });
 
 			// This is the same case as above where we can choose to do a schema update if we want:
 			assert(stored.tryUpdateTreeSchema(positionedCanvasItem2));
@@ -250,12 +220,11 @@ describe("Schema Evolution Examples", () => {
 
 			// And recheck compat:
 			const compat3 = view3.checkCompatibility(stored);
-			assertEnumEqual(Compatibility, compat3.read, Compatibility.Compatible);
-			assertEnumEqual(Compatibility, compat3.write, Compatibility.Compatible);
+			assert.deepEqual(compat3, { canView: true, canUpgrade: true, isEquivalent: true });
 		}
 	});
 
-	// TODO: support adapters
+	// TODO: support adapters.
 
 	// function makeTolerantRootAdapter(view: TreeStoredSchema): FieldAdapter {
 	// 	return {

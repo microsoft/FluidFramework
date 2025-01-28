@@ -7,19 +7,22 @@ import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfac
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	ITelemetryLoggerExt,
-	PerformanceEvent,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 
-/** @internal */
+/**
+ * @internal
+ */
 export class DataStoreContexts
 	implements Iterable<[string, FluidDataStoreContext]>, IDisposable
 {
 	private readonly notBoundContexts = new Set<string>();
 
-	/** Attached and loaded context proxies */
+	/**
+	 * Attached and loaded context proxies
+	 */
 	private readonly _contexts = new Map<string, FluidDataStoreContext>();
 
 	/**
@@ -41,7 +44,7 @@ export class DataStoreContexts
 				.catch((contextError) => {
 					this._logger.sendErrorEvent(
 						{
-							eventName: "DisposeError",
+							eventName: "FluidDataStoreContextDisposeError",
 							fluidDataStoreId,
 						},
 						contextError,
@@ -53,10 +56,7 @@ export class DataStoreContexts
 	private readonly _logger: ITelemetryLoggerExt;
 
 	constructor(baseLogger: ITelemetryBaseLogger) {
-		this._logger = createChildLogger({
-			namespace: "FluidDataStoreContexts",
-			logger: baseLogger,
-		});
+		this._logger = createChildLogger({ logger: baseLogger });
 	}
 
 	[Symbol.iterator](): Iterator<[string, FluidDataStoreContext]> {
@@ -67,20 +67,20 @@ export class DataStoreContexts
 		return this._contexts.size;
 	}
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = () => this.disposeOnce.value;
+	public readonly dispose = (): void => this.disposeOnce.value;
 
-	public notBoundLength() {
+	public notBoundLength(): number {
 		return this.notBoundContexts.size;
 	}
 
-	public isNotBound(id: string) {
+	public isNotBound(id: string): boolean {
 		return this.notBoundContexts.has(id);
 	}
 
-	public has(id: string) {
+	public has(id: string): boolean {
 		return this._contexts.has(id);
 	}
 
@@ -102,7 +102,7 @@ export class DataStoreContexts
 	private readonly _recentlyDeletedContexts: Map<string, FluidDataStoreContext | undefined> =
 		new Map();
 
-	public getRecentlyDeletedContext(id: string) {
+	public getRecentlyDeletedContext(id: string): FluidDataStoreContext | undefined {
 		return this._recentlyDeletedContexts.get(id);
 	}
 
@@ -122,7 +122,7 @@ export class DataStoreContexts
 	/**
 	 * Add the given context, marking it as to-be-bound
 	 */
-	public addUnbound(context: LocalFluidDataStoreContext) {
+	public addUnbound(context: LocalFluidDataStoreContext): void {
 		const id = context.id;
 		assert(!this._contexts.has(id), 0x158 /* "Creating store with existing ID" */);
 
@@ -144,20 +144,11 @@ export class DataStoreContexts
 	): Promise<FluidDataStoreContext | undefined> {
 		const deferredContext = this.ensureDeferred(id);
 
-		const existing = deferredContext.isCompleted;
-		return PerformanceEvent.timedExecAsync(
-			this._logger,
-			{
-				eventName: "GetBoundOrRemoted",
-				wait,
-				existing,
-			},
-			async () => (!wait && !existing ? undefined : deferredContext.promise),
-			{
-				start: true,
-				end: true,
-			},
-		);
+		if (!wait && !deferredContext.isCompleted) {
+			return undefined;
+		}
+
+		return deferredContext.promise;
 	}
 
 	private ensureDeferred(id: string): Deferred<FluidDataStoreContext> {
@@ -174,7 +165,7 @@ export class DataStoreContexts
 	/**
 	 * Update this context as bound
 	 */
-	public bind(id: string) {
+	public bind(id: string): void {
 		const removed: boolean = this.notBoundContexts.delete(id);
 		assert(removed, 0x159 /* "The given id was not found in notBoundContexts to delete" */);
 
@@ -185,7 +176,7 @@ export class DataStoreContexts
 	 * Triggers the deferred to resolve, indicating the context is not local-only
 	 * @param id - The id of the context to resolve to
 	 */
-	private resolveDeferred(id: string) {
+	private resolveDeferred(id: string): void {
 		const context = this._contexts.get(id);
 		assert(!!context, 0x15a /* "Cannot find context to resolve to" */);
 		assert(
@@ -203,7 +194,7 @@ export class DataStoreContexts
 	 * This could be because it's a local context that's been bound, or because it's a remote context.
 	 * @param context - The context to add
 	 */
-	public addBoundOrRemoted(context: FluidDataStoreContext) {
+	public addBoundOrRemoted(context: FluidDataStoreContext): void {
 		const id = context.id;
 		assert(!this._contexts.has(id), 0x15d /* "Creating store with existing ID" */);
 

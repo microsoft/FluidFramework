@@ -5,7 +5,7 @@
 
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { GitRepo, type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
+import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
 import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 import {
@@ -14,6 +14,7 @@ import {
 	PackageSelectionCriteria,
 	filterPackages,
 	selectAndFilterPackages,
+	selectPackagesFromContext,
 } from "../filter.js";
 import { Context } from "../library/index.js";
 
@@ -23,9 +24,7 @@ chai.use(assertArrays);
 
 async function getContext(): Promise<Context> {
 	const resolvedRoot = await getResolvedFluidRoot();
-	const gitRepo = new GitRepo(resolvedRoot);
-	const branch = await gitRepo.getCurrentBranchName();
-	const context = new Context(gitRepo, "microsoft/FluidFramework", branch);
+	const context = new Context(resolvedRoot);
 	return context;
 }
 
@@ -247,7 +246,7 @@ describe("selectAndFilterPackages", () => {
 			independentPackages: false,
 			releaseGroups: [],
 			releaseGroupRoots: [],
-			directory: path.resolve(__dirname, "../.."),
+			directory: [path.resolve(__dirname, "../..")],
 			changedSinceBranch: undefined,
 		};
 		const filters: PackageFilterOptions = {
@@ -366,5 +365,23 @@ describe("selectAndFilterPackages", () => {
 			"@fluidframework/build-tools",
 			"@fluidframework/bundle-size-tools",
 		]);
+	});
+
+	it("multiple selection flags", async () => {
+		const context = await getContext();
+		const selectionOptions: PackageSelectionCriteria = {
+			independentPackages: false,
+			releaseGroups: [],
+			releaseGroupRoots: ["client"],
+			directory: [path.resolve(__dirname, "../..")],
+			changedSinceBranch: undefined,
+		};
+
+		const selected = await selectPackagesFromContext(context, selectionOptions);
+
+		expect(selected).to.be.ofSize(2);
+
+		expect(selected[0]?.name).to.equal("@fluid-tools/build-cli");
+		expect(selected[1]?.name).to.equal("client-release-group-root");
 	});
 });

@@ -5,12 +5,14 @@
 
 import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { h } from "hastscript";
+
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";
-import type { TransformationConfig } from "./configuration/index.js";
+
 import {
 	createTransformationContext,
 	type TransformationContext,
 } from "./TransformationContext.js";
+import type { TransformationConfiguration } from "./configuration/index.js";
 
 /**
  * Generates an HTML AST from the provided {@link DocumentNode}.
@@ -20,7 +22,10 @@ import {
  *
  * @public
  */
-export function documentToHtml(document: DocumentNode, config: TransformationConfig): HastRoot {
+export function documentToHtml(
+	document: DocumentNode,
+	config: TransformationConfiguration,
+): HastRoot {
 	const transformationContext = createTransformationContext(config);
 
 	const transformedChildren = documentationNodesToHtml(document.children, transformationContext);
@@ -32,7 +37,7 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
  *
  * @privateRemarks Exported for testing purposes. Not intended for external use.
  */
-export function treeFromBody(body: HastTree[], config: TransformationConfig): HastRoot {
+export function treeFromBody(body: HastTree[], config: TransformationConfiguration): HastRoot {
 	const rootBodyContents: HastTree[] = [];
 	rootBodyContents.push({
 		type: "doctype",
@@ -61,7 +66,7 @@ export function treeFromBody(body: HastTree[], config: TransformationConfig): Ha
  */
 export function documentationNodeToHtml(
 	node: DocumentationNode,
-	config: TransformationConfig,
+	config: TransformationConfiguration,
 ): HastTree;
 /**
  * Generates an HTML AST from the provided {@link DocumentationNode}.
@@ -80,7 +85,7 @@ export function documentationNodeToHtml(
  */
 export function documentationNodeToHtml(
 	node: DocumentationNode,
-	configOrContext: TransformationConfig | TransformationContext,
+	configOrContext: TransformationConfiguration | TransformationContext,
 ): HastTree {
 	const context = getContext(configOrContext);
 
@@ -100,7 +105,7 @@ export function documentationNodeToHtml(
  */
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
-	config: TransformationConfig,
+	config: TransformationConfiguration,
 ): HastTree[];
 /**
  * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
@@ -116,14 +121,14 @@ export function documentationNodesToHtml(
  */
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
-	configOrContext: TransformationConfig | TransformationContext,
+	configOrContext: TransformationConfiguration | TransformationContext,
 ): HastTree[] {
 	const context = getContext(configOrContext);
 	return nodes.map((node) => documentationNodeToHtml(node, context));
 }
 
 function getContext(
-	configOrContext: TransformationConfig | TransformationContext,
+	configOrContext: TransformationConfiguration | TransformationContext,
 ): TransformationContext {
 	return (configOrContext as Partial<TransformationContext>).transformations === undefined
 		? createTransformationContext(configOrContext)

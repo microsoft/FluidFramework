@@ -3,42 +3,74 @@
  * Licensed under the MIT License.
  */
 
-import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
+import { StaticCodeLoader } from "@fluid-example/example-utils";
+import {
+	createDetachedContainer,
+	loadExistingContainer,
+} from "@fluidframework/container-loader/legacy";
+import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
+import {
+	createInsecureTinyliciousTestTokenProvider,
+	createInsecureTinyliciousTestUrlResolver,
+	createTinyliciousTestCreateNewRequest,
+} from "@fluidframework/tinylicious-driver/test-utils";
+import { createElement } from "react";
+// eslint-disable-next-line import/no-internal-modules
+import { createRoot } from "react-dom/client";
 
-import { DiceRollerContainerRuntimeFactory, IDiceRollerAppModel } from "./containerCode.js";
-import { renderDiceRoller } from "./view.js";
+import { DiceRollerContainerRuntimeFactory } from "./containerCode.js";
+import type { IDiceRoller } from "./interface.js";
+import { DiceRollerView } from "./view.js";
 
-/**
- * Start the app and render.
- *
- * @remarks We wrap this in an async function so we can await Fluid's async calls.
- */
-async function start() {
-	const tinyliciousModelLoader = new TinyliciousModelLoader<IDiceRollerAppModel>(
-		new StaticCodeLoader(new DiceRollerContainerRuntimeFactory()),
-	);
+const updateTabForId = (id: string): void => {
+	// Update the URL with the actual ID
+	location.hash = id;
 
+	// Put the ID in the tab title
+	document.title = id;
+};
+
+const render = (diceRoller: IDiceRoller): void => {
+	const appDiv = document.getElementById("app") as HTMLDivElement;
+	const appRoot = createRoot(appDiv);
+	appRoot.render(createElement(DiceRollerView, { diceRoller }));
+};
+
+const urlResolver = createInsecureTinyliciousTestUrlResolver();
+const tokenProvider = createInsecureTinyliciousTestTokenProvider();
+const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
+const codeLoader = new StaticCodeLoader(new DiceRollerContainerRuntimeFactory());
+
+async function start(): Promise<void> {
 	let id: string;
-	let model: IDiceRollerAppModel;
+	let diceRoller: IDiceRoller;
 
 	if (location.hash.length === 0) {
-		// Normally our code loader is expected to match up with the version passed here.
-		// But since we're using a StaticCodeLoader that always loads the same runtime factory regardless,
-		// the version doesn't actually matter.
-		const createResponse = await tinyliciousModelLoader.createDetached("1.0");
-		model = createResponse.model;
-		id = await createResponse.attach();
+		const container = await createDetachedContainer({
+			codeDetails: { package: "1.0" },
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+		});
+		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
+		await container.attach(createTinyliciousTestCreateNewRequest());
+		if (container.resolvedUrl === undefined) {
+			throw new Error("Resolved Url not available on attached container");
+		}
+		id = container.resolvedUrl.id;
 	} else {
 		id = location.hash.substring(1);
-		model = await tinyliciousModelLoader.loadExisting(id);
+		const container = await loadExistingContainer({
+			request: { url: id },
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+		});
+		diceRoller = (await container.getEntryPoint()) as IDiceRoller;
 	}
 
-	// update the browser URL and the window title with the actual container ID
-	location.hash = id;
-	document.title = id;
-
-	const contentDiv = document.getElementById("content") as HTMLDivElement;
-	renderDiceRoller(model.diceRoller, contentDiv);
+	render(diceRoller);
+	updateTabForId(id);
 }
 
 start().catch((error) => console.error(error));

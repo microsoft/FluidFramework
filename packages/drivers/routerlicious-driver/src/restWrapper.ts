@@ -26,7 +26,11 @@ import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
-import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
+import {
+	getUrlForTelemetry,
+	RouterliciousErrorTypes,
+	throwR11sNetworkError,
+} from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
 import { RestWrapper } from "./restWrapperBase.js";
@@ -174,6 +178,13 @@ class RouterliciousRestWrapper extends RestWrapper {
 					// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
 					this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
 
+					const telemetryProps = {
+						driverVersion,
+						retryCount: requestRetryCount,
+						url: getUrlForTelemetry(completeRequestUrl.hostname, completeRequestUrl.pathname),
+						requestMethod: fetchRequestConfig.method,
+					};
+
 					// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
 					const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
 					const errorMessage = isNetworkError
@@ -185,14 +196,16 @@ class RouterliciousRestWrapper extends RestWrapper {
 					// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 					// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
 					const err = errorMessage.includes("failed, reason: self signed certificate")
-						? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
-								driverVersion,
-								retryCount: requestRetryCount,
-							})
-						: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
-								driverVersion,
-								retryCount: requestRetryCount,
-							});
+						? new NonRetryableError(
+								errorMessage,
+								RouterliciousErrorTypes.sslCertError,
+								telemetryProps,
+							)
+						: new GenericNetworkError(
+								errorMessage,
+								errorMessage.startsWith("NetworkError"),
+								telemetryProps,
+							);
 					throw err;
 				},
 			);
@@ -203,6 +216,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 		});
 
 		const response = res.response;
+		const headers = headersToMap(response.headers);
 
 		let start = performanceNow();
 		const text = await response.text();
@@ -222,7 +236,6 @@ class RouterliciousRestWrapper extends RestWrapper {
 			// on successful response, remove the entry from the retryCounter map
 			this.retryCounter.delete(requestKey);
 			const result = responseBody as T;
-			const headers = headersToMap(response.headers);
 			return {
 				content: result,
 				headers,
@@ -268,6 +281,12 @@ class RouterliciousRestWrapper extends RestWrapper {
 			`R11s fetch error: ${responseSummary}`,
 			response.status,
 			responseBody?.retryAfter,
+			{
+				...getPropsToLogFromResponse(headers),
+				driverVersion,
+				url: getUrlForTelemetry(completeRequestUrl.hostname, completeRequestUrl.pathname),
+				requestMethod: fetchRequestConfig.method,
+			},
 		);
 	}
 

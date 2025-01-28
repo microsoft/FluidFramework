@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import type { ICodecOptions } from "../../codec/index.js";
@@ -226,21 +226,22 @@ describe("SharedTreeChangeFamily", () => {
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
 				const tag = mintRevisionTag();
-				assert.deepEqual(
-					sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback, tag),
-					{
-						changes: [
-							{
-								type: "data",
-								innerChange: modularFamily.invert(
-									makeAnonChange(dataChange1),
-									isRollback,
-									tag,
-								),
-							},
-						],
-					},
+				const inverted = sharedTreeFamily.invert(
+					makeAnonChange(stDataChange1),
+					isRollback,
+					tag,
 				);
+
+				const expected = {
+					changes: [
+						{
+							type: "data",
+							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback, tag),
+						},
+					],
+				};
+
+				assert.deepEqual(inverted, expected);
 			});
 		}
 	});

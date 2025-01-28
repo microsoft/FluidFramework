@@ -10,9 +10,9 @@
 export type { _InlineTrick, FlattenKeys } from "./util/index.js";
 export type {
 	ApplyKind,
+	ApplyKindInput,
 	NodeBuilderData,
 	FieldHasDefault,
-	TreeArrayNodeBase,
 	ScopedSchemaName,
 	DefaultProvider,
 	typeNameSymbol,

@@ -18,6 +18,9 @@ import {
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
+// This import is required for intellisense in @link doc comments on mouseover in VSCode.
+// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
+import type { TreeAlpha } from "../../shared-tree/index.js";
 
 import {
 	booleanSchema,
@@ -37,6 +40,7 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
+	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -74,6 +78,7 @@ import type {
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import { TreeNodeValid } from "../treeNodeValid.js";
 import { isLazy } from "../flexList.js";
+
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
  */
@@ -98,6 +103,64 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
 }
 
 /**
+ * Options when declaring an {@link SchemaFactory.object|object node}'s schema
+ *
+ * @alpha
+ */
+export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
+	/**
+	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
+	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
+	 * that has upgraded the document's schema to include those optional fields.
+	 *
+	 * @defaultValue `false`
+	 * @remarks
+	 * The advantage of enabling this option is that it allows an application ecosystem with staged rollout to more quickly
+	 * upgrade documents to include schema for new optional features.
+	 *
+	 * However, it does come with trade-offs that applications should weigh carefully when it comes to interactions between
+	 * code and documents.
+	 * When opening such documents, the API presented is still determined by the view schema.
+	 * This can have implications on the behavior of edits or code which uses portions of the view schema,
+	 * since this may inadvertently drop data which is present in those optional fields in the document schema.
+	 *
+	 * Consider the following example:
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactory("com.example");
+	 * class PersonView extends sf.object("Person", { name: sf.string }, { allowUnknownOptionalFields: true }) {}
+	 * class PersonStored extends sf.object("Person", { name: sf.string, nickname: sf.optional(sf.string) }) {}
+	 *
+	 * // Say we have a document which uses `PersonStored` in its schema, and application code constructs
+	 * // a tree view using `PersonView`. If the application for some reason had implemented a function like this:
+	 * function clonePerson(a: PersonView): PersonView {
+	 * 	return new PersonView({ name: a.name });
+	 * }
+	 * // ...or even like this:
+	 * function clonePerson(a: PersonView): PersonView {
+	 *  return new PersonView({ ...a})
+	 * }
+	 * // Then the alleged clone wouldn't actually clone the entire person in either case, it would drop the nickname.
+	 * ```
+	 *
+	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
+	 * {@link TreeAlpha.(importVerbose:2)|import}/{@link TreeAlpha.(exportVerbose:2)|export} APIs with persistent keys.
+	 *
+	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
+	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
+	 * reaches into a node (either by accessing its fields, spreading it, or some other means) that this problem arises.
+	 */
+	allowUnknownOptionalFields?: boolean;
+}
+
+export const defaultSchemaFactoryObjectOptions: Required<
+	Omit<SchemaFactoryObjectOptions, "metadata">
+> = {
+	allowUnknownOptionalFields: false,
+};
+
+/**
  * The name of a schema produced by {@link SchemaFactory}, including its optional scope prefix.
  *
  * @system @public
@@ -120,6 +183,10 @@ export type ScopedSchemaName<
  * Typically this is just `string` but it is also possible to use `string` or `number` based enums if you prefer to identify your types that way.
  *
  * @remarks
+ * For details related to inputting data constrained by schema (including via assignment), and how non-exact schema types are handled in general refer to {@link Input}.
+ * For information about recursive schema support, see methods postfixed with "recursive" and {@link ValidateRecursiveSchema}.
+ * To apply schema defined with this factory to a tree, see {@link ViewableTree.viewWith} and {@link TreeViewConfiguration}.
+ *
  * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
@@ -196,6 +263,8 @@ export type ScopedSchemaName<
  *
  * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
  *
+ * @see {@link SchemaFactoryAlpha}
+ *
  * @sealed @public
  */
 export class SchemaFactory<
@@ -212,19 +281,45 @@ export class SchemaFactory<
 	private readonly structuralTypes: Map<string, TreeNodeSchema> = new Map();
 
 	/**
-	 * Construct a SchemaFactory with a given scope.
+	 * Construct a SchemaFactory with a given {@link SchemaFactory.scope|scope}.
 	 * @remarks
-	 * There are no restrictions on mixing schema from different schema factories:
-	 * this is encouraged when a single schema references schema from different libraries.
-	 * If each library exporting schema picks its own globally unique scope for its SchemaFactory,
-	 * then all schema an application might depend on, directly or transitively,
-	 * will end up with a unique fully qualified name which is required to refer to it in persisted data and errors.
-	 *
-	 * @param scope - Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
-	 * Use of [Reverse domain name notation](https://en.wikipedia.org/wiki/Reverse_domain_name_notation) or a UUIDv4 is recommended to avoid collisions.
-	 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
+	 * There are no restrictions on mixing schema from different schema factories.
+	 * Typically each library will create one or more SchemaFactories and use them to define its schema.
 	 */
-	public constructor(public readonly scope: TScope) {}
+	public constructor(
+		/**
+		 * Prefix appended to the identifiers of all {@link TreeNodeSchema} produced by this builder.
+		 *
+		 * @remarks
+		 * Generally each independently developed library
+		 * (possibly a package, but could also be part of a package or multiple packages developed together)
+		 * should get its own unique `scope`.
+		 * Then each schema in the library get a name which is unique within the library.
+		 * The scope and name are joined (with a period) to form the {@link TreeNodeSchemaCore.identifier|schema identifier}.
+		 * Following this pattern allows a single application to depend on multiple libraries which define their own schema, and use them together in a single tree without risk of collisions.
+		 * If a library logically contains sub-libraries with their own schema, they can be given a scope nested inside the parent scope, such as "ParentScope.ChildScope".
+		 *
+		 * To avoid collisions between the scopes of libraries
+		 * it is recommended that the libraries use {@link https://en.wikipedia.org/wiki/Reverse_domain_name_notation | Reverse domain name notation} or a UUIDv4 for their scope.
+		 * If this pattern is followed, application can safely use third party libraries without risk of the schema in them colliding.
+		 *
+		 * You may opt out of using a scope by passing `undefined`, but note that this increases the risk of collisions.
+		 *
+		 * @example
+		 * Fluid Framework follows this pattern, placing the schema for the built in leaf types in the `com.fluidframework.leaf` scope.
+		 * If Fluid Framework publishes more schema in the future, they would be under some other `com.fluidframework` scope.
+		 * This ensures that any schema defined by any other library will not conflict with Fluid Framework's schema
+		 * as long as the library uses the recommended patterns for how to scope its schema..
+		 *
+		 * @example
+		 * A library could generate a random UUIDv4, like `242c4397-49ed-47e6-8dd0-d5c3bc31778b` and use that as the scope.
+		 * Note: do not use this UUID: a new one must be randomly generated when needed to ensure collision resistance.
+		 * ```typescript
+		 * const factory = new SchemaFactory("242c4397-49ed-47e6-8dd0-d5c3bc31778b");
+		 * ```
+		 */
+		public readonly scope: TScope,
+	) {}
 
 	private scoped<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
 		return (
@@ -303,11 +398,18 @@ export class SchemaFactory<
 		true,
 		T
 	> {
-		return objectSchema(this.scoped(name), fields, true);
+		return objectSchema(
+			this.scoped(name),
+			fields,
+			true,
+			defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
+		);
 	}
 
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 *
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 *
 	 * @remarks
 	 * The unique identifier for this Map is defined as a function of the provided types.
@@ -337,13 +439,15 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 *
 	 * @example
 	 * ```typescript
@@ -359,10 +463,13 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
+	 * {@link SchemaFactory.map} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
@@ -391,7 +498,8 @@ export class SchemaFactory<
 				TreeMapNode<T>,
 				MapNodeInsertableData<T>,
 				true,
-				T
+				T,
+				undefined
 			>;
 		}
 		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
@@ -401,7 +509,8 @@ export class SchemaFactory<
 			TreeMapNode<T>,
 			MapNodeInsertableData<T>,
 			true,
-			T
+			T,
+			undefined
 		> = this.namedMap(nameOrAllowedTypes as TName, allowedTypes, true, true);
 		return out;
 	}
@@ -426,7 +535,8 @@ export class SchemaFactory<
 		TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
 		MapNodeInsertableData<T>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined
 	> {
 		return mapSchema(
 			this.scoped(name),
@@ -434,11 +544,14 @@ export class SchemaFactory<
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
+			undefined,
 		);
 	}
 
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
+	 *
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @remarks
 	 * The identifier for this Array is defined as a function of the provided types.
@@ -478,13 +591,15 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, `Array<${string}>`>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
 	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @example
 	 * ```typescript
@@ -502,10 +617,13 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		true,
-		T
+		T,
+		undefined
 	>;
 
 	/**
+	 * {@link SchemaFactory.array} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */
@@ -531,7 +649,8 @@ export class SchemaFactory<
 				TreeArrayNode<T>,
 				Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 				true,
-				T
+				T,
+				undefined
 			>;
 		}
 		const out: TreeNodeSchemaBoth<
@@ -540,7 +659,8 @@ export class SchemaFactory<
 			TreeArrayNode<T>,
 			Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 			true,
-			T
+			T,
+			undefined
 		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
 		return out;
 	}
@@ -569,7 +689,8 @@ export class SchemaFactory<
 		TreeArrayNode<T> & WithType<ScopedSchemaName<TScope, string>, NodeKind.Array>,
 		Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T>>,
 		ImplicitlyConstructable,
-		T
+		T,
+		undefined
 	> {
 		return arraySchema(this.scoped(name), allowedTypes, implicitlyConstructable, customizable);
 	}
@@ -686,11 +807,20 @@ export class SchemaFactory<
 	 * `error TS2589: Type instantiation is excessively deep and possibly infinite.`
 	 * which otherwise gets reported at sometimes incorrect source locations that vary based on incremental builds.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	public objectRecursive<
 		const Name extends TName,
 		const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>,
-	>(name: Name, t: T) {
+	>(
+		name: Name,
+		t: T,
+	): TreeNodeSchemaClass<
+		ScopedSchemaName<TScope, Name>,
+		NodeKind.Object,
+		TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>,
+		object & InsertableObjectFromSchemaRecordUnsafe<T>,
+		false,
+		T
+	> {
 		type TScopedName = ScopedSchemaName<TScope, Name>;
 		return this.object(
 			name,
@@ -743,7 +873,8 @@ export class SchemaFactory<
 				[Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
 			},
 			false,
-			T
+			T,
+			undefined
 		>;
 	}
 
@@ -763,6 +894,8 @@ export class SchemaFactory<
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
 			true,
+			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
+			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
 			false,
 		);
 
@@ -770,26 +903,32 @@ export class SchemaFactory<
 			ScopedSchemaName<TScope, Name>,
 			NodeKind.Map,
 			TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>,
-			{
-				/**
-				 * Iterator for the iterable of content for this node.
-				 * @privateRemarks
-				 * Wrapping the constructor parameter for recursive arrays and maps in an inlined object type avoids (for unknown reasons)
-				 * the following compile error when declaring the recursive schema:
-				 * `Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.`
-				 * To benefit from this without impacting the API, the definition of `Iterable` has been inlined as such an object.
-				 *
-				 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
-				 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
-				 */
-				[Symbol.iterator](): Iterator<
-					[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
-				>;
-			},
-			// Ideally this would be included, but doing so breaks recursive types.
-			// | RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			| {
+					/**
+					 * Iterator for the iterable of content for this node.
+					 * @privateRemarks
+					 * Wrapping the constructor parameter for recursive arrays and maps in an inlined object type avoids (for unknown reasons)
+					 * the following compile error when declaring the recursive schema:
+					 * `Function implicitly has return type 'any' because it does not have a return type annotation and is referenced directly or indirectly in one of its return expressions.`
+					 * To benefit from this without impacting the API, the definition of `Iterable` has been inlined as such an object.
+					 *
+					 * If this workaround is kept, ideally this comment would be deduplicated with the other instance of it.
+					 * Unfortunately attempts to do this failed to avoid the compile error this was introduced to solve.
+					 */
+					[Symbol.iterator](): Iterator<
+						[string, InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>]
+					>;
+			  }
+			// Ideally this would be
+			// RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+			// but doing so breaks recursive types.
+			// Instead we do a less nice version:
+			| {
+					readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+			  },
 			false,
-			T
+			T,
+			undefined
 		>;
 	}
 }

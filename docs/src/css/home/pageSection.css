@@ -1,0 +1,17 @@
+.ffcom-home-page-section {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
+	padding-top: 25px;
+}
+
+.ffcom-home-page-section-inner {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	height: 100%;
+	width: 100%;
+	max-width: 1600px;
+	padding: 15px;
+}

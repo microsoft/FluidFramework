@@ -58,6 +58,8 @@
 			"packages/tools/fluid-runner/src/test/localOdspSnapshots/**",
 			"packages/tools/fluid-runner/src/test/telemetryExpectedOutputs/**",
 			"tools/api-markdown-documenter/src/test/snapshots/**",
+			// TODO: why does examples/apps/tree-cli-app/*.json not work?
+			"**/data/*.json",
 
 			// Generated type-tests
 			"**/*.generated.ts",
@@ -120,7 +122,6 @@
 			"tools/getkeys/**",
 			"tools/markdown-magic/**",
 			"tools/pipelines/**",
-			"tools/telemetry-generator/**",
 			"tools/test-tools/**"
 		],
 		"maxSize": 2097152

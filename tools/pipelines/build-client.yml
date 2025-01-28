@@ -100,7 +100,7 @@ trigger:
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
-    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/build-npm-client-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -110,6 +110,7 @@ trigger:
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-process-test-results.yml
+    - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
 
 pr:
@@ -161,7 +162,7 @@ pr:
     # markdown-magic is part of the client release group
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
-    - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/build-npm-client-package.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -175,10 +176,9 @@ variables:
     parameters:
       publishOverride: '${{ parameters.publishOverride }}'
       releaseBuildOverride: '${{ parameters.releaseBuildOverride }}'
-      buildNumberInPatch: ''
 
 extends:
-  template: /tools/pipelines/templates/build-npm-package.yml@self
+  template: /tools/pipelines/templates/build-npm-client-package.yml@self
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
@@ -193,7 +193,7 @@ extends:
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
-    poolBuild: NewLarge-linux-1ES
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build
@@ -206,14 +206,13 @@ extends:
     # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
     # packages twice.
-    - check:are-the-types-wrong
-    - webpack
-    - ci:test:mocha
-    - ci:test:jest
-    - ci:test:realsvc:local
-    - ci:test:realsvc:tinylicious
-    - ci:test:stress:tinylicious
-    - test:copyresults
+    - { name: "ci:test:jest", jobName: "JestTest" }
+    - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest" }
+    - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
+    - { name: "check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
+    coverageTests:
+    - { name: "ci:test:mocha", jobName: "MochaTest" }
+    - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
     testResultDirs:
     - nyc/examples
     - nyc/experimental

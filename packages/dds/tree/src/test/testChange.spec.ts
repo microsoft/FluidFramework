@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
@@ -74,14 +74,7 @@ describe("TestChange", () => {
 		const tag = mintRevisionTag();
 		const delta = TestChange.toDelta(tagChange(change1, tag));
 		const field: FieldKey = brand("testIntentions");
-		const expected = new Map([
-			[
-				field,
-				{
-					local: [{ count: 2 }, { count: 3 }],
-				},
-			],
-		]);
+		const expected = new Map([[field, [{ count: 2 }, { count: 3 }]]]);
 
 		assert.deepEqual(delta, expected);
 		assert.deepEqual(

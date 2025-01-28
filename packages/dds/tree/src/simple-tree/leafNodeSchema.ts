@@ -40,6 +40,10 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 		return data;
 	}
 
+	public createFromInsertable(data: TreeValue<T>): TreeValue<T> {
+		return data;
+	}
+
 	public constructor(name: Name, t: T) {
 		this.identifier = name;
 		this.info = t;
@@ -56,7 +60,8 @@ function makeLeaf<Name extends string, const T extends ValueSchema>(
 	`com.fluidframework.leaf.${Name}`,
 	NodeKind.Leaf,
 	TreeValue<T>,
-	TreeValue<T>
+	TreeValue<T>,
+	true
 > {
 	// Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
 	return new LeafNodeSchema(`com.fluidframework.leaf.${name}`, t);

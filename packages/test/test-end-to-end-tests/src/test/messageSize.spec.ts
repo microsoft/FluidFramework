@@ -12,6 +12,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
+	disabledCompressionConfig,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
@@ -23,6 +24,7 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
+	toIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -113,13 +115,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			}),
 		);
 
-	const disableCompressionConfig = {
+	const configWithCompressionDisabled = {
 		...testContainerConfig,
 		runtimeOptions: {
-			compressionOptions: {
-				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
+			compressionOptions: disabledCompressionConfig,
 		},
 	}; // Compression is enabled by default
 
@@ -128,7 +127,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async () => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
-			await setupContainers(disableCompressionConfig);
+			await setupContainers(configWithCompressionDisabled);
 
 			const errorEvent = containerError(localContainer);
 
@@ -168,7 +167,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		const maxMessageSizeInBytes = 600 * 1024;
-		await setupContainers(disableCompressionConfig);
+		await setupContainers(configWithCompressionDisabled);
 		const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
 		const messageCount = 10;
 		localContainer.disconnect();
@@ -245,7 +244,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers(disableCompressionConfig);
+			await setupContainers(configWithCompressionDisabled);
 
 			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 3; // Will result in a 15 MB payload
@@ -256,7 +255,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const chunkingBatchesTimeoutMs = 200000;
 
-	[false, true].forEach((enableGroupedBatching) => {
+	[true].forEach((enableGroupedBatching) => {
 		const containerConfig: ITestContainerConfig = {
 			...testContainerConfig,
 			runtimeOptions: {
@@ -447,7 +446,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				});
 				totalPayloadSizeInBytes = 0;
 				totalOps = 0;
-				localContainer.deltaManager.outbound.on("push", (messages) => {
+				toIDeltaManagerFull(localContainer.deltaManager).outbound.on("push", (messages) => {
 					totalPayloadSizeInBytes += JSON.stringify(messages).length;
 					totalOps += messages.length;
 				});
@@ -623,13 +622,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							container.disconnect();
 							container.once("connected", () => {
 								resolve();
-								container.deltaManager.outbound.off("op", handler);
+								toIDeltaManagerFull(container.deltaManager).outbound.off("op", handler);
 							});
 							container.connect();
 						}
 					};
 
-					container.deltaManager.outbound.on("op", handler);
+					toIDeltaManagerFull(container.deltaManager).outbound.on("op", handler);
 				});
 			};
 

@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import {
 	type ChangeAtomId,
-	type DeltaFieldChanges,
 	type TaggedChange,
 	makeAnonChange,
 	makeDetachedNodeId,
@@ -43,6 +42,11 @@ import { testRebaserAxioms } from "./optionalChangeRebaser.test.js";
 import { testCodecs } from "./optionalFieldChangeCodecs.test.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
+import type {
+	FieldChangeDelta,
+	NestedChangesIndices,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 /**
  * A change to a child encoding as a simple placeholder string.
@@ -669,7 +673,7 @@ describe("optionalField", () => {
 	describe("IntoDelta", () => {
 		it("can be converted to a delta when field was empty", () => {
 			const outerNodeId = makeDetachedNodeId(tag, 41);
-			const expected: DeltaFieldChanges = {
+			const expected: FieldChangeDelta = {
 				global: [
 					{
 						id: outerNodeId,
@@ -684,7 +688,7 @@ describe("optionalField", () => {
 		});
 
 		it("can be converted to a delta when restoring content", () => {
-			const expected: DeltaFieldChanges = {
+			const expected: FieldChangeDelta = {
 				local: [
 					{
 						count: 1,
@@ -699,7 +703,7 @@ describe("optionalField", () => {
 		});
 
 		it("can be converted to a delta with only child changes", () => {
-			const expected: DeltaFieldChanges = {
+			const expected: FieldChangeDelta = {
 				local: [
 					{
 						count: 1,
@@ -946,7 +950,27 @@ describe("optionalField", () => {
 		it("includes changes to the node in the field", () => {
 			const change: OptionalChangeset = Change.child(nodeId1);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			assert.deepEqual(actual, [[nodeId1, 0]]);
+			const expected: NestedChangesIndices = [[nodeId1, 0, 0]];
+			assert.deepEqual(actual, expected);
+		});
+		it("includes changes to a node being removed from the field", () => {
+			const change: OptionalChangeset = Change.atOnce(
+				Change.child(nodeId1),
+				Change.clear("self", brand(41)),
+			);
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			const expected: NestedChangesIndices = [[nodeId1, 0, undefined]];
+			assert.deepEqual(actual, expected);
+		});
+		it("includes changes to a node being moved into from the field", () => {
+			const change: OptionalChangeset = Change.atOnce(
+				Change.reserve("self", brand(41)),
+				Change.childAt(brand(42), nodeId1),
+				Change.move(brand(42), "self"),
+			);
+			const actual = optionalChangeHandler.getNestedChanges(change);
+			const expected: NestedChangesIndices = [[nodeId1, undefined, 0]];
+			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to removed nodes", () => {
 			const change: OptionalChangeset = Change.atOnce(
@@ -954,10 +978,11 @@ describe("optionalField", () => {
 				Change.childAt(brand(42), nodeId2),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			assert.deepEqual(actual, [
-				[nodeId1, undefined],
-				[nodeId2, undefined],
-			]);
+			const expected: NestedChangesIndices = [
+				[nodeId1, undefined, undefined],
+				[nodeId2, undefined, undefined],
+			];
+			assert.deepEqual(actual, expected);
 		});
 	});
 });

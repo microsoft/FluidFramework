@@ -14,9 +14,10 @@
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "npm run build:genver && concurrently npm:build:compile npm:lint",
-		"build:compile": "npm run tsc && npm run typetests:gen",
+		"build:compile": "npm run tsc && npm run typetests:gen && npm run build:test",
 		"build:genver": "gen-version",
-		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run prettier:fix",
@@ -24,8 +25,10 @@
 		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
+		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
+		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -41,15 +44,20 @@
 		"nconf": "^0.12.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@5.0.0",
+		"@types/mocha": "^10.0.1",
+		"@types/sinon": "^17.0.3",
+		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
+		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
+		"sinon": "^18.0.1",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
@@ -62,24 +70,46 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_IOrdererManager": {
+			"Class_CombinedProducer": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IProducer": {
+			"Class_MongoManager": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_CombinedProducer": {
+			"Class_TokenRevocationError": {
+				"backCompat": false
+			},
+			"Class_TokenRevokedError": {
+				"backCompat": false
+			},
+			"ClassStatics_TokenRevocationError": {
+				"backCompat": false
+			},
+			"ClassStatics_TokenRevokedError": {
+				"backCompat": false
+			},
+			"Interface_IBoxcarMessage": {
+				"backCompat": false
+			},
+			"Interface_IContext": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IOrdererConnection": {
+			"Interface_IOrdererConnection": {
 				"forwardCompat": false
 			},
-			"InterfaceDeclaration_IContext": {
+			"Interface_IOrdererManager": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_MongoManager": {
+			"Interface_IProducer": {
+				"forwardCompat": false
+			},
+			"Interface_ITenantConfig": {
+				"forwardCompat": false
+			},
+			"Interface_ITenantManager": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

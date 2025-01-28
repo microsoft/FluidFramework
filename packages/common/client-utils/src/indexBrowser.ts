@@ -25,3 +25,13 @@ export {
 	TypedEventEmitter,
 	type TypedEventTransform,
 } from "./typedEventEmitter.js";
+
+export { createEmitter } from "./events/index.js";
+
+export {
+	checkLayerCompatibility,
+	type LayerCompatCheckResult,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
+	type ILayerCompatSupportRequirements,
+} from "./layerCompat.js";

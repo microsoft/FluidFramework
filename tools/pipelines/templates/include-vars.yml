@@ -17,10 +17,12 @@ parameters:
   default: false
 
 - name: buildNumberInPatch
-  type: string
+  type: boolean
+  default: false
 
 variables:
 - group: prague-key-vault
+- group: ado-feeds
 - name: skipComponentGovernanceDetection
   value: true
 - name: testBuild
@@ -65,8 +67,6 @@ variables:
         eq(variables.shouldPublish, true)
       )
     )}}
-- name: componentDetection
-  value: ${{ variables.publish }}
 - name: pushImage
   value: ${{ variables.publish }}
 - name: releaseImage
@@ -103,3 +103,5 @@ variables:
 - name: testCoverage
   value: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
   readonly: true
+
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self

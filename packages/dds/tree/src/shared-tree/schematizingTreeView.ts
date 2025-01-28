@@ -3,34 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import type {
+	HasListeners,
+	IEmitter,
+	Listenable,
+} from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	AllowedUpdateType,
-	anchorSlot,
-	Compatibility,
-	type SchemaPolicy,
-} from "../core/index.js";
-import {
-	type HasListeners,
-	type IEmitter,
-	type Listenable,
-	createEmitter,
-} from "../events/index.js";
+import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
 import {
 	type NodeKeyManager,
 	defaultSchemaPolicy,
 	ContextSlot,
 	cursorForMapTreeNode,
 	type FullSchemaPolicy,
+	TreeStatus,
 } from "../feature-libraries/index.js";
 import {
 	type FieldSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-	type InsertableTreeFieldFromImplicitField,
-	type TreeFieldFromImplicitField,
 	type TreeView,
 	type TreeViewEvents,
 	getTreeNodeForField,
@@ -43,13 +37,36 @@ import {
 	prepareContentForHydration,
 	comparePersistedSchemaInternal,
 	toStoredSchema,
+	type TreeViewAlpha,
+	type InsertableField,
+	type ReadableField,
+	type ReadSchema,
+	type UnsafeUnknownSchema,
+	type TreeBranch,
+	type TreeBranchEvents,
+	getOrCreateInnerNode,
+	getKernel,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import { HydratedContext, SimpleContextSlot } from "../simple-tree/index.js";
+import {
+	HydratedContext,
+	SimpleContextSlot,
+	areImplicitFieldSchemaEqual,
+	createUnknownOptionalFieldPolicy,
+} from "../simple-tree/index.js";
+import type {
+	VoidTransactionCallbackStatus,
+	TransactionCallbackStatus,
+	TransactionResult,
+	TransactionResultExt,
+	RunTransactionParams,
+	TransactionConstraint,
+} from "./transactionTypes.js";
+
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
  * exists and error if creating a second.
@@ -60,8 +77,9 @@ export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
  * Implementation of TreeView wrapping a FlexTreeView.
  */
 @breakingClass
-export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitFieldSchema>
-	implements TreeView<TRootSchema>, WithBreakable
+export class SchematizingSimpleTreeView<
+	in out TRootSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
+> implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
 	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
@@ -75,9 +93,9 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	private readonly schemaPolicy: SchemaPolicy;
-	public readonly events: Listenable<TreeViewEvents> &
-		IEmitter<TreeViewEvents> &
-		HasListeners<TreeViewEvents> = createEmitter();
+	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
+		IEmitter<TreeViewEvents & TreeBranchEvents> &
+		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
 	private readonly viewSchema: ViewSchema;
 
@@ -96,7 +114,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
-		public readonly config: TreeViewConfiguration<TRootSchema>,
+		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
 		public readonly nodeKeyManager: NodeKeyManager,
 		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 		private readonly onDispose?: () => void,
@@ -106,14 +124,14 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		}
 		checkout.forest.anchors.slots.set(ViewSlot, this);
 
-		const policy = {
+		this.rootFieldSchema = normalizeFieldSchema(config.schema);
+		this.schemaPolicy = {
 			...defaultSchemaPolicy,
 			validateSchema: config.enableSchemaValidation,
+			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
-		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.schemaPolicy = defaultSchemaPolicy;
 
-		this.viewSchema = new ViewSchema(policy, {}, toStoredSchema(this.rootFieldSchema));
+		this.viewSchema = new ViewSchema(this.schemaPolicy, {}, this.rootFieldSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -124,17 +142,24 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.update();
 
 		this.unregisterCallbacks.add(
-			this.checkout.events.on("commitApplied", (data, getRevertible) =>
-				this.events.emit("commitApplied", data, getRevertible),
-			),
+			this.checkout.events.on("changed", (data, getRevertible) => {
+				this.events.emit("changed", data, getRevertible);
+				this.events.emit("commitApplied", data, getRevertible);
+			}),
 		);
 	}
 
-	public get schema(): TRootSchema {
+	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
+		schema: TSchema,
+	): this is TreeViewAlpha<TSchema> {
+		return areImplicitFieldSchemaEqual(this.rootFieldSchema, schema);
+	}
+
+	public get schema(): ReadSchema<TRootSchema> {
 		return this.config.schema;
 	}
 
-	public initialize(content: InsertableTreeFieldFromImplicitField<TRootSchema>): void {
+	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
@@ -149,16 +174,13 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				this.nodeKeyManager,
 				{
 					schema: this.checkout.storedSchema,
-					policy: {
-						...defaultSchemaPolicy,
-						validateSchema: this.config.enableSchemaValidation,
-					},
+					policy: this.schemaPolicy,
 				},
 			);
 
 			prepareContentForHydration(mapTree, this.checkout.forest);
 			initialize(this.checkout, {
-				schema: this.viewSchema.schema,
+				schema: toStoredSchema(this.viewSchema.schema),
 				initialTree: mapTree === undefined ? undefined : cursorForMapTreeNode(mapTree),
 			});
 		});
@@ -185,7 +207,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				AllowedUpdateType.SchemaCompatible,
 				this.checkout,
 				{
-					schema: this.viewSchema.schema,
+					schema: toStoredSchema(this.viewSchema.schema),
 					initialTree: undefined,
 				},
 			);
@@ -200,6 +222,84 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.ensureUndisposed();
 		assert(this.view !== undefined, 0x8c0 /* unexpected getViewOrError */);
 		return this.view;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
+	 */
+	public runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue>;
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
+	 */
+	public runTransaction(
+		transaction: () => VoidTransactionCallbackStatus | void,
+		params?: RunTransactionParams,
+	): TransactionResult;
+	public runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () =>
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		const addConstraints = (
+			constraintsOnRevert: boolean,
+			constraints: readonly TransactionConstraint[] = [],
+		): void => {
+			for (const constraint of constraints) {
+				switch (constraint.type) {
+					case "nodeInDocument": {
+						const node = getOrCreateInnerNode(constraint.node);
+						const nodeStatus = getKernel(constraint.node).getStatus();
+						if (nodeStatus !== TreeStatus.InDocument) {
+							const revertText = constraintsOnRevert ? " on revert" : "";
+							throw new UsageError(
+								`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+							);
+						}
+						if (constraintsOnRevert) {
+							this.checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
+						} else {
+							this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
+						}
+						break;
+					}
+					default:
+						unreachableCase(constraint.type);
+				}
+			}
+		};
+
+		this.checkout.transaction.start();
+
+		// Validate preconditions before running the transaction callback.
+		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
+		const transactionCallbackStatus = transaction();
+		const rollback = transactionCallbackStatus?.rollback;
+		const value = (
+			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+		)?.value;
+
+		if (rollback === true) {
+			this.checkout.transaction.abort();
+			return value !== undefined
+				? { success: false, value: value as TFailureValue }
+				: { success: false };
+		}
+
+		// Validate preconditions on revert after running the transaction callback and was successful.
+		addConstraints(
+			true /* constraintsOnRevert */,
+			transactionCallbackStatus?.preconditionsOnRevert,
+		);
+
+		this.checkout.transaction.commit();
+		return value !== undefined
+			? { success: true, value: value as TSuccessValue }
+			: { success: true };
 	}
 
 	private ensureUndisposed(): void {
@@ -280,7 +380,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
 			);
 
-			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
 				view[disposeSymbol]();
@@ -290,7 +390,7 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			this.view = undefined;
 			this.checkout.forest.anchors.slots.delete(SimpleContextSlot);
 
-			const unregister = this.checkout.storedSchema.on("afterSchemaChange", () => {
+			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
 				unregister();
 				this.unregisterCallbacks.delete(unregister);
 				this.update();
@@ -338,9 +438,13 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
+		if (this.checkout.isBranch && !this.checkout.disposed) {
+			// All (non-main) branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+			this.checkout.dispose();
+		}
 	}
 
-	public get root(): TreeFieldFromImplicitField<TRootSchema> {
+	public get root(): ReadableField<TRootSchema> {
 		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
@@ -348,10 +452,10 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			);
 		}
 		const view = this.getView();
-		return getTreeNodeForField(view.flexTree) as TreeFieldFromImplicitField<TRootSchema>;
+		return getTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
 	}
 
-	public set root(newRoot: InsertableTreeFieldFromImplicitField<TRootSchema>) {
+	public set root(newRoot: InsertableField<TRootSchema>) {
 		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
@@ -365,6 +469,34 @@ export class SchematizingSimpleTreeView<in out TRootSchema extends ImplicitField
 			newRoot as InsertableContent | undefined,
 		);
 	}
+
+	// #region Branching
+
+	public fork(): ReturnType<TreeBranch["fork"]> & SchematizingSimpleTreeView<TRootSchema> {
+		return this.checkout.branch().viewWith(this.config);
+	}
+
+	public merge(context: TreeBranch, disposeMerged = true): void {
+		this.checkout.merge(getCheckout(context), disposeMerged);
+	}
+
+	public rebaseOnto(context: TreeBranch): void {
+		getCheckout(context).rebase(this.checkout);
+	}
+
+	// #endregion Branching
+}
+
+/**
+ * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
+ * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
+ * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
+ */
+export function getCheckout(context: TreeBranch): TreeCheckout {
+	if (context instanceof SchematizingSimpleTreeView) {
+		return context.checkout;
+	}
+	throw new UsageError("Unsupported context implementation");
 }
 
 /**
@@ -383,11 +515,7 @@ export function requireSchema(
 
 	{
 		const compatibility = viewSchema.checkCompatibility(checkout.storedSchema);
-		assert(
-			compatibility.write === Compatibility.Compatible &&
-				compatibility.read === Compatibility.Compatible,
-			0x8c3 /* requireSchema invoked with incompatible schema */,
-		);
+		assert(compatibility.canView, 0x8c3 /* requireSchema invoked with incompatible schema */);
 	}
 
 	const view = new CheckoutFlexTreeView(checkout, schemaPolicy, nodeKeyManager, onDispose);

@@ -54,6 +54,8 @@ import {
 	VisibilityState,
 	gcDataBlobKey,
 	IInboundSignalMessage,
+	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -193,7 +195,7 @@ export class FluidDataStoreRuntime
 	private readonly pendingHandlesToMakeVisible: Set<IFluidHandleInternal> = new Set();
 
 	public readonly id: string;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 	public readonly options: Record<string | number, any>;
 	public readonly deltaManagerInternal: IDeltaManager<
 		ISequencedDocumentMessage,
@@ -356,6 +358,18 @@ export class FluidDataStoreRuntime
 	public async request(request: IRequest): Promise<IResponse> {
 		try {
 			const parser = RequestParser.create(request);
+			// If there are not path parts, and the request is via a handle
+			// then we should return the entrypoint object for this runtime.
+			// This allows the entrypoint handle to be resolved without the need
+			// for the entrypoint object to know anything about requests or handles.
+			//
+			// This works because the entrypoint handle is an object handle,
+			// which always has a real reference to the object itself.
+			// Those get serialized and then deserialized into a plain handle, which really just has a path,
+			// resolution walks to the runtime, which calls this, and get the true object off the internal object handle
+			if (parser.pathParts.length === 0 && request.headers?.viaHandle === true) {
+				return { mimeType: "fluid/object", status: 200, value: await this.entryPoint.get() };
+			}
 			const id = parser.pathParts[0];
 
 			if (id === "_channels" || id === "_custom") {
@@ -650,66 +664,151 @@ export class FluidDataStoreRuntime
 		);
 	}
 
+	/**
+	 * Process channel messages. The messages here are contiguous channel types messages in a batch for this data
+	 * store.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	private processChannelMessages(messageCollection: IRuntimeMessageCollection) {
+		this.verifyNotClosed();
+
+		/*
+		 * Bunch contiguous messages for the same channel and send them together.
+		 * This is an optimization where DDSes can process a bunch of ops together. DDSes
+		 * like merge tree or shared tree can process ops more efficiently when they are bunched together.
+		 */
+		let currentAddress: string | undefined;
+		let currentMessagesContent: IRuntimeMessagesContent[] = [];
+		const { messagesContent, local } = messageCollection;
+
+		const sendBunchedMessages = () => {
+			// Current address will be undefined for the first message in the list.
+			if (currentAddress === undefined) {
+				return;
+			}
+
+			// process the last set of channel ops
+			const channelContext = this.contexts.get(currentAddress);
+			assert(!!channelContext, 0xa6b /* Channel context not found */);
+
+			channelContext.processMessages({
+				envelope: messageCollection.envelope,
+				messagesContent: currentMessagesContent,
+				local,
+			});
+
+			currentMessagesContent = [];
+		};
+
+		for (const { contents, ...restOfMessagesContent } of messagesContent) {
+			const contentsEnvelope = contents as IEnvelope;
+
+			// If the address of the message changes while processing the batch, send the current bunch.
+			if (currentAddress !== contentsEnvelope.address) {
+				sendBunchedMessages();
+			}
+
+			currentMessagesContent.push({
+				contents: contentsEnvelope.contents,
+				...restOfMessagesContent,
+			});
+			currentAddress = contentsEnvelope.address;
+		}
+
+		// Process the last bunch of messages.
+		sendBunchedMessages();
+	}
+
+	private processAttachMessages(messageCollection: IRuntimeMessageCollection) {
+		const { envelope, messagesContent, local } = messageCollection;
+		for (const { contents } of messagesContent) {
+			const attachMessage = contents as IAttachMessage;
+			const id = attachMessage.id;
+
+			// We need to process the GC Data for both local and remote attach messages
+			processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
+				// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
+				const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
+				this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp);
+			});
+
+			// If a non-local operation then go and create the object
+			// Otherwise mark it as officially attached.
+			if (local) {
+				assert(
+					this.pendingAttach.delete(id),
+					0x17c /* "Unexpected attach (local) channel OP" */,
+				);
+			} else {
+				assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
+
+				const summarizerNodeParams = {
+					type: CreateSummarizerNodeSource.FromAttach,
+					sequenceNumber: envelope.sequenceNumber,
+					snapshot: attachMessage.snapshot,
+				};
+
+				const remoteChannelContext = this.createRemoteChannelContext(
+					attachMessage,
+					summarizerNodeParams,
+				);
+				this.contexts.set(id, remoteChannelContext);
+			}
+		}
+	}
+
+	/**
+	 * Process messages for this data store. The messages here are contiguous messages in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
+		this.verifyNotClosed();
+
+		const { envelope, messagesContent } = messageCollection;
+		try {
+			switch (envelope.type) {
+				case DataStoreMessageType.ChannelOp:
+					this.processChannelMessages(messageCollection);
+					break;
+				case DataStoreMessageType.Attach:
+					this.processAttachMessages(messageCollection);
+					break;
+				default:
+			}
+		} catch (error) {
+			throw DataProcessingError.wrapIfUnrecognized(
+				error,
+				"fluidDataStoreRuntimeFailedToProcessMessage",
+				envelope,
+			);
+		}
+
+		for (const { contents, clientSequenceNumber } of messagesContent) {
+			this.emit("op", { ...envelope, contents, clientSequenceNumber });
+		}
+	}
+
+	/**
+	 * back-compat ADO 21575.
+	 * This is still here for back-compat purposes because it exists on IFluidDataStoreChannel. Once it is removed from
+	 * the interface, this method can be removed.
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
-		this.verifyNotClosed();
-
-		try {
-			// catches as data processing error whether or not they come from async pending queues
-			switch (message.type) {
-				case DataStoreMessageType.Attach: {
-					const attachMessage = message.contents as IAttachMessage;
-					const id = attachMessage.id;
-
-					// We need to process the GC Data for both local and remote attach messages
-					processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
-						// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
-						const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
-						this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath, message.timestamp);
-					});
-
-					// If a non-local operation then go and create the object
-					// Otherwise mark it as officially attached.
-					if (local) {
-						assert(
-							this.pendingAttach.delete(id),
-							0x17c /* "Unexpected attach (local) channel OP" */,
-						);
-					} else {
-						assert(!this.contexts.has(id), 0x17d /* "Unexpected attach channel OP" */);
-
-						const summarizerNodeParams = {
-							type: CreateSummarizerNodeSource.FromAttach,
-							sequenceNumber: message.sequenceNumber,
-							snapshot: attachMessage.snapshot,
-						};
-
-						const remoteChannelContext = this.createRemoteChannelContext(
-							attachMessage,
-							summarizerNodeParams,
-						);
-						this.contexts.set(id, remoteChannelContext);
-					}
-					break;
-				}
-
-				case DataStoreMessageType.ChannelOp:
-					this.processChannelOp(message, local, localOpMetadata);
-					break;
-				default:
-			}
-
-			this.emit("op", message);
-		} catch (error) {
-			throw DataProcessingError.wrapIfUnrecognized(
-				error,
-				"fluidDataStoreRuntimeFailedToProcessMessage",
-				message,
-			);
-		}
+		this.processMessages({
+			envelope: message,
+			messagesContent: [
+				{
+					contents: message.contents,
+					localOpMetadata,
+					clientSequenceNumber: message.clientSequenceNumber,
+				},
+			],
+			local,
+		});
 	}
 
 	public processSignal(message: IInboundSignalMessage, local: boolean) {
@@ -1124,27 +1223,6 @@ export class FluidDataStoreRuntime
 	private setChannelDirty(address: string): void {
 		this.verifyNotClosed();
 		this.dataStoreContext.setChannelDirty(address);
-	}
-
-	private processChannelOp(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		this.verifyNotClosed();
-
-		const envelope = message.contents as IEnvelope;
-
-		const transformed: ISequencedDocumentMessage = {
-			...message,
-			contents: envelope.contents,
-		};
-
-		const channelContext = this.contexts.get(envelope.address);
-		assert(!!channelContext, 0x185 /* "Channel not found" */);
-		channelContext.processOp(transformed, local, localOpMetadata);
-
-		return channelContext;
 	}
 
 	private attachListener() {

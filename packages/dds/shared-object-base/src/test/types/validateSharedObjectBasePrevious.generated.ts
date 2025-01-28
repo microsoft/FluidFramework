@@ -148,7 +148,7 @@ declare type current_as_old_for_Interface_ISharedObjectEvents = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISharedObjectKind": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_ISharedObjectKind = requireAssignableTo<TypeOnly<old.ISharedObjectKind<any>>, TypeOnly<current.ISharedObjectKind<any>>>
+declare type old_as_current_for_Interface_ISharedObjectKind = requireAssignableTo<TypeOnly<old.ISharedObjectKind<never>>, TypeOnly<current.ISharedObjectKind<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -157,7 +157,7 @@ declare type old_as_current_for_Interface_ISharedObjectKind = requireAssignableT
  * typeValidation.broken:
  * "Interface_ISharedObjectKind": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_ISharedObjectKind = requireAssignableTo<TypeOnly<current.ISharedObjectKind<any>>, TypeOnly<old.ISharedObjectKind<any>>>
+declare type current_as_old_for_Interface_ISharedObjectKind = requireAssignableTo<TypeOnly<current.ISharedObjectKind<never>>, TypeOnly<old.ISharedObjectKind<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

@@ -18,6 +18,7 @@ import {
 	CompressionAlgorithms,
 	ContainerMessageType,
 	DefaultSummaryConfiguration,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -71,9 +72,23 @@ const usageErrorMessage = "Empty file summary creation isn't supported in this d
 const containerCloseAndDisposeUsageErrors = [
 	{ eventName: "fluid:telemetry:Container:ContainerClose", error: usageErrorMessage },
 ];
-const ContainerCloseUsageError: ExpectedEvents = {
+const ContainerStateEventsOrErrors: ExpectedEvents = {
 	routerlicious: containerCloseAndDisposeUsageErrors,
 	tinylicious: containerCloseAndDisposeUsageErrors,
+	odsp: [
+		{
+			eventName: "fluid:telemetry:OdspDriver:createNewEmptyFile_end",
+			containerAttachState: "Detached",
+		},
+		{
+			eventName: "fluid:telemetry:OdspDriver:uploadSummary_end",
+			containerAttachState: "Attaching",
+		},
+		{
+			eventName: "fluid:telemetry:OdspDriver:renameFile_end",
+			containerAttachState: "Attaching",
+		},
+	],
 };
 
 describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
@@ -85,7 +100,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", async function () {
 		provider = getTestObjectProvider();
-		// Currently FRS does not support blob API.
+		// Currently, AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -216,7 +231,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 		]);
 	});
 
-	[false, true].forEach((enableGroupedBatching) => {
+	[true].forEach((enableGroupedBatching) => {
 		it(`attach sends ops with compression enabled and ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batching`, async function () {
@@ -230,16 +245,18 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 				this.skip();
 			}
 
+			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+				...testContainerConfig.runtimeOptions,
+				compressionOptions: {
+					minimumBatchSizeInBytes: 1,
+					compressionAlgorithm: CompressionAlgorithms.lz4,
+				},
+				enableGroupedBatching,
+			};
+
 			const container = await provider.makeTestContainer({
 				...testContainerConfig,
-				runtimeOptions: {
-					...testContainerConfig.runtimeOptions,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 1,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					enableGroupedBatching,
-				},
+				runtimeOptions,
 			});
 
 			const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
@@ -281,7 +298,7 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", async function () {
 		testPersistedCache = new TestPersistedCache();
 		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
-		// Currently FRS does not support blob API.
+		// Currently AFR does not support blob API.
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -368,7 +385,8 @@ describeCompat("blobs", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore1 = (await container1.getEntryPoint()) as ITestDataObject;
 		const dataStore2 = (await container2.getEntryPoint()) as ITestDataObject;
 		const blob = stringToBuffer("some different yet still random text", "utf-8");
-
+		await waitForContainerConnection(container1);
+		await waitForContainerConnection(container2);
 		// pause so the ops are in flight at the same time
 		await provider.opProcessingController.pauseProcessing();
 
@@ -444,7 +462,7 @@ function serializationTests({
 			for (const summarizeProtocolTree of [undefined, true, false]) {
 				itExpects(
 					`works in detached container. summarizeProtocolTree: ${summarizeProtocolTree}`,
-					ContainerCloseUsageError,
+					ContainerStateEventsOrErrors,
 					async function () {
 						const loader = provider.makeTestLoader({
 							...testContainerConfig,
@@ -611,7 +629,7 @@ function serializationTests({
 
 			itExpects(
 				"redirect table saved in snapshot",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					// test with and without offline load enabled
 					const offlineCfg = {
@@ -687,7 +705,7 @@ function serializationTests({
 
 			itExpects(
 				"serialize/rehydrate then attach",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,
@@ -741,7 +759,7 @@ function serializationTests({
 
 			itExpects(
 				"serialize/rehydrate multiple times then attach",
-				ContainerCloseUsageError,
+				ContainerStateEventsOrErrors,
 				async function () {
 					const loader = provider.makeTestLoader({
 						...testContainerConfig,

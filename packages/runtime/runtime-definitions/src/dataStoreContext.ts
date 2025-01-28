@@ -28,13 +28,16 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
+import type {
+	IFluidDataStoreFactory,
+	IProvideFluidDataStoreFactory,
+} from "./dataStoreFactory.js";
 import type { IProvideFluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage } from "./protocol.js";
+import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -122,28 +125,24 @@ export type VisibilityState = (typeof VisibilityState)[keyof typeof VisibilitySt
  * @sealed
  */
 export interface IContainerRuntimeBaseEvents extends IEvent {
-	(
-		event: "batchBegin",
-		listener: (
-			op: Omit<ISequencedDocumentMessage, "contents"> & {
-				/** @deprecated Use the "op" event to get details about the message contents */
-				contents: unknown;
-			},
-		) => void,
-	);
+	/**
+	 * Indicates the beginning of an incoming batch of ops
+	 * @param op - The first op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 */
+	(event: "batchBegin", listener: (op: Omit<ISequencedDocumentMessage, "contents">) => void);
+	/**
+	 * Indicates the end of an incoming batch of ops
+	 * @param error - If an error occurred while processing the batch, it is provided here.
+	 * @param op - The last op in the batch. Can be inspected to learn about the sequence numbers relevant for this batch.
+	 */
 	(
 		event: "batchEnd",
-		listener: (
-			error: any,
-			op: Omit<ISequencedDocumentMessage, "contents"> & {
-				/** @deprecated Use the "op" event to get details about the message contents */
-				contents: unknown;
-			},
-		) => void,
+		listener: (error: unknown, op: Omit<ISequencedDocumentMessage, "contents">) => void,
 	);
 	/**
+	 * Indicates that an incoming op has been processed.
 	 * @param runtimeMessage - tells if op is runtime op. If it is, it was unpacked, i.e. its type and content
-	 * represent internal container runtime type / content.
+	 * represent internal container runtime type / content. i.e. A grouped batch of N ops will result in N "op" events
 	 */
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
@@ -218,15 +217,6 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
 
 	/**
-	 * @deprecated 0.16 Issue #1537, #3631
-	 */
-	_createDataStoreWithProps(
-		pkg: Readonly<string | string[]>,
-		props?: any,
-		id?: string,
-	): Promise<IDataStore>;
-
-	/**
 	 * Creates a data store and returns an object that exposes a handle to the data store's entryPoint, and also serves
 	 * as the data store's router. The data store is not bound to a container, and in such state is not persisted to
 	 * storage (file). Storing the entryPoint handle (or any other handle inside the data store, e.g. for DDS) into an
@@ -287,14 +277,14 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 
 	/**
 	 * Generates a new ID that is guaranteed to be unique across all sessions for this container.
-	 * It could be in compact form (non-negative integer, oppotunistic), but it could also be UUID string.
+	 * It could be in compact form (non-negative integer, opportunistic), but it could also be UUID string.
 	 * UUIDs generated will have low entropy in groups and will compress well.
 	 * It can be leveraged anywhere in container where container unique IDs are required, i.e. any place
 	 * that uses uuid() and stores result in container is likely candidate to start leveraging this API.
 	 * If you always want to convert to string, instead of doing String(generateDocumentUniqueId()), consider
 	 * doing encodeCompactIdToString(generateDocumentUniqueId()).
 	 *
-	 * For more details, please see IIdCompressor.generateDocumentUniqueId()
+	 * @see {@link @fluidframework/id-compressor#IIdCompressor.generateDocumentUniqueId}
 	 */
 	generateDocumentUniqueId(): number | string;
 
@@ -302,7 +292,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * Api to fetch the snapshot from the service for a loadingGroupIds.
 	 * @param loadingGroupIds - LoadingGroupId for which the snapshot is asked for.
 	 * @param pathParts - Parts of the path, which we want to extract from the snapshot tree.
-	 * @returns - snapshotTree and the sequence number of the snapshot.
+	 * @returns snapshotTree and the sequence number of the snapshot.
 	 */
 	getSnapshotForLoadingGroupId(
 		loadingGroupIds: string[],
@@ -336,7 +326,14 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	getAttachGCData(telemetryContext?: ITelemetryContext): IGarbageCollectionData;
 
 	/**
+	 * Process messages for this channel. The messages here are contiguous messages in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	processMessages?(messageCollection: IRuntimeMessageCollection): void;
+
+	/**
 	 * Processes the op.
+	 * @deprecated processMessages should be used instead to process messages for a channel.
 	 */
 	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
 
@@ -385,8 +382,10 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	reSubmit(type: string, content: any, localOpMetadata: unknown);
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
 
 	/**
@@ -395,6 +394,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	rollback?(type: string, content: any, localOpMetadata: unknown): void;
 
 	/**
@@ -422,6 +422,15 @@ export type CreateChildSummarizerNodeFn = (
 ) => ISummarizerNodeWithGC;
 
 /**
+ * The state maintained for messages that are received when a channel isn't yet loaded.
+ * @internal
+ */
+export interface IPendingMessagesState {
+	messageCollections: IRuntimeMessageCollection[];
+	pendingCount: number;
+}
+
+/**
  * Represents the context for the data store like objects. It is used by the data store runtime to
  * get information and call functionality to its parent.
  *
@@ -433,6 +442,7 @@ export type CreateChildSummarizerNodeFn = (
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
 		Partial<IProvideFluidDataStoreRegistry> {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
@@ -478,19 +488,6 @@ export interface IFluidParentContext
 	getAudience(): IAudience;
 
 	/**
-	 * Invokes the given callback and expects that no ops are submitted
-	 * until execution finishes. If an op is submitted, an error will be raised.
-	 *
-	 * Can be disabled by feature gate `Fluid.ContainerRuntime.DisableOpReentryCheck`
-	 *
-	 * @param callback - the callback to be invoked
-	 *
-	 * @deprecated
-	 * // back-compat: to be removed in 2.0
-	 */
-	ensureNoDataModelChanges<T>(callback: () => T): T;
-
-	/**
 	 * Submits the message to be sent to other clients.
 	 * @param type - Type of the message.
 	 * @param content - Content of the message.
@@ -498,6 +495,7 @@ export interface IFluidParentContext
 	 * the server. This will be sent back when this message is received back from the server. This is also sent if
 	 * we are asked to resubmit the message.
 	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	submitMessage(type: string, content: any, localOpMetadata: unknown): void;
 
 	/**
@@ -585,6 +583,9 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	/**
 	 * @deprecated 0.16 Issue #1635, #3631
 	 */
+	// Seems like this can be removed now; the issues mentioned in the @deprecated tag are about _createDataStoreWithProps
+	// which we finally removed in FF 2.20 (https://github.com/microsoft/FluidFramework/pull/22996).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	readonly createProps?: any;
 
 	/**
@@ -594,6 +595,28 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 * and its children with the GC details from the previous summary.
 	 */
 	getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+
+	/**
+	 * Synchronously creates a detached child data store.
+	 *
+	 * The `createChildDataStore` method allows for the synchronous creation of a detached child data store. This is particularly
+	 * useful in scenarios where immediate availability of the child data store is required, such as during the initialization
+	 * of a parent data store, or when creation is in response to synchronous user input.
+	 *
+	 * In order for this function to succeed:
+	 * 1. The parent data store's factory must also be an `IFluidDataStoreRegistry`.
+	 * 2. The parent data store's registry must include the same instance as the provided child factory.
+	 * 3. The parent data store's registry must synchronously provide the child factory via the `getSync` method.
+	 * 4. The child factory must implement the `createDataStore` method.
+	 *
+	 * These invariants ensure that the child data store can also be created by a remote client running the same code as this client.
+	 *
+	 * @param childFactory - The factory of the data store to be created.
+	 * @returns The created data store channel.
+	 */
+	createChildDataStore?<T extends IFluidDataStoreFactory>(
+		childFactory: T,
+	): ReturnType<Exclude<T["createDataStore"], undefined>>;
 }
 
 /**

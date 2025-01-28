@@ -35,8 +35,8 @@ import * as app from "./app";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 
 export class NexusRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server?: IWebServer;
+	private runningDeferred?: Deferred<void>;
 	private stopped: boolean = false;
 	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.NexusRunner);
 
@@ -92,6 +92,10 @@ export class NexusRunner implements IRunner {
 			const isSignalUsageCountingEnabled = this.config.get(
 				"usage:signalUsageCountingEnabled",
 			);
+
+			if (!this.server.webSocketServer) {
+				throw new Error("WebSocket server is not initialized");
+			}
 
 			// Register all the socket.io stuff
 			configureWebSocketServices(
@@ -239,8 +243,8 @@ export class NexusRunner implements IRunner {
 	 * Event listener for HTTP server "listening" event.
 	 */
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}

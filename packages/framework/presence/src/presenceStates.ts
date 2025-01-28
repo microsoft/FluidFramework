@@ -6,15 +6,27 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
+import type { BroadcastControlSettings } from "./broadcastControls.js";
+import { RequiredBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { ClientRecord } from "./internalTypes.js";
-import { brandedObjectEntries } from "./internalTypes.js";
+import type { RecordEntryTypes } from "./internalUtils.js";
+import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
-import { handleFromDatastore, type StateDatastore } from "./stateDatastore.js";
-import type { PresenceStates, PresenceStatesMethods, PresenceStatesSchema } from "./types.js";
+import type { LocalStateUpdateOptions, StateDatastore } from "./stateDatastore.js";
+import { handleFromDatastore } from "./stateDatastore.js";
+import type { PresenceStates, PresenceStatesSchema } from "./types.js";
 import { unbrandIVM } from "./valueManager.js";
 
 /**
+ * Extracts `Part` from {@link InternalTypes.ManagerFactory} return type
+ * matching the {@link PresenceStatesSchema} `Keys` given.
+ *
+ * @remarks
+ * If the `Part` is an optional property, undefined will be included in the
+ * result. Applying `Required` to the return type prior to extracting `Part`
+ * does not work as expected. Use Exclude\<, undefined\> can be used as needed.
+ *
  * @internal
  */
 export type MapSchemaElement<
@@ -26,10 +38,25 @@ export type MapSchemaElement<
 /**
  * @internal
  */
+export interface RuntimeLocalUpdateOptions {
+	allowableUpdateLatencyMs: number;
+
+	/**
+	 * Special option allowed for unicast notifications.
+	 */
+	targetClientId?: ClientConnectionId;
+}
+
+/**
+ * @internal
+ */
 export interface PresenceRuntime {
 	readonly clientSessionId: ClientSessionId;
 	lookupClient(clientId: ClientConnectionId): ISessionClient;
-	localUpdate(states: { [key: string]: ClientUpdateEntry }, forceBroadcast: boolean): void;
+	localUpdate(
+		states: { [key: string]: ClientUpdateEntry },
+		options: RuntimeLocalUpdateOptions,
+	): void;
 }
 
 type PresenceSubSchemaFromWorkspaceSchema<
@@ -48,7 +75,7 @@ type MapEntries<TSchema extends PresenceStatesSchema> = PresenceSubSchemaFromWor
  * ValueElementMap is a map of key to a map of clientId to ValueState.
  * It is not restricted to the schema of the map as it may receive updates from other clients
  * with managers that have not been registered locally. Each map node is responsible for keeping
- * all sessions state to be able to pick arbitrary client to rebroadcast to others.
+ * all session's state to be able to pick arbitrary client to rebroadcast to others.
  *
  * This generic aspect makes some typing difficult. The loose typing is not broadcast to the
  * consumers that are expected to maintain their schema over multiple versions of clients.
@@ -99,11 +126,13 @@ interface ValueUpdateRecord {
 export interface PresenceStatesInternal {
 	ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
 		content: TSchemaAdditional,
+		controls: BroadcastControlSettings | undefined,
 	): PresenceStates<TSchemaAdditional>;
 	processUpdate(
 		received: number,
 		timeModifier: number,
 		remoteDatastore: ValueUpdateRecord,
+		senderConnectionId: ClientConnectionId,
 	): void;
 }
 
@@ -118,7 +147,12 @@ function isValueDirectory<
 	return "items" in value;
 }
 
-function mergeValueDirectory<
+/**
+ * Merge a value directory.
+ *
+ * @internal
+ */
+export function mergeValueDirectory<
 	T,
 	TValueState extends
 		| InternalTypes.ValueRequiredState<T>
@@ -178,11 +212,12 @@ export function mergeUntrackedDatastore(
 	datastore: ValueElementMap<PresenceStatesSchema>,
 	timeModifier: number,
 ): void {
-	if (!(key in datastore)) {
-		datastore[key] = {};
-	}
-	const localAllKnownState = datastore[key];
-	for (const [clientSessionId, value] of brandedObjectEntries(remoteAllKnownState)) {
+	const localAllKnownState = getOrCreateRecord(
+		datastore,
+		key,
+		(): RecordEntryTypes<typeof datastore> => ({}),
+	);
+	for (const [clientSessionId, value] of objectEntries(remoteAllKnownState)) {
 		if (!("ignoreUnmonitored" in value)) {
 			localAllKnownState[clientSessionId] = mergeValueDirectory(
 				localAllKnownState[clientSessionId],
@@ -193,50 +228,80 @@ export function mergeUntrackedDatastore(
 	}
 }
 
+/**
+ * The default allowable update latency for PresenceStates workspaces in milliseconds.
+ */
+const defaultAllowableUpdateLatencyMs = 60;
+
+/**
+ * Produces the value type of a schema element or set of elements.
+ */
+type SchemaElementValueType<
+	TSchema extends PresenceStatesSchema,
+	Keys extends keyof TSchema & string,
+> = Exclude<MapSchemaElement<TSchema, "initialData", Keys>, undefined>["value"];
+
 class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 	implements
 		PresenceStatesInternal,
-		PresenceStatesMethods<TSchema, unknown>,
+		PresenceStates<TSchema>,
 		StateDatastore<
 			keyof TSchema & string,
-			MapSchemaElement<TSchema, "value", keyof TSchema & string>
+			SchemaElementValueType<TSchema, keyof TSchema & string>
 		>
 {
-	public readonly nodes: MapEntries<TSchema>;
+	private readonly nodes: MapEntries<TSchema>;
+	public readonly props: PresenceStates<TSchema>["props"];
+
+	public readonly controls: RequiredBroadcastControl;
 
 	public constructor(
 		private readonly runtime: PresenceRuntime,
 		private readonly datastore: ValueElementMap<TSchema>,
 		initialContent: TSchema,
+		controlsSettings: BroadcastControlSettings | undefined,
 	) {
+		this.controls = new RequiredBroadcastControl(defaultAllowableUpdateLatencyMs);
+		if (controlsSettings?.allowableUpdateLatencyMs !== undefined) {
+			this.controls.allowableUpdateLatencyMs = controlsSettings.allowableUpdateLatencyMs;
+		}
+
 		// Prepare initial map content from initial state
 		{
 			const clientSessionId = this.runtime.clientSessionId;
+			// Empty record does not satisfy the type, but nodes will post loop.
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			const nodes = {} as MapEntries<TSchema>;
 			let anyInitialValues = false;
-			// eslint-disable-next-line unicorn/no-array-reduce
-			const initial = Object.entries(initialContent).reduce(
-				(acc, [key, nodeFactory]) => {
-					const newNodeData = nodeFactory(key, handleFromDatastore(this));
-					acc.nodes[key as keyof TSchema] = newNodeData.manager;
-					if ("value" in newNodeData) {
-						acc.datastore[key] = acc.datastore[key] ?? {};
-						acc.datastore[key][clientSessionId] = newNodeData.value;
-						acc.newValues[key] = newNodeData.value;
-						anyInitialValues = true;
+			const newValues: { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> } = {};
+			let cumulativeAllowableUpdateLatencyMs: number | undefined;
+			for (const [key, nodeFactory] of Object.entries(initialContent)) {
+				const newNodeData = nodeFactory(key, handleFromDatastore(this));
+				nodes[key as keyof TSchema] = newNodeData.manager;
+				if ("initialData" in newNodeData) {
+					const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
+					(datastore[key] ??= {})[clientSessionId] = value;
+					newValues[key] = value;
+					if (allowableUpdateLatencyMs !== undefined) {
+						cumulativeAllowableUpdateLatencyMs =
+							cumulativeAllowableUpdateLatencyMs === undefined
+								? allowableUpdateLatencyMs
+								: Math.min(cumulativeAllowableUpdateLatencyMs, allowableUpdateLatencyMs);
 					}
-					return acc;
-				},
-				{
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-					nodes: {} as MapEntries<TSchema>,
-					datastore,
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-					newValues: {} as { [key: string]: InternalTypes.ValueDirectoryOrState<unknown> },
-				},
-			);
-			this.nodes = initial.nodes;
+					anyInitialValues = true;
+				}
+			}
+			this.nodes = nodes;
+			// props is the public view of nodes that limits the entries types to
+			// the public interface of the value manager with an additional type
+			// filter that beguiles the type system. So just reinterpret cast.
+			this.props = this.nodes as unknown as PresenceStates<TSchema>["props"];
+
 			if (anyInitialValues) {
-				this.runtime.localUpdate(initial.newValues, false);
+				this.runtime.localUpdate(newValues, {
+					allowableUpdateLatencyMs:
+						cumulativeAllowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+				});
 			}
 		}
 	}
@@ -245,28 +310,39 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		key: Key,
 	): {
 		self: ClientSessionId | undefined;
-		states: ClientRecord<MapSchemaElement<TSchema, "value", Key>>;
+		states: ClientRecord<SchemaElementValueType<TSchema, Key>>;
 	} {
 		return {
 			self: this.runtime.clientSessionId,
-			states: this.datastore[key],
+			// Caller must only use `key`s that are part of `this.datastore`.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			states: this.datastore[key]!,
 		};
 	}
 
 	public localUpdate<Key extends keyof TSchema & string>(
 		key: Key,
-		value: MapSchemaElement<TSchema, "value", Key> & ClientUpdateEntry,
-		forceBroadcast: boolean,
+		value: SchemaElementValueType<TSchema, Key> & ClientUpdateEntry,
+		options: LocalStateUpdateOptions,
 	): void {
-		this.runtime.localUpdate({ [key]: value }, forceBroadcast);
+		this.runtime.localUpdate(
+			{ [key]: value },
+			{
+				...options,
+				allowableUpdateLatencyMs:
+					options.allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+			},
+		);
 	}
 
 	public update<Key extends keyof TSchema & string>(
 		key: Key,
 		clientId: ClientSessionId,
-		value: Exclude<MapSchemaElement<TSchema, "value", Key>, undefined>,
+		value: Exclude<MapSchemaElement<TSchema, "initialData", Key>, undefined>["value"],
 	): void {
-		const allKnownState = this.datastore[key];
+		// Callers my only use `key`s that are part of `this.datastore`.
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const allKnownState = this.datastore[key]!;
 		allKnownState[clientId] = mergeValueDirectory(allKnownState[clientId], value, 0);
 	}
 
@@ -287,29 +363,42 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		assert(!(key in this.nodes), 0xa3c /* Already have entry for key in map */);
 		const nodeData = nodeFactory(key, handleFromDatastore(this));
 		this.nodes[key] = nodeData.manager;
-		if ("value" in nodeData) {
-			if (key in this.datastore) {
+		if ("initialData" in nodeData) {
+			const { value, allowableUpdateLatencyMs } = nodeData.initialData;
+			let datastoreValue = this.datastore[key];
+			if (datastoreValue === undefined) {
+				datastoreValue = this.datastore[key] = {};
+			} else {
 				// Already have received state from other clients. Kept in `all`.
 				// TODO: Send current `all` state to state manager.
-			} else {
-				this.datastore[key] = {};
 			}
-			this.datastore[key][this.runtime.clientSessionId] = nodeData.value;
-			this.runtime.localUpdate({ [key]: nodeData.value }, false);
+			datastoreValue[this.runtime.clientSessionId] = value;
+			this.runtime.localUpdate(
+				{ [key]: value },
+				{
+					allowableUpdateLatencyMs:
+						allowableUpdateLatencyMs ?? this.controls.allowableUpdateLatencyMs,
+				},
+			);
 		}
 	}
 
 	public ensureContent<TSchemaAdditional extends PresenceStatesSchema>(
 		content: TSchemaAdditional,
+		controls: BroadcastControlSettings | undefined,
 	): PresenceStates<TSchema & TSchemaAdditional> {
+		if (controls?.allowableUpdateLatencyMs !== undefined) {
+			this.controls.allowableUpdateLatencyMs = controls.allowableUpdateLatencyMs;
+		}
 		for (const [key, nodeFactory] of Object.entries(content)) {
-			if (key in this.nodes) {
-				const node = unbrandIVM(this.nodes[key]);
+			const brandedIVM = this.nodes[key];
+			if (brandedIVM === undefined) {
+				this.add(key, nodeFactory);
+			} else {
+				const node = unbrandIVM(brandedIVM);
 				if (!(node instanceof nodeFactory.instanceBase)) {
 					throw new TypeError(`State "${key}" previously created by different value manager.`);
 				}
-			} else {
-				this.add(key, nodeFactory);
 			}
 		}
 		return this as PresenceStates<TSchema & TSchemaAdditional>;
@@ -321,15 +410,16 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		remoteDatastore: ValueUpdateRecord,
 	): void {
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
-			if (key in this.nodes) {
-				const node = unbrandIVM(this.nodes[key]);
-				for (const [clientSessionId, value] of brandedObjectEntries(remoteAllKnownState)) {
+			const brandedIVM = this.nodes[key];
+			if (brandedIVM === undefined) {
+				// Assume all broadcast state is meant to be kept even if not currently registered.
+				mergeUntrackedDatastore(key, remoteAllKnownState, this.datastore, timeModifier);
+			} else {
+				const node = unbrandIVM(brandedIVM);
+				for (const [clientSessionId, value] of objectEntries(remoteAllKnownState)) {
 					const client = this.runtime.lookupClient(clientSessionId);
 					node.update(client, received, value);
 				}
-			} else {
-				// Assume all broadcast state is meant to be kept even if not currently registered.
-				mergeUntrackedDatastore(key, remoteAllKnownState, this.datastore, timeModifier);
 			}
 		}
 	}
@@ -343,30 +433,12 @@ export function createPresenceStates<TSchema extends PresenceStatesSchema>(
 	runtime: PresenceRuntime,
 	datastore: ValueElementMap<PresenceStatesSchema>,
 	initialContent: TSchema,
+	controls: BroadcastControlSettings | undefined,
 ): { public: PresenceStates<TSchema>; internal: PresenceStatesInternal } {
-	const impl = new PresenceStatesImpl(runtime, datastore, initialContent);
-
-	// Capture the top level "public" map. Both the map implementation and
-	// the wrapper object reference this object.
-	const nodes = impl.nodes;
-
-	// Create a wrapper object that has just the public interface methods and nothing more.
-	const wrapper = {
-		add: impl.add.bind(impl),
-	};
+	const impl = new PresenceStatesImpl<TSchema>(runtime, datastore, initialContent, controls);
 
 	return {
-		public: new Proxy(wrapper as PresenceStates<TSchema>, {
-			get(target, p, receiver): unknown {
-				if (typeof p === "string") {
-					return target[p] ?? nodes[p];
-				}
-				return Reflect.get(target, p, receiver);
-			},
-			set(_target, _p, _newValue, _receiver): false {
-				return false;
-			},
-		}),
+		public: impl,
 		internal: impl,
 	};
 }
