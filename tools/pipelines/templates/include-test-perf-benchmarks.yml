@@ -63,7 +63,7 @@ steps:
 
 - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
   parameters:
-    devFeedUrl: ${{ parameters.devFeedUrl }}
+    downloadFeedUrl: ${{ parameters.devFeedUrl }}
     officeFeedUrl: ${{ parameters.officeFeedUrl }}
     pathForTelemetryGeneratorInstall: ${{ parameters.pathForTelemetryGeneratorInstall }}
 
