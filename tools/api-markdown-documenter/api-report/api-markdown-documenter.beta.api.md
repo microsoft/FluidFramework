@@ -116,6 +116,7 @@ declare namespace ApiItemUtilities {
         getCustomBlockComments,
         getDefaultValueBlock,
         getDeprecatedBlock,
+        getEffectiveReleaseLevel,
         getExampleBlocks,
         getFileSafeNameForApiItem,
         getModifiers,
@@ -414,6 +415,9 @@ function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | u
 
 // @public
 function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
+
+// @public
+function getEffectiveReleaseLevel(apiItem: ApiItem): ReleaseLevel;
 
 // @public
 function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
