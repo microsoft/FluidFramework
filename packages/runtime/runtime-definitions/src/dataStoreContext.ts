@@ -208,6 +208,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 */
 	orderSequentially(callback: () => void): void;
 
+	detachHead(): { merge(): void; pause(): Promise<void>; dispose(): void };
+
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.

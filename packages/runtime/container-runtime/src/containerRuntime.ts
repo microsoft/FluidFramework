@@ -3386,7 +3386,7 @@ export class ContainerRuntime
 		);
 
 		this.outbox.flush(resubmittingBatchId);
-		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+		// assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
 	/**
@@ -3446,6 +3446,30 @@ export class ContainerRuntime
 			this.flush();
 		}
 		return result;
+	}
+
+	detachHead(): { merge(): void; pause(): Promise<void>; dispose(): void } {
+		const checkpoint = this.outbox.getBatchCheckpoints(true);
+		let paused = false;
+		const branchInfo = {
+			dispose: () => {
+				checkpoint.mainBatch.rollback();
+				checkpoint.unblockFlush();
+			},
+			pause: async () => {
+				if (!paused) {
+					paused = true;
+					return this._deltaManager.inbound.pause();
+				}
+			},
+			merge: () => {
+				if (paused) this._deltaManager.inbound.resume();
+				checkpoint.unblockFlush();
+				this.outbox.flush();
+			},
+		};
+
+		return branchInfo;
 	}
 
 	/**

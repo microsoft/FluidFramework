@@ -300,6 +300,9 @@ export class Outbox {
 	 * with the given Batch ID, which must be preserved
 	 */
 	public flush(resubmittingBatchId?: BatchId): void {
+		if (this.blockFlush) {
+			return;
+		}
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
@@ -310,6 +313,9 @@ export class Outbox {
 	}
 
 	private flushAll(resubmittingBatchId?: BatchId): void {
+		if (this.blockFlush) {
+			return;
+		}
 		// If we're resubmitting and all batches are empty, we need to flush an empty batch.
 		// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
 		// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
@@ -337,6 +343,9 @@ export class Outbox {
 	}
 
 	private flushEmptyBatch(resubmittingBatchId: BatchId): void {
+		if (this.blockFlush) {
+			return;
+		}
 		const referenceSequenceNumber =
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
@@ -363,7 +372,7 @@ export class Outbox {
 		disableGroupedBatching: boolean = false,
 		resubmittingBatchId?: BatchId,
 	): void {
-		if (batchManager.empty) {
+		if (batchManager.empty || this.blockFlush) {
 			return;
 		}
 
@@ -536,18 +545,31 @@ export class Outbox {
 		return clientSequenceNumber;
 	}
 
+	private blockFlush: boolean = false;
 	/**
 	 * Gets a checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
 	 */
-	public getBatchCheckpoints(): {
+	public getBatchCheckpoints(blockFlush: boolean = false): {
+		unblockFlush: () => void;
 		mainBatch: IBatchCheckpoint;
 		idAllocationBatch: IBatchCheckpoint;
 		blobAttachBatch: IBatchCheckpoint;
 	} {
+		const thisCheckpointBlocksFlush = !this.blockFlush && blockFlush === true;
+
+		if (thisCheckpointBlocksFlush) {
+			this.blockFlush = true;
+		}
+
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
+			unblockFlush: thisCheckpointBlocksFlush
+				? () => {
+						this.blockFlush = false;
+					}
+				: () => {},
 			mainBatch,
 			idAllocationBatch: this.idAllocationBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
