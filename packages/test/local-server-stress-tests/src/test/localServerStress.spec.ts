@@ -13,9 +13,9 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 
 import {
-	createDDSFuzzSuite,
-	DDSFuzzModel,
-	type DDSFuzzTestState,
+	createLocalServerStressSuite,
+	LocalServerStressModel,
+	type LocalServerStressState,
 } from "../localServerStressHarness";
 
 import { _dirname } from "./dirname.cjs";
@@ -24,12 +24,12 @@ interface Noop {
 	type: "Noop";
 }
 
-const reducer = combineReducers<Noop, DDSFuzzTestState>({
+const reducer = combineReducers<Noop, LocalServerStressState>({
 	Noop: () => {},
 });
 
-function makeGenerator(): AsyncGenerator<Noop, DDSFuzzTestState> {
-	const syncGenerator = createWeightedGenerator<Noop, DDSFuzzTestState>([
+function makeGenerator(): AsyncGenerator<Noop, LocalServerStressState> {
+	const syncGenerator = createWeightedGenerator<Noop, LocalServerStressState>([
 		[{ type: "Noop" }, 0.5],
 	]);
 
@@ -37,24 +37,24 @@ function makeGenerator(): AsyncGenerator<Noop, DDSFuzzTestState> {
 }
 
 describe("Local Server Stress", () => {
-	const model: DDSFuzzModel<Noop> = {
+	const model: LocalServerStressModel<Noop> = {
 		workloadName: "default",
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: () => {},
 	};
 
-	createDDSFuzzSuite(model, {
+	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
 		clientJoinOptions: {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
-			stashableClientProbability: 0.2,
 		},
 		reconnectProbability: 0,
 		// Uncomment to replay a particular seed.
 		// replay: 0,
 		saveFailures: { directory: path.join(_dirname, "../../results") },
+		saveSuccesses: { directory: path.join(_dirname, "../../results") },
 	});
 });

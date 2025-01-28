@@ -9,9 +9,9 @@ import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import type {
 	BaseOperation,
-	DDSFuzzHarnessEvents,
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
+	LocalServerStressHarnessEvents,
+	LocalServerStressModel,
+	LocalServerStressOptions,
 } from "./localServerStressHarness.js";
 import { ReducerPreconditionError, replayTest } from "./localServerStressHarness.js";
 
@@ -50,8 +50,8 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	private readonly random = makeRandom();
 
 	constructor(
-		readonly ddsModel: DDSFuzzModel<TOperation>,
-		readonly providedOptions: Partial<DDSFuzzSuiteOptions>,
+		readonly ddsModel: LocalServerStressModel<TOperation>,
+		readonly providedOptions: Partial<LocalServerStressOptions>,
 		readonly operations: TOperation[],
 		readonly seed: number,
 		readonly saveInfo: SaveInfo,
@@ -192,7 +192,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	 */
 	private async assertFails(): Promise<boolean> {
 		const emitter = (this.providedOptions.emitter ??=
-			new TypedEventEmitter<DDSFuzzHarnessEvents>());
+			new TypedEventEmitter<LocalServerStressHarnessEvents>());
 
 		let lastOp: BaseOperation = { type: "___none___" };
 		const lastOpTracker = (op: BaseOperation): void => {

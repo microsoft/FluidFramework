@@ -71,7 +71,7 @@ export interface Client {
 /**
  * @internal
  */
-export interface DDSFuzzTestState extends BaseFuzzTestState {
+export interface LocalServerStressState extends BaseFuzzTestState {
 	localDeltaConnectionServer: ILocalDeltaConnectionServer;
 	codeLoader: ICodeDetailsLoader;
 	containerUrl?: string;
@@ -139,7 +139,7 @@ function getSavePath(directory: string, model: HasWorkloadName, seed: number): s
 
 function getSaveInfo(
 	model: HasWorkloadName,
-	options: DDSFuzzSuiteOptions,
+	options: LocalServerStressOptions,
 	seed: number,
 ): SaveInfo {
 	return {
@@ -152,48 +152,9 @@ function getSaveInfo(
 	};
 }
 
-/**
- * Represents a generic fuzz model for testing eventual consistency of a DDS.
- *
- * @remarks
- *
- * Typical DDSes will parameterize this with their SharedObject factory and a serializable set
- * of operations corresponding to valid edits in the DDS's public API.
- *
- * @example
- * A simplified SharedString data structure exposing the APIs `insertAt(index, contentString)` and `removeRange(start, end)`
- * might represent their API with the following operations:
- * ```typescript
- * type InsertOperation = { type: "insert"; index: number; content: string }
- * type RemoveOperation = { type: "remove"; start: number; end: number }
- * type Operation = InsertOperation | RemoveOperation;
- * ```
- *
- * It would then typically use utilities from \@fluid-private/stochastic-test-utils to write a generator
- * for inserting/removing content, and a reducer for interpreting the serializable operations in terms of
- * SimpleSharedString's public API.
- *
- * See \@fluid-private/stochastic-test-utils's README for more details on this step.
- *
- * Then, it could define a model like so:
- * ```typescript
- * const model: DDSFuzzModel<SimpleSharedStringFactory, Operation> = {
- *     workloadName: "insert and delete",
- *     factory: SimpleSharedStringFactory,
- *     generatorFactory: myGeneratorFactory,
- *     reducer: myReducer,
- *     // A non-toy implementation would typically give a more informative assertion error (e.g. including
- *     // the IDs for `a` and `b`).
- *     validateConsistency: (a, b) => { assert.equal(a.channel.getText(), b.channel.getText()); }
- * }
- * ```
- * This model can be used directly to create a suite of fuzz tests with {@link (createDDSFuzzSuite:function)}
- *
- * @internal
- */
-export interface DDSFuzzModel<
+export interface LocalServerStressModel<
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState = DDSFuzzTestState,
+	TState extends LocalServerStressState = LocalServerStressState,
 > {
 	/**
 	 * Name for this model. This is used for test case naming, and should generally reflect properties
@@ -201,7 +162,7 @@ export interface DDSFuzzModel<
 	 * For example, SharedString might fuzz test several different workloads--some involving intervals,
 	 * some without, some that never delete text, etc.
 	 * This name should also be relatively friendly for file system; if the "save to disk" option of
-	 * {@link (createDDSFuzzSuite:function)} is enabled, it will be kebab cased for failure files.
+	 * {@link (createLocalServerStressSuite:function)} is enabled, it will be kebab cased for failure files.
 	 */
 	workloadName: string;
 
@@ -238,7 +199,7 @@ export interface DDSFuzzModel<
 /**
  * @internal
  */
-export interface DDSFuzzHarnessEvents {
+export interface LocalServerStressHarnessEvents {
 	/**
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
@@ -247,12 +208,12 @@ export interface DDSFuzzHarnessEvents {
 	/**
 	 * Raised after creating the initialState but prior to performing the fuzzActions..
 	 */
-	(event: "testStart", listener: (initialState: DDSFuzzTestState) => void);
+	(event: "testStart", listener: (initialState: LocalServerStressState) => void);
 
 	/**
 	 * Raised after all fuzzActions have been completed.
 	 */
-	(event: "testEnd", listener: (finalState: DDSFuzzTestState) => void);
+	(event: "testEnd", listener: (finalState: LocalServerStressState) => void);
 
 	/**
 	 * Raised before each generated operation is run by its reducer.
@@ -263,7 +224,7 @@ export interface DDSFuzzHarnessEvents {
 /**
  * @internal
  */
-export interface DDSFuzzSuiteOptions {
+export interface LocalServerStressOptions {
 	/**
 	 * Number of tests to generate for correctness modes (which are run in the PR gate).
 	 */
@@ -272,10 +233,10 @@ export interface DDSFuzzSuiteOptions {
 	/**
 	 * Number of clients to perform operations on following the attach phase.
 	 * This does not include the read-only client created for consistency validation
-	 * and summarization--see {@link DDSFuzzTestState.summarizerClient}.
+	 * and summarization--see {@link LocalServerStressState.summarizerClient}.
 	 *
-	 * See {@link DDSFuzzSuiteOptions.detachedStartOptions} for more details on the detached start phase.
-	 * See {@link DDSFuzzSuiteOptions.clientJoinOptions} for more details on clients joining after those in the initial attach.
+	 * See {@link LocalServerStressOptions.detachedStartOptions} for more details on the detached start phase.
+	 * See {@link LocalServerStressOptions.clientJoinOptions} for more details on clients joining after those in the initial attach.
 	 */
 	numberOfClients: number;
 
@@ -303,11 +264,6 @@ export interface DDSFuzzSuiteOptions {
 		 * If the current number of clients has reached the maximum, this probability is ignored.
 		 */
 		clientAddProbability: number;
-		/**
-		 * The probability for an added client to also be stashable which simulates
-		 * getting the pending state, closing the container, and re-opening with the state.
-		 */
-		stashableClientProbability?: number;
 	};
 
 	/**
@@ -316,7 +272,7 @@ export interface DDSFuzzSuiteOptions {
 	 * When enabled, the fuzz test starts with a single client generating edits. After a certain number of ops (dictated by `numOpsBeforeAttach`),
 	 * an attach op will be generated, at which point:
 	 * - getAttachSummary will be invoked on this client
-	 * - The remaining clients (as dictated by {@link DDSFuzzSuiteOptions.numberOfClients}) will load from this summary and join the session
+	 * - The remaining clients (as dictated by {@link LocalServerStressOptions.numberOfClients}) will load from this summary and join the session
 	 *
 	 * This setup simulates application code initializing state in a data store before attaching it, e.g. running code to edit a DDS from
 	 * `DataObject.initializingFirstTime`.
@@ -342,20 +298,20 @@ export interface DDSFuzzSuiteOptions {
 	 * @example
 	 *
 	 * ```typescript
-	 * const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+	 * const emitter = new TypedEventEmitter<LocalServerStressHarnessEvents>();
 	 * emitter.on("clientCreate", (client) => {
 	 *     // Casting is necessary as the event typing isn't parameterized with each DDS type.
 	 *     const myDDS = client.channel as MyDDSType;
 	 *     // Do what you want with `myDDS`, e.g. subscribe to change events, add logging, etc.
 	 * });
 	 * const options = {
-	 *     ...defaultDDSFuzzSuiteOptions,
+	 *     ...defaultLocalServerStressSuiteOptions,
 	 *     emitter,
 	 * };
-	 * createDDSFuzzSuite(model, options);
+	 * createLocalServerStressSuite(model, options);
 	 * ```
 	 */
-	emitter: TypedEventEmitter<DDSFuzzHarnessEvents>;
+	emitter: TypedEventEmitter<LocalServerStressHarnessEvents>;
 
 	/**
 	 * Strategy for validating eventual consistency of DDSes.
@@ -402,11 +358,11 @@ export interface DDSFuzzSuiteOptions {
 	 *
 	 * ```typescript
 	 * // Runs only seed 42 for the given model.
-	 * createDDSFuzzSuite(model, { only: [42] });
+	 * createLocalServerStressSuite(model, { only: [42] });
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.only` syntax works. See {@link (createDDSFuzzSuite:namespace).only}.
+	 * If you prefer, a variant of the standard `.only` syntax works. See {@link (createLocalServerStressSuite:namespace).only}.
 	 */
 	only: Iterable<number>;
 
@@ -417,11 +373,11 @@ export interface DDSFuzzSuiteOptions {
 	 *
 	 * ```typescript
 	 * // Skips seed 42 for the given model.
-	 * createDDSFuzzSuite(model, { skip: [42] });
+	 * createLocalServerStressSuite(model, { skip: [42] });
 	 * ```
 	 *
 	 * @remarks
-	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link (createDDSFuzzSuite:namespace).skip}.
+	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link (createLocalServerStressSuite:namespace).skip}.
 	 */
 	skip: Iterable<number>;
 
@@ -447,7 +403,7 @@ export interface DDSFuzzSuiteOptions {
 	 * exact contents of the test cases.
 	 *
 	 * Minimization only works when the failure occurs as part of a reducer, and is mostly
-	 * useful if the model being tested defines {@link DDSFuzzModel.minimizationTransforms}.
+	 * useful if the model being tested defines {@link LocalServerStressModel.minimizationTransforms}.
 	 *
 	 * It can also add a couple seconds of overhead per failing
 	 * test case. See {@link MinimizationTransform} for additional context.
@@ -458,7 +414,7 @@ export interface DDSFuzzSuiteOptions {
 /**
  * @internal
  */
-export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
+export const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
@@ -483,11 +439,11 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
  */
 export function mixinNewClient<
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState,
+	TState extends LocalServerStressState,
 >(
-	model: DDSFuzzModel<TOperation, TState>,
-	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TOperation | AddClient, TState> {
+	model: LocalServerStressModel<TOperation, TState>,
+	options: LocalServerStressOptions,
+): LocalServerStressModel<TOperation | AddClient, TState> {
 	const isClientAddOp = (op: TOperation | AddClient): op is AddClient =>
 		op.type === "addClient";
 
@@ -545,14 +501,17 @@ export function mixinNewClient<
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export function mixinAttach<TOperation extends BaseOperation, TState extends DDSFuzzTestState>(
-	model: DDSFuzzModel<TOperation, TState>,
-	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TOperation | Attach, TState> {
+export function mixinAttach<
+	TOperation extends BaseOperation,
+	TState extends LocalServerStressState,
+>(
+	model: LocalServerStressModel<TOperation, TState>,
+	options: LocalServerStressOptions,
+): LocalServerStressModel<TOperation | Attach, TState> {
 	const { numOpsBeforeAttach } = options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
-		return model as DDSFuzzModel<TOperation | Attach, TState>;
+		return model as LocalServerStressModel<TOperation | Attach, TState>;
 	}
 	const attachOp = async (): Promise<TOperation | Attach> => {
 		return { type: "attach" };
@@ -585,8 +544,8 @@ export function mixinAttach<TOperation extends BaseOperation, TState extends DDS
 					loadClient(
 						state.localDeltaConnectionServer,
 						state.codeLoader,
-						url,
 						makeFriendlyClientId(state.random, index),
+						url,
 					),
 				),
 			);
@@ -623,11 +582,11 @@ export function mixinAttach<TOperation extends BaseOperation, TState extends DDS
  */
 export function mixinSynchronization<
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState,
+	TState extends LocalServerStressState,
 >(
-	model: DDSFuzzModel<TOperation, TState>,
-	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TOperation | Synchronize, TState> {
+	model: LocalServerStressModel<TOperation, TState>,
+	options: LocalServerStressOptions,
+): LocalServerStressModel<TOperation | Synchronize, TState> {
 	const { validationStrategy } = options;
 	let generatorFactory: () => AsyncGenerator<TOperation | Synchronize, TState>;
 
@@ -744,8 +703,8 @@ const isClientSpec = (op: unknown): op is ClientSpec =>
 
 /**
  * Mixes in the ability to select a client to perform an operation on.
- * Makes this available to existing generators and reducers in the passed-in model via {@link DDSFuzzTestState.client}
- * and {@link  @fluid-private/test-dds-utils#DDSFuzzTestState.channel}.
+ * Makes this available to existing generators and reducers in the passed-in model via {@link LocalServerStressState.client}
+ * and {@link  @fluid-private/test-dds-utils#LocalServerStressTestState.channel}.
  *
  * @remarks This exists purely for convenience, as "pick a client to perform an operation on" is a common concern.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -753,11 +712,11 @@ const isClientSpec = (op: unknown): op is ClientSpec =>
  */
 export function mixinClientSelection<
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState,
+	TState extends LocalServerStressState,
 >(
-	model: DDSFuzzModel<TOperation, TState>,
-	_: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TOperation, TState> {
+	model: LocalServerStressModel<TOperation, TState>,
+	_: LocalServerStressOptions,
+): LocalServerStressModel<TOperation, TState> {
 	const generatorFactory: () => AsyncGenerator<TOperation, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
@@ -800,7 +759,7 @@ export function mixinClientSelection<
  *
  * Since the callback is async, this modification to the state could be an issue if multiple runs of this function are done concurrently.
  */
-async function runInStateWithClient<TState extends DDSFuzzTestState, Result>(
+async function runInStateWithClient<TState extends LocalServerStressState, Result>(
 	state: TState,
 	client: TState["client"],
 	callback: (state: TState) => Promise<Result>,
@@ -919,11 +878,11 @@ const runtimeFactory: IRuntimeFactory = {
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export async function runTestForSeed<TOperation extends BaseOperation>(
-	model: DDSFuzzModel<TOperation>,
-	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
+	model: LocalServerStressModel<TOperation>,
+	options: Omit<LocalServerStressOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<DDSFuzzTestState> {
+): Promise<LocalServerStressState> {
 	const random = makeRandom(seed);
 
 	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
@@ -938,24 +897,26 @@ export async function runTestForSeed<TOperation extends BaseOperation>(
 		codeDetails,
 		startDetached ? makeFriendlyClientId(random, 0) : "summarizer",
 	);
+	const clients: Client[] = [];
 	if (!startDetached) {
 		await initialClient.container.attach(createLocalResolverCreateNewRequest("stress"));
-	}
-	const url = "aas";
-
-	const clients = startDetached
-		? [initialClient]
-		: await Promise.all(
-				Array.from({ length: options.numberOfClients }, async (_, i) =>
-					loadClient(
-						localDeltaConnectionServer,
-						codeLoader,
-						makeFriendlyClientId(random, i),
-						url,
-					),
+		const url = await initialClient.container.getAbsoluteUrl("");
+		assert(url !== undefined, "attached container must have url");
+		await Promise.all(
+			Array.from({ length: options.numberOfClients }, async (_, i) =>
+				loadClient(
+					localDeltaConnectionServer,
+					codeLoader,
+					makeFriendlyClientId(random, i),
+					url,
 				),
-			);
-	const initialState: DDSFuzzTestState = {
+			),
+		);
+	} else {
+		clients.push(initialClient);
+	}
+
+	const initialState: LocalServerStressState = {
 		clients,
 		localDeltaConnectionServer,
 		codeLoader,
@@ -966,11 +927,15 @@ export async function runTestForSeed<TOperation extends BaseOperation>(
 
 	options.emitter.emit("testStart", initialState);
 
-	const operationCount = 0;
+	let operationCount = 0;
 	const generator = model.generatorFactory();
 	const finalState = await performFuzzActionsAsync(
 		generator,
-		model.reducer,
+		async (state, operation) => {
+			options.emitter.emit("operation");
+			operationCount++;
+			return model.reducer(state, operation);
+		},
 		initialState,
 		saveInfo,
 	);
@@ -985,7 +950,7 @@ export async function runTestForSeed<TOperation extends BaseOperation>(
 }
 
 function runTest<TOperation extends BaseOperation>(
-	model: DDSFuzzModel<TOperation>,
+	model: LocalServerStressModel<TOperation>,
 	options: InternalOptions,
 	seed: number,
 	saveInfo: SaveInfo | undefined,
@@ -1033,12 +998,12 @@ function runTest<TOperation extends BaseOperation>(
 	});
 }
 
-type InternalOptions = Omit<DDSFuzzSuiteOptions, "only" | "skip"> & {
+type InternalOptions = Omit<LocalServerStressOptions, "only" | "skip"> & {
 	only: Set<number>;
 	skip: Set<number>;
 };
 
-function isInternalOptions(options: DDSFuzzSuiteOptions): options is InternalOptions {
+function isInternalOptions(options: LocalServerStressOptions): options is InternalOptions {
 	return options.only instanceof Set && options.skip instanceof Set;
 }
 
@@ -1058,14 +1023,14 @@ export class ReducerPreconditionError extends Error {}
  * @internal
  */
 export async function replayTest<TOperation extends BaseOperation>(
-	ddsModel: DDSFuzzModel<TOperation>,
+	ddsModel: LocalServerStressModel<TOperation>,
 	seed: number,
 	operations: TOperation[],
 	saveInfo?: SaveInfo,
-	providedOptions?: Partial<DDSFuzzSuiteOptions>,
+	providedOptions?: Partial<LocalServerStressOptions>,
 ): Promise<void> {
 	const options = {
-		...defaultDDSFuzzSuiteOptions,
+		...defaultLocalServerStressSuiteOptions,
 		...providedOptions,
 		only: new Set(providedOptions?.only ?? []),
 		skip: new Set(providedOptions?.skip ?? []),
@@ -1112,12 +1077,12 @@ export function generateTestSeeds(testCount: number, stressMode: StressMode): nu
  * Creates a suite of eventual consistency tests for a particular DDS model.
  * @internal
  */
-export function createDDSFuzzSuite<TOperation extends BaseOperation>(
-	ddsModel: DDSFuzzModel<TOperation>,
-	providedOptions?: Partial<DDSFuzzSuiteOptions>,
+export function createLocalServerStressSuite<TOperation extends BaseOperation>(
+	ddsModel: LocalServerStressModel<TOperation>,
+	providedOptions?: Partial<LocalServerStressOptions>,
 ): void {
 	const options = {
-		...defaultDDSFuzzSuiteOptions,
+		...defaultLocalServerStressSuiteOptions,
 		...providedOptions,
 	};
 
@@ -1173,9 +1138,9 @@ export function createDDSFuzzSuite<TOperation extends BaseOperation>(
 }
 
 const getFullModel = <TOperation extends BaseOperation>(
-	ddsModel: DDSFuzzModel<TOperation>,
-	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TOperation | AddClient | Attach | Synchronize> =>
+	ddsModel: LocalServerStressModel<TOperation>,
+	options: LocalServerStressOptions,
+): LocalServerStressModel<TOperation | AddClient | Attach | Synchronize> =>
 	mixinAttach(
 		mixinSynchronization(
 			mixinNewClient(mixinClientSelection(ddsModel, options), options),
@@ -1185,12 +1150,12 @@ const getFullModel = <TOperation extends BaseOperation>(
 	);
 
 /**
- * {@inheritDoc (createDDSFuzzSuite:function)}
+ * {@inheritDoc (createLocalServerStressSuite:function)}
  * @internal
  */
 // Explicit usage of namespace needed for api-extractor.
 // eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace createDDSFuzzSuite {
+export namespace createLocalServerStressSuite {
 	/**
 	 * Runs only the provided seeds.
 	 *
@@ -1198,17 +1163,17 @@ export namespace createDDSFuzzSuite {
 	 *
 	 * ```typescript
 	 * // Runs only seed 42 for the given model.
-	 * createDDSFuzzSuite.only(42)(model);
+	 * createLocalServerStressSuite.only(42)(model);
 	 * ```
 	 * @internal
 	 */
 	export const only =
 		(...seeds: number[]) =>
 		<TOperation extends BaseOperation>(
-			ddsModel: DDSFuzzModel<TOperation>,
-			providedOptions?: Partial<DDSFuzzSuiteOptions>,
+			ddsModel: LocalServerStressModel<TOperation>,
+			providedOptions?: Partial<LocalServerStressOptions>,
 		): void =>
-			createDDSFuzzSuite(ddsModel, {
+			createLocalServerStressSuite(ddsModel, {
 				...providedOptions,
 				only: [...seeds, ...(providedOptions?.only ?? [])],
 			});
@@ -1220,17 +1185,17 @@ export namespace createDDSFuzzSuite {
 	 *
 	 * ```typescript
 	 * // Skips seed 42 for the given model.
-	 * createDDSFuzzSuite.skip(42)(model);
+	 * createLocalServerStressSuite.skip(42)(model);
 	 * ```
 	 * @internal
 	 */
 	export const skip =
 		(...seeds: number[]) =>
 		<TOperation extends BaseOperation>(
-			ddsModel: DDSFuzzModel<TOperation>,
-			providedOptions?: Partial<DDSFuzzSuiteOptions>,
+			ddsModel: LocalServerStressModel<TOperation>,
+			providedOptions?: Partial<LocalServerStressOptions>,
 		): void =>
-			createDDSFuzzSuite(ddsModel, {
+			createLocalServerStressSuite(ddsModel, {
 				...providedOptions,
 				skip: [...seeds, ...(providedOptions?.skip ?? [])],
 			});
