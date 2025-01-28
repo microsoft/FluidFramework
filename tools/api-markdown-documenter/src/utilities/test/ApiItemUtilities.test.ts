@@ -31,7 +31,7 @@ describe("ApiItemUtilities", () => {
 			expect(getEffectiveReleaseLevel(item)).to.equal(ReleaseTag.Beta);
 		});
 
-		it("Tag is more restrictive than ancestors", () => {
+		it("Child tag wins when more restrictive than ancestors", () => {
 			const parent = {
 				releaseTag: ReleaseTag.Beta,
 			} as unknown as ApiItem;
@@ -44,7 +44,7 @@ describe("ApiItemUtilities", () => {
 			expect(getEffectiveReleaseLevel(item)).to.equal(ReleaseTag.Alpha);
 		});
 
-		it("Tag is less restrictive than ancestors", () => {
+		it("Parent tag wins when more restrictive than descendants", () => {
 			const parent = {
 				releaseTag: ReleaseTag.Alpha,
 			} as unknown as ApiItem;
