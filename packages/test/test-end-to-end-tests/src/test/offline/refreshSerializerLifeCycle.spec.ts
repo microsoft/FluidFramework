@@ -13,11 +13,9 @@ import type {
 	IFluidHandle,
 	ConfigTypes,
 	IConfigProviderBase,
-	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import {
 	ITestFluidObject,
@@ -27,11 +25,12 @@ import {
 	timeoutAwait,
 	waitForContainerConnection,
 	type ChannelFactoryRegistry,
-	type ITestContainerConfig,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
-import { wrapObjectAndOverride } from "../mocking.js";
+import { wrapObjectAndOverride } from "../../mocking.js";
+
+import { loadContainerOffline } from "./offlineTestsUtils.js";
 
 const testConfigs = generatePairwiseOptions({
 	savedOps: [true, false],
@@ -47,56 +46,6 @@ const testConfigs = generatePairwiseOptions({
 	timeoutRefreshInOriginalContainer: [true, false],
 	timeoutRefreshInLoadedContainer: [true, false],
 });
-
-/**
- * Load a Container using testContainerConfig and the given testObjectProvider,
- * Deferring connection to the service indefinetely for this scenario
- *
- * @param testObjectProvider - For accessing Loader/Driver
- * @param request - Request to use when loading
- * @param pendingLocalState - (Optional) custom PendingLocalState to load from. Defaults to using getPendingOps helper if omitted.
- * @returns A container instance with a connect function to unblock the Driver (simulating coming back from offline)
- */
-async function loadOffline(
-	testContainerConfig: ITestContainerConfig,
-	testObjectProvider: ITestObjectProvider,
-	request: IRequest,
-	pendingLocalState: string,
-): Promise<IContainerExperimental> {
-	const p = new Deferred();
-	// This documentServiceFactory will wait for the promise p to resolve before connecting to the service
-	const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
-		testObjectProvider.documentServiceFactory,
-		{
-			createDocumentService: {
-				connectToDeltaStream: (ds) => async (client) => {
-					await p.promise;
-					return ds.connectToDeltaStream(client);
-				},
-				connectToDeltaStorage: (ds) => async () => {
-					await p.promise;
-					return ds.connectToDeltaStorage();
-				},
-				connectToStorage: (ds) => async () => {
-					await p.promise;
-					return ds.connectToStorage();
-				},
-			},
-		},
-	);
-
-	const loader = testObjectProvider.createLoader(
-		[
-			[
-				testObjectProvider.defaultCodeDetails,
-				testObjectProvider.createFluidEntryPoint(testContainerConfig),
-			],
-		],
-		{ ...testContainerConfig.loaderProps, documentServiceFactory },
-	);
-	const container: IContainerExperimental = await loader.resolve(request, pendingLocalState);
-	return container;
-}
 
 describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
 	const mapId = "map";
@@ -271,9 +220,18 @@ describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider,
 			// container loaded from previous pending state. The snapshot should refresh
 			// in case a summary has already happened. Such snapshot could be the first one to
 			// have a data store with groupId
-			const container2: IContainerExperimental = testConfig.loadOffline
-				? await loadOffline(testContainerConfig, provider, { url }, pendingOps)
-				: await loader.resolve({ url }, pendingOps);
+			let container2: IContainerExperimental;
+			if (testConfig.loadOffline) {
+				const offlineObject = await loadContainerOffline(
+					testContainerConfig,
+					provider,
+					{ url },
+					pendingOps,
+				);
+				container2 = offlineObject.container;
+			} else {
+				container2 = await loader.resolve({ url }, pendingOps);
+			}
 			const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 			const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 			const groupIdDataObject2 = await getDataStoreWithGroupId(dataStore2, groupId);
