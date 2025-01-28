@@ -45,16 +45,13 @@ import { ReducerPreconditionError, replayTest } from "./localServerStressHarness
  */
 export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOperation) => void;
 
-export class FuzzTestMinimizer<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
-> {
+export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	private initialError?: { message: string; op: BaseOperation };
 	private readonly transforms: MinimizationTransform<TOperation>[];
 	private readonly random = makeRandom();
 
 	constructor(
-		readonly ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+		readonly ddsModel: DDSFuzzModel<TOperation>,
 		readonly providedOptions: Partial<DDSFuzzSuiteOptions>,
 		readonly operations: TOperation[],
 		readonly seed: number,

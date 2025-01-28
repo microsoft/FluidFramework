@@ -32,7 +32,6 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { MinimizationTransform } from "./minification.js";
 import { FuzzTestMinimizer } from "./minification.js";
 
@@ -72,7 +71,7 @@ export interface DDSRandom extends IRandom {
 	handle(): IFluidHandle;
 }
 
-export interface Client<T = undefined> {
+export interface Client {
 	container: IContainer;
 	id: string;
 }
@@ -80,16 +79,15 @@ export interface Client<T = undefined> {
 /**
  * @internal
  */
-export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
-	extends BaseFuzzTestState {
+export interface DDSFuzzTestState extends BaseFuzzTestState {
 	localDeltaConnectionServer: ILocalDeltaConnectionServer;
 	codeLoader: ICodeDetailsLoader;
 	containerUrl?: string;
 
 	random: IRandom;
 
-	clients: Client<TChannelFactory>[];
-	client: Client<TChannelFactory>;
+	clients: Client[];
+	client: Client;
 	isDetached: boolean;
 }
 
@@ -202,9 +200,8 @@ function getSaveInfo(
  * @internal
  */
 export interface DDSFuzzModel<
-	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory> = DDSFuzzTestState<TChannelFactory>,
+	TState extends DDSFuzzTestState = DDSFuzzTestState,
 > {
 	/**
 	 * Name for this model. This is used for test case naming, and should generally reflect properties
@@ -215,11 +212,6 @@ export interface DDSFuzzModel<
 	 * {@link (createDDSFuzzSuite:function)} is enabled, it will be kebab cased for failure files.
 	 */
 	workloadName: string;
-
-	/**
-	 * ChannelFactory to instantiate the DDS.
-	 */
-	factory: TChannelFactory;
 
 	/**
 	 * Factory which creates a generator for this model.
@@ -239,10 +231,7 @@ export interface DDSFuzzModel<
 	 * necessarily have the same set of ops applied).
 	 * @throws - An informative error if the channels don't have equivalent data.
 	 */
-	validateConsistency: (
-		channelA: Client<TChannelFactory>,
-		channelB: Client<TChannelFactory>,
-	) => void | Promise<void>;
+	validateConsistency: (channelA: Client, channelB: Client) => void | Promise<void>;
 
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
@@ -261,17 +250,17 @@ export interface DDSFuzzHarnessEvents {
 	/**
 	 * Raised for each non-summarizer client created during fuzz test execution.
 	 */
-	(event: "clientCreate", listener: (client: Client<IChannelFactory>) => void);
+	(event: "clientCreate", listener: (client: Client) => void);
 
 	/**
 	 * Raised after creating the initialState but prior to performing the fuzzActions..
 	 */
-	(event: "testStart", listener: (initialState: DDSFuzzTestState<IChannelFactory>) => void);
+	(event: "testStart", listener: (initialState: DDSFuzzTestState) => void);
 
 	/**
 	 * Raised after all fuzzActions have been completed.
 	 */
-	(event: "testEnd", listener: (finalState: DDSFuzzTestState<IChannelFactory>) => void);
+	(event: "testEnd", listener: (finalState: DDSFuzzTestState) => void);
 
 	/**
 	 * Raised before each generated operation is run by its reducer.
@@ -501,13 +490,12 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinNewClient<
-	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory>,
+	TState extends DDSFuzzTestState,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzModel<TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | AddClient, TState> {
+): DDSFuzzModel<TOperation | AddClient, TState> {
 	const isClientAddOp = (op: TOperation | AddClient): op is AddClient =>
 		op.type === "addClient";
 
@@ -565,18 +553,14 @@ export function mixinNewClient<
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export function mixinAttach<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory>,
->(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+export function mixinAttach<TOperation extends BaseOperation, TState extends DDSFuzzTestState>(
+	model: DDSFuzzModel<TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
+): DDSFuzzModel<TOperation | Attach, TState> {
 	const { numOpsBeforeAttach } = options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
-		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
+		return model as DDSFuzzModel<TOperation | Attach, TState>;
 	}
 	const attachOp = async (): Promise<TOperation | Attach> => {
 		return { type: "attach" };
@@ -599,12 +583,12 @@ export function mixinAttach<
 		if (isOperationType<Attach>("attach", operation)) {
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
-			const clientA: Client<TChannelFactory> = state.clients[0];
+			const clientA: Client = state.clients[0];
 
 			await clientA.container.attach(createLocalResolverCreateNewRequest("stress test"));
 			const url = await clientA.container.getAbsoluteUrl("");
 			assert(url !== undefined, "container must have a url");
-			const clients: Client<TChannelFactory>[] = await Promise.all(
+			const clients: Client[] = await Promise.all(
 				Array.from({ length: options.numberOfClients }, async (_, index) =>
 					loadClient(
 						state.localDeltaConnectionServer,
@@ -620,7 +604,7 @@ export function mixinAttach<
 			// However, now that we're transitioning to an attached state, the summarizer client should never have any edits.
 			// Thus we use one of the clients we just loaded as the summarizer client, and keep the client around that we generated the
 			// attach summary from.
-			const summarizerClient: Client<TChannelFactory> = clients[0];
+			const summarizerClient: Client = clients[0];
 			clients[0] = state.clients[0];
 
 			return {
@@ -646,13 +630,12 @@ export function mixinAttach<
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinSynchronization<
-	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory>,
+	TState extends DDSFuzzTestState,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzModel<TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Synchronize, TState> {
+): DDSFuzzModel<TOperation | Synchronize, TState> {
 	const { validationStrategy } = options;
 	let generatorFactory: () => AsyncGenerator<TOperation | Synchronize, TState>;
 
@@ -777,13 +760,12 @@ const isClientSpec = (op: unknown): op is ClientSpec =>
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
 export function mixinClientSelection<
-	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
-	TState extends DDSFuzzTestState<TChannelFactory>,
+	TState extends DDSFuzzTestState,
 >(
-	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
+	model: DDSFuzzModel<TOperation, TState>,
 	_: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation, TState> {
+): DDSFuzzModel<TOperation, TState> {
 	const generatorFactory: () => AsyncGenerator<TOperation, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
@@ -826,7 +808,7 @@ export function mixinClientSelection<
  *
  * Since the callback is async, this modification to the state could be an issue if multiple runs of this function are done concurrently.
  */
-async function runInStateWithClient<TState extends DDSFuzzTestState<IChannelFactory>, Result>(
+async function runInStateWithClient<TState extends DDSFuzzTestState, Result>(
 	state: TState,
 	client: TState["client"],
 	callback: (state: TState) => Promise<Result>,
@@ -853,12 +835,12 @@ function makeUnreachableCodePathProxy<T extends object>(name: string): T {
 	});
 }
 
-async function createDetachedClient<TChannelFactory extends IChannelFactory>(
+async function createDetachedClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
 	codeDetails: IFluidCodeDetails,
 	id: string,
-): Promise<Client<TChannelFactory>> {
+): Promise<Client> {
 	const container = await createDetachedContainer({
 		codeLoader,
 		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
@@ -866,19 +848,19 @@ async function createDetachedClient<TChannelFactory extends IChannelFactory>(
 		codeDetails,
 	});
 
-	const newClient: Client<TChannelFactory> = {
+	const newClient: Client = {
 		container,
 		id,
 	};
 	return newClient;
 }
 
-async function loadClient<TChannelFactory extends IChannelFactory>(
+async function loadClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
 	id: string,
 	url: string,
-): Promise<Client<TChannelFactory>> {
+): Promise<Client> {
 	const container = await loadExistingContainer({
 		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
 		request: { url },
@@ -944,15 +926,12 @@ const runtimeFactory: IRuntimeFactory = {
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export async function runTestForSeed<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
->(
-	model: DDSFuzzModel<TChannelFactory, TOperation>,
+export async function runTestForSeed<TOperation extends BaseOperation>(
+	model: DDSFuzzModel<TOperation>,
 	options: Omit<DDSFuzzSuiteOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<DDSFuzzTestState<TChannelFactory>> {
+): Promise<DDSFuzzTestState> {
 	const random = makeRandom(seed);
 
 	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
@@ -984,7 +963,7 @@ export async function runTestForSeed<
 					),
 				),
 			);
-	const initialState: DDSFuzzTestState<TChannelFactory> = {
+	const initialState: DDSFuzzTestState = {
 		clients,
 		localDeltaConnectionServer,
 		codeLoader,
@@ -1013,8 +992,8 @@ export async function runTestForSeed<
 	return finalState;
 }
 
-function runTest<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-	model: DDSFuzzModel<TChannelFactory, TOperation>,
+function runTest<TOperation extends BaseOperation>(
+	model: DDSFuzzModel<TOperation>,
 	options: InternalOptions,
 	seed: number,
 	saveInfo: SaveInfo | undefined,
@@ -1086,11 +1065,8 @@ export class ReducerPreconditionError extends Error {}
  *
  * @internal
  */
-export async function replayTest<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
->(
-	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+export async function replayTest<TOperation extends BaseOperation>(
+	ddsModel: DDSFuzzModel<TOperation>,
 	seed: number,
 	operations: TOperation[],
 	saveInfo?: SaveInfo,
@@ -1144,11 +1120,8 @@ export function generateTestSeeds(testCount: number, stressMode: StressMode): nu
  * Creates a suite of eventual consistency tests for a particular DDS model.
  * @internal
  */
-export function createDDSFuzzSuite<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
->(
-	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+export function createDDSFuzzSuite<TOperation extends BaseOperation>(
+	ddsModel: DDSFuzzModel<TOperation>,
 	providedOptions?: Partial<DDSFuzzSuiteOptions>,
 ): void {
 	const options = {
@@ -1207,13 +1180,10 @@ export function createDDSFuzzSuite<
 	});
 }
 
-const getFullModel = <
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
->(
-	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+const getFullModel = <TOperation extends BaseOperation>(
+	ddsModel: DDSFuzzModel<TOperation>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | AddClient | Attach | Synchronize> =>
+): DDSFuzzModel<TOperation | AddClient | Attach | Synchronize> =>
 	mixinAttach(
 		mixinSynchronization(
 			mixinNewClient(mixinClientSelection(ddsModel, options), options),
@@ -1242,8 +1212,8 @@ export namespace createDDSFuzzSuite {
 	 */
 	export const only =
 		(...seeds: number[]) =>
-		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-			ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+		<TOperation extends BaseOperation>(
+			ddsModel: DDSFuzzModel<TOperation>,
 			providedOptions?: Partial<DDSFuzzSuiteOptions>,
 		): void =>
 			createDDSFuzzSuite(ddsModel, {
@@ -1264,8 +1234,8 @@ export namespace createDDSFuzzSuite {
 	 */
 	export const skip =
 		(...seeds: number[]) =>
-		<TChannelFactory extends IChannelFactory, TOperation extends BaseOperation>(
-			ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
+		<TOperation extends BaseOperation>(
+			ddsModel: DDSFuzzModel<TOperation>,
 			providedOptions?: Partial<DDSFuzzSuiteOptions>,
 		): void =>
 			createDDSFuzzSuite(ddsModel, {
