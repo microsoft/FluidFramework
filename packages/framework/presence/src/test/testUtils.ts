@@ -11,7 +11,11 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type { ClientConnectionId, ClientSessionId } from "@fluidframework/presence/alpha";
+import type {
+	ClientConnectionId,
+	ClientSessionId,
+	ValueTypeSchemaValidator,
+} from "@fluidframework/presence/alpha";
 import type { IExtensionMessage } from "@fluidframework/presence/internal/container-definitions/internal";
 import type { InternalUtilityTypes } from "@fluidframework/presence/internal/core-interfaces";
 
@@ -152,4 +156,14 @@ export function assertFinalExpectations(
 	}
 	// Make sure all expected signals were sent.
 	runtime.assertAllSignalsSubmitted();
+}
+
+/**
+ * Creates a null validator (one that does nothing) for a given type T.
+ */
+export function createNullValidator<T extends object>(): ValueTypeSchemaValidator<T> {
+	const nullValidator: ValueTypeSchemaValidator<T> = (data: unknown) => {
+		return data as T;
+	};
+	return nullValidator;
 }

@@ -10,7 +10,11 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
+import type {
+	LatestValueClientData,
+	LatestValueData,
+	ValueTypeSchemaValidator,
+} from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -167,6 +171,7 @@ class LatestValueManagerImpl<T, Key extends string>
  */
 export function Latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
+	validator: ValueTypeSchemaValidator<T>,
 	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<
 	Key,

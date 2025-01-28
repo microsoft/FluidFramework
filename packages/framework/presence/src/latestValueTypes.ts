@@ -46,3 +46,22 @@ export interface LatestValueData<T> {
 export interface LatestValueClientData<T> extends LatestValueData<T> {
 	client: ISessionClient;
 }
+
+/**
+ * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
+ * presence workspace and managed by a value manager.
+ *
+ * @alpha
+ */
+export type ValueTypeSchemaValidator<T extends object> = (
+	unvalidatedData: unknown,
+	// TODO: What else will the validator need? Stuff may be accessible via closure depending on where the validator is
+	// used.
+) => T | undefined;
+
+/**
+ * @alpha
+ */
+export type ValueTypeSchemaValidatorFunction<T extends object> = (
+	unvalidatedData: unknown,
+) => ValueTypeSchemaValidator<T> | undefined;
