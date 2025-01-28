@@ -79,6 +79,7 @@
 		"@playwright/test": "^1.49.0",
 		"@rushstack/node-core-library": "^5.9.0",
 		"@types/node": "^22.9.1",
+		"@wayneferrao/docusaurus-search-local": "^0.48.5",
 		"chalk": "^5.3.0",
 		"clsx": "^2.1.1",
 		"concurrently": "^9.1.0",

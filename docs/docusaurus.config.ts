@@ -156,7 +156,7 @@ const config: Config = {
 
 		// Theme that adds local search support (including generating an index as a part of the build).
 		[
-			"@easyops-cn/docusaurus-search-local",
+			"@wayneferrao/docusaurus-search-local",
 			{
 				// `hashed` is recommended as long-term-cache of index file is possible.
 				hashed: true,
