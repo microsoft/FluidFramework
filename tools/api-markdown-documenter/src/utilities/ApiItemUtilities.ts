@@ -241,6 +241,8 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
 /**
  * Gets the release tag associated with the provided API item, if the item's documentation contained one.
  *
+ * @param apiItem - The API item whose release tag is being queried.
+ *
  * @returns The associated release tag, if it exists. Will return `None` if no tag is present.
  *
  * @privateRemarks
@@ -260,6 +262,8 @@ export function getReleaseTag(apiItem: ApiItem): ReleaseTag {
  * @remarks
  * The release level of a given item is the most restrictive of all items in its ancestry.
  * An item with no release tag is implicitly considered `Public`.
+ *
+ * @param apiItem - The API item whose release level is being queried.
  *
  * @example
  *
