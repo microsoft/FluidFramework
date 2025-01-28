@@ -103,6 +103,17 @@ interface NestedIndexSignatureType {
 	};
 }
 
+/**
+ * Testing Nullish Coalescing Assignment (`??=`) Behavior
+ *
+ * Validates scenarios where:
+ * 1. Nullish coalescing assignment (`??=`) initializes index signature properties
+ * 2. Nested `??=` patterns safely initialize deep properties
+ * 3. Subsequent property accesses after `??=` are considered safe
+ *
+ * The rule should NOT report errors for these patterns, as `??=` ensures
+ * the property is initialized before access.
+ */
 function TestNullish(
 	base: NestedIndexSignatureType | undefined,
 	newData: NestedIndexSignatureType,

@@ -324,7 +324,9 @@ function propertyHasBeenChecked(node, context) {
 		}
 
 		const parent = current.parent;
-		if (parent === null) break;
+		if (parent === null) {
+			return false; // No parent nodes left - property check not found
+		}
 
 		// Handle Object.entries/keys loops
 		if (parent.type === "ForOfStatement") {
@@ -339,39 +341,38 @@ function propertyHasBeenChecked(node, context) {
 			}
 		}
 
-		// Handle presence checks
-		if (parent.type === "IfStatement" || parent.type === "ConditionalExpression") {
-			if (parent.test) {
-				if (nodesAreEquivalent(parent.test, node)) {
-					return true;
-				}
-				if (parent.test.type === "BinaryExpression") {
-					if (parent.test.operator === "in") {
-						const testBase = getBaseObject(parent.test.right);
-						if (baseObj === testBase) {
-							// Check if the else block assigns the key
-							const ifStatement = parent;
-							const elseBlock = ifStatement.alternate;
-							if (elseBlock) {
-								const keyNode = parent.test.left;
-								if (
-									checkElseBlockAssignsKey(elseBlock, testBase, keyNode, context)
-								) {
-									return true;
-								}
+		// Handle presence checks with guard against malformed AST nodes
+		if (
+			(parent.type === "IfStatement" || parent.type === "ConditionalExpression") &&
+			parent.test // Guard against incomplete code scenarios
+		) {
+			if (nodesAreEquivalent(parent.test, node)) {
+				return true;
+			}
+			if (parent.test.type === "BinaryExpression") {
+				if (parent.test.operator === "in") {
+					const testBase = getBaseObject(parent.test.right);
+					if (baseObj === testBase) {
+						// Check if the else block assigns the key
+						const ifStatement = parent;
+						const elseBlock = ifStatement.alternate;
+						if (elseBlock) {
+							const keyNode = parent.test.left;
+							if (checkElseBlockAssignsKey(elseBlock, testBase, keyNode, context)) {
+								return true;
 							}
-							return true;
 						}
-					}
-					if (
-						(parent.test.operator === "!==" || parent.test.operator === "!=") &&
-						((nodesAreEquivalent(parent.test.left, node) &&
-							isUndefinedNode(parent.test.right)) ||
-							(nodesAreEquivalent(parent.test.right, node) &&
-								isUndefinedNode(parent.test.left)))
-					) {
 						return true;
 					}
+				}
+				if (
+					(parent.test.operator === "!==" || parent.test.operator === "!=") &&
+					((nodesAreEquivalent(parent.test.left, node) &&
+						isUndefinedNode(parent.test.right)) ||
+						(nodesAreEquivalent(parent.test.right, node) &&
+							isUndefinedNode(parent.test.left)))
+				) {
+					return true;
 				}
 			}
 		}
@@ -488,7 +489,7 @@ function findParentFunction(node) {
 		}
 		node = node.parent;
 	}
-	return null;
+	return undefined;
 }
 
 // Helper function to check if a type is allowed to be undefined (e.g., Promise<T | undefined>)
@@ -528,7 +529,7 @@ function findFunctionDeclaration(name, scope) {
 	if (variable && variable.defs.length > 0) {
 		return variable.defs[0].node;
 	}
-	return null;
+	return undefined;
 }
 
 // Helper function to get the type of a function parameter
@@ -591,7 +592,10 @@ function findContainingBlock(node) {
 	return null;
 }
 
-// Helper to resolve variable values in scope
+/**
+ * Resolves the value of a variable by checking its declarations in the scope chain.
+ * Handles both literal values and identifier references recursively.
+ */
 function getKeyValue(node, context) {
 	if (node.type === "Literal") return node.value;
 	if (node.type === "Identifier") {
@@ -604,25 +608,34 @@ function getKeyValue(node, context) {
 					const init = def?.node?.init;
 					if (!init) continue;
 
-					// Handle nested literals (e.g., const key = "test")
+					// Base case: literal value initialization
 					if (init.type === "Literal") {
 						return init.value;
 					}
-					// Handle simple identifier references (e.g., const key = KEY_CONSTANT)
+
+					// Recursive case: identifier reference initialization
 					if (init.type === "Identifier") {
 						return getKeyValue(init, context); // Resolve recursively
 					}
+
+					// If initialization is not a literal or identifier, stop searching
+					break;
 				}
 				break;
 			}
 			scope = scope.upper;
 		}
+		// Return the original identifier name if resolution fails
 		return node.name;
 	}
-	return null;
+	return undefined;
 }
 
-// Helper to check if else block assigns the key to the base object
+/**
+ * Helper to check if else block assigns the key to the base object.
+ * Example: if (key in obj) { ... } else { obj[key] = defaultValue; }
+ * Returns true if such a pattern is detected.
+ */
 function checkElseBlockAssignsKey(elseBlock, baseObjName, keyNode, context) {
 	let assignsKey = false;
 	const keyValue = getKeyValue(keyNode, context);
