@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /*!
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
@@ -16,6 +15,9 @@ import {
 	TreeViewConfiguration,
 	SharedTree,
 	type TreeNode,
+	type ITree,
+	type SimpleTreeSchema,
+	type TreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
@@ -382,13 +384,10 @@ describe("applyAgentEdit", () => {
 	});
 
 	describe("modify edits", () => {
-		let tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		let config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
-		let view = tree.viewWith(config);
-		let simpleSchema = getSimpleSchema(view.schema);
+		let tree: ITree;
+		let config: TreeViewConfiguration<typeof RootObjectPolymorphic>;
+		let view: TreeView<typeof RootObjectPolymorphic>;
+		let simpleSchema: SimpleTreeSchema;
 
 		// Reinitialize our test tree to the same initial state.
 		beforeEach(() => {
@@ -558,7 +557,7 @@ describe("applyAgentEdit", () => {
 			assert.throws(
 				() => applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions),
 				validateUsageError(
-					`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. The node's field you selected for modification \`x2\` does not exist in this nodes schema. The set of available fields for this node are: \`['id', 'x', 'y', 'z']\`. If you are sure you are trying to modify this node, did you mean to use the field \`x\` which has the following set of allowed types: \`['com.fluidframework.leaf.number']\`?`,
+					`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. The node's field you selected for modification \`x2\` does not exist in this node's schema. The set of available fields for this node are: \`['id', 'x', 'y', 'z']\`. If you are sure you are trying to modify this node, did you mean to use the field \`x\` which has the following set of allowed types: \`['com.fluidframework.leaf.number']\`?`,
 				),
 			);
 		});
@@ -578,7 +577,7 @@ describe("applyAgentEdit", () => {
 			assert.throws(
 				() => applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions),
 				validateUsageError(
-					`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. You cannot set the node's field \`x\` to the value \`false\` with type \`boolean\` because this type is incompatible with all of the types allowed by the node's schema. The set of allowed types are \`['com.fluidframework.leaf.number']\`.`,
+					`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. You cannot set the node's field \`x\` to the value \`false\` with type \`boolean\` because this type is incompatible with all of the types allowed by the field's schema. The set of allowed types are \`['com.fluidframework.leaf.number']\`.`,
 				),
 			);
 		});

@@ -21,6 +21,7 @@ import {
 	type IterableTreeArrayContent,
 	SchemaFactory,
 } from "@fluidframework/tree/internal";
+import { closest } from "fastest-levenshtein";
 
 import {
 	type TreeEdit,
@@ -37,7 +38,7 @@ import {
 import type { IdGenerator } from "./idGenerator.js";
 import type { JsonValue } from "./jsonTypes.js";
 import { toDecoratedJson } from "./promptGeneration.js";
-import { fail, findClosestStringMatch } from "./utils.js";
+import { fail } from "./utils.js";
 
 function populateDefaults(
 	json: JsonValue,
@@ -340,7 +341,7 @@ export function applyAgentEdit(
 }
 
 /**
- * Produces a useful, context-rich error message for the LLM when the LLM produces an {@link ModifyEdit} that either references a nonexistant field or an invalid type for the selected field.
+ * Produces a useful, context-rich error message to give as a response to the LLM when it has produced an {@link ModifyEdit} that either references a nonexistant field or an invalid type for the selected field.
  * @param errorType - The type of error message to produce. You must determine the error type before calling this function.
  * - `'NONEXISTENT_FIELD'` is used when the field does not exist in the node's schema.
  * - `'INVALID_TYPE'` is used when the field exists but the type of the modification is invalid.
@@ -352,42 +353,25 @@ function createInvalidModifyFeedbackMsg(
 ): string {
 	const { treeNodeSchema } = getSimpleNodeSchema(treeNode);
 	const nodeFieldSchemas = treeNodeSchema.info as Record<string, ImplicitFieldSchema>;
-
 	const messagePrefix = `You attempted an invalid modify edit on the node with id '${modifyEdit.target.target}' and schema '${treeNodeSchema.identifier}'.`;
 	let messageSuffix = "";
+	const getAllowedTypeIdentifiers = (fieldName: string): string[] => {
+		const targetFieldNodeSchema = nodeFieldSchemas[fieldName];
+		return targetFieldNodeSchema instanceof FieldSchema
+			? [...targetFieldNodeSchema.allowedTypeSet.values()].map((schema) => schema.identifier)
+			: [(targetFieldNodeSchema as TreeNodeSchema).identifier];
+	};
+
 	if (errorType === "NONEXISTENT_FIELD") {
 		const nodeFieldNames = Object.keys(nodeFieldSchemas);
-		const closestPossibleMatchForField = findClosestStringMatch(
-			modifyEdit.field,
-			nodeFieldNames,
-		);
-
-		let closestPossibleMatchForFieldMessage = "";
-		if (closestPossibleMatchForField !== "") {
-			const targetFieldNodeSchema = nodeFieldSchemas[closestPossibleMatchForField];
-			const allowedTypeIdentifiers: string[] =
-				targetFieldNodeSchema instanceof FieldSchema
-					? [...targetFieldNodeSchema.allowedTypeSet.values()].map(
-							(schema) => schema.identifier,
-						)
-					: [(targetFieldNodeSchema as TreeNodeSchema).identifier];
-			closestPossibleMatchForFieldMessage = ` If you are sure you are trying to modify this node, did you mean to use the field \`${closestPossibleMatchForField}\` which has the following set of allowed types: \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`?`;
-		}
-
-		messageSuffix = ` The node's field you selected for modification \`${modifyEdit.field}\` does not exist in this nodes schema. The set of available fields for this node are: \`[${nodeFieldNames.map((field) => `'${field}'`).join(", ")}]\`.${closestPossibleMatchForFieldMessage}`;
+		const closestPossibleFieldMatch = closest(modifyEdit.field, nodeFieldNames);
+		const allowedTypeIdentifiers = getAllowedTypeIdentifiers(closestPossibleFieldMatch);
+		const closestPossibleMatchForFieldMessage = ` If you are sure you are trying to modify this node, did you mean to use the field \`${closestPossibleFieldMatch}\` which has the following set of allowed types: \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`?`;
+		messageSuffix = ` The node's field you selected for modification \`${modifyEdit.field}\` does not exist in this node's schema. The set of available fields for this node are: \`[${nodeFieldNames.map((field) => `'${field}'`).join(", ")}]\`.${closestPossibleMatchForFieldMessage}`;
 	} else if (errorType === "INVALID_TYPE") {
-		const targetFieldNodeSchema = nodeFieldSchemas[modifyEdit.field];
-		const allowedTypeIdentifiers =
-			targetFieldNodeSchema instanceof FieldSchema
-				? [
-						[...targetFieldNodeSchema.allowedTypeSet.values()].map(
-							(schema) => schema.identifier,
-						),
-					]
-				: [(targetFieldNodeSchema as TreeNodeSchema).identifier];
-
+		const allowedTypeIdentifiers = getAllowedTypeIdentifiers(modifyEdit.field);
 		// TODO: If the invalid modification is a new object, it won't be clear what part of the object is invalid for the given type. If we could give some more detailed guidance on what was wrong with the object it would be ideal.
-		messageSuffix = ` You cannot set the node's field \`${modifyEdit.field}\` to the value \`${modifyEdit.modification}\` with type \`${typeof modifyEdit.modification}\` because this type is incompatible with all of the types allowed by the node's schema. The set of allowed types are \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`.`;
+		messageSuffix = ` You cannot set the node's field \`${modifyEdit.field}\` to the value \`${modifyEdit.modification}\` with type \`${typeof modifyEdit.modification}\` because this type is incompatible with all of the types allowed by the field's schema. The set of allowed types are \`[${allowedTypeIdentifiers.map((id) => `'${id}'`).join(", ")}]\`.`;
 	}
 
 	return messagePrefix + messageSuffix;
