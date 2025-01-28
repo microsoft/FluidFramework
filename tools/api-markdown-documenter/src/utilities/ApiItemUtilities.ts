@@ -241,22 +241,15 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
 /**
  * Gets the release tag associated with the provided API item, if the item's documentation contained one.
  *
+ * @remarks
+ * Note: getting the exact tag of an item is generally not useful.
+ * Use {@link getEffectiveReleaseTag} instead to get the effective release level, accounting for inheritance.
+ *
  * @param apiItem - The API item whose release tag is being queried.
  *
  * @returns The associated release tag, if it exists. Will return `None` if no tag is present.
- *
- * @privateRemarks
- * TODO: No one should really use this. They should use `getEffectiveReleaseTag` instead.
- * This includes the docs we generate - we shouldn't label an interface member as `@public` if the interface itself is
- * `@beta`, for example, even if that member is directly tagged `@public`.
- *
- * @deprecated
- * Generally, getting the exact tag of an item is not useful. Use `getEffectiveReleaseTag` instead to get the
- * effective release level, accounting for inheritance.
- *
- * @public
  */
-export function getReleaseTag(apiItem: ApiItem): ReleaseTag {
+function getReleaseTag(apiItem: ApiItem): ReleaseTag {
 	return (apiItem as Partial<ApiReleaseTagMixin>).releaseTag ?? ReleaseTag.None;
 }
 
