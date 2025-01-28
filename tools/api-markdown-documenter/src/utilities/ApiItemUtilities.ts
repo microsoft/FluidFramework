@@ -21,7 +21,7 @@ import {
 	type ApiPackage,
 	ApiParameterListMixin,
 	ApiReadonlyMixin,
-	ApiReleaseTagMixin,
+	type ApiReleaseTagMixin,
 	ApiStaticMixin,
 	type Excerpt,
 	type IResolveDeclarationReferenceResult,
@@ -248,7 +248,7 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  * @public
  */
 export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
-	return ApiReleaseTagMixin.isBaseClassOf(apiItem) ? apiItem.releaseTag : undefined;
+	return (apiItem as Partial<ApiReleaseTagMixin>).releaseTag ?? undefined;
 }
 
 /**
