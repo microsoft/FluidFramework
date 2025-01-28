@@ -366,17 +366,16 @@ export function doesItemRequireOwnDocument(
  * TODO
  */
 export function getEffectiveReleaseTag(apiItem: ApiItem): ReleaseTag {
-	const releaseTag = getReleaseTag(apiItem);
-	if (releaseTag === undefined || releaseTag === ReleaseTag.None) {
-		// If the item does not have a release tag, then it inherits the release scope of its ancestry.
-		const parent = getFilteredParent(apiItem);
-		if (parent === undefined) {
-			return ReleaseTag.None;
-		}
+	// The lack of a release tag is treated as public
+	const myReleaseTag = getReleaseTag(apiItem) ?? ReleaseTag.Public;
 
-		return getEffectiveReleaseTag(parent);
+	const parent = getFilteredParent(apiItem);
+	if (parent === undefined) {
+		return myReleaseTag;
 	}
-	return releaseTag;
+
+	const parentEffectiveReleaseTag = getEffectiveReleaseTag(parent);
+	return Math.min(myReleaseTag, parentEffectiveReleaseTag);
 }
 
 /**
@@ -425,12 +424,6 @@ export function shouldItemBeIncluded(
 	config: ApiItemTransformationConfiguration,
 ): boolean {
 	const releaseTag = getEffectiveReleaseTag(apiItem);
-	if (releaseTag === ReleaseTag.None) {
-		// If we encounter an item with no release tag in its ancestry, we can't make a determination as to whether
-		// or not it is intended to be included in the generated documentation suite.
-		// To be safe, log a warning but return true.
-		config.logger.warning("Encountered an API item with no release tag in ancestry.");
-	}
 
 	if (releaseTag < config.minimumReleaseLevel) {
 		// If the item has a release tag that is lower than the minimum release level, it should be not be included.

@@ -12,15 +12,15 @@ describe("ApiItemTransformUtilities", () => {
 	describe("getEffectiveReleaseTag", () => {
 		it("Item is tagged", () => {
 			const item = {
-				releaseTag: ReleaseTag.Public,
+				releaseTag: ReleaseTag.Alpha,
 			} as unknown as ApiItem;
 
-			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Public);
+			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Alpha);
 		});
 
 		it("Tag is inherited", () => {
 			const parent = {
-				releaseTag: ReleaseTag.Public,
+				releaseTag: ReleaseTag.Beta,
 			} as unknown as ApiItem;
 
 			const item = {
@@ -28,7 +28,33 @@ describe("ApiItemTransformUtilities", () => {
 				releaseTag: undefined,
 			} as unknown as ApiItem;
 
-			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Public);
+			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Beta);
+		});
+
+		it("Tag is more restrictive than ancestors", () => {
+			const parent = {
+				releaseTag: ReleaseTag.Beta,
+			} as unknown as ApiItem;
+
+			const item = {
+				parent,
+				releaseTag: ReleaseTag.Alpha,
+			} as unknown as ApiItem;
+
+			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Alpha);
+		});
+
+		it("Tag is less restrictive than ancestors", () => {
+			const parent = {
+				releaseTag: ReleaseTag.Alpha,
+			} as unknown as ApiItem;
+
+			const item = {
+				parent,
+				releaseTag: ReleaseTag.Beta,
+			} as unknown as ApiItem;
+
+			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Alpha);
 		});
 
 		it("No tag in ancestry", () => {
@@ -41,7 +67,7 @@ describe("ApiItemTransformUtilities", () => {
 				releaseTag: undefined,
 			} as unknown as ApiItem;
 
-			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.None);
+			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Public);
 		});
 	});
 });
