@@ -466,7 +466,6 @@ export function filterItems(
 	return apiItems.filter((member) => shouldItemBeIncluded(member, config));
 }
 
-// TODO: rename to `getFilteredMembers`
 /**
  * Filters and returns the child members of the provided `apiItem` to include only those desired by the user configuration.
  * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.excludeItem}.
@@ -474,7 +473,7 @@ export function filterItems(
  * @param apiItem - The API item being queried.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function filterChildMembers(
+export function getFilteredMembers(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): ApiItem[] {
