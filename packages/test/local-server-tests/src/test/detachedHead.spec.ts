@@ -29,12 +29,12 @@ import { createLoader } from "../utils.js";
  * synchronous method to create child datastores, which could be called
  * in response to synchronous user input, like a key press.
  */
-class ParentDataObject extends DataObject {
+class RootDataObject extends DataObject {
 	private static instanceCount: number = 0;
 	private readonly instanceNumber =
 		this.context.containerRuntime.clientDetails.capabilities.interactive === false
 			? -1
-			: ParentDataObject.instanceCount++;
+			: RootDataObject.instanceCount++;
 
 	get ParentDataObject() {
 		return this;
@@ -63,7 +63,7 @@ class ParentDataObject extends DataObject {
  */
 const parentDataObjectFactory = new DataObjectFactory(
 	"ParentDataObject",
-	ParentDataObject,
+	RootDataObject,
 	undefined,
 	{},
 );
@@ -100,8 +100,8 @@ const runtimeFactory: IRuntimeFactory = {
 	},
 };
 
-async function getDataObject(container: IContainer): Promise<ParentDataObject> {
-	const entrypoint: FluidObject<ParentDataObject> = await container.getEntryPoint();
+async function getDataObject(container: IContainer): Promise<RootDataObject> {
+	const entrypoint: FluidObject<RootDataObject> = await container.getEntryPoint();
 	const dataObject = entrypoint.ParentDataObject;
 	assert(dataObject !== undefined, "dataObject must be defined");
 	return dataObject;
@@ -109,7 +109,7 @@ async function getDataObject(container: IContainer): Promise<ParentDataObject> {
 
 interface Client {
 	container: IContainer;
-	dataObject: ParentDataObject;
+	dataObject: RootDataObject;
 }
 
 const waitForSave = async (clients: Client[] | Record<string, Client>) =>
@@ -125,54 +125,50 @@ const waitForSave = async (clients: Client[] | Record<string, Client>) =>
 	);
 
 const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer) => {
-	const clients = {} as unknown as Record<
-		"original" | "loaded",
-		{ container: IContainer; dataObject: ParentDataObject }
-	>;
+	const { loaderProps, codeDetails, urlResolver } = createLoader({
+		deltaConnectionServer,
+		runtimeFactory,
+	});
 
-	{
-		const { loaderProps, codeDetails, urlResolver } = createLoader({
-			deltaConnectionServer,
-			runtimeFactory,
-		});
+	const createContainer = await createDetachedContainer({ ...loaderProps, codeDetails });
 
-		const createContainer = await createDetachedContainer({ ...loaderProps, codeDetails });
+	const original = {
+		container: createContainer,
+		dataObject: await getDataObject(createContainer),
+	};
+	original.dataObject.makeEdit("detached");
 
-		const original = (clients.original = {
-			container: createContainer,
-			dataObject: await getDataObject(createContainer),
-		});
-		original.dataObject.makeEdit("detached");
+	await createContainer.attach(urlResolver.createCreateNewRequest("test"));
+	original.dataObject.makeEdit("attached");
 
-		await createContainer.attach(urlResolver.createCreateNewRequest("test"));
-		original.dataObject.makeEdit("attached");
+	const url = await createContainer.getAbsoluteUrl("");
+	assert(url !== undefined, "must have url");
 
-		const url = await createContainer.getAbsoluteUrl("");
-		assert(url !== undefined, "must have url");
+	const loadLoader = createLoader({
+		deltaConnectionServer,
+		runtimeFactory,
+	});
 
-		const loadLoader = createLoader({
-			deltaConnectionServer,
-			runtimeFactory,
-		});
+	const loadedContainer = await loadExistingContainer({
+		...loadLoader.loaderProps,
+		request: { url },
+	});
+	const loaded = {
+		dataObject: await getDataObject(loadedContainer),
+		container: loadedContainer,
+	};
+	loaded.dataObject.makeEdit("loaded");
 
-		const loadedContainer = await loadExistingContainer({
-			...loadLoader.loaderProps,
-			request: { url },
-		});
-		const loaded = (clients.loaded = {
-			dataObject: await getDataObject(loadedContainer),
-			container: loadedContainer,
-		});
-		loaded.dataObject.makeEdit("loaded");
+	const clients = { original, loaded };
 
-		await waitForSave(clients);
+	await waitForSave(clients);
 
-		assert.deepStrictEqual(
-			original.dataObject.state,
-			loaded.dataObject.state,
-			"states should match after save",
-		);
-	}
+	assert.deepStrictEqual(
+		original.dataObject.state,
+		loaded.dataObject.state,
+		"initial states should match after save",
+	);
+
 	return clients;
 };
 
