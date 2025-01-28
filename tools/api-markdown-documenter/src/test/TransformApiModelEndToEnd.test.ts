@@ -48,7 +48,7 @@ const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel
 			includeTopLevelDocumentHeading: true,
 			hierarchy: HierarchyConfigurations.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
-			excludeItem: (apiItem) =>
+			exclude: (apiItem) =>
 				// Skip test-suite-b package
 				apiItem.kind === ApiItemKind.Package &&
 				(apiItem as ApiPackage).name === "test-suite-b",

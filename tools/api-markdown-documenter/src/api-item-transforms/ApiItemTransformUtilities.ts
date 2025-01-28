@@ -381,7 +381,7 @@ export function getEffectiveReleaseTag(apiItem: ApiItem): ReleaseTag {
 
 /**
  * Determines whether or not the specified API item should have documentation generated for it.
- * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.excludeItem}.
+ * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.exclude}.
  *
  * @remarks
  *
@@ -441,7 +441,7 @@ export function shouldItemBeIncluded(
 	// If so, this item will not be included.
 	let currentItem: ApiItem | undefined = apiItem;
 	while (currentItem !== undefined) {
-		if (config.excludeItem(currentItem)) {
+		if (config.exclude(currentItem)) {
 			return false;
 		}
 		currentItem = getFilteredParent(currentItem);
@@ -452,7 +452,7 @@ export function shouldItemBeIncluded(
 
 /**
  * Filters and returns the provided list of `ApiItem`s to include only those desired by the user configuration.
- * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.excludeItem}.
+ * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.exclude}.
  *
  * @param apiItem - The API item being queried.
  * @param config - See {@link ApiItemTransformationConfiguration}.
@@ -468,7 +468,7 @@ export function filterItems(
 
 /**
  * Filters and returns the child members of the provided `apiItem` to include only those desired by the user configuration.
- * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.excludeItem}.
+ * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.exclude}.
  *
  * @param apiItem - The API item being queried.
  * @param config - See {@link ApiItemTransformationConfiguration}.

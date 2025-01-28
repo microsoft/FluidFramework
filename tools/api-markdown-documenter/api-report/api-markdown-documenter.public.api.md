@@ -216,7 +216,7 @@ export const defaultConsoleLogger: Logger;
 
 // @public
 export namespace DefaultDocumentationSuiteConfiguration {
-    export function defaultExcludeItem(): boolean;
+    export function defaultExclude(): boolean;
     export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
@@ -315,7 +315,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 
 // @public
 export interface DocumentationSuiteConfiguration {
-    readonly excludeItem: (apiItem: ApiItem) => boolean;
+    readonly exclude: (apiItem: ApiItem) => boolean;
     readonly getAlertsForItem: (apiItem: ApiItem) => string[];
     readonly getHeadingTextForItem: (apiItem: ApiItem) => string;
     readonly getLinkTextForItem: (apiItem: ApiItem) => string;

@@ -131,7 +131,7 @@ export interface DocumentationSuiteConfiguration {
 	 *
 	 * @defaultValue No items are skipped.
 	 */
-	readonly excludeItem: (apiItem: ApiItem) => boolean;
+	readonly exclude: (apiItem: ApiItem) => boolean;
 
 	/**
 	 * Minimal release scope to include in generated documentation suite.
@@ -275,11 +275,11 @@ export namespace DefaultDocumentationSuiteConfiguration {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteConfiguration.excludeItem}.
+	 * Default {@link DocumentationSuiteConfiguration.exclude}.
 	 *
 	 * Unconditionally returns `false` (i.e. no packages will be filtered out).
 	 */
-	export function defaultExcludeItem(): boolean {
+	export function defaultExclude(): boolean {
 		return false;
 	}
 }
@@ -311,8 +311,7 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 		getAlertsForItem:
 			options?.getAlertsForItem ??
 			DefaultDocumentationSuiteConfiguration.defaultGetAlertsForItem,
-		excludeItem:
-			options?.excludeItem ?? DefaultDocumentationSuiteConfiguration.defaultExcludeItem,
+		exclude: options?.exclude ?? DefaultDocumentationSuiteConfiguration.defaultExclude,
 		minimumReleaseLevel: options?.minimumReleaseLevel ?? ReleaseTag.Internal,
 	};
 }

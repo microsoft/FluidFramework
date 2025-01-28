@@ -30,7 +30,7 @@ import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "
  */
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(options);
-	const { apiModel, logger, excludeItem } = config;
+	const { apiModel, logger, exclude: excludeItem } = config;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
