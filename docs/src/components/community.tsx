@@ -77,7 +77,7 @@ function CommunityLink({
 	return (
 		<div className={clsx("col col--4")}>
 			<div className="text--center">
-				<Icon className={"ffcom-community-link-icon"} role="img" />
+				<Icon className={"ffcom-community-link-icon"} role="img" aria-label={title} />
 			</div>
 			<div className="text--center padding-horiz--md">
 				<Heading as="h3">
