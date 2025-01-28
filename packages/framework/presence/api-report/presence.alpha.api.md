@@ -246,6 +246,6 @@ export interface ValueMap<K extends string | number, V> {
 }
 
 // @alpha
-export type ValueTypeSchemaValidator<T extends object> = (unvalidatedData: unknown) => T | undefined;
+export type ValueTypeSchemaValidator<T> = (unvalidatedData: unknown) => T | undefined;
 
 ```

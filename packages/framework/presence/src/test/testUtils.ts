@@ -5,7 +5,7 @@
 
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers } from "sinon";
+import type { SinonFakeTimers, SinonSpy } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
 
@@ -166,4 +166,23 @@ export function createNullValidator<T extends object>(): ValueTypeSchemaValidato
 		return data as T;
 	};
 	return nullValidator;
+}
+
+type ValidatorSpy = Pick<SinonSpy, "callCount">;
+
+/**
+ * Creates a validator and a spy for test purposes.
+ */
+export function createSpiedValidator<T extends object>(
+	validator: ValueTypeSchemaValidator<T>,
+): [ValueTypeSchemaValidator<T>, ValidatorSpy] {
+	const spy: ValidatorSpy = {
+		callCount: 0,
+	};
+
+	const nullValidatorSpy: ValueTypeSchemaValidator<T> = (data: unknown) => {
+		spy.callCount++;
+		return validator(data) as T;
+	};
+	return [nullValidatorSpy, spy];
 }
