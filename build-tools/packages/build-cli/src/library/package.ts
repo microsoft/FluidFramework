@@ -710,7 +710,7 @@ async function setPackageDependencies(
 
 				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				newRangeString = dep.range.toString();
-				if (dependencies[name] !== newRangeString) {
+				if (dependencies[name] === "workspace:~") {
 					changed = true;
 					dependencies[name] = newRangeString;
 				}
