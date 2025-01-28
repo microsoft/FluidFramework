@@ -68,15 +68,16 @@ export class DocumentContextManager extends EventEmitter {
 			Lumberjack.verbose("Emitting error from contextManager, context error event.");
 			this.emit("error", error, errorData);
 		});
-		context.addListener("pause", (offset: number, reason?: any) => {
+		context.addListener("pause", (offset?: number, reason?: any) => {
 			// Find the lowest offset of all contexts' tail (checkpointed offset) and emit pause at that offset to ensure we dont miss any messages
-			let lowestOffset = offset;
+			let lowestOffset = offset ?? 0;
 			for (const docContext of this.contexts) {
 				if (docContext.tail.offset < lowestOffset) {
 					lowestOffset = docContext.tail.offset;
 				}
 				docContext.setStateToPause(); // set headUpdatedAfterResume to false for all doc partitions, so that we allow their head to move backwards during resume
 			}
+			lowestOffset = lowestOffset > -1 ? lowestOffset : 0;
 			this.headUpdatedAfterResume = false; // reset this flag when we pause
 			this.tailUpdatedAfterResume = false; // reset this flag when we pause
 			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
@@ -117,31 +118,24 @@ export class DocumentContextManager extends EventEmitter {
 					);
 					return false;
 				}
-				// if (this.headUpdatedAfterResume) {
-				// 	Lumberjack.warning(
-				// 		"ContextManager head is moving backwards again after a previous move backwards. This is unexpected.",
-				// 		{ resumeBackToOffset, newHeadOffset: head.offset, currentHeadOffset: this.head.offset },
-				// 	);
-				// 	return false;
-				// }
 
 				// allow moving backwards
 				Lumberjack.info(
-					"Allowing the contextManager head to move to the specified offset, and setting headUpdatedAfterResume to true",
-					{ newHeadOffset: head.offset, currentHeadOffset: this.head.offset },
+					"Allowing the contextManager head to move backwards to the specified offset",
+					{
+						newHeadOffset: head.offset,
+						currentHeadOffset: this.head.offset,
+						headUpdatedAfterResume: this.headUpdatedAfterResume,
+					},
 				);
-				// // move all doc Contexts' heads also
-				// for (const docContext of this.contexts) {
-				// 	docContext.resetHeadToTail(); // reset head to tail so that they can be updated to the new head
-				// }
-				// if (!this.headUpdatedAfterResume && resumeBackToOffset !== undefined) {
-				// Lumberjack.info("Setting headUpdatedAfterResume to true", {
-				// 	resumeBackToOffset,
-				// 	newHeadOffset: head.offset,
-				// 	currentHeadOffset: this.head.offset,
-				// });
+			}
+
+			if (!this.headUpdatedAfterResume) {
+				Lumberjack.info("Setting headUpdatedAfterResume to true", {
+					newHeadOffset: head.offset,
+					currentHeadOffset: this.head.offset,
+				});
 				this.headUpdatedAfterResume = true;
-				// }
 			}
 
 			this.head = head;
@@ -160,22 +154,22 @@ export class DocumentContextManager extends EventEmitter {
 
 		if (tail.offset <= this.tail.offset) {
 			Lumberjack.info(
-				"Allowing the contextManager tail to move to the specified offset, and setting tailUpdatedAfterResume to true",
+				"Allowing the contextManager tail to move backwards to the specified offset",
 				{
 					newTailOffset: tail.offset,
 					currentTailOffset: this.tail.offset,
+					tailUpdatedAfterResume: this.tailUpdatedAfterResume,
 				},
 			);
-			this.tailUpdatedAfterResume = true;
 		}
 
-		// if (!this.tailUpdatedAfterResume && resumeBackToOffset !== undefined) {
-		// 	Lumberjack.info("Setting tailUpdatedAfterResume to true", {
-		// 		resumeBackToOffset,
-		// 		currentTailOffset: this.tail.offset,
-		// 	});
-		// 	this.tailUpdatedAfterResume = true;
-		// }
+		if (!this.tailUpdatedAfterResume) {
+			Lumberjack.info("Setting tailUpdatedAfterResume to true", {
+				newTailOffset: tail.offset,
+				currentTailOffset: this.tail.offset,
+			});
+			this.tailUpdatedAfterResume = true;
+		}
 
 		this.tail = tail;
 		this.updateCheckpoint();

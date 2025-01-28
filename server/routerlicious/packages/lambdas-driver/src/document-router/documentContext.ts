@@ -91,29 +91,29 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 			// allow moving backwards
 			Lumberjack.info(
-				"Allowing the document context head to move to the specified offset, and setting headUpdatedAfterResume to true",
+				"Allowing the document context head to move backwards to the specified offset",
 				{
 					newHeadOffset: head.offset,
 					currentHeadOffset: this.head.offset,
 					documentId: this.routingKey.documentId,
+					headUpdatedAfterResume: this.headUpdatedAfterResume,
 				},
 			);
-
-			// if (!this.headUpdatedAfterResume) { // TODO do we need to resumeBackToOffset !== undefined check here? i.e. if 2 docs emitted pause, will this be defined for both docs?
-			// 	Lumberjack.info("Setting headUpdatedAfterResume to true", {
-			// 		resumeBackToOffset,
-			// 		newHeadOffset: head.offset,
-			// 		currentHeadOffset: this.head.offset,
-			// 		documentId: this.routingKey.documentId,
-			// 	});
-			this.headUpdatedAfterResume = true;
-			// }
 		}
 
 		// When moving back to a state where head and tail differ we set the tail to be the old head, as in the
 		// constructor, to make tail represent the inclusive top end of the checkpoint range.
 		if (!this.hasPendingWork()) {
 			this.tailInternal = this.getLatestTail();
+		}
+
+		if (!this.headUpdatedAfterResume) {
+			Lumberjack.info("Setting headUpdatedAfterResume to true", {
+				newHeadOffset: head.offset,
+				currentHeadOffset: this.head.offset,
+				documentId: this.routingKey.documentId,
+			});
+			this.headUpdatedAfterResume = true;
 		}
 
 		this.headInternal = head;
@@ -162,7 +162,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		return this.contextError;
 	}
 
-	public pause(offset: number, reason?: any) {
+	public pause(offset?: number, reason?: any) {
 		this.headUpdatedAfterResume = false; // reset this flag when we pause
 		this.emit("pause", offset, reason);
 	}
