@@ -141,8 +141,6 @@ stages:
           value: true
         - name: artifactPipeline
           value: Build - client packages
-        - name: downloadFeedUrl
-          value: $(ado-feeds-ff-download-only) # Comes from the ado-feeds variable group
 
         steps:
         # Setup
@@ -192,7 +190,6 @@ stages:
                 isTestBranch=${{ variables.isTestBranch }}
                 testWorkspace=${{ parameters.testWorkspace }}
                 testPackageFilePattern=${{ variables.testPackageFilePattern }}
-                downloadFeedUrl=${{ variables.downloadFeedUrl }}
                 testCommand=${{ parameters.testCommand }}
                 continueOnError=${{ parameters.continueOnError }}
                 variant.flag=${{ variant.flags }}
@@ -239,7 +236,7 @@ stages:
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.testWorkspace }}
-            # Note: $(ado-feeds-build) and $(ado-feeds-office) come from the ado-feeds variable group
+            # Note: $(ado-feeds-ff-download-only) and $(ado-feeds-office) come from the ado-feeds variable group
             script: |
               set -eu -o pipefail
 
@@ -248,7 +245,7 @@ stages:
 
               echo Generating .npmrc
               # Default feed that contains all our internal builds and mirrors external sources like npm.
-              echo "registry=${{ variables.downloadFeedUrl }}" >> ./.npmrc
+              echo "registry=$(ado-feeds-ff-download-only)" >> ./.npmrc
               echo "always-auth=true" >> ./.npmrc
 
               # For some internal dependencies in the @microsoft scope
