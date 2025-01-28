@@ -32,9 +32,7 @@ import {
 } from "@fluid-private/stochastic-test-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import type {
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { MinimizationTransform } from "./minification.js";
 import { FuzzTestMinimizer } from "./minification.js";
 
@@ -43,8 +41,16 @@ import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
-import { ILocalDeltaConnectionServer, LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import type { ICodeDetailsLoader, IContainer, IFluidCodeDetails, IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import {
+	ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
+} from "@fluidframework/server-local-server";
+import type {
+	ICodeDetailsLoader,
+	IContainer,
+	IFluidCodeDetails,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
 	createDetachedContainer,
@@ -66,8 +72,7 @@ export interface DDSRandom extends IRandom {
 	handle(): IFluidHandle;
 }
 
-
-export interface Client<T=undefined>{
+export interface Client<T = undefined> {
 	container: IContainer;
 	id: string;
 }
@@ -102,7 +107,6 @@ export interface BaseOperation {
 	type: number | string;
 }
 
-
 /**
  * @internal
  */
@@ -115,7 +119,7 @@ export interface Attach {
  */
 export interface AddClient {
 	type: "addClient";
-	id: string,
+	id: string;
 	url: string;
 }
 
@@ -522,7 +526,7 @@ export function mixinNewClient<
 				return {
 					type: "addClient",
 					url: containerUrl,
-					id: makeFriendlyClientId(random, clients.length)
+					id: makeFriendlyClientId(random, clients.length),
 				} satisfies AddClient;
 			}
 			return baseOp;
@@ -533,7 +537,6 @@ export function mixinNewClient<
 		(model.minimizationTransforms as
 			| MinimizationTransform<TOperation | AddClient>[]
 			| undefined) ?? [];
-
 
 	const reducer: AsyncReducer<TOperation | AddClient, TState> = async (state, op) => {
 		if (isClientAddOp(op)) {
@@ -557,7 +560,6 @@ export function mixinNewClient<
 	};
 }
 
-
 /**
  * Mixes in functionality to generate an 'attach' op, which
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -570,25 +572,17 @@ export function mixinAttach<
 >(
 	model: DDSFuzzModel<TChannelFactory, TOperation, TState>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<TChannelFactory, TOperation | Attach , TState> {
-	const { numOpsBeforeAttach} =
-		options.detachedStartOptions;
+): DDSFuzzModel<TChannelFactory, TOperation | Attach, TState> {
+	const { numOpsBeforeAttach } = options.detachedStartOptions;
 	if (numOpsBeforeAttach === 0) {
 		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
-		return model as DDSFuzzModel<
-			TChannelFactory,
-			TOperation | Attach ,
-			TState
-		>;
+		return model as DDSFuzzModel<TChannelFactory, TOperation | Attach, TState>;
 	}
-	const attachOp = async (): Promise<TOperation | Attach > => {
+	const attachOp = async (): Promise<TOperation | Attach> => {
 		return { type: "attach" };
 	};
 
-	const generatorFactory: () => AsyncGenerator<
-		TOperation | Attach ,
-		TState
-	> = () => {
+	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return chainAsync(
 			takeAsync(numOpsBeforeAttach, baseGenerator),
@@ -601,10 +595,7 @@ export function mixinAttach<
 		| MinimizationTransform<TOperation | Attach>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | Attach, TState> = async (
-		state,
-		operation,
-	) => {
+	const reducer: AsyncReducer<TOperation | Attach, TState> = async (state, operation) => {
 		if (isOperationType<Attach>("attach", operation)) {
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
@@ -619,11 +610,10 @@ export function mixinAttach<
 						state.localDeltaConnectionServer,
 						state.codeLoader,
 						url,
-						makeFriendlyClientId(state.random,index)
+						makeFriendlyClientId(state.random, index),
 					),
 				),
 			);
-
 
 			// While detached, the initial state was set up so that the 'summarizer client' was the same as the detached client.
 			// This is actually a pretty reasonable representation of what really happens.
@@ -708,8 +698,10 @@ export function mixinSynchronization<
 					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
 						const selectedClients = new Set(
 							state.clients
-								.filter((client) => client.container.connectionState === ConnectionState.Connected)
-								.filter(() => state.random.bool(validationStrategy.clientProbability))
+								.filter(
+									(client) => client.container.connectionState === ConnectionState.Connected,
+								)
+								.filter(() => state.random.bool(validationStrategy.clientProbability)),
 						);
 
 						return { type: "synchronize", clients: [...selectedClients] };
@@ -734,11 +726,17 @@ export function mixinSynchronization<
 		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
 			const connectedClients = state.clients.filter(
-				(client) => client.container.connectionState === ConnectionState.Connected
+				(client) => client.container.connectionState === ConnectionState.Connected,
 			);
 
-
-			await Promise.all(connectedClients.map((c)=>new Promise<void>((resolve)=>c.container.isDirty ? c.container.once("saved",()=>resolve()): resolve())))
+			await Promise.all(
+				connectedClients.map(
+					(c) =>
+						new Promise<void>((resolve) =>
+							c.container.isDirty ? c.container.once("saved", () => resolve()) : resolve(),
+						),
+				),
+			);
 
 			if (connectedClients.length > 0) {
 				const readonlyChannel = state.clients[0];
@@ -861,13 +859,12 @@ async function createDetachedClient<TChannelFactory extends IChannelFactory>(
 	codeDetails: IFluidCodeDetails,
 	id: string,
 ): Promise<Client<TChannelFactory>> {
-
 	const container = await createDetachedContainer({
 		codeLoader,
 		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
 		urlResolver: new LocalResolver(),
-		codeDetails
-	})
+		codeDetails,
+	});
 
 	const newClient: Client<TChannelFactory> = {
 		container,
@@ -882,18 +879,17 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 	id: string,
 	url: string,
 ): Promise<Client<TChannelFactory>> {
-
 	const container = await loadExistingContainer({
 		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
-		request: {url},
+		request: { url },
 		urlResolver: new LocalResolver(),
-		codeLoader
+		codeLoader,
 	});
 
 	return {
 		container,
 		id,
-	}
+	};
 }
 
 /**
@@ -904,7 +900,6 @@ async function loadClient<TChannelFactory extends IChannelFactory>(
 function makeFriendlyClientId(random: IRandom, index: number): string {
 	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
 }
-
 
 class StressDataObject extends DataObject {
 	get StressDataObject() {
@@ -919,7 +914,6 @@ const stressDataObjectFactory = new DataObjectFactory(
 	{},
 );
 
-
 const runtimeFactory: IRuntimeFactory = {
 	get IRuntimeFactory() {
 		return this;
@@ -929,10 +923,7 @@ const runtimeFactory: IRuntimeFactory = {
 			context,
 			existing,
 			registryEntries: [
-				[
-					stressDataObjectFactory.type,
-					Promise.resolve(stressDataObjectFactory),
-				],
+				[stressDataObjectFactory.type, Promise.resolve(stressDataObjectFactory)],
 			],
 			provideEntryPoint: async (rt) => {
 				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
@@ -947,7 +938,6 @@ const runtimeFactory: IRuntimeFactory = {
 		});
 	},
 };
-
 
 /**
  * Runs the provided DDS fuzz model. All functionality is already assumed to be mixed in.
@@ -966,11 +956,11 @@ export async function runTestForSeed<
 	const random = makeRandom(seed);
 
 	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
-	const localDeltaConnectionServer= LocalDeltaConnectionServer.create();
+	const localDeltaConnectionServer = LocalDeltaConnectionServer.create();
 	const codeDetails: IFluidCodeDetails = {
-		package:"local-server-stress-tests"
+		package: "local-server-stress-tests",
 	};
-	const codeLoader = new LocalCodeLoader([[codeDetails,runtimeFactory]]);
+	const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 	const initialClient = await createDetachedClient(
 		localDeltaConnectionServer,
 		codeLoader,
@@ -978,9 +968,9 @@ export async function runTestForSeed<
 		startDetached ? makeFriendlyClientId(random, 0) : "summarizer",
 	);
 	if (!startDetached) {
-		await initialClient.container.attach(createLocalResolverCreateNewRequest("stress"))
+		await initialClient.container.attach(createLocalResolverCreateNewRequest("stress"));
 	}
-	const url="aas";
+	const url = "aas";
 
 	const clients = startDetached
 		? [initialClient]
@@ -1005,7 +995,6 @@ export async function runTestForSeed<
 
 	options.emitter.emit("testStart", initialState);
 
-
 	let operationCount = 0;
 	const generator = model.generatorFactory();
 	const finalState = await performFuzzActionsAsync(
@@ -1018,7 +1007,6 @@ export async function runTestForSeed<
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
 	// this usually indicates an error on the part of the test author.
 	assert(operationCount > 0, "Generator should have produced at least one operation.");
-
 
 	options.emitter.emit("testEnd", finalState);
 
@@ -1225,23 +1213,14 @@ const getFullModel = <
 >(
 	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 	options: DDSFuzzSuiteOptions,
-): DDSFuzzModel<
-	TChannelFactory,
-	| TOperation
-	| AddClient
-	| Attach
-	| Synchronize
-> =>
+): DDSFuzzModel<TChannelFactory, TOperation | AddClient | Attach | Synchronize> =>
 	mixinAttach(
 		mixinSynchronization(
-			mixinNewClient(
-					mixinClientSelection(ddsModel, options),
-					options,
-				),
-				options,
-			),
+			mixinNewClient(mixinClientSelection(ddsModel, options), options),
 			options,
-		);
+		),
+		options,
+	);
 
 /**
  * {@inheritDoc (createDDSFuzzSuite:function)}
