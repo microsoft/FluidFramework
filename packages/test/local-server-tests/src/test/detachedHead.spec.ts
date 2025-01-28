@@ -52,7 +52,8 @@ class ParentDataObject extends DataObject {
 	}
 
 	public detachHead() {
-		return this.context.containerRuntime.detachHead();
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		return this.context.containerRuntime.detachHead!();
 	}
 }
 
