@@ -4,7 +4,7 @@
  */
 
 import type { EventEmitter } from "@fluid-internal/client-utils";
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -179,14 +179,14 @@ class ScheduleManagerCore {
 	private pauseQueue() {
 		assert(!this.localPaused, 0x297 /* "always called from resumed state" */);
 		this.localPaused = true;
-		this.timePaused = performance.now();
+		this.timePaused = performanceNow();
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.deltaManager.inbound.pause();
 	}
 
 	private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
 		const endBatch = messageEndBatch.sequenceNumber;
-		const duration = this.localPaused ? performance.now() - this.timePaused : undefined;
+		const duration = this.localPaused ? performanceNow() - this.timePaused : undefined;
 
 		this.batchCount++;
 		if (this.batchCount % 1000 === 1) {

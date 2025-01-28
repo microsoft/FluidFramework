@@ -245,10 +245,11 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"TypeAlias_IsomorphicPerformance": {
+			"Variable_performance": {
 				"backCompat": false
 			},
-			"Variable_performance": {
+			"TypeAlias_IsomorphicPerformance": {
+				"forwardCompat": false,
 				"backCompat": false
 			}
 		},

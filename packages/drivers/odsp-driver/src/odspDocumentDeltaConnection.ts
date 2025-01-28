@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
@@ -442,7 +442,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 
 		this.pushCallCounter++;
 		const nonce = `${this.requestOpsNoncePrefix}${this.pushCallCounter}`;
-		const start = performance.now();
+		const start = performanceNow();
 
 		// We may keep keep accumulating memory for nothing, if we are not getting responses.
 		// Note that we should not have overlapping requests, as DeltaManager allows only one
@@ -467,7 +467,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 				from: payloadToDelete.from,
 				to: payloadToDelete.to,
 				length: payloadToDelete.to - payloadToDelete.from,
-				duration: performance.now() - payloadToDelete.start,
+				duration: performanceNow() - payloadToDelete.start,
 			});
 			this.getOpsMap.delete(key!);
 		}
@@ -583,7 +583,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 					code: result.code,
 					from: data?.from,
 					to: data?.to,
-					duration: data === undefined ? undefined : performance.now() - data.start,
+					duration: data === undefined ? undefined : performanceNow() - data.start,
 				};
 				if (messages !== undefined && messages.length > 0) {
 					this.logger.sendPerformanceEvent({

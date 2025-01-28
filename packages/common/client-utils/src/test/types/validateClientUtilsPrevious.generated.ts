@@ -229,6 +229,7 @@ declare type current_as_old_for_TypeAlias_IsoBuffer = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_IsomorphicPerformance": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_IsomorphicPerformance = requireAssignableTo<TypeOnly<old.IsomorphicPerformance>, TypeOnly<current.IsomorphicPerformance>>
 
 /*

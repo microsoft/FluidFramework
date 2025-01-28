@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
@@ -270,7 +270,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				let retrievedSnapshot: ISnapshot | IPrefetchSnapshotContents | undefined;
 
 				let method: string;
-				let prefetchWaitStartTime: number = performance.now();
+				let prefetchWaitStartTime: number = performanceNow();
 				if (snapshotFetchOptions.fetchSource === FetchSource.noCache) {
 					retrievedSnapshot = await this.fetchSnapshotFromNetwork(
 						hostSnapshotOptions,
@@ -393,13 +393,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					} else {
 						// Note: There's a race condition here - another caller may come past the undefined check
 						// while the first caller is awaiting later async code in this block.
-						const startTime = performance.now();
+						const startTime = performanceNow();
 						retrievedSnapshot = await cachedSnapshotP;
-						cacheLookupTimeInSerialFetch = performance.now() - startTime;
+						cacheLookupTimeInSerialFetch = performanceNow() - startTime;
 						method = retrievedSnapshot === undefined ? "network" : "cache";
 
 						if (retrievedSnapshot === undefined) {
-							prefetchWaitStartTime = performance.now();
+							prefetchWaitStartTime = performanceNow();
 							retrievedSnapshot = await this.fetchSnapshotFromNetwork(
 								hostSnapshotOptions,
 								snapshotFetchOptions.loadingGroupIds,
@@ -436,7 +436,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			},
 		);
 
-		const stTime = performance.now();
+		const stTime = performanceNow();
 		// Don't override ops which were fetched during initial load, since we could still need them.
 		const id = this.initializeFromSnapshot(
 			odspSnapshotCacheValue,
@@ -446,7 +446,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.logger.sendTelemetryEvent(
 			{
 				eventName: "SnapshotInitializeTime",
-				duration: performance.now() - stTime,
+				duration: performanceNow() - stTime,
 			},
 			undefined,
 			LogLevel.verbose,
