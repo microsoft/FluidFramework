@@ -102,7 +102,7 @@ import {
 	type RootRange,
 } from "./modularChangeTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { DetachedNodeRename } from "../../core/tree/delta.js";
+import { newChangeAtomIdTransform } from "../../core/rebase/types.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -2331,7 +2331,7 @@ interface ComposeFieldContext {
 
 function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	return {
-		entries: newChangeAtomIdRangeMap<DetachedNodeEntry<T>>(),
+		entries: newChangeAtomIdRangeMap<DetachedNodeEntry>(),
 		invalidatedFields: new Set(),
 	};
 }
@@ -3072,8 +3072,7 @@ function attachIdFromDetachId(
 }
 
 export function newNodeRenameTable(): NodeRenameTable {
-	// XXX: These tables should be maps from key ranges to value ranges.
-	return { newToOldId: newChangeAtomIdRangeMap(), oldToNewId: newChangeAtomIdRangeMap() };
+	return { newToOldId: newChangeAtomIdTransform(), oldToNewId: newChangeAtomIdTransform() };
 }
 
 function mergeRenameTables(

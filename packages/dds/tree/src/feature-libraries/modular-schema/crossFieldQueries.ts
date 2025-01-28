@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ChangeAtomId,
-	ChangeAtomIdRangeMap,
-	ChangesetLocalId,
-	RevisionTag,
-} from "../../core/index.js";
+import type { ChangeAtomId, ChangeAtomIdRangeMap } from "../../core/index.js";
 import type { RangeQueryResult } from "../../util/index.js";
 import type { NodeId } from "./modularChangeTypes.js";
 

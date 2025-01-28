@@ -207,6 +207,10 @@ export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
 	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
 }
 
+export function newChangeAtomIdTransform(): ChangeAtomIdRangeMap<ChangeAtomId> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds, offsetChangeAtomId);
+}
+
 export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
 	const cmp = compareRevisions(a.revision, b.revision);
 	if (cmp !== 0) {
