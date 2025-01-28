@@ -383,6 +383,28 @@ export function getEffectiveReleaseTag(apiItem: ApiItem): Exclude<ReleaseTag, Re
 }
 
 /**
+ * Determines whether or not the specified API item should be excluded from documentation generation,
+ * based on {@link ApiItemTransformationConfiguration.exclude} in terms of the item itself and its ancestry.
+ */
+export function isItemOrAncestorExcluded(
+	apiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): boolean {
+	// Check if this item, or any of its ancestors, is explicitly excluded by the user config.
+	// If so, this item will not be included.
+	let currentItem: ApiItem | undefined = apiItem;
+	while (currentItem !== undefined) {
+		if (config.exclude(currentItem)) {
+			return true;
+		}
+		currentItem = getFilteredParent(currentItem);
+	}
+
+	// Nothing in the ancestry is excluded by the user config.
+	return false;
+}
+
+/**
  * Determines whether or not the specified API item should have documentation generated for it.
  * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.exclude}.
  *
@@ -429,19 +451,14 @@ export function shouldItemBeIncluded(
 ): boolean {
 	const releaseTag = getEffectiveReleaseTag(apiItem);
 
+	// If the item has a release tag that is lower than the minimum release level, it should be not be included.
 	if (releaseTag < config.minimumReleaseLevel) {
-		// If the item has a release tag that is lower than the minimum release level, it should be not be included.
 		return false;
 	}
 
-	// Check if this item, or any of its ancestors, is explicitly excluded by the user config.
-	// If so, this item will not be included.
-	let currentItem: ApiItem | undefined = apiItem;
-	while (currentItem !== undefined) {
-		if (config.exclude(currentItem)) {
-			return false;
-		}
-		currentItem = getFilteredParent(currentItem);
+	// If the item or any of its ancestors are explicitly excluded, it should not be included.
+	if (isItemOrAncestorExcluded(apiItem, config)) {
+		return false;
 	}
 
 	return true;
