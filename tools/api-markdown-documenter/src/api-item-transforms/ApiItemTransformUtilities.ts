@@ -363,9 +363,25 @@ export function doesItemRequireOwnDocument(
 }
 
 /**
+ * TODO
+ */
+export function getEffectiveReleaseTag(apiItem: ApiItem): ReleaseTag {
+	const releaseTag = getReleaseTag(apiItem);
+	if (releaseTag === undefined || releaseTag === ReleaseTag.None) {
+		// If the item does not have a release tag, then it inherits the release scope of its ancestry.
+		const parent = getFilteredParent(apiItem);
+		if (parent === undefined) {
+			return ReleaseTag.None;
+		}
+
+		return getEffectiveReleaseTag(parent);
+	}
+	return releaseTag;
+}
+
+/**
  * Determines whether or not the specified API item should have documentation generated for it.
- * This is determined based on its release tag (or inherited release scope) compared to
- * {@link DocumentationSuiteConfiguration.minimumReleaseLevel}.
+ * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.excludeItem}.
  *
  * @remarks
  *
@@ -408,28 +424,36 @@ export function shouldItemBeIncluded(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): boolean {
-	const releaseTag = getReleaseTag(apiItem);
-	if (releaseTag === undefined || releaseTag === ReleaseTag.None) {
-		// If the item does not have a release tag, then it inherits the release scope of its ancestry.
-		const parent = getFilteredParent(apiItem);
-		if (parent === undefined) {
-			// If we encounter an item with no release tag in its ancestry, we can't make a determination as to whether
-			// or not it is intended to be included in the generated documentation suite.
-			// To be safe, log a warning but return true.
-			config.logger.warning("Encountered an API item with no release tag in ancestry.");
-			return true;
-		}
-
-		return shouldItemBeIncluded(parent, config);
+	const releaseTag = getEffectiveReleaseTag(apiItem);
+	if (releaseTag === ReleaseTag.None) {
+		// If we encounter an item with no release tag in its ancestry, we can't make a determination as to whether
+		// or not it is intended to be included in the generated documentation suite.
+		// To be safe, log a warning but return true.
+		config.logger.warning("Encountered an API item with no release tag in ancestry.");
 	}
 
-	return releaseTag >= (config.minimumReleaseLevel as ReleaseTag);
+	if (releaseTag < config.minimumReleaseLevel) {
+		// If the item has a release tag that is lower than the minimum release level, it should be not be included.
+		return false;
+	}
+
+	// Check if this item, or any of its ancestors, is explicitly excluded by the user config.
+	// If so, this item will not be included.
+	let currentItem: ApiItem | undefined = apiItem;
+	while (currentItem !== undefined) {
+		if (config.excludeItem(currentItem)) {
+			return false;
+		}
+		currentItem = getFilteredParent(currentItem);
+	}
+
+	return true;
 }
 
 /**
  * Filters and returns the provided list of `ApiItem`s to include only those desired by the user configuration.
- * This is determined based on its release tag (or inherited release scope) compared to
- * {@link DocumentationSuiteConfiguration.minimumReleaseLevel}.
+ * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.excludeItem}.
+ *
  * @param apiItem - The API item being queried.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
@@ -442,11 +466,11 @@ export function filterItems(
 	return apiItems.filter((member) => shouldItemBeIncluded(member, config));
 }
 
+// TODO: rename to `getFilteredMembers`
 /**
  * Filters and returns the child members of the provided `apiItem` to include only those desired by the user configuration.
- * This is determined based on its release tag (or inherited release scope) compared to
- * {@link DocumentationSuiteConfiguration.minimumReleaseLevel}.
- * @remarks See {@link shouldItemBeIncluded} for more details.
+ * Accounts for {@link DocumentationSuiteConfiguration.minimumReleaseLevel} and {@link DocumentationSuiteConfiguration.excludeItem}.
+ *
  * @param apiItem - The API item being queried.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */

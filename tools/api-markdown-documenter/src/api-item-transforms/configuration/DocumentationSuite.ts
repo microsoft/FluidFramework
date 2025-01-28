@@ -7,7 +7,6 @@ import {
 	type ApiDeclaredItem,
 	type ApiItem,
 	ApiItemKind,
-	type ApiPackage,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
@@ -105,17 +104,34 @@ export interface DocumentationSuiteConfiguration {
 	readonly getAlertsForItem: (apiItem: ApiItem) => string[];
 
 	/**
-	 * Whether or not the provided `ApiPackage` should be skipped during documentation generation.
+	 * Whether or not the provided API item should be excluded from documentation generation.
 	 *
-	 * @param apiPackage - The package that may or may not be skipped.
+	 * @remarks Note: for items with children, excluding the item also results in the exclusion of all child items.
 	 *
-	 * @returns
+	 * @example Exclude packages with a particular name scope
 	 *
-	 * `true` if the package should not be included documentation generation. `false` otherwise.
+	 * ```typescript
+	 * excludeItem: (apiItem: ApiItem) => {
+	 * 	if (apiItem.kind === ApiItemKind.Package) {
+	 * 		return apiItem.displayName.startsWith("@private-scope/");
+	 * 	}
+	 * 	return false;
+	 * }
+	 * ```
 	 *
-	 * @defaultValue No packages are skipped.
+	 * @example Exclude items tagged with custom `@skip` tag
+	 *
+	 * ```typescript
+	 * excludeItem: (apiItem: ApiItem) => {
+	 * 	return ApiItemUtilities.hasModifierTag(apiItem, "@skip");
+	 * }
+	 * ```
+	 *
+	 * @returns `true` if the item should be excluded from documentation generation. `false` otherwise.
+	 *
+	 * @defaultValue No items are skipped.
 	 */
-	readonly skipPackage: (apiPackage: ApiPackage) => boolean;
+	readonly excludeItem: (apiItem: ApiItem) => boolean;
 
 	/**
 	 * Minimal release scope to include in generated documentation suite.
@@ -259,11 +275,11 @@ export namespace DefaultDocumentationSuiteConfiguration {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteConfiguration.skipPackage}.
+	 * Default {@link DocumentationSuiteConfiguration.excludeItem}.
 	 *
 	 * Unconditionally returns `false` (i.e. no packages will be filtered out).
 	 */
-	export function defaultSkipPackage(): boolean {
+	export function defaultExcludeItem(): boolean {
 		return false;
 	}
 }
@@ -295,8 +311,8 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 		getAlertsForItem:
 			options?.getAlertsForItem ??
 			DefaultDocumentationSuiteConfiguration.defaultGetAlertsForItem,
-		skipPackage:
-			options?.skipPackage ?? DefaultDocumentationSuiteConfiguration.defaultSkipPackage,
+		excludeItem:
+			options?.excludeItem ?? DefaultDocumentationSuiteConfiguration.defaultExcludeItem,
 		minimumReleaseLevel: options?.minimumReleaseLevel ?? ReleaseTag.Internal,
 	};
 }

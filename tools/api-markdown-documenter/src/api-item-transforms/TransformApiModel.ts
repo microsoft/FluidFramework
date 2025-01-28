@@ -30,7 +30,7 @@ import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "
  */
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(options);
-	const { apiModel, logger, skipPackage } = config;
+	const { apiModel, logger, excludeItem } = config;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
@@ -50,7 +50,7 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 	}
 
 	// Filter out packages not wanted per user config
-	const filteredPackages = apiModel.packages.filter((apiPackage) => !skipPackage(apiPackage));
+	const filteredPackages = apiModel.packages.filter((apiPackage) => !excludeItem(apiPackage));
 
 	if (filteredPackages.length === 0) {
 		logger.warning("No packages found after filtering per `skipPackages` configuration.");

@@ -216,11 +216,11 @@ export const defaultConsoleLogger: Logger;
 
 // @public
 export namespace DefaultDocumentationSuiteConfiguration {
+    export function defaultExcludeItem(): boolean;
     export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
     export function defaultGetUriBaseOverrideForItem(): string | undefined;
-    export function defaultSkipPackage(): boolean;
 }
 
 // @public @sealed
@@ -315,6 +315,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 
 // @public
 export interface DocumentationSuiteConfiguration {
+    readonly excludeItem: (apiItem: ApiItem) => boolean;
     readonly getAlertsForItem: (apiItem: ApiItem) => string[];
     readonly getHeadingTextForItem: (apiItem: ApiItem) => string;
     readonly getLinkTextForItem: (apiItem: ApiItem) => string;
@@ -323,7 +324,6 @@ export interface DocumentationSuiteConfiguration {
     readonly includeBreadcrumb: boolean;
     readonly includeTopLevelDocumentHeading: boolean;
     readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
-    readonly skipPackage: (apiPackage: ApiPackage) => boolean;
 }
 
 // @public
