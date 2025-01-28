@@ -250,6 +250,10 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  * This includes the docs we generate - we shouldn't label an interface member as `@public` if the interface itself is
  * `@beta`, for example, even if that member is directly tagged `@public`.
  *
+ * @deprecated
+ * Generally, getting the exact tag of an item is not useful. Use `getEffectiveReleaseTag` instead to get the
+ * effective release level, accounting for inheritance.
+ *
  * @public
  */
 export function getReleaseTag(apiItem: ApiItem): ReleaseTag {

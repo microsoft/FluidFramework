@@ -437,7 +437,7 @@ function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiMod
 // @public
 function getModifierTags(apiItem: ApiItem): ReadonlySet<string>;
 
-// @public
+// @public @deprecated
 function getReleaseTag(apiItem: ApiItem): ReleaseTag;
 
 // @public

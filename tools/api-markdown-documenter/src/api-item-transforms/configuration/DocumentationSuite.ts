@@ -13,6 +13,7 @@ import {
 import {
 	getApiItemKind,
 	getConciseSignature,
+	// eslint-disable-next-line import/no-deprecated -- TODO: Use `getEffectiveReleaseLevel` instead.
 	getReleaseTag,
 	getSingleLineExcerptText,
 	isDeprecated,
@@ -266,6 +267,7 @@ export namespace DefaultDocumentationSuiteConfiguration {
 			alerts.push("Deprecated");
 		}
 
+		// eslint-disable-next-line import/no-deprecated -- TODO: Use `getEffectiveReleaseLevel` instead.
 		const releaseTag = getReleaseTag(apiItem);
 		if (releaseTag === ReleaseTag.Alpha) {
 			alerts.push("Alpha");
