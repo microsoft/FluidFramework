@@ -611,11 +611,9 @@ export async function setVersion(
 					? translatedVersion.version
 					: getVersionRange(translatedVersion, interdependencyRange);
 		} else {
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			newRange = `${interdependencyRange}${translatedVersion.version}`;
 		}
 	} else {
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 
@@ -872,7 +870,6 @@ export async function npmCheckUpdatesHomegrown(
 	}
 
 	const range: InterdependencyRange = prerelease ? newVersion : `^${[...versionSet][0]}`;
-	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	log?.verbose(`Calculated new range: ${range}`);
 	for (const dep of Object.keys(dependencyVersionMap)) {
 		const pkg = context.fullPackageMap.get(dep);
