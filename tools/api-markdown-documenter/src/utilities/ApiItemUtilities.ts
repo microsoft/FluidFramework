@@ -243,7 +243,7 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  *
  * @remarks
  * Note: getting the exact tag of an item is generally not useful.
- * Use {@link getEffectiveReleaseTag} instead to get the effective release level, accounting for inheritance.
+ * Use `getEffectiveReleaseTag` instead to get the effective release level, accounting for inheritance.
  *
  * @param apiItem - The API item whose release tag is being queried.
  *

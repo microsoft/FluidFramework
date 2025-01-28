@@ -20,6 +20,8 @@ exclude: (apiItem) => {
 
 ### ⚠ BREAKING CHANGES
 
+#### `skipPackage` option has been removed
+
 With the addition of `exclude`, `skipPackage` has been removed.
 This usage can be migrated as follows:
 
@@ -40,6 +42,18 @@ exclude: (apiItem) => {
     }
 }
 ```
+
+#### `ApiItemUtilities.getReleaseTag` has been removed
+
+This function would get the exact release tag with which the corresponding API item was annotated.
+This is not generally useful information, however, as it does not account for inheritance.
+
+E.g., if an item was untagged, but its parent was tagged with `@beta`, this API would have returned `None`.
+
+Additionally, consider the following malformed case: an interface is tagged as `@public`, but its parent namespace is tagged as `@beta`.
+The effective release level of the interface should be `Beta`, not `Public`.
+
+A new API, `ApiItemUtilities.getEffectiveReleaseLevel` can now be used to get the appropriate release level of an item, accounting for inheritance.
 
 ## 0.18.0
 
