@@ -323,7 +323,7 @@ export interface DocumentationSuiteConfiguration {
     readonly hierarchy: HierarchyConfiguration;
     readonly includeBreadcrumb: boolean;
     readonly includeTopLevelDocumentHeading: boolean;
-    readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
+    readonly minimumReleaseLevel: ReleaseLevel;
 }
 
 // @public
@@ -677,6 +677,9 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
     get text(): string;
     readonly type = DocumentationNodeType.PlainText;
 }
+
+// @public
+export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
 
 export { ReleaseTag }
 

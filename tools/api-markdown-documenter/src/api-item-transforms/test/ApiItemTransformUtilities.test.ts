@@ -3,75 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ReleaseTag, type ApiItem } from "@microsoft/api-extractor-model";
+import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
 import type { ApiItemTransformationConfiguration } from "../../api-item-transforms/index.js";
-import { getEffectiveReleaseTag, isItemOrAncestorExcluded } from "../ApiItemTransformUtilities.js";
+import { isItemOrAncestorExcluded } from "../ApiItemTransformUtilities.js";
 
 describe("ApiItemTransformUtilities", () => {
-	describe("getEffectiveReleaseTag", () => {
-		it("Item is tagged", () => {
-			const item = {
-				releaseTag: ReleaseTag.Alpha,
-			} as unknown as ApiItem;
-
-			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Alpha);
-		});
-
-		it("Tag is inherited", () => {
-			const parent = {
-				releaseTag: ReleaseTag.Beta,
-			} as unknown as ApiItem;
-
-			const item = {
-				parent,
-				releaseTag: undefined,
-			} as unknown as ApiItem;
-
-			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Beta);
-		});
-
-		it("Tag is more restrictive than ancestors", () => {
-			const parent = {
-				releaseTag: ReleaseTag.Beta,
-			} as unknown as ApiItem;
-
-			const item = {
-				parent,
-				releaseTag: ReleaseTag.Alpha,
-			} as unknown as ApiItem;
-
-			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Alpha);
-		});
-
-		it("Tag is less restrictive than ancestors", () => {
-			const parent = {
-				releaseTag: ReleaseTag.Alpha,
-			} as unknown as ApiItem;
-
-			const item = {
-				parent,
-				releaseTag: ReleaseTag.Beta,
-			} as unknown as ApiItem;
-
-			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Alpha);
-		});
-
-		it("No tag in ancestry", () => {
-			const parent = {
-				releaseTag: undefined,
-			} as unknown as ApiItem;
-
-			const item = {
-				parent,
-				releaseTag: undefined,
-			} as unknown as ApiItem;
-
-			expect(getEffectiveReleaseTag(item)).to.equal(ReleaseTag.Public);
-		});
-	});
-
 	describe("isItemOrAncestorExcluded", () => {
 		it("Item is excluded by user config", () => {
 			const config = {

@@ -16,6 +16,7 @@ import {
 	getReleaseTag,
 	getSingleLineExcerptText,
 	isDeprecated,
+	type ReleaseLevel,
 } from "../../utilities/index.js";
 
 import {
@@ -154,7 +155,7 @@ export interface DocumentationSuiteConfiguration {
 	 * releaseLevel: ReleaseTag.Beta
 	 * ```
 	 */
-	readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
+	readonly minimumReleaseLevel: ReleaseLevel;
 }
 
 /**

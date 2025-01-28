@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { type ApiItem, ApiItemKind, ReleaseTag } from "@microsoft/api-extractor-model";
+import { type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
 import type { Heading } from "../Heading.js";
 import type { Link } from "../Link.js";
@@ -13,8 +13,8 @@ import {
 	getApiItemKind,
 	getFilteredParent,
 	getFileSafeNameForApiItem,
-	getReleaseTag,
 	type ValidApiItemKind,
+	getEffectiveReleaseLevel,
 } from "../utilities/index.js";
 
 import {
@@ -362,26 +362,6 @@ export function doesItemRequireOwnDocument(
 	return doesItemKindRequireOwnDocument(itemKind, hierarchyConfig);
 }
 
-// TODO: move to `ApiItemUtilities`.
-/**
- * TODO
- */
-export function getEffectiveReleaseTag(apiItem: ApiItem): Exclude<ReleaseTag, ReleaseTag.None> {
-	let myReleaseTag = getReleaseTag(apiItem);
-	if (myReleaseTag === ReleaseTag.None) {
-		// The lack of a release tag is treated as public
-		myReleaseTag = ReleaseTag.Public;
-	}
-
-	const parent = getFilteredParent(apiItem);
-	if (parent === undefined) {
-		return myReleaseTag;
-	}
-
-	const parentEffectiveReleaseTag = getEffectiveReleaseTag(parent);
-	return Math.min(myReleaseTag, parentEffectiveReleaseTag);
-}
-
 /**
  * Determines whether or not the specified API item should be excluded from documentation generation,
  * based on {@link ApiItemTransformationConfiguration.exclude} in terms of the item itself and its ancestry.
@@ -449,7 +429,7 @@ export function shouldItemBeIncluded(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): boolean {
-	const releaseTag = getEffectiveReleaseTag(apiItem);
+	const releaseTag = getEffectiveReleaseLevel(apiItem);
 
 	// If the item has a release tag that is lower than the minimum release level, it should be not be included.
 	if (releaseTag < config.minimumReleaseLevel) {
