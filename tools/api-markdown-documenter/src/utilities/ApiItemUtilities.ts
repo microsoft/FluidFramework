@@ -248,7 +248,7 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
  * @public
  */
 export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
-	return (apiItem as Partial<ApiReleaseTagMixin>).releaseTag ?? undefined;
+	return (apiItem as Partial<ApiReleaseTagMixin>).releaseTag;
 }
 
 /**
