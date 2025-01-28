@@ -4,12 +4,13 @@
  */
 
 /**
- * This type contains all browser performance properties as optional, and some
- * of the intersecting properties of node and browser performance as required.
+ * This type contains the common browser performance properties used by client packages.
  *
  * @internal
  */
-export type IsomorphicPerformance = Partial<Performance> & Pick<Performance, "now">;
+export interface IsomorphicPerformance {
+	now: () => number;
+}
 
 /**
  * This exported "performance" member masks the built-in globalThis.performance object
