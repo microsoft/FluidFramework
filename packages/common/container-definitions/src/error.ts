@@ -31,7 +31,6 @@ export type ContainerErrorTypes =
 /**
  * Different error types the Container may report out to the Host.
  *
- * @deprecated ContainerErrorType is being deprecated as a public export. Please use {@link ContainerErrorTypes#clientSessionExpiredError} instead.
  * @internal
  */
 export enum ContainerErrorType {

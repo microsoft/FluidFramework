@@ -130,12 +130,14 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public clientValue(client: ISessionClient): LatestValueData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientSessionId = client.sessionId;
-		if (clientSessionId in allKnownStates.states) {
-			const { value, rev: revision } = allKnownStates.states[clientSessionId];
-			return { value, metadata: { revision, timestamp: Date.now() } };
+		const clientState = allKnownStates.states[client.sessionId];
+		if (clientState === undefined) {
+			throw new Error("No entry for clientId");
 		}
-		throw new Error("No entry for clientId");
+		return {
+			value: clientState.value,
+			metadata: { revision: clientState.rev, timestamp: Date.now() },
+		};
 	}
 
 	public update(
@@ -145,11 +147,9 @@ class LatestValueManagerImpl<T, Key extends string>
 	): void {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
-		if (clientSessionId in allKnownStates.states) {
-			const currentState = allKnownStates.states[clientSessionId];
-			if (currentState.rev >= value.rev) {
-				return;
-			}
+		const currentState = allKnownStates.states[clientSessionId];
+		if (currentState !== undefined && currentState.rev >= value.rev) {
+			return;
 		}
 		this.datastore.update(this.key, clientSessionId, value);
 		this.events.emit("updated", {
