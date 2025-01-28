@@ -5,7 +5,12 @@
 
 import Path from "node:path";
 
-import { ReleaseTag, type ApiModel } from "@microsoft/api-extractor-model";
+import {
+	ApiItemKind,
+	ReleaseTag,
+	type ApiModel,
+	type ApiPackage,
+} from "@microsoft/api-extractor-model";
 
 import { checkForDuplicateDocumentPaths } from "../api-item-transforms/index.js";
 import { loadModel, transformApiModel, type ApiItemTransformationOptions } from "../index.js";
@@ -43,7 +48,10 @@ const testConfigs = new Map<string, Omit<ApiItemTransformationOptions, "apiModel
 			includeTopLevelDocumentHeading: true,
 			hierarchy: HierarchyConfigurations.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
-			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
+			exclude: (apiItem) =>
+				// Skip test-suite-b package
+				apiItem.kind === ApiItemKind.Package &&
+				(apiItem as ApiPackage).name === "test-suite-b",
 		},
 	],
 ]);
