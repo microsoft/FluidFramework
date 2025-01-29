@@ -71,7 +71,7 @@
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.1",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/codemirror": "5.60.7",
 		"@types/node": "^18.19.0",
 		"@types/react": "^18.3.11",
