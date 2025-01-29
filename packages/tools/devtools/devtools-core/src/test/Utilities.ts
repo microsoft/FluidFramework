@@ -45,7 +45,7 @@ class MockContainer
 		this.emit("attached");
 	}
 
-	public dispose(error?: IErrorBase): void {
+	public dispose(error?: IErrorBase | undefined): void {
 		this.emit("disposed");
 	}
 

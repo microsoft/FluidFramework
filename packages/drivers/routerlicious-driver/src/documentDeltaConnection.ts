@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -113,7 +114,10 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	 */
 	protected disconnectCore(err: IAnyDriverError): void {
 		// tell the server we are disconnecting this client from the document
-		this.socket.emit("disconnect_document", this.clientId, this.documentId, err.message);
+		const isCorruption =
+			err.errorType === FluidErrorTypes.dataCorruptionError ||
+			err.errorType === FluidErrorTypes.dataProcessingError;
+		this.socket.emit("disconnect_document", this.clientId, this.documentId, isCorruption);
 		super.disconnectCore(err);
 	}
 }
