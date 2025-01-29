@@ -1049,7 +1049,7 @@ export class ContainerRuntime
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
 		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
 			// Unless bypass is explicitly set, then take action when sequence numbers mismatch.
-			// eslint-disable-next-line unicorn/no-lonely-if
+			// eslint-disable-next-line unicorn/no-lonely-if -- Separate if statements make flow easier to parse
 			if (
 				loadSequenceNumberVerification !== "bypass" &&
 				runtimeSequenceNumber !== protocolSequenceNumber
