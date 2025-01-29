@@ -711,7 +711,8 @@ stages:
               TARFILE_NAME=npm-logs-e2e-perf-${{ endpointObject.endpointName }}.tar
               # Put all files in a tarball, in case there's more than one
               tar -cvf $TARFILE_NAME /home/cloudtest/.npm/_logs/*
-              echo "##vso[task.uploadfile]$TARFILE_NAME";
+              # Seems to need an absolute path
+              echo "##vso[task.uploadfile]$(Agent.TempDirectory)/$TARFILE_NAME";
 
     - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
       parameters:
