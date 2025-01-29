@@ -131,7 +131,7 @@ export class Sessions {
 	}
 
 	public equals(other: Sessions, includeLocalState: boolean): boolean {
-		const checkIsSubset = (sessionsA: Sessions, sessionsB: Sessions) => {
+		const checkIsSubset = (sessionsA: Sessions, sessionsB: Sessions): boolean => {
 			const first = sessionsA.sessions().next();
 			const firstSessionThis = first.done ? undefined : first.value;
 			for (const [stableId, session] of sessionsA.sessionCache.entries()) {
@@ -296,7 +296,7 @@ export class Session {
 
 	public equals(other: Session): boolean {
 		for (const [index, value] of Object.entries(this.clusterChain)) {
-			if (!clustersEqual(value, other.clusterChain[index])) {
+			if (!clustersEqual(value, other.clusterChain[index] as IdCluster)) {
 				return false;
 			}
 		}

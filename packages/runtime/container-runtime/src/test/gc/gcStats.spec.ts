@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
@@ -62,7 +62,7 @@ describe("Garbage Collection Stats", () => {
 
 	function createGarbageCollector(
 		createParams: Partial<IGarbageCollectorCreateParams> = {},
-		gcBlobsMap: Map<string, any> = new Map(),
+		gcBlobsMap: Map<string, unknown> = new Map(),
 		gcMetadata: IGCMetadata = {},
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
 		isSummarizerClient: boolean = true,
