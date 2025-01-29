@@ -51,6 +51,7 @@
 		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
+		"@sinclair/typebox": "^0.34.13",
 		"fluid-framework": "workspace:~",
 		"process": "^0.11.10"
 	},
