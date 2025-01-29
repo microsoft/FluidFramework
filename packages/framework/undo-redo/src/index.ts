@@ -19,7 +19,7 @@ Licensed under the MIT License.
  * that operation. This allows the consumer of the undo redo stack manager to determine the granularity of what is
  * undone or redone.
  *
- * For instance, you could defined a text operation at the word level, so as a user types you could close the current
+ * For instance, you could define a text operation at the word level, so as a user types you could close the current
  * operation whenever the user types a space. By doing this when the user issues an undo mid-word the characters typed
  * since the last space would be undone, if they issue another undo the previous word would them be undone.
  *
