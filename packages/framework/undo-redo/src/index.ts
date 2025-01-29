@@ -6,12 +6,14 @@
 /**
  * This library provides an implementation of an in-memory undo redo stack, as
  * well as handlers for the SharedMap, and SharedSegmentSequence distributed
- * datastructures.
+ * data structures.
  *
- * <h3>Undo Redo Stack Manager</h3>
+ * @remarks
+ *
+ * Undo Redo Stack Manager
  *
  * The undo redo stack manager is where undo and redo commands are issued, and it
- * holds the stack of all undoable and redoable operations. The undo redo stack
+ * holds the stack of all undo-able and redo-able operations. The undo redo stack
  * manager is a stack of stacks.
  *
  * The outer stack contains operations, and the inner stack contains all the
@@ -33,7 +35,7 @@
  * In order to create IRevertible object there are provided undo redo handlers
  * for commonly used data structures.
  *
- * <h3>Shared Map Undo Redo Handler</h3>
+ * Shared Map Undo Redo Handler
  *
  * The SharedMapUndoRedoHandler generates IRevertible objects,
  * SharedMapRevertible for all local changes made to a SharedMap and pushes them
@@ -42,7 +44,7 @@
  * current operation on the stack. This is a fairly simple handler, and a good
  * example to look at for understanding how IRevertible objects should work.
  *
- * <h3>Shared Segment Sequence Undo Redo Handler</h3>
+ * Shared Segment Sequence Undo Redo Handler
  *
  * The SharedSegmentSequenceUndoRedoHandler generates IRevertible objects,
  * SharedSegmentSequenceRevertible for any SharedSegmentSequence based
@@ -58,7 +60,7 @@
  * IRevertible objects it can to minimize the memory and performance overhead on
  * the SharedSegmentSequence of tracking changes for revert.
  *
- * <h3>Shared Segment Sequence Revertible</h3>
+ * Shared Segment Sequence Revertible
  *
  * The SharedSegmentSequenceRevertible does the heavy lifting of tracking and
  * reverting changes on the underlying SharedSegmentSequence. This is
