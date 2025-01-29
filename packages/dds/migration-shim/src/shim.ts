@@ -7,6 +7,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type { GetCommon } from "./shimFactory.js";
+import type { SharedKernelFactory } from "./treeMap.js";
 
 /**
  * Design constraints:
@@ -41,14 +42,25 @@ export function unsupportedAdapter<T>(value: T): never {
 /**
  *
  */
-export interface MigrationOptions<in Before, out After, out Common> {
+export interface MigrationOptions<
+	in Before = never,
+	out After = unknown,
+	out Common = unknown,
+> {
 	/**
 	 * Unique identifier for this migration.
 	 */
 	readonly migrationIdentifier: string;
-	readonly to: ISharedObjectKind<After>;
+	readonly defaultMigrated: boolean;
+	readonly to: SharedKernelFactory<After>;
 	beforeAdapter(from: Before): Common & IChannel;
 	afterAdapter(from: After): Common & IChannel;
+
+	/**
+	 * Migrate all data, including non persisted things like event registrations to the new object.
+	 *
+	 * `from` should be left in a consistent state to support that since migration might be rolled back by discarding the new object and reusing the old.
+	 */
 	migrate(from: Before, to: After);
 }
 
@@ -56,8 +68,8 @@ export interface MigrationOptions<in Before, out After, out Common> {
  *
  */
 export interface MigrationSet<in out TFrom> {
-	readonly from: ISharedObjectKind<TFrom>;
-	selector(id: string): MigrationOptions<TFrom, unknown, unknown>;
+	readonly from: SharedKernelFactory<TFrom>;
+	selector(id: string): MigrationOptions<TFrom>;
 }
 
 /**
@@ -74,7 +86,7 @@ export interface MigrationShim {
 
 interface MigrationShimInfo {
 	readonly status: MigrationStatus;
-	cast<const T extends MigrationOptions<never, unknown, unknown>>(
+	cast<const T extends MigrationOptions>(
 		options: T,
 	): T extends MigrationOptions<never, unknown, infer Common> ? Common : never;
 }

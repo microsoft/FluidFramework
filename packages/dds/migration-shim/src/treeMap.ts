@@ -32,9 +32,11 @@ import type { ImplicitFieldSchema, ITree } from "@fluidframework/tree";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
+	type JsonCompatible,
 	type TreeView,
 	// SharedTree,
 } from "@fluidframework/tree/internal";
+import type { MigrationOptions, MigrationSet } from "./shim.js";
 
 /**
  * TODO:
@@ -56,10 +58,111 @@ const schemaFactory = new SchemaFactory("com.fluidframework/adapters/map");
 /**
  *
  */
-export class MapAdapterRoot extends schemaFactory.map("Root", [
-	schemaFactory.handle,
-	schemaFactory.string,
-]) {}
+export class Handles extends schemaFactory.map("Handles", schemaFactory.handle) {}
+
+function tryGetHandleKey(value: unknown): undefined | string {
+	if (typeof value === "object" && value !== null && "handle" in value) {
+		const key = value.handle;
+		if (typeof key === "string") {
+			return key;
+		}
+	}
+	return undefined;
+}
+
+/**
+ *
+ */
+export class MapAdapterItem extends schemaFactory.object("Item", {
+	json: schemaFactory.string,
+	handles: Handles,
+}) {
+	public static encode(value: JsonCompatible<IFluidHandle>): MapAdapterItem {
+		const handles = new Handles();
+		const handleKeys = new Set<string>();
+
+		// Find existing objects with a "handle" property that is a string, and add those strings to handleKeys to avoid collisions when including fluid handles.
+		{
+			const queue = [value];
+			while (queue.length > 0) {
+				const item = queue.pop();
+
+				if (typeof item === "object" && item !== null) {
+					if (Array.isArray(item)) {
+						queue.push(...item);
+					}
+					if (isFluidHandle(item)) {
+						// Skip
+					} else {
+						const existingKey = tryGetHandleKey(item);
+						if (existingKey !== undefined) {
+							handleKeys.add(existingKey);
+						}
+						queue.push(...(Object.values(item) as JsonCompatible<IFluidHandle>[]));
+					}
+				}
+			}
+		}
+
+		let nextKey = 0;
+		const json = JSON.stringify(
+			value,
+			(propertyKey, propertyValue: JsonCompatible<IFluidHandle>) => {
+				if (isFluidHandle(propertyValue)) {
+					let handleKey: string;
+					// Generate a unique string thats not in handleKeys
+					// eslint-disable-next-line no-constant-condition
+					while (true) {
+						handleKey = nextKey.toString(36);
+						nextKey++;
+						if (!handleKeys.has(handleKey)) {
+							// No need to add to handleKey set here since keys generated from nextKey will not repeat.
+							break;
+						}
+					}
+					handles.set(handleKey, propertyValue);
+					return { handle: handleKey };
+				}
+				return value;
+			},
+		);
+
+		return new MapAdapterItem({ json, handles });
+	}
+
+	public static decode(value: MapAdapterItem): JsonCompatible<IFluidHandle> {
+		const result = JSON.parse(
+			value.json,
+			(propertyKey, propertyValue: JsonCompatible<IFluidHandle>) => {
+				const existingKey = tryGetHandleKey(propertyValue);
+				if (existingKey !== undefined) {
+					const handle = value.handles.get(existingKey);
+					if (handle !== undefined) {
+						return handle;
+					}
+				}
+				return propertyValue;
+			},
+		) as JsonCompatible<IFluidHandle>;
+		return result;
+	}
+}
+
+/**
+ *
+ */
+export class MapAdapterRoot extends schemaFactory.map("Root", [MapAdapterItem]) {
+	public setRaw(key: string, value: JsonCompatible<IFluidHandle>): void {
+		this.set(key, MapAdapterItem.encode(value));
+	}
+	public getRaw(key: string): JsonCompatible<IFluidHandle> | undefined {
+		const item = this.get(key);
+		if (item === undefined) {
+			return undefined;
+		}
+		return MapAdapterItem.decode(item);
+	}
+}
 
 const config = new TreeViewConfiguration({ schema: MapAdapterRoot, preventAmbiguity: true });
 
@@ -96,11 +199,6 @@ export function dataFromTree(tree: ITree): TreeData | ErrorData {
 	}
 }
 
-function setTreeValue<T = unknown>(value: T, key: string, root: MapAdapterRoot): void {
-	const treeValue = isFluidHandle(value) ? value : JSON.stringify(value);
-	root.set(key, treeValue);
-}
-
 interface IntoTree {
 	intoTree(): void;
 }
@@ -113,6 +211,11 @@ export enum Compatability {
 	PreferTree,
 }
 
+interface FactoryOut<T> {
+	readonly kernel: SharedKernel;
+	readonly view: T;
+}
+
 /**
  * TODO: use this. Maybe move loadCore here.
  */
@@ -123,7 +226,7 @@ export interface SharedKernelFactory<T> {
 		submitMessage: (op: unknown, localOpMetadata: unknown) => void,
 		isAttached: () => boolean,
 		eventEmitter: TypedEventEmitter<ISharedMapEvents>,
-	): { kernel: SharedKernel; view: T };
+	): FactoryOut<T>;
 }
 
 /**
@@ -212,7 +315,7 @@ class TreeMap
 			case "map": {
 				const converted = new MapAdapterRoot();
 				for (const [key, value] of this.data.map.entries()) {
-					setTreeValue(value, key, converted);
+					converted.setRaw(key, value as JsonCompatible<IFluidHandle>);
 				}
 				// TODO:
 				// if read+write: send conversion op
@@ -241,15 +344,7 @@ class TreeMap
 	public get<T = any>(key: string): T | undefined {
 		switch (this.data.mode) {
 			case "tree": {
-				const value = this.data.root.get(key);
-				if (isFluidHandle(value)) {
-					// Thats not safe, but thats how ISharedMap works.
-					return value as T;
-				}
-				if (value === undefined) {
-					return undefined;
-				}
-				return JSON.parse(value) as T;
+				return this.data.root.getRaw(key) as T | undefined;
 			}
 			case "map": {
 				return this.data.map.get(key);
@@ -262,7 +357,7 @@ class TreeMap
 	public set<T = unknown>(key: string, value: T): this {
 		switch (this.data.mode) {
 			case "tree": {
-				setTreeValue<T>(value, key, this.data.root);
+				this.data.root.setRaw(key, value as JsonCompatible<IFluidHandle>);
 				break;
 			}
 			case "map": {
@@ -524,3 +619,135 @@ export const MapToTree = createSharedObjectKind<ISharedMap & IntoTree>(TreeMapFa
  * @public
  */
 export const TreeFromMap = createSharedObjectKind<ITree>(TreeMapFactory);
+
+interface ShimData<TOut> extends FactoryOut<unknown> {
+	readonly adapter: TOut;
+	migrated?: MigrationOptions;
+}
+
+/**
+ * Map which can be based on a SharedMap or a SharedTree.
+ *
+ * Once this has been accessed as a SharedTree, the SharedMap APIs are no longer accessible.
+ *
+ * TODO: events
+ */
+class MigrationShim<TFrom, TOut> extends SharedObjectFromKernel<ISharedMapEvents> {
+	/**
+	 * If a migration is in progress (locally migrated, but migration not sequenced),
+	 * this will hold the data in the format before migration.
+	 *
+	 * TODO: use this.
+	 */
+	#preMigrationData: ShimData<TOut> | undefined;
+
+	// Lazy init here so correct kernel constructed in loadCore when loading from existing data.
+	#data: ShimData<TOut> | undefined;
+
+	private readonly kernelArgs: Parameters<SharedKernelFactory<TFrom>["create"]>;
+
+	/**
+	 * @param id - String identifier.
+	 * @param runtime - Data store runtime.
+	 * @param attributes - The attributes for the map.
+	 */
+	public constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+		private readonly migrationSet: MigrationSet<TFrom>,
+	) {
+		super(id, runtime, attributes, "fluid_treeMap_");
+		this.kernelArgs = [
+			this.serializer,
+			this.handle,
+			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+			() => this.isAttached(),
+			this,
+		];
+
+		// Proxy which grafts the adapter's APIs onto this object.
+		return new Proxy(this, {
+			get: (target, prop, receiver) => {
+				const adapter = target.data.adapter;
+				if (Reflect.has(adapter as object, prop)) {
+					return Reflect.get(adapter as object, prop, adapter) as unknown;
+				}
+				return Reflect.get(target, prop, target);
+			},
+		});
+	}
+
+	/**
+	 * Convert the underling data structure into a tree.
+	 * @remarks
+	 * This does not prevent the map APIs from being available:
+	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
+	 */
+	public upgrade(): void {
+		// TODO: upgrade op, upgrade rebasing etc.
+
+		const data = this.data;
+		if (data.migrated !== undefined) {
+			return;
+		}
+		const options: MigrationOptions<TFrom, unknown, TOut> = this.migrationSet.selector(
+			this.id,
+		) as MigrationOptions<TFrom, unknown, TOut>;
+		const { kernel, view } = options.to.create(...this.kernelArgs);
+
+		options.migrate(data.view as TFrom, view);
+		const adapter = options.afterAdapter(view);
+		this.#data = {
+			view,
+			kernel: this.wrapKernel(kernel),
+			adapter,
+			migrated: options,
+		};
+	}
+
+	private get data(): FactoryOut<unknown> & {
+		readonly adapter: TOut;
+		migrated?: MigrationOptions;
+	} {
+		if (this.#data === undefined) {
+			// initialize to default format
+			const options: MigrationOptions<TFrom, unknown, TOut> = this.migrationSet.selector(
+				this.id,
+			) as MigrationOptions<TFrom, unknown, TOut>;
+			if (options.defaultMigrated) {
+				// Create post migration
+				const { kernel, view } = options.to.create(...this.kernelArgs);
+				const adapter = options.afterAdapter(view);
+				this.#data = {
+					view,
+					kernel: this.wrapKernel(kernel),
+					adapter,
+					migrated: options,
+				};
+			} else {
+				// Create pre migration
+				const { kernel, view } = this.migrationSet.from.create(...this.kernelArgs);
+				const adapter = options.beforeAdapter(view);
+				this.#data = {
+					view,
+					kernel: this.wrapKernel(kernel),
+					adapter,
+					migrated: options,
+				};
+			}
+		}
+		return this.#data;
+	}
+
+	private wrapKernel(kernel: SharedKernel): SharedKernel {
+		return {
+			...kernel,
+			// TODO: intercept ops to handle migration cases.
+		};
+	}
+
+	protected override get kernel(): SharedKernel {
+		return this.data.kernel;
+	}
+}
