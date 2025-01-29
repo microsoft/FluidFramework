@@ -53,6 +53,7 @@ module.exports = {
 		"unicorn/catch-error-name": "error",
 		"unicorn/consistent-destructuring": "error",
 		"unicorn/consistent-function-scoping": "error",
+		"unicorn/error-message": "error",
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
@@ -71,7 +72,6 @@ module.exports = {
 		// unicorn/no-negated-condition
 		// unicorn/no-lonely-if
 		// unicorn/prefer-includes
-		// unicorn/error-message
 		// unicorn/explicit-length-check
 
 		// #endregion
@@ -83,6 +83,7 @@ module.exports = {
 			rules: {
 				// TODO: remove these overrides and fix violations
 				"@typescript-eslint/explicit-function-return-type": "off",
+				"unicorn/error-message": "warn",
 
 				// Test files are run in node only so additional node libraries can be used.
 				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
