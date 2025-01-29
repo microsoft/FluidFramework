@@ -640,8 +640,8 @@ export function configureWebSocketServices(
 
 		socket.on(
 			"disconnect_document",
-			(clientId: string, documentId: string, errorType: string) => {
-				Lumberjack.error({ clientId, documentId, errorType });
+			(clientId: string, documentId: string, errorType: string, isCorruption: boolean) => {
+				Lumberjack.error({ clientId, documentId, errorType, isCorruption });
 			},
 		);
 	});
