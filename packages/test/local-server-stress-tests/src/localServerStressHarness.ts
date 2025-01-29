@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { stringToBuffer, TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	AsyncGenerator,
 	AsyncReducer,
@@ -43,12 +43,16 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
@@ -66,6 +70,7 @@ const isOperationType = <O extends BaseOperation>(
 interface Client {
 	container: IContainer;
 	id: string;
+	entryPoint: StressDataObject;
 }
 
 /**
@@ -75,9 +80,7 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	localDeltaConnectionServer: ILocalDeltaConnectionServer;
 	codeLoader: ICodeDetailsLoader;
 	containerUrl?: string;
-
 	random: IRandom;
-
 	clients: Client[];
 	client: Client;
 	isDetached: boolean;
@@ -767,7 +770,7 @@ async function runInStateWithClient<TState extends LocalServerStressState, Resul
 		return await callback(state);
 	} finally {
 		// This code is explicitly trying to "update" to the old value.
-		// eslint-disable-next-line require-atomic-updates
+
 		state.client = oldClient;
 	}
 }
@@ -796,9 +799,13 @@ async function createDetachedClient(
 		codeDetails,
 	});
 
+	const maybe: FluidObject<StressDataObject> | undefined = await container.getEntryPoint();
+	assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
+
 	const newClient: Client = {
 		container,
 		id,
+		entryPoint: maybe.StressDataObject,
 	};
 	return newClient;
 }
@@ -816,9 +823,13 @@ async function loadClient(
 		codeLoader,
 	});
 
+	const maybe: FluidObject<StressDataObject> | undefined = await container.getEntryPoint();
+	assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
+
 	return {
 		container,
 		id,
+		entryPoint: maybe.StressDataObject,
 	};
 }
 
@@ -835,11 +846,71 @@ class StressDataObject extends DataObject {
 	get StressDataObject() {
 		return this;
 	}
+
+	public globalObjects: Record<
+		string,
+		| { type: "newBlob"; blobHandle: IFluidHandle<ArrayBufferLike> }
+		| { type: "newDatastore"; dataStore: IDataStore }
+		| {
+				type: "stressDataObject";
+				StressDataObject: StressDataObject;
+				channels: { root: ISharedDirectory };
+		  }
+		| { type: "newAlias"; alias: string }
+	> = {};
+
+	protected async getDefaultStressDataObject() {
+		const root = await this.context.containerRuntime.getAliasedDataStoreEntryPoint("default");
+		assert(root !== undefined, "default must exist");
+
+		const maybe: FluidObject<StressDataObject> | undefined = await root.get();
+		assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
+		return maybe.StressDataObject;
+	}
+
+	protected async initializingFromExisting(): Promise<void> {
+		const root = await this.getDefaultStressDataObject();
+
+		this.globalObjects = root.globalObjects;
+
+		this.globalObjects[this.id] = {
+			type: "stressDataObject",
+			StressDataObject: this,
+			channels: { root: this.root },
+		};
+	}
+
+	public uploadBlob(id: string, contents: string) {
+		void this.runtime
+			.uploadBlob(stringToBuffer(contents, "utf-8"))
+			.then((blobHandle) => (this.globalObjects[id] = { type: "newBlob", blobHandle }));
+	}
+
+	public createDataStore(id: string) {
+		void this.context.containerRuntime
+			.createDataStore(stressDataObjectFactory.type)
+			.then(async (dataStore) => {
+				this.globalObjects[id] = { type: "newDatastore", dataStore };
+			});
+	}
 }
 
 const stressDataObjectFactory = new DataObjectFactory(
-	"ParentDataObject",
+	"StressDataObject",
 	StressDataObject,
+	undefined,
+	{},
+);
+
+class DefaultStressDataObject extends StressDataObject {
+	protected override async getDefaultStressDataObject(): Promise<StressDataObject> {
+		return this;
+	}
+}
+
+const defaultStressDataObjectFactory = new DataObjectFactory(
+	"DefaultStressDataObject",
+	DefaultStressDataObject,
 	undefined,
 	{},
 );
@@ -853,17 +924,23 @@ const runtimeFactory: IRuntimeFactory = {
 			context,
 			existing,
 			registryEntries: [
+				[defaultStressDataObjectFactory.type, Promise.resolve(defaultStressDataObjectFactory)],
 				[stressDataObjectFactory.type, Promise.resolve(stressDataObjectFactory)],
 			],
 			provideEntryPoint: async (rt) => {
 				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
 				if (maybeRoot === undefined) {
-					const ds = await rt.createDataStore(stressDataObjectFactory.type);
+					const ds = await rt.createDataStore(defaultStressDataObjectFactory.type);
 					await ds.trySetAlias("default");
 				}
 				const root = await rt.getAliasedDataStoreEntryPoint("default");
 				assert(root !== undefined, "default must exist");
-				return root.get();
+
+				const maybe: FluidObject<StressDataObject> | undefined = await root.get();
+				assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
+
+				maybe.StressDataObject.globalObjects.default = { type: "newAlias", alias: "default" };
+				return maybe;
 			},
 		});
 	},
