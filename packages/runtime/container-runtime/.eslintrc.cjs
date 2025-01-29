@@ -57,6 +57,7 @@ module.exports = {
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
+		"unicorn/no-lonely-if": "error",
 		"unicorn/no-new-array": "error",
 		"unicorn/no-null": "error",
 		"unicorn/no-zero-fractions": "error",
@@ -70,7 +71,6 @@ module.exports = {
 
 		// TODO:
 		// unicorn/no-negated-condition
-		// unicorn/no-lonely-if
 		// unicorn/prefer-includes
 		// unicorn/explicit-length-check
 
