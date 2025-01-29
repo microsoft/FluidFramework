@@ -66,16 +66,18 @@ async function getVersionTags(git: SimpleGit, prefix: string): Promise<string[]>
  * @returns List of version details, or undefined if one could not be found.
  */
 export async function getVersionsFromTags(
-	releaseGroup: IReleaseGroup,
 	git: Readonly<SimpleGit>,
+	releaseGroup: IReleaseGroup,
+	tags?: string[],
 ): Promise<string[] | undefined> {
-	const tags = await getVersionTags(git, releaseGroup.name);
+	// use the tags passed in for testing, otherwise get the tags from the repo
+	const versionTags = tags ?? (await getVersionTags(git, releaseGroup.name));
 
-	if (tags.length === 0) {
+	if (versionTags.length === 0) {
 		return undefined;
 	}
 
-	const versions = getVersionsFromStrings(releaseGroup.name, tags);
+	const versions = getVersionsFromStrings(releaseGroup.name, versionTags);
 
 	return versions;
 }

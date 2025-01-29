@@ -5,6 +5,7 @@
 
 import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
+import { Flags } from "@oclif/core";
 import * as semver from "semver";
 import { releaseGroupArg, semverArg } from "../../../args.js";
 import { BaseCommandWithBuildProject, getVersionsFromTags } from "../../../library/index.js";
@@ -29,9 +30,24 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 		release_group: releaseGroupArg({ required: true }),
 	} as const;
 
+	static readonly flags = {
+		tags: Flags.string({
+			description:
+				"The git tags to consider when determining whether a version is latest. Used for testing.",
+			hidden: true,
+			multiple: true,
+		}),
+		searchPath: Flags.string({
+			description: "The path to build project. Used for testing.",
+			hidden: true,
+			multiple: false,
+		}),
+		...BaseCommandWithBuildProject.flags,
+	} as const;
+
 	public async run(): Promise<void> {
-		const { args } = this;
-		const buildProject = this.getBuildProject();
+		const { args, flags } = this;
+		const buildProject = this.getBuildProject(flags.searchPath);
 		const releaseGroup = buildProject.releaseGroups.get(
 			args.release_group as ReleaseGroupName,
 		);
@@ -42,7 +58,7 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 
 		const versionInput = args.version;
 		const git = await buildProject.getGitRepository();
-		const versions = await getVersionsFromTags(releaseGroup, git);
+		const versions = await getVersionsFromTags(git, releaseGroup, flags.tags);
 
 		if (!versions) {
 			this.error(`No versions found for ${releaseGroup.name}`);
