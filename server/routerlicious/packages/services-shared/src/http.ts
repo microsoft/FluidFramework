@@ -4,9 +4,10 @@
  */
 
 import { parse } from "path";
+
 import { NetworkError } from "@fluidframework/server-services-client";
-import type { RequestHandler, Response } from "express";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { RequestHandler, Response } from "express";
 
 /**
  * Check a given path string for path traversal (e.g. "../" or "/").
@@ -103,7 +104,7 @@ export function handleResponse<T>(
 			if (error instanceof Error && error?.name === "NetworkError") {
 				const networkError = error as NetworkError;
 				response
-					.status(errorStatus ?? networkError.code ?? 400)
+					.status(networkError.code ?? errorStatus ?? 400)
 					.json(networkError.details ?? error);
 			} else {
 				// Mask unexpected internal errors in outgoing response.
