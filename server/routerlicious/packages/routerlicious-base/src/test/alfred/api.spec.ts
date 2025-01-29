@@ -949,8 +949,9 @@ describe("Routerlicious", () => {
 				});
 
 				it("should return 404 when document is not found", async () => {
-					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas")
-						.rejects(new NetworkError(404, "Document not found"));
+					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas").rejects(
+						new NetworkError(404, "Document not found"),
+					);
 
 					const response = await supertest
 						.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
@@ -962,8 +963,9 @@ describe("Routerlicious", () => {
 				});
 
 				it("should return 500 when an internal Non-network error occurs", async () => {
-					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas")
-						.rejects(new Error("Internal Error 499")); // Not a NetworkError, simulating an internal issue
+					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas").rejects(
+						new Error("Internal Error 499"),
+					); // Not a NetworkError, simulating an internal issue
 
 					const response = await supertest
 						.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
@@ -975,8 +977,9 @@ describe("Routerlicious", () => {
 				});
 
 				it("should return 500 when an internal 500 error occurs", async () => {
-					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas")
-						.rejects(new NetworkError(500, "Internal Server Error"));
+					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas").rejects(
+						new NetworkError(500, "Internal Server Error"),
+					);
 
 					const response = await supertest
 						.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
