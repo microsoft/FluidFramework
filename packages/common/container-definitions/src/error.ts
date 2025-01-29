@@ -29,44 +29,6 @@ export type ContainerErrorTypes =
 	(typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
 /**
- * Different error types the Container may report out to the Host.
- *
- * @internal
- */
-export enum ContainerErrorType {
-	/**
-	 * Some error, most likely an exception caught by runtime and propagated to container as critical error
-	 */
-	genericError = "genericError",
-
-	/**
-	 * Throttling error from server. Server is busy and is asking not to reconnect for some time
-	 */
-	throttlingError = "throttlingError",
-
-	/**
-	 * Data loss error detected by Container / DeltaManager. Likely points to storage issue.
-	 */
-	dataCorruptionError = "dataCorruptionError",
-
-	/**
-	 * Error encountered when processing an operation. May correlate with data corruption.
-	 */
-	dataProcessingError = "dataProcessingError",
-
-	/**
-	 * Error indicating an API is being used improperly resulting in an invalid operation.
-	 */
-	usageError = "usageError",
-
-	/**
-	 * Error indicating an client session has expired. Currently this only happens when GC is allowed on a document and
-	 * aids in safely deleting unused objects.
-	 */
-	clientSessionExpiredError = "clientSessionExpiredError",
-}
-
-/**
  * Represents warnings raised on container.
  * @legacy
  * @alpha
