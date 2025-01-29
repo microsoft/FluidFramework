@@ -8,7 +8,6 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { isDisconnectReason } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -402,7 +401,7 @@ export class DocumentDeltaConnection
 	 * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
 	 * multiplexing here, so we need to close the socket here.
 	 */
-	public dispose(error?: Error) {
+	public dispose() {
 		this.logger.sendTelemetryEvent({
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
@@ -410,22 +409,14 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-
 		this.disconnect(
 			createGenericNetworkError(
 				// pre-0.58 error message: clientClosingConnection
-				this.getDisconnectMessage(error),
+				"Client closing delta connection",
 				{ canRetry: true },
 				{ driverVersion },
 			),
 		);
-	}
-
-	private getDisconnectMessage(error?: Error): string {
-		if (error?.message && isDisconnectReason(error.message)) {
-			return error.message;
-		}
-		return "Client closing delta connection";
 	}
 
 	protected disconnect(err: IAnyDriverError) {

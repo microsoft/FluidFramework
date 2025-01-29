@@ -41,10 +41,7 @@ import {
 	ITelemetryBaseProperties,
 	LogLevel,
 } from "@fluidframework/core-interfaces";
-import {
-	DisconnectReason,
-	type ISignalEnvelope,
-} from "@fluidframework/core-interfaces/internal";
+import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	IClient,
@@ -1061,22 +1058,16 @@ export class Container
 		return this.protocolHandler.quorum;
 	}
 
-	public dispose(
-		error?: ICriticalContainerError,
-		reason: DisconnectReason = DisconnectReason.Unknown,
-	): void {
-		this.verifyClosedAfter(() => this._deltaManager.dispose(error, reason));
+	public dispose(error?: ICriticalContainerError): void {
+		this.verifyClosedAfter(() => this._deltaManager.dispose(error));
 	}
 
-	public close(
-		error?: ICriticalContainerError,
-		reason: DisconnectReason = DisconnectReason.Unknown,
-	): void {
+	public close(error?: ICriticalContainerError): void {
 		// 1. Ensure that close sequence is exactly the same no matter if it's initiated by host or by DeltaManager
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
-		this.verifyClosedAfter(() => this._deltaManager.close(error, reason));
+		this.verifyClosedAfter(() => this._deltaManager.close(error));
 	}
 
 	private verifyClosedAfterCalls = 0;
