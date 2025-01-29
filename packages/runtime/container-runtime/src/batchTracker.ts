@@ -81,7 +81,8 @@ export class BatchTracker {
  */
 export const BindBatchTracker = (
 	batchEventEmitter: EventEmitter,
-	logger: ITelemetryLoggerExt,
+	logger: ITelemetryBaseLogger,
 	batchLengthThreshold: number = 1000,
 	batchCountSamplingRate: number = 1000,
-) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);
+): BatchTracker =>
+	new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/contact-collection",
-	"version": "2.20.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Example of using a Fluid Object as a collection of items",
 	"homepage": "https://fluidframework.com",
@@ -31,8 +31,8 @@
 		"start": "webpack serve",
 		"start:test": "webpack serve --config webpack.test.cjs",
 		"test": "npm run test:jest",
-		"test:jest": "jest",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
+		"test:jest": "jest --ci",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

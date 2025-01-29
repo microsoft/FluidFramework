@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SinonFakeTimers, SinonSpy, spy, useFakeTimers } from "sinon";
 
@@ -84,7 +84,10 @@ describe("Garbage Collection Tests", () => {
 				start.sweepGracePeriodMs ?? 10 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, start.state, `Wrong starting state`);
-			steps.forEach(({ time: advanceClockTo, updateWith, state: expectedState }, index) => {
+			for (const [
+				index,
+				{ time: advanceClockTo, updateWith, state: expectedState },
+			] of steps.entries()) {
 				assert(
 					advanceClockTo > clock.now,
 					"INVALID TEST CASE: steps must move forward in time, following start",
@@ -96,7 +99,7 @@ describe("Garbage Collection Tests", () => {
 				}
 
 				assert.equal(tracker.state, expectedState, `Wrong state at step ${index + 1}`); // 0-indexed including start
-			});
+			}
 		}
 
 		/**
@@ -202,11 +205,11 @@ describe("Garbage Collection Tests", () => {
 			},
 		];
 
-		testCases.forEach((testCase) => {
+		for (const testCase of testCases) {
 			it(testCase.name, () => {
 				runTestCase(testCase.steps);
 			});
-		});
+		}
 
 		it("Non-zero unreferencedTimestampMs properly offsets", () => {
 			tracker = new UnreferencedStateTracker(
@@ -269,6 +272,7 @@ describe("Garbage Collection Tests", () => {
 				0 /* sweepGracePeriodMs */,
 			);
 			assert.equal(tracker.state, UnreferencedState.Active, "Should start as Active");
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Accessing private property
 			const timerClearSpy: SinonSpy = spy((tracker as any).inactiveTimer, "clear");
 			// At T10 we had 15 to go based on server timestamps, so Timer is set to 25
 			clock.tick(6); // at T16 (9 to go)

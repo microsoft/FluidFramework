@@ -44,6 +44,11 @@ module.exports = {
 			},
 		],
 
+		// #region `unicorn` rule overrides
+
+		// False positives on non-array `push` methods.
+		"unicorn/no-array-push-push": "off",
+
 		"unicorn/empty-brace-spaces": "off",
 
 		// Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
@@ -108,6 +113,8 @@ module.exports = {
 		 */
 		"unicorn/expiring-todo-comments": "off",
 
+		// #endregion
+
 		/**
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
@@ -150,13 +157,13 @@ module.exports = {
 
 		/**
 		 * Disallows calling any variable that is typed as any. The arguments to, and return value of calling an
-		 * any typed variable are not checked at all by TypeScript.
+		 * `any`-typed variable are not checked at all by TypeScript.
 		 */
 		"@typescript-eslint/no-unsafe-call": "error",
 
 		/**
 		 * Disallows member access on any variable that is typed as any. The arguments to, and return value of
-		 * calling an any typed variable are not checked at all by TypeScript.
+		 * calling an `any`-typed variable are not checked at all by TypeScript.
 		 */
 		"@typescript-eslint/no-unsafe-member-access": "error",
 

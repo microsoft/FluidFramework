@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
@@ -155,7 +155,7 @@ describe("Garbage Collection Tests", () => {
 	function createGarbageCollector(
 		params: {
 			createParams?: Partial<IGarbageCollectorCreateParams>;
-			gcBlobsMap?: Map<string, any>;
+			gcBlobsMap?: Map<string, unknown>;
 			gcMetadata?: IGCMetadata;
 			closeFn?: (error?: ICriticalContainerError) => void;
 			isSummarizerClient?: boolean;
@@ -335,11 +335,13 @@ describe("Garbage Collection Tests", () => {
 	});
 
 	it("Private Autorecovery API", () => {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const autoRecovery: {
 			useFullGC: () => boolean;
 			requestFullGCOnNextRun: () => void;
 			onCompletedGCRun: () => void;
 			onSummaryAck: () => void;
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} = createGarbageCollector().autoRecovery as any;
 
 		assert.equal(autoRecovery.useFullGC(), false, "Expect false by default");
@@ -463,9 +465,9 @@ describe("Garbage Collection Tests", () => {
 
 			// Simulate GC Data with a route missing (nodes[0] is referenced but missing here)
 			// We'll return this from getGCData unless fullGC is passed in.
-			const corruptedGCData: IGarbageCollectionData = JSON.parse(
+			const corruptedGCData = JSON.parse(
 				JSON.stringify(defaultGCData),
-			);
+			) as IGarbageCollectionData;
 			corruptedGCData.gcNodes["/"] = [nodes[1]];
 
 			// getGCData set up to return the corrupted data unless fullGC is true
@@ -594,10 +596,10 @@ describe("Garbage Collection Tests", () => {
 	describe("errors when unreferenced objects are used after they are inactive / deleted", () => {
 		// Mock node loaded and changed activity for all the nodes in the graph.
 		async function mockNodeChangesAndRunGC(garbageCollector: IGarbageCollector) {
-			nodes.forEach((nodeId) => {
+			for (const nodeId of nodes) {
 				nodeUpdated(garbageCollector, nodeId, "Loaded", Date.now(), testPkgPath);
 				nodeUpdated(garbageCollector, nodeId, "Changed", Date.now(), testPkgPath);
-			});
+			}
 			await garbageCollector.collectGarbage({});
 		}
 
@@ -1241,7 +1243,7 @@ describe("Garbage Collection Tests", () => {
 				};
 				snapshotTree.blobs[metadataBlobName] = metadataBlobId;
 
-				const gcBlobsMap: Map<string, any> = new Map();
+				const gcBlobsMap: Map<string, unknown> = new Map();
 				gcBlobsMap.set(gcBlobId, gcState);
 				gcBlobsMap.set(gcTombstoneBlobId, tombstones);
 				gcBlobsMap.set(gcDeletedBlobId, deletedBlobs);
@@ -1258,7 +1260,7 @@ describe("Garbage Collection Tests", () => {
 					gcFeature: baseGCVersion,
 				};
 				let snapshotTree: ISnapshotTree;
-				let gcBlobsMap: Map<string, any> | undefined;
+				let gcBlobsMap: Map<string, unknown> | undefined;
 				if (gcStateInBaseSnapshot) {
 					const snapshotWithGCState = getSnapshotWithGCVersion(baseGCVersion);
 					snapshotTree = snapshotWithGCState.snapshotTree;

@@ -1,8 +1,58 @@
 # @fluid-tools/api-markdown-documenter
 
-## 0.18.0
+## 0.19.0
+
+### Add the ability to filter out individual API items (and their descendants) from documentation generation
+
+A new property `exclude` has been added to the options for documentation suite generation.
+This can be used to omit API items (and their descendants) from documentation generation.
+
+#### Example
+
+My repo uses a custom `TSDoc` tag `@hideDocs` for API items we don't wish to include in public documentation.
+To exclude such items, I could provide the following in my configuration:
+
+```typescript
+exclude: (apiItem) => {
+	return ApiItemUtilities.hasModifierTag(apiItem, "@hideDocs");
+};
+```
 
 ### ⚠ BREAKING CHANGES
+
+With the addition of `exclude`, `skipPackage` has been removed.
+This usage can be migrated as follows:
+
+```typescript
+skipPackage: (packageItem) => {
+    ...
+}
+```
+
+becomes
+
+```typescript
+exclude: (apiItem) => {
+    if (apiItem.kind === ApiItemKind.Package) {
+        ...
+    } else {
+        return false;
+    }
+}
+```
+
+## 0.18.0
+
+-   The default suite structure has been updated as follows:
+    -   `Package` and `Namespace` items now generate documents _inside_ of their own folder hierarchy, yielding documents named "index".
+    -   `Enum` and `TypeAlias` items now generate their own documents (rather than being rendered as sections under their parent document).
+-   `uriRoot` parameter is now optional.
+    The default value is "".
+
+### ⚠ BREAKING CHANGES
+
+The default output format has been updated, as noted above.
+Additionally...
 
 #### Simplify the parameters given to `MarkdownRenderer` and `HtmlRenderer` methods.
 
@@ -25,7 +75,7 @@ const apiModel = await loadModel({
 
 const transformConfig = {
 	apiModel,
-	uriRoot: ".",
+	uriRoot: "",
 };
 
 await MarkdownRenderer.renderApiModel(transformConfig, {}, { outputDirectoryPath });
@@ -46,7 +96,7 @@ const apiModel = await loadModel({
 
 await MarkdownRenderer.renderApiModel({
 	apiModel,
-	uriRoot: ".",
+	uriRoot: "", // Note: this parameter is also now optional. Default: "".
 	outputDirectoryPath,
 });
 ```
