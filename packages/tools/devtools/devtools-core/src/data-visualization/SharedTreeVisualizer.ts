@@ -87,10 +87,10 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 	if (schema.allowedTypes !== undefined) {
 		children.allowedTypes = createAllowedTypesVisualTree(schema.allowedTypes);
 	}
-	if (schema.requirement !== undefined) {
-		children.requirement = {
+	if (schema.isRequired !== undefined) {
+		children.isRequired = {
 			nodeKind: VisualNodeKind.ValueNode,
-			value: schema.requirement,
+			value: schema.isRequired,
 		};
 	}
 	return {
@@ -167,14 +167,7 @@ export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
  * Extract {@link FieldKind} from the schema.
  */
 export function getRequirement(schema: SimpleTreeSchema | SimpleFieldSchema): string {
-	const allowedTypesPrefix =
-		schema.kind === FieldKind.Optional
-			? "optional"
-			: schema.kind === FieldKind.Required
-				? "required"
-				: "identifier";
-
-	return allowedTypesPrefix;
+	return schema.kind === FieldKind.Required ? "true" : "false";
 }
 
 /**
@@ -184,7 +177,7 @@ async function visualizeVerboseNodeFields(
 	treeFields: VerboseTree[] | Record<string, VerboseTree>,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: Record<string, string>,
-	requirements: Record<string, string>,
+	requirements: Record<string, string> | undefined,
 	visualizeChildData: VisualizeChildData,
 ): Promise<Record<string, VisualSharedTreeNode>> {
 	const fields: Record<string | number, VisualSharedTreeNode> = {};
@@ -194,7 +187,7 @@ async function visualizeVerboseNodeFields(
 			childField,
 			treeDefinitions,
 			allowedTypes[fieldKey],
-			requirements[fieldKey],
+			requirements === undefined ? requirements : requirements[fieldKey],
 			visualizeChildData,
 		);
 	}
@@ -224,7 +217,7 @@ async function visualizeObjectNode(
 	tree: VerboseTreeNode,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: string,
-	requirement: string,
+	isRequired: string | undefined,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const { allowedTypes: objectAllowedTypes, requirements: objectRequirements } =
@@ -234,7 +227,7 @@ async function visualizeObjectNode(
 		schema: {
 			schemaName: tree.type,
 			allowedTypes,
-			requirement,
+			isRequired,
 		},
 		fields: await visualizeVerboseNodeFields(
 			tree.fields,
@@ -255,25 +248,25 @@ async function visualizeMapNode(
 	nodeSchema: SimpleMapNodeSchema,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: string,
+	isRequired: string | undefined,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const mapAllowedTypes: Record<string, string> = {};
-	const mapRequirements: Record<string, string> = {};
 
 	for (const key of Object.keys(tree.fields)) {
 		mapAllowedTypes[key] = concatenateTypes(nodeSchema.allowedTypes);
-		mapRequirements[key] = "required";
 	}
 	return {
 		schema: {
 			schemaName: tree.type,
 			allowedTypes,
+			isRequired,
 		},
 		fields: await visualizeVerboseNodeFields(
 			tree.fields,
 			treeDefinitions,
 			mapAllowedTypes,
-			mapRequirements,
+			undefined,
 			visualizeChildData,
 		),
 		kind: VisualSharedTreeNodeKind.InternalNode,
@@ -293,7 +286,7 @@ async function visualizeInternalNodeBySchema(
 	tree: VerboseTreeNode,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: string,
-	requirement: string,
+	isRequired: string | undefined,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const schema = treeDefinitions.get(tree.type);
@@ -308,7 +301,7 @@ async function visualizeInternalNodeBySchema(
 				tree,
 				treeDefinitions,
 				allowedTypes,
-				requirement,
+				isRequired,
 				visualizeChildData,
 			);
 			return objectVisualized;
@@ -319,6 +312,7 @@ async function visualizeInternalNodeBySchema(
 				schema,
 				treeDefinitions,
 				allowedTypes,
+				isRequired,
 				visualizeChildData,
 			);
 			return mapVisualized;
@@ -331,16 +325,14 @@ async function visualizeInternalNodeBySchema(
 			}
 
 			const arrayAllowedTypes: Record<string, string> = {};
-			const arrayRequirements: Record<string, string> = {};
 			for (let i = 0; i < children.length; i++) {
 				arrayAllowedTypes[i] = concatenateTypes(schema.allowedTypes);
-				arrayRequirements[i] = "required";
 
 				fields[i] = await visualizeSharedTreeBySchema(
 					children[i],
 					treeDefinitions,
 					arrayAllowedTypes[i],
-					arrayRequirements[i],
+					undefined,
 					visualizeChildData,
 				);
 			}
@@ -349,13 +341,13 @@ async function visualizeInternalNodeBySchema(
 				schema: {
 					schemaName: tree.type,
 					allowedTypes,
-					requirement,
+					isRequired,
 				},
 				fields: await visualizeVerboseNodeFields(
 					tree.fields,
 					treeDefinitions,
 					arrayAllowedTypes,
-					arrayRequirements,
+					undefined,
 					visualizeChildData,
 				),
 				kind: VisualSharedTreeNodeKind.InternalNode,
@@ -383,7 +375,7 @@ export async function visualizeSharedTreeBySchema(
 	tree: VerboseTree,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: string,
-	requirement: string,
+	isRequired: string | undefined,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const schemaFactory = new SchemaFactory(undefined);
@@ -399,7 +391,7 @@ export async function visualizeSharedTreeBySchema(
 				schema: {
 					schemaName: Tree.schema(tree).identifier,
 					allowedTypes,
-					requirement,
+					isRequired,
 				},
 				value: await visualizeChildData(tree),
 				kind: VisualSharedTreeNodeKind.LeafNode,
@@ -408,7 +400,7 @@ export async function visualizeSharedTreeBySchema(
 				tree,
 				treeDefinitions,
 				allowedTypes,
-				requirement,
+				isRequired,
 				visualizeChildData,
 			);
 }

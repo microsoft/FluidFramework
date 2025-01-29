@@ -1862,40 +1862,6 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
-	// it.only("Example", async () => {
-	// 	const factory = SharedTree.getFactory();
-	// 	const builder = new SchemaFactory("shared-tree-test");
-
-	// 	const sharedTree = factory.create(
-	// 		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-	// 		"test",
-	// 	);
-
-	// 	class RootNodeSchema extends builder.object("root-item", {
-	// 		foo: builder.object("bar-item", {
-	// 			banana: builder.string,
-	// 		}),
-	// 	}) {}
-
-	// 	const view = sharedTree.viewWith(
-	// 		new TreeViewConfiguration({ schema: builder.optional([RootNodeSchema]) }),
-	// 	);
-	// 	view.initialize(
-	// 		new RootNodeSchema({
-	// 			foo: {
-	// 				banana: "Taro Bubble Tea",
-	// 			},
-	// 		}),
-	// 	);
-
-	// 	const result = await visualizeSharedTree(
-	// 		sharedTree as unknown as ISharedObject,
-	// 		visualizeChildData,
-	// 	);
-
-	// 	console.log(result);
-	// });
-
 	it("Unknown SharedObject", async () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		const unknownObject = {

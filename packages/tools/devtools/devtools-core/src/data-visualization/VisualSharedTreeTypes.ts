@@ -38,7 +38,7 @@ export interface SharedTreeSchemaNode {
 	/**
 	 * If the field or node is required (e.g., required, optional) or not.
 	 */
-	requirement?: string;
+	isRequired?: string;
 }
 
 /**
