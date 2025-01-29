@@ -61,6 +61,7 @@ module.exports = {
 		"unicorn/no-new-array": "error",
 		"unicorn/no-null": "error",
 		"unicorn/no-zero-fractions": "error",
+		"unicorn/prefer-includes": "error",
 		"unicorn/prefer-node-protocol": "error",
 		"unicorn/prefer-number-properties": "error",
 		"unicorn/prefer-optional-catch-binding": "error",
@@ -71,7 +72,6 @@ module.exports = {
 
 		// TODO:
 		// unicorn/no-negated-condition
-		// unicorn/prefer-includes
 		// unicorn/explicit-length-check
 
 		// #endregion

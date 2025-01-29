@@ -100,7 +100,7 @@ describe("Runtime", () => {
 					throw new Error(`${failMsg}: Expected to fail`);
 				} catch (error: unknown) {
 					assert(
-						expectedErrors.some((e) => e === (error as ILoggingError).message),
+						expectedErrors.includes((error as ILoggingError).message),
 						errMsg,
 					);
 				}
@@ -117,7 +117,7 @@ describe("Runtime", () => {
 					throw new Error(`${failMsg}: Expected to reject`);
 				} catch (error: unknown) {
 					assert(
-						expectedErrors.some((e) => e === (error as ILoggingError).message),
+						expectedErrors.includes((error as ILoggingError).message),
 						errMsg,
 					);
 				}
