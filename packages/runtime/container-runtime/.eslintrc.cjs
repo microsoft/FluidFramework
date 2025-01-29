@@ -54,6 +54,7 @@ module.exports = {
 		"unicorn/consistent-destructuring": "error",
 		"unicorn/consistent-function-scoping": "error",
 		"unicorn/error-message": "error",
+		"unicorn/explicit-length-check": "error",
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
@@ -72,7 +73,6 @@ module.exports = {
 
 		// TODO:
 		// unicorn/no-negated-condition
-		// unicorn/explicit-length-check
 
 		// #endregion
 	},
