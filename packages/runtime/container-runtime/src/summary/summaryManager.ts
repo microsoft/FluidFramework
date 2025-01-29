@@ -24,6 +24,7 @@ import {
 
 import { IThrottler } from "../throttler.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { Summarizer } from "./summarizer.js";
 import { ISummarizerClientElection } from "./summarizerClientElection.js";
 import {
@@ -284,6 +285,7 @@ export class SummaryManager
 					// which would happen when we have a high enough number of unsummarized ops.
 					if (
 						startWithInitialDelay ||
+						// eslint-disable-next-line import/no-deprecated
 						!Summarizer.stopReasonCanRunLastSummary(shouldSummarizeState.stopReason)
 					) {
 						this.state = SummaryManagerState.Starting;
@@ -432,7 +434,7 @@ export class SummaryManager
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this.summarizer === undefined) {
-			throw Error("No running summarizer client");
+			throw new Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
 		}
 		return this.summarizer.summarizeOnDemand(options);
@@ -440,7 +442,7 @@ export class SummaryManager
 
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this.summarizer === undefined) {
-			throw Error("No running summarizer client");
+			throw new Error("No running summarizer client");
 			// TODO: could spawn a summarizer client temporarily.
 		}
 		return this.summarizer.enqueueSummarize(options);
@@ -457,13 +459,13 @@ export class SummaryManager
 	private readonly forwardedEvents = new Map<string, () => void>();
 
 	private setupForwardedEvents(): void {
-		[
+		for (const event of [
 			"summarize",
 			"summarizeAllAttemptsFailed",
 			"summarizerStop",
 			"summarizerStart",
 			"summarizerStartupFailed",
-		].forEach((event) => {
+		]) {
 			const listener = (...args: any[]): void => {
 				this.emit(event, ...args);
 			};
@@ -471,14 +473,14 @@ export class SummaryManager
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			this.summarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
-		});
+		}
 	}
 
 	private cleanupForwardedEvents(): void {
-		this.forwardedEvents.forEach((listener, event) =>
+		for (const [event, listener] of this.forwardedEvents.entries()) {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			this.summarizer?.off(event as any, listener),
-		);
+			this.summarizer?.off(event as any, listener);
+		}
 		this.forwardedEvents.clear();
 	}
 }
