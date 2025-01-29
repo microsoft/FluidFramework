@@ -84,7 +84,6 @@
 		"@fluidframework/tree": "workspace:~",
 		"axios": "^1.7.7",
 		"cross-env": "^7.0.3",
-		"fluid-framework": "^1.4.0",
 		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
