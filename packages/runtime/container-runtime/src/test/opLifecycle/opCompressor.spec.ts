@@ -19,7 +19,7 @@ describe("OpCompressor", () => {
 	});
 
 	const createBatch = (length: number, messageSize: number) => {
-		const messages = Array.from({ length }).map(() =>
+		const messages = Array.from({ length }, () =>
 			createMessage(generateStringOfSize(messageSize)),
 		);
 		return messagesToBatch(messages);

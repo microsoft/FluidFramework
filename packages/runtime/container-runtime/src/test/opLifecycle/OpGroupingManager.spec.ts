@@ -24,9 +24,7 @@ describe("OpGroupingManager", () => {
 		opHasMetadata: boolean = false,
 		batchId?: string,
 	): IBatch => ({
-		...messagesToBatch(
-			Array.from({ length }).map(() => createMessage(opHasMetadata, batchId)),
-		),
+		...messagesToBatch(Array.from({ length }, () => createMessage(opHasMetadata, batchId))),
 		hasReentrantOps,
 	});
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
