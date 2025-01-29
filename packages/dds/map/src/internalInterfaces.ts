@@ -7,6 +7,7 @@ import type { ILocalValue } from "./localValues.js";
 
 /**
  * Operation indicating a value should be set for a key.
+ * @internal
  */
 export interface IMapSetOperation {
 	/**
@@ -27,6 +28,7 @@ export interface IMapSetOperation {
 
 /**
  * Operation indicating the map should be cleared.
+ * @internal
  */
 export interface IMapClearOperation {
 	/**
@@ -37,6 +39,7 @@ export interface IMapClearOperation {
 
 /**
  * Operation indicating a key should be deleted from the map.
+ * @internal
  */
 export interface IMapDeleteOperation {
 	/**

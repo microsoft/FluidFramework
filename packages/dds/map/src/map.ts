@@ -13,28 +13,15 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMap, ISharedMapEvents } from "./interfaces.js";
-import {
-	type IMapDataObjectSerializable,
-	type IMapOperation,
-	MapKernel,
-} from "./mapKernel.js";
-
-interface IMapSerializationFormat {
-	blobs?: string[];
-	content: IMapDataObjectSerializable;
-}
-
-const snapshotFileName = "header";
+import { type IMapOperation, MapKernel } from "./mapKernel.js";
 
 /**
  * {@inheritDoc ISharedMap}
@@ -177,92 +164,14 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats {
-		let currentSize = 0;
-		let counter = 0;
-		let headerBlob: IMapDataObjectSerializable = {};
-		const blobs: string[] = [];
-
-		const builder = new SummaryTreeBuilder();
-
-		const data = this.kernel.getSerializedStorage(serializer);
-
-		// If single property exceeds this size, it goes into its own blob
-		const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
-
-		// Maximum blob size for multiple map properties
-		// Should be bigger than MinValueSizeSeparateSnapshotBlob
-		const MaxSnapshotBlobSize = 16 * 1024;
-
-		// Partitioning algorithm:
-		// 1) Split large (over MinValueSizeSeparateSnapshotBlob = 8K) properties into their own blobs.
-		//    Naming (across snapshots) of such blob does not have to be stable across snapshots,
-		//    As de-duping process (in driver) should not care about paths, only content.
-		// 2) Split remaining properties into blobs of MaxSnapshotBlobSize (16K) size.
-		//    This process does not produce stable partitioning. This means
-		//    modification (including addition / deletion) of property can shift properties across blobs
-		//    and result in non-incremental snapshot.
-		//    This can be improved in the future, without being format breaking change, as loading sequence
-		//    loads all blobs at once and partitioning schema has no impact on that process.
-		for (const key of Object.keys(data)) {
-			const value = data[key];
-			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
-				const blobName = `blob${counter}`;
-				counter++;
-				blobs.push(blobName);
-				const content: IMapDataObjectSerializable = {
-					[key]: {
-						type: value.type,
-						value: JSON.parse(value.value) as unknown,
-					},
-				};
-				builder.addBlob(blobName, JSON.stringify(content));
-			} else {
-				currentSize += value.type.length + 21; // Approximation cost of property header
-				if (value.value) {
-					currentSize += value.value.length;
-				}
-
-				if (currentSize > MaxSnapshotBlobSize) {
-					const blobName = `blob${counter}`;
-					counter++;
-					blobs.push(blobName);
-					builder.addBlob(blobName, JSON.stringify(headerBlob));
-					headerBlob = {};
-					currentSize = 0;
-				}
-				headerBlob[key] = {
-					type: value.type,
-					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
-				};
-			}
-		}
-
-		const header: IMapSerializationFormat = {
-			blobs,
-			content: headerBlob,
-		};
-		builder.addBlob(snapshotFileName, JSON.stringify(header));
-
-		return builder.getSummaryTree();
+		return this.kernel.summarizeCore(serializer, telemetryContext);
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
 	 */
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
-		const json = await readAndParse<object>(storage, snapshotFileName);
-		const newFormat = json as IMapSerializationFormat;
-		if (Array.isArray(newFormat.blobs)) {
-			this.kernel.populateFromSerializable(newFormat.content);
-			await Promise.all(
-				newFormat.blobs.map(async (value) => {
-					const content = await readAndParse<IMapDataObjectSerializable>(storage, value);
-					this.kernel.populateFromSerializable(content);
-				}),
-			);
-		} else {
-			this.kernel.populateFromSerializable(json as IMapDataObjectSerializable);
-		}
+		return this.kernel.loadCore(storage);
 	}
 
 	/**

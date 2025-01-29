@@ -33,3 +33,9 @@ export type {
 	IDirectoryDataObject,
 } from "./directory.js";
 export type { ISerializableValue } from "./internalInterfaces.js";
+export { MapKernel, type IMapOperation, type IMapKeyOperation } from "./mapKernel.js";
+export type {
+	IMapClearOperation,
+	IMapDeleteOperation,
+	IMapSetOperation,
+} from "./internalInterfaces.js";

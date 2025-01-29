@@ -8425,6 +8425,133 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
+  packages/dds/migration-shim:
+    dependencies:
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../common/client-utils
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/datastore-definitions
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../map
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../shared-object-base
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../tree
+      path-browserify:
+        specifier: ^1.0.1
+        version: 1.0.1
+    devDependencies:
+      '@arethetypeswrong/cli':
+        specifier: ^0.17.1
+        version: 0.17.1
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
+      '@fluid-private/stochastic-test-utils':
+        specifier: workspace:~
+        version: link:../../test/stochastic-test-utils
+      '@fluid-private/test-dds-utils':
+        specifier: workspace:~
+        version: link:../test-dds-utils
+      '@fluid-tools/benchmark':
+        specifier: ^0.50.0
+        version: 0.50.0
+      '@fluid-tools/build-cli':
+        specifier: ^0.51.0
+        version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.51.0
+        version: 0.51.0(@types/node@18.19.67)
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.6.0
+        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/test-runtime-utils
+      '@microsoft/api-extractor':
+        specifier: 7.47.8
+        version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.67
+      '@types/path-browserify':
+        specifier: ^1.0.0
+        version: 1.0.3
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
+      concurrently:
+        specifier: ^8.2.1
+        version: 8.2.2
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      mocha:
+        specifier: ^10.2.0
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      moment:
+        specifier: ^2.21.0
+        version: 2.30.1
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      replace-in-file:
+        specifier: ^6.3.5
+        version: 6.3.5
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   packages/dds/ordered-collection:
     dependencies:
       '@fluid-internal/client-utils':

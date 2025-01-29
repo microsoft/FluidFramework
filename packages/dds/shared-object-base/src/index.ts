@@ -21,3 +21,7 @@ export {
 	bindHandles,
 } from "./utils.js";
 export { ValueType } from "./valueType.js";
+export {
+	SharedObjectFromKernel,
+	SharedKernel,
+} from "./sharedObjectKernel.js";

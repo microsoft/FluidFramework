@@ -58,6 +58,7 @@ fluid-framework
 @fluidframework/register-collection
 @fluid-experimental/pact-map
 @fluidframework/ordered-collection
+@fluidframework/migration-shim
 @fluidframework/merge-tree
 @fluidframework/matrix
 @fluidframework/map
