@@ -419,6 +419,10 @@ describe("DefaultVisualizers unit tests", () => {
 							value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 							nodeKind: "ValueNode",
 						},
+						isRequired: {
+							nodeKind: "ValueNode",
+							value: "true",
+						},
 					},
 				},
 			},
@@ -588,6 +592,10 @@ describe("DefaultVisualizers unit tests", () => {
 										'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
 									nodeKind: "ValueNode",
 								},
+								isRequired: {
+									nodeKind: "ValueNode",
+									value: "true",
+								},
 							},
 						},
 					},
@@ -605,6 +613,10 @@ describe("DefaultVisualizers unit tests", () => {
 						allowedTypes: {
 							value: "shared-tree-test.root-item",
 							nodeKind: "ValueNode",
+						},
+						isRequired: {
+							nodeKind: "ValueNode",
+							value: "true",
 						},
 					},
 				},
@@ -725,6 +737,10 @@ describe("DefaultVisualizers unit tests", () => {
 										'shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
 									nodeKind: "ValueNode",
 								},
+								isRequired: {
+									nodeKind: "ValueNode",
+									value: "true",
+								},
 							},
 						},
 					},
@@ -742,6 +758,10 @@ describe("DefaultVisualizers unit tests", () => {
 						allowedTypes: {
 							value: "shared-tree-test.root-item",
 							nodeKind: "ValueNode",
+						},
+						isRequired: {
+							nodeKind: "ValueNode",
+							value: "true",
 						},
 					},
 				},
@@ -803,6 +823,10 @@ describe("DefaultVisualizers unit tests", () => {
 												"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string",
 											nodeKind: "ValueNode",
 										},
+										isRequired: {
+											nodeKind: "ValueNode",
+											value: "true",
+										},
 									},
 								},
 							},
@@ -822,6 +846,10 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "com.fluidframework.leaf.string",
 											nodeKind: "ValueNode",
 										},
+										isRequired: {
+											nodeKind: "ValueNode",
+											value: "true",
+										},
 									},
 								},
 							},
@@ -839,6 +867,10 @@ describe("DefaultVisualizers unit tests", () => {
 								allowedTypes: {
 									value: "shared-tree-test.bar-item",
 									nodeKind: "ValueNode",
+								},
+								isRequired: {
+									nodeKind: "ValueNode",
+									value: "true",
 								},
 							},
 						},
@@ -858,13 +890,16 @@ describe("DefaultVisualizers unit tests", () => {
 							value: "shared-tree-test.root-item",
 							nodeKind: "ValueNode",
 						},
+						isRequired: {
+							nodeKind: "ValueNode",
+							value: "true",
+						},
 					},
 				},
 			},
 			fluidObjectId: "test",
 			typeMetadata: "SharedTree",
 		};
-
 		expect(result).to.deep.equal(expected);
 	});
 
@@ -903,6 +938,10 @@ describe("DefaultVisualizers unit tests", () => {
 						allowedTypes: {
 							value: "com.fluidframework.leaf.handle",
 							nodeKind: "ValueNode",
+						},
+						isRequired: {
+							nodeKind: "ValueNode",
+							value: "true",
 						},
 					},
 				},
@@ -964,6 +1003,10 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "com.fluidframework.leaf.handle",
 											nodeKind: "ValueNode",
 										},
+										isRequired: {
+											nodeKind: "ValueNode",
+											value: "true",
+										},
 									},
 								},
 							},
@@ -982,6 +1025,10 @@ describe("DefaultVisualizers unit tests", () => {
 									value: "shared-tree-test.bar-item",
 									nodeKind: "ValueNode",
 								},
+								isRequired: {
+									nodeKind: "ValueNode",
+									value: "true",
+								},
 							},
 						},
 					},
@@ -999,6 +1046,10 @@ describe("DefaultVisualizers unit tests", () => {
 						allowedTypes: {
 							value: "shared-tree-test.root-item",
 							nodeKind: "ValueNode",
+						},
+						isRequired: {
+							nodeKind: "ValueNode",
+							value: "true",
 						},
 					},
 				},
@@ -1136,6 +1187,10 @@ describe("DefaultVisualizers unit tests", () => {
 																		"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 																	nodeKind: "ValueNode",
 																},
+																isRequired: {
+																	nodeKind: "ValueNode",
+																	value: "true",
+																},
 															},
 														},
 													},
@@ -1158,6 +1213,10 @@ describe("DefaultVisualizers unit tests", () => {
 																				allowedTypes: {
 																					value: "com.fluidframework.leaf.string",
 																					nodeKind: "ValueNode",
+																				},
+																				isRequired: {
+																					nodeKind: "ValueNode",
+																					value: "true",
 																				},
 																			},
 																		},
@@ -1197,6 +1256,10 @@ describe("DefaultVisualizers unit tests", () => {
 																		'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
 																	nodeKind: "ValueNode",
 																},
+																isRequired: {
+																	nodeKind: "ValueNode",
+																	value: "true",
+																},
 															},
 														},
 													},
@@ -1235,6 +1298,10 @@ describe("DefaultVisualizers unit tests", () => {
 														'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
 													nodeKind: "ValueNode",
 												},
+												isRequired: {
+													nodeKind: "ValueNode",
+													value: "true",
+												},
 											},
 										},
 									},
@@ -1257,6 +1324,10 @@ describe("DefaultVisualizers unit tests", () => {
 																"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
 															nodeKind: "ValueNode",
 														},
+														isRequired: {
+															nodeKind: "ValueNode",
+															value: "true",
+														},
 													},
 												},
 											},
@@ -1274,6 +1345,10 @@ describe("DefaultVisualizers unit tests", () => {
 												allowedTypes: {
 													value: "shared-tree-test.banana-object",
 													nodeKind: "ValueNode",
+												},
+												isRequired: {
+													nodeKind: "ValueNode",
+													value: "true",
 												},
 											},
 										},
@@ -1293,6 +1368,10 @@ describe("DefaultVisualizers unit tests", () => {
 												allowedTypes: {
 													value: "com.fluidframework.leaf.number",
 													nodeKind: "ValueNode",
+												},
+												isRequired: {
+													nodeKind: "ValueNode",
+													value: "false",
 												},
 											},
 										},
@@ -1338,6 +1417,10 @@ describe("DefaultVisualizers unit tests", () => {
 																		"com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 																	nodeKind: "ValueNode",
 																},
+																isRequired: {
+																	nodeKind: "ValueNode",
+																	value: "true",
+																},
 															},
 														},
 													},
@@ -1360,6 +1443,10 @@ describe("DefaultVisualizers unit tests", () => {
 																				allowedTypes: {
 																					value: "com.fluidframework.leaf.string",
 																					nodeKind: "ValueNode",
+																				},
+																				isRequired: {
+																					nodeKind: "ValueNode",
+																					value: "true",
 																				},
 																			},
 																		},
@@ -1399,6 +1486,10 @@ describe("DefaultVisualizers unit tests", () => {
 																		'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
 																	nodeKind: "ValueNode",
 																},
+																isRequired: {
+																	nodeKind: "ValueNode",
+																	value: "true",
+																},
 															},
 														},
 													},
@@ -1437,6 +1528,10 @@ describe("DefaultVisualizers unit tests", () => {
 														'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
 													nodeKind: "ValueNode",
 												},
+												isRequired: {
+													nodeKind: "ValueNode",
+													value: "true",
+												},
 											},
 										},
 									},
@@ -1459,6 +1554,10 @@ describe("DefaultVisualizers unit tests", () => {
 																"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.number",
 															nodeKind: "ValueNode",
 														},
+														isRequired: {
+															nodeKind: "ValueNode",
+															value: "true",
+														},
 													},
 												},
 											},
@@ -1476,6 +1575,10 @@ describe("DefaultVisualizers unit tests", () => {
 												allowedTypes: {
 													value: "shared-tree-test.banana-object",
 													nodeKind: "ValueNode",
+												},
+												isRequired: {
+													nodeKind: "ValueNode",
+													value: "true",
 												},
 											},
 										},
@@ -1513,6 +1616,10 @@ describe("DefaultVisualizers unit tests", () => {
 									value: 'shared-tree-test.Array<["shared-tree-test.foo-item"]>',
 									nodeKind: "ValueNode",
 								},
+								isRequired: {
+									nodeKind: "ValueNode",
+									value: "true",
+								},
 							},
 						},
 					},
@@ -1534,6 +1641,10 @@ describe("DefaultVisualizers unit tests", () => {
 											value: "com.fluidframework.leaf.boolean",
 											nodeKind: "ValueNode",
 										},
+										isRequired: {
+											nodeKind: "ValueNode",
+											value: "true",
+										},
 									},
 								},
 							},
@@ -1552,6 +1663,10 @@ describe("DefaultVisualizers unit tests", () => {
 										allowedTypes: {
 											value: "com.fluidframework.leaf.string",
 											nodeKind: "ValueNode",
+										},
+										isRequired: {
+											nodeKind: "ValueNode",
+											value: "true",
 										},
 									},
 								},
@@ -1575,6 +1690,10 @@ describe("DefaultVisualizers unit tests", () => {
 														"com.fluidframework.leaf.boolean | com.fluidframework.leaf.string | com.fluidframework.leaf.handle",
 													nodeKind: "ValueNode",
 												},
+												isRequired: {
+													nodeKind: "ValueNode",
+													value: "true",
+												},
 											},
 										},
 									},
@@ -1592,6 +1711,10 @@ describe("DefaultVisualizers unit tests", () => {
 										allowedTypes: {
 											value: "shared-tree-test.chai-latte-object",
 											nodeKind: "ValueNode",
+										},
+										isRequired: {
+											nodeKind: "ValueNode",
+											value: "true",
 										},
 									},
 								},
@@ -1615,6 +1738,10 @@ describe("DefaultVisualizers unit tests", () => {
 														allowedTypes: {
 															value: "com.fluidframework.leaf.boolean",
 															nodeKind: "ValueNode",
+														},
+														isRequired: {
+															nodeKind: "ValueNode",
+															value: "true",
 														},
 													},
 												},
@@ -1651,6 +1778,10 @@ describe("DefaultVisualizers unit tests", () => {
 										allowedTypes: {
 											value: 'shared-tree-test.Array<["shared-tree-test.dalgona-object"]>',
 											nodeKind: "ValueNode",
+										},
+										isRequired: {
+											nodeKind: "ValueNode",
+											value: "true",
 										},
 									},
 								},
@@ -1714,6 +1845,10 @@ describe("DefaultVisualizers unit tests", () => {
 												'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
 											nodeKind: "ValueNode",
 										},
+										isRequired: {
+											nodeKind: "ValueNode",
+											value: "true",
+										},
 									},
 								},
 							},
@@ -1731,6 +1866,10 @@ describe("DefaultVisualizers unit tests", () => {
 								allowedTypes: {
 									value: "shared-tree-test.bar-item",
 									nodeKind: "ValueNode",
+								},
+								isRequired: {
+									nodeKind: "ValueNode",
+									value: "true",
 								},
 							},
 						},
@@ -1751,6 +1890,10 @@ describe("DefaultVisualizers unit tests", () => {
 									value:
 										"com.fluidframework.leaf.number | com.fluidframework.leaf.string | com.fluidframework.leaf.boolean",
 									nodeKind: "ValueNode",
+								},
+								isRequired: {
+									nodeKind: "ValueNode",
+									value: "true",
 								},
 							},
 						},
@@ -1834,6 +1977,10 @@ describe("DefaultVisualizers unit tests", () => {
 										'shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string","shared-tree-test.map-object"]>',
 									nodeKind: "ValueNode",
 								},
+								isRequired: {
+									nodeKind: "ValueNode",
+									value: "true",
+								},
 							},
 						},
 					},
@@ -1852,13 +1999,16 @@ describe("DefaultVisualizers unit tests", () => {
 							value: "shared-tree-test.root-item",
 							nodeKind: "ValueNode",
 						},
+						isRequired: {
+							nodeKind: "ValueNode",
+							value: "true",
+						},
 					},
 				},
 			},
 			fluidObjectId: "test",
 			typeMetadata: "SharedTree",
 		};
-
 		expect(result).to.deep.equal(expected);
 	});
 

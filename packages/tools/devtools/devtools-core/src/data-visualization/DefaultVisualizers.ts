@@ -30,7 +30,7 @@ import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualizat
 import {
 	concatenateTypes,
 	determineNodeKind,
-	getRequirement,
+	getIsRequired,
 	toVisualTree,
 	visualizeSharedTreeBySchema,
 } from "./SharedTreeVisualizer.js";
@@ -282,7 +282,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	 * each node's allowed types are computed at the parent field level.
 	 */
 	const allowedTypes = concatenateTypes(sharedTree.exportSimpleSchema().allowedTypes);
-	const isRequired = getRequirement(sharedTree.exportSimpleSchema());
+	const isRequired = getIsRequired(sharedTree.exportSimpleSchema());
 
 	// Create a root field visualization that shows the allowed types at the root
 	const visualTreeRepresentation: VisualSharedTreeNode = await visualizeSharedTreeBySchema(

@@ -164,9 +164,9 @@ export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
 }
 
 /**
- * Extract {@link FieldKind} from the schema.
+ * Returns if the node under the field is required or optional from the {@link FieldKind} of schema.
  */
-export function getRequirement(schema: SimpleTreeSchema | SimpleFieldSchema): string {
+export function getIsRequired(schema: SimpleTreeSchema | SimpleFieldSchema): string {
 	return schema.kind === FieldKind.Required ? "true" : "false";
 }
 
@@ -195,6 +195,9 @@ async function visualizeVerboseNodeFields(
 	return fields;
 }
 
+/**
+ * Extracts and stores allowed types & kind from {@link SimpleFieldSchema}.
+ */
 function storeObjectAllowedTypes(schema: SimpleObjectNodeSchema): {
 	allowedTypes: Record<string, string>;
 	requirements: Record<string, string>;
@@ -204,7 +207,7 @@ function storeObjectAllowedTypes(schema: SimpleObjectNodeSchema): {
 
 	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
 		allowedTypes[fieldKey] = concatenateTypes(treeFieldSimpleSchema.allowedTypes);
-		requirements[fieldKey] = getRequirement(treeFieldSimpleSchema);
+		requirements[fieldKey] = getIsRequired(treeFieldSimpleSchema);
 	}
 
 	return { allowedTypes, requirements };
@@ -362,7 +365,11 @@ async function visualizeInternalNodeBySchema(
 /**
  * Creates a visual representation of a SharedTree based on its schema.
  * @param tree - The {@link VerboseTree} to visualize
- * @param treeSchema - The schema that defines the structure and types of the tree
+ * @param treeDefinitions - The schema that defines the structure and types of the tree
+ * @param allowedTypes - String representing the allowed types for this node
+ * @param isRequired - Whether this field is required in its parent object schema.
+ * Only meaningful for direct children of object nodes.
+ * Undefined for array/map elements since they are always required within their parent.
  * @param visualizeChildData - Callback function to visualize child node data
  * @returns A visual representation of the tree that includes schema information and node values
  *
