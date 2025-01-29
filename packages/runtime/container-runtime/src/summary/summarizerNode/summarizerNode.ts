@@ -61,7 +61,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * The reference sequence number of the most recent acked summary.
 	 * Returns 0 if there is not yet an acked summary.
 	 */
-	public get referenceSequenceNumber() {
+	public get referenceSequenceNumber(): number {
 		return this._lastSummaryReferenceSequenceNumber ?? 0;
 	}
 
@@ -198,20 +198,23 @@ export class SummarizerNode implements IRootSummarizerNode {
 		this.wipSummarizeCalled = true;
 
 		// Try to reuse the tree if unchanged
-		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
-			if (this._lastSummaryReferenceSequenceNumber !== undefined) {
-				this.wipSkipRecursion = true;
-				const stats = mergeStats();
-				stats.handleNodeCount++;
-				return {
-					summary: {
-						type: SummaryType.Handle,
-						handle: this.summaryHandleId,
-						handleType: SummaryType.Tree,
-					},
-					stats,
-				};
-			}
+		if (
+			this.canReuseHandle &&
+			!fullTree &&
+			!this.hasChanged() &&
+			this._lastSummaryReferenceSequenceNumber !== undefined
+		) {
+			this.wipSkipRecursion = true;
+			const stats = mergeStats();
+			stats.handleNodeCount++;
+			return {
+				summary: {
+					type: SummaryType.Handle,
+					handle: this.summaryHandleId,
+					handleType: SummaryType.Tree,
+				},
+				stats,
+			};
 		}
 
 		let incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
@@ -323,7 +326,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * queue. We track this until we get an ack from the server for this summary.
 	 * @param proposalHandle - The handle of the summary that was uploaded to the server.
 	 */
-	public completeSummary(proposalHandle: string) {
+	public completeSummary(proposalHandle: string): void {
 		this.completeSummaryCore(proposalHandle, false /* parentSkipRecursion */);
 	}
 
@@ -335,22 +338,20 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * In that case, the children will not have work-in-progress state.
 	 * @param validate - true to validate that the in-progress summary is correct for all nodes.
 	 */
-	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean) {
+	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean): void {
 		assert(
 			this.wipReferenceSequenceNumber !== undefined,
 			0x1a4 /* "Not tracking a summary" */,
 		);
-		if (parentSkipRecursion) {
-			if (this._lastSummaryReferenceSequenceNumber === undefined) {
-				// This case the child is added after the latest non-failure summary.
-				// This node and all children should consider themselves as still not
-				// having a successful summary yet.
-				// We cannot "reuse" this node if unchanged since that summary, because
-				// handles will be unable to point to that node. It never made it to the
-				// tree itself, and only exists as an attach op in the _outstandingOps.
-				this.clearSummary();
-				return;
-			}
+		if (parentSkipRecursion && this._lastSummaryReferenceSequenceNumber === undefined) {
+			// This case the child is added after the latest non-failure summary.
+			// This node and all children should consider themselves as still not
+			// having a successful summary yet.
+			// We cannot "reuse" this node if unchanged since that summary, because
+			// handles will be unable to point to that node. It never made it to the
+			// tree itself, and only exists as an attach op in the _outstandingOps.
+			this.clearSummary();
+			return;
 		}
 
 		for (const child of this.children.values()) {
@@ -368,7 +369,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		this.clearSummary();
 	}
 
-	public clearSummary() {
+	public clearSummary(): void {
 		this.wipReferenceSequenceNumber = undefined;
 		this.wipSummarizeCalled = false;
 		this.wipSkipRecursion = false;
@@ -482,7 +483,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 	}
 
-	public updateBaseSummaryState(snapshot: ISnapshotTree) {
+	public updateBaseSummaryState(snapshot: ISnapshotTree): void {
 		// Function deprecated. Empty declaration is kept around to compat failures.
 	}
 
@@ -609,7 +610,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	 * @param id - Initial id or path part of this node
 	 *
 	 */
-	protected maybeUpdateChildState(child: SummarizerNode, id: string) {
+	protected maybeUpdateChildState(child: SummarizerNode, id: string): void {
 		// If a summary is in progress, this child was created after the summary started. So, we need to update the
 		// child's summary state as well.
 		if (this.isSummaryInProgress()) {
@@ -617,13 +618,13 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 		// In case we have pending summaries on the parent, let's initialize it on the child.
 		if (child._lastSummaryReferenceSequenceNumber !== undefined) {
-			this.pendingSummaries.forEach((pendingSummaryInfo, proposedHandle) => {
+			for (const [proposedHandle, pendingSummaryInfo] of this.pendingSummaries.entries()) {
 				child.addPendingSummary(proposedHandle, pendingSummaryInfo);
-			});
+			}
 		}
 	}
 
-	protected addPendingSummary(key: string, pendingSummaryInfo: PendingSummaryInfo) {
+	protected addPendingSummary(key: string, pendingSummaryInfo: PendingSummaryInfo): void {
 		this.pendingSummaries.set(key, pendingSummaryInfo);
 	}
 

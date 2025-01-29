@@ -6,6 +6,7 @@
 import { performance } from "@fluid-internal/client-utils";
 import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -301,7 +302,7 @@ class OpPerfTelemetry {
 		});
 	}
 
-	private reportGettingUpToDate() {
+	private reportGettingUpToDate(): void {
 		this.connectionOpSeqNumber = undefined;
 		this.logger.sendPerformanceEvent({
 			eventName: "ConnectionSpeed",
@@ -315,7 +316,7 @@ class OpPerfTelemetry {
 		});
 	}
 
-	private recordPingTime(latency: number) {
+	private recordPingTime(latency: number): void {
 		this.pingLatency = latency;
 
 		// Log if latency is longer than 1 min
@@ -335,7 +336,7 @@ class OpPerfTelemetry {
 		}
 	}
 
-	private beforeOpSubmit(message: IDocumentMessage) {
+	private beforeOpSubmit(message: IDocumentMessage): void {
 		// start with first client op and measure latency every 500 client ops
 		if (
 			this.opLatencyLogger.isSamplingDisabled ||
@@ -362,7 +363,7 @@ class OpPerfTelemetry {
 		}
 	}
 
-	private afterProcessingOp(message: ISequencedDocumentMessage) {
+	private afterProcessingOp(message: ISequencedDocumentMessage): void {
 		const sequenceNumber = message.sequenceNumber;
 
 		if (sequenceNumber === this.connectionOpSeqNumber) {
@@ -520,7 +521,12 @@ export function ReportOpPerfTelemetry(
 	clientId: string | undefined,
 	deltaManager: IDeltaManagerFull,
 	containerRuntimeEvents: IEventProvider<IContainerRuntimeEvents>,
-	logger: ITelemetryLoggerExt,
+	logger: ITelemetryBaseLogger,
 ): void {
-	new OpPerfTelemetry(clientId, deltaManager, containerRuntimeEvents, logger);
+	new OpPerfTelemetry(
+		clientId,
+		deltaManager,
+		containerRuntimeEvents,
+		createChildLogger({ logger }),
+	);
 }

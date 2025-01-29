@@ -11,6 +11,7 @@ import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	IOrderedClientElection,
+	// eslint-disable-next-line import/no-deprecated
 	ISerializedElection,
 	ITrackedClient,
 } from "./orderedClientElection.js";
@@ -51,10 +52,10 @@ export class SummarizerClientElection
 	 */
 	private lastReportedSeq = 0;
 
-	public get electedClientId() {
+	public get electedClientId(): string | undefined {
 		return this.clientElection.electedClient?.clientId;
 	}
-	public get electedParentId() {
+	public get electedParentId(): string | undefined {
 		return this.clientElection.electedParent?.clientId;
 	}
 
@@ -119,6 +120,7 @@ export class SummarizerClientElection
 		});
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public serialize(): ISerializedElection {
 		const { electedClientId, electedParentId, electionSequenceNumber } =
 			this.clientElection.serialize();
