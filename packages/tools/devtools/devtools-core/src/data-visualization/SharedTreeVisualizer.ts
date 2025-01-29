@@ -164,7 +164,14 @@ export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
 }
 
 /**
- * Returns if the node under the field is required or optional from the {@link FieldKind} of schema.
+ * Determines if a field or node is required based on its schema kind.
+ * @param schema - The schema to check, either a SimpleTreeSchema or SimpleFieldSchema
+ * @returns "true" if the field is required (FieldKind.Required), "false" otherwise
+ *
+ * @remarks
+ * This function is used when visualizing schema information to indicate whether
+ * fields in object nodes are required or optional. The return value is a string
+ * rather than a boolean to match the expected format for schema visualization.
  */
 export function getIsRequired(schema: SimpleTreeSchema | SimpleFieldSchema): string {
 	return schema.kind === FieldKind.Required ? "true" : "false";
