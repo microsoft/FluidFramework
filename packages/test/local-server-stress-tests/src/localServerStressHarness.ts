@@ -67,7 +67,7 @@ const isOperationType = <O extends BaseOperation>(
 	op: BaseOperation,
 ): op is O => op.type === type;
 
-interface Client {
+export interface Client {
 	container: IContainer;
 	id: string;
 	entryPoint: StressDataObject;
@@ -420,7 +420,7 @@ export interface LocalServerStressOptions {
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 5,
+		numOpsBeforeAttach: 0,
 	},
 	handleGenerationDisabled: true,
 	emitter: new TypedEventEmitter(),
@@ -842,12 +842,12 @@ function makeFriendlyClientId(random: IRandom, index: number): string {
 	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
 }
 
-class StressDataObject extends DataObject {
+export class StressDataObject extends DataObject {
 	get StressDataObject() {
 		return this;
 	}
 
-	public globalObjects: Record<
+	private _globalObjects: Record<
 		string,
 		| { type: "newBlob"; blobHandle: IFluidHandle<ArrayBufferLike> }
 		| { type: "newDatastore"; dataStore: IDataStore }
@@ -858,6 +858,22 @@ class StressDataObject extends DataObject {
 		  }
 		| { type: "newAlias"; alias: string }
 	> = {};
+
+	public get globalObjects(): Readonly<
+		Record<
+			string,
+			| { type: "newBlob"; blobHandle: IFluidHandle<ArrayBufferLike> }
+			| { type: "newDatastore"; dataStore: IDataStore }
+			| {
+					type: "stressDataObject";
+					StressDataObject: StressDataObject;
+					channels: { root: ISharedDirectory };
+			  }
+			| { type: "newAlias"; alias: string }
+		>
+	> {
+		return this._globalObjects;
+	}
 
 	protected async getDefaultStressDataObject() {
 		const root = await this.context.containerRuntime.getAliasedDataStoreEntryPoint("default");
@@ -871,9 +887,9 @@ class StressDataObject extends DataObject {
 	protected async initializingFromExisting(): Promise<void> {
 		const root = await this.getDefaultStressDataObject();
 
-		this.globalObjects = root.globalObjects;
+		this._globalObjects = root._globalObjects;
 
-		this.globalObjects[this.id] = {
+		this._globalObjects[this.id] = {
 			type: "stressDataObject",
 			StressDataObject: this,
 			channels: { root: this.root },
@@ -883,14 +899,14 @@ class StressDataObject extends DataObject {
 	public uploadBlob(id: string, contents: string) {
 		void this.runtime
 			.uploadBlob(stringToBuffer(contents, "utf-8"))
-			.then((blobHandle) => (this.globalObjects[id] = { type: "newBlob", blobHandle }));
+			.then((blobHandle) => (this._globalObjects[id] = { type: "newBlob", blobHandle }));
 	}
 
 	public createDataStore(id: string) {
 		void this.context.containerRuntime
 			.createDataStore(stressDataObjectFactory.type)
 			.then(async (dataStore) => {
-				this.globalObjects[id] = { type: "newDatastore", dataStore };
+				this._globalObjects[id] = { type: "newDatastore", dataStore };
 			});
 	}
 }
@@ -976,15 +992,17 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		await initialClient.container.attach(createLocalResolverCreateNewRequest("stress"));
 		const url = await initialClient.container.getAbsoluteUrl("");
 		assert(url !== undefined, "attached container must have url");
-		await Promise.all(
-			Array.from({ length: options.numberOfClients }, async (_, i) =>
-				loadClient(
-					localDeltaConnectionServer,
-					codeLoader,
-					makeFriendlyClientId(random, i),
-					url,
+		clients.push(
+			...(await Promise.all(
+				Array.from({ length: options.numberOfClients }, async (_, i) =>
+					loadClient(
+						localDeltaConnectionServer,
+						codeLoader,
+						makeFriendlyClientId(random, i),
+						url,
+					),
 				),
-			),
+			)),
 		);
 	} else {
 		clients.push(initialClient);
