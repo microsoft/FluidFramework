@@ -1961,7 +1961,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -2009,7 +2009,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -2083,7 +2083,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
