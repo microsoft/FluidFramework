@@ -63,7 +63,7 @@ const isOperationType = <O extends BaseOperation>(
 	op: BaseOperation,
 ): op is O => op.type === type;
 
-export interface Client {
+interface Client {
 	container: IContainer;
 	id: string;
 }
@@ -86,7 +86,7 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 /**
  * @internal
  */
-export interface ClientSpec {
+interface SelectedClientSpec {
 	clientId: string;
 }
 
@@ -100,14 +100,14 @@ export interface BaseOperation {
 /**
  * @internal
  */
-export interface Attach {
+interface Attach {
 	type: "attach";
 }
 
 /**
  * @internal
  */
-export interface AddClient {
+interface AddClient {
 	type: "addClient";
 	id: string;
 	url: string;
@@ -116,7 +116,7 @@ export interface AddClient {
 /**
  * @internal
  */
-export interface Synchronize {
+interface Synchronize {
 	type: "synchronize";
 	clients?: Client[];
 }
@@ -414,7 +414,7 @@ export interface LocalServerStressOptions {
 /**
  * @internal
  */
-export const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
+const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
@@ -437,7 +437,7 @@ export const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export function mixinNewClient<
+function mixinNewClient<
 	TOperation extends BaseOperation,
 	TState extends LocalServerStressState,
 >(
@@ -501,10 +501,7 @@ export function mixinNewClient<
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export function mixinAttach<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
+function mixinAttach<TOperation extends BaseOperation, TState extends LocalServerStressState>(
 	model: LocalServerStressModel<TOperation, TState>,
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation | Attach, TState> {
@@ -580,7 +577,7 @@ export function mixinAttach<
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export function mixinSynchronization<
+function mixinSynchronization<
 	TOperation extends BaseOperation,
 	TState extends LocalServerStressState,
 >(
@@ -698,8 +695,8 @@ export function mixinSynchronization<
 	};
 }
 
-const isClientSpec = (op: unknown): op is ClientSpec =>
-	(op as ClientSpec).clientId !== undefined;
+const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
+	(op as SelectedClientSpec).clientId !== undefined;
 
 /**
  * Mixes in the ability to select a client to perform an operation on.
@@ -710,7 +707,7 @@ const isClientSpec = (op: unknown): op is ClientSpec =>
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export function mixinClientSelection<
+function mixinClientSelection<
 	TOperation extends BaseOperation,
 	TState extends LocalServerStressState,
 >(
@@ -739,7 +736,7 @@ export function mixinClientSelection<
 	};
 
 	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
-		assert(isClientSpec(operation), "operation should have been given a client");
+		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.id === operation.clientId);
 		assert(client !== undefined);
 		await runInStateWithClient(state, client, async () =>
@@ -877,7 +874,7 @@ const runtimeFactory: IRuntimeFactory = {
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export async function runTestForSeed<TOperation extends BaseOperation>(
+async function runTestForSeed<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	options: Omit<LocalServerStressOptions, "only" | "skip">,
 	seed: number,
@@ -1048,7 +1045,7 @@ export async function replayTest<TOperation extends BaseOperation>(
 	await runTestForSeed(model, options, seed, saveInfo);
 }
 
-export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
+function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
 	switch (stressMode) {
 		case StressMode.Short:
 		case StressMode.Normal: {
