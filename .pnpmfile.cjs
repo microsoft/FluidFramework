@@ -1,9 +1,13 @@
-//@ts-check
+// .pnpmfile.cjs is a pnpm hook file that allows modification of package.json content
+// (in memory) of the packages that are being installed.
+// https://pnpm.io/pnpmfile
 
-// Based on https://gist.github.com/dvins/33b8fb52480149d37cdeb98890244c5b
+// This implementation is based on https://gist.github.com/dvins/33b8fb52480149d37cdeb98890244c5b.
 // Changes:
 //  - Added support for complete dependency removal (specify null for newVersion)
 //  - Specify remapPeerDependencies for local needs
+
+//@ts-check
 
 // https://pnpm.io/pnpmfile
 // https://github.com/pnpm/pnpm/issues/4214
@@ -58,7 +62,6 @@ function overridesPeerDependencies(pkg) {
 module.exports = {
 	hooks: {
 		readPackage(pkg, _context) {
-			// skipDeps(pkg);
 			overridesPeerDependencies(pkg);
 			return pkg;
 		},
