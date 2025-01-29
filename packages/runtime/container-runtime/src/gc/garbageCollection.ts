@@ -352,7 +352,8 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * API for ensuring the correct auto-recovery mitigations
 	 */
-	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
+	// TODO: consider hoisting this to an outer scope as an optimization
+	// eslint-disable-next-line unicorn/consistent-function-scoping
 	private readonly autoRecovery = (() => {
 		// This uses a hidden state machine for forcing fullGC as part of auto-recovery,
 		// to regenerate the GC data for each node.
