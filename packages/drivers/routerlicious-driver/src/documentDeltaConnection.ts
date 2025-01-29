@@ -117,7 +117,9 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 		const isCorruption =
 			err.errorType === FluidErrorTypes.dataCorruptionError ||
 			err.errorType === FluidErrorTypes.dataProcessingError;
-		this.socket.emit("disconnect_document", this.clientId, this.documentId, isCorruption);
+		if (isCorruption) {
+			this.socket.emit("disconnect_document", this.clientId, this.documentId, err.errorType);
+		}
 		super.disconnectCore(err);
 	}
 }
