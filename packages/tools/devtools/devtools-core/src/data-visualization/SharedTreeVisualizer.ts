@@ -87,6 +87,12 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 	if (schema.allowedTypes !== undefined) {
 		children.allowedTypes = createAllowedTypesVisualTree(schema.allowedTypes);
 	}
+	if (schema.requirement !== undefined) {
+		children.requirement = {
+			nodeKind: VisualNodeKind.ValueNode,
+			value: schema.requirement,
+		};
+	}
 	return {
 		nodeKind: VisualNodeKind.TreeNode,
 		children,
@@ -160,15 +166,15 @@ export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
 /**
  * Extract {@link FieldKind} from the schema.
  */
-export function extractKind(schema: SimpleTreeSchema | SimpleFieldSchema): string {
+export function getRequirement(schema: SimpleTreeSchema | SimpleFieldSchema): string {
 	const allowedTypesPrefix =
 		schema.kind === FieldKind.Optional
-			? "optional | "
+			? "optional"
 			: schema.kind === FieldKind.Required
-				? "required | "
-				: "identifier | ";
+				? "required"
+				: "identifier";
 
-	return `${allowedTypesPrefix}${[...schema.allowedTypes].join(" | ")}`;
+	return allowedTypesPrefix;
 }
 
 /**
@@ -178,6 +184,7 @@ async function visualizeVerboseNodeFields(
 	treeFields: VerboseTree[] | Record<string, VerboseTree>,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: Record<string, string>,
+	requirements: Record<string, string>,
 	visualizeChildData: VisualizeChildData,
 ): Promise<Record<string, VisualSharedTreeNode>> {
 	const fields: Record<string | number, VisualSharedTreeNode> = {};
@@ -187,6 +194,7 @@ async function visualizeVerboseNodeFields(
 			childField,
 			treeDefinitions,
 			allowedTypes[fieldKey],
+			requirements[fieldKey],
 			visualizeChildData,
 		);
 	}
@@ -194,15 +202,19 @@ async function visualizeVerboseNodeFields(
 	return fields;
 }
 
-function storeObjectAllowedTypes(schema: SimpleObjectNodeSchema): Record<string, string> {
-	const result: Record<string, string> = {};
+function storeObjectAllowedTypes(schema: SimpleObjectNodeSchema): {
+	allowedTypes: Record<string, string>;
+	requirements: Record<string, string>;
+} {
+	const allowedTypes: Record<string, string> = {};
+	const requirements: Record<string, string> = {};
 
 	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
-		result[fieldKey] =
-			`${extractKind(treeFieldSimpleSchema)} ${concatenateTypes(treeFieldSimpleSchema.allowedTypes)}`;
+		allowedTypes[fieldKey] = concatenateTypes(treeFieldSimpleSchema.allowedTypes);
+		requirements[fieldKey] = getRequirement(treeFieldSimpleSchema);
 	}
 
-	return result;
+	return { allowedTypes, requirements };
 }
 
 /**
@@ -212,21 +224,23 @@ async function visualizeObjectNode(
 	tree: VerboseTreeNode,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: string,
+	requirement: string,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const objectAllowedTypes = storeObjectAllowedTypes(
-		treeDefinitions.get(tree.type) as SimpleObjectNodeSchema,
-	);
+	const { allowedTypes: objectAllowedTypes, requirements: objectRequirements } =
+		storeObjectAllowedTypes(treeDefinitions.get(tree.type) as SimpleObjectNodeSchema);
 
 	return {
 		schema: {
 			schemaName: tree.type,
 			allowedTypes,
+			requirement,
 		},
 		fields: await visualizeVerboseNodeFields(
 			tree.fields,
 			treeDefinitions,
 			objectAllowedTypes,
+			objectRequirements,
 			visualizeChildData,
 		),
 		kind: VisualSharedTreeNodeKind.InternalNode,
@@ -244,9 +258,11 @@ async function visualizeMapNode(
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const mapAllowedTypes: Record<string, string> = {};
+	const mapRequirements: Record<string, string> = {};
 
 	for (const key of Object.keys(tree.fields)) {
 		mapAllowedTypes[key] = concatenateTypes(nodeSchema.allowedTypes);
+		mapRequirements[key] = "required";
 	}
 	return {
 		schema: {
@@ -257,6 +273,7 @@ async function visualizeMapNode(
 			tree.fields,
 			treeDefinitions,
 			mapAllowedTypes,
+			mapRequirements,
 			visualizeChildData,
 		),
 		kind: VisualSharedTreeNodeKind.InternalNode,
@@ -276,6 +293,7 @@ async function visualizeInternalNodeBySchema(
 	tree: VerboseTreeNode,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: string,
+	requirement: string,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const schema = treeDefinitions.get(tree.type);
@@ -290,6 +308,7 @@ async function visualizeInternalNodeBySchema(
 				tree,
 				treeDefinitions,
 				allowedTypes,
+				requirement,
 				visualizeChildData,
 			);
 			return objectVisualized;
@@ -312,13 +331,16 @@ async function visualizeInternalNodeBySchema(
 			}
 
 			const arrayAllowedTypes: Record<string, string> = {};
+			const arrayRequirements: Record<string, string> = {};
 			for (let i = 0; i < children.length; i++) {
 				arrayAllowedTypes[i] = concatenateTypes(schema.allowedTypes);
+				arrayRequirements[i] = "required";
 
 				fields[i] = await visualizeSharedTreeBySchema(
 					children[i],
 					treeDefinitions,
 					arrayAllowedTypes[i],
+					arrayRequirements[i],
 					visualizeChildData,
 				);
 			}
@@ -327,11 +349,13 @@ async function visualizeInternalNodeBySchema(
 				schema: {
 					schemaName: tree.type,
 					allowedTypes,
+					requirement,
 				},
 				fields: await visualizeVerboseNodeFields(
 					tree.fields,
 					treeDefinitions,
 					arrayAllowedTypes,
+					arrayRequirements,
 					visualizeChildData,
 				),
 				kind: VisualSharedTreeNodeKind.InternalNode,
@@ -359,6 +383,7 @@ export async function visualizeSharedTreeBySchema(
 	tree: VerboseTree,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: string,
+	requirement: string,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const schemaFactory = new SchemaFactory(undefined);
@@ -374,9 +399,16 @@ export async function visualizeSharedTreeBySchema(
 				schema: {
 					schemaName: Tree.schema(tree).identifier,
 					allowedTypes,
+					requirement,
 				},
 				value: await visualizeChildData(tree),
 				kind: VisualSharedTreeNodeKind.LeafNode,
 			}
-		: visualizeInternalNodeBySchema(tree, treeDefinitions, allowedTypes, visualizeChildData);
+		: visualizeInternalNodeBySchema(
+				tree,
+				treeDefinitions,
+				allowedTypes,
+				requirement,
+				visualizeChildData,
+			);
 }

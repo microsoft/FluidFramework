@@ -30,15 +30,15 @@ export interface SharedTreeSchemaNode {
 	schemaName: string;
 
 	/**
-	 * TODO
-	 */
-	fieldKind?: string;
-
-	/**
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
 	 * - InternalNode: `Record<string, string>`.
 	 */
 	allowedTypes?: string | Record<string, string>;
+
+	/**
+	 * If the field or node is required (e.g., required, optional) or not.
+	 */
+	requirement?: string;
 }
 
 /**
