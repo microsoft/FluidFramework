@@ -4841,6 +4841,9 @@ export class ContainerRuntime
 		};
 	}
 
+	private readonly readAndParseBlob = async <T>(id: string): Promise<T> =>
+		readAndParse<T>(this.storage, id);
+
 	/**
 	 * Fetches the latest snapshot from storage. If the fetched snapshot is same or newer than the one for which ack
 	 * was received, close this client. Fetching the snapshot will update the cache for this client so if it's
@@ -4853,9 +4856,6 @@ export class ContainerRuntime
 		targetAckHandle: string,
 		logger: ITelemetryLoggerExt,
 	): Promise<void> {
-		const readAndParseBlob = async <T>(id: string): Promise<T> =>
-			readAndParse<T>(this.storage, id);
-
 		const fetchedSnapshotRefSeq = await PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: "RefreshLatestSummaryAckFetch" },
@@ -4921,7 +4921,7 @@ export class ContainerRuntime
 
 				props.getSnapshotDuration = trace.trace().duration;
 
-				const snapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
+				const snapshotRefSeq = await seqFromTree(snapshotTree, this.readAndParseBlob);
 				props.snapshotRefSeq = snapshotRefSeq;
 				props.newerSnapshotPresent = snapshotRefSeq >= targetRefSeq;
 
