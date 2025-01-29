@@ -554,6 +554,21 @@ stages:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
 
+        - task: Bash@3
+          displayName: Use the authenticated .npmrc file globally
+          inputs:
+            targetType: 'inline'
+            script: |
+              TARGET_FILE=$(Agent.TempDirectory)/.npmrc
+
+              echo "Copying the authenticated .npmrc file to '$TARGET_FILE'"
+              cp ${{ variables.testWorkspace }}/.npmrc $TARGET_FILE
+
+              # Configure the copied file to be the default user-level .npmrc file, so all invocations of npm use it.
+              # Particularly relevant for the ones that occur whel we install older version for compat tests.
+              echo "Setting NPM_CONFIG_USERCONFIG to '$TARGET_FILE'"
+              echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$TARGET_FILE"
+
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
         # one fails.
         # Doing this with separate ADO steps is not easy.
