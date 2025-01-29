@@ -52,6 +52,7 @@ module.exports = {
 
 		"unicorn/catch-error-name": "error",
 		"unicorn/consistent-destructuring": "error",
+		"unicorn/consistent-function-scoping": "error",
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
@@ -66,7 +67,7 @@ module.exports = {
 		"unicorn/throw-new-error": "error",
 
 		// TODO:
-		// unicorn/consistent-function-scoping
+		//
 		// unicorn/no-negated-condition
 		// unicorn/no-lonely-if
 		// unicorn/no-new-array
@@ -86,6 +87,10 @@ module.exports = {
 
 				// Test files are run in node only so additional node libraries can be used.
 				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
+
+				// TODO:AB#3027: This rule is disabled for tests in the `recommended` base config.
+				// Remove this override once the base has been updated.
+				"unicorn/consistent-function-scoping": "off",
 			},
 		},
 	],

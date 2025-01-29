@@ -352,8 +352,9 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * API for ensuring the correct auto-recovery mitigations
 	 */
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly autoRecovery = (() => {
-		// This uses a hidden state machine for forcing fullGC as part of autorecovery,
+		// This uses a hidden state machine for forcing fullGC as part of auto-recovery,
 		// to regenerate the GC data for each node.
 		//
 		// Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
@@ -1282,7 +1283,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// The runtime can't reliably identify the type of deleted nodes. So, get the type here. This should
 		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import/no-deprecated, unicorn/consistent-function-scoping
 		const getDeletedNodeType = (nodeId: string): GCNodeType => {
 			const pathParts = nodeId.split("/");
 			if (pathParts[1] === blobManagerBasePath) {

@@ -853,6 +853,7 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 		});
 
 		// Now that we've logged, prevent future logging (globally).
+		// eslint-disable-next-line unicorn/consistent-function-scoping
 		getSingleUseLegacyLogCallback = () => () => {};
 	};
 };
@@ -4622,6 +4623,8 @@ export class ContainerRuntime
 		}
 
 		this.flushTaskExists = true;
+
+		// eslint-disable-next-line unicorn/consistent-function-scoping -- Separate `flush` method already exists in outer scope
 		const flush = (): void => {
 			this.flushTaskExists = false;
 			try {
@@ -4848,6 +4851,9 @@ export class ContainerRuntime
 		targetAckHandle: string,
 		logger: ITelemetryLoggerExt,
 	): Promise<void> {
+		const readAndParseBlob = async <T>(id: string): Promise<T> =>
+			readAndParse<T>(this.storage, id);
+
 		const fetchedSnapshotRefSeq = await PerformanceEvent.timedExecAsync(
 			logger,
 			{ eventName: "RefreshLatestSummaryAckFetch" },
@@ -4912,8 +4918,7 @@ export class ContainerRuntime
 				}
 
 				props.getSnapshotDuration = trace.trace().duration;
-				const readAndParseBlob = async <T>(id: string): Promise<T> =>
-					readAndParse<T>(this.storage, id);
+
 				const snapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
 				props.snapshotRefSeq = snapshotRefSeq;
 				props.newerSnapshotPresent = snapshotRefSeq >= targetRefSeq;
