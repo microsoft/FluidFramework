@@ -10,7 +10,6 @@ import {
 } from "@fluidframework/core-interfaces";
 import { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 
 /**
  * Events emitted by {@link ISharedObject}.
@@ -66,11 +65,4 @@ export interface ISharedObject<TEvent extends ISharedObjectEvents = ISharedObjec
 	 * the runtime attaches.
 	 */
 	bindToContext(): void;
-
-	/**
-	 * Returns the GC data for this shared object. It contains a list of GC nodes that contains references to
-	 * other GC nodes.
-	 * @param fullGC - true to bypass optimizations and force full generation of GC data.
-	 */
-	getGCData(fullGC?: boolean): IGarbageCollectionData;
 }

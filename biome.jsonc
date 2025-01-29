@@ -122,7 +122,6 @@
 			"tools/getkeys/**",
 			"tools/markdown-magic/**",
 			"tools/pipelines/**",
-			"tools/telemetry-generator/**",
 			"tools/test-tools/**"
 		],
 		"maxSize": 2097152

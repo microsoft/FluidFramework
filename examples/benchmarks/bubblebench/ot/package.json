@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bubblebench-ot",
-	"version": "2.12.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Bubblemark inspired DDS benchmark",
 	"homepage": "https://fluidframework.com",
@@ -35,8 +35,8 @@
 		"start:spo-df": "webpack serve --config webpack.config.cjs --env mode=spo-df",
 		"start:tinylicious": "webpack serve --config webpack.config.cjs --env mode=tinylicious",
 		"test": "npm run test:jest",
-		"test:jest": "jest",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
+		"test:jest": "jest --ci",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

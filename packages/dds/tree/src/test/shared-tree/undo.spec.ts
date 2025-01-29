@@ -648,7 +648,10 @@ describe("Undo and redo", () => {
 
 		const undoOriginalPropertyOne = undoStack.pop();
 
-		assert.throws(() => undoOriginalPropertyOne?.clone(viewB).revert(), "Error: 0x576");
+		assert.throws(
+			() => undoOriginalPropertyOne?.clone(viewB),
+			/Cannot clone revertible for a commit that is not present on the given branch./,
+		);
 	});
 
 	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.

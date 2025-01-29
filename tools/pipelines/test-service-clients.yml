@@ -21,6 +21,7 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test

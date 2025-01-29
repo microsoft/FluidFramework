@@ -10,7 +10,7 @@ import { toHtml as toHtmlString } from "hast-util-to-html";
 import type { DocumentNode } from "../../documentation-domain/index.js";
 import {
 	documentToHtml,
-	type TransformationConfig,
+	type TransformationConfiguration,
 } from "../../documentation-domain-to-html/index.js";
 
 /**
@@ -19,12 +19,12 @@ import {
  * @sealed
  * @public
  */
-export interface RenderHtmlConfig {
+export interface RenderHtmlConfiguration {
 	/**
 	 * Whether or not to render the generated HTML "pretty", human-readable formatting.
 	 * @defaultValue `true`
 	 */
-	prettyFormatting?: boolean;
+	readonly prettyFormatting?: boolean;
 }
 
 /**
@@ -33,7 +33,9 @@ export interface RenderHtmlConfig {
  * @sealed
  * @public
  */
-export interface RenderDocumentConfig extends TransformationConfig, RenderHtmlConfig {}
+export interface RenderDocumentConfiguration
+	extends TransformationConfiguration,
+		RenderHtmlConfiguration {}
 
 /**
  * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
@@ -43,7 +45,10 @@ export interface RenderDocumentConfig extends TransformationConfig, RenderHtmlCo
  *
  * @public
  */
-export function renderDocument(document: DocumentNode, config: RenderDocumentConfig): string {
+export function renderDocument(
+	document: DocumentNode,
+	config: RenderDocumentConfiguration,
+): string {
 	const htmlTree = documentToHtml(document, config);
 	return renderHtml(htmlTree, config);
 }
@@ -56,10 +61,8 @@ export function renderDocument(document: DocumentNode, config: RenderDocumentCon
  *
  * @public
  */
-export function renderHtml(
-	html: HastTree,
-	{ prettyFormatting }: { prettyFormatting?: boolean },
-): string {
+export function renderHtml(html: HastTree, config: RenderHtmlConfiguration): string {
+	const { prettyFormatting } = config;
 	if (prettyFormatting !== false) {
 		// Pretty formatting. Modifies the tree in place.
 		// Note: this API is specifically typed to only accept a `Root` node, but its code only requires any `Nodes`.

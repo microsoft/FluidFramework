@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-container-views",
-	"version": "2.12.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Minimal Fluid Container & data store sample to implement a collaborative dice roller as a standalone app.",
 	"homepage": "https://fluidframework.com",
@@ -30,8 +30,8 @@
 		"prepack": "npm run webpack",
 		"start": "webpack serve",
 		"test": "npm run test:jest",
-		"test:jest": "jest",
-		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest",
+		"test:jest": "jest --ci",
+		"test:jest:verbose": "cross-env FLUID_TEST_VERBOSE=1 jest --ci",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},

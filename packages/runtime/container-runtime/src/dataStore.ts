@@ -26,9 +26,13 @@ import { ContainerMessageType } from "./messageTypes.js";
  * alias to a datastore
  */
 export interface IDataStoreAliasMessage {
-	/** The internal id of the datastore */
+	/**
+	 * The internal id of the datastore
+	 */
 	readonly internalId: string;
-	/** The alias name to be assigned to the datastore */
+	/**
+	 * The alias name to be assigned to the datastore
+	 */
 	readonly alias: string;
 }
 
@@ -39,11 +43,12 @@ export interface IDataStoreAliasMessage {
  * @returns True if the {@link IDataStoreAliasMessage} is fully implemented, false otherwise
  */
 export const isDataStoreAliasMessage = (
-	maybeDataStoreAliasMessage: any,
+	maybeDataStoreAliasMessage: unknown,
 ): maybeDataStoreAliasMessage is IDataStoreAliasMessage => {
 	return (
-		typeof maybeDataStoreAliasMessage?.internalId === "string" &&
-		typeof maybeDataStoreAliasMessage?.alias === "string"
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.internalId ===
+			"string" &&
+		typeof (maybeDataStoreAliasMessage as Partial<IDataStoreAliasMessage>)?.alias === "string"
 	);
 };
 
@@ -77,18 +82,20 @@ class DataStore implements IDataStore {
 		switch (this.aliasState) {
 			// If we're already aliasing, check if it's for the same value and return
 			// the stored promise, otherwise return 'AlreadyAliased'
-			case AliasState.Aliasing:
+			case AliasState.Aliasing: {
 				assert(
 					this.aliasResult !== undefined,
 					0x316 /* There should be a cached promise of in-progress aliasing */,
 				);
 				await this.aliasResult;
 				return this.alias === alias ? "Success" : "AlreadyAliased";
+			}
 
 			// If this datastore is already aliased, return true only if this
 			// is a repeated call for the same alias
-			case AliasState.Aliased:
+			case AliasState.Aliased: {
 				return this.alias === alias ? "Success" : "AlreadyAliased";
+			}
 
 			case AliasState.None: {
 				const existingAlias = this.pendingAliases.get(alias);
@@ -103,8 +110,9 @@ class DataStore implements IDataStore {
 				break;
 			}
 
-			default:
+			default: {
 				unreachableCase(this.aliasState);
+			}
 		}
 
 		this.aliasState = AliasState.Aliasing;
@@ -187,7 +195,7 @@ class DataStore implements IDataStore {
 	private async ackBasedPromise<T>(
 		executor: (
 			resolve: (value: T | PromiseLike<T>) => void,
-			reject: (reason?: any) => void,
+			reject: (reason?: unknown) => void,
 		) => void,
 	): Promise<T> {
 		let rejectBecauseDispose: () => void;

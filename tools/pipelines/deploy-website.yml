@@ -44,6 +44,7 @@ parameters:
 variables:
   - group: doc-versions
   - group: storage-vars
+  - group: ado-feeds
   - name: repoToTrigger
     value: microsoft/FluidFramework
   - name: shouldRetainGuardianAssets
@@ -129,6 +130,8 @@ stages:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
+          env:
+            INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
 
         # Run the tests
         - task: Npm@1

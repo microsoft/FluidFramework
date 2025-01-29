@@ -1,6 +1,6 @@
 {
 	"name": "@types/jest-environment-puppeteer",
-	"version": "2.12.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "TypeScript `globals` definitions fix-up for jest-environment-puppeteer",
 	"homepage": "https://fluidframework.com",

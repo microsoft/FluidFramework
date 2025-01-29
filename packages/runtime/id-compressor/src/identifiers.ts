@@ -26,7 +26,7 @@ export type LocalCompressedId = number & {
 } & SessionSpaceCompressedId; // Same brand as CompressedId, as local IDs are always locally normalized
 
 /**
- * @returns true if the supplied ID is a final ID.
+ * Returns true if the supplied ID is a final ID.
  */
 export function isFinalId(
 	id: SessionSpaceCompressedId | OpSpaceCompressedId,

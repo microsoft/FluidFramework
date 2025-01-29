@@ -22,7 +22,7 @@ export class HistorianResources implements core.IResources {
 		public readonly config: Provider,
 		public readonly port: string | number,
 		public readonly riddler: historianServices.ITenantService,
-		public readonly storageNameRetriever: core.IStorageNameRetriever,
+		public readonly storageNameRetriever: core.IStorageNameRetriever | undefined,
 		public readonly restTenantThrottlers: Map<string, core.IThrottler>,
 		public readonly restClusterThrottlers: Map<string, core.IThrottler>,
 		public readonly documentManager: core.IDocumentManager,
@@ -33,6 +33,7 @@ export class HistorianResources implements core.IResources {
 		public readonly denyList?: historianServices.IDenyList,
 		public readonly ephemeralDocumentTTLSec?: number,
 		public readonly readinessCheck?: core.IReadinessCheck,
+		public readonly simplifiedCustomDataRetriever?: historianServices.ISimplifiedCustomDataRetriever,
 	) {
 		const httpServerConfig: services.IHttpServerConfig = config.get("system:httpServer");
 		this.webServerFactory = new services.BasicWebServerFactory(httpServerConfig);
@@ -195,17 +196,19 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			? customizations?.storageNameRetriever ?? new services.StorageNameRetriever()
 			: undefined;
 
+		const port = normalizePort(process.env.PORT || "3000");
 		const tenantManager: core.ITenantManager = new services.TenantManager(
 			riddlerEndpoint,
-			undefined /* internalHistorianUrl */,
+			"http://invalid-api-use" /* internalHistorianUrl (explicitly invalid to avoid circular reference) */,
 		);
 		const documentManager: core.IDocumentManager = new services.DocumentManager(
 			alfredEndpoint,
 			tenantManager,
 			gitCache,
 		);
-
-		const port = normalizePort(process.env.PORT || "3000");
+		const simplifiedCustomDataRetriever =
+			customizations?.simplifiedCustomDataRetriever ??
+			new historianServices.SimplifiedCustomDataRetriever();
 
 		// Token revocation
 		const revokedTokenChecker: core.IRevokedTokenChecker | undefined =
@@ -232,6 +235,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			denyList,
 			ephemeralDocumentTTLSec,
 			customizations?.readinessCheck,
+			simplifiedCustomDataRetriever,
 		);
 	}
 }
@@ -253,6 +257,7 @@ export class HistorianRunnerFactory implements core.IRunnerFactory<HistorianReso
 			resources.denyList,
 			resources.ephemeralDocumentTTLSec,
 			resources.readinessCheck,
+			resources.simplifiedCustomDataRetriever,
 		);
 	}
 }

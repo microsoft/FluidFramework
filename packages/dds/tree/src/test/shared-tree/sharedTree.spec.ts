@@ -47,7 +47,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/object-forest/objectForest.js";
 import {
-	ForestType,
+	ForestTypeExpensiveDebug,
+	ForestTypeOptimized,
+	ForestTypeReference,
 	getBranch,
 	type ISharedTree,
 	type SharedTree,
@@ -62,6 +64,7 @@ import {
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	cursorFromInsertable,
+	getSimpleSchema,
 	SchemaFactory,
 	toStoredSchema,
 	type TreeFieldFromImplicitField,
@@ -99,7 +102,7 @@ const enableSchemaValidation = true;
 
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: typeboxValidator,
-	forest: ForestType.Reference,
+	forest: ForestTypeReference,
 }) as ISharedObjectKind<unknown> as ISharedObjectKind<SharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
@@ -1554,8 +1557,11 @@ describe("SharedTree", () => {
 			otherLoadedView.root.insertAtStart("d");
 			await provider.ensureSynchronized();
 
-			const loader = provider.makeTestLoader();
-			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const loadedContainer = await provider.loadTestContainer(
+				undefined,
+				undefined,
+				pendingOps,
+			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<SharedTree>("TestSharedTree");
 			const view = tree.viewWith(
@@ -1850,8 +1856,11 @@ describe("SharedTree", () => {
 			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
 			provider.opProcessingController.resumeProcessing();
 
-			const loader = provider.makeTestLoader();
-			const loadedContainer = await loader.resolve({ url }, pendingOps);
+			const loadedContainer = await provider.loadTestContainer(
+				undefined,
+				undefined,
+				pendingOps,
+			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
 			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
@@ -1879,7 +1888,7 @@ describe("SharedTree", () => {
 				1,
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
-					forest: ForestType.Reference,
+					forest: ForestTypeReference,
 				}),
 			);
 			const forest = trees[0].checkout.forest;
@@ -1892,7 +1901,7 @@ describe("SharedTree", () => {
 				1,
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
-					forest: ForestType.Optimized,
+					forest: ForestTypeOptimized,
 				}),
 			);
 			assert.equal(trees[0].checkout.forest instanceof ChunkedForest, true);
@@ -1903,7 +1912,7 @@ describe("SharedTree", () => {
 				1,
 				new SharedTreeFactory({
 					jsonValidator: typeboxValidator,
-					forest: ForestType.Expensive,
+					forest: ForestTypeExpensiveDebug,
 				}),
 			);
 			const forest = trees[0].checkout.forest;
@@ -2147,5 +2156,21 @@ describe("SharedTree", () => {
 			() => tree.getAttachSummary(),
 			validateUsageError(/invalid state by another error/),
 		);
+	});
+
+	it("exportVerbose & exportSimpleSchema", () => {
+		const tree = treeTestFactory();
+		assert.deepEqual(tree.exportVerbose(), undefined);
+		const sf = new SchemaFactory(undefined);
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(sf.optional([])));
+
+		const config = new TreeViewConfiguration({
+			schema: numberSchema,
+		});
+		const view = tree.viewWith(config);
+		view.initialize(10);
+
+		assert.deepEqual(tree.exportVerbose(), 10);
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(numberSchema));
 	});
 });

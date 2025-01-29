@@ -52,17 +52,13 @@ export class RequestParser implements IRequest {
 
 // @alpha (undocumented)
 export abstract class RuntimeFactoryHelper<T = IContainerRuntime> implements IRuntimeFactory {
-    // (undocumented)
     hasInitialized(_runtime: T): Promise<void>;
-    // (undocumented)
     instantiateFirstTime(_runtime: T): Promise<void>;
-    // (undocumented)
     instantiateFromExisting(_runtime: T): Promise<void>;
     // (undocumented)
     instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
     // (undocumented)
     get IRuntimeFactory(): this;
-    // (undocumented)
     abstract preInitialize(context: IContainerContext, existing: boolean): Promise<IRuntime & T>;
 }
 
