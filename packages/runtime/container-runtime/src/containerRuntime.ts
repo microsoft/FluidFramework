@@ -4625,6 +4625,7 @@ export class ContainerRuntime
 
 		this.flushTaskExists = true;
 
+		// TODO: hoist this out of the function scope to save unnecessary allocations
 		// eslint-disable-next-line unicorn/consistent-function-scoping -- Separate `flush` method already exists in outer scope
 		const flush = (): void => {
 			this.flushTaskExists = false;
