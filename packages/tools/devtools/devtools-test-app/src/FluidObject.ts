@@ -175,58 +175,64 @@ export class AppData extends DataObject {
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {
-		// Set up SharedTree for visualization
-		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaFactory("TodoList_Schema");
 
-		// TODO: Maybe include example handle
-		class LeafNodeSchema extends builder.object("leaf-node", {
-			value: [builder.boolean, builder.handle, builder.string],
+		class TodoItem extends builder.object("todo-item", {
+			title: builder.string,
+			completed: builder.boolean,
+			dueDate: builder.optional(builder.string),
+			assignee: builder.optional(builder.string),
+			colloborators: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		class ArrayNodeSchema extends builder.object("array-node", {
-			value: [builder.string, builder.boolean],
-			childLeaf: builder.optional(LeafNodeSchema),
+		class TodoObject extends builder.object("todo-list", {
+			items: builder.array(TodoItem),
 		}) {}
 
-		class BranchNodeSchema extends builder.object("branch-node", {
-			arrayOrHandleNode: builder.optional([builder.array(ArrayNodeSchema), builder.handle]),
-			numericLeafNode: builder.optional(builder.number),
+		class TodoCategory extends builder.object("todo-category", {
+			work: TodoObject,
+			personal: TodoObject,
 		}) {}
 
-		class MainBranchA extends builder.object("main-object-a", {
-			numericLeafNode: builder.optional(builder.number),
-			objectNode: BranchNodeSchema,
-		}) {}
-
-		class MainBranchB extends builder.object("main-object-b", {
-			numericLeafNode: builder.optional(builder.number),
-			booleanValue: builder.boolean,
-		}) {}
-
-		class RootField extends builder.object("root-field-b", {
-			mainObjectNode: builder.optional([MainBranchA, MainBranchB]),
+		class TodoWorkspace extends builder.object("todo-workspace", {
+			lists: TodoCategory,
 		}) {}
 
 		const config = new TreeViewConfiguration({
-			schema: [RootField, builder.number],
+			schema: [TodoWorkspace],
 		});
+
 		const view = sharedTree.viewWith(config);
 		view.initialize({
-			mainObjectNode: {
-				numericLeafNode: 42,
-				objectNode: {
-					arrayOrHandleNode: [
+			lists: {
+				work: {
+					items: [
 						{
-							value: false,
-							childLeaf: {
-								value: "hello world!",
-							},
+							title: "Finish design doc.",
+							completed: false,
+							dueDate: "2048-01-01",
+							assignee: "Kevin",
+							colloborators: ["Rick"],
 						},
 						{
-							value: true,
+							title: "Review pull requests",
+							completed: true,
+							assignee: "Bob",
 						},
 					],
-					numericLeafNode: 123,
+				},
+				personal: {
+					items: [
+						{
+							title: "Buy groceries",
+							completed: false,
+						},
+						{
+							title: "Schedule dentist appointment",
+							completed: false,
+							dueDate: "2024-05-04",
+						},
+					],
 				},
 			},
 		});
