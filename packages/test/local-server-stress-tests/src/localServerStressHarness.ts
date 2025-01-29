@@ -46,12 +46,12 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/internal
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
-import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import {
 	ILocalDeltaConnectionServer,
@@ -775,7 +775,7 @@ async function runInStateWithClient<TState extends LocalServerStressState, Resul
 	}
 }
 
-function makeUnreachableCodePathProxy<T extends object>(name: string): T {
+export function makeUnreachableCodePathProxy<T extends object>(name: string): T {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	return new Proxy({} as T, {
 		get: (): never => {
@@ -847,14 +847,14 @@ export class StressDataObject extends DataObject {
 		return this;
 	}
 
-	private _globalObjects: Record<
+	protected _globalObjects: Record<
 		string,
-		| { type: "newBlob"; blobHandle: IFluidHandle<ArrayBufferLike> }
-		| { type: "newDatastore"; dataStore: IDataStore }
+		| { type: "newBlob"; handle: IFluidHandle<ArrayBufferLike> }
+		| { type: "newDatastore"; dataStore: IDataStore; handle: IFluidHandle }
 		| {
 				type: "stressDataObject";
 				StressDataObject: StressDataObject;
-				channels: { root: ISharedDirectory };
+				handle: IFluidHandle;
 		  }
 		| { type: "newAlias"; alias: string }
 	> = {};
@@ -862,14 +862,14 @@ export class StressDataObject extends DataObject {
 	public get globalObjects(): Readonly<
 		Record<
 			string,
-			| { type: "newBlob"; blobHandle: IFluidHandle<ArrayBufferLike> }
-			| { type: "newDatastore"; dataStore: IDataStore }
+			| { type: "newBlob"; handle: IFluidHandle<ArrayBufferLike> }
+			| { type: "newDatastore"; dataStore: IDataStore; handle: IFluidHandle }
 			| {
 					type: "stressDataObject";
 					StressDataObject: StressDataObject;
-					channels: { root: ISharedDirectory };
+					handle: IFluidHandle;
 			  }
-			| { type: "newAlias"; alias: string }
+			| { type: "newAlias"; alias: string; handle?: undefined }
 		>
 	> {
 		return this._globalObjects;
@@ -884,7 +884,11 @@ export class StressDataObject extends DataObject {
 		return maybe.StressDataObject;
 	}
 
-	protected async initializingFromExisting(): Promise<void> {
+	public channels: Record<string, () => IChannel> = {
+		root: () => this.root,
+	};
+
+	protected async preInitialize(): Promise<void> {
 		const root = await this.getDefaultStressDataObject();
 
 		this._globalObjects = root._globalObjects;
@@ -892,21 +896,27 @@ export class StressDataObject extends DataObject {
 		this._globalObjects[this.id] = {
 			type: "stressDataObject",
 			StressDataObject: this,
-			channels: { root: this.root },
+			handle: this.handle,
 		};
 	}
 
 	public uploadBlob(id: string, contents: string) {
 		void this.runtime
 			.uploadBlob(stringToBuffer(contents, "utf-8"))
-			.then((blobHandle) => (this._globalObjects[id] = { type: "newBlob", blobHandle }));
+			.then(
+				(blobHandle) => (this._globalObjects[id] = { type: "newBlob", handle: blobHandle }),
+			);
 	}
 
 	public createDataStore(id: string) {
 		void this.context.containerRuntime
 			.createDataStore(stressDataObjectFactory.type)
 			.then(async (dataStore) => {
-				this._globalObjects[id] = { type: "newDatastore", dataStore };
+				this._globalObjects[id] = {
+					type: "newDatastore",
+					dataStore,
+					handle: dataStore.entryPoint,
+				};
 			});
 	}
 }
@@ -919,8 +929,15 @@ const stressDataObjectFactory = new DataObjectFactory(
 );
 
 class DefaultStressDataObject extends StressDataObject {
+	public static readonly alias = "default";
+
 	protected override async getDefaultStressDataObject(): Promise<StressDataObject> {
 		return this;
+	}
+
+	protected async preInitialize(): Promise<void> {
+		await super.preInitialize();
+		this._globalObjects.default = { type: "newAlias", alias: DefaultStressDataObject.alias };
 	}
 }
 
@@ -944,18 +961,19 @@ const runtimeFactory: IRuntimeFactory = {
 				[stressDataObjectFactory.type, Promise.resolve(stressDataObjectFactory)],
 			],
 			provideEntryPoint: async (rt) => {
-				const maybeRoot = await rt.getAliasedDataStoreEntryPoint("default");
-				if (maybeRoot === undefined) {
+				const maybeDefault = await rt.getAliasedDataStoreEntryPoint(
+					DefaultStressDataObject.alias,
+				);
+				if (maybeDefault === undefined) {
 					const ds = await rt.createDataStore(defaultStressDataObjectFactory.type);
-					await ds.trySetAlias("default");
+					await ds.trySetAlias(DefaultStressDataObject.alias);
 				}
-				const root = await rt.getAliasedDataStoreEntryPoint("default");
-				assert(root !== undefined, "default must exist");
+				const aliasedDefault = await rt.getAliasedDataStoreEntryPoint(
+					DefaultStressDataObject.alias,
+				);
+				assert(aliasedDefault !== undefined, "default must exist");
 
-				const maybe: FluidObject<StressDataObject> | undefined = await root.get();
-				assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
-
-				maybe.StressDataObject.globalObjects.default = { type: "newAlias", alias: "default" };
+				const maybe: FluidObject<StressDataObject> | undefined = await aliasedDefault.get();
 				return maybe;
 			},
 		});

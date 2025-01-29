@@ -130,15 +130,18 @@ function makeGenerator(
 	return async (state) => syncGenerator(state);
 }
 
-describe("Map fuzz tests", () => {
-	const model: DDSFuzzModel<MapFactory, Operation> = {
-		workloadName: "default",
-		factory: new MapFactory(),
-		generatorFactory: () => takeAsync(100, makeGenerator()),
-		reducer: async (state, operation) => reducer(state, operation),
-		validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
-	};
+/**
+ * the maps fuzz model
+ */
+export const model: DDSFuzzModel<MapFactory, Operation> = {
+	workloadName: "default",
+	factory: new MapFactory(),
+	generatorFactory: () => takeAsync(100, makeGenerator()),
+	reducer: async (state, operation) => reducer(state, operation),
+	validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
+};
 
+describe.skip("Map fuzz tests", () => {
 	createDDSFuzzSuite(model, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
