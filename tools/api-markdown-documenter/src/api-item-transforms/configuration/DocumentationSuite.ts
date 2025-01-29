@@ -7,16 +7,17 @@ import {
 	type ApiDeclaredItem,
 	type ApiItem,
 	ApiItemKind,
-	type ApiPackage,
 	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 
 import {
 	getApiItemKind,
 	getConciseSignature,
+	// eslint-disable-next-line import/no-deprecated -- TODO: Use `getEffectiveReleaseLevel` instead.
 	getReleaseTag,
 	getSingleLineExcerptText,
 	isDeprecated,
+	type ReleaseLevel,
 } from "../../utilities/index.js";
 
 import {
@@ -105,17 +106,34 @@ export interface DocumentationSuiteConfiguration {
 	readonly getAlertsForItem: (apiItem: ApiItem) => string[];
 
 	/**
-	 * Whether or not the provided `ApiPackage` should be skipped during documentation generation.
+	 * Whether or not the provided API item should be excluded from documentation generation.
 	 *
-	 * @param apiPackage - The package that may or may not be skipped.
+	 * @remarks Note: for items with children, excluding the item also results in the exclusion of all child items.
 	 *
-	 * @returns
+	 * @example Exclude packages with a particular name scope
 	 *
-	 * `true` if the package should not be included documentation generation. `false` otherwise.
+	 * ```typescript
+	 * excludeItem: (apiItem: ApiItem) => {
+	 * 	if (apiItem.kind === ApiItemKind.Package) {
+	 * 		return apiItem.displayName.startsWith("@private-scope/");
+	 * 	}
+	 * 	return false;
+	 * }
+	 * ```
 	 *
-	 * @defaultValue No packages are skipped.
+	 * @example Exclude items tagged with custom `@skip` tag
+	 *
+	 * ```typescript
+	 * excludeItem: (apiItem: ApiItem) => {
+	 * 	return ApiItemUtilities.hasModifierTag(apiItem, "@skip");
+	 * }
+	 * ```
+	 *
+	 * @returns `true` if the item should be excluded from documentation generation. `false` otherwise.
+	 *
+	 * @defaultValue No items are skipped.
 	 */
-	readonly skipPackage: (apiPackage: ApiPackage) => boolean;
+	readonly exclude: (apiItem: ApiItem) => boolean;
 
 	/**
 	 * Minimal release scope to include in generated documentation suite.
@@ -138,7 +156,7 @@ export interface DocumentationSuiteConfiguration {
 	 * releaseLevel: ReleaseTag.Beta
 	 * ```
 	 */
-	readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
+	readonly minimumReleaseLevel: ReleaseLevel;
 }
 
 /**
@@ -249,6 +267,7 @@ export namespace DefaultDocumentationSuiteConfiguration {
 			alerts.push("Deprecated");
 		}
 
+		// eslint-disable-next-line import/no-deprecated -- TODO: Use `getEffectiveReleaseLevel` instead.
 		const releaseTag = getReleaseTag(apiItem);
 		if (releaseTag === ReleaseTag.Alpha) {
 			alerts.push("Alpha");
@@ -259,11 +278,11 @@ export namespace DefaultDocumentationSuiteConfiguration {
 	}
 
 	/**
-	 * Default {@link DocumentationSuiteConfiguration.skipPackage}.
+	 * Default {@link DocumentationSuiteConfiguration.exclude}.
 	 *
 	 * Unconditionally returns `false` (i.e. no packages will be filtered out).
 	 */
-	export function defaultSkipPackage(): boolean {
+	export function defaultExclude(): boolean {
 		return false;
 	}
 }
@@ -295,8 +314,7 @@ export function getDocumentationSuiteConfigurationWithDefaults(
 		getAlertsForItem:
 			options?.getAlertsForItem ??
 			DefaultDocumentationSuiteConfiguration.defaultGetAlertsForItem,
-		skipPackage:
-			options?.skipPackage ?? DefaultDocumentationSuiteConfiguration.defaultSkipPackage,
+		exclude: options?.exclude ?? DefaultDocumentationSuiteConfiguration.defaultExclude,
 		minimumReleaseLevel: options?.minimumReleaseLevel ?? ReleaseTag.Internal,
 	};
 }

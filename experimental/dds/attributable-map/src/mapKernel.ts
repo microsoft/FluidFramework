@@ -508,7 +508,14 @@ export class AttributableMapKernel {
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @returns True if the operation was processed, false otherwise.
+	 * @returns True if the operation was recognized and thus processed, false otherwise.
+	 *
+	 * @remarks
+	 * When this returns false and the caller doesn't handle the op itself, then the op could be from a different version of this code.
+	 * In such a case, not applying the op would result in this client becoming out of sync with clients that do handle the op
+	 * and could result in data corruption or data loss as well.
+	 * Therefore, in such cases the caller should typically throw an error, ensuring that this client treats the situation as data corruption
+	 * (since its data no longer matches what other clients think the data should be) and will avoid overriding document content or misleading the users into thinking their current state is accurate.
 	 */
 	public tryProcessMessage(
 		message: ISequencedDocumentMessage,
