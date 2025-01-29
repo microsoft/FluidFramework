@@ -853,6 +853,7 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 		});
 
 		// Now that we've logged, prevent future logging (globally).
+		// eslint-disable-next-line unicorn/consistent-function-scoping
 		getSingleUseLegacyLogCallback = () => () => {};
 	};
 };
@@ -1048,6 +1049,7 @@ export class ContainerRuntime
 		// When we load with pending state, we reuse an old snapshot so we don't expect these numbers to match
 		if (!context.pendingLocalState && runtimeSequenceNumber !== undefined) {
 			// Unless bypass is explicitly set, then take action when sequence numbers mismatch.
+			// eslint-disable-next-line unicorn/no-lonely-if -- Separate if statements make flow easier to parse
 			if (
 				loadSequenceNumberVerification !== "bypass" &&
 				runtimeSequenceNumber !== protocolSequenceNumber
@@ -4622,6 +4624,9 @@ export class ContainerRuntime
 		}
 
 		this.flushTaskExists = true;
+
+		// TODO: hoist this out of the function scope to save unnecessary allocations
+		// eslint-disable-next-line unicorn/consistent-function-scoping -- Separate `flush` method already exists in outer scope
 		const flush = (): void => {
 			this.flushTaskExists = false;
 			try {
@@ -4836,6 +4841,9 @@ export class ContainerRuntime
 		};
 	}
 
+	private readonly readAndParseBlob = async <T>(id: string): Promise<T> =>
+		readAndParse<T>(this.storage, id);
+
 	/**
 	 * Fetches the latest snapshot from storage. If the fetched snapshot is same or newer than the one for which ack
 	 * was received, close this client. Fetching the snapshot will update the cache for this client so if it's
@@ -4912,9 +4920,8 @@ export class ContainerRuntime
 				}
 
 				props.getSnapshotDuration = trace.trace().duration;
-				const readAndParseBlob = async <T>(id: string): Promise<T> =>
-					readAndParse<T>(this.storage, id);
-				const snapshotRefSeq = await seqFromTree(snapshotTree, readAndParseBlob);
+
+				const snapshotRefSeq = await seqFromTree(snapshotTree, this.readAndParseBlob);
 				props.snapshotRefSeq = snapshotRefSeq;
 				props.newerSnapshotPresent = snapshotRefSeq >= targetRefSeq;
 

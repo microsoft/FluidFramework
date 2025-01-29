@@ -195,6 +195,7 @@ export class PendingStateManager implements IDisposable {
 	 */
 	private savedOps: IPendingMessage[] = [];
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
 		this.pendingMessages.clear();

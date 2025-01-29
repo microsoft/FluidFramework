@@ -114,7 +114,7 @@ export class InboundBatchAggregator {
 	 */
 	private readonly trackPending = (message: ISequencedDocumentMessage): void => {
 		assert(
-			this.deltaManager.inbound.length !== 0,
+			this.deltaManager.inbound.length > 0,
 			0x298 /* "we have something in the queue that generates this event" */,
 		);
 
