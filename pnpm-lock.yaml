@@ -18,6 +18,8 @@ overrides:
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   socket.io-client: ~4.7.5
 
+pnpmfileChecksum: guqkatm7ncczi5qx3haxz4klam
+
 patchedDependencies:
   '@microsoft/api-extractor@7.47.8':
     hash: ldzfpsbo3oeejrejk775zxplmi
@@ -13095,9 +13097,6 @@ importers:
       eslint-config-prettier:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
-      fluid-framework:
-        specifier: workspace:~
-        version: link:../../framework/fluid-framework
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
@@ -13139,7 +13138,7 @@ importers:
         version: link:../../azure-client
       '@fluidframework/azure-client-legacy':
         specifier: npm:@fluidframework/azure-client@^1.2.0
-        version: '@fluidframework/azure-client@1.2.0(encoding@0.1.13)(fluid-framework@1.4.0)'
+        version: '@fluidframework/azure-client@1.2.0(encoding@0.1.13)'
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -17748,8 +17747,6 @@ packages:
 
   '@fluidframework/azure-client@1.2.0':
     resolution: {integrity: sha512-jpfYF6I1uwwCqOc8X0fOgZz4Lj91QFzKV4S9lM7jSW84GxytlL3nDanj9+EYC+vLn4liRVaOCA3zRwpkDNXRWg==}
-    peerDependencies:
-      fluid-framework: ^1.4.0
 
   '@fluidframework/azure-client@2.20.0':
     resolution: {integrity: sha512-Au4TD+WwRPOSfUaEwhDeW/QroSwFeEIlJm8egoetJmeOT7eJdyFyqbr9ucsLGugBFNUfF1hngfONHk+6gMbCKw==}
@@ -30303,7 +30300,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/azure-client@1.2.0(encoding@0.1.13)(fluid-framework@1.4.0)':
+  '@fluidframework/azure-client@1.2.0(encoding@0.1.13)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -30319,7 +30316,6 @@ snapshots:
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/server-services-client': 0.1036.5002
       axios: 0.28.1(debug@4.4.0)
-      fluid-framework: 1.4.0
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
