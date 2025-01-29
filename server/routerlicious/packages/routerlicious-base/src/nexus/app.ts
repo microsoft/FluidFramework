@@ -58,8 +58,10 @@ export function create(
 	app.use("/healthz", healthEndpoints);
 
 	// Bind routes
-	const routes = api.create(config, restThrottler, collaborationSessionEventEmitter, storage);
-	app.use(routes);
+	if (config.get("nexus:notificationsApi:enabled")) {
+		const routes = api.create(config, restThrottler, collaborationSessionEventEmitter, storage);
+		app.use(routes);
+	}
 
 	// Catch 404 and forward to error handler
 	app.use(catch404());
