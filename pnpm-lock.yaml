@@ -494,8 +494,8 @@ importers:
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.6.0
-        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
+        specifier: ^5.7.3
+        version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/test-tools':
         specifier: ^1.0.195075
         version: 1.0.195075
@@ -17714,8 +17714,8 @@ packages:
   '@fluid-internal/client-utils@2.20.0':
     resolution: {integrity: sha512-DNjKQkW7oGkv920Zmo4J/EVlnVpOG/O5y0xGiV9Ei4cL/dhtcI+h4+RoGn+Yu/fnzvh3lnS2lrC3sqhxLkvrLQ==}
 
-  '@fluid-internal/eslint-plugin-fluid@0.1.3':
-    resolution: {integrity: sha512-l3MPEQ34lYP9QOIQ9vx9ncyvkYqR7ci7ZixxD4RdOmGBnAFOqipBjn5Je9AJfztQ3jWgcT3jiV+AVT3rBjc2Yw==}
+  '@fluid-internal/eslint-plugin-fluid@0.1.5':
+    resolution: {integrity: sha512-p0nVeMiEfLL2deQJQaRUxid08jgV5wEkh9h9WXNosR1BRq9nFCjD8nZpC1K+YhjwQZEvgGDE+s+28VR2lAg61Q==}
 
   '@fluid-internal/test-driver-definitions@2.20.0':
     resolution: {integrity: sha512-R2oK5Jyv31lttzdmt83cUoazEypNhmJnjr/bzH+DHCHyAMxw9x79J7CUtvMpyna6VrWK1lrz57dFKk30r/iJRg==}
@@ -17868,8 +17868,8 @@ packages:
   '@fluidframework/driver-web-cache@2.20.0':
     resolution: {integrity: sha512-0UI8fpNVaNtKSa/ivbwmqEGJpVZndAx+Z7Aa5sbr8qaYpJklJujPvOmEfdcISuqP8oQLckZGgt2b9tE5yREvxw==}
 
-  '@fluidframework/eslint-config-fluid@5.6.0':
-    resolution: {integrity: sha512-XMQDPFpHbuSPJyRJvSg1mcjBOxCocqpGkIWNmNc/P1bdC6H01Ghi0Q4rFzb2icbJ5SyQFEOr0zAxYd882O3YdQ==}
+  '@fluidframework/eslint-config-fluid@5.7.3':
+    resolution: {integrity: sha512-/+6JDYTM4k4F7wHDMCIxXwmf9oWP9OmUyYJSPtWd0VQhdRomfdClicdajHIHQd9RWbo2SdZSXEsllKRT6s/9+Q==}
 
   '@fluidframework/file-driver@2.20.0':
     resolution: {integrity: sha512-VmrYxOv+1daR5oj8e1aKtrcERdjPCujceuS90SLWhEV+IURCCvkK79fJn0iHGFwI8x6z5NoZt4TOmShWkUisgw==}
@@ -30005,8 +30005,7 @@ snapshots:
       events_pkg: events@3.3.0
       sha.js: 2.4.11
 
-  /@fluid-internal/eslint-plugin-fluid@0.1.5(eslint@8.55.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-p0nVeMiEfLL2deQJQaRUxid08jgV5wEkh9h9WXNosR1BRq9nFCjD8nZpC1K+YhjwQZEvgGDE+s+28VR2lAg61Q==}
+  '@fluid-internal/eslint-plugin-fluid@0.1.5(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@microsoft/tsdoc': 0.14.2
       '@typescript-eslint/parser': 6.21.0(eslint@8.55.0)(typescript@5.4.5)
@@ -30808,8 +30807,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  /@fluidframework/eslint-config-fluid@5.7.3(eslint@8.55.0)(typescript@5.4.5):
-    resolution: {integrity: sha512-/+6JDYTM4k4F7wHDMCIxXwmf9oWP9OmUyYJSPtWd0VQhdRomfdClicdajHIHQd9RWbo2SdZSXEsllKRT6s/9+Q==}
+  '@fluidframework/eslint-config-fluid@5.7.3(eslint@8.55.0)(typescript@5.4.5)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.4.5)
       '@microsoft/tsdoc': 0.14.2
