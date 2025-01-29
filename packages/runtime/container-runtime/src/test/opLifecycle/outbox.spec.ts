@@ -11,6 +11,7 @@ import {
 	IBatchMessage,
 	IContainerContext,
 } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import {
 	IDocumentMessage,
 	MessageType,
@@ -926,9 +927,9 @@ describe("Outbox", () => {
 		}
 
 		mockLogger.assertMatch(
-			new Array(3).fill({
+			Array.from({ length: 3 }).fill({
 				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-			}),
+			}) as Omit<ITelemetryBaseEvent, "category">[],
 		);
 	});
 

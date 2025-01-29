@@ -18,8 +18,12 @@ describe("OpCompressor", () => {
 		mockLogger.clear();
 	});
 
-	const createBatch = (length: number, messageSize: number) =>
-		messagesToBatch(new Array(length).fill(createMessage(generateStringOfSize(messageSize))));
+	const createBatch = (length: number, messageSize: number) => {
+		const messages = Array.from({ length }).map(() =>
+			createMessage(generateStringOfSize(messageSize)),
+		);
+		return messagesToBatch(messages);
+	};
 	const messagesToBatch = (messages: BatchMessage[]): IBatch => ({
 		messages,
 		contentSizeInBytes: messages
@@ -33,8 +37,7 @@ describe("OpCompressor", () => {
 		contents,
 		referenceSequenceNumber: 0,
 	});
-	const generateStringOfSize = (sizeInBytes: number): string =>
-		new Array(sizeInBytes + 1).join("0");
+	const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
 	const toMB = (bytes: number) => (bytes / (1024 * 1024)).toFixed(2);
 
 	describe("Compressing batches", () => {
