@@ -708,7 +708,7 @@ stages:
             workingDirectory: '/home/cloudtest/.npm/_logs'
             script: |
               set -eu -o pipefail
-              $TARFILE_NAME=npm-logs.tar
+              TARFILE_NAME=npm-logs.tar
               # Put all files in a tarball, in case there's more than one
               tar -cvf $TARFILE_NAME .
               echo "##vso[task.uploadfile]$TARFILE_NAME";
