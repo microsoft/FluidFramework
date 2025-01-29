@@ -641,7 +641,11 @@ export function configureWebSocketServices(
 		socket.on(
 			"disconnect_document",
 			(clientId: string, documentId: string, errorType: string, isCorruption: boolean) => {
-				Lumberjack.error({ clientId, documentId, errorType, isCorruption });
+				Lumberjack.error(
+					`Error for client ${clientId}, ${
+						isCorruption ? "Corrupted" : "Not corrupted"
+					} document ${documentId}: ${errorType}`,
+				);
 			},
 		);
 	});
