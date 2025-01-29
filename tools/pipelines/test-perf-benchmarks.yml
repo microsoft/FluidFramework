@@ -699,6 +699,20 @@ stages:
               echo "Cleanup  ${{ variables.memoryUsageTestOutputFolder }}"
               rm -rf ${{ variables.memoryUsageTestOutputFolder }};
 
+        - task: Bash@3
+          displayName: Upload npm logs
+          condition: succeededOrFailed()
+          continueOnError: true
+          inputs:
+            targetType: 'inline'
+            workingDirectory: '/home/cloudtest/.npm/_logs'
+            script: |
+              set -eu -o pipefail
+              $TARFILE_NAME=npm-logs.tar
+              # Put all files in a tarball, in case there's more than one
+              tar -cvf $TARFILE_NAME .
+              echo "##vso[task.uploadfile]$TARFILE_NAME";
+
     - template: /tools/pipelines/templates/include-upload-stage-telemetry.yml@self
       parameters:
         stageId: perf_e2e_tests_${{ endpointObject.endpointName }}
