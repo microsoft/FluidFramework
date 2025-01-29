@@ -4,8 +4,10 @@
  */
 
 /**
- * Exposes the common browser performance properties used by client packages, which consists
- * of the `now` method.
+ * Exposes `Performance.now()` in both Node and browser environments. The performance API is available as an
+ * attribute on the `WindowOrWorkerGlobalScope` object, which `globalThis` points to.
+ * - The [global `performance` attribute](https://w3c.github.io/hr-time/#the-performance-attribute)
+ * - [`globalThis`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/globalThis)
  *
  * @internal
  */
