@@ -23,8 +23,7 @@ describe("BatchManager", () => {
 		canRebase: true,
 	};
 
-	const generateStringOfSize = (sizeInBytes: number): string =>
-		new Array(sizeInBytes + 1).join("0");
+	const generateStringOfSize = (sizeInBytes: number): string => "0".repeat(sizeInBytes);
 
 	const smallMessage = (): BatchMessage =>
 		({

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -404,7 +405,10 @@ export class AttributableMapClass
 		localOpMetadata: unknown,
 	): void {
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(message, local, localOpMetadata);
+			assert(
+				this.kernel.tryProcessMessage(message, local, localOpMetadata),
+				"AttributableMap received an unrecognized op, possibly from a newer version",
+			);
 		}
 	}
 

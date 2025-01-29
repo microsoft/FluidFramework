@@ -29,7 +29,6 @@ export {
 	OdspDocumentServiceFactory,
 } from "./odspDocumentServiceFactory.js";
 export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
-export { OdspDocumentServiceFactoryWithCodeSplit } from "./odspDocumentServiceFactoryWithCodeSplit.js";
 
 // File creation
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";

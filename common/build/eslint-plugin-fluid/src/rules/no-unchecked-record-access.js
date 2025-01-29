@@ -39,13 +39,12 @@ module.exports = {
 
 		// Main function to run on every member access (e.g., obj.a or obj["a"])
 		function checkPropertyAccess(node) {
-			// Only check index signature types
 			if (!isIndexSignatureType(parserServices, node)) {
 				return;
 			}
 
 			// Skip if the property has been checked (e.g., with optional chaining). Please see isDefined() for exhaustive list.
-			if (propertyHasBeenChecked(node)) {
+			if (propertyHasBeenChecked(node, context)) {
 				return;
 			}
 
@@ -302,16 +301,174 @@ function isUndefinableIndexSignatureType(parserServices, node) {
 	}
 }
 
-// Helper function to traverse up the code until the scope ends and checks if the property access has been checked for undefined
-function propertyHasBeenChecked(node) {
+/**
+ * Traverses up the AST from a property access node to check if the property has been properly guarded against being undefined.
+ * Looks for safety checks like optional chaining, null checks, 'in' operator usage, etc.
+ *
+ * @param {MemberExpression} node - The AST node representing the property access to check
+ * @param {RuleContext} context - ESLint rule context containing scope and AST information
+ * @returns {boolean} True if the property access has been properly checked for undefined, false otherwise
+ */
+function propertyHasBeenChecked(node, context) {
+	const baseObj = getBaseObject(node);
+	const currentKeyNode = node.property;
 	let current = node;
+
 	while (current) {
-		if (isDefined(current)) {
+		if (
+			current.optional || // Check for optional chaining (?.)
+			current.type === "ChainExpression" || // Check for nullish coalescing operator (??)
+			current.type === "TSNonNullExpression" // Check for non-null assertion (!)
+		) {
 			return true;
 		}
-		current = current.parent;
+
+		const parent = current.parent;
+		if (parent === null) {
+			return false; // No parent nodes left - property check not found
+		}
+
+		// Handle Object.entries/keys loops
+		if (parent.type === "ForOfStatement") {
+			const right = parent.right;
+			if (
+				right?.type === "CallExpression" &&
+				right.callee?.type === "MemberExpression" &&
+				right.callee.object.name === "Object" &&
+				(right.callee.property.name === "entries" || right.callee.property.name === "keys")
+			) {
+				return true;
+			}
+		}
+
+		// Handle presence checks with guard against malformed AST nodes
+		if (
+			(parent.type === "IfStatement" || parent.type === "ConditionalExpression") &&
+			parent.test // Guard against incomplete code scenarios
+		) {
+			if (nodesAreEquivalent(parent.test, node)) {
+				return true;
+			}
+			if (parent.test.type === "BinaryExpression") {
+				if (parent.test.operator === "in") {
+					const testBase = getBaseObject(parent.test.right);
+					if (baseObj === testBase) {
+						// Check if the else block assigns the key
+						const ifStatement = parent;
+						const elseBlock = ifStatement.alternate;
+						if (elseBlock) {
+							const keyNode = parent.test.left;
+							if (checkElseBlockAssignsKey(elseBlock, testBase, keyNode, context)) {
+								return true;
+							}
+						}
+						return true;
+					}
+				}
+				if (
+					(parent.test.operator === "!==" || parent.test.operator === "!=") &&
+					((nodesAreEquivalent(parent.test.left, node) &&
+						isUndefinedNode(parent.test.right)) ||
+						(nodesAreEquivalent(parent.test.right, node) &&
+							isUndefinedNode(parent.test.left)))
+				) {
+					return true;
+				}
+			}
+		}
+
+		// Additional check for 'in' checks in the same scope
+		const containingBlock = findContainingBlock(current);
+		if (containingBlock) {
+			for (const statement of containingBlock.body) {
+				if (statement.range[0] > current.range[0]) break; // Only check statements before current node
+				if (
+					statement.type === "IfStatement" &&
+					statement.test?.type === "BinaryExpression" &&
+					statement.test.operator === "in"
+				) {
+					const testBase = getBaseObject(statement.test.right);
+					const testKey = statement.test.left;
+					if (testBase === baseObj && nodesAreEquivalent(testKey, currentKeyNode)) {
+						const elseBlock = statement.alternate;
+						if (
+							elseBlock &&
+							checkElseBlockAssignsKey(elseBlock, testBase, testKey, context)
+						) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		current = parent;
 	}
+
 	return false;
+}
+
+function isUndefinedNode(node) {
+    return (
+        (node.type === "Identifier" && node.name === "undefined") ||
+        (node.type === "UnaryExpression" && node.operator === "void")  // Accept any void expression
+    );
+}
+
+/**
+ * Helper to safely validate that a value is an AST node
+ */
+function isNode(node) {
+	return (
+		node !== null &&
+		node !== undefined &&
+		typeof node === "object" &&
+		"type" in node &&
+		typeof node.type === "string" &&
+		"parent" in node &&
+		(node.type === "Identifier" ||
+			node.type === "Literal" ||
+			node.type === "MemberExpression" ||
+			node.type === "BinaryExpression")
+	);
+}
+
+/**
+ * Compares two AST nodes for structural equivalence.
+ * Uses strict validation of nodes and their required properties.
+ *
+ * @param {Node} a - First AST node to compare
+ * @param {Node} b - Second AST node to compare
+ * @returns {boolean} True if nodes are structurally equivalent, false otherwise
+ */
+function nodesAreEquivalent(a, b) {
+	if (!isNode(a) || !isNode(b)) return false;
+	if (a.type !== b.type) return false;
+
+	switch (a.type) {
+		case "MemberExpression":
+			return (
+				nodesAreEquivalent(a.object, b.object) &&
+				nodesAreEquivalent(a.property, b.property) &&
+				a.computed === b.computed
+			);
+
+		case "Identifier":
+			return a.name === b.name;
+
+		case "Literal":
+			return a.value === b.value;
+
+		case "BinaryExpression":
+			return (
+				a.operator === b.operator &&
+				nodesAreEquivalent(a.left, b.left) &&
+				nodesAreEquivalent(a.right, b.right)
+			);
+
+		default:
+			return false;
+	}
 }
 
 // Helper function to get the type of a node
@@ -319,69 +476,6 @@ function getNodeType(node, parserServices) {
 	const tsNode = parserServices.esTreeNodeToTSNodeMap.get(node);
 	const type = parserServices.program.getTypeChecker().getTypeAtLocation(tsNode);
 	return type;
-}
-
-// Helper function to determine if a node is defined. This has all the cases which define
-function isDefined(node) {
-	if (!node.parent) return false;
-	if (node.optional === true || node.parent.type === "TSNonNullExpression") return true;
-
-	let current = node;
-	while (current && current.parent) {
-		// Handle if statements that check property existence
-		if (current.parent.type === "IfStatement" && current.parent.test) {
-			const base = getBaseObject(node);
-			if (base && current.parent.test.type === "MemberExpression") {
-				const testBase = getBaseObject(current.parent.test);
-				if (base === testBase) {
-					return true;
-				}
-			}
-		}
-
-		// Handle for...of with Object.entries/keys
-		if (current.parent.type === "ForOfStatement") {
-			const right = current.parent.right;
-			if (
-				right.type === "CallExpression" &&
-				right.callee.type === "MemberExpression" &&
-				right.callee.object.name === "Object" &&
-				(right.callee.property.name === "entries" || right.callee.property.name === "keys")
-			) {
-				const base = getBaseObject(node);
-				if (right.arguments[0].type === "Identifier" && right.arguments[0].name === base) {
-					return true;
-				}
-			}
-		}
-
-		// Handle "in" operator checks
-		if (
-			(current.parent.type === "ConditionalExpression" ||
-				current.parent.type === "IfStatement") &&
-			current.parent.test?.type === "BinaryExpression" &&
-			current.parent.test.operator === "in"
-		) {
-			const test = current.parent.test;
-			const base = getBaseObject(node);
-			const testBase = getBaseObject(test.right);
-			if (base === testBase) {
-				return true;
-			}
-		}
-
-		current = current.parent;
-	}
-
-	if (
-		node.parent.type === "BinaryExpression" &&
-		node.parent.operator === "in" &&
-		node.parent.left === node
-	) {
-		return true;
-	}
-
-	return false;
 }
 
 function getBaseObject(node) {
@@ -425,7 +519,7 @@ function findParentFunction(node) {
 		}
 		node = node.parent;
 	}
-	return null;
+	return undefined;
 }
 
 // Helper function to check if a type is allowed to be undefined (e.g., Promise<T | undefined>)
@@ -465,7 +559,7 @@ function findFunctionDeclaration(name, scope) {
 	if (variable && variable.defs.length > 0) {
 		return variable.defs[0].node;
 	}
-	return null;
+	return undefined;
 }
 
 // Helper function to get the type of a function parameter
@@ -514,4 +608,124 @@ function isStrictlyTypedVariable(typeAnnotation) {
 
 	// Consider any non-union type as strictly typed, except for 'any' and 'unknown'
 	return typeAnnotation.type !== "TSAnyKeyword" && typeAnnotation.type !== "TSUnknownKeyword";
+}
+
+// Helper function to find the containing block (e.g., BlockStatement)
+function findContainingBlock(node) {
+	let current = node;
+	while (current) {
+		if (current.type === "BlockStatement" || current.type === "Program") {
+			return current;
+		}
+		current = current.parent;
+	}
+	return null;
+}
+
+/**
+ * Resolves the value of a variable by checking its declarations in the scope chain.
+ * Handles both literal values and identifier references recursively.
+ */
+function getKeyValue(node, context) {
+	if (node.type === "Literal") return node.value;
+	if (node.type === "Identifier") {
+		let scope = context.getScope();
+		while (scope) {
+			const variable = scope.variables.find((v) => v.name === node.name);
+			if (variable) {
+				// Check all definitions for initial values
+				for (const def of variable.defs) {
+					const init = def?.node?.init;
+					if (!init) continue;
+
+					// Base case: literal value initialization
+					if (init.type === "Literal") {
+						return init.value;
+					}
+
+					// Recursive case: identifier reference initialization
+					if (init.type === "Identifier") {
+						return getKeyValue(init, context); // Resolve recursively
+					}
+
+					// If initialization is not a literal or identifier, stop searching
+					break;
+				}
+				break;
+			}
+			scope = scope.upper;
+		}
+		// Return the original identifier name if resolution fails
+		return node.name;
+	}
+	return undefined;
+}
+
+/**
+ * Helper to check if else block assigns the key to the base object.
+ * Example: if (key in obj) { ... } else { obj[key] = defaultValue; }
+ * Returns true if such a pattern is detected.
+ */
+function checkElseBlockAssignsKey(elseBlock, baseObjName, keyNode, context) {
+	let assignsKey = false;
+	const keyValue = getKeyValue(keyNode, context);
+
+	/**
+	 * Recursively traverses an AST node to check if a specific key is assigned to the base object
+	 * within the node's subtree.
+	 *
+	 * @param {Object} node - The AST node to traverse
+	 * @returns {boolean} true if the key is assigned to the base object in this subtree,
+	 * false otherwise. The traversal stops when an assignment is found.
+	 */
+	const traverseNode = (node) => {
+		if (
+			node.type === "AssignmentExpression" &&
+			node.left.type === "MemberExpression" &&
+			node.left.object.type === "Identifier"
+		) {
+			const leftBase = node.left.object.name;
+			const leftKeyNode = node.left.property;
+
+			// Resolve both Identifier and Literal property keys
+			let leftKey;
+			if (leftKeyNode.type === "Identifier" || leftKeyNode.type === "Literal") {
+				leftKey = getKeyValue(leftKeyNode, context);
+			}
+
+			if (leftBase === baseObjName && leftKey === keyValue) {
+				assignsKey = true;
+				return true; // Stop traversal once found
+			}
+		}
+
+		// Recursively traverse child nodes
+		for (const key of Object.keys(node)) {
+			if (key === "parent") continue;
+			const child = node[key];
+			if (Array.isArray(child)) {
+				for (const item of child) {
+					if (item && typeof item === "object" && traverseNode(item)) {
+						return true;
+					}
+				}
+			} else if (child && typeof child === "object") {
+				if (traverseNode(child)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+
+	// Traverse the else block
+	if (elseBlock.type === "BlockStatement") {
+		for (const statement of elseBlock.body) {
+			if (traverseNode(statement)) break;
+		}
+	} else {
+		traverseNode(elseBlock);
+	}
+
+	return assignsKey;
 }

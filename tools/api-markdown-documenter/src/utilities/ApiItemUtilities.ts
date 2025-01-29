@@ -21,11 +21,11 @@ import {
 	type ApiPackage,
 	ApiParameterListMixin,
 	ApiReadonlyMixin,
-	ApiReleaseTagMixin,
+	type ApiReleaseTagMixin,
 	ApiStaticMixin,
 	type Excerpt,
 	type IResolveDeclarationReferenceResult,
-	type ReleaseTag,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import {
 	type DocDeclarationReference,
@@ -239,16 +239,58 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
 }
 
 /**
- * Gets the release tag associated with the provided API item, if one exists.
+ * Gets the release tag associated with the provided API item, if the item's documentation contained one.
  *
- * @param apiItem - The API item whose documentation is being queried.
+ * @remarks
+ * Note: getting the exact tag of an item is generally not useful.
+ * Use `getEffectiveReleaseTag` instead to get the effective release level, accounting for inheritance.
  *
- * @returns The associated release tag, if it exists. Otherwise, `undefined`.
+ * @param apiItem - The API item whose release tag is being queried.
+ *
+ * @returns The associated release tag, if it exists. Will return `None` if no tag is present.
+ */
+function getReleaseTag(apiItem: ApiItem): ReleaseTag {
+	return (apiItem as Partial<ApiReleaseTagMixin>).releaseTag ?? ReleaseTag.None;
+}
+
+/**
+ * Represents the release level of an API item.
+ *
+ * @remarks
+ * The release level of a given item is the most restrictive of all items in its ancestry.
+ * An item with no release tag is implicitly considered `Public`.
+ *
+ * @param apiItem - The API item whose release level is being queried.
+ *
+ * @example
+ *
+ * An interface tagged `@public` under a namespace tagged `@beta` would be considered `@beta`.
+ *
+ * By contrast, an interface tagged `@beta` under a namespace tagged `@public` would also be considered `@beta`.
  *
  * @public
  */
-export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
-	return ApiReleaseTagMixin.isBaseClassOf(apiItem) ? apiItem.releaseTag : undefined;
+export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
+
+/**
+ * Gets the effective {@link ReleaseLevel | release level} for the provided API item.
+ *
+ * @public
+ */
+export function getEffectiveReleaseLevel(apiItem: ApiItem): ReleaseLevel {
+	let myReleaseTag = getReleaseTag(apiItem);
+	if (myReleaseTag === ReleaseTag.None) {
+		// The lack of a release tag is treated as public
+		myReleaseTag = ReleaseTag.Public;
+	}
+
+	const parent = getFilteredParent(apiItem);
+	if (parent === undefined) {
+		return myReleaseTag;
+	}
+
+	const parentEffectiveReleaseTag = getEffectiveReleaseLevel(parent);
+	return Math.min(myReleaseTag, parentEffectiveReleaseTag);
 }
 
 /**

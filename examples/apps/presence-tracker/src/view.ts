@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { FocusTracker } from "./FocusTracker.js";
+import { FocusTracker, type IFocusState } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
 
 export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElement) {
@@ -20,8 +20,8 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusMessageDiv.id = "message-div";
 	focusMessageDiv.textContent = "Click to focus";
 	focusMessageDiv.style.position = "absolute";
-	focusMessageDiv.style.top = "10px";
-	focusMessageDiv.style.right = "10px";
+	focusMessageDiv.style.top = "50px";
+	focusMessageDiv.style.left = "10px";
 	focusMessageDiv.style.color = "red";
 	focusMessageDiv.style.fontWeight = "bold";
 	focusMessageDiv.style.fontSize = "18px";
@@ -30,20 +30,15 @@ export function renderFocusPresence(focusTracker: FocusTracker, div: HTMLDivElem
 	focusMessageDiv.style.display = "none";
 	wrapperDiv.appendChild(focusMessageDiv);
 
-	const onFocusChanged = () => {
-		const currentUser = focusTracker.audience.getMyself()?.name;
-		const focusPresences = focusTracker.getFocusPresences();
+	const onFocusChanged = (focusState: IFocusState) => {
+		focusDiv.innerHTML = getFocusPresencesString("<br>", focusTracker);
+		const { hasFocus } = focusState;
 
-		focusDiv.innerHTML = `
-            Current user: ${currentUser}</br>
-            ${getFocusPresencesString("</br>", focusTracker)}
-        `;
-
-		focusMessageDiv.style.display =
-			currentUser !== undefined && focusPresences.get(currentUser) === false ? "" : "none";
+		// hasFocus === true should hide the message
+		focusMessageDiv.style.display = hasFocus ? "none" : "";
 	};
 
-	onFocusChanged();
+	onFocusChanged({ hasFocus: window.document.hasFocus() });
 	focusTracker.on("focusChanged", onFocusChanged);
 
 	wrapperDiv.appendChild(focusDiv);
@@ -55,11 +50,9 @@ function getFocusPresencesString(
 ): string {
 	const focusString: string[] = [];
 
-	focusTracker.getFocusPresences().forEach((focus, userName) => {
-		const prefix = `User ${userName}:`;
-		if (focus === undefined) {
-			focusString.push(`${prefix} unknown focus`);
-		} else if (focus === true) {
+	focusTracker.getFocusPresences().forEach((hasFocus, sessionClient) => {
+		const prefix = `User session ${sessionClient.sessionId}:`;
+		if (hasFocus) {
 			focusString.push(`${prefix} has focus`);
 		} else {
 			focusString.push(`${prefix} missing focus`);
@@ -75,19 +68,42 @@ export function renderMousePresence(
 ) {
 	const onPositionChanged = () => {
 		div.innerHTML = "";
-		mouseTracker.getMousePresences().forEach((mousePosition, userName) => {
-			if (focusTracker.getFocusPresences().get(userName) === true) {
+
+		for (const [sessionClient, mousePosition] of mouseTracker.getMousePresences()) {
+			if (focusTracker.getFocusPresences().get(sessionClient) === true) {
 				const posDiv = document.createElement("div");
-				posDiv.textContent = userName;
+				posDiv.textContent = `/${sessionClient.sessionId}`;
 				posDiv.style.position = "absolute";
 				posDiv.style.left = `${mousePosition.x}px`;
-				posDiv.style.top = `${mousePosition.y}px`;
+				posDiv.style.top = `${mousePosition.y - 6}px`;
 				posDiv.style.fontWeight = "bold";
 				div.appendChild(posDiv);
 			}
-		});
+		}
 	};
 
 	onPositionChanged();
 	mouseTracker.on("mousePositionChanged", onPositionChanged);
+}
+
+export function renderControlPanel(mouseTracker: MouseTracker, controlPanel: HTMLDivElement) {
+	controlPanel.style.paddingBottom = "10px";
+	const slider = document.createElement("input");
+	slider.type = "range";
+	slider.id = "mouse-latency";
+	slider.name = "mouse-latency";
+	slider.min = "0";
+	slider.max = "200";
+	slider.defaultValue = "60";
+	const sliderLabel = document.createElement("label");
+	sliderLabel.htmlFor = "mouse-latency";
+	sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+	controlPanel.appendChild(slider);
+	controlPanel.appendChild(sliderLabel);
+
+	slider.addEventListener("input", (e) => {
+		sliderLabel.textContent = `mouse allowableUpdateLatencyMs: ${slider.value}`;
+		const target = e.target as HTMLInputElement;
+		mouseTracker.setAllowableLatency(parseInt(target.value, 10));
+	});
 }

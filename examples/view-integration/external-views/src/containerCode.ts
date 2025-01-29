@@ -3,55 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ModelContainerRuntimeFactory,
-	getDataStoreEntryPoint,
-} from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import { getDataStoreEntryPoint } from "@fluid-example/example-utils";
+import type {
+	IContainerContext,
+	IRuntime,
+	IRuntimeFactory,
+} from "@fluidframework/container-definitions/legacy";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { DiceRollerInstantiationFactory, IDiceRoller } from "./dataObject.js";
-
-/**
- * The data model for our application.
- *
- * @remarks Since this is a simple example it's just a single data object.  More advanced scenarios may have more
- * complex models.
- */
-export interface IDiceRollerAppModel {
-	readonly diceRoller: IDiceRoller;
-}
-
-class DiceRollerAppModel implements IDiceRollerAppModel {
-	public constructor(public readonly diceRoller: IDiceRoller) {}
-}
+import { DiceRollerFactory } from "./diceRoller.js";
 
 const diceRollerId = "dice-roller";
+const diceRollerRegistryKey = "dice-roller";
+const diceRollerFactory = new DiceRollerFactory();
 
-/**
- * The runtime factory for our Fluid container.
- */
-export class DiceRollerContainerRuntimeFactory extends ModelContainerRuntimeFactory<IDiceRollerAppModel> {
-	constructor() {
-		super(
-			new Map([DiceRollerInstantiationFactory.registryEntry]), // registryEntries
-		);
+export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
+	public get IRuntimeFactory(): IRuntimeFactory {
+		return this;
 	}
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
-	protected async containerInitializingFirstTime(runtime: IContainerRuntime) {
-		const diceRoller = await runtime.createDataStore(DiceRollerInstantiationFactory.type);
-		await diceRoller.trySetAlias(diceRollerId);
-	}
+	public async instantiateRuntime(
+		context: IContainerContext,
+		existing: boolean,
+	): Promise<IRuntime> {
+		const provideEntryPoint = async (
+			containerRuntime: IContainerRuntime,
+		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, diceRollerId);
 
-	/**
-	 * {@inheritDoc ModelContainerRuntimeFactory.createModel}
-	 */
-	protected async createModel(runtime: IContainerRuntime, container: IContainer) {
-		return new DiceRollerAppModel(
-			await getDataStoreEntryPoint<IDiceRoller>(runtime, diceRollerId),
-		);
+		const runtime = await loadContainerRuntime({
+			context,
+			registryEntries: new Map([[diceRollerRegistryKey, Promise.resolve(diceRollerFactory)]]),
+			provideEntryPoint,
+			existing,
+		});
+
+		if (!existing) {
+			const diceRoller = await runtime.createDataStore(diceRollerRegistryKey);
+			await diceRoller.trySetAlias(diceRollerId);
+		}
+
+		return runtime;
 	}
 }

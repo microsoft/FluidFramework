@@ -11,11 +11,11 @@ import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedMap } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";

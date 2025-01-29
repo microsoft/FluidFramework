@@ -726,10 +726,6 @@ export interface IContainerLoadMode {
  * @internal
  */
 export interface ILoaderHeader {
-	/**
-	 * @deprecated This header has been deprecated and will be removed in a future release
-	 */
-	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
 	[LoaderHeader.reconnect]: boolean;

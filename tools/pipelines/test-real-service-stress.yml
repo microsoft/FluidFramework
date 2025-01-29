@@ -38,7 +38,7 @@ variables:
 lockBehavior: sequential
 stages:
   # stress tests odsp
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_odsp
       stageDisplayName: Stress tests - Odsp
@@ -59,7 +59,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests odsp dogfood
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_odspdf
       stageDisplayName: Stress tests - Odspdf
@@ -80,7 +80,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests tinylicious
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_tinylicious
       stageDisplayName: Stress tests - tinylicious
@@ -100,7 +100,7 @@ stages:
         logger__morganFormat: tiny
 
   # stress tests AFR
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_frs
       stageDisplayName: Stress tests - AFR
@@ -120,7 +120,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests AFR canary
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_frs_canary
       stageDisplayName: Stress tests - AFR canary

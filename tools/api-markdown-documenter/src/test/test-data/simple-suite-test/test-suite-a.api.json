@@ -396,6 +396,101 @@
 					"implementsTokenRanges": []
 				},
 				{
+					"kind": "Namespace",
+					"canonicalReference": "test-suite-a!TestBetaNamespace:namespace",
+					"docComment": "/**\n * A namespace tagged as `@beta`.\n *\n * @remarks\n *\n * Tests release level inheritance.\n *\n * @beta\n */\n",
+					"excerptTokens": [
+						{
+							"kind": "Content",
+							"text": "export declare namespace TestBetaNamespace "
+						}
+					],
+					"fileUrlPath": "dist/TestNamespace.d.ts",
+					"releaseTag": "Beta",
+					"name": "TestBetaNamespace",
+					"preserveMemberOrder": false,
+					"members": [
+						{
+							"kind": "Variable",
+							"canonicalReference": "test-suite-a!TestBetaNamespace.alphaMember:var",
+							"docComment": "/**\n * @alpha\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "alphaMember = "
+								},
+								{
+									"kind": "Content",
+									"text": "\"alpha\""
+								}
+							],
+							"initializerTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isReadonly": true,
+							"releaseTag": "Alpha",
+							"name": "alphaMember",
+							"variableTypeTokenRange": {
+								"startIndex": 0,
+								"endIndex": 0
+							}
+						},
+						{
+							"kind": "Variable",
+							"canonicalReference": "test-suite-a!TestBetaNamespace.betaMember:var",
+							"docComment": "/**\n * @beta\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "betaMember = "
+								},
+								{
+									"kind": "Content",
+									"text": "\"beta\""
+								}
+							],
+							"initializerTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isReadonly": true,
+							"releaseTag": "Beta",
+							"name": "betaMember",
+							"variableTypeTokenRange": {
+								"startIndex": 0,
+								"endIndex": 0
+							}
+						},
+						{
+							"kind": "Variable",
+							"canonicalReference": "test-suite-a!TestBetaNamespace.publicMember:var",
+							"docComment": "/**\n * @public\n */\n",
+							"excerptTokens": [
+								{
+									"kind": "Content",
+									"text": "publicMember = "
+								},
+								{
+									"kind": "Content",
+									"text": "\"public\""
+								}
+							],
+							"initializerTokenRange": {
+								"startIndex": 1,
+								"endIndex": 2
+							},
+							"isReadonly": true,
+							"releaseTag": "Public",
+							"name": "publicMember",
+							"variableTypeTokenRange": {
+								"startIndex": 0,
+								"endIndex": 0
+							}
+						}
+					]
+				},
+				{
 					"kind": "Class",
 					"canonicalReference": "test-suite-a!TestClass:class",
 					"docComment": "/**\n * Test class\n *\n * @remarks\n *\n * Here are some remarks about the class\n *\n * @typeParam TTypeParameterA - A type parameter\n *\n * @typeParam TTypeParameterB - Another type parameter\n *\n * @see\n *\n * {@link TestAbstractClass}\n *\n * @public\n */\n",

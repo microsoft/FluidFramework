@@ -21,8 +21,10 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";
+// eslint-disable-next-line import/no-deprecated
 import { IGCMetadata } from "../gc/index.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { IDocumentSchema } from "./documentSchema.js";
 
 /**
@@ -130,7 +132,9 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 /**
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
+// eslint-disable-next-line import/no-deprecated
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/**
@@ -154,12 +158,14 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	 */
 	readonly telemetryDocumentId?: string;
 
+	// eslint-disable-next-line import/no-deprecated
 	readonly documentSchema?: IDocumentSchema;
 }
 
 /**
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface ICreateContainerMetadata {
 	/**
@@ -176,6 +182,7 @@ export interface ICreateContainerMetadata {
  * The properties of an ISequencedDocumentMessage to be stored in the metadata blob in summary.
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type ISummaryMetadataMessage = Pick<
 	ISequencedDocumentMessage,

@@ -98,3 +98,6 @@ tools/markdown-magic/test/include.md
 
 # These files are auto-generated according to the comments in the files
 **/charts/**/Chart.yaml
+
+# Ignore changeset files since their metadata formatting is corrupted by prettier
+.changeset/**

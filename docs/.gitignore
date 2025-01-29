@@ -14,10 +14,11 @@ versions.json
 
 # Generated API docs.
 # Note: keep `mdx` files that are handwritten
-docs/api/*
-!docs/api/**/*.mdx
-versioned_docs/*/api/*
-!versioned_docs/*/api/**/*.mdx
+docs/api
+!docs/api/index.mdx
+versioned_docs/*/api
+!versioned_docs/*/api/index.mdx
+!versioned_docs/*/api/fluid-framework/index.mdx
 
 # Test
 test-results

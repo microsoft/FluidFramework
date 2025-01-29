@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	stringToBuffer,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
 	ContainerErrorTypes,
@@ -1525,7 +1529,8 @@ describe("Runtime", () => {
 
 			const localGetMockContext = (
 				features?: ReadonlyMap<string, unknown>,
-			): Partial<IContainerContext> => {
+				compatibilityDetails?: ILayerCompatDetails,
+			): Partial<IContainerContext & IProvideLayerCompatDetails> => {
 				return {
 					attachState: AttachState.Attached,
 					deltaManager: new MockDeltaManager(),
@@ -1537,6 +1542,7 @@ describe("Runtime", () => {
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
 					getLoadedFromVersion: () => undefined,
+					ILayerCompatDetails: compatibilityDetails,
 				};
 			};
 
@@ -1576,6 +1582,29 @@ describe("Runtime", () => {
 					context: localGetMockContext(
 						new Map([["referenceSequenceNumbers", true]]),
 					) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions,
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				assert.equal(runtime.flushMode, FlushModeExperimental.Async);
+				mockLogger.assertMatchNone([
+					{
+						eventName: "ContainerRuntime:FlushModeFallback",
+						category: "error",
+					},
+				]);
+			});
+
+			it("Loader supported for async FlushMode with ILayerCompatDetails", async () => {
+				const compatDetails: ILayerCompatDetails = {
+					pkgVersion: "0.1.0",
+					generation: 1,
+					supportedFeatures: new Set(),
+				};
+				const runtime = await ContainerRuntime.loadRuntime({
+					context: localGetMockContext(undefined, compatDetails) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					runtimeOptions,
@@ -1932,7 +1961,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -1980,7 +2009,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -2054,7 +2083,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,

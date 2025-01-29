@@ -21,7 +21,7 @@ import {
 	getScopedMemberNameForDiagnostics,
 	isStatic,
 } from "../../utilities/index.js";
-import { filterChildMembers } from "../ApiItemTransformUtilities.js";
+import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 
@@ -71,7 +71,7 @@ export function transformApiClass(
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	const filteredChildren = filterChildMembers(apiClass, config);
+	const filteredChildren = getFilteredMembers(apiClass, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructors: ApiConstructor[] = [];

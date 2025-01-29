@@ -57,14 +57,21 @@ describe("versionUtils", () => {
 			const adjustPublicMajor = false;
 			createTest("1.0.0", -1, adjustPublicMajor, "^0.59.0");
 			createTest("1.0.0", -2, adjustPublicMajor, "^0.58.0");
-			createTest("2.0.0", -1, adjustPublicMajor, "^2.0.0-rc.4.0.0");
-			createTest("2.3.5", -1, adjustPublicMajor, "^2.0.0-rc.4.0.0");
+			createTest("2.0.0", -1, adjustPublicMajor, "^2.0.0-rc.5.0.0");
+			createTest("2.3.5", -1, adjustPublicMajor, "~2.0.0-rc.5.0.0");
+			createTest("2.10.0", -1, adjustPublicMajor, "~2.5.0");
+			createTest("2.10.0", -2, adjustPublicMajor, "^2.0.0-rc.5.0.0");
+			createTest("2.13.2", -1, adjustPublicMajor, "~2.5.0");
+			createTest("2.20.0", -1, adjustPublicMajor, "~2.13.0");
+			createTest("2.20.0", -2, adjustPublicMajor, "~2.5.0");
+			createTest("2.20.0", -3, adjustPublicMajor, "^2.0.0-rc.5.0.0");
 		});
 
 		describe("bumping public releases (adjustPublicMajor = true)", () => {
 			const adjustPublicMajor = true;
 			createTest("2.0.0", -1, adjustPublicMajor, "^1.0.0");
 			createTest("2.3.5", -1, adjustPublicMajor, "^1.0.0");
+			createTest("2.13.5", -1, adjustPublicMajor, "^1.0.0");
 		});
 
 		describe("bumping internal releases to public releases (adjustPublicMajor = false)", () => {
@@ -127,8 +134,8 @@ describe("versionUtils", () => {
 			createTest("2.0.0-rc.1.3.4", -2, adjustPublicMajor, "^2.0.0-internal.7.0.0");
 
 			// These tests should be enabled once 2.0.0-rc.1.0.0 is released (currently throws trying to fetch the unreleased packages)
-			// createTest("2.0.0-rc.2.0.0", -1, adjustPublicMajor, "^2.0.0-rc.1.0.0");
-			// createTest("2.0.0-rc.2.0.0", -2, adjustPublicMajor, "^2.0.0-internal.8.0.0");
+			createTest("2.0.0-rc.2.0.0", -1, adjustPublicMajor, "^2.0.0-rc.1.0.0");
+			createTest("2.0.0-rc.2.0.0", -2, adjustPublicMajor, "^2.0.0-internal.8.0.0");
 		});
 
 		it("error cases for malformed versions", () => {

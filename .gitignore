@@ -38,3 +38,8 @@ tsdoc-metadata.json
 
 # TODO: This can be removed once the `flub add changeset` command no longer creates the UPCOMING file.
 UPCOMING.md
+
+# Ignore the nested lib dist folder
+# This is created to later publish its content on the pipeline and do not need to be included on git as
+# artifacts or bundleAnalisys folders. See scripts/pack-distlib.sh for more details.
+nested_lib_dist

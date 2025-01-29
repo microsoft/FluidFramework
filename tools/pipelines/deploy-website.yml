@@ -109,9 +109,9 @@ stages:
           submodules: false
           clean: true
 
-        - template: templates/include-use-node-version.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-        - template: templates/include-install-pnpm.yml
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
             buildDirectory: $(Build.SourcesDirectory)/docs
 
@@ -168,7 +168,7 @@ stages:
           submodules: false
           clean: true
 
-        - template: templates/include-use-node-version.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'
@@ -234,9 +234,9 @@ stages:
           submodules: false
           clean: true
 
-        - template: templates/include-use-node-version.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-        - template: templates/include-install-pnpm.yml
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
             buildDirectory: $(Build.SourcesDirectory)/docs
 

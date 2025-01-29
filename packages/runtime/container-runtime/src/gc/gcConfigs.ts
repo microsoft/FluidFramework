@@ -9,10 +9,13 @@ import {
 	validatePrecondition,
 } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { IContainerRuntimeMetadata } from "../summary/index.js";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
 	IGCMetadata_Deprecated,
 	IGCRuntimeOptions,
@@ -42,6 +45,7 @@ export function generateGCConfigs(
 	mc: MonitoringContext,
 	createParams: {
 		gcOptions: IGCRuntimeOptions;
+		// eslint-disable-next-line import/no-deprecated
 		metadata: IContainerRuntimeMetadata | undefined;
 		existing: boolean;
 		isSummarizerClient: boolean;
@@ -50,7 +54,9 @@ export function generateGCConfigs(
 	let gcAllowed: boolean = true;
 	let sessionExpiryTimeoutMs: number | undefined;
 	let tombstoneTimeoutMs: number | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	let persistedGcFeatureMatrix: GCFeatureMatrix | undefined;
+	// eslint-disable-next-line import/no-deprecated
 	let gcVersionInBaseSnapshot: GCVersion | undefined;
 
 	/**

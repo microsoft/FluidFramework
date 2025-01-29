@@ -29,6 +29,8 @@ import {
 	RemoteMessageProcessor,
 } from "../../opLifecycle/index.js";
 
+import { compressMultipleMessageBatch } from "./legacyCompression.js";
+
 describe("RemoteMessageProcessor", () => {
 	function getMessageProcessor(): RemoteMessageProcessor {
 		const logger = new MockLogger();
@@ -38,7 +40,6 @@ describe("RemoteMessageProcessor", () => {
 			new OpGroupingManager(
 				{
 					groupedBatchingEnabled: true,
-					opCountThreshold: Number.POSITIVE_INFINITY,
 				},
 				logger,
 			),
@@ -128,7 +129,6 @@ describe("RemoteMessageProcessor", () => {
 				const groupingManager = new OpGroupingManager(
 					{
 						groupedBatchingEnabled: true,
-						opCountThreshold: 2,
 					},
 					mockLogger,
 				);
@@ -138,8 +138,12 @@ describe("RemoteMessageProcessor", () => {
 			let leadingChunkCount = 0;
 			const outboundMessages: IBatchMessage[] = [];
 			if (option.compressionAndChunking.compression) {
-				const compressor = new OpCompressor(mockLogger);
-				batch = compressor.compressBatch(batch);
+				if (batch.messages.length === 1) {
+					const compressor = new OpCompressor(mockLogger);
+					batch = compressor.compressBatch(batch);
+				} else {
+					batch = compressMultipleMessageBatch(batch);
+				}
 
 				if (option.compressionAndChunking.chunking) {
 					const splitter = new OpSplitter(

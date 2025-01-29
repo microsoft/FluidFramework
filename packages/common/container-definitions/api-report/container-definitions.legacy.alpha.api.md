@@ -164,7 +164,7 @@ export interface IContainerContext {
     readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
     // (undocumented)
     readonly submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) => number;
-    // (undocumented)
+    // @deprecated (undocumented)
     readonly supportedFeatures?: ReadonlyMap<string, unknown>;
     // (undocumented)
     readonly taggedLogger: ITelemetryBaseLogger;

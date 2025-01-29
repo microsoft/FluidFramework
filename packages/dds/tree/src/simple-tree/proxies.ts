@@ -24,9 +24,9 @@ import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 import {
 	getKernel,
 	type TreeNode,
-	tryGetTreeNodeFromMapNode,
 	getOrCreateNodeFromInnerNode,
 	tryUnhydratedFlexTreeNode,
+	unhydratedFlexTreeNodeToTreeNode,
 } from "./core/index.js";
 
 /**
@@ -146,7 +146,7 @@ function walkMapTree(
 		const [p, m] = next;
 		const mapTreeNode = tryUnhydratedFlexTreeNode(m);
 		if (mapTreeNode !== undefined) {
-			const treeNode = tryGetTreeNodeFromMapNode(mapTreeNode);
+			const treeNode = unhydratedFlexTreeNodeToTreeNode.get(mapTreeNode);
 			if (treeNode !== undefined) {
 				onVisitTreeNode(p, treeNode);
 			}

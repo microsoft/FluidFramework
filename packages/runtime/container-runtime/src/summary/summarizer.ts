@@ -21,18 +21,22 @@ import {
 
 import { ISummaryConfiguration } from "../containerRuntime.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import {
 	EnqueueSummarizeResult,
+	// eslint-disable-next-line import/no-deprecated
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizeHeuristicData,
 	ISummarizeResults,
 	ISummarizer,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
 	ISummarizingWarning,
 } from "./summarizerTypes.js";
@@ -77,6 +81,7 @@ export const createSummarizingWarning = (
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	public get ISummarizer(): this {
@@ -95,17 +100,21 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		 * Reference to runtime that created this object.
 		 * i.e. runtime with clientType === "summarizer"
 		 */
+		// eslint-disable-next-line import/no-deprecated
 		private readonly runtime: ISummarizerRuntime,
 		private readonly configurationGetter: () => ISummaryConfiguration,
 		/**
 		 * Represents an object that can generate summary.
 		 * In practical terms, it's same runtime (this.runtime) with clientType === "summarizer".
 		 */
+		// eslint-disable-next-line import/no-deprecated
 		private readonly internalsProvider: ISummarizerInternalsProvider,
 		handleContext: IFluidHandleContext,
 		public readonly summaryCollection: SummaryCollection,
 		private readonly runCoordinatorCreateFn: (
+			// eslint-disable-next-line import/no-deprecated
 			runtime: IConnectableRuntime,
+			// eslint-disable-next-line import/no-deprecated
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
@@ -155,6 +164,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	}
 
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
+		// eslint-disable-next-line import/no-deprecated
 		const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(
 			this.runtime,
 		);
@@ -239,6 +249,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 */
 	private async start(
 		onBehalfOf: string,
+		// eslint-disable-next-line import/no-deprecated
 		runCoordinator: ICancellableSummarizerController,
 	): Promise<RunningSummarizer> {
 		if (this.runningSummarizer) {

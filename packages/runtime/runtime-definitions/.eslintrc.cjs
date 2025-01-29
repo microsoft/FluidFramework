@@ -8,5 +8,4 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	extends: ["@fluidframework/eslint-config-fluid", "prettier"],
-	plugins: ["deprecation"],
 };

@@ -7,11 +7,7 @@ import { type IContainerContext } from "@fluidframework/container-definitions/in
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
-	type FluidObject,
-	type IRequest,
-	type IResponse,
-} from "@fluidframework/core-interfaces";
+import { type FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IContainerRuntimeBase,
@@ -62,17 +58,12 @@ export const mixinAttributor = (
 			runtimeOptions?: IContainerRuntimeOptions;
 			containerScope?: FluidObject;
 			containerRuntimeCtor?: typeof ContainerRuntime;
-			/**
-			 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-			 */
-			requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 			provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
 		}): Promise<ContainerRuntime> {
 			const {
 				context,
 				registryEntries,
 				existing,
-				requestHandler,
 				provideEntryPoint,
 				runtimeOptions,
 				containerScope,
@@ -96,7 +87,6 @@ export const mixinAttributor = (
 			const runtime = (await Base.loadRuntime({
 				context,
 				registryEntries: registryEntriesCopy,
-				requestHandler,
 				provideEntryPoint,
 				runtimeOptions,
 				containerScope,

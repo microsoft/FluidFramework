@@ -16,6 +16,7 @@ import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/in
 
 import { IRefreshSummaryResult } from "../summary/index.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
 import {
@@ -230,6 +231,7 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called to update the state from a GC run's stats. Used to update the count of data stores whose state updated.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	public updateStateFromGCRunStats(stats: IGCStats): void {
 		this.updatedDSCountSinceLastSummary += stats.updatedDataStoreCount;
 	}

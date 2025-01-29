@@ -155,8 +155,10 @@ const config: Config = {
 		"@docusaurus/theme-mermaid",
 
 		// Theme that adds local search support (including generating an index as a part of the build).
+		// TODO: This is a temporary workaround until we can replace it with a more robust search solution(Typesense/Algolia etc).
+		// AB#29144: Remove this fork dependency once we have implemented a long term search solution.
 		[
-			"@easyops-cn/docusaurus-search-local",
+			"@wayneferrao/docusaurus-search-local",
 			{
 				// `hashed` is recommended as long-term-cache of index file is possible.
 				hashed: true,

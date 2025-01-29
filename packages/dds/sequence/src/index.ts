@@ -84,11 +84,7 @@ export {
 	SharedStringSegment,
 	SharedStringClass,
 } from "./sharedString.js";
-export {
-	ISharedIntervalCollection,
-	SharedIntervalCollection,
-	SharedIntervalCollectionFactory,
-} from "./sharedIntervalCollection.js";
+export { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 
 export {

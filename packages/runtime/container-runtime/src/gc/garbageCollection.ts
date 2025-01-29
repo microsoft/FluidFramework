@@ -34,17 +34,22 @@ import { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCNodeType,
 	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
+	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
 	IGCResult,
+	// eslint-disable-next-line import/no-deprecated
 	IGCStats,
 	IGarbageCollectionRuntime,
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
+	// eslint-disable-next-line import/no-deprecated
 	IMarkPhaseStats,
+	// eslint-disable-next-line import/no-deprecated
 	ISweepPhaseStats,
 	UnreferencedState,
 	type IGCNodeUpdatedProps,
@@ -347,8 +352,10 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * API for ensuring the correct auto-recovery mitigations
 	 */
+	// TODO: consider hoisting this to an outer scope as an optimization
+	// eslint-disable-next-line unicorn/consistent-function-scoping
 	private readonly autoRecovery = (() => {
-		// This uses a hidden state machine for forcing fullGC as part of autorecovery,
+		// This uses a hidden state machine for forcing fullGC as part of auto-recovery,
 		// to regenerate the GC data for each node.
 		//
 		// Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
@@ -509,6 +516,7 @@ export class GarbageCollector implements IGarbageCollector {
 			fullGC?: boolean;
 		},
 		telemetryContext?: ITelemetryContext,
+		// eslint-disable-next-line import/no-deprecated
 	): Promise<IGCStats | undefined> {
 		const fullGC =
 			options.fullGC ?? (this.configs.runFullGC === true || this.autoRecovery.useFullGC());
@@ -606,6 +614,7 @@ export class GarbageCollector implements IGarbageCollector {
 		fullGC: boolean,
 		currentReferenceTimestampMs: number,
 		logger: ITelemetryLoggerExt,
+		// eslint-disable-next-line import/no-deprecated
 	): Promise<IGCStats> {
 		// 1. Generate / analyze the runtime's reference graph.
 		// Get the reference graph (gcData) and run GC algorithm to get referenced / unreferenced nodes.
@@ -761,6 +770,7 @@ export class GarbageCollector implements IGarbageCollector {
 			// local state when processing the op.
 			const sweepReadyDSAndBlobs = nodesToDelete.filter((nodeId) => {
 				const nodeType = this.runtime.getNodeType(nodeId);
+				// eslint-disable-next-line import/no-deprecated
 				return nodeType === GCNodeType.DataStore || nodeType === GCNodeType.Blob;
 			});
 			const contents: GarbageCollectionMessage = {
@@ -892,6 +902,7 @@ export class GarbageCollector implements IGarbageCollector {
 		);
 	}
 
+	// eslint-disable-next-line import/no-deprecated
 	public getMetadata(): IGCMetadata {
 		return {
 			/**
@@ -1054,6 +1065,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// Unless this is a Loaded event for a Blob or DataStore, we're done after telemetry tracking
 		const loadedBlobOrDataStore =
 			reason === "Loaded" &&
+			// eslint-disable-next-line import/no-deprecated
 			(nodeType === GCNodeType.Blob || nodeType === GCNodeType.DataStore);
 		if (!loadedBlobOrDataStore) {
 			return;
@@ -1181,7 +1193,9 @@ export class GarbageCollector implements IGarbageCollector {
 	 * @param gcResult - The result of the current GC run.
 	 * @returns the stats of the mark phase run.
 	 */
+	// eslint-disable-next-line import/no-deprecated
 	private getMarkPhaseStats(gcResult: IGCResult): IMarkPhaseStats {
+		// eslint-disable-next-line import/no-deprecated
 		const markPhaseStats: IMarkPhaseStats = {
 			nodeCount: 0,
 			dataStoreCount: 0,
@@ -1208,6 +1222,7 @@ export class GarbageCollector implements IGarbageCollector {
 				markPhaseStats.unrefNodeCount++;
 			}
 
+			// eslint-disable-next-line import/no-deprecated
 			if (this.runtime.getNodeType(nodeId) === GCNodeType.DataStore) {
 				markPhaseStats.dataStoreCount++;
 				if (stateUpdated) {
@@ -1217,6 +1232,7 @@ export class GarbageCollector implements IGarbageCollector {
 					markPhaseStats.unrefDataStoreCount++;
 				}
 			}
+			// eslint-disable-next-line import/no-deprecated
 			if (this.runtime.getNodeType(nodeId) === GCNodeType.Blob) {
 				markPhaseStats.attachmentBlobCount++;
 				if (stateUpdated) {
@@ -1250,10 +1266,13 @@ export class GarbageCollector implements IGarbageCollector {
 	private getSweepPhaseStats(
 		deletedNodes: Set<string>,
 		sweepReadyNodes: Set<string>,
+		// eslint-disable-next-line import/no-deprecated
 		markPhaseStats: IMarkPhaseStats,
+		// eslint-disable-next-line import/no-deprecated
 	): ISweepPhaseStats {
 		// Initialize the life time node counts to the mark phase node counts. If sweep is not enabled,
 		// these will be the life time node count for this container.
+		// eslint-disable-next-line import/no-deprecated
 		const sweepPhaseStats: ISweepPhaseStats = {
 			lifetimeNodeCount: markPhaseStats.nodeCount,
 			lifetimeDataStoreCount: markPhaseStats.dataStoreCount,
@@ -1265,25 +1284,32 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// The runtime can't reliably identify the type of deleted nodes. So, get the type here. This should
 		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
+		// eslint-disable-next-line import/no-deprecated, unicorn/consistent-function-scoping
 		const getDeletedNodeType = (nodeId: string): GCNodeType => {
 			const pathParts = nodeId.split("/");
 			if (pathParts[1] === blobManagerBasePath) {
+				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.Blob;
 			}
 			if (pathParts.length === 2) {
+				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.DataStore;
 			}
 			if (pathParts.length === 3) {
+				// eslint-disable-next-line import/no-deprecated
 				return GCNodeType.SubDataStore;
 			}
+			// eslint-disable-next-line import/no-deprecated
 			return GCNodeType.Other;
 		};
 
 		for (const nodeId of deletedNodes) {
 			sweepPhaseStats.deletedNodeCount++;
 			const nodeType = getDeletedNodeType(nodeId);
+			// eslint-disable-next-line import/no-deprecated
 			if (nodeType === GCNodeType.DataStore) {
 				sweepPhaseStats.deletedDataStoreCount++;
+				// eslint-disable-next-line import/no-deprecated
 			} else if (nodeType === GCNodeType.Blob) {
 				sweepPhaseStats.deletedAttachmentBlobCount++;
 			}
@@ -1304,8 +1330,10 @@ export class GarbageCollector implements IGarbageCollector {
 		for (const nodeId of sweepReadyNodes) {
 			sweepPhaseStats.deletedNodeCount++;
 			const nodeType = this.runtime.getNodeType(nodeId);
+			// eslint-disable-next-line import/no-deprecated
 			if (nodeType === GCNodeType.DataStore) {
 				sweepPhaseStats.deletedDataStoreCount++;
+				// eslint-disable-next-line import/no-deprecated
 			} else if (nodeType === GCNodeType.Blob) {
 				sweepPhaseStats.deletedAttachmentBlobCount++;
 			}

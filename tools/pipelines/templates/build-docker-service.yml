@@ -26,6 +26,8 @@ parameters:
     type: boolean
     default: false
 
+  # The workspace directory in the container's base image.
+  # This directory is used to run tests from within the container.
   - name: containerBaseDir
     type: string
     default: /home/node/server

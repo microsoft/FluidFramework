@@ -37,6 +37,12 @@ $env:PORT=6502
 pnpm start
 ```
 
+### Logging
+
+By default, tinylicious logs all output to stdout. You can adjust the logging level using the `logger__level`
+environment variable. For example, setting `logger__level=error` will log only errors. Using the level `crit` will hide
+all output.
+
 ### Storage
 
 The config.json file can be used to configure the Tinylicious service.
