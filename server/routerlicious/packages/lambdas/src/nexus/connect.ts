@@ -598,14 +598,6 @@ function setUpSignalListenerForRoomBroadcasting(
 	room: IRoom,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
 ): (() => void) | undefined {
-	// TODO: Delete
-	Lumberjack.info(
-		`broadcastSignal listenerCount: ${
-			collaborationSessionEventEmitter
-				? collaborationSessionEventEmitter.listenerCount("broadcastSignal")
-				: -1
-		}`,
-	);
 	if (
 		!collaborationSessionEventEmitter ||
 		collaborationSessionEventEmitter.listenerCount("broadcastSignal") > 0
@@ -617,21 +609,10 @@ function setUpSignalListenerForRoomBroadcasting(
 		// No-op if the room (collab session) that signal came in from is different
 		// than the current room. We reuse websockets so there could be multiple rooms
 		// that we are sending the signal to, and we don't want to do that.
-		// TODO: Delete
-		Lumberjack.info(
-			`broadcastSignal listener: signalRoom.doc ${signalRoom.documentId}
-			signalRoom.tenant ${signalRoom.tenantId}`,
-		);
-		Lumberjack.info(`broadcastSignal listener: room.doc ${room.documentId}
-			room.tenant ${room.tenantId}`);
 		if (signalRoom.documentId === room.documentId && signalRoom.tenantId === room.tenantId) {
 			try {
-				// TODO: Delete
-				Lumberjack.info(`broadcastSignal creating message`);
 				const runtimeMessage = createRuntimeMessage(signalContent);
 				try {
-					// TODO: Delete
-					Lumberjack.info(`broadcastSignal emitting to room`);
 					socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
 				} catch (error) {
 					const errorMsg = `Failed to broadcast signal from external API.`;
@@ -799,16 +780,6 @@ export async function connectDocument(
 			socket,
 			room,
 			lambdaDependencies,
-		);
-		// TODO: Delete
-		Lumberjack.info(
-			`broadcastSignal set up listener:
-			${disposeSignalListenerForRoomBroadcasting ? "has value" : "undefined"}`,
-			{
-				count: lambdaDependencies.collaborationSessionEventEmitter?.listenerCount(
-					"broadcastSignal",
-				),
-			},
 		);
 
 		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
