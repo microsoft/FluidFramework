@@ -12,6 +12,7 @@ import {
 	AsyncReducer,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
+	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -648,3 +649,51 @@ export function makeIntervalOperationGenerator(
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
 	]);
 }
+
+export const baseIntervalModel = {
+	...baseModel,
+	generatorFactory: () =>
+		takeAsync(100, makeIntervalOperationGenerator(defaultIntervalOperationGenerationConfig)),
+};
+
+export function makeSharedStringOperationGenerator(
+	optionsParam?: SharedStringOperationGenerationConfig,
+	alwaysLeaveChar: boolean = false,
+): AsyncGenerator<Operation, FuzzTestState> {
+	const {
+		addText,
+		removeRange,
+		annotateRange,
+		annotateAdjustRange,
+		removeRangeLeaveChar,
+		lengthSatisfies,
+		hasNonzeroLength,
+		isShorterThanMaxLength,
+	} = createSharedStringGeneratorOperations(optionsParam);
+
+	const usableWeights =
+		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
+	return createWeightedAsyncGenerator<Operation, FuzzTestState>([
+		[addText, usableWeights.addText, isShorterThanMaxLength],
+		[
+			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
+			usableWeights.removeRange,
+			alwaysLeaveChar
+				? lengthSatisfies((length) => {
+						return length > 1;
+					})
+				: hasNonzeroLength,
+		],
+		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
+		[annotateAdjustRange, usableWeights.annotateRange, hasNonzeroLength],
+	]);
+}
+
+export const baseSharedStringModel= {
+	...baseModel,
+	generatorFactory: () =>
+		takeAsync(
+			100,
+			makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig),
+		),
+};
