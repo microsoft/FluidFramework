@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 
 import { CustomEventEmitter, createEmitter } from "../../events/index.js";
+import { TypedEventEmitter } from "../../typedEventEmitter.js";
 
 interface TestEvents {
 	open: () => void;
@@ -279,6 +280,200 @@ describe("CustomEventEmitter", () => {
 			(e: Error) => validateAssertionError(e, /register.*twice.*TestEvent/),
 		);
 	});
+
+	it("Fire an event once", () => {
+		const emitter = createEmitter<TestEvents>();
+		let val = false;
+		emitter.once("close", () => {
+			val = true;
+			console.log("This will be called by once:", val);
+		});
+
+		emitter.emit("close", val); // Listener is triggered
+
+		emitter.emit("close", val); // Listener is not triggered
+	});
+
+	it("fires a listener once and deregisters it", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 1;
+		const listener = (): number => (count += 1);
+
+		emitter.once("open", listener);
+
+		emitter.emit("open");
+		assert.strictEqual(count, 2);
+
+		emitter.emit("open");
+		assert.strictEqual(count, 2);
+	});
+
+	it("removes the listener after being called", () => {
+		const emitter = createEmitter<TestEvents>();
+		let opened = false;
+
+		// Register a listener with once
+		emitter.once("open", () => {
+			opened = true;
+		});
+
+		emitter.emit("open");
+		assert(opened);
+	});
+
+	it("works with multiple once listeners for different events", () => {
+		const emitter = createEmitter<TestEvents>();
+		let opened = false;
+		let closed = false;
+
+		// Register 'once' listeners for different events
+		emitter.once("open", () => {
+			opened = true;
+		});
+		emitter.once("close", (value: boolean) => {
+			closed = value;
+		});
+
+		emitter.emit("open");
+		assert(opened);
+		assert(!closed);
+
+		emitter.emit("close", true);
+		assert(closed); // 'close' event listener should be called now
+	});
+
+	it("does not allow repeated firing of a once listener", () => {
+		const emitter = createEmitter<TestEvents>();
+		let opened = 0;
+
+		// Register a listener with once
+		emitter.once("open", () => {
+			opened += 1;
+		});
+
+		emitter.emit("open");
+		emitter.emit("open");
+		emitter.emit("open");
+
+		assert.strictEqual(opened, 1); // Listener should only fire once
+	});
+
+	it("deregisters the listener immediately after it is fired", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+		const listener = (): void => {
+			count += 1;
+		};
+
+		// Using once to register the listener
+		emitter.once("open", listener);
+
+		emitter.emit("open");
+		emitter.emit("open"); // Should not trigger the listener again
+		emitter.emit("open"); // Should not trigger the listener again
+
+		assert.strictEqual(count, 1);
+	});
+
+	it("deregister prior to emit", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+		const listener = (): void => {
+			count += 1;
+		};
+
+		emitter.once("open", listener);
+		emitter.off("open", listener);
+		emitter.emit("open");
+		assert.strictEqual(count, 0);
+	});
+
+	it("old implementation: deregister prior to emit", () => {
+		const emitter = new TypedEventEmitter<TestEvents>();
+		let count = 0;
+		const listener = (): void => {
+			count += 1;
+		};
+
+		emitter.once("open", listener);
+		emitter.off("open", listener);
+		emitter.emit("open");
+		assert.strictEqual(count, 0);
+	});
+
+	it("Old implementation: Listener identity is checked with count", () => {
+		const emitter = createEmitter<TestEvents>();
+		let count = 0;
+
+		const listener = (): void => {
+			count += 1;
+		};
+		emitter.once("open", listener);
+		emitter.once("open", listener);
+		emitter.emit("open"); // listener is called twice
+
+		assert.strictEqual(count, 2);
+	});
+
+	it("New implementation: Listener identity is checked with count", () => {
+		const emitter = new TypedEventEmitter<TestEvents>();
+		let count = 0;
+
+		const listener = (): void => {
+			count += 1;
+		};
+		emitter.once("open", listener);
+		emitter.once("open", listener);
+		emitter.emit("open"); // listener is called twice
+
+		assert.strictEqual(count, 2);
+	});
+
+	it("listener identity is checked", () => {
+		const emitter = createEmitter<TestEvents>();
+		let someConditionIWaitOn = false;
+		let count = 0;
+		const myCallback = (): void => {
+			if (someConditionIWaitOn) {
+				count += 1;
+				emitter.once("open", myCallback);
+				// assert.throws(
+				// 	() => emitter.once("open", myCallback),
+				// 	/Attempted to register the same listener object twice for event/,
+				// );
+			}
+		};
+
+		emitter.once("open", myCallback);
+		// assert.throws(
+		// 	() => emitter.once("open", myCallback),
+		// 	/Attempted to register the same listener object twice for event/,
+		// );
+		emitter.once("open", myCallback);
+
+		someConditionIWaitOn = true;
+		emitter.emit("open"); // myCallback is called twice
+		assert.strictEqual(count, 2);
+	});
+
+	it("old implementation: listener identity is checked", () => {
+		const emitter = new TypedEventEmitter<TestEvents>();
+		let someConditionIWaitOn = false;
+		let count = 0;
+		const myCallback = (): void => {
+			if (someConditionIWaitOn) {
+				count += 1;
+				emitter.once("open", myCallback);
+			}
+		};
+
+		emitter.once("open", myCallback);
+		emitter.once("open", myCallback);
+
+		someConditionIWaitOn = true;
+		emitter.emit("open"); // myCallback is called twice
+		assert.strictEqual(count, 2);
+	});
 });
 
 /**
@@ -332,6 +527,10 @@ export class MyCompositionClass implements Listenable<MyEvents> {
 
 	public on<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
 		return this.events.on(eventName, listener);
+	}
+
+	public once<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): () => void {
+		return this.events.once(eventName, listener);
 	}
 
 	public off<K extends keyof MyEvents>(eventName: K, listener: MyEvents[K]): void {

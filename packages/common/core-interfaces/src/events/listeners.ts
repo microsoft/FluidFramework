@@ -61,6 +61,14 @@ export interface Listenable<TListeners extends object> {
 	on<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
 
 	/**
+	 * Registers an event listener that will be invoked only once for the specified event.
+	 * After the listener is called for the first time, it is automatically removed.
+	 * @param eventName - The name of the event.
+	 * @param listener - The listener function to remove from the current set of event listeners.
+	 */
+	once<K extends keyof Listeners<TListeners>>(eventName: K, listener: TListeners[K]): Off;
+
+	/**
 	 * Deregister an event listener.
 	 * @param eventName - The name of the event.
 	 * @param listener - The listener function to remove from the current set of event listeners.
