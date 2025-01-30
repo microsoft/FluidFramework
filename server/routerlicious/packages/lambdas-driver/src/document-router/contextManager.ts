@@ -53,7 +53,7 @@ export class DocumentContextManager extends EventEmitter {
 		if (this.headUpdatedAfterResume && this.tailUpdatedAfterResume) {
 			// Contexts should only be created within the processing range of the manager
 			assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
-		} else if (this.headUpdatedAfterResume)	{
+		} else if (this.headUpdatedAfterResume) {
 			assert(head.offset === this.head.offset);
 		}
 
