@@ -50,6 +50,7 @@ const defaultCodeDetails: IFluidCodeDetails = {
 	config: {},
 };
 
+//* Add comments
 /**
  * @legacy
  * @alpha
