@@ -520,16 +520,18 @@ export class RunningSummarizer
 		this.disposeEnqueuedSummary();
 
 		// This will try to run lastSummary if needed.
-		if (allowLastSummary && this.heuristicRunner?.shouldRunLastSummary()) {
-			if (this.summarizingLock === undefined) {
-				this.trySummarizeOnce(
-					// summarizeProps
-					{ summarizeReason: "lastSummary" },
-					{},
-					undefined,
-					true /* isLastSummary */,
-				);
-			}
+		if (
+			allowLastSummary &&
+			this.heuristicRunner?.shouldRunLastSummary() &&
+			this.summarizingLock === undefined
+		) {
+			this.trySummarizeOnce(
+				// summarizeProps
+				{ summarizeReason: "lastSummary" },
+				{},
+				undefined,
+				true /* isLastSummary */,
+			);
 		}
 
 		// Note that trySummarizeOnce() call above returns right away, without waiting.
