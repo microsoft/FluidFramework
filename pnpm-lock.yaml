@@ -18,6 +18,8 @@ overrides:
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   socket.io-client: ~4.7.5
 
+pnpmfileChecksum: jsbnis4v7zlhs4t7yscsd3mtxe
+
 patchedDependencies:
   '@microsoft/api-extractor@7.47.8':
     hash: ldzfpsbo3oeejrejk775zxplmi
@@ -13139,7 +13141,7 @@ importers:
         version: link:../../azure-client
       '@fluidframework/azure-client-legacy':
         specifier: npm:@fluidframework/azure-client@^1.2.0
-        version: '@fluidframework/azure-client@1.2.0(encoding@0.1.13)(fluid-framework@1.4.0)'
+        version: '@fluidframework/azure-client@1.2.0(encoding@0.1.13)'
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -13191,9 +13193,6 @@ importers:
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
-      fluid-framework:
-        specifier: ^1.4.0
-        version: 1.4.0
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
@@ -17748,8 +17747,6 @@ packages:
 
   '@fluidframework/azure-client@1.2.0':
     resolution: {integrity: sha512-jpfYF6I1uwwCqOc8X0fOgZz4Lj91QFzKV4S9lM7jSW84GxytlL3nDanj9+EYC+vLn4liRVaOCA3zRwpkDNXRWg==}
-    peerDependencies:
-      fluid-framework: ^1.4.0
 
   '@fluidframework/azure-client@2.20.0':
     resolution: {integrity: sha512-Au4TD+WwRPOSfUaEwhDeW/QroSwFeEIlJm8egoetJmeOT7eJdyFyqbr9ucsLGugBFNUfF1hngfONHk+6gMbCKw==}
@@ -17908,9 +17905,6 @@ packages:
   '@fluidframework/matrix@2.20.0':
     resolution: {integrity: sha512-N3UqVg0hNtY/dkKdmf3DsWS5GknvquMzbsLAlnSW42SfI8b+I5EYpqLVPzaUv3EMMlPP6B1xNMp3Aq6j5TsOkA==}
 
-  '@fluidframework/merge-tree@1.4.0':
-    resolution: {integrity: sha512-UJq7AfD52bp8ecoJLxArGI8506hTFjkNYLU2TXj08Fn8pi6MYN8WBMrCgAGJ47P7ytP1YfXOOWLzeT2ODuYJYw==}
-
   '@fluidframework/merge-tree@2.20.0':
     resolution: {integrity: sha512-6vdrG/rCCQE33ERfau7v0+Qxd87gBAu8PDsURCFtTewUYxz5B17MikMkpba9l850Uql3wDaLPzQKKDtTt4C6bw==}
 
@@ -17976,9 +17970,6 @@ packages:
 
   '@fluidframework/runtime-utils@2.20.0':
     resolution: {integrity: sha512-QjAR9pwMqwguJ5iz1sLxr3/opfcl31rnVoX0IUkHq9bJcsjNufr+8zmZ89Yvlp0Rr4plsIqsz9Tv2fFPYGwhcg==}
-
-  '@fluidframework/sequence@1.4.0':
-    resolution: {integrity: sha512-KV/BNdALIgKhlivGv7U4NRCRrDWLIgWEVB2Q/oSNdKF5kUgoQnl+iIQLQcpC8dGAB7YQyCHFZVi4glanyEPF5Q==}
 
   '@fluidframework/sequence@2.20.0':
     resolution: {integrity: sha512-37k91G1Yxhh9YCv0KzoLBjdi9YuKiZ4yA8mItAnXg5koS6cHJONB8kCZ7iNWIp+ygeKFavAWxIHlDvadICqZ1g==}
@@ -22412,9 +22403,6 @@ packages:
 
   flatted@3.3.2:
     resolution: {integrity: sha512-AiwGJM8YcNOaobumgtng+6NHuOqC3A7MixFeDafM3X9cIUM+xUXoS5Vfgf+OihAYe20fxqNM9yPBXJzRtZ/4eA==}
-
-  fluid-framework@1.4.0:
-    resolution: {integrity: sha512-Alq2+bwmIrYBZFh/8IynI4mfHvKExLahD1wQ1/4G0PiFYVtI6k2vpRVBofXijTJYq81y3WHN7ytzycW4g/JJrQ==}
 
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
@@ -30303,7 +30291,7 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/azure-client@1.2.0(encoding@0.1.13)(fluid-framework@1.4.0)':
+  '@fluidframework/azure-client@1.2.0(encoding@0.1.13)':
     dependencies:
       '@fluidframework/common-definitions': 0.20.1
       '@fluidframework/common-utils': 1.1.1
@@ -30319,7 +30307,6 @@ snapshots:
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/server-services-client': 0.1036.5002
       axios: 0.28.1(debug@4.4.0)
-      fluid-framework: 1.4.0
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -31005,23 +30992,6 @@ snapshots:
       - debug
       - supports-color
 
-  '@fluidframework/merge-tree@1.4.0':
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/container-definitions': 1.4.0
-      '@fluidframework/container-utils': 1.4.0
-      '@fluidframework/core-interfaces': 1.4.0
-      '@fluidframework/datastore-definitions': 1.4.0
-      '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0
-      '@fluidframework/shared-object-base': 1.4.0
-      '@fluidframework/telemetry-utils': 1.4.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluidframework/merge-tree@2.20.0(debug@4.4.0)':
     dependencies:
       '@fluid-internal/client-utils': 2.20.0
@@ -31280,24 +31250,6 @@ snapshots:
       '@fluidframework/driver-utils': 2.20.0(debug@4.4.0)
       '@fluidframework/runtime-definitions': 2.20.0
       '@fluidframework/telemetry-utils': 2.20.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
-  '@fluidframework/sequence@1.4.0':
-    dependencies:
-      '@fluidframework/common-definitions': 0.20.1
-      '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/container-utils': 1.4.0
-      '@fluidframework/core-interfaces': 1.4.0
-      '@fluidframework/datastore-definitions': 1.4.0
-      '@fluidframework/merge-tree': 1.4.0
-      '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/runtime-definitions': 1.4.0
-      '@fluidframework/runtime-utils': 1.4.0
-      '@fluidframework/shared-object-base': 1.4.0
-      '@fluidframework/telemetry-utils': 1.4.0
-      uuid: 8.3.2
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -37613,18 +37565,6 @@ snapshots:
   flatted@2.0.2: {}
 
   flatted@3.3.2: {}
-
-  fluid-framework@1.4.0:
-    dependencies:
-      '@fluidframework/container-definitions': 1.4.0
-      '@fluidframework/container-loader': 1.4.0
-      '@fluidframework/driver-definitions': 1.4.0
-      '@fluidframework/fluid-static': 1.4.0
-      '@fluidframework/map': 1.4.0
-      '@fluidframework/sequence': 1.4.0
-    transitivePeerDependencies:
-      - debug
-      - supports-color
 
   fn.name@1.1.0: {}
 
