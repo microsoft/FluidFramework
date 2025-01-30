@@ -36,29 +36,29 @@ describe("Presence", () => {
 		 */
 		it("API use compiles", () => {});
 		describe("initializes with", () => {
+			let presence: IPresence;
+			beforeEach(() => {
+				presence = createPresenceManager(new MockEphemeralRuntime());
+			});
 			it("empty object", () => {
-				const presence = createPresenceManager(new MockEphemeralRuntime());
 				const states = presence.getStates(testWorkspaceName, {
 					obj: Latest({}),
 				});
 				assert.deepStrictEqual(states.props.obj.local, {});
 			});
 			it("object with properties", () => {
-				const presence = createPresenceManager(new MockEphemeralRuntime());
 				const states = presence.getStates(testWorkspaceName, {
 					obj: Latest({ x: 0, y: 0, z: 0 }),
 				});
 				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
 			});
 			it("empty array", () => {
-				const presence = createPresenceManager(new MockEphemeralRuntime());
 				const states = presence.getStates(testWorkspaceName, {
 					arr: Latest([]),
 				});
 				assert.deepStrictEqual(states.props.arr.local, []);
 			});
 			it("array with elements", () => {
-				const presence = createPresenceManager(new MockEphemeralRuntime());
 				const states = presence.getStates(testWorkspaceName, {
 					arr: Latest([1, 2, 3]),
 				});
