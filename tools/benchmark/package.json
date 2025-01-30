@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/benchmark",
-	"version": "0.51.0",
+	"version": "0.52.0",
 	"description": "Benchmarking tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
