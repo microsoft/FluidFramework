@@ -5,8 +5,11 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
+import { assert } from "node:console";
+
 import type { IRandom } from "@fluid-private/stochastic-test-utils";
 
+import type { IMergeTreeOp } from "../ops.js";
 import { InteriorSequencePlace, Side } from "../sequencePlace.js";
 
 import { annotateRange, type TestOperation } from "./mergeTreeOperationRunner.js";
@@ -46,6 +49,8 @@ export const posInField = (
 		endPos++;
 	}
 
+	assert(startPos >= 0 && endPos <= client.getLength(), "Field endpoints are out of bounds");
+
 	return { startPos, endPos };
 };
 
@@ -63,16 +68,28 @@ export const getFieldEndpoints = (
 	return startField ?? endField;
 };
 
+const generateFieldText = (client: TestClient, random: IRandom): string => {
+	const chunkLength = random.integer(1, 10);
+	return (client.longClientId!.codePointAt(0)! % 10).toString().repeat(chunkLength);
+};
+
+const insertFieldText: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	const text = generateFieldText(client, random);
+	return client.insertTextLocal(opStart, text);
+};
+
 export const insertField: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const chunkLength = random.integer(1, 10);
-	const numberText: string = (client.longClientId!.codePointAt(0)! % 10)
-		.toString()
-		.repeat(chunkLength);
+	const numberText = generateFieldText(client, random);
 	if (posInField(client, opStart) === undefined) {
 		return client.insertTextLocal(opStart, `{${numberText}}`);
 	}
@@ -89,16 +106,13 @@ export const obliterateField: TestOperation = (
 	let endISP: InteriorSequencePlace | undefined;
 	if (fieldEndpoints !== undefined) {
 		const { startPos, endPos } = fieldEndpoints;
-		if (endPos >= client.getLength()) {
-			endISP = { pos: client.getLength() - 1, side: Side.After };
-		}
 		// Obliterate text bewteen the separators, but avoid the case where the obliterate range is zero length.
 		if (endPos - startPos > 1) {
 			const op = client.obliterateRangeLocal(
 				{ pos: startPos + 1, side: Side.Before },
 				endISP ?? { pos: endPos - 1, side: Side.After },
 			);
-			insertField(client, startPos + 1, endPos, random);
+			insertFieldText(client, startPos + 1, endPos, random);
 			return op;
 		}
 	}
@@ -154,4 +168,34 @@ export const annotateWithField: TestOperation = (
 		end = fieldEndpoints.endPos + 1;
 	}
 	return annotateRange(client, start, end, random);
+};
+
+export const generateInsertWithField = (
+	client: TestClient,
+	random: IRandom,
+): IMergeTreeOp | undefined => {
+	const text = client.longClientId!.repeat(random.integer(1, 3));
+	let pos = random.integer(0, client.getLength());
+	const endpoints = posInField(client, pos);
+	if (endpoints !== undefined) {
+		pos = 0;
+	}
+	return client.insertTextLocal(pos, text);
+};
+
+export const generateUpdatedEndpoints = (
+	client: TestClient,
+	random: IRandom,
+): { start: number; end: number } => {
+	const len = client.getLength();
+	let start = random.integer(0, len - 1);
+	let end = random.integer(start + 1, len);
+	const fieldEndpoints = getFieldEndpoints(client, start, end);
+
+	if (fieldEndpoints !== undefined) {
+		const { startPos, endPos } = fieldEndpoints;
+		start = startPos;
+		end = endPos;
+	}
+	return { start, end };
 };
