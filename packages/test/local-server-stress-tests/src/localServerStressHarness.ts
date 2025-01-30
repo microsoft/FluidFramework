@@ -674,7 +674,7 @@ function mixinSynchronization<
 			);
 
 			if (connectedClients.length > 0) {
-				const readonlyChannel = state.clients[0];
+				const readonlyChannel = connectedClients[0];
 				for (const client of connectedClients) {
 					try {
 						await model.validateConsistency(readonlyChannel, client);
@@ -889,14 +889,16 @@ export class StressDataObject extends DataObject {
 		return this.runtime.attachState === AttachState.Attached;
 	}
 
-	public channels: Record<string, () => IChannel> = {
-		root: () => this.root,
+	public channels: Record<string, IChannel[]> = {
 	};
 
 	protected async preInitialize(): Promise<void> {
 		const root = await this.getDefaultStressDataObject();
 
 		this._globalObjects = root._globalObjects;
+
+		const channels = this.channels[this.root.attributes.type] ??=[];
+		channels.push(this.root);
 
 		setTimeout(() => {
 			this._globalObjects[this.id] = {
@@ -943,6 +945,8 @@ class DefaultStressDataObject extends StressDataObject {
 	}
 
 	protected async preInitialize(): Promise<void> {
+		const channels = this.channels[this.root.attributes.type] ??=[];
+		channels.push(this.root);
 		this._globalObjects[this.id] = {
 			type: "stressDataObject",
 			StressDataObject: this,

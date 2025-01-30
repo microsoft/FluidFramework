@@ -13788,7 +13788,7 @@ importers:
         version: link:../../loader/driver-utils
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.6.0
-        version: 5.6.0(eslint@8.55.0)(typescript@5.4.5)
+        version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../../runtime/id-compressor

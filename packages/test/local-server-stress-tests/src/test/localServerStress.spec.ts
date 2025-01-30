@@ -9,7 +9,6 @@ import {
 	type AsyncGenerator,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
-	done,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel } from "@fluid-private/test-dds-utils";
@@ -17,9 +16,9 @@ import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-inter
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
-import { model as MapFuzzModel } from "@fluidframework/map/internal/test";
+import { baseMapModel,baseDirModel } from "@fluidframework/map/internal/test";
 import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
+import { baseSharedStringModel,baseIntervalModel } from "@fluidframework/sequence/internal/test";
 
 import {
 	Client,
@@ -42,12 +41,14 @@ interface CreateDataStore {
 	type: "createDataStore";
 }
 
-interface MapModel {
-	type: "mapModel";
+interface DDSModelOp {
+	type: "DDSModelOp";
+	channelType:string;
+	channelId: string;
 	op: unknown;
 }
 
-type StressOperations = UploadBlob | AliasDataStore | CreateDataStore | MapModel;
+type StressOperations = UploadBlob | AliasDataStore | CreateDataStore | DDSModelOp;
 
 const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	aliasDataStore: async (state, op) => {
@@ -65,12 +66,16 @@ const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 			state.random.string(state.random.integer(1, 246)),
 		);
 	},
-	mapModel: async (state, op) => {
-		await MapFuzzModel.reducer(
+	DDSModelOp: async (state, op) => {
+		const baseModel = ddsModelMap.get(op.channelType);
+		assert(baseModel !== undefined, "must have model");
+		const channel = state.client.entryPoint.channels[op.channelType].find((v)=>v.id===op.channelId);
+		assert(channel !== undefined, "must have channel");
+		await baseModel.reducer(
 			{
 				clients: makeUnreachableCodePathProxy("clients"),
 				client: {
-					channel: state.client.entryPoint.channels.root() as ISharedMap,
+					channel,
 					containerRuntime: makeUnreachableCodePathProxy("containerRuntime"),
 					dataStoreRuntime: makeUnreachableCodePathProxy("dataStoreRuntime"),
 				},
@@ -108,12 +113,18 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 		} satisfies AliasDataStore;
 	};
 
-	let mapGenerator = MapFuzzModel.generatorFactory();
-	const mapModel: AsyncGenerator<MapModel, LocalServerStressState> = async (state) => {
-		const op = await mapGenerator({
+	const DDSModelOp: AsyncGenerator<DDSModelOp, LocalServerStressState> = async (state) => {
+
+		const channelType = state.random.pick(Object.keys(state.client.entryPoint.channels));
+		const channel= state.random.pick(state.client.entryPoint.channels[channelType]);
+		const model = ddsModelMap.get(channelType)
+		const generator = model?.generatorFactory();
+		assert(generator !== undefined, "must have model");
+
+		const op = await generator({
 			clients: makeUnreachableCodePathProxy("clients"),
 			client: {
-				channel: state.client.entryPoint.channels.root() as ISharedMap,
+				channel,
 				containerRuntime: makeUnreachableCodePathProxy("containerRuntime"),
 				dataStoreRuntime: makeUnreachableCodePathProxy("dataStoreRuntime"),
 			},
@@ -143,15 +154,12 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			},
 		});
 
-		if (op === done) {
-			mapGenerator = MapFuzzModel.generatorFactory();
-			return mapModel(state);
-		}
-
 		return {
-			type: "mapModel",
+			type: "DDSModelOp",
+			channelType,
+			channelId: channel.id,
 			op,
-		} satisfies MapModel;
+		} satisfies DDSModelOp;
 	};
 
 	const syncGenerator = createWeightedAsyncGenerator<StressOperations, LocalServerStressState>(
@@ -166,7 +174,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			],
 			[{ type: "createDataStore" }, 1],
 			[{ type: "uploadBlob" }, 1],
-			[mapModel, 2],
+			[DDSModelOp, 2],
 		],
 	);
 
@@ -175,8 +183,11 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 export const saveFailures = { directory: path.join(_dirname, "../../results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../../results") };
 
-const ddsModelMap = new Map<string, DDSFuzzModel<IChannelFactory, any>>();
-ddsModelMap.set(MapFuzzModel.factory.type, MapFuzzModel);
+const ddsModelMap = new Map<string, Omit<DDSFuzzModel<IChannelFactory, any>,"workloadName">>();
+ddsModelMap.set(baseMapModel.factory.type, baseMapModel);
+ddsModelMap.set(baseDirModel.factory.type, baseDirModel);
+ddsModelMap.set(baseSharedStringModel.factory.type, baseSharedStringModel);
+ddsModelMap.set(baseIntervalModel.factory.type, baseIntervalModel);
 
 const validateConsistency = async (clientA: Client, clientB: Client) => {
 	const buildChannelMap = (client: Client) => {
@@ -185,8 +196,7 @@ const validateConsistency = async (clientA: Client, clientB: Client) => {
 			v.type === "stressDataObject" ? v : undefined,
 		)) {
 			if (value?.StressDataObject.attached) {
-				for (const channelF of Object.values(value.StressDataObject.channels)) {
-					const channel = channelF();
+				for (const channel of Object.values(value.StressDataObject.channels).flatMap<IChannel>((ca)=>ca)) {
 					if (channel.isAttached()) {
 						channelMap.set(`${value.StressDataObject.id}/${channel.id}`, channel);
 					}

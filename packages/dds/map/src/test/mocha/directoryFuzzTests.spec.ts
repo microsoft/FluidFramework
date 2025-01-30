@@ -18,7 +18,7 @@ import { DirectoryFactory } from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
-import { baseDirModel, dirDefaultOptions } from "./fuzzUtils.js";
+import { baseDirModel, dirDefaultOptions, makeDirOperationGenerator, makeDirReducer, type DirOperation } from "./fuzzUtils.js";
 
 describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 
