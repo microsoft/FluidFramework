@@ -72,9 +72,9 @@ export function getOrCreateRecord<K extends string | number | symbol, V>(
 }
 
 /**
- * Shallow clone an object or array.
+ * Shallow clone an object.
  *
- * @param value - The object or array to clone
+ * @param value - The object to clone
  * @returns A shallow clone of the input value
  */
 export function shallowClone<T>(value: T): T {
