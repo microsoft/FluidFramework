@@ -15,7 +15,7 @@ import type { FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
-
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 export class StressDataObject extends DataObject {
 	get StressDataObject() {
@@ -63,15 +63,14 @@ export class StressDataObject extends DataObject {
 		return this.runtime.attachState === AttachState.Attached;
 	}
 
-	public channels: Record<string, IChannel[]> = {
-	};
+	public channels: Record<string, IChannel[]> = {};
 
 	protected async preInitialize(): Promise<void> {
 		const root = await this.getDefaultStressDataObject();
 
 		this._globalObjects = root._globalObjects;
 
-		const channels = this.channels[this.root.attributes.type] ??=[];
+		const channels = (this.channels[this.root.attributes.type] ??= []);
 		channels.push(this.root);
 
 		setTimeout(() => {
@@ -83,19 +82,21 @@ export class StressDataObject extends DataObject {
 		}, 0);
 	}
 
-	public uploadBlob(id: string, contents: string) {
-		void this.runtime
-			.uploadBlob(stringToBuffer(contents, "utf-8"))
-			.then(
-				(blobHandle) => (this._globalObjects[id] = { type: "newBlob", handle: blobHandle }),
-			);
+	public uploadBlob(contents: string) {
+		void this.runtime.uploadBlob(stringToBuffer(contents, "utf-8")).then(
+			(blobHandle) =>
+				(this._globalObjects[toFluidHandleInternal(blobHandle).absolutePath] = {
+					type: "newBlob",
+					handle: blobHandle,
+				}),
+		);
 	}
 
-	public createDataStore(id: string) {
+	public createDataStore() {
 		void this.context.containerRuntime
 			.createDataStore(stressDataObjectFactory.type)
 			.then(async (dataStore) => {
-				this._globalObjects[id] = {
+				this._globalObjects[dataStore.entryPoint.absolutePath] = {
 					type: "newDatastore",
 					dataStore,
 					handle: dataStore.entryPoint,
@@ -119,7 +120,7 @@ class DefaultStressDataObject extends StressDataObject {
 	}
 
 	protected async preInitialize(): Promise<void> {
-		const channels = this.channels[this.root.attributes.type] ??=[];
+		const channels = (this.channels[this.root.attributes.type] ??= []);
 		channels.push(this.root);
 		this._globalObjects[this.id] = {
 			type: "stressDataObject",
