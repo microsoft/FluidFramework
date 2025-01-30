@@ -40,7 +40,7 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
-import type {  FluidObject } from "@fluidframework/core-interfaces";
+import type { FluidObject } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import {
 	createLocalResolverCreateNewRequest,
@@ -55,7 +55,7 @@ import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
 import { FuzzTestMinimizer } from "./minification.js";
 import type { MinimizationTransform } from "./minification.js";
-import {runtimeFactory, StressDataObject} from "./stressDataObject.js"
+import { createRuntimeFactory, StressDataObject } from "./stressDataObject.js";
 
 const isOperationType = <O extends BaseOperation>(
 	type: O["type"],
@@ -837,7 +837,6 @@ function makeFriendlyClientId(random: IRandom, index: number): string {
 	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
 }
 
-
 /**
  * Runs the provided DDS fuzz model. All functionality is already assumed to be mixed in.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -856,7 +855,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	const codeDetails: IFluidCodeDetails = {
 		package: "local-server-stress-tests",
 	};
-	const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
+	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
 	const initialClient = await createDetachedClient(
 		localDeltaConnectionServer,
 		codeLoader,

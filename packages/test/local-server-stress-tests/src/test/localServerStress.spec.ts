@@ -16,6 +16,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
 
 import {
+	ddsModelMap,
 	DDSModelOpGenerator,
 	DDSModelOpReducer,
 	validateConsistencyOfAllDDS,
@@ -40,7 +41,17 @@ interface CreateDataStore {
 	type: "createDataStore";
 }
 
-type StressOperations = UploadBlob | AliasDataStore | CreateDataStore | DDSModelOp;
+interface CreateChannel {
+	type: "createChannel";
+	channelType: string;
+}
+
+type StressOperations =
+	| UploadBlob
+	| AliasDataStore
+	| CreateDataStore
+	| CreateChannel
+	| DDSModelOp;
 
 const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	aliasDataStore: async (state, op) => {
@@ -51,6 +62,9 @@ const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	},
 	createDataStore: async (state) => {
 		state.client.entryPoint.createDataStore();
+	},
+	createChannel: async (state, op) => {
+		state.client.entryPoint.createChannel(op.channelType);
 	},
 	uploadBlob: async (state) => {
 		state.client.entryPoint.uploadBlob(state.random.string(state.random.integer(1, 246)));
@@ -89,6 +103,13 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			],
 			[{ type: "createDataStore" }, 1],
 			[{ type: "uploadBlob" }, 1],
+			[
+				async (state) => ({
+					type: "createChannel",
+					channelType: state.random.pick([...ddsModelMap.keys()]),
+				}),
+				1,
+			],
 			[DDSModelOpGenerator, 2],
 		],
 	);

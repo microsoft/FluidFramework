@@ -113,11 +113,14 @@ const covertLocalServerStateToDdsState = (
 			...state.random,
 			handle: () => {
 				const realHandle = toFluidHandleInternal(
-					state.random.pick(
-						Object.values(state.client.entryPoint.globalObjects)
+					state.random.pick([
+						...Object.values(state.client.entryPoint.channels)
+							.flatMap((ca) => ca)
+							.map((c) => c.handle),
+						...Object.values(state.client.entryPoint.globalObjects)
 							.map((v) => v.handle)
 							.filter((v): v is IFluidHandle => v !== undefined),
-					),
+					]),
 				);
 				return {
 					absolutePath: realHandle.absolutePath,

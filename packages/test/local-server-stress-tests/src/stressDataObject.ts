@@ -12,12 +12,24 @@ import {
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
+import { ddsModelMap } from "./ddsModels";
+
 export class StressDataObject extends DataObject {
+	public static readonly factory = new Lazy(
+		() =>
+			new DataObjectFactory(
+				"StressDataObject",
+				StressDataObject,
+				[...ddsModelMap.values()].map((v) => v.factory),
+				{},
+			),
+	);
+
 	get StressDataObject() {
 		return this;
 	}
@@ -92,9 +104,14 @@ export class StressDataObject extends DataObject {
 		);
 	}
 
+	public createChannel(type: string) {
+		const channels = (this.channels[type] ??= []);
+		channels.push(this.runtime.createChannel(undefined, type));
+	}
+
 	public createDataStore() {
 		void this.context.containerRuntime
-			.createDataStore(stressDataObjectFactory.type)
+			.createDataStore(StressDataObject.factory.value.type)
 			.then(async (dataStore) => {
 				this._globalObjects[dataStore.entryPoint.absolutePath] = {
 					type: "newDatastore",
@@ -104,13 +121,6 @@ export class StressDataObject extends DataObject {
 			});
 	}
 }
-
-const stressDataObjectFactory = new DataObjectFactory(
-	"StressDataObject",
-	StressDataObject,
-	undefined,
-	{},
-);
 
 class DefaultStressDataObject extends StressDataObject {
 	public static readonly alias = "default";
@@ -131,41 +141,49 @@ class DefaultStressDataObject extends StressDataObject {
 	}
 }
 
-export const defaultStressDataObjectFactory = new DataObjectFactory(
-	"DefaultStressDataObject",
-	DefaultStressDataObject,
-	undefined,
-	{},
-);
+export const createRuntimeFactory = (): IRuntimeFactory => {
+	const defaultStressDataObjectFactory = new DataObjectFactory(
+		"DefaultStressDataObject",
+		DefaultStressDataObject,
+		[...ddsModelMap.values()].map((v) => v.factory),
+		{},
+	);
 
-export const runtimeFactory: IRuntimeFactory = {
-	get IRuntimeFactory() {
-		return this;
-	},
-	instantiateRuntime: async (context, existing) => {
-		return loadContainerRuntime({
-			context,
-			existing,
-			registryEntries: [
-				[defaultStressDataObjectFactory.type, Promise.resolve(defaultStressDataObjectFactory)],
-				[stressDataObjectFactory.type, Promise.resolve(stressDataObjectFactory)],
-			],
-			provideEntryPoint: async (rt) => {
-				const maybeDefault = await rt.getAliasedDataStoreEntryPoint(
-					DefaultStressDataObject.alias,
-				);
-				if (maybeDefault === undefined) {
-					const ds = await rt.createDataStore(defaultStressDataObjectFactory.type);
-					await ds.trySetAlias(DefaultStressDataObject.alias);
-				}
-				const aliasedDefault = await rt.getAliasedDataStoreEntryPoint(
-					DefaultStressDataObject.alias,
-				);
-				assert(aliasedDefault !== undefined, "default must exist");
+	return {
+		get IRuntimeFactory() {
+			return this;
+		},
+		instantiateRuntime: async (context, existing) => {
+			return loadContainerRuntime({
+				context,
+				existing,
+				registryEntries: [
+					[
+						defaultStressDataObjectFactory.type,
+						Promise.resolve(defaultStressDataObjectFactory),
+					],
+					[
+						StressDataObject.factory.value.type,
+						Promise.resolve(StressDataObject.factory.value),
+					],
+				],
+				provideEntryPoint: async (rt) => {
+					const maybeDefault = await rt.getAliasedDataStoreEntryPoint(
+						DefaultStressDataObject.alias,
+					);
+					if (maybeDefault === undefined) {
+						const ds = await rt.createDataStore(defaultStressDataObjectFactory.type);
+						await ds.trySetAlias(DefaultStressDataObject.alias);
+					}
+					const aliasedDefault = await rt.getAliasedDataStoreEntryPoint(
+						DefaultStressDataObject.alias,
+					);
+					assert(aliasedDefault !== undefined, "default must exist");
 
-				const maybe: FluidObject<StressDataObject> | undefined = await aliasedDefault.get();
-				return maybe;
-			},
-		});
-	},
+					const maybe: FluidObject<StressDataObject> | undefined = await aliasedDefault.get();
+					return maybe;
+				},
+			});
+		},
+	};
 };
