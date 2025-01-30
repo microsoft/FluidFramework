@@ -11,15 +11,12 @@ import {
 	createWeightedAsyncGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzModel } from "@fluid-private/test-dds-utils";
-import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
+import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import { baseMapModel,baseDirModel } from "@fluidframework/map/internal/test";
+import type { IChannel  } from "@fluidframework/datastore-definitions/internal";
 import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
-import { baseSharedStringModel,baseIntervalModel } from "@fluidframework/sequence/internal/test";
 
+import {ddsModelMap, DDSModelOpGenerator, type DDSModelOp} from "../ddsModels.js"
 import {
 	Client,
 	createLocalServerStressSuite,
@@ -39,13 +36,6 @@ interface AliasDataStore {
 }
 interface CreateDataStore {
 	type: "createDataStore";
-}
-
-interface DDSModelOp {
-	type: "DDSModelOp";
-	channelType:string;
-	channelId: string;
-	op: unknown;
 }
 
 type StressOperations = UploadBlob | AliasDataStore | CreateDataStore | DDSModelOp;
@@ -113,54 +103,6 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 		} satisfies AliasDataStore;
 	};
 
-	const DDSModelOp: AsyncGenerator<DDSModelOp, LocalServerStressState> = async (state) => {
-
-		const channelType = state.random.pick(Object.keys(state.client.entryPoint.channels));
-		const channel= state.random.pick(state.client.entryPoint.channels[channelType]);
-		const model = ddsModelMap.get(channelType)
-		const generator = model?.generatorFactory();
-		assert(generator !== undefined, "must have model");
-
-		const op = await generator({
-			clients: makeUnreachableCodePathProxy("clients"),
-			client: {
-				channel,
-				containerRuntime: makeUnreachableCodePathProxy("containerRuntime"),
-				dataStoreRuntime: makeUnreachableCodePathProxy("dataStoreRuntime"),
-			},
-			containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
-			isDetached: state.isDetached,
-			summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
-			random: {
-				...state.random,
-				handle: () => {
-					const realHandle = state.random.pick(
-						Object.values(state.client.entryPoint.globalObjects)
-							.map((v) => v.handle)
-							.filter((v): v is IFluidHandle => v !== undefined),
-					);
-					return {
-						get [fluidHandleSymbol]() {
-							return realHandle[fluidHandleSymbol];
-						},
-						async get() {
-							return realHandle.get();
-						},
-						get isAttached() {
-							return realHandle.isAttached;
-						},
-					};
-				},
-			},
-		});
-
-		return {
-			type: "DDSModelOp",
-			channelType,
-			channelId: channel.id,
-			op,
-		} satisfies DDSModelOp;
-	};
 
 	const syncGenerator = createWeightedAsyncGenerator<StressOperations, LocalServerStressState>(
 		[
@@ -174,7 +116,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			],
 			[{ type: "createDataStore" }, 1],
 			[{ type: "uploadBlob" }, 1],
-			[DDSModelOp, 2],
+			[DDSModelOpGenerator, 2],
 		],
 	);
 
@@ -183,11 +125,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 export const saveFailures = { directory: path.join(_dirname, "../../results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../../results") };
 
-const ddsModelMap = new Map<string, Omit<DDSFuzzModel<IChannelFactory, any>,"workloadName">>();
-ddsModelMap.set(baseMapModel.factory.type, baseMapModel);
-ddsModelMap.set(baseDirModel.factory.type, baseDirModel);
-ddsModelMap.set(baseSharedStringModel.factory.type, baseSharedStringModel);
-ddsModelMap.set(baseIntervalModel.factory.type, baseIntervalModel);
+
 
 const validateConsistency = async (clientA: Client, clientB: Client) => {
 	const buildChannelMap = (client: Client) => {
@@ -232,7 +170,7 @@ const validateConsistency = async (clientA: Client, clientB: Client) => {
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
-		generatorFactory: () => takeAsync(100, makeGenerator()),
+		generatorFactory: () => takeAsync(1000, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency,
 	};
