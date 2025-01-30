@@ -356,8 +356,10 @@ async function visualizeInternalNodeBySchema(
 /**
  * Creates a visual representation of a SharedTree based on its schema.
  * @param tree - The {@link VerboseTree} to visualize
- * @param treeDefinitions - The schema that defines the structure and types of the tree
- * @param allowedTypes - String representing the allowed types for this node
+ * @param treeDefinitions - Map containing all schema definitions for the entire tree structure. Each definition
+ * describes the shape and constraints of a particular node type.
+ * @param allowedTypes - Set of type names that are valid for this specific node position in the tree. This is a
+ * subset of the types defined in treeDefinitions.
  * @param isRequired - Whether this field is required in its parent object schema.
  * Only meaningful for direct children of object nodes.
  * Undefined for array/map elements since they are always required within their parent.
