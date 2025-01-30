@@ -565,19 +565,43 @@ The API has yet to be designed, but will conform as much as possible to existing
 
 ## Appendix A: Shortcut Matrix
 
-This table enumerates the kinds of [changes](#the-evolution-of-schema) to a SharedTree application schema that developers are expected to make and the [shortcuts](#schema-change-shortcuts) that can be used to accomplish them without resorting to a [staged rollout migration](#migration).
+This table enumerates the kinds of [changes](#the-evolution-of-schema) to a SharedTree application's view schema that developers might make and the [shortcuts](#schema-change-shortcuts) that can be used to accomplish them without resorting to a [staged rollout migration](#migration).
 For each, it lists in what ways the change is compatible with clients using the old or the new schema and whether or not SharedTree currently exposes an API for the shortcut.
 
-| View Schema Change                   | Old Client (Read) | Old Client (Write) | New Client (Read) | New Client (Write) | Does the stored schema have to change? | _If_ the stored schema is changed, might the data have to change too? | SharedTree Shortcut API Available |
-|--------------------------------------|-|-|-|-|-|-|-|
-| Add Allowed Type                     | ⚠️ Clients must _preemptively_ include "Unknown" type in the view schema | ✅ | ✅ | ✅ | 💾 Yes | No | ⌛ |
-| Remove Allowed Type                  | ✅ | ✅ | ✔ Include "Unknown" type in the view schema | ✅ | No | ❗ Yes | ⌛ |
-| Change Node Type ID                  | ✅ | ✅ | ✔ Clients provide alias in the view schema | ✔ Clients provide alias in the view schema | No | ❗ Yes | ⌛ |
-| Rename Field Key                     | ✅ | ✅ | ✔ Clients provide alias in the view schema | ✔ Clients provide alias in the view schema | No | ❗ Yes | ✅ |
-| Add Non-Required Field               | ⚠️ Clients must _preemptively_ enable flag in the view schema | ✅ | ✅ | ✅ | 💾 Yes | No | ✅ |
-| Remove Non-Required Field            | ✅ | ✅ | ✔ Clients must enable flag in the view schema | ✅ | No | ❗ Yes | ✅ |
-| Add Required Field                   | ✅ | ❌ Requires staged rollout | ✅ | ✅ | 💾 Yes | ❗ Yes | ❌ |
-| Remove Required Field                | ❌ Requires staged rollout | ✅ | ✅ | ✅ | 💾 Yes | ❗ Yes | ❌ |
-| Map Node <-> "Optional" Object Node† | ✅ | ✅ | ✅ | ✅ | No | No | ⌛ |
+The changes are ordered into three categories:
 
-> †For an object node to be converted to a map node (or visa versa) without a staged rollout migration, every field of the object must be an optional field.
+* The first (🟩) are changes which don't required any change to the stored schema.
+  The translation between the stored schema and the new desired view schema can be accomplished completely by the new client view schema code at runtime.
+  These are the easiest kinds of changes to make because the developer does not need to do anything to ensure compatibility other than use the proper migration API on the view schema in the new version of the application.
+* The second (🟡) are changes which do require a change to the stored schema, but which no _not_ require any changes to the application _data_ in the document.
+  These changes might require the previous version of the schema to be forwards-compatible with the new version, which requires planning ahead.
+* The third (🔶) are changes which require a change to the stored schema and also a change to the application data.
+  This requires a mechanism for migrating the data from one format to another at the same time that the stored schema is updated.
+  Currently, this capability is neither designed nor planned for SharedTree.
+
+Additional symbols used in the table below:
+
+* ✅ A green check mark indicates that the operation can be performed by the client
+* ✔ A gray check mark means the operation can be performed by the client by using a shortcut API.
+* ⚠️ A warning triangle indicates that the operation can be performed via a shortcut API, but must be planned for in advance (by being forward-compatible).
+* ⌛ A timer means a shortcut API is possible and/or planned, but not yet available
+
+|| View Schema Change | Stored Schema Change Required | Stored Schema Change ⇒ Possible Need to Migrate Data | Read Compatibility | Write Compatibility | SharedTree Shortcut API Available |
+|-|-|-|-|-|-|-|
+| 🟩 | Map Node → Object Node*              | No | No | ✔ **New clients** must enable `allowUnknownOptionalFields` in the view  | ✅ | ⌛ |
+| 🟩 | Rename Node Type†                    | No | ❕ Yes | ✔ **New clients** provide alias in the view schema | ✔ **New clients** provide alias in the view schema | ⌛ |
+| 🟩 | Rename Field Key                     | No | ❕ Yes | ✔ **New clients** provide alias in the view schema | ✔ **New clients** provide alias in the view schema | ✅ |
+| 🟩 | Remove Allowed Type                  | No | ❕ Yes | ✔ **New clients** mark the type as "excluded" in the view schema | ✅ | ⌛ |
+| 🟩 | Remove Non-Required Field            | No | ❕ Yes | ✔ **New clients** must mark the field as "excluded" in the view schema | ✅ | ⌛ |
+| 🟡 | Object Node† → Map Node              | 🔄 Yes | No | ✅ | ✅ | ⌛ |
+| 🟡 | Add Allowed Type                     | 🔄 Yes | No | ⚠️ **Old clients** must _preemptively_ include "Unknown" type in the view schema | ✅ | ⌛ |
+| 🟡 | Add Non-Required Field               | 🔄 Yes | No | ⚠️ **Old clients** must _preemptively_ enable `allowUnknownOptionalFields` in the view schema | ✅ | ✅ |
+| 🔶 | Add Required Field‡                  | 🔄 Yes | ❗ Yes | ✅ | ❌ | ❌ |
+| 🔶 | Remove Required Field‡               | 🔄 Yes | ❗ Yes | ❌ | ❌ Old client cannot write to field | ❌ |
+
+> \* For an object node to be converted to a map node (or visa versa), every field of the object must be an optional field.
+  Furthermore, the types allowed as values in the map must be the union of all types allowed in the fields of the object.
+
+> † This refers to renaming the schema type of a node, as opposed to simply renaming its name in the source code (e.g. the Typescript class name).
+
+> ‡ Adding or removing a required field can be accomplished less directly by defining a new type of node with the desired additions/removals and then adding that as a new allowed type.
