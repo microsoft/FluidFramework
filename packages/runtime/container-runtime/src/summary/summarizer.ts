@@ -172,6 +172,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 		// Wait for either external signal to cancel, or loss of connectivity.
 		const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);
+		// eslint-disable-next-line no-void
 		void stopP.then((reason) => {
 			this.logger.sendTelemetryEvent({
 				eventName: "StoppingSummarizer",

@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
@@ -16,6 +13,7 @@ module.exports = {
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// TODO: fix violations and remove overrides
+		"require-atomic-updates": "warn",
 		"unicorn/no-array-reduce": "off",
 
 		// False positives on non-array `push` methods.
