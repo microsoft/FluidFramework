@@ -9,7 +9,7 @@ import { Command, Flags, Interfaces } from "@oclif/core";
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 
-import { IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
+import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
@@ -43,10 +44,17 @@ export const findPackageOrReleaseGroup = (
  * Creates a CLI argument for release group names. It's a factory function so that commands can override the
  * properties more easily when using the argument.
  */
-export const releaseGroupArg = Args.custom({
+export const releaseGroupArg = Args.custom<ReleaseGroupName>({
 	name: "release_group",
 	required: true,
 	description: "The name of a release group.",
+	parse: async (input) => {
+		const parsed = input;
+		if (parsed === null) {
+			throw new Error(`Invalid semver: ${input}`);
+		}
+		return parsed as ReleaseGroupName;
+	},
 });
 
 /**

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
+
 import { releaseGroupArg, semverArg } from "../../../args.js";
 import { BaseCommandWithBuildProject, getVersionsFromTags } from "../../../library/index.js";
 
@@ -22,12 +22,12 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
 
 	static readonly args = {
+		release_group: releaseGroupArg({ required: true }),
 		version: semverArg({
 			required: true,
 			description:
 				"The version to check. When running in CI, this value corresponds to the pipeline trigger branch.",
 		}),
-		release_group: releaseGroupArg({ required: true }),
 	} as const;
 
 	static readonly flags = {
@@ -47,10 +47,9 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 
 	public async run(): Promise<void> {
 		const { args, flags } = this;
+
 		const buildProject = this.getBuildProject(flags.searchPath);
-		const releaseGroup = buildProject.releaseGroups.get(
-			args.release_group as ReleaseGroupName,
-		);
+		const releaseGroup = buildProject.releaseGroups.get(args.release_group);
 
 		if (releaseGroup === undefined) {
 			this.error(`Package not found: ${args.release_group}`);
@@ -64,7 +63,7 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 			this.error(`No versions found for ${releaseGroup.name}`);
 		}
 
-		// Filter out pre-release versions
+		// Filter out non-internal version schemes
 		const stableVersions = versions.filter((v) => {
 			return !isInternalVersionScheme(v);
 		});

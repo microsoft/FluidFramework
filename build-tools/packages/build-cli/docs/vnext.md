@@ -3,19 +3,19 @@
 
 Vnext commands are new implementations of standard flub commands using new infrastructure.
 
-* [`flub vnext check latestVersions VERSION RELEASE_GROUP`](#flub-vnext-check-latestversions-version-release_group)
+* [`flub vnext check latestVersions RELEASE_GROUP VERSION`](#flub-vnext-check-latestversions-release_group-version)
 
-## `flub vnext check latestVersions VERSION RELEASE_GROUP`
+## `flub vnext check latestVersions RELEASE_GROUP VERSION`
 
 Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
 
 ```
 USAGE
-  $ flub vnext check latestVersions VERSION RELEASE_GROUP [-v | --quiet]
+  $ flub vnext check latestVersions RELEASE_GROUP VERSION [-v | --quiet]
 
 ARGUMENTS
-  VERSION        The version to check. When running in CI, this value corresponds to the pipeline trigger branch.
   RELEASE_GROUP  The name of a release group.
+  VERSION        The version to check. When running in CI, this value corresponds to the pipeline trigger branch.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
