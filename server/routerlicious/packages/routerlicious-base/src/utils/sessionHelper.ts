@@ -297,7 +297,7 @@ export async function getSession(
 					throw new NetworkError(
 						404,
 						"Document is deleted and cannot be accessed",
-						true /* canRetry */,
+						false /* canRetry, we should not retry if DB already not in DB! */,
 					);
 				}
 				return result;
