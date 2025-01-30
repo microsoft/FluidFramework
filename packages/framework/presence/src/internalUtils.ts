@@ -70,16 +70,3 @@ export function getOrCreateRecord<K extends string | number | symbol, V>(
 	}
 	return record[key];
 }
-
-/**
- * Shallow clone an object.
- *
- * @param value - The object to clone
- * @returns A shallow clone of the input value
- */
-export function shallowClone<T>(value: T): T {
-	if (Array.isArray(value)) {
-		return [...value] as T;
-	}
-	return { ...value };
-}
