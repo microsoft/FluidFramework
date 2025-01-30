@@ -31,7 +31,9 @@ describe("createChildDataStore", () => {
 	};
 	const testContext = class TestContext extends FluidDataStoreContext {
 		protected pkg = ["ParentDataStore"];
-		public registry: IFluidDataStoreRegistry | undefined;
+		public setRegistry(r: IFluidDataStoreRegistry | undefined): void {
+			this.registry = r;
+		}
 		public getInitialSnapshotDetails = throwNYI;
 		public setAttachState = throwNYI;
 		public getAttachSummary = throwNYI;
@@ -98,7 +100,7 @@ describe("createChildDataStore", () => {
 			false,
 			throwNYI,
 		);
-		context.registry = registry;
+		context.setRegistry(registry);
 		return context;
 	};
 
