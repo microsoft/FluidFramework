@@ -59,6 +59,7 @@ module.exports = {
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
 		"unicorn/no-lonely-if": "error",
+		"unicorn/no-negated-condition": "error",
 		"unicorn/no-new-array": "error",
 		"unicorn/no-null": "error",
 		"unicorn/no-zero-fractions": "error",
@@ -70,9 +71,6 @@ module.exports = {
 		"unicorn/prefer-string-slice": "error",
 		"unicorn/switch-case-braces": "error",
 		"unicorn/throw-new-error": "error",
-
-		// TODO:
-		// unicorn/no-negated-condition
 
 		// #endregion
 	},
