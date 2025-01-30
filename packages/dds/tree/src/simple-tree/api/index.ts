@@ -84,6 +84,11 @@ export type {
 	AllowedTypesUnsafe,
 	TreeNodeSchemaNonClassUnsafe,
 	InsertableTreeNodeFromAllowedTypesUnsafe,
+	GetTypesUnsafe,
+	DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
+	StrictTypesUnsafe,
+	AssignableTreeFieldFromImplicitFieldUnsafe,
 } from "./typesUnsafe.js";
 
 export {

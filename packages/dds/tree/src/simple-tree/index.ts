@@ -124,6 +124,11 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
+	type GetTypesUnsafe,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe,
+	type DefaultTreeNodeFromImplicitAllowedTypesUnsafe,
+	type StrictTypesUnsafe,
+	type AssignableTreeFieldFromImplicitFieldUnsafe,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -158,6 +163,16 @@ export {
 	type ReadSchema,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	customizeSchemaTyping,
+	type DefaultTreeNodeFromImplicitAllowedTypes,
+	type Customizer,
+	type GetTypes,
+	type StrictTypes,
+	type CustomTypes,
+	type CustomizedSchemaTyping,
+	CustomizedTyping,
+	type DefaultInsertableTreeNodeFromImplicitAllowedTypes,
+	type SchemaUnionToIntersection,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,
@@ -172,6 +187,8 @@ export {
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	type AssignableTreeFieldFromImplicitField,
+	type ApplyKindAssignment,
 	type TreeObjectNode,
 	setField,
 	createUnknownOptionalFieldPolicy,
