@@ -244,7 +244,15 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Variable_performance": {
+				"backCompat": false
+			},
+			"TypeAlias_IsomorphicPerformance": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
