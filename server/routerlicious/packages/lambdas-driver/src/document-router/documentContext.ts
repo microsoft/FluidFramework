@@ -59,7 +59,8 @@ export class DocumentContext extends EventEmitter implements IContext {
 	}
 
 	/**
-	 * TODO
+	 * Sets the state to pause, i.e. resets the headUpdatedAfterResume flag.
+	 * This allows moving backwards during resume even if the document didnt trigger the pause, but some other document in the same kafka partition did.
 	 */
 	public setStateToPause() {
 		this.headUpdatedAfterResume = false;
