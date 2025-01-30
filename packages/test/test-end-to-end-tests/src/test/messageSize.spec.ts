@@ -310,54 +310,54 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 				].forEach((testConfig) => {
 					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					it(
-					"Large payloads pass when compression enabled, " +
-						"compressed content is over max op size and chunking enabled. " +
-						`${testConfig.messagesInBatch.toLocaleString()} messages of ${testConfig.messageSize.toLocaleString()} bytes == ` +
-						`${((testConfig.messagesInBatch * testConfig.messageSize) / bytesPerKB).toFixed(
-							2,
-						)} KB`,
-					async function () {
-						// This test is flaky on tinylicious (1500 messages being sent sometimes slows the system down)
-						if (provider.driver.type === "tinylicious") {
-							this.skip();
-						}
-						await setupContainers({
-							...containerConfig,
-							runtimeOptions: {
-								...containerConfig.runtimeOptions,
-								compressionOptions: {
-									minimumBatchSizeInBytes: 50 * bytesPerKB, // 50 KB
-									compressionAlgorithm: CompressionAlgorithms.lz4,
+						"Large payloads pass when compression enabled, " +
+							"compressed content is over max op size and chunking enabled. " +
+							`${testConfig.messagesInBatch.toLocaleString()} messages of ${testConfig.messageSize.toLocaleString()} bytes == ` +
+							`${((testConfig.messagesInBatch * testConfig.messageSize) / bytesPerKB).toFixed(
+								2,
+							)} KB`,
+						async function () {
+							// This test is flaky on tinylicious (1500 messages being sent sometimes slows the system down)
+							if (provider.driver.type === "tinylicious") {
+								this.skip();
+							}
+							await setupContainers({
+								...containerConfig,
+								runtimeOptions: {
+									...containerConfig.runtimeOptions,
+									compressionOptions: {
+										minimumBatchSizeInBytes: 50 * bytesPerKB, // 50 KB
+										compressionAlgorithm: CompressionAlgorithms.lz4,
+									},
+									chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
 								},
-								chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
-							},
-						});
+							});
 
-						const generated: string[] = [];
-						for (let i = 0; i < testConfig.messagesInBatch; i++) {
-							// Ensure that the contents don't get compressed properly, by
-							// generating a random string for each map value instead of repeating it
-							const content = generateRandomStringOfSize(testConfig.messageSize);
-							generated.push(content);
-							localMap.set(`key${i}`, content);
-						}
+							const generated: string[] = [];
+							for (let i = 0; i < testConfig.messagesInBatch; i++) {
+								// Ensure that the contents don't get compressed properly, by
+								// generating a random string for each map value instead of repeating it
+								const content = generateRandomStringOfSize(testConfig.messageSize);
+								generated.push(content);
+								localMap.set(`key${i}`, content);
+							}
 
-						await provider.ensureSynchronized();
+							await provider.ensureSynchronized();
 
-						for (let i = 0; i < testConfig.messagesInBatch; i++) {
-							assert.strictEqual(
-								localMap.get(`key${i}`),
-								generated[i],
-								`Wrong value for key${i} in local map`,
-							);
-							assert.strictEqual(
-								remoteMap.get(`key${i}`),
-								generated[i],
-								`Wrong value for key${i} in remote map`,
-							);
-						}
-					},
-				);
+							for (let i = 0; i < testConfig.messagesInBatch; i++) {
+								assert.strictEqual(
+									localMap.get(`key${i}`),
+									generated[i],
+									`Wrong value for key${i} in local map`,
+								);
+								assert.strictEqual(
+									remoteMap.get(`key${i}`),
+									generated[i],
+									`Wrong value for key${i} in remote map`,
+								);
+							}
+						},
+					);
 				}));
 
 			itExpects(
