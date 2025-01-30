@@ -24,7 +24,7 @@ describe("Throttler", () => {
 	afterEach(() => clock.reset());
 
 	function assertAscending(array: readonly number[]): void {
-		if (array.length < 1) {
+		if (array.length === 0) {
 			return;
 		}
 		let prev = array[0];
