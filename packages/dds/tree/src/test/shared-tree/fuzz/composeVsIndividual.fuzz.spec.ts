@@ -5,7 +5,6 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type AsyncGenerator,
 	combineReducersAsync,
@@ -48,6 +47,7 @@ import {
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 import { TreeViewConfiguration } from "../../../simple-tree/index.js";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -143,7 +143,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			reducer: fuzzComposedVsIndividualReducer,
 			validateConsistency: () => {},
 		};
-		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		const emitter = createEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
 

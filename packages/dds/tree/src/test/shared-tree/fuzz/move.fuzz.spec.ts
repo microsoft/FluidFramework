@@ -28,7 +28,7 @@ import {
 	populatedInitialState,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 describe("Fuzz - move", () => {
 	const runsPerBatch = 50;
@@ -60,7 +60,7 @@ describe("Fuzz - move", () => {
 		validateConsistency: validateFuzzTreeConsistency,
 	};
 
-	const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+	const emitter = createEmitter<DDSFuzzHarnessEvents>();
 	emitter.on("testStart", (state: FuzzTestState) => {
 		viewFromState(state, state.clients[0]);
 	});

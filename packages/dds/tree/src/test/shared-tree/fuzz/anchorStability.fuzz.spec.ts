@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzHarnessEvents,
@@ -37,6 +36,7 @@ import type { Operation } from "./operationTypes.js";
 import type { NodeBuilderData } from "../../../internalTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
+import { createEmitter } from "@fluid-internal/client-utils";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
@@ -95,7 +95,7 @@ describe("Fuzz - anchor stability", () => {
 			validateConsistency: () => {},
 		};
 
-		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		const emitter = createEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			const tree = viewFromState(initialState, initialState.clients[0]).checkout;
 			tree.transaction.start();
@@ -165,7 +165,7 @@ describe("Fuzz - anchor stability", () => {
 			validateConsistency: () => {},
 		};
 
-		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+		const emitter = createEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: AnchorFuzzTestState) => {
 			// Kludge: we force schematization and synchronization here to ensure that the clients all have the same
 			// starting tree as opposed to isomorphic copies.

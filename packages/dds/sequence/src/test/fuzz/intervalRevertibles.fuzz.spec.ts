@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import {
 	AsyncGenerator as Generator,
 	createWeightedAsyncGenerator as createWeightedGenerator,
@@ -40,7 +40,7 @@ import {
 	makeIntervalOperationGenerator,
 } from "./fuzzUtils.js";
 
-const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+const emitter = createEmitter<DDSFuzzHarnessEvents>();
 
 emitter.on("clientCreate", (client) => {
 	const channel = client.channel as RevertibleSharedString;
