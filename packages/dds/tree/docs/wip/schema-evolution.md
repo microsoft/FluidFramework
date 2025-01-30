@@ -593,7 +593,7 @@ Additional symbols used in the table below:
 | 🟩 | Rename Field Key                     | No | ❕ Yes | ✔ **New clients** provide alias in the view schema | ✔ **New clients** provide alias in the view schema | ✅ |
 | 🟩 | Remove Allowed Type                  | No | ❕ Yes | ✔ **New clients** mark the type as "excluded" in the view schema | ✅ | ⌛ |
 | 🟩 | Remove Non-Required Field            | No | ❕ Yes | ✔ **New clients** must mark the field as "excluded" in the view schema | ✅ | ⌛ |
-| 🟡 | Object Node† → Map Node              | 🔄 Yes | No | ✅ | ✅ | ⌛ |
+| 🟡 | Object Node* → Map Node              | 🔄 Yes | No | ✅ | ✅ | ⌛ |
 | 🟡 | Add Allowed Type                     | 🔄 Yes | No | ⚠️ **Old clients** must _preemptively_ include "Unknown" type in the view schema | ✅ | ⌛ |
 | 🟡 | Add Non-Required Field               | 🔄 Yes | No | ⚠️ **Old clients** must _preemptively_ enable `allowUnknownOptionalFields` in the view schema | ✅ | ✅ |
 | 🔶 | Add Required Field‡                  | 🔄 Yes | ❗ Yes | ✅ | ❌ | ❌ |
