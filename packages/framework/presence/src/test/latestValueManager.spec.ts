@@ -34,36 +34,36 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
-
-		it("initializes with empty array", () => {
-			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
-				array: Latest([]),
+		describe("initializes with", () => {
+			it("empty object", () => {
+				const presence = createPresenceManager(new MockEphemeralRuntime());
+				const states = presence.getStates(testWorkspaceName, {
+					obj: Latest({}),
+				});
+				assert.deepStrictEqual(states.props.obj.local, {});
 			});
-			assert.deepStrictEqual(states.props.array.local, []);
-		});
-		it("initializes with empty object", () => {
-			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
-				array: Latest({}),
+			it("object with properties", () => {
+				const presence = createPresenceManager(new MockEphemeralRuntime());
+				const states = presence.getStates(testWorkspaceName, {
+					obj: Latest({ x: 0, y: 0, z: 0 }),
+				});
+				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
 			});
-			assert.deepStrictEqual(states.props.array.local, {});
-		});
-		it("initializes with array with elements", () => {
-			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
-				array: Latest([1, 2, 3]),
+			it("empty array", () => {
+				const presence = createPresenceManager(new MockEphemeralRuntime());
+				const states = presence.getStates(testWorkspaceName, {
+					arr: Latest([]),
+				});
+				assert.deepStrictEqual(states.props.arr.local, []);
 			});
-			assert.deepStrictEqual(states.props.array.local, [1, 2, 3]);
-		});
-		it("initializes with object with properties", () => {
-			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
-				array: Latest({ a: 1, b: 2, c: 3 }),
+			it("array with elements", () => {
+				const presence = createPresenceManager(new MockEphemeralRuntime());
+				const states = presence.getStates(testWorkspaceName, {
+					arr: Latest([1, 2, 3]),
+				});
+				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
 			});
-			assert.deepStrictEqual(states.props.array.local, { a: 1, b: 2, c: 3 });
 		});
-
 		addControlsTests(createLatestManager);
 	});
 });
