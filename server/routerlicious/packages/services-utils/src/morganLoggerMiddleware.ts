@@ -119,6 +119,7 @@ export function jsonMorganLoggerMiddleware(
 					});
 			  })
 			: undefined;
+		// HTTP Metric durationInMs should only track internal server time, so manually set it before waiting for response close.
 		const startTime = performance.now();
 		const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
 		morgan<express.Request, express.Response>((tokens, req, res) => {
@@ -126,9 +127,13 @@ export function jsonMorganLoggerMiddleware(
 			if (computeAdditionalProperties) {
 				additionalProperties = computeAdditionalProperties(tokens, req, res);
 			}
+			const durationInMs = performance.now() - startTime;
 			let statusCode = tokens.status(req, res);
 			if (!statusCode) {
-				if (res.locals.serverTimeout) {
+				// The effort of trying to distinguish client close vs server close can be tricky when it reaches proxy timeout.
+				// If proxy timeout happen a little before server timeout, it is actually more due to a server timeout issue.
+				// Therefore, we can assume it is server timeout if duration is longer than 20s without a valid status code
+				if (res.locals.serverTimeout || durationInMs > 20000) {
 					statusCode = "Server Timeout";
 				} else if (res.locals.clientDisconnected) {
 					statusCode = "499";
@@ -171,9 +176,7 @@ export function jsonMorganLoggerMiddleware(
 				// Morgan middleware logs using the [on-finished](https://www.npmjs.com/package/on-finished) package, meaning that it will log
 				// request duration immediately on response 'finish' event. However, the gap between 'finish' and 'close' can be helpful for
 				// understanding response latency.
-				const endTime = performance.now();
-				// HTTP Metric durationInMs should only track internal server time, so manually set it before waiting for response close.
-				httpMetric.setProperty("durationInMs", endTime - startTime);
+				httpMetric.setProperty("durationInMs", durationInMs);
 				// Wait for response 'close' event to signal that the response is completed.
 				responseLatencyP
 					?.then((responseLatency) => {
