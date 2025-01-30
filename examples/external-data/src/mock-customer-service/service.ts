@@ -232,8 +232,8 @@ export async function initializeCustomerService(props: ServiceProps): Promise<Se
 			);
 			// eslint-disable-next-line unicorn/no-array-for-each
 			containerSessionRecords.forEach((record) => {
-				const tenantId = record.TenantId;
-				const documentId = record.DocumentId;
+				const tenantId: string | undefined = record.TenantId;
+				const documentId: string | undefined = record.DocumentId;
 				echoExternalDataWebhookToFluid(
 					taskData,
 					fluidServiceUrl,
