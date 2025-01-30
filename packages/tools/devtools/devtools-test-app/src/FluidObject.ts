@@ -182,17 +182,14 @@ export class AppData extends DataObject {
 			completed: builder.boolean,
 			dueDate: builder.optional(builder.string),
 			assignee: builder.optional(builder.string),
-			colloborators: builder.optional(builder.array(builder.string)),
+			collaborators: builder.optional(builder.array(builder.string)),
 		}) {}
 
 		class TodoObject extends builder.object("todo-list", {
 			items: builder.array(TodoItem),
 		}) {}
 
-		class TodoCategory extends builder.object("todo-category", {
-			work: TodoObject,
-			personal: TodoObject,
-		}) {}
+		const TodoCategory = builder.map("todo-category", [TodoObject]);
 
 		class TodoWorkspace extends builder.object("todo-workspace", {
 			lists: TodoCategory,
@@ -212,7 +209,7 @@ export class AppData extends DataObject {
 							completed: false,
 							dueDate: "2048-01-01",
 							assignee: "Kevin",
-							colloborators: ["Rick"],
+							collaborators: ["Rick"],
 						},
 						{
 							title: "Review pull requests",
