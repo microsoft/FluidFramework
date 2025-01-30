@@ -41,19 +41,6 @@ export const findPackageOrReleaseGroup = (
 };
 
 /**
- * Creates a CLI argument for release group names. It's a factory function so that commands can override the
- * properties more easily when using the argument.
- */
-export const releaseGroupArg = Args.custom<ReleaseGroupName>({
-	name: "release_group",
-	required: true,
-	description: "The name of a release group.",
-	parse: async (input) => {
-		return input as ReleaseGroupName;
-	},
-});
-
-/**
  * Creates a CLI argument for semver versions. It's a factory function so that commands can override the properties more
  * easily when using the argument.
  */
