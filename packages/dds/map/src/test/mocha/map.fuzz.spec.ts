@@ -28,25 +28,25 @@ import { type ISharedMap, MapFactory } from "../../index.js";
 
 import { _dirname } from "./dirname.cjs";
 
-interface Clear {
+interface MapClear {
 	type: "clear";
 }
 
-interface SetKey {
+interface MapSetKey {
 	type: "setKey";
 	key: string;
 	value: Serializable<unknown>;
 }
 
-interface DeleteKey {
+interface MapDeleteKey {
 	type: "deleteKey";
 	key: string;
 }
 
-type Operation = SetKey | DeleteKey | Clear;
+type MapOperation = MapSetKey | MapDeleteKey | MapClear;
 
 // This type gets used a lot as the state object of the suite; shorthand it here.
-type State = DDSFuzzTestState<MapFactory>;
+type MapState = DDSFuzzTestState<MapFactory>;
 
 async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<void> {
 	assert.equal(a.size, b.size, `${a.id} and ${b.id} have different number of keys.`);
@@ -73,7 +73,7 @@ async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<vo
 	}
 }
 
-const reducer = combineReducers<Operation, State>({
+const mapReducer = combineReducers<MapOperation, MapState>({
 	clear: ({ client }) => client.channel.clear(),
 	setKey: ({ client }, { key, value }) => {
 		client.channel.set(key, value);
@@ -83,31 +83,31 @@ const reducer = combineReducers<Operation, State>({
 	},
 });
 
-interface GeneratorOptions {
+interface MapGeneratorOptions {
 	setWeight: number;
 	deleteWeight: number;
 	clearWeight: number;
 	keyPoolSize: number;
 }
 
-const defaultOptions: GeneratorOptions = {
+const mapDefaultOptions: MapGeneratorOptions = {
 	setWeight: 20,
 	deleteWeight: 20,
 	clearWeight: 1,
 	keyPoolSize: 20,
 };
 
-function makeGenerator(
-	optionsParam?: Partial<GeneratorOptions>,
-): AsyncGenerator<Operation, State> {
+function mapMakeGenerator(
+	optionsParam?: Partial<MapGeneratorOptions>,
+): AsyncGenerator<MapOperation, MapState> {
 	const { setWeight, deleteWeight, clearWeight, keyPoolSize } = {
-		...defaultOptions,
+		...mapDefaultOptions,
 		...optionsParam,
 	};
 	// Use numbers as the key names.
 	const keyNames = Array.from({ length: keyPoolSize }, (_, i) => `${i}`);
 
-	const setKey: Generator<SetKey, State> = ({ random }) => ({
+	const setKey: Generator<MapSetKey, MapState> = ({ random }) => ({
 		type: "setKey",
 		key: random.pick(keyNames),
 		value: random.pick([
@@ -116,12 +116,12 @@ function makeGenerator(
 			(): IFluidHandle => random.handle(),
 		])(),
 	});
-	const deleteKey: Generator<DeleteKey, State> = ({ random }) => ({
+	const deleteKey: Generator<MapDeleteKey, MapState> = ({ random }) => ({
 		type: "deleteKey",
 		key: random.pick(keyNames),
 	});
 
-	const syncGenerator = createWeightedGenerator<Operation, State>([
+	const syncGenerator = createWeightedGenerator<MapOperation, MapState>([
 		[setKey, setWeight],
 		[deleteKey, deleteWeight],
 		[{ type: "clear" }, clearWeight],
@@ -133,16 +133,16 @@ function makeGenerator(
 /**
  * the maps fuzz model
  */
-export const model: DDSFuzzModel<MapFactory, Operation> = {
+export const mapBaseModel: DDSFuzzModel<MapFactory, MapOperation> = {
 	workloadName: "default",
 	factory: new MapFactory(),
-	generatorFactory: () => takeAsync(1000, makeGenerator()),
-	reducer: async (state, operation) => reducer(state, operation),
+	generatorFactory: () => takeAsync(1000, mapMakeGenerator()),
+	reducer: async (state, operation) => mapReducer(state, operation),
 	validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 };
 
 describe.skip("Map fuzz tests", () => {
-	createDDSFuzzSuite(model, {
+	createDDSFuzzSuite(mapBaseModel, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
 		clientJoinOptions: {
@@ -157,7 +157,7 @@ describe.skip("Map fuzz tests", () => {
 	});
 
 	createDDSFuzzSuite(
-		{ ...model, workloadName: "with reconnect" },
+		{ ...mapBaseModel, workloadName: "with reconnect" },
 		{
 			defaultTestCount: 100,
 			numberOfClients: 3,
@@ -176,7 +176,7 @@ describe.skip("Map fuzz tests", () => {
 	);
 
 	createDDSFuzzSuite(
-		{ ...model, workloadName: "with batches and rebasing" },
+		{ ...mapBaseModel, workloadName: "with batches and rebasing" },
 		{
 			defaultTestCount: 100,
 			numberOfClients: 3,
