@@ -38,6 +38,7 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import {
+	type IErrorBase,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 	IProvideFluidHandleContext,
@@ -812,6 +813,7 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 		});
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			throw responseToException(response, request);
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
@@ -1236,7 +1238,7 @@ export class ContainerRuntime
 					runtime.setConnectionStateCore(true, runtime.delayConnectClientId);
 				}
 			},
-			(error) => runtime.closeFn(error),
+			(error: IErrorBase) => runtime.closeFn(error),
 		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
@@ -2120,7 +2122,7 @@ export class ContainerRuntime
 					"summarizerStart",
 					"summarizerStartupFailed",
 				]) {
-					this.summaryManager?.on(eventName, (...args: any[]) => {
+					this.summaryManager?.on(eventName, (...args: unknown[]) => {
 						this.emit(eventName, ...args);
 					});
 				}

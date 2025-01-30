@@ -427,7 +427,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			const pendingSummaryWithGC = pendingSummary as PendingSummaryInfoWithGC;
 			if (pendingSummaryWithGC.serializedUsedRoutes !== undefined) {
 				const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
-					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes),
+					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes) as string[],
 				);
 				const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
 				const childPendingSummaryInfo = {

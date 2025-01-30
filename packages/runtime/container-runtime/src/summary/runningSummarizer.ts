@@ -196,7 +196,10 @@ export class RunningSummarizer
 	private totalSuccessfulAttempts = 0;
 	private initialized = false;
 
-	private readonly runtimeListener;
+	private readonly runtimeListener: (
+		op: ISequencedDocumentMessage,
+		runtimeMessage?: boolean,
+	) => void;
 
 	/**
 	 * The maximum number of summary attempts to do when submit summary fails.
@@ -956,7 +959,7 @@ export class RunningSummarizer
 		const { reason, ...summarizeOptions } = options;
 		if (options.retryOnFailure === true) {
 			this.summarizeOnDemandWithRetries(`onDemand;${reason}`, resultsBuilder).catch(
-				(error) => {
+				(error: IRetriableFailureError) => {
 					resultsBuilder.fail("summarize failed", error);
 				},
 			);
