@@ -50,8 +50,12 @@ export class DocumentContextManager extends EventEmitter {
 	 * This class is responsible for the lifetime of the context
 	 */
 	public createContext(routingKey: IRoutingKey, head: IQueuedMessage): DocumentContext {
-		// Contexts should only be created within the processing range of the manager
-		assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
+		if (this.headUpdatedAfterResume && this.tailUpdatedAfterResume) {
+			// Contexts should only be created within the processing range of the manager
+			assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
+		} else if (this.headUpdatedAfterResume)	{
+			assert(head.offset === this.head.offset);
+		}
 
 		// Create the new context and register for listeners on it
 		const context = new DocumentContext(
@@ -70,7 +74,7 @@ export class DocumentContextManager extends EventEmitter {
 		});
 		context.addListener("pause", (offset?: number, reason?: any) => {
 			// Find the lowest offset of all contexts' tail (checkpointed offset) and emit pause at that offset to ensure we dont miss any messages
-			let lowestOffset = offset ?? 0;
+			let lowestOffset = offset ?? Number.MAX_SAFE_INTEGER;
 			for (const docContext of this.contexts) {
 				if (docContext.tail.offset < lowestOffset) {
 					lowestOffset = docContext.tail.offset;
