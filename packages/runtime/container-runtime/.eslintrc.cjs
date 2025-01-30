@@ -52,11 +52,17 @@ module.exports = {
 
 		"unicorn/catch-error-name": "error",
 		"unicorn/consistent-destructuring": "error",
+		"unicorn/consistent-function-scoping": "error",
+		"unicorn/error-message": "error",
+		"unicorn/explicit-length-check": "error",
 		"unicorn/new-for-builtins": "error",
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
+		"unicorn/no-lonely-if": "error",
+		"unicorn/no-new-array": "error",
 		"unicorn/no-null": "error",
 		"unicorn/no-zero-fractions": "error",
+		"unicorn/prefer-includes": "error",
 		"unicorn/prefer-node-protocol": "error",
 		"unicorn/prefer-number-properties": "error",
 		"unicorn/prefer-optional-catch-binding": "error",
@@ -66,13 +72,7 @@ module.exports = {
 		"unicorn/throw-new-error": "error",
 
 		// TODO:
-		// unicorn/consistent-function-scoping
 		// unicorn/no-negated-condition
-		// unicorn/no-lonely-if
-		// unicorn/no-new-array
-		// unicorn/prefer-includes
-		// unicorn/error-message
-		// unicorn/explicit-length-check
 
 		// #endregion
 	},
@@ -83,9 +83,14 @@ module.exports = {
 			rules: {
 				// TODO: remove these overrides and fix violations
 				"@typescript-eslint/explicit-function-return-type": "off",
+				"unicorn/error-message": "warn",
 
 				// Test files are run in node only so additional node libraries can be used.
 				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
+
+				// TODO:AB#3027: This rule is disabled for tests in the `recommended` base config.
+				// Remove this override once the base has been updated.
+				"unicorn/consistent-function-scoping": "off",
 			},
 		},
 	],
