@@ -28,7 +28,6 @@ import { EditType } from "../CommonInterfaces.js";
 
 import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
-	concatenateTypes,
 	determineNodeKind,
 	toVisualTree,
 	visualizeSharedTreeBySchema,
@@ -280,7 +279,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	 * Since the {@link SimpleTreeSchema.allowedTypes} of each children node is only accessible at the parent field level,
 	 * each node's allowed types are computed at the parent field level.
 	 */
-	const allowedTypes = concatenateTypes(sharedTree.exportSimpleSchema().allowedTypes);
+	const allowedTypes = sharedTree.exportSimpleSchema().allowedTypes;
 	const isRequired =
 		sharedTree.exportSimpleSchema().kind === FieldKind.Required ? true : false;
 
