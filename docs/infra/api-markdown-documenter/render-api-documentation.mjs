@@ -147,9 +147,9 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				const packageName = apiItem.name;
 				const packageScope = PackageName.getScope(packageName);
 
-				// Skip `@fluid-private` packages
+				// Skip packages that are published, but are not intended for direct public consumption.
 				// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
-				if (["@fluid-private"].includes(packageScope)) {
+				if (["@fluid-example", "@fluid-experimental", "@fluid-private"].includes(packageScope)) {
 					return true;
 				}
 			}
