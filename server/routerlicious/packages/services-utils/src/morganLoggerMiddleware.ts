@@ -132,11 +132,12 @@ export function jsonMorganLoggerMiddleware(
 			if (!statusCode) {
 				// The effort of trying to distinguish client close vs server close can be tricky when it reaches proxy timeout.
 				// If proxy timeout happen a little before server timeout, it is actually more due to a server timeout issue.
-				// Therefore, we can assume it is server timeout if duration is longer than 20s without a valid status code
-				if (res.locals.serverTimeout || durationInMs > 20000) {
+				// Therefore, we can assume it is server timeout (triggered by client) if duration is longer than 20s without
+				// a valid status code
+				if (res.locals.serverTimeout) {
 					statusCode = "Server Timeout";
 				} else if (res.locals.clientDisconnected) {
-					statusCode = "499";
+					statusCode = durationInMs > 20_000 ? "Client Timeout" : "499";
 				} else {
 					statusCode = "STATUS_UNAVAILABLE";
 				}
