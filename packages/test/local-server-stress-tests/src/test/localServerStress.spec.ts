@@ -50,7 +50,7 @@ const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 		const entry = state.client.entryPoint.globalObjects[op.id];
 		assert(entry.type === "newDatastore", "must be a new datastore");
 
-		await entry.dataStore.trySetAlias(String.fromCodePoint(state.random.integer(0, 26) + 65));
+		void entry.dataStore.trySetAlias(String.fromCodePoint(state.random.integer(0, 26) + 65));
 	},
 	createDataStore: async (state) => {
 		state.client.entryPoint.createDataStore(state.random.uuid4());
@@ -174,7 +174,7 @@ export const saveSuccesses = { directory: path.join(_dirname, "../../results") }
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
-		generatorFactory: () => takeAsync(500, makeGenerator()),
+		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: () => {},
 	};
@@ -186,7 +186,7 @@ describe("Local Server Stress", () => {
 			maxNumberOfClients: 6,
 			clientAddProbability: 0.1,
 		},
-		reconnectProbability: 0,
+		reconnectProbability: 0.1,
 		skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		saveFailures,

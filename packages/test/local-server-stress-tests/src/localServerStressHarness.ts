@@ -1251,13 +1251,83 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 	});
 }
 
+/**
+ * @internal
+ */
+export interface ChangeConnectionState {
+	type: "changeConnectionState";
+	connected: boolean;
+}
+
+/**
+ * Mixes in functionality to disconnect and reconnect clients in a DDS fuzz model.
+ * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
+ * expose at the package level if we want to expose some of the harness's building blocks.
+ */
+export function mixinReconnect<
+	TOperation extends BaseOperation,
+	TState extends LocalServerStressState,
+>(
+	model: LocalServerStressModel<TOperation, TState>,
+	options: LocalServerStressOptions,
+): LocalServerStressModel<TOperation | ChangeConnectionState, TState> {
+	const generatorFactory: () => AsyncGenerator<TOperation | ChangeConnectionState, TState> =
+		() => {
+			const baseGenerator = model.generatorFactory();
+			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
+				const baseOp = baseGenerator(state);
+				if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
+					const client = state.clients.find((c) => c.id === state.client.id);
+					assert(client !== undefined);
+					return {
+						type: "changeConnectionState",
+						connected: client.container.connectionState === ConnectionState.Connected,
+					};
+				}
+
+				return baseOp;
+			};
+		};
+
+	const minimizationTransforms = model.minimizationTransforms as
+		| MinimizationTransform<TOperation | ChangeConnectionState>[]
+		| undefined;
+
+	const reducer: AsyncReducer<TOperation | ChangeConnectionState, TState> = async (
+		state,
+		operation,
+	) => {
+		if (isOperationType<ChangeConnectionState>("changeConnectionState", operation)) {
+			if (operation.connected) {
+				state.client.container.disconnect();
+			} else {
+				state.client.container.connect();
+			}
+			return state;
+		} else {
+			return model.reducer(state, operation);
+		}
+	};
+	return {
+		...model,
+		minimizationTransforms,
+		generatorFactory,
+		reducer,
+	};
+}
+
 const getFullModel = <TOperation extends BaseOperation>(
 	ddsModel: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | AddClient | Attach | Synchronize> =>
+): LocalServerStressModel<
+	TOperation | AddClient | Attach | Synchronize | ChangeConnectionState
+> =>
 	mixinAttach(
 		mixinSynchronization(
-			mixinNewClient(mixinClientSelection(ddsModel, options), options),
+			mixinNewClient(
+				mixinClientSelection(mixinReconnect(ddsModel, options), options),
+				options,
+			),
 			options,
 		),
 		options,
