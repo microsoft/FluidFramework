@@ -49,11 +49,7 @@ export const releaseGroupArg = Args.custom<ReleaseGroupName>({
 	required: true,
 	description: "The name of a release group.",
 	parse: async (input) => {
-		const parsed = input;
-		if (parsed === null) {
-			throw new Error(`Invalid semver: ${input}`);
-		}
-		return parsed as ReleaseGroupName;
+		return input as ReleaseGroupName;
 	},
 });
 

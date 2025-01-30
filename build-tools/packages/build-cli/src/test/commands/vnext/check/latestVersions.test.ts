@@ -46,7 +46,9 @@ describe("check:latestVersions", () => {
 		const { stdout } = await runCommand(
 			[
 				"vnext:check:latestVersions",
+				"--releaseGroup",
 				releaseGroup,
+				"--version",
 				version,
 				"--tags",
 				...test_tags,
@@ -77,7 +79,9 @@ describe("check:latestVersions", () => {
 		const { stdout } = await runCommand(
 			[
 				"vnext:check:latestVersions",
+				"--releaseGroup",
 				releaseGroup,
+				"--version",
 				version,
 				"--tags",
 				...test_tags,
@@ -108,7 +112,9 @@ describe("check:latestVersions", () => {
 		const { stdout } = await runCommand(
 			[
 				"vnext:check:latestVersions",
+				"--releaseGroup",
 				releaseGroup,
+				"--version",
 				version,
 				"--tags",
 				...test_tags,

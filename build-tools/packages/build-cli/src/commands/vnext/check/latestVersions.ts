@@ -7,7 +7,7 @@ import { isInternalVersionScheme } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 import * as semver from "semver";
 
-import { releaseGroupArg, semverArg } from "../../../args.js";
+import { releaseGroupNameFlag, semverFlag } from "../../../flags.js";
 import { BaseCommandWithBuildProject, getVersionsFromTags } from "../../../library/index.js";
 
 type MajorVersion = number;
@@ -21,16 +21,13 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 	static readonly description =
 		"This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version of a major version.";
 
-	static readonly args = {
-		release_group: releaseGroupArg({ required: true }),
-		version: semverArg({
+	static readonly flags = {
+		releaseGroup: releaseGroupNameFlag({ required: true }),
+		version: semverFlag({
 			required: true,
 			description:
 				"The version to check. When running in CI, this value corresponds to the pipeline trigger branch.",
 		}),
-	} as const;
-
-	static readonly flags = {
 		tags: Flags.string({
 			description:
 				"The git tags to consider when determining whether a version is latest. Used for testing.",
@@ -49,13 +46,13 @@ export default class LatestVersionsCommand extends BaseCommandWithBuildProject<
 		const { args, flags } = this;
 
 		const buildProject = this.getBuildProject(flags.searchPath);
-		const releaseGroup = buildProject.releaseGroups.get(args.release_group);
+		const releaseGroup = buildProject.releaseGroups.get(flags.releaseGroup);
 
 		if (releaseGroup === undefined) {
 			this.error(`Package not found: ${args.release_group}`);
 		}
 
-		const versionInput = args.version;
+		const versionInput = flags.version;
 		const git = await buildProject.getGitRepository();
 		const versions = await getVersionsFromTags(git, releaseGroup, flags.tags);
 
