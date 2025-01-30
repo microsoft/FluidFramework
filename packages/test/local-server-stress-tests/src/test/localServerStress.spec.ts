@@ -39,6 +39,7 @@ interface AliasDataStore {
 }
 interface CreateDataStore {
 	type: "createDataStore";
+	asChild: boolean;
 }
 
 interface CreateChannel {
@@ -60,14 +61,14 @@ const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 
 		void entry.dataStore.trySetAlias(String.fromCodePoint(state.random.integer(0, 26) + 65));
 	},
-	createDataStore: async (state) => {
-		state.client.entryPoint.createDataStore();
+	createDataStore: async (state, op) => {
+		state.client.entryPoint.createDataStore(op.asChild);
 	},
 	createChannel: async (state, op) => {
 		state.client.entryPoint.createChannel(op.channelType);
 	},
 	uploadBlob: async (state) => {
-		state.client.entryPoint.uploadBlob(state.random.string(state.random.integer(1, 246)));
+		state.client.entryPoint.uploadBlob(state.random.string(state.random.integer(1, 16)));
 	},
 	DDSModelOp: DDSModelOpReducer,
 });
@@ -101,16 +102,16 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 						(v) => v.type === "newDatastore",
 					),
 			],
-			[{ type: "createDataStore" }, 1],
-			[{ type: "uploadBlob" }, 1],
+			[async (state) => ({ type: "createDataStore", asChild: state.random.bool() }), 2],
+			[{ type: "uploadBlob" }, 2],
 			[
 				async (state) => ({
 					type: "createChannel",
 					channelType: state.random.pick([...ddsModelMap.keys()]),
 				}),
-				1,
+				3,
 			],
-			[DDSModelOpGenerator, 2],
+			[DDSModelOpGenerator, 4],
 		],
 	);
 

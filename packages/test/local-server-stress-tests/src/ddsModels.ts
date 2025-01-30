@@ -194,9 +194,10 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 	for (const key of aMap.keys()) {
 		const aChannel = aMap.get(key);
 		const bChannel = bMap.get(key);
-		assert(aChannel !== undefined, "types must match");
-		assert(aChannel.attributes.type === bChannel?.attributes.type, "types must match");
+		assert(aChannel !== undefined, "channel must exist");
+		assert(aChannel.attributes.type === bChannel?.attributes.type, "channel types must match");
 		const model = ddsModelMap.get(aChannel.attributes.type);
-		await model?.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
+		assert(model !== undefined, "model must exist");
+		await model.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
 	}
 };

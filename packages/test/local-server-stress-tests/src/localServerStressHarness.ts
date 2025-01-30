@@ -847,7 +847,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	options: Omit<LocalServerStressOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
-): Promise<LocalServerStressState> {
+): Promise<void> {
 	const random = makeRandom(seed);
 
 	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
@@ -911,7 +911,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 
 	options.emitter.emit("testEnd", finalState);
 
-	return finalState;
+	finalState.clients.forEach((c) => c.container.dispose());
 }
 
 function runTest<TOperation extends BaseOperation>(

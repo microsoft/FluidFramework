@@ -12,7 +12,7 @@ import {
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
@@ -20,15 +20,16 @@ import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { ddsModelMap } from "./ddsModels";
 
 export class StressDataObject extends DataObject {
-	public static readonly factory = new Lazy(
-		() =>
-			new DataObjectFactory(
-				"StressDataObject",
-				StressDataObject,
-				[...ddsModelMap.values()].map((v) => v.factory),
-				{},
-			),
-	);
+	public static readonly factory = new Lazy(() => {
+		const factory = new DataObjectFactory(
+			"StressDataObject",
+			StressDataObject,
+			[...ddsModelMap.values()].map((v) => v.factory),
+			{},
+			[["StressDataObject", new LazyPromise(() => factory)]],
+		);
+		return factory;
+	});
 
 	get StressDataObject() {
 		return this;
@@ -109,9 +110,13 @@ export class StressDataObject extends DataObject {
 		channels.push(this.runtime.createChannel(undefined, type));
 	}
 
-	public createDataStore() {
+	public createDataStore(asChild: boolean) {
 		void this.context.containerRuntime
-			.createDataStore(StressDataObject.factory.value.type)
+			.createDataStore(
+				asChild
+					? [...this.context.packagePath, StressDataObject.factory.value.type]
+					: StressDataObject.factory.value.type,
+			)
 			.then(async (dataStore) => {
 				this._globalObjects[dataStore.entryPoint.absolutePath] = {
 					type: "newDatastore",
@@ -147,6 +152,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		DefaultStressDataObject,
 		[...ddsModelMap.values()].map((v) => v.factory),
 		{},
+		[[StressDataObject.factory.value.type, StressDataObject.factory.value]],
 	);
 
 	return {
