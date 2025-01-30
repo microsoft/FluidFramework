@@ -30,16 +30,25 @@ import { DirectoryFactory, type IDirectory, type ISharedMap, MapFactory } from "
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 
 
+/**
+ * Represents a map clear operation.
+ */
 interface MapClear {
 	type: "clear";
 }
 
+/**
+ * Represents a map set key operation.
+ */
 interface MapSetKey {
 	type: "setKey";
 	key: string;
 	value: Serializable<unknown>;
 }
 
+/**
+ * Represents a map delete key operation.
+ */
 interface MapDeleteKey {
 	type: "deleteKey";
 	key: string;
@@ -85,6 +94,9 @@ const mapReducer = combineReducers<MapOperation, MapState>({
 	},
 });
 
+/**
+ * Represents the options for the map generator.
+ */
 interface MapGeneratorOptions {
 	setWeight: number;
 	deleteWeight: number;
@@ -148,7 +160,7 @@ export const baseMapModel: DDSFuzzModel<MapFactory, MapOperation> = {
 type DirFuzzTestState = DDSFuzzTestState<DirectoryFactory>;
 
 /**
- *
+ * Represents a directory set key operation.
  */
 export interface DirSetKey {
 	type: "set";
@@ -158,7 +170,7 @@ export interface DirSetKey {
 }
 
 /**
- *
+ * Represents a directory clear keys operation.
  */
 export interface DirClearKeys {
 	type: "clear";
@@ -166,7 +178,7 @@ export interface DirClearKeys {
 }
 
 /**
- *
+ * Represents a directory delete key operation.
  */
 export interface DirDeleteKey {
 	type: "delete";
@@ -175,7 +187,7 @@ export interface DirDeleteKey {
 }
 
 /**
- *
+ * Represents a create subdirectory operation.
  */
 export interface CreateSubDirectory {
 	type: "createSubDirectory";
@@ -184,7 +196,7 @@ export interface CreateSubDirectory {
 }
 
 /**
- *
+ * Represents a delete subdirectory operation.
  */
 export interface DeleteSubDirectory {
 	type: "deleteSubDirectory";
@@ -193,20 +205,23 @@ export interface DeleteSubDirectory {
 }
 
 /**
- *
+ * Represents a directory key operation.
  */
 export type DirKeyOperation = DirSetKey | DirDeleteKey | DirClearKeys;
 
 /**
- *
+ * Represents a subdirectory operation.
  */
 export type SubDirectoryOperation = CreateSubDirectory | DeleteSubDirectory;
 
 /**
- *
+ * Represents a directory operation.
  */
 export type DirOperation = DirKeyOperation | SubDirectoryOperation;
 
+/**
+ * Represents the configuration for directory operation generation.
+ */
 interface DirOperationGenerationConfig {
 	validateInterval: number;
 	maxSubDirectoryChild?: number;
@@ -234,6 +249,12 @@ export const dirDefaultOptions: Required<DirOperationGenerationConfig> = {
 	deleteSubDirWeight: 1,
 };
 
+/**
+ * Picks an absolute path for key operations.
+ * @param state - The current state of the directory fuzz test.
+ * @param shouldHaveKey - Whether the directory should have a key.
+ * @returns The absolute path.
+ */
 function pickAbsolutePathForKeyOps(state: DirFuzzTestState, shouldHaveKey: boolean): string {
 	const { random, client } = state;
 	let parentDir: IDirectory = client.channel;
@@ -254,7 +275,9 @@ function pickAbsolutePathForKeyOps(state: DirFuzzTestState, shouldHaveKey: boole
 }
 
 /**
- *
+ * Creates a directory operation generator.
+ * @param optionsParam - The configuration options for the generator.
+ * @returns An asynchronous generator for directory operations.
  */
 export function makeDirOperationGenerator(
 	optionsParam?: DirOperationGenerationConfig,
@@ -395,6 +418,9 @@ export function makeDirOperationGenerator(
 	]);
 }
 
+/**
+ * Represents logging information.
+ */
 interface LoggingInfo {
 	// Clients to print
 	clientIds: string[];
@@ -417,7 +443,9 @@ function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: Loggi
 }
 
 /**
- *
+ * Creates a directory reducer with optional logging.
+ * @param loggingInfo - The logging information.
+ * @returns An asynchronous reducer for directory operations.
  */
 export function makeDirReducer(loggingInfo?: LoggingInfo): AsyncReducer<DirOperation, DirFuzzTestState> {
 	const withLogging =
@@ -471,7 +499,7 @@ export function makeDirReducer(loggingInfo?: LoggingInfo): AsyncReducer<DirOpera
 }
 
 /**
- * The default options for the directory fuzz model
+ * The default options for the directory fuzz model.
  */
 const dirOptions: DirOperationGenerationConfig = {
 	setKeyWeight: 0,
@@ -485,7 +513,7 @@ const dirOptions: DirOperationGenerationConfig = {
 };
 
 /**
- * The base fuzz model for directory
+ * The base fuzz model for directory.
  */
 export const baseDirModel: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 	workloadName: "default directory 1",
