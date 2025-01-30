@@ -28,6 +28,7 @@ import { EditType } from "../CommonInterfaces.js";
 
 import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualization.js";
 import {
+	concatenateTypes,
 	determineNodeKind,
 	toVisualTree,
 	visualizeSharedTreeBySchema,
@@ -261,16 +262,6 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
-
-	if (treeView === undefined) {
-		return {
-			fluidObjectId: sharedTree.id,
-			typeMetadata: "SharedTree",
-			nodeKind: VisualNodeKind.FluidTreeNode,
-			children: {},
-		};
-	}
-
 	// Schema of the tree node.
 	const treeDefinitions = sharedTree.exportSimpleSchema().definitions;
 
@@ -282,6 +273,34 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	const allowedTypes = sharedTree.exportSimpleSchema().allowedTypes;
 	const isRequired =
 		sharedTree.exportSimpleSchema().kind === FieldKind.Required ? true : false;
+
+	if (treeView === undefined) {
+		return {
+			fluidObjectId: sharedTree.id,
+			typeMetadata: "SharedTree",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+			tooltipContents: {
+				schema: {
+					nodeKind: VisualNodeKind.TreeNode,
+					children: {
+						name: {
+							nodeKind: VisualNodeKind.ValueNode,
+							value: "undefined tree", // TODO: Change name
+						},
+						allowedTypes: {
+							nodeKind: VisualNodeKind.ValueNode,
+							value: concatenateTypes(allowedTypes),
+						},
+						isRequired: {
+							nodeKind: VisualNodeKind.ValueNode,
+							value: isRequired?.toString(),
+						},
+					},
+				},
+			},
+			children: {},
+		};
+	}
 
 	// Create a root field visualization that shows the allowed types at the root
 	const visualTreeRepresentation: VisualSharedTreeNode = await visualizeSharedTreeBySchema(

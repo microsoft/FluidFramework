@@ -2012,6 +2012,56 @@ describe("DefaultVisualizers unit tests", () => {
 		expect(result).to.deep.equal(expected);
 	});
 
+	it("SharedTree: Empty Root", async () => {
+		const factory = SharedTree.getFactory();
+		const builder = new SchemaFactory("shared-tree-test");
+
+		const sharedTree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"test",
+		);
+
+		const view = sharedTree.viewWith(
+			new TreeViewConfiguration({
+				schema: builder.optional([builder.number, builder.string]),
+			}),
+		);
+		view.initialize(undefined);
+
+		const result = await visualizeSharedTree(
+			sharedTree as unknown as ISharedObject,
+			visualizeChildData,
+		);
+
+		const expected = {
+			fluidObjectId: sharedTree.id,
+			typeMetadata: "SharedTree",
+			nodeKind: VisualNodeKind.FluidTreeNode,
+			tooltipContents: {
+				schema: {
+					nodeKind: VisualNodeKind.TreeNode,
+					children: {
+						name: {
+							nodeKind: VisualNodeKind.ValueNode,
+							value: "undefined tree",
+						},
+						allowedTypes: {
+							nodeKind: VisualNodeKind.ValueNode,
+							value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
+						},
+						isRequired: {
+							nodeKind: VisualNodeKind.ValueNode,
+							value: "false",
+						},
+					},
+				},
+			},
+			children: {},
+		};
+
+		expect(result).to.deep.equal(expected);
+	});
+
 	it("Unknown SharedObject", async () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		const unknownObject = {
