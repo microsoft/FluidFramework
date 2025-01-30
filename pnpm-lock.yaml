@@ -18,7 +18,7 @@ overrides:
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   socket.io-client: ~4.7.5
 
-pnpmfileChecksum: xaxghnsubb7ncvlsovpnos2y7e
+pnpmfileChecksum: jsbnis4v7zlhs4t7yscsd3mtxe
 
 patchedDependencies:
   '@microsoft/api-extractor@7.47.8':

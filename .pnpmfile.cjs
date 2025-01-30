@@ -21,10 +21,6 @@
 // https://github.com/pnpm/pnpm/issues/4214
 // https://github.com/pnpm/pnpm/issues/5391
 
-const rootPkg = require("./package.json");
-
-console.log(`Checking for package peerDependency overrides`);
-
 const remapPeerDependencies = [
 	// @fluidframework/azure-client 1.x declares a peerDependency on fluid-framework but does not require it.
 	// It should have been an optional peer dependency. We just remove it.
@@ -36,7 +32,16 @@ const remapPeerDependencies = [
 	},
 ];
 
+// Only emit the checking banner once.
+// And only if engaged. Some pnpm uses expect specific output (like `pnpm list`) and may break if anything is emitted.
+let emittedCheckBanner = false;
+
 function overridesPeerDependencies(pkg) {
+	if (!emittedCheckBanner) {
+		console.log(`Checking for package peerDependency overrides`);
+		emittedCheckBanner = true;
+	}
+
 	if (!pkg.peerDependencies) {
 		return;
 	}
