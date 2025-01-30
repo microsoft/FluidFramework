@@ -34,12 +34,6 @@ export class DocumentLambda implements IPartitionLambda {
 
 	private activityCheckTimer: NodeJS.Timeout | undefined;
 
-	// private reprocessRange: { startOffset: number | undefined; endOffset: number | undefined } = {
-	// 	startOffset: undefined,
-	// 	endOffset: undefined,
-	// };
-	// private reprocessingOffset: number | undefined;
-
 	constructor(
 		private readonly factory: IPartitionLambdaFactory<IPartitionLambdaConfig>,
 		private readonly context: IContext,
@@ -53,11 +47,6 @@ export class DocumentLambda implements IPartitionLambda {
 			context.error(error, errorData);
 		});
 		this.contextManager.on("pause", (lowestOffset: number, reason?: any) => {
-			// Emit pause at the lowest offset out of all document partitions
-			// This is important for ensuring that we don't miss any messages
-			// And store the reprocessRange so that we can allow contextManager to move back to it when it resumes
-			// It will move back to the first offset which was not checkpointed from this range
-			// this.storeReprocessRange(lowestOffset, pausedAtOffset);
 			context.pause(lowestOffset, reason);
 		});
 		this.contextManager.on("resume", () => {
@@ -73,9 +62,6 @@ export class DocumentLambda implements IPartitionLambda {
 	 * {@inheritDoc IPartitionLambda.handler}
 	 */
 	public handler(message: IQueuedMessage): undefined {
-		// this.reprocessingOffset = this.isOffsetWithinReprocessRange(message.offset)
-		// 	? message.offset
-		// 	: undefined;
 		if (!this.contextManager.setHead(message)) {
 			this.context.log?.warn(
 				"Unexpected head offset. " +
@@ -83,20 +69,11 @@ export class DocumentLambda implements IPartitionLambda {
 						message.offset
 					}`,
 			);
-			// // update reprocessRange to avoid reprocessing the same message again
-			// if (this.reprocessingOffset !== undefined) {
-			// 	this.updateReprocessRange(this.reprocessingOffset);
-			// }
 			return undefined;
 		}
 
 		this.handlerCore(message);
 		this.contextManager.setTail(message);
-
-		// // update reprocessRange to avoid reprocessing the same message again
-		// if (this.reprocessingOffset !== undefined) {
-		// 	this.updateReprocessRange(this.reprocessingOffset);
-		// }
 
 		return undefined;
 	}
@@ -127,33 +104,6 @@ export class DocumentLambda implements IPartitionLambda {
 			partition.resume();
 		}
 	}
-
-	// private storeReprocessRange(lowestOffset: number, pausedAtoffset: number) {
-	// 	this.reprocessRange = {
-	// 		startOffset: lowestOffset,
-	// 		endOffset: pausedAtoffset,
-	// 	};
-	// }
-
-	// private isOffsetWithinReprocessRange(offset: number) {
-	// 	return (
-	// 		this.reprocessRange.startOffset !== undefined &&
-	// 		this.reprocessRange.endOffset !== undefined &&
-	// 		offset >= this.reprocessRange.startOffset &&
-	// 		offset <= this.reprocessRange.endOffset
-	// 	);
-	// }
-
-	// private updateReprocessRange(reprocessedOffset: number) {
-	// 	this.reprocessRange.startOffset = reprocessedOffset + 1;
-	// 	if (
-	// 		this.reprocessRange.endOffset &&
-	// 		this.reprocessRange.endOffset < this.reprocessRange.startOffset
-	// 	) {
-	// 		// reset since all messages in the reprocess range have been processed
-	// 		this.reprocessRange = { startOffset: undefined, endOffset: undefined };
-	// 	}
-	// }
 
 	private handlerCore(message: IQueuedMessage): void {
 		const boxcar = extractBoxcar(message);

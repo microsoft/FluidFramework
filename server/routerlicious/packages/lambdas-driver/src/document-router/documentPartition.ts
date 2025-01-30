@@ -223,9 +223,6 @@ export class DocumentPartition {
 		if (this.lambda?.pause) {
 			this.lambda.pause(offset);
 		}
-		Lumberjack.info(
-			`TEST!! Doc partition paused, docId: ${this.documentId}, tenantId: ${this.tenantId}`,
-		);
 		Lumberjack.info("Doc partition paused", {
 			...getLumberBaseProperties(this.documentId, this.tenantId),
 			offset,
@@ -246,9 +243,6 @@ export class DocumentPartition {
 		if (this.lambda?.resume) {
 			this.lambda.resume();
 		}
-		Lumberjack.info(
-			`TEST!! Doc partition resumed, docId: ${this.documentId}, tenantId: ${this.tenantId}`,
-		);
 		Lumberjack.info("Doc partition resumed", {
 			...getLumberBaseProperties(this.documentId, this.tenantId),
 		});
