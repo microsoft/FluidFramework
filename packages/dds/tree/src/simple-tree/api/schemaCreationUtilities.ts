@@ -8,15 +8,26 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { fail } from "../../util/index.js";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
-import type { NodeFromSchema } from "../schemaTypes.js";
+import type {
+	ImplicitFieldSchema,
+	InsertableField,
+	NodeFromSchema,
+	TreeFieldFromImplicitField,
+} from "../schemaTypes.js";
 import type {
 	InternalTreeNode,
 	NodeKind,
 	TreeNode,
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
+	Unhydrated,
 } from "../core/index.js";
 import type { UnionToTuple } from "../../util/index.js";
+import type { TreeView, TreeViewAlpha, TreeViewConfiguration, ViewableTree } from "./tree.js";
+import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { SharedTree } from "../../treeFactory.js";
+import { SharedTreeCore } from "../../shared-tree-core/sharedTreeCore.js";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 /*
  * This file does two things:
@@ -268,4 +279,160 @@ function _enumFromStrings2<TScope extends string, const Members extends readonly
 	}
 
 	return adaptEnum(factory, enumObject);
+}
+
+/**
+ * Create a schema for a handle to a shared tree, including in the referenced tree's schema.
+ * @privateRemarks
+ * TODO: sort out lifetimes of the views.
+ * @alpha
+ */
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+export function treeHandleSchema<
+	TScope extends string,
+	TName extends string | number,
+	TSchema extends ImplicitFieldSchema,
+>(
+	factory: SchemaFactory<TScope, TName>,
+	name: TName,
+	configuration: TreeViewConfiguration<TSchema>,
+) {
+	class TreeHandleSchema
+		extends factory.object(name, { handle: factory.handle })
+		implements TreeHandleNode<TSchema>
+	{
+		public static async inNewDatastore<
+			TThis extends TreeNodeSchemaClass<
+				string,
+				NodeKind,
+				TreeHandleNodeType & InstanceType<TThis>,
+				{ readonly handle: IFluidHandle }
+			>,
+		>(
+			this: TThis,
+			container: Container,
+			content: InsertableField<TSchema>,
+		): Promise<InstanceType<TThis>> {
+			const x = await container.createDatastore(configuration, content);
+			return new this(x);
+		}
+
+		public async tryGetView(): Promise<undefined | TreeView<TSchema>> {
+			const result = await this.handle.get();
+			// TODO: if the DDS is in another datastore, might it use a different version of the shared tree code (and thus fail this test?).
+			// That could be consider intended, but should be determined and documented at least.
+			if (result instanceof SharedTreeCore) {
+				const tree = result as unknown as ViewableTree;
+				// TODO: determine if "get" above might return a DDS instance that already existed, and thus could already have a view.
+				// If so, this could create a second view, and thus error: a workaround for may be needed.
+				return tree.viewWith(configuration);
+			}
+			return undefined;
+		}
+
+		public async getView(): Promise<TreeView<TSchema>> {
+			const view = await this.tryGetView();
+			if (view === undefined) {
+				throw new UsageError("Handle did not point to a SharedTree");
+			}
+			return view;
+		}
+		public async root(): Promise<TreeFieldFromImplicitField<TSchema>> {
+			const view = await this.getView();
+			return view.root;
+		}
+	}
+
+	type TreeHandleNodeType = TreeNode & TreeHandleNode<TSchema>;
+
+	// Returning SingletonSchema without a type conversion results in TypeScript generating something like `readonly "__#124291@#brand": unknown;`
+	// for the private brand field of TreeNode.
+	// This numeric id doesn't seem to be stable over incremental builds, and thus causes diffs in the API extractor reports.
+	// This is avoided by doing this type conversion.
+	// The conversion is done via assignment instead of `as` to get stronger type safety.
+	const toReturn: TreeHandleSchemaStatics<TSchema> &
+		TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, TName>,
+			NodeKind.Object,
+			TreeHandleNodeType,
+			{ readonly handle: IFluidHandle },
+			true,
+			{ readonly handle: typeof factory.handle }
+		> = TreeHandleSchema;
+
+	return toReturn;
+}
+
+interface TreeHandleNode<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * If the handle points to a shared tree, return a view of it.
+	 */
+	tryGetView(): Promise<undefined | TreeView<TSchema>>;
+
+	/**
+	 * tryGetView, but throws if no view
+	 */
+	getView(): Promise<TreeView<TSchema>>;
+
+	/**
+	 * getView().root
+	 */
+	root(): Promise<TreeFieldFromImplicitField<TSchema>>;
+}
+
+interface TreeHandleSchemaStatics<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * Creates a new DataStore containing a SharedTree initialized with `content`.
+	 *
+	 * The resulting insertable should be inserted into the tree (aka "Hydrated").
+	 *
+	 * As long as it is referenced from some tree (which is also referenced or is the container root) it will be kept around.
+	 * If it is left unreferenced long enough (typically many days), it will be garbage collected from the container.
+	 */
+	// inNewDatastore(
+	// 	container: Container,
+	// 	content: InsertableField<TSchema>,
+	// ): Promise<{ handle: IFluidHandle }>;
+
+	inNewDatastore<TThis extends TreeNodeSchemaClass>(
+		container: Container,
+		content: InsertableField<TSchema>,
+	): Promise<InstanceType<TThis>>;
+}
+
+/**
+ * TODO: some container abstraction which can be used internally to create DataStores.
+ */
+interface Container {
+	/**
+	 * Creates a new DataStore containing a SharedTree initialized with `content`.
+	 *
+	 * The resulting insertable should be inserted into the tree (aka "Hydrated").
+	 *
+	 * As long as it is referenced from some tree (which is also referenced or is the container root) it will be kept around.
+	 * If it is left unreferenced long enough (typically many days), it will be garbage collected from the container.
+	 */
+	createDatastore<TSchema extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TSchema>,
+		content: InsertableField<TSchema>,
+	): Promise<{ handle: IFluidHandle }>;
+}
+
+class ContainerX implements Container {
+	createDatastore<TSchema extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TSchema>,
+		content: InsertableField<TSchema>,
+	): Promise<{ handle: IFluidHandle }> {
+		// TODO: create a DataStore
+		const runtime = null as unknown as IFluidDataStoreRuntime;
+		const tree = SharedTree.create(runtime);
+
+		const view = tree.viewWith(configuration) as TreeViewAlpha<TSchema>;
+		view.initialize(content);
+
+		const handle = tree.handle;
+
+		return { handle };
+	}
 }

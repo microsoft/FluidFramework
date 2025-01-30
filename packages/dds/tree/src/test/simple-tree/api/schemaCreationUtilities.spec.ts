@@ -433,4 +433,15 @@ describe("schemaCreationUtilities", () => {
 			),
 		);
 	});
+
+	it("datastore example", () => {
+		const factory = new TreeFactory({});
+
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
+			"tree",
+		);
+
+		// TODO
+	});
 });
