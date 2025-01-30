@@ -12,10 +12,10 @@ import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 
 import { _dirname } from "./dirname.cjs";
-import { mapBaseModel } from "./fuzzUtils.js";
+import { baseMapModel } from "./fuzzUtils.js";
 
 describe("Map fuzz tests", () => {
-	createDDSFuzzSuite(mapBaseModel, {
+	createDDSFuzzSuite(baseMapModel, {
 		defaultTestCount: 100,
 		numberOfClients: 3,
 		clientJoinOptions: {
@@ -30,7 +30,7 @@ describe("Map fuzz tests", () => {
 	});
 
 	createDDSFuzzSuite(
-		{ ...mapBaseModel, workloadName: "with reconnect" },
+		{ ...baseMapModel, workloadName: "with reconnect" },
 		{
 			defaultTestCount: 100,
 			numberOfClients: 3,
@@ -49,7 +49,7 @@ describe("Map fuzz tests", () => {
 	);
 
 	createDDSFuzzSuite(
-		{ ...mapBaseModel, workloadName: "with batches and rebasing" },
+		{ ...baseMapModel, workloadName: "with batches and rebasing" },
 		{
 			defaultTestCount: 100,
 			numberOfClients: 3,
