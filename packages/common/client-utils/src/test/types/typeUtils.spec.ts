@@ -37,7 +37,7 @@ void (x as Mutable<AllReadonly, "one">).two;
 
 class WithPrivate {
 	private readonly foo: string = "FOO";
-	public bar: number = 42;
+	public bar: number = this.foo.length;
 }
 const withPrivate = new WithPrivate();
 
