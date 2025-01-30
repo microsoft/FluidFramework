@@ -26,6 +26,7 @@ export {
 	TypedEventEmitter,
 	type TypedEventTransform,
 } from "./typedEventEmitter.js";
+export { type Patch } from "./typeUtils.js";
 
 export { createEmitter } from "./events/index.js";
 

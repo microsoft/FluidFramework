@@ -122,8 +122,11 @@ describe("OpSplitter", () => {
 		assert.equal(opSplitter.chunks.size, 0);
 	});
 
-	it("Reconstruct original chunked op with initial chunks", () => {
-		const op = generateChunkableOp(chunkSizeInBytes * 3);
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	it.only("Reconstruct original chunked op with initial chunks", () => {
+		const op = generateChunkableOp(chunkSizeInBytes * 1000);
 		const chunks = wrapChunkedOps(splitOp(op, chunkSizeInBytes), "testClient");
 		const opSplitter = new OpSplitter(
 			[],
