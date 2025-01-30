@@ -13,6 +13,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";
+import { delay } from "@fluidframework/common-utils";
 
 const defaultSessionStickinessDurationMs = 60 * 60 * 1000; // 60 minutes
 
@@ -290,35 +291,29 @@ export async function getSession(
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	const document = await runWithRetry(
-		async () =>
-			documentRepository.readOne({ tenantId, documentId }).then((result) => {
-				if (result === null) {
-					throw new NetworkError(
-						404,
-						"Document is deleted and cannot be accessed",
-						false /* canRetry, we should not retry if DB already not in DB! */,
-					);
-				}
-				return result;
-			}),
-		"getDocumentForSession",
-		readDocumentMaxRetries, // maxRetries
-		readDocumentRetryDelay, // retryAfterMs
-		baseLumberjackProperties, // telemetry props
-		undefined,
-		(error) => shouldRetryNetworkError(error),
-	).catch((error) => {
-		if (isNetworkError(error) && error.code === 404) {
-			return undefined;
+	let document: IDocument | null ;
+	try{
+		document = await documentRepository.readOne({ tenantId, documentId });
+		if(document === null) {
+			await delay(readDocumentRetryDelay);
+			document = await documentRepository.readOne({ tenantId, documentId });
 		}
-		connectionTrace?.stampStage("DocumentDBError");
+		if(document === null) {
+			// Retry once in case of DB replication lag should be enough
+			throw new NetworkError(404, "Document is deleted and cannot be accessed");
+		}
+	} catch (error: unknown) {
+		if (isNetworkError(error) && error.code === 404) {
+			connectionTrace?.stampStage("DocumentNotFound");
+		} else {
+			connectionTrace?.stampStage("DocumentDBError");
+		}
 		throw error;
-	});
+	};
 
-	// Check whether document was found in the DB.
-	if (!document || document?.scheduledDeletionTime !== undefined) {
-		connectionTrace?.stampStage("DocumentDoesNotExist");
+	// Check whether document was soft deleted
+	if (document.scheduledDeletionTime !== undefined) {
+		connectionTrace?.stampStage("DocumentSoftDeleted");
 		throw new NetworkError(404, "Document is deleted and cannot be accessed.");
 	}
 	connectionTrace?.stampStage("DocumentExistenceChecked");
