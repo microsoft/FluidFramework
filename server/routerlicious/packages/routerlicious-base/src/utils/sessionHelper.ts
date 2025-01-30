@@ -9,7 +9,6 @@ import {
 	runWithRetry,
 	IDocumentRepository,
 	IClusterDrainingChecker,
-	shouldRetryNetworkError,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { StageTrace } from "./trace";
@@ -291,25 +290,23 @@ export async function getSession(
 ): Promise<ISession> {
 	const baseLumberjackProperties = getLumberBaseProperties(documentId, tenantId);
 
-	let document: IDocument | null ;
-	try{
+	let document: IDocument | null;
+	try {
 		document = await documentRepository.readOne({ tenantId, documentId });
-		if(document === null) {
+		if (document === null) {
 			await delay(readDocumentRetryDelay);
 			document = await documentRepository.readOne({ tenantId, documentId });
 		}
-		if(document === null) {
+		if (document === null) {
 			// Retry once in case of DB replication lag should be enough
 			throw new NetworkError(404, "Document is deleted and cannot be accessed");
 		}
 	} catch (error: unknown) {
-		if (isNetworkError(error) && error.code === 404) {
-			connectionTrace?.stampStage("DocumentNotFound");
-		} else {
-			connectionTrace?.stampStage("DocumentDBError");
-		}
+		connectionTrace?.stampStage(
+			isNetworkError(error) && error.code === 404 ? "DocumentNotFound" : "DocumentDBError",
+		);
 		throw error;
-	};
+	}
 
 	// Check whether document was soft deleted
 	if (document.scheduledDeletionTime !== undefined) {
