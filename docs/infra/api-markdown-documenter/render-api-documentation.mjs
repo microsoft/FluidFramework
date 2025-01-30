@@ -8,6 +8,7 @@ import {
 	ApiItemUtilities,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
+	HierarchyKind,
 	loadModel,
 	MarkdownRenderer,
 	ReleaseTag,
@@ -78,13 +79,42 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 	const config = getApiItemTransformationConfigurationWithDefaults({
 		apiModel,
-		documentBoundaries: [
-			ApiItemKind.Class,
-			ApiItemKind.Enum,
-			ApiItemKind.Interface,
-			ApiItemKind.Namespace,
-			ApiItemKind.TypeAlias,
-		],
+		hierarchy: {
+			[ApiItemKind.Model]: HierarchyKind.Document,
+			[ApiItemKind.Namespace]: HierarchyKind.Folder,
+			[ApiItemKind.Package]: HierarchyKind.Folder,
+			getDocumentName: (apiItem, hierarchyConfig) => {
+				switch (apiItem.kind) {
+					case ApiItemKind.Model:
+						// We inject a custom landing page ("index.mdx") for a curated package reference.
+						// So we will give the auto-generated / complete model page its own separate document.
+						return "package-reference";
+
+					case ApiItemKind.Namespace:
+					case ApiItemKind.Package:
+						// Namespace and package items generate documents within their own folder.
+						return "index";
+					default:
+						let documentName = ApiItemUtilities.createQualifiedDocumentNameForApiItem(
+							apiItem,
+							hierarchyConfig,
+						);
+
+						// Docusaurus treats any document name starting with "_" as a "partial" document, which
+						// will not be included in the site output.
+						// See: <https://docusaurus.io/docs/create-doc>
+						// To work around this, while (hopefully) preventing name collisions, we will prefix
+						// The filename with "u". E.g. `_foo.md` -> `u_foo.md`.
+						// This doesn't affect displayed contents, strictly changes the resulting filenames and any
+						// links to them.
+						if (documentName.startsWith("_")) {
+							documentName = `u${documentName}`;
+						}
+
+						return documentName;
+				}
+			},
+		},
 		newlineKind: "lf",
 		uriRoot: uriRootDir,
 		includeBreadcrumb: false, // Docusaurus includes this by default based on file hierarchy
@@ -102,7 +132,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 					alerts.push("Legacy");
 				}
 
-				const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+				const releaseTag = ApiItemUtilities.getEffectiveReleaseLevel(apiItem);
 				if (releaseTag === ReleaseTag.Alpha) {
 					alerts.push("Alpha");
 				} else if (releaseTag === ReleaseTag.Beta) {
@@ -111,40 +141,22 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			}
 			return alerts;
 		},
-		getFileNameForItem: (apiItem) => {
-			switch (apiItem.kind) {
-				case ApiItemKind.Model: {
-					return "package-reference";
-				}
-				case ApiItemKind.Package: {
-					return ApiItemUtilities.getUnscopedPackageName(apiItem);
-				}
-				default: {
-					const qualifiedName = ApiItemUtilities.getQualifiedApiItemName(apiItem);
-					let fileName = qualifiedName;
+		exclude: (apiItem) => {
+			// Exclude packages that aren't intended for public consumption.
+			if (apiItem.kind === ApiItemKind.Package) {
+				const packageName = apiItem.name;
+				const packageScope = PackageName.getScope(packageName);
 
-					// Docusaurus treats any document name starting with "_" as a "partial" document, which
-					// will not be included in the site output.
-					// See: <https://docusaurus.io/docs/create-doc>
-					// To work around this, while (hopefully) preventing name collisions, we will prefix
-					// The filename with "u". E.g. `_foo.md` -> `u_foo.md`.
-					// This doesn't affect displayed contents, strictly changes the resulting filenames and any
-					// links to them.
-					if (qualifiedName.startsWith("_")) {
-						fileName = `u${qualifiedName}`;
-					}
-
-					return fileName;
+				// Skip `@fluid-private` packages
+				// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
+				if (["@fluid-private"].includes(packageScope)) {
+					return true;
 				}
 			}
-		},
-		skipPackage: (apiPackage) => {
-			const packageName = apiPackage.displayName;
-			const packageScope = PackageName.getScope(packageName);
 
-			// Skip `@fluid-private` packages
-			// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
-			return ["@fluid-private"].includes(packageScope);
+			// TODO: exclude alpha+legacy APIs, which are not intended for public consumption.
+
+			return false;
 		},
 	});
 

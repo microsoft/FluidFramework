@@ -26,11 +26,9 @@ import { MergeTree } from "./mergeTree.js";
 import { ISegmentPrivate } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	IRemovalInfo,
 	overwriteInfo,
 	type IInsertionInfo,
-	// eslint-disable-next-line import/no-deprecated
 	type IMoveInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -123,8 +121,7 @@ export class SnapshotLoader {
 				if (specAsBuggyFormat.removedClient !== undefined) {
 					spec.removedClientIds ??= [specAsBuggyFormat.removedClient];
 				}
-				assert(spec.removedClientIds !== undefined, 0xaa4 /* must have removedClient ids */);
-				// eslint-disable-next-line import/no-deprecated
+				assert(spec.removedClientIds !== undefined, 0xaac /* must have removedClient ids */);
 				overwriteInfo<IRemovalInfo>(seg, {
 					removedSeq: spec.removedSeq,
 					removedClientIds: spec.removedClientIds.map((id) =>
@@ -137,7 +134,6 @@ export class SnapshotLoader {
 					spec.movedClientIds !== undefined && spec.movedSeqs !== undefined,
 					0xaa5 /* must have movedIds ids */,
 				);
-				// eslint-disable-next-line import/no-deprecated
 				overwriteInfo<IMoveInfo>(seg, {
 					movedSeq: spec.movedSeq,
 					movedSeqs: spec.movedSeqs,

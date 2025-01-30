@@ -34,15 +34,6 @@ declare type old_as_current_for_Class_BaseSegment = requireAssignableTo<TypeOnly
 declare type current_as_old_for_Class_BaseSegment = requireAssignableTo<TypeOnly<current.BaseSegment>, TypeOnly<old.BaseSegment>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_LocalReferenceCollection": {"backCompat": false}
- */
-declare type current_as_old_for_Class_LocalReferenceCollection = requireAssignableTo<TypeOnly<current.LocalReferenceCollection>, TypeOnly<old.LocalReferenceCollection>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -122,15 +113,6 @@ declare type current_as_old_for_Class_TrackingGroupCollection = requireAssignabl
  * "ClassStatics_BaseSegment": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_BaseSegment = requireAssignableTo<TypeOnly<typeof current.BaseSegment>, TypeOnly<typeof old.BaseSegment>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_LocalReferenceCollection": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_LocalReferenceCollection = requireAssignableTo<TypeOnly<typeof current.LocalReferenceCollection>, TypeOnly<typeof old.LocalReferenceCollection>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -398,24 +380,6 @@ declare type current_as_old_for_Interface_IMarkerDef = requireAssignableTo<TypeO
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_IMergeNodeCommon": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IMergeNodeCommon = requireAssignableTo<TypeOnly<old.IMergeNodeCommon>, TypeOnly<current.IMergeNodeCommon>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IMergeNodeCommon": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IMergeNodeCommon = requireAssignableTo<TypeOnly<current.IMergeNodeCommon>, TypeOnly<old.IMergeNodeCommon>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_IMergeTreeAnnotateAdjustMsg": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IMergeTreeAnnotateAdjustMsg = requireAssignableTo<TypeOnly<old.IMergeTreeAnnotateAdjustMsg>, TypeOnly<current.IMergeTreeAnnotateAdjustMsg>>
@@ -650,24 +614,6 @@ declare type current_as_old_for_Interface_IMergeTreeSegmentDelta = requireAssign
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_IMoveInfo": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IMoveInfo = requireAssignableTo<TypeOnly<old.IMoveInfo>, TypeOnly<current.IMoveInfo>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IMoveInfo": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IMoveInfo = requireAssignableTo<TypeOnly<current.IMoveInfo>, TypeOnly<old.IMoveInfo>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_InteriorSequencePlace": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_InteriorSequencePlace = requireAssignableTo<TypeOnly<old.InteriorSequencePlace>, TypeOnly<current.InteriorSequencePlace>>
@@ -698,24 +644,6 @@ declare type old_as_current_for_Interface_IRelativePosition = requireAssignableT
  * "Interface_IRelativePosition": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IRelativePosition = requireAssignableTo<TypeOnly<current.IRelativePosition>, TypeOnly<old.IRelativePosition>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IRemovalInfo": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IRemovalInfo = requireAssignableTo<TypeOnly<old.IRemovalInfo>, TypeOnly<current.IRemovalInfo>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IRemovalInfo": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IRemovalInfo = requireAssignableTo<TypeOnly<current.IRemovalInfo>, TypeOnly<old.IRemovalInfo>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

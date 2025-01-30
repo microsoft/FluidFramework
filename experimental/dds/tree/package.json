@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.13.0",
+	"version": "2.21.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -102,7 +102,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",

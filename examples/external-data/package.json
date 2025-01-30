@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-data",
-	"version": "2.13.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Integrating an external data source with Fluid data.",
 	"homepage": "https://fluidframework.com",
@@ -84,7 +84,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/cors": "^2.8.4",
 		"@types/express": "^4.17.21",

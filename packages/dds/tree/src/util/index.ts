@@ -121,13 +121,9 @@ export {
 } from "./brandedMap.js";
 
 export {
-	getFirstEntryFromRangeMap,
-	getFromRangeMap,
-	type RangeEntry,
-	type RangeMap,
+	RangeMap,
 	type RangeQueryResult,
-	setInRangeMap,
-	deleteFromRangeMap,
+	newIntegerRangeMap,
 } from "./rangeMap.js";
 
 export {
@@ -145,3 +141,5 @@ export {
 	throwIfBroken,
 	breakingClass,
 } from "./breakable.js";
+
+export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";

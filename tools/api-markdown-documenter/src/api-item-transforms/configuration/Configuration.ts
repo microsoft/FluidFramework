@@ -12,6 +12,7 @@ import { createSectionForApiItem } from "../default-implementations/index.js";
 
 import {
 	type DocumentationSuiteConfiguration,
+	type DocumentationSuiteOptions,
 	getDocumentationSuiteConfigurationWithDefaults,
 } from "./DocumentationSuite.js";
 import {
@@ -39,11 +40,6 @@ export interface ApiItemTransformationConfigurationBase {
 	 * If you need to generate a model from API reports on disk, see {@link loadModel}.
 	 */
 	readonly apiModel: ApiModel;
-
-	/**
-	 * Default root URI used when generating content links.
-	 */
-	readonly uriRoot: string;
 }
 
 /**
@@ -59,6 +55,14 @@ export interface ApiItemTransformationConfiguration
 	extends ApiItemTransformationConfigurationBase,
 		DocumentationSuiteConfiguration,
 		Required<LoggingConfiguration> {
+	/**
+	 * Default root URI used when generating content links.
+	 *
+	 * @example
+	 * For a generated document `foo/bar` and a `uriRoot` of `docs`, any generated links to that document would be `docs/foo/bar`.
+	 */
+	readonly uriRoot: string;
+
 	/**
 	 * {@inheritDoc ApiItemTransformations}
 	 */
@@ -89,8 +93,15 @@ export interface ApiItemTransformationConfiguration
  */
 export interface ApiItemTransformationOptions
 	extends ApiItemTransformationConfigurationBase,
-		Partial<DocumentationSuiteConfiguration>,
+		DocumentationSuiteOptions,
 		LoggingConfiguration {
+	/**
+	 * {@inheritDoc ApiItemTransformationConfiguration.uriRoot}
+	 *
+	 * @defaultValue ""
+	 */
+	readonly uriRoot?: string | undefined;
+
 	/**
 	 * Optional overrides for the default transformations.
 	 */
@@ -123,7 +134,7 @@ export function getApiItemTransformationConfigurationWithDefaults(
 		...documentationSuiteOptions,
 		transformations,
 		apiModel: options.apiModel,
-		uriRoot: options.uriRoot,
+		uriRoot: options.uriRoot ?? "",
 		logger,
 		defaultSectionLayout,
 	};

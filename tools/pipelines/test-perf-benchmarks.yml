@@ -101,7 +101,7 @@ stages:
       displayName: Perf unit tests - runtime
       pool: ${{ parameters.poolBuild }}
       steps:
-      - template: templates/include-test-perf-benchmarks.yml
+      - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
           # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
@@ -116,7 +116,7 @@ stages:
       - ${{ each testPackage in parameters.executionTestPackages }}:
 
         # Download and install package with performance tests
-        - template: templates/include-test-perf-benchmarks-install-package.yml
+        - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
           parameters:
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
@@ -154,7 +154,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -237,7 +237,7 @@ stages:
       displayName: Perf unit tests - memory
       pool: ${{ parameters.poolBuild }}
       steps:
-      - template: templates/include-test-perf-benchmarks.yml
+      - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
           # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
@@ -252,7 +252,7 @@ stages:
       - ${{ each testPackage in parameters.memoryTestPackages }}:
 
         # Download and install package with performance tests
-        - template: templates/include-test-perf-benchmarks-install-package.yml
+        - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
           parameters:
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
@@ -290,7 +290,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -373,7 +373,7 @@ stages:
       displayName: Perf unit tests - customBenchmark
       pool: ${{ parameters.poolBuild }}
       steps:
-      - template: templates/include-test-perf-benchmarks.yml
+      - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
           # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
@@ -388,7 +388,7 @@ stages:
       - ${{ each testPackage in parameters.customBenchmarkTestPackages }}:
 
         # Download and install package with performance tests
-        - template: templates/include-test-perf-benchmarks-install-package.yml
+        - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
           parameters:
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
@@ -427,7 +427,7 @@ stages:
 
         - task: Npm@1
           displayName: Install dependencies - ${{ testPackage }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
@@ -522,7 +522,7 @@ stages:
         pool: ${{ parameters.poolBuild }}
         timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 60) }}
         steps:
-        - template: templates/include-test-perf-benchmarks.yml
+        - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
           parameters:
             # ado-feeds-dev and ado-feeds-office come from the ado-feeds variable group
             artifactBuildId: $(artifactBuildId)
@@ -534,7 +534,7 @@ stages:
             pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
         # Download and install package with performance tests
-        - template: templates/include-test-perf-benchmarks-install-package.yml
+        - template: /tools/pipelines/templates/include-test-perf-benchmarks-install-package.yml@self
           parameters:
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
@@ -549,7 +549,7 @@ stages:
             targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
         - task: Npm@1
           displayName: Install dependencies - ${{ endpointObject.endpointName }}
-          retryCountOnTaskFailure: 1
+          retryCountOnTaskFailure: 4
           inputs:
             command: 'install'
             workingDir: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}

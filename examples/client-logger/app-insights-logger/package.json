@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-insights-logger",
-	"version": "2.13.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Provides a simple Fluid application with a UI view written in React to test the Fluid App Insights telemetry logger that will route typical Fluid telemetry to configured Azure App Insights",
 	"homepage": "https://fluidframework.com",
@@ -58,7 +58,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@testing-library/dom": "^10.4.0",
 		"@testing-library/jest-dom": "^5.16.5",
 		"@testing-library/react": "^16.0.1",

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable tsdoc/syntax */
 /* eslint-disable no-bitwise */
 import { assert } from "@fluidframework/core-utils/internal";
 
@@ -20,6 +19,7 @@ export class AppendOnlySortedMap<K, V> {
 	public constructor(protected readonly comparator: (a: K, b: K) => number) {}
 
 	/**
+	 * Gets the size of the map.
 	 * @returns the number of entries in this map
 	 */
 	public get size(): number {
@@ -27,6 +27,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
+	 * Gets the min key in the map.
 	 * @returns the min key in the map.
 	 */
 	public minKey(): K | undefined {
@@ -34,6 +35,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
+	 * Gets the max key in the map.
 	 * @returns the max key in the map.
 	 */
 	public maxKey(): K | undefined {
@@ -41,6 +43,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
+	 * Gets the min value in the map.
 	 * @returns the min value in the map.
 	 */
 	public minValue(): V | undefined {
@@ -48,14 +51,16 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @returns the min value in the map.
+	 * Gets the max value in the map.
+	 * @returns the max value in the map.
 	 */
 	public maxValue(): V | undefined {
 		return this.elements[this.elements.length - 1] as V | undefined;
 	}
 
 	/**
-	 * @returns the min key in the map.
+	 * Gets the first key/value pair in the map.
+	 * @returns the first pair if it exists, or undefined otherwise.
 	 */
 	public first(): [K, V] | undefined {
 		const { elements } = this;
@@ -67,7 +72,8 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @returns the max key in the map.
+	 * Gets the last key/value pair in the map.
+	 * @returns the last pair if it exists, or undefined otherwise.
 	 */
 	public last(): [K, V] | undefined {
 		const { elements } = this;
@@ -80,7 +86,9 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * Returns the element at the insertion index.
+	 * Gets the entry at the specified index.
+	 * @param index - the entry index
+	 * @returns the key/value pair if it exists, or undefined otherwise.
 	 */
 	public getAtIndex(index: number): [K, V] | undefined {
 		const realIndex = index * 2;
@@ -92,6 +100,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
+	 * Gets the entries in the map.
 	 * @returns an iterable of the entries in the map.
 	 */
 	public *entries(): IterableIterator<readonly [K, V]> {
@@ -102,6 +111,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
+	 * Gets the keys in the map.
 	 * @returns an iterable of the keys in the map.
 	 */
 	public *keys(): IterableIterator<K> {
@@ -112,6 +122,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
+	 * Gets the values in the map.
 	 * @returns an iterable of the values in the map.
 	 */
 	public *values(): IterableIterator<V> {
@@ -122,6 +133,7 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
+	 * Gets the entries in the map, reversed.
 	 * @returns an iterable of the entries in the map, reversed.
 	 */
 	public *entriesReversed(): IterableIterator<readonly [K, V]> {
@@ -132,9 +144,9 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * Adds a new key/value pair to the map. `key` must be > to all keys in the map.
-	 * @param key - the key to add.
-	 * @param value - the value to add.
+	 * Appends a new key/value pair at the end of the map. `key` must be greater than all other keys in the map.
+	 * @param key - the key to add
+	 * @param value - the value to add
 	 */
 	public append(key: K, value: V): void {
 		const { elements } = this;
@@ -142,15 +154,14 @@ export class AppendOnlySortedMap<K, V> {
 		if (length !== 0 && this.comparator(key, this.maxKey() as K) <= 0) {
 			throw new Error("Inserted key must be > all others in the map.");
 		}
-		elements.push(key);
-		elements.push(value);
+		elements.push(key, value);
 	}
 
 	/**
-	 * Replaces the last key/value pair with the given one. If the map is empty, it simply appends.
-	 * `key` must be > to all keys in the map prior to the one replaced.
-	 * @param key - the key to add.
-	 * @param value - the value to add.
+	 * Replaces the last key/value pair with a new one. If the map is empty, the new pair is appended.
+	 * 'key' must be greater than all other keys in the map.
+	 * @param key - the key to set
+	 * @param value - the value to set
 	 */
 	public replaceLast(key: K, value: V): void {
 		const { elements, comparator } = this;
@@ -162,13 +173,13 @@ export class AppendOnlySortedMap<K, V> {
 				throw new Error("Inserted key must be > all others in the map.");
 			}
 		}
-		elements.push(key);
-		elements.push(value);
+		elements.push(key, value);
 	}
 
 	/**
-	 * @param key - the key to lookup.
-	 * @returns the value associated with `key` if such an entry exists, and undefined otherwise.
+	 * Gets the value associated with a given key.
+	 * @param key - the key to lookup
+	 * @returns the value if it exists, or undefined otherwise.
 	 */
 	public get(key: K): V | undefined {
 		const index = AppendOnlySortedMap.keyIndexOf(this.elements, key, this.comparator);
@@ -179,15 +190,16 @@ export class AppendOnlySortedMap<K, V> {
 	}
 
 	/**
-	 * @param key - the key to lookup.
-	 * @returns the entry associated with `key` if such an entry exists, the entry associated with the next lower key if such an entry
-	 * exists, and undefined otherwise.
+	 * Gets the pair associated with the given key or the next smaller key.
+	 * @param key - the key to lookup
+	 * @returns the pair if it exists, or undefined otherwise.
 	 */
 	public getPairOrNextLower(key: K): readonly [K, V] | undefined {
 		return this.getPairOrNextLowerBy(key, this.comparator);
 	}
 
 	/**
+	 * Gets the pair associated with the given key or the next higher key.
 	 * @param key - the key to lookup.
 	 * @returns the entry associated with `key` if such an entry exists, the entry associated with the next higher key if such an entry
 	 * exists, and undefined otherwise.
@@ -293,6 +305,12 @@ export class AppendOnlySortedMap<K, V> {
 		return keyIndex;
 	}
 
+	/**
+	 * Gets the pair associated with the given key or next higher key.
+	 * @param search - the search value
+	 * @param comparator - a comparison function
+	 * @returns the pair if it exists, or undefined otherwise.
+	 */
 	protected getPairOrNextHigherBy<T>(
 		search: T,
 		comparator: (search: T, key: K, value: V) => number,
