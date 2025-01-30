@@ -6,6 +6,7 @@
 import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
+// eslint-disable-next-line import/no-deprecated -- TODO: Use `getEffectiveReleaseLevel` instead.
 import { getReleaseTag } from "../../utilities/index.js";
 import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
@@ -71,6 +72,8 @@ export function createSectionForApiItem(
 	}
 
 	// Render alpha/beta notice if applicable
+
+	// eslint-disable-next-line import/no-deprecated -- TODO: Use `getEffectiveReleaseLevel` instead.
 	const releaseTag = getReleaseTag(apiItem);
 	if (releaseTag === ReleaseTag.Alpha) {
 		sections.push(wrapInSection([alphaWarningSpan]));
@@ -116,7 +119,7 @@ export function createSectionForApiItem(
 
 	// Add heading to top of section only if this is being rendered to a parent item.
 	// Document items have their headings handled specially.
-	return doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+	return doesItemRequireOwnDocument(apiItem, config.hierarchy)
 		? sections
 		: [wrapInSection(sections, getHeadingForApiItem(apiItem, config))];
 }

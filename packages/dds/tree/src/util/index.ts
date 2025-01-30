@@ -123,6 +123,7 @@ export {
 export {
 	RangeMap,
 	type RangeQueryResult,
+	newIntegerRangeMap,
 } from "./rangeMap.js";
 
 export {
@@ -140,3 +141,5 @@ export {
 	throwIfBroken,
 	breakingClass,
 } from "./breakable.js";
+
+export { type TupleBTree, newTupleBTree, mergeTupleBTrees } from "./bTreeUtils.js";

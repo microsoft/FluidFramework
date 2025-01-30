@@ -269,29 +269,28 @@ export const selectionFlags = {
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	dir: Flags.directory({
-		description:
-			"Run on the package in this directory. Cannot be used with --all, --packages, --releaseGroup, or --releaseGroupRoot.",
-		exclusive: ["packages", "releaseGroup", "releaseGroupRoot", "all"],
+		description: "Run on the package in this directory. Cannot be used with --all.",
+		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
+		multiple: true,
 	}),
 	packages: Flags.boolean({
-		description:
-			"Run on all independent packages in the repo. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+		description: "Run on all independent packages in the repo. Cannot be used with --all.",
 		default: false,
-		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all"],
+		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	releaseGroup: releaseGroupWithAllFlag({
 		description:
-			"Run on all child packages within the specified release groups. This does not include release group root packages. To include those, use the --releaseGroupRoot argument. Cannot be used with --all, --dir, or --packages.",
-		exclusive: ["all", "dir", "packages"],
+			"Run on all child packages within the specified release groups. This does not include release group root packages. To include those, use the --releaseGroupRoot argument. Cannot be used with --all.",
+		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
 	}),
 	releaseGroupRoot: releaseGroupWithAllFlag({
 		description:
-			"Run on the root package of the specified release groups. This does not include any child packages within the release group. To include those, use the --releaseGroup argument. Cannot be used with --all, --dir, or --packages.",
-		exclusive: ["all", "dir", "packages"],
+			"Run on the root package of the specified release groups. This does not include any child packages within the release group. To include those, use the --releaseGroup argument. Cannot be used with --all.",
+		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
 		char: undefined,
@@ -299,8 +298,8 @@ export const selectionFlags = {
 	}),
 	changed: Flags.boolean({
 		description:
-			"Select only packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with other options.",
-		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all", "packages"],
+			"Select packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with --all.",
+		exclusive: ["all"],
 		required: false,
 		default: false,
 		helpGroup: "PACKAGE SELECTION",
@@ -339,7 +338,7 @@ export const selectionFlags = {
  */
 export interface selectionFlags {
 	readonly all: boolean;
-	readonly dir: string | undefined;
+	readonly dir: string[] | undefined;
 	readonly packages: boolean;
 	readonly releaseGroup: string[] | undefined;
 	readonly releaseGroupRoot: string[] | undefined;

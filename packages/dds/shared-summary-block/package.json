@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/shared-summary-block",
-	"version": "2.14.0",
+	"version": "2.21.0",
 	"description": "A DDS that does not generate ops but is part of summary",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -134,7 +134,7 @@
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.6.0",
-		"@fluidframework/shared-summary-block-previous": "npm:@fluidframework/shared-summary-block@2.12.0",
+		"@fluidframework/shared-summary-block-previous": "npm:@fluidframework/shared-summary-block@2.20.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/benchmark": "^2.1.0",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-data",
-	"version": "2.14.0",
+	"version": "2.21.0",
 	"private": true,
 	"description": "Integrating an external data source with Fluid data.",
 	"homepage": "https://fluidframework.com",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-dds-utils",
-	"version": "2.14.0",
+	"version": "2.21.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {

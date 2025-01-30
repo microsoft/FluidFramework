@@ -10,6 +10,7 @@ import {
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
@@ -181,8 +182,10 @@ export async function createSummarizer(
  */
 export async function summarizeNow(
 	summarizer: ISummarizer,
+	// eslint-disable-next-line import/no-deprecated
 	inputs: string | IOnDemandSummarizeOptions = "end-to-end test",
 ): Promise<SummaryInfo> {
+	// eslint-disable-next-line import/no-deprecated
 	const options: IOnDemandSummarizeOptions =
 		typeof inputs === "string" ? { reason: inputs } : inputs;
 	const result = summarizer.summarizeOnDemand(options);
