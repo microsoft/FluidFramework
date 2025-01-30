@@ -13731,10 +13731,7 @@ importers:
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack@5.97.1)
 
   packages/test/local-server-stress-tests:
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
+    dependencies:
       '@fluid-experimental/tree':
         specifier: workspace:~
         version: link:../../../experimental/dds/tree
@@ -13747,9 +13744,9 @@ importers:
       '@fluid-private/stochastic-test-utils':
         specifier: workspace:~
         version: link:../stochastic-test-utils
-      '@fluid-private/test-drivers':
+      '@fluid-private/test-dds-utils':
         specifier: workspace:~
-        version: link:../test-drivers
+        version: link:../../dds/test-dds-utils
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../framework/aqueduct
@@ -13822,6 +13819,13 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -13858,9 +13862,6 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
 
   packages/test/local-server-tests:
     devDependencies:

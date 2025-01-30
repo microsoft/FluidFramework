@@ -84,6 +84,7 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"@fluid-private/test-dds-utils": "workspace:~",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {

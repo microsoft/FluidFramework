@@ -31,11 +31,12 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
-import type {
-	ICodeDetailsLoader,
-	IContainer,
-	IFluidCodeDetails,
-	IRuntimeFactory,
+import {
+	AttachState,
+	type ICodeDetailsLoader,
+	type IContainer,
+	type IFluidCodeDetails,
+	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
@@ -882,6 +883,10 @@ export class StressDataObject extends DataObject {
 		const maybe: FluidObject<StressDataObject> | undefined = await root.get();
 		assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
 		return maybe.StressDataObject;
+	}
+
+	public get attached() {
+		return this.runtime.attachState === AttachState.Attached;
 	}
 
 	public channels: Record<string, () => IChannel> = {
