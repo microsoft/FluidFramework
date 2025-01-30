@@ -15,20 +15,20 @@ import {
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import type {
-	Client,
-	DDSFuzzModel,
-	DDSFuzzTestState,
-} from "@fluid-private/test-dds-utils";
+import type { Client, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isObject } from "@fluidframework/core-utils/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import { DirectoryFactory, type IDirectory, type ISharedMap, MapFactory } from "../../index.js";
+import {
+	DirectoryFactory,
+	type IDirectory,
+	type ISharedMap,
+	MapFactory,
+} from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
-
 
 /**
  * Represents a map clear operation.
@@ -154,8 +154,6 @@ export const baseMapModel: DDSFuzzModel<MapFactory, MapOperation> = {
 	reducer: async (state, operation) => mapReducer(state, operation),
 	validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 };
-
-
 
 type DirFuzzTestState = DDSFuzzTestState<DirectoryFactory>;
 
@@ -402,7 +400,8 @@ export function makeDirOperationGenerator(
 		[
 			deleteSubDirectory,
 			options.deleteSubDirWeight,
-			(state: DirFuzzTestState): boolean => (state.client.channel.countSubDirectory?.() ?? 0) > 0,
+			(state: DirFuzzTestState): boolean =>
+				(state.client.channel.countSubDirectory?.() ?? 0) > 0,
 		],
 		[setKey, options.setKeyWeight],
 		[
@@ -447,7 +446,9 @@ function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: Loggi
  * @param loggingInfo - The logging information.
  * @returns An asynchronous reducer for directory operations.
  */
-export function makeDirReducer(loggingInfo?: LoggingInfo): AsyncReducer<DirOperation, DirFuzzTestState> {
+export function makeDirReducer(
+	loggingInfo?: LoggingInfo,
+): AsyncReducer<DirOperation, DirFuzzTestState> {
 	const withLogging =
 		<T>(baseReducer: AsyncReducer<T, DirFuzzTestState>): AsyncReducer<T, DirFuzzTestState> =>
 		async (state, operation) => {
@@ -499,25 +500,11 @@ export function makeDirReducer(loggingInfo?: LoggingInfo): AsyncReducer<DirOpera
 }
 
 /**
- * The default options for the directory fuzz model.
- */
-const dirOptions: DirOperationGenerationConfig = {
-	setKeyWeight: 0,
-	clearKeysWeight: 0,
-	deleteKeyWeight: 0,
-	createSubDirWeight: 2,
-	deleteSubDirWeight: 2,
-	maxSubDirectoryChild: 2,
-	subDirectoryNamePool: ["dir1", "dir2"],
-	validateInterval: dirDefaultOptions.validateInterval,
-};
-
-/**
  * The base fuzz model for directory.
  */
 export const baseDirModel: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 	workloadName: "default directory 1",
-	generatorFactory: () => takeAsync(100, makeDirOperationGenerator(dirOptions)),
+	generatorFactory: () => takeAsync(100, makeDirOperationGenerator(dirDefaultOptions)),
 	reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
 	validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 	factory: new DirectoryFactory(),

@@ -24,7 +24,7 @@ export class StressDataObject extends DataObject {
 
 	protected _globalObjects: Record<
 		string,
-		| { type: "newBlob"; handle: IFluidHandle<ArrayBufferLike> }
+		| { type: "newBlob"; handle: IFluidHandle }
 		| { type: "newDatastore"; dataStore: IDataStore; handle: IFluidHandle }
 		| {
 				type: "stressDataObject";
@@ -37,7 +37,7 @@ export class StressDataObject extends DataObject {
 	public get globalObjects(): Readonly<
 		Record<
 			string,
-			| { type: "newBlob"; handle: IFluidHandle<ArrayBufferLike> }
+			| { type: "newBlob"; handle: IFluidHandle }
 			| { type: "newDatastore"; dataStore: IDataStore; handle: IFluidHandle }
 			| {
 					type: "stressDataObject";
@@ -84,10 +84,10 @@ export class StressDataObject extends DataObject {
 
 	public uploadBlob(contents: string) {
 		void this.runtime.uploadBlob(stringToBuffer(contents, "utf-8")).then(
-			(blobHandle) =>
-				(this._globalObjects[toFluidHandleInternal(blobHandle).absolutePath] = {
+			(handle) =>
+				(this._globalObjects[toFluidHandleInternal(handle).absolutePath] = {
 					type: "newBlob",
-					handle: blobHandle,
+					handle,
 				}),
 		);
 	}

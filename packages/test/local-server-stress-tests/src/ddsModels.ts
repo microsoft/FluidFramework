@@ -21,6 +21,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	baseSharedStringModel,
 	baseIntervalModel,
@@ -111,12 +112,15 @@ const covertLocalServerStateToDdsState = (
 		random: {
 			...state.random,
 			handle: () => {
-				const realHandle = state.random.pick(
-					Object.values(state.client.entryPoint.globalObjects)
-						.map((v) => v.handle)
-						.filter((v): v is IFluidHandle => v !== undefined),
+				const realHandle = toFluidHandleInternal(
+					state.random.pick(
+						Object.values(state.client.entryPoint.globalObjects)
+							.map((v) => v.handle)
+							.filter((v): v is IFluidHandle => v !== undefined),
+					),
 				);
 				return {
+					absolutePath: realHandle.absolutePath,
 					get [fluidHandleSymbol]() {
 						return realHandle[fluidHandleSymbol];
 					},
