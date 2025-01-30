@@ -22,7 +22,7 @@ import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import type { ITreeInternal } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 
@@ -30,7 +30,6 @@ import type { VisualizeChildData, VisualizeSharedObject } from "./DataVisualizat
 import {
 	concatenateTypes,
 	determineNodeKind,
-	getIsRequired,
 	toVisualTree,
 	visualizeSharedTreeBySchema,
 } from "./SharedTreeVisualizer.js";
@@ -282,7 +281,8 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	 * each node's allowed types are computed at the parent field level.
 	 */
 	const allowedTypes = concatenateTypes(sharedTree.exportSimpleSchema().allowedTypes);
-	const isRequired = getIsRequired(sharedTree.exportSimpleSchema());
+	const isRequired =
+		sharedTree.exportSimpleSchema().kind === FieldKind.Required ? true : false;
 
 	// Create a root field visualization that shows the allowed types at the root
 	const visualTreeRepresentation: VisualSharedTreeNode = await visualizeSharedTreeBySchema(
