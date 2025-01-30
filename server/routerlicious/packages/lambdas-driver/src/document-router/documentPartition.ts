@@ -92,7 +92,7 @@ export class DocumentPartition {
 			.catch((error) => {
 				if (
 					(error.name && this.restartOnErrorNames.includes(error.name as string)) ||
-					error.message?.includes("Error while creating circuit breaker")
+					error.shouldRestart
 				) {
 					this.context.error(error, {
 						restart: true,
