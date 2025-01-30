@@ -34,7 +34,9 @@ import {
 	EnqueueSummarizeResult,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
+	// eslint-disable-next-line import/no-deprecated
 	IRefreshSummaryAckOptions,
+	// eslint-disable-next-line import/no-deprecated
 	ISubmitSummaryOptions,
 	ISummarizeHeuristicData,
 	ISummarizeHeuristicRunner,
@@ -42,7 +44,9 @@ import {
 	ISummarizeResults,
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
+	// eslint-disable-next-line import/no-deprecated
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
 	type IRetriableFailureError,
@@ -88,12 +92,16 @@ export class RunningSummarizer
 		logger: ITelemetryBaseLogger,
 		summaryWatcher: IClientSummaryWatcher,
 		configuration: ISummaryConfiguration,
+		// eslint-disable-next-line import/no-deprecated
 		submitSummaryCallback: (options: ISubmitSummaryOptions) => Promise<SubmitSummaryResult>,
+		// eslint-disable-next-line import/no-deprecated
 		refreshLatestSummaryAckCallback: (options: IRefreshSummaryAckOptions) => Promise<void>,
 		heuristicData: ISummarizeHeuristicData,
 		summaryCollection: SummaryCollection,
+		// eslint-disable-next-line import/no-deprecated
 		cancellationToken: ISummaryCancellationToken,
 		stopSummarizerCallback: (reason: SummarizerStopReason) => void,
+		// eslint-disable-next-line import/no-deprecated
 		runtime: ISummarizerRuntime,
 	): Promise<RunningSummarizer> {
 		const summarizer = new RunningSummarizer(
@@ -207,15 +215,19 @@ export class RunningSummarizer
 		private readonly summaryWatcher: IClientSummaryWatcher,
 		private readonly configuration: ISummaryConfiguration,
 		private readonly submitSummaryCallback: (
+			// eslint-disable-next-line import/no-deprecated
 			options: ISubmitSummaryOptions,
 		) => Promise<SubmitSummaryResult>,
 		private readonly refreshLatestSummaryAckCallback: (
+			// eslint-disable-next-line import/no-deprecated
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly heuristicData: ISummarizeHeuristicData,
 		private readonly summaryCollection: SummaryCollection,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly cancellationToken: ISummaryCancellationToken,
 		private readonly stopSummarizerCallback: (reason: SummarizerStopReason) => void,
+		// eslint-disable-next-line import/no-deprecated
 		private readonly runtime: ISummarizerRuntime,
 	) {
 		super();
@@ -293,6 +305,7 @@ export class RunningSummarizer
 			() => {
 				this.totalSuccessfulAttempts++;
 			},
+			// eslint-disable-next-line import/no-deprecated
 			async (options: IRefreshSummaryAckOptions) => {
 				if (immediatelyRefreshLatestSummaryAck) {
 					await this.refreshLatestSummaryAckAndHandleError(options);
@@ -341,6 +354,7 @@ export class RunningSummarizer
 		await this.lockedSummaryAction(
 			() => {},
 			async () => {
+				// eslint-disable-next-line import/no-deprecated
 				const options: IRefreshSummaryAckOptions = {
 					proposalHandle: summaryOpHandle,
 					ackHandle: summaryAckHandle,
@@ -354,6 +368,7 @@ export class RunningSummarizer
 	}
 
 	private readonly refreshLatestSummaryAckAndHandleError = async (
+		// eslint-disable-next-line import/no-deprecated
 		options: IRefreshSummaryAckOptions,
 	): Promise<void> => {
 		return this.refreshLatestSummaryAckCallback(options).catch(async (error) => {
@@ -475,10 +490,12 @@ export class RunningSummarizer
 		switch (op.type) {
 			case MessageType.Summarize:
 			case MessageType.SummaryAck:
-			case MessageType.SummaryNack:
+			case MessageType.SummaryNack: {
 				return false;
-			default:
+			}
+			default: {
 				return runtimeMessage || this.nonRuntimeOpCanTriggerSummary();
+			}
 		}
 	}
 
@@ -503,16 +520,18 @@ export class RunningSummarizer
 		this.disposeEnqueuedSummary();
 
 		// This will try to run lastSummary if needed.
-		if (allowLastSummary && this.heuristicRunner?.shouldRunLastSummary()) {
-			if (this.summarizingLock === undefined) {
-				this.trySummarizeOnce(
-					// summarizeProps
-					{ summarizeReason: "lastSummary" },
-					{},
-					undefined,
-					true /* isLastSummary */,
-				);
-			}
+		if (
+			allowLastSummary &&
+			this.heuristicRunner?.shouldRunLastSummary() &&
+			this.summarizingLock === undefined
+		) {
+			this.trySummarizeOnce(
+				// summarizeProps
+				{ summarizeReason: "lastSummary" },
+				{},
+				undefined,
+				true /* isLastSummary */,
+			);
 		}
 
 		// Note that trySummarizeOnce() call above returns right away, without waiting.
@@ -625,6 +644,7 @@ export class RunningSummarizer
 					logger: this.mc.logger,
 					properties: { all: summarizeProps },
 				});
+				// eslint-disable-next-line import/no-deprecated
 				const summaryOptions: ISubmitSummaryOptions = {
 					...options,
 					summaryLogger,
@@ -741,6 +761,7 @@ export class RunningSummarizer
 				logger: this.mc.logger,
 				properties: { all: summarizeProps },
 			});
+			// eslint-disable-next-line import/no-deprecated
 			const summaryOptions: ISubmitSummaryOptions = {
 				...summarizeOptions,
 				summaryLogger,
@@ -912,7 +933,7 @@ export class RunningSummarizer
 	}
 
 	/**
-	 * {@inheritdoc (ISummarizer:interface).summarizeOnDemand}
+	 *{@inheritdoc (ISummarizer:interface).summarizeOnDemand}
 	 */
 	public summarizeOnDemand(
 		options: IOnDemandSummarizeOptions,
@@ -950,7 +971,7 @@ export class RunningSummarizer
 	}
 
 	/**
-	 * {@inheritdoc (ISummarizer:interface).enqueueSummarize}
+	 *{@inheritdoc (ISummarizer:interface).enqueueSummarize}
 	 */
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		const { reason, afterSequenceNumber = 0, override = false, ...summarizeOptions } = options;

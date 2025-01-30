@@ -5,7 +5,12 @@
 
 import Path from "node:path";
 
-import { ReleaseTag, type ApiModel } from "@microsoft/api-extractor-model";
+import {
+	ApiItemKind,
+	ReleaseTag,
+	type ApiModel,
+	type ApiPackage,
+} from "@microsoft/api-extractor-model";
 
 import { HtmlRenderer, loadModel } from "../index.js";
 
@@ -37,7 +42,7 @@ const testConfigs = new Map<
 	[
 		"default-config",
 		{
-			uriRoot: ".",
+			uriRoot: "",
 		},
 	],
 
@@ -62,7 +67,10 @@ const testConfigs = new Map<
 			includeTopLevelDocumentHeading: true,
 			hierarchy: HierarchyConfigurations.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
-			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
+			exclude: (apiItem) =>
+				// Skip test-suite-b package
+				apiItem.kind === ApiItemKind.Package &&
+				(apiItem as ApiPackage).name === "test-suite-b",
 			startingHeadingLevel: 2,
 		},
 	],
@@ -73,7 +81,6 @@ const testConfigs = new Map<
 	[
 		"deep-config",
 		{
-			uriRoot: "",
 			hierarchy: HierarchyConfigurations.deep,
 		},
 	],
