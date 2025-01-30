@@ -9,9 +9,10 @@ import {
 	type AsyncGenerator,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
+	done,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { fluidHandleSymbol, type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { model as MapFuzzModel } from "@fluidframework/map/internal/test";
@@ -103,7 +104,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 		} satisfies AliasDataStore;
 	};
 
-	const mapGenerator = MapFuzzModel.generatorFactory();
+	let mapGenerator = MapFuzzModel.generatorFactory();
 	const mapModel: AsyncGenerator<MapModel, LocalServerStressState> = async (state) => {
 		const op = await mapGenerator({
 			clients: makeUnreachableCodePathProxy("clients"),
@@ -118,14 +119,31 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			random: {
 				...state.random,
 				handle: () => {
-					return state.random.pick(
+					const realHandle = state.random.pick(
 						Object.values(state.client.entryPoint.globalObjects)
 							.map((v) => v.handle)
 							.filter((v): v is IFluidHandle => v !== undefined),
 					);
+					return {
+						get [fluidHandleSymbol]() {
+							return realHandle[fluidHandleSymbol];
+						},
+						async get() {
+							return realHandle.get();
+						},
+						get isAttached() {
+							return realHandle.isAttached;
+						},
+					};
 				},
 			},
 		});
+
+		if (op === done) {
+			mapGenerator = MapFuzzModel.generatorFactory();
+			return mapModel(state);
+		}
+
 		return {
 			type: "mapModel",
 			op,
@@ -144,7 +162,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			],
 			[{ type: "createDataStore" }, 1],
 			[{ type: "uploadBlob" }, 1],
-			[mapModel, 10],
+			[mapModel, 2],
 		],
 	);
 
@@ -156,7 +174,7 @@ export const saveSuccesses = { directory: path.join(_dirname, "../../results") }
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
-		generatorFactory: () => takeAsync(100, makeGenerator()),
+		generatorFactory: () => takeAsync(500, makeGenerator()),
 		reducer: async (state, operation) => reducer(state, operation),
 		validateConsistency: () => {},
 	};
@@ -169,9 +187,9 @@ describe("Local Server Stress", () => {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0,
+		skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 0,
-		// saveFailures,
-		// saveSuccesses,
+		saveFailures,
+		saveSuccesses,
 	});
 });

@@ -893,11 +893,13 @@ export class StressDataObject extends DataObject {
 
 		this._globalObjects = root._globalObjects;
 
-		this._globalObjects[this.id] = {
-			type: "stressDataObject",
-			StressDataObject: this,
-			handle: this.handle,
-		};
+		setTimeout(() => {
+			this._globalObjects[this.id] = {
+				type: "stressDataObject",
+				StressDataObject: this,
+				handle: this.handle,
+			};
+		}, 0);
 	}
 
 	public uploadBlob(id: string, contents: string) {
@@ -936,7 +938,11 @@ class DefaultStressDataObject extends StressDataObject {
 	}
 
 	protected async preInitialize(): Promise<void> {
-		await super.preInitialize();
+		this._globalObjects[this.id] = {
+			type: "stressDataObject",
+			StressDataObject: this,
+			handle: this.handle,
+		};
 		this._globalObjects.default = { type: "newAlias", alias: DefaultStressDataObject.alias };
 	}
 }
@@ -1003,16 +1009,16 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		localDeltaConnectionServer,
 		codeLoader,
 		codeDetails,
-		startDetached ? makeFriendlyClientId(random, 0) : "summarizer",
+		startDetached ? makeFriendlyClientId(random, 0) : "original",
 	);
-	const clients: Client[] = [];
+	const clients: Client[] = [initialClient];
 	if (!startDetached) {
 		await initialClient.container.attach(createLocalResolverCreateNewRequest("stress"));
 		const url = await initialClient.container.getAbsoluteUrl("");
 		assert(url !== undefined, "attached container must have url");
 		clients.push(
 			...(await Promise.all(
-				Array.from({ length: options.numberOfClients }, async (_, i) =>
+				Array.from({ length: options.numberOfClients - 1 }, async (_, i) =>
 					loadClient(
 						localDeltaConnectionServer,
 						codeLoader,
@@ -1022,8 +1028,6 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 				),
 			)),
 		);
-	} else {
-		clients.push(initialClient);
 	}
 
 	const initialState: LocalServerStressState = {

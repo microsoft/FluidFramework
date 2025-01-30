@@ -136,7 +136,7 @@ function makeGenerator(
 export const model: DDSFuzzModel<MapFactory, Operation> = {
 	workloadName: "default",
 	factory: new MapFactory(),
-	generatorFactory: () => takeAsync(100, makeGenerator()),
+	generatorFactory: () => takeAsync(1000, makeGenerator()),
 	reducer: async (state, operation) => reducer(state, operation),
 	validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 };
