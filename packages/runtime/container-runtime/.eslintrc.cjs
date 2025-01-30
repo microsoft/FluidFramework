@@ -5,7 +5,7 @@
 
 module.exports = {
 	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
+		require.resolve("@fluidframework/eslint-config-fluid"),
 		"prettier",
 	],
 	parserOptions: {
@@ -14,6 +14,9 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+
+		// TODO: fix violations and remove overrides
+		"unicorn/no-array-reduce": "off",
 
 		// False positives on non-array `push` methods.
 		// TODO:AB#28686: remove this override once this rule has been disabled in the root config.
