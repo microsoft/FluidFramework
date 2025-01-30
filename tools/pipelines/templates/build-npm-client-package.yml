@@ -560,8 +560,9 @@ extends:
                 value: $(Build.SourcesDirectory)/tools/telemetry-generator
                 readonly: true
               # We already run CodeQL in the main build job, so we don't need to run it again here.
-              - name: DisableCodeQL
-                value: true
+              # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
+              - name: ONEES_ENFORCED_CODEQL_ENABLED
+                value: 'false'
             steps:
               # Setup
               - checkout: self
@@ -710,8 +711,9 @@ extends:
                   value: $(Build.SourcesDirectory)/tools/telemetry-generator
                   readonly: true
                 # We already run CodeQL in the main build job, so we don't need to run it again here.
-                - name: DisableCodeQL
-                  value: true
+                # Note that we need to disable it in the right way for 1ES pipeline templates, vs manual CodeQL tasks.
+                - name: ONEES_ENFORCED_CODEQL_ENABLED
+                  value: 'false'
               steps:
                 # Setup
                 - checkout: self
