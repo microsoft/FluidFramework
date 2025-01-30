@@ -2,8 +2,12 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "node:assert";
+
+import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
@@ -12,12 +16,13 @@ import type {
 } from "@fluidframework/presence/alpha";
 import { Latest } from "@fluidframework/presence/alpha";
 
+const testWorkspaceName = "name:testWorkspaceA";
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestManager(
 	presence: IPresence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.getStates("name:testWorkspaceA", {
+	const states = presence.getStates(testWorkspaceName, {
 		camera: Latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
 	});
 	return states.props.camera;
@@ -29,6 +34,35 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		it("initializes with empty array", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				array: Latest([]),
+			});
+			assert.deepStrictEqual(states.props.array.local, []);
+		});
+		it("initializes with empty object", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				array: Latest({}),
+			});
+			assert.deepStrictEqual(states.props.array.local, {});
+		});
+		it("initializes with array with elements", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				array: Latest([1, 2, 3]),
+			});
+			assert.deepStrictEqual(states.props.array.local, [1, 2, 3]);
+		});
+		it("initializes with object with properties", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				array: Latest({ a: 1, b: 2, c: 3 }),
+			});
+			assert.deepStrictEqual(states.props.array.local, { a: 1, b: 2, c: 3 });
+		});
 
 		addControlsTests(createLatestManager);
 	});

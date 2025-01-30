@@ -9,7 +9,7 @@ import type { Listenable } from "@fluidframework/core-interfaces";
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { ValueManager } from "./internalTypes.js";
-import { objectEntries } from "./internalUtils.js";
+import { objectEntries, shallowClone } from "./internalUtils.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -178,7 +178,7 @@ export function Latest<T extends object, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: Array.isArray(initialValue) ? Object.assign([], initialValue) : { ...initialValue },
+		value: shallowClone(initialValue),
 	};
 	const factory = (
 		key: Key,
