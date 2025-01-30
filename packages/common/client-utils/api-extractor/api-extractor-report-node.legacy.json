@@ -1,5 +1,8 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.legacy.d.ts"
+	"mainEntryPointFilePath": "<projectFolder>/lib/<unscopedPackageName>.node.legacy.d.ts",
+	"apiReport": {
+		"reportFileName": "<unscopedPackageName>.node.legacy"
+	}
 }
