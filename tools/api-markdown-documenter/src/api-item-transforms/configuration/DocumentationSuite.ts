@@ -13,8 +13,7 @@ import {
 import {
 	getApiItemKind,
 	getConciseSignature,
-	// eslint-disable-next-line import/no-deprecated -- TODO: Use `getEffectiveReleaseLevel` instead.
-	getReleaseTag,
+	getEffectiveReleaseLevel,
 	getSingleLineExcerptText,
 	isDeprecated,
 	type ReleaseLevel,
@@ -267,11 +266,10 @@ export namespace DefaultDocumentationSuiteConfiguration {
 			alerts.push("Deprecated");
 		}
 
-		// eslint-disable-next-line import/no-deprecated -- TODO: Use `getEffectiveReleaseLevel` instead.
-		const releaseTag = getReleaseTag(apiItem);
-		if (releaseTag === ReleaseTag.Alpha) {
+		const releaseLevel = getEffectiveReleaseLevel(apiItem);
+		if (releaseLevel === ReleaseTag.Alpha) {
 			alerts.push("Alpha");
-		} else if (releaseTag === ReleaseTag.Beta) {
+		} else if (releaseLevel === ReleaseTag.Beta) {
 			alerts.push("Beta");
 		}
 		return alerts;

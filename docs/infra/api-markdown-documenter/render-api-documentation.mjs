@@ -132,7 +132,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 					alerts.push("Legacy");
 				}
 
-				const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+				const releaseTag = ApiItemUtilities.getEffectiveReleaseLevel(apiItem);
 				if (releaseTag === ReleaseTag.Alpha) {
 					alerts.push("Alpha");
 				} else if (releaseTag === ReleaseTag.Beta) {
@@ -141,13 +141,22 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			}
 			return alerts;
 		},
-		skipPackage: (apiPackage) => {
-			const packageName = apiPackage.displayName;
-			const packageScope = PackageName.getScope(packageName);
+		exclude: (apiItem) => {
+			// Exclude packages that aren't intended for public consumption.
+			if (apiItem.kind === ApiItemKind.Package) {
+				const packageName = apiItem.name;
+				const packageScope = PackageName.getScope(packageName);
 
-			// Skip `@fluid-private` packages
-			// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
-			return ["@fluid-private"].includes(packageScope);
+				// Skip `@fluid-private` packages
+				// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
+				if (["@fluid-private"].includes(packageScope)) {
+					return true;
+				}
+			}
+
+			// TODO: exclude alpha+legacy APIs, which are not intended for public consumption.
+
+			return false;
 		},
 	});
 

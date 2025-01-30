@@ -267,6 +267,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 
 	protected readonly mc: MonitoringContext;
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly disposeOnce = new Lazy<void>(() => this.contexts.dispose());
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
