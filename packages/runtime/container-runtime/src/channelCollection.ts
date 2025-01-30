@@ -861,29 +861,6 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	}
 
 	/**
-	 * This is still here for back-compat purposes because channel collection implements
-	 * IFluidDataStoreChannel. Once it is removed from the interface, this method can be removed.
-	 * Container runtime calls `processMessages` instead.
-	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
-		this.processMessages({
-			envelope: message,
-			messagesContent: [
-				{
-					contents: message.contents,
-					localOpMetadata,
-					clientSequenceNumber: message.clientSequenceNumber,
-				},
-			],
-			local,
-		});
-	}
-
-	/**
 	 * Process channel messages. The messages here are contiguous channel type messages in a batch. Bunch
 	 * of contiguous messages for a data store should be sent to it together.
 	 * @param messageCollection - The collection of messages to process.

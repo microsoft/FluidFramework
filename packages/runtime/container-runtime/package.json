@@ -222,7 +222,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_DocumentsSchemaController": {
+				"backCompat": false
+			},
+			"ClassStatics_DocumentsSchemaController": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

@@ -76,6 +76,7 @@ declare type current_as_old_for_Interface_IOpProcessingController = requireAssig
  * typeValidation.broken:
  * "Interface_IProvideTestFluidObject": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IProvideTestFluidObject = requireAssignableTo<TypeOnly<old.IProvideTestFluidObject>, TypeOnly<current.IProvideTestFluidObject>>
 
 /*
@@ -85,6 +86,7 @@ declare type old_as_current_for_Interface_IProvideTestFluidObject = requireAssig
  * typeValidation.broken:
  * "Interface_IProvideTestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IProvideTestFluidObject = requireAssignableTo<TypeOnly<current.IProvideTestFluidObject>, TypeOnly<old.IProvideTestFluidObject>>
 
 /*
@@ -94,6 +96,7 @@ declare type current_as_old_for_Interface_IProvideTestFluidObject = requireAssig
  * typeValidation.broken:
  * "Interface_ITestFluidObject": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITestFluidObject = requireAssignableTo<TypeOnly<old.ITestFluidObject>, TypeOnly<current.ITestFluidObject>>
 
 /*
@@ -103,4 +106,5 @@ declare type old_as_current_for_Interface_ITestFluidObject = requireAssignableTo
  * typeValidation.broken:
  * "Interface_ITestFluidObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ITestFluidObject = requireAssignableTo<TypeOnly<current.ITestFluidObject>, TypeOnly<old.ITestFluidObject>>

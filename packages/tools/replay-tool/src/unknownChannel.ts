@@ -16,7 +16,6 @@ import {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryContext,
 	IGarbageCollectionData,
@@ -32,11 +31,6 @@ class UnknownChannel implements IChannel {
 		services: IChannelServices,
 	) {
 		services.deltaConnection.attach({
-			process: (
-				message: ISequencedDocumentMessage,
-				local: boolean,
-				localOpMetadata: unknown,
-			) => {},
 			processMessages: (messageCollection: IRuntimeMessageCollection) => {},
 			setConnectionState: (connected: boolean) => {},
 			reSubmit: (content: any, localOpMetadata: unknown) => {},
