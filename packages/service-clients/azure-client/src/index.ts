@@ -27,8 +27,8 @@ export type {
 export type { ITokenProvider, ITokenResponse } from "@fluidframework/routerlicious-driver";
 export type { IUser } from "@fluidframework/driver-definitions";
 import {
-	type ITokenClaims as ITokenClaims2,
-	ScopeType as ScopeType2,
+	type ITokenClaims as ITokenClaimsBase,
+	ScopeType as ScopeTypeBase,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -37,7 +37,7 @@ import {
  * @alpha
  * @deprecated Consider importing from `@fluidframework/driver-definitions/legacy` - to be removed in 2.40
  */
-export type ITokenClaims = ITokenClaims2;
+export type ITokenClaims = ITokenClaimsBase;
 
 /**
  * {@inheritdoc @fluidframework/driver-definitions/legacy#ScopeType}
@@ -45,14 +45,14 @@ export type ITokenClaims = ITokenClaims2;
  * @alpha
  * @deprecated Use ScopeType from \@fluidframework/driver-definitions/legacy - to be removed in 2.40
  */
-export const ScopeType = ScopeType2;
+export const ScopeType = ScopeTypeBase;
 /**
  * {@inheritdoc @fluidframework/driver-definitions/legacy#ScopeType}
  * @legacy
  * @alpha
  * @deprecated Use ScopeType from \@fluidframework/driver-definitions/legacy - to be removed in 2.40
  */
-export type ScopeType = ScopeType2;
+export type ScopeType = ScopeTypeBase;
 
 // Re-export so developers can build loggers without pulling in core-interfaces
 export type {
