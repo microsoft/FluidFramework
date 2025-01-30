@@ -163,6 +163,14 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			return loadContainerRuntime({
 				context,
 				existing,
+				runtimeOptions: {
+					summaryOptions: {
+						summaryConfigOverrides: {
+							maxOps: 3,
+							initialSummarizerDelayMs: 0,
+						} as any,
+					},
+				},
 				registryEntries: [
 					[
 						defaultStressDataObjectFactory.type,

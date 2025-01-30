@@ -74,7 +74,7 @@ export interface Client {
 export interface LocalServerStressState extends BaseFuzzTestState {
 	localDeltaConnectionServer: ILocalDeltaConnectionServer;
 	codeLoader: ICodeDetailsLoader;
-	containerUrl?: string;
+	containerUrl: string | undefined;
 	random: IRandom;
 	clients: Client[];
 	client: Client;
@@ -109,6 +109,14 @@ interface AddClient {
 	type: "addClient";
 	id: string;
 	url: string;
+}
+
+/**
+ * @internal
+ */
+interface RemoveClient {
+	type: "removeClient";
+	id: string;
 }
 
 /**
@@ -435,45 +443,58 @@ const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinNewClient<
+function mixinAddRemoveClient<
 	TOperation extends BaseOperation,
 	TState extends LocalServerStressState,
 >(
 	model: LocalServerStressModel<TOperation, TState>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | AddClient, TState> {
-	const isClientAddOp = (op: TOperation | AddClient): op is AddClient =>
-		op.type === "addClient";
+): LocalServerStressModel<TOperation | AddClient | RemoveClient, TState> {
+	const generatorFactory: () => AsyncGenerator<TOperation | AddClient | RemoveClient, TState> =
+		() => {
+			const baseGenerator = model.generatorFactory();
+			return async (
+				state: TState,
+			): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
+				const baseOp = baseGenerator(state);
+				const { clients, random, isDetached, containerUrl } = state;
+				if (
+					containerUrl !== undefined &&
+					options.clientJoinOptions !== undefined &&
+					!isDetached &&
+					random.bool(options.clientJoinOptions.clientAddProbability)
+				) {
+					if (clients.length > options.numberOfClients && random.bool()) {
+						return {
+							type: "removeClient",
+							id: random.pick(clients).id,
+						} satisfies RemoveClient;
+					}
 
-	const generatorFactory: () => AsyncGenerator<TOperation | AddClient, TState> = () => {
-		const baseGenerator = model.generatorFactory();
-		return async (state: TState): Promise<TOperation | AddClient | typeof done> => {
-			const baseOp = baseGenerator(state);
-			const { clients, random, isDetached, containerUrl } = state;
-			if (
-				containerUrl !== undefined &&
-				options.clientJoinOptions !== undefined &&
-				clients.length < options.clientJoinOptions.maxNumberOfClients &&
-				!isDetached &&
-				random.bool(options.clientJoinOptions.clientAddProbability)
-			) {
-				return {
-					type: "addClient",
-					url: containerUrl,
-					id: makeFriendlyClientId(random, clients.length),
-				} satisfies AddClient;
-			}
-			return baseOp;
+					if (clients.length < options.clientJoinOptions.maxNumberOfClients) {
+						return {
+							type: "addClient",
+							url: containerUrl,
+							id: makeFriendlyClientId(random, clients.length),
+						} satisfies AddClient;
+					}
+				}
+				return baseOp;
+			};
 		};
-	};
 
-	const minimizationTransforms: MinimizationTransform<TOperation | AddClient>[] =
+	const minimizationTransforms: MinimizationTransform<
+		TOperation | AddClient | RemoveClient
+	>[] =
 		(model.minimizationTransforms as
-			| MinimizationTransform<TOperation | AddClient>[]
+			| MinimizationTransform<TOperation | AddClient | RemoveClient>[]
 			| undefined) ?? [];
 
-	const reducer: AsyncReducer<TOperation | AddClient, TState> = async (state, op) => {
-		if (isClientAddOp(op)) {
+	const reducer: AsyncReducer<TOperation | AddClient | RemoveClient, TState> = async (
+		state,
+		op,
+	) => {
+		if (isOperationType<AddClient>("addClient", op)) {
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,
@@ -481,6 +502,14 @@ function mixinNewClient<
 				op.url,
 			);
 			state.clients.push(newClient);
+			return state;
+		}
+		if (isOperationType<RemoveClient>("removeClient", op)) {
+			const removed = state.clients.splice(
+				state.clients.findIndex((c) => c.id === op.id),
+				1,
+			);
+			removed[0].container.dispose();
 			return state;
 		}
 		return model.reducer(state, op);
@@ -863,9 +892,10 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		startDetached ? makeFriendlyClientId(random, 0) : "original",
 	);
 	const clients: Client[] = [initialClient];
+	let containerUrl: string | undefined;
 	if (!startDetached) {
 		await initialClient.container.attach(createLocalResolverCreateNewRequest("stress"));
-		const url = await initialClient.container.getAbsoluteUrl("");
+		const url = (containerUrl = await initialClient.container.getAbsoluteUrl(""));
 		assert(url !== undefined, "attached container must have url");
 		clients.push(
 			...(await Promise.all(
@@ -888,6 +918,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		random,
 		client: makeUnreachableCodePathProxy("client"),
 		isDetached: startDetached,
+		containerUrl,
 	};
 
 	options.emitter.emit("testStart", initialState);
@@ -1171,11 +1202,11 @@ const getFullModel = <TOperation extends BaseOperation>(
 	ddsModel: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<
-	TOperation | AddClient | Attach | Synchronize | ChangeConnectionState
+	TOperation | AddClient | RemoveClient | Attach | Synchronize | ChangeConnectionState
 > =>
 	mixinAttach(
 		mixinSynchronization(
-			mixinNewClient(
+			mixinAddRemoveClient(
 				mixinClientSelection(mixinReconnect(ddsModel, options), options),
 				options,
 			),
