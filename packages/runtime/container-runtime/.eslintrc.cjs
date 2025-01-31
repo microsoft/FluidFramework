@@ -13,7 +13,6 @@ module.exports = {
 	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 
 		// False positives on non-array `push` methods.
 		// TODO:AB#28686: remove this override once this rule has been disabled in the root config.
