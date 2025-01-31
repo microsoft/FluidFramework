@@ -151,7 +151,7 @@ function createSystemNotice(apiItem) {
  * @returns An array of sections describing the layout. See {@link @fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration.createDefaultLayout}.
  */
 export function layoutContent(apiItem, itemSpecificContent, config) {
-	if(apiItem.kind === ApiItemKind.None) {
+	if (apiItem.kind === ApiItemKind.None) {
 		throw new Error("Invalid API item kind.");
 	}
 
