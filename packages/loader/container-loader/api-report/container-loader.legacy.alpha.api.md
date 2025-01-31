@@ -162,12 +162,23 @@ export class Loader implements IHostLoader {
         clientDetailsOverride?: IClientDetails;
     }): Promise<IContainer>;
     // (undocumented)
+    createDetachedContainerUninitialized(codeDetails: IFluidCodeDetails, createDetachedProps?: {
+        canReconnect?: boolean;
+        clientDetailsOverride?: IClientDetails;
+    }): IContainer & {
+        initialize: () => Promise<void>;
+    };
+    // (undocumented)
     rehydrateDetachedContainerFromSnapshot(snapshot: string, createDetachedProps?: {
         canReconnect?: boolean;
         clientDetailsOverride?: IClientDetails;
     }): Promise<IContainer>;
     // (undocumented)
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
+    // (undocumented)
+    resolveUninitialized(request: IRequest, pendingLocalState?: string): Promise<IContainer & {
+        initialize: () => Promise<void>;
+    }>;
     // (undocumented)
     readonly services: ILoaderServices;
 }

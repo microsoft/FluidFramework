@@ -350,7 +350,7 @@ export class Loader implements IHostLoader {
 			canReconnect?: boolean;
 			clientDetailsOverride?: IClientDetails;
 		},
-	): Container & { initialize: () => Promise<void> } {
+	): IContainer & { initialize: () => Promise<void> } {
 		return Container.createDetached(
 			{
 				...createDetachedProps,
@@ -391,7 +391,7 @@ export class Loader implements IHostLoader {
 	public async resolveUninitialized(
 		request: IRequest,
 		pendingLocalState?: string,
-	): Promise<Container & { initialize: () => Promise<void> }> {
+	): Promise<IContainer & { initialize: () => Promise<void> }> {
 		const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
 		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
 			return this.resolveCore(
@@ -404,7 +404,7 @@ export class Loader implements IHostLoader {
 	private async resolveCore(
 		request: IRequest,
 		pendingLocalState?: IPendingContainerState,
-	): Promise<Container & { initialize: () => Promise<void> }> {
+	): Promise<IContainer & { initialize: () => Promise<void> }> {
 		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
 		ensureResolvedUrlDefined(resolvedAsFluid);
 
@@ -438,7 +438,7 @@ export class Loader implements IHostLoader {
 		request: IRequest,
 		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
-	): Container & { initialize: () => Promise<void> } {
+	): IContainer & { initialize: () => Promise<void> } {
 		return Container.loadUninitialized(
 			{
 				resolvedUrl,
