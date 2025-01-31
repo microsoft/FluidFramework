@@ -788,9 +788,9 @@ function mixinClientSelection<
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.id === operation.clientId);
 		assert(client !== undefined);
-		await runInStateWithClient(state, client, async () =>
-			model.reducer(state, operation as TOperation),
-		);
+		await runInStateWithClient(state, client, async () => {
+			await model.reducer(state, operation as TOperation);
+		});
 	};
 	return {
 		...model,

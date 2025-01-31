@@ -105,13 +105,10 @@ const covertLocalServerStateToDdsState = async (
 ): Promise<DDSFuzzTestState<IChannelFactory>> => {
 	const channels = await state.client.entryPoint.channels();
 	const allHandles = [
-		...(
-			await Promise.all(
-				Object.values(channels)
-					.flatMap((c) => c)
-					.map(async (c) => c.channel.handle),
-			)
-		).filter((v): v is IFluidHandle => v !== undefined),
+		...Object.values(channels)
+			.flatMap((c) => c)
+			.map((c) => c.channel.handle)
+			.filter((v): v is IFluidHandle => v !== undefined),
 		...Object.values(state.client.entryPoint.globalObjects)
 			.map((v) => v.handle)
 			.filter((v): v is IFluidHandle => v !== undefined),
