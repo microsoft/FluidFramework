@@ -806,9 +806,9 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
 	if (resolvedContainer.getEntryPoint === undefined) {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-		const response = await (resolvedContainer as any).request({
+		const response = (await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
-		}) as IResponse;
+		})) as IResponse;
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
