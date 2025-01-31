@@ -10,7 +10,11 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
+import type {
+	LatestValueClientData,
+	LatestValueData,
+	ValueTypeSchemaValidator,
+} from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -90,6 +94,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
+		private readonly validator: ValueTypeSchemaValidator<T>,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -134,6 +139,12 @@ class LatestValueManagerImpl<T, Key extends string>
 		if (clientState === undefined) {
 			throw new Error("No entry for clientId");
 		}
+
+		const valid = this.validator(clientState);
+		if (valid === undefined) {
+			throw new Error("Data failed runtime validation.");
+		}
+
 		return {
 			value: clientState.value,
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
@@ -167,6 +178,7 @@ class LatestValueManagerImpl<T, Key extends string>
  */
 export function Latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
+	validator: ValueTypeSchemaValidator<T>,
 	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<
 	Key,
@@ -192,7 +204,13 @@ export function Latest<T extends object, Key extends string = string>(
 	} => ({
 		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
+			new LatestValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				validator,
+				controls,
+			),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

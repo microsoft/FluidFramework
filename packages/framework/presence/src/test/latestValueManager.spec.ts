@@ -4,6 +4,7 @@
  */
 
 import { addControlsTests } from "./broadcastControlsTests.js";
+import { createNullValidator } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
@@ -18,7 +19,7 @@ function createLatestManager(
 	valueControlSettings?: BroadcastControlSettings,
 ) {
 	const states = presence.getStates("name:testWorkspaceA", {
-		camera: Latest({ x: 0, y: 0, z: 0 }, valueControlSettings),
+		camera: Latest({ x: 0, y: 0, z: 0 }, createNullValidator(), valueControlSettings),
 	});
 	return states.props.camera;
 }
@@ -43,14 +44,14 @@ export function checkCompiles(): void {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 	const presence = {} as IPresence;
 	const statesWorkspace = presence.getStates("name:testStatesWorkspaceWithLatest", {
-		cursor: Latest({ x: 0, y: 0 }),
-		camera: Latest({ x: 0, y: 0, z: 0 }),
+		cursor: Latest({ x: 0, y: 0 }, createNullValidator()),
+		camera: Latest({ x: 0, y: 0, z: 0 }, createNullValidator()),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
 	const props = workspace.props;
 
-	workspace.add("caret", Latest({ id: "", pos: 0 }));
+	workspace.add("caret", Latest({ id: "", pos: 0 }, createNullValidator()));
 
 	const fakeAdd =
 		workspace.props.caret.local.pos + props.camera.local.z + props.cursor.local.x;

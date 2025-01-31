@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
@@ -11,7 +13,12 @@ import { Latest, Notifications, type PresenceNotifications } from "../index.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
+import {
+	assertFinalExpectations,
+	createNullValidator,
+	createSpiedValidator,
+	prepareConnectedPresence,
+} from "./testUtils.js";
 
 describe("Presence", () => {
 	describe("batching", () => {
@@ -140,13 +147,17 @@ describe("Presence", () => {
 					],
 				);
 
+				const [v, s] = createSpiedValidator<{ num: 0 }>(createNullValidator());
+
 				// Configure a state workspace
 				// SIGNAL #1 - intial data is sent immediately
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
+					count: Latest({ num: 0 }, v, { allowableUpdateLatencyMs: 0 }),
 				});
 
 				const { count } = stateWorkspace.props;
+
+				assert.equal(s.callCount, 0);
 
 				clock.tick(10); // Time is now 1020
 
@@ -155,6 +166,8 @@ describe("Presence", () => {
 
 				// SIGNAL #3
 				count.local = { num: 84 };
+
+				assert.equal(s.callCount, 1);
 
 				assertFinalExpectations(runtime, logger);
 			});
@@ -192,7 +205,10 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
+					count: Latest(
+						{ num: 0 },
+						createNullValidator() /* default allowableUpdateLatencyMs = 60 */,
+					),
 				}); // will be queued; deadline is now 1070
 
 				// SIGNAL #1
@@ -266,7 +282,10 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 } /* default allowableUpdateLatencyMs = 60 */),
+					count: Latest(
+						{ num: 0 },
+						createNullValidator() /* default allowableUpdateLatencyMs = 60 */,
+					),
 				}); // will be queued; deadline is now 1070
 
 				const { count } = stateWorkspace.props;
@@ -368,7 +387,7 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
 				});
 
 				const { count } = stateWorkspace.props;
@@ -487,8 +506,10 @@ describe("Presence", () => {
 				// SIGNAL #1 - this signal is not queued because it contains a value manager with a latency of 0,
 				// so the initial data will be sent immediately.
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-					immediateUpdate: Latest({ num: 0 }, { allowableUpdateLatencyMs: 0 }),
+					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
+					immediateUpdate: Latest({ num: 0 }, createNullValidator(), {
+						allowableUpdateLatencyMs: 0,
+					}),
 				});
 
 				const { count, immediateUpdate } = stateWorkspace.props;
@@ -574,8 +595,10 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
-					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 50 }),
+					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
+					note: Latest({ message: "" }, createNullValidator(), {
+						allowableUpdateLatencyMs: 50,
+					}),
 				}); // will be queued, deadline is set to 1060
 
 				const { count, note } = stateWorkspace.props;
@@ -646,11 +669,13 @@ describe("Presence", () => {
 
 				// Configure two state workspaces
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
 
 				const stateWorkspace2 = presence.getStates("name:testStateWorkspace2", {
-					note: Latest({ message: "" }, { allowableUpdateLatencyMs: 60 }),
+					note: Latest({ message: "" }, createNullValidator(), {
+						allowableUpdateLatencyMs: 60,
+					}),
 				}); // will be queued, deadline is 1070
 
 				const { count } = stateWorkspace.props;
@@ -841,7 +866,7 @@ describe("Presence", () => {
 
 				// Configure a state workspace
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, { allowableUpdateLatencyMs: 100 }),
+					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 100 }),
 				}); // will be queued, deadline is 1110
 
 				// eslint-disable-next-line @typescript-eslint/ban-types
