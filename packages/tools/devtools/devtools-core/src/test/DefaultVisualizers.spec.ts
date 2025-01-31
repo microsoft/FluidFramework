@@ -733,7 +733,7 @@ describe("DefaultVisualizers unit tests", () => {
 								},
 								allowedTypes: {
 									value:
-										'shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
+										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle",
 									nodeKind: "ValueNode",
 								},
 								isRequired: {
@@ -2035,10 +2035,6 @@ describe("DefaultVisualizers unit tests", () => {
 				schema: {
 					nodeKind: VisualNodeKind.TreeNode,
 					children: {
-						name: {
-							nodeKind: VisualNodeKind.ValueNode,
-							value: "undefined tree",
-						},
 						allowedTypes: {
 							nodeKind: VisualNodeKind.ValueNode,
 							value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
