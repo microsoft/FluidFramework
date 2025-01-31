@@ -185,7 +185,7 @@ export class FluidSerializer implements IFluidSerializer {
 				// current property is replaced by the `replaced` value.
 				if (replaced !== value) {
 					// Lazily create a shallow clone of the `input` object if we haven't done so already.
-					clone = clone ?? shallowCloneObject(input);
+					clone ??= shallowCloneObject(input);
 
 					// Overwrite the current property `key` in the clone with the `replaced` value.
 					clone[key] = replaced;
