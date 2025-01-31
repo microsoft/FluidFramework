@@ -73,6 +73,7 @@ import {
 	tagCodeArtifacts,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
 import {
 	// eslint-disable-next-line import/no-deprecated
@@ -643,7 +644,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			}
 			return id;
 		}
-		return `${this.parentContext.containerRuntime.generateDocumentUniqueId()}`;
+		return uuid();
 	}
 
 	public createDetachedDataStore(

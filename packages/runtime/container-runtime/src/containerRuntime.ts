@@ -582,8 +582,6 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching?: boolean;
-
-	readonly defaultGlobalIdGenerator?: () => string;
 }
 
 /**
@@ -1003,7 +1001,6 @@ export class ContainerRuntime
 			chunkSizeInBytes = defaultChunkSizeInBytes,
 			enableGroupedBatching = true,
 			explicitSchemaControl = false,
-			defaultGlobalIdGenerator = () => uuid(),
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
@@ -1207,7 +1204,6 @@ export class ContainerRuntime
 			enableRuntimeIdCompressor: enableRuntimeIdCompressor as "on" | "delayed",
 			enableGroupedBatching,
 			explicitSchemaControl,
-			defaultGlobalIdGenerator,
 		};
 
 		const runtime = new containerRuntimeCtor(
@@ -1252,8 +1248,6 @@ export class ContainerRuntime
 
 		return runtime;
 	}
-
-	private readonly defaultGlobalIdGenerator: () => string;
 
 	public readonly options: Record<string | number, unknown>;
 	private imminentClosure: boolean = false;
@@ -1357,7 +1351,7 @@ export class ContainerRuntime
 	 * {@inheritDoc @fluidframework/runtime-definitions#IContainerRuntimeBase.generateDocumentUniqueId}
 	 */
 	public generateDocumentUniqueId(): string | number {
-		return this._idCompressor?.generateDocumentUniqueId() ?? this.defaultGlobalIdGenerator();
+		return this._idCompressor?.generateDocumentUniqueId() ?? uuid();
 	}
 
 	public get IFluidHandleContext(): IFluidHandleContext {
@@ -1556,7 +1550,7 @@ export class ContainerRuntime
 		electedSummarizerData: ISerializedElection | undefined,
 		chunks: [string, string[]][],
 		dataStoreAliasMap: [string, string][],
-		runtimeOptions: Readonly<Required<IContainerRuntimeOptionsInternal>>,
+		baseRuntimeOptions: Readonly<Required<IContainerRuntimeOptions>>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
 		public readonly baseLogger: ITelemetryBaseLogger,
@@ -1577,7 +1571,7 @@ export class ContainerRuntime
 			// the defaults
 			...DefaultSummaryConfiguration,
 			// the runtime configuration overrides
-			...runtimeOptions.summaryOptions?.summaryConfigOverrides,
+			...baseRuntimeOptions.summaryOptions?.summaryConfigOverrides,
 		},
 		recentBatchInfo?: [number, string][],
 	) {
@@ -1610,8 +1604,10 @@ export class ContainerRuntime
 		validateLoaderCompatibility(maybeLoaderCompatDetails.ILayerCompatDetails, this.disposeFn);
 
 		// Backfill in defaults for the internal runtimeOptions, since they may not be present on the provided runtimeOptions object
-		this.defaultGlobalIdGenerator = runtimeOptions.defaultGlobalIdGenerator;
-
+		const runtimeOptions = {
+			flushMode: defaultFlushMode,
+			...baseRuntimeOptions,
+		};
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
@@ -2148,7 +2144,7 @@ export class ContainerRuntime
 			summaryFormatVersion: metadata?.summaryFormatVersion,
 			disableIsolatedChannels: metadata?.disableIsolatedChannels,
 			gcVersion: metadata?.gcFeature,
-			options: JSON.stringify(runtimeOptions),
+			options: JSON.stringify(baseRuntimeOptions),
 			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
 			idCompressorMode: this.sessionSchema.idCompressorMode,
 			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
