@@ -134,7 +134,10 @@ export class DocumentContext extends EventEmitter implements IContext {
 		const offset = message.offset;
 
 		const contextManagerResumeState = this.getContextManagerResumeState();
-		if (contextManagerResumeState.headUpdatedAfterResume && contextManagerResumeState.tailUpdatedAfterResume) {
+		if (
+			contextManagerResumeState.headUpdatedAfterResume &&
+			contextManagerResumeState.tailUpdatedAfterResume
+		) {
 			assert(
 				offset > this.tail.offset && offset <= this.head.offset,
 				`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
