@@ -10,7 +10,7 @@ import type { IChannelAttributes } from "@fluidframework/datastore-definitions/i
  * @alpha
  * @legacy
  */
-export const SharedTreeType: string = "https://graph.microsoft.com/types/tree";
+export const SharedTreeType = "https://graph.microsoft.com/types/tree";
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
