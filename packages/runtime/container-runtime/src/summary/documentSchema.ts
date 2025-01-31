@@ -503,9 +503,8 @@ export class DocumentsSchemaController {
 		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
 		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
 		// Latter is importnat sure that's what will go into summary.
-		this.documentSchema = !existing
-			? this.desiredSchema
-			: ((documentMetadataSchema as IDocumentSchemaCurrent) ??
+		this.documentSchema = existing
+			? ((documentMetadataSchema as IDocumentSchemaCurrent) ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
@@ -515,7 +514,8 @@ export class DocumentsSchemaController {
 					runtime: {
 						explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
 					},
-				} satisfies IDocumentSchemaCurrent));
+				} satisfies IDocumentSchemaCurrent))
+			: this.desiredSchema;
 
 		checkRuntimeCompatibility(this.documentSchema, "document");
 		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
