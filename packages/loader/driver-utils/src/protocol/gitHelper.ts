@@ -79,7 +79,7 @@ export function buildGitTreeHierarchy(
 		const entryPathBase = entryPath.slice(lastIndex + 1);
 
 		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-		const node: ISnapshotTreeEx | undefined = lookup[entryPathDir];
+		const node = lookup[entryPathDir];
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {
