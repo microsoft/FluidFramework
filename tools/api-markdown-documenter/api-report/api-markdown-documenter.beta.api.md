@@ -52,18 +52,19 @@ export { ApiItemKind }
 export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
     readonly defaultSectionLayout: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly transformations: ApiItemTransformations;
+    readonly uriRoot: string;
 }
 
 // @public @sealed
 export interface ApiItemTransformationConfigurationBase {
     readonly apiModel: ApiModel;
-    readonly uriRoot: string;
 }
 
 // @public
 export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, DocumentationSuiteOptions, LoggingConfiguration {
     readonly defaultSectionLayout?: (apiItem: ApiItem, childSections: SectionNode[] | undefined, config: ApiItemTransformationConfiguration) => SectionNode[];
     readonly transformations?: Partial<ApiItemTransformations>;
+    readonly uriRoot?: string | undefined;
 }
 
 // @public
@@ -115,11 +116,11 @@ declare namespace ApiItemUtilities {
         getCustomBlockComments,
         getDefaultValueBlock,
         getDeprecatedBlock,
+        getEffectiveReleaseLevel,
         getExampleBlocks,
         getFileSafeNameForApiItem,
         getModifiers,
         getModifierTags,
-        getReleaseTag,
         getReturnsBlock,
         getSeeBlocks,
         getSingleLineExcerptText,
@@ -215,11 +216,11 @@ export const defaultConsoleLogger: Logger;
 
 // @public
 export namespace DefaultDocumentationSuiteConfiguration {
+    export function defaultExclude(): boolean;
     export function defaultGetAlertsForItem(apiItem: ApiItem): string[];
     export function defaultGetHeadingTextForItem(apiItem: ApiItem): string;
     export function defaultGetLinkTextForItem(apiItem: ApiItem): string;
     export function defaultGetUriBaseOverrideForItem(): string | undefined;
-    export function defaultSkipPackage(): boolean;
 }
 
 // @public @sealed
@@ -314,6 +315,7 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
 
 // @public
 export interface DocumentationSuiteConfiguration {
+    readonly exclude: (apiItem: ApiItem) => boolean;
     readonly getAlertsForItem: (apiItem: ApiItem) => string[];
     readonly getHeadingTextForItem: (apiItem: ApiItem) => string;
     readonly getLinkTextForItem: (apiItem: ApiItem) => string;
@@ -321,8 +323,7 @@ export interface DocumentationSuiteConfiguration {
     readonly hierarchy: HierarchyConfiguration;
     readonly includeBreadcrumb: boolean;
     readonly includeTopLevelDocumentHeading: boolean;
-    readonly minimumReleaseLevel: Exclude<ReleaseTag, ReleaseTag.None>;
-    readonly skipPackage: (apiPackage: ApiPackage) => boolean;
+    readonly minimumReleaseLevel: ReleaseLevel;
 }
 
 // @public
@@ -415,6 +416,9 @@ function getDefaultValueBlock(apiItem: ApiItem, logger?: Logger): DocSection | u
 function getDeprecatedBlock(apiItem: ApiItem): DocSection | undefined;
 
 // @public
+function getEffectiveReleaseLevel(apiItem: ApiItem): ReleaseLevel;
+
+// @public
 function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 
 // @public
@@ -431,9 +435,6 @@ function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiMod
 
 // @public
 function getModifierTags(apiItem: ApiItem): ReadonlySet<string>;
-
-// @public
-function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined;
 
 // @public
 function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;
@@ -698,6 +699,9 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> implemen
     get text(): string;
     readonly type = DocumentationNodeType.PlainText;
 }
+
+// @public
+export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
 
 export { ReleaseTag }
 

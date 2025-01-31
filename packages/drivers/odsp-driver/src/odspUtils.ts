@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
@@ -135,7 +135,7 @@ export async function fetchHelper(
 	requestInfo: RequestInfo,
 	requestInit: RequestInit | undefined,
 ): Promise<IOdspResponse<Response>> {
-	const start = performance.now();
+	const start = performanceNow();
 
 	// Node-fetch and dom have conflicting typing, force them to work by casting for now
 	return fetch(requestInfo, requestInit).then(
@@ -165,7 +165,7 @@ export async function fetchHelper(
 				content: response,
 				headers,
 				propsToLog: getSPOAndGraphRequestIdsFromResponse(headers),
-				duration: performance.now() - start,
+				duration: performanceNow() - start,
 			};
 		},
 		(error) => {
@@ -508,16 +508,16 @@ export function buildOdspShareLinkReqParams(
 }
 
 export function measure<T>(callback: () => T): [T, number] {
-	const start = performance.now();
+	const start = performanceNow();
 	const result = callback();
-	const time = performance.now() - start;
+	const time = performanceNow() - start;
 	return [result, time];
 }
 
 export async function measureP<T>(callback: () => Promise<T>): Promise<[T, number]> {
-	const start = performance.now();
+	const start = performanceNow();
 	const result = await callback();
-	const time = performance.now() - start;
+	const time = performanceNow() - start;
 	return [result, time];
 }
 

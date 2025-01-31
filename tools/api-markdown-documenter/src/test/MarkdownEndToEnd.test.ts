@@ -5,7 +5,12 @@
 
 import Path from "node:path";
 
-import { ReleaseTag, type ApiModel } from "@microsoft/api-extractor-model";
+import {
+	ApiItemKind,
+	ReleaseTag,
+	type ApiModel,
+	type ApiPackage,
+} from "@microsoft/api-extractor-model";
 
 import { loadModel, MarkdownRenderer } from "../index.js";
 
@@ -37,7 +42,7 @@ const testConfigs = new Map<
 	[
 		"default-config",
 		{
-			uriRoot: ".",
+			uriRoot: "",
 		},
 	],
 
@@ -62,22 +67,23 @@ const testConfigs = new Map<
 			includeTopLevelDocumentHeading: true,
 			hierarchy: HierarchyConfigurations.sparse,
 			minimumReleaseLevel: ReleaseTag.Public, // Only include `@public` items in the docs suite
-			skipPackage: (apiPackage) => apiPackage.name === "test-suite-b", // Skip test-suite-b package
+			exclude: (apiItem) =>
+				// Skip test-suite-b package
+				apiItem.kind === ApiItemKind.Package &&
+				(apiItem as ApiPackage).name === "test-suite-b",
 			startingHeadingLevel: 2,
 		},
 	],
 
-	// TODO
-	// // A sample "deep" configuration.
-	// // All "parent" API items generate hierarchy.
-	// // All other items are rendered as documents under their parent hierarchy.
-	// [
-	// 	"deep-config",
-	// 	{
-	// 		uriRoot: ".",
-	// 		hierarchy: HierarchyConfigurations.deep,
-	// 	},
-	// ],
+	// A sample "deep" configuration.
+	// All "parent" API items generate hierarchy.
+	// All other items are rendered as documents under their parent hierarchy.
+	[
+		"deep-config",
+		{
+			hierarchy: HierarchyConfigurations.deep,
+		},
+	],
 ]);
 
 describe("Markdown end-to-end tests", () => {

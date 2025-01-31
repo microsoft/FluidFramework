@@ -4,7 +4,7 @@
  */
 
 import type { EventEmitter } from "@fluid-internal/client-utils";
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -26,7 +26,7 @@ export class BatchTracker {
 		logger: ITelemetryBaseLogger,
 		batchLengthThreshold: number,
 		batchCountSamplingRate: number,
-		dateTimeProvider: () => number = () => performance.now(),
+		dateTimeProvider: () => number = () => performanceNow(),
 	) {
 		this.logger = createChildLogger({ logger, namespace: "Batching" });
 
@@ -81,7 +81,8 @@ export class BatchTracker {
  */
 export const BindBatchTracker = (
 	batchEventEmitter: EventEmitter,
-	logger: ITelemetryLoggerExt,
+	logger: ITelemetryBaseLogger,
 	batchLengthThreshold: number = 1000,
 	batchCountSamplingRate: number = 1000,
-) => new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);
+): BatchTracker =>
+	new BatchTracker(batchEventEmitter, logger, batchLengthThreshold, batchCountSamplingRate);

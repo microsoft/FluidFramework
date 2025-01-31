@@ -6,15 +6,15 @@
 import Path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ApiItemKind } from "@microsoft/api-extractor-model";
+import { ApiItemKind, type ApiItem, type ApiPackage } from "@microsoft/api-extractor-model";
 import { FileSystem } from "@rushstack/node-core-library";
 import { expect } from "chai";
 import { compare } from "dir-compare";
 
 import {
-	FolderDocumentPlacement,
+	ApiItemUtilities,
 	HierarchyKind,
-	type FolderHierarchyConfiguration,
+	type HierarchyConfiguration,
 	type HierarchyOptions,
 } from "../index.js";
 
@@ -44,11 +44,6 @@ export const testDataDirectoryPath = Path.resolve(dirname, "..", "..", "src", "t
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace HierarchyConfigurations {
-	const outsideFolderConfig: FolderHierarchyConfiguration = {
-		kind: HierarchyKind.Folder,
-		documentPlacement: FolderDocumentPlacement.Outside,
-	};
-
 	/**
 	 * "Flat" hierarchy: Packages get their own documents, and all descendent API items are rendered as sections under that document.
 	 * @remarks Results in a small number of documents, but can lead to relatively large documents.
@@ -72,14 +67,29 @@ export namespace HierarchyConfigurations {
 		[ApiItemKind.PropertySignature]: HierarchyKind.Section,
 		[ApiItemKind.TypeAlias]: HierarchyKind.Section,
 		[ApiItemKind.Variable]: HierarchyKind.Section,
+
+		getDocumentName: (apiItem: ApiItem, config: HierarchyConfiguration): string => {
+			switch (apiItem.kind) {
+				case ApiItemKind.Model: {
+					return "index";
+				}
+				case ApiItemKind.Package: {
+					return ApiItemUtilities.getUnscopedPackageName(apiItem as ApiPackage);
+				}
+				default: {
+					// Let the system generate a unique name that accounts for folder hierarchy.
+					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
+				}
+			}
+		},
 	};
 
 	/**
-	 * "Sparse" hierarchy: Packages yield folder hierarchy, and each descendent item gets its own document under that folder.
+	 * "Sparse" hierarchy: Packages yield folder hierarchy, and each descendent item gets its own document directly under that folder.
 	 * @remarks Leads to many documents, but each document is likely to be relatively small.
 	 */
 	export const sparse: HierarchyOptions = {
-		[ApiItemKind.Package]: outsideFolderConfig,
+		[ApiItemKind.Package]: HierarchyKind.Folder,
 
 		[ApiItemKind.CallSignature]: HierarchyKind.Document,
 		[ApiItemKind.Class]: HierarchyKind.Document,
@@ -97,57 +107,65 @@ export namespace HierarchyConfigurations {
 		[ApiItemKind.PropertySignature]: HierarchyKind.Document,
 		[ApiItemKind.TypeAlias]: HierarchyKind.Document,
 		[ApiItemKind.Variable]: HierarchyKind.Document,
+
+		getDocumentName: (apiItem, config): string => {
+			switch (apiItem.kind) {
+				case ApiItemKind.Model:
+				case ApiItemKind.Package: {
+					return "index";
+				}
+				default: {
+					// Let the system generate a unique name that accounts for folder hierarchy.
+					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
+				}
+			}
+		},
 	};
 
-	// TODO
-	// const insideFolderOptions: FolderHierarchyConfiguration = {
-	// 	kind: HierarchyKind.Folder,
-	// 	documentPlacement: FolderDocumentPlacement.Inside,
-	// };
-	// /**
-	//  * "Deep" hierarchy: All "parent" API items generate hierarchy. All other items are rendered as documents under their parent hierarchy.
-	//  * @remarks Leads to many documents, but each document is likely to be relatively small.
-	//  */
-	// export const deep: HierarchyOptions = {
-	// 	// Items that introduce folder hierarchy:
-	// 	[ApiItemKind.Namespace]: insideFolderOptions,
-	// 	[ApiItemKind.Package]: insideFolderOptions,
-	// 	[ApiItemKind.Class]: insideFolderOptions,
-	// 	[ApiItemKind.Enum]: insideFolderOptions,
-	// 	[ApiItemKind.Interface]: insideFolderOptions,
-	// 	[ApiItemKind.TypeAlias]: insideFolderOptions,
+	/**
+	 * "Deep" hierarchy: All "parent" API items generate hierarchy. All other items are rendered as documents under their parent hierarchy.
+	 * @remarks Leads to many documents, but each document is likely to be relatively small.
+	 */
+	export const deep: HierarchyOptions = {
+		// Items that introduce folder hierarchy:
+		[ApiItemKind.Package]: HierarchyKind.Folder,
+		[ApiItemKind.Namespace]: HierarchyKind.Folder,
+		[ApiItemKind.Class]: HierarchyKind.Folder,
+		[ApiItemKind.Enum]: HierarchyKind.Folder,
+		[ApiItemKind.Interface]: HierarchyKind.Folder,
+		[ApiItemKind.TypeAlias]: HierarchyKind.Folder,
 
-	// 	// Items that get their own document, but do not introduce folder hierarchy:
-	// 	[ApiItemKind.CallSignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.Constructor]: HierarchyKind.Document,
-	// 	[ApiItemKind.ConstructSignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.EnumMember]: HierarchyKind.Document,
-	// 	[ApiItemKind.Function]: HierarchyKind.Document,
-	// 	[ApiItemKind.IndexSignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.Method]: HierarchyKind.Document,
-	// 	[ApiItemKind.MethodSignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.Property]: HierarchyKind.Document,
-	// 	[ApiItemKind.PropertySignature]: HierarchyKind.Document,
-	// 	[ApiItemKind.Variable]: HierarchyKind.Document,
+		// Items that get their own document, but do not introduce folder hierarchy:
+		[ApiItemKind.CallSignature]: HierarchyKind.Document,
+		[ApiItemKind.Constructor]: HierarchyKind.Document,
+		[ApiItemKind.ConstructSignature]: HierarchyKind.Document,
+		[ApiItemKind.EnumMember]: HierarchyKind.Document,
+		[ApiItemKind.Function]: HierarchyKind.Document,
+		[ApiItemKind.IndexSignature]: HierarchyKind.Document,
+		[ApiItemKind.Method]: HierarchyKind.Document,
+		[ApiItemKind.MethodSignature]: HierarchyKind.Document,
+		[ApiItemKind.Property]: HierarchyKind.Document,
+		[ApiItemKind.PropertySignature]: HierarchyKind.Document,
+		[ApiItemKind.Variable]: HierarchyKind.Document,
 
-	// 	getDocumentName: (apiItem, config): string => {
-	// 		switch (apiItem.kind) {
-	// 			case ApiItemKind.Model:
-	// 			case ApiItemKind.Package:
-	// 			case ApiItemKind.Namespace:
-	// 			case ApiItemKind.Class:
-	// 			case ApiItemKind.Enum:
-	// 			case ApiItemKind.Interface:
-	// 			case ApiItemKind.TypeAlias: {
-	// 				return "index";
-	// 			}
-	// 			default: {
-	// 				// Let the system generate a unique name that accounts for folder hierarchy.
-	// 				return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
-	// 			}
-	// 		}
-	// 	},
-	// };
+		getDocumentName: (apiItem, config): string => {
+			switch (apiItem.kind) {
+				case ApiItemKind.Model:
+				case ApiItemKind.Package:
+				case ApiItemKind.Namespace:
+				case ApiItemKind.Class:
+				case ApiItemKind.Enum:
+				case ApiItemKind.Interface:
+				case ApiItemKind.TypeAlias: {
+					return "index";
+				}
+				default: {
+					// Let the system generate a unique name that accounts for folder hierarchy.
+					return ApiItemUtilities.createQualifiedDocumentNameForApiItem(apiItem, config);
+				}
+			}
+		},
+	};
 }
 
 /**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -54,7 +54,7 @@ export class InboundBatchAggregator {
 		this.deltaManager.on("op", this.afterOpProcessing);
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.deltaManager.off("op", this.afterOpProcessing);
 		this.deltaManager.inbound.off("push", this.trackPending);
 	}
@@ -63,7 +63,7 @@ export class InboundBatchAggregator {
 	 * Callback for DeltaManager's "op" event, for us to make decision if op processing should
 	 * be paused or not after that.
 	 */
-	private readonly afterOpProcessing = (message: ISequencedDocumentMessage) => {
+	private readonly afterOpProcessing = (message: ISequencedDocumentMessage): void => {
 		assert(
 			!this.localPaused,
 			0x294 /* "can't have op processing paused if we are processing an op" */,
@@ -112,9 +112,9 @@ export class InboundBatchAggregator {
 	/**
 	 * Called for each incoming op (i.e. inbound "push" notification)
 	 */
-	private readonly trackPending = (message: ISequencedDocumentMessage) => {
+	private readonly trackPending = (message: ISequencedDocumentMessage): void => {
 		assert(
-			this.deltaManager.inbound.length !== 0,
+			this.deltaManager.inbound.length > 0,
 			0x298 /* "we have something in the queue that generates this event" */,
 		);
 
@@ -224,17 +224,17 @@ export class InboundBatchAggregator {
 		}
 	};
 
-	private pauseQueue() {
+	private pauseQueue(): void {
 		assert(!this.localPaused, 0x297 /* "always called from resumed state" */);
 		this.localPaused = true;
-		this.timePaused = performance.now();
+		this.timePaused = performanceNow();
 		// eslint-disable-next-line @typescript-eslint/no-floating-promises
 		this.deltaManager.inbound.pause();
 	}
 
-	private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage) {
+	private resumeQueue(startBatch: number, messageEndBatch: ISequencedDocumentMessage): void {
 		const endBatch = messageEndBatch.sequenceNumber;
-		const duration = this.localPaused ? performance.now() - this.timePaused : undefined;
+		const duration = this.localPaused ? performanceNow() - this.timePaused : undefined;
 
 		this.batchCount++;
 		if (this.batchCount % 1000 === 1) {
