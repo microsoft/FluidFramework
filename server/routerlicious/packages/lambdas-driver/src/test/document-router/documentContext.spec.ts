@@ -34,8 +34,8 @@ describe("document-router", () => {
 				DebugLogger.create("fluid-server:TestDocumentContext"),
 				() => contextTailOffset,
 				() => ({
-					headUpdatedAfterResume: true,
-					tailUpdatedAfterResume: true,
+					headPaused: true,
+					tailPaused: true,
 				}),
 			);
 		});
