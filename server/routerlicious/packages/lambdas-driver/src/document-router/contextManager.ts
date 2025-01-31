@@ -58,7 +58,7 @@ export class DocumentContextManager extends EventEmitter {
 			assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
 		} else if (this.headUpdatedAfterResume) {
 			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
-			assert(head.offset <= this.head.offset);
+			assert(head.offset === this.head.offset);
 		}
 
 		// Create the new context and register for listeners on it
