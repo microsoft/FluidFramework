@@ -34,6 +34,10 @@ export class DocumentContext extends EventEmitter implements IContext {
 		head: IQueuedMessage,
 		public readonly log: ILogger | undefined,
 		private readonly getLatestTail: () => IQueuedMessage,
+		private readonly getContextManagerResumeState: () => {
+			headUpdatedAfterResume: boolean;
+			tailUpdatedAfterResume: boolean;
+		},
 	) {
 		super();
 
@@ -129,10 +133,19 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Assert offset is between the current tail and head
 		const offset = message.offset;
 
-		assert(
-			offset > this.tail.offset && offset <= this.head.offset,
-			`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
-		);
+		const contextManagerResumeState = this.getContextManagerResumeState();
+		if (contextManagerResumeState.headUpdatedAfterResume && contextManagerResumeState.tailUpdatedAfterResume) {
+			assert(
+				offset > this.tail.offset && offset <= this.head.offset,
+				`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			);
+		} else if (contextManagerResumeState.headUpdatedAfterResume) {
+			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
+			assert(
+				offset <= this.head.offset,
+				`Checkpoint offset ${offset} must be less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			);
+		}
 
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
