@@ -81,7 +81,7 @@ export class DocumentContextManager extends EventEmitter {
 			this.emit("error", error, errorData);
 		});
 		context.addListener("pause", (offset?: number, reason?: any) => {
-			// Find the lowest offset of all contexts' tail (checkpointed offset) and emit pause at that offset to ensure we dont miss any messages
+			// Find the lowest offset of all doc contexts' tail (checkpointed offset) and emit pause at that offset to ensure we dont miss any messages during resume (reprocessing)
 			let lowestOffset = offset ?? Number.MAX_SAFE_INTEGER;
 			for (const docContext of this.contexts) {
 				if (docContext.tail.offset < lowestOffset) {
