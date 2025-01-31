@@ -605,14 +605,14 @@ export class OrderedClientElection
 			if (this._electedClient === client) {
 				// Removing the _electedClient. There are 2 possible cases:
 				if (this._electedParent === client) {
-					// 2. The _electedClient is an interactive client that has left the quorum.
+					// 1. The _electedClient is an interactive client that has left the quorum.
 					// Automatically shift to next oldest client.
 					const nextClient =
 						this.findFirstEligibleParent(this._electedParent?.youngerClient) ??
 						this.findFirstEligibleParent(this.orderedClientCollection.oldestClient);
 					this.tryElectingClient(nextClient, sequenceNumber, "RemoveClient");
 				} else {
-					// 1. The _electedClient is a summarizer that we've been allowing to finish its work.
+					// 2. The _electedClient is a summarizer that we've been allowing to finish its work.
 					// Let the _electedParent become the _electedClient so that it can start its own summarizer.
 					if (this._electedClient.client.details.type !== summarizerClientType) {
 						throw new UsageError("Elected client should be a summarizer client 1");

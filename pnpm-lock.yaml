@@ -10978,6 +10978,9 @@ importers:
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/app-insights-logger-previous':
+        specifier: npm:@fluidframework/app-insights-logger@2.20.0
+        version: '@fluidframework/app-insights-logger@2.20.0(tslib@1.14.1)'
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -17738,6 +17741,9 @@ packages:
 
   '@fluidframework/agent-scheduler@2.20.0':
     resolution: {integrity: sha512-8eufS3GAyYvBqz/M6aaZpj97ZJ5Q9YynYbOlHLEXi4nEYLb8QV3ike2ndoK5FpoIYZTbXgs3b3IP49yMFOlKxw==}
+
+  '@fluidframework/app-insights-logger@2.20.0':
+    resolution: {integrity: sha512-VjsCXnV7qLkpXwVeI/hOp6tnbFrqlQ4fUem0ci1MokoJwe+dY2PRg4bBPUJbuNpf3F8M+VepeXcVRkmm716ntw==}
 
   '@fluidframework/aqueduct@1.4.0':
     resolution: {integrity: sha512-b3I3fWGAWuXQbyuEFeeEi3GVVUOYPWJfFaB4httsu5Jn4C0QSkKxftkielDlor9/7rCJYjHc4IEWViaVO+kBbA==}
@@ -30248,6 +30254,14 @@ snapshots:
     transitivePeerDependencies:
       - debug
       - supports-color
+
+  '@fluidframework/app-insights-logger@2.20.0(tslib@1.14.1)':
+    dependencies:
+      '@fluidframework/core-interfaces': 2.20.0
+      '@microsoft/applicationinsights-web': 2.8.18(tslib@1.14.1)
+      '@ungap/structured-clone': 1.2.1
+    transitivePeerDependencies:
+      - tslib
 
   '@fluidframework/aqueduct@1.4.0':
     dependencies:
