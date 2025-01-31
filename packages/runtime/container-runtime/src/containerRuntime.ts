@@ -812,7 +812,6 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 			url: `/${summarizerRequestUrl}`,
 		})) as IResponse;
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			throw responseToException(response, request);
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
