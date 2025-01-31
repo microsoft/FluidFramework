@@ -352,8 +352,10 @@ export class GarbageCollector implements IGarbageCollector {
 	/**
 	 * API for ensuring the correct auto-recovery mitigations
 	 */
+	// TODO: consider hoisting this to an outer scope as an optimization
+	// eslint-disable-next-line unicorn/consistent-function-scoping
 	private readonly autoRecovery = (() => {
-		// This uses a hidden state machine for forcing fullGC as part of autorecovery,
+		// This uses a hidden state machine for forcing fullGC as part of auto-recovery,
 		// to regenerate the GC data for each node.
 		//
 		// Once fullGC has been requested, we need to wait until GC has run and the summary has been acked before clearing the state.
@@ -440,14 +442,14 @@ export class GarbageCollector implements IGarbageCollector {
 			},
 			async (event) => {
 				// If the GC state hasn't been initialized yet, initialize it and return.
-				if (!initialized) {
-					await this.initializeGCStateFromBaseSnapshotP;
-				} else {
+				if (initialized) {
 					// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
 					// reference timestamp.
 					for (const [, nodeStateTracker] of this.unreferencedNodesState) {
 						nodeStateTracker.updateTracking(currentReferenceTimestampMs);
 					}
+				} else {
+					await this.initializeGCStateFromBaseSnapshotP;
 				}
 				event.end({
 					details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
@@ -1032,7 +1034,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// trackedId will be either DataStore or Blob ID (not sub-DataStore ID, since some of those are unrecognized by GC)
 		const trackedId = node.path;
 		const isTombstoned = this.tombstones.includes(trackedId);
-		const fullPath = request !== undefined ? urlToGCNodePath(request.url) : trackedId;
+		const fullPath = request === undefined ? trackedId : urlToGCNodePath(request.url);
 
 		// This will log if appropriate
 		this.telemetryTracker.nodeUsed(trackedId, {
@@ -1282,7 +1284,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 		// The runtime can't reliably identify the type of deleted nodes. So, get the type here. This should
 		// be good enough because the only types that participate in GC today are data stores, DDSes and blobs.
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import/no-deprecated, unicorn/consistent-function-scoping
 		const getDeletedNodeType = (nodeId: string): GCNodeType => {
 			const pathParts = nodeId.split("/");
 			if (pathParts[1] === blobManagerBasePath) {

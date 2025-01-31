@@ -383,15 +383,9 @@ export abstract class FluidDataStoreContext
 				? this.parentContext.attachState
 				: AttachState.Detached;
 
-		const thisSummarizeInternal = async (
-			fullTree: boolean,
-			trackState: boolean,
-			telemetryContext?: ITelemetryContext,
-		): Promise<ISummarizeInternalResult> =>
-			this.summarizeInternal(fullTree, trackState, telemetryContext);
-
 		this.summarizerNode = props.createSummarizerNodeFn(
-			thisSummarizeInternal,
+			async (fullTree, trackState, telemetryContext) =>
+				this.summarizeInternal(fullTree, trackState, telemetryContext),
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
@@ -619,9 +613,7 @@ export abstract class FluidDataStoreContext
 		channel: IFluidDataStoreChannel,
 		messageCollection: IRuntimeMessageCollection,
 	): void {
-		if (channel.processMessages !== undefined) {
-			channel.processMessages(messageCollection);
-		} else {
+		if (channel.processMessages === undefined) {
 			const { envelope, messagesContent, local } = messageCollection;
 			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
 				channel.process(
@@ -630,6 +622,8 @@ export abstract class FluidDataStoreContext
 					localOpMetadata,
 				);
 			}
+		} else {
+			channel.processMessages(messageCollection);
 		}
 	}
 
@@ -1149,6 +1143,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	 */
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
@@ -1367,6 +1362,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return this.channel.getAttachGCData(telemetryContext);
 	}
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
 		// eslint-disable-next-line import/no-deprecated

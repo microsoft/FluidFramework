@@ -6,7 +6,7 @@
 import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import type { SectionNode } from "../../documentation-domain/index.js";
-import { getReleaseTag } from "../../utilities/index.js";
+import { getEffectiveReleaseLevel } from "../../utilities/index.js";
 import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import {
@@ -71,10 +71,10 @@ export function createSectionForApiItem(
 	}
 
 	// Render alpha/beta notice if applicable
-	const releaseTag = getReleaseTag(apiItem);
-	if (releaseTag === ReleaseTag.Alpha) {
+	const releaseLevel = getEffectiveReleaseLevel(apiItem);
+	if (releaseLevel === ReleaseTag.Alpha) {
 		sections.push(wrapInSection([alphaWarningSpan]));
-	} else if (releaseTag === ReleaseTag.Beta) {
+	} else if (releaseLevel === ReleaseTag.Beta) {
 		sections.push(wrapInSection([betaWarningSpan]));
 	}
 
