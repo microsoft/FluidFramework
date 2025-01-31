@@ -50,12 +50,8 @@ export class DocumentContextManager extends EventEmitter {
 	 * This class is responsible for the lifetime of the context
 	 */
 	public createContext(routingKey: IRoutingKey, head: IQueuedMessage): DocumentContext {
-		if (this.headUpdatedAfterResume && this.tailUpdatedAfterResume) {
-			// Contexts should only be created within the processing range of the manager
-			assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
-		} else if (this.headUpdatedAfterResume) {
-			assert(head.offset === this.head.offset);
-		}
+		// Contexts should only be created within the processing range of the manager
+		assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
 
 		// Create the new context and register for listeners on it
 		const context = new DocumentContext(
@@ -103,8 +99,7 @@ export class DocumentContextManager extends EventEmitter {
 	}
 
 	/**
-	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards, except if the resumeBackToOffset is specified.
-	 * resumeBackToOffset is specified during resume after a lambda pause (eg: circuit breaker)
+	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards, unless headUpdatedAfterResume is false.
 	 * @returns True if the head was updated, false if it was not.
 	 */
 	public setHead(head: IQueuedMessage) {
@@ -132,6 +127,16 @@ export class DocumentContextManager extends EventEmitter {
 						headUpdatedAfterResume: this.headUpdatedAfterResume,
 					},
 				);
+
+				// if head goes lower than the current tail, we need to update the tail accordingly since it will be an invalid state
+				if (head.offset < this.tail.offset) {
+					Lumberjack.info("contextManager.setHead: updating tail offset because it is greater than the new head offset", {
+						newHeadOffset: head.offset,
+						currentHeadOffset: this.head.offset,
+						currentTailOffset: this.tail.offset,
+					});
+					this.tail = head;
+				}
 			}
 
 			if (!this.headUpdatedAfterResume) {
