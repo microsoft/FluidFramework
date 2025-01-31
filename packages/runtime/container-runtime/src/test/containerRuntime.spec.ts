@@ -1706,11 +1706,10 @@ describe("Runtime", () => {
 				// messages after generating the summary.
 				const patch = (fn: (...args: any[]) => Promise<ISummaryTreeWithStats>) => {
 					const boundFn = fn.bind(containerRuntime);
-					return async (...args: any[]) => {
+					return async (...args: unknown[]) => {
 						// Submit an op and yield for it to be flushed from outbox to pending state manager.
 						submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
 						await yieldEventLoop();
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 						return boundFn(...args);
 					};
 				};
