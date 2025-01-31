@@ -688,7 +688,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 // @alpha
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
-// @alpha
+// @public
 export const SharedTreeAttributes: IChannelAttributes;
 
 // @alpha
@@ -735,7 +735,7 @@ export interface SharedTreeSummaryBase {
     readonly version: WriteFormat;
 }
 
-// @alpha
+// @public
 export const SharedTreeType: string;
 
 // @alpha
