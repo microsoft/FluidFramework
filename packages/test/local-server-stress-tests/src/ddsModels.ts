@@ -99,10 +99,23 @@ const createDDSClient = (channel: IChannel): DDSClient<IChannelFactory> => {
 	};
 };
 
-const covertLocalServerStateToDdsState = (
+const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
 	channel: IChannel,
-): DDSFuzzTestState<IChannelFactory> => {
+): Promise<DDSFuzzTestState<IChannelFactory>> => {
+	const channels = await state.client.entryPoint.channels();
+	const allHandles = [
+		...(
+			await Promise.all(
+				Object.values(channels)
+					.flatMap((c) => c)
+					.map(async (c) => c.channel.handle),
+			)
+		).filter((v): v is IFluidHandle => v !== undefined),
+		...Object.values(state.client.entryPoint.globalObjects)
+			.map((v) => v.handle)
+			.filter((v): v is IFluidHandle => v !== undefined),
+	];
 	return {
 		clients: makeUnreachableCodePathProxy("clients"),
 		client: createDDSClient(channel),
@@ -112,16 +125,7 @@ const covertLocalServerStateToDdsState = (
 		random: {
 			...state.random,
 			handle: () => {
-				const realHandle = toFluidHandleInternal(
-					state.random.pick([
-						...Object.values(state.client.entryPoint.channels)
-							.flatMap((ca) => ca)
-							.map((c) => c.handle),
-						...Object.values(state.client.entryPoint.globalObjects)
-							.map((v) => v.handle)
-							.filter((v): v is IFluidHandle => v !== undefined),
-					]),
-				);
+				const realHandle = toFluidHandleInternal(state.random.pick(allHandles));
 				return {
 					absolutePath: realHandle.absolutePath,
 					get [fluidHandleSymbol]() {
@@ -142,12 +146,14 @@ const covertLocalServerStateToDdsState = (
 export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressState> = async (
 	state,
 ) => {
-	const channelType = state.random.pick(Object.keys(state.client.entryPoint.channels));
-	const channel = state.random.pick(state.client.entryPoint.channels[channelType]);
+	const channels = await state.client.entryPoint.channels();
+	const channelType = state.random.pick(Object.keys(channels));
+	const channel = state.random.pick(channels[channelType]).channel;
+	assert(channel !== undefined, "channel mist exist");
 	const model = ddsModelMap.get(channelType);
 	assert(model !== undefined, "must have model");
 
-	const op = await model.generator(covertLocalServerStateToDdsState(state, channel));
+	const op = await model.generator(await covertLocalServerStateToDdsState(state, channel));
 
 	return {
 		type: "DDSModelOp",
@@ -163,33 +169,36 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 ) => {
 	const baseModel = ddsModelMap.get(op.channelType);
 	assert(baseModel !== undefined, "must have model");
-	const channel = state.client.entryPoint.channels[op.channelType].find(
-		(v) => v.id === op.channelId,
-	);
+	const channels = await state.client.entryPoint.channels();
+	const channel = channels[op.channelType].find((v) => v.id === op.channelId)?.channel;
 	assert(channel !== undefined, "must have channel");
-	await baseModel.reducer(covertLocalServerStateToDdsState(state, channel), op.op as any);
+	await baseModel.reducer(
+		await covertLocalServerStateToDdsState(state, channel),
+		op.op as any,
+	);
 };
 
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
-	const buildChannelMap = (client: Client) => {
+	const buildChannelMap = async (client: Client) => {
 		const channelMap = new Map<string, IChannel>();
 		for (const value of Object.values(client.entryPoint.globalObjects).map((v) =>
 			v.type === "stressDataObject" ? v : undefined,
 		)) {
-			if (value?.StressDataObject.attached) {
-				for (const channel of Object.values(value.StressDataObject.channels).flatMap<IChannel>(
-					(ca) => ca,
-				)) {
+			const stressDataObject = await value?.stressDataObject;
+			if (stressDataObject?.attached) {
+				const channels = await stressDataObject.channels();
+				for (const entry of Object.values(channels).flatMap((ca) => ca)) {
+					const channel = entry.channel;
 					if (channel.isAttached()) {
-						channelMap.set(`${value.StressDataObject.id}/${channel.id}`, channel);
+						channelMap.set(`${stressDataObject.id}/${channel.id}`, channel);
 					}
 				}
 			}
 		}
 		return channelMap;
 	};
-	const aMap = buildChannelMap(clientA);
-	const bMap = buildChannelMap(clientB);
+	const aMap = await buildChannelMap(clientA);
+	const bMap = await buildChannelMap(clientB);
 	assert(aMap.size === bMap.size, "channel maps should be the same size");
 	for (const key of aMap.keys()) {
 		const aChannel = aMap.get(key);

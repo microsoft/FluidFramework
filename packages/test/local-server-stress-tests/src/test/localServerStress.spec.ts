@@ -11,9 +11,7 @@ import {
 	createWeightedAsyncGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IDataStore } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	ddsModelMap,
@@ -27,24 +25,29 @@ import {
 	LocalServerStressModel,
 	type LocalServerStressState,
 } from "../localServerStressHarness";
+import type { ContainerObjects } from "../stressDataObject.js";
 
 import { _dirname } from "./dirname.cjs";
 
 interface UploadBlob {
 	type: "uploadBlob";
+	id: `blob-${number}`;
 }
 interface AliasDataStore {
 	type: "aliasDataStore";
-	id: string;
+	datastoreId: `datastore-${number}`;
+	alias: string;
 }
 interface CreateDataStore {
 	type: "createDataStore";
 	asChild: boolean;
+	id: `datastore-${number}`;
 }
 
 interface CreateChannel {
 	type: "createChannel";
 	channelType: string;
+	id: `channel-${number}`;
 }
 
 type StressOperations =
@@ -56,39 +59,42 @@ type StressOperations =
 
 const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	aliasDataStore: async (state, op) => {
-		const entry = state.client.entryPoint.globalObjects[op.id];
-		assert(entry.type === "newDatastore", "must be a new datastore");
+		const entry = state.client.entryPoint.globalObjects[op.datastoreId];
+		assert(
+			entry.type === "stressDataObject" && entry.dataStore !== undefined,
+			"must be a new datastore",
+		);
 
-		void entry.dataStore.trySetAlias(String.fromCodePoint(state.random.integer(0, 26) + 65));
+		void entry.dataStore.trySetAlias(op.alias);
 	},
 	createDataStore: async (state, op) => {
-		state.client.entryPoint.createDataStore(op.asChild);
+		state.client.entryPoint.createDataStore(op.id, op.asChild);
 	},
 	createChannel: async (state, op) => {
-		state.client.entryPoint.createChannel(op.channelType);
+		state.client.entryPoint.createChannel(op.id, op.channelType);
 	},
-	uploadBlob: async (state) => {
-		state.client.entryPoint.uploadBlob(state.random.string(state.random.integer(1, 16)));
+	uploadBlob: async (state, op) => {
+		state.client.entryPoint.uploadBlob(
+			op.id,
+			state.random.string(state.random.integer(1, 16)),
+		);
 	},
 	DDSModelOp: DDSModelOpReducer,
 });
 
+let id = 0;
 function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressState> {
 	const aliasDataStore: AsyncGenerator<AliasDataStore, LocalServerStressState> = async (
 		state,
 	) => {
 		const newDataStores = Object.entries(state.client.entryPoint.globalObjects).filter(
-			(
-				e,
-			): e is [
-				string,
-				{ type: "newDatastore"; dataStore: IDataStore; handle: IFluidHandle },
-			] => e[1].type === "newDatastore",
+			(e): e is [string, Extract<ContainerObjects, { type: "stressDataObject" }>] =>
+				e[1].type === "stressDataObject" && e[1].dataStore !== undefined,
 		);
-		const [id] = state.random.pick(newDataStores);
 		return {
 			type: "aliasDataStore",
-			id,
+			datastoreId: state.random.pick(newDataStores)[1].id,
+			alias: `alias-${state.random.integer(0, 10)}`,
 		} satisfies AliasDataStore;
 	};
 
@@ -99,15 +105,29 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 				1,
 				(state) =>
 					Object.values(state.client.entryPoint.globalObjects).some(
-						(v) => v.type === "newDatastore",
+						(v) => v.type === "stressDataObject" && v.dataStore !== undefined,
 					),
 			],
-			[async (state) => ({ type: "createDataStore", asChild: state.random.bool() }), 2],
-			[{ type: "uploadBlob" }, 2],
+			[
+				async (state) => ({
+					type: "createDataStore",
+					asChild: state.random.bool(),
+					id: `datastore-${++id}`,
+				}),
+				2,
+			],
+			[
+				async (state) => ({
+					type: "uploadBlob",
+					id: `blob-${++id}`,
+				}),
+				2,
+			],
 			[
 				async (state) => ({
 					type: "createChannel",
 					channelType: state.random.pick([...ddsModelMap.keys()]),
+					id: `channel-${++id}`,
 				}),
 				3,
 			],

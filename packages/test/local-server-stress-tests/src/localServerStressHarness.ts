@@ -695,6 +695,28 @@ function mixinSynchronization<
 						),
 				),
 			);
+			const maxSeq = Math.max(
+				...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
+			);
+
+			const makeOpHandler = (container: IContainer, resolve: () => void) => {
+				if (container.deltaManager.lastKnownSeqNumber < maxSeq) {
+					const handler = (msg) => {
+						if (msg.sequenceNumber >= maxSeq) {
+							container.off("op", handler);
+							resolve();
+						}
+					};
+					container.on("op", handler);
+				} else {
+					resolve();
+				}
+			};
+			await Promise.all(
+				connectedClients.map(
+					async (c) => new Promise<void>((resolve) => makeOpHandler(c.container, resolve)),
+				),
+			);
 
 			if (connectedClients.length > 0) {
 				const readonlyChannel = connectedClients[0];
