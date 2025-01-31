@@ -230,9 +230,9 @@ export class GCTelemetryTracker {
 			type: nodeType,
 			unrefTime: nodeStateTracker?.unreferencedTimestampMs ?? -1,
 			age:
-				nodeStateTracker !== undefined
-					? currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs
-					: -1,
+				nodeStateTracker === undefined
+					? -1
+					: currentReferenceTimestampMs - nodeStateTracker.unreferencedTimestampMs,
 			timeout,
 			isTombstoned,
 			...tagCodeArtifacts({ id: untaggedId, fromId: untaggedFromId }),
