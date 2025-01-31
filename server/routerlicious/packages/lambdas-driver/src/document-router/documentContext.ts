@@ -37,7 +37,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		head: IQueuedMessage,
 		public readonly log: ILogger | undefined,
 		private readonly getLatestTail: () => IQueuedMessage,
-		private readonly getContextManagerResumeState: () => {
+		private readonly getContextManagerPauseState: () => {
 			headPaused: boolean;
 			tailPaused: boolean;
 		},
@@ -135,13 +135,13 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Assert offset is between the current tail and head
 		const offset = message.offset;
 
-		const contextManagerResumeState = this.getContextManagerResumeState();
-		if (!contextManagerResumeState.headPaused && !contextManagerResumeState.tailPaused) {
+		const contextManagerPauseState = this.getContextManagerPauseState();
+		if (!contextManagerPauseState.headPaused && !contextManagerPauseState.tailPaused) {
 			assert(
 				offset > this.tail.offset && offset <= this.head.offset,
 				`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 			);
-		} else if (contextManagerResumeState.tailPaused) {
+		} else if (contextManagerPauseState.tailPaused) {
 			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
 			assert(
 				offset === this.head.offset,
