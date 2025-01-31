@@ -80,8 +80,9 @@ export class FileSnapshotReader
 			throw new Error(`Unknown version id: ${versionRequested}`);
 		}
 
-		let snapshotTree = this.trees[versionRequested.id];
+		let snapshotTree: ISnapshotTree | undefined = this.trees[versionRequested.id];
 		if (snapshotTree === undefined) {
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 			const tree = this.commits[versionRequested.id];
 			if (tree === undefined) {
 				throw new Error(`Can't find version ${versionRequested.id}`);
