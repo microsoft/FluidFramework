@@ -71,10 +71,10 @@ function spyOnContainerRuntimeMessages(runtime: MockContainerRuntimeForReconnect
 	};
 
 	const processedMessages: ISequencedDocumentMessage[] = [];
-	const originalProcess = runtime.process.bind(runtime);
-	runtime.process = (message: ISequencedDocumentMessage): void => {
-		processedMessages.push(message);
-		return originalProcess(message);
+	const originalProcessMessages = runtime.processMessages.bind(runtime);
+	runtime.processMessages = (messages: ISequencedDocumentMessage[]): void => {
+		processedMessages.push(...messages);
+		return originalProcessMessages(messages);
 	};
 
 	return { submittedContent, processedMessages };

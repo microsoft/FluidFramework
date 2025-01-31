@@ -30,6 +30,7 @@ import type {
 import type { SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -363,7 +364,7 @@ export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	private readonly runtimeFactory: MockContainerRuntimeFactoryForReconnection;
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 
@@ -372,6 +373,8 @@ export class TestTreeProviderLite {
 	 * @param trees - the number of trees created by this provider.
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
+	 * @param flushMode - The flush mode to use for the container runtime. This is FlushMode.Immediate by default. Tests
+	 * that need ops to be processed in a batch or bunch should use FlushMode.TurnBased.
 	 * @example
 	 *
 	 * ```typescript
@@ -385,7 +388,11 @@ export class TestTreeProviderLite {
 		trees = 1,
 		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
 		useDeterministicSessionIds = true,
+		flushMode: FlushMode = FlushMode.Immediate,
 	) {
+		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection({
+			flushMode,
+		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTreeWithConnectionStateSetter[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
@@ -417,9 +424,9 @@ export class TestTreeProviderLite {
 	}
 
 	public processMessages(count?: number): void {
-		this.runtimeFactory.processSomeMessages(
-			count ?? this.runtimeFactory.outstandingMessageCount,
-		);
+		return count !== undefined
+			? this.runtimeFactory.processSomeMessages(count)
+			: this.runtimeFactory.processAllMessages();
 	}
 
 	public get minimumSequenceNumber(): number {

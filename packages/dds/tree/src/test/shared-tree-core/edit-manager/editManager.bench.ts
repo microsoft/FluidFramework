@@ -287,8 +287,8 @@ describe("EditManager - Bench", () => {
 							// Measure
 							const before = state.timer.now();
 							for (let iChange = 0; iChange < count; iChange++) {
-								manager.addSequencedChange(
-									sequencedEdits[iChange],
+								manager.addSequencedChanges(
+									[sequencedEdits[iChange]],
 									brand(iChange + 1),
 									brand(0),
 								);

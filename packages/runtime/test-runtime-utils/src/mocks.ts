@@ -59,6 +59,7 @@ import {
 	VisibilityState,
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -195,6 +196,7 @@ const makeContainerRuntimeOptions = (
  */
 export interface IInternalMockRuntimeMessage {
 	content: any;
+	clientSequenceNumber: number;
 	localOpMetadata?: unknown;
 }
 
@@ -274,6 +276,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
+			clientSequenceNumber,
 		};
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
@@ -281,12 +284,12 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
 				if (!isAllocationMessage) {
-					const idAllocationOp = this.generateIdAllocationOp();
+					const idAllocationOp = this.generateIdAllocationOp(clientSequenceNumber);
 					if (idAllocationOp !== undefined) {
-						this.submitInternal(idAllocationOp, clientSequenceNumber);
+						this.submitInternal(idAllocationOp);
 					}
 				}
-				this.submitInternal(message, clientSequenceNumber);
+				this.submitInternal(message);
 				break;
 			}
 
@@ -336,10 +339,15 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			return;
 		}
 
+		let fakeClientSequenceNumber = 0;
+		const idAllocationOpClientSeq = this.runtimeOptions.enableGroupedBatching
+			? ++fakeClientSequenceNumber
+			: ++this.deltaManager.clientSequenceNumber;
+
 		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
 		// and sticking it in front of any op that might rely on that id. It differs slightly in that
 		// in the actual runtime it would get put in its own separate batch
-		const idAllocationOp = this.generateIdAllocationOp();
+		const idAllocationOp = this.generateIdAllocationOp(idAllocationOpClientSeq);
 		if (idAllocationOp !== undefined) {
 			this.idAllocationOutbox.push(idAllocationOp);
 		}
@@ -349,18 +357,15 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.idAllocationOutbox.length = 0;
 		this.outbox.length = 0;
 
-		let fakeClientSequenceNumber = 1;
 		messagesToSubmit.forEach((message) => {
-			this.submitInternal(
-				message,
-				// When grouped batching is used, the ops within the same grouped batch will have
-				// fake sequence numbers when they're ungrouped. The submit function will still
-				// return the clientSequenceNumber but this will ensure that the readers will always
-				// read the fake client sequence numbers.
-				this.runtimeOptions.enableGroupedBatching
-					? fakeClientSequenceNumber++
-					: this.deltaManager.clientSequenceNumber,
-			);
+			// When grouped batching is used, the ops within the same grouped batch will have
+			// fake sequence numbers when they're ungrouped. The submit function will still
+			// return the clientSequenceNumber but this will ensure that the readers will always
+			// read the fake client sequence numbers.
+			const clientSequenceNumber = this.runtimeOptions.enableGroupedBatching
+				? ++fakeClientSequenceNumber
+				: message.clientSequenceNumber;
+			this.submitInternal({ ...message, clientSequenceNumber });
 		});
 	}
 
@@ -408,7 +413,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		});
 	}
 
-	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
+	private generateIdAllocationOp(
+		clientSequenceNumber: number,
+	): IInternalMockRuntimeMessage | undefined {
 		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
@@ -417,33 +424,85 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
+				clientSequenceNumber,
 			};
 		}
 		return undefined;
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+	private submitInternal(message: IInternalMockRuntimeMessage) {
 		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
 		this.deltaManager.outbound.push([
 			{
-				clientSequenceNumber,
+				clientSequenceNumber: message.clientSequenceNumber,
 				contents: message.content,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				type: MessageType.Operation,
 			},
 		]);
-		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
+		this.addPendingMessage(
+			message.content,
+			message.localOpMetadata,
+			message.clientSequenceNumber,
+		);
 	}
 
-	public process(message: ISequencedDocumentMessage) {
-		this.deltaManager.process(message);
-		const [local, localOpMetadata] = this.processInternal(message);
-
-		if (this.isSequencedAllocationMessage(message)) {
-			this.finalizeIdRange(message.contents.contents);
-		} else {
-			this.dataStoreRuntime.process(message, local, localOpMetadata);
+	/**
+	 * Processes multiple messages. It mocks the op bunching feature of the runtime by processing ops
+	 * from the same client in a single bunch.
+	 */
+	public processMessages(messages: ISequencedDocumentMessage[]) {
+		if (messages.length === 0) {
+			return;
 		}
+
+		let bunchedMessagesContent: IRuntimeMessagesContent[] = [];
+		let previousMessage: ISequencedDocumentMessage | undefined;
+		let previousLocal: boolean | undefined;
+		let previousClientId: string | undefined;
+
+		const sendBunchedMessages = (): void => {
+			if (previousMessage === undefined) {
+				return;
+			}
+			assert(previousLocal !== undefined, "previous local must exist");
+			const messageCollection: IRuntimeMessageCollection = {
+				envelope: previousMessage,
+				local: previousLocal,
+				messagesContent: bunchedMessagesContent,
+			};
+			this.dataStoreRuntime.processMessages(messageCollection);
+			bunchedMessagesContent = [];
+		};
+
+		for (const message of messages) {
+			this.deltaManager.process(message);
+			const [local, localOpMetadata] = this.processInternal(message);
+
+			// Id allocation messages are for the runtime, so process it here directly.
+			if (this.isSequencedAllocationMessage(message)) {
+				this.finalizeIdRange(message.contents.contents);
+				continue;
+			}
+
+			// If the client Id in the message changes, send the previous bunch of messages to the
+			// data store for processing.
+			if (previousClientId && previousClientId !== message.clientId) {
+				sendBunchedMessages();
+			}
+
+			previousClientId = message.clientId ?? undefined;
+			previousLocal = local;
+			previousMessage = message;
+
+			bunchedMessagesContent.push({
+				contents: message.contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			});
+		}
+
+		sendBunchedMessages();
 	}
 
 	protected addPendingMessage(
@@ -572,66 +631,126 @@ export class MockContainerRuntimeFactory {
 	}
 
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
-	private processFirstMessage() {
-		assert(this.messages.length > 0, "The message queue should not be empty");
 
-		// Explicitly JSON clone the value to match the behavior of going thru the wire.
-		const message = JSON.parse(
-			JSON.stringify(this.messages.shift()),
-		) as ISequencedDocumentMessage;
-
-		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
-		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
-		if (
-			this.runtimeOptions.flushMode === FlushMode.Immediate ||
-			this.lastProcessedMessage?.clientId !== message.clientId
-		) {
-			this.sequenceNumber++;
-		}
-		message.sequenceNumber = this.sequenceNumber;
-		message.minimumSequenceNumber = this.getMinSeq();
-		this.lastProcessedMessage = message;
+	/**
+	 * Flushes the messages in all the runtimes. This should only be called in TurnBased flush mode.
+	 */
+	private flushMessages() {
+		assert(
+			this.runtimeOptions.flushMode === FlushMode.TurnBased,
+			"flushMessages can only be called in TurnBased flush mode",
+		);
 		for (const runtime of this.runtimes) {
-			runtime.process(message);
+			runtime.flush();
 		}
 	}
 
 	/**
-	 * Process one of the queued messages.  Throws if no messages are queued.
+	 * Process the given number of queued messages one by one in Immediate flush mode.
 	 */
-	public processOneMessage() {
-		if (this.messages.length === 0) {
-			throw new Error("Tried to process a message that did not exist");
+	private processMessagesInImmediateMode(count: number) {
+		assert(
+			this.runtimeOptions.flushMode === FlushMode.Immediate,
+			"processFirstMessage can only be called in Immediate flush mode",
+		);
+		if (count > this.messages.length) {
+			throw new Error("Tried to process more messages than exist");
 		}
-		this.lastProcessedMessage = undefined;
 
-		this.processFirstMessage();
+		for (let i = 0; i < count; i++) {
+			// Explicitly JSON clone the value to match the behavior of going thru the wire.
+			const message = JSON.parse(
+				JSON.stringify(this.messages.shift()),
+			) as ISequencedDocumentMessage;
+
+			// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
+			this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
+			this.sequenceNumber++;
+			message.sequenceNumber = this.sequenceNumber;
+			message.minimumSequenceNumber = this.getMinSeq();
+			this.lastProcessedMessage = message;
+			for (const runtime of this.runtimes) {
+				runtime.processMessages([message]);
+			}
+		}
 	}
 
 	/**
-	 * Process a given number of queued messages.  Throws if there are fewer messages queued than requested.
-	 * @param count - the number of messages to process
+	 * Processes the given number of queued messages. It sends them to the runtimes together.
+	 * This should only be called in TurnBased flush mode.
 	 */
-	public processSomeMessages(count: number) {
+	private processMessagesInTurnBasedMode(count: number) {
+		assert(
+			this.runtimeOptions.flushMode === FlushMode.TurnBased,
+			"processTurnBasedMessages can only be called in TurnBased flush mode",
+		);
+
+		if (count === 0) {
+			return;
+		}
+
 		if (count > this.messages.length) {
 			throw new Error("Tried to process more messages than exist");
 		}
 
 		this.lastProcessedMessage = undefined;
 
+		const messages: ISequencedDocumentMessage[] = [];
 		for (let i = 0; i < count; i++) {
-			this.processFirstMessage();
+			// Explicitly JSON clone the value to match the behavior of going thru the wire.
+			const message = JSON.parse(
+				JSON.stringify(this.messages.shift()),
+			) as ISequencedDocumentMessage;
+
+			// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
+			this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
+			if (this.lastProcessedMessage?.clientId !== message.clientId) {
+				this.sequenceNumber++;
+			}
+			message.sequenceNumber = this.sequenceNumber;
+			message.minimumSequenceNumber = this.getMinSeq();
+			this.lastProcessedMessage = message;
+			messages.push(message);
+		}
+
+		for (const runtime of this.runtimes) {
+			runtime.processMessages(messages);
 		}
 	}
 
 	/**
-	 * Process all remaining messages in the queue.
+	 * Process a given number of queued messages.
+	 * In Immediate flush mode, it processes the messages one by one.
+	 * In TurnBased flush mode, it flushes all messages in all the runtimes. It then sends the given number of
+	 * messages to them together mocking the op bunching feature.
+	 * @param count - the number of messages to process
+	 */
+	public processSomeMessages(count: number) {
+		if (this.runtimeOptions.flushMode === FlushMode.Immediate) {
+			return this.processMessagesInImmediateMode(count);
+		}
+
+		this.flushMessages();
+		this.processMessagesInTurnBasedMode(count);
+	}
+
+	/**
+	 * Process one of the queued messages.
+	 */
+	public processOneMessage() {
+		this.processSomeMessages(1);
+	}
+
+	/**
+	 * Process all messages in the queue.
 	 */
 	public processAllMessages() {
-		this.lastProcessedMessage = undefined;
-		while (this.messages.length > 0) {
-			this.processFirstMessage();
+		// In TurnBased flush mode, we need to flush the messages before processing them. Otherwise, the
+		// messages queue might be empty.
+		if (this.runtimeOptions.flushMode === FlushMode.TurnBased) {
+			this.flushMessages();
 		}
+		this.processSomeMessages(this.messages.length);
 	}
 }
 
@@ -1015,17 +1134,23 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
-		for (const {
-			contents,
-			localOpMetadata,
-			clientSequenceNumber,
-		} of messageCollection.messagesContent) {
-			this.process(
-				{ ...messageCollection.envelope, contents, clientSequenceNumber },
-				messageCollection.local,
-				localOpMetadata,
-			);
-		}
+		this.deltaConnections.forEach((dc) => {
+			if (dc.processMessages !== undefined) {
+				dc.processMessages(messageCollection);
+			} else {
+				for (const {
+					contents,
+					localOpMetadata,
+					clientSequenceNumber,
+				} of messageCollection.messagesContent) {
+					dc.process(
+						{ ...messageCollection.envelope, contents, clientSequenceNumber },
+						messageCollection.local,
+						localOpMetadata,
+					);
+				}
+			}
+		});
 	}
 
 	public processSignal(message: any, local: boolean) {
