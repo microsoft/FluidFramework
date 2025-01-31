@@ -119,7 +119,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		uriRoot: uriRootDir,
 		includeBreadcrumb: false, // Docusaurus includes this by default based on file hierarchy
 		includeTopLevelDocumentHeading: false, // We inject `title` front-matter metadata instead
-		createDefaultLayout: layoutContent,
+		defaultSectionLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
 			const alerts = [];
 			if (ApiItemUtilities.hasModifierTag(apiItem, "@system")) {
