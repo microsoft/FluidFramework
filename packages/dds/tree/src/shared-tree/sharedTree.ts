@@ -84,7 +84,7 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 import { breakingClass, fail, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { SharedTreeAttributes, SharedTreeType } from "./publicContracts.js";
+import { SharedTreeAttributes, SharedTreeFactoryType } from "./publicContracts.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -646,7 +646,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
  * A channel factory that creates {@link ISharedTree}s.
  */
 export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
-	public readonly type: string = SharedTreeType;
+	public readonly type: string = SharedTreeFactoryType;
 
 	public readonly attributes: IChannelAttributes = SharedTreeAttributes;
 

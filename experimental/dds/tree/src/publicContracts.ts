@@ -7,16 +7,18 @@ import type { IChannelAttributes } from '@fluidframework/datastore-definitions/i
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
- * @public
+ * @alpha
+ * @legacy
  */
-export const SharedTreeType = 'SharedTree';
+export const SharedTreeFactoryType = 'SharedTree';
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
- * @public
+ * @alpha
+ * @legacy
  */
 export const SharedTreeAttributes: IChannelAttributes = {
-	type: SharedTreeType,
+	type: SharedTreeFactoryType,
 	snapshotFormatVersion: '0.1',
 	packageVersion: '0.1',
 };

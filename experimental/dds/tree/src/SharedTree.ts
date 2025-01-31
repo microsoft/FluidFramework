@@ -100,7 +100,7 @@ import {
 	ghostSessionId,
 	reservedIdCount,
 } from './persisted-types/index.js';
-import { SharedTreeAttributes, SharedTreeType } from './publicContracts.js';
+import { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 
 /**
  * The write format and associated options used to construct a `SharedTree`
@@ -201,7 +201,7 @@ export class SharedTreeFactory implements IChannelFactory {
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
 	 */
-	public static Type = SharedTreeType;
+	public static Type = SharedTreeFactoryType;
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}

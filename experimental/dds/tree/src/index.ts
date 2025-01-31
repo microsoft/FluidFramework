@@ -145,7 +145,7 @@ export {
 	StashedLocalOpMetadata,
 } from './SharedTree.js';
 export { StringInterner } from './StringInterner.js';
-export { SharedTreeType, SharedTreeAttributes } from './publicContracts.js';
+export { SharedTreeAttributes, SharedTreeFactoryType } from './publicContracts.js';
 
 /**
  * TODO:#61413: Publish test utilities from a separate test package

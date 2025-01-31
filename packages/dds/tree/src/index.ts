@@ -84,7 +84,7 @@ export {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	SharedTreeAttributes,
-	SharedTreeType,
+	SharedTreeFactoryType,
 } from "./shared-tree/index.js";
 
 export {

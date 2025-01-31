@@ -688,7 +688,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 // @alpha
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
-// @public
+// @alpha
 export const SharedTreeAttributes: IChannelAttributes;
 
 // @alpha
@@ -715,6 +715,9 @@ export class SharedTreeFactory implements IChannelFactory {
 }
 
 // @alpha
+export const SharedTreeFactoryType = "SharedTree";
+
+// @alpha
 export type SharedTreeOptions<WF extends WriteFormat, HistoryCompatibility extends 'Forwards' | 'None' = 'Forwards'> = SharedTreeBaseOptions & Omit<WF extends WriteFormat.v0_0_2 ? SharedTreeOptions_0_0_2 : WF extends WriteFormat.v0_1_1 ? SharedTreeOptions_0_1_1 : never, HistoryCompatibility extends 'Forwards' ? 'summarizeHistory' : never>;
 
 // @alpha
@@ -734,9 +737,6 @@ export interface SharedTreeOptions_0_1_1 {
 export interface SharedTreeSummaryBase {
     readonly version: WriteFormat;
 }
-
-// @public
-export const SharedTreeType: string;
 
 // @alpha
 export class SharedTreeUndoRedoHandler {

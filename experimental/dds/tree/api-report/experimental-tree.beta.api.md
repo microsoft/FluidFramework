@@ -7,10 +7,4 @@
 export { getSerializedUploadedEditChunkContents }
 export { getSerializedUploadedEditChunkContents as getUploadedEditChunkContents }
 
-// @public
-export const SharedTreeAttributes: IChannelAttributes;
-
-// @public
-export const SharedTreeType: string;
-
 ```

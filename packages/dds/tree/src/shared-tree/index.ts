@@ -24,7 +24,7 @@ export {
 
 export {
 	SharedTreeAttributes,
-	SharedTreeType,
+	SharedTreeFactoryType,
 } from "./publicContracts.js";
 
 export {

@@ -409,7 +409,7 @@ export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 export const SharedTreeAttributes: IChannelAttributes;
 
 // @alpha
-export const SharedTreeType: string;
+export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
