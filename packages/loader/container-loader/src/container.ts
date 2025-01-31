@@ -439,21 +439,25 @@ export class Container
 	/**
 	 * Create a new container in a detached state.
 	 */
-	public static async createDetached(
+	public static createDetached(
 		createProps: IContainerCreateProps,
 		codeDetails: IFluidCodeDetails,
-	): Promise<Container> {
+	): { container: Container; initialize: () => Promise<IContainer> } {
 		const container = new Container(createProps);
 
-		return PerformanceEvent.timedExecAsync(
-			container.mc.logger,
-			{ eventName: "CreateDetached" },
-			async (_event) => {
-				await container.createDetached(codeDetails);
-				return container;
-			},
-			{ start: true, end: true, cancel: "generic" },
-		);
+		return {
+			container,
+			initialize: async () =>
+				PerformanceEvent.timedExecAsync(
+					container.mc.logger,
+					{ eventName: "CreateDetached" },
+					async (_event) => {
+						await container.createDetached(codeDetails);
+						return container;
+					},
+					{ start: true, end: true, cancel: "generic" },
+				),
+		};
 	}
 
 	/**

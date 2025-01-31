@@ -336,6 +336,21 @@ export class Loader implements IHostLoader {
 			clientDetailsOverride?: IClientDetails;
 		},
 	): Promise<IContainer> {
+		const { container, initialize } = this.createDetachedContainer2(
+			codeDetails,
+			createDetachedProps,
+		);
+		//*
+		return initialize().then(() => container);
+	}
+
+	public createDetachedContainer2(
+		codeDetails: IFluidCodeDetails,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): { container: Container; initialize: () => Promise<IContainer> } {
 		return Container.createDetached(
 			{
 				...createDetachedProps,
