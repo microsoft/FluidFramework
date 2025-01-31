@@ -26,6 +26,7 @@ parameters:
     values:
       - new
       - old
+      - staging
   # determines whether to retain guardian assets
   - name: guardianAssetRetentionOverride
     displayName: Guardian Asset Retention Override (default = based on branch)
@@ -54,6 +55,8 @@ variables:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
     ${{ if eq( parameters['deployEnvironment'], 'old') }}:
       value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+    ${{ if eq(parameters['deployEnvironment'], 'staging') }}:
+      value: "$(STAGING_AZURE_STATIC_WEB_APPS_API_TOKEN)"
   # skip injected CG detection as we manually trigger it in a parallel job
   - name: skipComponentGovernanceDetection
     value: true
