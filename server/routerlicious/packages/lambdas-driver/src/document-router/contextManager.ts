@@ -130,11 +130,14 @@ export class DocumentContextManager extends EventEmitter {
 
 				// if head goes lower than the current tail, we need to update the tail accordingly since it will be an invalid state
 				if (head.offset < this.tail.offset) {
-					Lumberjack.info("contextManager.setHead: updating tail offset because it is greater than the new head offset", {
-						newHeadOffset: head.offset,
-						currentHeadOffset: this.head.offset,
-						currentTailOffset: this.tail.offset,
-					});
+					Lumberjack.info(
+						"contextManager.setHead: updating tail offset because it is greater than the new head offset",
+						{
+							newHeadOffset: head.offset,
+							currentHeadOffset: this.head.offset,
+							currentTailOffset: this.tail.offset,
+						},
+					);
 					this.tail = head;
 				}
 			}
