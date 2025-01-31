@@ -38,8 +38,11 @@ export class DocumentContextManager extends EventEmitter {
 
 	private closed = false;
 
-	private headUpdatedAfterResume = true; // used to track whether the head has been updated after a pause/resume event, so that we allow moving out of order only once during resume.
-	private tailUpdatedAfterResume = true; // used to track whether the tail has been updated after a pause/resume event, so that we allow moving out of order only once during resume.
+	// Below flags are used to track whether head/tail has been updated after a pause/resume event.
+	// This is to allow moving out of order once during resume.
+	// Value false means they are in a paused state and are waiting to be updated during resume.
+	private headUpdatedAfterResume = true;
+	private tailUpdatedAfterResume = true;
 
 	constructor(private readonly partitionContext: IContext) {
 		super();
@@ -50,8 +53,13 @@ export class DocumentContextManager extends EventEmitter {
 	 * This class is responsible for the lifetime of the context
 	 */
 	public createContext(routingKey: IRoutingKey, head: IQueuedMessage): DocumentContext {
-		// Contexts should only be created within the processing range of the manager
-		assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
+		if (this.headUpdatedAfterResume && this.tailUpdatedAfterResume) {
+			// Contexts should only be created within the processing range of the manager
+			assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
+		} else if (this.headUpdatedAfterResume) {
+			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
+			assert(head.offset <= this.head.offset);
+		}
 
 		// Create the new context and register for listeners on it
 		const context = new DocumentContext(
@@ -59,6 +67,10 @@ export class DocumentContextManager extends EventEmitter {
 			head,
 			this.partitionContext.log,
 			() => this.tail,
+			() => ({
+				headUpdatedAfterResume: this.headUpdatedAfterResume,
+				tailUpdatedAfterResume: this.tailUpdatedAfterResume,
+			}),
 		);
 		this.contexts.add(context);
 		context.addListener("checkpoint", (restartOnCheckpointFailure?: boolean) =>
@@ -127,19 +139,6 @@ export class DocumentContextManager extends EventEmitter {
 						headUpdatedAfterResume: this.headUpdatedAfterResume,
 					},
 				);
-
-				// if head goes lower than the current tail, we need to update the tail accordingly since it will be an invalid state
-				if (head.offset < this.tail.offset) {
-					Lumberjack.info(
-						"contextManager.setHead: updating tail offset because it is greater than the new head offset",
-						{
-							newHeadOffset: head.offset,
-							currentHeadOffset: this.head.offset,
-							currentTailOffset: this.tail.offset,
-						},
-					);
-					this.tail = head;
-				}
 			}
 
 			if (!this.headUpdatedAfterResume) {
