@@ -21,20 +21,25 @@ const initializeBrowser = async () => {
 	return browser;
 };
 
+/**
+ * @param page The page to load the presence tracker app on.
+ */
+const loadPresenceTrackerApp = async (page: Page) => {
+	await page.goto(globals.PATH, { waitUntil: "load" });
+	// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
+	await page.waitForFunction(() => window["fluidStarted"]);
+};
+
 // Most tests are passing when tinylicious is running. Those that aren't are individually skipped.
 describe("presence-tracker", () => {
 	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
-		await page.waitForFunction(() => window["fluidStarted"]);
+		// Wait for the page to load first before running any tests giving a more generous timeout
+		// so this time isn't attributed to the first test.
+		await loadPresenceTrackerApp(page);
 	}, 45000);
 
 	beforeEach(async () => {
-		await page.goto(globals.PATH, { waitUntil: "load" });
-		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
-		await page.waitForFunction(() => window["fluidStarted"]);
+		await loadPresenceTrackerApp(page);
 	});
 
 	describe("Single client", () => {
@@ -89,13 +94,11 @@ describe("presence-tracker", () => {
 			// Create a second browser instance.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
+			await loadPresenceTrackerApp(page2);
 		}, 45000);
 
 		beforeEach(async () => {
-			// Navigate to the URL/session created by the first browser.
-			await page2.goto(page.url(), { waitUntil: "load" });
-			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
-			await page2.waitForFunction(() => window["fluidStarted"]);
+			await loadPresenceTrackerApp(page2);
 		});
 
 		afterAll(async () => {
