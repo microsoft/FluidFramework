@@ -520,16 +520,18 @@ export class RunningSummarizer
 		this.disposeEnqueuedSummary();
 
 		// This will try to run lastSummary if needed.
-		if (allowLastSummary && this.heuristicRunner?.shouldRunLastSummary()) {
-			if (this.summarizingLock === undefined) {
-				this.trySummarizeOnce(
-					// summarizeProps
-					{ summarizeReason: "lastSummary" },
-					{},
-					undefined,
-					true /* isLastSummary */,
-				);
-			}
+		if (
+			allowLastSummary &&
+			this.heuristicRunner?.shouldRunLastSummary() &&
+			this.summarizingLock === undefined
+		) {
+			this.trySummarizeOnce(
+				// summarizeProps
+				{ summarizeReason: "lastSummary" },
+				{},
+				undefined,
+				true /* isLastSummary */,
+			);
 		}
 
 		// Note that trySummarizeOnce() call above returns right away, without waiting.
@@ -811,9 +813,9 @@ export class RunningSummarizer
 			// If submit summary failed, use maxAttemptsForSubmitFailures. Else use the defaultMaxAttempts.
 			// Note: Check "summarySubmitted" result first because if it fails, ack nack would fail as well.
 			const submitSummaryResult = await results.summarySubmitted;
-			maxAttempts = !submitSummaryResult.success
-				? this.maxAttemptsForSubmitFailures
-				: defaultMaxAttempts;
+			maxAttempts = submitSummaryResult.success
+				? defaultMaxAttempts
+				: this.maxAttemptsForSubmitFailures;
 
 			// Emit "summarize" event for this failed attempt.
 			status = "failure";
