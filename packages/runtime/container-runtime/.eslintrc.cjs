@@ -83,6 +83,7 @@ module.exports = {
 			rules: {
 				// TODO: remove these overrides and fix violations
 				"@typescript-eslint/explicit-function-return-type": "warn",
+				"unicorn/consistent-function-scoping": "warn",
 				"unicorn/error-message": "warn",
 
 				// Test files are run in node only so additional node libraries can be used.
