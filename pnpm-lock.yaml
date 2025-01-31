@@ -4531,6 +4531,9 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../../packages/common/core-utils
+      '@fluidframework/id-compressor':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/id-compressor
       '@fluidframework/map':
         specifier: workspace:~
         version: link:../../../packages/dds/map

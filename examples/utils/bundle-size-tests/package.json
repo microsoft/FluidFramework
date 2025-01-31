@@ -39,6 +39,7 @@
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
+		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
 		"@fluidframework/odsp-client": "workspace:~",
