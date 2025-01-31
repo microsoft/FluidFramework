@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
+//@ts-check
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItem} ApiItem */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
+
 import {
+	ApiItemKind,
 	ApiItemUtilities,
 	CodeSpanNode,
 	HeadingNode,
@@ -41,10 +46,20 @@ const supportDocsLinkSpan = new SpanNode([
  * @privateRemarks
  * If we later wish to differentiate between release tags of `@legacy` items, this function will need
  * to be updated.
+ *
+ * @param {ApiItem} apiItem - The API item for which the import notice is being created.
  */
 function createImportNotice(apiItem) {
-	const packageName = apiItem.getAssociatedPackage().displayName;
+	const containingPackage = apiItem.getAssociatedPackage();
+	if (containingPackage === undefined) {
+		throw new Error("API item does not have an associated package.");
+	}
+	const packageName = containingPackage.displayName;
 
+	/**
+	 * @param {string} importSubpath - Subpath beneath the item's package through which the item can be imported.
+	 * @param {string} admonitionTitle - Title to display for the admonition.
+	 */
 	function createImportAdmonition(importSubpath, admonitionTitle) {
 		return new AdmonitionNode(
 			[
@@ -68,16 +83,16 @@ function createImportNotice(apiItem) {
 		);
 	}
 
-	const releaseTag = ApiItemUtilities.getReleaseTag(apiItem);
+	const releaseLevel = ApiItemUtilities.getEffectiveReleaseLevel(apiItem);
 
-	if (releaseTag === ReleaseTag.Alpha) {
+	if (releaseLevel === ReleaseTag.Alpha) {
 		return createImportAdmonition(
 			"alpha",
 			"This API is provided as an alpha preview and may change without notice.",
 		);
 	}
 
-	if (releaseTag === ReleaseTag.Beta) {
+	if (releaseLevel === ReleaseTag.Beta) {
 		return createImportAdmonition(
 			"beta",
 			"This API is provided as a beta preview and may change without notice.",
@@ -91,6 +106,8 @@ function createImportNotice(apiItem) {
  * Creates a special use notice for the provided API item, if one is appropriate.
  *
  * If the item is tagged as "@system", displays an internal notice with use notes.
+ *
+ * @param {ApiItem} apiItem - The API item for which the system notice is being created.
  */
 function createSystemNotice(apiItem) {
 	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
@@ -129,13 +146,17 @@ function createSystemNotice(apiItem) {
  *
  * 1. See (if any)
  *
- * @param {@microsoft/api-extractor-model#ApiItem} apiItem - The API item being rendered.
- * @param {@fluid-tools/api-markdown-documenter#SectionNode[] | undefined} itemSpecificContent - API item-specific details to be included in the default layout.
- * @param {@fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration} config - Transformation configuration.
+ * @param {ApiItem} apiItem - The API item being rendered.
+ * @param {SectionNode[] | undefined} itemSpecificContent - API item-specific details to be included in the default layout.
+ * @param {ApiItemTransformationConfiguration} config - Transformation configuration.
  *
  * @returns An array of sections describing the layout. See {@link @fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration.createDefaultLayout}.
  */
 export function layoutContent(apiItem, itemSpecificContent, config) {
+	if (apiItem.kind === ApiItemKind.None) {
+		throw new Error("Invalid API item kind.");
+	}
+
 	const sections = [];
 
 	// Render summary comment (if any)
@@ -144,7 +165,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 		sections.push(new SectionNode([summary]));
 	}
 
-	// Render system notice (if any) that supercedes deprecation and import notices
+	// Render system notice (if any) that supersedes deprecation and import notices
 	const systemNotice = createSystemNotice(apiItem);
 	if (systemNotice !== undefined) {
 		sections.push(new SectionNode([systemNotice]));
@@ -208,7 +229,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 
 	// Add heading to top of section only if this is being rendered to a parent item.
 	// Document items have their headings handled specially.
-	return ApiItemUtilities.doesItemRequireOwnDocument(apiItem, config.documentBoundaries)
+	return ["Document", "Folder"].includes(config.hierarchy[apiItem.kind].kind)
 		? sections
 		: [
 				new SectionNode(
@@ -226,8 +247,8 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
  *
  * @remarks Displayed as a Docusaurus admonition. See {@link AdmonitionNode} and {@link renderAdmonitionNode}.
  *
- * @param {@microsoft/api-extractor-model#ApiItem} apiItem - The API item being rendered.
- * @param {@fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration} config - Transformation configuration.
+ * @param {ApiItem} apiItem - The API item being rendered.
+ * @param {ApiItemTransformationConfiguration} config - Transformation configuration.
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
@@ -238,6 +259,9 @@ function createDeprecationNoticeSection(apiItem, config) {
 	}
 
 	const transformedDeprecatedBlock = transformTsdocNode(deprecatedBlock, apiItem, config);
+	if (transformedDeprecatedBlock === undefined) {
+		throw new Error("Failed to transform deprecated block.");
+	}
 
 	return new AdmonitionNode(
 		[transformedDeprecatedBlock],
