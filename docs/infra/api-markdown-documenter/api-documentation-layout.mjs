@@ -259,6 +259,9 @@ function createDeprecationNoticeSection(apiItem, config) {
 	}
 
 	const transformedDeprecatedBlock = transformTsdocNode(deprecatedBlock, apiItem, config);
+	if (transformedDeprecatedBlock === undefined) {
+		throw new Error("Failed to transform deprecated block.");
+	}
 
 	return new AdmonitionNode(
 		[transformedDeprecatedBlock],

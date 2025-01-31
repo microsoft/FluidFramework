@@ -92,10 +92,16 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 	const apiModel = await loadModel({ modelDirectoryPath: inputDir });
 
-	// Custom renderers that utilize Docusaurus syntax for certain kinds of documentation elements.
+	/**
+	 * Custom renderers that utilize Docusaurus syntax for certain kinds of documentation elements.
+	 * @type {import("@fluid-tools/api-markdown-documenter").MarkdownRenderers}
+	 */
 	const customRenderers = {
+		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
 		[DocumentationNodeType.BlockQuote]: renderBlockQuoteNode,
+		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
 		[DocumentationNodeType.Table]: renderTableNode,
+		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
 		[admonitionNodeType]: renderAdmonitionNode,
 	};
 
