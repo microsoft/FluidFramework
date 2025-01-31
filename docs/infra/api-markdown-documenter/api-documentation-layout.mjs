@@ -45,7 +45,7 @@ const supportDocsLinkSpan = new SpanNode([
  * If we later wish to differentiate between release tags of `@legacy` items, this function will need
  * to be updated.
  *
- * @param apiItem {import("@fluid-tools/api-markdown-documenter").ApiItem} - The API item for which the import notice is being created.
+ * @param {import("@fluid-tools/api-markdown-documenter").ApiItem} apiItem - The API item for which the import notice is being created.
  */
 function createImportNotice(apiItem) {
 	const containingPackage = apiItem.getAssociatedPackage();
@@ -105,7 +105,7 @@ function createImportNotice(apiItem) {
  *
  * If the item is tagged as "@system", displays an internal notice with use notes.
  *
- * @param apiItem {import("@fluid-tools/api-markdown-documenter").ApiItem} - The API item for which the system notice is being created.
+ * @param {import("@fluid-tools/api-markdown-documenter").ApiItem} apiItem - The API item for which the system notice is being created.
  */
 function createSystemNotice(apiItem) {
 	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
