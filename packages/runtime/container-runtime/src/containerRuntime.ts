@@ -805,16 +805,14 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	// Older containers may not have the "getEntryPoint" API
 	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
 	if (resolvedContainer.getEntryPoint === undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
 		const response = await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
-		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		}) as IResponse;
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			throw responseToException(response, request);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		fluidObject = response.value;
 	} else {
 		fluidObject = await resolvedContainer.getEntryPoint();
