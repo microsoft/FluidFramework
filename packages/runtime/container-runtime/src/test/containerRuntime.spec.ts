@@ -1264,6 +1264,7 @@ describe("Runtime", () => {
 					"Ops with unrecognized type should fail to process",
 				);
 			});
+
 			it.only("Throws when op compression is on and op grouping is off", async () => {
 				await assert.rejects(
 					async () =>
@@ -1290,6 +1291,7 @@ describe("Runtime", () => {
 				);
 			});
 		});
+
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime method works", async () => {
 				const makeMixin = <T>(
