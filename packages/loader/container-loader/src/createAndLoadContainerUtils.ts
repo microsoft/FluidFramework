@@ -3,11 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	IContainer,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
 	type IContainerPolicies,
+	type IContainerEvents,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -143,6 +145,47 @@ export async function createDetachedContainer(
 		canReconnect: createDetachedContainerProps.allowReconnect,
 		clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
 	});
+}
+
+/**
+ * Creates a new container using the specified code details but in an unattached state. While unattached, all
+ * updates will only be local until the user explicitly attaches the container to a service provider.
+ * @param createDetachedContainerProps - Services and properties necessary for creating detached container.
+ * @legacy
+ * @alpha
+ */
+//* 3 is better
+// export function createDetachedContainer2(
+// 	createDetachedContainerProps: ICreateDetachedContainerProps,
+// ): { container: IContainer; initialize: () => Promise<void> } {
+// 	const loader = new Loader(createDetachedContainerProps);
+// 	return loader.createDetachedContainer2(createDetachedContainerProps.codeDetails, {
+// 		canReconnect: createDetachedContainerProps.allowReconnect,
+// 		clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
+// 	});
+// }
+
+/**
+ * Creates a new container using the specified code details but in an unattached state. While unattached, all
+ * updates will only be local until the user explicitly attaches the container to a service provider.
+ * @param createDetachedContainerProps - Services and properties necessary for creating detached container.
+ * @legacy
+ * @alpha
+ */
+export function createDetachedContainer3(
+	createDetachedContainerProps: ICreateDetachedContainerProps,
+	//* name this type
+): { shell: TypedEventEmitter<IContainerEvents> & { initialize: () => Promise<IContainer> } } {
+	const loader = new Loader(createDetachedContainerProps);
+	const { container, initialize } = loader.createDetachedContainer2(
+		createDetachedContainerProps.codeDetails,
+		{
+			canReconnect: createDetachedContainerProps.allowReconnect,
+			clientDetailsOverride: createDetachedContainerProps.clientDetailsOverride,
+		},
+	);
+	//* Put initialize on Container class but not IContainer interface
+	return { shell: Object.assign(container, { initialize }) };
 }
 
 /**
