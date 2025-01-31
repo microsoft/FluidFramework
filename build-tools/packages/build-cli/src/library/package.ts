@@ -503,6 +503,7 @@ export interface DependencyWithRange {
  * @param interdependencyRange - The type of dependency to use on packages within the release group.
  * @param writeChanges - If true, save changes to packages to disk.
  * @param log - A logger to use.
+ * @param onlyUpdateWorkspaceDeps - If true, only dependencies that use the workspace: protocol will be updated.
  */
 export async function setVersion(
 	context: Context,
@@ -510,6 +511,7 @@ export async function setVersion(
 	version: semver.SemVer,
 	interdependencyRange: InterdependencyRange = "^",
 	log?: Logger,
+	onlyUpdateWorkspaceDeps: boolean = true,
 ): Promise<void> {
 	const translatedVersion = version;
 	const scheme = detectVersionScheme(translatedVersion);
@@ -599,11 +601,9 @@ export async function setVersion(
 					? translatedVersion.version
 					: getVersionRange(translatedVersion, interdependencyRange);
 		} else {
-			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			newRange = `${interdependencyRange}${translatedVersion.version}`;
 		}
 	} else {
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		newRange = `${interdependencyRange}${translatedVersion.version}`;
 	}
 
@@ -628,6 +628,7 @@ export async function setVersion(
 			dependencyVersionMap,
 			/* updateWithinSameReleaseGroup */ true,
 			/* writeChanges */ true,
+			onlyUpdateWorkspaceDeps,
 		);
 	}
 
@@ -672,6 +673,7 @@ function getDependenciesRecord(
  * group. Typically this should be `false`, but in some cases you may need to set a precise dependency range string
  * within the same release group.
  * @param writeChanges - If true, save changes to packages to disk.
+ * @param onlyUpdateWorkspaceDeps - If true, only dependencies that use the workspace: protocol will be updated.
  * @returns True if the packages dependencies were changed; false otherwise.
  *
  * @remarks
@@ -685,6 +687,7 @@ async function setPackageDependencies(
 	dependencyVersionMap: Map<string, DependencyWithRange>,
 	updateWithinSameReleaseGroup = false,
 	writeChanges = true,
+	onlyUpdateWorkspaceDeps = true,
 ): Promise<boolean> {
 	let changed = false;
 	let newRangeString: string;
@@ -698,9 +701,13 @@ async function setPackageDependencies(
 					continue;
 				}
 
-				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				newRangeString = dep.range.toString();
-				if (dependencies[name] !== newRangeString) {
+
+				const shouldDepBeUpdated = onlyUpdateWorkspaceDeps
+					? isWorkspaceRange(dependencies[name])
+					: dependencies[name] !== newRangeString;
+
+				if (shouldDepBeUpdated) {
 					changed = true;
 					dependencies[name] = newRangeString;
 				}
@@ -853,7 +860,6 @@ export async function npmCheckUpdatesHomegrown(
 	}
 
 	const range: InterdependencyRange = prerelease ? newVersion : `^${[...versionSet][0]}`;
-	// eslint-disable-next-line @typescript-eslint/no-base-to-string
 	log?.verbose(`Calculated new range: ${range}`);
 	for (const dep of Object.keys(dependencyVersionMap)) {
 		const pkg = context.fullPackageMap.get(dep);

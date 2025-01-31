@@ -813,9 +813,9 @@ export class RunningSummarizer
 			// If submit summary failed, use maxAttemptsForSubmitFailures. Else use the defaultMaxAttempts.
 			// Note: Check "summarySubmitted" result first because if it fails, ack nack would fail as well.
 			const submitSummaryResult = await results.summarySubmitted;
-			maxAttempts = !submitSummaryResult.success
-				? this.maxAttemptsForSubmitFailures
-				: defaultMaxAttempts;
+			maxAttempts = submitSummaryResult.success
+				? defaultMaxAttempts
+				: this.maxAttemptsForSubmitFailures;
 
 			// Emit "summarize" event for this failed attempt.
 			status = "failure";
