@@ -173,10 +173,10 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	const isDocumentItem = ["Document", "Folder"].includes(config.hierarchy[apiItem.kind].kind);
 
 	// Whether or not this item can be imported by the end user.
-	// For example, a function or interface belonging to a package's exports can be directly imported by the end user.
+	// For example, a function or interface belonging to a package's exports (entry-point) can be directly imported by the end user.
 	// Whereas, the method of an interface cannot.
 	// For such members where the end-user can't directly import, we won't display import instructions.
-	const isImportable = apiItem.parent?.kind === ApiItemKind.Package;
+	const isImportable = apiItem.parent?.kind === ApiItemKind.EntryPoint;
 
 	const sections = [];
 
