@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
-import { ScopeType } from "@fluidframework/azure-client/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -19,6 +18,7 @@ import {
 	createAzureClient,
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
+	ScopeType,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
 import { configProvider, waitForMember, getTestMatrix } from "./utils.js";

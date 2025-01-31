@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
@@ -722,11 +722,11 @@ export class PerformanceEvent {
 	}
 
 	public get duration(): number {
-		return performance.now() - this.startTime;
+		return performanceNow() - this.startTime;
 	}
 
 	private event?: ITelemetryGenericEventExt;
-	private readonly startTime = performance.now();
+	private readonly startTime = performanceNow();
 	private startMark?: string;
 
 	protected constructor(
