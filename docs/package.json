@@ -77,6 +77,8 @@
 		"@microsoft/applicationinsights-web": "^3.3.4",
 		"@playwright/test": "^1.49.0",
 		"@rushstack/node-core-library": "^5.9.0",
+		"@types/fs-extra": "^11.0.4",
+		"@types/hast": "^3.0.4",
 		"@types/node": "^22.9.1",
 		"@wayneferrao/docusaurus-search-local": "^0.48.5",
 		"chalk": "^5.3.0",
@@ -108,8 +110,5 @@
 	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
 	"engines": {
 		"node": ">=18.0"
-	},
-	"dependencies": {
-		"@types/fs-extra": "^11.0.4"
 	}
 }
