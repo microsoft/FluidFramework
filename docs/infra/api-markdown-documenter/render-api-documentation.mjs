@@ -119,7 +119,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 		uriRoot: uriRootDir,
 		includeBreadcrumb: false, // Docusaurus includes this by default based on file hierarchy
 		includeTopLevelDocumentHeading: false, // We inject `title` front-matter metadata instead
-		createDefaultLayout: layoutContent,
+		defaultSectionLayout: layoutContent,
 		getAlertsForItem: (apiItem) => {
 			const alerts = [];
 			if (ApiItemUtilities.hasModifierTag(apiItem, "@system")) {
@@ -128,15 +128,18 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				if (ApiItemUtilities.isDeprecated(apiItem)) {
 					alerts.push("Deprecated");
 				}
+
+				// If an item is `@legacy`, ignore its release tag (we use `@alpha`+`@legacy` to mean something
+				// entirely different from `@alpha`, so displaying the release tag would be misleading).
 				if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
 					alerts.push("Legacy");
-				}
-
-				const releaseTag = ApiItemUtilities.getEffectiveReleaseLevel(apiItem);
-				if (releaseTag === ReleaseTag.Alpha) {
-					alerts.push("Alpha");
-				} else if (releaseTag === ReleaseTag.Beta) {
-					alerts.push("Beta");
+				} else {
+					const releaseTag = ApiItemUtilities.getEffectiveReleaseLevel(apiItem);
+					if (releaseTag === ReleaseTag.Alpha) {
+						alerts.push("Alpha");
+					} else if (releaseTag === ReleaseTag.Beta) {
+						alerts.push("Beta");
+					}
 				}
 			}
 			return alerts;
@@ -147,9 +150,13 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				const packageName = apiItem.name;
 				const packageScope = PackageName.getScope(packageName);
 
-				// Skip `@fluid-private` packages
+				// Skip packages that are published, but are not intended for direct public consumption.
 				// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
-				if (["@fluid-private"].includes(packageScope)) {
+				if (
+					["@fluid-example", "@fluid-experimental", "@fluid-private"].includes(
+						packageScope,
+					)
+				) {
 					return true;
 				}
 			}
