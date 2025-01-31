@@ -5,6 +5,7 @@
 
 //@ts-check
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
+
 import {
 	ApiItem,
 	ApiItemKind,
