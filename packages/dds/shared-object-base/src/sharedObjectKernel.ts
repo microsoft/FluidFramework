@@ -3,16 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
+import {
+	IChannelStorageService,
+	type IChannel,
+	type IChannelAttributes,
+	type IChannelFactory,
+	type IChannelServices,
+	type IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 
+import { SharedObjectHandle } from "./handle.js";
 import { IFluidSerializer } from "./serializer.js";
-import { SharedObject } from "./sharedObject.js";
-import { ISharedObjectEvents } from "./types.js";
+import {
+	createSharedObjectKind,
+	SharedObject,
+	type ISharedObjectKind,
+	type SharedObjectKind,
+} from "./sharedObject.js";
+import { ISharedObjectEvents, type ISharedObject } from "./types.js";
 
 /**
  * Functionality specific a particular kind of shared object.
@@ -42,17 +58,17 @@ export interface SharedKernel {
 	// TODO: maybe this should be part of the factory, not a method here?
 	// That would enable lazy loading the kernel code during this call.
 	/**
-	 * {@inheritDoc SharedObject.loadCore}
+	 * {@inheritDoc SharedObjectCore.loadCore}
 	 */
 	loadCore(storage: IChannelStorageService): Promise<void>;
 
 	/**
-	 * {@inheritDoc SharedObject.onDisconnect}
+	 * {@inheritDoc SharedObjectCore.onDisconnect}
 	 */
 	onDisconnect(): void;
 
 	/**
-	 * {@inheritDoc SharedObject.reSubmitCore}
+	 * {@inheritDoc SharedObjectCore.reSubmitCore}
 	 */
 	reSubmitCore(content: unknown, localOpMetadata: unknown): void;
 
@@ -62,7 +78,7 @@ export interface SharedKernel {
 	applyStashedOp(content: unknown): void;
 
 	/**
-	 * {@inheritDoc SharedObject.processCore}
+	 * {@inheritDoc SharedObjectCore.processCore}
 	 */
 	processCore(
 		message: ISequencedDocumentMessage,
@@ -71,7 +87,7 @@ export interface SharedKernel {
 	): void;
 
 	/**
-	 * {@inheritDoc SharedObject.rollback}
+	 * {@inheritDoc SharedObjectCore.rollback}
 	 */
 	rollback(content: unknown, localOpMetadata: unknown): void;
 }
@@ -119,4 +135,234 @@ export abstract class SharedObjectFromKernel<
 	protected override rollback(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.rollback(content, localOpMetadata);
 	}
+}
+
+/**
+ * When present on a method, it indicates the methods return value should be replaced with `this` (the wrapper)
+ * when wrapping the object with the method.
+ * @internal
+ */
+export const thisWrap: unique symbol = Symbol("selfWrap");
+
+/**
+ * @internal
+ */
+export interface FactoryOut<T extends object> {
+	readonly kernel: SharedKernel;
+	readonly view: T;
+}
+
+/**
+ * TODO: Maybe move loadCore here.
+ * @internal
+ */
+export interface SharedKernelFactory<T extends object> {
+	create(args: KernelArgs): FactoryOut<T>;
+}
+
+/**
+ * @internal
+ */
+export interface KernelArgs {
+	serializer: IFluidSerializer;
+	handle: IFluidHandle;
+	submitMessage: (op: unknown, localOpMetadata: unknown) => void;
+	isAttached: () => boolean;
+	eventEmitter: TypedEventEmitter<ISharedObjectEvents>;
+}
+
+/**
+ * Map which can be based on a SharedMap or a SharedTree.
+ *
+ * Once this has been accessed as a SharedTree, the SharedMap APIs are no longer accessible.
+ *
+ * TODO: events
+ */
+class SharedObjectFromKernelFull<
+	TOut extends object,
+	TEvents extends ISharedObjectEvents,
+> extends SharedObjectFromKernel<TEvents> {
+	// Lazy init here so correct kernel constructed in loadCore when loading from existing data.
+	#data: FactoryOut<TOut> | undefined;
+
+	private readonly kernelArgs: KernelArgs;
+
+	/**
+	 * @param id - String identifier.
+	 * @param runtime - Data store runtime.
+	 * @param attributes - The attributes for the map.
+	 */
+	public constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+		public readonly factory: SharedKernelFactory<TOut>,
+		telemetryContextPrefix: string,
+	) {
+		super(id, runtime, attributes, telemetryContextPrefix);
+
+		// Proxy which grafts the adapter's APIs onto this object.
+		const merged = mergeAPIs(this, () => this.data.view);
+
+		this.handle = new SharedObjectHandle(merged, id, runtime.IFluidHandleContext);
+
+		this.kernelArgs = {
+			serializer: this.serializer,
+			handle: this.handle,
+			submitMessage: (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+			isAttached: () => this.isAttached(),
+			eventEmitter: merged,
+		};
+
+		return merged;
+	}
+
+	private get data(): FactoryOut<TOut> {
+		this.#data ??= this.factory.create(this.kernelArgs);
+		return this.#data;
+	}
+
+	protected override get kernel(): SharedKernel {
+		return this.data.kernel;
+	}
+}
+
+function mergeAPIs<Base extends object, Extra extends object>(
+	base: Base,
+	extraGetter: () => Extra,
+): Base & Extra {
+	// Proxy which grafts the adapter's APIs onto this object.
+	return new Proxy(base, {
+		get: (target, prop, receiver) => {
+			// Prefer `this` over adapter when there is a conflict.
+			if (Reflect.has(target, prop)) {
+				return Reflect.get(target, prop, target);
+			}
+			const extra = extraGetter();
+			const adapted = Reflect.get(extra, prop, extra) as unknown;
+			if (adapted instanceof Function) {
+				// eslint-disable-next-line unicorn/prefer-ternary
+				if (thisWrap in adapted) {
+					return (...args: unknown[]) => {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/ban-types
+						const result = (adapted as unknown as Function).call(extra, ...args);
+						assert(result === extra, "methods returning thisWrap should return this");
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+						return receiver;
+					};
+				} else {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+					return adapted.bind(extra);
+				}
+			}
+
+			return adapted;
+		},
+	}) as Base & Extra;
+}
+
+/**
+ * @internal
+ */
+export interface SharedObjectOptions<T extends object> {
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+	 */
+	readonly type: string;
+
+	/**
+	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+	 */
+	readonly attributes: IChannelAttributes;
+
+	readonly factory: SharedKernelFactory<Omit<T, keyof ISharedObject>>;
+
+	readonly telemetryContextPrefix: string;
+}
+
+/**
+ * Utility to create a IChannelFactory classes.
+ * @remarks
+ * Prefer using {@link makeSharedObjectKind} instead if exposing the factory is not needed for legacy API compatibility.
+ * @internal
+ */
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+export function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
+	class ChannelFactory implements IChannelFactory<T> {
+		/**
+		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+		 */
+		public static readonly Type = options.type;
+
+		/**
+		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+		 */
+		public static readonly Attributes: IChannelAttributes = options.attributes;
+
+		/**
+		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
+		 */
+		public get type(): string {
+			return ChannelFactory.Type;
+		}
+
+		/**
+		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
+		 */
+		public get attributes(): IChannelAttributes {
+			return ChannelFactory.Attributes;
+		}
+
+		/**
+		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
+		 */
+		public async load(
+			runtime: IFluidDataStoreRuntime,
+			id: string,
+			services: IChannelServices,
+			attributes: IChannelAttributes,
+		): Promise<T & IChannel> {
+			const shared = new SharedObjectFromKernelFull(
+				id,
+				runtime,
+				attributes,
+				options.factory,
+				options.telemetryContextPrefix,
+			);
+			await shared.load(services);
+			return shared as unknown as T & IChannel;
+		}
+
+		/**
+		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
+		 */
+		public create(runtime: IFluidDataStoreRuntime, id: string): T & IChannel {
+			const shared = new SharedObjectFromKernelFull(
+				id,
+				runtime,
+				ChannelFactory.Attributes,
+				options.factory,
+				options.telemetryContextPrefix,
+			);
+
+			shared.initializeLocal();
+
+			return shared as unknown as T & IChannel;
+		}
+	}
+
+	return ChannelFactory;
+}
+
+/**
+ * Utility to create a SharedObjectKind.
+ * @privateRemarks
+ * Using this API avoids having to subclasses any Fluid Framework types,
+ * reducing the coupling between the framework and the shared object implementation.
+ * @internal
+ */
+export function makeSharedObjectKind<T extends object>(
+	options: SharedObjectOptions<T>,
+): ISharedObjectKind<T> & SharedObjectKind<T> {
+	return createSharedObjectKind<T>(makeChannelFactory(options));
 }

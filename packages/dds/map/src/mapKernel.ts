@@ -7,16 +7,23 @@ import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { ValueType } from "@fluidframework/shared-object-base/internal";
+import type {
+	IFluidSerializer,
+	KernelArgs,
+	SharedKernel,
+	SharedKernelFactory,
+} from "@fluidframework/shared-object-base/internal";
+import { thisWrap, ValueType } from "@fluidframework/shared-object-base/internal";
 
-import type { ISharedMapEvents } from "./interfaces.js";
+import type { ISharedMapCore, ISharedMapEvents } from "./interfaces.js";
 import type {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
@@ -135,10 +142,30 @@ function createKeyLocalOpMetadata(
 }
 
 /**
- * A SharedMap is a map-like distributed data structure.
  * @internal
  */
-export class MapKernel {
+export const mapKernelFactory: SharedKernelFactory<ISharedMapCore> = {
+	create: (args: KernelArgs) => {
+		const k = new MapKernel(
+			args.serializer,
+			args.handle,
+			args.submitMessage,
+			args.isAttached,
+			args.eventEmitter,
+		);
+		return { kernel: k, view: k };
+	},
+};
+
+/**
+ * A SharedMap is a map-like distributed data structure.
+ */
+class MapKernel implements SharedKernel, ISharedMapCore {
+	/**
+	 * String representation for the class.
+	 */
+	public readonly [Symbol.toStringTag]: string = "SharedMap";
+
 	/**
 	 * The number of key/value pairs stored in the map.
 	 */
@@ -295,7 +322,7 @@ export class MapKernel {
 	/**
 	 * {@inheritDoc ISharedMap.set}
 	 */
-	public set(key: string, value: unknown): void {
+	public set(key: string, value: unknown): this {
 		// Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
 		if (key === undefined || key === null) {
 			throw new Error("Undefined and null keys are not supported");
@@ -309,7 +336,7 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			return;
+			return this;
 		}
 
 		const op: IMapSetOperation = {
@@ -318,6 +345,8 @@ export class MapKernel {
 			value: { type: localValue.type, value: localValue.value as unknown },
 		};
 		this.submitMapKeyMessage(op, previousValue);
+
+		return this;
 	}
 
 	/**
@@ -895,7 +924,45 @@ export class MapKernel {
 			this.populateFromSerializable(json as IMapDataObjectSerializable);
 		}
 	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+	 */
+	public processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+		if (message.type === MessageType.Operation) {
+			assert(
+				this.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata),
+				"Map received an unrecognized op, possibly from a newer version",
+			);
+		}
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+	 */
+	public onDisconnect(): void {}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+	 */
+	public reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+		this.trySubmitMessage(content as IMapOperation, localOpMetadata);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+	 */
+	public applyStashedOp(content: unknown): void {
+		this.tryApplyStashedOp(content as IMapOperation);
+	}
 }
+
+MapKernel.prototype.set[thisWrap] = true;
 
 interface IMapSerializationFormat {
 	blobs?: string[];

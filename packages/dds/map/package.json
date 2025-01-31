@@ -167,7 +167,11 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"ClassStatics_MapFactory": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

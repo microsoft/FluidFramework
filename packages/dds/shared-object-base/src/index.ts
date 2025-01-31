@@ -24,4 +24,10 @@ export { ValueType } from "./valueType.js";
 export {
 	SharedObjectFromKernel,
 	SharedKernel,
+	makeChannelFactory,
+	thisWrap,
+	KernelArgs,
+	makeSharedObjectKind,
+	SharedKernelFactory,
+	FactoryOut,
 } from "./sharedObjectKernel.js";

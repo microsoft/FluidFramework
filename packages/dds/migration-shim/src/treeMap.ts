@@ -5,7 +5,6 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
@@ -25,7 +24,6 @@ import { isFluidHandle } from "@fluidframework/runtime-utils";
 import {
 	createSharedObjectKind,
 	SharedObjectFromKernel,
-	type IFluidSerializer,
 	type SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import type { ImplicitFieldSchema, ITree } from "@fluidframework/tree";
@@ -36,7 +34,13 @@ import {
 	type TreeView,
 	// SharedTree,
 } from "@fluidframework/tree/internal";
-import type { MigrationOptions, MigrationSet } from "./shim.js";
+import type {
+	KernelArgs,
+	MigrationOptions,
+	MigrationSet,
+	SharedKernelFactory,
+} from "./shim.js";
+import type { ISharedMapCore } from "../../map/lib/interfaces.js";
 
 /**
  * TODO:
@@ -209,24 +213,6 @@ interface IntoTree {
 export enum Compatability {
 	SupportSharedMap,
 	PreferTree,
-}
-
-interface FactoryOut<T> {
-	readonly kernel: SharedKernel;
-	readonly view: T;
-}
-
-/**
- * TODO: use this. Maybe move loadCore here.
- */
-export interface SharedKernelFactory<T> {
-	create(
-		serializer: IFluidSerializer,
-		handle: IFluidHandle,
-		submitMessage: (op: unknown, localOpMetadata: unknown) => void,
-		isAttached: () => boolean,
-		eventEmitter: TypedEventEmitter<ISharedMapEvents>,
-	): FactoryOut<T>;
 }
 
 /**
@@ -620,134 +606,118 @@ export const MapToTree = createSharedObjectKind<ISharedMap & IntoTree>(TreeMapFa
  */
 export const TreeFromMap = createSharedObjectKind<ITree>(TreeMapFactory);
 
-interface ShimData<TOut> extends FactoryOut<unknown> {
-	readonly adapter: TOut;
-	migrated?: MigrationOptions;
-}
+export const mapFactory: SharedKernelFactory<MapKernel> = {
+	create: (args: KernelArgs) => {
+		const k = new MapKernel(
+			args.serializer,
+			args.handle,
+			args.submitMessage,
+			args.isAttached,
+			args.eventEmitter,
+		);
+		return { kernel: k, view: k };
+	},
+};
+
+type TreeKernel = SharedKernel & ITree;
+
+export const treeFactory: SharedKernelFactory<ITree> = {
+	create: (args: KernelArgs) => {
+		throw new Error("Not implemented");
+	},
+};
 
 /**
  * Map which can be based on a SharedMap or a SharedTree.
  *
  * Once this has been accessed as a SharedTree, the SharedMap APIs are no longer accessible.
  *
- * TODO: events
+ * TODO: factor into generic adapter class, use Proxy to graft interfaces from adapters onto this.
  */
-class MigrationShim<TFrom, TOut> extends SharedObjectFromKernel<ISharedMapEvents> {
-	/**
-	 * If a migration is in progress (locally migrated, but migration not sequenced),
-	 * this will hold the data in the format before migration.
-	 *
-	 * TODO: use this.
-	 */
-	#preMigrationData: ShimData<TOut> | undefined;
-
-	// Lazy init here so correct kernel constructed in loadCore when loading from existing data.
-	#data: ShimData<TOut> | undefined;
-
-	private readonly kernelArgs: Parameters<SharedKernelFactory<TFrom>["create"]>;
-
-	/**
-	 * @param id - String identifier.
-	 * @param runtime - Data store runtime.
-	 * @param attributes - The attributes for the map.
-	 */
-	public constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		private readonly migrationSet: MigrationSet<TFrom>,
-	) {
-		super(id, runtime, attributes, "fluid_treeMap_");
-		this.kernelArgs = [
-			this.serializer,
-			this.handle,
-			(op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-			() => this.isAttached(),
-			this,
-		];
-
-		// Proxy which grafts the adapter's APIs onto this object.
-		return new Proxy(this, {
-			get: (target, prop, receiver) => {
-				const adapter = target.data.adapter;
-				if (Reflect.has(adapter as object, prop)) {
-					return Reflect.get(adapter as object, prop, adapter) as unknown;
-				}
-				return Reflect.get(target, prop, target);
-			},
-		});
-	}
-
-	/**
-	 * Convert the underling data structure into a tree.
-	 * @remarks
-	 * This does not prevent the map APIs from being available:
-	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
-	 */
-	public upgrade(): void {
-		// TODO: upgrade op, upgrade rebasing etc.
-
-		const data = this.data;
-		if (data.migrated !== undefined) {
-			return;
+class TreeMapAdapter implements ISharedMapCore {
+	public data: TreeData;
+	public constructor(public readonly tree: ITree) {
+		const data = dataFromTree(tree);
+		if (data.mode !== "tree") {
+			throw new Error(data.message);
 		}
-		const options: MigrationOptions<TFrom, unknown, TOut> = this.migrationSet.selector(
-			this.id,
-		) as MigrationOptions<TFrom, unknown, TOut>;
-		const { kernel, view } = options.to.create(...this.kernelArgs);
-
-		options.migrate(data.view as TFrom, view);
-		const adapter = options.afterAdapter(view);
-		this.#data = {
-			view,
-			kernel: this.wrapKernel(kernel),
-			adapter,
-			migrated: options,
-		};
+		this.data = data;
 	}
 
-	private get data(): FactoryOut<unknown> & {
-		readonly adapter: TOut;
-		migrated?: MigrationOptions;
-	} {
-		if (this.#data === undefined) {
-			// initialize to default format
-			const options: MigrationOptions<TFrom, unknown, TOut> = this.migrationSet.selector(
-				this.id,
-			) as MigrationOptions<TFrom, unknown, TOut>;
-			if (options.defaultMigrated) {
-				// Create post migration
-				const { kernel, view } = options.to.create(...this.kernelArgs);
-				const adapter = options.afterAdapter(view);
-				this.#data = {
-					view,
-					kernel: this.wrapKernel(kernel),
-					adapter,
-					migrated: options,
-				};
-			} else {
-				// Create pre migration
-				const { kernel, view } = this.migrationSet.from.create(...this.kernelArgs);
-				const adapter = options.beforeAdapter(view);
-				this.#data = {
-					view,
-					kernel: this.wrapKernel(kernel),
-					adapter,
-					migrated: options,
-				};
-			}
+	public get<T = any>(key: string): T | undefined {
+		return this.data.root.getRaw(key) as T | undefined;
+	}
+	public set<T = unknown>(key: string, value: T): this {
+		this.data.root.setRaw(key, value as JsonCompatible<IFluidHandle>);
+		return this;
+	}
+
+	public readonly [Symbol.toStringTag]: string = "TreeMap";
+
+	public keys(): IterableIterator<string> {
+		return this.data.root.keys();
+	}
+
+	public entries(): IterableIterator<[string, any]> {
+		return [...this.data.root.keys()]
+			.map((key): [string, any] => [key, this.get(key)])
+			[Symbol.iterator]();
+	}
+
+	public values(): IterableIterator<any> {
+		return [...this.data.root.keys()].map((key): any => this.get(key))[Symbol.iterator]();
+	}
+
+	public [Symbol.iterator](): IterableIterator<[string, any]> {
+		return this.entries();
+	}
+
+	public get size(): number {
+		return this.data.root.size;
+	}
+
+	public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
+		return [...this.entries()].forEach(([key, value]) => callbackFn(value, key, this));
+	}
+
+	public has(key: string): boolean {
+		return this.data.root.has(key);
+	}
+
+	public delete(key: string): boolean {
+		const had = this.has(key);
+		this.data.root.set(key, undefined);
+		return had;
+	}
+
+	public clear(): void {
+		for (const key of this.keys()) {
+			this.delete(key);
 		}
-		return this.#data;
-	}
-
-	private wrapKernel(kernel: SharedKernel): SharedKernel {
-		return {
-			...kernel,
-			// TODO: intercept ops to handle migration cases.
-		};
-	}
-
-	protected override get kernel(): SharedKernel {
-		return this.data.kernel;
 	}
 }
+
+const mapToTreeOptions: MigrationOptions<MapKernel, ITree, ISharedMapCore> = {
+	migrationIdentifier: "defaultMapToTree",
+	to: treeFactory,
+	beforeAdapter(from: MapKernel): ISharedMapCore {
+		return from;
+	},
+	afterAdapter(from: ITree): ISharedMapCore {
+		return new TreeMapAdapter(from);
+	},
+	migrate(from: SharedMap, to: ITree) {
+		// TODO: Implement
+	},
+	defaultMigrated: false,
+};
+
+/**
+ *
+ */
+export const mapToTree: MigrationSet<MapKernel> = {
+	from: mapFactory,
+	selector(id: string) {
+		return mapToTreeOptions;
+	},
+};

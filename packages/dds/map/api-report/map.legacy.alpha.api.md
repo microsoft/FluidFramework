@@ -84,7 +84,11 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 }
 
 // @alpha @sealed
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, ISharedMapCore {
+}
+
+// @alpha @sealed
+export interface ISharedMapCore extends Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }
@@ -102,14 +106,19 @@ export interface IValueChanged {
 }
 
 // @alpha @sealed
-export class MapFactory implements IChannelFactory<ISharedMap> {
-    static readonly Attributes: IChannelAttributes;
-    get attributes(): IChannelAttributes;
-    create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap;
-    load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap>;
-    static readonly Type = "https://graph.microsoft.com/types/map";
-    get type(): string;
-}
+export const MapFactory: {
+    new (): {
+        readonly type: string;
+        readonly attributes: IChannelAttributes;
+        load(runtime: IFluidDataStoreRuntime, id: string, services: IChannelServices, attributes: IChannelAttributes): Promise<ISharedMap & IChannel>;
+        create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap & IChannel;
+    };
+    readonly Type: string;
+    readonly Attributes: IChannelAttributes;
+};
+
+// @alpha @sealed
+export type MapFactory = InstanceType<typeof MapFactory>;
 
 // @alpha
 export const SharedDirectory: ISharedObjectKind<ISharedDirectory> & SharedObjectKind<ISharedDirectory>;

@@ -3,79 +3,58 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IChannelAttributes,
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-	IChannelServices,
-} from "@fluidframework/datastore-definitions/internal";
-import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import {
+	createSharedObjectKind,
+	makeChannelFactory,
+	type ISharedObject,
+	type SharedKernelFactory,
+} from "@fluidframework/shared-object-base/internal";
 
-import type { ISharedMap } from "./interfaces.js";
-import { SharedMap as SharedMapInternal } from "./map.js";
+import type { ISharedMap, ISharedMapCore } from "./interfaces.js";
+import { mapKernelFactory } from "./mapKernel.js";
 import { pkgVersion } from "./packageVersion.js";
+
+const type = "https://graph.microsoft.com/types/map";
+
+// Type testing to ensure kernel and dds types line up correctly.
+// This is needed to ensure cast below on mapKernelFactory doesn't hide other type errors.
+{
+	type KernelType = Omit<ISharedMap, keyof ISharedObject>;
+
+	const x = 0 as unknown as ISharedMapCore;
+	// @ts-expect-error This return value on `set` causes an issue
+	const _withSet: KernelType = x;
+	// With `set` removed, confirm everything else type checks.
+	const _withoutSet: Omit<KernelType, "set"> = x;
+}
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
- *
+ * @privateRemarks
+ * The clean way to export this is to do `class MapFactory extends ...` but that hits https://github.com/microsoft/rushstack/issues/4429.
  * @sealed
  * @legacy
  * @alpha
  */
-export class MapFactory implements IChannelFactory<ISharedMap> {
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public static readonly Type = "https://graph.microsoft.com/types/map";
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public static readonly Attributes: IChannelAttributes = {
-		type: MapFactory.Type,
+export const MapFactory = makeChannelFactory<ISharedMap>({
+	type,
+	attributes: {
+		type,
 		snapshotFormatVersion: "0.2",
 		packageVersion: pkgVersion,
-	};
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
-	 */
-	public get type(): string {
-		return MapFactory.Type;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.attributes}
-	 */
-	public get attributes(): IChannelAttributes {
-		return MapFactory.Attributes;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		attributes: IChannelAttributes,
-	): Promise<ISharedMap> {
-		const map = new SharedMapInternal(id, runtime, attributes);
-		await map.load(services);
-
-		return map;
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
-	 */
-	public create(runtime: IFluidDataStoreRuntime, id: string): ISharedMap {
-		const map = new SharedMapInternal(id, runtime, MapFactory.Attributes);
-		map.initializeLocal();
-
-		return map;
-	}
-}
+	},
+	telemetryContextPrefix: "fluid_map_",
+	// This cast is used only to fix the return type of `.set` to be the desired `this` type.
+	// THe use of `thisWrap` makes this work at runtime.
+	factory: mapKernelFactory as SharedKernelFactory<ISharedMap>,
+});
+/**
+ * {@inheritdoc (MapFactory:variable)}
+ * @sealed
+ * @legacy
+ * @alpha
+ */
+export type MapFactory = InstanceType<typeof MapFactory>;
 
 /**
  * Entrypoint for {@link ISharedMap} creation.

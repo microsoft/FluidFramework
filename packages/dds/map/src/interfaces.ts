@@ -365,8 +365,27 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @alpha
  */
 // TODO: Use `unknown` instead (breaking change).
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, ISharedMapCore {}
+
+/**
+ * The SharedMap distributed data structure can be used to store key-value pairs.
+ *
+ * @remarks
+ * SharedMap provides the same API for setting and retrieving values that JavaScript developers are accustomed to with the
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map | Map} built-in object.
+ * However, the keys of a SharedMap must be strings, and the values must either be a JSON-serializable object or a
+ * {@link @fluidframework/datastore#FluidObjectHandle}.
+ *
+ * Note: unlike JavaScript maps, SharedMap does not make any guarantees regarding enumeration order.
+ *
+ * For more information, including example usages, see {@link https://fluidframework.com/docs/data-structures/map/}.
+ * @sealed
+ * @legacy
+ * @alpha
+ */
+// TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMapCore extends Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from
