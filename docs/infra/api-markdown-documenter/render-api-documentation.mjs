@@ -4,13 +4,13 @@
  */
 
 //@ts-check
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItem} ApiItem */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiPackage} ApiPackage */
 
 import {
-	ApiItem,
 	ApiItemKind,
 	ApiItemUtilities,
-	ApiPackage,
 	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	HierarchyKind,
