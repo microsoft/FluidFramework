@@ -1264,6 +1264,31 @@ describe("Runtime", () => {
 					"Ops with unrecognized type should fail to process",
 				);
 			});
+			it.only("Throws when op compression is on and op grouping is off", async () => {
+				await assert.rejects(
+					async () =>
+						ContainerRuntime.loadRuntime({
+							context: getMockContext() as IContainerContext,
+							registryEntries: [],
+							existing: false,
+							runtimeOptions: {
+								enableGroupedBatching: false,
+								compressionOptions: {
+									compressionAlgorithm: CompressionAlgorithms.lz4,
+									minimumBatchSizeInBytes: 1,
+								},
+							},
+							provideEntryPoint: mockProvideEntryPoint,
+						}),
+					(error: IErrorBase) => {
+						return (
+							error.errorType === ContainerErrorTypes.usageError &&
+							error.message === "If compression is enabled, op grouping must be enabled too"
+						);
+					},
+					"Container should throw when op compression is on and op grouping is off",
+				);
+			});
 		});
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime method works", async () => {
