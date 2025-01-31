@@ -90,7 +90,10 @@ export class DocumentPartition {
 				this.q.resume();
 			})
 			.catch((error) => {
-				if (error.name && this.restartOnErrorNames.includes(error.name as string)) {
+				if (
+					(error.name && this.restartOnErrorNames.includes(error.name as string)) ||
+					error.shouldRestart
+				) {
 					this.context.error(error, {
 						restart: true,
 						tenantId: this.tenantId,

@@ -27,13 +27,20 @@ export class DocumentContext extends EventEmitter implements IContext {
 	private closed = false;
 	private contextError = undefined;
 
-	public headUpdatedAfterResume = false; // used to track whether the head has been updated after a resume event, so that we allow moving out of order only once during resume.
+	// Below flag is used to track whether head has been updated after a pause/resume event.
+	// This is to allow moving out of order once during resume.
+	// Value = true means it is in a paused state and waiting to be updated during resume.
+	public headPaused = false;
 
 	constructor(
 		private readonly routingKey: IRoutingKey,
 		head: IQueuedMessage,
 		public readonly log: ILogger | undefined,
 		private readonly getLatestTail: () => IQueuedMessage,
+		private readonly getContextManagerPauseState: () => {
+			headPaused: boolean;
+			tailPaused: boolean;
+		},
 	) {
 		super();
 
@@ -59,13 +66,19 @@ export class DocumentContext extends EventEmitter implements IContext {
 	}
 
 	/**
+	 * Sets the state to pause, i.e. headPaused = true.
+	 */
+	public setStateToPause() {
+		this.headPaused = true;
+	}
+
+	/**
 	 * Updates the head offset for the context.
 	 */
-	public setHead(head: IQueuedMessage, resumeBackToOffset?: number | undefined) {
+	public setHead(head: IQueuedMessage) {
 		assert(
-			head.offset > this.head.offset ||
-				(head.offset === resumeBackToOffset && !this.headUpdatedAfterResume),
-			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or equal to the resume offset ${resumeBackToOffset} if not yet resumed (headUpdatedAfterResume: ${this.headUpdatedAfterResume}). Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			head.offset > this.head.offset || this.headPaused,
+			`Head offset ${head.offset} must be greater than the current head offset ${this.head.offset} or headPaused should be true (${this.headPaused}). Topic ${head.topic}, partition ${head.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 		);
 
 		// If head is moving backwards
@@ -82,11 +95,17 @@ export class DocumentContext extends EventEmitter implements IContext {
 				);
 				return false;
 			}
-			Lumberjack.info("Allowing the document context head to move to the specified offset", {
-				resumeBackToOffset,
-				currentHeadOffset: this.head.offset,
-				documentId: this.routingKey.documentId,
-			});
+
+			// allow moving backwards
+			Lumberjack.info(
+				"Allowing the document context head to move backwards to the specified offset",
+				{
+					newHeadOffset: head.offset,
+					currentHeadOffset: this.head.offset,
+					documentId: this.routingKey.documentId,
+					headPaused: this.headPaused,
+				},
+			);
 		}
 
 		// When moving back to a state where head and tail differ we set the tail to be the old head, as in the
@@ -95,13 +114,13 @@ export class DocumentContext extends EventEmitter implements IContext {
 			this.tailInternal = this.getLatestTail();
 		}
 
-		if (!this.headUpdatedAfterResume && resumeBackToOffset !== undefined) {
-			Lumberjack.info("Setting headUpdatedAfterResume to true", {
-				resumeBackToOffset,
+		if (this.headPaused) {
+			Lumberjack.info("Setting headPaused to false", {
+				newHeadOffset: head.offset,
 				currentHeadOffset: this.head.offset,
 				documentId: this.routingKey.documentId,
 			});
-			this.headUpdatedAfterResume = true;
+			this.headPaused = false;
 		}
 
 		this.headInternal = head;
@@ -116,10 +135,19 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Assert offset is between the current tail and head
 		const offset = message.offset;
 
-		assert(
-			offset > this.tail.offset && offset <= this.head.offset,
-			`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
-		);
+		const contextManagerPauseState = this.getContextManagerPauseState();
+		if (!contextManagerPauseState.headPaused && !contextManagerPauseState.tailPaused) {
+			assert(
+				offset > this.tail.offset && offset <= this.head.offset,
+				`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			);
+		} else if (contextManagerPauseState.tailPaused) {
+			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
+			assert(
+				offset === this.head.offset,
+				`Checkpoint offset ${offset} must be equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			);
+		}
 
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
@@ -127,6 +155,14 @@ export class DocumentContext extends EventEmitter implements IContext {
 	}
 
 	public error(error: any, errorData: IContextErrorData) {
+		if (this.closed) {
+			// don't emit errors after closing
+			Lumberjack.info("Skipping emitting error since the documentContext is already closed", {
+				documentId: this.routingKey.documentId,
+				tenantId: this.routingKey.tenantId,
+			});
+			return;
+		}
 		this.contextError = error;
 		Lumberjack.verbose("Emitting error from documentContext");
 		this.emit("error", error, errorData);
@@ -142,8 +178,8 @@ export class DocumentContext extends EventEmitter implements IContext {
 		return this.contextError;
 	}
 
-	public pause(offset: number, reason?: any) {
-		this.headUpdatedAfterResume = false; // reset this flag when we pause
+	public pause(offset?: number, reason?: any) {
+		this.headPaused = true;
 		this.emit("pause", offset, reason);
 	}
 
