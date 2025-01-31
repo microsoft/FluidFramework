@@ -9,6 +9,6 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off"
+		"@typescript-eslint/strict-boolean-expressions": "off",
 	},
 };

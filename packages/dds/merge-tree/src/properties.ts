@@ -122,7 +122,6 @@ export function extendIfUndefined<T>(
 		// eslint-disable-next-line no-restricted-syntax
 		for (const key in extension) {
 			if (base[key] === undefined) {
-				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 				base[key] = extension[key];
 			}
 		}
