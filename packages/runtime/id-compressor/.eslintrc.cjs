@@ -9,8 +9,7 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@typescript-eslint/strict-boolean-expressions": "off"
 	},
 	overrides: [
 		{
