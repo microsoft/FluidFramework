@@ -40,9 +40,9 @@ export class DocumentContextManager extends EventEmitter {
 
 	// Below flags are used to track whether head/tail has been updated after a pause/resume event.
 	// This is to allow moving out of order once during resume.
-	// Value false means they are in a paused state and are waiting to be updated during resume.
-	private headUpdatedAfterResume = true;
-	private tailUpdatedAfterResume = true;
+	// Value = true means they are in a paused state and are waiting to be updated during resume.
+	private headPaused = false;
+	private tailPaused = false;
 
 	constructor(private readonly partitionContext: IContext) {
 		super();
@@ -53,10 +53,10 @@ export class DocumentContextManager extends EventEmitter {
 	 * This class is responsible for the lifetime of the context
 	 */
 	public createContext(routingKey: IRoutingKey, head: IQueuedMessage): DocumentContext {
-		if (this.headUpdatedAfterResume && this.tailUpdatedAfterResume) {
+		if (!this.headPaused && !this.tailPaused) {
 			// Contexts should only be created within the processing range of the manager
 			assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
-		} else if (this.headUpdatedAfterResume) {
+		} else if (this.tailPaused) {
 			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
 			assert(head.offset === this.head.offset);
 		}
@@ -68,8 +68,8 @@ export class DocumentContextManager extends EventEmitter {
 			this.partitionContext.log,
 			() => this.tail,
 			() => ({
-				headUpdatedAfterResume: this.headUpdatedAfterResume,
-				tailUpdatedAfterResume: this.tailUpdatedAfterResume,
+				headPaused: this.headPaused,
+				tailPaused: this.tailPaused,
 			}),
 		);
 		this.contexts.add(context);
@@ -87,11 +87,13 @@ export class DocumentContextManager extends EventEmitter {
 				if (docContext.tail.offset < lowestOffset) {
 					lowestOffset = docContext.tail.offset;
 				}
-				docContext.setStateToPause(); // set headUpdatedAfterResume to false for all doc partitions, so that we allow their head to move backwards during resume
+				// Pause all doc partitions' contexts
+				// Set headPaused=true for all doc partitions, so that we allow their head to move backwards(reprocess some ops) during resume
+				docContext.setStateToPause();
 			}
 			lowestOffset = lowestOffset > -1 ? lowestOffset : 0;
-			this.headUpdatedAfterResume = false; // reset this flag when we pause
-			this.tailUpdatedAfterResume = false; // reset this flag when we pause
+			this.headPaused = true;
+			this.tailPaused = true;
 			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
 			this.emit("pause", lowestOffset, reason);
 		});
@@ -111,11 +113,11 @@ export class DocumentContextManager extends EventEmitter {
 	}
 
 	/**
-	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards, unless headUpdatedAfterResume is false.
+	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards, unless headPaused is true.
 	 * @returns True if the head was updated, false if it was not.
 	 */
 	public setHead(head: IQueuedMessage) {
-		if (head.offset > this.head.offset || !this.headUpdatedAfterResume) {
+		if (head.offset > this.head.offset || this.headPaused) {
 			// If head is moving backwards
 			if (head.offset <= this.head.offset) {
 				if (head.offset <= this.lastCheckpoint.offset) {
@@ -136,17 +138,17 @@ export class DocumentContextManager extends EventEmitter {
 					{
 						newHeadOffset: head.offset,
 						currentHeadOffset: this.head.offset,
-						headUpdatedAfterResume: this.headUpdatedAfterResume,
+						headPaused: this.headPaused,
 					},
 				);
 			}
 
-			if (!this.headUpdatedAfterResume) {
-				Lumberjack.info("Setting headUpdatedAfterResume to true", {
+			if (this.headPaused) {
+				Lumberjack.info("Setting headPaused to false", {
 					newHeadOffset: head.offset,
 					currentHeadOffset: this.head.offset,
 				});
-				this.headUpdatedAfterResume = true;
+				this.headPaused = false;
 			}
 
 			this.head = head;
@@ -158,9 +160,9 @@ export class DocumentContextManager extends EventEmitter {
 
 	public setTail(tail: IQueuedMessage) {
 		assert(
-			(tail.offset > this.tail.offset || !this.tailUpdatedAfterResume) &&
+			(tail.offset > this.tail.offset || this.tailPaused) &&
 				tail.offset <= this.head.offset,
-			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or tailUpdatedAfterResume should be false (${this.tailUpdatedAfterResume}), and less than or equal to the head offset ${this.head.offset}.`,
+			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or tailPaused should be true (${this.tailPaused}), and less than or equal to the head offset ${this.head.offset}.`,
 		);
 
 		if (tail.offset <= this.tail.offset) {
@@ -169,17 +171,17 @@ export class DocumentContextManager extends EventEmitter {
 				{
 					newTailOffset: tail.offset,
 					currentTailOffset: this.tail.offset,
-					tailUpdatedAfterResume: this.tailUpdatedAfterResume,
+					tailPaused: this.tailPaused,
 				},
 			);
 		}
 
-		if (!this.tailUpdatedAfterResume) {
-			Lumberjack.info("Setting tailUpdatedAfterResume to true", {
+		if (this.tailPaused) {
+			Lumberjack.info("Setting tailPaused to false", {
 				newTailOffset: tail.offset,
 				currentTailOffset: this.tail.offset,
 			});
-			this.tailUpdatedAfterResume = true;
+			this.tailPaused = false;
 		}
 
 		this.tail = tail;
