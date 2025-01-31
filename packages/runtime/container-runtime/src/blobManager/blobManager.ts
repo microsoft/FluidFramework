@@ -867,10 +867,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 											resolve();
 										}
 									};
-									if (!entry.attached) {
-										this.on("blobAttached", onBlobAttached);
-									} else {
+									if (entry.attached) {
 										resolve();
+									} else {
+										this.on("blobAttached", onBlobAttached);
 									}
 								}),
 							);
