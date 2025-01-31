@@ -9,7 +9,7 @@ import type { IChannelAttributes } from '@fluidframework/datastore-definitions/i
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
  * @alpha
  */
-export const SharedTreeType: string = 'SharedTree';
+export const SharedTreeType = 'SharedTree';
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
