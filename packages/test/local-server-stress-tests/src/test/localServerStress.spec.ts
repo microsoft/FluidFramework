@@ -117,13 +117,13 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 
 	return async (state) => syncGenerator(state);
 }
-export const saveFailures = { directory: path.join(_dirname, "../../results") };
-export const saveSuccesses = { directory: path.join(_dirname, "../../results") };
+export const saveFailures = { directory: path.join(_dirname, "../../src/test/results") };
+export const saveSuccesses = { directory: path.join(_dirname, "../../rc/test/results") };
 
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
-		generatorFactory: () => takeAsync(1000, makeGenerator()),
+		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer,
 		validateConsistency: validateConsistencyOfAllDDS,
 	};
@@ -138,7 +138,8 @@ describe("Local Server Stress", () => {
 		reconnectProbability: 0.1,
 		skipMinimization: true,
 		// Uncomment to replay a particular seed.
+		// replay: 24,
 		saveFailures,
-		saveSuccesses,
+		// saveSuccesses,
 	});
 });

@@ -50,5 +50,3 @@ nyc
 # Generated modules
 intel_modules/
 temp_modules/
-
-results

@@ -689,7 +689,7 @@ export function makeSharedStringOperationGenerator(
 	]);
 }
 
-export const baseSharedStringModel= {
+export const baseSharedStringModel = {
 	...baseModel,
 	generatorFactory: () =>
 		takeAsync(

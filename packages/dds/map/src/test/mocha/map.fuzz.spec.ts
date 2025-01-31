@@ -5,11 +5,8 @@
 
 import * as path from "node:path";
 
-import {
-	createDDSFuzzSuite,
-} from "@fluid-private/test-dds-utils";
+import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-
 
 import { _dirname } from "./dirname.cjs";
 import { baseMapModel } from "./fuzzUtils.js";

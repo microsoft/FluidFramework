@@ -5,25 +5,28 @@
 
 import * as dirPath from "node:path";
 
-import {
-	takeAsync,
-} from "@fluid-private/stochastic-test-utils";
-import {
-	type DDSFuzzModel,
-	createDDSFuzzSuite,
-} from "@fluid-private/test-dds-utils";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
+import { type DDSFuzzModel, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { DirectoryFactory } from "../../index.js";
 
 import { assertEquivalentDirectories } from "./directoryEquivalenceUtils.js";
 import { _dirname } from "./dirname.cjs";
-import { baseDirModel, dirDefaultOptions, makeDirOperationGenerator, makeDirReducer, type DirOperation } from "./fuzzUtils.js";
+import {
+	baseDirModel,
+	dirDefaultOptions,
+	makeDirOperationGenerator,
+	makeDirReducer,
+	type DirOperation,
+} from "./fuzzUtils.js";
 
 describe("SharedDirectory fuzz Create/Delete concentrated", () => {
-
 	createDDSFuzzSuite(baseDirModel, {
-		validationStrategy: { type: "fixedInterval", interval: dirDefaultOptions.validateInterval },
+		validationStrategy: {
+			type: "fixedInterval",
+			interval: dirDefaultOptions.validateInterval,
+		},
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
 		// We prevent handles from being generated on the creation/deletion tests since the set operations are disabled.
@@ -80,7 +83,10 @@ describe("SharedDirectory fuzz", () => {
 	};
 
 	createDDSFuzzSuite(model, {
-		validationStrategy: { type: "fixedInterval", interval: dirDefaultOptions.validateInterval },
+		validationStrategy: {
+			type: "fixedInterval",
+			interval: dirDefaultOptions.validateInterval,
+		},
 		reconnectProbability: 0.15,
 		numberOfClients: 3,
 		clientJoinOptions: {
