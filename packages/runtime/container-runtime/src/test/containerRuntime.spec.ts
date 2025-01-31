@@ -144,9 +144,7 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 		"content" in obj.contents &&
 		"type" in obj.contents &&
 		typeof obj.contents.type === "string" &&
-		(!("address" in obj) ||
-			typeof obj.address === "string" ||
-			typeof obj.address === "undefined") &&
+		(!("address" in obj) || typeof obj.address === "string" || obj.address === undefined) &&
 		(!("clientBroadcastSignalSequenceNumber" in obj) ||
 			typeof obj.clientBroadcastSignalSequenceNumber === "number")
 	);
@@ -1710,6 +1708,7 @@ describe("Runtime", () => {
 						// Submit an op and yield for it to be flushed from outbox to pending state manager.
 						submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
 						await yieldEventLoop();
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 						return boundFn(...args);
 					};
 				};
@@ -1850,6 +1849,7 @@ describe("Runtime", () => {
 					}
 
 					async getVersions(
+						// eslint-disable-next-line @rushstack/no-new-null -- base signature uses `null`
 						versionId: string | null,
 						count: number,
 						scenarioName?: string,

@@ -743,7 +743,9 @@ export function getDeviceSpec(): {
 				hardwareConcurrency: navigator.hardwareConcurrency,
 			};
 		}
-	} catch {}
+	} catch {
+		// Eat the error
+	}
 	return {};
 }
 
@@ -1567,6 +1569,7 @@ export class ContainerRuntime
 			request: IRequest,
 			runtime: IContainerRuntime,
 		) => Promise<IResponse>,
+		// eslint-disable-next-line unicorn/no-object-as-default-parameter
 		summaryConfiguration: ISummaryConfiguration = {
 			// the defaults
 			...DefaultSummaryConfiguration,
@@ -2292,7 +2295,7 @@ export class ContainerRuntime
 		// be in same loading group. So, once we have fetched the snapshot for that loading group on
 		// any request, then cache that as same group could be requested in future too.
 		const snapshot = await this.snapshotCacheForLoadingGroupIds.addOrGet(
-			sortedLoadingGroupIds.join(),
+			sortedLoadingGroupIds.join(","),
 			async () => {
 				assert(
 					this.storage.getSnapshot !== undefined,
