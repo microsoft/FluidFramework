@@ -160,8 +160,7 @@ export class DocumentContextManager extends EventEmitter {
 
 	public setTail(tail: IQueuedMessage) {
 		assert(
-			(tail.offset > this.tail.offset || this.tailPaused) &&
-				tail.offset <= this.head.offset,
+			(tail.offset > this.tail.offset || this.tailPaused) && tail.offset <= this.head.offset,
 			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or tailPaused should be true (${this.tailPaused}), and less than or equal to the head offset ${this.head.offset}.`,
 		);
 
