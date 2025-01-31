@@ -157,11 +157,6 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 		throw new Error("Invalid API item kind.");
 	}
 
-	// Whether or not this item is being transformed into its own document (vs being transformed into a subsection
-	// of some parent document).
-	// TODO: it would probably be better to have the library pass this information in, rather than re-deriving it here.
-	const isDocumentItem = ["Document", "Folder"].includes(config.hierarchy[apiItem.kind].kind);
-
 	const sections = [];
 
 	// Render summary comment (if any)
@@ -234,7 +229,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 
 	// Add heading to top of section only if this is being rendered to a parent item.
 	// Document items have their headings handled specially.
-	return isDocumentItem
+	return ["Document", "Folder"].includes(config.hierarchy[apiItem.kind].kind)
 		? sections
 		: [
 				new SectionNode(
