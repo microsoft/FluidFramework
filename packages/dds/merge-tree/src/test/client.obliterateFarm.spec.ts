@@ -16,7 +16,6 @@ import {
 import {
 	annotateWithField,
 	generateInsertWithField,
-	generateUpdatedEndpoints,
 	insertAvoidField,
 	insertField,
 	obliterateField,
@@ -45,7 +44,6 @@ export const defaultOptions: IObliterateFarmConfig = {
 	operations: allOperations,
 	growthFunc: (input: number) => input * 2,
 	insertText: generateInsertWithField,
-	updateEndpoints: generateUpdatedEndpoints,
 };
 
 // Generate a list of single character client names, support up to 69 clients

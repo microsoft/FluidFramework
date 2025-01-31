@@ -5,17 +5,18 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "node:console";
+import { strict as assert } from "node:assert";
 
 import type { IRandom } from "@fluid-private/stochastic-test-utils";
 
-import type { IMergeTreeOp } from "../ops.js";
+import { createGroupOp } from "../opBuilder.js";
+import type { IMergeTreeInsertMsg, IMergeTreeOp } from "../ops.js";
 import { InteriorSequencePlace, Side } from "../sequencePlace.js";
 
-import { annotateRange, type TestOperation } from "./mergeTreeOperationRunner.js";
+import { annotateRange, removeRange, type TestOperation } from "./mergeTreeOperationRunner.js";
 import type { TestClient } from "./testClient.js";
 
-export const posInField = (
+const posInField = (
 	client: TestClient,
 	pos: number,
 ): { startPos: number; endPos: number } | undefined => {
@@ -49,12 +50,10 @@ export const posInField = (
 		endPos++;
 	}
 
-	assert(startPos >= 0 && endPos <= client.getLength(), "Field endpoints are out of bounds");
-
 	return { startPos, endPos };
 };
 
-export const getFieldEndpoints = (
+const getFieldEndpoints = (
 	client: TestClient,
 	start: number,
 	end: number,
@@ -73,12 +72,12 @@ const generateFieldText = (client: TestClient, random: IRandom): string => {
 	return (client.longClientId!.codePointAt(0)! % 10).toString().repeat(chunkLength);
 };
 
-const insertFieldText: TestOperation = (
+const insertFieldText = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
 	random: IRandom,
-) => {
+): IMergeTreeInsertMsg | undefined => {
 	const text = generateFieldText(client, random);
 	return client.insertTextLocal(opStart, text);
 };
@@ -108,11 +107,13 @@ export const obliterateField: TestOperation = (
 		const { startPos, endPos } = fieldEndpoints;
 		// Obliterate text bewteen the separators, but avoid the case where the obliterate range is zero length.
 		if (endPos - startPos > 1) {
-			const op = client.obliterateRangeLocal(
-				{ pos: startPos + 1, side: Side.Before },
-				endISP ?? { pos: endPos - 1, side: Side.After },
+			const obliterateOp = client.obliterateRangeLocal(
+				{ pos: startPos, side: Side.After },
+				{ pos: endPos, side: Side.Before },
 			);
-			insertFieldText(client, startPos + 1, endPos, random);
+			const insertOp = insertFieldText(client, startPos + 1, endPos, random);
+			assert(insertOp !== undefined, "Insert op should not be undefined");
+			const op = createGroupOp(obliterateOp, insertOp);
 			return op;
 		}
 	}
@@ -143,6 +144,7 @@ export const removeWithField: TestOperation = (
 	client: TestClient,
 	opStart: number,
 	opEnd: number,
+	random: IRandom,
 ) => {
 	let start = opStart;
 	let end = opEnd;
@@ -151,7 +153,7 @@ export const removeWithField: TestOperation = (
 		start = fieldEndpoints.startPos;
 		end = fieldEndpoints.endPos + 1;
 	}
-	return client.removeRangeLocal(start, end);
+	return removeRange(client, start, end, random);
 };
 
 export const annotateWithField: TestOperation = (
@@ -181,21 +183,4 @@ export const generateInsertWithField = (
 		pos = 0;
 	}
 	return client.insertTextLocal(pos, text);
-};
-
-export const generateUpdatedEndpoints = (
-	client: TestClient,
-	random: IRandom,
-): { start: number; end: number } => {
-	const len = client.getLength();
-	let start = random.integer(0, len - 1);
-	let end = random.integer(start + 1, len);
-	const fieldEndpoints = getFieldEndpoints(client, start, end);
-
-	if (fieldEndpoints !== undefined) {
-		const { startPos, endPos } = fieldEndpoints;
-		start = startPos;
-		end = endPos;
-	}
-	return { start, end };
 };

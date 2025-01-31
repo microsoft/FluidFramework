@@ -149,16 +149,6 @@ const generateInsert = (client: TestClient, random: IRandom): IMergeTreeOp | und
 	return client.insertTextLocal(random.integer(0, len), text);
 };
 
-const generateEndpoints = (
-	client: TestClient,
-	random: IRandom,
-): { start: number; end: number } => {
-	const len = client.getLength();
-	const start = random.integer(0, len - 1);
-	const end = random.integer(start + 1, len);
-	return { start, end };
-};
-
 export interface IConfigRange {
 	min: number;
 	max: number;
@@ -327,7 +317,6 @@ export function runMergeTreeOperationRunner(
 				config.operations,
 				config.applyOpDuringGeneration,
 				config.insertText,
-				config.updateEndpoints,
 			);
 			seq = apply(messageData[0][0].sequenceNumber - 1, messageData, clients, logger, random);
 			const resultText = logger.validate();
@@ -359,7 +348,6 @@ export function generateOperationMessagesForClients(
 	operations: readonly TestOperation[],
 	applyOpDuringGeneration?: boolean,
 	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined,
-	updateEndpoints?: (client: TestClient, random: IRandom) => { start: number; end: number },
 ): [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] {
 	const minimumSequenceNumber = startingSeq;
 	let runningSeq = startingSeq;
@@ -376,6 +364,7 @@ export function generateOperationMessagesForClients(
 				.slice(0, random.integer(1, 3));
 			applyMessages(toApply[0][0].sequenceNumber - 1, toApply, [client], logger);
 		}
+
 		const len = client.getLength();
 		const sg = client.peekPendingSegmentGroups();
 		let op: IMergeTreeOp | undefined;
@@ -384,11 +373,8 @@ export function generateOperationMessagesForClients(
 				insertText === undefined ? generateInsert(client, random) : insertText(client, random);
 		} else {
 			let opIndex = random.integer(0, operations.length - 1);
-			// TODO: without accounting for potential fields here, we hit MergeTree insert failures.
-			const { start, end } =
-				updateEndpoints === undefined
-					? generateEndpoints(client, random)
-					: updateEndpoints(client, random);
+			const start = random.integer(0, len - 1);
+			const end = random.integer(start + 1, len);
 
 			for (let y = 0; y < operations.length && op === undefined; y++) {
 				op = operations[opIndex](client, start, end, random);
