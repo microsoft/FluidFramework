@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -106,5 +107,23 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			...super.getAdditionalErrorProps(handler),
 			url: getUrlForTelemetry(this.url, socketIoPath),
 		};
+	}
+
+	/**
+	 * Disconnect from the websocket
+	 */
+	protected disconnectCore(err: IAnyDriverError): void {
+		// tell the server we are disconnecting this client from the document
+		const isCorruption =
+			err.errorType === FluidErrorTypes.dataCorruptionError ||
+			err.errorType === FluidErrorTypes.dataProcessingError;
+		this.socket.emit(
+			"disconnect_document",
+			this.clientId,
+			this.documentId,
+			err.errorType,
+			isCorruption,
+		);
+		super.disconnectCore(err);
 	}
 }
