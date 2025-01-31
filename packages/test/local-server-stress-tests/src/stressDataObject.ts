@@ -9,7 +9,10 @@ import {
 	AttachState,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
+import {
+	loadContainerRuntime,
+	type IContainerRuntimeOptionsInternal,
+} from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
@@ -155,6 +158,17 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		[[StressDataObject.factory.value.type, StressDataObject.factory.value]],
 	);
 
+	let id = 0;
+	const runtimeOptions: IContainerRuntimeOptionsInternal = {
+		summaryOptions: {
+			summaryConfigOverrides: {
+				maxOps: 3,
+				initialSummarizerDelayMs: 0,
+			} as any,
+		},
+		defaultGlobalIdGenerator: () => `${id++}`,
+	};
+
 	return {
 		get IRuntimeFactory() {
 			return this;
@@ -163,14 +177,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			return loadContainerRuntime({
 				context,
 				existing,
-				runtimeOptions: {
-					summaryOptions: {
-						summaryConfigOverrides: {
-							maxOps: 3,
-							initialSummarizerDelayMs: 0,
-						} as any,
-					},
-				},
+				runtimeOptions,
 				registryEntries: [
 					[
 						defaultStressDataObjectFactory.type,

@@ -118,7 +118,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 	return async (state) => syncGenerator(state);
 }
 export const saveFailures = { directory: path.join(_dirname, "../../src/test/results") };
-export const saveSuccesses = { directory: path.join(_dirname, "../../rc/test/results") };
+export const saveSuccesses = { directory: path.join(_dirname, "../../src/test/results") };
 
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
@@ -140,6 +140,6 @@ describe("Local Server Stress", () => {
 		// Uncomment to replay a particular seed.
 		// replay: 24,
 		saveFailures,
-		// saveSuccesses,
+		saveSuccesses,
 	});
 });

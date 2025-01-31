@@ -481,7 +481,7 @@ export class FluidDataStoreRuntime
 					id = typeof res === "number" ? encodeCompactIdToString(2 * res + 1, "_") : res;
 				}
 			} else {
-				id = uuid();
+				id = `${this.dataStoreContext.containerRuntime.generateDocumentUniqueId()}`;
 			}
 			assert(!id.includes("/"), 0x8fc /* slash */);
 		}
