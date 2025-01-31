@@ -76,7 +76,7 @@ function createImportNotice(apiItem) {
 		);
 	}
 
-	if (ApiItemUtilities.hasModifierTag(apiItem, "@legacy")) {
+	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@legacy")) {
 		return createImportAdmonition(
 			"legacy",
 			"This API is provided for existing users, but is not recommended for new users.",
