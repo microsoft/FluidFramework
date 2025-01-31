@@ -9,7 +9,7 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"@typescript-eslint/strict-boolean-expressions": "off"
+		"@typescript-eslint/strict-boolean-expressions": "off",
 	},
 	overrides: [
 		{
