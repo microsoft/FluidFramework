@@ -380,60 +380,81 @@ export class Container
 	implements IContainer, IContainerExperimental
 {
 	/**
+	 * Not to be called directly on this type.
+	 */
+	public async initialize(): Promise<void> {
+		assert(false, "Method will be provided based on create/load API that is used");
+	}
+
+	/**
 	 * Load an existing container.
 	 */
 	public static async load(
 		loadProps: IContainerLoadProps,
 		createProps: IContainerCreateProps,
 	): Promise<Container> {
+		const container = Container.loadUninitialized(loadProps, createProps);
+		return container.initialize().then(() => container);
+	}
+
+	/**
+	 * Load an existing container.
+	 */
+	public static loadUninitialized(
+		loadProps: IContainerLoadProps,
+		createProps: IContainerCreateProps,
+	): Container & { initialize: () => Promise<void> } {
 		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
 
 		const container = new Container(createProps, loadProps);
 
-		return PerformanceEvent.timedExecAsync(
-			container.mc.logger,
-			{ eventName: "Load", ...loadMode },
-			async (event) =>
-				new Promise<Container>((resolve, reject) => {
-					const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
-					// if we have pendingLocalState, anything we cached is not useful and we shouldn't wait for connection
-					// to return container, so ignore this value and use undefined for opsBeforeReturn
-					const mode: IContainerLoadMode = pendingLocalState
-						? { ...(loadMode ?? defaultMode), opsBeforeReturn: undefined }
-						: (loadMode ?? defaultMode);
+		const initialize = async (): Promise<void> =>
+			PerformanceEvent.timedExecAsync(
+				container.mc.logger,
+				{ eventName: "Load", ...loadMode },
+				async (event) =>
+					new Promise((resolve, reject) => {
+						const defaultMode: IContainerLoadMode = { opsBeforeReturn: "cached" };
+						// if we have pendingLocalState, anything we cached is not useful and we shouldn't wait for connection
+						// to return container, so ignore this value and use undefined for opsBeforeReturn
+						const mode: IContainerLoadMode = pendingLocalState
+							? { ...(loadMode ?? defaultMode), opsBeforeReturn: undefined }
+							: (loadMode ?? defaultMode);
 
-					const onClosed = (err?: ICriticalContainerError): void => {
-						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
-						reject(err ?? new GenericError("Container closed without error during load"));
-					};
-					container.on("closed", onClosed);
+						const onClosed = (err?: ICriticalContainerError): void => {
+							// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
+							reject(err ?? new GenericError("Container closed without error during load"));
+						};
+						container.on("closed", onClosed);
 
-					container
-						.load(version, mode, resolvedUrl, pendingLocalState)
-						.finally(() => {
-							container.removeListener("closed", onClosed);
-						})
-						.then(
-							(props) => {
-								event.end({ ...props });
-								resolve(container);
-							},
-							(error) => {
-								const err = normalizeError(error);
-								// Depending where error happens, we can be attempting to connect to web socket
-								// and continuously retrying (consider offline mode)
-								// Host has no container to close, so it's prudent to do it here
-								// Note: We could only dispose the container instead of just close but that would
-								// the telemetry where users sometimes search for ContainerClose event to look
-								// for load failures. So not removing this at this time.
-								container.close(err);
-								container.dispose(err);
-								onClosed(err);
-							},
-						);
-				}),
-			{ start: true, end: true, cancel: "generic" },
-		);
+						container
+							.load(version, mode, resolvedUrl, pendingLocalState)
+							.finally(() => {
+								container.removeListener("closed", onClosed);
+							})
+							.then(
+								(props) => {
+									event.end({ ...props });
+									resolve();
+								},
+								(error) => {
+									const err = normalizeError(error);
+									// Depending where error happens, we can be attempting to connect to web socket
+									// and continuously retrying (consider offline mode)
+									// Host has no container to close, so it's prudent to do it here
+									// Note: We could only dispose the container instead of just close but that would
+									// the telemetry where users sometimes search for ContainerClose event to look
+									// for load failures. So not removing this at this time.
+									container.close(err);
+									container.dispose(err);
+									onClosed(err);
+								},
+							);
+					}),
+				{ start: true, end: true, cancel: "generic" },
+			);
+
+		return Object.assign(container, { initialize });
 	}
 
 	/**
@@ -442,22 +463,20 @@ export class Container
 	public static createDetached(
 		createProps: IContainerCreateProps,
 		codeDetails: IFluidCodeDetails,
-	): { container: Container; initialize: () => Promise<IContainer> } {
+	): Container & { initialize: () => Promise<void> } {
 		const container = new Container(createProps);
 
-		return {
-			container,
+		return Object.assign(container, {
 			initialize: async () =>
 				PerformanceEvent.timedExecAsync(
 					container.mc.logger,
 					{ eventName: "CreateDetached" },
 					async (_event) => {
 						await container.createDetached(codeDetails);
-						return container;
 					},
 					{ start: true, end: true, cancel: "generic" },
 				),
-		};
+		});
 	}
 
 	/**
