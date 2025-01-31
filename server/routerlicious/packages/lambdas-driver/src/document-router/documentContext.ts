@@ -145,7 +145,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		} else if (contextManagerResumeState.headUpdatedAfterResume) {
 			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
 			assert(
-				offset <= this.head.offset,
+				offset === this.head.offset,
 				`Checkpoint offset ${offset} must be less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 			);
 		}
