@@ -127,7 +127,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		if (path.length === 1) {
 			switch (handleType) {
 				case SummaryType.Blob: {
-					const tryId: string | undefined = previousSnapshot.blobs[key];
+					const tryId = previousSnapshot.blobs[key];
 					assert(
 						!!tryId,
 						0x0b4 /* "Parent summary does not have blob handle for specified path." */,
