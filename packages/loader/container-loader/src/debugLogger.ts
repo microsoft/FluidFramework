@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
@@ -88,7 +88,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		newEvent.eventName = undefined;
 
 		let tick = "";
-		tick = `tick=${formatTick(performance.now())}`;
+		tick = `tick=${formatTick(performanceNow())}`;
 
 		// Extract stack to put it last, but also to avoid escaping '\n' in it by JSON.stringify below
 		const stack = newEvent.stack ?? "";
