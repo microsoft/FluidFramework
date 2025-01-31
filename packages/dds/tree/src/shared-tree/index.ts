@@ -23,6 +23,11 @@ export {
 } from "./sharedTree.js";
 
 export {
+	SharedTreeAttributes,
+	SharedTreeType,
+} from "./publicContracts.js";
+
+export {
 	createTreeCheckout,
 	TreeCheckout,
 	type ITreeCheckout,

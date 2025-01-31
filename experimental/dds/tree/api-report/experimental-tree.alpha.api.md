@@ -689,6 +689,9 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
 // @alpha
+export const SharedTreeAttributes: IChannelAttributes;
+
+// @alpha
 export interface SharedTreeBaseOptions {
     editEvictionFrequency?: number;
     inMemoryHistorySize?: number;
@@ -731,6 +734,9 @@ export interface SharedTreeOptions_0_1_1 {
 export interface SharedTreeSummaryBase {
     readonly version: WriteFormat;
 }
+
+// @alpha
+export const SharedTreeType: string;
 
 // @alpha
 export class SharedTreeUndoRedoHandler {
