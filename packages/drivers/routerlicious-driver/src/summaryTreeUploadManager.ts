@@ -41,8 +41,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		previousFullSnapshot: ISnapshotTreeEx | undefined,
 	): Promise<string> {
 		const entries = await Promise.all(
-			Object.keys(summaryTree.tree).map(async (key) => {
-				const entry = summaryTree.tree[key];
+			Object.entries(summaryTree.tree).map(async ([key, entry]) => {
 				const pathHandle = await this.writeSummaryTreeObject(entry, previousFullSnapshot);
 				const treeEntry: IGitCreateTreeEntry = {
 					mode: getGitMode(entry),
@@ -128,7 +127,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		if (path.length === 1) {
 			switch (handleType) {
 				case SummaryType.Blob: {
-					const tryId = previousSnapshot.blobs[key];
+					const tryId: string | undefined = previousSnapshot.blobs[key];
 					assert(
 						!!tryId,
 						0x0b4 /* "Parent summary does not have blob handle for specified path." */,
