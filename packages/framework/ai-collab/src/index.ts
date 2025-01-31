@@ -34,6 +34,8 @@ export {
 	type TokenUsage,
 	type TokenLimits,
 	type OpenAiClientOptions,
+	type DebugEvent,
+	type DebugEventLogHandler,
 } from "./aiCollabApi.js";
 
 export { aiCollab } from "./aiCollab.js";

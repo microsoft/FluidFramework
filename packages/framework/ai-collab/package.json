@@ -114,8 +114,10 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"@types/uuid": "^9.0.2",
 		"openai": "^4.67.3",
 		"typechat": "^0.1.1",
+		"uuid": "^9.0.0",
 		"zod": "^3.23.8"
 	},
 	"devDependencies": {
@@ -142,7 +144,8 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"typescript": "~5.4.5"
+		"typescript": "~5.4.5",
+		"uuid": "^9.0.0"
 	},
 	"fluidBuild": {
 		"tasks": {

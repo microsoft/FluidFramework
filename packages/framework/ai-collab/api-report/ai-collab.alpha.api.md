@@ -16,7 +16,7 @@ export interface AiCollabErrorResponse {
 
 // @alpha
 export interface AiCollabOptions {
-    readonly dumpDebugLog?: boolean;
+    readonly debugEventLogHandler?: DebugEventLogHandler;
     readonly finalReviewStep?: boolean;
     readonly limiters?: {
         readonly abortController?: AbortController;
@@ -45,6 +45,21 @@ export function createMergableDiffSeries(diffs: Difference[]): Difference[];
 
 // @alpha
 export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference[], idAttributeName: string | number): Difference[];
+
+// @alpha
+export interface DebugEvent {
+    // (undocumented)
+    eventName?: string;
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    timestamp: string;
+    // (undocumented)
+    traceId?: string;
+}
+
+// @alpha
+export type DebugEventLogHandler = <T extends DebugEvent>(event: T) => unknown;
 
 // @alpha
 export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;

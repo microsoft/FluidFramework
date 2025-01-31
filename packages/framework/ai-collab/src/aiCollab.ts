@@ -53,7 +53,6 @@ import { generateTreeEdits } from "./explicit-strategy/index.js";
  * 		},
  * 		planningStep: true,
  * 		finalReviewStep: true,
- * 		dumpDebugLog: true,
  * 	});
  * ```
  *
@@ -77,9 +76,9 @@ export async function aiCollab(
 		openAI: options.openAI,
 		prompt: options.prompt,
 		limiters: options.limiters,
-		dumpDebugLog: options.dumpDebugLog,
 		planningStep: options.planningStep,
 		finalReviewStep: options.finalReviewStep,
+		debugEventLogHandler: options.debugEventLogHandler,
 	});
 
 	return response;
