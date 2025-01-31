@@ -63,6 +63,7 @@ function cloneSummary(): ISummaryTree {
  */
 function generateSummaryWithContent(contentSize: number) {
 	const summary = cloneSummary();
+	// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 	const header = (
 		(
 			((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
@@ -85,6 +86,7 @@ function generateSummaryWithContent(contentSize: number) {
 
 function generateSummaryWithBinaryContent(startsWith: number, contentSize: number) {
 	const summary = cloneSummary();
+	// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 	const header = (
 		(
 			((summary.tree[".channels"] as ISummaryTree).tree.rootDOId as ISummaryTree).tree[
@@ -621,6 +623,7 @@ function getHeaderContent(summary: ISummaryTree) {
 }
 
 function getHeader(summary: ISummaryTree) {
+	// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 	return getHeaderHolder(summary).tree.header;
 }
 
