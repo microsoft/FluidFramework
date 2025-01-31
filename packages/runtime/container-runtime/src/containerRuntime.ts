@@ -38,6 +38,7 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import {
+	type IErrorBase,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 	IProvideFluidHandleContext,
@@ -804,15 +805,14 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 	// Older containers may not have the "getEntryPoint" API
 	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
 	if (resolvedContainer.getEntryPoint === undefined) {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-		const response = await (resolvedContainer as any).request({
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+		const response = (await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
-		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		})) as IResponse;
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		fluidObject = response.value;
 	} else {
 		fluidObject = await resolvedContainer.getEntryPoint();
@@ -1236,7 +1236,7 @@ export class ContainerRuntime
 					runtime.setConnectionStateCore(true, runtime.delayConnectClientId);
 				}
 			},
-			(error) => runtime.closeFn(error),
+			(error: IErrorBase) => runtime.closeFn(error),
 		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
@@ -2120,7 +2120,7 @@ export class ContainerRuntime
 					"summarizerStart",
 					"summarizerStartupFailed",
 				]) {
-					this.summaryManager?.on(eventName, (...args: any[]) => {
+					this.summaryManager?.on(eventName, (...args: unknown[]) => {
 						this.emit(eventName, ...args);
 					});
 				}
