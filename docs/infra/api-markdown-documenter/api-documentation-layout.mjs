@@ -4,6 +4,8 @@
  */
 
 //@ts-check
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItem} ApiItem */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
 
 import {
 	ApiItemKind,
@@ -45,7 +47,7 @@ const supportDocsLinkSpan = new SpanNode([
  * If we later wish to differentiate between release tags of `@legacy` items, this function will need
  * to be updated.
  *
- * @param apiItem {import("@fluid-tools/api-markdown-documenter").ApiItem} - The API item for which the import notice is being created.
+ * @param {ApiItem} apiItem - The API item for which the import notice is being created.
  */
 function createImportNotice(apiItem) {
 	const containingPackage = apiItem.getAssociatedPackage();
@@ -105,7 +107,7 @@ function createImportNotice(apiItem) {
  *
  * If the item is tagged as "@system", displays an internal notice with use notes.
  *
- * @param apiItem {import("@fluid-tools/api-markdown-documenter").ApiItem} - The API item for which the system notice is being created.
+ * @param {ApiItem} apiItem - The API item for which the system notice is being created.
  */
 function createSystemNotice(apiItem) {
 	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@system")) {
@@ -144,9 +146,9 @@ function createSystemNotice(apiItem) {
  *
  * 1. See (if any)
  *
- * @param {import("@fluid-tools/api-markdown-documenter").ApiItem} apiItem - The API item being rendered.
- * @param {import("@fluid-tools/api-markdown-documenter").SectionNode[] | undefined} itemSpecificContent - API item-specific details to be included in the default layout.
- * @param {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} config - Transformation configuration.
+ * @param {ApiItem} apiItem - The API item being rendered.
+ * @param {SectionNode[] | undefined} itemSpecificContent - API item-specific details to be included in the default layout.
+ * @param {ApiItemTransformationConfiguration} config - Transformation configuration.
  *
  * @returns An array of sections describing the layout. See {@link @fluid-tools/api-markdown-documenter#ApiItemTransformationConfiguration.createDefaultLayout}.
  */
@@ -245,8 +247,8 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
  *
  * @remarks Displayed as a Docusaurus admonition. See {@link AdmonitionNode} and {@link renderAdmonitionNode}.
  *
- * @param {import("@fluid-tools/api-markdown-documenter").ApiItem} apiItem - The API item being rendered.
- * @param {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} config - Transformation configuration.
+ * @param {ApiItem} apiItem - The API item being rendered.
+ * @param {ApiItemTransformationConfiguration} config - Transformation configuration.
  *
  * @returns The doc section if the API item had a `@remarks` comment, otherwise `undefined`.
  */
@@ -257,6 +259,9 @@ function createDeprecationNoticeSection(apiItem, config) {
 	}
 
 	const transformedDeprecatedBlock = transformTsdocNode(deprecatedBlock, apiItem, config);
+	if (transformedDeprecatedBlock === undefined) {
+		throw new Error("Failed to transform deprecated block.");
+	}
 
 	return new AdmonitionNode(
 		[transformedDeprecatedBlock],
