@@ -56,7 +56,7 @@ variables:
     ${{ if eq( parameters['deployEnvironment'], 'old') }}:
       value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
     ${{ if eq(parameters['deployEnvironment'], 'staging') }}:
-      value: "$(STAGING_AZURE_STATIC_WEB_APPS_API_TOKEN)"
+      value: "$(AZURE_STATIC_WEB_APPS_STAGING_API_TOKEN)"
   # skip injected CG detection as we manually trigger it in a parallel job
   - name: skipComponentGovernanceDetection
     value: true
