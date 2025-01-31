@@ -52,6 +52,8 @@ import {
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
 	type IEnvelope,
+	type ITelemetryContext,
+	type ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -1319,6 +1321,33 @@ describe("Runtime", () => {
 					"mixed in return",
 				);
 				assert.equal((runtime as unknown as { method2: () => unknown }).method2(), 42);
+			});
+
+			// A legacy partner team overrides the summarizeInternal method to add custom data to the Summary.
+			// Let's make sure we don't break them inadvertently, while we work to move them to a better pattern.
+			it("Preserve known overreach into private member", async () => {
+				const containerRuntime_withSummarizeInternal = (await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as {
+					summarizeInternal(
+						fullTree: boolean,
+						trackState: boolean,
+						telemetryContext?: ITelemetryContext,
+					): Promise<ISummarizeInternalResult>;
+				};
+
+				assert(
+					typeof containerRuntime_withSummarizeInternal.summarizeInternal === "function",
+					"Expected summarizeInternal to be present (it's a private method)",
+				);
+				const result = await containerRuntime_withSummarizeInternal.summarizeInternal(
+					true,
+					true,
+				);
+				assert(result.summary !== undefined, "Expected a valid result from summarizeInternal");
 			});
 		});
 
