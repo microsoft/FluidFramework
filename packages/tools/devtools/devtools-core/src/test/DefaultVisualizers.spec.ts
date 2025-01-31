@@ -588,8 +588,7 @@ describe("DefaultVisualizers unit tests", () => {
 										'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
 								},
 								allowedTypes: {
-									value:
-										'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
+									value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 									nodeKind: "ValueNode",
 								},
 								isRequired: {
@@ -1252,8 +1251,7 @@ describe("DefaultVisualizers unit tests", () => {
 																		'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
 																},
 																allowedTypes: {
-																	value:
-																		'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
+																	value: "shared-tree-test.broccoli-object-schema",
 																	nodeKind: "ValueNode",
 																},
 																isRequired: {
@@ -1294,8 +1292,7 @@ describe("DefaultVisualizers unit tests", () => {
 														'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
 												},
 												allowedTypes: {
-													value:
-														'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
+													value: "shared-tree-test.apple-object-schema",
 													nodeKind: "ValueNode",
 												},
 												isRequired: {
@@ -1482,8 +1479,7 @@ describe("DefaultVisualizers unit tests", () => {
 																		'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
 																},
 																allowedTypes: {
-																	value:
-																		'shared-tree-test.Array<["shared-tree-test.broccoli-object-schema"]>',
+																	value: "shared-tree-test.broccoli-object-schema",
 																	nodeKind: "ValueNode",
 																},
 																isRequired: {
@@ -1524,8 +1520,7 @@ describe("DefaultVisualizers unit tests", () => {
 														'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
 												},
 												allowedTypes: {
-													value:
-														'shared-tree-test.Array<["shared-tree-test.apple-object-schema"]>',
+													value: "shared-tree-test.apple-object-schema",
 													nodeKind: "ValueNode",
 												},
 												isRequired: {
@@ -1613,7 +1608,7 @@ describe("DefaultVisualizers unit tests", () => {
 									value: 'shared-tree-test.Array<["shared-tree-test.foo-item"]>',
 								},
 								allowedTypes: {
-									value: 'shared-tree-test.Array<["shared-tree-test.foo-item"]>',
+									value: "shared-tree-test.foo-item",
 									nodeKind: "ValueNode",
 								},
 								isRequired: {
@@ -1776,7 +1771,7 @@ describe("DefaultVisualizers unit tests", () => {
 											value: 'shared-tree-test.Array<["shared-tree-test.dalgona-object"]>',
 										},
 										allowedTypes: {
-											value: 'shared-tree-test.Array<["shared-tree-test.dalgona-object"]>',
+											value: "shared-tree-test.dalgona-object",
 											nodeKind: "ValueNode",
 										},
 										isRequired: {
@@ -1841,8 +1836,7 @@ describe("DefaultVisualizers unit tests", () => {
 												'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
 										},
 										allowedTypes: {
-											value:
-												'shared-tree-test.Array<["com.fluidframework.leaf.number","com.fluidframework.leaf.string"]>',
+											value: "com.fluidframework.leaf.number | com.fluidframework.leaf.string",
 											nodeKind: "ValueNode",
 										},
 										isRequired: {
@@ -1974,7 +1968,7 @@ describe("DefaultVisualizers unit tests", () => {
 								},
 								allowedTypes: {
 									value:
-										'shared-tree-test.Map<["com.fluidframework.leaf.handle","com.fluidframework.leaf.number","com.fluidframework.leaf.string","shared-tree-test.map-object"]>',
+										"com.fluidframework.leaf.string | com.fluidframework.leaf.number | com.fluidframework.leaf.handle | shared-tree-test.map-object",
 									nodeKind: "ValueNode",
 								},
 								isRequired: {

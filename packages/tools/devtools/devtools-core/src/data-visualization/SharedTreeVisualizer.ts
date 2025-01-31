@@ -241,7 +241,6 @@ async function visualizeMapNode(
 	tree: VerboseTreeNode,
 	nodeSchema: SimpleMapNodeSchema,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
-	allowedTypes: ReadonlySet<string>,
 	isRequired: boolean | undefined,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
@@ -253,7 +252,7 @@ async function visualizeMapNode(
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: concatenateTypes(allowedTypes),
+			allowedTypes: concatenateTypes(nodeSchema.allowedTypes),
 			isRequired: isRequired?.toString(),
 		},
 		fields: await visualizeVerboseNodeFields(
@@ -305,7 +304,6 @@ async function visualizeInternalNodeBySchema(
 				tree,
 				schema,
 				treeDefinitions,
-				allowedTypes,
 				isRequired,
 				visualizeChildData,
 			);

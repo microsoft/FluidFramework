@@ -283,10 +283,6 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 				schema: {
 					nodeKind: VisualNodeKind.TreeNode,
 					children: {
-						name: {
-							nodeKind: VisualNodeKind.ValueNode,
-							value: "undefined tree", // TODO: Change name
-						},
 						allowedTypes: {
 							nodeKind: VisualNodeKind.ValueNode,
 							value: concatenateTypes(allowedTypes),
