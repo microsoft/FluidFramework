@@ -12,7 +12,7 @@ module.exports = {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
-		"import/no-nodejs-modules": ["error"]
+		"import/no-nodejs-modules": ["error"],
 	},
 	overrides: [
 		{
