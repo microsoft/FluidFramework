@@ -6,6 +6,7 @@
 //@ts-check
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItem} ApiItem */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").DocumentationNode} DocumentationNode */
 
 import {
 	ApiItemKind,
@@ -38,18 +39,22 @@ const supportDocsLinkSpan = new SpanNode([
 ]);
 
 /**
- * Creates a special import notice for the provided API item, if one is appropriate.
+ * Creates a special support notice for the provided API item, if one is appropriate.
  *
- * If the item is tagged as "@legacy", displays a legacy notice with import instructions.
- * Otherwise, if the item is `@alpha` or `@beta`, displays the appropriate warning and import instructions.
+ * If the item is tagged as "@legacy", displays a legacy notice.
+ * Otherwise, if the item is `@alpha` or `@beta`, displays the appropriate warning.
+ *
+ * In either case, import instructions will also be created, but only if the item is importable by the end-user (`isImportable`).
  *
  * @privateRemarks
  * If we later wish to differentiate between release tags of `@legacy` items, this function will need
  * to be updated.
  *
  * @param {ApiItem} apiItem - The API item for which the import notice is being created.
+ * @param {boolean} isImportable - Whether or not the item can be imported by the end user.
+ *
  */
-function createImportNotice(apiItem) {
+function createSupportNotice(apiItem, isImportable) {
 	const containingPackage = apiItem.getAssociatedPackage();
 	if (containingPackage === undefined) {
 		throw new Error("API item does not have an associated package.");
@@ -60,24 +65,29 @@ function createImportNotice(apiItem) {
 	 * @param {string} importSubpath - Subpath beneath the item's package through which the item can be imported.
 	 * @param {string} admonitionTitle - Title to display for the admonition.
 	 */
-	function createImportAdmonition(importSubpath, admonitionTitle) {
-		return new AdmonitionNode(
-			[
+	function createAdmonition(importSubpath, admonitionTitle) {
+		/** @type {DocumentationNode[]} */
+		const admonitionChildren = [];
+		if (isImportable) {
+			admonitionChildren.push(
 				new SpanNode([
 					new PlainTextNode("To use, import via "),
 					CodeSpanNode.createFromPlainText(`${packageName}/${importSubpath}`),
 					new PlainTextNode("."),
 				]),
 				LineBreakNode.Singleton,
-				supportDocsLinkSpan,
-			],
+			);
+		}
+		admonitionChildren.push(supportDocsLinkSpan);
+		return new AdmonitionNode(
+			admonitionChildren,
 			/* admonitionKind: */ "warning",
 			admonitionTitle,
 		);
 	}
 
 	if (ApiItemUtilities.ancestryHasModifierTag(apiItem, "@legacy")) {
-		return createImportAdmonition(
+		return createAdmonition(
 			"legacy",
 			"This API is provided for existing users, but is not recommended for new users.",
 		);
@@ -86,14 +96,14 @@ function createImportNotice(apiItem) {
 	const releaseLevel = ApiItemUtilities.getEffectiveReleaseLevel(apiItem);
 
 	if (releaseLevel === ReleaseTag.Alpha) {
-		return createImportAdmonition(
+		return createAdmonition(
 			"alpha",
 			"This API is provided as an alpha preview and may change without notice.",
 		);
 	}
 
 	if (releaseLevel === ReleaseTag.Beta) {
-		return createImportAdmonition(
+		return createAdmonition(
 			"beta",
 			"This API is provided as a beta preview and may change without notice.",
 		);
@@ -162,6 +172,12 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	// TODO: it would probably be better to have the library pass this information in, rather than re-deriving it here.
 	const isDocumentItem = ["Document", "Folder"].includes(config.hierarchy[apiItem.kind].kind);
 
+	// Whether or not this item can be imported by the end user.
+	// For example, a function or interface belonging to a package's exports can be directly imported by the end user.
+	// Whereas, the method of an interface cannot.
+	// For such members where the end-user can't directly import, we won't display import instructions.
+	const isImportable = apiItem.parent?.kind === ApiItemKind.Package;
+
 	const sections = [];
 
 	// Render summary comment (if any)
@@ -182,7 +198,7 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 		}
 
 		// Render the appropriate API notice (with import instructions), if applicable.
-		const importNotice = createImportNotice(apiItem);
+		const importNotice = createSupportNotice(apiItem, isImportable);
 		if (importNotice !== undefined) {
 			sections.push(new SectionNode([importNotice]));
 		}
