@@ -24,8 +24,8 @@ const initializeBrowser = async () => {
 /**
  * @param page The page to load the presence tracker app on.
  */
-const loadPresenceTrackerApp = async (page: Page) => {
-	await page.goto(globals.PATH, { waitUntil: "load" });
+const loadPresenceTrackerApp = async (page: Page, url: string) => {
+	await page.goto(url, { waitUntil: "load" });
 	// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
 	await page.waitForFunction(() => window["fluidStarted"]);
 };
@@ -35,11 +35,11 @@ describe("presence-tracker", () => {
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests giving a more generous timeout
 		// so this time isn't attributed to the first test.
-		await loadPresenceTrackerApp(page);
+		await loadPresenceTrackerApp(page, globals.PATH);
 	}, 45000);
 
 	beforeEach(async () => {
-		await loadPresenceTrackerApp(page);
+		await loadPresenceTrackerApp(page, globals.PATH);
 	});
 
 	describe("Single client", () => {
@@ -94,11 +94,11 @@ describe("presence-tracker", () => {
 			// Create a second browser instance.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
-			await loadPresenceTrackerApp(page2);
+			await loadPresenceTrackerApp(page2, page.url());
 		}, 45000);
 
 		beforeEach(async () => {
-			await loadPresenceTrackerApp(page2);
+			await loadPresenceTrackerApp(page2, page.url());
 		});
 
 		afterAll(async () => {
