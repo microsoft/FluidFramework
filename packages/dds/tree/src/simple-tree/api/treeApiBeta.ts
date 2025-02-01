@@ -120,9 +120,9 @@ export const TreeBeta: {
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 */
-	clone<const TSchema extends ImplicitFieldSchema>(
-		node: TreeFieldFromImplicitField<TSchema>,
-	): TreeFieldFromImplicitField<TSchema>;
+	clone<const TNode extends TreeFieldFromImplicitField<ImplicitFieldSchema>>(
+		node: TNode,
+	): Unhydrated<TNode>;
 
 	// TODO: support more clone options
 	// /**
@@ -150,9 +150,9 @@ export const TreeBeta: {
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},
-	clone<const TSchema extends ImplicitFieldSchema>(
-		node: TreeFieldFromImplicitField<TSchema>,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+	clone<const TNode extends TreeFieldFromImplicitField<ImplicitFieldSchema>>(
+		node: TNode,
+	): Unhydrated<TNode> {
 		/** The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is. */
 		if (!isTreeNode(node)) {
 			return node;
@@ -160,8 +160,6 @@ export const TreeBeta: {
 
 		const kernel = getKernel(node);
 		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-		return createFromCursor(kernel.schema, cursor) as Unhydrated<
-			TreeFieldFromImplicitField<TSchema>
-		>;
+		return createFromCursor(kernel.schema, cursor) as TNode;
 	},
 };

@@ -366,7 +366,7 @@ export const TreeAlpha: {
 		};
 		const config = new TreeViewConfiguration({ schema });
 		const view = independentInitializedView(config, options, content);
-		return TreeBeta.clone<TSchema>(view.root);
+		return TreeBeta.clone(view.root);
 	},
 };
 
