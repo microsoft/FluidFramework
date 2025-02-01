@@ -336,6 +336,21 @@ export class Loader implements IHostLoader {
 			clientDetailsOverride?: IClientDetails;
 		},
 	): Promise<IContainer> {
+		const container = this.createDetachedContainerUninitialized(
+			codeDetails,
+			createDetachedProps,
+		);
+		//*
+		return container.initialize().then(() => container);
+	}
+
+	public createDetachedContainerUninitialized(
+		codeDetails: IFluidCodeDetails,
+		createDetachedProps?: {
+			canReconnect?: boolean;
+			clientDetailsOverride?: IClientDetails;
+		},
+	): Container & { initialize: () => Promise<void> } {
 		return Container.createDetached(
 			{
 				...createDetachedProps,
@@ -364,6 +379,21 @@ export class Loader implements IHostLoader {
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
 		const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
 		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
+			const container = await this.resolveCore(
+				request,
+				getAttachedContainerStateFromSerializedContainer(pendingLocalState),
+			);
+			await container.initialize();
+			return container;
+		});
+	}
+
+	public async resolveUninitialized(
+		request: IRequest,
+		pendingLocalState?: string,
+	): Promise<Container & { initialize: () => Promise<void> }> {
+		const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
+		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
 			return this.resolveCore(
 				request,
 				getAttachedContainerStateFromSerializedContainer(pendingLocalState),
@@ -374,7 +404,7 @@ export class Loader implements IHostLoader {
 	private async resolveCore(
 		request: IRequest,
 		pendingLocalState?: IPendingContainerState,
-	): Promise<Container> {
+	): Promise<Container & { initialize: () => Promise<void> }> {
 		const resolvedAsFluid = await this.services.urlResolver.resolve(request);
 		ensureResolvedUrlDefined(resolvedAsFluid);
 
@@ -401,15 +431,15 @@ export class Loader implements IHostLoader {
 		request.headers[LoaderHeader.version] =
 			parsed.version ?? request.headers[LoaderHeader.version];
 
-		return this.loadContainer(request, resolvedAsFluid, pendingLocalState);
+		return this.loadContainerUninitialized(request, resolvedAsFluid, pendingLocalState);
 	}
 
-	private async loadContainer(
+	private loadContainerUninitialized(
 		request: IRequest,
 		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
-	): Promise<Container> {
-		return Container.load(
+	): Container & { initialize: () => Promise<void> } {
+		return Container.loadUninitialized(
 			{
 				resolvedUrl,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
