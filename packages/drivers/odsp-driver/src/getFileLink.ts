@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { mockify } from "./mockify.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -42,7 +43,7 @@ const fileLinkCache = new Map<string, Promise<string>>();
  * @param logger - used to log results of operation, including any error
  * @returns Promise which resolves to file link url when successful; otherwise, undefined.
  */
-export async function getFileLink(
+async function getFileLink(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	resolvedUrl: IOdspResolvedUrl,
 	logger: ITelemetryLoggerExt,
@@ -100,6 +101,9 @@ export async function getFileLink(
 	fileLinkCache.set(cacheKey, fileLink);
 	return fileLink;
 }
+
+const mockableGetFileLink = mockify(getFileLink);
+export { mockableGetFileLink as getFileLink };
 
 /**
  * Handles location redirection while fulfilling the getFileLink call. We don't want browser to handle

@@ -12,13 +12,14 @@ import { SinonFakeTimers, SinonStub, stub, useFakeTimers } from "sinon";
 
 import { OdspFluidDataStoreLocator } from "../contractsPublic.js";
 import { createOdspUrl } from "../createOdspUrl.js";
+import { mockify } from "../mockify.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection.js";
 import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
 import { OdspDocumentService } from "../odspDocumentService.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
-import * as joinSession from "../vroom.js";
+import { fetchJoinSession } from "../vroom.js";
 
 describe("joinSessions Tests", () => {
 	let clock: SinonFakeTimers;
@@ -65,7 +66,7 @@ describe("joinSessions Tests", () => {
 
 	function addJoinSessionStub(time: number): SinonStub {
 		joinSessionResponse.refreshSessionDurationSeconds = time;
-		const joinSessionStub = stub(joinSession, "fetchJoinSession").callsFake(
+		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
 			async () => joinSessionResponse,
 		);
 		return joinSessionStub;

@@ -16,6 +16,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "./epochTracker.js";
+import { mockify } from "./mockify.js";
 import { getApiRoot } from "./odspUrlHelper.js";
 import { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
@@ -42,7 +43,7 @@ interface IJoinSessionBody {
  * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
  * If not specified client display name is extracted from the access token that is used to join session.
  */
-export async function fetchJoinSession(
+async function fetchJoinSession(
 	urlParts: IOdspUrlParts,
 	path: string,
 	method: "GET" | "POST",
@@ -139,3 +140,6 @@ export async function fetchJoinSession(
 		},
 	);
 }
+
+const mockableFetchJoinSession = mockify(fetchJoinSession);
+export { mockableFetchJoinSession as fetchJoinSession };

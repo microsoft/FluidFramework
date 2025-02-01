@@ -138,7 +138,7 @@ export async function fetchHelper(
 	const start = performanceNow();
 
 	// Node-fetch and dom have conflicting typing, force them to work by casting for now
-	return fetch(requestInfo, requestInit).then(
+	return fetchHelper.fetch(requestInfo, requestInit).then(
 		async (fetchResponse) => {
 			const response = fetchResponse as unknown as Response;
 			// Let's assume we can retry.
@@ -221,6 +221,8 @@ export async function fetchHelper(
 		},
 	);
 }
+// This allows `fetch` to be mocked (e.g. with sinon `stub()`)
+fetchHelper.fetch = fetch;
 
 /**
  * A utility function to fetch and parse as JSON with support for retries
