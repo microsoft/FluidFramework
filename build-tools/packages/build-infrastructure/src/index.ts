@@ -15,6 +15,7 @@
  */
 
 export {
+	BuildProject,
 	getAllDependencies,
 	loadBuildProject,
 } from "./buildProject.js";
@@ -24,11 +25,21 @@ export {
 	type IFluidBuildDir,
 	type IFluidBuildDirs,
 	type IFluidBuildDirEntry,
-	type BuildProjectConfig as BuildProjectLayout,
+	type BuildProjectConfig,
 	BUILDPROJECT_CONFIG_VERSION,
 	getBuildProjectConfig,
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
+export {
+	type PackageFilterOptions,
+	type PackageSelectionCriteria,
+	filterPackages,
+	FilterablePackage,
+	selectAndFilterPackages,
+	EmptySelectionCriteria,
+	AllPackagesSelectionCriteria,
+	GlobString,
+} from "./filter.js";
 export {
 	getFiles,
 	findGitRootSync,
@@ -36,9 +47,11 @@ export {
 	getRemote,
 	getChangedSinceRef,
 } from "./git.js";
+export { type Logger, type LoggingFunction, type ErrorLoggingFunction } from "./logging.js";
 export { PackageBase } from "./package.js";
 export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
 export { createPackageManager } from "./packageManagers.js";
+export { Stopwatch } from "./stopwatch.js";
 export type {
 	AdditionalPackageProps,
 	Installable,

@@ -4,6 +4,7 @@
 
 ```ts
 
+import { LoggingFunction as LoggingFunction_2 } from './logging.js';
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
 import { SemVer } from 'semver';
@@ -14,10 +15,30 @@ import { SimpleGit } from 'simple-git';
 export type AdditionalPackageProps = Record<string, string> | undefined;
 
 // @public
+export const AllPackagesSelectionCriteria: PackageSelectionCriteria;
+
+// @public
+export class BuildProject<P extends IPackage> implements IBuildProject<P> {
+    constructor(searchPath: string,
+    upstreamRemotePartialUrl?: string | undefined);
+    protected readonly configFilePath: string;
+    readonly configuration: BuildProjectConfig;
+    getGitRepository(): Promise<Readonly<SimpleGit>>;
+    getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
+    get packages(): Map<PackageName, P>;
+    relativeToRepo(p: string): string;
+    get releaseGroups(): Map<ReleaseGroupName, IReleaseGroup>;
+    reload(): void;
+    readonly root: string;
+    readonly upstreamRemotePartialUrl?: string | undefined;
+    get workspaces(): Map<WorkspaceName, IWorkspace>;
+}
+
+// @public
 export const BUILDPROJECT_CONFIG_VERSION = 1;
 
 // @public
-export interface BuildProjectLayout {
+export interface BuildProjectConfig {
     buildProject?: {
         workspaces: {
             [name: string]: WorkspaceDefinition;
@@ -30,6 +51,23 @@ export interface BuildProjectLayout {
 
 // @public
 export function createPackageManager(name: PackageManagerName): IPackageManager;
+
+// @public
+export const EmptySelectionCriteria: PackageSelectionCriteria;
+
+// @public
+export type ErrorLoggingFunction = (msg: string | Error | undefined, ...args: any[]) => void;
+
+// @public
+export interface FilterablePackage {
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    private?: boolean | undefined;
+}
+
+// @public
+export function filterPackages<T extends FilterablePackage>(packages: T[], filters: PackageFilterOptions): Promise<T[]>;
 
 // @public
 export function findGitRootSync(cwd?: string): string;
@@ -50,7 +88,7 @@ export function getAllDependencies(repo: IBuildProject, packages: IPackage[]): {
 
 // @public
 export function getBuildProjectConfig(searchPath: string, noCache?: boolean): {
-    config: BuildProjectLayout;
+    config: BuildProjectConfig;
     configFilePath: string;
 };
 
@@ -73,8 +111,11 @@ export function getMergeBaseRemote(git: SimpleGit, branch: string, remote?: stri
 export function getRemote(git: SimpleGit, partialUrl: string | undefined): Promise<string | undefined>;
 
 // @public
+export type GlobString = string;
+
+// @public
 export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable {
-    configuration: BuildProjectLayout;
+    configuration: BuildProjectConfig;
     getGitRepository(): Promise<Readonly<SimpleGit>>;
     getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
     packages: Map<PackageName, P>;
@@ -170,6 +211,18 @@ export interface IWorkspace extends Installable, Reloadable {
 export function loadBuildProject<P extends IPackage>(searchPath: string, upstreamRemotePartialUrl?: string): IBuildProject<P>;
 
 // @public
+export interface Logger {
+    errorLog: ErrorLoggingFunction;
+    info: ErrorLoggingFunction;
+    log: LoggingFunction;
+    verbose: ErrorLoggingFunction;
+    warning: ErrorLoggingFunction;
+}
+
+// @public
+export type LoggingFunction = (message?: string, ...args: any[]) => void;
+
+// @public
 export class NotInGitRepository extends Error {
     constructor(
     path: string);
@@ -215,6 +268,13 @@ export interface PackageDependency {
 }
 
 // @public
+export interface PackageFilterOptions {
+    private: boolean | undefined;
+    scope?: string[] | undefined;
+    skipScope?: string[] | undefined;
+}
+
+// @public
 export type PackageJson = SetRequired<PackageJson_2 & FluidPackageJsonFields, "name" | "scripts" | "version">;
 
 // @public
@@ -222,6 +282,16 @@ export type PackageManagerName = "npm" | "pnpm" | "yarn";
 
 // @public
 export type PackageName = Opaque<string, "PackageName">;
+
+// @public
+export interface PackageSelectionCriteria {
+    changedSinceBranch?: string | undefined;
+    directory?: string | undefined;
+    releaseGroupRoots: (GlobString | string)[];
+    releaseGroups: (GlobString | string)[];
+    workspaceRoots: (GlobString | string)[];
+    workspaces: (GlobString | string)[];
+}
 
 // @public
 export interface ReleaseGroupDefinition {
@@ -240,7 +310,24 @@ export interface Reloadable {
 }
 
 // @public
+export function selectAndFilterPackages<P extends IPackage>(buildProject: IBuildProject<P>, selection: PackageSelectionCriteria, filter?: PackageFilterOptions): Promise<{
+    selected: P[];
+    filtered: P[];
+}>;
+
+// @public
 export function setVersion<J extends PackageJson>(packages: IPackage<J>[], version: SemVer): Promise<void>;
+
+// @public
+export class Stopwatch {
+    constructor(enabled: boolean, logFunc?: LoggingFunction_2);
+    // (undocumented)
+    getTotalTime(): number;
+    // (undocumented)
+    log(msg?: string, print?: boolean): number;
+    // (undocumented)
+    protected logFunc: LoggingFunction_2;
+}
 
 // @public
 export function updatePackageJsonFile<J extends PackageJson = PackageJson>(packagePath: string, packageTransformer: (json: J) => void): void;
