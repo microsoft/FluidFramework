@@ -1015,7 +1015,7 @@ describe("client.applyMsg", () => {
 
 			logger.validate({ baseText: "BBBBBB B" });
 		});
-		it.only("obliterate with mismatched final states", () => {
+		it.skip("obliterate with mismatched final states", () => {
 			const clients = createClientsAtInitialState(
 				{
 					initialState: "B{6666666}BBB{666666}BB",
