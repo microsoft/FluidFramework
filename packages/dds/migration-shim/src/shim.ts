@@ -24,6 +24,7 @@ import {
 	type SharedObjectKind,
 	type SharedObjectOptions,
 } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Design constraints:
@@ -136,10 +137,10 @@ interface ShimData<TOut> extends FactoryOut<object> {
  */
 export function makeSharedObjectAdapter<TFrom extends object, Common extends object = object>(
 	migration: MigrationSet<TFrom, Common>,
-): ISharedObjectKind<Common> & SharedObjectKind<Common> {
+): ISharedObjectKind<Common & IMigrationShim> & SharedObjectKind<Common & IMigrationShim> {
 	const fromFactory = migration.fromSharedObject.getFactory();
 
-	const kernelFactory: SharedKernelFactory<Common> = {
+	const kernelFactory: SharedKernelFactory<Common & IMigrationShim> = {
 		create(args) {
 			const shim = new MigrationShim<TFrom, Common>(args, migration);
 			return {
@@ -149,14 +150,14 @@ export function makeSharedObjectAdapter<TFrom extends object, Common extends obj
 		},
 	};
 
-	const options: SharedObjectOptions<Common> = {
+	const options: SharedObjectOptions<Common & IMigrationShim> = {
 		type: fromFactory.type,
 		attributes: fromFactory.attributes, // TODO: maybe these should be customized
 		telemetryContextPrefix: "fluid_adapter_",
 		factory: kernelFactory,
 	};
 
-	return makeSharedObjectKind<Common>(options);
+	return makeSharedObjectKind<Common & IMigrationShim>(options);
 }
 
 /**
@@ -199,7 +200,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 
 	private readonly migrationOptions: MigrationOptions<TFrom, object, TOut>;
 
-	public readonly view: TOut;
+	public readonly view: TOut & IMigrationShim;
 
 	/**
 	 * @param id - String identifier.
@@ -211,8 +212,23 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		public readonly migrationSet: MigrationSet<TFrom, TOut>,
 	) {
 		this.migrationOptions = this.migrationSet.selector(this.kernelArgs.id);
+		const shim: MigrationShimInfo = {
+			cast: <const T extends MigrationOptions>(options: T) => {
+				if ((options as MigrationOptions) !== this.migrationOptions) {
+					throw new UsageError("Invalid cast");
+				}
+				return this.view as T extends MigrationOptions<never, object, infer Common>
+					? Common
+					: never;
+			},
+			status: MigrationStatus.Before,
+			upgrade: () => this.upgrade(true),
+		};
 		// Proxy which forwards to the current adapter's APIs.
-		this.view = mergeAPIs<object, TOut>(Object.freeze({}), () => this.data.adapter);
+		this.view = mergeAPIs<IMigrationShim, TOut>(
+			Object.freeze({ [shimInfo]: shim }),
+			() => this.data.adapter,
+		);
 	}
 	public summarizeCore(
 		serializer: IFluidSerializer,
@@ -233,6 +249,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		assert(this.#data === undefined, "loadCore should only be called once, and called first");
 
 		const isMigrated = await storage.contains(this.migrationOptions.migrationIdentifier);
+		// This could cause an upgrade if no beforeAdapter is provided. TODO: is that ok? Handle readonly.
 		this.#data = this.init(isMigrated);
 		if (isMigrated) {
 			const migrationBlob = await storage.readBlob(this.migrationOptions.migrationIdentifier);
@@ -371,7 +388,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	 * This does not prevent the map APIs from being available:
 	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
 	 */
-	public upgrade(doEdits: boolean): void {
+	private upgrade(doEdits: boolean): void {
 		// TODO: upgrade op, upgrade rebasing etc.
 
 		const data = this.data;
@@ -399,6 +416,26 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		this.#data = after;
 	}
 
+	/**
+	 * Convert the underling data structure into a tree.
+	 * @remarks
+	 * This does not prevent the map APIs from being available:
+	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
+	 */
+	private sendUpgrade(from: TFrom, to: object, adaptedTo: TOut): void {
+		// TODO: actual op
+		const op = { migration: this.migrationOptions.migrationIdentifier };
+		assert(
+			opMigrationIdFromContents(op) === this.migrationOptions.migrationIdentifier,
+			"Migration op must have migration identifier",
+		);
+		this.kernelArgs.submitMessage(op, {
+			inner: {},
+			migrated: MigrationPhase.Migration,
+		} satisfies LocalOpMetadata);
+		this.migrationOptions.migrate(from, to, adaptedTo);
+	}
+
 	private init(migrated: boolean): FactoryOut<object> & {
 		readonly adapter: TOut;
 		migrated?: MigrationOptions;
@@ -423,15 +460,34 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				migrated: this.migrationOptions,
 			};
 		} else {
-			// Create pre migration
-			const { kernel, view } = this.migrationSet.fromKernel.create(adjustedArgs);
-			const adapter = this.migrationOptions.beforeAdapter(view);
-			return {
-				view,
-				kernel,
-				adapter,
-				migrated: this.migrationOptions,
-			};
+			const before = this.migrationSet.fromKernel.create(adjustedArgs);
+			if (this.migrationOptions.beforeAdapter === unsupportedAdapter) {
+				// Migrate
+				assert(
+					this.migrationOptions.defaultMigrated,
+					"defaultMigrated must be set if no beforeAdapter",
+				);
+				const after = this.migrationOptions.to.create(adjustedArgs);
+				const adapter = this.migrationOptions.afterAdapter(after.view);
+				// TODO: handle read only case.
+				this.sendUpgrade(before.view, after.view, adapter);
+				return {
+					view: before.view,
+					kernel: before.kernel,
+					adapter,
+					migrated: this.migrationOptions,
+				};
+			} else {
+				// Create pre migration
+
+				const adapter = this.migrationOptions.beforeAdapter(before.view);
+				return {
+					view: before.view,
+					kernel: before.kernel,
+					adapter,
+					migrated: this.migrationOptions,
+				};
+			}
 		}
 	}
 

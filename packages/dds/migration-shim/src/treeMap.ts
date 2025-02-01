@@ -333,7 +333,7 @@ const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITree, ITree> = {
 		});
 		view.dispose();
 	},
-	defaultMigrated: false,
+	defaultMigrated: true,
 };
 
 const mapToTreePhase2: MigrationSet<ISharedMapCore, ITree, ITree> = {
