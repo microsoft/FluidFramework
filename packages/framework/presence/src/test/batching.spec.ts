@@ -693,7 +693,7 @@ describe("Presence", () => {
 									"testEvents": {
 										"sessionId-2": {
 											"rev": 0,
-											"timestamp": 0,
+											"timestamp": 1050,
 											"value": { "name": "newId", "args": [77] },
 											"ignoreUnmonitored": true,
 										},
@@ -717,7 +717,7 @@ describe("Presence", () => {
 									"testEvents": {
 										"sessionId-2": {
 											"rev": 0,
-											"timestamp": 0,
+											"timestamp": 1060,
 											"value": { "name": "newId", "args": [88] },
 											"ignoreUnmonitored": true,
 										},
@@ -794,7 +794,7 @@ describe("Presence", () => {
 									"testEvents": {
 										"sessionId-2": {
 											"rev": 0,
-											"timestamp": 0,
+											"timestamp": 1060,
 											"value": {
 												"name": "newId",
 												"args": [99],
@@ -825,7 +825,7 @@ describe("Presence", () => {
 									"testEvents": {
 										"sessionId-2": {
 											"rev": 0,
-											"timestamp": 0,
+											"timestamp": 1090,
 											"value": {
 												"name": "newId",
 												"args": [111],
