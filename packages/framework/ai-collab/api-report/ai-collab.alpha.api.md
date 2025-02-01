@@ -36,6 +36,7 @@ export interface AiCollabOptions {
 
 // @alpha
 export interface AiCollabSuccessResponse {
+    readonly diffs: Difference[];
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
 }

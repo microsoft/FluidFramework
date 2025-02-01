@@ -17,7 +17,16 @@ import type {
 } from "openai/resources/index.mjs";
 import { z } from "zod";
 
-import type { OpenAiClientOptions, TokenLimits, TokenUsage } from "../aiCollabApi.js";
+import type {
+	AiCollabOptions,
+	Difference,
+	AiCollabSuccessResponse,
+	AiCollabErrorResponse,
+	OpenAiClientOptions,
+	TokenLimits,
+	TokenUsage,
+	ObjectPath,
+} from "../aiCollabApi.js";
 
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
@@ -58,17 +67,6 @@ export interface GenerateTreeEditsOptions {
 	planningStep?: boolean;
 }
 
-interface GenerateTreeEditsSuccessResponse {
-	status: "success";
-	tokensUsed: TokenUsage;
-}
-
-interface GenerateTreeEditsErrorResponse {
-	status: "failure" | "partial-failure";
-	errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted";
-	tokensUsed: TokenUsage;
-}
-
 /**
  * Prompts the provided LLM client to generate valid tree edits.
  * Applies those edits to the provided tree branch before returning.
@@ -76,12 +74,10 @@ interface GenerateTreeEditsErrorResponse {
  * @remarks
  * - Optional root nodes are not supported
  * - Primitive root nodes are not supported
- *
- * @internal
  */
 export async function generateTreeEdits(
-	options: GenerateTreeEditsOptions,
-): Promise<GenerateTreeEditsSuccessResponse | GenerateTreeEditsErrorResponse> {
+	options: AiCollabOptions,
+): Promise<AiCollabSuccessResponse | AiCollabErrorResponse> {
 	const idGenerator = new IdGenerator();
 	const editLog: EditLog = [];
 	let editCount = 0;
@@ -171,14 +167,54 @@ export async function generateTreeEdits(
 		throw error;
 	}
 
+	// Transform editLog into diffs
+	const diffs: Difference[] = editLog.map((log) => {
+		switch (log.edit.type) {
+			case "move": {
+				return {
+					type: "MOVE",
+					path: log.edit.destination as unknown as ObjectPath,
+					newIndex: log.edit.source as unknown as number,
+					value: log.edit.source as unknown as number,
+					objectId: log.edit.source as unknown as string,
+				};
+			}
+			case "insert": {
+				return {
+					type: "CREATE",
+					path: log.edit.destination as unknown as ObjectPath,
+					value: log.edit.content as unknown as TreeNode,
+				};
+			}
+			case "modify": {
+				return {
+					type: "CHANGE",
+					path: log.edit.target as unknown as ObjectPath,
+					value: log.edit.modification as unknown as TreeNode,
+					oldValue: log.edit.modification as unknown as TreeNode,
+				};
+			}
+			case "remove": {
+				return {
+					type: "REMOVE",
+					path: log.edit.source as unknown as ObjectPath,
+					oldValue: log.edit.source as unknown as TreeNode,
+				};
+			}
+			default: {
+				return fail("Unknown edit type");
+			}
+		}
+	});
+
 	if (options.dumpDebugLog ?? false) {
 		console.log(DEBUG_LOG.join("\n\n"));
 		DEBUG_LOG.length = 0;
 	}
-
 	return {
 		status: "success",
 		tokensUsed,
+		diffs,
 	};
 }
 
