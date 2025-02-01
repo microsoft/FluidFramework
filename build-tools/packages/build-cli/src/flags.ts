@@ -29,6 +29,7 @@ import {
 	isVersionScheme,
 } from "@fluid-tools/version-tools";
 
+import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import type { DependencyUpdateType } from "./library/index.js";
 import { ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
 
@@ -47,6 +48,18 @@ export const releaseGroupFlag = Flags.custom<ReleaseGroup>({
 		}
 
 		return group;
+	},
+});
+
+/**
+ * A re-usable CLI flag to parse release group name.
+ */
+export const releaseGroupNameFlag = Flags.custom<ReleaseGroupName>({
+	name: "release_group",
+	required: true,
+	description: "The name of a release group.",
+	parse: async (input) => {
+		return input as ReleaseGroupName;
 	},
 });
 

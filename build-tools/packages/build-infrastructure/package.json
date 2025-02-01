@@ -1,7 +1,6 @@
 {
 	"name": "@fluid-tools/build-infrastructure",
 	"version": "0.52.0",
-	"private": true,
 	"description": "Fluid build infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,17 +13,14 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
+			"default": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
 			}
 		}
 	},
 	"main": "lib/index.js",
+	"types": "./lib/index.d.ts",
 	"bin": {
 		"buildProject": "./bin/run.mjs"
 	},
