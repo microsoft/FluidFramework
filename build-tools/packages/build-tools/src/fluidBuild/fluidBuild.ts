@@ -46,12 +46,6 @@ async function main() {
 		process.exit(-4);
 	}
 
-	// Dependency checks
-	if (options.depcheck) {
-		await repo.depcheck(false);
-		timer.time("Dependencies check completed", true);
-	}
-
 	// Uninstall
 	if (options.uninstall) {
 		if (!(await repo.uninstall())) {
@@ -62,9 +56,7 @@ async function main() {
 
 		if (!options.install) {
 			let errorStep: string | undefined = undefined;
-			if (options.symlink) {
-				errorStep = "symlink";
-			} else if (options.clean) {
+			if (options.clean) {
 				errorStep = "clean";
 			} else if (options.build) {
 				errorStep = "build";
@@ -86,24 +78,15 @@ async function main() {
 		timer.time("Install completed", true);
 	}
 
-	// Symlink check
-	const symlinkTaskName = options.symlink ? "Symlink" : "Symlink check";
-	await repo.symlink(options);
-	timer.time(`${symlinkTaskName} completed`, options.symlink);
-
 	let failureSummary = "";
 	let exitCode = 0;
 	if (options.buildTaskNames.length !== 0) {
-		if (options.fullSymlink !== undefined) {
-			log(chalk.yellow(`Symlink in ${options.fullSymlink ? "full" : "isolated"} mode`));
-		}
-
 		// build the graph
 		let buildGraph: BuildGraph;
 		const spinner = new Spinner("Creating build graph...");
 		try {
 			spinner.start();
-			buildGraph = repo.createBuildGraph(options, options.buildTaskNames);
+			buildGraph = repo.createBuildGraph(options.buildTaskNames);
 		} catch (e: unknown) {
 			error((e as Error).message);
 			process.exit(-11);

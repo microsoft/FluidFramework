@@ -11,11 +11,10 @@ import { defaultLogger } from "../common/logging";
 import { commonOptionString, parseOption } from "./commonOptions";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";
-import { ISymlinkOptions } from "./symlinkUtils";
 
 const { log, warning, errorLog } = defaultLogger;
 
-interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
+interface FastBuildOptions extends IPackageMatchedOptions {
 	nolint: boolean;
 	lintonly: boolean;
 	showExec: boolean;
@@ -24,21 +23,6 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	buildTaskNames: string[];
 	build?: boolean;
 	vscode: boolean;
-
-	/**
-	 * @deprecated symlink-related functionality will be removed in an upcoming release.
-	 */
-	symlink: boolean;
-
-	/**
-	 * @deprecated symlink-related functionality will be removed in an upcoming release.
-	 */
-	fullSymlink: boolean | undefined;
-
-	/**
-	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
-	 */
-	depcheck: boolean;
 	force: boolean;
 	install: boolean;
 	uninstall: boolean;
@@ -60,9 +44,6 @@ export const options: FastBuildOptions = {
 	matchedOnly: true,
 	buildTaskNames: [],
 	vscode: false,
-	symlink: false,
-	fullSymlink: undefined,
-	depcheck: false,
 	force: false,
 	install: false,
 	uninstall: false,
@@ -93,8 +74,6 @@ Options:
   -g --releaseGroup   Release group to operate on
      --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
   -t --task <name>    target to execute (default:build)
-     --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
-     --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
      --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
      --vscode         Output error message to work with default problem matcher in vscode
      --worker         Reuse worker threads for some tasks, increasing memory use but lowering overhead.
@@ -127,12 +106,6 @@ function setInstall() {
 
 function setUninstall() {
 	options.uninstall = true;
-	setBuild(false);
-}
-
-function setSymlink(fullSymlink: boolean) {
-	options.symlink = true;
-	options.fullSymlink = fullSymlink;
 	setBuild(false);
 }
 
@@ -220,31 +193,6 @@ export function parseOptions(argv: string[]) {
 
 		if (arg === "--vscode") {
 			options.vscode = true;
-			continue;
-		}
-
-		if (arg === "--symlink") {
-			console.warn(
-				"The --symlink flag is deprecated and will be removed in an upcoming release.",
-			);
-			setSymlink(false);
-			continue;
-		}
-
-		if (arg === "--symlink:full") {
-			console.warn(
-				"The --symlink:full flag is deprecated and will be removed in an upcoming release.",
-			);
-			setSymlink(true);
-			continue;
-		}
-
-		if (arg === "--depcheck") {
-			console.warn(
-				"The --depcheck flag is deprecated and will be removed in an upcoming release.",
-			);
-			options.depcheck = true;
-			setBuild(false);
 			continue;
 		}
 
