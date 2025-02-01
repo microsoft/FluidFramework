@@ -12,6 +12,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate node10Entrypoints`](#flub-generate-node10entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
+* [`flub generate sourceEntrypoints`](#flub-generate-sourceentrypoints)
 * [`flub generate typetests`](#flub-generate-typetests)
 * [`flub generate upcoming`](#flub-generate-upcoming)
 
@@ -372,6 +373,30 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/releaseNotes.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/releaseNotes.ts)_
+
+## `flub generate sourceEntrypoints`
+
+Generates TypeScript source files that roll up APIs into different entrypoint files, defined by the "exports" field in package.json and organized by API tags
+
+```
+USAGE
+  $ flub generate sourceEntrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>]
+
+FLAGS
+  --mainEntrypoint=<value>  [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --outDir=<value>          [default: src/entrypoints/tsconfig.json] Directory that contains a file named
+                            `tsconfig.json`
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Generates TypeScript source files that roll up APIs into different entrypoint files, defined by the "exports" field in
+  package.json and organized by API tags
+```
+
+_See code: [src/commands/generate/sourceEntrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/sourceEntrypoints.ts)_
 
 ## `flub generate typetests`
 
