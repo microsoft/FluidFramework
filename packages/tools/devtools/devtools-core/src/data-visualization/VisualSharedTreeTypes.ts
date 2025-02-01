@@ -34,6 +34,11 @@ export interface SharedTreeSchemaNode {
 	 * - InternalNode: `Record<string, string>`.
 	 */
 	allowedTypes?: string | Record<string, string>;
+
+	/**
+	 * If the field or node is required {@link FieldKind.Required} or not {@link FieldKind.Optional}
+	 */
+	isRequired?: string;
 }
 
 /**

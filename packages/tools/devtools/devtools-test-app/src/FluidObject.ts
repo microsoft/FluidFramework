@@ -175,43 +175,63 @@ export class AppData extends DataObject {
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {
-		// Set up SharedTree for visualization
-		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaFactory("TodoList_Schema");
 
-		// TODO: Maybe include example handle
-
-		class LeafSchema extends builder.object("leaf-item", {
-			leafField: [builder.boolean, builder.handle, builder.string],
+		class TodoItem extends builder.object("todo-item", {
+			title: builder.string,
+			completed: builder.boolean,
+			dueDate: builder.optional(builder.string),
+			assignee: builder.optional(builder.string),
+			collaborators: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		class ChildSchema extends builder.object("child-item", {
-			childField: [builder.string, builder.boolean],
-			childData: builder.optional(LeafSchema),
+		class TodoObject extends builder.object("todo-list", {
+			items: builder.array(TodoItem),
 		}) {}
 
-		class RootNodeSchema extends builder.object("root-item", {
-			childrenOne: builder.array(ChildSchema),
-			childrenTwo: builder.number,
+		const TodoCategory = builder.map("todo-category", [TodoObject]);
+
+		class TodoWorkspace extends builder.object("todo-workspace", {
+			lists: TodoCategory,
 		}) {}
 
-		const config = new TreeViewConfiguration({ schema: RootNodeSchema });
+		const config = new TreeViewConfiguration({
+			schema: [TodoWorkspace],
+		});
+
 		const view = sharedTree.viewWith(config);
 		view.initialize({
-			childrenOne: [
-				{
-					childField: "Hello world!",
-					childData: {
-						leafField: "Hello world again!",
-					},
+			lists: {
+				work: {
+					items: [
+						{
+							title: "Finish design doc.",
+							completed: false,
+							dueDate: "2048-01-01",
+							assignee: "Kevin",
+							collaborators: ["Rick"],
+						},
+						{
+							title: "Review pull requests",
+							completed: true,
+							assignee: "Bob",
+						},
+					],
 				},
-				{
-					childField: true,
-					childData: {
-						leafField: false,
-					},
+				personal: {
+					items: [
+						{
+							title: "Buy groceries",
+							completed: false,
+						},
+						{
+							title: "Schedule dentist appointment",
+							completed: false,
+							dueDate: "2024-05-04",
+						},
+					],
 				},
-			],
-			childrenTwo: 32,
+			},
 		});
 	}
 }
