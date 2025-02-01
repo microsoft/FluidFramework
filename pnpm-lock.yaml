@@ -38,6 +38,9 @@ importers:
       '@fluid-private/changelog-generator-wrapper':
         specifier: workspace:~
         version: link:packages/tools/changelog-generator-wrapper
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@22.10.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -53,9 +56,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@microsoft/api-documenter':
         specifier: ^7.21.6
         version: 7.26.2(@types/node@22.10.1)
@@ -80,6 +80,9 @@ importers:
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       danger:
         specifier: ^11.3.0
         version: 11.3.1(encoding@0.1.13)
@@ -622,6 +625,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -752,6 +758,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -764,9 +773,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -918,6 +924,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -930,9 +939,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1072,6 +1078,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1084,9 +1093,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1202,6 +1208,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1214,9 +1223,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1405,6 +1411,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -1417,9 +1426,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1535,6 +1541,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1544,9 +1553,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1714,6 +1720,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1723,9 +1732,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1829,6 +1835,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1838,9 +1847,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -1935,6 +1941,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -1944,9 +1953,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2386,6 +2392,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2395,9 +2404,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2504,6 +2510,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2513,9 +2522,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -2713,6 +2719,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2722,9 +2731,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -2822,6 +2828,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -2831,9 +2840,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -3138,6 +3144,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3147,9 +3156,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -3818,6 +3824,9 @@ importers:
       '@fluid-example/webpack-fluid-loader':
         specifier: workspace:~
         version: link:../../utils/webpack-fluid-loader
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -3827,9 +3836,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../packages/test/test-utils
@@ -4159,6 +4165,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4168,9 +4177,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/cors':
         specifier: ^2.8.4
         version: 2.8.17
@@ -4310,6 +4316,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../../tools/test-tools
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -4340,9 +4349,6 @@ importers:
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/events_pkg':
         specifier: npm:@types/events@^3.0.0
         version: '@types/events@3.0.3'
@@ -5112,6 +5118,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5124,9 +5133,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5266,6 +5272,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5278,9 +5287,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5450,6 +5456,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5462,9 +5471,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5616,6 +5622,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@22.10.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5628,9 +5637,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5752,6 +5758,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5764,9 +5773,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -5903,6 +5909,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -5915,9 +5924,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -6027,6 +6033,9 @@ importers:
       '@biomejs/biome':
         specifier: ~1.9.3
         version: 1.9.4
+      '@fluid-private/test-tools':
+        specifier: workspace:~
+        version: link:../../../tools/test-tools
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
         version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -6039,9 +6048,6 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.3
         version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -16505,6 +16511,45 @@ importers:
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
+
+  tools/test-tools:
+    devDependencies:
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.51.0
+        version: 0.51.0(@types/node@18.19.67)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.7.3
+        version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.67
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      eslint-config-prettier:
+        specifier: ~9.0.0
+        version: 9.0.0(eslint@8.55.0)
+      mocha:
+        specifier: ^10.2.0
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
 
 packages:
 
