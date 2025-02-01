@@ -14,6 +14,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
+	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -48,7 +49,7 @@ import {
 import type { SharedTreeBranch } from "./branch.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
-import type { SeqNumber } from "./editManagerFormat.js";
+import type { Commit, SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import type { DecodedMessage } from "./messageTypes.js";
@@ -326,8 +327,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(
-				{ ...enrichedCommit, sessionId: this.editManager.localSessionId },
+			this.editManager.addSequencedChanges(
+				[{ ...enrichedCommit, sessionId: this.editManager.localSessionId }],
 				newRevision,
 				this.detachedRevision,
 			);
@@ -362,14 +363,47 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			idCompressor: this.idCompressor,
 		});
 
-		this.editManager.addSequencedChange(
-			{ ...commit, sessionId },
+		this.editManager.addSequencedChanges(
+			[{ ...commit, sessionId }],
 			brand(message.sequenceNumber),
 			brand(message.referenceSequenceNumber),
 		);
 		this.resubmitMachine.onSequencedCommitApplied(local);
 
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
+	}
+
+	/**
+	 * Process a bunch of messages. Some important invariants for these messages:
+	 * - They are all from the same client.
+	 * - They are all part of the same batch so they are not interleaved with messages from other clients.
+	 *-  They are not interleaved with messages from other DDSes in the container.
+	 */
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		const commits: Commit<TChange>[] = [];
+
+		// Get a list of all the commits from the messages.
+		for (const messageContent of messagesContent) {
+			// Empty context object is passed in, as our decode function is schema-agnostic.
+			const { commit, sessionId } = this.messageCodec.decode(messageContent.contents, {
+				idCompressor: this.idCompressor,
+			});
+			commits.push({ ...commit, sessionId });
+		}
+
+		this.editManager.addSequencedChanges(
+			commits,
+			brand(envelope.sequenceNumber),
+			brand(envelope.referenceSequenceNumber),
+		);
+
+		// Update the resubmit machine for each commit applied.
+		for (const _ of messagesContent) {
+			this.resubmitMachine.onSequencedCommitApplied(local);
+		}
+
+		this.editManager.advanceMinimumSequenceNumber(brand(envelope.minimumSequenceNumber));
 	}
 
 	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {

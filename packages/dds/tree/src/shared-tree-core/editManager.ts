@@ -472,7 +472,7 @@ export class EditManager<
 		// `EditManager` would have to be amended in one of two ways:
 		// A) Changes made by the local session should be represented by a branch in `EditManager.branches`.
 		// B) The contents of such a branch should be computed on demand based on the trunk.
-		// Note that option (A) would be a simple change to `addSequencedChange` whereas (B) would likely require
+		// Note that option (A) would be a simple change to `addSequencedChanges` whereas (B) would likely require
 		// rebasing trunk changes over the inverse of trunk changes.
 		assert(
 			this.localBranch.getHead() === this.trunk.getHead(),
@@ -646,8 +646,16 @@ export class EditManager<
 		return Math.max(max, localPath.length);
 	}
 
-	public addSequencedChange(
-		newCommit: Commit<TChangeset>,
+	/**
+	 * Add a bunch of sequenced changes.
+	 * Local changes (changes from this client) are applied by fast forwarding the local branch commit onto the trunk.
+	 * Remote changes (changes from remote clients) are applied in three steps:
+	 * 1. Recreate the remote client's local environment.
+	 * 2. Rebase the change over the trunk and append it to the peer branch.
+	 * 3. Rebase the local branch over the updated trunk.
+	 */
+	public addSequencedChanges(
+		newCommits: Commit<TChangeset>[],
 		sequenceNumber: SeqNumber,
 		referenceSequenceNumber: SeqNumber,
 	): void {
@@ -656,66 +664,73 @@ export class EditManager<
 			0x713 /* Expected change sequence number to exceed the last known minimum sequence number */,
 		);
 
-		assert(
-			sequenceNumber >= // This is ">=", not ">" because changes in the same batch will have the same sequence number
-				(this.sequenceMap.maxKey()?.sequenceNumber ?? minimumPossibleSequenceNumber),
-			0xa64 /* Attempted to sequence change with an outdated sequence number */,
-		);
-
-		const commitsSequenceNumber = this.getBatch(sequenceNumber);
-		const sequenceId: SequenceId =
-			commitsSequenceNumber.length === 0
-				? {
-						sequenceNumber,
-					}
-				: {
-						sequenceNumber,
-						indexInBatch: commitsSequenceNumber.length,
-					};
-
-		if (newCommit.sessionId === this.localSessionId) {
-			return this.fastForwardNextLocalCommit(sequenceId);
-		}
-
-		// Get the revision that the remote change is based on
-		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
-		// Rebase that branch over the part of the trunk up to the base revision
-		// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
-		const peerLocalBranch = getOrCreate(
-			this.peerLocalBranches,
-			newCommit.sessionId,
-			() => new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
-		);
-		peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
-
-		if (peerLocalBranch.getHead() === this.trunk.getHead()) {
-			// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
-			this.pushCommitToTrunk(sequenceId, newCommit);
-			peerLocalBranch.setHead(this.trunk.getHead());
-		} else {
-			// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
-			const { duration, output: newChangeFullyRebased } = measure(() =>
-				rebaseChange(
-					this.changeFamily.rebaser,
-					newCommit,
-					peerLocalBranch.getHead(),
-					this.trunk.getHead(),
-					this.mintRevisionTag,
-				),
+		for (const newCommit of newCommits) {
+			assert(
+				sequenceNumber >= // This is ">=", not ">" because changes in the same batch will have the same sequence number
+					(this.sequenceMap.maxKey()?.sequenceNumber ?? minimumPossibleSequenceNumber),
+				0xa64 /* Attempted to sequence change with an outdated sequence number */,
 			);
 
-			this.telemetryEventBatcher?.accumulateAndLog({
-				duration,
-				...newChangeFullyRebased.telemetryProperties,
-			});
+			const commitsSequenceNumber = this.getBatch(sequenceNumber);
+			const sequenceId: SequenceId =
+				commitsSequenceNumber.length === 0
+					? {
+							sequenceNumber,
+						}
+					: {
+							sequenceNumber,
+							indexInBatch: commitsSequenceNumber.length,
+						};
 
-			peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
-			this.pushCommitToTrunk(sequenceId, {
-				...newCommit,
-				change: newChangeFullyRebased.change,
-			});
+			if (newCommit.sessionId === this.localSessionId) {
+				this.fastForwardNextLocalCommit(sequenceId);
+				continue;
+			}
+
+			// Step 1 - Recreate the peer remote client's local environment.
+			// Get the revision that the remote change is based on
+			const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
+			// Rebase that peer local branch over the part of the trunk up to the base revision
+			// This will be a no-op if the sending client has not advanced since the last time we received an edit from it
+			const peerLocalBranch = getOrCreate(
+				this.peerLocalBranches,
+				newCommit.sessionId,
+				() =>
+					new SharedTreeBranch(baseRevisionInTrunk, this.changeFamily, this.mintRevisionTag),
+			);
+			peerLocalBranch.rebaseOnto(this.trunk, baseRevisionInTrunk);
+
+			// Step 2 - Rebase the change over the trunk and append it to the peer branch
+			if (peerLocalBranch.getHead() === this.trunk.getHead()) {
+				// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
+				this.pushCommitToTrunk(sequenceId, newCommit);
+				peerLocalBranch.setHead(this.trunk.getHead());
+			} else {
+				// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
+				const { duration, output: newChangeFullyRebased } = measure(() =>
+					rebaseChange(
+						this.changeFamily.rebaser,
+						newCommit,
+						peerLocalBranch.getHead(),
+						this.trunk.getHead(),
+						this.mintRevisionTag,
+					),
+				);
+
+				this.telemetryEventBatcher?.accumulateAndLog({
+					duration,
+					...newChangeFullyRebased.telemetryProperties,
+				});
+
+				peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
+				this.pushCommitToTrunk(sequenceId, {
+					...newCommit,
+					change: newChangeFullyRebased.change,
+				});
+			}
 		}
 
+		// Step 3 - Rebase the local branch over the updated trunk.
 		this.localBranch.rebaseOnto(this.trunk);
 	}
 

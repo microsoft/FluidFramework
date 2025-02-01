@@ -33,6 +33,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -392,6 +393,13 @@ export abstract class SharedObjectCore<
 	): void;
 
 	/**
+	 * Derived classes should override this to do custom processing on remote messages.
+	 * Process messages for this shared object. The messages here are contiguous messages for this object in a batch.
+	 * @param messageCollection - The collection of messages to process.
+	 */
+	protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
+
+	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
 
@@ -587,17 +595,55 @@ export abstract class SharedObjectCore<
 	 * @param messageCollection - The collection of messages to process.
 	 */
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
-		const { envelope, messagesContent, local } = messagesCollection;
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-			this.process(
-				{
-					...envelope,
-					clientSequenceNumber,
-					contents: parseHandles(contents, this.serializer),
-				},
-				local,
+		const { envelope, local, messagesContent: encodedMessagesContent } = messagesCollection;
+
+		// Decode any handles in the contents.
+		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
+		for (const { contents, localOpMetadata, clientSequenceNumber } of encodedMessagesContent) {
+			decodedMessagesContent.push({
+				contents: parseHandles(contents, this.serializer),
 				localOpMetadata,
+				clientSequenceNumber,
+			});
+		}
+
+		if (this.processMessagesCore === undefined) {
+			for (const {
+				contents,
+				localOpMetadata,
+				clientSequenceNumber,
+			} of decodedMessagesContent) {
+				this.process(
+					{
+						...envelope,
+						clientSequenceNumber,
+						contents,
+					},
+					local,
+					localOpMetadata,
+				);
+			}
+		} else {
+			this.opProcessingHelper.measure(
+				(): ICustomData<ProcessTelemetryProperties> => {
+					this.processMessagesCore?.({
+						envelope,
+						local,
+						messagesContent: decodedMessagesContent,
+					});
+					const telemetryProperties: ProcessTelemetryProperties = {
+						sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+					};
+					return {
+						customData: telemetryProperties,
+					};
+				},
+				local ? "local" : "remote",
 			);
+
+			for (const { contents, clientSequenceNumber } of decodedMessagesContent) {
+				this.emit("op", { ...envelope, contents, clientSequenceNumber });
+			}
 		}
 	}
 
