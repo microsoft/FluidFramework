@@ -51,6 +51,7 @@
 		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
+		"emoji-picker-element": "^1.26.0",
 		"fluid-framework": "workspace:~",
 		"process": "^0.11.10"
 	},
