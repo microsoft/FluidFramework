@@ -17,6 +17,7 @@ import {
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";
 
 function setNavigator(
+	// eslint-disable-next-line @rushstack/no-new-null -- testing behavior with global
 	navigator: Partial<Navigator & { deviceMemory?: number }> | undefined | null,
 ) {
 	global.navigator = navigator as Navigator;
@@ -90,7 +91,7 @@ describe("Hardware Stats", () => {
 	});
 
 	it("should generate correct hardware stats with null navigator", async () => {
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line unicorn/no-null -- testing behavior with global
 		const navigator = null;
 		setNavigator(navigator);
 		// testing function

@@ -1479,7 +1479,8 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		// If the node belongs to a data store, return its package path. For DDSes, we return the package path of the
 		// data store that contains it.
 		const context = this.contexts.get(nodePath.split("/")[1]);
-		return (await context?.getInitialSnapshotDetails())?.pkg;
+		const initialSnapshotDetails = await context?.getInitialSnapshotDetails();
+		return initialSnapshotDetails?.pkg;
 	}
 
 	/**
