@@ -1015,6 +1015,47 @@ describe("client.applyMsg", () => {
 
 			logger.validate({ baseText: "BBBBBB B" });
 		});
+		it.only("obliterate with mismatched final states", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "B{6666666}BBB{666666}BB",
+					options: {
+						mergeTreeEnableObliterate: true,
+						mergeTreeEnableSidedObliterate: true,
+						mergeTreeEnableAnnotateAdjust: true,
+					},
+				},
+				"A",
+				"B",
+			);
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+			const b = clients.B;
+
+			ops.push(
+				// no way to know if annotates are regular or adjust
+				b.makeOpMessage(b.annotateRangeLocal(12, 21, { foo: 1 }), ++seq),
+				b.makeOpMessage(
+					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 9, side: Side.Before }),
+					++seq,
+				),
+				b.makeOpMessage(b.insertTextLocal(2, "66"), ++seq),
+				b.makeOpMessage(b.insertTextLocal(8, "BB"), ++seq),
+				b.makeOpMessage(
+					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 4, side: Side.Before }),
+					++seq,
+				),
+				b.makeOpMessage(b.insertTextLocal(2, "6666666666"), ++seq),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+
+			logger.validate({ baseText: "B{66666666}BBBBB{666666}BB" });
+		});
 	});
 
 	describe("updates minSeq", () => {
