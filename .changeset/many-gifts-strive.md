@@ -5,7 +5,7 @@
 "section": deprecation
 ---
 
-Deprecate unnecessary exports of container-runtime package
+Many unnecessary exports have been deprecated in the container-runtime package
 
 The following types in the `@fluidframework/container-runtime` are deprecated. These types are unnecessary for external users of this package.
 
