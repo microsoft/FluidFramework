@@ -8,24 +8,27 @@
 export function identityAdapter<T>(value: T): T;
 
 // @public (undocumented)
-export interface MigrationOptions<in Before, out After, out Common> {
+export interface MigrationOptions<in Before = never, out After extends object = object, out Common = unknown> {
     // (undocumented)
-    afterAdapter(from: After): Common & IChannel;
+    afterAdapter(from: After): Common;
     // (undocumented)
-    beforeAdapter(from: Before): Common & IChannel;
+    beforeAdapter(from: Before): Common;
     // (undocumented)
-    migrate(from: Before, to: After): any;
+    readonly defaultMigrated: boolean;
+    migrate(from: Before, to: After, adaptedTo: Common): void;
     readonly migrationIdentifier: string;
     // (undocumented)
-    readonly to: ISharedObjectKind<After>;
+    readonly to: SharedKernelFactory<After>;
 }
 
 // @public (undocumented)
-export interface MigrationSet<in out TFrom> {
+export interface MigrationSet<in out TFrom extends object = object, out Common = unknown, out After extends object = object> {
     // (undocumented)
-    readonly from: ISharedObjectKind<TFrom>;
+    readonly fromKernel: SharedKernelFactory<TFrom>;
     // (undocumented)
-    selector(id: string): MigrationOptions<TFrom, unknown, unknown>;
+    readonly fromSharedObject: ISharedObjectKind<unknown>;
+    // (undocumented)
+    selector(id: string): MigrationOptions<TFrom, After, Common>;
 }
 
 // @public

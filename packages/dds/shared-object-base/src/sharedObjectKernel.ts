@@ -164,6 +164,7 @@ export interface SharedKernelFactory<T extends object> {
  * @internal
  */
 export interface KernelArgs {
+	id: string;
 	serializer: IFluidSerializer;
 	handle: IFluidHandle;
 	submitMessage: (op: unknown, localOpMetadata: unknown) => void;
@@ -207,6 +208,7 @@ class SharedObjectFromKernelFull<
 		this.handle = new SharedObjectHandle(merged, id, runtime.IFluidHandleContext);
 
 		this.kernelArgs = {
+			id,
 			serializer: this.serializer,
 			handle: this.handle,
 			submitMessage: (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
@@ -227,7 +229,11 @@ class SharedObjectFromKernelFull<
 	}
 }
 
-function mergeAPIs<Base extends object, Extra extends object>(
+/**
+ * User a proxy to add APIs from extra onto base.
+ * @internal
+ */
+export function mergeAPIs<Base extends object, Extra extends object>(
 	base: Base,
 	extraGetter: () => Extra,
 ): Base & Extra {

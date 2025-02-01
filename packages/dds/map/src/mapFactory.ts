@@ -32,6 +32,7 @@ const type = "https://graph.microsoft.com/types/map";
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
  * @privateRemarks
  * The clean way to export this is to do `class MapFactory extends ...` but that hits https://github.com/microsoft/rushstack/issues/4429.
+ * TODO: this should not even be exposed: `makeSharedObjectKind` should be used instead.
  * @sealed
  * @legacy
  * @alpha

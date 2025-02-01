@@ -3,21 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import type { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { bufferToString } from "@fluid-internal/client-utils";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
+	ITelemetryContext,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
+import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
-	SharedObjectFromKernel,
+	makeSharedObjectKind,
+	mergeAPIs,
+	type FactoryOut,
 	type IFluidSerializer,
-	type ISharedObjectEvents,
 	type ISharedObjectKind,
+	type KernelArgs,
 	type SharedKernel,
+	type SharedKernelFactory,
+	type SharedObjectKind,
+	type SharedObjectOptions,
 } from "@fluidframework/shared-object-base/internal";
-
-import type { GetCommon } from "./shimFactory.js";
 
 /**
  * Design constraints:
@@ -54,7 +60,7 @@ export function unsupportedAdapter<T>(value: T): never {
  */
 export interface MigrationOptions<
 	in Before = never,
-	out After = unknown,
+	out After extends object = object,
 	out Common = unknown,
 > {
 	/**
@@ -69,17 +75,24 @@ export interface MigrationOptions<
 	/**
 	 * Migrate all data, including non persisted things like event registrations to the new object.
 	 *
-	 * `from` should be left in a consistent state to support that since migration might be rolled back by discarding the new object and reusing the old.
+	 * This should use editing APis which emit Ops to send the changes to remote clients.
+	 *
+	 * `to` is in the default initial state when this is called.
 	 */
-	migrate(from: Before, to: After);
+	migrate(from: Before, to: After, adaptedTo: Common): void;
 }
 
 /**
  *
  */
-export interface MigrationSet<in out TFrom> {
-	readonly from: SharedKernelFactory<TFrom>;
-	selector(id: string): MigrationOptions<TFrom>;
+export interface MigrationSet<
+	in out TFrom extends object = object,
+	out Common = unknown,
+	out After extends object = object,
+> {
+	readonly fromKernel: SharedKernelFactory<TFrom>;
+	readonly fromSharedObject: ISharedObjectKind<unknown>;
+	selector(id: string): MigrationOptions<TFrom, After, Common>;
 }
 
 /**
@@ -98,12 +111,18 @@ interface MigrationShimInfo {
 	readonly status: MigrationStatus;
 	cast<const T extends MigrationOptions>(
 		options: T,
-	): T extends MigrationOptions<never, unknown, infer Common> ? Common : never;
+	): T extends MigrationOptions<never, object, infer Common> ? Common : never;
+	upgrade(): void;
 }
 
 enum MigrationStatus {
 	Before,
 	After,
+}
+
+interface ShimData<TOut> extends FactoryOut<object> {
+	readonly adapter: TOut;
+	migrated?: MigrationOptions;
 }
 
 /**
@@ -115,39 +134,54 @@ enum MigrationStatus {
  * Data saved by this adapter can be loaded by `From` if it is before the migration, but after the migration it can not always be loaded by `To`:
  * the migration shim must continue to be used to load the data to ensure legacy content is properly supported.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function migrate<T extends MigrationSet<any>>(
-	options: T,
-): ISharedObjectKind<GetCommon<T["selector"]> & IMigrationShim> {
+export function makeSharedObjectAdapter<TFrom extends object, Common extends object = object>(
+	migration: MigrationSet<TFrom, Common>,
+): ISharedObjectKind<Common> & SharedObjectKind<Common> {
+	const fromFactory = migration.fromSharedObject.getFactory();
+
+	const kernelFactory: SharedKernelFactory<Common> = {
+		create(args) {
+			const shim = new MigrationShim<TFrom, Common>(args, migration);
+			return {
+				kernel: shim,
+				view: shim.view,
+			};
+		},
+	};
+
+	const options: SharedObjectOptions<Common> = {
+		type: fromFactory.type,
+		attributes: fromFactory.attributes, // TODO: maybe these should be customized
+		telemetryContextPrefix: "fluid_adapter_",
+		factory: kernelFactory,
+	};
+
+	return makeSharedObjectKind<Common>(options);
+}
+
+/**
+ * If op is a migration op, return the migration identifier.
+ */
+function opMigrationId(op: ISequencedDocumentMessage): string | undefined {
+	return opMigrationIdFromContents(op.contents);
+}
+
+/**
+ * If op is a migration op, return the migration identifier.
+ */
+function opMigrationIdFromContents(op: unknown): string | undefined {
 	throw new Error("Not implemented");
 }
 
-interface FactoryOut<T> {
-	readonly kernel: SharedKernel;
-	readonly view: T;
+interface LocalOpMetadata {
+	migrated: MigrationPhase;
+	inner: unknown;
 }
 
-/**
- * TODO: use this. Maybe move loadCore here.
- */
-export interface SharedKernelFactory<T> {
-	create(args: KernelArgs): FactoryOut<T>;
-}
-
-/**
- *
- */
-export interface KernelArgs {
-	serializer: IFluidSerializer;
-	handle: IFluidHandle;
-	submitMessage: (op: unknown, localOpMetadata: unknown) => void;
-	isAttached: () => boolean;
-	eventEmitter: TypedEventEmitter<ISharedObjectEvents>;
-}
-
-interface ShimData<TOut> extends FactoryOut<unknown> {
-	readonly adapter: TOut;
-	migrated?: MigrationOptions;
+enum MigrationPhase {
+	Before,
+	Migration,
+	After,
 }
 
 /**
@@ -157,19 +191,15 @@ interface ShimData<TOut> extends FactoryOut<unknown> {
  *
  * TODO: events
  */
-class MigrationShim<TFrom, TOut> extends SharedObjectFromKernel<ISharedObjectEvents> {
-	/**
-	 * If a migration is in progress (locally migrated, but migration not sequenced),
-	 * this will hold the data in the format before migration.
-	 *
-	 * TODO: use this.
-	 */
-	#preMigrationData: ShimData<TOut> | undefined;
-
+class MigrationShim<TFrom extends object, TOut extends object> implements SharedKernel {
 	// Lazy init here so correct kernel constructed in loadCore when loading from existing data.
 	#data: ShimData<TOut> | undefined;
 
-	private readonly kernelArgs: KernelArgs;
+	private migrationSequenced: undefined | { sequenceNumber: number; clientId: string };
+
+	private readonly migrationOptions: MigrationOptions<TFrom, object, TOut>;
+
+	public readonly view: TOut;
 
 	/**
 	 * @param id - String identifier.
@@ -177,31 +207,162 @@ class MigrationShim<TFrom, TOut> extends SharedObjectFromKernel<ISharedObjectEve
 	 * @param attributes - The attributes for the map.
 	 */
 	public constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		private readonly migrationSet: MigrationSet<TFrom>,
+		public readonly kernelArgs: KernelArgs,
+		public readonly migrationSet: MigrationSet<TFrom, TOut>,
 	) {
-		super(id, runtime, attributes, "fluid_treeMap_");
-		this.kernelArgs = {
-			serializer: this.serializer,
-			handle: this.handle,
-			submitMessage: (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
-			isAttached: () => this.isAttached(),
-			eventEmitter: this,
-		};
+		this.migrationOptions = this.migrationSet.selector(this.kernelArgs.id);
+		// Proxy which forwards to the current adapter's APIs.
+		this.view = mergeAPIs<object, TOut>(Object.freeze({}), () => this.data.adapter);
+	}
+	public summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
+		const result = this.data.kernel.summarizeCore(serializer, telemetryContext);
+		if (this.migrationSequenced !== undefined) {
+			addBlobToSummary(
+				result,
+				this.migrationOptions.migrationIdentifier,
+				JSON.stringify(this.migrationSequenced),
+			);
+		}
+		return result;
+	}
 
-		// Proxy which grafts the adapter's APIs onto this object.
-		return new Proxy(this, {
-			get: (target, prop, receiver) => {
-				// Prefer `this` over adapter when there is a conflict.
-				if (Reflect.has(target, prop)) {
-					return Reflect.get(target, prop, target);
+	public async loadCore(storage: IChannelStorageService): Promise<void> {
+		assert(this.#data === undefined, "loadCore should only be called once, and called first");
+
+		const isMigrated = await storage.contains(this.migrationOptions.migrationIdentifier);
+		this.#data = this.init(isMigrated);
+		if (isMigrated) {
+			const migrationBlob = await storage.readBlob(this.migrationOptions.migrationIdentifier);
+			const migrationString = bufferToString(migrationBlob, "utf8");
+			// TODO: validate migration data
+			const migrationData = JSON.parse(migrationString) as {
+				sequenceNumber: number;
+				clientId: string;
+			};
+			this.migrationSequenced = migrationData;
+
+			// TODO: there does not seem to be a way to scope storage to a subpath so we can hide the migration data from it.
+		}
+
+		return this.data.kernel.loadCore(storage);
+	}
+
+	public onDisconnect(): void {
+		// TODO: should this be called on old kernel after migration?
+		this.data.kernel.onDisconnect();
+	}
+
+	public reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+		// TODO: In the future could allow an adapter to optionally handle this case by rebasing the op into the new format.
+		const meta = localOpMetadata as LocalOpMetadata;
+		switch (meta.migrated) {
+			case MigrationPhase.Before: {
+				if (this.data.migrated !== undefined) {
+					throw new Error("Cannot reSubmitCore across migration");
 				}
-				const adapter = target.data.adapter;
-				return Reflect.get(adapter as object, prop, adapter) as unknown;
-			},
-		});
+				break;
+			}
+			case MigrationPhase.Migration: {
+				// TODO: maybe support this?
+				throw new Error("Cannot reSubmitCore migration");
+			}
+			case MigrationPhase.After: {
+				assert(
+					this.data.migrated !== undefined,
+					"Ops after migration should only happen after migration",
+				);
+				break;
+			}
+			default: {
+				unreachableCase(meta.migrated);
+			}
+		}
+		this.data.kernel.reSubmitCore(content, meta.inner);
+	}
+
+	public applyStashedOp(content: unknown): void {
+		// TODO: how does this interact with migration?
+		this.data.kernel.applyStashedOp(content);
+	}
+
+	public processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): void {
+		const migration = opMigrationId(message);
+		if (migration === this.migrationOptions.migrationIdentifier) {
+			if (this.migrationSequenced === undefined) {
+				if (!local) {
+					// TODO: migrate
+				}
+				assert(message.clientId !== null, "server should not migrate");
+				this.migrationSequenced = {
+					sequenceNumber: message.sequenceNumber,
+					clientId: message.clientId,
+				};
+			} else {
+				// Concurrent migrations. Drop this one.
+				// Will also drop local ops that client made before observing the first migration ensuring loading up new DDS doesn't happen twice.
+				// Maybe telemetry here?
+				return;
+			}
+		} else {
+			// If migration !== undefined here, there could be a nested adapter (Which could be supported in the future) or mismatched adapters.
+			// For now, error in this case.
+			assert(migration === undefined, "Mismatched migration");
+
+			if (this.migrationSequenced === undefined) {
+				// Before migration
+				this.data.kernel.processCore(message, local, localOpMetadata);
+			} else {
+				// Already migrated
+				if (
+					message.referenceSequenceNumber < this.migrationSequenced.sequenceNumber &&
+					message.clientId !== this.migrationSequenced.clientId
+				) {
+					// A migration happened that the client producing this op didn't know about (when it made this op).
+					// Drop the op: migrations are first write wins.
+					// Maybe telemetry here?
+					// TODO: In the future could allow an adapter to optionally handle this case by rebasing the op into the new format.
+					return;
+				} else {
+					// This op is after the migration from a client that observed the migration.
+					// Must be in new format, send to new kernel:
+					this.data.kernel.processCore(message, local, localOpMetadata);
+				}
+			}
+		}
+	}
+
+	public rollback(content: unknown, localOpMetadata: unknown): void {
+		// TODO: In the future could allow an adapter to optionally handle this case by rebasing the op into the new format.
+		const meta = localOpMetadata as LocalOpMetadata;
+		switch (meta.migrated) {
+			case MigrationPhase.Before: {
+				if (this.data.migrated !== undefined) {
+					throw new Error("Cannot rollback across migration");
+				}
+				break;
+			}
+			case MigrationPhase.Migration: {
+				throw new Error("Cannot rollback migration");
+			}
+			case MigrationPhase.After: {
+				assert(
+					this.data.migrated !== undefined,
+					"Ops after migration should only happen after migration",
+				);
+				break;
+			}
+			default: {
+				unreachableCase(meta.migrated);
+			}
+		}
+		this.data.kernel.rollback(content, meta.inner);
 	}
 
 	/**
@@ -210,70 +371,77 @@ class MigrationShim<TFrom, TOut> extends SharedObjectFromKernel<ISharedObjectEve
 	 * This does not prevent the map APIs from being available:
 	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
 	 */
-	public upgrade(): void {
+	public upgrade(doEdits: boolean): void {
 		// TODO: upgrade op, upgrade rebasing etc.
 
 		const data = this.data;
 		if (data.migrated !== undefined) {
+			// Already migrated
 			return;
 		}
-		const options: MigrationOptions<TFrom, unknown, TOut> = this.migrationSet.selector(
-			this.id,
-		) as MigrationOptions<TFrom, unknown, TOut>;
-		const { kernel, view } = options.to.create(this.kernelArgs);
 
-		options.migrate(data.view as TFrom, view);
-		const adapter = options.afterAdapter(view);
-		this.#data = {
-			view,
-			kernel: this.wrapKernel(kernel),
-			adapter,
-			migrated: options,
-		};
+		const after = this.init(true);
+
+		if (doEdits) {
+			// TODO: actual op
+			const op = { migration: this.migrationOptions.migrationIdentifier };
+			assert(
+				opMigrationIdFromContents(op) === this.migrationOptions.migrationIdentifier,
+				"Migration op must have migration identifier",
+			);
+			this.kernelArgs.submitMessage(op, {
+				inner: {},
+				migrated: MigrationPhase.Migration,
+			} satisfies LocalOpMetadata);
+			this.migrationOptions.migrate(data.view as TFrom, after.view, after.adapter);
+		}
+
+		this.#data = after;
 	}
 
-	private get data(): FactoryOut<unknown> & {
+	private init(migrated: boolean): FactoryOut<object> & {
+		readonly adapter: TOut;
+		migrated?: MigrationOptions;
+	} {
+		const adjustedArgs: KernelArgs = {
+			...this.kernelArgs,
+			submitMessage: (content, localOpMetadata) => {
+				this.kernelArgs.submitMessage(content, {
+					migrated: migrated ? MigrationPhase.After : MigrationPhase.Before,
+					inner: localOpMetadata,
+				} satisfies LocalOpMetadata);
+			},
+		};
+		if (migrated) {
+			// Create post migration
+			const { kernel, view } = this.migrationOptions.to.create(adjustedArgs);
+			const adapter = this.migrationOptions.afterAdapter(view);
+			return {
+				view,
+				kernel,
+				adapter,
+				migrated: this.migrationOptions,
+			};
+		} else {
+			// Create pre migration
+			const { kernel, view } = this.migrationSet.fromKernel.create(adjustedArgs);
+			const adapter = this.migrationOptions.beforeAdapter(view);
+			return {
+				view,
+				kernel,
+				adapter,
+				migrated: this.migrationOptions,
+			};
+		}
+	}
+
+	private get data(): FactoryOut<object> & {
 		readonly adapter: TOut;
 		migrated?: MigrationOptions;
 	} {
 		if (this.#data === undefined) {
-			// initialize to default format
-			const options: MigrationOptions<TFrom, unknown, TOut> = this.migrationSet.selector(
-				this.id,
-			) as MigrationOptions<TFrom, unknown, TOut>;
-			if (options.defaultMigrated) {
-				// Create post migration
-				const { kernel, view } = options.to.create(this.kernelArgs);
-				const adapter = options.afterAdapter(view);
-				this.#data = {
-					view,
-					kernel: this.wrapKernel(kernel),
-					adapter,
-					migrated: options,
-				};
-			} else {
-				// Create pre migration
-				const { kernel, view } = this.migrationSet.from.create(this.kernelArgs);
-				const adapter = options.beforeAdapter(view);
-				this.#data = {
-					view,
-					kernel: this.wrapKernel(kernel),
-					adapter,
-					migrated: options,
-				};
-			}
+			this.#data = this.init(this.migrationOptions.defaultMigrated);
 		}
 		return this.#data;
-	}
-
-	private wrapKernel(kernel: SharedKernel): SharedKernel {
-		return {
-			...kernel,
-			// TODO: intercept ops to handle migration cases.
-		};
-	}
-
-	protected override get kernel(): SharedKernel {
-		return this.data.kernel;
 	}
 }

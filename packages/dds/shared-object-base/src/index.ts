@@ -30,4 +30,6 @@ export {
 	makeSharedObjectKind,
 	SharedKernelFactory,
 	FactoryOut,
+	SharedObjectOptions,
+	mergeAPIs,
 } from "./sharedObjectKernel.js";
