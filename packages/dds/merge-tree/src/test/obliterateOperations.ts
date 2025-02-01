@@ -75,7 +75,6 @@ const generateFieldText = (client: TestClient, random: IRandom): string => {
 const insertFieldText = (
 	client: TestClient,
 	opStart: number,
-	opEnd: number,
 	random: IRandom,
 ): IMergeTreeInsertMsg | undefined => {
 	const text = generateFieldText(client, random);
@@ -111,7 +110,7 @@ export const obliterateField: TestOperation = (
 				{ pos: startPos, side: Side.After },
 				{ pos: endPos, side: Side.Before },
 			);
-			const insertOp = insertFieldText(client, startPos + 1, endPos, random);
+			const insertOp = insertFieldText(client, startPos + 1, random);
 			assert(insertOp !== undefined, "Insert op should not be undefined");
 			const op = createGroupOp(obliterateOp, insertOp);
 			return op;

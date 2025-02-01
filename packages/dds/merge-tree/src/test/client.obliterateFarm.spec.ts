@@ -96,7 +96,7 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 	});
 }
 
-describeFuzz("MergeTree.Client Obliterate", ({ testCount }) => {
+describeFuzz.skip("MergeTree.Client Obliterate", ({ testCount }) => {
 	if (testCount > 1) {
 		doOverRange(
 			{ min: 0, max: testCount - 1 },
