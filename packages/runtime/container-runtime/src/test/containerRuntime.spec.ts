@@ -1325,7 +1325,7 @@ describe("Runtime", () => {
 
 			// A legacy partner team overrides the summarizeInternal method to add custom data to the Summary.
 			// Let's make sure we don't break them inadvertently, while we work to move them to a better pattern.
-			it("Preserve known overreach into private member", async () => {
+			it("Ensure private member is stable to support legacy usage", async () => {
 				const containerRuntime_withSummarizeInternal = (await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
 					registryEntries: [],
