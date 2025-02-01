@@ -14,7 +14,6 @@ module.exports = {
 	rules: {
 		"@typescript-eslint/no-use-before-define": "off",
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	settings: {
 		"import/extensions": [".ts", ".tsx", ".d.ts", ".js", ".jsx"],
