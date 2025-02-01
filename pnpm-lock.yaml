@@ -13160,24 +13160,12 @@ importers:
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../../runtime/datastore-definitions
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../../../framework/fluid-static
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../dds/map
-      '@fluidframework/map-legacy':
+      '@fluidframework/map-1dot4':
         specifier: npm:@fluidframework/map@^1.4.0
         version: '@fluidframework/map@1.4.0'
-      '@fluidframework/matrix':
-        specifier: workspace:~
-        version: link:../../../dds/matrix
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
-      '@fluidframework/sequence':
-        specifier: workspace:~
-        version: link:../../../dds/sequence
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../utils/telemetry-utils
@@ -13187,15 +13175,15 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../test/test-utils
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../../dds/tree
       axios:
         specifier: ^1.7.7
         version: 1.7.9(debug@4.4.0)
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../framework/fluid-framework
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
