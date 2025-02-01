@@ -302,9 +302,9 @@ export class DocumentService
 		}
 		const fluidResolvedUrl = response.resolvedUrl;
 		this._resolvedUrl = fluidResolvedUrl;
-		this.storageUrl = fluidResolvedUrl.endpoints.storageUrl;
-		this.ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
-		this.deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
+		this.storageUrl = fluidResolvedUrl?.endpoints?.storageUrl;
+		this.ordererUrl = fluidResolvedUrl?.endpoints?.ordererUrl;
+		this.deltaStorageUrl = fluidResolvedUrl?.endpoints?.deltaStorageUrl;
 		this.deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? this.ordererUrl;
 		return true;
 	}
