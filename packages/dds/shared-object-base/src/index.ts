@@ -21,3 +21,15 @@ export {
 	bindHandles,
 } from "./utils.js";
 export { ValueType } from "./valueType.js";
+export {
+	SharedObjectFromKernel,
+	SharedKernel,
+	makeChannelFactory,
+	thisWrap,
+	KernelArgs,
+	makeSharedObjectKind,
+	SharedKernelFactory,
+	FactoryOut,
+	SharedObjectOptions,
+	mergeAPIs,
+} from "./sharedObjectKernel.js";

@@ -6,10 +6,24 @@
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import { ValueType } from "@fluidframework/shared-object-base/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
+import type {
+	ITelemetryContext,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
+import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import type {
+	IFluidSerializer,
+	KernelArgs,
+	SharedKernel,
+	SharedKernelFactory,
+} from "@fluidframework/shared-object-base/internal";
+import { thisWrap, ValueType } from "@fluidframework/shared-object-base/internal";
 
-import type { ISharedMapEvents } from "./interfaces.js";
+import type { ISharedMapCore, ISharedMapEvents } from "./interfaces.js";
 import type {
 	IMapClearLocalOpMetadata,
 	IMapClearOperation,
@@ -21,7 +35,7 @@ import type {
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
-import { type ILocalValue, LocalValueMaker, makeSerializable } from "./localValues.js";
+import { type ILocalValue, LocalValueMaker } from "./localValues.js";
 
 /**
  * Defines the means to process and submit a given op on a map.
@@ -46,11 +60,13 @@ interface IMapMessageHandler {
 
 /**
  * Map key operations are one of several types.
+ * @internal
  */
 export type IMapKeyOperation = IMapSetOperation | IMapDeleteOperation;
 
 /**
  * Description of a map delta operation
+ * @internal
  */
 export type IMapOperation = IMapKeyOperation | IMapClearOperation;
 
@@ -126,9 +142,30 @@ function createKeyLocalOpMetadata(
 }
 
 /**
+ * @internal
+ */
+export const mapKernelFactory: SharedKernelFactory<ISharedMapCore> = {
+	create: (args: KernelArgs) => {
+		const k = new MapKernel(
+			args.serializer,
+			args.handle,
+			args.submitMessage,
+			args.isAttached,
+			args.eventEmitter,
+		);
+		return { kernel: k, view: k };
+	},
+};
+
+/**
  * A SharedMap is a map-like distributed data structure.
  */
-export class MapKernel {
+class MapKernel implements SharedKernel, ISharedMapCore {
+	/**
+	 * String representation for the class.
+	 */
+	public readonly [Symbol.toStringTag]: string = "SharedMap";
+
 	/**
 	 * The number of key/value pairs stored in the map.
 	 */
@@ -285,7 +322,7 @@ export class MapKernel {
 	/**
 	 * {@inheritDoc ISharedMap.set}
 	 */
-	public set(key: string, value: unknown): void {
+	public set(key: string, value: unknown): this {
 		// Undefined/null keys can't be serialized to JSON in the manner we currently snapshot.
 		if (key === undefined || key === null) {
 			throw new Error("Undefined and null keys are not supported");
@@ -299,7 +336,7 @@ export class MapKernel {
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
-			return;
+			return this;
 		}
 
 		const op: IMapSetOperation = {
@@ -308,6 +345,8 @@ export class MapKernel {
 			value: { type: localValue.type, value: localValue.value as unknown },
 		};
 		this.submitMapKeyMessage(op, previousValue);
+
+		return this;
 	}
 
 	/**
@@ -361,7 +400,7 @@ export class MapKernel {
 	 * @param serializer - The serializer to use to serialize handles in its values.
 	 * @returns A JSON string containing serialized map data
 	 */
-	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
+	private getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
 			serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
@@ -369,23 +408,11 @@ export class MapKernel {
 		return serializableMapData;
 	}
 
-	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
-		const serializableMapData: IMapDataObjectSerializable = {};
-		for (const [key, localValue] of this.data.entries()) {
-			serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
-		}
-		return serializableMapData;
-	}
-
-	public serialize(serializer: IFluidSerializer): string {
-		return JSON.stringify(this.getSerializableStorage(serializer));
-	}
-
 	/**
 	 * Populate the kernel with the given map data.
 	 * @param data - A JSON string containing serialized map data
 	 */
-	public populateFromSerializable(json: IMapDataObjectSerializable): void {
+	private populateFromSerializable(json: IMapDataObjectSerializable): void {
 		for (const [key, serializable] of Object.entries(
 			this.serializer.decode(json) as IMapDataObjectSerializable,
 		)) {
@@ -802,4 +829,144 @@ export class MapKernel {
 				: { type: "add", pendingMessageId };
 		this.submitMessage(op, localMetadata);
 	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.summarizeCore}
+	 */
+	public summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+	): ISummaryTreeWithStats {
+		let currentSize = 0;
+		let counter = 0;
+		let headerBlob: IMapDataObjectSerializable = {};
+		const blobs: string[] = [];
+
+		const builder = new SummaryTreeBuilder();
+
+		const data = this.getSerializedStorage(serializer);
+
+		// If single property exceeds this size, it goes into its own blob
+		const MinValueSizeSeparateSnapshotBlob = 8 * 1024;
+
+		// Maximum blob size for multiple map properties
+		// Should be bigger than MinValueSizeSeparateSnapshotBlob
+		const MaxSnapshotBlobSize = 16 * 1024;
+
+		// Partitioning algorithm:
+		// 1) Split large (over MinValueSizeSeparateSnapshotBlob = 8K) properties into their own blobs.
+		//    Naming (across snapshots) of such blob does not have to be stable across snapshots,
+		//    As de-duping process (in driver) should not care about paths, only content.
+		// 2) Split remaining properties into blobs of MaxSnapshotBlobSize (16K) size.
+		//    This process does not produce stable partitioning. This means
+		//    modification (including addition / deletion) of property can shift properties across blobs
+		//    and result in non-incremental snapshot.
+		//    This can be improved in the future, without being format breaking change, as loading sequence
+		//    loads all blobs at once and partitioning schema has no impact on that process.
+		for (const key of Object.keys(data)) {
+			const value = data[key];
+			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
+				const blobName = `blob${counter}`;
+				counter++;
+				blobs.push(blobName);
+				const content: IMapDataObjectSerializable = {
+					[key]: {
+						type: value.type,
+						value: JSON.parse(value.value) as unknown,
+					},
+				};
+				builder.addBlob(blobName, JSON.stringify(content));
+			} else {
+				currentSize += value.type.length + 21; // Approximation cost of property header
+				if (value.value) {
+					currentSize += value.value.length;
+				}
+
+				if (currentSize > MaxSnapshotBlobSize) {
+					const blobName = `blob${counter}`;
+					counter++;
+					blobs.push(blobName);
+					builder.addBlob(blobName, JSON.stringify(headerBlob));
+					headerBlob = {};
+					currentSize = 0;
+				}
+				headerBlob[key] = {
+					type: value.type,
+					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
+				};
+			}
+		}
+
+		const header: IMapSerializationFormat = {
+			blobs,
+			content: headerBlob,
+		};
+		builder.addBlob(snapshotFileName, JSON.stringify(header));
+
+		return builder.getSummaryTree();
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.loadCore}
+	 */
+	public async loadCore(storage: IChannelStorageService): Promise<void> {
+		const json = await readAndParse<object>(storage, snapshotFileName);
+		const newFormat = json as IMapSerializationFormat;
+		if (Array.isArray(newFormat.blobs)) {
+			this.populateFromSerializable(newFormat.content);
+			await Promise.all(
+				newFormat.blobs.map(async (value) => {
+					const content = await readAndParse<IMapDataObjectSerializable>(storage, value);
+					this.populateFromSerializable(content);
+				}),
+			);
+		} else {
+			this.populateFromSerializable(json as IMapDataObjectSerializable);
+		}
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
+	 */
+	public processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+		if (message.type === MessageType.Operation) {
+			assert(
+				this.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata),
+				"Map received an unrecognized op, possibly from a newer version",
+			);
+		}
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
+	 */
+	public onDisconnect(): void {}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
+	 */
+	public reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+		this.trySubmitMessage(content as IMapOperation, localOpMetadata);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.applyStashedOp}
+	 */
+	public applyStashedOp(content: unknown): void {
+		this.tryApplyStashedOp(content as IMapOperation);
+	}
 }
+
+MapKernel.prototype.set[thisWrap] = true;
+
+interface IMapSerializationFormat {
+	blobs?: string[];
+	content: IMapDataObjectSerializable;
+}
+
+const snapshotFileName = "header";
