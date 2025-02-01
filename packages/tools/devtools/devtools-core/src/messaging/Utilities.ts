@@ -106,17 +106,26 @@ export function handleIncomingMessage(
 ): void {
 	// TODO: remove loggingOptions once things settle.
 
-	if (message === undefined || !isDevtoolsMessage(message)) {
+	const loggingPreamble =
+		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
+
+	if (message === undefined) {
+		console.error(`${loggingPreamble} No message provided to handle.`);
+		return;
+	}
+
+	if (!isDevtoolsMessage(message)) {
+		console.debug(`${loggingPreamble} Ignoring non-devtools message.`);
 		return;
 	}
 
 	if (handlers[message.type] === undefined) {
 		// No handler for this type provided. No-op.
+		console.debug(
+			`${loggingPreamble} Ignoring message of type: "${message.type}", for which no handler was provided.`,
+		);
 		return;
 	}
-
-	const loggingPreamble =
-		loggingOptions?.context === undefined ? "" : `${loggingOptions.context}: `;
 
 	handlers[message.type](message).then(
 		(wasMessageHandled) => {
