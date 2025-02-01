@@ -112,8 +112,10 @@ function createClearLocalOpMetadata(
 	const localMetadata: IMapClearLocalOpMetadata = {
 		type: "clear",
 		pendingMessageId: pendingClearMessageId,
-		previousMap,
 	};
+	if (previousMap !== undefined) {
+		localMetadata.previousMap = previousMap;
+	}
 	return localMetadata;
 }
 
@@ -675,12 +677,13 @@ export class AttributableMapKernel {
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
 		const op = message.contents as IMapKeyOperation;
-		if (this.pendingClearMessageIds.length > 0) {
+		const firstPendingClearMessageId = this.pendingClearMessageIds[0];
+		if (firstPendingClearMessageId !== undefined) {
 			if (local) {
 				assert(
 					localOpMetadata !== undefined &&
 						isMapKeyLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
+						localOpMetadata.pendingMessageId < firstPendingClearMessageId,
 					0x5ed /* Received out of order op when there is an unackd clear message */,
 				);
 			}
