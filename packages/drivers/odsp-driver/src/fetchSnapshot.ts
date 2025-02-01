@@ -46,6 +46,7 @@ import {
 import { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { mockify } from "./mockify.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import { checkForKnownServerFarmType } from "./odspUrlHelper.js";
 import {
@@ -693,7 +694,7 @@ function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void 
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
  * @returns fetched snapshot.
  */
-export async function downloadSnapshot(
+async function downloadSnapshot(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	tokenFetchOptions: TokenFetchOptionsEx,
@@ -774,6 +775,9 @@ export async function downloadSnapshot(
 		requestUrl: url,
 	};
 }
+
+const mockableDownloadSnapshot = mockify(downloadSnapshot);
+export { mockableDownloadSnapshot as downloadSnapshot };
 
 function isRedeemSharingLinkError(
 	odspResolvedUrl: IOdspResolvedUrl,
