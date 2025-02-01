@@ -13,8 +13,8 @@ import {
 	DDSFuzzTestState,
 	Client as DDSClient,
 } from "@fluid-private/test-dds-utils";
-import { IFluidHandle, fluidHandleSymbol } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IChannelFactory,
@@ -107,11 +107,10 @@ const covertLocalServerStateToDdsState = async (
 	const allHandles = [
 		...Object.values(channels)
 			.flatMap((c) => c)
-			.map((c) => c.channel.handle)
-			.filter((v): v is IFluidHandle => v !== undefined),
-		...Object.values(state.client.entryPoint.globalObjects)
-			.map((v) => v.handle)
-			.filter((v): v is IFluidHandle => v !== undefined),
+			.map((c) => ({ id: c.id, handle: c.channel.handle })),
+		...Object.values(state.client.entryPoint.globalObjects).filter(
+			(v) => v.handle !== undefined,
+		),
 	];
 	return {
 		clients: makeUnreachableCodePathProxy("clients"),
@@ -122,8 +121,11 @@ const covertLocalServerStateToDdsState = async (
 		random: {
 			...state.random,
 			handle: () => {
-				const realHandle = toFluidHandleInternal(state.random.pick(allHandles));
+				const { id, handle } = state.random.pick(allHandles);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const realHandle = toFluidHandleInternal(handle!);
 				return {
+					id,
 					absolutePath: realHandle.absolutePath,
 					get [fluidHandleSymbol]() {
 						return realHandle[fluidHandleSymbol];
@@ -143,10 +145,11 @@ const covertLocalServerStateToDdsState = async (
 export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressState> = async (
 	state,
 ) => {
+	// we need to look at other objects, not just the entrypoint
 	const channels = await state.client.entryPoint.channels();
 	const channelType = state.random.pick(Object.keys(channels));
 	const channel = state.random.pick(channels[channelType]).channel;
-	assert(channel !== undefined, "channel mist exist");
+	assert(channel !== undefined, "channel must exist");
 	const model = ddsModelMap.get(channelType);
 	assert(model !== undefined, "must have model");
 
@@ -169,10 +172,26 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 	const channels = await state.client.entryPoint.channels();
 	const channel = channels[op.channelType].find((v) => v.id === op.channelId)?.channel;
 	assert(channel !== undefined, "must have channel");
-	await baseModel.reducer(
-		await covertLocalServerStateToDdsState(state, channel),
-		op.op as any,
-	);
+
+	const allHandles = [
+		...Object.values(channels)
+			.flatMap((c) => c)
+			.map((c) => ({ id: c.id, handle: c.channel.handle })),
+		...Object.values(state.client.entryPoint.globalObjects).filter(
+			(v) => v.handle !== undefined,
+		),
+	];
+
+	const subOp = JSON.parse(JSON.stringify(op.op), (key, value) => {
+		if (isObject(value) && "absolutePath" in value && "id" in value) {
+			const handle = allHandles.find((h) => h.id === value.id);
+			assert(handle !== undefined, "handle must exist");
+			return handle;
+		}
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+		return value;
+	});
+	await baseModel.reducer(await covertLocalServerStateToDdsState(state, channel), subOp);
 };
 
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {

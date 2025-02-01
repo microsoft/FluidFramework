@@ -156,10 +156,9 @@ describe("Local Server Stress", () => {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0.1,
-		skipMinimization: true,
+		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 24,
+		// replay: 5,
 		saveFailures,
-		saveSuccesses,
 	});
 });
