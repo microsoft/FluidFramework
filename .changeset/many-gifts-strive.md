@@ -7,7 +7,7 @@
 
 Many unnecessary exports have been deprecated in the container-runtime package
 
-The following types in the `@fluidframework/container-runtime` are deprecated. These types are unnecessary for external users of this package.
+The following types in the `@fluidframework/container-runtime` package are now deprecated. These types are unnecessary for external users of this package.
 
 - currentDocumentVersionSchema
 - DeletedResponseHeaderKey
