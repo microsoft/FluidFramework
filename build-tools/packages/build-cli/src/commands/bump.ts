@@ -78,6 +78,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the workspace:-prefixed values to set interdependencies using the workspace protocol. The interdependency range will be set to the workspace string specified.',
 			options: [...RangeOperators, ...WorkspaceRanges],
 		}),
+		updateAllDeps: Flags.boolean({
+			description:
+				'Controls the behavior for updating dependencies in a package. If "false" (the default), matching dependencies are only updated if they use the "workspace:" protocol. If "true", they are updated regardless of what their version specifier says. This flag only exists to allow use of the old behavior (by passing `--updateAllDeps).',
+			default: false,
+			env: "FLUB_BUMP_UPDATE_ALL_DEPS",
+		}),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
 		skipChecks: skipCheckFlag,
@@ -247,6 +253,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			newVersion,
 			interdependencyRange,
 			this.logger,
+			!flags.updateAllDeps,
 		);
 
 		if (shouldInstall) {
