@@ -5,4 +5,9 @@
 "section": deprecation
 ---
 
-[Deprecate azure-client re-exported legacy APIs](https://github.com/microsoft/FluidFramework/issues/23702) including `ITokenClaims` and `ScopeType`. See [issue #23702](https://github.com/microsoft/FluidFramework/issues/23702) for details and alternatives.
+ITokenClaims and ScopeType types are now deprecated
+
+The `ITokenClaims` and `ScopeType` types in `@fluidframework/azure-client` are now deprecated. These were isolated types
+re-exported for convenience but they do not directly interact with typical azure-client APIs.
+
+See [issue #23702](https://github.com/microsoft/FluidFramework/issues/23702) for details and alternatives.
