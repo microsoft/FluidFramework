@@ -243,6 +243,7 @@ class DefaultStressDataObject extends StressDataObject {
 				this.map.set(handle.absolutePath, { id: obj.id, type: obj.type });
 			}
 		}
+		this._globalObjects[obj.id] = obj;
 	}
 }
 
