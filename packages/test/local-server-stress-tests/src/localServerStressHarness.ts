@@ -456,7 +456,6 @@ function mixinAddRemoveClient<
 			return async (
 				state: TState,
 			): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
-				const baseOp = baseGenerator(state);
 				const { clients, random, isDetached, containerUrl } = state;
 				if (
 					containerUrl !== undefined &&
@@ -475,11 +474,11 @@ function mixinAddRemoveClient<
 						return {
 							type: "addClient",
 							url: containerUrl,
-							id: makeFriendlyClientId(random, clients.length),
+							id: makeFriendlyClientId(random),
 						} satisfies AddClient;
 					}
 				}
-				return baseOp;
+				return baseGenerator(state);
 			};
 		};
 
@@ -568,7 +567,7 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
 					loadClient(
 						state.localDeltaConnectionServer,
 						state.codeLoader,
-						makeFriendlyClientId(state.random, index),
+						makeFriendlyClientId(state.random),
 						url,
 					),
 				),
@@ -884,7 +883,9 @@ async function loadClient(
  * This exists purely for easier debugging--reasoning about client "A" is easier than reasoning
  * about client "3e8a621a-7b35-414b-897f-8795962fb415".
  */
-function makeFriendlyClientId(random: IRandom, index: number): string {
+let clientCount = 0;
+function makeFriendlyClientId(random: IRandom): string {
+	const index = clientCount++;
 	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
 }
 
@@ -907,11 +908,12 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		package: "local-server-stress-tests",
 	};
 	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
+	clientCount = 0;
 	const initialClient = await createDetachedClient(
 		localDeltaConnectionServer,
 		codeLoader,
 		codeDetails,
-		startDetached ? makeFriendlyClientId(random, 0) : "original",
+		startDetached ? makeFriendlyClientId(random) : "original",
 	);
 	const clients: Client[] = [initialClient];
 	let containerUrl: string | undefined;
@@ -925,7 +927,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 					loadClient(
 						localDeltaConnectionServer,
 						codeLoader,
-						makeFriendlyClientId(random, i),
+						makeFriendlyClientId(random),
 						url,
 					),
 				),
@@ -1179,7 +1181,6 @@ export function mixinReconnect<
 		() => {
 			const baseGenerator = model.generatorFactory();
 			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
-				const baseOp = baseGenerator(state);
 				if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
 					const client = state.clients.find((c) => c.id === state.client.id);
 					assert(client !== undefined);
@@ -1189,7 +1190,7 @@ export function mixinReconnect<
 					};
 				}
 
-				return baseOp;
+				return baseGenerator(state);
 			};
 		};
 

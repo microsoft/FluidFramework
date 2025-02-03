@@ -98,44 +98,45 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 		} satisfies AliasDataStore;
 	};
 
-	const syncGenerator = createWeightedAsyncGenerator<StressOperations, LocalServerStressState>(
+	const asyncGenerator = createWeightedAsyncGenerator<
+		StressOperations,
+		LocalServerStressState
+	>([
 		[
-			[
-				aliasDataStore,
-				1,
-				(state) =>
-					Object.values(state.client.entryPoint.globalObjects).some(
-						(v) => v.type === "stressDataObject" && v.dataStore !== undefined,
-					),
-			],
-			[
-				async (state) => ({
-					type: "createDataStore",
-					asChild: state.random.bool(),
-					id: `datastore-${++id}`,
-				}),
-				2,
-			],
-			[
-				async (state) => ({
-					type: "uploadBlob",
-					id: `blob-${++id}`,
-				}),
-				2,
-			],
-			[
-				async (state) => ({
-					type: "createChannel",
-					channelType: state.random.pick([...ddsModelMap.keys()]),
-					id: `channel-${++id}`,
-				}),
-				3,
-			],
-			[DDSModelOpGenerator, 4],
+			aliasDataStore,
+			1,
+			(state) =>
+				Object.values(state.client.entryPoint.globalObjects).some(
+					(v) => v.type === "stressDataObject" && v.dataStore !== undefined,
+				),
 		],
-	);
+		[
+			async (state) => ({
+				type: "createDataStore",
+				asChild: state.random.bool(),
+				id: `datastore-${++id}`,
+			}),
+			2,
+		],
+		[
+			async (state) => ({
+				type: "uploadBlob",
+				id: `blob-${++id}`,
+			}),
+			2,
+		],
+		[
+			async (state) => ({
+				type: "createChannel",
+				channelType: state.random.pick([...ddsModelMap.keys()]),
+				id: `channel-${++id}`,
+			}),
+			3,
+		],
+		[DDSModelOpGenerator, 4],
+	]);
 
-	return async (state) => syncGenerator(state);
+	return async (state) => asyncGenerator(state);
 }
 export const saveFailures = { directory: path.join(_dirname, "../../src/test/results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../../src/test/results") };
@@ -156,9 +157,10 @@ describe("Local Server Stress", () => {
 			clientAddProbability: 0.1,
 		},
 		reconnectProbability: 0.1,
-		// skipMinimization: true,
+		skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// replay: 5,
 		saveFailures,
+		saveSuccesses,
 	});
 });
