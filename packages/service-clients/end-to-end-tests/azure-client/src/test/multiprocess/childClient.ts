@@ -45,10 +45,6 @@ if (useAzure && endPoint === undefined) {
 	throw new Error("Azure Fluid Relay service endpoint is missing");
 }
 
-let presence: IPresence;
-let container: IFluidContainer;
-let containerId: string;
-
 const getOrCreatePresenceContainer = async (
 	id: string | undefined,
 	user: AzureUser,
@@ -61,6 +57,8 @@ const getOrCreatePresenceContainer = async (
 	client: AzureClient;
 	containerId: string;
 }> => {
+	let container: IFluidContainer;
+	let containerId: string;
 	const connectionProps: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
 		? {
 				tenantId,
@@ -100,7 +98,7 @@ const getOrCreatePresenceContainer = async (
 		"Container is not attached after attach is called",
 	);
 
-	presence = acquirePresenceViaDataObject(
+	const presence = acquirePresenceViaDataObject(
 		container.initialObjects.presence as ExperimentalPresenceDO,
 	);
 	return {
@@ -111,86 +109,94 @@ const getOrCreatePresenceContainer = async (
 		containerId,
 	};
 };
-let send: (msg: MessageToParent) => void;
-if (process.send) {
-	send = process.send.bind(process);
-} else {
+function createSendFunction(): (msg: MessageToParent) => void {
+	if (process.send) {
+		return process.send.bind(process);
+	}
 	throw new Error("process.send is not defined");
 }
 
-function isConnected(): boolean {
+const send = createSendFunction();
+
+function isConnected(container: IFluidContainer | undefined): boolean {
 	return container !== undefined && container.connectionState === ConnectionState.Connected;
 }
 
-async function messageHandler(msg: MessageFromParent): Promise<void> {
-	switch (msg.command) {
-		case "connect": {
-			if (!msg.user) {
-				send({ event: "error", error: "No azure user information given" });
-				break;
-			}
-			if (isConnected()) {
-				send({ event: "error", error: "Child is already connected" });
-				break;
-			}
-			const {
-				container: c,
-				presence: p,
-				containerId: id,
-			} = await getOrCreatePresenceContainer(msg.containerId, msg.user);
-			container = c;
-			presence = p;
-			containerId = id;
+class MessageHandler {
+	public presence: IPresence | undefined;
+	public container: IFluidContainer | undefined;
+	public containerId: string | undefined;
 
-			presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
-				const m: MessageToParent = {
-					event: "attendeeJoined",
-					sessionId: attendee.sessionId,
-				};
-				send(m);
-			});
-			presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
-				const m: MessageToParent = {
-					event: "attendeeDisconnected",
-					sessionId: attendee.sessionId,
-				};
-				send(m);
-			});
-			send({ event: "ready", containerId, sessionId: presence.getMyself().sessionId });
+	public async onMessage(msg: MessageFromParent): Promise<void> {
+		switch (msg.command) {
+			case "connect": {
+				if (!msg.user) {
+					send({ event: "error", error: "No azure user information given" });
+					break;
+				}
+				if (isConnected(this.container)) {
+					send({ event: "error", error: "Child is already connected" });
+					break;
+				}
+				const { container, presence, containerId } = await getOrCreatePresenceContainer(
+					msg.containerId,
+					msg.user,
+				);
+				this.container = container;
+				this.presence = presence;
+				this.containerId = containerId;
 
-			break;
-		}
+				presence.events.on("attendeeJoined", (attendee: ISessionClient) => {
+					const m: MessageToParent = {
+						event: "attendeeJoined",
+						sessionId: attendee.sessionId,
+					};
+					send(m);
+				});
+				presence.events.on("attendeeDisconnected", (attendee: ISessionClient) => {
+					const m: MessageToParent = {
+						event: "attendeeDisconnected",
+						sessionId: attendee.sessionId,
+					};
+					send(m);
+				});
+				send({ event: "ready", containerId, sessionId: presence.getMyself().sessionId });
 
-		case "disconnectSelf": {
-			if (!container) {
-				send({ event: "error", error: "Child is not connected to container" });
-				break;
-			}
-			if (!presence) {
-				send({ event: "error", error: "Child is not connected to presence" });
 				break;
 			}
 
-			container.disconnect();
-			send({
-				event: "disconnectedSelf",
-				sessionId: presence.getMyself().sessionId,
-			});
+			case "disconnectSelf": {
+				if (!this.container) {
+					send({ event: "error", error: "Child is not connected to container" });
+					break;
+				}
+				if (!this.presence) {
+					send({ event: "error", error: "Child is not connected to presence" });
+					break;
+				}
 
-			break;
-		}
-		default: {
-			console.error("Unknown command");
-			send({ event: "error", error: "Unknown command" });
-			break;
+				this.container.disconnect();
+				send({
+					event: "disconnectedSelf",
+					sessionId: this.presence.getMyself().sessionId,
+				});
+
+				break;
+			}
+			default: {
+				console.error("Unknown command");
+				send({ event: "error", error: "Unknown command" });
+				break;
+			}
 		}
 	}
 }
 
 function setupMessageHandler(): void {
+	const messageHandler = new MessageHandler();
 	process.on("message", (msg: MessageFromParent) => {
-		messageHandler(msg).catch((error: Error) => {
-			console.error("Error in child client", error);
+		messageHandler.onMessage(msg).catch((error: Error) => {
+			console.error(`Error in client ${process.argv[2]}`, error);
 			send({ event: "error", error: error.message });
 		});
 	});

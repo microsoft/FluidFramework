@@ -11,7 +11,7 @@ export type MessageToChild = ConnectCommand | DisconnectSelfCommand;
 interface ConnectCommand {
 	command: "connect";
 	user: AzureUser;
-	containerId?: string;
+	containerId: string | undefined;
 }
 
 interface DisconnectSelfCommand {

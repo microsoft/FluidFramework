@@ -14,7 +14,7 @@ describe(`Presence with AzureClient`, () => {
 	const numClients = 5;
 	assert(numClients > 1, "Must have at least two clients");
 	let children: ChildProcess[] = [];
-	const connectTimeoutMs = 10_000;
+	const durationMs = 10_000;
 
 	const afterCleanUp: (() => void)[] = [];
 	afterEach(async () => {
@@ -33,18 +33,22 @@ describe(`Presence with AzureClient`, () => {
 	beforeEach("setup", async () => {
 		// Create inital child process
 		let containerId: string | undefined;
+
+		// Fork child processes
 		for (let i = 0; i < numClients; i++) {
-			const user = { id: `test-user-id-${i}`, name: `test-user-name-${i}` };
-			//
 			const child = fork("./lib/test/multiprocess/childClient.js", [
 				`child${i}` /* identifier passed to child process */,
 			]);
 			children.push(child);
-			// Send connect command to child
+		}
+
+		// Send connect command to each child process
+		for (const [index, child] of children.entries()) {
+			const user = { id: `test-user-id-${index}`, name: `test-user-name-${index}` };
 			const message: MessageToChild = { command: "connect", containerId, user };
 			child.send(message);
 			// The initial child process will create the container, so we must wait to receive the containerId so future child clients can use it
-			if (i === 0) {
+			if (index === 0) {
 				await timeoutPromise(
 					(resolve) => {
 						child.once("message", (msg: MessageFromChild) => {
@@ -55,7 +59,7 @@ describe(`Presence with AzureClient`, () => {
 						});
 					},
 					{
-						durationMs: connectTimeoutMs,
+						durationMs,
 						errorMsg: "did not receive 'ready' from child process",
 					},
 				);
@@ -67,7 +71,6 @@ describe(`Presence with AzureClient`, () => {
 			child.on("error", (error) => {
 				assert.fail(`Child${index} process errored: ${error.message}`);
 			});
-			afterCleanUp.push(() => child.removeAllListeners());
 		}
 	});
 
@@ -85,7 +88,7 @@ describe(`Presence with AzureClient`, () => {
 				});
 			},
 			{
-				durationMs: connectTimeoutMs,
+				durationMs,
 				errorMsg: "did not receive all 'attendeeJoined' events",
 			},
 		);
@@ -104,7 +107,7 @@ describe(`Presence with AzureClient`, () => {
 						});
 					},
 					{
-						durationMs: connectTimeoutMs,
+						durationMs,
 						errorMsg: `Attendee[${index}] Disconnected Timeout`,
 					},
 				),
