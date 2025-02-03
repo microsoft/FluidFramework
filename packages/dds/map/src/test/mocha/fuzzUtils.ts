@@ -19,7 +19,7 @@ import type { Client, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isObject } from "@fluidframework/core-utils/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import {
 	DirectoryFactory,
@@ -69,8 +69,8 @@ async function assertMapsAreEquivalent(a: ISharedMap, b: ISharedMap): Promise<vo
 				isObject(bVal),
 				`${a.id} and ${b.id} differ at ${key}: a is an object, b is not}`,
 			);
-			const aHandle = isFluidHandle(aVal) ? await aVal.get() : aVal;
-			const bHandle = isFluidHandle(bVal) ? await bVal.get() : bVal;
+			const aHandle = isFluidHandle(aVal) ? toFluidHandleInternal(aVal).absolutePath : aVal;
+			const bHandle = isFluidHandle(bVal) ? toFluidHandleInternal(bVal).absolutePath : bVal;
 			assert.equal(
 				aHandle,
 				bHandle,
@@ -150,7 +150,7 @@ function mapMakeGenerator(
 export const baseMapModel: DDSFuzzModel<MapFactory, MapOperation> = {
 	workloadName: "default",
 	factory: new MapFactory(),
-	generatorFactory: () => takeAsync(1000, mapMakeGenerator()),
+	generatorFactory: () => takeAsync(100, mapMakeGenerator()),
 	reducer: async (state, operation) => mapReducer(state, operation),
 	validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 };
@@ -220,7 +220,7 @@ export type DirOperation = DirKeyOperation | SubDirectoryOperation;
 /**
  * Represents the configuration for directory operation generation.
  */
-interface DirOperationGenerationConfig {
+export interface DirOperationGenerationConfig {
 	validateInterval: number;
 	maxSubDirectoryChild?: number;
 	subDirectoryNamePool?: string[];

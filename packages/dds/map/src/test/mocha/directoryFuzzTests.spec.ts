@@ -19,10 +19,29 @@ import {
 	makeDirOperationGenerator,
 	makeDirReducer,
 	type DirOperation,
+	type DirOperationGenerationConfig,
 } from "./fuzzUtils.js";
 
 describe("SharedDirectory fuzz Create/Delete concentrated", () => {
-	createDDSFuzzSuite(baseDirModel, {
+	const options: DirOperationGenerationConfig = {
+		setKeyWeight: 0,
+		clearKeysWeight: 0,
+		deleteKeyWeight: 0,
+		createSubDirWeight: 2,
+		deleteSubDirWeight: 2,
+		maxSubDirectoryChild: 2,
+		subDirectoryNamePool: ["dir1", "dir2"],
+		validateInterval: dirDefaultOptions.validateInterval,
+	};
+	const model: DDSFuzzModel<DirectoryFactory, DirOperation> = {
+		workloadName: "default directory 1",
+		generatorFactory: () => takeAsync(100, makeDirOperationGenerator(options)),
+		reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
+		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
+		factory: new DirectoryFactory(),
+	};
+
+	createDDSFuzzSuite(model, {
 		validationStrategy: {
 			type: "fixedInterval",
 			interval: dirDefaultOptions.validateInterval,
@@ -74,15 +93,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 });
 
 describe("SharedDirectory fuzz", () => {
-	const model: DDSFuzzModel<DirectoryFactory, DirOperation> = {
-		workloadName: "default directory 2",
-		generatorFactory: () => takeAsync(100, makeDirOperationGenerator()),
-		reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
-		validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
-		factory: new DirectoryFactory(),
-	};
-
-	createDDSFuzzSuite(model, {
+	createDDSFuzzSuite(baseDirModel, {
 		validationStrategy: {
 			type: "fixedInterval",
 			interval: dirDefaultOptions.validateInterval,
@@ -103,7 +114,7 @@ describe("SharedDirectory fuzz", () => {
 	});
 
 	createDDSFuzzSuite(
-		{ ...model, workloadName: "default directory 2 with rebasing" },
+		{ ...baseDirModel, workloadName: "default directory 2 with rebasing" },
 		{
 			validationStrategy: {
 				type: "random",
