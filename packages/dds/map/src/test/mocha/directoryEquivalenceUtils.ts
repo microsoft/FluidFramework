@@ -42,7 +42,7 @@ async function assertEventualConsistencyCore(
 	for (const key of first.keys()) {
 		const firstVal: unknown = first.get(key);
 		const secondVal: unknown = second.get(key);
-		if (isObject(firstVal) === true) {
+		if (isObject(firstVal) === true || isObject(secondVal)) {
 			assert(
 				isObject(secondVal),
 				`Values differ at key ${key}: first is an object, second is not`,

@@ -172,9 +172,9 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 
 	const subOp = JSON.parse(JSON.stringify(op.op), (key, value) => {
 		if (isObject(value) && "absolutePath" in value && "id" in value) {
-			const handle = allHandles.find((h) => h.id === value.id);
-			assert(handle !== undefined, "handle must exist");
-			return handle;
+			const entry = allHandles.find((h) => h.id === value.id);
+			assert(entry !== undefined, "entry must exist");
+			return entry.handle;
 		}
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
@@ -189,7 +189,7 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 			v.type === "stressDataObject" ? v : undefined,
 		)) {
 			const stressDataObject = await value?.stressDataObject;
-			if (stressDataObject?.attached) {
+			if (stressDataObject?.attached === true) {
 				const channels = await stressDataObject.channels();
 				for (const channel of channels) {
 					if (channel.isAttached()) {

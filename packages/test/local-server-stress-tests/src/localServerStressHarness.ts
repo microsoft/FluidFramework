@@ -688,7 +688,18 @@ function mixinSynchronization<
 		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
 			const connectedClients = state.clients.filter(
-				(client) => client.container.connectionState === ConnectionState.Connected,
+				(client) => client.container.connectionState !== ConnectionState.Disconnected,
+			);
+
+			await Promise.all(
+				connectedClients.map(
+					async (c) =>
+						new Promise<void>((resolve) =>
+							c.container.connectionState !== ConnectionState.Connected
+								? c.container.once("connected", () => resolve())
+								: resolve(),
+						),
+				),
 			);
 
 			await Promise.all(
@@ -729,7 +740,7 @@ function mixinSynchronization<
 						await model.validateConsistency(readonlyChannel, client);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
-							error.message = `Comparing client ${readonlyChannel.container.clientId} vs client ${client.container.clientId}\n${error.message}`;
+							error.message = `Comparing client ${readonlyChannel.id} vs client ${client.id}\n${error.message}`;
 						}
 						throw error;
 					}
