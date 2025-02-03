@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.=
  * Licensed under the MIT License.
  */
 
@@ -10,6 +10,27 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
+/**
+ * This test suite is a prototype for multi-process end to end testing using the new Presence API on AzureClient.
+ * This main test file acts as the 'Orchestrator'. The orchestrator's job includes:
+ *
+ * - Fork child processes to simulate multiple Fluid clients
+ * - Send command messages to child clients to perform specific Fluid actions.
+ * - Receive response messages from child clients to verify expected behavior.
+ * - Clean up child processes after each test.
+ *
+ * The child processes are located in the `childClient.ts` file. Each child process simulates a Fluid client.
+ * The child client's job includes:
+ *
+ * - Create/Get + connect to Fluid container.
+ * - Listen for command messages from the orchestrator.
+ * - Perform the requested action.
+ * - Send response messages including any relevant data back to the orchestrator to verify expected behavior.
+ *
+ * This particular test suite tests the following E2E functionality for Presence:
+ * - Announce 'attendeeJoined' when remote client joins session.
+ * - Announce 'attendeeDisconnected' when remote client disconnects.
+ */
 describe(`Presence with AzureClient`, () => {
 	const numClients = 5;
 	assert(numClients > 1, "Must have at least two clients");

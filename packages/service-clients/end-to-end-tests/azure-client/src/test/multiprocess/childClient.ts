@@ -196,7 +196,10 @@ function setupMessageHandler(): void {
 	const messageHandler = new MessageHandler();
 	process.on("message", (msg: MessageFromParent) => {
 		messageHandler.onMessage(msg).catch((error: Error) => {
-			console.error(`Error in client ${process.argv[2]}`, error);
+			console.error(
+				`Error in client ${process.argv[2]}` /* Name given to child process */,
+				error,
+			);
 			send({ event: "error", error: error.message });
 		});
 	});
