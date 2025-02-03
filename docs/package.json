@@ -77,6 +77,8 @@
 		"@microsoft/applicationinsights-web": "^3.3.4",
 		"@playwright/test": "^1.49.0",
 		"@rushstack/node-core-library": "^5.9.0",
+		"@types/fs-extra": "^11.0.4",
+		"@types/hast": "^3.0.4",
 		"@types/node": "^22.9.1",
 		"@wayneferrao/docusaurus-search-local": "^0.48.5",
 		"chalk": "^5.3.0",
