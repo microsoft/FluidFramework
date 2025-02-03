@@ -4,7 +4,7 @@
  */
 
 import { validateRequestParams } from "@fluidframework/server-services-shared";
-import { throttle, IThrottleMiddlewareOptions } from "@fluidframework/server-services-utils";
+import { throttle, IThrottleMiddlewareOptions, verifyStorageToken } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
@@ -21,6 +21,7 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export function create(
 	config: Provider,
+	tenantManager: core.ITenantManager,
 	tenantThrottlers?: Map<string, core.IThrottler>,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	storage?: core.IDocumentStorage,
@@ -37,6 +38,7 @@ export function create(
 		"/:tenantId/:id/broadcast-signal",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+		verifyStorageToken(tenantManager, config),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
 			const tenantId = request.params.tenantId;
@@ -58,6 +60,7 @@ export function create(
 			}
 			try {
 				const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
+				// This will be removed shortly. Used to test in dev clusters and force a redirect.
 				const redirect: boolean = config.get("redirect");
 				const document = await storage?.getDocument(tenantId, documentId);
 				if (document?.session.deltaStreamUrl !== deltaStreamUrl || redirect) {
@@ -66,10 +69,7 @@ export function create(
 						currentUrl: deltaStreamUrl,
 						targetUrlAndPath: `${document?.session.deltaStreamUrl}${request.originalUrl}`,
 					});
-					response.redirect(
-						308,
-						`${document?.session.deltaStreamUrl}${request.originalUrl}`,
-					);
+					response.redirect(`${document?.session.deltaStreamUrl}${request.originalUrl}`);
 					return;
 				}
 				const signalRoom: IRoom = { tenantId, documentId };

@@ -77,6 +77,7 @@ export class NexusRunner implements IRunner {
 		const nexus = app.create(
 			this.config,
 			this.startupCheck,
+			this.tenantManager,
 			this.readinessCheck,
 			throttler,
 			this.collaborationSessionEventEmitter,

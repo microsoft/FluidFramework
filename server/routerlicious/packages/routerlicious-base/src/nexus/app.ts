@@ -19,6 +19,7 @@ import {
 	IReadinessCheck,
 	IThrottler,
 	IDocumentStorage,
+	ITenantManager,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -26,6 +27,7 @@ import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 export function create(
 	config: Provider,
 	startupCheck: IReadinessCheck,
+	tenantManager: ITenantManager,
 	readinessCheck?: IReadinessCheck,
 	restThrottler?: Map<string, IThrottler>,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
@@ -59,7 +61,7 @@ export function create(
 
 	// Bind routes
 	if (config.get("nexus:notificationsApi:enabled")) {
-		const routes = api.create(config, restThrottler, collaborationSessionEventEmitter, storage);
+		const routes = api.create(config, tenantManager, restThrottler, collaborationSessionEventEmitter, storage);
 		app.use(routes);
 	}
 

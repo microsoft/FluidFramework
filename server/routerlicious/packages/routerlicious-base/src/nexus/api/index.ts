@@ -13,6 +13,7 @@ import * as api from "./api";
 
 export function create(
 	config: Provider,
+	tenantManager: core.ITenantManager,
 	tenantThrottlers?: Map<string, core.IThrottler>,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	storage?: core.IDocumentStorage,
@@ -21,6 +22,7 @@ export function create(
 
 	const apiRoute = api.create(
 		config,
+		tenantManager,
 		tenantThrottlers,
 		collaborationSessionEventEmitter,
 		storage,
