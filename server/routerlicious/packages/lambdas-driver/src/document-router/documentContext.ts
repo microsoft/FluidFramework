@@ -80,7 +80,9 @@ export class DocumentContext extends EventEmitter implements IContext {
 	}
 
 	/**
-	 * Sets the state to pause, i.e. headPaused = true.
+	 * Sets the state to pause, i.e. headPaused = true, without emitting the pause event.
+	 * It is different than pause() method which emits the pause event.
+	 * This is used to set the state to pause when another doc in the same kafka partition triggered pause and we want to pause all the docs in that kafka partition.
 	 */
 	public setStateToPause() {
 		this.headPaused = true;

@@ -87,11 +87,8 @@ export class DocumentContextManager extends EventEmitter {
 				if (docContext.lastSuccessfulOffset < lowestOffset) {
 					lowestOffset = docContext.lastSuccessfulOffset;
 				}
-				// Pause all doc partitions' contexts
-				// Set headPaused=true for all doc partitions, so that we allow their head to move backwards(reprocess some ops) during resume
-				docContext.setStateToPause();
 			}
-			lowestOffset = lowestOffset > -1 ? lowestOffset : 0;
+			lowestOffset = (lowestOffset > -1 && lowestOffset < Number.MAX_SAFE_INTEGER) ? lowestOffset : 0;
 			this.headPaused = true;
 			this.tailPaused = true;
 			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
