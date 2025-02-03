@@ -937,7 +937,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 		if (message.type === MessageType.Operation) {
 			assert(
 				this.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata),
-				"Map received an unrecognized op, possibly from a newer version",
+				0xab2 /* Map received an unrecognized op, possibly from a newer version */,
 			);
 		}
 	}
