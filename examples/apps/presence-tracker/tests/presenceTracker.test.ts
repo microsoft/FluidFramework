@@ -108,11 +108,15 @@ describe("presence-tracker", () => {
 			await browser2.close();
 		});
 
+		// TODO:AB#28502: This test case passes all the time, but considering the remainder of this suite has issues where browser2 doesn't
+		// actually connect to the same session as browser1, it should be audited so that it's not a false positive.
 		it.skip("Second user can join", async () => {
 			// Both browser instances should be pointing to the same URL now.
 			expect(page2.url()).toEqual(page.url());
 		});
 
+		// TODO:AB#28502: There is a false positive with this test when `loadPresenceTrackerApp` in `beforeAll` is removed or sent to `page.url()`.
+		// In those cases, the second session observed on page2 is not from the first session.
 		it.skip("Second client shows two clients connected", async () => {
 			// Get the client list from the second browser instance; it should show two connected.
 			const elementHandle = await page2.waitForFunction(() =>
