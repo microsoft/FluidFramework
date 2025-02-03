@@ -117,7 +117,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	// The number of eager final IDs generated since the last telemetry was sent.
 	private telemetryEagerFinalIdCount = 0;
 	// The ongoing ghost session, if one exists.
-	private ongoingGhostSession?: { cluster?: IdCluster; ghostSessionId: SessionId };
+	private ongoingGhostSession?: { cluster?: IdCluster; ghostSessionId: SessionId } | undefined;
 
 	// #endregion
 

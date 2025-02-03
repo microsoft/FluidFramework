@@ -1096,7 +1096,9 @@ describe("Runtime", () => {
 					try {
 						summarizer.summarizeOnDemand({ reason });
 						resolved = true;
-					} catch {}
+					} catch {
+						// Eat the error
+					}
 
 					await flushPromises();
 					assert(resolved === false, "already running promise should not resolve yet");
@@ -1164,7 +1166,7 @@ describe("Runtime", () => {
 						"should be nack",
 					);
 					assert(
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
 						JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
 						"summary nack error should be test-nack",
 					);
