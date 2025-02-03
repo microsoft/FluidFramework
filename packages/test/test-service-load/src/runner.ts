@@ -246,9 +246,7 @@ async function runnerProcess(
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
 			// non-null guaranteed by bounds check
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const testConfiguration = configurations[
-				runConfig.runId % configurations.length
-			]!;
+			const testConfiguration = configurations[runConfig.runId % configurations.length]!;
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
