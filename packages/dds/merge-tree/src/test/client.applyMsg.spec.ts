@@ -1019,7 +1019,7 @@ describe("client.applyMsg", () => {
 		it.skip("obliterate with mismatched final states", () => {
 			const clients = createClientsAtInitialState(
 				{
-					initialState: "B{6666666}BBB{666666}BB",
+					initialState: "0{zzzzzzz}123{yyyyyy}45",
 					options: {
 						mergeTreeEnableObliterate: true,
 						mergeTreeEnableSidedObliterate: true,
