@@ -16,7 +16,7 @@ import {
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import { IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequestHeader, type ConfigTypes } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -244,7 +244,9 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
-			const testConfiguration = configurations[runConfig.runId % configurations.length];
+			const testConfiguration = configurations[
+				runConfig.runId % configurations.length
+			] as Record<string, ConfigTypes>;
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
@@ -564,8 +566,9 @@ async function setupOpsMetrics(
 	const getUserName = (userContainer: IContainer) => {
 		const clientId = userContainer.clientId;
 		if (clientId !== undefined && clientId.length > 0) {
-			if (clientIdUserNameMap[clientId]) {
-				return clientIdUserNameMap[clientId];
+			const maybeUserName = clientIdUserNameMap[clientId];
+			if (maybeUserName !== undefined) {
+				return maybeUserName;
 			}
 
 			const userName: string | undefined = userContainer.getQuorum().getMember(clientId)
