@@ -42,6 +42,7 @@ import {
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
 	LocalDocumentServiceFactory,
@@ -78,6 +79,8 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	random: IRandom;
 	clients: Client[];
 	client: Client;
+	datastore: StressDataObject;
+	channel: IChannel;
 	isDetached: boolean;
 }
 
@@ -86,6 +89,8 @@ export interface LocalServerStressState extends BaseFuzzTestState {
  */
 interface SelectedClientSpec {
 	clientId: string;
+	datastoreId: string;
+	channelId: string;
 }
 
 /**
@@ -771,23 +776,41 @@ function mixinClientSelection<
 			// 2. Make it available to the subsequent reducer logic we're going to inject
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
-			const baseOp = await runInStateWithClient(state, client, async () =>
+			const entry = state.random.pick(
+				Object.values(client.entryPoint.globalObjects).filter(
+					(v) => v.type === "stressDataObject",
+				),
+			);
+			assert(entry?.type === "stressDataObject");
+			const datastore = await entry.stressDataObject;
+			const channels = await datastore.StressDataObject.channels();
+			const channel = state.random.pick(channels);
+			assert(channel !== undefined, "channel must exist");
+			const baseOp = await runInStateWithClient(state, client, datastore, channel, async () =>
 				baseGenerator(state),
 			);
 			return baseOp === done
 				? done
-				: {
+				: ({
 						...baseOp,
 						clientId: client.id,
-					};
+						datastoreId: entry.id,
+						channelId: channel.id,
+					} satisfies SelectedClientSpec);
 		};
 	};
 
 	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.id === operation.clientId);
+		const entry = client?.entryPoint.globalObjects[operation.datastoreId];
+		assert(entry?.type === "stressDataObject");
+		const datastore = await entry.stressDataObject;
+		const channels = await datastore.StressDataObject.channels();
+		const channel = channels.find((c) => c.id === operation.channelId);
+		assert(channel !== undefined, "channel must exist");
 		assert(client !== undefined);
-		await runInStateWithClient(state, client, async () => {
+		await runInStateWithClient(state, client, datastore, channel, async () => {
 			await model.reducer(state, operation as TOperation);
 		});
 	};
@@ -807,16 +830,22 @@ function mixinClientSelection<
 async function runInStateWithClient<TState extends LocalServerStressState, Result>(
 	state: TState,
 	client: TState["client"],
+	datastore: TState["datastore"],
+	channel: TState["channel"],
 	callback: (state: TState) => Promise<Result>,
 ): Promise<Result> {
-	const oldClient = state.client;
+	const old = { ...state };
 	state.client = client;
+	state.datastore = datastore;
+	state.channel = channel;
 	try {
 		return await callback(state);
 	} finally {
 		// This code is explicitly trying to "update" to the old value.
 
-		state.client = oldClient;
+		state.client = old.client;
+		state.datastore = old.datastore;
+		state.channel = old.channel;
 	}
 }
 
@@ -941,6 +970,8 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		codeLoader,
 		random,
 		client: makeUnreachableCodePathProxy("client"),
+		datastore: makeUnreachableCodePathProxy("datastore"),
+		channel: makeUnreachableCodePathProxy("channel"),
 		isDetached: startDetached,
 		containerUrl,
 	};

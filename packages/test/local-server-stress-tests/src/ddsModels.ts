@@ -101,20 +101,17 @@ const createDDSClient = (channel: IChannel): DDSClient<IChannelFactory> => {
 
 const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
-	channel: IChannel,
 ): Promise<DDSFuzzTestState<IChannelFactory>> => {
-	const channels = await state.client.entryPoint.channels();
+	const channels = await state.datastore.channels();
 	const allHandles = [
-		...Object.values(channels)
-			.flatMap((c) => c)
-			.map((c) => ({ id: c.id, handle: c.channel.handle })),
+		...channels.map((c) => ({ id: c.id, handle: c.handle })),
 		...Object.values(state.client.entryPoint.globalObjects).filter(
 			(v) => v.handle !== undefined,
 		),
 	];
 	return {
 		clients: makeUnreachableCodePathProxy("clients"),
-		client: createDDSClient(channel),
+		client: createDDSClient(state.channel),
 		containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
 		isDetached: state.isDetached,
 		summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
@@ -145,19 +142,15 @@ const covertLocalServerStateToDdsState = async (
 export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressState> = async (
 	state,
 ) => {
-	// we need to look at other objects, not just the entrypoint
-	const channels = await state.client.entryPoint.channels();
-	const channelType = state.random.pick(Object.keys(channels));
-	const channel = state.random.pick(channels[channelType]).channel;
-	assert(channel !== undefined, "channel must exist");
-	const model = ddsModelMap.get(channelType);
+	const channel = state.channel;
+	const model = ddsModelMap.get(channel.attributes.type);
 	assert(model !== undefined, "must have model");
 
-	const op = await model.generator(await covertLocalServerStateToDdsState(state, channel));
+	const op = await model.generator(await covertLocalServerStateToDdsState(state));
 
 	return {
 		type: "DDSModelOp",
-		channelType,
+		channelType: channel.attributes.type,
 		channelId: channel.id,
 		op,
 	} satisfies DDSModelOp;
@@ -168,15 +161,10 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 	op,
 ) => {
 	const baseModel = ddsModelMap.get(op.channelType);
-	assert(baseModel !== undefined, "must have model");
-	const channels = await state.client.entryPoint.channels();
-	const channel = channels[op.channelType].find((v) => v.id === op.channelId)?.channel;
-	assert(channel !== undefined, "must have channel");
-
+	assert(baseModel !== undefined, "must have base model");
+	const channels = await state.datastore.channels();
 	const allHandles = [
-		...Object.values(channels)
-			.flatMap((c) => c)
-			.map((c) => ({ id: c.id, handle: c.channel.handle })),
+		...channels.map((c) => ({ id: c.id, handle: c.handle })),
 		...Object.values(state.client.entryPoint.globalObjects).filter(
 			(v) => v.handle !== undefined,
 		),
@@ -191,7 +179,7 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
 	});
-	await baseModel.reducer(await covertLocalServerStateToDdsState(state, channel), subOp);
+	await baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp);
 };
 
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
@@ -203,8 +191,7 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 			const stressDataObject = await value?.stressDataObject;
 			if (stressDataObject?.attached) {
 				const channels = await stressDataObject.channels();
-				for (const entry of Object.values(channels).flatMap((ca) => ca)) {
-					const channel = entry.channel;
+				for (const channel of channels) {
 					if (channel.isAttached()) {
 						channelMap.set(`${stressDataObject.id}/${channel.id}`, channel);
 					}

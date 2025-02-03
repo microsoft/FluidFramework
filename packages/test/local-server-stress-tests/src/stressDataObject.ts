@@ -71,15 +71,11 @@ export class StressDataObject extends DataObject {
 	}
 
 	public async channels() {
-		const channels: Record<string, { id: string; channel: IChannel }[]> = {};
-		for (const [name, type] of this.channelNameMap.entries()) {
+		const channels: IChannel[] = [];
+		for (const [name] of this.channelNameMap.entries()) {
 			const channel = await this.runtime.getChannel(name).catch(() => undefined);
 			if (channel !== undefined) {
-				const ofType = (channels[type] ??= []);
-				ofType.push({
-					id: name,
-					channel,
-				});
+				channels.push(channel);
 			}
 		}
 		return channels;
