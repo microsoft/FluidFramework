@@ -1269,7 +1269,6 @@ describe("Runtime", () => {
 				);
 			});
 		});
-
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime method works", async () => {
 				const makeMixin = <T>(
