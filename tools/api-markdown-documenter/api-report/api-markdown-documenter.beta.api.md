@@ -121,7 +121,6 @@ declare namespace ApiItemUtilities {
         getFileSafeNameForApiItem,
         getModifiers,
         getModifierTags,
-        getReleaseTag,
         getReturnsBlock,
         getSeeBlocks,
         getSingleLineExcerptText,
@@ -436,9 +435,6 @@ function getModifiers(apiItem: ApiItem, modifiersToOmit?: ApiModifier[]): ApiMod
 
 // @public
 function getModifierTags(apiItem: ApiItem): ReadonlySet<string>;
-
-// @public @deprecated
-function getReleaseTag(apiItem: ApiItem): ReleaseTag;
 
 // @public
 function getReturnsBlock(apiItem: ApiItem): DocSection | undefined;

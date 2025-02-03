@@ -24,7 +24,6 @@ export {
 	getFileSafeNameForApiItem,
 	getModifiers,
 	getModifierTags,
-	getReleaseTag,
 	getReturnsBlock,
 	getSeeBlocks,
 	getSingleLineExcerptText,
