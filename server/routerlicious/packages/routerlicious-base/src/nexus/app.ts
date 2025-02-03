@@ -61,7 +61,13 @@ export function create(
 
 	// Bind routes
 	if (config.get("nexus:notificationsApi:enabled")) {
-		const routes = api.create(config, tenantManager, restThrottler, collaborationSessionEventEmitter, storage);
+		const routes = api.create(
+			config,
+			tenantManager,
+			restThrottler,
+			collaborationSessionEventEmitter,
+			storage,
+		);
 		app.use(routes);
 	}
 

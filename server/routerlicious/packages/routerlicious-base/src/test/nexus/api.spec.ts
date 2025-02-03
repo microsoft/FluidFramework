@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { IAlfredTenant, } from "@fluidframework/server-services-client";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	// IDocument,
 	MongoDatabaseManager,
@@ -186,7 +186,8 @@ describe("Routerlicious", () => {
 					// );
 					const startupCheck = new StartupCheck();
 					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					const collabSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+					const collabSessionEventEmitter =
+						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
 						startupCheck,
@@ -279,7 +280,8 @@ describe("Routerlicious", () => {
 
 					const startupCheck = new StartupCheck();
 					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					const collabSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+					const collabSessionEventEmitter =
+						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
 						startupCheck,
@@ -376,7 +378,8 @@ describe("Routerlicious", () => {
 
 					const startupCheck = new StartupCheck();
 					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					const collabSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+					const collabSessionEventEmitter =
+						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
 						startupCheck,
@@ -462,7 +465,8 @@ describe("Routerlicious", () => {
 					const startupCheck = new StartupCheck();
 					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					// testClusterDrainingStatusChecker = new TestClusterDrainingStatusChecker();
-					const collabSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+					const collabSessionEventEmitter =
+						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
 						startupCheck,
@@ -501,7 +505,6 @@ describe("Routerlicious", () => {
 					// 				},
 					// 			} as IDocument),
 					// 		);
-
 					// 	await supertest
 					// 		.get(`/documents/${appTenant1.id}/session/${document1._id}`)
 					// 		.set("Authorization", tenantToken1)
@@ -515,7 +518,6 @@ describe("Routerlicious", () => {
 					// 				isSessionActive: false,
 					// 			});
 					// 		});
-
 					// 	// Update an existing session
 					// 	await supertest
 					// 		.get(`/documents/${appTenant1.id}/session/${document1._id}`)
@@ -530,7 +532,6 @@ describe("Routerlicious", () => {
 					// 				isSessionActive: true,
 					// 			});
 					// 		});
-
 					// 	// Error our when the cluster is draining
 					// 	testClusterDrainingStatusChecker.setClusterDrainingStatus(true);
 					// 	await supertest
@@ -588,7 +589,8 @@ describe("Routerlicious", () => {
 					const startupCheck = new StartupCheck();
 					// testClusterDrainingStatusChecker = new TestClusterDrainingStatusChecker();
 					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					const collabSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+					const collabSessionEventEmitter =
+						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
 						startupCheck,

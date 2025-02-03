@@ -4,7 +4,11 @@
  */
 
 import { validateRequestParams } from "@fluidframework/server-services-shared";
-import { throttle, IThrottleMiddlewareOptions, verifyStorageToken } from "@fluidframework/server-services-utils";
+import {
+	throttle,
+	IThrottleMiddlewareOptions,
+	verifyStorageToken,
+} from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
