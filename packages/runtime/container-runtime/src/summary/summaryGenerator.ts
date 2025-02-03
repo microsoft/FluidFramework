@@ -242,11 +242,13 @@ export class SummaryGenerator {
 		summaryOptions: ISubmitSummaryOptions,
 		resultsBuilder = new SummarizeResultBuilder(),
 	): ISummarizeResults {
-		this.summarizeCore(summaryOptions, resultsBuilder).catch((error) => {
-			const message = "UnexpectedSummarizeError";
-			summaryOptions.summaryLogger.sendErrorEvent({ eventName: message }, error);
-			resultsBuilder.fail(message, error);
-		});
+		this.summarizeCore(summaryOptions, resultsBuilder).catch(
+			(error: IRetriableFailureError) => {
+				const message = "UnexpectedSummarizeError";
+				summaryOptions.summaryLogger.sendErrorEvent({ eventName: message }, error);
+				resultsBuilder.fail(message, error);
+			},
+		);
 
 		return resultsBuilder.build();
 	}
