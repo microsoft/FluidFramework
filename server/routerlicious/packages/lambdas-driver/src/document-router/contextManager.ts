@@ -127,6 +127,7 @@ export class DocumentContextManager extends EventEmitter {
 							newHeadOffset: head.offset,
 							currentHeadOffset: this.head.offset,
 							lastCheckpointOffset: this.lastCheckpoint.offset,
+							currentTailOffset: this.tail.offset,
 						},
 					);
 					return false;
@@ -138,6 +139,7 @@ export class DocumentContextManager extends EventEmitter {
 					{
 						newHeadOffset: head.offset,
 						currentHeadOffset: this.head.offset,
+						currentTailOffset: this.tail.offset,
 						headPaused: this.headPaused,
 					},
 				);
@@ -147,6 +149,7 @@ export class DocumentContextManager extends EventEmitter {
 				Lumberjack.info("Setting headPaused to false", {
 					newHeadOffset: head.offset,
 					currentHeadOffset: this.head.offset,
+					currentTailOffset: this.tail.offset,
 				});
 				this.headPaused = false;
 			}
@@ -170,6 +173,7 @@ export class DocumentContextManager extends EventEmitter {
 				{
 					newTailOffset: tail.offset,
 					currentTailOffset: this.tail.offset,
+					currentHeadOffset: this.head.offset,
 					tailPaused: this.tailPaused,
 				},
 			);
@@ -179,6 +183,7 @@ export class DocumentContextManager extends EventEmitter {
 			Lumberjack.info("Setting tailPaused to false", {
 				newTailOffset: tail.offset,
 				currentTailOffset: this.tail.offset,
+				currentHeadOffset: this.head.offset,
 			});
 			this.tailPaused = false;
 		}
