@@ -5,7 +5,7 @@
 
 import * as dirPath from "node:path";
 
-import { defaultOptions, takeAsync } from "@fluid-private/stochastic-test-utils";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { type DDSFuzzModel, createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
