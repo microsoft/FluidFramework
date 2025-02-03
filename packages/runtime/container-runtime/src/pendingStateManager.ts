@@ -357,15 +357,15 @@ export class PendingStateManager implements IDisposable {
 				}
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-				if (!this.stateHandler.isAttached()) {
-					if (localOpMetadata !== undefined) {
-						throw new Error("Local Op Metadata must be undefined when not attached");
-					}
-				} else {
+				if (this.stateHandler.isAttached()) {
 					nextMessage.localOpMetadata = localOpMetadata;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 					patchbatchInfo(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
+				} else {
+					if (localOpMetadata !== undefined) {
+						throw new Error("Local Op Metadata must be undefined when not attached");
+					}
 				}
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);

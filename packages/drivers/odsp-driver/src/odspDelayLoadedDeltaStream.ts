@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
@@ -519,7 +519,7 @@ export class OdspDelayLoadedDeltaStream {
 		client: IClient,
 		webSocketUrl: string,
 	): Promise<OdspDocumentDeltaConnection> {
-		const startTime = performance.now();
+		const startTime = performanceNow();
 		const connection = await OdspDocumentDeltaConnection.create(
 			tenantId,
 			documentId,
@@ -531,7 +531,7 @@ export class OdspDelayLoadedDeltaStream {
 			this.epochTracker,
 			this.socketReferenceKeyPrefix,
 		);
-		const duration = performance.now() - startTime;
+		const duration = performanceNow() - startTime;
 		// This event happens rather often, so it adds up to cost of telemetry.
 		// Given that most reconnects result in reusing socket and happen very quickly,
 		// report event only if it took longer than threshold.
