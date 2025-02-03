@@ -16,7 +16,7 @@ import {
 	loadExistingContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
-import { IRequestHeader, type ConfigTypes } from "@fluidframework/core-interfaces";
+import { IRequestHeader } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
@@ -244,9 +244,11 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
+			// non-null guaranteed by bounds check
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const testConfiguration = configurations[
 				runConfig.runId % configurations.length
-			] as Record<string, ConfigTypes>;
+			]!;
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
