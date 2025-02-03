@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/merge-tree",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "Merge tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
