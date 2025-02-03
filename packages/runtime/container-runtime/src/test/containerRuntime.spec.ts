@@ -3481,7 +3481,7 @@ describe("Runtime", () => {
 				});
 			});
 			describe("Validate runtime options", () => {
-				it.only("Throws when op compression is on and op grouping is off", async () => {
+				it("Throws when op compression is on and op grouping is off", async () => {
 					await assert.rejects(
 						async () =>
 							ContainerRuntime.loadRuntime({
