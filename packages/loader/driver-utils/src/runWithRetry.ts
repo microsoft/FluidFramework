@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { delay } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt, isFluidError } from "@fluidframework/telemetry-utils/internal";
@@ -58,7 +58,7 @@ export async function runWithRetry<T>(
 	// We double this value in first try in when we calculate time to wait for in "calculateMaxWaitTime" function.
 	let retryAfterMs = 500; // has to be positive!
 	let numRetries = 0;
-	const startTime = performance.now();
+	const startTime = performanceNow();
 	let lastError: any;
 	do {
 		try {
@@ -71,7 +71,7 @@ export async function runWithRetry<T>(
 					{
 						eventName: `${fetchCallName}_cancel`,
 						retry: numRetries,
-						duration: performance.now() - startTime,
+						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
 					err,
@@ -84,7 +84,7 @@ export async function runWithRetry<T>(
 					{
 						eventName: `${fetchCallName}_runWithRetryAborted`,
 						retry: numRetries,
-						duration: performance.now() - startTime,
+						duration: performanceNow() - startTime,
 						fetchCallName,
 						reason: progress.cancel.reason,
 					},
@@ -108,7 +108,7 @@ export async function runWithRetry<T>(
 				logger.sendTelemetryEvent(
 					{
 						eventName: `${fetchCallName}_firstFailed`,
-						duration: performance.now() - startTime,
+						duration: performanceNow() - startTime,
 						fetchCallName,
 					},
 					err,
@@ -130,7 +130,7 @@ export async function runWithRetry<T>(
 			{
 				eventName: `${fetchCallName}_lastError`,
 				retry: numRetries,
-				duration: performance.now() - startTime,
+				duration: performanceNow() - startTime,
 				fetchCallName,
 			},
 			lastError,

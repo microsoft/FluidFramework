@@ -143,6 +143,12 @@ export const insert: TestOperation = (
 	return client.insertTextLocal(start, text);
 };
 
+const generateInsert = (client: TestClient, random: IRandom): IMergeTreeOp | undefined => {
+	const len = client.getLength();
+	const text = client.longClientId!.repeat(random.integer(1, 3));
+	return client.insertTextLocal(random.integer(0, len), text);
+};
+
 export interface IConfigRange {
 	min: number;
 	max: number;
@@ -263,6 +269,8 @@ export interface IMergeTreeOperationRunnerConfig {
 	readonly applyOpDuringGeneration?: boolean;
 	growthFunc(input: number): number;
 	resultsFilePostfix?: string;
+	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined;
+	updateEndpoints?: (client: TestClient, random: IRandom) => { start: number; end: number };
 }
 
 export interface ReplayGroup {
@@ -308,6 +316,7 @@ export function runMergeTreeOperationRunner(
 				minLength,
 				config.operations,
 				config.applyOpDuringGeneration,
+				config.insertText,
 			);
 			seq = apply(messageData[0][0].sequenceNumber - 1, messageData, clients, logger, random);
 			const resultText = logger.validate();
@@ -338,6 +347,7 @@ export function generateOperationMessagesForClients(
 	minLength: number,
 	operations: readonly TestOperation[],
 	applyOpDuringGeneration?: boolean,
+	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined,
 ): [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] {
 	const minimumSequenceNumber = startingSeq;
 	let runningSeq = startingSeq;
@@ -359,8 +369,8 @@ export function generateOperationMessagesForClients(
 		const sg = client.peekPendingSegmentGroups();
 		let op: IMergeTreeOp | undefined;
 		if (len === 0 || len < minLength) {
-			const text = client.longClientId!.repeat(random.integer(1, 3));
-			op = client.insertTextLocal(random.integer(0, len), text);
+			op =
+				insertText === undefined ? generateInsert(client, random) : insertText(client, random);
 		} else {
 			let opIndex = random.integer(0, operations.length - 1);
 			const start = random.integer(0, len - 1);

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-client",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Tinylicious service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -69,7 +69,7 @@
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",

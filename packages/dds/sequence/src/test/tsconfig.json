@@ -7,6 +7,8 @@
 		"noImplicitAny": false,
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
+		"declaration": true,
+		"declarationMap": true,
 	},
 	"include": ["./**/*"],
 	"references": [

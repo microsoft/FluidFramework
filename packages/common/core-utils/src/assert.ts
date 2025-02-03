@@ -96,7 +96,7 @@ let debugAssertsEnabled = false;
 export function configureDebugAsserts(enabled: boolean): boolean {
 	assert(
 		nonProductionConditionalsIncluded(),
-		"Debug asserts cannot be configured since they have been optimized out.",
+		0xab1 /* Debug asserts cannot be configured since they have been optimized out. */,
 	);
 	const old = debugAssertsEnabled;
 	debugAssertsEnabled = enabled;

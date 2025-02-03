@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/branching",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"private": true,
 	"description": "Using the experimental branching feature.",
 	"homepage": "https://fluidframework.com",

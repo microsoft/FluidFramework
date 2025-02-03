@@ -121,7 +121,7 @@ export class MockRuntime
 
 	public getStorage(): IDocumentStorageService {
 		return {
-			createBlob: async (blob) => {
+			createBlob: async (blob: ArrayBufferLike) => {
 				if (this.processing) {
 					return this.storage.createBlob(blob);
 				}
@@ -139,7 +139,7 @@ export class MockRuntime
 				this.blobPs.push(P);
 				return P;
 			},
-			readBlob: async (id) => this.storage.readBlob(id),
+			readBlob: async (id: string) => this.storage.readBlob(id),
 		} as unknown as IDocumentStorageService;
 	}
 
@@ -234,7 +234,7 @@ export class MockRuntime
 		redirectTable: [string, string][] | undefined;
 	}> {
 		if (this.detachedStorage.blobs.size > 0) {
-			const table = new Map();
+			const table = new Map<string, string>();
 			for (const [detachedId, blob] of this.detachedStorage.blobs) {
 				const { id } = await this.attachedStorage.createBlob(blob);
 				table.set(detachedId, id);
@@ -259,7 +259,7 @@ export class MockRuntime
 		for (const op of ops) {
 			// TODO: better typing
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-			this.blobManager.reSubmit((op as any).metadata);
+			this.blobManager.reSubmit((op as any).metadata as Record<string, unknown> | undefined);
 		}
 	}
 
@@ -319,7 +319,11 @@ export const validateSummary = (
 			assert.strictEqual(key, redirectTableBlobName);
 			assert(attachment.type === SummaryType.Blob);
 			assert(typeof attachment.content === "string");
-			redirectTable = [...new Map<string, string>(JSON.parse(attachment.content)).entries()];
+			redirectTable = [
+				...new Map<string, string>(
+					JSON.parse(attachment.content) as [string, string][],
+				).entries(),
+			];
 		}
 	}
 	return { ids, redirectTable };
@@ -869,7 +873,7 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			let handleP: Promise<IFluidHandleInternal<ArrayBufferLike>> | undefined;
 			try {
 				const blob = IsoBuffer.from("blob", "utf8");
 				handleP = runtime.createBlob(blob, ac.signal);
@@ -922,7 +926,7 @@ describe("BlobManager", () => {
 			await runtime.attach();
 			await runtime.connect();
 			const ac = new AbortController();
-			let handleP;
+			let handleP: Promise<IFluidHandleInternal<ArrayBufferLike>> | undefined;
 			try {
 				handleP = runtime.createBlob(IsoBuffer.from("blob", "utf8"), ac.signal);
 				const p1 = runtime.processBlobs(true);
@@ -945,7 +949,9 @@ describe("BlobManager", () => {
 			}
 			await runtime.connect();
 			runtime.processOps();
-			await assert.rejects(handleP);
+
+			// TODO: `handleP` can be `undefined`; this should be made safer.
+			await assert.rejects(handleP as Promise<IFluidHandleInternal<ArrayBufferLike>>);
 			const summaryData = validateSummary(runtime);
 			assert.strictEqual(summaryData.ids.length, 0);
 			assert.strictEqual(summaryData.redirectTable, undefined);

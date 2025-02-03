@@ -224,14 +224,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 				0x5df /* Summarize should not be called when not tracking the summary */,
 			);
 			incrementalSummaryContext =
-				this._lastSummaryReferenceSequenceNumber !== undefined
-					? {
+				this._lastSummaryReferenceSequenceNumber === undefined
+					? undefined
+					: {
 							summarySequenceNumber: this.wipReferenceSequenceNumber,
 							latestSummarySequenceNumber: this._lastSummaryReferenceSequenceNumber,
 							// TODO: remove summaryPath.
 							summaryPath: this.summaryHandleId,
-						}
-					: undefined;
+						};
 		}
 
 		const result = await this.summarizeInternalFn(

@@ -442,14 +442,14 @@ export class GarbageCollector implements IGarbageCollector {
 			},
 			async (event) => {
 				// If the GC state hasn't been initialized yet, initialize it and return.
-				if (!initialized) {
-					await this.initializeGCStateFromBaseSnapshotP;
-				} else {
+				if (initialized) {
 					// If the GC state has been initialized, update the tracking of unreferenced nodes as per the current
 					// reference timestamp.
 					for (const [, nodeStateTracker] of this.unreferencedNodesState) {
 						nodeStateTracker.updateTracking(currentReferenceTimestampMs);
 					}
+				} else {
+					await this.initializeGCStateFromBaseSnapshotP;
 				}
 				event.end({
 					details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
@@ -1034,7 +1034,7 @@ export class GarbageCollector implements IGarbageCollector {
 		// trackedId will be either DataStore or Blob ID (not sub-DataStore ID, since some of those are unrecognized by GC)
 		const trackedId = node.path;
 		const isTombstoned = this.tombstones.includes(trackedId);
-		const fullPath = request !== undefined ? urlToGCNodePath(request.url) : trackedId;
+		const fullPath = request === undefined ? trackedId : urlToGCNodePath(request.url);
 
 		// This will log if appropriate
 		this.telemetryTracker.nodeUsed(trackedId, {

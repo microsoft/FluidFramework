@@ -4,16 +4,17 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
+
+		// TODO: fix violations and remove overrides
 		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"require-atomic-updates": "warn",
+		"unicorn/no-array-reduce": "warn",
 
 		// False positives on non-array `push` methods.
 		// TODO:AB#28686: remove this override once this rule has been disabled in the root config.
@@ -42,6 +43,7 @@ module.exports = {
 				ignoreRestArgs: true,
 			},
 		],
+		"@typescript-eslint/no-unsafe-argument": "error",
 		"@typescript-eslint/no-unsafe-assignment": "error",
 		"@typescript-eslint/no-unsafe-call": "error",
 		"@typescript-eslint/no-unsafe-member-access": "error",
@@ -59,6 +61,7 @@ module.exports = {
 		"unicorn/no-array-callback-reference": "error",
 		"unicorn/no-array-for-each": "error",
 		"unicorn/no-lonely-if": "error",
+		"unicorn/no-negated-condition": "error",
 		"unicorn/no-new-array": "error",
 		"unicorn/no-null": "error",
 		"unicorn/no-zero-fractions": "error",
@@ -71,9 +74,6 @@ module.exports = {
 		"unicorn/switch-case-braces": "error",
 		"unicorn/throw-new-error": "error",
 
-		// TODO:
-		// unicorn/no-negated-condition
-
 		// #endregion
 	},
 	overrides: [
@@ -82,15 +82,12 @@ module.exports = {
 			files: ["*.spec.ts", "src/test/**"],
 			rules: {
 				// TODO: remove these overrides and fix violations
-				"@typescript-eslint/explicit-function-return-type": "off",
+				"@typescript-eslint/explicit-function-return-type": "warn",
+				"unicorn/consistent-function-scoping": "warn",
 				"unicorn/error-message": "warn",
 
 				// Test files are run in node only so additional node libraries can be used.
 				"import/no-nodejs-modules": ["error", { allow: ["node:assert", "node:crypto"] }],
-
-				// TODO:AB#3027: This rule is disabled for tests in the `recommended` base config.
-				// Remove this override once the base has been updated.
-				"unicorn/consistent-function-scoping": "off",
 			},
 		},
 	],

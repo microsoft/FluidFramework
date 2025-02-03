@@ -11,11 +11,11 @@ test.describe("Nav", () => {
 	});
 
 	// TODO:AB#24415: Fix and re-enable
-	test.skip("Nav contains the expected links", async ({ page }) => {
+	test("Nav contains the expected links", async ({ page }) => {
 		const docsLink = page.getByRole("link", { name: /Docs/ });
 		await expect(docsLink).toHaveAttribute("href", "/docs/");
 
-		const communityLink = page.getByRole("link", { name: /Community/ });
+		const communityLink = page.locator(".navbar").getByRole("link", { name: /Community/ });
 		await expect(communityLink).toHaveAttribute("href", "/community/");
 
 		const supportLink = page.getByRole("link", { name: /Support/ });

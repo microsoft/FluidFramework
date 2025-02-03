@@ -238,6 +238,7 @@ declare type current_as_old_for_TypeAlias_IsoBuffer = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "TypeAlias_IsomorphicPerformance": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_IsomorphicPerformance = requireAssignableTo<TypeOnly<old.IsomorphicPerformance>, TypeOnly<current.IsomorphicPerformance>>
 
 /*
@@ -247,6 +248,7 @@ declare type old_as_current_for_TypeAlias_IsomorphicPerformance = requireAssigna
  * typeValidation.broken:
  * "TypeAlias_IsomorphicPerformance": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_IsomorphicPerformance = requireAssignableTo<TypeOnly<current.IsomorphicPerformance>, TypeOnly<old.IsomorphicPerformance>>
 
 /*
@@ -310,6 +312,7 @@ declare type current_as_old_for_Variable_IsoBuffer = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Variable_performance": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Variable_performance = requireAssignableTo<TypeOnly<typeof current.performance>, TypeOnly<typeof old.performance>>
 
 /*

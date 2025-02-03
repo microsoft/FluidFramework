@@ -52,13 +52,13 @@ Here's the list of release group workspaces:
     -   [./experimental](./experimental) (Published in the `@fluid-experimental/` namespace)
     -   [./examples](./examples) (Not published, live in the `@fluid-example/` namespace)
     -   [./azure](./azure). (Published in the `@fluidframework/` namespace)
--   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
+-   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/pnpm-workspace.yaml](server/routerlicious/pnpm-workspace.yaml))
     -   [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
--   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
+-   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/pnpm-workspace.yaml](./server/gitrest/pnpm-workspace.yaml))
     -   [Packages](./server/gitrest/packages) (Published in the `@fluidframework/` namespace)
--   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/lerna.json](./server/historian/lerna.json))
+-   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/pnpm-workspace.yaml](./server/historian/pnpm-workspace.yaml))
     -   [Packages](./server/historian/packages) (Published in the `@fluidframework/` namespace)
--   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/lerna.json](./build-tools/lerna.json))
+-   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/pnpm-workspace.yaml](./build-tools/pnpm-workspace.yaml))
     -   [Packages](./build-tools/packages) (Published in a mix of `@fluidframework/` and `@fluid-tools/` namespaces)
 
 Here's a list of other sets of other packages (each package within these groups is versioned independently,

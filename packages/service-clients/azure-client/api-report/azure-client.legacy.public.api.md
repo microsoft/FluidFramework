@@ -82,14 +82,10 @@ export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
-export { ITokenClaims }
-
 export { ITokenProvider }
 
 export { ITokenResponse }
 
 export { IUser }
-
-export { ScopeType }
 
 ```

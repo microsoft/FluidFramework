@@ -196,7 +196,10 @@ export class RunningSummarizer
 	private totalSuccessfulAttempts = 0;
 	private initialized = false;
 
-	private readonly runtimeListener;
+	private readonly runtimeListener: (
+		op: ISequencedDocumentMessage,
+		runtimeMessage?: boolean,
+	) => void;
 
 	/**
 	 * The maximum number of summary attempts to do when submit summary fails.
@@ -813,9 +816,9 @@ export class RunningSummarizer
 			// If submit summary failed, use maxAttemptsForSubmitFailures. Else use the defaultMaxAttempts.
 			// Note: Check "summarySubmitted" result first because if it fails, ack nack would fail as well.
 			const submitSummaryResult = await results.summarySubmitted;
-			maxAttempts = !submitSummaryResult.success
-				? this.maxAttemptsForSubmitFailures
-				: defaultMaxAttempts;
+			maxAttempts = submitSummaryResult.success
+				? defaultMaxAttempts
+				: this.maxAttemptsForSubmitFailures;
 
 			// Emit "summarize" event for this failed attempt.
 			status = "failure";
@@ -956,7 +959,7 @@ export class RunningSummarizer
 		const { reason, ...summarizeOptions } = options;
 		if (options.retryOnFailure === true) {
 			this.summarizeOnDemandWithRetries(`onDemand;${reason}`, resultsBuilder).catch(
-				(error) => {
+				(error: IRetriableFailureError) => {
 					resultsBuilder.fail("summarize failed", error);
 				},
 			);

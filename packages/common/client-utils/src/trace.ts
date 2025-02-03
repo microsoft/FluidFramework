@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "./performanceIsomorphic.js";
+import { performanceNow } from "./performanceIsomorphic.js";
 
 /**
  * Helper class for tracing performance of events
@@ -13,7 +13,7 @@ import { performance } from "./performanceIsomorphic.js";
  */
 export class Trace {
 	public static start(): Trace {
-		const startTick = performance.now();
+		const startTick = performanceNow();
 		return new Trace(startTick);
 	}
 
@@ -23,7 +23,7 @@ export class Trace {
 	}
 
 	public trace(): ITraceEvent {
-		const tick = performance.now();
+		const tick = performanceNow();
 		const event = {
 			totalTimeElapsed: tick - this.startTick,
 			duration: tick - this.lastTick,

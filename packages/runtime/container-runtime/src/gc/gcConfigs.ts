@@ -104,7 +104,9 @@ export function generateGCConfigs(
 	// Note that if no generation option is provided, Sweep is allowed for any document.
 	const sweepAllowed = shouldAllowGcSweep(
 		persistedGcFeatureMatrix ?? {} /* featureMatrix */,
-		createParams.gcOptions[gcGenerationOptionName] /* currentGeneration */,
+		createParams.gcOptions[gcGenerationOptionName] as
+			| number
+			| undefined /* currentGeneration */,
 	);
 
 	/**

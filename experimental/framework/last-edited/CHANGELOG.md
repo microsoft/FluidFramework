@@ -1,5 +1,9 @@
 # @fluid-experimental/last-edited
 
+## 2.21.0
+
+Dependency updates only.
+
 ## 2.20.0
 
 Dependency updates only.

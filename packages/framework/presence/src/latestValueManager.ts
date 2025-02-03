@@ -5,6 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
@@ -178,7 +179,7 @@ export function Latest<T extends object, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: { ...initialValue },
+		value: shallowCloneObject(initialValue),
 	};
 	const factory = (
 		key: Key,

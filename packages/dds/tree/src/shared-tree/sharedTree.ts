@@ -7,9 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
-	IChannelFactory,
 	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
@@ -640,38 +638,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
 };
-
-/**
- * A channel factory that creates {@link ISharedTree}s.
- */
-export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
-	public readonly type: string = "https://graph.microsoft.com/types/tree";
-
-	public readonly attributes: IChannelAttributes = {
-		type: this.type,
-		snapshotFormatVersion: "0.0.0",
-		packageVersion: "0.0.0",
-	};
-
-	public constructor(private readonly options: SharedTreeOptionsInternal = {}) {}
-
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
-		await tree.load(services);
-		return tree;
-	}
-
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, this.options);
-		tree.initializeLocal();
-		return tree;
-	}
-}
 
 function verboseFromCursor(
 	reader: ITreeCursor,
