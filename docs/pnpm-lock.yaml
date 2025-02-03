@@ -62,6 +62,12 @@ importers:
       '@rushstack/node-core-library':
         specifier: ^5.9.0
         version: 5.9.0(@types/node@22.9.1)
+      '@types/fs-extra':
+        specifier: ^11.0.4
+        version: 11.0.4
+      '@types/hast':
+        specifier: ^3.0.4
+        version: 3.0.4
       '@types/node':
         specifier: ^22.9.1
         version: 22.9.1
@@ -2187,6 +2193,9 @@ packages:
   '@types/form-data@0.0.33':
     resolution: {integrity: sha512-8BSvG1kGm83cyJITQMZSulnl6QV8jqAGreJsc5tPu1Jq0vTSOiY/k24Wx82JRpWwZSqrala6sd5rWi6aNXvqcw==}
 
+  '@types/fs-extra@11.0.4':
+    resolution: {integrity: sha512-yTbItCNreRooED33qjunPthRcSjERP1r4MqCZc7wv0u2sUkzTFp45tgUfS5+r7FrZPdmCCNflLhVSP/o+SemsQ==}
+
   '@types/geojson@7946.0.14':
     resolution: {integrity: sha512-WCfD5Ht3ZesJUsONdhvm84dmzWOiOzOAqOncN0++w0lBw1o8OuDNJF2McvvCef/yBqb/HYRahp1BYtODFQ8bRg==}
 
@@ -2234,6 +2243,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/jsonfile@6.1.4':
+    resolution: {integrity: sha512-D5qGUYwjvnNNextdU59/+fI+spnwtTFmyQP0h+PfIOSkNfpU6AOICUOkm4i0OnSk+NyjdPJrxCDro0sJsWlRpQ==}
 
   '@types/lodash@4.17.13':
     resolution: {integrity: sha512-lfx+dftrEZcdBPczf9d0Qv0x+j/rfNCMuC6OcfXmO8gkfeNAY88PgKUbvG56whcN23gc27yenwF6oJZXGFpYxg==}
@@ -11670,6 +11682,11 @@ snapshots:
     dependencies:
       '@types/node': 22.9.1
 
+  '@types/fs-extra@11.0.4':
+    dependencies:
+      '@types/jsonfile': 6.1.4
+      '@types/node': 22.9.1
+
   '@types/geojson@7946.0.14': {}
 
   '@types/get-port@3.2.0': {}
@@ -11715,6 +11732,10 @@ snapshots:
       '@types/istanbul-lib-report': 3.0.3
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/jsonfile@6.1.4':
+    dependencies:
+      '@types/node': 22.9.1
 
   '@types/lodash@4.17.13': {}
 

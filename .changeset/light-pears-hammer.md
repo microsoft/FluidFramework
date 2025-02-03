@@ -5,6 +5,7 @@
 "section": deprecation
 ---
 
-`supportedFeatures` is deprecated in `IContainerContext`
+The IContainerContext.supportedFeatures property is now deprecated
 
-This was an optional property that was used internally to communicate features supported by the Loader layer to Runtime. This has been replaced with an internal-only functionality.
+The `IContainerContext.supportedFeatures` optional property was used internally to communicate features supported by the
+Loader layer to the Runtime layer. This has since been replaced with functionality that is not exposed externally.

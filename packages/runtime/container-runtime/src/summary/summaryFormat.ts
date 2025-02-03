@@ -10,10 +10,7 @@ import {
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	blobHeadersBlobName as blobNameForBlobHeaders,
-	readAndParse,
-} from "@fluidframework/driver-utils/internal";
+import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	ISummaryTreeWithStats,
 	channelsTreeName,
@@ -234,7 +231,6 @@ export const chunksBlobName = ".chunks";
 export const recentBatchInfoBlobName = ".recentBatchInfo";
 export const electedSummarizerBlobName = ".electedSummarizer";
 export const idCompressorBlobName = ".idCompressor";
-export const blobHeadersBlobName = blobNameForBlobHeaders;
 
 export function rootHasIsolatedChannels(metadata?: IContainerRuntimeMetadata): boolean {
 	return !!metadata && !metadata.disableIsolatedChannels;
@@ -315,3 +311,5 @@ export async function getFluidDataStoreAttributes(
 	assert(formatVersion > 0, 0x1d5 /* Invalid snapshot format version */);
 	return attributes;
 }
+
+export { blobHeadersBlobName } from "@fluidframework/driver-utils/internal";

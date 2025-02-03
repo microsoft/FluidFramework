@@ -71,7 +71,7 @@ steps:
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
       set -eu -o pipefail
-      # expect lerna.json and package.json be in the current working directory
+      # expect release group root package.json be in the current working directory
 
       echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
       echo TEST_BUILD=$TEST_BUILD
