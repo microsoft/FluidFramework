@@ -7,9 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
-	IChannelFactory,
 	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
@@ -84,7 +82,6 @@ import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
 import { breakingClass, fail, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { SharedTreeAttributes, SharedTreeFactoryType } from "./publicContracts.js";
 
 /**
  * Copy of data from an {@link ISharedTree} at some point in time.
@@ -641,34 +638,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
 };
-
-/**
- * A channel factory that creates {@link ISharedTree}s.
- */
-export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
-	public readonly type: string = SharedTreeFactoryType;
-
-	public readonly attributes: IChannelAttributes = SharedTreeAttributes;
-
-	public constructor(private readonly options: SharedTreeOptionsInternal = {}) {}
-
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
-		await tree.load(services);
-		return tree;
-	}
-
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, this.options);
-		tree.initializeLocal();
-		return tree;
-	}
-}
 
 function verboseFromCursor(
 	reader: ITreeCursor,
