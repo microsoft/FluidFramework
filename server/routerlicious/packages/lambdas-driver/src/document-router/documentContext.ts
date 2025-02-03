@@ -24,6 +24,8 @@ export class DocumentContext extends EventEmitter implements IContext {
 	private headInternal: IQueuedMessage;
 	private tailInternal: IQueuedMessage;
 
+	private lastSuccessfulOffsetInternal: number;
+
 	private closed = false;
 	private contextError = undefined;
 
@@ -48,6 +50,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// Tail will be set to the checkpoint offset of the previous head
 		this.headInternal = head;
 		this.tailInternal = this.getLatestTail();
+		this.lastSuccessfulOffsetInternal = this.tailInternal.offset; // will be -1 at creation
 	}
 
 	public get head(): IQueuedMessage {
@@ -58,11 +61,22 @@ export class DocumentContext extends EventEmitter implements IContext {
 		return this.tailInternal;
 	}
 
+	public get lastSuccessfulOffset(): number {
+		return this.lastSuccessfulOffsetInternal;
+	}
+
 	/**
 	 * Returns whether or not there is pending work in flight - i.e. the head and tail are not equal
 	 */
 	public hasPendingWork(): boolean {
 		return this.headInternal !== this.tailInternal;
+	}
+
+	/**
+	 * Sets the last successfully processed offset.
+	 */
+	public setLastSuccessfulOffset(offset: number) {
+		this.lastSuccessfulOffsetInternal = offset;
 	}
 
 	/**

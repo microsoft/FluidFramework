@@ -81,11 +81,11 @@ export class DocumentContextManager extends EventEmitter {
 			this.emit("error", error, errorData);
 		});
 		context.addListener("pause", (offset?: number, reason?: any) => {
-			// Find the lowest offset of all doc contexts' tail (checkpointed offset) and emit pause at that offset to ensure we dont miss any messages during resume (reprocessing)
+			// Find the lowest offset of all doc contexts' lastSuccessfulOffset and emit pause at that offset to ensure we dont miss any messages during resume (reprocessing)
 			let lowestOffset = offset ?? Number.MAX_SAFE_INTEGER;
 			for (const docContext of this.contexts) {
-				if (docContext.tail.offset < lowestOffset) {
-					lowestOffset = docContext.tail.offset;
+				if (docContext.lastSuccessfulOffset < lowestOffset) {
+					lowestOffset = docContext.lastSuccessfulOffset;
 				}
 				// Pause all doc partitions' contexts
 				// Set headPaused=true for all doc partitions, so that we allow their head to move backwards(reprocess some ops) during resume
