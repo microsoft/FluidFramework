@@ -27,7 +27,7 @@ Then either:
 -   Direct invocation: Use `node bin/<tool-name>` in this directory or `node build-tools/packages/build-tools/bin/<tool-name>`
     from the Fluid repo root.
 -   Symlink package: Use [npm link](https://docs.npmjs.com/cli/v10/commands/npm-link) with this package to override the
-    version of it used in the root package (which is the `client` lerna package, but often used to build other as well).
+    version of it used in the root package (which is the `client` release group, but often used to build other as well).
     This will make scripts like `build:fast` use the linked version.
 
 NOTE: Using `fluid-build`'s `--symlink:full` does **NOT** symlink the version of build tools in the repo into the root package:
