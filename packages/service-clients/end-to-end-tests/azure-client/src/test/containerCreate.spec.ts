@@ -14,13 +14,12 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { SharedMap as SharedMap_1dot4 } from "@fluidframework/map-1dot4";
+import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map/internal";
+import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { AxiosResponse } from "axios";
-import { ContainerSchema, type IFluidContainer } from "fluid-framework";
-// eslint-disable-next-line import/no-internal-modules -- Need SharedMap to test it
-import { SharedMap } from "fluid-framework/legacy";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
 
@@ -286,7 +285,7 @@ for (const testOpts of testMatrix) {
 
 		const schemaLegacy = {
 			initialObjects: {
-				map1: SharedMap_1dot4,
+				map1: SharedMapLegacy,
 			},
 		};
 
@@ -325,7 +324,7 @@ for (const testOpts of testMatrix) {
 					(resolve) => {
 						const confirmValueSet = (): void => {
 							if (
-								(containerLegacy.initialObjects.map1 as SharedMap_1dot4).get("key") === "value"
+								(containerLegacy.initialObjects.map1 as SharedMapLegacy).get("key") === "value"
 							) {
 								containerLegacy.off("saved", confirmValueSet);
 								resolve();
@@ -338,7 +337,7 @@ for (const testOpts of testMatrix) {
 						errorMsg: "valueSet timeout",
 					},
 				);
-				(containerLegacy.initialObjects.map1 as SharedMap_1dot4).set("key", "value");
+				(containerLegacy.initialObjects.map1 as SharedMapLegacy).set("key", "value");
 
 				// Await the value being saved, especially important if we dispose the legacy container.
 				await valueSetP;
@@ -393,7 +392,7 @@ for (const testOpts of testMatrix) {
 
 		const schemaLegacy = {
 			initialObjects: {
-				map1: SharedMap_1dot4,
+				map1: SharedMapLegacy,
 			},
 		};
 
@@ -451,7 +450,7 @@ for (const testOpts of testMatrix) {
 				});
 			}
 
-			const result = (containerLegacy.initialObjects.map1 as SharedMap_1dot4).get<string>(
+			const result = (containerLegacy.initialObjects.map1 as SharedMapLegacy).get<string>(
 				"key",
 			);
 			assert.strictEqual(result, "value", "Value not found in copied container");
@@ -581,7 +580,7 @@ for (const testOpts of testMatrix) {
 				});
 			}
 
-			const legacyMap = containerLegacy.initialObjects.map1 as SharedMap_1dot4;
+			const legacyMap = containerLegacy.initialObjects.map1 as SharedMapLegacy;
 
 			// Verify ops are processed by legacy AzureClient
 			assert.strictEqual(legacyMap.get("1"), 1);
