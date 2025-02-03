@@ -137,7 +137,8 @@ export function jsonMorganLoggerMiddleware(
 				if (res.locals.serverTimeout) {
 					statusCode = "Server Timeout";
 				} else if (res.locals.clientDisconnected) {
-					statusCode = durationInMs > 20_000 ? "Server Timeout - Client Disconnect" : "499";
+					statusCode =
+						durationInMs > 20_000 ? "Server Timeout - Client Disconnect" : "499";
 				} else {
 					statusCode = "STATUS_UNAVAILABLE";
 				}
