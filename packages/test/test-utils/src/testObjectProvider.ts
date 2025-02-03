@@ -354,8 +354,9 @@ export class EventAndErrorTrackingLogger
 	}
 
 	send(event: ITelemetryBaseEvent): void {
-		if (this.expectedEvents.length > 0) {
-			const ee = this.expectedEvents[0].event;
+		const firstExpectedEvent = this.expectedEvents[0];
+		if (firstExpectedEvent !== undefined) {
+			const ee = firstExpectedEvent.event;
 			if (ee.eventName === event.eventName) {
 				let matches = true;
 				for (const key of Object.keys(ee)) {
