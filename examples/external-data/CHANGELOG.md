@@ -1,5 +1,8 @@
 # @fluid-example/app-integration-external-data
 
+## 2.22.0
+Replaced node-fetch with native fetch for improved compatibility and maintainability.
+
 ## 2.21.0
 
 Dependency updates only.
