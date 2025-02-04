@@ -347,11 +347,11 @@ async function visualizeInternalNodeBySchema(
 			}
 
 			const arrayNodeAllowedTypes: Record<string, ReadonlySet<string>> = {};
-			for (let i = 0; i < children.length; i++) {
+			for (const [i, child] of children.entries()) {
 				arrayNodeAllowedTypes[i] = schema.allowedTypes;
 
 				fields[i] = await visualizeSharedTreeBySchema(
-					children[i],
+					child,
 					treeDefinitions,
 					{ allowedTypes: arrayNodeAllowedTypes[i] },
 					visualizeChildData,
