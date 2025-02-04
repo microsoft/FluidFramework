@@ -8,3 +8,9 @@ export {
 	diffGroceryListJSON,
 	GroceryListFactory,
 } from "./groceryList.js";
+export {
+	GroceryListJSON,
+	GroceryListModifications,
+	IGroceryItem,
+	IGroceryList,
+} from "./interfaces.js";

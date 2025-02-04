@@ -9,7 +9,7 @@ import {
 	IGroceryItem,
 	IGroceryList,
 	type GroceryListModifications,
-} from "../modelInterfaces.js";
+} from "../groceryList/index.js";
 
 export interface IGroceryItemViewProps {
 	groceryItem: IGroceryItem;

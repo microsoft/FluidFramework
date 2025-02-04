@@ -28,7 +28,7 @@ import type {
 	IGroceryItem,
 	IGroceryList,
 	IGroceryListEvents,
-} from "../modelInterfaces.js";
+} from "./interfaces.js";
 
 export const diffGroceryListJSON = (
 	baseGroceryListJSON: GroceryListJSON,

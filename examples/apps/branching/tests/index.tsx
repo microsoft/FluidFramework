@@ -22,7 +22,7 @@ import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
 import { GroceryListContainerRuntimeFactory } from "../src/containerCode.js";
-import type { IGroceryList } from "../src/modelInterfaces.js";
+import type { IGroceryList } from "../src/groceryList/index.js";
 import { AppView, DebugView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {

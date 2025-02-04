@@ -19,7 +19,7 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 
 import { GroceryListContainerRuntimeFactory } from "./containerCode.js";
-import type { IGroceryList } from "./modelInterfaces.js";
+import type { IGroceryList } from "./groceryList/index.js";
 import { AppView, DebugView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {

@@ -5,13 +5,14 @@
 
 import React, { type FC, useState } from "react";
 
-import { applyDiffToGroceryList, diffGroceryListJSON } from "../groceryList/index.js";
+import {
+	applyDiffToGroceryList,
+	diffGroceryListJSON,
+	type GroceryListJSON,
+	type GroceryListModifications,
+	type IGroceryList,
+} from "../groceryList/index.js";
 import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
-import type {
-	GroceryListJSON,
-	GroceryListModifications,
-	IGroceryList,
-} from "../modelInterfaces.js";
 
 import { GroceryListView } from "./groceryListView.js";
 

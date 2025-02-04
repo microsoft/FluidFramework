@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { GroceryListJSON } from "./modelInterfaces.js";
+import type { GroceryListJSON } from "./groceryList/index.js";
 
 export const NETWORK_askHealthBotForSuggestions = async (
 	groceryListJSONString: string,

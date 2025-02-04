@@ -5,7 +5,7 @@
 
 import React from "react";
 
-import type { IGroceryList } from "../modelInterfaces.js";
+import type { IGroceryList } from "../groceryList/index.js";
 
 export interface IDebugViewProps {
 	groceryList: IGroceryList;
