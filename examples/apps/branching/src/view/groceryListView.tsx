@@ -17,8 +17,8 @@ export const GroceryItemView: FC<IGroceryItemViewProps> = ({
 	suggestRemoval,
 }: IGroceryItemViewProps) => {
 	return (
-		<tr>
-			<td style={{ backgroundColor: suggestRemoval ? "#fcc" : "auto" }}>{groceryItem.name}</td>
+		<tr style={suggestRemoval ? { backgroundColor: "#fcc" } : undefined}>
+			<td>{groceryItem.name}</td>
 			<td>
 				<button
 					onClick={groceryItem.deleteItem}
@@ -109,13 +109,13 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 	}, [groceryList]);
 
 	const groceryItemViews = groceryItems.map((groceryItem) => {
+		const suggestRemoval =
+			suggestions?.removals.find((removal) => removal.id === groceryItem.id) !== undefined;
 		return (
 			<GroceryItemView
 				key={groceryItem.id}
 				groceryItem={groceryItem}
-				suggestRemoval={
-					suggestions?.removals.find((removal) => removal.id === groceryItem.id) !== undefined
-				}
+				suggestRemoval={suggestRemoval}
 			/>
 		);
 	});

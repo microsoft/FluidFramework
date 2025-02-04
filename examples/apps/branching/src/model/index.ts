@@ -4,4 +4,4 @@
  */
 
 export { GroceryListContainerRuntimeFactory } from "./containerCode.js";
-export { diffGroceryListJSON } from "./groceryList.js";
+export { applyDiffToGroceryList, diffGroceryListJSON } from "./groceryList.js";

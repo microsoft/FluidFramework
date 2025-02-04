@@ -6,7 +6,7 @@
 import React, { type FC, useState } from "react";
 
 import { askHealthBotForSuggestions } from "../healthBot.js";
-import { diffGroceryListJSON } from "../model/index.js";
+import { applyDiffToGroceryList, diffGroceryListJSON } from "../model/index.js";
 import type {
 	GroceryListJSON,
 	GroceryListJSONDiff,
@@ -37,11 +37,10 @@ export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
 	let actions;
 	if (suggestions !== undefined) {
 		const onAcceptChanges = () => {
-			// TODO
+			applyDiffToGroceryList(groceryList, suggestions);
 			setSuggestions(undefined);
 		};
 		const onRejectChanges = () => {
-			// TODO
 			setSuggestions(undefined);
 		};
 		actions = (

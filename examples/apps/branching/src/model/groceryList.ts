@@ -58,6 +58,18 @@ export const diffGroceryListJSON = (
 	};
 };
 
+export const applyDiffToGroceryList = (
+	groceryList: IGroceryList,
+	groceryListJSONDiff: GroceryListJSONDiff,
+) => {
+	for (const add of groceryListJSONDiff.adds) {
+		groceryList.addItem(add.name);
+	}
+	for (const removal of groceryListJSONDiff.removals) {
+		groceryList.removeItem(removal.id);
+	}
+};
+
 /**
  * GroceryItem is the local object with a friendly interface for the view to use.
  * It wraps a new SharedTree node representing a grocery item to abstract out the DDS manipulation and access.
@@ -113,7 +125,7 @@ class GroceryList implements IGroceryList {
 		return [...this._groceryItems.values()];
 	};
 
-	public readonly deleteItem = (id: string) => {
+	public readonly removeItem = (id: string) => {
 		this.map.delete(id);
 	};
 
@@ -125,7 +137,7 @@ class GroceryList implements IGroceryList {
 			this._events.emit("itemDeleted");
 		} else {
 			const newGroceryItem = new GroceryItem(changedId, newName, () => {
-				this.deleteItem(changedId);
+				this.removeItem(changedId);
 			});
 			this._groceryItems.set(changedId, newGroceryItem);
 			this._events.emit("itemAdded");

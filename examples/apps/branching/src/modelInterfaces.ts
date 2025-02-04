@@ -40,7 +40,7 @@ export interface IGroceryList {
 
 	readonly addItem: (name: string) => void;
 	readonly getItems: () => IGroceryItem[];
-	readonly deleteItem: (id: string) => void;
+	readonly removeItem: (id: string) => void;
 
 	readonly exportJSONString: () => string;
 }
