@@ -165,7 +165,7 @@ export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
  * Returns the schema & fields of the node.
  */
 async function visualizeVerboseNodeFields(
-	treeFields: VerboseTree[] | Record<string, VerboseTree>,
+	treeFields: readonly VerboseTree[] | Record<string, VerboseTree>,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	allowedTypes: Record<string, ReadonlySet<string>>,
 	requirements: Record<string, boolean> | undefined,
