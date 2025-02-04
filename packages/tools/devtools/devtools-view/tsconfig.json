@@ -9,7 +9,7 @@
 		"outDir": "- invalid - use tsconfig.cjs|esm.json when emitting -",
 		// @fluentui packages raise tsc errors.
 		"skipLibCheck": true,
-		"noUncheckedIndexedAccess": false,
+		"noUncheckedIndexedAccess": true,
 		"exactOptionalPropertyTypes": false,
 	},
 }

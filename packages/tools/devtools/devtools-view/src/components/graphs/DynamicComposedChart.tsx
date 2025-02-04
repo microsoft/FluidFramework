@@ -380,7 +380,9 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 				renderChartData(
 					dataSet.graphType,
 					dataSet.schema.displayName,
-					graphColorPalette.graphColors[currColorPaletteIndex],
+					// Non null guatenteed because of the way currColorPaletteIndex is computed
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					graphColorPalette.graphColors[currColorPaletteIndex]!,
 					dataSet.schema.uuid,
 				),
 			);
