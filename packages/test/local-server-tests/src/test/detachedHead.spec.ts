@@ -195,10 +195,21 @@ describe("Scenario Test", () => {
 
 		await waitForSave([clients.loaded]);
 
+		// Wait for the mainline changes to propagate
+		//* TODO: Need some of e2e test utils like ContainerLoaderTracker to properly wait here
+		await new Promise<void>((resolve) => setTimeout(resolve, 100));
+
 		assert.notDeepStrictEqual(
 			clients.original.dataObject.state,
 			clients.loaded.dataObject.state,
 			"should not match after save",
+		);
+
+		const branchState = clients.original.dataObject.state;
+		assert.notEqual(
+			Object.keys(branchState).find((k) => k.startsWith("after-branch")),
+			undefined,
+			"Expected mainline change to reach branch",
 		);
 
 		branchData.merge();
