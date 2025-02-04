@@ -54,6 +54,8 @@ export interface ComposeNodeManager {
 		count: number,
 		newChanges: NodeId | undefined,
 	): void;
+
+	composeDetachAttach(baseDetachId: ChangeAtomId, count: number): void;
 }
 
 export interface RebaseNodeManager<T = unknown> {
@@ -67,6 +69,7 @@ export interface RebaseNodeManager<T = unknown> {
 	rebaseOverDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
+		newDetachId: ChangeAtomId | undefined,
 		nodeChange: NodeId | undefined,
 		fieldData: T | undefined,
 	): void;

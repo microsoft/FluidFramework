@@ -127,7 +127,7 @@ export const sequenceFieldEditor = {
 	): Changeset {
 		const moveIn: Mark = {
 			type: "Insert",
-			id: detachCellId,
+			id: attachCellId.localId,
 			count,
 			cellId: attachCellId,
 			revision,

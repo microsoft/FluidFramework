@@ -761,7 +761,7 @@ export class ModularChangeFamily
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
-			invertedNodeRenames: cloneRenameTable(change.change.nodeRenames),
+			invertedNodeRenames: invertedRenameTable(change.change.nodeRenames),
 		};
 		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 		const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
@@ -936,6 +936,7 @@ export class ModularChangeFamily
 			baseChange: over.change,
 			baseFieldToContext: new Map(),
 			baseNodeRenames: over.change.nodeRenames,
+			rebasedNodeRenames: cloneRenameTable(change.nodeRenames),
 			baseToRebasedNodeId: newTupleBTree(),
 			rebasedFields: new Set(),
 			rebasedNodeToParent: brand(change.nodeToParent.clone()),
@@ -988,6 +989,7 @@ export class ModularChangeFamily
 			fieldChanges: this.pruneFieldMap(rebasedFields, rebasedNodes),
 			nodeChanges: rebasedNodes,
 			nodeToParent: crossFieldTable.rebasedNodeToParent,
+			nodeRenames: crossFieldTable.rebasedNodeRenames,
 			nodeAliases: change.nodeAliases,
 			crossFieldKeys: crossFieldTable.rebasedCrossFieldKeys,
 			maxId: idState.maxId,
@@ -2233,6 +2235,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	readonly rebasedFields: Set<FieldChange>;
 	readonly rebasedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	readonly rebasedCrossFieldKeys: CrossFieldKeyTable;
+	readonly rebasedNodeRenames: NodeRenameTable;
 
 	/**
 	 * List of unprocessed (newId, baseId) pairs encountered so far.
@@ -2359,17 +2362,6 @@ class InvertNodeManagerI implements InvertNodeManager {
 		count: number,
 		nodeChange: NodeId | undefined,
 	): void {
-		// XXX: invertAttach should delete this entry?
-		renameNodes(
-			this.table.invertedNodeRenames,
-			detachId,
-			{
-				revision: this.table.invertRevision,
-				localId: detachId.localId,
-			},
-			count,
-		);
-
 		// XXX: Need to record something even if there is no node change
 		// as we may need to create a detached node entry in the inverse changeset?
 		// Or should the changeset only have an entry if there is data associated with the detached change?
@@ -2407,14 +2399,35 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 	public rebaseOverDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
+		newDetachId: ChangeAtomId | undefined,
 		nodeChange: NodeId | undefined,
 		fieldData: unknown,
 	): void {
 		const baseAttachId = attachIdFromDetachId(this.table.baseNodeRenames, baseDetachId, count);
+
+		// XXX: Store data in rebased changeset if there is no reattach
 		setInCrossFieldMap(this.table.entries, baseAttachId, count, {
 			nodeChange,
 			fieldData,
 		});
+
+		if (newDetachId !== undefined) {
+			// XXX: Need to check if only part of this range is moved.
+			const isMove =
+				getFieldsForCrossFieldKey(
+					this.table.baseChange,
+					{
+						target: CrossFieldTarget.Destination,
+						revision: baseAttachId.revision,
+						localId: baseAttachId.localId,
+					},
+					count,
+				).length > 0;
+
+			if (!isMove) {
+				renameNodes(this.table.rebasedNodeRenames, baseDetachId, newDetachId, count);
+			}
+		}
 
 		if (this.allowInval) {
 			const baseFieldIds = getFieldsForCrossFieldKey(
@@ -2426,12 +2439,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 				},
 				count,
 			);
-
-			// XXX: Handle rebasing over a non-move detach
-			// assert(
-			// 	baseFieldIds.length > 0,
-			// 	0x9c7 /* Cross field key not registered in base or new change */,
-			// );
 
 			for (const baseFieldId of baseFieldIds) {
 				this.table.affectedBaseFields.set(
@@ -2472,6 +2479,12 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			newId: newDetachId,
 			nodeChange: newChanges,
 		});
+	}
+
+	public composeDetachAttach(baseDetachId: ChangeAtomId, count: number): void {
+		// Note that the composed rename table may have a cycle for this ID,
+		// created by taking the union of the input rename tables.
+		deleteNodeRename(this.table.composedNodeRenames, baseDetachId, count);
 	}
 }
 
@@ -3092,6 +3105,10 @@ function cloneRenameTable(renames: NodeRenameTable): NodeRenameTable {
 	};
 }
 
+function invertedRenameTable(renames: NodeRenameTable): NodeRenameTable {
+	return { oldToNewId: renames.newToOldId.clone(), newToOldId: renames.oldToNewId.clone() };
+}
+
 function renameNodes(
 	renames: NodeRenameTable,
 	oldId: ChangeAtomId,
@@ -3127,6 +3144,19 @@ function renameNodes(
 			offsetChangeAtomId(newId, countToRename),
 			count - countToRename,
 		);
+	}
+}
+
+/**
+ * Deletes any renames from or to `id`.
+ */
+function deleteNodeRename(renames: NodeRenameTable, id: ChangeAtomId, count: number): void {
+	for (const entry of renames.oldToNewId.getAll(id, count)) {
+		deleteNodeRenameEntry(renames, entry.start, entry.value, entry.length);
+	}
+
+	for (const entry of renames.newToOldId.getAll(id, count)) {
+		deleteNodeRenameEntry(renames, entry.value, entry.start, entry.length);
 	}
 }
 

@@ -204,6 +204,7 @@ const invalidFunc = (): never => fail("Should not be called when converting gene
 const invalidComposeManager: ComposeNodeManager = {
 	getChangesForBaseDetach: invalidFunc,
 	composeBaseAttach: invalidFunc,
+	composeDetachAttach: invalidFunc,
 };
 
 function* relevantRemovedRoots(

@@ -766,10 +766,6 @@ function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 	effect.revision = revision;
 }
 
-export function getDetachId(effect: MoveMarkEffect): ChangeAtomId {
-	return { revision: effect.revision, localId: effect.id };
-}
-
 export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 	const keys: CrossFieldKeyRange[] = [];
 	for (const mark of change) {

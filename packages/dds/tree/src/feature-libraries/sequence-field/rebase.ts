@@ -347,12 +347,13 @@ function separateEffectsForMove(mark: MarkEffect): {
 
 function moveRebasedChanges(
 	moveEffects: SequenceRebaseNodeManager,
-	id: ChangeAtomId,
+	baseId: ChangeAtomId,
 	count: number,
 	nodeChange: NodeId | undefined,
-	effect: Detach | undefined,
+	newDetach: Detach | undefined,
 ): void {
-	moveEffects.rebaseOverDetach(id, count, nodeChange, effect);
+	const newId = newDetach !== undefined ? getDetachOutputCellId(newDetach) : undefined;
+	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange, newDetach);
 }
 
 function rebaseNodeChange(

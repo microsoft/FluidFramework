@@ -138,7 +138,7 @@ function invertMark(
 			const removeMark: Mutable<CellMark<Remove>> = {
 				type: "Remove",
 				count: mark.count,
-				id: inputId.localId,
+				id: mark.id,
 				revision,
 			};
 
@@ -158,7 +158,6 @@ function applyMovedChanges(
 	revision: RevisionTag | undefined,
 	manager: InvertNodeManager,
 ): Mark[] {
-	// Although this is a source mark, we query the destination because this was a destination mark during the original invert pass.
 	const entry = manager.invertAttach({ revision, localId: mark.id }, mark.count);
 
 	if (entry.length < mark.count) {

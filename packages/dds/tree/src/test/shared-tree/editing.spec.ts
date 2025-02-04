@@ -115,6 +115,23 @@ describe("Editing", () => {
 			expectJsonTree([tree1, tree2], expected);
 		});
 
+		it("can rebase move over remove", () => {
+			const tree1 = makeTreeFromJsonSequence(["a", "b"]);
+			const tree2 = tree1.branch();
+
+			// Remove b
+			remove(tree1, 1, 1);
+
+			// Move b before a
+			tree2.editor.move(rootField, 1, 1, rootField, 0);
+
+			tree2.rebaseOnto(tree1);
+			tree1.merge(tree2);
+
+			const expected = ["b", "a"];
+			expectJsonTree([tree1, tree2], expected);
+		});
+
 		it("can rebase intra-field move over inter-field move of same node and its parent", () => {
 			const tree1 = makeTreeFromJsonSequence([[], ["X", "Y"]]);
 			const tree2 = tree1.branch();

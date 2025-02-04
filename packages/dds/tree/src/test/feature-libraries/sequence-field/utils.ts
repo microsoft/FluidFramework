@@ -824,6 +824,8 @@ function newComposeManager(): TestComposeManager {
 			setInCrossFieldMap(this.nodeChangeTable, baseAttachId, count, newChanges);
 			this.isInvalidated = true;
 		},
+
+		composeDetachAttach(baseDetachId, count): void {},
 	};
 
 	return manager;

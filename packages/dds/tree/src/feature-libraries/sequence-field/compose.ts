@@ -33,7 +33,7 @@ import {
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
-	getDetachId,
+	getDetachOutputCellId,
 	getInputCellId,
 	getOutputCellId,
 	isAttach,
@@ -196,7 +196,7 @@ function composeMarksIgnoreChild(
 		const detach = extractMarkEffect(newMark);
 
 		moveEffects.composeBaseAttach(
-			{ revision: baseMark.revision, localId: baseMark.id },
+			baseMark.cellId,
 			getOutputCellId(newMark),
 			baseMark.count,
 			newMark.changes,
@@ -208,8 +208,9 @@ function composeMarksIgnoreChild(
 		}
 		return normalizeCellRename(baseMark.cellId, baseMark.count, attach, detach);
 	} else {
-		const length = baseMark.count;
-		return createNoopMark(length, undefined);
+		assert(baseMark.type === "Remove", "Unexpected mark type");
+		moveEffects.composeDetachAttach(getDetachOutputCellId(baseMark), baseMark.count);
+		return createNoopMark(baseMark.count, undefined);
 	}
 }
 
@@ -236,20 +237,18 @@ function handleNodeChanges(
 	moveEffects: ComposeNodeManager,
 ): NodeId | undefined {
 	if (newMark.changes !== undefined) {
-		const baseSource = getAttach(baseMark);
-		let newId: ChangeAtomId | undefined;
-		if (isMoveMark(newMark)) {
-			newId = getDetachId(newMark);
-		}
+		if (baseMark.type === "Insert" && baseMark.cellId !== undefined) {
+			let newId: ChangeAtomId | undefined;
+			if (newMark.type === "Remove") {
+				newId = getDetachOutputCellId(newMark);
+			}
 
-		// TODO: Make sure composeChild is not called twice on the node changes.
-		if (baseSource !== undefined) {
-			// XXX: Weird that we call getDetachId on an attach
-			moveEffects.composeBaseAttach(getDetachId(baseSource), newId, 1, newMark.changes);
+			moveEffects.composeBaseAttach(baseMark.cellId, newId, 1, newMark.changes);
 			return undefined;
 		}
 	}
 
+	// TODO: Make sure composeChild is not called twice on the node changes.
 	return composeChildChanges(baseMark.changes, newMark.changes, composeChild);
 }
 

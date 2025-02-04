@@ -299,10 +299,27 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				attachCellId,
 				revision,
 			);
-			this.modularBuilder.submitChange(
-				sourceField,
-				sequence.identifier,
-				brand(change),
+			this.modularBuilder.submitChanges(
+				[
+					{
+						type: "global",
+						renames: [
+							{
+								count,
+								oldId: { revision, localId: detachCellId },
+								newId: attachCellId,
+							},
+						],
+						revision,
+					},
+					{
+						type: "field",
+						field: sourceField,
+						fieldKind: sequence.identifier,
+						change: brand(change),
+						revision,
+					},
+				],
 				revision,
 			);
 		} else {
