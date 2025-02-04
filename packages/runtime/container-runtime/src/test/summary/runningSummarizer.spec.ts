@@ -1096,7 +1096,9 @@ describe("Runtime", () => {
 					try {
 						summarizer.summarizeOnDemand({ reason });
 						resolved = true;
-					} catch {}
+					} catch {
+						// Eat the error
+					}
 
 					await flushPromises();
 					assert(resolved === false, "already running promise should not resolve yet");

@@ -5,7 +5,7 @@
 
 export {
 	type ISharedTree,
-	SharedTreeFactory,
+	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
 	SharedTree,
 	getBranch,
@@ -21,6 +21,11 @@ export {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 } from "./sharedTree.js";
+
+export {
+	SharedTreeAttributes,
+	SharedTreeFactoryType,
+} from "./publicContracts.js";
 
 export {
 	createTreeCheckout,

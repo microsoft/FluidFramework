@@ -280,9 +280,9 @@ export async function visualizeSharedTreeNodeBySchema(
 				throw new TypeError("Invalid array");
 			}
 
-			for (let i = 0; i < children.length; i++) {
+			for (const [i, child] of children.entries()) {
 				fields[i] = await visualizeSharedTreeNodeBySchema(
-					children[i],
+					child,
 					treeSchema,
 					visualizeChildData,
 				);

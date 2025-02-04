@@ -20,7 +20,7 @@ import {
 	TreeCompressionStrategy,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import { SharedTreeFactory, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
+import type { CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -49,6 +49,7 @@ import {
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
 import { cursorFromInsertable } from "../../simple-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -64,7 +65,7 @@ const nodesCountDeep = [
 ];
 
 // TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
-const factory = new SharedTreeFactory({
+const factory = new TreeFactory({
 	jsonValidator: typeboxValidator,
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
 });
