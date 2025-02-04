@@ -5,7 +5,7 @@
 
 import type { GroceryListJSON } from "./modelInterfaces.js";
 
-export const askHealthBotForSuggestions = async (
+export const NETWORK_askHealthBotForSuggestions = async (
 	groceryListJSONString: string,
 ): Promise<string> => {
 	const parsedGroceryList: GroceryListJSON = JSON.parse(groceryListJSONString);

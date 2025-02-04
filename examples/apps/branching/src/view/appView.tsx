@@ -5,7 +5,7 @@
 
 import React, { type FC, useState } from "react";
 
-import { askHealthBotForSuggestions } from "../healthBot.js";
+import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
 import { applyDiffToGroceryList, diffGroceryListJSON } from "../model/index.js";
 import type {
 	GroceryListJSON,
@@ -24,7 +24,7 @@ const getSuggestionsFromHealthBot = async (
 ): Promise<GroceryListJSONDiff> => {
 	const stringifiedOriginal = groceryList.exportJSONString();
 	const jsonOriginal: GroceryListJSON = JSON.parse(stringifiedOriginal);
-	const stringifiedSuggestions = await askHealthBotForSuggestions(stringifiedOriginal);
+	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
 	const jsonSuggestions: GroceryListJSON = JSON.parse(stringifiedSuggestions);
 	const { adds, removals } = diffGroceryListJSON(jsonOriginal, jsonSuggestions);
 	console.log("Suggestions:", jsonSuggestions, "\nAdds:", adds, "\nRemovals:", removals);
