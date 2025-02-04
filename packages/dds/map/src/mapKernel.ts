@@ -149,7 +149,7 @@ export const mapKernelFactory: SharedKernelFactory<ISharedMapCore> = {
 		const k = new MapKernel(
 			args.serializer,
 			args.handle,
-			args.submitMessage,
+			args.submitLocalMessage,
 			args.isAttached,
 			args.eventEmitter,
 		);

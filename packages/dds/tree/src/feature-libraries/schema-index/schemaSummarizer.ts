@@ -5,10 +5,7 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -46,7 +43,6 @@ export class SchemaSummarizer implements Summarizable {
 	private schemaIndexLastChangedSeq: number | undefined;
 
 	public constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly schema: MutableTreeStoredSchema,
 		options: ICodecOptions,
 		collabWindow: CollabWindow,

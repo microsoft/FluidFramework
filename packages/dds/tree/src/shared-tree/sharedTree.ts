@@ -5,12 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces/internal";
-import type {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { KernelArgs } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
@@ -111,7 +107,7 @@ export interface SharedTreeContentSnapshot {
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
-export interface ITreeInternal extends ISharedObject, ITree {
+export interface ITreeInternal extends ITree {
 	/**
 	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
 	 * @privateRemarks
@@ -131,7 +127,7 @@ export interface ITreeInternal extends ISharedObject, ITree {
 /**
  * {@link ITreeInternal} extended with some non-exported APIs.
  */
-export interface ISharedTree extends ISharedObject, ITreeInternal {
+export interface ISharedTree extends ITreeInternal {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -190,39 +186,35 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
  * TODO: detail compatibility requirements.
  */
 @breakingClass
-export class SharedTree
-	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
-	implements ISharedTree
-{
+export class SharedTree extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
+	/**
+	 * User facing API surface for users of the tree (does not include stuff needed by the runtime to manage the tree).
+	 */
+	public readonly view: ISharedTree;
+
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
 	}
 
-	public constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		optionsParam: SharedTreeOptionsInternal,
-		telemetryContextPrefix: string = "fluid_sharedTree_",
-	) {
-		if (runtime.idCompressor === undefined) {
+	public constructor(args: KernelArgs, optionsParam: SharedTreeOptionsInternal) {
+		if (args.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
 
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest = buildConfiguredForest(options.forest, schema, runtime.idCompressor);
-		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const forest = buildConfiguredForest(options.forest, schema, args.idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(args.idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
-			runtime.idCompressor,
+			args.idCompressor,
 			options,
 		);
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
-			getCurrentSeq: () => this.deltaManager.lastSequenceNumber,
+		const schemaSummarizer = new SchemaSummarizer(schema, options, {
+			getCurrentSeq: () => args.lastSequenceNumber(),
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
@@ -232,8 +224,8 @@ export class SharedTree
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
-			originatorId: runtime.idCompressor.localSessionId,
-			idCompressor: runtime.idCompressor,
+			originatorId: args.idCompressor.localSessionId,
+			idCompressor: args.idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -241,7 +233,7 @@ export class SharedTree
 			fieldBatchCodec,
 			encoderContext,
 			options,
-			runtime.idCompressor,
+			args.idCompressor,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -249,7 +241,7 @@ export class SharedTree
 			fieldBatchCodec,
 			options,
 			options.treeEncodeType,
-			runtime.idCompressor,
+			args.idCompressor,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -275,14 +267,12 @@ export class SharedTree
 		);
 		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
+			args,
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
 			codecVersions,
-			id,
-			runtime,
-			attributes,
-			telemetryContextPrefix,
+			args.idCompressor,
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
@@ -294,7 +284,7 @@ export class SharedTree
 		);
 		const localBranch = this.getLocalBranch();
 		this.checkout = createTreeCheckout(
-			runtime.idCompressor,
+			args.idCompressor,
 			this.mintRevisionTag,
 			revisionTagCodec,
 			{
@@ -305,37 +295,48 @@ export class SharedTree
 				fieldBatchCodec,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
-				logger: this.logger,
+				logger: args.logger,
 				breaker: this.breaker,
 				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 			},
 		);
 
 		this.checkout.transaction.events.on("started", () => {
-			if (this.isAttached()) {
+			if (args.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.startTransaction();
 			}
 		});
 		this.checkout.transaction.events.on("aborting", () => {
-			if (this.isAttached()) {
+			if (args.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.abortTransaction();
 			}
 		});
 		this.checkout.transaction.events.on("committing", () => {
-			if (this.isAttached()) {
+			if (args.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.commitTransaction();
 			}
 		});
 		this.checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && this.isAttached()) {
+			if (event.type === "append" && args.isAttached()) {
 				if (this.checkout.transaction.isInProgress()) {
 					this.commitEnricher.addTransactionCommits(event.newCommits);
 				}
 			}
 		});
+
+		this.view = {
+			contentSnapshot: () => this.contentSnapshot(),
+			exportSimpleSchema: () => this.exportSimpleSchema(),
+			exportVerbose: () => this.exportVerbose(),
+			viewWith: this.viewWith.bind(this),
+			handle: args.handle,
+			get IFluidLoadable() {
+				return this;
+			},
+		};
 	}
 
 	public exportVerbose(): VerboseTree | undefined {
@@ -399,7 +400,7 @@ export class SharedTree
 			TreeView<ReadSchema<TRoot>>;
 	}
 
-	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+	public override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
 		this.checkout.load();
 	}
@@ -415,7 +416,7 @@ export class SharedTree
 		super.didAttach();
 	}
 
-	protected override applyStashedOp(
+	public override applyStashedOp(
 		...args: Parameters<
 			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
 		>

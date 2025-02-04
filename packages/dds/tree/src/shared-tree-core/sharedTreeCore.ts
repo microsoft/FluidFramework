@@ -4,11 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -18,9 +14,10 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import {
-	type IFluidSerializer,
-	SharedObject,
+import type {
+	IFluidSerializer,
+	KernelArgs,
+	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
@@ -75,8 +72,7 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
  */
 @breakingClass
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
-	extends SharedObject
-	implements WithBreakable
+	implements SharedKernel, WithBreakable
 {
 	public readonly breaker: Breakable = new Breakable("Shared Tree");
 
@@ -132,44 +128,39 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * @param telemetryContextPrefix - The property prefix for telemetry pertaining to this object. See {@link ITelemetryContext}
 	 */
 	public constructor(
+		private readonly kernelArgs: KernelArgs,
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
-		// Base class arguments
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		telemetryContextPrefix: string,
+		idCompressor: IIdCompressor,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
 		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
 	) {
-		super(id, runtime, attributes, telemetryContextPrefix);
-
 		this.schemaAndPolicy = {
 			schema,
 			policy: schemaPolicy,
 		};
 
 		const rebaseLogger = createChildLogger({
-			logger: this.logger,
+			logger: this.kernelArgs.logger,
 			namespace: "Rebase",
 		});
 
 		assert(
-			runtime.idCompressor !== undefined,
+			idCompressor !== undefined,
 			0x886 /* IdCompressor must be enabled to use SharedTree */,
 		);
-		this.idCompressor = runtime.idCompressor;
+		this.idCompressor = idCompressor;
 		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
-		const localSessionId = runtime.idCompressor.localSessionId;
+		const localSessionId = idCompressor.localSessionId;
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
@@ -189,7 +180,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			}
 		});
 
-		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
 			this.editManager.changeFamily.codecs,
 			revisionTagCodec,
@@ -212,7 +203,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs,
-			new RevisionTagCodec(runtime.idCompressor),
+			new RevisionTagCodec(idCompressor),
 			options,
 			formatOptions.message,
 		);
@@ -231,7 +222,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
 	// We might want to not subclass it, or override/reimplement most of its functionality.
 	@throwIfBroken
-	protected summarizeCore(
+	public summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
@@ -243,7 +234,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(
-					(contents) => serializer.stringify(contents, this.handle),
+					(contents) => serializer.stringify(contents, this.kernelArgs.handle),
 					undefined,
 					undefined,
 					telemetryContext,
@@ -256,7 +247,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return builder.getSummaryTree();
 	}
 
-	protected async loadCore(services: IChannelStorageService): Promise<void> {
+	public async loadCore(services: IChannelStorageService): Promise<void> {
 		assert(
 			this.editManager.localBranch.getHead() === this.editManager.getTrunkHead(),
 			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
@@ -295,7 +286,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	): Promise<void> {
 		return summarizable.load(
 			scopeStorageService(services, summarizablesTreeKey, summarizable.key),
-			(contents) => this.serializer.parse(contents),
+			(contents) => this.kernelArgs.serializer.parse(contents),
 		);
 	}
 
@@ -311,7 +302,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		isResubmit: boolean,
 	): void {
 		assert(
-			this.isAttached() === (this.detachedRevision === undefined),
+			this.kernelArgs.isAttached() === (this.detachedRevision === undefined),
 			0x95a /* Detached revision should only be set when not attached */,
 		);
 
@@ -344,7 +335,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				schema: schemaAndPolicy,
 			},
 		);
-		this.submitLocalMessage(message, {
+		this.kernelArgs.submitLocalMessage(message, {
 			// Clone the schema to ensure that during resubmit the schema has not been mutated by later changes
 			schema: schemaAndPolicy.schema.clone(),
 			policy: schemaAndPolicy.policy,
@@ -352,7 +343,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
 	}
 
-	protected processCore(
+	public processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
@@ -376,22 +367,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return this.editManager.localBranch;
 	}
 
-	protected onDisconnect(): void {}
+	public onDisconnect(): void {}
 
-	protected override didAttach(): void {
+	protected didAttach(): void {
 		if (this.detachedRevision !== undefined) {
 			this.detachedRevision = undefined;
 		}
 	}
 
-	protected override reSubmitCore(
-		content: JsonCompatibleReadOnly,
-		localOpMetadata: unknown,
-	): void {
+	public reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
-		} = this.messageCodec.decode(this.serializer.decode(content), {
+		} = this.messageCodec.decode(this.kernelArgs.serializer.decode(content), {
 			idCompressor: this.idCompressor,
 		});
 		const [commit] = this.editManager.findLocalCommit(revision);
@@ -416,30 +404,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 
-	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
+	public applyStashedOp(content: JsonCompatibleReadOnly): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision, change },
 		} = this.messageCodec.decode(content, { idCompressor: this.idCompressor });
 		this.editManager.localBranch.apply({ change, revision });
-	}
-
-	public override getGCData(fullGC?: boolean): IGarbageCollectionData {
-		const gcNodes: IGarbageCollectionData["gcNodes"] = super.getGCData(fullGC).gcNodes;
-		for (const s of this.summarizables) {
-			for (const [id, routes] of Object.entries(s.getGCData(fullGC).gcNodes)) {
-				gcNodes[id] ??= [];
-				for (const route of routes) {
-					// Non null asserting here because we are creating an array at gcNodes[id] if it is undefined
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					gcNodes[id]!.push(route);
-				}
-			}
-		}
-
-		return {
-			gcNodes,
-		};
 	}
 }
 

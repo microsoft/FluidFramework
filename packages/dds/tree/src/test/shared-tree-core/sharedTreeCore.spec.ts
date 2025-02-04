@@ -55,13 +55,14 @@ import { SharedTreeTestFactory, StringArray, TestTreeProviderLite } from "../uti
 
 import { TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { mockSerializer } from "../mockSerializer.js";
 
 const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
 		const tree = createTree([]);
-		const { summary, stats } = await tree.summarize();
+		const { summary, stats } = tree.summarizeCore(mockSerializer);
 		assert(summary);
 		assert(stats);
 		assert.equal(stats.treeNodeCount, 3);
@@ -76,8 +77,10 @@ describe("SharedTreeCore", () => {
 			summarizable.on("loaded", () => (loaded = true));
 			const summarizables = [summarizable] as const;
 			const tree = createTree(summarizables);
-			const defaultSummary = await createTree([]).summarize();
-			await tree.load(MockSharedObjectServices.createFromSummary(defaultSummary.summary));
+			const defaultSummary = createTree([]).summarizeCore(mockSerializer);
+			await tree.loadCore(
+				MockSharedObjectServices.createFromSummary(defaultSummary.summary).objectStorage,
+			);
 			assert(loaded, "Expected summarizable to load");
 		});
 
@@ -91,8 +94,8 @@ describe("SharedTreeCore", () => {
 			});
 			const summarizables = [summarizable] as const;
 			const tree = createTree(summarizables);
-			const { summary } = await tree.summarize();
-			await tree.load(MockSharedObjectServices.createFromSummary(summary));
+			const { summary } = tree.summarizeCore(mockSerializer);
+			await tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage);
 			assert.equal(loadedBlob, true);
 		});
 

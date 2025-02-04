@@ -82,7 +82,7 @@ import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { TreeFactory } from "../../../treeFactory.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
 
 const options = {
 	jsonValidator: typeboxValidator,
@@ -395,10 +395,10 @@ describe("End to end chunked encoding", () => {
 		});
 
 		it("Initializing tree creates uniform chunks with encoded identifiers", async () => {
-			const factory = new TreeFactory({
+			const factory = configuredSharedTree({
 				jsonValidator: typeboxValidator,
 				forest: ForestTypeOptimized,
-			});
+			}).getFactory();
 
 			const runtime = new MockFluidDataStoreRuntime({
 				clientId: `test-client`,
@@ -408,7 +408,7 @@ describe("End to end chunked encoding", () => {
 			const tree = factory.create(
 				runtime,
 				"TestSharedTree",
-			) as SharedTreeWithConnectionStateSetter;
+			) as unknown as SharedTreeWithConnectionStateSetter;
 
 			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 

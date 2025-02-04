@@ -15,10 +15,12 @@ import {
 	type IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { SharedObjectHandle } from "./handle.js";
 import { IFluidSerializer } from "./serializer.js";
@@ -89,7 +91,7 @@ export interface SharedKernel {
 	/**
 	 * {@inheritDoc SharedObjectCore.rollback}
 	 */
-	rollback(content: unknown, localOpMetadata: unknown): void;
+	rollback?(content: unknown, localOpMetadata: unknown): void;
 }
 
 /**
@@ -133,7 +135,11 @@ export abstract class SharedObjectFromKernel<
 	}
 
 	protected override rollback(content: unknown, localOpMetadata: unknown): void {
-		this.kernel.rollback(content, localOpMetadata);
+		if (this.kernel.rollback === undefined) {
+			super.rollback(content, localOpMetadata);
+		} else {
+			this.kernel.rollback(content, localOpMetadata);
+		}
 	}
 }
 
@@ -164,12 +170,15 @@ export interface SharedKernelFactory<T extends object> {
  * @internal
  */
 export interface KernelArgs {
-	id: string;
-	serializer: IFluidSerializer;
-	handle: IFluidHandle;
-	submitMessage: (op: unknown, localOpMetadata: unknown) => void;
-	isAttached: () => boolean;
-	eventEmitter: TypedEventEmitter<ISharedObjectEvents>;
+	readonly id: string;
+	readonly serializer: IFluidSerializer;
+	readonly handle: IFluidHandle;
+	readonly submitLocalMessage: (op: unknown, localOpMetadata: unknown) => void;
+	readonly isAttached: () => boolean;
+	readonly eventEmitter: TypedEventEmitter<ISharedObjectEvents>;
+	readonly logger: ITelemetryLoggerExt;
+	readonly idCompressor: IIdCompressor | undefined;
+	readonly lastSequenceNumber: () => number;
 }
 
 /**
@@ -211,9 +220,13 @@ class SharedObjectFromKernelFull<
 			id,
 			serializer: this.serializer,
 			handle: this.handle,
-			submitMessage: (op, localOpMetadata) => this.submitLocalMessage(op, localOpMetadata),
+			submitLocalMessage: (op, localOpMetadata) =>
+				this.submitLocalMessage(op, localOpMetadata),
 			isAttached: () => this.isAttached(),
 			eventEmitter: merged,
+			logger: this.logger,
+			idCompressor: runtime.idCompressor,
+			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 		};
 
 		return merged;

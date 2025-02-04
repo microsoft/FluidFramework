@@ -26,6 +26,7 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
@@ -141,6 +142,7 @@ import {
 	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
+	type ITree,
 } from "../simple-tree/index.js";
 import {
 	type JsonCompatible,
@@ -158,7 +160,7 @@ import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
-import { TreeFactory } from "../treeFactory.js";
+import { configuredSharedTree, TreeFactory } from "../treeFactory.js";
 
 // Testing utilities
 
@@ -233,7 +235,9 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: TreeFactory = new TreeFactory({ jsonValidator: typeboxValidator }),
+		factory: IChannelFactory<ITree> = configuredSharedTree({
+			jsonValidator: typeboxValidator,
+		}).getFactory(),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
