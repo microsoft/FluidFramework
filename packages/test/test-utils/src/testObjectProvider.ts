@@ -356,7 +356,7 @@ export class EventAndErrorTrackingLogger
 	send(event: ITelemetryBaseEvent): void {
 		const firstExpectedEvent = this.expectedEvents[0];
 		if (firstExpectedEvent === undefined) {
-			throw new Error("There should always be atleast one expected event");
+			throw new Error("There should always be at least one expected event");
 		}
 
 		const ee = firstExpectedEvent.event;
