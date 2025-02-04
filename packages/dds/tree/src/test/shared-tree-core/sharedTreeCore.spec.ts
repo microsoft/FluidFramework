@@ -159,16 +159,6 @@ describe("SharedTreeCore", () => {
 				"Expected summary stats to correctly count tree nodes",
 			);
 		});
-
-		it("are asked for GC", () => {
-			const summarizable = new MockSummarizable("summarizable");
-			let requestedGC = false;
-			summarizable.on("gcRequested", () => (requestedGC = true));
-			const summarizables = [summarizable] as const;
-			const tree = createTree(summarizables);
-			tree.getGCData();
-			assert(requestedGC, "Expected SharedTree to ask summarizable for GC");
-		});
 	});
 
 	it("evicts trunk commits behind the minimum sequence number", () => {

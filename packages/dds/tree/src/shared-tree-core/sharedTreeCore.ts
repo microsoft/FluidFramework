@@ -9,7 +9,6 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -451,13 +450,6 @@ export interface Summarizable {
 		trackState?: boolean,
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummaryTreeWithStats>;
-
-	/**
-	 * {@inheritDoc (ISharedObject:interface).getGCData}
-	 */
-	// TODO: Change this interface (and the one in ISharedObject, if necessary) to support "handles within handles".
-	// Consider the case of a document with history; the return value here currently grows unboundedly.
-	getGCData(fullGC?: boolean): IGarbageCollectionData;
 
 	/**
 	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore
