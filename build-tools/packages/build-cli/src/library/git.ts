@@ -49,7 +49,7 @@ function getVersionFromTag(tag: string): string | undefined {
  * Get all version tags for a given prefix.
  *
  * @param git - The git repository.
- * @param prefix - prefix to search for.
+ * @param prefix - Prefix to search for.
  * @returns List of version tags.
  */
 async function getVersionTags(git: SimpleGit, prefix: string): Promise<string[]> {

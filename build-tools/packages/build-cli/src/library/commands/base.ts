@@ -297,12 +297,10 @@ export abstract class BaseCommandWithBuildProject<
 	 * @param searchPath - The path to search for the build project.
 	 * @returns The build project.
 	 */
-	public getBuildProject(searchPath?: string): IBuildProject {
+	public getBuildProject(searchPath = process.cwd()): IBuildProject {
 		if (this._buildProject === undefined) {
-			const root = searchPath ?? process.cwd();
-			this._buildProject = loadBuildProject(root);
+			this._buildProject = loadBuildProject(searchPath);
 		}
-
 		return this._buildProject;
 	}
 }

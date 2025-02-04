@@ -6,8 +6,7 @@
 import { EOL } from "node:os";
 import { runCommand } from "@oclif/test";
 import { expect } from "chai";
-import { afterEach, describe, it } from "mocha";
-import mockedEnv from "mocked-env";
+import { describe, it } from "mocha";
 import { testRepoRoot } from "../../../init.js";
 
 /**
@@ -34,11 +33,7 @@ function stdoutLineEquals(stdout: string, lineIndex: number, testValue: string):
 	expect(lines[lineIndex]).to.equal(testValue);
 }
 
-describe("check:latestVersions", () => {
-	const restore = mockedEnv.default({}, { clear: true });
-
-	afterEach(() => restore());
-
+describe("vnext:check:latestVersions", () => {
 	it("should set shouldDeploy to true if input version is the latest version", async () => {
 		const version = "1.0.0";
 		const releaseGroup = "group2";
