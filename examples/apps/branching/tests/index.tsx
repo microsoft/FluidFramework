@@ -21,7 +21,7 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
-import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
+import { GroceryListContainerRuntimeFactory } from "../src/containerCode.js";
 import type { IGroceryList } from "../src/modelInterfaces.js";
 import { AppView, DebugView } from "../src/view/index.js";
 

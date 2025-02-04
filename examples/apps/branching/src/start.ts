@@ -18,7 +18,7 @@ import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { GroceryListContainerRuntimeFactory } from "./model/index.js";
+import { GroceryListContainerRuntimeFactory } from "./containerCode.js";
 import type { IGroceryList } from "./modelInterfaces.js";
 import { AppView, DebugView } from "./view/index.js";
 

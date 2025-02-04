@@ -5,8 +5,8 @@
 
 import React, { type FC, useState } from "react";
 
+import { applyDiffToGroceryList, diffGroceryListJSON } from "../groceryList/index.js";
 import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
-import { applyDiffToGroceryList, diffGroceryListJSON } from "../model/index.js";
 import type {
 	GroceryListJSON,
 	GroceryListModifications,

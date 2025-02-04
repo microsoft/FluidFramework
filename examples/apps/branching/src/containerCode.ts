@@ -13,7 +13,7 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { GroceryListFactory } from "./groceryList.js";
+import { GroceryListFactory } from "./groceryList/index.js";
 
 const groceryListId = "grocery-list";
 const groceryListRegistryKey = "grocery-list";
