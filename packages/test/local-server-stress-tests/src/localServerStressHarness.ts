@@ -69,7 +69,7 @@ const isOperationType = <O extends BaseOperation>(
 
 export interface Client {
 	container: IContainer;
-	tag: string;
+	tag: `client-${number}`;
 	entryPoint: DefaultStressDataObject;
 }
 
@@ -86,15 +86,16 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	datastore: StressDataObject;
 	channel: IChannel;
 	isDetached: boolean;
+	tag<T extends string>(prefix: T): `${T}-${number}`;
 }
 
 /**
  * @internal
  */
 interface SelectedClientSpec {
-	clientTag: string;
-	datastoreTag: string;
-	channelTag: string;
+	clientTag: `client-${number}`;
+	datastoreTag: `datastore-${number}`;
+	channelTag: `channel-${number}`;
 }
 
 /**
@@ -116,7 +117,7 @@ interface Attach {
  */
 interface AddClient {
 	type: "addClient";
-	clientTag: string;
+	clientTag: `client-${number}`;
 	url: string;
 }
 
@@ -125,7 +126,7 @@ interface AddClient {
  */
 interface RemoveClient {
 	type: "removeClient";
-	clientTag: string;
+	clientTag: `client-${number}`;
 }
 
 /**
@@ -483,7 +484,7 @@ function mixinAddRemoveClient<
 						return {
 							type: "addClient",
 							url: containerUrl,
-							clientTag: makeFriendlyClientTag(random),
+							clientTag: state.tag("client"),
 						} satisfies AddClient;
 					}
 				}
@@ -576,7 +577,7 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
 					loadClient(
 						state.localDeltaConnectionServer,
 						state.codeLoader,
-						makeFriendlyClientTag(state.random),
+						state.tag("client"),
 						url,
 					),
 				),
@@ -840,7 +841,7 @@ function mixinClientSelection<
 						...baseOp,
 						clientTag: client.tag,
 						datastoreTag: entry.tag,
-						channelTag: channel.id,
+						channelTag: channel.id as `channel-${number}`,
 					} satisfies SelectedClientSpec);
 		};
 	};
@@ -910,7 +911,7 @@ async function createDetachedClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
 	codeDetails: IFluidCodeDetails,
-	tag: string,
+	tag: `client-${number}`,
 ): Promise<Client> {
 	const container = await createDetachedContainer({
 		codeLoader,
@@ -934,7 +935,7 @@ async function createDetachedClient(
 async function loadClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
-	tag: string,
+	tag: `client-${number}`,
 	url: string,
 ): Promise<Client> {
 	const container = await loadExistingContainer({
@@ -954,18 +955,6 @@ async function loadClient(
 		entryPoint: maybe.DefaultStressDataObject,
 	};
 }
-
-/**
- * Gets a friendly ID for a client based on its index in the client list.
- * This exists purely for easier debugging--reasoning about client "A" is easier than reasoning
- * about client "3e8a621a-7b35-414b-897f-8795962fb415".
- */
-let clientCount = 0;
-function makeFriendlyClientTag(random: IRandom): string {
-	const index = clientCount++;
-	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
-}
-
 /**
  * Runs the provided DDS fuzz model. All functionality is already assumed to be mixed in.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -985,12 +974,13 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		package: "local-server-stress-tests",
 	};
 	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
-	clientCount = 0;
+	let tagCount = 0;
+	const tag: LocalServerStressState["tag"] = (prefix) => `${prefix}-${tagCount++}`;
 	const initialClient = await createDetachedClient(
 		localDeltaConnectionServer,
 		codeLoader,
 		codeDetails,
-		startDetached ? makeFriendlyClientTag(random) : "original",
+		tag("client"),
 	);
 	const clients: Client[] = [initialClient];
 	let containerUrl: string | undefined;
@@ -1001,17 +991,11 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		clients.push(
 			...(await Promise.all(
 				Array.from({ length: options.numberOfClients - 1 }, async (_, i) =>
-					loadClient(
-						localDeltaConnectionServer,
-						codeLoader,
-						makeFriendlyClientTag(random),
-						url,
-					),
+					loadClient(localDeltaConnectionServer, codeLoader, tag("client"), url),
 				),
 			)),
 		);
 	}
-
 	const initialState: LocalServerStressState = {
 		clients,
 		localDeltaConnectionServer,
@@ -1022,6 +1006,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		channel: makeUnreachableCodePathProxy("channel"),
 		isDetached: startDetached,
 		containerUrl,
+		tag,
 	};
 
 	options.emitter.emit("testStart", initialState);

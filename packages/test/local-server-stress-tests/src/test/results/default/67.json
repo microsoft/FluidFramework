@@ -1,0 +1,130 @@
+[
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": "E4v"
+        },
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "attach"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "clear",
+            "path": "/"
+        },
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/dir3",
+            "value": {
+                "tag": "datastore-0",
+                "absolutePath": "/a6a4db21-a234-405b-855f-5d85f63ed3fb",
+                "isAttached": true
+            }
+        },
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/dir3",
+            "value": {
+                "tag": "root",
+                "absolutePath": "/a6a4db21-a234-405b-855f-5d85f63ed3fb/root",
+                "isAttached": true
+            }
+        },
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/dir3",
+            "value": ""
+        },
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/dir3",
+            "value": "UKTr"
+        },
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "synchronize"
+    }
+]

@@ -1,0 +1,24 @@
+[
+    {
+        "type": "createDataStore",
+        "asChild": false,
+        "tag": "datastore-1",
+        "clientTag": "client-0",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "type": "attach"
+    },
+    {
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/dir1"
+        },
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    }
+]
