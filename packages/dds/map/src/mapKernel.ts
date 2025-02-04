@@ -614,13 +614,12 @@ export class MapKernel {
 		local: boolean,
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
-		const firstPendingClearMessageId = this.pendingClearMessageIds[0];
-		if (firstPendingClearMessageId !== undefined) {
+		if (this.pendingClearMessageIds[0] !== undefined) {
 			if (local) {
 				assert(
 					localOpMetadata !== undefined &&
 						isMapKeyLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < firstPendingClearMessageId,
+						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
 					0x013 /* "Received out of order op when there is an unackd clear message" */,
 				);
 			}
