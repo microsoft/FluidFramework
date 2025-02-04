@@ -1492,7 +1492,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			dirs: this._subdirectories,
 			next(): IteratorResult<[string, IDirectory]> {
 				if (this.index < subdirNames.length) {
-					// Bounds check above guarentees non null
+					// Bounds check above guarantees non-null (at least at compile time, assuming all types are respected)
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const subdirName = subdirNames[this.index++]!;
 					const subdir = this.dirs.get(subdirName);
