@@ -1,5 +1,5 @@
 /*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.=
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
 
@@ -32,19 +32,19 @@ import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
  * - Announce 'attendeeDisconnected' when remote client disconnects.
  */
 describe(`Presence with AzureClient`, () => {
-	const numClients = 5;
+	const numClients = 5; // Set the total number of Fluid clients to create
 	assert(numClients > 1, "Must have at least two clients");
 	let children: ChildProcess[] = [];
 	const durationMs = 10_000;
 
 	const afterCleanUp: (() => void)[] = [];
+
+	// After each test, kill each child process and run any cleanup functions that were registered
 	afterEach(async () => {
-		// kill all child processes after each test
 		for (const child of children) {
 			child.kill();
 		}
 		children = [];
-
 		for (const cleanUp of afterCleanUp) {
 			cleanUp();
 		}
@@ -68,7 +68,10 @@ describe(`Presence with AzureClient`, () => {
 			const user = { id: `test-user-id-${index}`, name: `test-user-name-${index}` };
 			const message: MessageToChild = { command: "connect", containerId, user };
 			child.send(message);
-			// The initial child process will create the container, so we must wait to receive the containerId so future child clients can use it
+			/*
+			 The initial child process will create the container,
+			 so we must wait to receive the containerId so future child clients can use it
+			*/
 			if (index === 0) {
 				await timeoutPromise(
 					(resolve) => {
