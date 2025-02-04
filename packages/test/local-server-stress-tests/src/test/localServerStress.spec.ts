@@ -24,41 +24,26 @@ import {
 	LocalServerStressModel,
 	type LocalServerStressState,
 } from "../localServerStressHarness";
+import type { StressDataObjectOperations } from "../stressDataObject.js";
 
 import { _dirname } from "./dirname.cjs";
 
-interface UploadBlob {
-	type: "uploadBlob";
-	id: `blob-${number}`;
-}
-interface CreateDataStore {
-	type: "createDataStore";
-	asChild: boolean;
-	id: `datastore-${number}`;
-}
-
-interface CreateChannel {
-	type: "createChannel";
-	channelType: string;
-	id: `channel-${number}`;
-}
-
-type StressOperations = UploadBlob | CreateDataStore | CreateChannel | DDSModelOp;
+type StressOperations = StressDataObjectOperations | DDSModelOp;
 
 const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	createDataStore: async (state, op) => {
-		state.datastore.createDataStore(op.id, op.asChild);
+		state.datastore.createDataStore(op.tag, op.asChild);
 	},
 	createChannel: async (state, op) => {
-		state.datastore.createChannel(op.id, op.channelType);
+		state.datastore.createChannel(op.tag, op.channelType);
 	},
 	uploadBlob: async (state, op) => {
-		state.datastore.uploadBlob(op.id, state.random.string(state.random.integer(1, 16)));
+		state.datastore.uploadBlob(op.tag, state.random.string(state.random.integer(1, 16)));
 	},
 	DDSModelOp: DDSModelOpReducer,
 });
 
-let id = 0;
+let tag = 0;
 function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressState> {
 	const asyncGenerator = createWeightedAsyncGenerator<
 		StressOperations,
@@ -68,14 +53,14 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			async (state) => ({
 				type: "createDataStore",
 				asChild: state.random.bool(),
-				id: `datastore-${++id}`,
+				tag: `datastore-${++tag}`,
 			}),
 			1,
 		],
 		[
 			async (state) => ({
 				type: "uploadBlob",
-				id: `blob-${++id}`,
+				tag: `blob-${++tag}`,
 			}),
 			10,
 		],
@@ -83,7 +68,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			async (state) => ({
 				type: "createChannel",
 				channelType: state.random.pick([...ddsModelMap.keys()]),
-				id: `channel-${++id}`,
+				tag: `channel-${++tag}`,
 			}),
 			5,
 		],
@@ -117,6 +102,6 @@ describe("Local Server Stress", () => {
 		// only: [99],
 		saveFailures,
 		// saveSuccesses,
-		skip: [67, 99],
+		skip: [],
 	});
 });

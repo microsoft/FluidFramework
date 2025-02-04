@@ -86,8 +86,6 @@ export const ddsModelMap = generateSubModelMap(
 
 export interface DDSModelOp {
 	type: "DDSModelOp";
-	channelType: string;
-	channelId: string;
 	op: unknown;
 }
 
@@ -102,10 +100,10 @@ const createDDSClient = (channel: IChannel): DDSClient<IChannelFactory> => {
 const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
 ): Promise<DDSFuzzTestState<IChannelFactory>> => {
-	const channels = await state.datastore.channels();
+	const channels = await state.datastore.getChannels();
 	const allHandles = [
-		...channels.map((c) => ({ id: c.id, handle: c.handle })),
-		...Object.values(await state.client.entryPoint.globalObjects()).filter(
+		...channels.map((c) => ({ tag: c.id, handle: c.handle })),
+		...(await state.client.entryPoint.getContainerObjects()).filter(
 			(v) => v.handle !== undefined,
 		),
 	];
@@ -118,11 +116,11 @@ const covertLocalServerStateToDdsState = async (
 		random: {
 			...state.random,
 			handle: () => {
-				const { id, handle } = state.random.pick(allHandles);
+				const { tag, handle } = state.random.pick(allHandles);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const realHandle = toFluidHandleInternal(handle!);
 				return {
-					id,
+					tag,
 					absolutePath: realHandle.absolutePath,
 					get [fluidHandleSymbol]() {
 						return realHandle[fluidHandleSymbol];
@@ -150,8 +148,6 @@ export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressSt
 
 	return {
 		type: "DDSModelOp",
-		channelType: channel.attributes.type,
-		channelId: channel.id,
 		op,
 	} satisfies DDSModelOp;
 };
@@ -160,18 +156,18 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 	state,
 	op,
 ) => {
-	const baseModel = ddsModelMap.get(op.channelType);
+	const baseModel = ddsModelMap.get(state.channel.attributes.type);
 	assert(baseModel !== undefined, "must have base model");
-	const channels = await state.datastore.channels();
-	const globalObjects = await state.client.entryPoint.globalObjects();
+	const channels = await state.datastore.getChannels();
+	const globalObjects = await state.client.entryPoint.getContainerObjects();
 	const allHandles = [
-		...channels.map((c) => ({ id: c.id, handle: c.handle })),
-		...Object.values(globalObjects).filter((v) => v.handle !== undefined),
+		...channels.map((c) => ({ tag: c.id, handle: c.handle })),
+		...globalObjects.filter((v) => v.handle !== undefined),
 	];
 
 	const subOp = JSON.parse(JSON.stringify(op.op), (key, value) => {
-		if (isObject(value) && "absolutePath" in value && "id" in value) {
-			const entry = allHandles.find((h) => h.id === value.id);
+		if (isObject(value) && "absolutePath" in value && "tag" in value) {
+			const entry = allHandles.find((h) => h.tag === value.tag);
 			assert(entry !== undefined, "entry must exist");
 			return entry.handle;
 		}
@@ -184,16 +180,16 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
 	const buildChannelMap = async (client: Client) => {
 		const channelMap = new Map<string, IChannel>();
-		for (const entry of Object.values(await client.entryPoint.globalObjects()).map((v) =>
+		for (const entry of (await client.entryPoint.getContainerObjects()).map((v) =>
 			v.type === "stressDataObject" ? v : undefined,
 		)) {
 			if (entry !== undefined) {
 				const stressDataObject = entry?.stressDataObject;
 				if (stressDataObject?.attached === true) {
-					const channels = await stressDataObject.channels();
+					const channels = await stressDataObject.getChannels();
 					for (const channel of channels) {
 						if (channel.isAttached()) {
-							channelMap.set(`${entry.id}/${channel.id}`, channel);
+							channelMap.set(`${entry.tag}/${channel.id}`, channel);
 						}
 					}
 				}

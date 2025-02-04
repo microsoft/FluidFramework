@@ -56,7 +56,11 @@ import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
 import { FuzzTestMinimizer } from "./minification.js";
 import type { MinimizationTransform } from "./minification.js";
-import { createRuntimeFactory, StressDataObject } from "./stressDataObject.js";
+import {
+	createRuntimeFactory,
+	StressDataObject,
+	type DefaultStressDataObject,
+} from "./stressDataObject.js";
 
 const isOperationType = <O extends BaseOperation>(
 	type: O["type"],
@@ -65,8 +69,8 @@ const isOperationType = <O extends BaseOperation>(
 
 export interface Client {
 	container: IContainer;
-	id: string;
-	entryPoint: StressDataObject;
+	tag: string;
+	entryPoint: DefaultStressDataObject;
 }
 
 /**
@@ -88,9 +92,9 @@ export interface LocalServerStressState extends BaseFuzzTestState {
  * @internal
  */
 interface SelectedClientSpec {
-	clientId: string;
-	datastoreId: string;
-	channelId: string;
+	clientTag: string;
+	datastoreTag: string;
+	channelTag: string;
 }
 
 /**
@@ -112,7 +116,7 @@ interface Attach {
  */
 interface AddClient {
 	type: "addClient";
-	id: string;
+	clientTag: string;
 	url: string;
 }
 
@@ -121,7 +125,7 @@ interface AddClient {
  */
 interface RemoveClient {
 	type: "removeClient";
-	id: string;
+	clientTag: string;
 }
 
 /**
@@ -471,7 +475,7 @@ function mixinAddRemoveClient<
 					if (clients.length > options.numberOfClients && random.bool()) {
 						return {
 							type: "removeClient",
-							id: random.pick(clients).id,
+							clientTag: random.pick(clients).tag,
 						} satisfies RemoveClient;
 					}
 
@@ -479,7 +483,7 @@ function mixinAddRemoveClient<
 						return {
 							type: "addClient",
 							url: containerUrl,
-							id: makeFriendlyClientId(random),
+							clientTag: makeFriendlyClientTag(random),
 						} satisfies AddClient;
 					}
 				}
@@ -502,7 +506,7 @@ function mixinAddRemoveClient<
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,
-				op.id,
+				op.clientTag,
 				op.url,
 			);
 			state.clients.push(newClient);
@@ -510,7 +514,7 @@ function mixinAddRemoveClient<
 		}
 		if (isOperationType<RemoveClient>("removeClient", op)) {
 			const removed = state.clients.splice(
-				state.clients.findIndex((c) => c.id === op.id),
+				state.clients.findIndex((c) => c.tag === op.clientTag),
 				1,
 			);
 			removed[0].container.dispose();
@@ -572,7 +576,7 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
 					loadClient(
 						state.localDeltaConnectionServer,
 						state.codeLoader,
-						makeFriendlyClientId(state.random),
+						makeFriendlyClientTag(state.random),
 						url,
 					),
 				),
@@ -689,7 +693,7 @@ function mixinSynchronization<
 		if (isSynchronizeOp(operation)) {
 			const connectedClients = state.clients.filter((client) => {
 				if (client.container.closed || client.container.disposed) {
-					throw new Error(`Client ${client.id} is closed`);
+					throw new Error(`Client ${client.tag} is closed`);
 				}
 				return client.container.connectionState !== ConnectionState.Disconnected;
 			});
@@ -771,7 +775,7 @@ function mixinSynchronization<
 						await model.validateConsistency(readonlyChannel, client);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
-							error.message = `Comparing client ${readonlyChannel.id} vs client ${client.id}\n${error.message}`;
+							error.message = `Comparing client ${readonlyChannel.tag} vs client ${client.tag}\n${error.message}`;
 						}
 						throw error;
 					}
@@ -791,7 +795,7 @@ function mixinSynchronization<
 }
 
 const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
-	(op as SelectedClientSpec).clientId !== undefined;
+	(op as SelectedClientSpec).clientTag !== undefined;
 
 /**
  * Mixes in the ability to select a client to perform an operation on.
@@ -818,13 +822,13 @@ function mixinClientSelection<
 			// 2. Make it available to the subsequent reducer logic we're going to inject
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
-			const globalObjects = await client.entryPoint.globalObjects();
+			const globalObjects = await client.entryPoint.getContainerObjects();
 			const entry = state.random.pick(
-				Object.values(globalObjects).filter((v) => v.type === "stressDataObject"),
+				globalObjects.filter((v) => v.type === "stressDataObject"),
 			);
 			assert(entry?.type === "stressDataObject");
 			const datastore = entry.stressDataObject;
-			const channels = await datastore.StressDataObject.channels();
+			const channels = await datastore.StressDataObject.getChannels();
 			const channel = state.random.pick(channels);
 			assert(channel !== undefined, "channel must exist");
 			const baseOp = await runInStateWithClient(state, client, datastore, channel, async () =>
@@ -834,23 +838,23 @@ function mixinClientSelection<
 				? done
 				: ({
 						...baseOp,
-						clientId: client.id,
-						datastoreId: entry.id,
-						channelId: channel.id,
+						clientTag: client.tag,
+						datastoreTag: entry.tag,
+						channelTag: channel.id,
 					} satisfies SelectedClientSpec);
 		};
 	};
 
 	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
-		const client = state.clients.find((c) => c.id === operation.clientId);
+		const client = state.clients.find((c) => c.tag === operation.clientTag);
 		assert(client !== undefined);
-		const globalObjects = await client.entryPoint.globalObjects();
-		const entry = globalObjects[operation.datastoreId];
+		const globalObjects = await client.entryPoint.getContainerObjects();
+		const entry = globalObjects.find((e) => e.tag === operation.datastoreTag);
 		assert(entry?.type === "stressDataObject");
 		const datastore = entry.stressDataObject;
-		const channels = await datastore.StressDataObject.channels();
-		const channel = channels.find((c) => c.id === operation.channelId);
+		const channels = await datastore.StressDataObject.getChannels();
+		const channel = channels.find((c) => c.id === operation.channelTag);
 		assert(channel !== undefined, "channel must exist");
 		await runInStateWithClient(state, client, datastore, channel, async () => {
 			await model.reducer(state, operation as TOperation);
@@ -906,7 +910,7 @@ async function createDetachedClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
 	codeDetails: IFluidCodeDetails,
-	id: string,
+	tag: string,
 ): Promise<Client> {
 	const container = await createDetachedContainer({
 		codeLoader,
@@ -915,13 +919,14 @@ async function createDetachedClient(
 		codeDetails,
 	});
 
-	const maybe: FluidObject<StressDataObject> | undefined = await container.getEntryPoint();
-	assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
+	const maybe: FluidObject<DefaultStressDataObject> | undefined =
+		await container.getEntryPoint();
+	assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
 
 	const newClient: Client = {
 		container,
-		id,
-		entryPoint: maybe.StressDataObject,
+		tag,
+		entryPoint: maybe.DefaultStressDataObject,
 	};
 	return newClient;
 }
@@ -929,7 +934,7 @@ async function createDetachedClient(
 async function loadClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
-	id: string,
+	tag: string,
 	url: string,
 ): Promise<Client> {
 	const container = await loadExistingContainer({
@@ -939,13 +944,14 @@ async function loadClient(
 		codeLoader,
 	});
 
-	const maybe: FluidObject<StressDataObject> | undefined = await container.getEntryPoint();
-	assert(maybe.StressDataObject !== undefined, "must be StressDataObject");
+	const maybe: FluidObject<DefaultStressDataObject> | undefined =
+		await container.getEntryPoint();
+	assert(maybe.DefaultStressDataObject !== undefined, "must be DefaultStressDataObject");
 
 	return {
 		container,
-		id,
-		entryPoint: maybe.StressDataObject,
+		tag,
+		entryPoint: maybe.DefaultStressDataObject,
 	};
 }
 
@@ -955,7 +961,7 @@ async function loadClient(
  * about client "3e8a621a-7b35-414b-897f-8795962fb415".
  */
 let clientCount = 0;
-function makeFriendlyClientId(random: IRandom): string {
+function makeFriendlyClientTag(random: IRandom): string {
 	const index = clientCount++;
 	return index < 26 ? String.fromCodePoint(index + 65) : random.uuid4();
 }
@@ -984,7 +990,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		localDeltaConnectionServer,
 		codeLoader,
 		codeDetails,
-		startDetached ? makeFriendlyClientId(random) : "original",
+		startDetached ? makeFriendlyClientTag(random) : "original",
 	);
 	const clients: Client[] = [initialClient];
 	let containerUrl: string | undefined;
@@ -998,7 +1004,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 					loadClient(
 						localDeltaConnectionServer,
 						codeLoader,
-						makeFriendlyClientId(random),
+						makeFriendlyClientTag(random),
 						url,
 					),
 				),
@@ -1255,7 +1261,7 @@ export function mixinReconnect<
 			const baseGenerator = model.generatorFactory();
 			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
 				if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
-					const client = state.clients.find((c) => c.id === state.client.id);
+					const client = state.clients.find((c) => c.tag === state.client.tag);
 					assert(client !== undefined);
 					return {
 						type: "changeConnectionState",

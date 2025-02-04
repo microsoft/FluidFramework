@@ -30,6 +30,24 @@ import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { ddsModelMap } from "./ddsModels";
 import { makeUnreachableCodePathProxy } from "./localServerStressHarness";
 
+export interface UploadBlob {
+	type: "uploadBlob";
+	tag: `blob-${number}`;
+}
+export interface CreateDataStore {
+	type: "createDataStore";
+	asChild: boolean;
+	tag: `datastore-${number}`;
+}
+
+export interface CreateChannel {
+	type: "createChannel";
+	channelType: string;
+	tag: `channel-${number}`;
+}
+
+export type StressDataObjectOperations = UploadBlob | CreateDataStore | CreateChannel;
+
 export class StressDataObject extends DataObject {
 	public static readonly factory = new Lazy(() => {
 		const factory = new DataObjectFactory(
@@ -49,9 +67,6 @@ export class StressDataObject extends DataObject {
 	private defaultStressObject: DefaultStressDataObject = makeUnreachableCodePathProxy(
 		"defaultStressDataObject",
 	);
-	public async globalObjects() {
-		return this.defaultStressObject.globalObjects();
-	}
 	protected async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
 		const defaultDataStore =
 			await this.context.containerRuntime.getAliasedDataStoreEntryPoint("default");
@@ -70,7 +85,7 @@ export class StressDataObject extends DataObject {
 		this.channelNameMap.set("root", this.root.attributes.type);
 	}
 
-	public async channels() {
+	public async getChannels() {
 		const channels: IChannel[] = [];
 		for (const [name] of this.channelNameMap.entries()) {
 			const channel = await this.runtime.getChannel(name).catch(() => undefined);
@@ -93,22 +108,22 @@ export class StressDataObject extends DataObject {
 		return this.runtime.attachState === AttachState.Attached;
 	}
 
-	public uploadBlob(id: `blob-${number}`, contents: string) {
+	public uploadBlob(tag: `blob-${number}`, contents: string) {
 		void this.runtime.uploadBlob(stringToBuffer(contents, "utf-8")).then((handle) =>
-			this.defaultStressObject.registerObject({
+			this.defaultStressObject.registerLocallyCreatedObject({
 				type: "newBlob",
 				handle,
-				id,
+				tag,
 			}),
 		);
 	}
 
-	public createChannel(id: `channel-${number}`, type: string) {
-		this.runtime.createChannel(id, type);
-		this.channelNameMap.set(id, type);
+	public createChannel(tag: `channel-${number}`, type: string) {
+		this.runtime.createChannel(tag, type);
+		this.channelNameMap.set(tag, type);
 	}
 
-	public createDataStore(id: `datastore-${number}`, asChild: boolean) {
+	public createDataStore(tag: `datastore-${number}`, asChild: boolean) {
 		void this.context.containerRuntime
 			.createDataStore(
 				asChild
@@ -119,42 +134,40 @@ export class StressDataObject extends DataObject {
 				const maybe: FluidObject<StressDataObject> | undefined =
 					await dataStore.entryPoint.get();
 				assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
-				this.defaultStressObject.registerObject({
+				this.defaultStressObject.registerLocallyCreatedObject({
 					type: "stressDataObject",
 					dataStore,
 					handle: dataStore.entryPoint,
-					id,
+					tag,
 					stressDataObject: maybe.StressDataObject,
 				});
 			});
 	}
 }
 export type ContainerObjects =
-	| { type: "newBlob"; handle: IFluidHandle; id: `blob-${number}` }
+	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
 	| {
 			type: "stressDataObject";
-			id: `datastore-${number}`;
+			tag: `datastore-${number}`;
 			dataStore: IDataStore | undefined;
 			handle: IFluidHandle;
 			stressDataObject: StressDataObject;
 	  }
-	| { type: "newAlias"; id: `alias-${number}`; handle: undefined };
+	| { type: "newAlias"; tag: `alias-${number}`; handle: undefined };
 
-class DefaultStressDataObject extends StressDataObject {
+export class DefaultStressDataObject extends StressDataObject {
 	public static readonly alias = "default";
 
 	public get DefaultStressDataObject() {
 		return this;
 	}
 
-	private readonly _globalObjects: Record<string, ContainerObjects> = {};
-	public async globalObjects(): Promise<Readonly<Record<string, Readonly<ContainerObjects>>>> {
-		const globalObjects: Record<string, Readonly<ContainerObjects>> = {
-			...this._globalObjects,
-		};
+	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
+	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
+		const globalObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
 		const containerRuntime = // eslint-disable-next-line import/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
-		for (const url of this.map.keys()) {
+		for (const url of this.containerObjectMap.keys()) {
 			const resp = await containerRuntime.resolveHandle({
 				url,
 				headers: { [RuntimeHeaders.wait]: false },
@@ -163,30 +176,30 @@ class DefaultStressDataObject extends StressDataObject {
 				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
 				const handle = maybe?.IFluidLoadable?.handle;
 				if (handle !== undefined) {
-					const entry = this.map.get<ContainerObjects>(url);
+					const entry = this.containerObjectMap.get<ContainerObjects>(url);
 					switch (entry?.type) {
 						case "newAlias":
-							globalObjects[entry.id] = {
+							globalObjects.push({
 								...entry,
 								handle: undefined,
-							};
+							});
 							break;
 						case "newBlob":
-							globalObjects[entry.id] = {
+							globalObjects.push({
 								...entry,
 								handle,
-							};
+							});
 							break;
 						case "stressDataObject":
 							assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
 
-							globalObjects[entry.id] = {
+							globalObjects.push({
 								type: "stressDataObject",
-								id: entry.id,
+								tag: entry.tag,
 								dataStore: undefined,
 								handle,
 								stressDataObject: maybe.StressDataObject,
-							};
+							});
 							break;
 						default:
 					}
@@ -200,33 +213,35 @@ class DefaultStressDataObject extends StressDataObject {
 		return this;
 	}
 
-	private map: ISharedMap = makeUnreachableCodePathProxy("map");
+	private containerObjectMap: ISharedMap = makeUnreachableCodePathProxy("containerObjectMap");
 	protected async initializingFirstTime(props?: any): Promise<void> {
 		await super.initializingFirstTime(props);
-		this.map = SharedMap.create(this.runtime, "privateRoot");
-		this.map.bindToContext();
+		this.containerObjectMap = SharedMap.create(this.runtime, "containerObjectMap");
+		this.containerObjectMap.bindToContext();
 
-		this.registerObject({
+		this.registerLocallyCreatedObject({
 			type: "stressDataObject",
 			handle: this.handle,
-			id: `datastore-0`,
+			tag: `datastore-0`,
 			dataStore: undefined,
 			stressDataObject: this,
 		});
 	}
 
 	protected async initializingFromExisting(): Promise<void> {
-		this.map = (await this.runtime.getChannel("privateRoot")) as any as ISharedMap;
+		this.containerObjectMap = (await this.runtime.getChannel(
+			"containerObjectMap",
+		)) as any as ISharedMap;
 	}
 
-	public registerObject(obj: ContainerObjects) {
+	public registerLocallyCreatedObject(obj: ContainerObjects) {
 		if (obj.handle) {
 			const handle = toFluidHandleInternal(obj.handle);
-			if (this.map.get(handle.absolutePath) === undefined) {
-				this.map.set(handle.absolutePath, { id: obj.id, type: obj.type });
+			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
+				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });
 			}
 		}
-		this._globalObjects[obj.id] = obj;
+		this._locallyCreatedObjects.push(obj);
 	}
 }
 
