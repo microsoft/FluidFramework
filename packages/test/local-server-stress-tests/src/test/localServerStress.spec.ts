@@ -116,6 +116,6 @@ describe("Local Server Stress", () => {
 		// replay: 98,
 		// only: [98],
 		saveFailures,
-		saveSuccesses,
+		// saveSuccesses,
 	});
 });
