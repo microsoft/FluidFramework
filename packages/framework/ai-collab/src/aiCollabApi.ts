@@ -8,7 +8,7 @@ import type { TreeNode } from "@fluidframework/tree";
 import type OpenAI from "openai";
 
 /**
- * Debug event types for the ai-collab
+ * Core Debug event type for the ai-collab
  *
  * @alpha
  */
@@ -17,6 +17,15 @@ export interface DebugEvent {
 	traceId?: string;
 	eventName?: string;
 	timestamp: string;
+}
+
+/**
+ * A Debug event that marks the start or end of a single core logic flow, such as generated tree edits, planning prompt, etc.
+ */
+export interface EventFlowDebugEvent extends DebugEvent {
+	eventFlowName: string;
+	eventFlowStatus: string;
+	eventFlowTraceId?: string;
 }
 
 /**
@@ -157,16 +166,18 @@ export interface AiCollabErrorResponse {
 	 * - 'tooManyErrors' indicates that the LLM made too many errors in a row
 	 * - 'tooManyModelCalls' indicates that the LLM made too many model calls
 	 * - 'aborted' indicates that the AI collaboration was aborted by the user or a limiter
+	 * - 'unexpectedError' indicates that an unexpected error occured
 	 */
 	readonly errorMessage:
 		| "tokenLimitExceeded"
 		| "tooManyErrors"
 		| "tooManyModelCalls"
-		| "aborted";
+		| "aborted"
+		| "unexpectedError";
 	/**
 	 * {@inheritDoc TokenUsage}
 	 */
-	readonly tokensUsed: TokenUsage;
+	tokensUsed: TokenUsage;
 }
 
 /**
