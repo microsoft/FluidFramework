@@ -100,7 +100,9 @@ export function getOdspCredentials(
 		const tenants: LoginTenants = JSON.parse(loginTenants);
 		const tenantNames = Object.keys(tenants);
 		const tenant = tenantNames[tenantIndex % tenantNames.length];
-		const tenantInfo = tenants[tenant];
+		// TODO Why non null assert here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const tenantInfo = tenants[tenant!]!;
 		// Translate all the user from that user to the full user principle name by appending the tenant domain
 		const range = tenantInfo.range;
 
@@ -131,9 +133,12 @@ export function getOdspCredentials(
 		const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
 
 		// Need to choose one out of the set as these account might be from different tenant
-		const username = requestedUserName ?? Object.keys(passwords)[0];
-		assert(passwords[username], `No password for username: ${username}`);
-		creds.push({ username, password: passwords[username] });
+		// TODO Why non null assert here
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const username = requestedUserName ?? Object.keys(passwords)[0]!;
+		const userPass = passwords[username];
+		assert(userPass, `No password for username: ${username}`);
+		creds.push({ username, password: userPass });
 	}
 	return creds;
 }
@@ -191,13 +196,18 @@ export class OdspTestDriver implements ITestDriver {
 				? Math.random()
 				: OdspTestDriver.legacyDriverUserRandomIndex;
 		const userIndex = Math.floor(randomUserIndex * creds.length);
-		const { username, password } = creds[userIndex];
+		// Bounds check above guarantees non-null (at least at compile time, assuming all types are respected)
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const { username, password } = creds[userIndex]!;
 
 		const emailServer = username.substr(username.indexOf("@") + 1);
 
 		let siteUrl: string;
 		let tenantName: string;
-		if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
+		if (
+			emailServer.startsWith("http://") === true ||
+			emailServer.startsWith("https://") === true
+		) {
 			// it's already a site url
 			tenantName = new URL(emailServer).hostname;
 			siteUrl = emailServer;
