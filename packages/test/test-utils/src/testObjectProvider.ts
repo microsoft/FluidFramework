@@ -355,26 +355,28 @@ export class EventAndErrorTrackingLogger
 
 	send(event: ITelemetryBaseEvent): void {
 		const firstExpectedEvent = this.expectedEvents[0];
-		if (firstExpectedEvent !== undefined) {
-			const ee = firstExpectedEvent.event;
-			if (ee.eventName === event.eventName) {
-				let matches = true;
-				for (const key of Object.keys(ee)) {
-					if (ee[key] !== event[key]) {
-						matches = false;
-						break;
-					}
+		if (firstExpectedEvent === undefined) {
+			throw new Error("There should always be atleast one expected event");
+		}
+
+		const ee = firstExpectedEvent.event;
+		if (ee.eventName === event.eventName) {
+			let matches = true;
+			for (const key of Object.keys(ee)) {
+				if (ee[key] !== event[key]) {
+					matches = false;
+					break;
 				}
-				if (matches) {
-					// we found an expected event
-					// so remove it from the list of expected events
-					// and if it is an error, change it to generic
-					// this helps keep our telemetry clear of
-					// expected errors.
-					this.expectedEvents.shift();
-					if (event.category === "error") {
-						event.category = "generic";
-					}
+			}
+			if (matches) {
+				// we found an expected event
+				// so remove it from the list of expected events
+				// and if it is an error, change it to generic
+				// this helps keep our telemetry clear of
+				// expected errors.
+				this.expectedEvents.shift();
+				if (event.category === "error") {
+					event.category = "generic";
 				}
 			}
 		}

@@ -338,15 +338,16 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	private needSequenceNumberSynchronize(containersToApply: IContainer[]) {
 		// If there is a pending proposal, wait for it to be accepted
 		const firstContainerToApply = containersToApply[0];
+		if (firstContainerToApply === undefined) {
+			throw new Error("There should always be atleast one container to apply");
+		}
 
-		if (firstContainerToApply !== undefined) {
-			const minSeqNum = firstContainerToApply.deltaManager.minimumSequenceNumber;
-			if (minSeqNum < this.lastProposalSeqNum) {
-				return {
-					reason: "Proposal",
-					message: `waiting for MSN to advance to proposal at sequence number ${this.lastProposalSeqNum}`,
-				};
-			}
+		const minSeqNum = firstContainerToApply.deltaManager.minimumSequenceNumber;
+		if (minSeqNum < this.lastProposalSeqNum) {
+			return {
+				reason: "Proposal",
+				message: `waiting for MSN to advance to proposal at sequence number ${this.lastProposalSeqNum}`,
+			};
 		}
 
 		// clientSequenceNumber check detects ops in flight, both on the wire and in the outbound queue
