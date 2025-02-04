@@ -5,22 +5,17 @@
 
 import { strict as assert } from "assert";
 
+import { describeCompat } from "@fluid-private/test-version-utils";
 import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	DataObject,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import {
-	ITestDataObject,
-	TestDataObjectType,
-	describeCompat,
-} from "@fluid-private/test-version-utils";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
-import { SharedDirectory } from "@fluidframework/map/internal";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { SharedDirectory, type ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	createTestConfigProvider,
-	ITestContainerConfig,
 	ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
@@ -55,6 +50,13 @@ class TestDataObject extends DataObject {
 		return this.context;
 	}
 
+	public get dds1(): ISharedDirectory {
+		assert(this.dir1 !== undefined, "dir1 should be defined");
+		return this.dir1;
+	}
+
+	private dir1: ISharedDirectory | undefined;
+
 	public get containerRuntime() {
 		return this.context.containerRuntime as ContainerRuntime;
 	}
@@ -62,6 +64,11 @@ class TestDataObject extends DataObject {
 	public async initializingFirstTime(): Promise<void> {
 		this.root.set("dir1", SharedDirectory.create(this.runtime).handle);
 		this.root.set("dir2", SharedDirectory.create(this.runtime).handle);
+	}
+
+	public async hasInitialized() {
+		this.dir1 = await this.root.get<IFluidHandle<SharedDirectory>>("dir1")?.get();
+		assert(this.dir1 !== undefined, "dir1 should be defined");
 	}
 }
 
@@ -119,7 +126,14 @@ describeCompat("Summary size", "NoCompat", (getTestObjectProvider) => {
 
 			await provider.attachDetachedContainer(container);
 
-			dataObject._root.set("mode", "write");
+			let ddsOpLength = 0;
+			containerRuntime.on("op", (op) => {
+				if ((op.contents as any)?.contents?.content.address === dataObject.dds1.id) {
+					ddsOpLength = JSON.stringify(op).length;
+				}
+			});
+
+			dataObject.dds1.set("mode", "write");
 			await waitForContainerWriteModeConnectionWrite(container);
 
 			await provider.ensureSynchronized();
@@ -127,16 +141,17 @@ describeCompat("Summary size", "NoCompat", (getTestObjectProvider) => {
 			const summarizeResult = await containerRuntime.summarize({ fullTree: true });
 
 			const summarySize = JSON.stringify(summarizeResult.summary).length;
-			const gcSummarySize = JSON.stringify(summarizeResult.summary.tree["gc"]).length;
+			const gcSummarySize = JSON.stringify(summarizeResult.summary.tree.gc).length;
 			const gcSummaryPercentage = ((gcSummarySize / summarySize) * 100).toFixed(2);
 
 			console.log(
-				`Short Ids: ${useShortIds}
+				`\nShort Ids: ${useShortIds}
 Data store count: ${dataStoreCount}
 DDS count: ${dataStoreCount * 3}
 Summary size: ${getSizeString(summarySize)}
 GC summary size: ${getSizeString(gcSummarySize)}
-GC summary %: ${gcSummaryPercentage}%`,
+GC summary %: ${gcSummaryPercentage}%
+DDS op size: ${getSizeString(ddsOpLength)}`,
 			);
 		});
 	};
