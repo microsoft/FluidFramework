@@ -2938,10 +2938,9 @@ function buildModularChangesetFromNode(props: {
 		nodeId = { localId: brand(props.idAllocator.allocate()), revision: props.revision },
 	} = props;
 	setInChangeAtomIdMap(props.nodeChanges, nodeId, props.nodeChange);
-	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChange(
-		path.parentIndex,
-		nodeId,
-	);
+	const fieldChangeset = genericFieldKind.changeHandler.editor.buildChildChanges([
+		[path.parentIndex, nodeId],
+	]);
 
 	const fieldChange: FieldChange = {
 		fieldKind: genericFieldKind.identifier,

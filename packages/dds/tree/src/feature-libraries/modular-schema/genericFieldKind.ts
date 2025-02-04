@@ -11,9 +11,8 @@ import {
 	type RevisionTag,
 	replaceAtomRevisions,
 } from "../../core/index.js";
-import { type IdAllocator, fail } from "../../util/index.js";
+import type { IdAllocator } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type {
 	FieldChangeDelta,
 	FieldChangeHandler,
@@ -43,8 +42,8 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
-		buildChildChange(index, change): GenericChangeset {
-			return newGenericChangeset([[index, change]]);
+		buildChildChanges(changes: Iterable<[number, NodeId]>): GenericChangeset {
+			return newGenericChangeset(Array.from(changes));
 		},
 	},
 	intoDelta: (change: GenericChangeset, deltaFromChild: ToDelta): FieldChangeDelta => {
@@ -186,34 +185,8 @@ export function convertGenericChange<TChange>(
 	genId: IdAllocator,
 	revisionMetadata: RevisionMetadataSource,
 ): TChange {
-	const perIndex: TChange[] = [];
-	for (const [index, nodeChange] of changeset.entries()) {
-		perIndex.push(target.editor.buildChildChange(index, nodeChange));
-	}
-
-	if (perIndex.length === 0) {
-		return target.createEmpty();
-	}
-
-	return perIndex.reduce((a, b) =>
-		target.rebaser.compose(
-			a,
-			b,
-			composeChild,
-			genId,
-			invalidCrossFieldManager,
-			revisionMetadata,
-		),
-	);
+	return target.editor.buildChildChanges(changeset.entries());
 }
-
-const invalidFunc = (): never => fail("Should not be called when converting generic changes");
-const invalidCrossFieldManager: CrossFieldManager = {
-	set: invalidFunc,
-	get: invalidFunc,
-	onMoveIn: invalidFunc,
-	moveKey: invalidFunc,
-};
 
 function* relevantRemovedRoots(
 	change: GenericChangeset,
