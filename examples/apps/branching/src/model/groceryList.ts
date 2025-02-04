@@ -89,7 +89,6 @@ class GroceryList implements IGroceryList {
 		private readonly disposableParent: IDisposableParent,
 		public readonly handle: IFluidHandle<FluidObject>,
 		private readonly map: ISharedMap,
-		public readonly branch: () => Promise<IGroceryList>,
 	) {
 		if (this.disposableParent.disposed) {
 			this.dispose();
@@ -186,25 +185,7 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 		assert(runtime.entryPoint !== undefined, "EntryPoint was undefined");
 		const handle = runtime.entryPoint;
 
-		// TODO: Use actual branching.  This is currently just creating a detached map and copying the data over.
-		const branchMap = (originalMap: ISharedMap) => {
-			const branchedMap = runtime.createChannel(uuid(), mapFactory.type) as ISharedMap;
-			for (const [key, value] of originalMap) {
-				branchedMap.set(key, value);
-			}
-			return branchedMap;
-		};
-
-		const branch = async () => {
-			const branchedMap = branchMap(map);
-			// TODO: Should there be a working handle here?  What would that mean?
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			return new GroceryList(runtime, {} as IFluidHandle<FluidObject>, branchedMap, () => {
-				throw new Error("Double-branching not supported right now");
-			});
-		};
-
-		const instance = new GroceryList(runtime, handle, map, branch);
+		const instance = new GroceryList(runtime, handle, map);
 
 		return runtime;
 	}

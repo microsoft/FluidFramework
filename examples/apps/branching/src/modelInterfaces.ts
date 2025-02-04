@@ -42,7 +42,5 @@ export interface IGroceryList {
 	readonly getItems: () => IGroceryItem[];
 	readonly deleteItem: (id: string) => void;
 
-	readonly branch: () => Promise<IGroceryList>;
-
 	readonly exportJSONString: () => string;
 }

@@ -5,18 +5,20 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import { IGroceryItem, IGroceryList } from "../modelInterfaces.js";
+import { IGroceryItem, IGroceryList, type GroceryListJSONDiff } from "../modelInterfaces.js";
 
 export interface IGroceryItemViewProps {
 	groceryItem: IGroceryItem;
+	suggestRemoval: boolean;
 }
 
 export const GroceryItemView: FC<IGroceryItemViewProps> = ({
 	groceryItem,
+	suggestRemoval,
 }: IGroceryItemViewProps) => {
 	return (
 		<tr>
-			<td>{groceryItem.name}</td>
+			<td style={{ backgroundColor: suggestRemoval ? "#fcc" : "auto" }}>{groceryItem.name}</td>
 			<td>
 				<button
 					onClick={groceryItem.deleteItem}
@@ -25,6 +27,20 @@ export const GroceryItemView: FC<IGroceryItemViewProps> = ({
 					❌
 				</button>
 			</td>
+		</tr>
+	);
+};
+
+export interface ISuggestedGroceryItemViewProps {
+	name: string;
+}
+
+export const SuggestedGroceryItemView: FC<ISuggestedGroceryItemViewProps> = ({
+	name,
+}: ISuggestedGroceryItemViewProps) => {
+	return (
+		<tr>
+			<td style={{ backgroundColor: "#cfc" }}>{name}</td>
 		</tr>
 	);
 };
@@ -69,10 +85,12 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
 
 export interface IGroceryListViewProps {
 	groceryList: IGroceryList;
+	suggestions?: GroceryListJSONDiff | undefined;
 }
 
 export const GroceryListView: FC<IGroceryListViewProps> = ({
 	groceryList,
+	suggestions,
 }: IGroceryListViewProps) => {
 	const [groceryItems, setGroceryItems] = useState<IGroceryItem[]>(groceryList.getItems());
 	useEffect(() => {
@@ -91,15 +109,27 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 	}, [groceryList]);
 
 	const groceryItemViews = groceryItems.map((groceryItem) => {
-		return <GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />;
+		return (
+			<GroceryItemView
+				key={groceryItem.id}
+				groceryItem={groceryItem}
+				suggestRemoval={
+					suggestions?.removals.find((removal) => removal.id === groceryItem.id) !== undefined
+				}
+			/>
+		);
 	});
+	const suggestedGroceryItemViews =
+		suggestions?.adds.map((add, index) => (
+			<SuggestedGroceryItemView key={index} name={add.name} />
+		)) ?? [];
 
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<tbody>
-				{groceryItemViews.length > 0 ? (
-					groceryItemViews
-				) : (
+				{groceryItemViews}
+				{suggestedGroceryItemViews}
+				{groceryItemViews.length === 0 && suggestedGroceryItemViews.length === 0 && (
 					<tr>
 						<td colSpan={1}>No items on grocery list</td>
 					</tr>
