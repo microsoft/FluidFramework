@@ -213,10 +213,15 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableCollaborationSessionPruning === true &&
 			collaborationSessionTracker !== undefined
 		) {
-			const intervalMs = core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval;
+			const intervalMs =
+				core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval;
 			setInterval(() => {
 				collaborationSessionTracker.pruneInactiveSessions().catch((error) => {
-					Lumberjack.error("Failed to prune inactive sessions on an interval", { intervalMs}, error);
+					Lumberjack.error(
+						"Failed to prune inactive sessions on an interval",
+						{ intervalMs },
+						error,
+					);
 				});
 			}, intervalMs);
 		}

@@ -64,17 +64,19 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
 	): Promise<void> {
-		return this.startClientSessionCore(client, sessionId, knownConnectedClients).catch((error) => {
-			Lumberjack.error(
-				"Failed to start tracking client session",
-				{
-					...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
-					numConnectedClients: knownConnectedClients?.length,
-				},
-				error,
-			);
-			throw error;
-		});
+		return this.startClientSessionCore(client, sessionId, knownConnectedClients).catch(
+			(error) => {
+				Lumberjack.error(
+					"Failed to start tracking client session",
+					{
+						...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+						numConnectedClients: knownConnectedClients?.length,
+					},
+					error,
+				);
+				throw error;
+			},
+		);
 	}
 
 	private async startClientSessionCore(
@@ -121,17 +123,19 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
 	): Promise<void> {
-		return this.endClientSessionCore(client, sessionId, knownConnectedClients).catch((error) => {
-			Lumberjack.error(
-				"Failed to end tracking client session",
-				{
-					...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
-					numConnectedClients: knownConnectedClients?.length,
-				},
-				error,
-			);
-			throw error;
-		});
+		return this.endClientSessionCore(client, sessionId, knownConnectedClients).catch(
+			(error) => {
+				Lumberjack.error(
+					"Failed to end tracking client session",
+					{
+						...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+						numConnectedClients: knownConnectedClients?.length,
+					},
+					error,
+				);
+				throw error;
+			},
+		);
 	}
 
 	private async endClientSessionCore(
