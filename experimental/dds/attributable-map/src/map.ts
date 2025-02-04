@@ -407,7 +407,7 @@ export class AttributableMapClass
 		if (message.type === MessageType.Operation) {
 			assert(
 				this.kernel.tryProcessMessage(message, local, localOpMetadata),
-				"AttributableMap received an unrecognized op, possibly from a newer version",
+				0xab0 /* AttributableMap received an unrecognized op, possibly from a newer version */,
 			);
 		}
 	}
