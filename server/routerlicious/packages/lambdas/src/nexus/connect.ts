@@ -316,7 +316,13 @@ function trackCollaborationSession(
 			sessionClient,
 			{ documentId, tenantId },
 			connectedClients,
-		);
+		).catch((error) => {
+			Lumberjack.error(
+				"Failed to update collaboration session tracker for new client",
+				{ tenantId, documentId },
+				error,
+			);
+		});
 	}
 }
 

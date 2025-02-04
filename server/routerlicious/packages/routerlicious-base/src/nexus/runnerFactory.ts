@@ -213,9 +213,12 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			enableCollaborationSessionPruning === true &&
 			collaborationSessionTracker !== undefined
 		) {
+			const intervalMs = core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval;
 			setInterval(() => {
-				collaborationSessionTracker.pruneInactiveSessions();
-			}, core.DefaultServiceConfiguration.documentLambda.partitionActivityCheckInterval);
+				collaborationSessionTracker.pruneInactiveSessions().catch((error) => {
+					Lumberjack.error("Failed to prune inactive sessions on an interval", { intervalMs}, error);
+				});
+			}, intervalMs);
 		}
 
 		const redisClientConnectionManagerForJwtCache =

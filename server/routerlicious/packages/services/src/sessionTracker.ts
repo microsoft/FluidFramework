@@ -59,12 +59,12 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		private readonly sessionActivityTimeoutMs = 10 * 60 * 1000,
 	) {}
 
-	public startClientSession(
+	public async startClientSession(
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
-	): void {
-		this.startClientSessionCore(client, sessionId, knownConnectedClients).catch((error) => {
+	): Promise<void> {
+		return this.startClientSessionCore(client, sessionId, knownConnectedClients).catch((error) => {
 			Lumberjack.error(
 				"Failed to start tracking client session",
 				{
@@ -73,6 +73,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 				},
 				error,
 			);
+			throw error;
 		});
 	}
 
@@ -115,12 +116,12 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		});
 	}
 
-	public endClientSession(
+	public async endClientSession(
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
-	): void {
-		this.endClientSessionCore(client, sessionId, knownConnectedClients).catch((error) => {
+	): Promise<void> {
+		return this.endClientSessionCore(client, sessionId, knownConnectedClients).catch((error) => {
 			Lumberjack.error(
 				"Failed to end tracking client session",
 				{
@@ -129,6 +130,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 				},
 				error,
 			);
+			throw error;
 		});
 	}
 
@@ -171,9 +173,10 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		}
 	}
 
-	public pruneInactiveSessions(): void {
-		this.pruneInactiveSessionsCore().catch((error) => {
+	public async pruneInactiveSessions(): Promise<void> {
+		return this.pruneInactiveSessionsCore().catch((error) => {
 			Lumberjack.error("Failed to prune inactive sessions", undefined, error);
+			throw error;
 		});
 	}
 

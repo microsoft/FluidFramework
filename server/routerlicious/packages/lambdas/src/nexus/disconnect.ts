@@ -138,7 +138,13 @@ function removeClientAndSendNotifications(
 						tenantId: room.tenantId,
 						documentId: room.documentId,
 					},
-				);
+				).catch((error) => {
+					Lumberjack.error(
+						"Failed to update collaboration session tracker for client disconnection",
+						{ messageMetaData },
+						error,
+					);
+				});
 			}
 		}
 	}
