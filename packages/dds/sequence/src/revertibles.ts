@@ -324,7 +324,9 @@ export function appendSharedStringDeltaToRevertibles(
 				event: IntervalOpType.POSITION_REMOVE,
 				intervals: [],
 				revertibleRefs,
-				mergeTreeRevertible: removeRevertibles[0],
+				// Non null guarenteed because of assert above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				mergeTreeRevertible: removeRevertibles[0]!,
 			};
 
 			// add an interval for each startInterval, accounting for any corresponding endIntervals
@@ -335,7 +337,9 @@ export function appendSharedStringDeltaToRevertibles(
 				});
 				let endOffset: number | undefined;
 				if (endIntervalIndex !== -1) {
-					endOffset = endIntervals[endIntervalIndex].offset;
+					// endIntervals[endIntervalIndex] will be non null if endIntervalIndex !== -1
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					endOffset = endIntervals[endIntervalIndex]!.offset;
 					endIntervals.splice(endIntervalIndex, 1);
 				}
 
@@ -600,7 +604,9 @@ function revertLocalSequenceRemove(
 			restoredRanges.addOrUpdate({
 				ranges: event.ranges,
 				length,
-				segment: event.ranges[0].segment,
+				// Non null guarenteed by length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				segment: event.ranges[0]!.segment,
 			});
 		}
 	};

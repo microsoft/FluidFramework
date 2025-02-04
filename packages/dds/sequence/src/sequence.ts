@@ -976,9 +976,11 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			this.messagesSinceMSNChange.push(stashMessage);
 
 			// Do GC every once in a while...
+			const twentyethMessageSinceMSNChange = this.messagesSinceMSNChange[20];
 			if (
 				this.messagesSinceMSNChange.length > 20 &&
-				this.messagesSinceMSNChange[20].sequenceNumber < message.minimumSequenceNumber
+				twentyethMessageSinceMSNChange !== undefined &&
+				twentyethMessageSinceMSNChange.sequenceNumber < message.minimumSequenceNumber
 			) {
 				this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
 			}
@@ -986,13 +988,8 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	}
 
 	private processMinSequenceNumberChanged(minSeq: number) {
-		let index = 0;
-		for (; index < this.messagesSinceMSNChange.length; index++) {
-			if (this.messagesSinceMSNChange[index].sequenceNumber > minSeq) {
-				break;
-			}
-		}
-		if (index !== 0) {
+		const index = this.messagesSinceMSNChange.findIndex((msg) => msg.sequenceNumber > minSeq);
+		if (index !== -1) {
 			this.messagesSinceMSNChange = this.messagesSinceMSNChange.slice(index);
 		}
 	}

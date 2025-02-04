@@ -600,7 +600,9 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	public next(): IteratorResult<TInterval> {
 		if (this.index < this.results.length) {
 			return {
-				value: this.results[this.index++],
+				// Non null guarenteed because of bounds check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				value: this.results[this.index++]!,
 				done: false,
 			};
 		}
