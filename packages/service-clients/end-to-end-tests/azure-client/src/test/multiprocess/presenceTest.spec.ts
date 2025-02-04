@@ -11,17 +11,22 @@ import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 /**
- * This test suite is a prototype for multi-process end to end testing using the new Presence API on AzureClient.
- * This main test file acts as the 'Orchestrator'. The orchestrator's job includes:
+ * This test suite is a prototype for a multi-process end to end test for Fluid using the new Presence API on AzureClient.
+ * In the future we hope to expand and generalize this pattern to broadly test more Fluid features.
+ * Currently our E2E tests are limited to running multiple clients on a single process which does not effectively
+ * simulate real-world production scenarios where clients are usually running on different machines.
  *
+ * The pattern demonstrated in this test suite is as follows:
+ *
+ * This main test file acts as the 'Orchestrator'. The orchestrator's job includes:
  * - Fork child processes to simulate multiple Fluid clients
  * - Send command messages to child clients to perform specific Fluid actions.
  * - Receive response messages from child clients to verify expected behavior.
  * - Clean up child processes after each test.
  *
  * The child processes are located in the `childClient.ts` file. Each child process simulates a Fluid client.
- * The child client's job includes:
  *
+ * The child client's job includes:
  * - Create/Get + connect to Fluid container.
  * - Listen for command messages from the orchestrator.
  * - Perform the requested action.
