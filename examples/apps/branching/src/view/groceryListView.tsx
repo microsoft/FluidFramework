@@ -5,7 +5,11 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import { IGroceryItem, IGroceryList, type GroceryListJSONDiff } from "../modelInterfaces.js";
+import {
+	IGroceryItem,
+	IGroceryList,
+	type GroceryListModifications,
+} from "../modelInterfaces.js";
 
 export interface IGroceryItemViewProps {
 	groceryItem: IGroceryItem;
@@ -85,7 +89,7 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
 
 export interface IGroceryListViewProps {
 	groceryList: IGroceryList;
-	suggestions?: GroceryListJSONDiff | undefined;
+	suggestions?: GroceryListModifications | undefined;
 }
 
 export const GroceryListView: FC<IGroceryListViewProps> = ({

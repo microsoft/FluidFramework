@@ -23,7 +23,7 @@ import { v4 as uuid } from "uuid";
 import type {
 	GroceryListItemJSON,
 	GroceryListJSON,
-	GroceryListJSONDiff,
+	GroceryListModifications,
 	IDisposableParent,
 	IGroceryItem,
 	IGroceryList,
@@ -31,13 +31,13 @@ import type {
 } from "../modelInterfaces.js";
 
 export const diffGroceryListJSON = (
-	sourceGroceryListJSON: GroceryListJSON,
-	destinationGroceryListJSON: GroceryListJSON,
-): GroceryListJSONDiff => {
+	baseGroceryListJSON: GroceryListJSON,
+	modifiedGroceryListJSON: GroceryListJSON,
+): GroceryListModifications => {
 	const removals: GroceryListItemJSON[] = [];
-	for (const maybeRemoval of sourceGroceryListJSON) {
+	for (const maybeRemoval of baseGroceryListJSON) {
 		if (
-			!destinationGroceryListJSON.find(
+			!modifiedGroceryListJSON.find(
 				(destinationItem) => destinationItem.id === maybeRemoval.id,
 			)
 		) {
@@ -46,8 +46,8 @@ export const diffGroceryListJSON = (
 	}
 
 	const adds: GroceryListItemJSON[] = [];
-	for (const maybeAdd of destinationGroceryListJSON) {
-		if (!sourceGroceryListJSON.find((sourceItem) => sourceItem.id === maybeAdd.id)) {
+	for (const maybeAdd of modifiedGroceryListJSON) {
+		if (!baseGroceryListJSON.find((sourceItem) => sourceItem.id === maybeAdd.id)) {
 			adds.push(maybeAdd);
 		}
 	}
@@ -60,7 +60,7 @@ export const diffGroceryListJSON = (
 
 export const applyDiffToGroceryList = (
 	groceryList: IGroceryList,
-	groceryListJSONDiff: GroceryListJSONDiff,
+	groceryListJSONDiff: GroceryListModifications,
 ) => {
 	for (const add of groceryListJSONDiff.adds) {
 		groceryList.addItem(add.name);
@@ -72,7 +72,8 @@ export const applyDiffToGroceryList = (
 
 /**
  * GroceryItem is the local object with a friendly interface for the view to use.
- * It wraps a new SharedTree node representing a grocery item to abstract out the DDS manipulation and access.
+ * It conceals the DDS manipulation and access, and exposes a more-convenient surface
+ * for working with a single item.
  */
 class GroceryItem implements IGroceryItem {
 	public constructor(
@@ -97,7 +98,6 @@ class GroceryList implements IGroceryList {
 	}
 
 	public constructor(
-		// TODO:  Consider just specifying what the data object requires rather than taking a full runtime.
 		private readonly disposableParent: IDisposableParent,
 		public readonly handle: IFluidHandle<FluidObject>,
 		private readonly map: ISharedMap,

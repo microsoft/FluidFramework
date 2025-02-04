@@ -45,7 +45,6 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 			const groceryList = await runtime.createDataStore(groceryListRegistryKey);
 			await groceryList.trySetAlias(groceryListId);
 		}
-		// Any onLoad work would happen here, none needed so far though.
 
 		return runtime;
 	}

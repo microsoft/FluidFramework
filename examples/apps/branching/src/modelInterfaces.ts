@@ -30,7 +30,7 @@ export interface IGroceryListEvents extends IEvent {
 export type GroceryListItemJSON = { id: string; name: string };
 export type GroceryListJSON = GroceryListItemJSON[];
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type GroceryListJSONDiff = {
+export type GroceryListModifications = {
 	adds: GroceryListItemJSON[];
 	removals: GroceryListItemJSON[];
 };

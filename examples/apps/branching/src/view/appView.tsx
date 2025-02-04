@@ -9,7 +9,7 @@ import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
 import { applyDiffToGroceryList, diffGroceryListJSON } from "../model/index.js";
 import type {
 	GroceryListJSON,
-	GroceryListJSONDiff,
+	GroceryListModifications,
 	IGroceryList,
 } from "../modelInterfaces.js";
 
@@ -21,7 +21,7 @@ export interface IAppViewProps {
 
 const getSuggestionsFromHealthBot = async (
 	groceryList: IGroceryList,
-): Promise<GroceryListJSONDiff> => {
+): Promise<GroceryListModifications> => {
 	const stringifiedOriginal = groceryList.exportJSONString();
 	const jsonOriginal: GroceryListJSON = JSON.parse(stringifiedOriginal);
 	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
@@ -32,7 +32,9 @@ const getSuggestionsFromHealthBot = async (
 };
 
 export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
-	const [suggestions, setSuggestions] = useState<GroceryListJSONDiff | undefined>(undefined);
+	const [suggestions, setSuggestions] = useState<GroceryListModifications | undefined>(
+		undefined,
+	);
 
 	let actions;
 	if (suggestions !== undefined) {
