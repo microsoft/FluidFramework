@@ -12,7 +12,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
-import { Tree, type SharedTreeFactory } from "../../../shared-tree/index.js";
+import { Tree } from "../../../shared-tree/index.js";
 import { fail } from "../../../util/index.js";
 import { validateFuzzTreeConsistency, viewCheckout } from "../../utils.js";
 
@@ -62,8 +62,9 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
+import type { TreeFactory } from "../../../treeFactory.js";
 
-const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFactory>>({
+const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<TreeFactory>>({
 	treeEdit: (state, { edit }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
@@ -92,18 +93,18 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<SharedTreeFa
 		applyConstraint(state, operation);
 	},
 });
-export const fuzzReducer: AsyncReducer<
-	Operation,
-	DDSFuzzTestState<SharedTreeFactory>
-> = async (state, operation) => syncFuzzReducer(state, operation);
+export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<TreeFactory>> = async (
+	state,
+	operation,
+) => syncFuzzReducer(state, operation);
 
-export function checkTreesAreSynchronized(trees: readonly Client<SharedTreeFactory>[]) {
+export function checkTreesAreSynchronized(trees: readonly Client<TreeFactory>[]) {
 	for (const tree of trees) {
 		validateFuzzTreeConsistency(trees[0], tree);
 	}
 }
 
-export function applySynchronizationOp(state: DDSFuzzTestState<SharedTreeFactory>) {
+export function applySynchronizationOp(state: DDSFuzzTestState<TreeFactory>) {
 	state.containerRuntimeFactory.processAllMessages();
 	const connectedClients = state.clients.filter((client) => client.containerRuntime.connected);
 	if (connectedClients.length > 0) {
