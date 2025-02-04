@@ -188,7 +188,7 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 			v.type === "stressDataObject" ? v : undefined,
 		)) {
 			if (entry !== undefined) {
-				const stressDataObject = await entry?.stressDataObject;
+				const stressDataObject = entry?.stressDataObject;
 				if (stressDataObject?.attached === true) {
 					const channels = await stressDataObject.channels();
 					for (const channel of channels) {

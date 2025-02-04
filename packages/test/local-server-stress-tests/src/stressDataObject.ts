@@ -116,17 +116,15 @@ export class StressDataObject extends DataObject {
 					: StressDataObject.factory.value.type,
 			)
 			.then(async (dataStore) => {
+				const maybe: FluidObject<StressDataObject> | undefined =
+					await dataStore.entryPoint.get();
+				assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
 				this.defaultStressObject.registerObject({
 					type: "stressDataObject",
 					dataStore,
 					handle: dataStore.entryPoint,
 					id,
-					stressDataObject: new LazyPromise(async () => {
-						const maybe: FluidObject<StressDataObject> | undefined =
-							await dataStore.entryPoint.get();
-						assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
-						return maybe.StressDataObject;
-					}),
+					stressDataObject: maybe.StressDataObject,
 				});
 			});
 	}
@@ -138,7 +136,7 @@ export type ContainerObjects =
 			id: `datastore-${number}`;
 			dataStore: IDataStore | undefined;
 			handle: IFluidHandle;
-			stressDataObject: LazyPromise<StressDataObject>;
+			stressDataObject: StressDataObject;
 	  }
 	| { type: "newAlias"; id: `alias-${number}`; handle: undefined };
 
@@ -162,8 +160,8 @@ class DefaultStressDataObject extends StressDataObject {
 				headers: { [RuntimeHeaders.wait]: false },
 			});
 			if (resp.status === 200) {
-				const maybeHandle: FluidObject<IFluidLoadable> | undefined = resp.value;
-				const handle = maybeHandle?.IFluidLoadable?.handle;
+				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
+				const handle = maybe?.IFluidLoadable?.handle;
 				if (handle !== undefined) {
 					const entry = this.map.get<ContainerObjects>(url);
 					switch (entry?.type) {
@@ -180,18 +178,14 @@ class DefaultStressDataObject extends StressDataObject {
 							};
 							break;
 						case "stressDataObject":
+							assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
+
 							globalObjects[entry.id] = {
 								type: "stressDataObject",
 								id: entry.id,
 								dataStore: undefined,
 								handle,
-								stressDataObject: new LazyPromise(async () => {
-									const maybe = (await handle.get()) as
-										| FluidObject<StressDataObject>
-										| undefined;
-									assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
-									return maybe.StressDataObject;
-								}),
+								stressDataObject: maybe.StressDataObject,
 							};
 							break;
 						default:
@@ -217,7 +211,7 @@ class DefaultStressDataObject extends StressDataObject {
 			handle: this.handle,
 			id: `datastore-0`,
 			dataStore: undefined,
-			stressDataObject: new LazyPromise(async () => this),
+			stressDataObject: this,
 		});
 	}
 
