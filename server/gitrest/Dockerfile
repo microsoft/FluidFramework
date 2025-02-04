@@ -44,11 +44,10 @@ ENV PNPM_HOME="/pnpm"
 # though it's not leveraged currently.
 ENV PATH="$PNPM_HOME:$GITREST_ROOT/node_modules/.bin:$PATH"
 
-# Note: `npm install -g corepack` and `corepack prepare pnpm@9.15.3` were added as a temporary workaround in response
-# to https://github.com/nodejs/corepack/issues/612.
-# Letting corepack try to get the latest version (automatically) of pnpm was broken by a key rotation in npm
-# registries + corepack "in the wild" having hardcoded references to the old keys.
-# 9.15.3 was chosen to match the version in package.json.
+# Note: `npm install -g corepack` was added as a temporary workaround in response to https://github.com/nodejs/corepack/issues/612.
+# The NPM registry recently rotated some keys but non-latest corepack versions (like those distributed with Node18)
+# have hardcoded references to the old keys and thus fail to install packages that were signed with the new keys.
+# So install the latest corepack globally to work around the problem.
 RUN npm install -g corepack && corepack enable
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
