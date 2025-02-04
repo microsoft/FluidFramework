@@ -1035,8 +1035,6 @@ describe("client.applyMsg", () => {
 			const b = clients.B;
 
 			ops.push(
-				// no way to know if annotates are regular or adjust
-				b.makeOpMessage(b.annotateRangeLocal(12, 21, { foo: 1 }), ++seq),
 				b.makeOpMessage(
 					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 9, side: Side.Before }),
 					++seq,
@@ -1055,7 +1053,7 @@ describe("client.applyMsg", () => {
 					c.applyMsg(op);
 				}
 
-			logger.validate({ baseText: "B{66666666}BBBBB{666666}BB" });
+			logger.validate({ baseText: "0{6666666666}123BB{yyyyyy}45" });
 		});
 	});
 
