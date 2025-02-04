@@ -2430,7 +2430,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 				).length > 0;
 
 			if (!isMove) {
-				renameNodes(this.table.rebasedNodeRenames, baseDetachId, newDetachId, length);
+				renameNodes(this.table.rebasedNodeRenames, baseAttachId, newDetachId, length);
 			}
 		}
 
@@ -2512,8 +2512,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 	}
 
 	public composeDetachAttach(baseDetachId: ChangeAtomId, count: number): void {
-		// Note that the composed rename table may have a cycle for this ID,
-		// created by taking the union of the input rename tables.
 		deleteNodeRename(this.table.composedNodeRenames, baseDetachId, count);
 	}
 }
@@ -3113,10 +3111,12 @@ function mergeRenameTables(
 	renames1: NodeRenameTable,
 	renames2: NodeRenameTable,
 ): NodeRenameTable {
-	return {
-		oldToNewId: RangeMap.union(renames1.oldToNewId, renames2.oldToNewId),
-		newToOldId: RangeMap.union(renames1.newToOldId, renames2.newToOldId),
-	};
+	const mergedTable = cloneRenameTable(renames1);
+	for (const entry of renames2.oldToNewId.entries()) {
+		renameNodes(mergedTable, entry.start, entry.value, entry.length);
+	}
+
+	return mergedTable;
 }
 
 function cloneRenameTable(renames: NodeRenameTable): NodeRenameTable {
@@ -3174,10 +3174,6 @@ function renameNodes(
 function deleteNodeRename(renames: NodeRenameTable, id: ChangeAtomId, count: number): void {
 	for (const entry of renames.oldToNewId.getAll(id, count)) {
 		deleteNodeRenameEntry(renames, entry.start, entry.value, entry.length);
-	}
-
-	for (const entry of renames.newToOldId.getAll(id, count)) {
-		deleteNodeRenameEntry(renames, entry.value, entry.start, entry.length);
 	}
 }
 
