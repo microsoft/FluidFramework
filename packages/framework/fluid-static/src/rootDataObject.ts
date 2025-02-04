@@ -19,7 +19,7 @@ import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js
 import type {
 	CompatibilityMode,
 	ContainerSchema,
-	DataObjectClass,
+	DataObjectKind,
 	IRootDataObject,
 	LoadableObjectClass,
 	LoadableObjectClassRecord,
@@ -135,7 +135,7 @@ class RootDataObject
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: DataObjectClass<T>,
+		dataObjectClass: DataObjectKind<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];

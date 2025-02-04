@@ -40,21 +40,22 @@ export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
  */
 export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
 	| ISharedObjectKind<T>
-	| DataObjectClass<T>;
+	| DataObjectKind<T>;
 
 /**
  * A class that has a factory that can create a `DataObject` and a
  * constructor that will return the type of the `DataObject`.
  *
  * @typeParam T - The class of the `DataObject`.
+ *
  * @privateRemarks
  * Having both `factory` and constructor is redundant.
  * TODO: It appears the factory is what's used, so the constructor should be removed once factory provides strong typing.
  */
-export interface DataObjectClass<T extends IFluidLoadable> {
+export interface DataObjectKind<T extends IFluidLoadable> {
 	readonly factory: IFluidDataStoreFactory;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	new (...args: any[]): T;
+	// Not actually used, but helps with strong typing.
+	new (...args: never[]): T;
 }
 
 /**

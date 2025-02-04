@@ -9,29 +9,29 @@ import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-d
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ContainerSchema, DataObjectClass, LoadableObjectClass } from "./types.js";
+import type { ContainerSchema, DataObjectKind, LoadableObjectClass } from "./types.js";
 
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
 export function isDataObjectClass<T extends IFluidLoadable>(
 	obj: LoadableObjectClass<T>,
-): obj is DataObjectClass<T>;
+): obj is DataObjectKind<T>;
 
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
 export function isDataObjectClass(
 	obj: LoadableObjectClass,
-): obj is DataObjectClass<IFluidLoadable>;
+): obj is DataObjectKind<IFluidLoadable>;
 
 /**
  * Runtime check to determine if a class is a DataObject type.
  */
 export function isDataObjectClass(
 	obj: LoadableObjectClass,
-): obj is DataObjectClass<IFluidLoadable> {
-	const maybe = obj as Partial<DataObjectClass<IFluidLoadable>> | undefined;
+): obj is DataObjectKind<IFluidLoadable> {
+	const maybe = obj as Partial<DataObjectKind<IFluidLoadable>> | undefined;
 	const isDataObject =
 		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
 		maybe.factory.IFluidDataStoreFactory === maybe.factory;
