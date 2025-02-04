@@ -15,7 +15,11 @@ import {
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { extractTokenFromHeader, getValidAccessToken } from "@fluidframework/server-services-utils";
+import {
+	extractTokenFromHeader,
+	getValidAccessToken,
+	logHttpMetrics,
+} from "@fluidframework/server-services-utils";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
@@ -114,8 +118,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties().correlationId,
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
-			"tenant" /* service */,
-			true /* enableTelemetry */,
+			logHttpMetrics,
 		);
 		const result = await restWrapper.post<core.ITenantConfig & { key: string }>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId || "")}`,
@@ -234,8 +237,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties().correlationId,
 			() => getGlobalTelemetryContext().getProperties(),
 			refreshTokenIfNeeded,
-			"tenant" /* service */,
-			true /* enableTelemetry */,
+			logHttpMetrics,
 		);
 		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);
@@ -256,8 +258,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties().correlationId,
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
-			"tenant" /* service */,
-			true /* enableTelemetry */,
+			logHttpMetrics,
 		);
 		await restWrapper.post(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/validate`,
@@ -278,8 +279,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties().correlationId,
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
-			"tenant" /* service */,
-			true /* enableTelemetry */,
+			logHttpMetrics,
 		);
 		const result = await restWrapper.get<core.ITenantKeys>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/keys`,
@@ -310,8 +310,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties().correlationId,
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
-			"tenant" /* service */,
-			true /* enableTelemetry */,
+			logHttpMetrics,
 		);
 		const result = await restWrapper.post<core.IFluidAccessToken>(
 			`${this.endpoint}/api/tenants/${encodeURIComponent(tenantId)}/accesstoken`,
@@ -352,8 +351,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			() => getGlobalTelemetryContext().getProperties().correlationId,
 			() => getGlobalTelemetryContext().getProperties(),
 			undefined /* refreshTokenIfNeeded */,
-			"tenant" /* service */,
-			true /* enableTelemetry */,
+			logHttpMetrics,
 		);
 		return restWrapper.get<core.ITenantConfig>(`${this.endpoint}/api/tenants/${tenantId}`, {
 			includeDisabledTenant,

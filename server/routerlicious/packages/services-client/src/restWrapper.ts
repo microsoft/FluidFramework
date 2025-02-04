@@ -10,18 +10,24 @@ import {
 	AxiosInstance,
 	AxiosRequestConfig,
 	RawAxiosRequestHeaders,
+	type AxiosResponse,
 } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
-import {
-	Lumberjack,
-	LumberEventName,
-	HttpProperties,
-	BaseTelemetryProperties,
-	CommonProperties,
-} from "@fluidframework/server-services-telemetry";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
+
+/**
+ * @internal
+ */
+export interface IBasicRestWrapperMetricProps {
+	axiosError: AxiosError<any>;
+	status: number | string;
+	method: string;
+	url: string;
+	correlationId: string;
+	durationInMs: number;
+}
 
 /**
  * @internal
@@ -177,8 +183,7 @@ export class BasicRestWrapper extends RestWrapper {
 		private readonly refreshTokenIfNeeded?: (
 			authorizationHeader: RawAxiosRequestHeaders,
 		) => Promise<RawAxiosRequestHeaders | undefined>,
-		private readonly serviceName?: string,
-		private readonly enableTelemetry = false,
+		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -213,10 +218,12 @@ export class BasicRestWrapper extends RestWrapper {
 
 		return new Promise<T>((resolve, reject) => {
 			const startTime = performance.now();
-			let axiosError: AxiosError<any>;
+			let axiosError: AxiosError;
+			let axiosResponse: AxiosResponse;
 			this.axios
 				.request<T>(options)
 				.then((response) => {
+					axiosResponse = response;
 					resolve(response.data);
 				})
 				.catch((error: AxiosError<any>) => {
@@ -307,29 +314,19 @@ export class BasicRestWrapper extends RestWrapper {
 					}
 				})
 				.finally(() => {
-					if (this.enableTelemetry) {
-						const properties = {
-							[HttpProperties.method]: options.method ?? "METHOD_UNAVAILABLE",
-							[HttpProperties.url]: options.url ?? "URL_UNAVAILABLE",
-							[BaseTelemetryProperties.correlationId]: correlationId,
-							[CommonProperties.serviceName]: this.serviceName,
-							[CommonProperties.telemetryGroupName]: "rest_wrapper",
+					if (this.logHttpMetrics) {
+						const status: string | number = axiosError
+							? axiosError?.response?.status ?? "STATUS_UNAVAILABLE"
+							: axiosResponse?.status ?? "STATUS_UNAVAILABLE";
+						const requestProps: IBasicRestWrapperMetricProps = {
+							axiosError,
+							status,
+							method: options.method ?? "METHOD_UNAVAILABLE",
+							url: options.url ?? "URL_UNAVAILABLE",
+							correlationId,
+							durationInMs: performance.now() - startTime,
 						};
-						const httpMetric = Lumberjack.newLumberMetric(
-							LumberEventName.RestWrapper,
-							properties,
-						);
-						const endTime = performance.now();
-						httpMetric.setProperty("durationInMs", endTime - startTime);
-						if (axiosError) {
-							httpMetric.setProperty(
-								HttpProperties.status,
-								axiosError?.response?.status ?? "STATUS_UNAVAILABLE",
-							);
-							httpMetric.error("HttpRequest failed");
-						} else {
-							httpMetric.success("HttpRequest completed");
-						}
+						this.logHttpMetrics(requestProps);
 					}
 				});
 		});
