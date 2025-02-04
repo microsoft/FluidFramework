@@ -339,7 +339,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		// If there is a pending proposal, wait for it to be accepted
 		const firstContainerToApply = containersToApply[0];
 		if (firstContainerToApply === undefined) {
-			throw new Error("There should always be atleast one container to apply");
+			throw new Error("There should always be at least one container to apply");
 		}
 
 		const minSeqNum = firstContainerToApply.deltaManager.minimumSequenceNumber;
