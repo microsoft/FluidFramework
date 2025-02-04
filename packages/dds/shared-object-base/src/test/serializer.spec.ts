@@ -60,7 +60,6 @@ describe("FluidSerializer", () => {
 		// Verify that `encode` is a no-op for these simple cases.
 		for (const input of simple) {
 			it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- test deals with several object shapes
 				const actual = serializer.encode(input, handle);
 				assert.strictEqual(
 					actual,
@@ -68,7 +67,6 @@ describe("FluidSerializer", () => {
 					"encode() on input with no handles must return original input.",
 				);
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- test deals with several object shapes
 				const decoded = serializer.decode(actual);
 				assert.strictEqual(
 					decoded,
@@ -120,7 +118,6 @@ describe("FluidSerializer", () => {
 
 		for (const input of tricky) {
 			it(`${printHandle(input)} -> ${JSON.stringify(input)}`, () => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- test deals with several object shapes
 				const actual = serializer.encode(input, handle);
 				assert.strictEqual(
 					actual,
@@ -128,7 +125,6 @@ describe("FluidSerializer", () => {
 					"encode() on input with no handles must return original input.",
 				);
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- test deals with several object shapes
 				const decoded = serializer.decode(actual);
 				assert.strictEqual(
 					decoded,
@@ -177,7 +173,6 @@ describe("FluidSerializer", () => {
 
 		function check(decodedForm, encodedForm): void {
 			it(`${printHandle(decodedForm)} -> ${JSON.stringify(encodedForm)}`, () => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.encode()
 				const replaced = serializer.encode(decodedForm, handle);
 				assert.notStrictEqual(
 					replaced,
@@ -186,11 +181,9 @@ describe("FluidSerializer", () => {
 				);
 				assert.deepStrictEqual(replaced, encodedForm, "encode() must return expected output.");
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.encode()
 				const replacedTwice = serializer.encode(replaced, handle);
 				assert.deepStrictEqual(replacedTwice, replaced, "encode should be idempotent");
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.decode()
 				const decodedRoundTrip = serializer.decode(replaced);
 				assert.notStrictEqual(
 					decodedRoundTrip,
@@ -203,7 +196,6 @@ describe("FluidSerializer", () => {
 					"input must round-trip through encode()/decode().",
 				);
 
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.decode()
 				const decodedTwice = serializer.decode(decodedRoundTrip);
 				assert.deepStrictEqual(decodedTwice, decodedRoundTrip, "decode should be idempotent");
 
@@ -251,7 +243,6 @@ describe("FluidSerializer", () => {
 			input.h = handle; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 			input.o1.h = handle; // eslint-disable-line @typescript-eslint/no-unsafe-member-access
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.encode()
 			const replaced = serializer.encode(input, handle);
 			assert.notStrictEqual(
 				replaced,
@@ -259,7 +250,6 @@ describe("FluidSerializer", () => {
 				"encode() must shallow-clone rather than mutate original object.",
 			);
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: update when we can fix the return type of serializer.decode()
 			const decoded = serializer.decode(replaced);
 			assert.notStrictEqual(
 				decoded,
