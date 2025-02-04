@@ -787,10 +787,9 @@ function mixinClientSelection<
 			// 2. Make it available to the subsequent reducer logic we're going to inject
 			// (so that we can recover the channel from serialized data)
 			const client = state.random.pick(state.clients);
+			const globalObjects = await client.entryPoint.globalObjects();
 			const entry = state.random.pick(
-				Object.values(client.entryPoint.globalObjects).filter(
-					(v) => v.type === "stressDataObject",
-				),
+				Object.values(globalObjects).filter((v) => v.type === "stressDataObject"),
 			);
 			assert(entry?.type === "stressDataObject");
 			const datastore = await entry.stressDataObject;
@@ -814,13 +813,14 @@ function mixinClientSelection<
 	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.id === operation.clientId);
-		const entry = client?.entryPoint.globalObjects[operation.datastoreId];
+		assert(client !== undefined);
+		const globalObjects = await client.entryPoint.globalObjects();
+		const entry = globalObjects[operation.datastoreId];
 		assert(entry?.type === "stressDataObject");
 		const datastore = await entry.stressDataObject;
 		const channels = await datastore.StressDataObject.channels();
 		const channel = channels.find((c) => c.id === operation.channelId);
 		assert(channel !== undefined, "channel must exist");
-		assert(client !== undefined);
 		await runInStateWithClient(state, client, datastore, channel, async () => {
 			await model.reducer(state, operation as TOperation);
 		});

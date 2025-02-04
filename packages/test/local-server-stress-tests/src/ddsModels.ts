@@ -105,7 +105,7 @@ const covertLocalServerStateToDdsState = async (
 	const channels = await state.datastore.channels();
 	const allHandles = [
 		...channels.map((c) => ({ id: c.id, handle: c.handle })),
-		...Object.values(state.client.entryPoint.globalObjects).filter(
+		...Object.values(await state.client.entryPoint.globalObjects()).filter(
 			(v) => v.handle !== undefined,
 		),
 	];
@@ -163,11 +163,10 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 	const baseModel = ddsModelMap.get(op.channelType);
 	assert(baseModel !== undefined, "must have base model");
 	const channels = await state.datastore.channels();
+	const globalObjects = await state.client.entryPoint.globalObjects();
 	const allHandles = [
 		...channels.map((c) => ({ id: c.id, handle: c.handle })),
-		...Object.values(state.client.entryPoint.globalObjects).filter(
-			(v) => v.handle !== undefined,
-		),
+		...Object.values(globalObjects).filter((v) => v.handle !== undefined),
 	];
 
 	const subOp = JSON.parse(JSON.stringify(op.op), (key, value) => {
@@ -185,15 +184,17 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
 	const buildChannelMap = async (client: Client) => {
 		const channelMap = new Map<string, IChannel>();
-		for (const value of Object.values(client.entryPoint.globalObjects).map((v) =>
+		for (const entry of Object.values(await client.entryPoint.globalObjects()).map((v) =>
 			v.type === "stressDataObject" ? v : undefined,
 		)) {
-			const stressDataObject = await value?.stressDataObject;
-			if (stressDataObject?.attached === true) {
-				const channels = await stressDataObject.channels();
-				for (const channel of channels) {
-					if (channel.isAttached()) {
-						channelMap.set(`${stressDataObject.id}/${channel.id}`, channel);
+			if (entry !== undefined) {
+				const stressDataObject = await entry?.stressDataObject;
+				if (stressDataObject?.attached === true) {
+					const channels = await stressDataObject.channels();
+					for (const channel of channels) {
+						if (channel.isAttached()) {
+							channelMap.set(`${entry.id}/${channel.id}`, channel);
+						}
 					}
 				}
 			}

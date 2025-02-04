@@ -49,8 +49,8 @@ export class StressDataObject extends DataObject {
 	private defaultStressObject: DefaultStressDataObject = makeUnreachableCodePathProxy(
 		"defaultStressDataObject",
 	);
-	public get globalObjects() {
-		return this.defaultStressObject.globalObjects;
+	public async globalObjects() {
+		return this.defaultStressObject.globalObjects();
 	}
 	protected async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
 		const defaultDataStore =
@@ -150,8 +150,56 @@ class DefaultStressDataObject extends StressDataObject {
 	}
 
 	private readonly _globalObjects: Record<string, ContainerObjects> = {};
-	public get globalObjects(): Readonly<Record<string, Readonly<ContainerObjects>>> {
-		return this._globalObjects;
+	public async globalObjects(): Promise<Readonly<Record<string, Readonly<ContainerObjects>>>> {
+		const globalObjects: Record<string, Readonly<ContainerObjects>> = {
+			...this._globalObjects,
+		};
+		const containerRuntime = // eslint-disable-next-line import/no-deprecated
+			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+		for (const url of this.map.keys()) {
+			const resp = await containerRuntime.resolveHandle({
+				url,
+				headers: { [RuntimeHeaders.wait]: false },
+			});
+			if (resp.status === 200) {
+				const maybeHandle: FluidObject<IFluidLoadable> | undefined = resp.value;
+				const handle = maybeHandle?.IFluidLoadable?.handle;
+				if (handle !== undefined) {
+					const entry = this.map.get<ContainerObjects>(url);
+					switch (entry?.type) {
+						case "newAlias":
+							globalObjects[entry.id] = {
+								...entry,
+								handle: undefined,
+							};
+							break;
+						case "newBlob":
+							globalObjects[entry.id] = {
+								...entry,
+								handle,
+							};
+							break;
+						case "stressDataObject":
+							globalObjects[entry.id] = {
+								type: "stressDataObject",
+								id: entry.id,
+								dataStore: undefined,
+								handle,
+								stressDataObject: new LazyPromise(async () => {
+									const maybe = (await handle.get()) as
+										| FluidObject<StressDataObject>
+										| undefined;
+									assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
+									return maybe.StressDataObject;
+								}),
+							};
+							break;
+						default:
+					}
+				}
+			}
+		}
+		return globalObjects;
 	}
 
 	protected override async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
@@ -164,10 +212,6 @@ class DefaultStressDataObject extends StressDataObject {
 		this.map = SharedMap.create(this.runtime, "privateRoot");
 		this.map.bindToContext();
 
-		this.map.on("valueChanged", (changed) => {
-			void this.processValue(changed.key);
-		});
-
 		this.registerObject({
 			type: "stressDataObject",
 			handle: this.handle,
@@ -179,57 +223,6 @@ class DefaultStressDataObject extends StressDataObject {
 
 	protected async initializingFromExisting(): Promise<void> {
 		this.map = (await this.runtime.getChannel("privateRoot")) as any as ISharedMap;
-		void Promise.resolve().then(async () => {
-			for (const url of this.map.keys()) {
-				await this.processValue(url);
-			}
-		});
-	}
-
-	private async processValue(url: string) {
-		const containerRuntime = // eslint-disable-next-line import/no-deprecated
-			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
-		const resp = await containerRuntime.resolveHandle({
-			url,
-			headers: { [RuntimeHeaders.wait]: false },
-		});
-		if (resp.status === 200) {
-			const maybeHandle: FluidObject<IFluidLoadable> | undefined = resp.value;
-			const handle = maybeHandle?.IFluidLoadable?.handle;
-			if (handle !== undefined) {
-				const entry = this.map.get<ContainerObjects>(url);
-				switch (entry?.type) {
-					case "newAlias":
-						this.registerObject({
-							...entry,
-							handle: undefined,
-						});
-						break;
-					case "newBlob":
-						this.registerObject({
-							...entry,
-							handle,
-						});
-						break;
-					case "stressDataObject":
-						this.registerObject({
-							type: "stressDataObject",
-							id: entry.id,
-							dataStore: undefined,
-							handle,
-							stressDataObject: new LazyPromise(async () => {
-								const maybe = (await handle.get()) as
-									| FluidObject<StressDataObject>
-									| undefined;
-								assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
-								return maybe.StressDataObject;
-							}),
-						});
-						break;
-					default:
-				}
-			}
-		}
 	}
 
 	public registerObject(obj: ContainerObjects) {
