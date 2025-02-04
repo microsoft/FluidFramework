@@ -102,6 +102,7 @@ import {
 } from "./modularChangeTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { newChangeAtomIdTransform } from "../../core/rebase/types.js";
+import type { RangeQueryEntry } from "../../util/rangeMap.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -2403,10 +2404,14 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		nodeChange: NodeId | undefined,
 		fieldData: unknown,
 	): void {
-		const baseAttachId = attachIdFromDetachId(this.table.baseNodeRenames, baseDetachId, count);
+		const { value: baseAttachId, length } = firstAttachIdFromDetachId(
+			this.table.baseNodeRenames,
+			baseDetachId,
+			count,
+		);
 
 		// XXX: Store data in rebased changeset if there is no reattach
-		setInCrossFieldMap(this.table.entries, baseAttachId, count, {
+		setInCrossFieldMap(this.table.entries, baseAttachId, length, {
 			nodeChange,
 			fieldData,
 		});
@@ -2421,11 +2426,11 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 						revision: baseAttachId.revision,
 						localId: baseAttachId.localId,
 					},
-					count,
+					length,
 				).length > 0;
 
 			if (!isMove) {
-				renameNodes(this.table.rebasedNodeRenames, baseDetachId, newDetachId, count);
+				renameNodes(this.table.rebasedNodeRenames, baseDetachId, newDetachId, length);
 			}
 		}
 
@@ -2437,7 +2442,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					revision: baseAttachId.revision,
 					localId: baseAttachId.localId,
 				},
-				count,
+				length,
 			);
 
 			for (const baseFieldId of baseFieldIds) {
@@ -2446,6 +2451,24 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 					true,
 				);
 			}
+		}
+
+		if (length < count) {
+			const remainingCount = count - length;
+
+			assert(fieldData === undefined, "XXX: Handle splitting field data");
+			const nextDetachId =
+				newDetachId !== undefined
+					? offsetChangeAtomId(newDetachId, remainingCount)
+					: undefined;
+
+			this.rebaseOverDetach(
+				offsetChangeAtomId(baseDetachId, remainingCount),
+				remainingCount,
+				nextDetachId,
+				nodeChange,
+				fieldData,
+			);
 		}
 	}
 }
@@ -2461,13 +2484,13 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId> {
-		const attachId = attachIdFromDetachId(
+		const { value: attachId, length } = firstAttachIdFromDetachId(
 			this.table.baseChange.nodeRenames,
 			baseDetachId,
 			count,
 		);
 
-		const result = this.table.entries.getFirst(attachId, count);
+		const result = this.table.entries.getFirst(attachId, length);
 		return { ...result, value: result.value?.nodeChange };
 	}
 
@@ -2481,7 +2504,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			renameNodes(this.table.composedNodeRenames, baseAttachId, newDetachId, count);
 		}
 
-		const baseDetachId = setInCrossFieldMap(this.table.entries, baseAttachId, count, {
+		setInCrossFieldMap(this.table.entries, baseAttachId, count, {
 			currentId: baseAttachId,
 			newId: newDetachId,
 			nodeChange: newChanges,
@@ -3073,22 +3096,13 @@ function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
 }
 
-function attachIdFromDetachId(
+function firstAttachIdFromDetachId(
 	renames: NodeRenameTable,
 	detachId: ChangeAtomId,
 	count: number,
-): ChangeAtomId {
-	const entry = renames.oldToNewId.getFirst(detachId, 1);
-	if (entry.value === undefined) {
-		return detachId;
-	}
-
-	assert(
-		entry.length === count,
-		"XXX: Handle the case where the ID range maps into multiple blocks",
-	);
-
-	return attachIdFromDetachId(renames, entry.value, count);
+): RangeQueryEntry<ChangeAtomId, ChangeAtomId> {
+	const result = renames.oldToNewId.getFirst(detachId, count);
+	return { ...result, value: result.value ?? detachId };
 }
 
 export function newNodeRenameTable(): NodeRenameTable {
