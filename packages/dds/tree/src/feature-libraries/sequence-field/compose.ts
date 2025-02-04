@@ -13,7 +13,7 @@ import type {
 
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
-import { getAttach, isMoveMark, type NodeRangeQueryFunc } from "./moveEffectTable.js";
+import type { NodeRangeQueryFunc } from "./moveEffectTable.js";
 import {
 	type CellMark,
 	type Changeset,
@@ -21,7 +21,6 @@ import {
 	type Mark,
 	type MarkEffect,
 	type MarkList,
-	type MoveId,
 	type NoopMark,
 	NoopMarkType,
 } from "./types.js";
@@ -115,12 +114,7 @@ function composeMarks(
 	moveEffects: ComposeNodeManager,
 ): Mark {
 	const nodeChange = handleNodeChanges(baseMark, newMark, composeChild, moveEffects);
-
-	return withUpdatedEndpoint(
-		withNodeChange(composeMarksIgnoreChild(baseMark, newMark, moveEffects), nodeChange),
-		baseMark.count,
-		moveEffects,
-	);
+	return withNodeChange(composeMarksIgnoreChild(baseMark, newMark, moveEffects), nodeChange);
 }
 
 function composeMarksIgnoreChild(
@@ -262,16 +256,6 @@ function composeChildChanges(
 	}
 
 	return composeChild(baseChange, newChange);
-}
-
-function composeMark<TMark extends Mark>(
-	mark: TMark,
-	moveEffects: ComposeNodeManager,
-	composeChild: (node: NodeId) => NodeId | undefined,
-): TMark {
-	const nodeChanges = mark.changes !== undefined ? composeChild(mark.changes) : undefined;
-	const updatedMark = withUpdatedEndpoint(mark, mark.count, moveEffects);
-	return withNodeChange(updatedMark, nodeChanges);
 }
 
 export class ComposeQueue {
@@ -416,25 +400,9 @@ function getMovedChangesFromMark(
 		return undefined;
 	}
 
-	return getModifyAfter(moveEffects, markEffect.revision, markEffect.id);
-}
-
-// It is expected that the range from `id` to `id + count - 1` has the same move effect.
-// The call sites to this function are making queries about a mark which has already been split by a `MarkQueue`
-// to match the ranges in `moveEffects`.
-// TODO: Reduce the duplication between this and other MoveEffect helpers
-function getModifyAfter(
-	moveEffects: ComposeNodeManager,
-	revision: RevisionTag | undefined,
-	localId: MoveId,
-): NodeId | undefined {
-	return moveEffects.getChangesForBaseDetach({ revision, localId }, 1).value;
-}
-
-function withUpdatedEndpoint<TMark extends MarkEffect>(
-	mark: TMark,
-	count: number,
-	effects: ComposeNodeManager,
-): TMark {
-	return mark;
+	// XXX: Should use the detach ID, not the mark ID
+	return moveEffects.getChangesForBaseDetach(
+		{ revision: markEffect.revision, localId: markEffect.id },
+		1,
+	).value;
 }

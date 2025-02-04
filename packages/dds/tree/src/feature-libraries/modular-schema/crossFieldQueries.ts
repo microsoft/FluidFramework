@@ -19,14 +19,6 @@ export function setInCrossFieldMap<T>(
 	map.set(id, count, value);
 }
 
-export function getFirstFromCrossFieldMap<T>(
-	map: CrossFieldMap<T>,
-	id: ChangeAtomId,
-	count: number,
-): RangeQueryResult<ChangeAtomId, T> {
-	return map.getFirst(id, count);
-}
-
 /**
  */
 export enum CrossFieldTarget {

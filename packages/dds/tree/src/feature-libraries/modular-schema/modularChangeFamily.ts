@@ -72,7 +72,6 @@ import {
 	type CrossFieldMap,
 	CrossFieldTarget,
 	type DetachedNodeEntry,
-	getFirstFromCrossFieldMap,
 	type InvertNodeManager,
 	type RebaseNodeManager,
 	setInCrossFieldMap,
@@ -2393,7 +2392,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		baseAttachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
-		return getFirstFromCrossFieldMap(this.table.entries, baseAttachId, count);
+		return this.table.entries.getFirst(baseAttachId, count);
 	}
 
 	public rebaseOverDetach(
@@ -2461,7 +2460,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId> {
-		const result = getFirstFromCrossFieldMap(this.table.entries, baseDetachId, count);
+		// XXX: This needs to use the rename table to normalize the ID
+		const result = this.table.entries.getFirst(baseDetachId, count);
 		return { ...result, value: result.value?.nodeChange };
 	}
 
