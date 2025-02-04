@@ -39,7 +39,7 @@ describe(`Presence with AzureClient`, () => {
 
 	const afterCleanUp: (() => void)[] = [];
 
-	// After each test, kill each child process and run any cleanup functions that were registered
+	// After each test, kill each child process and call any cleanup functions that were registered
 	afterEach(async () => {
 		for (const child of children) {
 			child.kill();
@@ -88,6 +88,7 @@ describe(`Presence with AzureClient`, () => {
 					},
 				);
 			}
+			// Add removal of child process listeners to after test cleanup
 			afterCleanUp.push(() => child.removeAllListeners());
 		}
 
