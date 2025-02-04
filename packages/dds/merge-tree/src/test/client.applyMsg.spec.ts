@@ -1039,7 +1039,7 @@ describe("client.applyMsg", () => {
 					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 9, side: Side.Before }),
 					++seq,
 				),
-				b.makeOpMessage(b.insertTextLocal(2, "66"), ++seq),
+				b.makeOpMessage(b.insertTextLocal(2, "xx"), ++seq),
 				b.makeOpMessage(b.insertTextLocal(8, "BB"), ++seq),
 				b.makeOpMessage(
 					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 4, side: Side.Before }),
