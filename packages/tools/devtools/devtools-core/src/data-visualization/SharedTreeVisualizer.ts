@@ -169,7 +169,7 @@ interface FieldSchemaProperties {
 	 * Set of type names that are valid for this specific node position in the tree.
 	 * This is a subset of the types defined in treeDefinitions.
 	 */
-	allowedTypes: ReadonlySet<string>;
+	allowedTypes?: ReadonlySet<string>;
 
 	/**
 	 * Whether this field is required in its parent object schema.
@@ -252,7 +252,7 @@ async function visualizeObjectNode(
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: concatenateTypes(allowedTypes),
+			allowedTypes: concatenateTypes(allowedTypes ?? new Set()),
 			isRequired: isRequired?.toString(),
 		},
 		fields: await visualizeVerboseNodeFields(
@@ -416,7 +416,7 @@ export async function visualizeSharedTreeBySchema(
 		? {
 				schema: {
 					schemaName: Tree.schema(tree).identifier,
-					allowedTypes: concatenateTypes(allowedTypes),
+					allowedTypes: concatenateTypes(allowedTypes ?? new Set()),
 					isRequired: isRequired?.toString(),
 				},
 				value: await visualizeChildData(tree),
