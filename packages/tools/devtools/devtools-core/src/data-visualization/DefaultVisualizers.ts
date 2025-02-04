@@ -302,8 +302,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	const visualTreeRepresentation: VisualSharedTreeNode = await visualizeSharedTreeBySchema(
 		treeView,
 		treeDefinitions,
-		allowedTypes,
-		isRequired,
+		{ allowedTypes, isRequired },
 		visualizeChildData,
 	);
 
