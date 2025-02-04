@@ -34,9 +34,6 @@ export { ContainerStateChangeKind } from "./Container.js";
 export type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
 export type {
-	Edit,
-	EditData,
-	EditSharedObject,
 	FluidHandleNode,
 	FluidObjectNode,
 	FluidObjectNodeBase,
@@ -45,7 +42,6 @@ export type {
 	FluidUnknownObjectNode,
 	Primitive,
 	RootHandleNode,
-	SharedObjectEdit,
 	TreeNodeBase,
 	ValueNodeBase,
 	VisualChildNode,
@@ -83,7 +79,6 @@ export {
 	ContainerList,
 	ContainerStateChange,
 	ContainerStateHistory,
-	DataEdit,
 	DataVisualization,
 	DevtoolsDisposed,
 	DevtoolsFeatures,

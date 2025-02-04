@@ -405,6 +405,12 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 // @alpha
 export const SharedTree: ISharedObjectKind<ITree> & SharedObjectKind<ITree>;
 
+// @alpha
+export const SharedTreeAttributes: IChannelAttributes;
+
+// @alpha
+export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 

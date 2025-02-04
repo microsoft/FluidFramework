@@ -24,12 +24,7 @@ import type {
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
-import {
-	Tree,
-	type ISharedTree,
-	type SharedTree,
-	type SharedTreeFactory,
-} from "../../../shared-tree/index.js";
+import { Tree, type ISharedTree, type SharedTree } from "../../../shared-tree/index.js";
 import { fail, getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
@@ -69,6 +64,7 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
+import type { TreeFactory } from "../../../treeFactory.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
@@ -98,7 +94,7 @@ export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSch
 	currentSchema: FuzzNodeSchema;
 };
 
-export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
+export interface FuzzTestState extends DDSFuzzTestState<TreeFactory> {
 	/**
 	 * Schematized view of clients and their nodeSchemas. Created lazily by viewFromState.
 	 *
@@ -118,7 +114,7 @@ export interface FuzzTestState extends DDSFuzzTestState<SharedTreeFactory> {
 
 export function viewFromState(
 	state: FuzzTestState,
-	client: Client<SharedTreeFactory> = state.client,
+	client: Client<TreeFactory> = state.client,
 ): FuzzView {
 	state.clientViews ??= new Map();
 	const view =
@@ -594,7 +590,7 @@ export const makeConstraintEditGenerator = (
 
 export function makeOpGenerator(
 	weightsArg: Partial<EditGeneratorOpWeights> = defaultEditGeneratorOpWeights,
-): AsyncGenerator<Operation, DDSFuzzTestState<SharedTreeFactory>> {
+): AsyncGenerator<Operation, DDSFuzzTestState<TreeFactory>> {
 	const weights = {
 		...defaultEditGeneratorOpWeights,
 		...weightsArg,

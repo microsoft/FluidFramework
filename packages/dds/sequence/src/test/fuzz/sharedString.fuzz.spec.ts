@@ -3,63 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AsyncGenerator as Generator,
-	createWeightedAsyncGenerator as createWeightedGenerator,
-	takeAsync as take,
-} from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	FuzzTestState,
-	Operation,
-	SharedStringOperationGenerationConfig,
-	baseModel,
-	createSharedStringGeneratorOperations,
-	defaultFuzzOptions,
-	defaultIntervalOperationGenerationConfig,
-} from "./fuzzUtils.js";
-
-type ClientOpState = FuzzTestState;
-export function makeSharedStringOperationGenerator(
-	optionsParam?: SharedStringOperationGenerationConfig,
-	alwaysLeaveChar: boolean = false,
-): Generator<Operation, ClientOpState> {
-	const {
-		addText,
-		removeRange,
-		annotateRange,
-		annotateAdjustRange,
-		removeRangeLeaveChar,
-		lengthSatisfies,
-		hasNonzeroLength,
-		isShorterThanMaxLength,
-	} = createSharedStringGeneratorOperations(optionsParam);
-
-	const usableWeights =
-		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
-	return createWeightedGenerator<Operation, ClientOpState>([
-		[addText, usableWeights.addText, isShorterThanMaxLength],
-		[
-			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
-			usableWeights.removeRange,
-			alwaysLeaveChar
-				? lengthSatisfies((length) => {
-						return length > 1;
-					})
-				: hasNonzeroLength,
-		],
-		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
-		[annotateAdjustRange, usableWeights.annotateRange, hasNonzeroLength],
-	]);
-}
-
-const baseSharedStringModel = {
-	...baseModel,
-	generatorFactory: () =>
-		take(100, makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig)),
-};
+import { baseSharedStringModel, defaultFuzzOptions } from "./fuzzUtils.js";
 
 describe("SharedString fuzz testing", () => {
 	createDDSFuzzSuite(

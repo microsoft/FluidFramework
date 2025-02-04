@@ -16,7 +16,7 @@ import {
 
 import type { SectionNode } from "../../documentation-domain/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
-import { filterChildMembers } from "../ApiItemTransformUtilities.js";
+import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 
@@ -60,7 +60,7 @@ export function transformApiInterface(
 ): SectionNode[] {
 	const childSections: SectionNode[] = [];
 
-	const filteredChildren = filterChildMembers(apiInterface, config);
+	const filteredChildren = getFilteredMembers(apiInterface, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructSignatures: ApiConstructSignature[] = [];

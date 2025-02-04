@@ -58,6 +58,13 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 
 	protected initProps?: I["InitialState"];
 
+	/**
+	 * Internal implementation detail.
+	 * Subclasses should not use this.
+	 * @privateRemarks
+	 * For unknown reasons this API was exposed as a protected member with no documented behavior nor any external usage or clear use-case.
+	 * Ideally a breaking change would be made to replace this with a better named private property like `#initializationPromise` when permitted.
+	 */
 	protected initializeP: Promise<void> | undefined;
 
 	public get id(): string {
@@ -117,17 +124,14 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 	}
 
 	/**
-	 * Call this API to ensure PureDataObject is fully initialized.
+	 * Await this API to ensure PureDataObject is fully initialized.
 	 * Initialization happens on demand, only on as-needed bases.
 	 * In most cases you should allow factory/object to decide when to finish initialization.
 	 * But if you are supplying your own implementation of DataStoreRuntime factory and overriding some methods
-	 * and need a fully initialized object, then you can call this API to ensure object is fully initialized.
+	 * and need a fully initialized object, then you can await this API to ensure object is fully initialized.
 	 */
 	public async finishInitialization(existing: boolean): Promise<void> {
-		if (this.initializeP !== undefined) {
-			return this.initializeP;
-		}
-		this.initializeP = this.initializeInternal(existing);
+		this.initializeP ??= this.initializeInternal(existing);
 		return this.initializeP;
 	}
 

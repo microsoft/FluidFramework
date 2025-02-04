@@ -231,7 +231,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 		]);
 	});
 
-	[true].forEach((enableGroupedBatching) => {
+	[false, true].forEach((enableGroupedBatching) => {
 		it(`attach sends ops with compression enabled and ${
 			enableGroupedBatching ? "grouped" : "regular"
 		} batching`, async function () {
@@ -248,7 +248,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 			const runtimeOptions: IContainerRuntimeOptionsInternal = {
 				...testContainerConfig.runtimeOptions,
 				compressionOptions: {
-					minimumBatchSizeInBytes: 1,
+					minimumBatchSizeInBytes: enableGroupedBatching ? 1 : Number.POSITIVE_INFINITY,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 				enableGroupedBatching,

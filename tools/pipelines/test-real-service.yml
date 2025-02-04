@@ -38,7 +38,7 @@ variables:
 lockBehavior: sequential
 stages:
 
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_local_server
       stageDisplayName: e2e - local server
@@ -55,7 +55,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests tinylicious
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_tinylicious
       stageDisplayName: e2e - tinylicious
@@ -77,7 +77,7 @@ stages:
         logger__morganFormat: tiny
 
   # end-to-end tests routerlicious
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_routerlicious
       stageDisplayName: e2e - routerlicious
@@ -108,7 +108,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests AFR
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_frs
       stageDisplayName: e2e - AFR
@@ -140,7 +140,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests odsp
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_odsp
       stageDisplayName: e2e - odsp

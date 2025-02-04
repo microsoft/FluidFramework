@@ -3,8 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
+import { createPresenceManager } from "../presenceManager.js";
+
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { createNullValidator } from "./testUtils.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
@@ -12,6 +17,8 @@ import type {
 	LatestValueClientData,
 } from "@fluidframework/presence/alpha";
 import { Latest } from "@fluidframework/presence/alpha";
+
+const testWorkspaceName = "name:testWorkspaceA";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestManager(
@@ -30,6 +37,42 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		describe("when initialized", () => {
+			let presence: IPresence;
+
+			beforeEach(() => {
+				presence = createPresenceManager(new MockEphemeralRuntime());
+			});
+
+			it("can set and get empty object as initial value", () => {
+				const states = presence.getStates(testWorkspaceName, {
+					obj: Latest({}),
+				});
+				assert.deepStrictEqual(states.props.obj.local, {});
+			});
+
+			it("can set and get object with properties as initial value", () => {
+				const states = presence.getStates(testWorkspaceName, {
+					obj: Latest({ x: 0, y: 0, z: 0 }),
+				});
+				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
+			});
+
+			it("can set and get empty array as initial value", () => {
+				const states = presence.getStates(testWorkspaceName, {
+					arr: Latest([]),
+				});
+				assert.deepStrictEqual(states.props.arr.local, []);
+			});
+
+			it("can set and get array with elements as initial value", () => {
+				const states = presence.getStates(testWorkspaceName, {
+					arr: Latest([1, 2, 3]),
+				});
+				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
+			});
+		});
 
 		addControlsTests(createLatestManager);
 	});

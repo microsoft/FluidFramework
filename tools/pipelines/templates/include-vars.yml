@@ -105,3 +105,11 @@ variables:
   readonly: true
 
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
+
+# The way 1ES pipeline templates determine the default branch of a repository only works for repos hosted in ADO.
+# For repos hosted in Github, they fail to determine a default branch and set the current branch as default,
+# causing CodeQL tasks to run for all branches.
+# They add a significant amount of time to pipeline runs when they trigger, so we force-disable them for non-main branches.
+- ${{ if ne(variables['Build.SourceBranch'], 'refs/heads/main') }}:
+  - name: ONEES_ENFORCED_CODEQL_ENABLED
+    value: 'false'

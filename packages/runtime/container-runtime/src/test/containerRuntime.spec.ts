@@ -52,6 +52,8 @@ import {
 	type IRuntimeMessageCollection,
 	type ISequencedMessageEnvelope,
 	type IEnvelope,
+	type ITelemetryContext,
+	type ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
@@ -144,9 +146,7 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 		"content" in obj.contents &&
 		"type" in obj.contents &&
 		typeof obj.contents.type === "string" &&
-		(!("address" in obj) ||
-			typeof obj.address === "string" ||
-			typeof obj.address === "undefined") &&
+		(!("address" in obj) || typeof obj.address === "string" || obj.address === undefined) &&
 		(!("clientBroadcastSignalSequenceNumber" in obj) ||
 			typeof obj.clientBroadcastSignalSequenceNumber === "number")
 	);
@@ -425,13 +425,17 @@ describe("Runtime", () => {
 
 					if (enableOfflineLoad) {
 						assert(
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-							batchIdMatchesUnsentFormat(submittedOps[0].metadata?.batchId),
+							batchIdMatchesUnsentFormat(
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+								submittedOps[0].metadata?.batchId as string | undefined,
+							),
 							"expected unsent batchId format (0)",
 						);
 						assert(
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-							batchIdMatchesUnsentFormat(submittedOps[1].metadata?.batchId),
+							batchIdMatchesUnsentFormat(
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+								submittedOps[1].metadata?.batchId as string | undefined,
+							),
 							"expected unsent batchId format (0)",
 						);
 					} else {
@@ -1316,6 +1320,33 @@ describe("Runtime", () => {
 				);
 				assert.equal((runtime as unknown as { method2: () => unknown }).method2(), 42);
 			});
+
+			// A legacy partner team overrides the summarizeInternal method to add custom data to the Summary.
+			// Let's make sure we don't break them inadvertently, while we work to move them to a better pattern.
+			it("Ensure private member is stable to support legacy usage", async () => {
+				const containerRuntime_withSummarizeInternal = (await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as {
+					summarizeInternal(
+						fullTree: boolean,
+						trackState: boolean,
+						telemetryContext?: ITelemetryContext,
+					): Promise<ISummarizeInternalResult>;
+				};
+
+				assert(
+					typeof containerRuntime_withSummarizeInternal.summarizeInternal === "function",
+					"Expected summarizeInternal to be present (it's a private method)",
+				);
+				const result = await containerRuntime_withSummarizeInternal.summarizeInternal(
+					true,
+					true,
+				);
+				assert(result.summary !== undefined, "Expected a valid result from summarizeInternal");
+			});
 		});
 
 		describe("EntryPoint initialized correctly", () => {
@@ -1700,12 +1731,13 @@ describe("Runtime", () => {
 			it("summary fails after generate if there are pending ops", async () => {
 				// Patch the summarize function to submit messages during it. This way there will be pending
 				// messages after generating the summary.
-				const patch = (fn: (...args) => Promise<ISummaryTreeWithStats>) => {
+				const patch = (fn: (...args: any[]) => Promise<ISummaryTreeWithStats>) => {
 					const boundFn = fn.bind(containerRuntime);
-					return async (...args: any[]) => {
+					return async (...args: unknown[]) => {
 						// Submit an op and yield for it to be flushed from outbox to pending state manager.
 						submitDataStoreOp(containerRuntime, "fakeId", "fakeContents");
 						await yieldEventLoop();
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 						return boundFn(...args);
 					};
 				};
@@ -1846,6 +1878,7 @@ describe("Runtime", () => {
 					}
 
 					async getVersions(
+						// eslint-disable-next-line @rushstack/no-new-null -- base signature uses `null`
 						versionId: string | null,
 						count: number,
 						scenarioName?: string,
@@ -1961,7 +1994,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -2009,7 +2042,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -2083,7 +2116,7 @@ describe("Runtime", () => {
 					},
 					provideEntryPoint: mockProvideEntryPoint,
 				});
-				const pendingStates = Array.from({ length: 5 }).map<IPendingMessage>((_, i) => ({
+				const pendingStates: IPendingMessage[] = Array.from({ length: 5 }, (_, i) => ({
 					content: i.toString(),
 					type: "message",
 					referenceSequenceNumber: 0,
@@ -2312,7 +2345,7 @@ describe("Runtime", () => {
 								JSON.stringify(
 									'{"gcNodes":{"/":{"outboundRoutes":["/rootDOId"]},"/rootDOId":{"outboundRoutes":["/rootDOId/de68ca53-be31-479e-8d34-a267958997e4","/rootDOId/root"]},"/rootDOId/de68ca53-be31-479e-8d34-a267958997e4":{"outboundRoutes":["/rootDOId"]},"/rootDOId/root":{"outboundRoutes":["/rootDOId","/rootDOId/de68ca53-be31-479e-8d34-a267958997e4"]}}}',
 								),
-							),
+							) as string,
 							"utf8",
 						),
 					],
@@ -3472,6 +3505,33 @@ describe("Runtime", () => {
 						],
 						"SignalLatency telemetry should log correct amount of sent and lost signals",
 						/* inlineDetailsProp = */ true,
+					);
+				});
+			});
+			describe("Validate runtime options", () => {
+				it("Throws when op compression is on and op grouping is off", async () => {
+					await assert.rejects(
+						async () =>
+							ContainerRuntime.loadRuntime({
+								context: getMockContext() as IContainerContext,
+								registryEntries: [],
+								existing: false,
+								runtimeOptions: {
+									enableGroupedBatching: false,
+									compressionOptions: {
+										compressionAlgorithm: CompressionAlgorithms.lz4,
+										minimumBatchSizeInBytes: 1,
+									},
+								},
+								provideEntryPoint: mockProvideEntryPoint,
+							}),
+						(error: IErrorBase) => {
+							return (
+								error.errorType === ContainerErrorTypes.usageError &&
+								error.message === "If compression is enabled, op grouping must be enabled too"
+							);
+						},
+						"Container should throw when op compression is on and op grouping is off",
 					);
 				});
 			});

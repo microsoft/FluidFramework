@@ -83,10 +83,11 @@ const foo = bar;
 
 # Namespaces
 
-| Namespace | Description |
-| --- | --- |
-| [TestModule](docs/test-suite-a#testmodule-namespace) |  |
-| [TestNamespace](docs/test-suite-a#testnamespace-namespace) | Test Namespace |
+| Namespace | Alerts | Description |
+| --- | --- | --- |
+| [TestBetaNamespace](docs/test-suite-a#testbetanamespace-namespace) | `Beta` | A namespace tagged as `@beta`. |
+| [TestModule](docs/test-suite-a#testmodule-namespace) |  |  |
+| [TestNamespace](docs/test-suite-a#testnamespace-namespace) |  | Test Namespace |
 
 # Interface Details
 
@@ -1016,6 +1017,51 @@ testConstWithEmptyDeprecatedBlock: string
 **Type:** string
 
 # Namespace Details
+
+## TestBetaNamespace {#testbetanamespace-namespace}
+
+A namespace tagged as `@beta`.
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
+
+### Signature {#testbetanamespace-signature}
+
+```typescript
+export declare namespace TestBetaNamespace
+```
+
+### Remarks {#testbetanamespace-remarks}
+
+Tests release level inheritance.
+
+### Variables
+
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [betaMember](docs/test-suite-a#testbetanamespace-betamember-variable) | `Beta` | `readonly` |  |  |
+| [publicMember](docs/test-suite-a#testbetanamespace-publicmember-variable) | `Beta` | `readonly` |  |  |
+
+### Variable Details
+
+#### betaMember {#testbetanamespace-betamember-variable}
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
+
+##### Signature {#betamember-signature}
+
+```typescript
+betaMember = "beta"
+```
+
+#### publicMember {#testbetanamespace-publicmember-variable}
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
+
+##### Signature {#publicmember-signature}
+
+```typescript
+publicMember = "public"
+```
 
 ## TestModule {#testmodule-namespace}
 

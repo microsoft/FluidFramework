@@ -7,7 +7,7 @@ echo SETVERSION_CODEVERSION=$SETVERSION_CODEVERSION
 echo RELEASE_GROUP=$RELEASE_GROUP
 echo INTERDEPENDENCY_RANGE="'$INTERDEPENDENCY_RANGE'"
 
-if [ -f "lerna.json" ]; then
+if [ -f ".releaseGroup" ]; then
   if [ "$VERSION_RELEASE" = "release" ]; then
       echo "release group with '$INTERDEPENDENCY_RANGE' deps"
       echo command="flub bump $RELEASE_GROUP --exact $SETVERSION_VERSION --interdependencyRange=\"$INTERDEPENDENCY_RANGE\" -xv"
