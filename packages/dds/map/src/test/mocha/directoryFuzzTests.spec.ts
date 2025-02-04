@@ -62,7 +62,7 @@ describe("SharedDirectory fuzz Create/Delete concentrated", () => {
 	});
 
 	createDDSFuzzSuite(
-		{ ...baseDirModel, workloadName: "default directory 1 with rebasing" },
+		{ ...model, workloadName: "default directory 1 with rebasing" },
 		{
 			validationStrategy: {
 				type: "random",
