@@ -88,7 +88,8 @@ export class DocumentContextManager extends EventEmitter {
 					lowestOffset = docContext.lastSuccessfulOffset;
 				}
 			}
-			lowestOffset = (lowestOffset > -1 && lowestOffset < Number.MAX_SAFE_INTEGER) ? lowestOffset : 0;
+			lowestOffset =
+				lowestOffset > -1 && lowestOffset < Number.MAX_SAFE_INTEGER ? lowestOffset : 0;
 			this.headPaused = true;
 			this.tailPaused = true;
 			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
