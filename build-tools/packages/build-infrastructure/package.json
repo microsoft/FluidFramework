@@ -13,9 +13,13 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"default": {
+			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/index.d.ts",
+				"default": "./dist/index.js"
 			}
 		}
 	},

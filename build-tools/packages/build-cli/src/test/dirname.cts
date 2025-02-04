@@ -11,5 +11,4 @@
 //
 // Note that *.cjs files are always CommonJS, but can be imported from ESM.
 // eslint-disable-next-line unicorn/prefer-module -- this is used for ESM/CJS interop
-export const _dirname =
-	"/workspaces/FluidFramework/build-tools/packages/build-infrastructure/src/test";
+export const _dirname = __dirname;
