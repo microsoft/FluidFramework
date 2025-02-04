@@ -5,7 +5,7 @@
 
 export {
 	type ISharedTree,
-	SharedTreeFactory,
+	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
 	SharedTree,
 	getBranch,

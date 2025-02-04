@@ -53,7 +53,6 @@ import {
 	getBranch,
 	type ISharedTree,
 	type SharedTree,
-	SharedTreeFactory,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -90,7 +89,7 @@ import {
 	NumberArray,
 	validateViewConsistency,
 } from "../utils.js";
-import { configuredSharedTree } from "../../treeFactory.js";
+import { configuredSharedTree, TreeFactory } from "../../treeFactory.js";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -177,7 +176,7 @@ describe("SharedTree", () => {
 		const provider = await TestTreeProvider.create(
 			2,
 			SummarizeType.disabled,
-			new SharedTreeFactory({
+			new TreeFactory({
 				jsonValidator: typeboxValidator,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
 			}),
@@ -546,7 +545,7 @@ describe("SharedTree", () => {
 		// Detached trees are not connected to the sequencing service, but they still "sequence" their edits as if they were totally ordered.
 		// The second tree must take care to avoid sequencing its edits with sequence numbers that the first tree already used.
 		// If it doesn't, the second tree will throw an error when trying to sequence a commit with sequence number that has "gone backwards" and this test will fail.
-		const sharedTreeFactory = new SharedTreeFactory();
+		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({
 			idCompressor: createIdCompressor(),
 			attachState: AttachState.Detached,
@@ -1876,7 +1875,7 @@ describe("SharedTree", () => {
 		it("unspecified ForestType uses ObjectForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
-				new SharedTreeFactory({
+				new TreeFactory({
 					jsonValidator: typeboxValidator,
 				}),
 			);
@@ -1886,7 +1885,7 @@ describe("SharedTree", () => {
 		it("ForestType.Reference uses ObjectForest with additionalAsserts flag set to false", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
-				new SharedTreeFactory({
+				new TreeFactory({
 					jsonValidator: typeboxValidator,
 					forest: ForestTypeReference,
 				}),
@@ -1899,7 +1898,7 @@ describe("SharedTree", () => {
 		it("ForestType.Optimized uses ChunkedForest", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
-				new SharedTreeFactory({
+				new TreeFactory({
 					jsonValidator: typeboxValidator,
 					forest: ForestTypeOptimized,
 				}),
@@ -1910,7 +1909,7 @@ describe("SharedTree", () => {
 		it("ForestType.Expensive uses ObjectForest with additionalAsserts flag set to true", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
-				new SharedTreeFactory({
+				new TreeFactory({
 					jsonValidator: typeboxValidator,
 					forest: ForestTypeExpensiveDebug,
 				}),
@@ -1923,7 +1922,7 @@ describe("SharedTree", () => {
 	describe("Schema based op encoding", () => {
 		// TODO:#8915: This test will fail until bug #8915 is fixed
 		it.skip("uses the correct schema for subsequent edits after schema change.", async () => {
-			const factory = new SharedTreeFactory({
+			const factory = new TreeFactory({
 				jsonValidator: typeboxValidator,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			});
@@ -1968,7 +1967,7 @@ describe("SharedTree", () => {
 
 		it("properly encodes ops using specified compression strategy", async () => {
 			// Check that ops are using uncompressed encoding with "Uncompressed" treeEncodeType
-			const factory = new SharedTreeFactory({
+			const factory = new TreeFactory({
 				jsonValidator: typeboxValidator,
 				treeEncodeType: TreeCompressionStrategy.Uncompressed,
 			});
@@ -2011,7 +2010,7 @@ describe("SharedTree", () => {
 			assert.deepEqual(encodedTreeData.data[0][1], expectedUncompressedTreeData);
 
 			// Check that ops are encoded using schema based compression with "Compressed" treeEncodeType
-			const factory2 = new SharedTreeFactory({
+			const factory2 = new TreeFactory({
 				jsonValidator: typeboxValidator,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			});
@@ -2043,7 +2042,7 @@ describe("SharedTree", () => {
 
 	describe("Identifiers", () => {
 		it("Can use identifiers and the static Tree Apis", async () => {
-			const factory = new SharedTreeFactory({
+			const factory = new TreeFactory({
 				jsonValidator: typeboxValidator,
 				treeEncodeType: TreeCompressionStrategy.Compressed,
 			});
@@ -2107,7 +2106,7 @@ describe("SharedTree", () => {
 	});
 
 	it("throws an error if attaching during a transaction", () => {
-		const sharedTreeFactory = new SharedTreeFactory();
+		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = sharedTreeFactory.create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();

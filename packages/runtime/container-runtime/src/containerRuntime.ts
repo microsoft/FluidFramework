@@ -3727,6 +3727,12 @@ export class ContainerRuntime
 
 	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
 
+	/**
+	 * Builds the Summary tree including all the channels and the container state.
+	 *
+	 * @remarks - Unfortunately, this function is accessed in a non-typesafe way by a legacy first-party partner,
+	 * so until we can provide a proper API for their scenario, we need to ensure this function doesn't change.
+	 */
 	private async summarizeInternal(
 		fullTree: boolean,
 		trackState: boolean,
