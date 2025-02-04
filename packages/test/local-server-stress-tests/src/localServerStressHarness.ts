@@ -428,7 +428,7 @@ export interface LocalServerStressOptions {
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	defaultTestCount: defaultOptions.defaultTestCount,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 0,
+		numOpsBeforeAttach: 5,
 	},
 	handleGenerationDisabled: true,
 	emitter: new TypedEventEmitter(),
@@ -687,51 +687,82 @@ function mixinSynchronization<
 	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
-			const connectedClients = state.clients.filter(
-				(client) => client.container.connectionState !== ConnectionState.Disconnected,
-			);
-
-			await Promise.all(
-				connectedClients.map(
-					async (c) =>
-						new Promise<void>((resolve) =>
-							c.container.connectionState !== ConnectionState.Connected
-								? c.container.once("connected", () => resolve())
-								: resolve(),
-						),
-				),
-			);
-
-			await Promise.all(
-				connectedClients.map(
-					async (c) =>
-						new Promise<void>((resolve) =>
-							c.container.isDirty ? c.container.once("saved", () => resolve()) : resolve(),
-						),
-				),
-			);
-			const maxSeq = Math.max(
-				...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
-			);
-
-			const makeOpHandler = (container: IContainer, resolve: () => void) => {
-				if (container.deltaManager.lastKnownSeqNumber < maxSeq) {
-					const handler = (msg) => {
-						if (msg.sequenceNumber >= maxSeq) {
-							container.off("op", handler);
-							resolve();
-						}
-					};
-					container.on("op", handler);
-				} else {
-					resolve();
+			const connectedClients = state.clients.filter((client) => {
+				if (client.container.closed || client.container.disposed) {
+					throw new Error(`Client ${client.id} is closed`);
 				}
-			};
-			await Promise.all(
-				connectedClients.map(
-					async (c) => new Promise<void>((resolve) => makeOpHandler(c.container, resolve)),
-				),
+				return client.container.connectionState !== ConnectionState.Disconnected;
+			});
+
+			const rejects = new Map<Client, ((reason?: any) => void)[]>(
+				connectedClients.map((c) => [c, []]),
 			);
+
+			const cleanUps: (() => void)[] = [];
+			for (const c of connectedClients) {
+				const rejector = (err) => rejects.get(c)?.forEach((r) => r(err));
+				c.container.once("closed", rejector);
+				c.container.once("disposed", rejector);
+				cleanUps.push(() => {
+					c.container.off("closed", rejector);
+					c.container.off("disposed", rejector);
+				});
+			}
+			try {
+				await Promise.all(
+					connectedClients.map(
+						async (c) =>
+							new Promise<void>((resolve, reject) => {
+								if (c.container.connectionState !== ConnectionState.Connected) {
+									c.container.once("connected", () => resolve());
+									rejects.get(c)?.push(reject);
+								} else {
+									resolve();
+								}
+							}),
+					),
+				);
+
+				await Promise.all(
+					connectedClients.map(
+						async (c) =>
+							new Promise<void>((resolve, reject) => {
+								if (c.container.isDirty) {
+									c.container.once("saved", () => resolve());
+									rejects.get(c)?.push(reject);
+								} else {
+									resolve();
+								}
+							}),
+					),
+				);
+				const maxSeq = Math.max(
+					...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
+				);
+
+				const makeOpHandler = (c: Client, resolve: () => void, reject: () => void) => {
+					if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
+						const handler = (msg) => {
+							if (msg.sequenceNumber >= maxSeq) {
+								c.container.off("op", handler);
+								resolve();
+							}
+						};
+						c.container.on("op", handler);
+						rejects.get(c)?.push(reject);
+					} else {
+						resolve();
+					}
+				};
+				await Promise.all(
+					connectedClients.map(
+						async (c) =>
+							new Promise<void>((resolve, reject) => makeOpHandler(c, resolve, reject)),
+					),
+				);
+			} finally {
+				cleanUps.forEach((f) => f());
+			}
 
 			if (connectedClients.length > 0) {
 				const readonlyChannel = connectedClients[0];
