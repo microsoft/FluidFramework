@@ -30,10 +30,12 @@ import type {
 import type { SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
@@ -363,15 +365,19 @@ export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	private readonly runtimeFactory: MockContainerRuntimeFactoryForReconnection;
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
+	private readonly runtimeMap: Map<SharedTreeWithConnectionStateSetter, MockContainerRuntime> =
+		new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
 	 * @param trees - the number of trees created by this provider.
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
+	 * @param flushMode - The flush mode to use for the container runtime. This is FlushMode.Immediate by default. Tests
+	 * that need ops to be processed in a batch or bunch should use FlushMode.TurnBased.
 	 * @example
 	 *
 	 * ```typescript
@@ -385,7 +391,11 @@ export class TestTreeProviderLite {
 		trees = 1,
 		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
 		useDeterministicSessionIds = true,
+		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
+		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection({
+			flushMode,
+		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTreeWithConnectionStateSetter[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
@@ -402,6 +412,7 @@ export class TestTreeProviderLite {
 				TestTreeProviderLite.treeId,
 			) as SharedTreeWithConnectionStateSetter;
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			this.runtimeMap.set(tree, containerRuntime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -417,6 +428,14 @@ export class TestTreeProviderLite {
 	}
 
 	public processMessages(count?: number): void {
+		// In TurnBased mode, flush the messages from all the runtimes before processing the messages.
+		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
+		// flush messages from individual runtimes in the order they were created.
+		if (this.flushMode === FlushMode.TurnBased) {
+			this.runtimeMap.forEach((runtime) => {
+				runtime.flush();
+			});
+		}
 		this.runtimeFactory.processSomeMessages(
 			count ?? this.runtimeFactory.outstandingMessageCount,
 		);
