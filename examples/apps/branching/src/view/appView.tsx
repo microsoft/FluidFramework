@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import React, { FC, useState } from "react";
+import React, { type FC, useState } from "react";
 
 import { askHealthBotForSuggestions } from "../healthBot.js";
-import { IGroceryList } from "../modelInterfaces.js";
+import { diffGroceryListJSON } from "../model/index.js";
+import type { GroceryListJSON, IGroceryList } from "../modelInterfaces.js";
 
 import { GroceryListView } from "./groceryListView.js";
 
@@ -16,7 +17,18 @@ export interface IAppViewProps {
 
 const getBranchedSuggestionsFromHealthBot = async (groceryList: IGroceryList) => {
 	const branchedGroceryList = await groceryList.branch();
-	await askHealthBotForSuggestions(branchedGroceryList);
+	const stringifiedOriginal = branchedGroceryList.exportJSONString();
+	const jsonOriginal: GroceryListJSON = JSON.parse(stringifiedOriginal);
+	const stringifiedSuggestions = await askHealthBotForSuggestions(stringifiedOriginal);
+	const jsonSuggestions: GroceryListJSON = JSON.parse(stringifiedSuggestions);
+	const { adds, removals } = diffGroceryListJSON(jsonOriginal, jsonSuggestions);
+	console.log("Suggestions:", jsonSuggestions, "\nAdds:", adds, "\nRemovals:", removals);
+	for (const removal of removals) {
+		branchedGroceryList.deleteItem(removal.id);
+	}
+	for (const add of adds) {
+		branchedGroceryList.addItem(add.name);
+	}
 	return branchedGroceryList;
 };
 

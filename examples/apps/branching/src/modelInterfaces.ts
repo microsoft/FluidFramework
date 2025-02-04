@@ -26,11 +26,23 @@ export interface IGroceryListEvents extends IEvent {
 	(event: "disposed", listener: () => void);
 }
 
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type GroceryListItemJSON = { id: string; name: string };
+export type GroceryListJSON = GroceryListItemJSON[];
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type GroceryListJSONDiff = {
+	adds: GroceryListItemJSON[];
+	removals: GroceryListItemJSON[];
+};
+
 export interface IGroceryList {
 	readonly events: IEventProvider<IGroceryListEvents>;
 
 	readonly addItem: (name: string) => void;
 	readonly getItems: () => IGroceryItem[];
+	readonly deleteItem: (id: string) => void;
 
 	readonly branch: () => Promise<IGroceryList>;
+
+	readonly exportJSONString: () => string;
 }

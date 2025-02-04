@@ -21,11 +21,42 @@ import type {
 import { v4 as uuid } from "uuid";
 
 import type {
+	GroceryListItemJSON,
+	GroceryListJSON,
+	GroceryListJSONDiff,
 	IDisposableParent,
 	IGroceryItem,
 	IGroceryList,
 	IGroceryListEvents,
 } from "../modelInterfaces.js";
+
+export const diffGroceryListJSON = (
+	sourceGroceryListJSON: GroceryListJSON,
+	destinationGroceryListJSON: GroceryListJSON,
+): GroceryListJSONDiff => {
+	const removals: GroceryListItemJSON[] = [];
+	for (const maybeRemoval of sourceGroceryListJSON) {
+		if (
+			!destinationGroceryListJSON.find(
+				(destinationItem) => destinationItem.id === maybeRemoval.id,
+			)
+		) {
+			removals.push(maybeRemoval);
+		}
+	}
+
+	const adds: GroceryListItemJSON[] = [];
+	for (const maybeAdd of destinationGroceryListJSON) {
+		if (!sourceGroceryListJSON.find((sourceItem) => sourceItem.id === maybeAdd.id)) {
+			adds.push(maybeAdd);
+		}
+	}
+
+	return {
+		adds,
+		removals,
+	};
+};
 
 /**
  * GroceryItem is the local object with a friendly interface for the view to use.
@@ -83,6 +114,10 @@ class GroceryList implements IGroceryList {
 		return [...this._groceryItems.values()];
 	};
 
+	public readonly deleteItem = (id: string) => {
+		this.map.delete(id);
+	};
+
 	private readonly onMapValueChanged = (changed: IValueChanged) => {
 		const changedId = changed.key;
 		const newName = this.map.get(changedId);
@@ -91,12 +126,14 @@ class GroceryList implements IGroceryList {
 			this._events.emit("itemDeleted");
 		} else {
 			const newGroceryItem = new GroceryItem(changedId, newName, () => {
-				this.map.delete(changedId);
+				this.deleteItem(changedId);
 			});
 			this._groceryItems.set(changedId, newGroceryItem);
 			this._events.emit("itemAdded");
 		}
 	};
+
+	public readonly exportJSONString = (): string => JSON.stringify(this.getItems());
 
 	/**
 	 * Called when the host container closes and disposes itself

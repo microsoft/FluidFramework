@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { IGroceryList } from "./modelInterfaces.js";
+import type { GroceryListJSON } from "./modelInterfaces.js";
 
-export const askHealthBotForSuggestions = async (groceryList: IGroceryList) => {
-	for (const item of groceryList.getItems()) {
-		if (item.name === "chocolate") {
-			item.deleteItem();
-		}
-	}
-	groceryList.addItem("cauliflower");
+export const askHealthBotForSuggestions = async (
+	groceryListJSONString: string,
+): Promise<string> => {
+	const parsedGroceryList: GroceryListJSON = JSON.parse(groceryListJSONString);
+	const improvedGroceryList: GroceryListJSON = parsedGroceryList.filter(
+		(item) => item.name.localeCompare("chocolate", "en", { sensitivity: "base" }) !== 0,
+	);
+	improvedGroceryList.push({ id: "newItem", name: "cauliflower" });
+
+	return JSON.stringify(improvedGroceryList);
 };
