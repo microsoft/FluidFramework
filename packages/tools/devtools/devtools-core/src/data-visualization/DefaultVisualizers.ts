@@ -262,7 +262,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
-	// Schema of the tree node.
+	// All schema definitions for the SharedTree.
 	const treeDefinitions = sharedTree.exportSimpleSchema().definitions;
 
 	/**
