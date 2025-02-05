@@ -150,24 +150,43 @@ export class DocumentContext extends EventEmitter implements IContext {
 			return;
 		}
 
+		// skip checkpoint in paused state
+		const contextManagerPauseState = this.getContextManagerPauseState();
+		if (
+			this.headPaused ||
+			(!contextManagerPauseState.headPaused && contextManagerPauseState.tailPaused)
+		) {
+			const telemetryProperties = {
+				documentId: this.routingKey.documentId,
+				tenantId: this.routingKey.tenantId,
+				headOffset: this.head.offset,
+				tailOffset: this.tail.offset,
+				checkpointOffset: message.offset,
+				headPaused: this.headPaused,
+			};
+			if (this.headPaused) {
+				Lumberjack.info(
+					"Skipping doc checkpoint since the documentContext is currently in paused state",
+					telemetryProperties,
+				);
+			} else {
+				// contextManager's tail is resumed after head, so its possible to be in this state, but vice versa is not possible
+				// but document shouldnt be checkpointing at this time, adding a log here to monitor if this happens
+				Lumberjack.warning(
+					"Skipping doc checkpoint since contextManager's tail is not yet updated after resume",
+					telemetryProperties,
+				);
+			}
+			return;
+		}
+
 		// Assert offset is between the current tail and head
 		const offset = message.offset;
 
-		const contextManagerPauseState = this.getContextManagerPauseState();
-		if (!contextManagerPauseState.headPaused && contextManagerPauseState.tailPaused) {
-			// tail is resumed after head, so its possible to be in this state, but vice versa is not possible
-			// this means that tail is pending to be updated after resume, so it might be having an invalid value currently
-			assert(
-				offset === this.head.offset,
-				`Checkpoint offset ${offset} must be equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
-			);
-		} else {
-			// both head and tail are either paused or resumed
-			assert(
-				offset > this.tail.offset && offset <= this.head.offset,
-				`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
-			);
-		}
+		assert(
+			offset > this.tail.offset && offset <= this.head.offset,
+			`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+		);
 
 		// Update the tail and broadcast the checkpoint
 		this.tailInternal = message;
