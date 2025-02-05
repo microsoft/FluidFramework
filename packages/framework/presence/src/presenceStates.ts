@@ -278,7 +278,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 			for (const [key, nodeFactory] of Object.entries(initialContent)) {
 				const newNodeData = nodeFactory(key, handleFromDatastore(this));
 				nodes[key as keyof TSchema] = newNodeData.manager;
-				if ("initialData" in newNodeData) {
+				if (newNodeData.initialData) {
 					const { value, allowableUpdateLatencyMs } = newNodeData.initialData;
 					(datastore[key] ??= {})[clientSessionId] = value;
 					newValues[key] = value;
@@ -363,7 +363,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		assert(!(key in this.nodes), 0xa3c /* Already have entry for key in map */);
 		const nodeData = nodeFactory(key, handleFromDatastore(this));
 		this.nodes[key] = nodeData.manager;
-		if ("initialData" in nodeData) {
+		if (nodeData.initialData) {
 			const { value, allowableUpdateLatencyMs } = nodeData.initialData;
 			let datastoreValue = this.datastore[key];
 			if (datastoreValue === undefined) {

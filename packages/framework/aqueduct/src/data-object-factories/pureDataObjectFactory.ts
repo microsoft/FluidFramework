@@ -127,7 +127,7 @@ async function createDataObject<
 }
 
 /**
- * PureDataObjectFactory is a barebones IFluidDataStoreFactory for use with PureDataObject.
+ * PureDataObjectFactory is a bare-bones IFluidDataStoreFactory for use with PureDataObject.
  * Consumers should typically use DataObjectFactory instead unless creating
  * another base data store factory.
  *
@@ -185,6 +185,8 @@ export class PureDataObjectFactory<
 	 * @returns The NamedFluidDataStoreRegistryEntry
 	 */
 	public get registryEntry(): NamedFluidDataStoreRegistryEntry {
+		// TODO: this is wrong and should be fixed.
+		// `IFluidDataStoreRegistry` can be undefined, which the type signature does not support.
 		return [this.type, Promise.resolve(this)];
 	}
 
