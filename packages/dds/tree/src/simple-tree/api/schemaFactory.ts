@@ -873,7 +873,7 @@ export class SchemaFactory<
 	/**
 	 * {@inheritdoc schemaStatics.required}
 	 */
-	public static required = schemaStatics.required;
+	public static readonly required = schemaStatics.required;
 
 	/**
 	 * {@inheritdoc schemaStatics.optionalRecursive}
