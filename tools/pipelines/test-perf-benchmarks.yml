@@ -145,19 +145,12 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests).
-        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
-        - task: CopyFiles@2
-          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
-          inputs:
-            sourceFolder: ${{ variables.testWorkspace }}
-            contents: '.npmrc'
-            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-        - task: Npm@1
+        - task: Bash@3
           displayName: Install dependencies - ${{ testPackage }}
           retryCountOnTaskFailure: 4
           inputs:
-            command: 'install'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            script: 'npm install'
 
         # Run tests
         - task: Npm@1
@@ -281,19 +274,12 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
-        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
-        - task: CopyFiles@2
-          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
-          inputs:
-            sourceFolder: ${{ variables.testWorkspace }}
-            contents: '.npmrc'
-            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-        - task: Npm@1
+        - task: Bash@3
           displayName: Install dependencies - ${{ testPackage }}
           retryCountOnTaskFailure: 4
           inputs:
-            command: 'install'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            script: 'npm install'
 
         # Run tests
         - task: Npm@1
@@ -417,20 +403,12 @@ stages:
               tar --extract --verbose --file $TAR_PATH ./src/test
 
         # Install package dependencies (this gets devDependencies installed so we can then run the package's tests)
-        # Note: the required .npmrc file is created by the include-test-perf-benchmarks.yml template above.
-        - task: CopyFiles@2
-          displayName: Copy .npmrc to test package folder - ${{ testPackage }}
-          inputs:
-            sourceFolder: ${{ variables.testWorkspace }}
-            contents: '.npmrc'
-            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
-
-        - task: Npm@1
+        - task: Bash@3
           displayName: Install dependencies - ${{ testPackage }}
           retryCountOnTaskFailure: 4
           inputs:
-            command: 'install'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            script: 'npm install'
 
         - task: Npm@1
           displayName: Run custom data performance tests - ${{ testPackage }}
@@ -541,18 +519,12 @@ stages:
             testPackageName: $(testPackage)
             installPath: $(testWorkspace)
 
-        - task: CopyFiles@2
-          displayName: Copy .npmrc to test package folder
-          inputs:
-            sourceFolder: ${{ variables.testWorkspace }}
-            contents: '.npmrc'
-            targetFolder: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
-        - task: Npm@1
+        - task: Bash@3
           displayName: Install dependencies - ${{ endpointObject.endpointName }}
           retryCountOnTaskFailure: 4
           inputs:
-            command: 'install'
-            workingDir: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
+            workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
+            script: 'npm install'
 
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first
         # one fails.

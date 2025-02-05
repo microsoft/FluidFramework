@@ -60,11 +60,9 @@ steps:
 
       echo "NPM_CONFIG_USERCONFIG: $NPM_CONFIG_USERCONFIG"
 
-- task: Npm@1
+- task: Bash@3
   displayName: 'Install telemetry-generator'
   retryCountOnTaskFailure: 4
   inputs:
-    workingDir: ${{ parameters.pathForTelemetryGeneratorInstall }}
-    command: 'custom'
-    customCommand: 'install @ff-internal/telemetry-generator@${{ parameters.versionToInstall }}'
-    customRegistry: 'useNpmrc'
+    workingDirectory: ${{ parameters.pathForTelemetryGeneratorInstall }}
+    script: 'npm install @ff-internal/telemetry-generator@${{ parameters.versionToInstall }}'

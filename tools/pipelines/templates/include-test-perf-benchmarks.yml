@@ -99,11 +99,9 @@ steps:
       mkdir ${{ parameters.testWorkspace }}
 
 # Install aria-logger
-- task: Npm@1
+- task: Bash@3
   displayName: 'npm install aria logger'
   retryCountOnTaskFailure: 4
   inputs:
-    workingDir: ${{ parameters.testWorkspace }}
-    command: 'custom'
-    customCommand: 'install @ff-internal/aria-logger'
-    customRegistry: 'useNpmrc'
+    workingDirectory: ${{ parameters.testWorkspace }}
+    script: 'npm install @ff-internal/aria-logger'

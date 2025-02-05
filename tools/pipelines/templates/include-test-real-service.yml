@@ -256,17 +256,15 @@ stages:
               fi
 
         # Install test and logger package
-        - task: Npm@1
+        - task: Bash@3
           displayName: 'npm install'
           # ADO feeds have latency on the order of minutes before packages are available downstream. See:
           # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
           # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
           retryCountOnTaskFailure: 10
           inputs:
-            command: 'custom'
-            workingDir: ${{ parameters.testWorkspace }}
-            customCommand: 'install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
-            customRegistry: 'useNpmrc'
+            workingDirectory: ${{ parameters.testWorkspace }}
+            script: 'npm install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
 
         # Download Test Files & Install Extra Dependencies
         # These steps are intended to include extra dependencies that are not available as
@@ -328,14 +326,12 @@ stages:
                   require('fs').writeFileSync('$pkgJsonPath', JSON.stringify(pkg));
                 "
 
-          - task: Npm@1
+          - task: Bash@3
             displayName: 'npm install - extra dependencies for test files'
             retryCountOnTaskFailure: 10
             inputs:
-              command: 'custom'
-              workingDir: ${{ parameters.testWorkspace }}
-              customCommand: 'install'
-              customRegistry: 'useNpmrc'
+              workingDirectory: ${{ parameters.testWorkspace }}
+              script: 'npm install'
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
           - task: Cache@2
