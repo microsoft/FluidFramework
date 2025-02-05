@@ -89,17 +89,13 @@ declare type old_as_current_for_Class_AlfredRunnerFactory = requireAssignableTo<
 declare type current_as_old_for_Class_AlfredRunnerFactory = requireAssignableTo<TypeOnly<current.AlfredRunnerFactory>, TypeOnly<old.AlfredRunnerFactory>>
 
 /*
-* Validate forward compat by using old type in place of current type
-* If breaking change required, add in package.json under typeValidation.broken:
-* "VariableDeclaration_Constants": {"forwardCompat": false}
-*/
-declare function get_old_VariableDeclaration_Constants():
-    TypeOnly<typeof old.Constants>;
-declare function use_current_VariableDeclaration_Constants(
-    use: TypeOnly<typeof current.Constants>): void;
-use_current_VariableDeclaration_Constants(
-    // @ts-expect-error compatibility expected to be broken
-    get_old_VariableDeclaration_Constants());
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_DeltaService": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_DeltaService = requireAssignableTo<TypeOnly<old.DeltaService>, TypeOnly<current.DeltaService>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

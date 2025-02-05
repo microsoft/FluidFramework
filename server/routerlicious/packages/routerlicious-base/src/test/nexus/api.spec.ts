@@ -7,23 +7,13 @@ import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
-import {
-	// IDocument,
-	MongoDatabaseManager,
-	MongoManager,
-} from "@fluidframework/server-services-core";
+import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import { StartupCheck } from "@fluidframework/server-services-shared";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import { generateToken } from "@fluidframework/server-services-utils";
 import {
-	// TestCache,
-	// TestClusterDrainingStatusChecker,
 	TestDbFactory,
 	TestDocumentStorage,
-	// TestFluidAccessTokenGenerator,
-	// TestKafka,
-	// TestNotImplementedDocumentRepository,
-	// TestProducer,
 	TestTenantManager,
 	TestThrottler,
 } from "@fluidframework/server-test-utils";
@@ -34,7 +24,6 @@ import Sinon from "sinon";
 import request from "supertest";
 import * as nexusApp from "../../nexus/app";
 import { Constants } from "../../utils";
-// import * as SessionHelper from "../../utils/sessionHelper";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -72,17 +61,19 @@ describe("Routerlicious", () => {
 				id: "default-tenant-1",
 				key: "tenant-key-1",
 			};
-			// const appTenant2: IAlfredTenant = {
-			// 	id: "default-tenant-2",
-			// 	key: "tenant-key-2",
-			// };
-			// const defaultAppTenants: IAlfredTenant[] = [appTenant1, appTenant2];
 			const defaultTenantManager = new TestTenantManager();
 			const document1 = {
 				_id: "doc-1",
 				tenantId: appTenant1.id,
 				documentId: "doc-1",
 				content: "Hello, World!",
+				session: {
+					ordererUrl: defaultProvider.get("worker:serverUrl"),
+					deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
+					historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+					isSessionAlive: true,
+					isSessionActive: true,
+				},
 			};
 			const defaultDbFactory = new TestDbFactory({
 				[documentsCollectionName]: [document1],
@@ -102,7 +93,6 @@ describe("Routerlicious", () => {
 				rawDeltasCollectionName,
 			);
 			const defaultStorage = new TestDocumentStorage(defaultDbManager, defaultTenantManager);
-			// const defaultSingleUseTokenCache = new TestCache();
 			const scopes = [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite];
 			const tenantToken1 = `Basic ${generateToken(
 				appTenant1.id,
@@ -110,91 +100,27 @@ describe("Routerlicious", () => {
 				appTenant1.key,
 				scopes,
 			)}`;
-			// const tenantToken2 = `Basic ${generateToken(
-			// 	appTenant2.id,
-			// 	document1._id,
-			// 	appTenant2.key,
-			// 	scopes,
-			// )}`;
-			// const tenantToken3 = `Basic ${generateToken(
-			// 	appTenant1.id,
-			// 	document1._id,
-			// 	appTenant1.key,
-			// 	scopes,
-			// )}`;
-			// const tenantToken4 = `Basic ${generateToken(
-			// 	appTenant1.id,
-			// 	document1._id,
-			// 	appTenant1.key,
-			// 	scopes,
-			// )}`;
-			// const defaultProducer = new TestProducer(new TestKafka());
-			// const deltasCollection = await defaultDbManager.getDeltaCollection(
-			// 	undefined,
-			// 	undefined,
-			// );
-			// const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
-			// const defaultCollaborationSessionEventEmitter =
-			// 	new TypedEventEmitter<ICollaborationSessionEvents>();
+			const defaultStartupCheck = new StartupCheck();
+			const defaultCollaborationSessionEventEmitter =
+				new TypedEventEmitter<ICollaborationSessionEvents>();
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
-			// let testFluidAccessTokenGenerator: TestFluidAccessTokenGenerator;
-			// let testClusterDrainingStatusChecker: TestClusterDrainingStatusChecker;
 			describe("throttling", () => {
 				const limitTenant = 10;
-				// const limitCreateDoc = 5;
-				// const limitGetDeltas = 5;
-				// const limitGetSession = 5;
 				beforeEach(() => {
 					const restTenantThrottler = new TestThrottler(limitTenant);
-					// const restTenantGetDeltasThrottler = new TestThrottler(limitTenant);
-					// const restTenantCreateDocThrottler = new TestThrottler(limitTenant);
-					// const restTenantGetSessionThrottler = new TestThrottler(limitTenant);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
 					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-					// restTenantThrottlers.set(
-					// 	Constants.getDeltasThrottleIdPrefix,
-					// 	restTenantGetDeltasThrottler,
-					// );
-					// restTenantThrottlers.set(
-					// 	Constants.createDocThrottleIdPrefix,
-					// 	restTenantCreateDocThrottler,
-					// );
-					// restTenantThrottlers.set(
-					// 	Constants.getSessionThrottleIdPrefix,
-					// 	restTenantGetSessionThrottler,
-					// );
-
-					// const restCreateDocThrottler = new TestThrottler(limitCreateDoc);
-					// const restGetDeltasThrottler = new TestThrottler(limitGetDeltas);
-					// const restGetSessionThrottler = new TestThrottler(limitGetSession);
-					// const restClusterThrottlers = new Map<string, TestThrottler>();
-					// restClusterThrottlers.set(
-					// 	Constants.createDocThrottleIdPrefix,
-					// 	restCreateDocThrottler,
-					// );
-					// restClusterThrottlers.set(
-					// 	Constants.getDeltasThrottleIdPrefix,
-					// 	restGetDeltasThrottler,
-					// );
-					// restClusterThrottlers.set(
-					// 	Constants.getSessionThrottleIdPrefix,
-					// 	restGetSessionThrottler,
-					// );
-					const startupCheck = new StartupCheck();
-					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					const collabSessionEventEmitter =
-						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
-						startupCheck,
+						defaultStartupCheck,
 						defaultTenantManager,
 						undefined,
 						restTenantThrottlers,
-						collabSessionEventEmitter,
+						defaultCollaborationSessionEventEmitter,
 						defaultStorage,
 					);
 					supertest = request(app);
@@ -227,7 +153,7 @@ describe("Routerlicious", () => {
 				describe("/api/v1", () => {
 					it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
 						await assertThrottle(
-							`/api/v1/tenants/${appTenant1.id}/accesstoken`,
+							`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
 							"Bearer 12345", // Dummy bearer token
 							undefined,
 							"post",
@@ -240,55 +166,19 @@ describe("Routerlicious", () => {
 				const maxThrottlerLimit = 10;
 				beforeEach(() => {
 					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
 					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-					// restTenantThrottlers.set(
-					// 	Constants.getDeltasThrottleIdPrefix,
-					// 	restTenantGetDeltasThrottler,
-					// );
-					// restTenantThrottlers.set(
-					// 	Constants.createDocThrottleIdPrefix,
-					// 	restTenantCreateDocThrottler,
-					// );
-					// restTenantThrottlers.set(
-					// 	Constants.getSessionThrottleIdPrefix,
-					// 	restTenantGetSessionThrottler,
-					// );
 
-					// const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterThrottlers = new Map<string, TestThrottler>();
-					// restClusterThrottlers.set(
-					// 	Constants.createDocThrottleIdPrefix,
-					// 	restClusterCreateDocThrottler,
-					// );
-					// restClusterThrottlers.set(
-					// 	Constants.getDeltasThrottleIdPrefix,
-					// 	restClusterGetDeltasThrottler,
-					// );
-					// restClusterThrottlers.set(
-					// 	Constants.getSessionThrottleIdPrefix,
-					// 	restClusterGetSessionThrottler,
-					// );
-
-					const startupCheck = new StartupCheck();
-					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					const collabSessionEventEmitter =
-						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
-						startupCheck,
+						defaultStartupCheck,
 						defaultTenantManager,
 						undefined,
 						restTenantThrottlers,
-						collabSessionEventEmitter,
+						defaultCollaborationSessionEventEmitter,
 						defaultStorage,
 					);
 					supertest = request(app);
@@ -338,55 +228,19 @@ describe("Routerlicious", () => {
 				const maxThrottlerLimit = 1000000;
 				beforeEach(() => {
 					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
 					const restTenantThrottlers = new Map<string, TestThrottler>();
 					restTenantThrottlers.set(
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-					// restTenantThrottlers.set(
-					// 	Constants.getDeltasThrottleIdPrefix,
-					// 	restTenantGetDeltasThrottler,
-					// );
-					// restTenantThrottlers.set(
-					// 	Constants.createDocThrottleIdPrefix,
-					// 	restTenantCreateDocThrottler,
-					// );
-					// restTenantThrottlers.set(
-					// 	Constants.getSessionThrottleIdPrefix,
-					// 	restTenantGetSessionThrottler,
-					// );
 
-					// const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterThrottlers = new Map<string, TestThrottler>();
-					// restClusterThrottlers.set(
-					// 	Constants.createDocThrottleIdPrefix,
-					// 	restClusterCreateDocThrottler,
-					// );
-					// restClusterThrottlers.set(
-					// 	Constants.getDeltasThrottleIdPrefix,
-					// 	restClusterGetDeltasThrottler,
-					// );
-					// restClusterThrottlers.set(
-					// 	Constants.getSessionThrottleIdPrefix,
-					// 	restClusterGetSessionThrottler,
-					// );
-
-					const startupCheck = new StartupCheck();
-					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					const collabSessionEventEmitter =
-						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
-						startupCheck,
+						defaultStartupCheck,
 						defaultTenantManager,
 						undefined,
 						restTenantThrottlers,
-						collabSessionEventEmitter,
+						defaultCollaborationSessionEventEmitter,
 						defaultStorage,
 					);
 					supertest = request(app);
@@ -416,64 +270,22 @@ describe("Routerlicious", () => {
 				});
 			});
 
-			describe("session and discovery", () => {
-				// let spyGetSession;
-
+			describe("functionality", () => {
+				const maxThrottlerLimit = 10;
+				const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
+				const restTenantThrottlers = new Map<string, TestThrottler>();
+				restTenantThrottlers.set(
+					Constants.generalRestCallThrottleIdPrefix,
+					restTenantThrottler,
+				);
 				beforeEach(() => {
-					const maxThrottlerLimit = 1000000;
-					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
-					const restTenantThrottlers = new Map<string, TestThrottler>();
-					restTenantThrottlers.set(
-						Constants.generalRestCallThrottleIdPrefix,
-						restTenantThrottler,
-					);
-					// restTenantThrottlers.set(
-					// 	Constants.getDeltasThrottleIdPrefix,
-					// 	restTenantGetDeltasThrottler,
-					// );
-					// restTenantThrottlers.set(
-					// 	Constants.createDocThrottleIdPrefix,
-					// 	restTenantCreateDocThrottler,
-					// );
-					// restTenantThrottlers.set(
-					// 	Constants.getSessionThrottleIdPrefix,
-					// 	restTenantGetSessionThrottler,
-					// );
-
-					// const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
-					// const restClusterThrottlers = new Map<string, TestThrottler>();
-					// restClusterThrottlers.set(
-					// 	Constants.createDocThrottleIdPrefix,
-					// 	restClusterCreateDocThrottler,
-					// );
-					// restClusterThrottlers.set(
-					// 	Constants.getDeltasThrottleIdPrefix,
-					// 	restClusterGetDeltasThrottler,
-					// );
-					// restClusterThrottlers.set(
-					// 	Constants.getSessionThrottleIdPrefix,
-					// 	restClusterGetSessionThrottler,
-					// );
-
-					// spyGetSession = Sinon.spy(SessionHelper, "getSession");
-
-					const startupCheck = new StartupCheck();
-					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					// testClusterDrainingStatusChecker = new TestClusterDrainingStatusChecker();
-					const collabSessionEventEmitter =
-						new TypedEventEmitter<ICollaborationSessionEvents>();
 					app = nexusApp.create(
 						defaultProvider,
-						startupCheck,
+						defaultStartupCheck,
 						defaultTenantManager,
 						undefined,
 						restTenantThrottlers,
-						collabSessionEventEmitter,
+						defaultCollaborationSessionEventEmitter,
 						defaultStorage,
 					);
 					supertest = request(app);
@@ -481,126 +293,6 @@ describe("Routerlicious", () => {
 
 				afterEach(() => {
 					Sinon.restore();
-				});
-
-				describe("documents", () => {
-					// it("/:tenantId/session/:id", async () => {
-					// 	// Create a new session
-					// 	Sinon.stub(defaultDocumentRepository, "updateOne").returns(
-					// 		Promise.resolve(),
-					// 	);
-					// 	Sinon.stub(defaultDocumentRepository, "readOne")
-					// 		.onFirstCall()
-					// 		.returns(Promise.resolve({} as IDocument))
-					// 		.onSecondCall()
-					// 		.returns(
-					// 			Promise.resolve({
-					// 				session: {
-					// 					ordererUrl: defaultProvider.get("worker:serverUrl"),
-					// 					deltaStreamUrl:
-					// 						defaultProvider.get("worker:deltaStreamUrl"),
-					// 					historianUrl: defaultProvider.get("worker:blobStorageUrl"),
-					// 					isSessionAlive: false,
-					// 					isSessionActive: true,
-					// 				},
-					// 			} as IDocument),
-					// 		);
-					// 	await supertest
-					// 		.get(`/documents/${appTenant1.id}/session/${document1._id}`)
-					// 		.set("Authorization", tenantToken1)
-					// 		.expect((res) => {
-					// 			assert(spyGetSession.calledOnce);
-					// 			assert.deepStrictEqual(res.body, {
-					// 				ordererUrl: defaultProvider.get("worker:serverUrl"),
-					// 				historianUrl: defaultProvider.get("worker:blobStorageUrl"),
-					// 				deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
-					// 				isSessionAlive: false,
-					// 				isSessionActive: false,
-					// 			});
-					// 		});
-					// 	// Update an existing session
-					// 	await supertest
-					// 		.get(`/documents/${appTenant1.id}/session/${document1._id}`)
-					// 		.set("Authorization", tenantToken1)
-					// 		.expect((res) => {
-					// 			assert(spyGetSession.calledTwice);
-					// 			assert.deepStrictEqual(res.body, {
-					// 				ordererUrl: defaultProvider.get("worker:serverUrl"),
-					// 				historianUrl: defaultProvider.get("worker:blobStorageUrl"),
-					// 				deltaStreamUrl: defaultProvider.get("worker:deltaStreamUrl"),
-					// 				isSessionAlive: false,
-					// 				isSessionActive: true,
-					// 			});
-					// 		});
-					// 	// Error our when the cluster is draining
-					// 	testClusterDrainingStatusChecker.setClusterDrainingStatus(true);
-					// 	await supertest
-					// 		.get(`/documents/${appTenant1.id}/session/${document1._id}`)
-					// 		.set("Authorization", tenantToken1)
-					// 		.expect((res) => {
-					// 			assert.strictEqual(res.status, 503);
-					// 		});
-					// });
-				});
-			});
-
-			describe("functionality", () => {
-				const maxThrottlerLimit = 10;
-				beforeEach(() => {
-					const restTenantThrottler = new TestThrottler(maxThrottlerLimit);
-					const restTenantGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					const restTenantCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restTenantGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
-					const restTenantThrottlers = new Map<string, TestThrottler>();
-					restTenantThrottlers.set(
-						Constants.generalRestCallThrottleIdPrefix,
-						restTenantThrottler,
-					);
-					restTenantThrottlers.set(
-						Constants.getDeltasThrottleIdPrefix,
-						restTenantGetDeltasThrottler,
-					);
-					restTenantThrottlers.set(
-						Constants.createDocThrottleIdPrefix,
-						restTenantCreateDocThrottler,
-					);
-					restTenantThrottlers.set(
-						Constants.getSessionThrottleIdPrefix,
-						restTenantGetSessionThrottler,
-					);
-
-					const restClusterCreateDocThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterGetDeltasThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterGetSessionThrottler = new TestThrottler(maxThrottlerLimit);
-					const restClusterThrottlers = new Map<string, TestThrottler>();
-					restClusterThrottlers.set(
-						Constants.createDocThrottleIdPrefix,
-						restClusterCreateDocThrottler,
-					);
-					restClusterThrottlers.set(
-						Constants.getDeltasThrottleIdPrefix,
-						restClusterGetDeltasThrottler,
-					);
-					restClusterThrottlers.set(
-						Constants.getSessionThrottleIdPrefix,
-						restClusterGetSessionThrottler,
-					);
-
-					const startupCheck = new StartupCheck();
-					// testClusterDrainingStatusChecker = new TestClusterDrainingStatusChecker();
-					// testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
-					const collabSessionEventEmitter =
-						new TypedEventEmitter<ICollaborationSessionEvents>();
-					app = nexusApp.create(
-						defaultProvider,
-						startupCheck,
-						defaultTenantManager,
-						undefined,
-						restTenantThrottlers,
-						collabSessionEventEmitter,
-						defaultStorage,
-					);
-					supertest = request(app);
 				});
 
 				describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
@@ -633,6 +325,170 @@ describe("Routerlicious", () => {
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
 							.expect(400);
+					});
+
+					it("Successful request with redirect", async () => {
+						const body = {
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
+						};
+						const documentHostedInOtherUrl = {
+							_id: "doc-1",
+							tenantId: appTenant1.id,
+							version: "1.0",
+							documentId: "doc-1",
+							content: "Hello, World!",
+							session: {
+								ordererUrl: defaultProvider.get("worker:serverUrl"),
+								deltaStreamUrl: "http://localhost:3006",
+								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+								isSessionAlive: true,
+								isSessionActive: true,
+							},
+							createTime: Date.now(),
+							scribe: "",
+							deli: "",
+						};
+
+						Sinon.stub(defaultStorage, "getDocument").returns(
+							Promise.resolve(documentHostedInOtherUrl),
+						);
+
+						await supertest
+							.post(
+								`/api/v1/${appTenant1.id}/${documentHostedInOtherUrl._id}/broadcast-signal`,
+							)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(302);
+					});
+
+					it("Document not found", async () => {
+						const body = {
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
+						};
+
+						const documentNoActiveSession = {
+							_id: "doc-1",
+							tenantId: appTenant1.id,
+							version: "1.0",
+							documentId: "doc-1",
+							content: "Hello, World!",
+							session: {
+								ordererUrl: defaultProvider.get("worker:serverUrl"),
+								deltaStreamUrl: "http://localhost:3006",
+								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+								isSessionAlive: false,
+								isSessionActive: false,
+							},
+							createTime: Date.now(),
+							scribe: "",
+							deli: "",
+						};
+
+						Sinon.stub(defaultStorage, "getDocument")
+							.onFirstCall()
+							.returns(Promise.resolve(null))
+							.onSecondCall()
+							.returns(Promise.resolve(documentNoActiveSession));
+
+						await supertest
+							.post(
+								`/api/v1/${appTenant1.id}/${documentNoActiveSession._id}/broadcast-signal`,
+							)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(404);
+
+						await supertest
+							.post(
+								`/api/v1/${appTenant1.id}/${documentNoActiveSession._id}/broadcast-signal`,
+							)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(404);
+					});
+
+					it("Document session not alive", async () => {
+						const body = {
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
+						};
+						const documentNoSessionAlive = {
+							_id: "doc-1",
+							tenantId: appTenant1.id,
+							version: "1.0",
+							documentId: "doc-1",
+							content: "Hello, World!",
+							session: {
+								ordererUrl: defaultProvider.get("worker:serverUrl"),
+								deltaStreamUrl: "http://localhost:3006",
+								historianUrl: defaultProvider.get("worker:blobStorageUrl"),
+								isSessionAlive: false,
+								isSessionActive: true,
+							},
+							createTime: Date.now(),
+							scribe: "",
+							deli: "",
+						};
+
+						Sinon.stub(defaultStorage, "getDocument").returns(
+							Promise.resolve(documentNoSessionAlive),
+						);
+
+						await supertest
+							.post(
+								`/api/v1/${appTenant1.id}/${documentNoSessionAlive._id}/broadcast-signal`,
+							)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(410);
+					});
+
+					it("Missing event emitter", async () => {
+						const appWithoutEmitter = nexusApp.create(
+							defaultProvider,
+							defaultStartupCheck,
+							defaultTenantManager,
+							undefined,
+							restTenantThrottlers,
+							undefined,
+							defaultStorage,
+						);
+						supertest = request(appWithoutEmitter);
+
+						const body = {
+							signalContent: {
+								contents: {
+									type: "ExternalDataChanged_V1.0.0",
+									content: { taskListId: "task-list-1" },
+								},
+							},
+						};
+
+						await supertest
+							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
+							.send(body)
+							.set("Authorization", tenantToken1)
+							.set("Content-Type", "application/json")
+							.expect(500);
 					});
 				});
 			});

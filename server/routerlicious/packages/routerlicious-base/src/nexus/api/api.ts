@@ -67,13 +67,23 @@ export function create(
 				// This will be removed shortly. Used to test in dev clusters and force a redirect.
 				const redirect: boolean = config.get("redirect");
 				const document = await storage?.getDocument(tenantId, documentId);
-				if (document?.session.deltaStreamUrl !== deltaStreamUrl || redirect) {
+				if (!document || !document.session.isSessionActive) {
+					Lumberjack.info("Document not found", { tenantId, documentId });
+					response.status(404).send("Document not found.");
+					return;
+				}
+				if (!document.session.isSessionAlive) {
+					Lumberjack.info("Document session not alive", { tenantId, documentId });
+					response.status(410).send("Document session not alive.");
+					return;
+				}
+				if (document.session.deltaStreamUrl !== deltaStreamUrl || redirect) {
 					Lumberjack.info("Redirecting to docs cluster", {
-						documentUrl: document?.session.deltaStreamUrl,
+						documentUrl: document.session.deltaStreamUrl,
 						currentUrl: deltaStreamUrl,
-						targetUrlAndPath: `${document?.session.deltaStreamUrl}${request.originalUrl}`,
+						targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
 					});
-					response.redirect(`${document?.session.deltaStreamUrl}${request.originalUrl}`);
+					response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
 					return;
 				}
 				const signalRoom: IRoom = { tenantId, documentId };
