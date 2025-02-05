@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/import-testing",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"private": true,
 	"description": "import-testing",
 	"homepage": "https://fluidframework.com",
@@ -47,7 +47,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"cross-env": "^7.0.3",

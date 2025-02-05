@@ -59,21 +59,24 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		private readonly sessionActivityTimeoutMs = 10 * 60 * 1000,
 	) {}
 
-	public startClientSession(
+	public async startClientSession(
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
-	): void {
-		this.startClientSessionCore(client, sessionId, knownConnectedClients).catch((error) => {
-			Lumberjack.error(
-				"Failed to start tracking client session",
-				{
-					...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
-					numConnectedClients: knownConnectedClients?.length,
-				},
-				error,
-			);
-		});
+	): Promise<void> {
+		return this.startClientSessionCore(client, sessionId, knownConnectedClients).catch(
+			(error) => {
+				Lumberjack.error(
+					"Failed to start tracking client session",
+					{
+						...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+						numConnectedClients: knownConnectedClients?.length,
+					},
+					error,
+				);
+				throw error;
+			},
+		);
 	}
 
 	private async startClientSessionCore(
@@ -115,21 +118,24 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		});
 	}
 
-	public endClientSession(
+	public async endClientSession(
 		client: ICollaborationSessionClient,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
-	): void {
-		this.endClientSessionCore(client, sessionId, knownConnectedClients).catch((error) => {
-			Lumberjack.error(
-				"Failed to end tracking client session",
-				{
-					...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
-					numConnectedClients: knownConnectedClients?.length,
-				},
-				error,
-			);
-		});
+	): Promise<void> {
+		return this.endClientSessionCore(client, sessionId, knownConnectedClients).catch(
+			(error) => {
+				Lumberjack.error(
+					"Failed to end tracking client session",
+					{
+						...getLumberBaseProperties(sessionId.documentId, sessionId.tenantId),
+						numConnectedClients: knownConnectedClients?.length,
+					},
+					error,
+				);
+				throw error;
+			},
+		);
 	}
 
 	private async endClientSessionCore(
@@ -171,9 +177,10 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		}
 	}
 
-	public pruneInactiveSessions(): void {
-		this.pruneInactiveSessionsCore().catch((error) => {
+	public async pruneInactiveSessions(): Promise<void> {
+		return this.pruneInactiveSessionsCore().catch((error) => {
 			Lumberjack.error("Failed to prune inactive sessions", undefined, error);
+			throw error;
 		});
 	}
 
