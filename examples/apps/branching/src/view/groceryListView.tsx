@@ -124,6 +124,8 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 			<SuggestedGroceryItemView key={index} name={add.name} />
 		)) ?? [];
 
+	// TODO: Consider modifying the AddItemView to add to the suggestions.adds rather than groceryList.addItem
+	// when we have suggestions.  Same for the groceryItem provided to GroceryItemView for its removal.
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<tbody>
