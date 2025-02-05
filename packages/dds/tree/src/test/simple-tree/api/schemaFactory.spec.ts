@@ -895,12 +895,11 @@ describe("schemaFactory", () => {
 	});
 
 	it("schemaFromValue", () => {
-		const f = new SchemaFactory("");
-		assert.equal(schemaFromValue(1), f.number);
-		assert.equal(schemaFromValue(""), f.string);
-		assert.equal(schemaFromValue(null), f.null);
-		assert.equal(schemaFromValue(new MockHandle("x")), f.handle);
-		assert.equal(schemaFromValue(false), f.boolean);
+		assert.equal(schemaFromValue(1), SchemaFactory.number);
+		assert.equal(schemaFromValue(""), SchemaFactory.string);
+		assert.equal(schemaFromValue(null), SchemaFactory.null);
+		assert.equal(schemaFromValue(new MockHandle("x")), SchemaFactory.handle);
+		assert.equal(schemaFromValue(false), SchemaFactory.boolean);
 	});
 
 	it("extra fields in object constructor", () => {

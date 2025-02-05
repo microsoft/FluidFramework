@@ -216,6 +216,7 @@ export {
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	type schemaStatics,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
