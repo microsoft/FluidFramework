@@ -20,12 +20,8 @@ import type {
 } from "@fluidframework/runtime-definitions/legacy";
 import { v4 as uuid } from "uuid";
 
-import type {
-	IDisposableParent,
-	IGroceryItem,
-	IGroceryList,
-	IGroceryListEvents,
-} from "./interfaces.js";
+import type { IGroceryItem, IGroceryList, IGroceryListEvents } from "./interfaces.js";
+import type { IDisposableParent } from "./runtimeInterfaces.js";
 
 /**
  * GroceryItem is the local object with a friendly interface for the view to use.
@@ -100,8 +96,6 @@ class GroceryList implements IGroceryList {
 			this._events.emit("itemAdded");
 		}
 	};
-
-	public readonly exportJSONString = (): string => JSON.stringify(this.getItems());
 
 	/**
 	 * Called when the host container closes and disposes itself

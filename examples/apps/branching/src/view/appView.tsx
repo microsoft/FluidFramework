@@ -7,8 +7,9 @@ import React, { type FC, useState } from "react";
 
 import {
 	applyDiffToGroceryList,
-	diffGroceryListJSON,
-	type GroceryListJSON,
+	diffGroceryListPOJO,
+	extractGroceryListPOJO,
+	type GroceryListPOJO,
 	type GroceryListModifications,
 	type IGroceryList,
 } from "../groceryList/index.js";
@@ -23,12 +24,12 @@ export interface IAppViewProps {
 const getSuggestionsFromHealthBot = async (
 	groceryList: IGroceryList,
 ): Promise<GroceryListModifications> => {
-	const stringifiedOriginal = groceryList.exportJSONString();
-	const jsonOriginal: GroceryListJSON = JSON.parse(stringifiedOriginal);
+	const stringifiedOriginal = extractGroceryListPOJO(groceryList);
+	const pojoOriginal: GroceryListPOJO = JSON.parse(stringifiedOriginal);
 	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
-	const jsonSuggestions: GroceryListJSON = JSON.parse(stringifiedSuggestions);
-	const { adds, removals } = diffGroceryListJSON(jsonOriginal, jsonSuggestions);
-	console.log("Suggestions:", jsonSuggestions, "\nAdds:", adds, "\nRemovals:", removals);
+	const pojoSuggestions: GroceryListPOJO = JSON.parse(stringifiedSuggestions);
+	const { adds, removals } = diffGroceryListPOJO(pojoOriginal, pojoSuggestions);
+	console.log("Suggestions:", pojoSuggestions, "\nAdds:", adds, "\nRemovals:", removals);
 	return { adds, removals };
 };
 

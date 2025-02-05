@@ -3,21 +3,29 @@
  * Licensed under the MIT License.
  */
 
+import type { IGroceryList } from "./interfaces.js";
 import type {
 	GroceryListItemPOJO,
 	GroceryListPOJO,
 	GroceryListModifications,
-	IGroceryList,
-} from "./interfaces.js";
+} from "./utilsInterfaces.js";
 
-export const diffGroceryListJSON = (
-	baseGroceryListJSON: GroceryListPOJO,
-	modifiedGroceryListJSON: GroceryListPOJO,
+export const extractGroceryListPOJO = (groceryList: IGroceryList): string =>
+	JSON.stringify(groceryList.getItems());
+
+/**
+ * Utilities for converting an IGroceryList to and from POJO for serialization and network request,
+ * as well as working with the serialized format (e.g. diffing).
+ */
+
+export const diffGroceryListPOJO = (
+	baseGroceryListPOJO: GroceryListPOJO,
+	modifiedGroceryListPOJO: GroceryListPOJO,
 ): GroceryListModifications => {
 	const removals: GroceryListItemPOJO[] = [];
-	for (const maybeRemoval of baseGroceryListJSON) {
+	for (const maybeRemoval of baseGroceryListPOJO) {
 		if (
-			!modifiedGroceryListJSON.find(
+			!modifiedGroceryListPOJO.find(
 				(destinationItem) => destinationItem.id === maybeRemoval.id,
 			)
 		) {
@@ -26,8 +34,8 @@ export const diffGroceryListJSON = (
 	}
 
 	const adds: GroceryListItemPOJO[] = [];
-	for (const maybeAdd of modifiedGroceryListJSON) {
-		if (!baseGroceryListJSON.find((sourceItem) => sourceItem.id === maybeAdd.id)) {
+	for (const maybeAdd of modifiedGroceryListPOJO) {
+		if (!baseGroceryListPOJO.find((sourceItem) => sourceItem.id === maybeAdd.id)) {
 			adds.push(maybeAdd);
 		}
 	}
@@ -40,12 +48,12 @@ export const diffGroceryListJSON = (
 
 export const applyDiffToGroceryList = (
 	groceryList: IGroceryList,
-	groceryListJSONDiff: GroceryListModifications,
+	groceryListModifications: GroceryListModifications,
 ) => {
-	for (const add of groceryListJSONDiff.adds) {
+	for (const add of groceryListModifications.adds) {
 		groceryList.addItem(add.name);
 	}
-	for (const removal of groceryListJSONDiff.removals) {
+	for (const removal of groceryListModifications.removals) {
 		groceryList.removeItem(removal.id);
 	}
 };

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { GroceryListJSON } from "./groceryList/index.js";
+import type { GroceryListPOJO } from "./groceryList/index.js";
 
 /**
  * Simulating the case that we're making a network request to get suggestions for edits to the content,
@@ -12,10 +12,10 @@ import type { GroceryListJSON } from "./groceryList/index.js";
  * has changed in the meantime).
  */
 export const NETWORK_askHealthBotForSuggestions = async (
-	groceryListJSONString: string,
+	groceryListString: string,
 ): Promise<string> => {
-	const parsedGroceryList: GroceryListJSON = JSON.parse(groceryListJSONString);
-	const improvedGroceryList: GroceryListJSON = parsedGroceryList.filter(
+	const parsedGroceryList: GroceryListPOJO = JSON.parse(groceryListString);
+	const improvedGroceryList: GroceryListPOJO = parsedGroceryList.filter(
 		(item) => item.name.localeCompare("chocolate", "en", { sensitivity: "base" }) !== 0,
 	);
 	improvedGroceryList.push({ id: "newItem", name: "cauliflower" });
