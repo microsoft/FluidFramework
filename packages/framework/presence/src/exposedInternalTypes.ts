@@ -23,6 +23,12 @@ export namespace InternalTypes {
 	export interface ValueStateMetadata {
 		rev: number;
 		timestamp: number;
+		/**
+		 * Indicates whether the value state has been validated.
+		 *
+		 * TODO: what's the relationship between this and LatestValueMetadata?
+		 */
+		hasBeenValidated: boolean;
 	}
 
 	/**
@@ -68,6 +74,12 @@ export namespace InternalTypes {
 			// See https://github.com/microsoft/TypeScript/issues/42810.
 			[name in Keys]: ValueOptionalState<T>;
 		};
+		/**
+		 * Indicates whether the value state has been validated.
+		 *
+		 * TODO: what's the relationship between this and ValueStateMetadata?
+		 */
+		hasBeenValidated: boolean;
 	}
 
 	/**

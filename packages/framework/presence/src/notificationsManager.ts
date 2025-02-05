@@ -178,6 +178,7 @@ class NotificationsManagerImpl<
 					timestamp: 0,
 					value: { name, args: [...(args as JsonTypeWith<never>[])] },
 					ignoreUnmonitored: true,
+					hasBeenValidated: false,
 				},
 				// This is a notification, so we want to send it immediately.
 				{ allowableUpdateLatencyMs: 0 },
@@ -191,6 +192,7 @@ class NotificationsManagerImpl<
 					timestamp: 0,
 					value: { name, args: [...(args as JsonTypeWith<never>[])] },
 					ignoreUnmonitored: true,
+					hasBeenValidated: false,
 				},
 				// This is a notification, so we want to send it immediately.
 				{ allowableUpdateLatencyMs: 0, targetClientId: targetClient.getConnectionId() },

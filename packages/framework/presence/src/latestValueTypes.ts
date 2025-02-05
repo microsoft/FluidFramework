@@ -24,6 +24,12 @@ export interface LatestValueMetadata {
 	 * @remarks Currently this is a placeholder for future implementation.
 	 */
 	timestamp: number;
+	/**
+	 * Indicates whether the value state has been validated.
+	 *
+	 * TODO: what's the relationship between this and InternalTypes.ValueStateMetadata?
+	 */
+	// hasBeenValidated: boolean;
 }
 
 /**
@@ -53,17 +59,23 @@ export interface LatestValueClientData<T> extends LatestValueData<T> {
  *
  * @alpha
  */
-export type ValueTypeSchemaValidator<T> = (
-	unvalidatedData: unknown,
-	// TODO: What else will the validator need? Stuff may be accessible via closure depending on where the validator is
-	// used.
-) => T | undefined;
+export type ValueTypeSchemaValidator<T> = (unvalidatedData: unknown) => T | undefined;
 
 /**
- * Not yet used. I'm wondering if accepting a function that generates a validator would be more flexible. But if all the
- * validator gets passed is the unknown blob of JSON, then maybe this isn't useful.
+ * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
+ * presence workspace and managed by a value manager.
+ *
  * @alpha
  */
-export type ValueTypeSchemaValidatorFunction<T extends object> = (
+export type KeyValueTypeSchemaValidator<T, Keys extends string | number = string | number> = (
+	unvalidatedData: unknown,
+) => ReadonlyMap<T, Keys> | undefined;
+
+/**
+ * A
+ * @alpha
+ */
+export type ValueTypeSchemaValidatorForKey<T, Keys extends string | number = string | number> = (
+	key: Keys,
 	unvalidatedData: unknown,
 ) => ValueTypeSchemaValidator<T> | undefined;
