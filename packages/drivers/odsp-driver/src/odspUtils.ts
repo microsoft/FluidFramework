@@ -54,7 +54,6 @@ import {
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { fetch } from "./fetch.js";
 import { storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
 // eslint-disable-next-line import/no-deprecated
 import { ISnapshotContents } from "./odspPublicUtils.js";
@@ -137,7 +136,6 @@ export async function fetchHelper(
 ): Promise<IOdspResponse<Response>> {
 	const start = performanceNow();
 
-	// Node-fetch and dom have conflicting typing, force them to work by casting for now
 	return fetch(requestInfo, requestInit).then(
 		async (fetchResponse) => {
 			const response = fetchResponse as unknown as Response;

@@ -5,8 +5,6 @@
 
 import assert from "node:assert";
 
-import * as fetchModule from "node-fetch";
-import { Headers } from "node-fetch";
 import { stub } from "sinon";
 
 /**
@@ -49,14 +47,14 @@ export async function mockFetchMultiple<T>(
 	responses: (() => Promise<object>)[],
 	type: FetchCallType = "single",
 ): Promise<T> {
-	const fetchStub = stub(fetchModule, "default");
+	const fetchStub = stub(global, "fetch");
 	fetchStub.callsFake(async () => {
 		if (type === "external") {
 			fetchStub.restore();
 		}
 		const cb = responses.shift();
 		assert(cb !== undefined, "the end");
-		return cb() as Promise<fetchModule.Response>;
+		return cb() as Promise<Response>;
 	});
 	try {
 		return await callback();
@@ -89,7 +87,7 @@ export async function mockFetchError<T>(
 	response: Error,
 	type: FetchCallType = "single",
 ): Promise<T> {
-	const fetchStub = stub(fetchModule, "default");
+	const fetchStub = stub(global, "fetch");
 	fetchStub.callsFake(async () => {
 		if (type === "external") {
 			fetchStub.restore();
