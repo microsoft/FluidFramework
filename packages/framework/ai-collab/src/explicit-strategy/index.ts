@@ -41,7 +41,7 @@ import {
 	type CoreEventLoopCompletedDebugEvent,
 	generateDebugEvent,
 	type PlanningPromptStartedDebugEvent,
-} from "./debugEventLogTypes.js";
+} from "./debugEvents.js";
 import { IdGenerator } from "./idGenerator.js";
 import {
 	getEditingSystemPrompt,

@@ -48,13 +48,9 @@ export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference
 
 // @alpha
 export interface DebugEvent {
-    // (undocumented)
     eventName?: string;
-    // (undocumented)
     id: string;
-    // (undocumented)
     timestamp: string;
-    // (undocumented)
     traceId?: string;
 }
 

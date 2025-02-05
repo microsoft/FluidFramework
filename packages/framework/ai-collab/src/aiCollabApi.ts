@@ -9,22 +9,44 @@ import type OpenAI from "openai";
 
 /**
  * Core Debug event type for the ai-collab
- *
  * @alpha
  */
 export interface DebugEvent {
+	/**
+	 * The unique id of the debug event.
+	 */
 	id: string;
+	/**
+	 * An id that will be shared across all debug events that originate from the same single execution of ai-collab.
+	 * @remarks This is intended to be used to correlate all debug events that originate from the same execution
+	 */
 	traceId?: string;
+	/**
+	 * The name of the debug event.
+	 */
 	eventName?: string;
+	/**
+	 * The date and time at which the debug event was created.
+	 */
 	timestamp: string;
 }
 
 /**
  * A Debug event that marks the start or end of a single core logic flow, such as generated tree edits, planning prompt, etc.
+ * @alpha
  */
 export interface EventFlowDebugEvent extends DebugEvent {
+	/**
+	 * The name of the particular event flow.
+	 */
 	eventFlowName: string;
-	eventFlowStatus: string;
+	/**
+	 * The status of the particular event flow.
+	 */
+	eventFlowStatus: "STARTED" | "COMPLETED";
+	/**
+	 * A unique id that will be shared across all debug events that are part of the same event flow.
+	 */
 	eventFlowTraceId?: string;
 }
 
