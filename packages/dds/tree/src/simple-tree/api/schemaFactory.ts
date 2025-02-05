@@ -198,7 +198,7 @@ export const schemaStatics = {
 	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
 	 *
 	 * @remarks
-	 * The number is a {@link https://en.wikipedia.org/wiki/Double-precision_floating-point_format | double-precision 64-bit binary format IEEE 754}} value, however there are some exceptions:
+	 * The number is a {@link https://en.wikipedia.org/wiki/Double-precision_floating-point_format | double-precision 64-bit binary format IEEE 754} value, however there are some exceptions:
 	 * - `NaN`, and the infinities are converted to `null` (and may therefore only be used where `null` is allowed by the schema).
 	 * - `-0` may be converted to `0` in some cases.
 	 *
@@ -463,62 +463,62 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * {@inheritdoc schemaStatics.string}
+	 * {@inheritDoc schemaStatics.string}
 	 */
 	public readonly string = stringSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.number}
+	 * {@inheritDoc schemaStatics.number}
 	 */
 	public readonly number = numberSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.boolean}
+	 * {@inheritDoc schemaStatics.boolean}
 	 */
 	public readonly boolean = booleanSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.null}
+	 * {@inheritDoc schemaStatics.null}
 	 */
 	public readonly null = nullSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.handle}
+	 * {@inheritDoc schemaStatics.handle}
 	 */
 	public readonly handle = handleSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.leaves}
+	 * {@inheritDoc schemaStatics.leaves}
 	 */
 	public readonly leaves = schemaStatics.leaves;
 
 	/**
-	 * {@inheritdoc schemaStatics.string}
+	 * {@inheritDoc schemaStatics.string}
 	 */
 	public static readonly string = stringSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.number}
+	 * {@inheritDoc schemaStatics.number}
 	 */
 	public static readonly number = numberSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.boolean}
+	 * {@inheritDoc schemaStatics.boolean}
 	 */
 	public static readonly boolean = booleanSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.null}
+	 * {@inheritDoc schemaStatics.null}
 	 */
 	public static readonly null = nullSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.handle}
+	 * {@inheritDoc schemaStatics.handle}
 	 */
 	public static readonly handle = handleSchema;
 
 	/**
-	 * {@inheritdoc schemaStatics.leaves}
+	 * {@inheritDoc schemaStatics.leaves}
 	 */
 	public static readonly leaves = schemaStatics.leaves;
 
@@ -840,42 +840,42 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * {@inheritdoc schemaStatics.optional}
+	 * {@inheritDoc schemaStatics.optional}
 	 */
 	public readonly optional = schemaStatics.optional;
 
 	/**
-	 * {@inheritdoc schemaStatics.required}
+	 * {@inheritDoc schemaStatics.required}
 	 */
 	public readonly required = schemaStatics.required;
 
 	/**
-	 * {@inheritdoc schemaStatics.optionalRecursive}
+	 * {@inheritDoc schemaStatics.optionalRecursive}
 	 */
 	public readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
-	 * {@inheritdoc schemaStatics.requiredRecursive}
+	 * {@inheritDoc schemaStatics.requiredRecursive}
 	 */
 	public readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
-	 * {@inheritdoc schemaStatics.optional}
+	 * {@inheritDoc schemaStatics.optional}
 	 */
 	public static readonly optional = schemaStatics.optional;
 
 	/**
-	 * {@inheritdoc schemaStatics.required}
+	 * {@inheritDoc schemaStatics.required}
 	 */
 	public static readonly required = schemaStatics.required;
 
 	/**
-	 * {@inheritdoc schemaStatics.optionalRecursive}
+	 * {@inheritDoc schemaStatics.optionalRecursive}
 	 */
 	public static readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
-	 * {@inheritdoc schemaStatics.requiredRecursive}
+	 * {@inheritDoc schemaStatics.requiredRecursive}
 	 */
 	public static readonly requiredRecursive = schemaStatics.requiredRecursive;
 
