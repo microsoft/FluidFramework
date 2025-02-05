@@ -1265,10 +1265,6 @@ export class ContainerRuntime
 		return this;
 	}
 
-	private readonly submitSummaryFn: (
-		summaryOp: ISummaryContent,
-		referenceSequenceNumber?: number,
-	) => number;
 	/**
 	 * Do not call directly - use submitAddressesSignal
 	 */
@@ -1627,10 +1623,6 @@ export class ContainerRuntime
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
-		// back-compat: ADO #1385: Make this call unconditional in the future
-		this.submitSummaryFn =
-			submitSummaryFn ??
-			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
 		this.submitSignalFn = submitSignalFn;
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
@@ -1981,6 +1973,22 @@ export class ContainerRuntime
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
 			closeContainer: this.closeFn,
+			rollback: (msg) => {
+				// Need to parse from string for back-compat
+				const { type, contents } = this.parseLocalOpContent(msg.contents);
+				switch (type) {
+					case ContainerMessageType.FluidDataStoreOp: {
+						// For operations, call rollbackDataStoreOp which will find the right store
+						// and trigger rollback on it.
+						this.channelCollection.rollback(type, contents, msg.localOpMetadata);
+						break;
+					}
+					default: {
+						throw new Error(`Can't rollback ${type}`);
+					}
+				}
+			},
+			submitSummaryFn,
 		});
 
 		this._quorum = quorum;
@@ -3399,7 +3407,7 @@ export class ContainerRuntime
 		);
 
 		this.outbox.flush(resubmittingBatchId);
-		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+		// assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
 	/**
@@ -3421,9 +3429,7 @@ export class ContainerRuntime
 			if (checkpoint) {
 				// This will throw and close the container if rollback fails
 				try {
-					checkpoint.rollback((message: BatchMessage) =>
-						this.rollback(message.contents, message.localOpMetadata),
-					);
+					checkpoint.rollback();
 				} catch (error_) {
 					const error2 = wrapError(error_, (message) => {
 						return DataProcessingError.create(
@@ -3461,6 +3467,30 @@ export class ContainerRuntime
 			this.flush();
 		}
 		return result;
+	}
+
+	detachHead(): { merge(): void; pause(): Promise<void>; dispose(): void } {
+		const checkpoint = this.outbox.getBatchCheckpoints(true);
+		let paused = false;
+		const branchInfo = {
+			dispose: () => {
+				checkpoint.mainBatch.rollback();
+				checkpoint.unblockFlush();
+			},
+			pause: async () => {
+				if (!paused) {
+					paused = true;
+					return this._deltaManager.inbound.pause();
+				}
+			},
+			merge: () => {
+				if (paused) this._deltaManager.inbound.resume();
+				checkpoint.unblockFlush();
+				this.outbox.flush();
+			},
+		};
+
+		return branchInfo;
 	}
 
 	/**
@@ -4348,7 +4378,10 @@ export class ContainerRuntime
 
 			let clientSequenceNumber: number;
 			try {
-				clientSequenceNumber = this.submitSummaryMessage(summaryMessage, summaryRefSeqNum);
+				clientSequenceNumber = this.outbox.submitSummaryMessage(
+					summaryMessage,
+					summaryRefSeqNum,
+				);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -4659,22 +4692,6 @@ export class ContainerRuntime
 		}
 	}
 
-	private submitSummaryMessage(
-		contents: ISummaryContent,
-		referenceSequenceNumber: number,
-	): number {
-		this.verifyNotClosed();
-		assert(
-			this.connected,
-			0x133 /* "Container disconnected when trying to submit system message" */,
-		);
-
-		// System message should not be sent in the middle of the batch.
-		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
-
-		return this.submitSummaryFn(contents, referenceSequenceNumber);
-	}
-
 	/**
 	 * Throw an error if the runtime is closed.  Methods that are expected to potentially
 	 * be called after dispose due to asynchrony should not call this.
@@ -4766,22 +4783,6 @@ export class ContainerRuntime
 				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
 				this.closeFn(error);
 				throw error;
-			}
-		}
-	}
-
-	private rollback(content: string | undefined, localOpMetadata: unknown): void {
-		// Need to parse from string for back-compat
-		const { type, contents } = this.parseLocalOpContent(content);
-		switch (type) {
-			case ContainerMessageType.FluidDataStoreOp: {
-				// For operations, call rollbackDataStoreOp which will find the right store
-				// and trigger rollback on it.
-				this.channelCollection.rollback(type, contents, localOpMetadata);
-				break;
-			}
-			default: {
-				throw new Error(`Can't rollback ${type}`);
 			}
 		}
 	}

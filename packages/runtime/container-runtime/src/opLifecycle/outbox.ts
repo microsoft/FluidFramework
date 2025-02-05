@@ -7,6 +7,7 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { ISummaryContent } from "@fluidframework/driver-definitions/internal";
 import {
 	GenericError,
 	UsageError,
@@ -55,6 +56,11 @@ export interface IOutboxParameters {
 	readonly reSubmit: (message: PendingMessageResubmitData) => void;
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
+	readonly rollback: (message: BatchMessage) => void;
+	readonly submitSummaryFn: (
+		summaryOp: ISummaryContent,
+		referenceSequenceNumber?: number,
+	) => number;
 }
 
 /**
@@ -139,7 +145,11 @@ export class Outbox {
 			? Number.POSITIVE_INFINITY
 			: this.params.config.maxBatchSizeInBytes;
 
-		this.mainBatch = new BatchManager({ hardLimit, canRebase: true });
+		this.mainBatch = new BatchManager({
+			hardLimit,
+			canRebase: true,
+			rollback: params.rollback,
+		});
 		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
 		this.idAllocationBatch = new BatchManager({
 			hardLimit,
@@ -268,6 +278,21 @@ export class Outbox {
 		}
 	}
 
+	public submitSummaryMessage(
+		contents: ISummaryContent,
+		referenceSequenceNumber: number,
+	): number {
+		assert(
+			this.params.shouldSend(),
+			0x133 /* "Container disconnected when trying to submit system message" */,
+		);
+
+		// System message should not be sent in the middle of the batch.
+		assert(this.isEmpty, 0x3d4 /* System op in the middle of a batch */);
+
+		return this.params.submitSummaryFn(contents, referenceSequenceNumber);
+	}
+
 	/**
 	 * Flush all the batches to the ordering service.
 	 * This method is expected to be called at the end of a batch.
@@ -275,6 +300,9 @@ export class Outbox {
 	 * with the given Batch ID, which must be preserved
 	 */
 	public flush(resubmittingBatchId?: BatchId): void {
+		if (this.blockFlush) {
+			return;
+		}
 		if (this.isContextReentrant()) {
 			const error = new UsageError("Flushing is not supported inside DDS event handlers");
 			this.params.closeContainer(error);
@@ -285,6 +313,9 @@ export class Outbox {
 	}
 
 	private flushAll(resubmittingBatchId?: BatchId): void {
+		if (this.blockFlush) {
+			return;
+		}
 		// If we're resubmitting and all batches are empty, we need to flush an empty batch.
 		// Note that we currently resubmit one batch at a time, so on resubmit, 2 of the 3 batches will *always* be empty.
 		// It's theoretically possible that we don't *need* to resubmit this empty batch, and in those cases, it'll safely be ignored
@@ -312,6 +343,9 @@ export class Outbox {
 	}
 
 	private flushEmptyBatch(resubmittingBatchId: BatchId): void {
+		if (this.blockFlush) {
+			return;
+		}
 		const referenceSequenceNumber =
 			this.params.getCurrentSequenceNumbers().referenceSequenceNumber;
 		assert(
@@ -338,7 +372,7 @@ export class Outbox {
 		disableGroupedBatching: boolean = false,
 		resubmittingBatchId?: BatchId,
 	): void {
-		if (batchManager.empty) {
+		if (batchManager.empty || this.blockFlush) {
 			return;
 		}
 
@@ -511,18 +545,31 @@ export class Outbox {
 		return clientSequenceNumber;
 	}
 
+	private blockFlush: boolean = false;
 	/**
 	 * Gets a checkpoint object per batch that facilitates iterating over the batch messages when rolling back.
 	 */
-	public getBatchCheckpoints(): {
+	public getBatchCheckpoints(blockFlush: boolean = false): {
+		unblockFlush: () => void;
 		mainBatch: IBatchCheckpoint;
 		idAllocationBatch: IBatchCheckpoint;
 		blobAttachBatch: IBatchCheckpoint;
 	} {
+		const thisCheckpointBlocksFlush = !this.blockFlush && blockFlush === true;
+
+		if (thisCheckpointBlocksFlush) {
+			this.blockFlush = true;
+		}
+
 		// This variable is declared with a specific type so that we have a standard import of the IBatchCheckpoint type.
 		// When the type is inferred, the generated .d.ts uses a dynamic import which doesn't resolve.
 		const mainBatch: IBatchCheckpoint = this.mainBatch.checkpoint();
 		return {
+			unblockFlush: thisCheckpointBlocksFlush
+				? () => {
+						this.blockFlush = false;
+					}
+				: () => {},
 			mainBatch,
 			idAllocationBatch: this.idAllocationBatch.checkpoint(),
 			blobAttachBatch: this.blobAttachBatch.checkpoint(),
