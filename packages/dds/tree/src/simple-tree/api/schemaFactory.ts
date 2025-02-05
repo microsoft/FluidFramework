@@ -490,7 +490,7 @@ export class SchemaFactory<
 	/**
 	 * {@inheritdoc schemaStatics.leaves}
 	 */
-	public readonly leaves = SchemaFactory.leaves;
+	public readonly leaves = schemaStatics.leaves;
 
 	/**
 	 * {@inheritdoc schemaStatics.string}
@@ -520,13 +520,7 @@ export class SchemaFactory<
 	/**
 	 * {@inheritdoc schemaStatics.leaves}
 	 */
-	public static readonly leaves = [
-		stringSchema,
-		numberSchema,
-		booleanSchema,
-		nullSchema,
-		handleSchema,
-	] as const;
+	public static readonly leaves = schemaStatics.leaves;
 
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
