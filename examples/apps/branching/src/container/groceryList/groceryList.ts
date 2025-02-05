@@ -20,8 +20,12 @@ import type {
 } from "@fluidframework/runtime-definitions/legacy";
 import { v4 as uuid } from "uuid";
 
-import type { IGroceryItem, IGroceryList, IGroceryListEvents } from "./interfaces.js";
-import type { IDisposableParent } from "./runtimeInterfaces.js";
+import type {
+	IDisposableParent,
+	IGroceryItem,
+	IGroceryList,
+	IGroceryListEvents,
+} from "./interfaces.js";
 
 /**
  * GroceryItem is the local object with a friendly interface for the view to use.

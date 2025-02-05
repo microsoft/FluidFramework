@@ -10,11 +10,9 @@ export {
 	extractGroceryListPOJO,
 } from "./groceryListUtils.js";
 export {
-	IGroceryItem,
-	IGroceryList,
-} from "./interfaces.js";
-export {
 	GroceryListItemPOJO,
 	GroceryListPOJO,
 	GroceryListChanges,
-} from "./utilsInterfaces.js";
+	IGroceryItem,
+	IGroceryList,
+} from "./interfaces.js";

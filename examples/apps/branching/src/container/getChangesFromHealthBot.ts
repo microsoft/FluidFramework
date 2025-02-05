@@ -16,8 +16,9 @@ import {
 export const getChangesFromHealthBot = async (
 	groceryList: IGroceryList,
 ): Promise<GroceryListChanges> => {
-	const stringifiedOriginal = extractGroceryListPOJO(groceryList);
-	const pojoOriginal: GroceryListPOJO = JSON.parse(stringifiedOriginal);
+	const pojoOriginal = extractGroceryListPOJO(groceryList);
+	// Here I'm pretending the network service expects JSON.  Some other format could be used instead.
+	const stringifiedOriginal = JSON.stringify(pojoOriginal);
 	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
 	const pojoSuggestions: GroceryListPOJO = JSON.parse(stringifiedSuggestions);
 	const changes = diffGroceryListPOJO(pojoOriginal, pojoSuggestions);

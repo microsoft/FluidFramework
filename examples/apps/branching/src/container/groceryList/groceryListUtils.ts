@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import type { IGroceryList } from "./interfaces.js";
 import type {
 	GroceryListItemPOJO,
 	GroceryListPOJO,
 	GroceryListChanges,
-} from "./utilsInterfaces.js";
-
-export const extractGroceryListPOJO = (groceryList: IGroceryList): string =>
-	JSON.stringify(groceryList.getItems());
+	IGroceryList,
+} from "./interfaces.js";
 
 /**
  * Utilities for converting an IGroceryList to and from POJO for serialization and network request,
  * as well as working with the serialized format (e.g. diffing).
  */
+
+export const extractGroceryListPOJO = (groceryList: IGroceryList): GroceryListPOJO =>
+	groceryList.getItems();
 
 export const diffGroceryListPOJO = (
 	baseGroceryListPOJO: GroceryListPOJO,
