@@ -13,23 +13,23 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ContainerSchema, LoadableObjectKind } from "./types.js";
 
 /**
- * Runtime check to determine if a class is a DataObject type.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export function isDataObjectClass<T extends IFluidLoadable>(
+export function isDataObjectKind<T extends IFluidLoadable>(
 	obj: LoadableObjectKind<T>,
 ): obj is DataObjectKind<T>;
 
 /**
- * Runtime check to determine if a class is a DataObject type.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export function isDataObjectClass(
+export function isDataObjectKind(
 	obj: LoadableObjectKind,
 ): obj is DataObjectKind<IFluidLoadable>;
 
 /**
- * Runtime check to determine if a class is a DataObject type.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export function isDataObjectClass(
+export function isDataObjectKind(
 	obj: LoadableObjectKind,
 ): obj is DataObjectKind<IFluidLoadable> {
 	const maybe = obj as Partial<DataObjectKind<IFluidLoadable>> | undefined;
@@ -55,7 +55,7 @@ export function isDataObjectClass(
 export function isSharedObjectKind(
 	obj: LoadableObjectKind,
 ): obj is ISharedObjectKind<IFluidLoadable> {
-	return !isDataObjectClass(obj);
+	return !isDataObjectKind(obj);
 }
 
 /**
@@ -72,7 +72,7 @@ export const parseDataObjectsFromSharedObjects = (
 	const tryAddObject = (obj: LoadableObjectKind): void => {
 		if (isSharedObjectKind(obj)) {
 			sharedObjects.add(obj.getFactory());
-		} else if (isDataObjectClass(obj)) {
+		} else if (isDataObjectKind(obj)) {
 			registryEntries.add([obj.factory.type, Promise.resolve(obj.factory)]);
 		} else {
 			throw new Error(`Entry is neither a DataObject or a SharedObject`);

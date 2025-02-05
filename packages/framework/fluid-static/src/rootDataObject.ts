@@ -26,7 +26,7 @@ import type {
 	LoadableObjectRecord,
 } from "./types.js";
 import {
-	isDataObjectClass,
+	isDataObjectKind,
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
@@ -126,7 +126,7 @@ class RootDataObject
 	 */
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
 		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
-		if (isDataObjectClass(internal)) {
+		if (isDataObjectKind(internal)) {
 			return this.createDataObject(internal);
 		} else if (isSharedObjectKind(internal)) {
 			return this.createSharedObject(internal);
