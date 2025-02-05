@@ -108,6 +108,10 @@ export async function runWithRetry<T>(
 		}
 	}
 
+	if (shouldIgnoreError !== undefined && shouldIgnoreError(latestResultError) === true) {
+		return undefined as unknown as T; // Ensure a value of type T is returned
+	}
+
 	Lumberjack.error(
 		`Error after retrying ${retryCount} times, rejecting`,
 		telemetryProperties,
