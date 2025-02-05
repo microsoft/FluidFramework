@@ -53,6 +53,21 @@ import {
 import { generateGenericEditTypes } from "./typeGeneration.js";
 import { fail } from "./utils.js";
 
+// TODO: Create a proper index file and move the logic of this file to a new location
+export type {
+	ApplyEditFailureDebugEvent,
+	ApplyEditSuccessDebugEvent,
+	CoreEventLoopCompletedDebugEvent,
+	CoreEventLoopStartedDebugEvent,
+	FinalReviewCompletedDebugEvent,
+	FinalReviewStartedDebugEvent,
+	GenerateTreeEditCompletedDebugEvent,
+	GenerateTreeEditStartedDebugEvent,
+	LlmApiCallDebugEvent,
+	PlanningPromptCompletedDebugEvent,
+	PlanningPromptStartedDebugEvent,
+} from "./debugEvents.js";
+
 /**
  * {@link generateTreeEdits} options.
  *
@@ -117,11 +132,13 @@ export async function generateTreeEdits(
 
 	const debugLogTraceId = uuidv4();
 
+	const coreEventFlowTraceId = uuidv4();
 	options.debugEventLogHandler?.({
 		...generateDebugEvent(debugLogTraceId),
 		eventName: "CORE_EVENT_LOOP_STARTED",
 		eventFlowName: "CORE_EVENT_LOOP",
 		eventFlowStatus: "STARTED",
+		eventFlowTraceId: coreEventFlowTraceId,
 	} satisfies CoreEventLoopStartedDebugEvent);
 
 	try {
@@ -204,6 +221,7 @@ export async function generateTreeEdits(
 					eventFlowStatus: "COMPLETED",
 					status: "failure",
 					failureReason: completionResponse.errorMessage,
+					eventFlowTraceId: coreEventFlowTraceId,
 				} satisfies CoreEventLoopCompletedDebugEvent);
 
 				return completionResponse;
@@ -216,6 +234,7 @@ export async function generateTreeEdits(
 			eventFlowName: "CORE_EVENT_LOOP",
 			eventFlowStatus: "COMPLETED",
 			status: "failure",
+			eventFlowTraceId: coreEventFlowTraceId,
 			failureReason:
 				error instanceof TokenLimitExceededError ? "tokenLimitExceeded" : "unexpectedError",
 			errorMessage: (error as Error)?.message,
@@ -237,6 +256,7 @@ export async function generateTreeEdits(
 		eventName: "CORE_EVENT_LOOP_COMPLETED",
 		eventFlowName: "CORE_EVENT_LOOP",
 		eventFlowStatus: "COMPLETED",
+		eventFlowTraceId: coreEventFlowTraceId,
 		status: "success",
 	} satisfies CoreEventLoopCompletedDebugEvent);
 

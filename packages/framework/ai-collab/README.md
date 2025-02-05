@@ -92,7 +92,7 @@ import { initializeAppState } from "./yourAppInitializationFile.ts"
 
 //  --------- File name: "app.ts" ---------
 
-// Initialize your app state somehow
+// Initialize your Fluid app state somehow
 const appState: PlannerAppState = initializeAppState({
 		taskGroups: [
 		{
@@ -143,6 +143,9 @@ const response = await aiCollab({
 				"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
 			userAsk: userAsk,
 		},
+		limiters: {
+			maxModelCalls: 25
+		}
 		planningStep: true,
 		finalReviewStep: true,
 		debugEventLogHandler: (event: DebugEvent) => {console.log(event);}
@@ -174,12 +177,48 @@ Once the `aiCollab` function call is initiated, an LLM will immediately begin at
      - `promptGeneration.ts`: Logic for producing the different types of prompts sent to an LLM in order to edit a SharedTree.
      - `typeGeneration.ts`: Generates serialized(/able) representations of a SharedTree Schema which is used within prompts and the generated of the structured output JSON schema
      - `utils.ts`: Utilities for interacting with a SharedTree
+	 - `debugEvents.ts`: Types and helper functions for `DebugEvent`'s emitted to the callback provided to the aiCollab's `debugEventLogHandler`
 - `/implicit-strategy`: The original implicit strategy, currently not used under the exported aiCollab API surface.
+
+## Debug Events
+This package allows users to consume `DebugEvents` that can very helpful in understanding what's going on internally and debugging potential issues.
+
+There are two types of debug events, `DebugEvent` which is the core interface and is used to describe ALL debug events and `EventFlowDebugEvent` which is for more specific debug events that mark a progress point in a specific logic flow within a single ai-collab function call.
+
+### There are a few primary event flow names:
+1. `CORE_EVENT_LOOP`: All events with this `eventFlowName` are used to mark the start and end of the life cycle of a single execution of the ai-collab function.
+	- Events:
+		1. `CoreEventLoopStartedDebugEvent`: Events with the `eventName` `CORE_EVENT_LOOP_STARTED`. This event marks the start of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
+		1. `CoreEventLoopCompletedDebugEvent`:Events with the `eventName` `CORE_EVENT_LOOP_COMPLETED`. This event marks the end of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
+2. `GENERATE_PLANNING_PROMPT`: All events with this `eventFlowName` are used to mark the start, end and outcome of the LLM generating the planning prompt used to assist the LLM to plan how it will edit the SharedTree based on the user ask
+	- Events
+		1. `PlanningPromptStartedDebugEvent`:Events with the `eventName` `GENERATE_PLANNING_PROMPT_STARTED`. This event marks the start of the logic flow for generating the planning prompt. There will be exactly 1 of these events per ai-collab function execution.
+			- Child `DebugEvent`'s triggered:
+				1. `LlmApiCallDebugEvent`: In order to generate the planning prompt, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
+		1. `PlanningPromptCompletedDebugEvent`:Events with the `eventName` `GENERATE_PLANNING_PROMPT_COMPLETED`: This event marks the end and outcome of the LLM generating the planning prompt There will be exactly 1 of these events per ai-collab function execution.
+3. `GENERATE_TREE_EDIT`: All events with this `eventFlowName` are used to mark the start, end and outcome of the LLM generating a single TreeEdit that will be applied to the tree. It is expected that the LLM will generate multiple of these events when it must generate multiple tree edits to satisfy the user request
+	- Events:
+		1. `GenerateTreeEditStartedDebugEvent`: Events with the `eventName` `GENERATE_TREE_EDIT_STARTED`: This event marks the start of the logic flow for generating a single tree edit
+			- Child `DebugEvent`'s triggered:
+				1. `LlmApiCallDebugEvent`: In order to generate a Tree Edit, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
+		1. `GenerateTreeEditCompletedDebugEvent`: Events with the `eventName` `GENERATE_TREE_EDIT_COMPLETED`. This event marks the end and outcome of the LLM generating a single tree edit. Note that if the LLM returns `null` as its edit at this step, it is signaling that it things no more edits are necessary.
+4. `FINAL_REVIEW`: All events with this `eventFlowName` are used to mark the start, end and outcome of the requesting the LLM to review its work and determine whether the users ask was accomplished or more edits are needed.
+	- Events:
+		- `FinalReviewStartedDebugEvent`: Events with the `eventName` `FINAL_REVIEW_STARTED`: This event marks the start of the logic flow for requesting the LLM complete a final review of the edits it has created and whether it believes the users ask was accomplished or more edits are needed. If the LLM thinks more edits are needed, the `GENERATE_TREE_EDIT` will start again.
+			- Child `DebugEvent`'s triggered:
+				1. `LlmApiCallDebugEvent`: In order to conduct the final review, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
+		- `FinalReviewCompletedDebugEvent`: Events with the `eventName` `FINAL_REVIEW_COMPLETED`. This event marks the end and outcome of the logic flow for requesting the LLM complete a final review of the edits it has created.
+
+
+### using Trace Id's
+Debug Events in ai-collab have two different types of trace id's:
+- `traceId`: This field exists on all debug events and can be used to coorelate all debug events that happened in a single execution. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
+- `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to coorelate all events from a particular event flow together. Additionally all `LlmApiCallDebugEvent` events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
+
 
 ## Known Issues & limitations
 
 1. Union types for a TreeNode are not present when generating App Schema. This will require extracting a field schema instead of TreeNodeSchema when passed a non root node.
-1. The Editing System prompt & structured out schema currently provide array related edits even when there are no arrays. This forces you to have an array in your schema to produce a valid json schema
 1. Optional roots are not allowed, This is because if you pass undefined as your treeNode to the API, we cannot disambiguate whether you passed the root or not.
 1. Primitive root nodes are not allowed to be passed to the API. You must use an object or array as your root.
 1. Optional nodes are not supported -- when we use optional nodes, the OpenAI API returns an error complaining that the structured output JSON schema is invalid. I have introduced a fix that should work upon manual validation of the json schema, but there looks to be an issue with their API. I have filed a ticket with OpenAI to address this

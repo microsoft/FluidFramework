@@ -10,6 +10,13 @@ import type { DebugEvent, EventFlowDebugEvent } from "../aiCollabApi.js";
 import type { TreeEdit } from "./agentEditTypes.js";
 
 /**
+ * This file contains the types for the debug events that are emitted by the explicit strategy
+ * as well as a helper functions to help create a consistent method for producing a base {@link DebugEvent}.
+ *
+ * **IMPORTANT**: If you change this file make sure the root README.md file is updated to reflect the changes.
+ */
+
+/**
  * A debug event for signaling the start of the ai-collab's core event loop.
  * Which makes various calls to the LLM to eventually apply edits to the users SharedTree which
  * accomplish the user's provided goal.

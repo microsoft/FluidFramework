@@ -27,6 +27,20 @@ export {
 	sharedTreeTraverse,
 } from "./implicit-strategy/index.js";
 
+export type {
+	ApplyEditFailureDebugEvent,
+	ApplyEditSuccessDebugEvent,
+	CoreEventLoopCompletedDebugEvent,
+	CoreEventLoopStartedDebugEvent,
+	FinalReviewCompletedDebugEvent,
+	FinalReviewStartedDebugEvent,
+	GenerateTreeEditCompletedDebugEvent,
+	GenerateTreeEditStartedDebugEvent,
+	LlmApiCallDebugEvent,
+	PlanningPromptCompletedDebugEvent,
+	PlanningPromptStartedDebugEvent,
+} from "./explicit-strategy/index.js";
+
 export {
 	type AiCollabOptions,
 	type AiCollabSuccessResponse,

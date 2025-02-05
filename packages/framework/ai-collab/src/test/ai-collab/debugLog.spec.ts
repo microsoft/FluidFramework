@@ -143,7 +143,9 @@ describe("Debug Log Works as expected", () => {
 			eventName: "CORE_EVENT_LOOP_STARTED",
 			eventFlowName: "CORE_EVENT_LOOP",
 			eventFlowStatus: "STARTED",
+			eventFlowTraceId: debugEvent1.eventFlowTraceId,
 		});
+		assert(debugEvent1.eventFlowTraceId !== undefined);
 
 		const debugEvent2: CoreEventLoopStartedDebugEvent = debugLog[
 			debugLog.length - 1
@@ -156,6 +158,7 @@ describe("Debug Log Works as expected", () => {
 			eventFlowName: "CORE_EVENT_LOOP",
 			eventFlowStatus: "COMPLETED",
 			status: "success",
+			eventFlowTraceId: debugEvent1.eventFlowTraceId,
 		});
 
 		assertDebugEventCoreInterfaceIsValid(debugEvent2);

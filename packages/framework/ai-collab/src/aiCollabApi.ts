@@ -47,7 +47,7 @@ export interface EventFlowDebugEvent extends DebugEvent {
 	/**
 	 * A unique id that will be shared across all debug events that are part of the same event flow.
 	 */
-	eventFlowTraceId?: string;
+	eventFlowTraceId: string;
 }
 
 /**
