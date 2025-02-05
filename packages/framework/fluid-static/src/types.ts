@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -41,22 +41,6 @@ export type LoadableObjectKindRecord = Record<string, SharedObjectKind>;
 export type LoadableObjectKind<T extends IFluidLoadable = IFluidLoadable> =
 	| ISharedObjectKind<T>
 	| DataObjectKind<T>;
-
-/**
- * A class that has a factory that can create a `DataObject` and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The kind of `DataObject`.
- *
- * @privateRemarks
- * Having both `factory` and constructor is redundant.
- * TODO: It appears the factory is what's used, so the constructor should be removed once factory provides strong typing.
- */
-export interface DataObjectKind<T extends IFluidLoadable> {
-	readonly factory: IFluidDataStoreFactory;
-	// Not actually used, but helps with strong typing.
-	new (...args: never[]): T;
-}
 
 /**
  * Represents properties that can be attached to a container.
