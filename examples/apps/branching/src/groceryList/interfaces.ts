@@ -27,12 +27,12 @@ export interface IGroceryListEvents extends IEvent {
 }
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type GroceryListItemJSON = { id: string; name: string };
-export type GroceryListJSON = GroceryListItemJSON[];
+export type GroceryListItemPOJO = { id: string; name: string };
+export type GroceryListPOJO = GroceryListItemPOJO[];
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type GroceryListModifications = {
-	adds: GroceryListItemJSON[];
-	removals: GroceryListItemJSON[];
+	adds: GroceryListItemPOJO[];
+	removals: GroceryListItemPOJO[];
 };
 
 export interface IGroceryList {

@@ -21,54 +21,11 @@ import type {
 import { v4 as uuid } from "uuid";
 
 import type {
-	GroceryListItemJSON,
-	GroceryListJSON,
-	GroceryListModifications,
 	IDisposableParent,
 	IGroceryItem,
 	IGroceryList,
 	IGroceryListEvents,
 } from "./interfaces.js";
-
-export const diffGroceryListJSON = (
-	baseGroceryListJSON: GroceryListJSON,
-	modifiedGroceryListJSON: GroceryListJSON,
-): GroceryListModifications => {
-	const removals: GroceryListItemJSON[] = [];
-	for (const maybeRemoval of baseGroceryListJSON) {
-		if (
-			!modifiedGroceryListJSON.find(
-				(destinationItem) => destinationItem.id === maybeRemoval.id,
-			)
-		) {
-			removals.push(maybeRemoval);
-		}
-	}
-
-	const adds: GroceryListItemJSON[] = [];
-	for (const maybeAdd of modifiedGroceryListJSON) {
-		if (!baseGroceryListJSON.find((sourceItem) => sourceItem.id === maybeAdd.id)) {
-			adds.push(maybeAdd);
-		}
-	}
-
-	return {
-		adds,
-		removals,
-	};
-};
-
-export const applyDiffToGroceryList = (
-	groceryList: IGroceryList,
-	groceryListJSONDiff: GroceryListModifications,
-) => {
-	for (const add of groceryListJSONDiff.adds) {
-		groceryList.addItem(add.name);
-	}
-	for (const removal of groceryListJSONDiff.removals) {
-		groceryList.removeItem(removal.id);
-	}
-};
 
 /**
  * GroceryItem is the local object with a friendly interface for the view to use.

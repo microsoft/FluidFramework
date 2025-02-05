@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+export { GroceryListFactory } from "./groceryList.js";
 export {
 	applyDiffToGroceryList,
 	diffGroceryListJSON,
-	GroceryListFactory,
-} from "./groceryList.js";
+} from "./groceryListUtils.js";
 export {
-	GroceryListJSON,
+	GroceryListPOJO as GroceryListJSON,
 	GroceryListModifications,
 	IGroceryItem,
 	IGroceryList,
