@@ -131,8 +131,6 @@ export class ModularChangeFamily
 	private normalizeFieldChanges(
 		change1: FieldChange,
 		change2: FieldChange,
-		genId: IdAllocator,
-		revisionMetadata: RevisionMetadataSource,
 	): {
 		fieldKind: FieldKindIdentifier;
 		changeHandler: FieldChangeHandler<unknown>;
@@ -156,18 +154,8 @@ export class ModularChangeFamily
 		}
 		const fieldKind = getFieldKind(this.fieldKinds, kind);
 		const changeHandler = fieldKind.changeHandler;
-		const normalizedChange1 = this.normalizeFieldChange(
-			change1,
-			changeHandler,
-			genId,
-			revisionMetadata,
-		);
-		const normalizedChange2 = this.normalizeFieldChange(
-			change2,
-			changeHandler,
-			genId,
-			revisionMetadata,
-		);
+		const normalizedChange1 = this.normalizeFieldChange(change1, changeHandler);
+		const normalizedChange2 = this.normalizeFieldChange(change2, changeHandler);
 		return {
 			fieldKind: kind,
 			changeHandler,
@@ -179,8 +167,6 @@ export class ModularChangeFamily
 	private normalizeFieldChange<T>(
 		fieldChange: FieldChange,
 		handler: FieldChangeHandler<T>,
-		genId: IdAllocator,
-		revisionMetadata: RevisionMetadataSource,
 	): FieldChangeset {
 		if (fieldChange.fieldKind !== genericFieldKind.identifier) {
 			return fieldChange.change;
@@ -188,20 +174,7 @@ export class ModularChangeFamily
 
 		// The cast is based on the `fieldKind` check above
 		const genericChange = fieldChange.change as unknown as GenericChangeset;
-		const convertedChange = convertGenericChange(
-			genericChange,
-			handler,
-			(child1, child2) => {
-				assert(
-					child1 === undefined || child2 === undefined,
-					0x92f /* Should not have two changesets to compose */,
-				);
-
-				return child1 ?? child2 ?? fail("Should not compose two undefined node IDs");
-			},
-			genId,
-			revisionMetadata,
-		) as FieldChangeset;
+		const convertedChange = convertGenericChange(genericChange, handler) as FieldChangeset;
 
 		return convertedChange;
 	}
@@ -578,7 +551,7 @@ export class ModularChangeFamily
 			changeHandler,
 			change1: change1Normalized,
 			change2: change2Normalized,
-		} = this.normalizeFieldChanges(change1, change2, idAllocator, revisionMetadata);
+		} = this.normalizeFieldChanges(change1, change2);
 
 		const manager = new ComposeManager(crossFieldTable, change1, fieldId);
 
@@ -1155,12 +1128,7 @@ export class ModularChangeFamily
 			changeHandler,
 			change1: fieldChangeset,
 			change2: baseChangeset,
-		} = this.normalizeFieldChanges(
-			context.newChange,
-			context.baseChange,
-			genId,
-			rebaseMetadata,
-		);
+		} = this.normalizeFieldChanges(context.newChange, context.baseChange);
 
 		const rebaseChild = (
 			curr: NodeId | undefined,
@@ -1338,7 +1306,7 @@ export class ModularChangeFamily
 				changeHandler,
 				change1: fieldChangeset,
 				change2: baseChangeset,
-			} = this.normalizeFieldChanges(fieldChange, baseChange, genId, revisionMetadata);
+			} = this.normalizeFieldChanges(fieldChange, baseChange);
 
 			const manager = new RebaseManager(crossFieldTable, baseChange, fieldId);
 

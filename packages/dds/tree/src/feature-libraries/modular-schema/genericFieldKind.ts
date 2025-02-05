@@ -6,12 +6,10 @@
 import {
 	type DeltaDetachedNodeId,
 	type DeltaMark,
-	type RevisionMetadataSource,
 	Multiplicity,
 	type RevisionTag,
 	replaceAtomRevisions,
 } from "../../core/index.js";
-import type { IdAllocator } from "../../util/index.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	FieldChangeDelta,
@@ -181,9 +179,6 @@ export const genericFieldKind: FieldKindWithEditor = new FieldKindWithEditor(
 export function convertGenericChange<TChange>(
 	changeset: GenericChangeset,
 	target: FieldChangeHandler<TChange>,
-	composeChild: NodeChangeComposer,
-	genId: IdAllocator,
-	revisionMetadata: RevisionMetadataSource,
 ): TChange {
 	return target.editor.buildChildChanges(changeset.entries());
 }

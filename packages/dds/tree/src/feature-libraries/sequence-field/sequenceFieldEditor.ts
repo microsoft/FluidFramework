@@ -79,6 +79,7 @@ export const sequenceFieldEditor = {
 		const changeset: Changeset = [];
 		let currentIndex = 0;
 		for (const [index, change] of changes) {
+			assert(index >= currentIndex, "Child changes must be in order.");
 			if (index > currentIndex) {
 				changeset.push({ count: index - currentIndex });
 			}

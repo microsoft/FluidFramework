@@ -205,8 +205,9 @@ export interface FieldEditor<TChangeset> {
 	 * For each element in the given iterable
 	 * - The number represents the index of the child node in the field.
 	 * - The `NodeId` represents the nested changes for that child node.
+	 * Note: The indices in the iterable must be ordered from smallest to largest (with no duplicates).
 	 */
-	buildChildChanges(changes: Iterable<[number, NodeId]>): TChangeset;
+	buildChildChanges(changes: Iterable<[index: number, change: NodeId]>): TChangeset;
 }
 
 /**
