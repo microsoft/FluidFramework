@@ -53,12 +53,14 @@ export class DocumentContextManager extends EventEmitter {
 	 * This class is responsible for the lifetime of the context
 	 */
 	public createContext(routingKey: IRoutingKey, head: IQueuedMessage): DocumentContext {
-		if (!this.headPaused && !this.tailPaused) {
+		if (!this.headPaused && this.tailPaused) {
+			// tail is resumed after head, so its possible to be in this state, but vice versa is not possible
+			// this means that tail is pending to be updated after resume, so it might be having an invalid value currently
+			assert(head.offset === this.head.offset);
+		} else {
+			// both head and tail are either paused or resumed
 			// Contexts should only be created within the processing range of the manager
 			assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
-		} else if (this.tailPaused) {
-			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
-			assert(head.offset === this.head.offset);
 		}
 
 		// Create the new context and register for listeners on it

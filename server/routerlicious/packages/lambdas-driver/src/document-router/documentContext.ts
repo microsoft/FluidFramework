@@ -154,16 +154,18 @@ export class DocumentContext extends EventEmitter implements IContext {
 		const offset = message.offset;
 
 		const contextManagerPauseState = this.getContextManagerPauseState();
-		if (!contextManagerPauseState.headPaused && !contextManagerPauseState.tailPaused) {
-			assert(
-				offset > this.tail.offset && offset <= this.head.offset,
-				`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
-			);
-		} else if (contextManagerPauseState.tailPaused) {
-			// means that tail is pending to be updated after resume, so it might be having an invalid value currently
+		if (!contextManagerPauseState.headPaused && contextManagerPauseState.tailPaused) {
+			// tail is resumed after head, so its possible to be in this state, but vice versa is not possible
+			// this means that tail is pending to be updated after resume, so it might be having an invalid value currently
 			assert(
 				offset === this.head.offset,
 				`Checkpoint offset ${offset} must be equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
+			);
+		} else {
+			// both head and tail are either paused or resumed
+			assert(
+				offset > this.tail.offset && offset <= this.head.offset,
+				`Checkpoint offset ${offset} must be greater than the current tail offset ${this.tail.offset} and less than or equal to the head offset ${this.head.offset}. Topic ${message.topic}, partition ${message.partition}, tenantId ${this.routingKey.tenantId}, documentId ${this.routingKey.documentId}.`,
 			);
 		}
 
