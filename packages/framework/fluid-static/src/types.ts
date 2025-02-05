@@ -24,12 +24,12 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
  * or `SharedObject`.
  */
-export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
+export type LoadableObjectKindRecord = Record<string, SharedObjectKind>;
 
 /**
- * A class object of `DataObject` or `SharedObject`.
+ * A kind of `DataObject` or `SharedObject`.
  *
- * @typeParam T - The class of the `DataObject` or `SharedObject`.
+ * @typeParam T - The kind of `DataObject` or `SharedObject`.
  *
  * @privateRemarks
  * There are some edge cases in TypeScript where the order of the members in a union matter.
@@ -38,7 +38,7 @@ export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
  * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
+export type LoadableObjectKind<T extends IFluidLoadable = IFluidLoadable> =
 	| ISharedObjectKind<T>
 	| DataObjectKind<T>;
 
@@ -46,7 +46,7 @@ export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
  * A class that has a factory that can create a `DataObject` and a
  * constructor that will return the type of the `DataObject`.
  *
- * @typeParam T - The class of the `DataObject`.
+ * @typeParam T - The kind of `DataObject`.
  *
  * @privateRemarks
  * Having both `factory` and constructor is redundant.

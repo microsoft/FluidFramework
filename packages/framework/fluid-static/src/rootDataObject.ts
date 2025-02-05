@@ -21,8 +21,8 @@ import type {
 	ContainerSchema,
 	DataObjectKind,
 	IRootDataObject,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
+	LoadableObjectKind,
+	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
 import {
@@ -40,7 +40,7 @@ export interface RootDataObjectProps {
 	 *
 	 * @see {@link RootDataObject.initializingFirstTime}
 	 */
-	readonly initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectKindRecord;
 }
 
 /**
@@ -125,7 +125,7 @@ class RootDataObject
 	 * {@inheritDoc IRootDataObject.create}
 	 */
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
-		const internal = objectClass as unknown as LoadableObjectClass<T & IFluidLoadable>;
+		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
 		if (isDataObjectClass(internal)) {
 			return this.createDataObject(internal);
 		} else if (isSharedObjectKind(internal)) {
@@ -186,7 +186,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		}
 	>;
 
-	private readonly initialObjects: LoadableObjectClassRecord;
+	private readonly initialObjects: LoadableObjectKindRecord;
 
 	public constructor(schema: ContainerSchema, compatibilityMode: CompatibilityMode) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
