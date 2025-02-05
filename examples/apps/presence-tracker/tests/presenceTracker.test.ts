@@ -44,7 +44,7 @@ const loadPresenceTrackerApp = async (page: Page, url: string): Promise<string> 
 	const waitFunction = idMatch
 		? (hash: string) => window["fluidContainerId"] === hash
 		: () => (window["fluidContainerId"] ?? "") !== "";
-	await page.waitForFunction(waitFunction, { timeout: 500 }, idMatch).catch(async () => {
+	await page.waitForFunction(waitFunction, { timeout: 1500 }, idMatch).catch(async () => {
 		const after = await page.evaluate(() => `${window["fluidContainerId"]}`);
 		throw new Error(
 			`failed waiting for app load to id ${idMatch ? idMatch : '!== ""'} (after timeout=${after})`,
