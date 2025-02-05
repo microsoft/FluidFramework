@@ -15,5 +15,5 @@ export {
 } from "./interfaces.js";
 export {
 	GroceryListPOJO,
-	GroceryListModifications,
+	GroceryListChanges,
 } from "./utilsInterfaces.js";

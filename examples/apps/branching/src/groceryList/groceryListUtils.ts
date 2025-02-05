@@ -7,7 +7,7 @@ import type { IGroceryList } from "./interfaces.js";
 import type {
 	GroceryListItemPOJO,
 	GroceryListPOJO,
-	GroceryListModifications,
+	GroceryListChanges,
 } from "./utilsInterfaces.js";
 
 export const extractGroceryListPOJO = (groceryList: IGroceryList): string =>
@@ -21,7 +21,7 @@ export const extractGroceryListPOJO = (groceryList: IGroceryList): string =>
 export const diffGroceryListPOJO = (
 	baseGroceryListPOJO: GroceryListPOJO,
 	modifiedGroceryListPOJO: GroceryListPOJO,
-): GroceryListModifications => {
+): GroceryListChanges => {
 	const removals: GroceryListItemPOJO[] = [];
 	for (const maybeRemoval of baseGroceryListPOJO) {
 		if (
@@ -48,7 +48,7 @@ export const diffGroceryListPOJO = (
 
 export const applyDiffToGroceryList = (
 	groceryList: IGroceryList,
-	groceryListModifications: GroceryListModifications,
+	groceryListModifications: GroceryListChanges,
 ) => {
 	for (const add of groceryListModifications.adds) {
 		groceryList.addItem(add.name);

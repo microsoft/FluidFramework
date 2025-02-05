@@ -7,7 +7,7 @@
 export type GroceryListItemPOJO = { id: string; name: string };
 export type GroceryListPOJO = GroceryListItemPOJO[];
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type GroceryListModifications = {
+export type GroceryListChanges = {
 	adds: GroceryListItemPOJO[];
 	removals: GroceryListItemPOJO[];
 };

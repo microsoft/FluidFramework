@@ -18,7 +18,7 @@ import {
 	diffGroceryListPOJO,
 	extractGroceryListPOJO,
 	GroceryListFactory,
-	type GroceryListModifications,
+	type GroceryListChanges,
 	type GroceryListPOJO,
 	type IGroceryList,
 } from "./groceryList/index.js";
@@ -30,7 +30,7 @@ const groceryListFactory = new GroceryListFactory();
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type PrivateChanges = {
-	readonly changes: GroceryListModifications;
+	readonly changes: GroceryListChanges;
 	readonly acceptChanges: () => void;
 	readonly rejectChanges: () => void;
 };
@@ -41,20 +41,21 @@ export type GroceryListAppEntryPoint = {
 	readonly getSuggestions: () => Promise<PrivateChanges>;
 };
 
-const getSuggestionsFromHealthBot = async (
-	groceryList: IGroceryList,
-): Promise<GroceryListModifications> => {
+const getSuggestions = async (groceryList: IGroceryList): Promise<PrivateChanges> => {
 	const stringifiedOriginal = extractGroceryListPOJO(groceryList);
 	const pojoOriginal: GroceryListPOJO = JSON.parse(stringifiedOriginal);
 	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
 	const pojoSuggestions: GroceryListPOJO = JSON.parse(stringifiedSuggestions);
-	const { adds, removals } = diffGroceryListPOJO(pojoOriginal, pojoSuggestions);
-	console.log("Suggestions:", pojoSuggestions, "\nAdds:", adds, "\nRemovals:", removals);
-	return { adds, removals };
-};
+	const changes = diffGroceryListPOJO(pojoOriginal, pojoSuggestions);
+	console.log(
+		"Suggestions:",
+		pojoSuggestions,
+		"\nAdds:",
+		changes.adds,
+		"\nRemovals:",
+		changes.removals,
+	);
 
-const getSuggestions = async (groceryList: IGroceryList): Promise<PrivateChanges> => {
-	const changes = await getSuggestionsFromHealthBot(groceryList);
 	return {
 		changes,
 		acceptChanges: () => applyDiffToGroceryList(groceryList, changes),

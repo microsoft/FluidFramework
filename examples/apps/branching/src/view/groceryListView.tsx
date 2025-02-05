@@ -5,11 +5,7 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import {
-	IGroceryItem,
-	IGroceryList,
-	type GroceryListModifications,
-} from "../groceryList/index.js";
+import type { IGroceryItem, IGroceryList, GroceryListChanges } from "../groceryList/index.js";
 
 export interface IGroceryItemViewProps {
 	groceryItem: IGroceryItem;
@@ -89,7 +85,7 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
 
 export interface IGroceryListViewProps {
 	groceryList: IGroceryList;
-	suggestions?: GroceryListModifications | undefined;
+	suggestions?: GroceryListChanges | undefined;
 }
 
 export const GroceryListView: FC<IGroceryListViewProps> = ({
