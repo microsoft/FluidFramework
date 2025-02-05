@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,7 +78,7 @@
 		"ci:build:docs": "api-extractor run",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",

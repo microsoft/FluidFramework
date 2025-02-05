@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,6 +52,18 @@
 				"types": "./dist/intervalCollection.d.ts",
 				"default": "./dist/intervalCollection.js"
 			}
+		},
+		"./internal/test": {
+			"allow-ff-test-exports": {
+				"import": {
+					"types": "./lib/test/index.d.ts",
+					"default": "./lib/test/index.js"
+				},
+				"require": {
+					"types": "./dist/test/index.d.ts",
+					"default": "./dist/test/index.js"
+				}
+			}
 		}
 	},
 	"main": "lib/index.js",
@@ -72,7 +84,7 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/intervalCollection",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/intervalCollection ./internal/test",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -86,7 +98,7 @@
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
