@@ -64,7 +64,6 @@ export type DataObjectKind<T = unknown> = {
 	  ) => T)
 );
 
-
 /**
  * Represents properties that can be attached to a container.
  * @public
