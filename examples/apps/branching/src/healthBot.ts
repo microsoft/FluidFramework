@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+/**
+ * Note that this import is not realistic and is just for my convenience in implementing the pseudo-service.
+ * We'd probably expect the network service to be unaware of the grocery list type, and rather operate
+ * on the data in a more abstract manner.
+ */
 import type { GroceryListPOJO } from "./groceryList/index.js";
 
 /**

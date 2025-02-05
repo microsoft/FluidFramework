@@ -21,8 +21,8 @@ import {
 	type GroceryListChanges,
 	type GroceryListPOJO,
 	type IGroceryList,
-} from "./groceryList/index.js";
-import { NETWORK_askHealthBotForSuggestions } from "./healthBot.js";
+} from "../groceryList/index.js";
+import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
 
 const groceryListId = "grocery-list";
 const groceryListRegistryKey = "grocery-list";

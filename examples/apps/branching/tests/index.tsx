@@ -25,7 +25,7 @@ import {
 	GroceryListContainerRuntimeFactory,
 	type GroceryListAppEntryPoint,
 	type PrivateChanges,
-} from "../src/containerCode.js";
+} from "../src/container/index.js";
 import type { IGroceryList } from "../src/groceryList/index.js";
 import { AppView, DebugView } from "../src/view/index.js";
 
