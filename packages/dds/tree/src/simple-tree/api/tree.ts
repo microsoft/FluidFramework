@@ -42,6 +42,8 @@ import { markSchemaMostDerived } from "./schemaFactory.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
+import type { VerboseTree } from "./verboseTree.js";
+import type { SimpleTreeSchema } from "./simpleSchema.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  *
@@ -52,7 +54,6 @@ import { walkFieldSchema } from "../walkFieldSchema.js";
  * Maybe rename "exportJsonSchema" to align on "concise" terminology.
  * Ensure schema exporting APIs here align and reference APIs for exporting view schema to the same formats (which should include stored vs property key choice).
  * Make sure users of independentView can use these export APIs (maybe provide a reference back to the ViewableTree from the TreeView to accomplish that).
- * Some of these APIs are on ISharedTree and can get moved here.
  * @system @sealed @public
  */
 export interface ViewableTree {
@@ -100,6 +101,26 @@ export interface ViewableTree {
  * @sealed @public
  */
 export interface ITree extends ViewableTree, IFluidLoadable {}
+
+/**
+ * {@link ITree} extended with some alpha APIs.
+ * @privateRemarks
+ * Promote this to alpha.
+ * @internal
+ */
+export interface ITreeAlpha extends ITree {
+	/**
+	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
+	 */
+	exportVerbose(): VerboseTree | undefined;
+
+	/**
+	 * Exports the SimpleTreeSchema that is stored in the tree, using stored keys for object fields.
+	 * @remarks
+	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
+	 */
+	exportSimpleSchema(): SimpleTreeSchema;
+}
 
 /**
  * Options when constructing a tree view.

@@ -85,6 +85,7 @@ export {
 	ForestTypeReference,
 	SharedTreeAttributes,
 	SharedTreeFactoryType,
+	type IChannelView,
 } from "./shared-tree/index.js";
 
 export {
@@ -216,6 +217,7 @@ export {
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	type ITreeAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
