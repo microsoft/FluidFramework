@@ -1269,6 +1269,10 @@ export class ContainerRuntime
 		return this;
 	}
 
+	private readonly submitSummaryFn: (
+		summaryOp: ISummaryContent,
+		referenceSequenceNumber?: number,
+	) => number;
 	/**
 	 * Do not call directly - use submitAddressesSignal
 	 */
@@ -1628,6 +1632,10 @@ export class ContainerRuntime
 
 		// Here we could wrap/intercept on these functions to block/modify outgoing messages if needed.
 		// This makes ContainerRuntime the final gatekeeper for outgoing messages.
+		// back-compat: ADO #1385: Make this call unconditional in the future
+		this.submitSummaryFn =
+			submitSummaryFn ??
+			((summaryOp, refseq) => submitFn(MessageType.Summarize, summaryOp, false));
 		this.submitSignalFn = submitSignalFn;
 
 		// TODO: After IContainerContext.options is removed, we'll just create a new blank object {} here.
@@ -1991,7 +1999,6 @@ export class ContainerRuntime
 					}
 				}
 			},
-			submitSummaryFn,
 		});
 
 		this._quorum = quorum;
@@ -4387,10 +4394,7 @@ export class ContainerRuntime
 
 			let clientSequenceNumber: number;
 			try {
-				clientSequenceNumber = this.outbox.submitSummaryMessage(
-					summaryMessage,
-					summaryRefSeqNum,
-				);
+				clientSequenceNumber = this.submitSummaryMessage(summaryMessage, summaryRefSeqNum);
 			} catch (error) {
 				return {
 					stage: "upload",
@@ -4702,6 +4706,22 @@ export class ContainerRuntime
 				break;
 			}
 		}
+	}
+
+	private submitSummaryMessage(
+		contents: ISummaryContent,
+		referenceSequenceNumber: number,
+	): number {
+		this.verifyNotClosed();
+		assert(
+			this.connected,
+			0x133 /* "Container disconnected when trying to submit system message" */,
+		);
+
+		// System message should not be sent in the middle of the batch.
+		assert(this.outbox.isEmpty, 0x3d4 /* System op in the middle of a batch */);
+
+		return this.submitSummaryFn(contents, referenceSequenceNumber);
 	}
 
 	/**

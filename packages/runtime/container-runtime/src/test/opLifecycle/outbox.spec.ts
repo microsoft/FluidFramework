@@ -241,7 +241,6 @@ describe("Outbox", () => {
 			opReentrancy: () => state.isReentrant,
 			closeContainer: (error?: ICriticalContainerError) => {},
 			rollback: () => {},
-			submitSummaryFn: () => Date.now(),
 		});
 	};
 
