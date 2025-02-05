@@ -4,8 +4,10 @@
  */
 
 import {
+	replaceAtomRevisions,
 	subtractChangeAtomIds,
 	type ChangeAtomId,
+	type ChangeAtomIdMap,
 	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
 	type FieldKey,
@@ -38,12 +40,8 @@ export interface ModularChangeset extends HasFieldChanges {
 	 */
 	readonly nodeChanges: ChangeAtomIdBTree<NodeChangeset>;
 
-	// XXX: Should we merge builds and destroys into this?
-	readonly rootNodes: RootRange[];
-
 	// XXX: Could this be merged with nodeAliases?
-	// XXX: Need to make sure whenever we split a range we also split the value of the range
-	readonly nodeRenames: NodeRenameTable;
+	readonly rootNodes: RootNodeTable;
 
 	/**
 	 * Maps from this changeset's canonical ID for a node to the ID for the field which contains that node.
@@ -79,16 +77,11 @@ export interface ModularChangeset extends HasFieldChanges {
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;
 }
 
-export interface NodeRenameTable {
+export interface RootNodeTable {
+	// TODO: Include builds, destroys, refreshers, and field changes
 	oldToNewId: ChangeAtomIdRangeMap<ChangeAtomId>;
 	newToOldId: ChangeAtomIdRangeMap<ChangeAtomId>;
-}
-
-export interface RootRange {
-	idBefore: ChangeAtomId | undefined;
-	idTransient: ChangeAtomId | undefined;
-	idAfter: ChangeAtomId | undefined;
-	count: number;
+	nodeChanges: ChangeAtomIdBTree<NodeId>;
 }
 
 export type ChangeAtomIdBTree<V> = TupleBTree<[RevisionTag | undefined, ChangesetLocalId], V>;

@@ -67,7 +67,7 @@ import {
 	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import { newNodeRenameTable } from "./modularChangeFamily.js";
+import { newRootTable } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -486,8 +486,7 @@ function makeModularChangeCodec(
 			const decoded: Mutable<ModularChangeset> = {
 				fieldChanges: new Map(),
 				nodeChanges: newTupleBTree(),
-				rootNodes: [], // XXX
-				nodeRenames: newNodeRenameTable(), // XXX
+				rootNodes: newRootTable(), // XXX
 				nodeToParent: newTupleBTree(),
 				nodeAliases: newTupleBTree(),
 				crossFieldKeys: newCrossFieldRangeTable(),

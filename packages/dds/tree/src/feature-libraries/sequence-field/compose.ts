@@ -400,9 +400,5 @@ function getMovedChangesFromMark(
 		return undefined;
 	}
 
-	// XXX: Should use the detach ID, not the mark ID
-	return moveEffects.getChangesForBaseDetach(
-		{ revision: markEffect.revision, localId: markEffect.id },
-		1,
-	).value;
+	return moveEffects.getChangesForBaseDetach(getDetachOutputCellId(markEffect), 1).value;
 }

@@ -39,7 +39,7 @@ import {
 import {
 	getChangeHandler,
 	getParentFieldId,
-	newNodeRenameTable,
+	newRootTable,
 	normalizeFieldId,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
@@ -78,8 +78,7 @@ function empty(): ModularChangeset {
 	return {
 		fieldChanges: new Map(),
 		nodeChanges: newTupleBTree(),
-		nodeRenames: newNodeRenameTable(),
-		rootNodes: [],
+		rootNodes: newRootTable(),
 		nodeToParent: newTupleBTree(),
 		nodeAliases: newTupleBTree(),
 		crossFieldKeys: newCrossFieldRangeTable(),
@@ -136,8 +135,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 	const result: Mutable<ModularChangeset> = {
 		nodeChanges,
 		fieldChanges,
-		rootNodes: [], // XXX
-		nodeRenames: newNodeRenameTable(), // XXX
+		rootNodes: newRootTable(), // XXX
 		nodeToParent,
 		crossFieldKeys,
 		nodeAliases: newTupleBTree(),

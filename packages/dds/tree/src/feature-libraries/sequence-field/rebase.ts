@@ -291,7 +291,7 @@ function rebaseMarkIgnoreChild(
 		const { remains, follows } = separateEffectsForMove(extractMarkEffect(currMark));
 		moveRebasedChanges(
 			moveEffects,
-			{ revision: baseMark.revision, localId: baseMark.id },
+			getDetachOutputCellId(baseMark),
 			baseMark.count,
 			currMark.changes,
 			follows,

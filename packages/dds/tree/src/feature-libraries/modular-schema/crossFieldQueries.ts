@@ -70,8 +70,4 @@ export interface RebaseNodeManager<T = unknown> {
 export interface DetachedNodeEntry<T = unknown> {
 	nodeChange?: NodeId;
 	fieldData?: T;
-	currentId?: ChangeAtomId;
-	newId?: ChangeAtomId;
-
-	// XXX: Tree for build
 }
