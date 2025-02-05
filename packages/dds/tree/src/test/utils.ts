@@ -368,8 +368,7 @@ export class TestTreeProviderLite {
 	private readonly runtimeFactory: MockContainerRuntimeFactoryForReconnection;
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
-	private readonly runtimeMap: Map<SharedTreeWithConnectionStateSetter, MockContainerRuntime> =
-		new Map();
+	private readonly containerRuntimes: Set<MockContainerRuntime> = new Set();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -412,7 +411,7 @@ export class TestTreeProviderLite {
 				TestTreeProviderLite.treeId,
 			) as SharedTreeWithConnectionStateSetter;
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
-			this.runtimeMap.set(tree, containerRuntime);
+			this.containerRuntimes.add(containerRuntime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -432,8 +431,8 @@ export class TestTreeProviderLite {
 		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
 		// flush messages from individual runtimes in the order they were created.
 		if (this.flushMode === FlushMode.TurnBased) {
-			this.runtimeMap.forEach((runtime) => {
-				runtime.flush();
+			this.containerRuntimes.forEach((containerRuntime) => {
+				containerRuntime.flush();
 			});
 		}
 		this.runtimeFactory.processSomeMessages(

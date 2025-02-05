@@ -32,7 +32,10 @@ export const maxSequenceId = (a: SequenceId, b: SequenceId): SequenceId =>
  * The indexInBatch value of the previous commit will depend on how many ops were in the previous batch of messages received.
  */
 export const getUpperBoundOfPreviousSequenceId = (sequenceId: SequenceId): SequenceId => {
-	assert(Number.isFinite(sequenceId.indexInBatch), "indexInBatch must not be infinity");
+	assert(
+		sequenceId.indexInBatch === undefined || Number.isFinite(sequenceId.indexInBatch),
+		"indexInBatch must not be infinity",
+	);
 	return sequenceId.indexInBatch === undefined || sequenceId.indexInBatch === 0
 		? {
 				sequenceNumber: brand(sequenceId.sequenceNumber - 1),
