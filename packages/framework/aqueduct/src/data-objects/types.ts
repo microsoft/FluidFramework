@@ -45,15 +45,8 @@ export interface IDataObjectProps<I extends DataObjectTypes = DataObjectTypes> {
 }
 
 /**
- * A class that has a factory that can create a `DataObject` and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The kind of `DataObject`.
- *
- * @privateRemarks
- * Having both `factory` and constructor is redundant.
- * TODO: It appears the factory is what's used, so the constructor should be removed once factory provides strong typing.
- *
+ * An object that has a factory that can create a data object.
+ * @typeParam T - The type of the data object.
  * @internal
  */
 export type DataObjectKind<T = unknown> = {
