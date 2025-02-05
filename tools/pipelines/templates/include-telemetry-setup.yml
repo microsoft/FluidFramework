@@ -58,6 +58,8 @@ steps:
       set -eu -o pipefail
       mkdir -p ${{ parameters.pathForTelemetryGeneratorInstall }}
 
+      echo "NPM_CONFIG_USERCONFIG: $NPM_CONFIG_USERCONFIG"
+
 - task: Npm@1
   displayName: 'Install telemetry-generator'
   retryCountOnTaskFailure: 4
