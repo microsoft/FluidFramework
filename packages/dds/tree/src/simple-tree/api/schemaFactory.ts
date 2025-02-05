@@ -198,7 +198,7 @@ export const schemaStatics = {
 	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
 	 *
 	 * @remarks
-	 * The number is a [double-precision 64-bit binary format IEEE 754](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) value, however there are some exceptions:
+	 * The number is a {@link https://en.wikipedia.org/wiki/Double-precision_floating-point_format | double-precision 64-bit binary format IEEE 754}} value, however there are some exceptions:
 	 * - `NaN`, and the infinities are converted to `null` (and may therefore only be used where `null` is allowed by the schema).
 	 * - `-0` may be converted to `0` in some cases.
 	 *
@@ -219,7 +219,7 @@ export const schemaStatics = {
 	 * {@link TreeNodeSchema} for JavaScript `null`.
 	 *
 	 * @remarks
-	 * There are good [reasons to avoid using null](https://www.npmjs.com/package/%40rushstack/eslint-plugin#rushstackno-new-null) in JavaScript, however sometimes it is desired.
+	 * There are good {@link https://www.npmjs.com/package/%40rushstack/eslint-plugin#rushstackno-new-null | reasons to avoid using null} in JavaScript, however sometimes it is desired.
 	 * This {@link TreeNodeSchema} node provides the option to include nulls in trees when desired.
 	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
 	 */
