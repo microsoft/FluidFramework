@@ -74,13 +74,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
-    detachHead?(): {
-        merge(): void;
-        pause(): Promise<void>;
-        dispose(): void;
-    };
-    // (undocumented)
     readonly disposed: boolean;
+    // (undocumented)
+    readonly enterStagingMode: () => StageControls;
     generateDocumentUniqueId(): number | string;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
@@ -398,6 +394,14 @@ Promise<FluidDataStoreRegistryEntry> | FluidDataStoreRegistryEntry
 export interface OpAttributionKey {
     seq: number;
     type: "op";
+}
+
+// @alpha @sealed (undocumented)
+export interface StageControls {
+    // (undocumented)
+    readonly commitChanges: () => void;
+    // (undocumented)
+    readonly discardChanges: () => void;
 }
 
 // @alpha (undocumented)

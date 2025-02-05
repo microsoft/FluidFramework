@@ -98,6 +98,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessagesContent,
 	type ISummarizerNodeWithGC,
+	type StageControls,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -3479,10 +3480,15 @@ export class ContainerRuntime
 		return result;
 	}
 
-	enterStagingMode = (): { commitChanges(): void; discardChanges(): void } => {
+	enterStagingMode = (): StageControls => {
 		const checkpoint = this.outbox.getBatchCheckpoints(true);
 		const branchInfo = {
 			discardChanges: () => {
+				assert(
+					checkpoint.blobAttachBatch.isEmpty() && checkpoint.idAllocationBatch.isEmpty(),
+					"other batches must be empty",
+				);
+
 				checkpoint.mainBatch.rollback();
 				checkpoint.unblockFlush();
 			},

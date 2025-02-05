@@ -51,8 +51,7 @@ class RootDataObject extends DataObject {
 	}
 
 	public enterStagingMode() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.context.containerRuntime.enterStagingMode!();
+		return this.context.containerRuntime.enterStagingMode();
 	}
 }
 

@@ -171,6 +171,7 @@ export class BatchManager {
 	public checkpoint(): IBatchCheckpoint {
 		const startPoint = this.pendingBatch.length;
 		return {
+			isEmpty: () => this.empty,
 			rollback: () => {
 				if (this.options.rollback === undefined) {
 					if (!this.empty) {
