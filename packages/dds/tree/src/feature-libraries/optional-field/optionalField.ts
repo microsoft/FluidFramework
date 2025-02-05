@@ -648,7 +648,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 	buildChildChanges: (changes: Iterable<[number, NodeId]>): OptionalChangeset => {
 		return {
 			moves: [],
-			childChanges: Array.from(changes).map(([index, childChange]) => {
+			childChanges: Array.from(changes, ([index, childChange]) => {
 				assert(index === 0, 0x404 /* Optional fields only support a single child node */);
 				return ["self", childChange];
 			}),
