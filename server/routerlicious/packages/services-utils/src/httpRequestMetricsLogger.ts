@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { IBasicRestWrapperMetricProps } from "@fluidframework/server-services-client";
+import {
+	convertAxiosErrorToNetorkError,
+	type IBasicRestWrapperMetricProps,
+} from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export const logHttpMetrics = (requestProps: IBasicRestWrapperMetricProps) => {
@@ -14,11 +17,8 @@ export const logHttpMetrics = (requestProps: IBasicRestWrapperMetricProps) => {
 	);
 	httpMetric.setProperty("successful", axiosError ? false : true);
 	if (axiosError) {
-		if (axiosError.config) {
-			// Since we send requests to riddler with the token in the body this would potentially log the token unless we redact it
-			axiosError.config.data = "FLUID_REDACTED";
-		}
-		httpMetric.error("HttpRequest failed", axiosError);
+		const networkError = convertAxiosErrorToNetorkError(axiosError);
+		httpMetric.error("HttpRequest failed", networkError);
 	} else {
 		httpMetric.success("HttpRequest completed");
 	}

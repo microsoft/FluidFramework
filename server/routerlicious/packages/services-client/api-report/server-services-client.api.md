@@ -52,6 +52,9 @@ export const canWrite: (scopes: string[]) => boolean;
 // @internal (undocumented)
 export const choose: () => string;
 
+// @internal (undocumented)
+export function convertAxiosErrorToNetorkError(error: AxiosError): NetworkError;
+
 // @internal
 export function convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree, unreferenced?: true | undefined): ISummaryTree;
 

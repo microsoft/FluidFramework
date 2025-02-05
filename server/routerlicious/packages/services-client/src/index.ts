@@ -28,6 +28,7 @@ export {
 	isNetworkError,
 	NetworkError,
 	throwFluidServiceNetworkError,
+	convertAxiosErrorToNetorkError,
 } from "./error";
 export { choose, getRandomName } from "./generateNames";
 export { GitManager } from "./gitManager";
