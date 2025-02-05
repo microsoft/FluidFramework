@@ -21,19 +21,19 @@ parameters:
   default: $(Agent.TempDirectory)/global-download-npmrc
 
 steps:
-# Force a "compile-time" error in the pipeline if this template is used in an unsupported way.
-{{ if ne(variables['System.TeamProject'], 'internal') }}:
-  "Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported.": error
-# - task: Bash@3
-#   displayName: Initialize .npmrc
-#   condition:
-#   inputs:
-#     targetType: 'inline'
-#     script: |
-#       set -eu -o pipefail
+# # Force a "compile-time" error in the pipeline if this template is used in an unsupported way.
+# {{ if ne(variables['System.TeamProject'], 'internal') }}:
+#  "Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported.": error
+- task: Bash@3
+  displayName: Fail on unsupported scenarios
+  condition: ne(variables['System.TeamProject'], 'internal')
+  inputs:
+    targetType: 'inline'
+    script: |
+      set -eu -o pipefail
 
-#       echo "##vso[task.logissue type=error]Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported."
-#       exit 1
+      echo "##vso[task.logissue type=error]Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported."
+      exit 1
 
 - task: Bash@3
   displayName: Initialize .npmrc
