@@ -10,6 +10,7 @@ parameters:
 # It should be an empty directory so that it doesn't interfere with anything else.
 # The caller of this template will need to know this in order to point to the correct locations for the handlers,
 # which will be under <this path>/node_modules/@ff-internal/telemetry-generator/dist/handlers/.
+# It must be provided as an absolute path.
 - name: pathForTelemetryGeneratorInstall
   type: string
 
@@ -51,18 +52,14 @@ steps:
     officeFeedUrl: ${{ parameters.officeFeedUrl }}
 
 - task: Bash@3
-  displayName: Create install directory for telemetry-generator
+  displayName: 'Install telemetry-generator'
+  retryCountOnTaskFailure: 4
   inputs:
     targetType: 'inline'
     script: |
       set -eu -o pipefail
+
       mkdir -p ${{ parameters.pathForTelemetryGeneratorInstall }}
+      cd ${{ parameters.pathForTelemetryGeneratorInstall }}
 
-      echo "NPM_CONFIG_USERCONFIG: $NPM_CONFIG_USERCONFIG"
-
-- task: Bash@3
-  displayName: 'Install telemetry-generator'
-  retryCountOnTaskFailure: 4
-  inputs:
-    workingDirectory: ${{ parameters.pathForTelemetryGeneratorInstall }}
-    script: 'npm install @ff-internal/telemetry-generator@${{ parameters.versionToInstall }}'
+      npm install @ff-internal/telemetry-generator@${{ parameters.versionToInstall }}

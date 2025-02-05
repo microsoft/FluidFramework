@@ -104,4 +104,5 @@ steps:
   retryCountOnTaskFailure: 4
   inputs:
     workingDirectory: ${{ parameters.testWorkspace }}
+    targetType: 'inline'
     script: 'npm install @ff-internal/aria-logger'

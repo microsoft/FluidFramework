@@ -150,6 +150,7 @@ stages:
           retryCountOnTaskFailure: 4
           inputs:
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            targetType: 'inline'
             script: 'npm install'
 
         # Run tests
@@ -279,6 +280,7 @@ stages:
           retryCountOnTaskFailure: 4
           inputs:
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            targetType: 'inline'
             script: 'npm install'
 
         # Run tests
@@ -408,6 +410,7 @@ stages:
           retryCountOnTaskFailure: 4
           inputs:
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ testPackage }}
+            targetType: 'inline'
             script: 'npm install'
 
         - task: Npm@1
@@ -524,6 +527,7 @@ stages:
           retryCountOnTaskFailure: 4
           inputs:
             workingDirectory: ${{ variables.testWorkspace }}/node_modules/${{ variables.testPackage }}
+            targetType: 'inline'
             script: 'npm install'
 
         # We run both types of tests in the same bash step so we can make sure to run the second set even if the first

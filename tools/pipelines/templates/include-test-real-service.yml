@@ -264,6 +264,7 @@ stages:
           retryCountOnTaskFailure: 10
           inputs:
             workingDirectory: ${{ parameters.testWorkspace }}
+            targetType: 'inline'
             script: 'npm install $(Initialize.testPackageTgz) ${{ parameters.loggerPackage }}'
 
         # Download Test Files & Install Extra Dependencies
@@ -331,6 +332,7 @@ stages:
             retryCountOnTaskFailure: 10
             inputs:
               workingDirectory: ${{ parameters.testWorkspace }}
+              targetType: 'inline'
               script: 'npm install'
 
         - ${{ if eq(parameters.cacheCompatVersionsInstalls, true) }}:
