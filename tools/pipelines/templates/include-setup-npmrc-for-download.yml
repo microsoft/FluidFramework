@@ -16,11 +16,24 @@ parameters:
 # Location for the .npmrc file that will be used to authenticate to the internal ADO feeds.
 # This is a global location that will be used by all npm tasks in the pipeline.
 # Consumers of this template don't need to provide it; it's a parameter just for reusability.
-- name: npmrcPath
+- name: npmrcLocation
   type: string
-  default: $(Agent.TempDirectory)/global-download-npmrc/
+  default: $(Agent.TempDirectory)/global-download-npmrc
 
 steps:
+# Force a "compile-time" error in the pipeline if this template is used in an unsupported way.
+{{ if ne(variables['System.TeamProject'], 'internal') }}:
+  "Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported.": error
+# - task: Bash@3
+#   displayName: Initialize .npmrc
+#   condition:
+#   inputs:
+#     targetType: 'inline'
+#     script: |
+#       set -eu -o pipefail
+
+#       echo "##vso[task.logissue type=error]Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported."
+#       exit 1
 
 - task: Bash@3
   displayName: Initialize .npmrc
@@ -29,8 +42,8 @@ steps:
     script: |
       set -eu -o pipefail
 
-      mkdir -p ${{ parameters.npmrcPath }}
-      cd ${{ parameters.npmrcPath }}
+      mkdir -p ${{ parameters.npmrcLocation }}
+      cd ${{ parameters.npmrcLocation }}
 
       echo "Generating .npmrc"
 
@@ -47,14 +60,14 @@ steps:
   displayName: 'Authenticate to internal ADO feeds'
   retryCountOnTaskFailure: 1
   inputs:
-    workingFile: ${{ parameters.npmrcPath }}/.npmrc
+    workingFile: ${{ parameters.npmrcLocation }}/.npmrc
 
 - task: Bash@3
   displayName: Use the authenticated .npmrc file globally
   inputs:
     targetType: 'inline'
     script: |
-      TARGET_FILE=${{ parameters.npmrcPath }}/.npmrc
+      TARGET_FILE=${{ parameters.npmrcLocation }}/.npmrc
 
       # Configure the copied file to be the default user-level .npmrc file, so all invocations of npm use it.
       # Particularly relevant for the ones that occur when we install older version for compat tests.
