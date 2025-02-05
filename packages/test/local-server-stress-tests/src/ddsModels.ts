@@ -117,8 +117,7 @@ const covertLocalServerStateToDdsState = async (
 			...state.random,
 			handle: () => {
 				const { tag, handle } = state.random.pick(allHandles);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const realHandle = toFluidHandleInternal(handle!);
+				const realHandle = toFluidHandleInternal(handle);
 				return {
 					tag,
 					absolutePath: realHandle.absolutePath,
@@ -165,13 +164,16 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 		...globalObjects.filter((v) => v.handle !== undefined),
 	];
 
-	const subOp = JSON.parse(JSON.stringify(op.op), (key, value) => {
+	// we always serialize and then deserialize withe a handle look
+	// up, as this ensure we all do the same thing, regardless of if
+	// we are replaying from a file with serialized generated operations, or
+	// running live with in-memory generated operations.
+	const subOp = JSON.parse(JSON.stringify(op.op), (key, value: unknown) => {
 		if (isObject(value) && "absolutePath" in value && "tag" in value) {
 			const entry = allHandles.find((h) => h.tag === value.tag);
 			assert(entry !== undefined, "entry must exist");
 			return entry.handle;
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 		return value;
 	});
 	await baseModel.reducer(await covertLocalServerStateToDdsState(state), subOp);
