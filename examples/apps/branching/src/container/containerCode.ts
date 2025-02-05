@@ -13,15 +13,11 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
-
+import { getChangesFromHealthBot } from "./getChangesFromHealthBot.js";
 import {
 	applyDiffToGroceryList,
-	diffGroceryListPOJO,
-	extractGroceryListPOJO,
 	GroceryListFactory,
 	type GroceryListChanges,
-	type GroceryListPOJO,
 	type IGroceryList,
 } from "./groceryList/index.js";
 
@@ -42,28 +38,6 @@ export type GroceryListAppEntryPoint = {
 	readonly getSuggestions: () => Promise<PrivateChanges>;
 };
 
-const getSuggestions = async (groceryList: IGroceryList): Promise<PrivateChanges> => {
-	const stringifiedOriginal = extractGroceryListPOJO(groceryList);
-	const pojoOriginal: GroceryListPOJO = JSON.parse(stringifiedOriginal);
-	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
-	const pojoSuggestions: GroceryListPOJO = JSON.parse(stringifiedSuggestions);
-	const changes = diffGroceryListPOJO(pojoOriginal, pojoSuggestions);
-	console.log(
-		"Suggestions:",
-		pojoSuggestions,
-		"\nAdds:",
-		changes.adds,
-		"\nRemovals:",
-		changes.removals,
-	);
-
-	return {
-		changes,
-		acceptChanges: () => applyDiffToGroceryList(groceryList, changes),
-		rejectChanges: () => {},
-	};
-};
-
 export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 	public get IRuntimeFactory(): IRuntimeFactory {
 		return this;
@@ -80,9 +54,17 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 				containerRuntime,
 				groceryListId,
 			);
+			const getSuggestions = async () => {
+				const changes = await getChangesFromHealthBot(groceryList);
+				return {
+					changes,
+					acceptChanges: () => applyDiffToGroceryList(groceryList, changes),
+					rejectChanges: () => {},
+				};
+			};
 			return {
 				groceryList,
-				getSuggestions: async () => getSuggestions(groceryList),
+				getSuggestions,
 			};
 		};
 
