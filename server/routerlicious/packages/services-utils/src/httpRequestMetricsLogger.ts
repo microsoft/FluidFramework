@@ -7,15 +7,18 @@ import type { IBasicRestWrapperMetricProps } from "@fluidframework/server-servic
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export const logHttpMetrics = (requestProps: IBasicRestWrapperMetricProps) => {
-	if (requestProps.axiosError) {
-		if (requestProps.axiosError.config) {
+	const { axiosError, ...sanitizedRequestProps } = requestProps;
+	const httpMetric = Lumberjack.newLumberMetric(
+		LumberEventName.RestWrapper,
+		sanitizedRequestProps,
+	);
+	httpMetric.setProperty("successful", axiosError ? false : true);
+	if (axiosError) {
+		if (axiosError.config) {
 			// Since we send requests to riddler with the token in the body this would potentially log the token unless we redact it
-			requestProps.axiosError.config.data = "FLUID_REDACTED";
+			axiosError.config.data = "FLUID_REDACTED";
 		}
-	}
-	const httpMetric = Lumberjack.newLumberMetric(LumberEventName.RestWrapper, requestProps);
-	if (requestProps.axiosError) {
-		httpMetric.error("HttpRequest failed");
+		httpMetric.error("HttpRequest failed", axiosError);
 	} else {
 		httpMetric.success("HttpRequest completed");
 	}
