@@ -26,9 +26,11 @@ steps:
   displayName: Initialize .npmrc
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.npmrcPath }}
     script: |
       set -eu -o pipefail
+
+      mkdir -p ${{ parameters.npmrcPath }}
+      cd ${{ parameters.npmrcPath }}
 
       echo "Generating .npmrc"
 
@@ -41,9 +43,8 @@ steps:
       echo "always-auth=true" >> ./.npmrc
       cat .npmrc
 
-# Auth to internal ADO feeds
 - task: npmAuthenticate@0
-  displayName: 'npm authenticate (internal ADO feeds)'
+  displayName: 'Authenticate to internal ADO feeds'
   retryCountOnTaskFailure: 1
   inputs:
     workingFile: ${{ parameters.npmrcPath }}/.npmrc
