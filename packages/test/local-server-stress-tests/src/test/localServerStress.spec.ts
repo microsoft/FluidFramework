@@ -62,6 +62,8 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 				tag: state.tag("blob"),
 			}),
 			10,
+			// local server doesn't support detached blobs
+			(state) => !state.isDetached,
 		],
 		[
 			async (state) => ({
@@ -101,6 +103,6 @@ describe("Local Server Stress", () => {
 		// only: [99],
 		saveFailures,
 		// saveSuccesses,
-		skip: [67, 77, 99],
+		skip: [67, 77],
 	});
 });
