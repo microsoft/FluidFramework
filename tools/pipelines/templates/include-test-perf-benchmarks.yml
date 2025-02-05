@@ -25,7 +25,7 @@ parameters:
   type: string
 
 # Path where the packages with perf tests will be installed.
-# The template will create it, setup an .npmrc file so Fluid packages can be resolved from our Dev Feed, and install aria-logger in it.
+# The template will create it, and install aria-logger in it.
 - name: testWorkspace
   type: string
 
@@ -60,6 +60,11 @@ steps:
         SourceBranch=$(Build.SourceBranch)
       "
 
+- template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
+  parameters:
+    downloadFeedUrl: ${{ parameters.downloadFeedUrl }}
+    officeFeedUrl: ${{ parameters.officeFeedUrl }}
+
 - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
   parameters:
     downloadFeedUrl: ${{ parameters.downloadFeedUrl }}
@@ -92,34 +97,6 @@ steps:
     targetType: 'inline'
     script: |
       mkdir ${{ parameters.testWorkspace }}
-
-- task: Bash@3
-  displayName: Initialize npmrc
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.testWorkspace }}
-    script: |
-      set -eu -o pipefail
-
-      echo Initialize package
-      npm init --yes
-
-      echo Generating .npmrc
-      # Default feed that contains all our internal builds and mirrors external sources like npm.
-      echo "registry=${{ parameters.downloadFeedUrl }}" >> ./.npmrc
-      echo "always-auth=true" >> ./.npmrc
-
-      # For some internal dependencies in the @microsoft scope
-      echo "@microsoft:registry=${{ parameters.officeFeedUrl }}" >> ./.npmrc
-      echo "always-auth=true" >> ./.npmrc
-      cat .npmrc
-
-# Auth to internal feed
-- task: npmAuthenticate@0
-  displayName: 'npm authenticate (internal feed)'
-  retryCountOnTaskFailure: 1
-  inputs:
-    workingFile: ${{ parameters.testWorkspace }}/.npmrc
 
 # Install aria-logger
 - task: Npm@1

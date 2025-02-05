@@ -1,0 +1,61 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# include-build-lint template for the Build and Lint step in client build and test stability pipeline
+
+parameters:
+# URL for the feed in our ADO project that serves as centralized default location to download any dependency.
+- name: downloadFeedUrl
+  type: string
+
+# URL for the "Office feed" in our ADO project. Packages in the @microsoft scope will be resolved from here when
+# installing the dependencies for telemetry generator and aria-logger.
+- name: officeFeedUrl
+  type: string
+
+# Location for the .npmrc file that will be used to authenticate to the internal ADO feeds.
+# This is a global location that will be used by all npm tasks in the pipeline.
+# Consumers of this template don't need to provide it; it's a parameter just for reusability.
+- name: npmrcPath
+  type: string
+  default: $(Agent.TempDirectory)/global-download-npmrc/
+
+steps:
+
+- task: Bash@3
+  displayName: Initialize .npmrc
+  inputs:
+    targetType: 'inline'
+    workingDirectory: ${{ parameters.npmrcPath }}
+    script: |
+      set -eu -o pipefail
+
+      echo "Generating .npmrc"
+
+      # Default feed that contains all our internal builds and mirrors external sources like npm.
+      echo "registry=${{ parameters.downloadFeedUrl }}" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+
+      # For some internal dependencies in the @microsoft scope
+      echo "@microsoft:registry=${{ parameters.officeFeedUrl }}" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+      cat .npmrc
+
+# Auth to internal ADO feeds
+- task: npmAuthenticate@0
+  displayName: 'npm authenticate (internal ADO feeds)'
+  retryCountOnTaskFailure: 1
+  inputs:
+    workingFile: ${{ parameters.npmrcPath }}/.npmrc
+
+- task: Bash@3
+  displayName: Use the authenticated .npmrc file globally
+  inputs:
+    targetType: 'inline'
+    script: |
+      TARGET_FILE=${{ parameters.npmrcPath }}/.npmrc
+
+      # Configure the copied file to be the default user-level .npmrc file, so all invocations of npm use it.
+      # Particularly relevant for the ones that occur when we install older version for compat tests.
+      echo "Setting NPM_CONFIG_USERCONFIG to '$TARGET_FILE'"
+      echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$TARGET_FILE"
