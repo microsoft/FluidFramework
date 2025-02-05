@@ -13,11 +13,54 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { GroceryListFactory } from "./groceryList/index.js";
+import {
+	applyDiffToGroceryList,
+	diffGroceryListPOJO,
+	extractGroceryListPOJO,
+	GroceryListFactory,
+	type GroceryListModifications,
+	type GroceryListPOJO,
+	type IGroceryList,
+} from "./groceryList/index.js";
+import { NETWORK_askHealthBotForSuggestions } from "./healthBot.js";
 
 const groceryListId = "grocery-list";
 const groceryListRegistryKey = "grocery-list";
 const groceryListFactory = new GroceryListFactory();
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type PrivateChanges = {
+	readonly changes: GroceryListModifications;
+	readonly acceptChanges: () => void;
+	readonly rejectChanges: () => void;
+};
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type GroceryListAppEntryPoint = {
+	readonly groceryList: IGroceryList;
+	readonly getSuggestions: () => Promise<PrivateChanges>;
+};
+
+const getSuggestionsFromHealthBot = async (
+	groceryList: IGroceryList,
+): Promise<GroceryListModifications> => {
+	const stringifiedOriginal = extractGroceryListPOJO(groceryList);
+	const pojoOriginal: GroceryListPOJO = JSON.parse(stringifiedOriginal);
+	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
+	const pojoSuggestions: GroceryListPOJO = JSON.parse(stringifiedSuggestions);
+	const { adds, removals } = diffGroceryListPOJO(pojoOriginal, pojoSuggestions);
+	console.log("Suggestions:", pojoSuggestions, "\nAdds:", adds, "\nRemovals:", removals);
+	return { adds, removals };
+};
+
+const getSuggestions = async (groceryList: IGroceryList): Promise<PrivateChanges> => {
+	const changes = await getSuggestionsFromHealthBot(groceryList);
+	return {
+		changes,
+		acceptChanges: () => applyDiffToGroceryList(groceryList, changes),
+		rejectChanges: () => {},
+	};
+};
 
 export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 	public get IRuntimeFactory(): IRuntimeFactory {
@@ -30,7 +73,16 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 	): Promise<IRuntime> {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
-		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, groceryListId);
+		): Promise<FluidObject> => {
+			const groceryList = await getDataStoreEntryPoint<IGroceryList>(
+				containerRuntime,
+				groceryListId,
+			);
+			return {
+				groceryList,
+				getSuggestions: async () => getSuggestions(groceryList),
+			};
+		};
 
 		const runtime = await loadContainerRuntime({
 			context,

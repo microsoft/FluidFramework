@@ -5,47 +5,28 @@
 
 import React, { type FC, useState } from "react";
 
-import {
-	applyDiffToGroceryList,
-	diffGroceryListPOJO,
-	extractGroceryListPOJO,
-	type GroceryListPOJO,
-	type GroceryListModifications,
-	type IGroceryList,
-} from "../groceryList/index.js";
-import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
+import type { PrivateChanges } from "../containerCode.js";
+import type { IGroceryList } from "../groceryList/index.js";
 
 import { GroceryListView } from "./groceryListView.js";
 
 export interface IAppViewProps {
 	groceryList: IGroceryList;
+	getSuggestions: () => Promise<PrivateChanges>;
 }
 
-const getSuggestionsFromHealthBot = async (
-	groceryList: IGroceryList,
-): Promise<GroceryListModifications> => {
-	const stringifiedOriginal = extractGroceryListPOJO(groceryList);
-	const pojoOriginal: GroceryListPOJO = JSON.parse(stringifiedOriginal);
-	const stringifiedSuggestions = await NETWORK_askHealthBotForSuggestions(stringifiedOriginal);
-	const pojoSuggestions: GroceryListPOJO = JSON.parse(stringifiedSuggestions);
-	const { adds, removals } = diffGroceryListPOJO(pojoOriginal, pojoSuggestions);
-	console.log("Suggestions:", pojoSuggestions, "\nAdds:", adds, "\nRemovals:", removals);
-	return { adds, removals };
-};
-
-export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
-	const [suggestions, setSuggestions] = useState<GroceryListModifications | undefined>(
-		undefined,
-	);
+export const AppView: FC<IAppViewProps> = ({ groceryList, getSuggestions }: IAppViewProps) => {
+	const [privateChanges, setPrivateChanges] = useState<PrivateChanges | undefined>(undefined);
 
 	let actions;
-	if (suggestions !== undefined) {
+	if (privateChanges !== undefined) {
 		const onAcceptChanges = () => {
-			applyDiffToGroceryList(groceryList, suggestions);
-			setSuggestions(undefined);
+			privateChanges.acceptChanges();
+			setPrivateChanges(undefined);
 		};
 		const onRejectChanges = () => {
-			setSuggestions(undefined);
+			privateChanges.rejectChanges();
+			setPrivateChanges(undefined);
 		};
 		actions = (
 			<>
@@ -55,7 +36,7 @@ export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
 		);
 	} else {
 		const onGetSuggestions = () => {
-			getSuggestionsFromHealthBot(groceryList).then(setSuggestions).catch(console.error);
+			getSuggestions().then(setPrivateChanges).catch(console.error);
 		};
 		actions = <button onClick={onGetSuggestions}>Get suggestions from HealthBot!</button>;
 	}
@@ -63,7 +44,7 @@ export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
 	return (
 		<>
 			<h1>Groceries!</h1>
-			<GroceryListView groceryList={groceryList} suggestions={suggestions} />
+			<GroceryListView groceryList={groceryList} suggestions={privateChanges?.changes} />
 			{actions}
 		</>
 	);
