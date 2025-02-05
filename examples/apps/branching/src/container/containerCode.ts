@@ -13,6 +13,8 @@ import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 
+import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
+
 import {
 	applyDiffToGroceryList,
 	diffGroceryListPOJO,
@@ -21,8 +23,7 @@ import {
 	type GroceryListChanges,
 	type GroceryListPOJO,
 	type IGroceryList,
-} from "../groceryList/index.js";
-import { NETWORK_askHealthBotForSuggestions } from "../healthBot.js";
+} from "./groceryList/index.js";
 
 const groceryListId = "grocery-list";
 const groceryListRegistryKey = "grocery-list";

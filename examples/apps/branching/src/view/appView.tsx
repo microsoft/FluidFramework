@@ -5,8 +5,7 @@
 
 import React, { type FC, useState } from "react";
 
-import type { PrivateChanges } from "../container/index.js";
-import type { IGroceryList } from "../groceryList/index.js";
+import type { IGroceryList, PrivateChanges } from "../container/index.js";
 
 import { GroceryListView } from "./groceryListView.js";
 

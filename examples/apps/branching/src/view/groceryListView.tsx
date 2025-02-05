@@ -5,7 +5,7 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import type { IGroceryItem, IGroceryList, GroceryListChanges } from "../groceryList/index.js";
+import type { IGroceryItem, IGroceryList, GroceryListChanges } from "../container/index.js";
 
 export interface IGroceryItemViewProps {
 	groceryItem: IGroceryItem;

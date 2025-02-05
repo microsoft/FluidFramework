@@ -8,3 +8,10 @@ export {
 	GroceryListContainerRuntimeFactory,
 	PrivateChanges,
 } from "./containerCode.js";
+export {
+	GroceryListChanges,
+	GroceryListItemPOJO,
+	GroceryListPOJO,
+	IGroceryItem,
+	IGroceryList,
+} from "./groceryList/index.js";

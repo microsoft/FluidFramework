@@ -8,7 +8,7 @@
  * We'd probably expect the network service to be unaware of the grocery list type, and rather operate
  * on the data in a more abstract manner.
  */
-import type { GroceryListPOJO } from "./groceryList/index.js";
+import type { GroceryListPOJO } from "./container/index.js";
 
 /**
  * Simulating the case that we're making a network request to get suggestions for edits to the content,

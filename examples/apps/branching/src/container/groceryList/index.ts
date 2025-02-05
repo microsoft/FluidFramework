@@ -14,6 +14,7 @@ export {
 	IGroceryList,
 } from "./interfaces.js";
 export {
+	GroceryListItemPOJO,
 	GroceryListPOJO,
 	GroceryListChanges,
 } from "./utilsInterfaces.js";

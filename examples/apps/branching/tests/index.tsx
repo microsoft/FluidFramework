@@ -24,9 +24,9 @@ import { v4 as uuid } from "uuid";
 import {
 	GroceryListContainerRuntimeFactory,
 	type GroceryListAppEntryPoint,
+	type IGroceryList,
 	type PrivateChanges,
 } from "../src/container/index.js";
-import type { IGroceryList } from "../src/groceryList/index.js";
 import { AppView, DebugView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {

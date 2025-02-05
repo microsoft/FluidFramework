@@ -21,9 +21,9 @@ import { createRoot } from "react-dom/client";
 import {
 	GroceryListContainerRuntimeFactory,
 	type GroceryListAppEntryPoint,
+	type IGroceryList,
 	type PrivateChanges,
 } from "./container/index.js";
-import type { IGroceryList } from "./groceryList/index.js";
 import { AppView, DebugView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
