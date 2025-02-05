@@ -7,7 +7,6 @@ import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISummaryContent } from "@fluidframework/driver-definitions/internal";
 import {
 	GenericError,
 	UsageError,
@@ -57,10 +56,6 @@ export interface IOutboxParameters {
 	readonly opReentrancy: () => boolean;
 	readonly closeContainer: (error?: ICriticalContainerError) => void;
 	readonly rollback: (message: BatchMessage) => void;
-	readonly submitSummaryFn: (
-		summaryOp: ISummaryContent,
-		referenceSequenceNumber?: number,
-	) => number;
 }
 
 /**
@@ -265,21 +260,6 @@ export class Outbox {
 				limit: batchManager.options.hardLimit,
 			});
 		}
-	}
-
-	public submitSummaryMessage(
-		contents: ISummaryContent,
-		referenceSequenceNumber: number,
-	): number {
-		assert(
-			this.params.shouldSend(),
-			0x133 /* "Container disconnected when trying to submit system message" */,
-		);
-
-		// System message should not be sent in the middle of the batch.
-		assert(this.isEmpty, 0x3d4 /* System op in the middle of a batch */);
-
-		return this.params.submitSummaryFn(contents, referenceSequenceNumber);
 	}
 
 	/**
