@@ -135,9 +135,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			};
 		},
 		senderConnectionId: ClientConnectionId,
-	): void {
+	): (() => void)[] {
 		const audienceMembers = this.audience.getMembers();
 		const joiningAttendees = new Set<SessionClient>();
+		const postUpdateActions: (() => void)[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
@@ -165,10 +166,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			}
 		}
 
-		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.
 		for (const announcedAttendee of joiningAttendees) {
-			this.events.emit("attendeeJoined", announcedAttendee);
+			postUpdateActions.push(() => this.events.emit("attendeeJoined", announcedAttendee));
 		}
+		return postUpdateActions;
 	}
 
 	public onConnectionAdded(clientConnectionId: ClientConnectionId): void {

@@ -383,16 +383,18 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				this.refreshBroadcastRequested = false;
 			}
 		}
-
+		const postUpdateActions: (() => void)[] = [];
 		for (const [workspaceAddress, remoteDatastore] of Object.entries(message.content.data)) {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
-				workspace.internal.processUpdate(
-					received,
-					timeModifier,
-					remoteDatastore,
-					message.clientId,
+				postUpdateActions.push(
+					...workspace.internal.processUpdate(
+						received,
+						timeModifier,
+						remoteDatastore,
+						message.clientId,
+					),
 				);
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
@@ -408,6 +410,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}
 			}
+		}
+		for (const action of postUpdateActions) {
+			action();
 		}
 	}
 

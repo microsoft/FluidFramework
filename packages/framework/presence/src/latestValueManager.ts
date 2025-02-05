@@ -145,19 +145,22 @@ class LatestValueManagerImpl<T, Key extends string>
 		client: ISessionClient,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<T>,
-	): void {
+	): (() => void)[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
 		const currentState = allKnownStates.states[clientSessionId];
 		if (currentState !== undefined && currentState.rev >= value.rev) {
-			return;
+			return [];
 		}
 		this.datastore.update(this.key, clientSessionId, value);
-		this.events.emit("updated", {
-			client,
-			value: value.value,
-			metadata: { revision: value.rev, timestamp: value.timestamp },
-		});
+		return [
+			() =>
+				this.events.emit("updated", {
+					client,
+					value: value.value,
+					metadata: { revision: value.rev, timestamp: value.timestamp },
+				}),
+		];
 	}
 }
 

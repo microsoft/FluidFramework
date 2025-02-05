@@ -231,7 +231,7 @@ class NotificationsManagerImpl<
 		client: ISessionClient,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
-	): void {
+	): (() => void)[] {
 		const eventName = value.value.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
@@ -241,13 +241,17 @@ class NotificationsManagerImpl<
 			>;
 			this.notificationsInternal.emit(eventName, ...args);
 		} else {
-			this.events.emit(
-				"unattendedNotification",
-				value.value.name,
-				client,
-				...value.value.args,
-			);
+			return [
+				() =>
+					this.events.emit(
+						"unattendedNotification",
+						value.value.name,
+						client,
+						...value.value.args,
+					),
+			];
 		}
+		return [];
 	}
 }
 

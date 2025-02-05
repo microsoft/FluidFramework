@@ -5,6 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
@@ -393,7 +394,7 @@ class LatestMapValueManagerImpl<
 		client: SpecificSessionClient<SpecificSessionClientId>,
 		_received: number,
 		value: InternalTypes.MapValueState<T, string | number>,
-	): void {
+	): (() => void)[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId: SpecificSessionClientId = client.sessionId;
 		const currentState = (allKnownStates.states[clientSessionId] ??=
@@ -413,7 +414,7 @@ class LatestMapValueManagerImpl<
 		}
 
 		if (updatedItemKeys.length === 0) {
-			return;
+			return [];
 		}
 
 		// Store updates
@@ -424,6 +425,7 @@ class LatestMapValueManagerImpl<
 			client,
 			items: new Map<Keys, LatestValueData<T>>(),
 		};
+		const postUpdateActions: (() => void)[] = [];
 		for (const key of updatedItemKeys) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const item = value.items[key]!;
@@ -431,23 +433,29 @@ class LatestMapValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				this.events.emit("itemUpdated", {
-					client,
-					key,
-					value: item.value,
-					metadata,
-				});
+				const emitItemUpdated = (): void => {
+					assert(item.value !== undefined, "Item value must be defined.");
+					this.events.emit("itemUpdated", {
+						client,
+						key,
+						value: item.value,
+						metadata,
+					});
+				};
+				postUpdateActions.push(emitItemUpdated);
 				allUpdates.items.set(key, { value: item.value, metadata });
 			} else if (hadPriorValue !== undefined) {
-				this.events.emit("itemRemoved", {
-					client,
-					key,
-					metadata,
-				});
+				postUpdateActions.push(() =>
+					this.events.emit("itemRemoved", {
+						client,
+						key,
+						metadata,
+					}),
+				);
 			}
 		}
 		this.datastore.update(this.key, clientSessionId, currentState);
-		this.events.emit("updated", allUpdates);
+		return [() => this.events.emit("updated", allUpdates), ...postUpdateActions];
 	}
 }
 
