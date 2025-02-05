@@ -4,6 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
@@ -170,8 +171,16 @@ export class BatchManager {
 	public checkpoint(): IBatchCheckpoint {
 		const startPoint = this.pendingBatch.length;
 		return {
+			isEmpty: () => this.empty,
 			rollback: () => {
-				assert(this.options.rollback !== undefined, "must support rollback");
+				if (this.options.rollback === undefined) {
+					if (!this.empty) {
+						throw new LoggingError(
+							"BatchManager: No rollback handler provided for batch, but batch is not empty",
+						);
+					}
+					return;
+				}
 
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;

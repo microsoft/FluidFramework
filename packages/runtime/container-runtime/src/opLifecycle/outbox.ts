@@ -145,6 +145,7 @@ export class Outbox {
 			canRebase: true,
 			rollback: params.rollback,
 		});
+		//* TODO: Figure out rollback requirements/impl for these two batch managers
 		this.blobAttachBatch = new BatchManager({ hardLimit, canRebase: true });
 		this.idAllocationBatch = new BatchManager({
 			hardLimit,

@@ -5,8 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { DataObject } from "@fluidframework/aqueduct/internal";
-import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	type IContainer,
 	type IRuntimeFactory,
@@ -51,9 +50,8 @@ class RootDataObject extends DataObject {
 		}, {});
 	}
 
-	public detachHead() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.context.containerRuntime.detachHead!();
+	public enterStagingMode() {
+		return this.context.containerRuntime.enterStagingMode();
 	}
 }
 
@@ -173,11 +171,11 @@ const createClients = async (deltaConnectionServer: ILocalDeltaConnectionServer)
 };
 
 describe("Scenario Test", () => {
-	it("detach head and merge", async () => {
+	it("enter staging mode and merge", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const branchData = clients.original.dataObject.detachHead();
+		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
 			clients.original.dataObject.state,
 			clients.loaded.dataObject.state,
@@ -212,7 +210,7 @@ describe("Scenario Test", () => {
 			"Expected mainline change to reach branch",
 		);
 
-		branchData.merge();
+		branchData.commitChanges();
 
 		await waitForSave(clients);
 
@@ -223,11 +221,11 @@ describe("Scenario Test", () => {
 		);
 	});
 
-	it("detach head  and dispose", async () => {
+	it("enter staging mode and discard staged changes", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const branchData = clients.original.dataObject.detachHead();
+		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
 			clients.original.dataObject.state,
 			clients.loaded.dataObject.state,
@@ -262,7 +260,7 @@ describe("Scenario Test", () => {
 			"states should match after save",
 		);
 
-		branchData.dispose();
+		branchData.discardChanges();
 
 		await waitForSave(clients);
 

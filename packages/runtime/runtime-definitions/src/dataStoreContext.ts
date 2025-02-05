@@ -189,6 +189,16 @@ export interface IDataStore {
 }
 
 /**
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface StageControls {
+	readonly commitChanges: () => void;
+	readonly discardChanges: () => void;
+}
+
+/**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
@@ -208,8 +218,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 */
 	orderSequentially(callback: () => void): void;
 
-	detachHead?(): { merge(): void; pause(): Promise<void>; dispose(): void };
-
+	readonly enterStagingMode: () => StageControls;
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.

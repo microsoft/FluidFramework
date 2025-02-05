@@ -98,6 +98,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessagesContent,
 	type ISummarizerNodeWithGC,
+	type StageControls,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -3479,29 +3480,26 @@ export class ContainerRuntime
 		return result;
 	}
 
-	detachHead(): { merge(): void; pause(): Promise<void>; dispose(): void } {
+	enterStagingMode = (): StageControls => {
 		const checkpoint = this.outbox.getBatchCheckpoints(true);
-		let paused = false;
 		const branchInfo = {
-			dispose: () => {
+			discardChanges: () => {
+				assert(
+					checkpoint.blobAttachBatch.isEmpty() && checkpoint.idAllocationBatch.isEmpty(),
+					"other batches must be empty",
+				);
+
 				checkpoint.mainBatch.rollback();
 				checkpoint.unblockFlush();
 			},
-			pause: async () => {
-				if (!paused) {
-					paused = true;
-					return this._deltaManager.inbound.pause();
-				}
-			},
-			merge: () => {
-				if (paused) this._deltaManager.inbound.resume();
+			commitChanges: () => {
 				checkpoint.unblockFlush();
 				this.outbox.flush();
 			},
 		};
 
 		return branchInfo;
-	}
+	};
 
 	/**
 	 * Returns the aliased data store's entryPoint, given the alias.

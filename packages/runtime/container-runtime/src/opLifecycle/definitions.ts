@@ -48,6 +48,7 @@ export interface IBatch<TMessages extends BatchMessage[] = BatchMessage[]> {
 
 export interface IBatchCheckpoint {
 	rollback: () => void;
+	isEmpty: () => boolean;
 }
 
 /**
