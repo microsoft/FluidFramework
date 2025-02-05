@@ -5,4 +5,4 @@
 
 export { DataObject, createDataObjectKind } from "./dataObject.js";
 export { PureDataObject } from "./pureDataObject.js";
-export type { DataObjectKind, DataObjectTypes, IDataObjectProps } from "./types.js";
+export type { DataObjectTypes, IDataObjectProps } from "./types.js";

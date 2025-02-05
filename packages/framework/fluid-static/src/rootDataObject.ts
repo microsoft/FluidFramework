@@ -7,7 +7,6 @@ import {
 	BaseContainerRuntimeFactory,
 	DataObject,
 	DataObjectFactory,
-	type DataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -20,6 +19,7 @@ import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js
 import type {
 	CompatibilityMode,
 	ContainerSchema,
+	DataObjectKind,
 	IRootDataObject,
 	LoadableObjectKind,
 	LoadableObjectKindRecord,

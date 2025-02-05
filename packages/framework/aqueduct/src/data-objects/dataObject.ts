@@ -11,7 +11,7 @@ import {
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectKind, DataObjectTypes } from "./types.js";
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -85,11 +85,11 @@ export abstract class DataObject<
 
 /**
  * Utility for creating SharedObjectKind instances for data objects.
- * @typeParam T - {@link DataObjectKind}.
+ * @typeParam T - The kind of data object.
  * @internal
  */
-export function createDataObjectKind<T extends DataObjectKind>(
+export function createDataObjectKind<T extends new (...any) => DataObject>(
 	factory: T,
-): T & SharedObjectKind<T extends DataObjectKind<infer I> ? I : unknown> {
-	return factory as T & SharedObjectKind<T extends DataObjectKind<infer I> ? I : unknown>;
+): T & SharedObjectKind<InstanceType<T>> {
+	return factory as T & SharedObjectKind<InstanceType<T>>;
 }
