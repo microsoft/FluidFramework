@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import { strict as assert } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
@@ -171,8 +172,8 @@ describe("Presence", () => {
 				});
 			});
 
-			describe.skip("new workspace", () => {
-				it("with 'workspaceActivated' event for States workspace ", () => {
+			describe.skip("DatastoreUpdate", () => {
+				it("with emitting 'workspaceActivated' event for unregistered States workspace ", () => {
 					// Setup
 					const listener = spy();
 					presence.events.on("workspaceActivated", listener);
@@ -195,7 +196,7 @@ describe("Presence", () => {
 											},
 										},
 									},
-									"s:name:testWorkspace": {
+									"s:name:testStateWorkspace": {
 										"latest": {
 											"sessionId-1": {
 												"rev": 1,
@@ -213,9 +214,9 @@ describe("Presence", () => {
 
 					// Verify
 					assert.strictEqual(listener.calledOnce, true);
-					assert.strictEqual(listener.calledWith("name:testWorkspace", "States"), true);
+					assert.strictEqual(listener.calledWith("name:testStateWorkspace", "States"), true);
 				});
-				it("with 'workspaceActivated' event for Notifications workspace", () => {
+				it("with emitting 'workspaceActivated' event for unregistered Notifications workspace", () => {
 					// Setup
 					const listener = spy();
 					presence.events.on("workspaceActivated", listener);
@@ -257,7 +258,110 @@ describe("Presence", () => {
 
 					// Verify
 					assert.strictEqual(listener.calledOnce, true);
-					assert.strictEqual(listener.calledWith("name:testWorkspace", "Notifications"), true);
+					assert.strictEqual(
+						listener.calledWith("name:testNotificationWorkspace", "Notifications"),
+						true,
+					);
+				});
+				it("with emitting 'workspaceActivated' event for unregistered workspace of unknown type ", () => {
+					// Setup
+					const listener = spy();
+					presence.events.on("workspaceActivated", listener);
+
+					// Act
+					presence.processSignal(
+						"",
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								sendTimestamp: clock.now - 10,
+								avgLatency: 20,
+								data: {
+									"system:presence": {
+										"clientToSessionId": {
+											"client1": {
+												"rev": 0,
+												"timestamp": 0,
+												"value": "sessionId-2",
+											},
+										},
+									},
+									"u:name:testUnknownWorkspace": {
+										"latest": {
+											"sessionId-1": {
+												"rev": 1,
+												"timestamp": 0,
+												"value": { x: 1, y: 1, z: 1 },
+											},
+										},
+									},
+								},
+							},
+							clientId: "client1",
+						},
+						false,
+					);
+
+					// Verify
+					assert.strictEqual(listener.calledOnce, true);
+					assert.strictEqual(
+						listener.calledWith("name:name:testUnknownWorkspace", "Unknown"),
+						true,
+					);
+				});
+				it("with NOT emitting 'workspaceActivated' event for already registered workspace", () => {
+					// Setup
+					const listener = spy();
+					presence.events.on("workspaceActivated", listener);
+					presence.getStates("name:testStateWorkspace", {});
+					presence.getNotifications("name:testNotificationWorkspace", {});
+
+					// Act
+					presence.processSignal(
+						"",
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								sendTimestamp: clock.now - 10,
+								avgLatency: 20,
+								data: {
+									"system:presence": {
+										"clientToSessionId": {
+											"client1": {
+												"rev": 0,
+												"timestamp": 0,
+												"value": "sessionId-2",
+											},
+										},
+									},
+									"s:name:testStateWorkspace": {
+										"latest": {
+											"sessionId-1": {
+												"rev": 1,
+												"timestamp": 0,
+												"value": { x: 1, y: 1, z: 1 },
+											},
+										},
+									},
+									"n:name:testNotificationWorkspace": {
+										"testEvents": {
+											"sessionId-1": {
+												"rev": 0,
+												"timestamp": 0,
+												"value": { "name": "newId", "args": [77] },
+												"ignoreUnmonitored": true,
+											},
+										},
+									},
+								},
+							},
+							clientId: "client1",
+						},
+						false,
+					);
+
+					// Verify
+					assert.strictEqual(listener.calledOn, false);
 				});
 			});
 		});
