@@ -1,7 +1,14 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# include-build-lint template for the Build and Lint step in client build and test stability pipeline
+# The include-setup-npmrc-for-download template creates an .npmrc file which uses the appropriate feeds from our ADO
+# org to download packages from the right locations, adds the necessary authentication to it, and sets configuration so
+# for the rest of the job execution all invocations of npm (EXCEPT installs through Npm@ tasks) use it.
+# The file is created in a "global" location that should not interfere with anything else.
+#
+# Npm@ tasks always override the user-level .npmrc file with one of their own, so they do not work with this
+# configuration. For that reason, using them to install dependencies should be avoided. Using them for other kinds
+# of npm invocations should be fine.
 
 parameters:
 # URL for the feed in our ADO project that serves as centralized default location to download any dependency.
