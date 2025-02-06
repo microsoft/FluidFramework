@@ -20,17 +20,24 @@ const GroceryItemView: FC<IGroceryItemViewProps> = ({
 			: groceryItem.suggestion === "remove"
 				? "#fcc"
 				: undefined;
+
+	const action =
+		groceryItem.suggestion === "remove" ? (
+			<button
+				onClick={groceryItem.rejectRemovalSuggestion}
+				style={{ border: "none", background: "none" }}
+			>
+				↩️
+			</button>
+		) : (
+			<button onClick={groceryItem.removeItem} style={{ border: "none", background: "none" }}>
+				❌
+			</button>
+		);
 	return (
 		<tr style={backgroundColor !== undefined ? { backgroundColor } : undefined}>
 			<td>{groceryItem.name}</td>
-			<td>
-				<button
-					onClick={groceryItem.removeItem}
-					style={{ border: "none", background: "none" }}
-				>
-					❌
-				</button>
-			</td>
+			<td>{action}</td>
 		</tr>
 	);
 };

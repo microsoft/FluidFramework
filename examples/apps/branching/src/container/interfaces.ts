@@ -31,6 +31,7 @@ export interface ISuggestionGroceryItem {
 	readonly name: string;
 	readonly suggestion: SuggestionState;
 	readonly removeItem: () => void;
+	readonly rejectRemovalSuggestion: () => void;
 }
 
 export interface ISuggestionGroceryListEvents extends IEvent {

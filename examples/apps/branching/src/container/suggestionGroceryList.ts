@@ -27,6 +27,7 @@ class SuggestionGroceryItem implements ISuggestionGroceryItem {
 		public readonly name: string,
 		public suggestion: SuggestionState,
 		public readonly removeItem: () => void,
+		public readonly rejectRemovalSuggestion: () => void,
 	) {}
 }
 
@@ -64,6 +65,12 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 					() => {
 						this.removeItem(preExistingSuggestionGroceryItem.id);
 					},
+					() => {
+						if (preExistingSuggestionGroceryItem.suggestion === "remove") {
+							preExistingSuggestionGroceryItem.suggestion = "none";
+							this._events.emit("itemSuggestionChanged", preExistingSuggestionGroceryItem);
+						}
+					},
 				);
 				this._suggestionGroceryItems.set(
 					preExistingSuggestionGroceryItem.id,
@@ -82,6 +89,12 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 				"add",
 				() => {
 					this.removeItem(suggestedAddition.id);
+				},
+				() => {
+					if (suggestedAddition.suggestion === "remove") {
+						suggestedAddition.suggestion = "none";
+						this._events.emit("itemSuggestionChanged", suggestedAddition);
+					}
 				},
 			);
 			this._suggestionGroceryItems.set(suggestedAddition.id, suggestedAddition);
@@ -164,9 +177,20 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 	};
 
 	private readonly onItemAdded = (item: IGroceryItem) => {
-		const addedItem = new SuggestionGroceryItem(item.id, item.name, "none", () => {
-			this.removeItem(addedItem.id);
-		});
+		const addedItem = new SuggestionGroceryItem(
+			item.id,
+			item.name,
+			"none",
+			() => {
+				this.removeItem(addedItem.id);
+			},
+			() => {
+				if (addedItem.suggestion === "remove") {
+					addedItem.suggestion = "none";
+					this._events.emit("itemSuggestionChanged", addedItem);
+				}
+			},
+		);
 		this._suggestionGroceryItems.set(addedItem.id, addedItem);
 		this._events.emit("itemAdded", addedItem);
 	};
