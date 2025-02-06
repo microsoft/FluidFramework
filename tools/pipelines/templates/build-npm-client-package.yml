@@ -859,17 +859,3 @@ extends:
                     echo "Listing files in '$WORK_FOLDER'"
                     ls -laR $WORK_FOLDER;
                     npx telemetry-generator --handlerModule "$(pathToTelemetryGeneratorHandlers)/stageTimingRetriever.js" --dir "$WORK_FOLDER";
-              - task: Bash@3
-                displayName: Upload npm logs
-                condition: succeededOrFailed()
-                continueOnError: true
-                inputs:
-                  targetType: 'inline'
-                  workingDirectory: $(Agent.TempDirectory)
-                  script: |
-                    set -eu -o pipefail
-                    TARFILE_NAME=npm-logs-telemetry-upload.tar
-                    # Put all files in a tarball, in case there's more than one
-                    tar -cvf $TARFILE_NAME /home/cloudtest/.npm/_logs/*
-                    # Seems to need an absolute path
-                    echo "##vso[task.uploadfile]$(Agent.TempDirectory)/$TARFILE_NAME";
