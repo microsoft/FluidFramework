@@ -106,8 +106,6 @@ stages:
           # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          downloadFeedUrl: $(ado-feeds-ff-download-only)
-          officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
           pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
@@ -236,8 +234,6 @@ stages:
           # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          downloadFeedUrl: $(ado-feeds-ff-download-only)
-          officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
           pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
@@ -366,8 +362,6 @@ stages:
           # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
-          downloadFeedUrl: $(ado-feeds-ff-download-only)
-          officeFeedUrl: $(ado-feeds-office)
           testFilesPath: $(testFilesPath)
           testWorkspace: $(testWorkspace)
           pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
@@ -508,8 +502,6 @@ stages:
             # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
-            downloadFeedUrl: $(ado-feeds-ff-download-only)
-            officeFeedUrl: $(ado-feeds-office)
             testFilesPath: $(testFilesPath)
             testWorkspace: $(testWorkspace)
             pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)

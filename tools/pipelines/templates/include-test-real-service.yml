@@ -201,9 +201,6 @@ stages:
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
-          parameters:
-            downloadFeedUrl: $(ado-feeds-ff-download-only)
-            officeFeedUrl: $(ado-feeds-office)
 
         # Download artifact
         - task: DownloadPipelineArtifact@2

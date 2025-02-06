@@ -21,15 +21,6 @@ parameters:
   type: string
   default: latest
 
-# URL for the feed in our ADO project that serves as centralized default location to download any dependency.
-- name: downloadFeedUrl
-  type: string
-
-# URL for the "Office feed" in our ADO project. Packages in the @microsoft scope will be resolved from here when
-# installing the dependencies for telemetry generator and aria-logger.
-- name: officeFeedUrl
-  type: string
-
 steps:
 - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -42,14 +33,9 @@ steps:
       echo "
       Parameters:
         pathForTelemetryGeneratorInstall=${{ parameters.pathForTelemetryGeneratorInstall }}
-        downloadFeedUrl=${{ parameters.downloadFeedUrl }}
-        officeFeedUrl=${{ parameters.officeFeedUrl }}
       "
 
 - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
-  parameters:
-    downloadFeedUrl: ${{ parameters.downloadFeedUrl }}
-    officeFeedUrl: ${{ parameters.officeFeedUrl }}
 
 - task: Bash@3
   displayName: 'Install telemetry-generator'

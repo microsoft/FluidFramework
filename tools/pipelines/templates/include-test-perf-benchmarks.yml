@@ -15,15 +15,6 @@ parameters:
 - name: artifactBuildId
   type: string
 
-# URL for the feed in our ADO project that serves as centralized default location to download any dependency.
-- name: downloadFeedUrl
-  type: string
-
-# URL for the "Office feed" in our ADO project. Packages in the @microsoft scope will be resolved from here when
-# installing the dependencies for telemetry generator and aria-logger.
-- name: officeFeedUrl
-  type: string
-
 # Path where the packages with perf tests will be installed.
 # The template will create it, and install aria-logger in it.
 - name: testWorkspace
@@ -51,8 +42,6 @@ steps:
       Variables:
         artifactBuildId=${{ parameters.artifactBuildId }}
         artifactPipeline=${{ parameters.artifactPipeline }}
-        downloadFeedUrl=${{ parameters.downloadFeedUrl }}
-        officeFeedUrl=${{ parameters.officeFeedUrl }}
         testFilesPath=${{ parameters.testFilesPath }}
         testWorkspace=${{ parameters.testWorkspace }}
 
@@ -61,14 +50,9 @@ steps:
       "
 
 - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
-  parameters:
-    downloadFeedUrl: ${{ parameters.downloadFeedUrl }}
-    officeFeedUrl: ${{ parameters.officeFeedUrl }}
 
 - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
   parameters:
-    downloadFeedUrl: ${{ parameters.downloadFeedUrl }}
-    officeFeedUrl: ${{ parameters.officeFeedUrl }}
     pathForTelemetryGeneratorInstall: ${{ parameters.pathForTelemetryGeneratorInstall }}
 
 # Download artifact with test files

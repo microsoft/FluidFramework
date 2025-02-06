@@ -11,26 +11,14 @@
 # of npm invocations should be fine.
 
 parameters:
-# URL for the feed in our ADO project that serves as centralized default location to download any dependency.
-- name: downloadFeedUrl
-  type: string
-
-# URL for the "Office feed" in our ADO project. Packages in the @microsoft scope will be resolved from here when
-# installing the dependencies for telemetry generator and aria-logger.
-- name: officeFeedUrl
-  type: string
-
-# Location for the .npmrc file that will be used to authenticate to the internal ADO feeds.
-# This is a global location that will be used by all npm tasks in the pipeline.
-# Consumers of this template don't need to provide it; it's a parameter just for reusability.
+# Location for the .npmrc file.
+# NOTE: Do not override the default value. It's a parameter just for reusability.
 - name: npmrcLocation
   type: string
   default: $(Agent.TempDirectory)/global-download-npmrc
 
 steps:
-# # Force a "compile-time" error in the pipeline if this template is used in an unsupported way.
-# {{ if ne(variables['System.TeamProject'], 'internal') }}:
-#  "Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported.": error
+# A (pipeline definition) parse-time error would be better but couldn't get it to work
 - task: Bash@3
   displayName: Fail on unsupported scenarios
   condition: ne(variables['System.TeamProject'], 'internal')
@@ -41,6 +29,23 @@ steps:
 
       echo "##vso[task.logissue type=error]Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported."
       exit 1
+
+- task: Bash@3
+  displayName: Ensure necessary values exist
+  inputs:
+    targetType: 'inline'
+    script: |
+      set -eu -o pipefail
+
+      if [ -z "$(ado-feeds-ff-download-only)" ]; then
+        echo "##vso[task.logissue type=error]Runtime variable 'ado-feeds-ff-download-only' must have a value. Make sure the 'ado-feeds' variable group is in scope."
+        exit 1
+      fi
+
+      if [ -z "$(ado-feeds-office)" ]; then
+        echo "##vso[task.logissue type=error]Runtime variable 'ado-feeds-office' must have a value. Make sure the 'ado-feeds' variable group is in scope."
+        exit 1
+      fi
 
 - task: Bash@3
   displayName: Initialize .npmrc
@@ -55,11 +60,11 @@ steps:
       echo "Generating .npmrc"
 
       # Default feed that contains all our internal builds and mirrors external sources like npm.
-      echo "registry=${{ parameters.downloadFeedUrl }}" >> ./.npmrc
+      echo "registry=$(ado-feeds-ff-download-only)" >> ./.npmrc
       echo "always-auth=true" >> ./.npmrc
 
       # For some internal dependencies in the @microsoft scope
-      echo "@microsoft:registry=${{ parameters.officeFeedUrl }}" >> ./.npmrc
+      echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
       echo "always-auth=true" >> ./.npmrc
       cat .npmrc
 

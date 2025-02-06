@@ -44,8 +44,6 @@ stages:
     steps:
     - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
       parameters:
-        downloadFeedUrl: $(ado-feeds-ff-download-only)
-        officeFeedUrl: $(ado-feeds-office)
         pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
     - task: Bash@3
