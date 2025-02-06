@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# The include-setup-npmrc-for-download template creates an .npmrc file which uses the appropriate feeds from our ADO
+# Creates an .npmrc file which uses the appropriate feeds from our ADO
 # org to download packages from the right locations, adds the necessary authentication to it, and sets configuration so
 # for the rest of the job execution all invocations of npm (EXCEPT installs through Npm@ tasks) use it.
 # The file is created in a "global" location that should not interfere with anything else.
