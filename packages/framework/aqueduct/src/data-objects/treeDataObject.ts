@@ -17,7 +17,7 @@ import {
 import { PureDataObject } from "./pureDataObject.js";
 
 /**
- * Generic DataObject for shared trees.
+ * {@link @fluidframework/tree#SharedTree}-backed {@link PureDataObject | data object}.
  * @alpha
  */
 export abstract class TreeDataObject<
