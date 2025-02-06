@@ -10,14 +10,12 @@ export {
 	IGroceryItem,
 	IGroceryList,
 	IGroceryListEvents,
+} from "./groceryList/index.js";
+export {
 	ISuggestionGroceryItem,
 	ISuggestionGroceryList,
 	ISuggestionGroceryListEvents,
-	SuggestionGroceryList,
 	SuggestionState,
-} from "./groceryList/index.js";
-export {
-	GroceryListAppEntryPoint,
-	GroceryListContainerRuntimeFactory,
-	PrivateChanges,
-} from "./runtimeFactory.js";
+} from "./interfaces.js";
+export { SuggestionGroceryList } from "./suggestionGroceryList.js";
+export { GroceryListContainerRuntimeFactory } from "./runtimeFactory.js";

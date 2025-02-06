@@ -7,11 +7,9 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
 import { v4 as uuid } from "uuid";
 
-import { getChangesFromHealthBot } from "../getChangesFromHealthBot.js";
-
+import { getChangesFromHealthBot } from "./getChangesFromHealthBot.js";
+import type { IGroceryItem, IGroceryList } from "./groceryList/index.js";
 import type {
-	IGroceryItem,
-	IGroceryList,
 	ISuggestionGroceryItem,
 	ISuggestionGroceryList,
 	ISuggestionGroceryListEvents,
@@ -34,7 +32,10 @@ class SuggestionGroceryItem implements ISuggestionGroceryItem {
 
 export class SuggestionGroceryList implements ISuggestionGroceryList {
 	private readonly _suggestionGroceryItems = new Map<string, SuggestionGroceryItem>();
-	private _takingSuggestions = false;
+	private _inStagingMode = false;
+	public get inStagingMode() {
+		return this._inStagingMode;
+	}
 
 	private _disposed = false;
 
@@ -73,7 +74,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 	}
 
 	public readonly addItem = (name: string) => {
-		if (this._takingSuggestions) {
+		if (this._inStagingMode) {
 			// Use timestamp as a hack for a consistent sortable order.  Prefixed with 'z' to sort last.
 			const suggestedAddition = new SuggestionGroceryItem(
 				`z${Date.now()}-${uuid()}`,
@@ -95,7 +96,7 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 	};
 
 	public readonly removeItem = (id: string) => {
-		if (this._takingSuggestions) {
+		if (this._inStagingMode) {
 			const suggestedRemoval = this._suggestionGroceryItems.get(id);
 			if (suggestedRemoval !== undefined) {
 				if (suggestedRemoval.suggestion === "add") {
@@ -121,7 +122,8 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 				this.removeItem(removal.id);
 			}
 		};
-		this._takingSuggestions = true;
+		this._inStagingMode = true;
+		this._events.emit("enterStagingMode");
 		asyncGetSuggestions().catch(console.error);
 	};
 
@@ -136,13 +138,14 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 		for (const add of adds) {
 			add.removeItem();
 		}
-		this._takingSuggestions = false;
+		this._inStagingMode = false;
 		for (const add of adds) {
 			this.addItem(add.name);
 		}
 		for (const removal of removals) {
 			removal.removeItem();
 		}
+		this._events.emit("leaveStagingMode");
 	};
 
 	public readonly rejectSuggestions = () => {
@@ -154,7 +157,8 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 				this._events.emit("itemSuggestionChanged", item);
 			}
 		}
-		this._takingSuggestions = false;
+		this._inStagingMode = false;
+		this._events.emit("leaveStagingMode");
 	};
 
 	private readonly onItemAdded = (item: IGroceryItem) => {

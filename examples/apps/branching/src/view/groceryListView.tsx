@@ -5,19 +5,23 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import type { IGroceryItem, IGroceryList, GroceryListChanges } from "../container/index.js";
+import type { ISuggestionGroceryList, ISuggestionGroceryItem } from "../container/index.js";
 
 export interface IGroceryItemViewProps {
-	groceryItem: IGroceryItem;
-	suggestRemoval: boolean;
+	groceryItem: ISuggestionGroceryItem;
 }
 
 export const GroceryItemView: FC<IGroceryItemViewProps> = ({
 	groceryItem,
-	suggestRemoval,
 }: IGroceryItemViewProps) => {
+	const backgroundColor =
+		groceryItem.suggestion === "add"
+			? "#cfc"
+			: groceryItem.suggestion === "remove"
+				? "#fcc"
+				: undefined;
 	return (
-		<tr style={suggestRemoval ? { backgroundColor: "#fcc" } : undefined}>
+		<tr style={backgroundColor !== undefined ? { backgroundColor } : undefined}>
 			<td>{groceryItem.name}</td>
 			<td>
 				<button
@@ -27,20 +31,6 @@ export const GroceryItemView: FC<IGroceryItemViewProps> = ({
 					❌
 				</button>
 			</td>
-		</tr>
-	);
-};
-
-export interface ISuggestedGroceryItemViewProps {
-	name: string;
-}
-
-export const SuggestedGroceryItemView: FC<ISuggestedGroceryItemViewProps> = ({
-	name,
-}: ISuggestedGroceryItemViewProps) => {
-	return (
-		<tr>
-			<td style={{ backgroundColor: "#cfc" }}>{name}</td>
 		</tr>
 	);
 };
@@ -84,15 +74,15 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
 };
 
 export interface IGroceryListViewProps {
-	groceryList: IGroceryList;
-	suggestions?: GroceryListChanges | undefined;
+	groceryList: ISuggestionGroceryList;
 }
 
 export const GroceryListView: FC<IGroceryListViewProps> = ({
 	groceryList,
-	suggestions,
 }: IGroceryListViewProps) => {
-	const [groceryItems, setGroceryItems] = useState<IGroceryItem[]>(groceryList.getItems());
+	const [groceryItems, setGroceryItems] = useState<ISuggestionGroceryItem[]>(
+		groceryList.getItems(),
+	);
 	useEffect(() => {
 		const updateItems = () => {
 			// TODO: This blows away all the grocery items, making the granular add/delete events
@@ -101,66 +91,29 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 		};
 		groceryList.events.on("itemAdded", updateItems);
 		groceryList.events.on("itemRemoved", updateItems);
+		groceryList.events.on("itemSuggestionChanged", updateItems);
 
 		return () => {
 			groceryList.events.off("itemAdded", updateItems);
 			groceryList.events.off("itemRemoved", updateItems);
+			groceryList.events.off("itemSuggestionChanged", updateItems);
 		};
 	}, [groceryList]);
 
-	const groceryItemViews = groceryItems.map((groceryItem) => {
-		const augmentedGroceryItem: IGroceryItem = {
-			id: groceryItem.id,
-			name: groceryItem.name,
-			removeItem: () => {
-				if (suggestions !== undefined) {
-					suggestions.removals.push({
-						id: groceryItem.id,
-						name: groceryItem.name,
-					});
-				} else {
-					groceryItem.removeItem();
-				}
-			},
-		};
-		const suggestRemoval =
-			suggestions?.removals.find((removal) => removal.id === augmentedGroceryItem.id) !==
-			undefined;
-		return (
-			<GroceryItemView
-				key={augmentedGroceryItem.id}
-				groceryItem={augmentedGroceryItem}
-				suggestRemoval={suggestRemoval}
-			/>
-		);
-	});
-	const suggestedGroceryItemViews =
-		suggestions?.adds.map((add, index) => (
-			<SuggestedGroceryItemView key={index} name={add.name} />
-		)) ?? [];
-
-	const onAddItem = (name: string) => {
-		if (suggestions !== undefined) {
-			suggestions.adds.push({
-				id: "newItem",
-				name,
-			});
-		} else {
-			groceryList.addItem(name);
-		}
-	};
+	const groceryItemViews = groceryItems.map((groceryItem) => (
+		<GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />
+	));
 
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<tbody>
 				{groceryItemViews}
-				{suggestedGroceryItemViews}
-				{groceryItemViews.length === 0 && suggestedGroceryItemViews.length === 0 && (
+				{groceryItemViews.length === 0 && (
 					<tr>
 						<td colSpan={1}>No items on grocery list</td>
 					</tr>
 				)}
-				<AddItemView addItem={onAddItem} />
+				<AddItemView addItem={groceryList.addItem} />
 			</tbody>
 		</table>
 	);

@@ -16,9 +16,4 @@ export {
 	IGroceryItem,
 	IGroceryList,
 	IGroceryListEvents,
-	ISuggestionGroceryItem,
-	ISuggestionGroceryList,
-	ISuggestionGroceryListEvents,
-	SuggestionState,
 } from "./interfaces.js";
-export { SuggestionGroceryList } from "./suggestionGroceryList.js";

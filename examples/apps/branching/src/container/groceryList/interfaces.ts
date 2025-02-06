@@ -31,40 +31,6 @@ export interface IGroceryList {
 	readonly disposed: boolean;
 }
 
-// #region SuggestionGroceryList interfaces
-/**
- * Interfaces for the SuggestionGroceryList class
- */
-
-export type SuggestionState = "none" | "add" | "remove";
-
-export interface ISuggestionGroceryItem {
-	readonly id: string;
-	readonly name: string;
-	readonly suggestion: SuggestionState;
-	readonly removeItem: () => void;
-}
-
-export interface ISuggestionGroceryListEvents extends IEvent {
-	(
-		event: "itemAdded" | "itemRemoved" | "itemSuggestionChanged",
-		listener: (item: ISuggestionGroceryItem) => void,
-	);
-	(event: "disposed", listener: () => void);
-}
-
-export interface ISuggestionGroceryList {
-	readonly events: IEventProvider<ISuggestionGroceryListEvents>;
-
-	readonly addItem: (name: string) => void;
-	readonly getItems: () => ISuggestionGroceryItem[];
-	readonly removeItem: (id: string) => void;
-
-	readonly getSuggestions: () => void;
-	readonly acceptSuggestions: () => void;
-	readonly rejectSuggestions: () => void;
-}
-
 // #region Utils interfaces
 /**
  * Interfaces used for extracting, diffing, and applying changes to an IGroceryList.

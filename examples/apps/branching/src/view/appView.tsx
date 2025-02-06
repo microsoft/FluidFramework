@@ -3,29 +3,38 @@
  * Licensed under the MIT License.
  */
 
-import React, { type FC, useState } from "react";
+import React, { type FC, useEffect, useState } from "react";
 
-import type { IGroceryList, PrivateChanges } from "../container/index.js";
+import type { ISuggestionGroceryList } from "../container/index.js";
 
 import { GroceryListView } from "./groceryListView.js";
 
 export interface IAppViewProps {
-	groceryList: IGroceryList;
-	getSuggestions: () => Promise<PrivateChanges>;
+	groceryList: ISuggestionGroceryList;
 }
 
-export const AppView: FC<IAppViewProps> = ({ groceryList, getSuggestions }: IAppViewProps) => {
-	const [privateChanges, setPrivateChanges] = useState<PrivateChanges | undefined>(undefined);
+export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
+	const [inStagingMode, setInStagingMode] = useState<boolean>(groceryList.inStagingMode);
+
+	useEffect(() => {
+		const handleStagingModeChanged = () => {
+			setInStagingMode(groceryList.inStagingMode);
+		};
+		groceryList.events.on("enterStagingMode", handleStagingModeChanged);
+		groceryList.events.on("leaveStagingMode", handleStagingModeChanged);
+		return () => {
+			groceryList.events.off("enterStagingMode", handleStagingModeChanged);
+			groceryList.events.off("leaveStagingMode", handleStagingModeChanged);
+		};
+	}, [groceryList]);
 
 	let actions;
-	if (privateChanges !== undefined) {
+	if (inStagingMode) {
 		const onAcceptChanges = () => {
-			privateChanges.acceptChanges();
-			setPrivateChanges(undefined);
+			groceryList.acceptSuggestions();
 		};
 		const onRejectChanges = () => {
-			privateChanges.rejectChanges();
-			setPrivateChanges(undefined);
+			groceryList.rejectSuggestions();
 		};
 		actions = (
 			<>
@@ -34,16 +43,15 @@ export const AppView: FC<IAppViewProps> = ({ groceryList, getSuggestions }: IApp
 			</>
 		);
 	} else {
-		const onGetSuggestions = () => {
-			getSuggestions().then(setPrivateChanges).catch(console.error);
-		};
-		actions = <button onClick={onGetSuggestions}>Get suggestions from HealthBot!</button>;
+		actions = (
+			<button onClick={groceryList.getSuggestions}>Get suggestions from HealthBot!</button>
+		);
 	}
 
 	return (
 		<>
 			<h1>Groceries!</h1>
-			<GroceryListView groceryList={groceryList} suggestions={privateChanges?.changes} />
+			<GroceryListView groceryList={groceryList} />
 			{actions}
 		</>
 	);
