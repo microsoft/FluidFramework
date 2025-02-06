@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { type SharedTree, SharedTreeFormatVersion } from "../../shared-tree/index.js";
+import { type ISharedTree, SharedTreeFormatVersion } from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { TreeFactory } from "../../treeFactory.js";
 
@@ -40,7 +40,7 @@ describe("SharedTree op format snapshots", () => {
 	}) {}
 
 	let containerRuntime: MockContainerRuntime;
-	let tree: SharedTree;
+	let tree: ISharedTree;
 
 	for (const versionKey of Object.keys(SharedTreeFormatVersion)) {
 		describe(`using SharedTreeFormatVersion.${versionKey}`, () => {

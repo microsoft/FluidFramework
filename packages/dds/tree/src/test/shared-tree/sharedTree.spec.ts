@@ -51,7 +51,7 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	getBranch,
-	type ISharedTree,
+	type ITreePrivate,
 	type SharedTree,
 	Tree,
 	type TreeCheckout,
@@ -1861,7 +1861,7 @@ describe("SharedTree", () => {
 				pendingOps,
 			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
+			const tree = await dataStore.getSharedObject<ITreePrivate>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
 
