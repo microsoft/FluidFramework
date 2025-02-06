@@ -94,7 +94,10 @@ describe("presence-tracker", () => {
 			// Create a second browser instance.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
-			await loadPresenceTrackerApp(page2, page.url());
+			// Like the 1-client tests, we confirm at least one successful page load with a longer timeout before running the suite.
+			// TODO:AB#28502: It's unclear this longer timeout is necessary, but the test suite failed at least once on timeout
+			// during the subsequent beforeEach hook, and loading the page once could help ensure browser cache is populated.
+			await loadPresenceTrackerApp(page2, globals.PATH);
 		}, 45000);
 
 		beforeEach(async () => {
@@ -105,12 +108,16 @@ describe("presence-tracker", () => {
 			await browser2.close();
 		});
 
-		it("Second user can join", async () => {
+		// TODO:AB#28502: This test case passes all the time, but considering the remainder of this suite has issues where browser2 doesn't
+		// actually connect to the same session as browser1, it should be audited so that it's not a false positive.
+		it.skip("Second user can join", async () => {
 			// Both browser instances should be pointing to the same URL now.
 			expect(page2.url()).toEqual(page.url());
 		});
 
-		it("Second client shows two clients connected", async () => {
+		// TODO:AB#28502: There is a false positive with this test when `loadPresenceTrackerApp` in `beforeAll` is removed or sent to `page.url()`.
+		// In those cases, the second session observed on page2 is not from the first session.
+		it.skip("Second client shows two clients connected", async () => {
 			// Get the client list from the second browser instance; it should show two connected.
 			const elementHandle = await page2.waitForFunction(() =>
 				document.getElementById("focus-div"),

@@ -3,47 +3,48 @@
  * Licensed under the MIT License.
  */
 
-import React, { FC, useState } from "react";
+import React, { type FC, useState } from "react";
 
-import { askHealthBotForSuggestions } from "../healthBot.js";
-import { IGroceryList } from "../modelInterfaces.js";
+import type { IGroceryList, PrivateChanges } from "../container/index.js";
 
 import { GroceryListView } from "./groceryListView.js";
 
 export interface IAppViewProps {
 	groceryList: IGroceryList;
+	getSuggestions: () => Promise<PrivateChanges>;
 }
 
-const getBranchedSuggestionsFromHealthBot = async (groceryList: IGroceryList) => {
-	const branchedGroceryList = await groceryList.branch();
-	await askHealthBotForSuggestions(branchedGroceryList);
-	return branchedGroceryList;
-};
+export const AppView: FC<IAppViewProps> = ({ groceryList, getSuggestions }: IAppViewProps) => {
+	const [privateChanges, setPrivateChanges] = useState<PrivateChanges | undefined>(undefined);
 
-export const AppView: FC<IAppViewProps> = ({ groceryList }: IAppViewProps) => {
-	const [branchedList, setBranchedList] = useState<IGroceryList | undefined>(undefined);
-	let branchedView;
-	if (branchedList !== undefined) {
-		branchedView = (
-			<div style={{ backgroundColor: "#ddd" }}>
-				<h2>Suggested changes:</h2>
-				<GroceryListView groceryList={branchedList} />
-				<button>Accept these changes</button>
-			</div>
+	let actions;
+	if (privateChanges !== undefined) {
+		const onAcceptChanges = () => {
+			privateChanges.acceptChanges();
+			setPrivateChanges(undefined);
+		};
+		const onRejectChanges = () => {
+			privateChanges.rejectChanges();
+			setPrivateChanges(undefined);
+		};
+		actions = (
+			<>
+				<button onClick={onAcceptChanges}>Accept these changes</button>
+				<button onClick={onRejectChanges}>Reject these changes</button>
+			</>
 		);
 	} else {
 		const onGetSuggestions = () => {
-			getBranchedSuggestionsFromHealthBot(groceryList)
-				.then(setBranchedList)
-				.catch(console.error);
+			getSuggestions().then(setPrivateChanges).catch(console.error);
 		};
-		branchedView = <button onClick={onGetSuggestions}>Get suggestions from HealthBot!</button>;
+		actions = <button onClick={onGetSuggestions}>Get suggestions from HealthBot!</button>;
 	}
+
 	return (
 		<>
 			<h1>Groceries!</h1>
-			<GroceryListView groceryList={groceryList} />
-			{branchedView}
+			<GroceryListView groceryList={groceryList} suggestions={privateChanges?.changes} />
+			{actions}
 		</>
 	);
 };

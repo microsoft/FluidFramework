@@ -8,11 +8,10 @@ import { strict as assert } from "node:assert";
 import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
+import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import { SharedMap } from "@fluidframework/map/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { AxiosResponse } from "axios";
-import { ContainerSchema, type IFluidContainer } from "fluid-framework";
-// eslint-disable-next-line import/no-internal-modules -- Need SharedMap to test it
-import { SharedMap } from "fluid-framework/legacy";
 
 import {
 	createAzureClient,

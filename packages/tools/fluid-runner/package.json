@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-runner",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "Utility for running various functionality inside a Fluid Framework environment",
 	"homepage": "https://fluidframework.com",
 	"repository": {
