@@ -93,9 +93,9 @@ class GroceryList implements IGroceryList {
 		const changedId = changed.key;
 		const newName = this.map.get(changedId);
 		if (newName === undefined) {
-			const deletedItem = this._groceryItems.get(changedId);
+			const removedItem = this._groceryItems.get(changedId);
 			this._groceryItems.delete(changedId);
-			this._events.emit("itemRemoved", deletedItem);
+			this._events.emit("itemRemoved", removedItem);
 		} else {
 			const newGroceryItem = new GroceryItem(changedId, newName, () => {
 				this.removeItem(changedId);
