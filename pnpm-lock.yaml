@@ -22,9 +22,6 @@ patchedDependencies:
   '@microsoft/api-extractor@7.47.8':
     hash: ldzfpsbo3oeejrejk775zxplmi
     path: patches/@microsoft__api-extractor@7.47.8.patch
-  emoji-picker-element:
-    hash: 5a2u6enr2pgcyqkk3gd76xtaiu
-    path: patches/emoji-picker-element.patch
 
 importers:
 
@@ -1064,8 +1061,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
       emoji-picker-element:
-        specifier: ^1.26.0
-        version: 1.26.0(patch_hash=5a2u6enr2pgcyqkk3gd76xtaiu)
+        specifier: ^1.26.1
+        version: 1.26.1
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
@@ -21743,8 +21740,8 @@ packages:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
     engines: {node: '>=12'}
 
-  emoji-picker-element@1.26.0:
-    resolution: {integrity: sha512-IcffFc+LNymYScmMuxOJooZulOCOACGc1Xvj+s7XeKqpc+0EoZfWrV9o4rBjEiuM7XjsgcEjD+m5DHg0aIfnnA==}
+  emoji-picker-element@1.26.1:
+    resolution: {integrity: sha512-XgQ9s2JdmworiqLfJC7eGbzQHGv8yb8U9XofjeRAnOMYaeLh0MfwVAz9oG1YE2U2WnzU0Pys1axMjYtPKJ7YSg==}
 
   emoji-regex@10.4.0:
     resolution: {integrity: sha512-EC+0oUMY1Rqm4O6LLrgjtYDvcVYTy7chDnM4Q7030tP4Kwj3u/pR6gP9ygnp2CJMK5Gq+9Q2oqmrFJAz01DXjw==}
@@ -36727,7 +36724,7 @@ snapshots:
 
   emittery@0.13.1: {}
 
-  emoji-picker-element@1.26.0(patch_hash=5a2u6enr2pgcyqkk3gd76xtaiu): {}
+  emoji-picker-element@1.26.1: {}
 
   emoji-regex@10.4.0: {}
 
