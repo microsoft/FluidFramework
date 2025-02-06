@@ -2076,8 +2076,7 @@ export class MergeTree {
 			// will win against the obliterate we're processing, hence the early exit.
 			if (
 				segment.seq === UnassignedSequenceNumber &&
-				segment.obliteratePrecedingInsertion !== undefined &&
-				segment.obliteratePrecedingInsertion.seq === UnassignedSequenceNumber &&
+				segment.obliteratePrecedingInsertion?.seq === UnassignedSequenceNumber &&
 				seq !== UnassignedSequenceNumber
 			) {
 				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.

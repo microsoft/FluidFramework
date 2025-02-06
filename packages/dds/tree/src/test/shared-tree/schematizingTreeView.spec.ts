@@ -21,9 +21,10 @@ import {
 	type InsertableField,
 	type InsertableTypedNode,
 	type UnsafeUnknownSchema,
+	type TransactionResult,
+	type TransactionResultExt,
+	toStoredSchema,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -34,8 +35,6 @@ import {
 import { insert } from "../sequenceRootUtils.js";
 import {
 	CheckoutFlexTreeView,
-	type TransactionResult,
-	type TransactionResultExt,
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../shared-tree/index.js";
