@@ -142,4 +142,42 @@ describe("State eventing", () => {
 			false,
 		);
 	});
+
+	it("is consistent with attendee + latest value manager + latest map value manager updates", () => {
+		latest.events.on("updated", () => {
+			assert(presence.getAttendee("client1") !== undefined);
+			const attendee = presence.getAttendee("client1");
+			assert.deepEqual(latest.clientValue(attendee).value, { x: 1, y: 1, z: 1 });
+		});
+		latestMap.events.on("updated", () => {
+			assert(presence.getAttendee("client1") !== undefined);
+			const attendee = presence.getAttendee("client1");
+			assert.deepEqual(latestMap.clientValue(attendee).get("key1")?.value, { a: 1, b: 1 });
+			assert.deepEqual(latestMap.clientValue(attendee).get("key2")?.value, { c: 1, d: 1 });
+		});
+		presence.events.on("attendeeJoined", (attendee) => {
+			assert.deepEqual(latest.clientValue(attendee).value, { x: 1, y: 1, z: 1 });
+			assert.deepEqual(latestMap.clientValue(attendee).get("key1")?.value, { a: 1, b: 1 });
+			assert.deepEqual(latestMap.clientValue(attendee).get("key2")?.value, { c: 1, d: 1 });
+		});
+		presence.processSignal(
+			"",
+			{
+				type: datastoreUpdateType,
+				content: {
+					sendTimestamp: clock.now - 10,
+					avgLatency: 20,
+					data: {
+						"system:presence": attendeeUpdate,
+						"s:name:testWorkspace": {
+							...latestUpdate,
+							...latestMapUpdate,
+						},
+					},
+				},
+				clientId: "client1",
+			},
+			false,
+		);
+	});
 });
