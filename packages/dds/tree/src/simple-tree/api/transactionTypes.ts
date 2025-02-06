@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNode } from "../simple-tree/index.js";
+import type { TreeNode } from "../core/index.js";
 
 /**
  * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
