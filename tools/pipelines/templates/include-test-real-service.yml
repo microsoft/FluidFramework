@@ -237,7 +237,6 @@ stages:
           inputs:
             targetType: 'inline'
             workingDirectory: ${{ parameters.testWorkspace }}
-            # Note: $(ado-feeds-ff-download-only) and $(ado-feeds-office) come from the ado-feeds variable group
             script: |
               set -eu -o pipefail
 

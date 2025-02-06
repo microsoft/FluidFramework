@@ -103,7 +103,6 @@ stages:
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
-          # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
@@ -231,7 +230,6 @@ stages:
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
-          # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
@@ -359,7 +357,6 @@ stages:
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
-          # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
           artifactBuildId: $(artifactBuildId)
           artifactPipeline: $(artifactPipeline)
           testFilesPath: $(testFilesPath)
@@ -499,7 +496,6 @@ stages:
         steps:
         - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
           parameters:
-            # ado-feeds-ff-download-only and ado-feeds-office come from the ado-feeds variable group
             artifactBuildId: $(artifactBuildId)
             artifactPipeline: $(artifactPipeline)
             testFilesPath: $(testFilesPath)
