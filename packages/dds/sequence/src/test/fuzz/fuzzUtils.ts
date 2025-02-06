@@ -27,7 +27,12 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { PropertySet, Side, type AdjustParams } from "@fluidframework/merge-tree/internal";
 
-import type { MapLike, SequenceInterval, SharedStringClass } from "../../index.js";
+import type {
+	InteriorSequencePlace,
+	MapLike,
+	SequenceInterval,
+	SharedStringClass,
+} from "../../index.js";
 import { type IIntervalCollection } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
@@ -74,8 +79,10 @@ export interface AnnotateAdjustRange extends RangeSpec {
 	adjust: { key: string; value: AdjustParams }[];
 }
 
-export interface ObliterateRange extends RangeSpec {
+export interface ObliterateRange {
 	type: "obliterateRange";
+	start: InteriorSequencePlace;
+	end: InteriorSequencePlace;
 }
 
 // For non-interval collection fuzzing, annotating text would also be useful.
@@ -339,9 +346,18 @@ export function createSharedStringGeneratorOperations(
 	}
 
 	async function obliterateRange(state: ClientOpState): Promise<ObliterateRange> {
+		const max = state.client.channel.getLength() - 1;
+		const num1 = state.random.integer(0, max);
+		const num2 = state.random.integer(0, max);
+		const start = Math.min(num1, num2);
+		const end = Math.max(num1, num2);
+		const startSide =
+			start === end ? Side.Before : state.random.pick([Side.Before, Side.After]);
+		const endSide = start === end ? Side.After : state.random.pick([Side.Before, Side.After]);
 		return {
 			type: "obliterateRange",
-			...exclusiveRange(state),
+			start: { pos: start, side: startSide },
+			end: { pos: end, side: endSide },
 		};
 	}
 
@@ -408,6 +424,7 @@ function setSharedStringRuntimeOptions(runtime: IFluidDataStoreRuntime) {
 	runtime.options.intervalStickinessEnabled = true;
 	runtime.options.mergeTreeEnableObliterate = true;
 	runtime.options.mergeTreeEnableAnnotateAdjust = true;
+	runtime.options.mergeTreeEnableSidedObliterate = true;
 }
 export class SharedStringFuzzFactory extends SharedStringFactory {
 	public async load(
@@ -667,6 +684,7 @@ export function makeSharedStringOperationGenerator(
 		annotateAdjustRange,
 		removeRangeLeaveChar,
 		lengthSatisfies,
+		obliterateRange,
 		hasNonzeroLength,
 		isShorterThanMaxLength,
 	} = createSharedStringGeneratorOperations(optionsParam);
@@ -684,6 +702,10 @@ export function makeSharedStringOperationGenerator(
 					})
 				: hasNonzeroLength,
 		],
+		// TODO:AB#17785: Once sided obliterates support specifying the start/end of the sequence,
+		// we can drop the `hasNonzeroLength` condition here and adjust the obliterate generation logic
+		// to get coverage of that in fuzz testing.
+		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
 		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
 		[annotateAdjustRange, usableWeights.annotateRange, hasNonzeroLength],
 	]);
