@@ -148,9 +148,10 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 		} else {
 			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
 			// Use timestamp as a hack for a consistent sortable order.
-			map.set(`${Date.now()}-${uuid()}`, "apple");
-			map.set(`${Date.now()}-${uuid()}`, "banana");
-			map.set(`${Date.now()}-${uuid()}`, "chocolate");
+			const timestamp = Date.now();
+			map.set(`${timestamp}-${uuid()}`, "apple");
+			map.set(`${timestamp + 1}-${uuid()}`, "banana");
+			map.set(`${timestamp + 2}-${uuid()}`, "chocolate");
 			map.bindToContext();
 		}
 
