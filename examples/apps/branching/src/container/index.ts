@@ -9,6 +9,12 @@ export {
 	GroceryListPOJO,
 	IGroceryItem,
 	IGroceryList,
+	IGroceryListEvents,
+	ISuggestionGroceryItem,
+	ISuggestionGroceryList,
+	ISuggestionGroceryListEvents,
+	SuggestionGroceryList,
+	SuggestionState,
 } from "./groceryList/index.js";
 export {
 	GroceryListAppEntryPoint,

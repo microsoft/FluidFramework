@@ -21,7 +21,7 @@ export const GroceryItemView: FC<IGroceryItemViewProps> = ({
 			<td>{groceryItem.name}</td>
 			<td>
 				<button
-					onClick={groceryItem.deleteItem}
+					onClick={groceryItem.removeItem}
 					style={{ border: "none", background: "none" }}
 				>
 					❌
@@ -100,21 +100,36 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 			setGroceryItems(groceryList.getItems());
 		};
 		groceryList.events.on("itemAdded", updateItems);
-		groceryList.events.on("itemDeleted", updateItems);
+		groceryList.events.on("itemRemoved", updateItems);
 
 		return () => {
 			groceryList.events.off("itemAdded", updateItems);
-			groceryList.events.off("itemDeleted", updateItems);
+			groceryList.events.off("itemRemoved", updateItems);
 		};
 	}, [groceryList]);
 
 	const groceryItemViews = groceryItems.map((groceryItem) => {
+		const augmentedGroceryItem: IGroceryItem = {
+			id: groceryItem.id,
+			name: groceryItem.name,
+			removeItem: () => {
+				if (suggestions !== undefined) {
+					suggestions.removals.push({
+						id: groceryItem.id,
+						name: groceryItem.name,
+					});
+				} else {
+					groceryItem.removeItem();
+				}
+			},
+		};
 		const suggestRemoval =
-			suggestions?.removals.find((removal) => removal.id === groceryItem.id) !== undefined;
+			suggestions?.removals.find((removal) => removal.id === augmentedGroceryItem.id) !==
+			undefined;
 		return (
 			<GroceryItemView
-				key={groceryItem.id}
-				groceryItem={groceryItem}
+				key={augmentedGroceryItem.id}
+				groceryItem={augmentedGroceryItem}
 				suggestRemoval={suggestRemoval}
 			/>
 		);
@@ -124,8 +139,17 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 			<SuggestedGroceryItemView key={index} name={add.name} />
 		)) ?? [];
 
-	// TODO: Consider modifying the AddItemView to add to the suggestions.adds rather than groceryList.addItem
-	// when we have suggestions.  Same for the groceryItem provided to GroceryItemView for its removal.
+	const onAddItem = (name: string) => {
+		if (suggestions !== undefined) {
+			suggestions.adds.push({
+				id: "newItem",
+				name,
+			});
+		} else {
+			groceryList.addItem(name);
+		}
+	};
+
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<tbody>
@@ -136,7 +160,7 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 						<td colSpan={1}>No items on grocery list</td>
 					</tr>
 				)}
-				<AddItemView addItem={groceryList.addItem} />
+				<AddItemView addItem={onAddItem} />
 			</tbody>
 		</table>
 	);

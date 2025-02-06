@@ -36,7 +36,7 @@ class GroceryItem implements IGroceryItem {
 	public constructor(
 		public readonly id: string,
 		public readonly name: string,
-		public readonly deleteItem: () => void,
+		public readonly removeItem: () => void,
 	) {}
 }
 
@@ -75,7 +75,8 @@ class GroceryList implements IGroceryList {
 	}
 
 	public readonly addItem = (name: string) => {
-		this.map.set(uuid(), name);
+		// Use timestamp as a hack for a consistent sortable order.
+		this.map.set(`${Date.now()}-${uuid()}`, name);
 	};
 
 	public readonly getItems = (): IGroceryItem[] => {
@@ -90,14 +91,15 @@ class GroceryList implements IGroceryList {
 		const changedId = changed.key;
 		const newName = this.map.get(changedId);
 		if (newName === undefined) {
+			const deletedItem = this._groceryItems.get(changedId);
 			this._groceryItems.delete(changedId);
-			this._events.emit("itemDeleted");
+			this._events.emit("itemRemoved", deletedItem);
 		} else {
 			const newGroceryItem = new GroceryItem(changedId, newName, () => {
 				this.removeItem(changedId);
 			});
 			this._groceryItems.set(changedId, newGroceryItem);
-			this._events.emit("itemAdded");
+			this._events.emit("itemAdded", newGroceryItem);
 		}
 	};
 
@@ -143,9 +145,10 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 			map = (await runtime.getChannel(mapId)) as ISharedMap;
 		} else {
 			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
-			map.set(uuid(), "apple");
-			map.set(uuid(), "banana");
-			map.set(uuid(), "chocolate");
+			// Use timestamp as a hack for a consistent sortable order.
+			map.set(`${Date.now()}-${uuid()}`, "apple");
+			map.set(`${Date.now()}-${uuid()}`, "banana");
+			map.set(`${Date.now()}-${uuid()}`, "chocolate");
 			map.bindToContext();
 		}
 

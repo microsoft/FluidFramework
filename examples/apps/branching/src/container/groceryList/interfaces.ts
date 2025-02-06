@@ -13,11 +13,11 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 export interface IGroceryItem {
 	readonly id: string;
 	readonly name: string;
-	readonly deleteItem: () => void;
+	readonly removeItem: () => void;
 }
 
 export interface IGroceryListEvents extends IEvent {
-	(event: "itemAdded" | "itemDeleted", listener: (item: IGroceryItem) => void);
+	(event: "itemAdded" | "itemRemoved", listener: (item: IGroceryItem) => void);
 	(event: "disposed", listener: () => void);
 }
 
@@ -27,6 +27,42 @@ export interface IGroceryList {
 	readonly addItem: (name: string) => void;
 	readonly getItems: () => IGroceryItem[];
 	readonly removeItem: (id: string) => void;
+
+	readonly disposed: boolean;
+}
+
+// #region SuggestionGroceryList interfaces
+/**
+ * Interfaces for the SuggestionGroceryList class
+ */
+
+export type SuggestionState = "none" | "add" | "remove";
+
+export interface ISuggestionGroceryItem {
+	readonly id: string;
+	readonly name: string;
+	readonly suggestion: SuggestionState;
+	readonly removeItem: () => void;
+}
+
+export interface ISuggestionGroceryListEvents extends IEvent {
+	(
+		event: "itemAdded" | "itemRemoved" | "itemSuggestionChanged",
+		listener: (item: ISuggestionGroceryItem) => void,
+	);
+	(event: "disposed", listener: () => void);
+}
+
+export interface ISuggestionGroceryList {
+	readonly events: IEventProvider<ISuggestionGroceryListEvents>;
+
+	readonly addItem: (name: string) => void;
+	readonly getItems: () => ISuggestionGroceryItem[];
+	readonly removeItem: (id: string) => void;
+
+	readonly getSuggestions: () => void;
+	readonly acceptSuggestions: () => void;
+	readonly rejectSuggestions: () => void;
 }
 
 // #region Utils interfaces
