@@ -106,12 +106,20 @@ export abstract class SequenceEventClass<
 			return set;
 		});
 
+		/*
+		 * Non-null assertions are safe here because:
+		 * - assert() ensures deltaSegments.length > 0 (except for OBLITERATE/ACKNOWLEDGED)
+		 * - sortedRanges is populated by iterating deltaSegments
+		 * - therefore items[0] and items[size-1] must exist in the non-empty set
+		 */
 		this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
-			() => this.sortedRanges.value.items[0],
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			() => this.sortedRanges.value.items[0]!,
 		);
 
 		this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
-			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1],
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1]!,
 		);
 	}
 
