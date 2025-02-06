@@ -122,6 +122,7 @@ describe("Fuzz - Top-Level", () => {
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
+				flushAutomatically: false,
 				enableGroupedBatching: true,
 			},
 			// AB#7162: see comment above.

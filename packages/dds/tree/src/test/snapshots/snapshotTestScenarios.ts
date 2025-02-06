@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { typeboxValidator } from "../../external-utilities/index.js";
@@ -49,7 +50,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		{
 			name: "tree-with-identifier-field",
 			runScenario: async (takeSnapshot) => {
-				const provider = new TestTreeProviderLite(2, factory, true);
+				const provider = new TestTreeProviderLite(2, factory, true, {
+					flushMode: FlushMode.Immediate,
+				});
 				const tree1 = provider.trees[0];
 				const sf = new SchemaFactory("com.example");
 				class SchemaWithIdentifier extends sf.object("parent", {
@@ -75,7 +78,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					bar: sf.array(sf.string),
 				});
 
-				const provider = new TestTreeProviderLite(2, factory, true);
+				const provider = new TestTreeProviderLite(2, factory, true, {
+					flushMode: FlushMode.Immediate,
+				});
 				const tree = provider.trees[0];
 
 				const view = tree.viewWith(
@@ -94,7 +99,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			name: "insert-and-remove",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("insert-and-remove");
-				const provider = new TestTreeProviderLite(2, factory, true);
+				const provider = new TestTreeProviderLite(2, factory, true, {
+					flushMode: FlushMode.Immediate,
+				});
 				const tree1 = provider.trees[0];
 				const view = tree1.viewWith(
 					new TreeViewConfiguration({
@@ -129,7 +136,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				const sf = new SchemaFactory("optional-field-scenarios");
 				const MapNode = sf.map("Map", [sf.string, sf.number]);
 
-				const provider = new TestTreeProviderLite(2, factory, true);
+				const provider = new TestTreeProviderLite(2, factory, true, {
+					flushMode: FlushMode.Immediate,
+				});
 				const tree1 = provider.trees[0];
 				const view1 = tree1.viewWith(
 					new TreeViewConfiguration({
@@ -172,7 +181,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			runScenario: async (takeSnapshot) => {
 				for (const index of [0, 1, 2, 3]) {
 					const sf = new SchemaFactory("competing-removes");
-					const provider = new TestTreeProviderLite(3, factory, true);
+					const provider = new TestTreeProviderLite(3, factory, true, {
+						flushMode: FlushMode.Immediate,
+					});
 					const view1 = provider.trees[0].viewWith(
 						new TreeViewConfiguration({
 							schema: [sf.array(sf.number)],
@@ -206,7 +217,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			name: "concurrent-inserts",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("concurrent-inserts");
-				const provider = new TestTreeProviderLite(1, factory, true);
+				const provider = new TestTreeProviderLite(1, factory, true, {
+					flushMode: FlushMode.Immediate,
+				});
 				const tree1 = provider.trees[0];
 				const view1 = tree1.viewWith(
 					new TreeViewConfiguration({
@@ -265,7 +278,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 						StringArray,
 					]) {}
 
-					const provider = new TestTreeProviderLite(1, new TreeFactory(options), true);
+					const provider = new TestTreeProviderLite(1, new TreeFactory(options), true, {
+						flushMode: FlushMode.Immediate,
+					});
 					const tree = provider.trees[0];
 					const view = tree.viewWith(
 						new TreeViewConfiguration({
@@ -312,7 +327,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			name: "has-handle",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("has-handle");
-				const provider = new TestTreeProviderLite(1, factory, true);
+				const provider = new TestTreeProviderLite(1, factory, true, {
+					flushMode: FlushMode.Immediate,
+				});
 				const tree = provider.trees[0];
 				const view = tree.viewWith(
 					new TreeViewConfiguration({
@@ -338,7 +355,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				]) {}
 				class SequenceMap extends sf.mapRecursive("Recursive Map", [() => Array]) {}
 
-				const provider = new TestTreeProviderLite(1, factory, true);
+				const provider = new TestTreeProviderLite(1, factory, true, {
+					flushMode: FlushMode.Immediate,
+				});
 				const tree = provider.trees[0];
 				const view = tree.viewWith(
 					new TreeViewConfiguration({
@@ -368,7 +387,9 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			name: "empty-root",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("test trees");
-				const provider = new TestTreeProviderLite(1, factory, true);
+				const provider = new TestTreeProviderLite(1, factory, true, {
+					flushMode: FlushMode.Immediate,
+				});
 				const tree = provider.trees[0];
 				const view = tree.viewWith(
 					new TreeViewConfiguration({

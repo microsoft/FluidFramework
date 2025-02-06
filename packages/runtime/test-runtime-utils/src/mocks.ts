@@ -715,20 +715,23 @@ export class MockContainerRuntimeFactory {
 
 		// TODO: Determine if this needs to be adapted for handling server-generated messages (which have null clientId and referenceSequenceNumber of -1).
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
+
+		// In TurnBased flush mode, if grouped batching is enabled, we will assign the same sequence number to messages
+		// from the same batch.
+		// eslint-disable-next-line unicorn/prefer-ternary
 		if (
-			this.runtimeOptions.flushMode === FlushMode.Immediate ||
-			!(
-				this.runtimeOptions.enableGroupedBatching &&
-				areMessagesFromSameBatch(
-					this.lastProcessedMessage,
-					message,
-					this.runtimeOptions.flushMode,
-				)
+			this.runtimeOptions.flushMode === FlushMode.TurnBased &&
+			this.runtimeOptions.enableGroupedBatching &&
+			areMessagesFromSameBatch(
+				this.lastProcessedMessage,
+				message,
+				this.runtimeOptions.flushMode,
 			)
 		) {
-			this.sequenceNumber++;
+			message.sequenceNumber = this.sequenceNumber;
+		} else {
+			message.sequenceNumber = ++this.sequenceNumber;
 		}
-		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 		this.lastProcessedMessage = message;
 		return message;

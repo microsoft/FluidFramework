@@ -30,12 +30,12 @@ import type {
 import type { SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 	type MockContainerRuntime,
+	type IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
@@ -152,6 +152,7 @@ import {
 	tryGetFromNestedMap,
 	isReadonlyArray,
 } from "../util/index.js";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
@@ -390,12 +391,18 @@ export class TestTreeProviderLite {
 		trees = 1,
 		private readonly factory = new TreeFactory({ jsonValidator: typeboxValidator }),
 		useDeterministicSessionIds = true,
-		private readonly flushMode: FlushMode = FlushMode.Immediate,
+		// Default to turn based flush mode with grouped batching enabled which is what the runtime uses by default.
+		// The fuzz tests cover immediate flush mode and non-grouped batching.
+		private readonly containerRuntimeOptions: IMockContainerRuntimeOptions = {
+			flushMode: FlushMode.TurnBased,
+			enableGroupedBatching: true,
+			flushAutomatically: true,
+		},
 	) {
-		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection({
-			flushMode,
-		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
+		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection(
+			containerRuntimeOptions,
+		);
 		const t: SharedTreeWithConnectionStateSetter[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
@@ -430,14 +437,14 @@ export class TestTreeProviderLite {
 		// In TurnBased mode, flush the messages from all the runtimes before processing the messages.
 		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
 		// flush messages from individual runtimes in the order they were created.
-		if (this.flushMode === FlushMode.TurnBased) {
+		if (this.containerRuntimeOptions.flushMode === FlushMode.TurnBased) {
 			this.containerRuntimes.forEach((containerRuntime) => {
 				containerRuntime.flush();
 			});
 		}
-		this.runtimeFactory.processSomeMessages(
-			count ?? this.runtimeFactory.outstandingMessageCount,
-		);
+		return count !== undefined
+			? this.runtimeFactory.processSomeMessages(count)
+			: this.runtimeFactory.processAllMessages();
 	}
 
 	public get minimumSequenceNumber(): number {

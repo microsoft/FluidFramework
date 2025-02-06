@@ -19,8 +19,8 @@ export type IMockContainerRuntimeOptions = {
     readonly flushMode: FlushMode.Immediate;
 } | {
     readonly flushMode: FlushMode.TurnBased;
-    readonly enableGroupedBatching?: boolean;
     readonly flushAutomatically?: boolean;
+    readonly enableGroupedBatching?: boolean;
 };
 
 // @alpha (undocumented)
@@ -117,7 +117,6 @@ export class MockContainerRuntimeFactory {
     processSomeMessages(count: number): void;
     // (undocumented)
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
-    // (undocumented)
     queueFlush(clientId: string, flush: () => void): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
