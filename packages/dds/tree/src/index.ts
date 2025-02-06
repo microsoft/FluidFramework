@@ -84,6 +84,7 @@ export {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	SharedTreeAttributes,
+	SharedTreeFactory,
 	SharedTreeFactoryType,
 	type IChannelView,
 } from "./shared-tree/index.js";
