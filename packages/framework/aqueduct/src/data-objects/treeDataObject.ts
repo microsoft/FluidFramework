@@ -4,7 +4,6 @@
  */
 
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -34,6 +33,8 @@ export abstract class TreeDataObject<
 	 */
 	protected get root(): ITree {
 		if (!this.internalRoot) {
+			// Note: Can't use `UsageError` because adding dependency on `telemetry-utils` would create a cycle.
+			// TODO: would probably be useful to move our shared error types in a more accessible location.
 			throw new Error(this.getUninitializedErrorString(`root`));
 		}
 
@@ -51,7 +52,7 @@ export abstract class TreeDataObject<
 			if (SharedTree.is(channel)) {
 				this.internalRoot = channel;
 			} else {
-				throw new UsageError(
+				throw new Error(
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
 			}
