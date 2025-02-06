@@ -5,9 +5,22 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-// #region SuggestionGroceryList interfaces
+// #region GroceryListChanges
 /**
- * Interfaces for the SuggestionGroceryList class
+ * Interfaces for extracting and diffing grocery list data.
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type GroceryListItemPOJO = { id: string; name: string };
+export type GroceryListPOJO = GroceryListItemPOJO[];
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type GroceryListChanges = {
+	adds: GroceryListItemPOJO[];
+	removals: GroceryListItemPOJO[];
+};
+
+// #region SuggestionGroceryList
+/**
+ * Interfaces for the SuggestionGroceryList class.
  */
 
 export type SuggestionState = "none" | "add" | "remove";
