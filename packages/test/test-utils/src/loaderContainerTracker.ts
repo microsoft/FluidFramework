@@ -337,12 +337,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 */
 	private needSequenceNumberSynchronize(containersToApply: IContainer[]) {
 		// If there is a pending proposal, wait for it to be accepted
-		const firstContainerToApply = containersToApply[0];
-		if (firstContainerToApply === undefined) {
-			throw new Error("There should always be at least one container to apply");
-		}
-
-		const minSeqNum = firstContainerToApply.deltaManager.minimumSequenceNumber;
+		const minSeqNum = containersToApply[0].deltaManager.minimumSequenceNumber;
 		if (minSeqNum < this.lastProposalSeqNum) {
 			return {
 				reason: "Proposal",
