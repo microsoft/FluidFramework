@@ -12,7 +12,6 @@ import type {
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -92,16 +91,6 @@ export class SchemaSummarizer implements Summarizable {
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
 	): Promise<ISummaryTreeWithStats> {
 		throw new Error("Method not implemented.");
-	}
-
-	public getGCData(fullGC?: boolean): IGarbageCollectionData {
-		// TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
-		// by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
-		// to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
-		// blob.
-		return {
-			gcNodes: {},
-		};
 	}
 
 	public async load(

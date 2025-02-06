@@ -30,7 +30,6 @@ import React from "react";
  * @returns The main documentation page for this version
  */
 function getVersionMainDoc(version: GlobalVersion): GlobalDoc {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return version.docs.find((doc) => doc.id === version.mainDocId);
 }
 
