@@ -92,13 +92,21 @@ describe("State eventing", () => {
 		clock.restore();
 	});
 
+	/**
+	 * Each of these tests will have multiple attendee/valuemanager updates in one datastore update message.
+	 * The idea here is to make sure every event triggered by the datastore message has consistent state,
+	 * This is done checking that every update within the message is reflected in every event, no matter the order.
+	 */
 	it("is consistent with attendee + latest value manager updates", () => {
+		// VERIFY - consistent state in update eventing
 		latest.events.on("updated", () => {
 			assert(presence.getAttendee("client1") !== undefined);
 		});
 		presence.events.on("attendeeJoined", (attendee) => {
 			assert.deepEqual(latest.clientValue(attendee).value, { x: 1, y: 1, z: 1 });
 		});
+
+		// ACT - Process datastore update signal message
 		presence.processSignal(
 			"",
 			{
@@ -118,6 +126,7 @@ describe("State eventing", () => {
 	});
 
 	it("is consistent with attendee + latest map value manager updates", () => {
+		// VERIFY - consistent state in update eventing
 		latestMap.events.on("updated", () => {
 			assert(presence.getAttendee("client1") !== undefined);
 		});
@@ -125,6 +134,8 @@ describe("State eventing", () => {
 			assert.deepEqual(latestMap.clientValue(attendee).get("key1")?.value, { a: 1, b: 1 });
 			assert.deepEqual(latestMap.clientValue(attendee).get("key2")?.value, { c: 1, d: 1 });
 		});
+
+		// ACT - Process datastore update signal message
 		presence.processSignal(
 			"",
 			{
@@ -144,6 +155,7 @@ describe("State eventing", () => {
 	});
 
 	it("is consistent with attendee + latest value manager + latest map value manager updates", () => {
+		// VERIFY - consistent state in update eventing
 		latest.events.on("updated", () => {
 			assert(presence.getAttendee("client1") !== undefined);
 			const attendee = presence.getAttendee("client1");
@@ -160,6 +172,8 @@ describe("State eventing", () => {
 			assert.deepEqual(latestMap.clientValue(attendee).get("key1")?.value, { a: 1, b: 1 });
 			assert.deepEqual(latestMap.clientValue(attendee).get("key2")?.value, { c: 1, d: 1 });
 		});
+
+		// ACT - Process datastore update signal message
 		presence.processSignal(
 			"",
 			{
