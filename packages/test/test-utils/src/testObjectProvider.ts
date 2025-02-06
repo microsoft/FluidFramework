@@ -40,10 +40,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { isNonEmptyArray } from "./NonEmptyArrayType.js";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
+import { isNonEmptyArray } from "./nonEmptyArrayType.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
 const defaultCodeDetails: IFluidCodeDetails = {

@@ -22,9 +22,9 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 
-import { isNonEmptyArray, type NonEmptyArray } from "./NonEmptyArrayType.js";
 import { toIDeltaManagerFull, waitForContainerConnection } from "./containerUtils.js";
 import { debug } from "./debug.js";
+import { isNonEmptyArray, type NonEmptyArray } from "./nonEmptyArrayType.js";
 import { IOpProcessingController } from "./testObjectProvider.js";
 import { timeoutAwait, timeoutPromise } from "./timeoutUtils.js";
 
@@ -338,9 +338,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 	 */
 	private needSequenceNumberSynchronize(containersToApply: NonEmptyArray<IContainer>) {
 		// If there is a pending proposal, wait for it to be accepted
-		const firstContainerToApply = containersToApply[0];
-
-		const minSeqNum = firstContainerToApply.deltaManager.minimumSequenceNumber;
+		const minSeqNum = containersToApply[0].deltaManager.minimumSequenceNumber;
 		if (minSeqNum < this.lastProposalSeqNum) {
 			return {
 				reason: "Proposal",
