@@ -70,9 +70,20 @@ export abstract class SortedSet<T> {
 				}
 				start = index + 1;
 			} else if (compareResult === 0) {
-				return { exists: true, index };
+				return this.onFindEquivalent(item, index);
 			}
 		}
 		return { exists: false, index };
+	}
+
+	/**
+	 * Invoked when `findItemPosition` finds an equivalent item (i.e. `compare` returns 0 between that item and the search item).
+	 *
+	 * By default, `SortedSet` assumes that equivalent items are equal and returns the found index.
+	 * @param item - The item that is being searched for (argument to `findItemPosition`)
+	 * @param index - The index of the equivalent item in the sorted set
+	 */
+	protected onFindEquivalent(item: T, index: number): { exists: boolean; index: number } {
+		return { exists: true, index };
 	}
 }

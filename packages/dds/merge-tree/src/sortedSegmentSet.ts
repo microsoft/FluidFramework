@@ -70,49 +70,25 @@ export class SortedSegmentSet<
 		return this.getOffset(a) - this.getOffset(b);
 	}
 
-	protected findItemPosition(item: T): { exists: boolean; index: number } {
-		if (this.sortedItems.length === 0) {
-			return { exists: false, index: 0 };
+	protected onFindEquivalent(item: T, startIndex: number): { exists: boolean; index: number } {
+		// SortedSegmentSet may contain multiple items with the same key (e.g. a local ref at offset 0 and the segment it is on).
+		// Items should compare as reference-equal, so we do a linear walk to find the actual item in this case.
+		let index = startIndex;
+		if (item === this.sortedItems[index]) {
+			return { exists: true, index };
 		}
-		let start = 0;
-		let end = this.sortedItems.length - 1;
-		let index = -1;
-
-		while (start <= end) {
-			index = start + Math.floor((end - start) / 2);
-			const compareResult = this.compare(item, this.sortedItems[index]);
-			if (compareResult < 0) {
-				if (start === index) {
-					return { exists: false, index };
-				}
-				end = index - 1;
-			} else if (compareResult > 0) {
-				if (index === end) {
-					return { exists: false, index: index + 1 };
-				}
-				start = index + 1;
-			} else if (compareResult === 0) {
-				// at this point we've found the key of the item
-				// so we need to find the index of the item instance
-				//
-				if (item === this.sortedItems[index]) {
-					return { exists: true, index };
-				}
-				for (let b = index - 1; b >= 0 && this.compare(item, this.sortedItems[b]) === 0; b--) {
-					if (this.sortedItems[b] === item) {
-						return { exists: true, index: b };
-					}
-				}
-				for (
-					index + 1;
-					index < this.sortedItems.length && this.compare(item, this.sortedItems[index]) === 0;
-					index++
-				) {
-					if (this.sortedItems[index] === item) {
-						return { exists: true, index };
-					}
-				}
-				return { exists: false, index };
+		for (let b = index - 1; b >= 0 && this.compare(item, this.sortedItems[b]) === 0; b--) {
+			if (this.sortedItems[b] === item) {
+				return { exists: true, index: b };
+			}
+		}
+		for (
+			index + 1;
+			index < this.sortedItems.length && this.compare(item, this.sortedItems[index]) === 0;
+			index++
+		) {
+			if (this.sortedItems[index] === item) {
+				return { exists: true, index };
 			}
 		}
 		return { exists: false, index };
