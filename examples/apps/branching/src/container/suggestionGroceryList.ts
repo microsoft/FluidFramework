@@ -92,7 +92,9 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 	};
 
 	public readonly getItems = (): ISuggestionGroceryItem[] => {
-		return [...this._suggestionGroceryItems.values()];
+		return [...this._suggestionGroceryItems.values()].sort((a, b) =>
+			a.id.localeCompare(b.id, "en", { sensitivity: "base" }),
+		);
 	};
 
 	public readonly removeItem = (id: string) => {

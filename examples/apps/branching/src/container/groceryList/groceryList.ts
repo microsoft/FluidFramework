@@ -80,7 +80,9 @@ class GroceryList implements IGroceryList {
 	};
 
 	public readonly getItems = (): IGroceryItem[] => {
-		return [...this._groceryItems.values()];
+		return [...this._groceryItems.values()].sort((a, b) =>
+			a.id.localeCompare(b.id, "en", { sensitivity: "base" }),
+		);
 	};
 
 	public readonly removeItem = (id: string) => {

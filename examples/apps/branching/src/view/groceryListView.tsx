@@ -100,9 +100,11 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 		};
 	}, [groceryList]);
 
-	const groceryItemViews = groceryItems.map((groceryItem) => (
-		<GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />
-	));
+	// This should already be sorted, but adding it here too in case I want to do something fancy later
+	// regarding more granular updates as noted in the above TODO.
+	const groceryItemViews = groceryItems
+		.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }))
+		.map((groceryItem) => <GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />);
 
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
