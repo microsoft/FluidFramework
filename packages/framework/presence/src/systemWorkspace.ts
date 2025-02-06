@@ -9,6 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { PostUpdateAction } from "./internalTypes.js";
 import type {
 	ClientSessionId,
 	IPresence,
@@ -135,7 +136,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			};
 		},
 		senderConnectionId: ClientConnectionId,
-	): (() => void)[] {
+	): PostUpdateAction[] {
 		const audienceMembers = this.audience.getMembers();
 		const joiningAttendees = new Set<SessionClient>();
 		const postUpdateActions: (() => void)[] = [];

@@ -9,7 +9,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import { RequiredBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientRecord } from "./internalTypes.js";
+import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
@@ -133,7 +133,7 @@ export interface PresenceStatesInternal {
 		timeModifier: number,
 		remoteDatastore: ValueUpdateRecord,
 		senderConnectionId: ClientConnectionId,
-	): (() => void)[];
+	): PostUpdateAction[];
 }
 
 function isValueDirectory<
@@ -408,7 +408,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		received: number,
 		timeModifier: number,
 		remoteDatastore: ValueUpdateRecord,
-	): (() => void)[] {
+	): PostUpdateAction[] {
 		const postUpdateActions: (() => void)[] = [];
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 			const brandedIVM = this.nodes[key];

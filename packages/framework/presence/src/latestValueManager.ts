@@ -9,7 +9,7 @@ import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
-import type { ValueManager } from "./internalTypes.js";
+import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
@@ -145,7 +145,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		client: ISessionClient,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<T>,
-	): (() => void)[] {
+	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
 		const currentState = allKnownStates.states[clientSessionId];

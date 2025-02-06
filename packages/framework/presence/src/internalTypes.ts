@@ -46,5 +46,10 @@ export interface ValueManager<
 > {
 	// Most value managers should provide value - implement Required<ValueManager<...>>
 	readonly value?: TValueState;
-	update(client: ISessionClient, received: number, value: TValueState): (() => void)[];
+	update(client: ISessionClient, received: number, value: TValueState): PostUpdateAction[];
 }
+
+/**
+ * @internal
+ */
+export type PostUpdateAction = () => void;
