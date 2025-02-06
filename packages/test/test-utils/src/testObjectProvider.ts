@@ -40,6 +40,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import { isNonEmptyArray } from "./NonEmptyArrayType.js";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
@@ -354,7 +355,7 @@ export class EventAndErrorTrackingLogger
 	}
 
 	send(event: ITelemetryBaseEvent): void {
-		if (this.expectedEvents.length > 0) {
+		if (isNonEmptyArray(this.expectedEvents)) {
 			const ee = this.expectedEvents[0].event;
 			if (ee.eventName === event.eventName) {
 				let matches = true;
