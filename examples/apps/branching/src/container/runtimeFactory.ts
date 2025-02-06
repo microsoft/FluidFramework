@@ -36,6 +36,7 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 				containerRuntime,
 				groceryListId,
 			);
+			// TODO: Here we could pass in the capability to enter staging mode if it lives on the containerRuntime.
 			return new SuggestionGroceryList(groceryList);
 		};
 
