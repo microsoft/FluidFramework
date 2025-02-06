@@ -5,6 +5,7 @@
 
 export {
 	type ISharedTree,
+	type ITreePrivate,
 	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
 	SharedTree,
@@ -20,6 +21,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	type IChannelView,
 } from "./sharedTree.js";
 
 export {

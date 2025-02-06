@@ -15,6 +15,7 @@ export {
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
+	type ITreeAlpha,
 	asTreeViewAlpha,
 } from "./tree.js";
 export {

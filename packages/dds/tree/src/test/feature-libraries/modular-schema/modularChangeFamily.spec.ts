@@ -114,9 +114,10 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 };
 
 const singleNodeEditor: FieldEditor<SingleNodeChangeset> = {
-	buildChildChange: (index: number, change: NodeId): SingleNodeChangeset => {
-		assert(index === 0, "This field kind only supports one node in its field");
-		return change;
+	buildChildChanges: (changes: Iterable<[number, NodeId]>): SingleNodeChangeset => {
+		const changesArray = Array.from(changes);
+		assert(changesArray.length <= 1, "This field kind only supports one node in its field");
+		return changesArray[0] === undefined ? undefined : changesArray[0][1];
 	},
 };
 
