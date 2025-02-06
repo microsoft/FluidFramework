@@ -401,15 +401,13 @@ describe("Editing", () => {
 			const fooListPath: FieldUpPath = { parent: fooList, field: brand("") };
 			const listEditor = tree2.editor.sequenceField(fooListPath);
 
-			// XXX
-			// moveWithin(tree2.editor, fooListPath, 2, 1, 1);
-			// listEditor.insert(
-			// 	3,
-			// 	cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "D" }),
-			// );
+			moveWithin(tree2.editor, fooListPath, 2, 1, 1);
+			listEditor.insert(
+				3,
+				cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "D" }),
+			);
 			listEditor.remove(0, 1);
-			// expectJsonTree(tree2, [{ foo: ["C", "B", "D"] }]);
-			expectJsonTree(tree2, [{ foo: ["B", "C"] }]);
+			expectJsonTree(tree2, [{ foo: ["C", "B", "D"] }]);
 
 			tree1.merge(tree2, false);
 			tree2.rebaseOnto(tree1);

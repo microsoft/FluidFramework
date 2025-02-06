@@ -50,7 +50,8 @@ export function sequenceFieldToDelta(
 					break;
 				}
 				case "Insert": {
-					const buildId = nodeIdFromChangeAtom({ revision: mark.revision, localId: mark.id });
+					assert(mark.cellId !== undefined, "Unexpected cell state");
+					const buildId = nodeIdFromChangeAtom(mark.cellId);
 					deltaMark.attach = buildId;
 					deltaMarks.push(deltaMark);
 					break;

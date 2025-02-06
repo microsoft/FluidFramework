@@ -309,11 +309,7 @@ export class ModularChangeFamily
 			affectedNewFields: newTupleBTree(),
 		};
 
-		const composedNodeRenames = composeRootTables(
-			change1.rootNodes,
-			change2.rootNodes,
-			pendingCompositions,
-		);
+		const composedNodeRenames = composeRootTables(change1, change2, pendingCompositions);
 
 		const crossFieldTable = newComposeTable(
 			change1,
@@ -2420,6 +2416,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		baseAttachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+		// XXX: This should return the deleted node
 		this.table.rebasedRootNodes.nodeChanges.delete([
 			baseAttachId.revision,
 			baseAttachId.localId,
@@ -2442,6 +2439,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		);
 
 		if (isAttachId(this.table.baseChange, baseAttachId, count)) {
+			// The base detach is part of a move in the base changeset.
 			setInCrossFieldMap(this.table.entries, baseAttachId, length, {
 				nodeChange,
 				fieldData,
@@ -2512,7 +2510,24 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId> {
-		// XXX: Also check for a detached node entry in the new changeset
+		const detachedNodeId = getFromChangeAtomIdMap(
+			this.table.newChange.rootNodes.nodeChanges,
+			baseDetachId,
+		);
+
+		if (detachedNodeId !== undefined) {
+			// XXX: Should this function be renamed since it can have a side effect?
+			// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
+			this.table.composedRootNodes.nodeChanges.delete([
+				baseDetachId.revision,
+				baseDetachId.localId,
+			]);
+
+			return { start: baseDetachId, value: detachedNodeId, length: 1 };
+		}
+
+		// The base detach might be part of a move.
+		// We check if we've previously seen a node change at the move destination.
 		const result = this.table.entries.getFirst(baseDetachId, count);
 		return { ...result, value: result.value?.nodeChange };
 	}
@@ -2537,6 +2552,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		if (newChanges !== undefined) {
 			if (isDetachId(this.table.baseChange, baseDetachId, count)) {
+				// The base attach is part of a move in the base changeset.
 				setInCrossFieldMap(this.table.entries, baseDetachId, count, {
 					nodeChange: newChanges,
 				});
@@ -3167,25 +3183,39 @@ export function newRootTable(): RootNodeTable {
 }
 
 function composeRootTables(
-	table1: RootNodeTable,
-	table2: RootNodeTable,
+	change1: ModularChangeset,
+	change2: ModularChangeset,
 	pendingCompositions: PendingCompositions,
 ): RootNodeTable {
-	const mergedTable = cloneRootTable(table1);
-	for (const entry of table2.oldToNewId.entries()) {
+	const mergedTable = cloneRootTable(change1.rootNodes);
+	for (const entry of change2.rootNodes.oldToNewId.entries()) {
 		renameNodes(mergedTable, entry.start, entry.value, entry.length);
 	}
 
-	for (const [[revision2, id2], nodeId2] of table2.nodeChanges.entries()) {
+	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
 		const detachId2 = { revision: revision2, localId: id2 };
-		const detachId1 = table1.newToOldId.getFirst(detachId2, 1).value ?? detachId2;
+		const detachId1 = change1.rootNodes.newToOldId.getFirst(detachId2, 1).value ?? detachId2;
+		const nodeId1 = getFromChangeAtomIdMap(change1.rootNodes.nodeChanges, detachId1);
 
-		// XXX: Check change1.crossFieldKeys for this detach and invalidate that field if found
-		const nodeId1 = getFromChangeAtomIdMap(table1.nodeChanges, detachId1);
 		if (nodeId1 !== undefined) {
 			pendingCompositions.nodeIdsToCompose.push([nodeId1, nodeId2]);
 		} else {
-			setInChangeAtomIdMap(mergedTable.nodeChanges, detachId1, nodeId2);
+			const fieldId = getFieldsForCrossFieldKey(
+				change1,
+				{ ...detachId1, target: CrossFieldTarget.Source },
+				1,
+			)[0];
+
+			if (fieldId !== undefined) {
+				// In this case, this node is attached in the input context of change1,
+				// and is represented in detachFieldId.
+				pendingCompositions.affectedBaseFields.set(
+					[fieldId.nodeId?.revision, fieldId.nodeId?.localId, fieldId.field],
+					true,
+				);
+			} else {
+				setInChangeAtomIdMap(mergedTable.nodeChanges, detachId1, nodeId2);
+			}
 		}
 	}
 

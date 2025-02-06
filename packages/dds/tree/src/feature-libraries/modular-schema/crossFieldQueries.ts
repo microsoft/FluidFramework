@@ -19,8 +19,7 @@ export function setInCrossFieldMap<T>(
 	map.set(id, count, value);
 }
 
-/**
- */
+// TODO: Rename to NodeMoveType(Attach | Detach)
 export enum CrossFieldTarget {
 	Source,
 	Destination,
