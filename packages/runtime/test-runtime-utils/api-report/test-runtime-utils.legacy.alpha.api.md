@@ -7,16 +7,21 @@
 // @alpha (undocumented)
 export interface IInternalMockRuntimeMessage {
     // (undocumented)
+    clientSequenceNumber: number;
+    // (undocumented)
     content: any;
     // (undocumented)
     localOpMetadata?: unknown;
 }
 
 // @alpha
-export interface IMockContainerRuntimeOptions {
+export type IMockContainerRuntimeOptions = {
+    readonly flushMode: FlushMode.Immediate;
+} | {
+    readonly flushMode: FlushMode.TurnBased;
     readonly enableGroupedBatching?: boolean;
-    readonly flushMode?: FlushMode;
-}
+    readonly flushAutomatically?: boolean;
+};
 
 // @alpha (undocumented)
 export interface IMockContainerRuntimePendingMessage {
@@ -81,8 +86,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     } | undefined;
     // (undocumented)
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
-    // (undocumented)
     process(message: ISequencedDocumentMessage): void;
+    processMessages(messages: ISequencedDocumentMessage[]): void;
     rebase(): void;
     // (undocumented)
     resolveHandle(handle: IFluidHandle): Promise<IResponse>;
@@ -112,6 +117,8 @@ export class MockContainerRuntimeFactory {
     processSomeMessages(count: number): void;
     // (undocumented)
     pushMessage(msg: Partial<ISequencedDocumentMessage>): void;
+    // (undocumented)
+    queueFlush(clientId: string, flush: () => void): void;
     // (undocumented)
     readonly quorum: MockQuorumClients;
     // (undocumented)
@@ -146,9 +153,11 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
     // (undocumented)
     protected readonly factory: MockContainerRuntimeFactoryForReconnection;
     // (undocumented)
+    flush(): void;
+    // (undocumented)
     initializeWithStashedOps(fromContainerRuntime: MockContainerRuntimeForReconnection): Promise<void>;
     // (undocumented)
-    process(message: ISequencedDocumentMessage): void;
+    processMessages(messages: ISequencedDocumentMessage[]): void;
     // (undocumented)
     protected setConnectedState(connected: boolean): void;
     // (undocumented)

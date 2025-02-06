@@ -59,6 +59,7 @@ import {
 	VisibilityState,
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -159,35 +160,61 @@ export interface IMockContainerRuntimeIdAllocationMessage {
  * @legacy
  * @alpha
  */
-export interface IMockContainerRuntimeOptions {
-	/**
-	 * Configures the flush mode for the runtime. In Immediate flush mode the runtime will immediately
-	 * send all operations to the driver layer, while in TurnBased the operations will be buffered
-	 * and then sent them as a single batch when `flush()` is called on the runtime.
-	 *
-	 * By default, flush mode is Immediate.
-	 */
-	readonly flushMode?: FlushMode;
-	/**
-	 * If configured, it will simulate group batching by forcing all ops within a batch to have
-	 * the same sequence number.
-	 *
-	 * By default, the value is `false`
-	 */
-	readonly enableGroupedBatching?: boolean;
-}
+export type IMockContainerRuntimeOptions =
+	| {
+			/**
+			 * In Immediate flush mode, the runtime will immediately flush all messages and they will be ready
+			 * to process.
+			 */
+			readonly flushMode: FlushMode.Immediate;
+	  }
+	| {
+			/**
+			 * In TurnBased flush mode the runtime will buffer all messages. These will be flushed based on the
+			 * "flushAutomatically" flag described below.
+			 */
+			readonly flushMode: FlushMode.TurnBased;
+			/**
+			 * If set to true, messages for a client will be queued and flushed automatically when another client
+			 * sends a message. The last set of messages will be flushed when one of the process methods is called
+			 * on the runtime factory.
+			 * This option tries to preserve the order in which messages are sent. However, there may be
+			 * scenarios where a test wants to control exactly when to flush messages and that's when this flag
+			 * should be set to false.
+			 *
+			 * If set to false, the runtime will only flush when the flush() method is called.
+			 *
+			 * The default value is false.
+			 */
+			readonly flushAutomatically?: boolean;
+			/**
+			 * If configured, it will simulate group batching by forcing all ops within a batch to have fake client
+			 * sequence numbers and, the same sequence number and minimum sequence number.
+			 *
+			 * The default value is true.
+			 */
+			readonly enableGroupedBatching?: boolean;
+	  };
 
 const defaultMockContainerRuntimeOptions: Required<IMockContainerRuntimeOptions> = {
 	flushMode: FlushMode.Immediate,
-	enableGroupedBatching: false,
 };
 
 const makeContainerRuntimeOptions = (
 	mockContainerRuntimeOptions: IMockContainerRuntimeOptions,
-): Required<IMockContainerRuntimeOptions> => ({
-	...defaultMockContainerRuntimeOptions,
-	...mockContainerRuntimeOptions,
-});
+): Required<IMockContainerRuntimeOptions> => {
+	const options = {
+		...defaultMockContainerRuntimeOptions,
+		...mockContainerRuntimeOptions,
+	};
+
+	if (options.flushMode === FlushMode.TurnBased) {
+		options.enableGroupedBatching = options.enableGroupedBatching ?? true;
+		options.flushAutomatically = options.flushAutomatically ?? false;
+	}
+
+	return options as Required<IMockContainerRuntimeOptions>;
+};
 
 /**
  * @legacy
@@ -195,7 +222,24 @@ const makeContainerRuntimeOptions = (
  */
 export interface IInternalMockRuntimeMessage {
 	content: any;
+	clientSequenceNumber: number;
 	localOpMetadata?: unknown;
+}
+
+/**
+ * Returns whether the two messages are from the same batch for the purposes of grouped batching.
+ * Messages in the same batch will have the same clientId and reference sequence number.
+ */
+function areMessagesFromSameBatch(
+	message1: ISequencedDocumentMessage | undefined,
+	message2: ISequencedDocumentMessage,
+	flushMode: FlushMode,
+) {
+	return (
+		flushMode === FlushMode.TurnBased &&
+		message1?.clientId === message2.clientId &&
+		message1?.referenceSequenceNumber === message2.referenceSequenceNumber
+	);
 }
 
 /**
@@ -245,11 +289,6 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.clientId = this.dataStoreRuntime.clientId ?? uuid();
 		factory.quorum.addMember(this.clientId, {});
 		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
-		assert(
-			this.runtimeOptions.flushMode !== FlushMode.Immediate ||
-				!this.runtimeOptions.enableGroupedBatching,
-			"Grouped batching is not compatible with FlushMode.Immediate",
-		);
 	}
 
 	/**
@@ -274,6 +313,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		const message: IInternalMockRuntimeMessage = {
 			content: messageContent,
 			localOpMetadata,
+			clientSequenceNumber,
 		};
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
@@ -281,12 +321,12 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
 				if (!isAllocationMessage) {
-					const idAllocationOp = this.generateIdAllocationOp();
+					const idAllocationOp = this.generateIdAllocationOp(clientSequenceNumber);
 					if (idAllocationOp !== undefined) {
-						this.submitInternal(idAllocationOp, clientSequenceNumber);
+						this.submitInternal(idAllocationOp);
 					}
 				}
-				this.submitInternal(message, clientSequenceNumber);
+				this.submitInternal(message);
 				break;
 			}
 
@@ -297,11 +337,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 				} else {
 					this.outbox.push(message);
 				}
+				this.factory.queueFlush(this.clientId, () => this.flush());
 				break;
 			}
 
 			default:
-				throw new Error(`Unsupported FlushMode ${this.runtimeOptions.flushMode}`);
 		}
 
 		return clientSequenceNumber;
@@ -336,10 +376,17 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			return;
 		}
 
+		const enableGroupedBatching = this.runtimeOptions.enableGroupedBatching;
+
+		let fakeClientSequenceNumber = 0;
+		const idAllocationOpClientSeq = this.runtimeOptions.enableGroupedBatching
+			? ++fakeClientSequenceNumber
+			: ++this.deltaManager.clientSequenceNumber;
+
 		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
 		// and sticking it in front of any op that might rely on that id. It differs slightly in that
 		// in the actual runtime it would get put in its own separate batch
-		const idAllocationOp = this.generateIdAllocationOp();
+		const idAllocationOp = this.generateIdAllocationOp(idAllocationOpClientSeq);
 		if (idAllocationOp !== undefined) {
 			this.idAllocationOutbox.push(idAllocationOp);
 		}
@@ -349,18 +396,15 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.idAllocationOutbox.length = 0;
 		this.outbox.length = 0;
 
-		let fakeClientSequenceNumber = 1;
 		messagesToSubmit.forEach((message) => {
-			this.submitInternal(
-				message,
-				// When grouped batching is used, the ops within the same grouped batch will have
-				// fake sequence numbers when they're ungrouped. The submit function will still
-				// return the clientSequenceNumber but this will ensure that the readers will always
-				// read the fake client sequence numbers.
-				this.runtimeOptions.enableGroupedBatching
-					? fakeClientSequenceNumber++
-					: this.deltaManager.clientSequenceNumber,
-			);
+			// When grouped batching is used, the ops within the same grouped batch will have
+			// fake sequence numbers when they're ungrouped. The submit function will still
+			// return the clientSequenceNumber but this will ensure that the readers will always
+			// read the fake client sequence numbers.
+			const clientSequenceNumber = enableGroupedBatching
+				? ++fakeClientSequenceNumber
+				: message.clientSequenceNumber;
+			this.submitInternal({ ...message, clientSequenceNumber });
 		});
 	}
 
@@ -408,7 +452,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		});
 	}
 
-	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
+	private generateIdAllocationOp(
+		clientSequenceNumber: number,
+	): IInternalMockRuntimeMessage | undefined {
 		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
@@ -417,33 +463,94 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
+				clientSequenceNumber,
 			};
 		}
 		return undefined;
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+	private submitInternal(message: IInternalMockRuntimeMessage) {
 		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
 		this.deltaManager.outbound.push([
 			{
-				clientSequenceNumber,
+				clientSequenceNumber: message.clientSequenceNumber,
 				contents: message.content,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				type: MessageType.Operation,
 			},
 		]);
-		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
+		this.addPendingMessage(
+			message.content,
+			message.localOpMetadata,
+			message.clientSequenceNumber,
+		);
 	}
 
+	/**
+	 * deprecated - use processMessages instead
+	 */
 	public process(message: ISequencedDocumentMessage) {
-		this.deltaManager.process(message);
-		const [local, localOpMetadata] = this.processInternal(message);
+		this.processMessages([message]);
+	}
 
-		if (this.isSequencedAllocationMessage(message)) {
-			this.finalizeIdRange(message.contents.contents);
-		} else {
-			this.dataStoreRuntime.process(message, local, localOpMetadata);
+	/**
+	 * Processes multiple messages. It mimics the op bunching feature of the runtime by processing ops
+	 * from same clients in a bunch.
+	 */
+	public processMessages(messages: ISequencedDocumentMessage[]) {
+		if (messages.length === 0) {
+			return;
 		}
+
+		let bunchedMessagesContent: IRuntimeMessagesContent[] = [];
+		let previousMessage: ISequencedDocumentMessage | undefined;
+		let previousLocal: boolean | undefined;
+
+		const sendBunchedMessages = (): void => {
+			if (previousMessage === undefined) {
+				return;
+			}
+			assert(previousLocal !== undefined, "previous local must exist");
+			const messageCollection: IRuntimeMessageCollection = {
+				envelope: previousMessage,
+				local: previousLocal,
+				messagesContent: bunchedMessagesContent,
+			};
+			this.dataStoreRuntime.processMessages(messageCollection);
+			bunchedMessagesContent = [];
+		};
+
+		for (const message of messages) {
+			this.deltaManager.process(message);
+			const [local, localOpMetadata] = this.processInternal(message);
+
+			// Id allocation messages are for the runtime, so process it here directly.
+			if (this.isSequencedAllocationMessage(message)) {
+				sendBunchedMessages();
+				this.finalizeIdRange(message.contents.contents);
+				previousMessage = undefined;
+				previousLocal = undefined;
+				bunchedMessagesContent = [];
+				continue;
+			}
+
+			// If the message is from a different batch, send the previous bunch of messages to the
+			// data store for processing.
+			if (!areMessagesFromSameBatch(previousMessage, message, this.runtimeOptions.flushMode)) {
+				sendBunchedMessages();
+			}
+
+			previousLocal = local;
+			previousMessage = message;
+
+			bunchedMessagesContent.push({
+				contents: message.contents,
+				localOpMetadata,
+				clientSequenceNumber: message.clientSequenceNumber,
+			});
+		}
+
+		sendBunchedMessages();
 	}
 
 	protected addPendingMessage(
@@ -502,6 +609,29 @@ export class MockContainerRuntimeFactory {
 	 */
 	protected messages: ISequencedDocumentMessage[] = [];
 	protected readonly runtimes: Set<MockContainerRuntime> = new Set();
+
+	/**
+	 * In TurnBased flush mode, keeps track of the last pending flush operation from a particular client.
+	 */
+	private pendingFlush: { clientId: string; flush: () => void } | undefined;
+	/**
+	 * In TurnBased flush mode and if flushAutomatically is true, queues of the last pending flush operation
+	 * from a particular client. If the clientId changes from the pending flush, it will flush the pending flush.
+	 */
+	public queueFlush(clientId: string, flush: () => void) {
+		assert(
+			this.runtimeOptions.flushMode === FlushMode.TurnBased,
+			"queueFlush can only be called in TurnBased flush mode",
+		);
+		if (
+			this.runtimeOptions.flushAutomatically === false ||
+			this.pendingFlush?.clientId === clientId
+		) {
+			return;
+		}
+		this.pendingFlush?.flush();
+		this.pendingFlush = { clientId, flush };
+	}
 
 	/**
 	 * The container runtime options which will be provided to the all runtimes
@@ -572,9 +702,12 @@ export class MockContainerRuntimeFactory {
 	}
 
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
-	private processFirstMessage() {
-		assert(this.messages.length > 0, "The message queue should not be empty");
 
+	/**
+	 * Returns the first message in the queue to process. It assigns sequence number and minimum sequence number
+	 * to the message.
+	 */
+	private getFirstMessageToProcess() {
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
 		const message = JSON.parse(
 			JSON.stringify(this.messages.shift()),
@@ -584,53 +717,87 @@ export class MockContainerRuntimeFactory {
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
 		if (
 			this.runtimeOptions.flushMode === FlushMode.Immediate ||
-			this.lastProcessedMessage?.clientId !== message.clientId
+			!(
+				this.runtimeOptions.enableGroupedBatching &&
+				areMessagesFromSameBatch(
+					this.lastProcessedMessage,
+					message,
+					this.runtimeOptions.flushMode,
+				)
+			)
 		) {
 			this.sequenceNumber++;
 		}
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 		this.lastProcessedMessage = message;
+		return message;
+	}
+
+	private processMessages(messages: ISequencedDocumentMessage[]) {
 		for (const runtime of this.runtimes) {
-			runtime.process(message);
+			runtime.processMessages(messages);
 		}
 	}
 
 	/**
-	 * Process one of the queued messages.  Throws if no messages are queued.
-	 */
-	public processOneMessage() {
-		if (this.messages.length === 0) {
-			throw new Error("Tried to process a message that did not exist");
-		}
-		this.lastProcessedMessage = undefined;
-
-		this.processFirstMessage();
-	}
-
-	/**
-	 * Process a given number of queued messages.  Throws if there are fewer messages queued than requested.
+	 * Process a given number of queued messages.
+	 * In Immediate flush mode, it processes the messages one by one.
+	 * In TurnBased flush mode, it flushes any pending messages. It then sends the given number of
+	 * messages to all the runtimes.
 	 * @param count - the number of messages to process
 	 */
 	public processSomeMessages(count: number) {
+		if (count === 0) {
+			return;
+		}
+
 		if (count > this.messages.length) {
 			throw new Error("Tried to process more messages than exist");
 		}
 
-		this.lastProcessedMessage = undefined;
-
-		for (let i = 0; i < count; i++) {
-			this.processFirstMessage();
+		if (this.runtimeOptions.flushMode === FlushMode.TurnBased) {
+			this.pendingFlush?.flush();
+			const messages: ISequencedDocumentMessage[] = [];
+			for (let i = 0; i < count; i++) {
+				messages.push(this.getFirstMessageToProcess());
+			}
+			this.processMessages(messages);
+		} else {
+			for (let i = 0; i < count; i++) {
+				const message = this.getFirstMessageToProcess();
+				this.processMessages([message]);
+			}
 		}
 	}
 
 	/**
-	 * Process all remaining messages in the queue.
+	 * Process one of the queued messages.
+	 */
+	public processOneMessage() {
+		this.processSomeMessages(1);
+	}
+
+	/**
+	 * Process all messages in the queue.
+	 * In Immediate flush mode, it processes all the messages one by one.
+	 * In TurnBased flush mode, it flushes any pending messages. It then sends all the messages to all the runtimes.
+	 *
+	 * Note that this will also process messages that were added to the queue after the call to this method.
 	 */
 	public processAllMessages() {
-		this.lastProcessedMessage = undefined;
-		while (this.messages.length > 0) {
-			this.processFirstMessage();
+		if (this.runtimeOptions.flushMode === FlushMode.TurnBased) {
+			this.pendingFlush?.flush();
+			const messages: ISequencedDocumentMessage[] = [];
+			while (this.messages.length > 0) {
+				messages.push(this.getFirstMessageToProcess());
+			}
+			this.processMessages(messages);
+		} else {
+			while (this.messages.length > 0) {
+				const message = this.getFirstMessageToProcess();
+				this.processMessages([message]);
+			}
 		}
 	}
 }
@@ -1015,17 +1182,23 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
-		for (const {
-			contents,
-			localOpMetadata,
-			clientSequenceNumber,
-		} of messageCollection.messagesContent) {
-			this.process(
-				{ ...messageCollection.envelope, contents, clientSequenceNumber },
-				messageCollection.local,
-				localOpMetadata,
-			);
-		}
+		this.deltaConnections.forEach((dc) => {
+			if (dc.processMessages !== undefined) {
+				dc.processMessages(messageCollection);
+			} else {
+				for (const {
+					contents,
+					localOpMetadata,
+					clientSequenceNumber,
+				} of messageCollection.messagesContent) {
+					dc.process(
+						{ ...messageCollection.envelope, contents, clientSequenceNumber },
+						messageCollection.local,
+						localOpMetadata,
+					);
+				}
+			}
+		});
 	}
 
 	public processSignal(message: any, local: boolean) {

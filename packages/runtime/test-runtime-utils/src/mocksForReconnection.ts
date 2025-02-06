@@ -46,9 +46,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		this._connected = connected;
 
 		if (connected) {
-			for (const remoteMessage of this.pendingRemoteMessages) {
-				this.process(remoteMessage);
-			}
+			this.processMessages(this.pendingRemoteMessages);
 			this.pendingRemoteMessages.length = 0;
 			this.deltaManager.clientSequenceNumber = 0;
 			// We should get a new clientId on reconnection.
@@ -83,7 +81,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected override readonly factory: MockContainerRuntimeFactoryForReconnection,
-		runtimeOptions: IMockContainerRuntimeOptions = {},
+		runtimeOptions?: IMockContainerRuntimeOptions,
 		overrides?: { minimumSequenceNumber?: number; trackRemoteOps?: boolean },
 	) {
 		super(dataStoreRuntime, factory, runtimeOptions, overrides);
@@ -92,12 +90,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		}
 	}
 
-	override process(message: ISequencedDocumentMessage) {
+	override processMessages(messages: ISequencedDocumentMessage[]) {
+		const messagesCopy = Array.from(messages);
 		if (this.connected) {
-			this.processedOps?.push(message);
-			super.process(message);
+			this.processedOps?.push(...messagesCopy);
+			super.processMessages(messagesCopy);
 		} else {
-			this.pendingRemoteMessages.push(message);
+			this.pendingRemoteMessages.push(...messagesCopy);
 		}
 	}
 
@@ -109,6 +108,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 		this.addPendingMessage(messageContent, localOpMetadata, -1);
 		return -1;
+	}
+
+	override flush() {
+		// Flush messages only if we are connection, otherwise, just ignore it.
+		if (this.connected) {
+			super.flush();
+		}
 	}
 
 	public async initializeWithStashedOps(
@@ -189,7 +195,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		await applyStashedOpsAtSeq(this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber);
 		// apply the saved and pending ops
 		for (const savedOp of remoteOps) {
-			this.process(savedOp);
+			this.processMessages([savedOp]);
 			await applyStashedOpsAtSeq(
 				this.dataStoreRuntime.deltaManagerInternal.lastSequenceNumber,
 			);

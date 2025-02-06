@@ -40,6 +40,7 @@ declare type current_as_old_for_Class_MockAudience = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_MockContainerRuntime": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockContainerRuntime = requireAssignableTo<TypeOnly<old.MockContainerRuntime>, TypeOnly<current.MockContainerRuntime>>
 
 /*
@@ -58,6 +59,7 @@ declare type current_as_old_for_Class_MockContainerRuntime = requireAssignableTo
  * typeValidation.broken:
  * "Class_MockContainerRuntimeFactory": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockContainerRuntimeFactory = requireAssignableTo<TypeOnly<old.MockContainerRuntimeFactory>, TypeOnly<current.MockContainerRuntimeFactory>>
 
 /*
@@ -76,6 +78,7 @@ declare type current_as_old_for_Class_MockContainerRuntimeFactory = requireAssig
  * typeValidation.broken:
  * "Class_MockContainerRuntimeFactoryForReconnection": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockContainerRuntimeFactoryForReconnection = requireAssignableTo<TypeOnly<old.MockContainerRuntimeFactoryForReconnection>, TypeOnly<current.MockContainerRuntimeFactoryForReconnection>>
 
 /*
@@ -94,6 +97,7 @@ declare type current_as_old_for_Class_MockContainerRuntimeFactoryForReconnection
  * typeValidation.broken:
  * "Class_MockContainerRuntimeForReconnection": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockContainerRuntimeForReconnection = requireAssignableTo<TypeOnly<old.MockContainerRuntimeForReconnection>, TypeOnly<current.MockContainerRuntimeForReconnection>>
 
 /*
@@ -184,6 +188,7 @@ declare type current_as_old_for_Class_MockFluidDataStoreContext = requireAssigna
  * typeValidation.broken:
  * "Class_MockFluidDataStoreRuntime": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<old.MockFluidDataStoreRuntime>, TypeOnly<current.MockFluidDataStoreRuntime>>
 
 /*
@@ -427,6 +432,7 @@ declare type current_as_old_for_ClassStatics_MockStorage = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_IInternalMockRuntimeMessage": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IInternalMockRuntimeMessage = requireAssignableTo<TypeOnly<old.IInternalMockRuntimeMessage>, TypeOnly<current.IInternalMockRuntimeMessage>>
 
 /*
@@ -445,6 +451,7 @@ declare type current_as_old_for_Interface_IInternalMockRuntimeMessage = requireA
  * typeValidation.broken:
  * "Interface_IMockContainerRuntimeOptions": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IMockContainerRuntimeOptions = requireAssignableTo<TypeOnly<old.IMockContainerRuntimeOptions>, TypeOnly<current.IMockContainerRuntimeOptions>>
 
 /*

@@ -63,10 +63,9 @@ export class MockContainerRuntimeFactoryForSummarizer extends MockContainerRunti
 	}
 }
 
-export interface IMockContainerRuntimeForSummarizerOptions
-	extends IMockContainerRuntimeOptions {
+export type IMockContainerRuntimeForSummarizerOptions = IMockContainerRuntimeOptions & {
 	summaryConfiguration?: ISummaryConfiguration;
-}
+};
 
 const DefaultSummaryConfiguration: ISummaryConfiguration = {
 	state: "disableHeuristics",
@@ -91,7 +90,7 @@ export class MockContainerRuntimeForSummarizer
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		factory: MockContainerRuntimeFactoryForSummarizer,
-		runtimeOptions: IMockContainerRuntimeForSummarizerOptions = {},
+		runtimeOptions?: IMockContainerRuntimeForSummarizerOptions,
 	) {
 		// trackRemoteOps is needed for replaying all ops on creating new ContainerRuntime
 		super(dataStoreRuntime, factory, runtimeOptions, { trackRemoteOps: true });
@@ -106,7 +105,7 @@ export class MockContainerRuntimeForSummarizer
 
 		const summaryConfiguration: ISummaryConfiguration = {
 			...DefaultSummaryConfiguration,
-			...runtimeOptions.summaryConfiguration,
+			...runtimeOptions?.summaryConfiguration,
 		};
 
 		this.summarizer = new Summarizer(
