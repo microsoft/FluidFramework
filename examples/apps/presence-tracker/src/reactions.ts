@@ -45,12 +45,14 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		const selectedReaction = document.getElementById("selected-reaction") as HTMLSpanElement;
 		const reactionValue = selectedReaction.textContent;
 
-		// TODO: Check that we're connected before sending.
-		notificationsWorkspace.props.reactions.emit.broadcast(
-			"reaction",
-			mouseTracker.getClientMousePosition(presence.getMyself()),
-			reactionValue ?? "?",
-		);
+		// Check that we're connected before sending notifications.
+		if (presence.getMyself().getConnectionStatus() === "Connected") {
+			notificationsWorkspace.props.reactions.emit.broadcast(
+				"reaction",
+				mouseTracker.getClientMousePosition(presence.getMyself()),
+				reactionValue ?? "?",
+			);
+		}
 	});
 }
 
