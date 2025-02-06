@@ -8,8 +8,8 @@ import { strict as assert } from "node:assert";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
-import { createNullValidator } from "./testUtils.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { createNullValidator } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
@@ -47,28 +47,28 @@ describe("Presence", () => {
 
 			it("can set and get empty object as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					obj: Latest({}),
+					obj: Latest({}, createNullValidator()),
 				});
 				assert.deepStrictEqual(states.props.obj.local, {});
 			});
 
 			it("can set and get object with properties as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					obj: Latest({ x: 0, y: 0, z: 0 }),
+					obj: Latest({ x: 0, y: 0, z: 0 }, createNullValidator()),
 				});
 				assert.deepStrictEqual(states.props.obj.local, { x: 0, y: 0, z: 0 });
 			});
 
 			it("can set and get empty array as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					arr: Latest([]),
+					arr: Latest([], createNullValidator()),
 				});
 				assert.deepStrictEqual(states.props.arr.local, []);
 			});
 
 			it("can set and get array with elements as initial value", () => {
 				const states = presence.getStates(testWorkspaceName, {
-					arr: Latest([1, 2, 3]),
+					arr: Latest([1, 2, 3], createNullValidator()),
 				});
 				assert.deepStrictEqual(states.props.arr.local, [1, 2, 3]);
 			});

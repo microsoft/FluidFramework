@@ -118,9 +118,12 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		for (const [clientSessionId, value] of objectEntries(allKnownStates.states)) {
 			if (clientSessionId !== allKnownStates.self) {
-				const validData = this.validator(value.value);
-				if (validData === undefined) {
-					throw new Error("Data failed runtime validation.");
+				if (value.valid !== true) {
+					const validData = this.validator(value.value);
+					if (validData === undefined) {
+						throw new Error("Data failed runtime validation.");
+					}
+					value.valid = validData;
 				}
 
 				yield {
@@ -146,11 +149,13 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for clientId");
 		}
 
-		const validData = this.validator(clientState);
-		if (validData === undefined) {
-			throw new Error("Data failed runtime validation.");
+		if (clientState.valid !== true) {
+			const validData = this.validator(clientState);
+			if (validData === undefined) {
+				throw new Error("Data failed runtime validation.");
+			}
+			clientState.valid = validData;
 		}
-		clientState.hasBeenValidated = true;
 
 		return {
 			value: clientState.value,
@@ -198,7 +203,6 @@ export function Latest<T extends object, Key extends string = string>(
 		rev: 0,
 		timestamp: Date.now(),
 		value: shallowCloneObject(initialValue),
-		hasBeenValidated: false,
 	};
 	const factory = (
 		key: Key,

@@ -181,7 +181,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			rev: this.selfAttendee.order++,
 			timestamp: Date.now(),
 			value: this.selfAttendee.sessionId,
-			hasBeenValidated: false,
 		};
 
 		// Mark 'Connected' remote attendees connections as stale

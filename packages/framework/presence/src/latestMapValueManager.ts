@@ -14,7 +14,7 @@ import type {
 	LatestValueClientData,
 	LatestValueData,
 	LatestValueMetadata,
-	KeyValueTypeSchemaValidator,
+	ValueTypeSchemaValidatorForKey,
 } from "./latestValueTypes.js";
 import type { ClientSessionId, ISessionClient, SpecificSessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -199,7 +199,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 				string | number
 			>,
 		) => void,
-		private readonly validator: KeyValueTypeSchemaValidator<T, K>,
+		private readonly validator: ValueTypeSchemaValidatorForKey<T, K>,
 	) {
 		// All initial items are expected to be defined.
 		// TODO assert all defined and/or update type.
@@ -221,7 +221,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		} else {
 			item.value = value;
 		}
-		const update = { rev: this.value.rev, items: { [key]: item }, hasBeenValidated: false };
+		const update = { rev: this.value.rev, items: { [key]: item } };
 		this.localUpdate(update);
 	}
 
@@ -253,7 +253,12 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		}
 	}
 	public get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> | undefined {
-		return this.value.items[key]?.value;
+		const data = this.value.items[key]?.value;
+		const valueValidator = this.validator(key, data);
+		if (valueValidator === undefined) {
+			throw new Error(`No validator for key ${key}`);
+		}
+		return valueValidator(data);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -261,7 +266,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	public set(key: K, value: JsonSerializable<T> & JsonDeserialized<T>): this {
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value, hasBeenValidated: false };
+			this.value.items[key] = { rev: 0, timestamp: 0, value };
 		}
 		this.updateItem(key, value);
 		return this;
@@ -338,7 +343,7 @@ class LatestMapValueManagerImpl<
 			InternalTypes.MapValueState<T, Keys>
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
-		private readonly validator: KeyValueTypeSchemaValidator<T, Keys>,
+		validator: ValueTypeSchemaValidatorForKey<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
@@ -382,22 +387,16 @@ class LatestMapValueManagerImpl<
 			throw new Error("No entry for client");
 		}
 
-		if(!clientStateMap.hasBeenValidated) {
-			const validData = this.validator(clientStateMap);
-			if (validData === undefined) {
-				throw new Error("Data failed runtime validation.");
-			}
-			clientStateMap.hasBeenValidated = true;
-		}
-
 		const items = new Map<Keys, LatestValueData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			const value = item.value;
-			if (value !== undefined) {
-				items.set(key, {
-					value,
-					metadata: { revision: item.rev, timestamp: item.timestamp },
-				});
+			if (item.value !== undefined) {
+				const value = item.value;
+				if (value !== undefined) {
+					items.set(key, {
+						value,
+						metadata: { revision: item.rev, timestamp: item.timestamp },
+					});
+				}
 			}
 		}
 		return items;
@@ -415,7 +414,6 @@ class LatestMapValueManagerImpl<
 			{
 				rev: value.rev,
 				items: {} as unknown as InternalTypes.MapValueState<T, Keys>["items"],
-				hasBeenValidated: false,
 			});
 		// Accumulate individual update keys
 		const updatedItemKeys: Keys[] = [];
@@ -447,7 +445,6 @@ class LatestMapValueManagerImpl<
 			const metadata = {
 				revision: item.rev,
 				timestamp: item.timestamp,
-				hasBeenValidated: false,
 			};
 			if (item.value !== undefined) {
 				this.events.emit("itemUpdated", {
@@ -487,7 +484,7 @@ export function LatestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	validator: KeyValueTypeSchemaValidator<T, Keys>,
+	validator: ValueTypeSchemaValidatorForKey<T, Keys>,
 	initialValues?: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	},
@@ -502,7 +499,7 @@ export function LatestMap<
 		T,
 		// This should be `Keys`, but will only work if properties are optional.
 		string | number
-	> = { rev: 0, items: {}, hasBeenValidated: false };
+	> = { rev: 0, items: {} };
 	// LatestMapValueManager takes ownership of values within initialValues.
 	if (initialValues !== undefined) {
 		for (const key of objectKeys(initialValues)) {

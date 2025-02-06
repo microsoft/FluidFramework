@@ -24,12 +24,6 @@ export interface LatestValueMetadata {
 	 * @remarks Currently this is a placeholder for future implementation.
 	 */
 	timestamp: number;
-	/**
-	 * Indicates whether the value state has been validated.
-	 *
-	 * TODO: what's the relationship between this and InternalTypes.ValueStateMetadata?
-	 */
-	// hasBeenValidated: boolean;
 }
 
 /**
@@ -41,17 +35,42 @@ export interface LatestValueMetadata {
 export interface LatestValueData<T> {
 	value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
 	metadata: LatestValueMetadata;
+
+	// /**
+	//  * If the value has been validated, this will contain the validated value. If it is undefined, then the value may not
+	//  * be valid.
+	//  */
+	// validated?: T | undefined;
 }
+
+// /**
+//  * Validated state of a value and its metadata.
+//  *
+//  * @sealed
+//  * @alpha
+//  */
+// export interface LatestValueDataValidated<T> extends LatestValueData<T> {
+// 	hasBeenValidated: true;
+// }
 
 /**
  * State of a specific client's value and its metadata.
- *
  * @sealed
  * @alpha
  */
 export interface LatestValueClientData<T> extends LatestValueData<T> {
 	client: ISessionClient;
 }
+
+// /**
+//  * Validated state of a specific client's value and its metadata.
+//  *
+//  * @sealed
+//  * @alpha
+//  */
+// export interface LatestValueClientDataValidated<T> extends LatestValueClientData<T> {
+// 	hasBeenValidated: true;
+// }
 
 /**
  * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
@@ -62,20 +81,15 @@ export interface LatestValueClientData<T> extends LatestValueData<T> {
 export type ValueTypeSchemaValidator<T> = (unvalidatedData: unknown) => T | undefined;
 
 /**
- * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
- * presence workspace and managed by a value manager.
- *
- * @alpha
- */
-export type KeyValueTypeSchemaValidator<T, Keys extends string | number = string | number> = (
-	unvalidatedData: unknown,
-) => ReadonlyMap<T, Keys> | undefined;
-
-/**
  * A
  * @alpha
  */
-export type ValueTypeSchemaValidatorForKey<T, Keys extends string | number = string | number> = (
+export type ValueTypeSchemaValidatorForKey<
+	T,
+	Keys extends string | number = string | number,
+> = (
 	key: Keys,
 	unvalidatedData: unknown,
-) => ValueTypeSchemaValidator<T> | undefined;
+) =>
+	| ValueTypeSchemaValidator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>>
+	| undefined;

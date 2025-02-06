@@ -23,12 +23,6 @@ export namespace InternalTypes {
 	export interface ValueStateMetadata {
 		rev: number;
 		timestamp: number;
-		/**
-		 * Indicates whether the value state has been validated.
-		 *
-		 * TODO: what's the relationship between this and LatestValueMetadata?
-		 */
-		hasBeenValidated: boolean;
 	}
 
 	/**
@@ -36,6 +30,11 @@ export namespace InternalTypes {
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
 		value?: JsonDeserialized<TValue>;
+		/**
+		 * Contains the validated data, or `undefined` if the value has not been validated.
+		 */
+		// valid?: JsonDeserialized<TValue> | undefined;
+		valid?: TValue | undefined;
 	}
 
 	/**
@@ -43,6 +42,11 @@ export namespace InternalTypes {
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
 		value: JsonDeserialized<TValue>;
+		/**
+		 * Contains the validated data, or `undefined` if the value has not been validated.
+		 */
+		// valid?: JsonDeserialized<TValue> | undefined;
+		valid?: TValue | undefined;
 	}
 
 	/**
@@ -74,12 +78,6 @@ export namespace InternalTypes {
 			// See https://github.com/microsoft/TypeScript/issues/42810.
 			[name in Keys]: ValueOptionalState<T>;
 		};
-		/**
-		 * Indicates whether the value state has been validated.
-		 *
-		 * TODO: what's the relationship between this and ValueStateMetadata?
-		 */
-		hasBeenValidated: boolean;
 	}
 
 	/**
