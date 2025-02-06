@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { rootFieldKey } from "../../core/index.js";
 import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
@@ -151,6 +152,52 @@ describe("Repair Data", () => {
 			// check that the repair data on the first tree is destroyed
 			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Deleted);
 			assert.equal(anchorBOnTree1.treeStatus, TreeStatus.Deleted);
+			assert.equal(view1.checkout.getRemovedRoots().length, 0);
+
+			unsubscribe();
+		});
+
+		it("the corresponding revertible is disposed with grouped batching", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				undefined /* factory */,
+				undefined /* useDeterministicSessionIds */,
+				FlushMode.TurnBased,
+			);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			view1.initialize(["A", "B"]);
+
+			// make sure that revertibles are created
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
+
+			// get anchors to the nodes we're removing
+			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");
+
+			// remove in first tree
+			view1.root.removeRange(0, 1);
+
+			provider.processMessages();
+			const removeSequenceNumber = provider.sequenceNumber;
+
+			assert.deepEqual([...view1.root], ["B"]);
+
+			advanceCollabWindow(provider, removeSequenceNumber);
+
+			// The nodes should not have been deleted yet because the revertible is still active
+			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Removed);
+			assert.equal(view1.checkout.getRemovedRoots().length, 1);
+
+			// dispose the revertible
+			undoStack[0].dispose();
+
+			// check that the repair data on the first tree is destroyed
+			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Deleted);
 			assert.equal(view1.checkout.getRemovedRoots().length, 0);
 
 			unsubscribe();
