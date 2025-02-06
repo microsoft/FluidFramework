@@ -10768,6 +10768,12 @@ importers:
       '@fluidframework/synthesize':
         specifier: workspace:~
         version: link:../synthesize
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../dds/tree
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1

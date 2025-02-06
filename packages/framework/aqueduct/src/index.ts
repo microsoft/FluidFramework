@@ -20,11 +20,12 @@
 
 export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories/index.js";
 export {
+	createDataObjectKind,
 	DataObject,
 	type DataObjectTypes,
 	type IDataObjectProps,
 	PureDataObject,
-	createDataObjectKind,
+	TreeDataObject,
 } from "./data-objects/index.js";
 export {
 	BaseContainerRuntimeFactory,
