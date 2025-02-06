@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { GroceryListContainerRuntimeFactory } from "./containerCode.js";
+export { baseIntervalModel, baseSharedStringModel } from "./fuzz/index.js";

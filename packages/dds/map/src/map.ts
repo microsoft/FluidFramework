@@ -203,8 +203,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		//    and result in non-incremental snapshot.
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
-		for (const key of Object.keys(data)) {
-			const value = data[key];
+		for (const [key, value] of Object.entries(data)) {
 			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
 				const blobName = `blob${counter}`;
 				counter++;
@@ -300,7 +299,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					local,
 					localOpMetadata,
 				),
-				"Map received an unrecognized op, possibly from a newer version",
+				0xab2 /* Map received an unrecognized op, possibly from a newer version */,
 			);
 		}
 	}

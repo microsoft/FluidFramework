@@ -38,6 +38,7 @@ import {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import {
+	type IErrorBase,
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 	IProvideFluidHandleContext,
@@ -742,7 +743,9 @@ export function getDeviceSpec(): {
 				hardwareConcurrency: navigator.hardwareConcurrency,
 			};
 		}
-	} catch {}
+	} catch {
+		// Eat the error
+	}
 	return {};
 }
 
@@ -803,19 +806,18 @@ async function createSummarizer(loader: ILoader, url: string): Promise<ISummariz
 
 	// Older containers may not have the "getEntryPoint" API
 	// ! This check will need to stay until LTS of loader moves past 2.0.0-internal.7.0.0
-	if (resolvedContainer.getEntryPoint !== undefined) {
-		fluidObject = await resolvedContainer.getEntryPoint();
-	} else {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
-		const response = await (resolvedContainer as any).request({
+	if (resolvedContainer.getEntryPoint === undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+		const response = (await (resolvedContainer as any).request({
 			url: `/${summarizerRequestUrl}`,
-		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+		})) as IResponse;
 		if (response.status !== 200 || response.mimeType !== "fluid/object") {
 			throw responseToException(response, request);
 		}
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		fluidObject = response.value;
+	} else {
+		fluidObject = await resolvedContainer.getEntryPoint();
 	}
 
 	if (fluidObject?.ISummarizer === undefined) {
@@ -1153,14 +1155,14 @@ export class ContainerRuntime
 					pendingLocalState.pendingIdCompressorState,
 					compressorLogger,
 				);
-			} else if (serializedIdCompressor !== undefined) {
+			} else if (serializedIdCompressor === undefined) {
+				return createIdCompressor(compressorLogger);
+			} else {
 				return deserializeIdCompressor(
 					serializedIdCompressor,
 					createSessionId(),
 					compressorLogger,
 				);
-			} else {
-				return createIdCompressor(compressorLogger);
 			}
 		};
 
@@ -1236,7 +1238,7 @@ export class ContainerRuntime
 					runtime.setConnectionStateCore(true, runtime.delayConnectClientId);
 				}
 			},
-			(error) => runtime.closeFn(error),
+			(error: IErrorBase) => runtime.closeFn(error),
 		);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
@@ -1567,6 +1569,7 @@ export class ContainerRuntime
 			request: IRequest,
 			runtime: IContainerRuntime,
 		) => Promise<IResponse>,
+		// eslint-disable-next-line unicorn/no-object-as-default-parameter
 		summaryConfiguration: ISummaryConfiguration = {
 			// the defaults
 			...DefaultSummaryConfiguration,
@@ -1939,7 +1942,6 @@ export class ContainerRuntime
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
-			closeContainer: (error?: ICriticalContainerError) => this.closeFn(error),
 		});
 
 		this.deltaScheduler = new DeltaScheduler(
@@ -2120,7 +2122,7 @@ export class ContainerRuntime
 					"summarizerStart",
 					"summarizerStartupFailed",
 				]) {
-					this.summaryManager?.on(eventName, (...args: any[]) => {
+					this.summaryManager?.on(eventName, (...args: unknown[]) => {
 						this.emit(eventName, ...args);
 					});
 				}
@@ -2292,7 +2294,7 @@ export class ContainerRuntime
 		// be in same loading group. So, once we have fetched the snapshot for that loading group on
 		// any request, then cache that as same group could be requested in future too.
 		const snapshot = await this.snapshotCacheForLoadingGroupIds.addOrGet(
-			sortedLoadingGroupIds.join(),
+			sortedLoadingGroupIds.join(","),
 			async () => {
 				assert(
 					this.storage.getSnapshot !== undefined,
@@ -3724,6 +3726,12 @@ export class ContainerRuntime
 
 	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
 
+	/**
+	 * Builds the Summary tree including all the channels and the container state.
+	 *
+	 * @remarks - Unfortunately, this function is accessed in a non-typesafe way by a legacy first-party partner,
+	 * so until we can provide a proper API for their scenario, we need to ensure this function doesn't change.
+	 */
 	private async summarizeInternal(
 		fullTree: boolean,
 		trackState: boolean,
@@ -4464,14 +4472,14 @@ export class ContainerRuntime
 	}
 
 	private updateDocumentDirtyState(dirty: boolean): void {
-		if (this.attachState !== AttachState.Attached) {
-			assert(dirty, 0x3d2 /* Non-attached container is dirty */);
-		} else {
+		if (this.attachState === AttachState.Attached) {
 			// Other way is not true = see this.isContainerMessageDirtyable()
 			assert(
 				!dirty || this.hasPendingMessages(),
 				0x3d3 /* if doc is dirty, there has to be pending ops */,
 			);
+		} else {
+			assert(dirty, 0x3d2 /* Non-attached container is dirty */);
 		}
 
 		if (this.dirtyContainer === dirty) {
@@ -5001,26 +5009,26 @@ export class ContainerRuntime
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.summarizeOnDemand(options);
-		} else if (this.summaryManager !== undefined) {
-			return this.summaryManager.summarizeOnDemand(options);
-		} else {
+		} else if (this.summaryManager === undefined) {
 			// If we're not the summarizer, and we don't have a summaryManager, we expect that
 			// disableSummaries is turned on. We are throwing instead of returning a failure here,
 			// because it is a misuse of the API rather than an expected failure.
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
+		} else {
+			return this.summaryManager.summarizeOnDemand(options);
 		}
 	}
 
 	public enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult {
 		if (this._summarizer !== undefined) {
 			return this._summarizer.enqueueSummarize(options);
-		} else if (this.summaryManager !== undefined) {
-			return this.summaryManager.enqueueSummarize(options);
-		} else {
+		} else if (this.summaryManager === undefined) {
 			// If we're not the summarizer, and we don't have a summaryManager, we expect that
 			// generateSummaries is turned off. We are throwing instead of returning a failure here,
 			// because it is a misuse of the API rather than an expected failure.
 			throw new UsageError(`Can't summarize, disableSummaries: ${this.summariesDisabled}`);
+		} else {
+			return this.summaryManager.enqueueSummarize(options);
 		}
 	}
 

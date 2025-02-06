@@ -21,20 +21,25 @@ const initializeBrowser = async () => {
 	return browser;
 };
 
+/**
+ * @param page The page to load the presence tracker app on.
+ */
+const loadPresenceTrackerApp = async (page: Page, url: string) => {
+	await page.goto(url, { waitUntil: "load" });
+	// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
+	await page.waitForFunction(() => window["fluidStarted"]);
+};
+
 // Most tests are passing when tinylicious is running. Those that aren't are individually skipped.
 describe("presence-tracker", () => {
 	beforeAll(async () => {
-		// Wait for the page to load first before running any tests
-		// so this time isn't attributed to the first test
-		await page.goto(globals.PATH, { waitUntil: "load", timeout: 0 });
-		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
-		await page.waitForFunction(() => window["fluidStarted"]);
+		// Wait for the page to load first before running any tests giving a more generous timeout
+		// so this time isn't attributed to the first test.
+		await loadPresenceTrackerApp(page, globals.PATH);
 	}, 45000);
 
 	beforeEach(async () => {
-		await page.goto(globals.PATH, { waitUntil: "load" });
-		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
-		await page.waitForFunction(() => window["fluidStarted"]);
+		await loadPresenceTrackerApp(page, globals.PATH);
 	});
 
 	describe("Single client", () => {
@@ -89,25 +94,30 @@ describe("presence-tracker", () => {
 			// Create a second browser instance.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
+			// Like the 1-client tests, we confirm at least one successful page load with a longer timeout before running the suite.
+			// TODO:AB#28502: It's unclear this longer timeout is necessary, but the test suite failed at least once on timeout
+			// during the subsequent beforeEach hook, and loading the page once could help ensure browser cache is populated.
+			await loadPresenceTrackerApp(page2, globals.PATH);
 		}, 45000);
 
 		beforeEach(async () => {
-			// Navigate to the URL/session created by the first browser.
-			await page2.goto(page.url(), { waitUntil: "load" });
-			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
-			await page2.waitForFunction(() => window["fluidStarted"]);
+			await loadPresenceTrackerApp(page2, page.url());
 		});
 
 		afterAll(async () => {
 			await browser2.close();
 		});
 
-		it("Second user can join", async () => {
+		// TODO:AB#28502: This test case passes all the time, but considering the remainder of this suite has issues where browser2 doesn't
+		// actually connect to the same session as browser1, it should be audited so that it's not a false positive.
+		it.skip("Second user can join", async () => {
 			// Both browser instances should be pointing to the same URL now.
 			expect(page2.url()).toEqual(page.url());
 		});
 
-		it("Second client shows two clients connected", async () => {
+		// TODO:AB#28502: There is a false positive with this test when `loadPresenceTrackerApp` in `beforeAll` is removed or sent to `page.url()`.
+		// In those cases, the second session observed on page2 is not from the first session.
+		it.skip("Second client shows two clients connected", async () => {
 			// Get the client list from the second browser instance; it should show two connected.
 			const elementHandle = await page2.waitForFunction(() =>
 				document.getElementById("focus-div"),
