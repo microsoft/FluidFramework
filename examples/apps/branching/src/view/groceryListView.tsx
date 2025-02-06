@@ -7,11 +7,11 @@ import React, { FC, useEffect, useRef, useState } from "react";
 
 import type { ISuggestionGroceryList, ISuggestionGroceryItem } from "../container/index.js";
 
-export interface IGroceryItemViewProps {
+interface IGroceryItemViewProps {
 	groceryItem: ISuggestionGroceryItem;
 }
 
-export const GroceryItemView: FC<IGroceryItemViewProps> = ({
+const GroceryItemView: FC<IGroceryItemViewProps> = ({
 	groceryItem,
 }: IGroceryItemViewProps) => {
 	const backgroundColor =

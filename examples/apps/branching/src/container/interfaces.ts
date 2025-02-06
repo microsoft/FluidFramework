@@ -9,6 +9,7 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 /**
  * Interfaces for extracting and diffing grocery list data.
  */
+
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type GroceryListItemPOJO = { id: string; name: string };
 export type GroceryListPOJO = GroceryListItemPOJO[];
