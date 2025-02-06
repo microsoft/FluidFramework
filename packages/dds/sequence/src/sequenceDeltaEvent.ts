@@ -51,12 +51,12 @@ export interface SequenceEvent<
 	/**
 	 * The first of the modified ranges.
 	 */
-	readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
+	readonly first: Readonly<ISequenceDeltaRange<TOperation> | undefined>;
 
 	/**
 	 * The last of the modified ranges.
 	 */
-	readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
+	readonly last: Readonly<ISequenceDeltaRange<TOperation> | undefined>;
 }
 export abstract class SequenceEventClass<
 	TOperation extends MergeTreeDeltaOperationTypes = MergeTreeDeltaOperationTypes,
@@ -66,8 +66,8 @@ export abstract class SequenceEventClass<
 	public readonly deltaOperation: TOperation;
 	// eslint-disable-next-line import/no-deprecated
 	private readonly sortedRanges: Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>;
-	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation>>;
-	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation>>;
+	private readonly pFirst: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
+	private readonly pLast: Lazy<ISequenceDeltaRange<TOperation> | undefined>;
 
 	constructor(
 		public readonly opArgs: IMergeTreeDeltaOpArgs | undefined,
@@ -106,20 +106,12 @@ export abstract class SequenceEventClass<
 			return set;
 		});
 
-		/*
-		 * Non-null assertions are safe here because:
-		 * - assert() ensures deltaSegments.length > 0 (except for OBLITERATE/ACKNOWLEDGED)
-		 * - sortedRanges is populated by iterating deltaSegments
-		 * - therefore items[0] and items[size-1] must exist in the non-empty set
-		 */
-		this.pFirst = new Lazy<ISequenceDeltaRange<TOperation>>(
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			() => this.sortedRanges.value.items[0]!,
+		this.pFirst = new Lazy<ISequenceDeltaRange<TOperation> | undefined>(
+			() => this.sortedRanges.value.items[0],
 		);
 
-		this.pLast = new Lazy<ISequenceDeltaRange<TOperation>>(
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1]!,
+		this.pLast = new Lazy<ISequenceDeltaRange<TOperation> | undefined>(
+			() => this.sortedRanges.value.items[this.sortedRanges.value.size - 1],
 		);
 	}
 
@@ -144,14 +136,14 @@ export abstract class SequenceEventClass<
 	/**
 	 * The first of the modified ranges.
 	 */
-	public get first(): Readonly<ISequenceDeltaRange<TOperation>> {
+	public get first(): Readonly<ISequenceDeltaRange<TOperation> | undefined> {
 		return this.pFirst.value;
 	}
 
 	/**
 	 * The last of the modified ranges.
 	 */
-	public get last(): Readonly<ISequenceDeltaRange<TOperation>> {
+	public get last(): Readonly<ISequenceDeltaRange<TOperation> | undefined> {
 		return this.pLast.value;
 	}
 }
