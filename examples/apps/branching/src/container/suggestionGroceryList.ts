@@ -32,6 +32,12 @@ class SuggestionGroceryItem implements ISuggestionGroceryItem {
 }
 
 export class SuggestionGroceryList implements ISuggestionGroceryList {
+	/**
+	 * The _suggestionGroceryItems closely follow the items from this.groceryList.  However,
+	 * they also include any suggested additions that are not yet in this.groceryList, and serve
+	 * as a buffer between the user and this.groceryList when _inStagingMode.  Its items can
+	 * be inspected to understand their suggestion status for the purpose of diff UI rendering.
+	 */
 	private readonly _suggestionGroceryItems = new Map<string, SuggestionGroceryItem>();
 	private _inStagingMode = false;
 	public get inStagingMode() {
