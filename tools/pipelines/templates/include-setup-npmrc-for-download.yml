@@ -18,7 +18,7 @@ parameters:
   default: $(Agent.TempDirectory)/global-download-npmrc
 
 steps:
-${{ if eq(variables['System.TeamProject'], 'internal')}}:
+- ${{ if eq(variables['System.TeamProject'], 'internal')}}:
   - error: Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported.
 
 - task: Bash@3
