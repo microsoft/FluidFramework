@@ -25,11 +25,12 @@ import type {
 	IGroceryItem,
 	IGroceryList,
 	IGroceryListEvents,
-} from "../modelInterfaces.js";
+} from "./interfaces.js";
 
 /**
  * GroceryItem is the local object with a friendly interface for the view to use.
- * It wraps a new SharedTree node representing a grocery item to abstract out the DDS manipulation and access.
+ * It conceals the DDS manipulation and access, and exposes a more-convenient surface
+ * for working with a single item.
  */
 class GroceryItem implements IGroceryItem {
 	public constructor(
@@ -54,11 +55,9 @@ class GroceryList implements IGroceryList {
 	}
 
 	public constructor(
-		// TODO:  Consider just specifying what the data object requires rather than taking a full runtime.
 		private readonly disposableParent: IDisposableParent,
 		public readonly handle: IFluidHandle<FluidObject>,
 		private readonly map: ISharedMap,
-		public readonly branch: () => Promise<IGroceryList>,
 	) {
 		if (this.disposableParent.disposed) {
 			this.dispose();
@@ -83,6 +82,10 @@ class GroceryList implements IGroceryList {
 		return [...this._groceryItems.values()];
 	};
 
+	public readonly removeItem = (id: string) => {
+		this.map.delete(id);
+	};
+
 	private readonly onMapValueChanged = (changed: IValueChanged) => {
 		const changedId = changed.key;
 		const newName = this.map.get(changedId);
@@ -91,7 +94,7 @@ class GroceryList implements IGroceryList {
 			this._events.emit("itemDeleted");
 		} else {
 			const newGroceryItem = new GroceryItem(changedId, newName, () => {
-				this.map.delete(changedId);
+				this.removeItem(changedId);
 			});
 			this._groceryItems.set(changedId, newGroceryItem);
 			this._events.emit("itemAdded");
@@ -149,25 +152,7 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 		assert(runtime.entryPoint !== undefined, "EntryPoint was undefined");
 		const handle = runtime.entryPoint;
 
-		// TODO: Use actual branching.  This is currently just creating a detached map and copying the data over.
-		const branchMap = (originalMap: ISharedMap) => {
-			const branchedMap = runtime.createChannel(uuid(), mapFactory.type) as ISharedMap;
-			for (const [key, value] of originalMap) {
-				branchedMap.set(key, value);
-			}
-			return branchedMap;
-		};
-
-		const branch = async () => {
-			const branchedMap = branchMap(map);
-			// TODO: Should there be a working handle here?  What would that mean?
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			return new GroceryList(runtime, {} as IFluidHandle<FluidObject>, branchedMap, () => {
-				throw new Error("Double-branching not supported right now");
-			});
-		};
-
-		const instance = new GroceryList(runtime, handle, map, branch);
+		const instance = new GroceryList(runtime, handle, map);
 
 		return runtime;
 	}

@@ -41,8 +41,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		previousFullSnapshot: ISnapshotTreeEx | undefined,
 	): Promise<string> {
 		const entries = await Promise.all(
-			Object.keys(summaryTree.tree).map(async (key) => {
-				const entry = summaryTree.tree[key];
+			Object.entries(summaryTree.tree).map(async ([key, entry]) => {
 				const pathHandle = await this.writeSummaryTreeObject(entry, previousFullSnapshot);
 				const treeEntry: IGitCreateTreeEntry = {
 					mode: getGitMode(entry),

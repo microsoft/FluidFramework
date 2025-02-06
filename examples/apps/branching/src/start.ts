@@ -18,8 +18,12 @@ import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { GroceryListContainerRuntimeFactory } from "./model/index.js";
-import type { IGroceryList } from "./modelInterfaces.js";
+import {
+	GroceryListContainerRuntimeFactory,
+	type GroceryListAppEntryPoint,
+	type IGroceryList,
+	type PrivateChanges,
+} from "./container/index.js";
 import { AppView, DebugView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
@@ -30,10 +34,10 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const render = (groceryList: IGroceryList) => {
+const render = (groceryList: IGroceryList, getSuggestions: () => Promise<PrivateChanges>) => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	const appRoot = createRoot(appDiv);
-	appRoot.render(createElement(AppView, { groceryList }));
+	appRoot.render(createElement(AppView, { groceryList, getSuggestions }));
 
 	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
 	const debugDiv = document.getElementById("debug") as HTMLDivElement;
@@ -47,7 +51,7 @@ const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory()
 
 async function start(): Promise<void> {
 	let id: string;
-	let groceryList: IGroceryList;
+	let entryPoint: GroceryListAppEntryPoint;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
@@ -56,7 +60,7 @@ async function start(): Promise<void> {
 			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		entryPoint = (await container.getEntryPoint()) as GroceryListAppEntryPoint;
 		await container.attach(createTinyliciousTestCreateNewRequest());
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url not available on attached container");
@@ -70,10 +74,10 @@ async function start(): Promise<void> {
 			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		entryPoint = (await container.getEntryPoint()) as GroceryListAppEntryPoint;
 	}
 
-	render(groceryList);
+	render(entryPoint.groceryList, entryPoint.getSuggestions);
 	updateTabForId(id);
 }
 

@@ -21,8 +21,12 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
-import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
-import type { IGroceryList } from "../src/modelInterfaces.js";
+import {
+	GroceryListContainerRuntimeFactory,
+	type GroceryListAppEntryPoint,
+	type IGroceryList,
+	type PrivateChanges,
+} from "../src/container/index.js";
 import { AppView, DebugView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
@@ -43,7 +47,7 @@ const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory()
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	let id: string;
-	let groceryList: IGroceryList;
+	let entryPoint: GroceryListAppEntryPoint;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
@@ -52,7 +56,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		entryPoint = (await container.getEntryPoint()) as GroceryListAppEntryPoint;
 		const documentId = uuid();
 		await container.attach(createLocalResolverCreateNewRequest(documentId));
 		if (container.resolvedUrl === undefined) {
@@ -68,15 +72,18 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		entryPoint = (await container.getEntryPoint()) as GroceryListAppEntryPoint;
 	}
 
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
-	const render = (groceryList: IGroceryList) => {
+	const render = (
+		groceryList: IGroceryList,
+		getSuggestions: () => Promise<PrivateChanges>,
+	) => {
 		const appRoot = createRoot(appDiv);
-		appRoot.render(createElement(AppView, { groceryList }));
+		appRoot.render(createElement(AppView, { groceryList, getSuggestions }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugRoot = createRoot(debugDiv);
@@ -86,7 +93,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(groceryList);
+	render(entryPoint.groceryList, entryPoint.getSuggestions);
 
 	element.append(appDiv, debugDiv);
 
