@@ -182,6 +182,30 @@ Once the `aiCollab` function call is initiated, an LLM will immediately begin at
 
 ## Debug Events
 This package allows users to consume `DebugEvents` that can very helpful in understanding what's going on internally and debugging potential issues.
+Users can consume these events by providing a callback to the ai-collab function's `debugEventLogHandler` parameter:
+```ts
+aiCollab({
+	openAI: {
+		client: new OpenAI({
+			apiKey: OPENAI_API_KEY,
+		}),
+		modelName: "gpt-4o",
+	},
+	treeNode: view.root.taskGroups[0],
+	prompt: {
+		systemRoleContext:
+			"You are a manager that is helping out with a project management tool. You have been asked to edit a group of tasks.",
+		userAsk: userAsk,
+	},
+	limiters: {
+		maxModelCalls: 25
+	}
+	planningStep: true,
+	finalReviewStep: true,
+	debugEventLogHandler: (event: DebugEvent) => {console.log(event);} // This should be your debug event log handler
+});
+
+```
 
 There are two types of debug events, `DebugEvent` which is the core interface and is used to describe ALL debug events and `EventFlowDebugEvent` which is for more specific debug events that mark a progress point in a specific logic flow within a single ai-collab function call.
 

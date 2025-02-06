@@ -41,6 +41,50 @@ export interface AiCollabSuccessResponse {
 }
 
 // @alpha
+export interface ApplyEditFailureDebugEvent extends DebugEvent {
+    edit: TreeEdit;
+    errorMessage: string;
+    eventFlowTraceId?: string;
+    // (undocumented)
+    eventName: "APPLIED_EDIT_FAILURE";
+    sequentialErrorCount: number;
+}
+
+// @alpha
+export interface ApplyEditSuccessDebugEvent extends DebugEvent {
+    edit: TreeEdit;
+    eventFlowTraceId?: string;
+    // (undocumented)
+    eventName: "APPLIED_EDIT_SUCCESS";
+}
+
+// @alpha
+export interface CoreEventLoopCompletedDebugEvent extends EventFlowDebugEvent {
+    // (undocumented)
+    errorMessage?: string;
+    // (undocumented)
+    eventFlowName: "CORE_EVENT_LOOP";
+    // (undocumented)
+    eventFlowStatus: "COMPLETED";
+    // (undocumented)
+    eventName: "CORE_EVENT_LOOP_COMPLETED";
+    // (undocumented)
+    failureReason?: string;
+    // (undocumented)
+    status: "success" | "failure";
+}
+
+// @alpha
+export interface CoreEventLoopStartedDebugEvent extends EventFlowDebugEvent {
+    // (undocumented)
+    eventFlowName: "CORE_EVENT_LOOP";
+    // (undocumented)
+    eventFlowStatus: "STARTED";
+    // (undocumented)
+    eventName: "CORE_EVENT_LOOP_STARTED";
+}
+
+// @alpha
 export function createMergableDiffSeries(diffs: Difference[]): Difference[];
 
 // @alpha
@@ -111,6 +155,70 @@ export interface DifferenceRemove {
 }
 
 // @alpha
+export interface FinalReviewCompletedDebugEvent extends EventFlowDebugEvent {
+    // (undocumented)
+    eventFlowName: "FINAL_REVIEW";
+    // (undocumented)
+    eventFlowStatus: "COMPLETED";
+    // (undocumented)
+    eventName: "FINAL_REVIEW_COMPLETED";
+    llmReviewResponse?: {
+        goalAccomplished: "yes" | "no";
+    };
+    status: "success" | "failure";
+}
+
+// @alpha
+export interface FinalReviewStartedDebugEvent extends EventFlowDebugEvent {
+    // (undocumented)
+    eventFlowName: "FINAL_REVIEW";
+    // (undocumented)
+    eventFlowStatus: "STARTED";
+    // (undocumented)
+    eventName: "FINAL_REVIEW_STARTED";
+    llmPrompt: string;
+}
+
+// @alpha
+export interface GenerateTreeEditCompletedDebugEvent extends EventFlowDebugEvent {
+    // (undocumented)
+    eventFlowName: "GENERATE_TREE_EDIT";
+    // (undocumented)
+    eventFlowStatus: "COMPLETED";
+    // (undocumented)
+    eventName: "GENERATE_TREE_EDIT_COMPLETED";
+    llmGeneratedEdit?: TreeEdit | null;
+    requestOutcome: "success" | "failure";
+}
+
+// @alpha
+export interface GenerateTreeEditStartedDebugEvent extends EventFlowDebugEvent {
+    // (undocumented)
+    eventFlowName: "GENERATE_TREE_EDIT";
+    // (undocumented)
+    eventFlowStatus: "STARTED";
+    // (undocumented)
+    eventName: "GENERATE_TREE_EDIT_STARTED";
+    // (undocumented)
+    llmPrompt: string;
+}
+
+// @alpha
+export interface LlmApiCallDebugEvent extends DebugEvent {
+    eventFlowTraceId?: string;
+    // (undocumented)
+    eventName: "LLM_API_CALL";
+    modelName: string;
+    requestParams: unknown;
+    response: unknown;
+    tokenUsage?: {
+        promptTokens: number;
+        completionTokens: number;
+    };
+    triggeringEventFlowName?: "GENERATE_PLANNING_PROMPT" | "GENERATE_TREE_EDIT" | "FINAL_REVIEW";
+}
+
+// @alpha
 export type ObjectPath = (string | number)[];
 
 // @alpha
@@ -127,6 +235,29 @@ export interface Options {
     useObjectIds?: {
         idAttributeName: string;
     } | undefined;
+}
+
+// @alpha
+export interface PlanningPromptCompletedDebugEvent extends EventFlowDebugEvent {
+    // (undocumented)
+    eventFlowName: "GENERATE_PLANNING_PROMPT";
+    // (undocumented)
+    eventFlowStatus: "COMPLETED";
+    // (undocumented)
+    eventName: "GENERATE_PLANNING_PROMPT_COMPLETED";
+    // (undocumented)
+    llmGeneratedPlan: string | undefined;
+    requestOutcome: "success" | "failure";
+}
+
+// @alpha
+export interface PlanningPromptStartedDebugEvent extends EventFlowDebugEvent {
+    // (undocumented)
+    eventFlowName: "GENERATE_PLANNING_PROMPT";
+    // (undocumented)
+    eventFlowStatus: "STARTED";
+    // (undocumented)
+    eventName: "GENERATE_PLANNING_PROMPT_STARTED";
 }
 
 // @alpha
