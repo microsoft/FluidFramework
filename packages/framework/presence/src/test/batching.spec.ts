@@ -167,7 +167,13 @@ describe("Presence", () => {
 				// SIGNAL #3
 				count.local = { num: 84 };
 
+				// Reading the data should cause the validator to get called.
+				const value = count.clientValue(presence.getMyself());
+				// const values = count.clientValues();
+
+				// assert.equal([...values].length, 2);
 				assert.equal(s.callCount, 1);
+				assert.equal(value.value.num, 84);
 
 				assertFinalExpectations(runtime, logger);
 			});
