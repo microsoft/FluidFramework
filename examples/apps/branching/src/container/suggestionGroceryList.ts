@@ -130,15 +130,21 @@ export class SuggestionGroceryList implements ISuggestionGroceryList {
 	public readonly getSuggestions = () => {
 		const asyncGetSuggestions = async () => {
 			const { adds, removals } = await getChangesFromHealthBot(this.groceryList);
-			for (const add of adds) {
-				this.addItem(add.name);
-			}
-			for (const removal of removals) {
-				this.removeItem(removal.id);
+			// Check to make sure we are still in staging mode after we get the results - if not, then just
+			// discard the suggestions.  Alternatively, we could wait for the network call to return before
+			// entering staging mode and emitting the event, depending on the desired UX.
+			if (this._inStagingMode) {
+				for (const add of adds) {
+					this.addItem(add.name);
+				}
+				for (const removal of removals) {
+					this.removeItem(removal.id);
+				}
 			}
 		};
 		this._inStagingMode = true;
 		this._events.emit("enterStagingMode");
+		// Float the promise because we don't need to wait for the result to enter staging mode.
 		asyncGetSuggestions().catch(console.error);
 	};
 
