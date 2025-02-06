@@ -18,7 +18,10 @@ parameters:
   default: $(Agent.TempDirectory)/global-download-npmrc
 
 steps:
-- ${{ if eq(variables['System.TeamProject'], 'internal')}}:
+# Force a parsing error so the pipeline run cannot even start if the conditions are incorrect for the use of this template.
+# Note this will always show up as a syntax error/warning (squiggly line) in IDEs that validate the structure of the
+# pipeline YAML file.
+- ${{ if ne(variables['System.TeamProject'], 'internal')}}:
   - "Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported."
 
 - task: Bash@3
