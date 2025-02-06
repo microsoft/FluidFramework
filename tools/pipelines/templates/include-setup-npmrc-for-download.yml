@@ -18,17 +18,8 @@ parameters:
   default: $(Agent.TempDirectory)/global-download-npmrc
 
 steps:
-# A (pipeline definition) parse-time error would be better but couldn't get it to work
-- task: Bash@3
-  displayName: Fail on unsupported scenarios
-  condition: ne(variables['System.TeamProject'], 'internal')
-  inputs:
-    targetType: 'inline'
-    script: |
-      set -eu -o pipefail
-
-      echo "##vso[task.logissue type=error]Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported."
-      exit 1
+${{ if eq(variables['System.TeamProject'], 'internal')}}:
+  - error: Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported.
 
 - task: Bash@3
   displayName: Ensure necessary values exist
