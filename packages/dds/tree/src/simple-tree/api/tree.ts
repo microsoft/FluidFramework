@@ -112,7 +112,7 @@ export interface ITreeAlpha extends ITree {
 	/**
 	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
 	 * @remarks
-	 * This is `undefined` iff the root field is empty (this can only happen if the root field is optional).
+	 * This is `undefined` if and only if the root field is empty (this can only happen if the root field is optional).
 	 */
 	exportVerbose(): VerboseTree | undefined;
 
