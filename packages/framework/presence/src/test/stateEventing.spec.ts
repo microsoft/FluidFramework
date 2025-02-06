@@ -94,7 +94,7 @@ describe("State eventing", () => {
 
 	/**
 	 * Each of these tests will have multiple attendee/valuemanager updates in one datastore update message.
-	 * The idea here is to make sure every event triggered by the datastore message has consistent state,
+	 * The idea here is to make sure every event triggered by the datastore message has consistent state.
 	 * This is done checking that every update within the message is reflected in every event, no matter the order.
 	 */
 	it("is consistent with attendee + latest value manager updates", () => {
