@@ -57,7 +57,7 @@ export function ServiceSection(): JSX.Element {
 						title="SharePoint Embedded"
 						description={speCardDescription}
 						learnMoreHref="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"
-						learnMoreLinkAltText="Sharepoint Embedded"
+						learnMoreLinkAltText="SharePoint Embedded"
 					/>
 				</div>
 			</div>
