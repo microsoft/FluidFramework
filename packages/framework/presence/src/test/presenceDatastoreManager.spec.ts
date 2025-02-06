@@ -2,10 +2,11 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+import { strict as assert } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers } from "sinon";
+import { useFakeTimers, spy } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
 
@@ -52,123 +53,212 @@ describe("Presence", () => {
 			// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
 			prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 		});
-
-		describe("responds to ClientJoin", () => {
+		describe("responds to", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
-
 			beforeEach(() => {
 				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
 			});
-
-			it("with broadcast immediately when preferred responder", () => {
-				// Setup
-				logger.registerExpectedEvent({
-					eventName: "Presence:JoinResponse",
-					details: JSON.stringify({
-						type: "broadcastAll",
-						requestor: "client4",
-						role: "primary",
-					}),
-				});
-				runtime.signalsExpected.push([
-					"Pres:DatastoreUpdate",
-					{
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": {
-										"rev": 0,
-										"timestamp": initialTime,
-										"value": "sessionId-2",
+			describe("ClientJoin", () => {
+				it("with broadcast immediately when preferred responder", () => {
+					// Setup
+					logger.registerExpectedEvent({
+						eventName: "Presence:JoinResponse",
+						details: JSON.stringify({
+							type: "broadcastAll",
+							requestor: "client4",
+							role: "primary",
+						}),
+					});
+					runtime.signalsExpected.push([
+						"Pres:DatastoreUpdate",
+						{
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": {
+											"rev": 0,
+											"timestamp": initialTime,
+											"value": "sessionId-2",
+										},
 									},
 								},
 							},
+							"isComplete": true,
+							"sendTimestamp": clock.now,
 						},
-						"isComplete": true,
-						"sendTimestamp": clock.now,
-					},
-				]);
+					]);
 
-				// Act
-				presence.processSignal(
-					"",
-					{
-						type: "Pres:ClientJoin",
-						content: {
-							sendTimestamp: clock.now - 50,
-							avgLatency: 50,
-							data: {},
-							updateProviders: ["client2"],
+					// Act
+					presence.processSignal(
+						"",
+						{
+							type: "Pres:ClientJoin",
+							content: {
+								sendTimestamp: clock.now - 50,
+								avgLatency: 50,
+								data: {},
+								updateProviders: ["client2"],
+							},
+							clientId: "client4",
 						},
-						clientId: "client4",
-					},
-					false,
-				);
+						false,
+					);
 
-				// Verify
-				assertFinalExpectations(runtime, logger);
+					// Verify
+					assertFinalExpectations(runtime, logger);
+				});
+
+				it("with broadcast after delay when NOT preferred responder", () => {
+					// #region Part 1 (no response)
+					// Act
+					presence.processSignal(
+						"",
+						{
+							type: "Pres:ClientJoin",
+							content: {
+								sendTimestamp: clock.now - 20,
+								avgLatency: 0,
+								data: {},
+								updateProviders: ["client0", "client1"],
+							},
+							clientId: "client4",
+						},
+						false,
+					);
+					// #endregion
+
+					// #region Part 2 (response after delay)
+					// Setup
+					logger.registerExpectedEvent({
+						eventName: "Presence:JoinResponse",
+						details: JSON.stringify({
+							type: "broadcastAll",
+							requestor: "client4",
+							role: "secondary",
+							order: 2,
+						}),
+					});
+					runtime.signalsExpected.push([
+						"Pres:DatastoreUpdate",
+						{
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										"client2": {
+											"rev": 0,
+											"timestamp": initialTime,
+											"value": "sessionId-2",
+										},
+									},
+								},
+							},
+							"isComplete": true,
+							"sendTimestamp": clock.now + 180,
+						},
+					]);
+
+					// Act
+					clock.tick(200);
+
+					// Verify
+					assertFinalExpectations(runtime, logger);
+					// #endregion
+				});
 			});
 
-			it("with broadcast after delay when NOT preferred responder", () => {
-				// #region Part 1 (no response)
-				// Act
-				presence.processSignal(
-					"",
-					{
-						type: "Pres:ClientJoin",
-						content: {
-							sendTimestamp: clock.now - 20,
-							avgLatency: 0,
-							data: {},
-							updateProviders: ["client0", "client1"],
-						},
-						clientId: "client4",
-					},
-					false,
-				);
-				// #endregion
+			describe.skip("new workspace", () => {
+				it("with 'workspaceActivated' event for States workspace ", () => {
+					// Setup
+					const listener = spy();
+					presence.events.on("workspaceActivated", listener);
 
-				// #region Part 2 (response after delay)
-				// Setup
-				logger.registerExpectedEvent({
-					eventName: "Presence:JoinResponse",
-					details: JSON.stringify({
-						type: "broadcastAll",
-						requestor: "client4",
-						role: "secondary",
-						order: 2,
-					}),
-				});
-				runtime.signalsExpected.push([
-					"Pres:DatastoreUpdate",
-					{
-						"avgLatency": 10,
-						"data": {
-							"system:presence": {
-								"clientToSessionId": {
-									"client2": {
-										"rev": 0,
-										"timestamp": initialTime,
-										"value": "sessionId-2",
+					// Act
+					presence.processSignal(
+						"",
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								sendTimestamp: clock.now - 10,
+								avgLatency: 20,
+								data: {
+									"system:presence": {
+										"clientToSessionId": {
+											"client1": {
+												"rev": 0,
+												"timestamp": 0,
+												"value": "sessionId-2",
+											},
+										},
+									},
+									"s:name:testWorkspace": {
+										"latest": {
+											"sessionId-1": {
+												"rev": 1,
+												"timestamp": 0,
+												"value": { x: 1, y: 1, z: 1 },
+											},
+										},
 									},
 								},
 							},
+							clientId: "client1",
 						},
-						"isComplete": true,
-						"sendTimestamp": clock.now + 180,
-					},
-				]);
+						false,
+					);
 
-				// Act
-				clock.tick(200);
+					// Verify
+					assert.strictEqual(listener.calledOnce, true);
+					assert.strictEqual(listener.calledWith("name:testWorkspace", "States"), true);
+				});
+				it("with 'workspaceActivated' event for Notifications workspace", () => {
+					// Setup
+					const listener = spy();
+					presence.events.on("workspaceActivated", listener);
 
-				// Verify
-				assertFinalExpectations(runtime, logger);
-				// #endregion
+					// Act
+					presence.processSignal(
+						"",
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								sendTimestamp: clock.now - 10,
+								avgLatency: 20,
+								data: {
+									"system:presence": {
+										"clientToSessionId": {
+											"client1": {
+												"rev": 0,
+												"timestamp": 0,
+												"value": "sessionId-2",
+											},
+										},
+									},
+									"n:name:testNotificationWorkspace": {
+										"testEvents": {
+											"sessionId-1": {
+												"rev": 0,
+												"timestamp": 0,
+												"value": { "name": "newId", "args": [77] },
+												"ignoreUnmonitored": true,
+											},
+										},
+									},
+								},
+							},
+							clientId: "client1",
+						},
+						false,
+					);
+
+					// Verify
+					assert.strictEqual(listener.calledOnce, true);
+					assert.strictEqual(listener.calledWith("name:testWorkspace", "Notifications"), true);
+				});
 			});
 		});
 	});
