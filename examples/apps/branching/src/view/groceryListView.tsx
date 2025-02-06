@@ -9,15 +9,18 @@ import type { IGroceryItem, IGroceryList, GroceryListChanges } from "../containe
 
 export interface IGroceryItemViewProps {
 	groceryItem: IGroceryItem;
+	suggestAdd: boolean;
 	suggestRemoval: boolean;
 }
 
 export const GroceryItemView: FC<IGroceryItemViewProps> = ({
 	groceryItem,
+	suggestAdd,
 	suggestRemoval,
 }: IGroceryItemViewProps) => {
+	const backgroundColor = suggestAdd ? "#cfc" : suggestRemoval ? "#fcc" : undefined;
 	return (
-		<tr style={suggestRemoval ? { backgroundColor: "#fcc" } : undefined}>
+		<tr style={{ backgroundColor }}>
 			<td>{groceryItem.name}</td>
 			<td>
 				<button
@@ -108,21 +111,55 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 		};
 	}, [groceryList]);
 
-	const groceryItemViews = groceryItems.map((groceryItem) => {
+	const removedGroceryItems: IGroceryItem[] =
+		suggestions === undefined
+			? []
+			: suggestions.removals.map((removal) => {
+					return {
+						id: removal.id,
+						name: removal.name,
+						deleteItem: () => {},
+					};
+				});
+
+	const groceryItemsPlusRemovals = [...groceryItems, ...removedGroceryItems].sort((a, b) =>
+		a.id.localeCompare(b.id, "en", { sensitivity: "base" }),
+	);
+
+	const groceryItemViews = groceryItemsPlusRemovals.map((groceryItem) => {
+		const augmentedGroceryItem: IGroceryItem = {
+			id: groceryItem.id,
+			name: groceryItem.name,
+			deleteItem: () => {
+				groceryItem.deleteItem();
+				suggestions?.removals.push({
+					id: groceryItem.id,
+					name: groceryItem.name,
+				});
+			},
+		};
+		const suggestAdd =
+			suggestions?.adds.find((add) => add.id === augmentedGroceryItem.id) !== undefined;
 		const suggestRemoval =
-			suggestions?.removals.find((removal) => removal.id === groceryItem.id) !== undefined;
+			suggestions?.removals.find((removal) => removal.id === augmentedGroceryItem.id) !==
+			undefined;
 		return (
 			<GroceryItemView
-				key={groceryItem.id}
-				groceryItem={groceryItem}
+				key={augmentedGroceryItem.id}
+				groceryItem={augmentedGroceryItem}
+				suggestAdd={suggestAdd}
 				suggestRemoval={suggestRemoval}
 			/>
 		);
 	});
-	const suggestedGroceryItemViews =
-		suggestions?.adds.map((add, index) => (
-			<SuggestedGroceryItemView key={index} name={add.name} />
-		)) ?? [];
+
+	const onAddItem = (name: string) => {
+		const id = groceryList.addItem(name);
+		suggestions?.adds.push({
+			id,
+			name,
+		});
+	};
 
 	// TODO: Consider modifying the AddItemView to add to the suggestions.adds rather than groceryList.addItem
 	// when we have suggestions.  Same for the groceryItem provided to GroceryItemView for its removal.
@@ -130,13 +167,12 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<tbody>
 				{groceryItemViews}
-				{suggestedGroceryItemViews}
-				{groceryItemViews.length === 0 && suggestedGroceryItemViews.length === 0 && (
+				{groceryItemViews.length === 0 && (
 					<tr>
 						<td colSpan={1}>No items on grocery list</td>
 					</tr>
 				)}
-				<AddItemView addItem={groceryList.addItem} />
+				<AddItemView addItem={onAddItem} />
 			</tbody>
 		</table>
 	);

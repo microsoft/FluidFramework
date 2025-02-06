@@ -68,13 +68,14 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 				groceryListId,
 			);
 			const getSuggestions = async () => {
+				const stageControls = containerRuntime.enterStagingMode();
 				const changes = await getChangesFromHealthBot(groceryList);
-				// TODO: Here try integrating staging mode and applying the changes in that mode.
+				applyDiffToGroceryList(groceryList, changes);
 				// TODO: If we end up providing a way to interrogate local changes, maybe replace the `changes` structure.
 				return {
 					changes,
-					acceptChanges: () => applyDiffToGroceryList(groceryList, changes),
-					rejectChanges: () => {},
+					acceptChanges: stageControls.commitChanges,
+					rejectChanges: stageControls.discardChanges,
 				};
 			};
 			return {

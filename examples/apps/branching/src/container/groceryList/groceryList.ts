@@ -75,10 +75,15 @@ class GroceryList implements IGroceryList {
 	}
 
 	public readonly addItem = (name: string) => {
-		this.map.set(uuid(), name);
+		// Use timestamp as a hack for a consistent sortable order.
+		const id = `${Date.now()}-${uuid()}`;
+		this.map.set(id, name);
+		return id;
 	};
 
 	public readonly getItems = (): IGroceryItem[] => {
+		const groceryItems = [...this._groceryItems.values()];
+		groceryItems.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }));
 		return [...this._groceryItems.values()];
 	};
 
@@ -143,9 +148,11 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 			map = (await runtime.getChannel(mapId)) as ISharedMap;
 		} else {
 			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
-			map.set(uuid(), "apple");
-			map.set(uuid(), "banana");
-			map.set(uuid(), "chocolate");
+			// Use timestamp as a hack for a consistent sortable order.
+			const timestamp = Date.now();
+			map.set(`${timestamp}-${uuid()}`, "apple");
+			map.set(`${timestamp + 1}-${uuid()}`, "banana");
+			map.set(`${timestamp + 2}-${uuid()}`, "chocolate");
 			map.bindToContext();
 		}
 
