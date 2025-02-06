@@ -186,7 +186,7 @@ export class PureDataObjectFactory<
 	 */
 	public get registryEntry(): NamedFluidDataStoreRegistryEntry {
 		// TODO: this is wrong and should be fixed.
-		// `IFluidDataStoreRegistry` can be undefined, which the type signature does not support.
+		// `this.IFluidDataStoreRegistry` can be undefined, which the type signature does not support.
 		return [this.type, Promise.resolve(this)];
 	}
 
