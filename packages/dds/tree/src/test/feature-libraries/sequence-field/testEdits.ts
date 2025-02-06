@@ -38,10 +38,9 @@ export const cases: {
 } = {
 	no_change: [],
 	insert: createInsertChangeset(1, 2, undefined /* revision */, { localId: brand(1) }),
-	modify: SF.sequenceFieldEditor.buildChildChange(
-		0,
-		TestNodeId.create(nodeId1, TestChange.mint([], 1)),
-	),
+	modify: SF.sequenceFieldEditor.buildChildChanges([
+		[0, TestNodeId.create(nodeId1, TestChange.mint([], 1))],
+	]),
 	modify_insert: [
 		createSkipMark(1),
 		createInsertMark(1, brand(1), {
@@ -167,7 +166,7 @@ function createReturnChangeset(
 }
 
 function createModifyChangeset(index: number, change: NodeId): SF.Changeset {
-	return SF.sequenceFieldEditor.buildChildChange(index, change);
+	return SF.sequenceFieldEditor.buildChildChanges([[index, change]]);
 }
 
 function createModifyDetachedChangeset(

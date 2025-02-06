@@ -15,6 +15,7 @@ export {
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
+	type ITreeAlpha,
 	asTreeViewAlpha,
 } from "./tree.js";
 export {
@@ -117,6 +118,19 @@ export {
 	comparePersistedSchemaInternal,
 	comparePersistedSchema,
 } from "./storedSchema.js";
+
+export {
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
+} from "./transactionTypes.js";
 
 // Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
 // These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639

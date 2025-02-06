@@ -24,12 +24,12 @@ export type LoadableObjectRecord = Record<string, IFluidLoadable>;
  * A mapping of string identifiers to classes that will later be used to instantiate a corresponding `DataObject`
  * or `SharedObject`.
  */
-export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
+export type LoadableObjectKindRecord = Record<string, SharedObjectKind>;
 
 /**
- * A class object of `DataObject` or `SharedObject`.
+ * A kind of `DataObject` or `SharedObject`.
  *
- * @typeParam T - The class of the `DataObject` or `SharedObject`.
+ * @typeParam T - The kind of `DataObject` or `SharedObject`.
  *
  * @privateRemarks
  * There are some edge cases in TypeScript where the order of the members in a union matter.
@@ -38,24 +38,31 @@ export type LoadableObjectClassRecord = Record<string, SharedObjectKind>;
  * In this case placing ISharedObjectKind fixed one usage and didn't break anything, and generally seems more likely to work than the reverse, so this is the order being used.
  * This is likely (a bug in TypeScript)[https://github.com/microsoft/TypeScript/issues/45809].
  */
-export type LoadableObjectClass<T extends IFluidLoadable = IFluidLoadable> =
+export type LoadableObjectKind<T extends IFluidLoadable = IFluidLoadable> =
 	| ISharedObjectKind<T>
-	| DataObjectClass<T>;
+	| DataObjectKind<T>;
 
 /**
- * A class that has a factory that can create a `DataObject` and a
- * constructor that will return the type of the `DataObject`.
- *
- * @typeParam T - The class of the `DataObject`.
- * @privateRemarks
- * Having both `factory` and constructor is redundant.
- * TODO: It appears the factory is what's used, so the constructor should be removed once factory provides strong typing.
+ * An object that has a factory that can create a data object.
+ * @typeParam T - The type of the data object.
+ * @internal
  */
-export interface DataObjectClass<T extends IFluidLoadable> {
+export type DataObjectKind<T = unknown> = {
 	readonly factory: IFluidDataStoreFactory;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	new (...args: any[]): T;
-}
+} & (
+	| {
+			/**
+			 * Not actually used, but required for strong typing.
+			 */
+			readonly makeCovariant?: T;
+	  }
+	/**
+	 * Not actually used, but helps with strong typing.
+	 */
+	| (new (
+			...args: never[]
+	  ) => T)
+);
 
 /**
  * Represents properties that can be attached to a container.

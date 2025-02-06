@@ -119,10 +119,9 @@ export function extendIfUndefined<T>(
 	extension: MapLike<T> | undefined,
 ): MapLike<T> {
 	if (extension !== undefined) {
-		// eslint-disable-next-line no-restricted-syntax
-		for (const key in extension) {
+		for (const [key, value] of Object.entries(extension)) {
 			if (base[key] === undefined) {
-				base[key] = extension[key];
+				base[key] = value;
 			}
 		}
 	}

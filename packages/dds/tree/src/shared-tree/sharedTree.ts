@@ -9,6 +9,7 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
+	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -72,6 +73,7 @@ import {
 	FieldKind,
 	type CustomTreeNode,
 	type CustomTreeValue,
+	type ITreeAlpha,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -84,7 +86,7 @@ import { breakingClass, fail, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
- * Copy of data from an {@link ISharedTree} at some point in time.
+ * Copy of data from an {@link ITreePrivate} at some point in time.
  * @remarks
  * This is unrelated to Fluids concept of "snapshots".
  */
@@ -108,30 +110,26 @@ export interface SharedTreeContentSnapshot {
 }
 
 /**
+ * Information about a Fluid channel.
+ * @privateRemarks
+ * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
+ * @internal
+ */
+export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;
+
+/**
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
-export interface ITreeInternal extends ISharedObject, ITree {
-	/**
-	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
-	 * @privateRemarks
-	 * TODO:
-	 * This should probably get promoted to a public API on ITree eventually.
-	 */
-	exportVerbose(): VerboseTree | undefined;
-
-	/**
-	 * Exports the SimpleTreeSchema that is stored in the tree, using stored keys for object fields.
-	 * @remarks
-	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
-	 */
-	exportSimpleSchema(): SimpleTreeSchema;
-}
+export interface ITreeInternal extends IChannelView, ITreeAlpha {}
 
 /**
  * {@link ITreeInternal} extended with some non-exported APIs.
+ * @remarks
+ * This allows access to the tree content using the internal data model used at the storage and "flex" layers,
+ * and should only be needed for testing and debugging this package's internals.
  */
-export interface ISharedTree extends ISharedObject, ITreeInternal {
+export interface ITreePrivate extends ITreeInternal {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -141,6 +139,13 @@ export interface ISharedTree extends ISharedObject, ITreeInternal {
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
 }
+
+/**
+ * {@link ITreePrivate} extended with ISharedObject.
+ * @remarks
+ * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
+ */
+export interface ISharedTree extends ISharedObject, ITreePrivate {}
 
 /**
  * Has an entry for each codec which writes an explicit version into its data.

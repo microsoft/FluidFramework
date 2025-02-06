@@ -16,14 +16,14 @@ import {
 	createNodeKeyManager,
 	MockNodeKeyManager,
 } from "../../../feature-libraries/index.js";
-import type { ISharedTree } from "../../../shared-tree/index.js";
+import type { ITreePrivate } from "../../../shared-tree/index.js";
 import { TestTreeProvider } from "../../utils.js";
 
 /**
  * Acquire an {@link IIdCompressor} via unsavory means.
  * @remarks TODO: Figure out a better way to get an IIDCompressor
  */
-async function getIIDCompressor(tree?: ISharedTree): Promise<IIdCompressor> {
+async function getIIDCompressor(tree?: ITreePrivate): Promise<IIdCompressor> {
 	const runtime = (
 		(tree ?? (await TestTreeProvider.create(1)).trees[0]) as unknown as {
 			runtime: IFluidDataStoreRuntime;

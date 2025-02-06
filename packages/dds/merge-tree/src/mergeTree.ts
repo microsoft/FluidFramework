@@ -593,6 +593,8 @@ export class MergeTree {
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
+	// TODO:AB#29553: This property doesn't seem to be adequately round-tripped through summarization.
+	// Specifically, it seems like we drop information about obliterates within the collab window for at least V1 summaries.
 	private readonly obliterates = new Obliterates(this);
 
 	public constructor(public options?: IMergeTreeOptionsInternal) {
@@ -1635,31 +1637,35 @@ export class MergeTree {
 				}
 			}
 
-			if (oldest && newest?.clientId !== clientId) {
-				const moveInfo: IMoveInfo = {
-					movedClientIds,
-					movedSeq: oldest.seq,
-					movedSeqs,
-					localMovedSeq: oldest.localSeq,
-					wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
-				};
+			if (oldest) {
+				newSegment.obliteratePrecedingInsertion = newest;
+				// See doc comment on obliteratePrecedingInsertion for more details: if the newest obliterate was performed
+				// by the same client that's inserting this segment, we let them insert into this range and therefore don't
+				// mark it obliterated.
+				if (newest?.clientId !== clientId) {
+					const moveInfo: IMoveInfo = {
+						movedClientIds,
+						movedSeq: oldest.seq,
+						movedSeqs,
+						localMovedSeq: oldest.localSeq,
+						wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
+					};
 
-				overwriteInfo(newSegment, moveInfo);
+					overwriteInfo(newSegment, moveInfo);
 
-				if (moveInfo.localMovedSeq !== undefined) {
-					assert(
-						oldest.segmentGroup !== undefined,
-						0x86c /* expected segment group to exist */,
-					);
+					if (moveInfo.localMovedSeq !== undefined) {
+						assert(
+							oldest.segmentGroup !== undefined,
+							0x86c /* expected segment group to exist */,
+						);
 
-					this.addToPendingList(newSegment, oldest.segmentGroup);
+						this.addToPendingList(newSegment, oldest.segmentGroup);
+					}
+
+					if (newSegment.parent) {
+						this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
+					}
 				}
-
-				if (newSegment.parent) {
-					this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
-				}
-			} else if (oldest && newest?.clientId === clientId) {
-				newSegment.prevObliterateByInserter = newest;
 			}
 
 			saveIfLocal(newSegment);
@@ -1682,8 +1688,8 @@ export class MergeTree {
 			segment.segmentGroups.copyTo(next.segmentGroups);
 		}
 
-		if (segment.prevObliterateByInserter) {
-			next.prevObliterateByInserter = segment.prevObliterateByInserter;
+		if (segment.obliteratePrecedingInsertion) {
+			next.obliteratePrecedingInsertion = segment.obliteratePrecedingInsertion;
 		}
 		copyPropertiesAndManager(segment, next);
 		if (segment.localRefs) {
@@ -2058,7 +2064,15 @@ export class MergeTree {
 			}
 			const existingMoveInfo = toMoveInfo(segment);
 
-			if (segment.prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
+			// The "last-to-obliterate-gets-to-insert" policy described by the doc comment on `obliteratePrecedingInsertion`
+			// is mostly handled by logic at insertion time, but we need a small bit of handling here.
+			// Specifically, we want to avoid marking a local-only segment as obliterated when we know one of our own local obliterates
+			// will win against the obliterate we're processing, hence the early exit.
+			if (
+				segment.seq === UnassignedSequenceNumber &&
+				segment.obliteratePrecedingInsertion?.seq === UnassignedSequenceNumber &&
+				seq !== UnassignedSequenceNumber
+			) {
 				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
 				// The local obliterate has not been sequenced yet, so it is still the newest obliterate we are aware of.
 				// Other clients will also choose not to obliterate this segment because the most recent obliteration has the same clientId
@@ -2067,8 +2081,8 @@ export class MergeTree {
 
 			const wasMovedOnInsert =
 				clientId !== segment.clientId &&
-				segment.seq !== undefined &&
 				seq !== UnassignedSequenceNumber &&
+				segment.seq !== undefined &&
 				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber);
 
 			if (existingMoveInfo === undefined) {

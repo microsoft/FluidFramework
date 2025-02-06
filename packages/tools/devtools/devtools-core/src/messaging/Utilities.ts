@@ -119,7 +119,8 @@ export function handleIncomingMessage(
 		return;
 	}
 
-	if (handlers[message.type] === undefined) {
+	const handler = handlers[message.type];
+	if (handler === undefined) {
 		// No handler for this type provided. No-op.
 		console.debug(
 			`${loggingPreamble} Ignoring message of type: "${message.type}", for which no handler was provided.`,
@@ -127,7 +128,7 @@ export function handleIncomingMessage(
 		return;
 	}
 
-	handlers[message.type](message).then(
+	handler(message).then(
 		(wasMessageHandled) => {
 			// Only log if the message was actually handled by the recipient.
 			if (wasMessageHandled && loggingOptions !== undefined) {

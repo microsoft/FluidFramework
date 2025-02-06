@@ -46,26 +46,22 @@ import {
 	type TreeBranchEvents,
 	getOrCreateInnerNode,
 	getKernel,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type RunTransactionParams,
+	type TransactionConstraint,
+	HydratedContext,
+	SimpleContextSlot,
+	areImplicitFieldSchemaEqual,
+	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
 import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
 
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
 import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import {
-	HydratedContext,
-	SimpleContextSlot,
-	areImplicitFieldSchemaEqual,
-	createUnknownOptionalFieldPolicy,
-} from "../simple-tree/index.js";
-import type {
-	VoidTransactionCallbackStatus,
-	TransactionCallbackStatus,
-	TransactionResult,
-	TransactionResultExt,
-	RunTransactionParams,
-	TransactionConstraint,
-} from "./transactionTypes.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
