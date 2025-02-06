@@ -49,6 +49,7 @@ export function ServiceSection(): JSX.Element {
 						title="Azure Fluid Relay"
 						description={afrCardDescription}
 						learnMoreHref="https://azure.microsoft.com/en-us/products/fluid-relay/#overview"
+						learnMoreLinkAltText="Azure Fluid Relay"
 					/>
 					<ServiceSectionCard
 						logoSource="https://storage.fluidframework.com/static/images/website/microsoft-logo.png"
@@ -56,6 +57,7 @@ export function ServiceSection(): JSX.Element {
 						title="SharePoint Embedded"
 						description={speCardDescription}
 						learnMoreHref="https://learn.microsoft.com/en-us/sharepoint/dev/embedded/overview"
+						learnMoreLinkAltText="Sharepoint Embedded"
 					/>
 				</div>
 			</div>
@@ -69,6 +71,7 @@ interface ServiceSectionCardProps {
 	title: string;
 	description: string;
 	learnMoreHref: string;
+	learnMoreLinkAltText: string;
 }
 
 function ServiceSectionCard({
@@ -77,6 +80,7 @@ function ServiceSectionCard({
 	title,
 	description,
 	learnMoreHref,
+	learnMoreLinkAltText,
 }: ServiceSectionCardProps): React.ReactElement {
 	return (
 		<div className="ffcom-service">
@@ -89,6 +93,7 @@ function ServiceSectionCard({
 					href={learnMoreHref}
 					target="_blank"
 					rel="noopener noreferrer"
+					aria-label={learnMoreLinkAltText}
 				>
 					Learn more
 				</a>
