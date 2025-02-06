@@ -48,12 +48,14 @@ export const diffGroceryListPOJO = (
 
 export const applyDiffToGroceryList = (
 	groceryList: IGroceryList,
-	groceryListModifications: GroceryListChanges,
+	groceryListChanges: GroceryListChanges,
 ) => {
-	for (const add of groceryListModifications.adds) {
-		groceryList.addItem(add.name);
+	for (const add of groceryListChanges.adds) {
+		// TODO: Probably shouldn't do this as a side-effect, I might want to retain the original
+		// suggestions unmodified.
+		add.id = groceryList.addItem(add.name);
 	}
-	for (const removal of groceryListModifications.removals) {
+	for (const removal of groceryListChanges.removals) {
 		groceryList.removeItem(removal.id);
 	}
 };

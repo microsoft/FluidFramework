@@ -24,7 +24,7 @@ export interface IGroceryListEvents extends IEvent {
 export interface IGroceryList {
 	readonly events: IEventProvider<IGroceryListEvents>;
 
-	readonly addItem: (name: string) => void;
+	readonly addItem: (name: string) => string;
 	readonly getItems: () => IGroceryItem[];
 	readonly removeItem: (id: string) => void;
 }
