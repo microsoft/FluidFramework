@@ -28,11 +28,10 @@ export type SortedSegmentSetItem =
  *
  * @internal
  */
-
 export class SortedSegmentSet<
 	T extends SortedSegmentSetItem = ISegmentInternal,
 > extends SortedSet<T> {
-	private getOrdinalOffset(item: T): [string, number] {
+	private getOrdinal(item: T): string {
 		const maybeRef = item as Partial<LocalReferencePosition>;
 		if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
 			const lref = maybeRef as LocalReferencePosition;
@@ -40,18 +39,27 @@ export class SortedSegmentSet<
 			// The particular value for comparison doesn't matter because `findItemPosition` tolerates
 			// elements with duplicate keys (as it must, since local references use the same key as their segment).
 			// All that matters is that it's consistent.
-			return [toMergeNodeInfo(lref.getSegment())?.ordinal ?? "", lref.getOffset()];
+			return toMergeNodeInfo(lref.getSegment())?.ordinal ?? "";
 		}
 		if (hasProp(item, "segment", "object")) {
-			return [toMergeNodeInfo(item.segment)?.ordinal ?? "", 0];
+			return toMergeNodeInfo(item.segment)?.ordinal ?? "";
 		}
 
-		return [toMergeNodeInfo(item)?.ordinal ?? "", 0];
+		return toMergeNodeInfo(item)?.ordinal ?? "";
+	}
+
+	private getOffset(item: T): number {
+		const maybeRef = item as Partial<LocalReferencePosition>;
+		if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
+			const lref = maybeRef as LocalReferencePosition;
+			return lref.getOffset();
+		}
+		return 0;
 	}
 
 	protected compare(a: T, b: T): number {
-		const [aOrdinal, aOffset] = this.getOrdinalOffset(a);
-		const [bOrdinal, bOffset] = this.getOrdinalOffset(b);
+		const aOrdinal = this.getOrdinal(a);
+		const bOrdinal = this.getOrdinal(b);
 
 		if (aOrdinal < bOrdinal) {
 			return -1;
@@ -59,7 +67,7 @@ export class SortedSegmentSet<
 		if (aOrdinal > bOrdinal) {
 			return 1;
 		}
-		return aOffset - bOffset;
+		return this.getOffset(a) - this.getOffset(b);
 	}
 
 	protected findItemPosition(item: T): { exists: boolean; index: number } {
