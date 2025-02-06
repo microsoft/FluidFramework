@@ -15,13 +15,13 @@ import type { IMousePosition, MouseTracker } from "./MouseTracker.js";
  */
 export function initializeReactions(presence: IPresence, mouseTracker: MouseTracker) {
 	// Create a notifications workspace to send reactions-related notifications. This workspace will be created if it
-	// doesn't exist. We create it with no notifications. We then add the Notifications value manager. You can also
-	// initialize the workspace with value managers instead of adding them later.
+	// doesn't exist. We also create a Notifications value manager. You can also
+	// add value managers to the workspace later.
 	const notificationsWorkspace = presence.getNotifications(
 		// A unique key identifying this workspace.
 		"name:reactions",
-		// Initialize a notifications workspace with the provided message schema.
 		{
+			// Initialize a notifications manager with the provided message schema.
 			reactions:
 				Notifications<// This explicit generic type specification will not be required in the future.
 				{
@@ -31,16 +31,13 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 						value: string,
 					) => void;
 				}>(
-					// Define a default listender. Listeners can also be added.
+					// Define a default listener. Listeners can also be added later.
 					{
 						reaction: onReaction,
 					},
 				),
 		},
 	);
-
-	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
-	const notifications: typeof notificationsWorkspace = notificationsWorkspace;
 
 	// Send a reaction to all clients on click.
 	document.body.addEventListener("click", (e) => {
@@ -49,7 +46,7 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		const reactionValue = selectedReaction.textContent;
 
 		// TODO: Check that we're connected before sending.
-		notifications.props.reactions.emit.broadcast(
+		notificationsWorkspace.props.reactions.emit.broadcast(
 			"reaction",
 			mouseTracker.getClientMousePosition(presence.getMyself()),
 			reactionValue ?? "?",
