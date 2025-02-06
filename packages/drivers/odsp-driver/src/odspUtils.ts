@@ -138,7 +138,7 @@ export async function fetchHelper(
 
 	return fetch(requestInfo, requestInit).then(
 		async (fetchResponse) => {
-			const response = fetchResponse as unknown as Response;
+			const response = fetchResponse;
 			// Let's assume we can retry.
 			if (!response) {
 				throw new NonRetryableError(

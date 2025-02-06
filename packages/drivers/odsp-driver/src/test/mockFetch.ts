@@ -47,7 +47,7 @@ export async function mockFetchMultiple<T>(
 	responses: (() => Promise<object>)[],
 	type: FetchCallType = "single",
 ): Promise<T> {
-	const fetchStub = stub(global, "fetch");
+	const fetchStub = stub(globalThis, "fetch");
 	fetchStub.callsFake(async () => {
 		if (type === "external") {
 			fetchStub.restore();
@@ -87,7 +87,7 @@ export async function mockFetchError<T>(
 	response: Error,
 	type: FetchCallType = "single",
 ): Promise<T> {
-	const fetchStub = stub(global, "fetch");
+	const fetchStub = stub(globalThis, "fetch");
 	fetchStub.callsFake(async () => {
 		if (type === "external") {
 			fetchStub.restore();
