@@ -22,6 +22,9 @@
 
 	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
 	--ifm-navbar-search-input-icon: url("@site/static/assets/search-icon-light.svg");
+
+	//Text color for classes in code blocks
+	--ifm-attr-name-color: #345094;
 }
 
 /* For readability concerns, you should choose a lighter palette in dark mode. */
@@ -41,4 +44,11 @@
 
 	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
 	--ifm-navbar-search-input-icon: url("@site/static/assets/search-icon-dark.svg");
+
+	//Text color for classes in code blocks
+	--ifm-attr-name-color: #00b3e6;
+}
+
+.token.attr-name {
+	color: var(--ifm-attr-name-color) !important;
 }
