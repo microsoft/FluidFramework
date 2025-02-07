@@ -53,15 +53,16 @@ import type {
 import { brand, disposeSymbol } from "../../util/index.js";
 import { SharedTreeTestFactory, StringArray, TestTreeProviderLite } from "../utils.js";
 
-import { TestSharedTreeCore } from "./utils.js";
+import { createTree, createTreeSharedObject, TestSharedTreeCore } from "./utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { mockSerializer } from "../mockSerializer.js";
 
 const enableSchemaValidation = true;
 
 describe("SharedTreeCore", () => {
 	it("summarizes without indexes", async () => {
 		const tree = createTree([]);
-		const { summary, stats } = await tree.summarize();
+		const { summary, stats } = tree.summarizeCore(mockSerializer);
 		assert(summary);
 		assert(stats);
 		assert.equal(stats.treeNodeCount, 3);
@@ -76,8 +77,10 @@ describe("SharedTreeCore", () => {
 			summarizable.on("loaded", () => (loaded = true));
 			const summarizables = [summarizable] as const;
 			const tree = createTree(summarizables);
-			const defaultSummary = await createTree([]).summarize();
-			await tree.load(MockSharedObjectServices.createFromSummary(defaultSummary.summary));
+			const defaultSummary = createTree([]).summarizeCore(mockSerializer);
+			await tree.loadCore(
+				MockSharedObjectServices.createFromSummary(defaultSummary.summary).objectStorage,
+			);
 			assert(loaded, "Expected summarizable to load");
 		});
 
@@ -91,8 +94,8 @@ describe("SharedTreeCore", () => {
 			});
 			const summarizables = [summarizable] as const;
 			const tree = createTree(summarizables);
-			const { summary } = await tree.summarize();
-			await tree.load(MockSharedObjectServices.createFromSummary(summary));
+			const { summary } = tree.summarizeCore(mockSerializer);
+			await tree.loadCore(MockSharedObjectServices.createFromSummary(summary).objectStorage);
 			assert.equal(loadedBlob, true);
 		});
 
@@ -105,7 +108,7 @@ describe("SharedTreeCore", () => {
 			summarizableB.on("summarizeAttached", () => (summarizedB = true));
 			const summarizables = [summarizableA, summarizableB] as const;
 			const tree = createTree(summarizables);
-			const { summary, stats } = tree.getAttachSummary();
+			const { summary, stats } = tree.summarizeCore(mockSerializer);
 			assert(summarizedA, "Expected summarizable A to summarize");
 			assert(summarizedB, "Expected summarizable B to summarize");
 			const summarizableTree = summary.tree.indexes;
@@ -125,37 +128,6 @@ describe("SharedTreeCore", () => {
 				"Expected summary stats to correctly count tree nodes",
 			);
 		});
-
-		// TODO: Enable once SharedTreeCore properly implements async summaries
-		it.skip("summarize asynchronously", async () => {
-			const summarizableA = new MockSummarizable("summarizable A");
-			let summarizedA = false;
-			summarizableA.on("summarizeAsync", () => (summarizedA = true));
-			const summarizableB = new MockSummarizable("summarizable B");
-			let summarizedB = false;
-			summarizableB.on("summarizeAsync", () => (summarizedB = true));
-			const summarizables = [summarizableA, summarizableB];
-			const tree = createTree(summarizables);
-			const { summary, stats } = await tree.summarize();
-			assert(summarizedA, "Expected summarizable A to summarize");
-			assert(summarizedB, "Expected summarizable B to summarize");
-			const summarizableTree = summary.tree.indexes;
-			assert(
-				isSummaryTree(summarizableTree),
-				"Expected summarizable subtree to be present in summary",
-			);
-			assert.equal(
-				Object.entries(summarizableTree.tree).length,
-				summarizables.length,
-				"Expected both summaries to be present in the summary",
-			);
-
-			assert.equal(
-				stats.treeNodeCount,
-				summarizables.length + 1,
-				"Expected summary stats to correctly count tree nodes",
-			);
-		});
 	});
 
 	it("evicts trunk commits behind the minimum sequence number", () => {
@@ -168,20 +140,20 @@ describe("SharedTreeCore", () => {
 			objectStorage: new MockStorage(),
 		});
 
-		changeTree(tree);
+		changeTree(tree.kernel);
 		factory.processAllMessages(); // Minimum sequence number === 0
-		assert.equal(getTrunkLength(tree), 1);
-		changeTree(tree);
-		changeTree(tree);
+		assert.equal(getTrunkLength(tree.kernel), 1);
+		changeTree(tree.kernel);
+		changeTree(tree.kernel);
 		// One commit is at the minimum sequence number and is evicted
 		factory.processAllMessages(); // Minimum sequence number === 1
-		assert.equal(getTrunkLength(tree), 2);
-		changeTree(tree);
-		changeTree(tree);
-		changeTree(tree);
+		assert.equal(getTrunkLength(tree.kernel), 2);
+		changeTree(tree.kernel);
+		changeTree(tree.kernel);
+		changeTree(tree.kernel);
 		// Three commits are behind or at the minimum sequence number and are evicted
 		factory.processAllMessages(); // Minimum sequence number === 3
-		assert.equal(getTrunkLength(tree), 6 - 3);
+		assert.equal(getTrunkLength(tree.kernel), 6 - 3);
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
@@ -202,38 +174,38 @@ describe("SharedTreeCore", () => {
 		// Additionally, by policy, the base commit of the trunk is never evicted, which adds another "off by one".
 		//
 		//                                            trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
-		changeTree(tree);
+		changeTree(tree.kernel);
 		factory.processAllMessages(); //                     [1]
-		assert.equal(getTrunkLength(tree), 1);
+		assert.equal(getTrunkLength(tree.kernel), 1);
 		const branch1 = tree.getLocalBranch().fork();
 		const branch2 = tree.getLocalBranch().fork();
 		const branch3 = branch2.fork();
-		changeTree(tree);
+		changeTree(tree.kernel);
 		factory.processAllMessages(); //                     [x (b1, b2, b3), 2]
-		changeTree(tree);
+		changeTree(tree.kernel);
 		factory.processAllMessages(); //                     [x (b1, b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
+		assert.equal(getTrunkLength(tree.kernel), 3);
 		branch1.dispose(); //                                [x (b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
+		assert.equal(getTrunkLength(tree.kernel), 3);
 		branch2.dispose(); //                                [x (b3), 2, 3]
-		assert.equal(getTrunkLength(tree), 3);
+		assert.equal(getTrunkLength(tree.kernel), 3);
 		branch3.dispose(); //                                [x, x, 3]
-		assert.equal(getTrunkLength(tree), 1);
+		assert.equal(getTrunkLength(tree.kernel), 1);
 		const branch4 = tree.getLocalBranch().fork(); //     [x, x, 3 (b4)]
-		changeTree(tree);
-		changeTree(tree);
+		changeTree(tree.kernel);
+		changeTree(tree.kernel);
 		factory.processAllMessages(); //                     [x, x, x (b4), 4, 5]
-		assert.equal(getTrunkLength(tree), 3);
+		assert.equal(getTrunkLength(tree.kernel), 3);
 		const branch5 = tree.getLocalBranch().fork(); //     [x, x, x (b4), 4, 5 (b5)]
 		branch4.rebaseOnto(branch5); //                      [x, x, x, 4, 5 (b4, b5)]
 		branch4.dispose(); //                                [x, x, x, 4, 5 (b5)]
-		assert.equal(getTrunkLength(tree), 2);
-		changeTree(tree);
+		assert.equal(getTrunkLength(tree.kernel), 2);
+		changeTree(tree.kernel);
 		factory.processAllMessages(); //                     [x, x, x, x, 5 (b5), 6]
-		assert.equal(getTrunkLength(tree), 2);
-		changeTree(tree);
+		assert.equal(getTrunkLength(tree.kernel), 2);
+		changeTree(tree.kernel);
 		branch5.dispose(); //                                [x, x, x, x, x, x, 7]
-		assert.equal(getTrunkLength(tree), 1);
+		assert.equal(getTrunkLength(tree.kernel), 1);
 	});
 
 	/**
@@ -272,7 +244,9 @@ describe("SharedTreeCore", () => {
 			"B",
 			{
 				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-				objectStorage: MockStorage.createFromSummary((await tree1.summarize()).summary),
+				objectStorage: MockStorage.createFromSummary(
+					tree1.summarizeCore(mockSerializer).summary,
+				),
 			},
 			factory.attributes,
 		);
@@ -461,7 +435,7 @@ describe("SharedTreeCore", () => {
 
 		it("notifies the ResubmitMachine of submitted and sequenced commits", () => {
 			const machine = new MockResubmitMachine();
-			const tree = createTree([], machine);
+			const tree = createTreeSharedObject([], machine);
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -474,7 +448,7 @@ describe("SharedTreeCore", () => {
 
 			assert.equal(machine.submissionLog.length, 0);
 			assert.equal(machine.sequencingLog.length, 0);
-			changeTree(tree);
+			changeTree(tree.kernel);
 			assert.equal(machine.submissionLog.length, 1);
 			assert.equal(machine.sequencingLog.length, 0);
 			containerRuntimeFactory.processAllMessages();
@@ -485,7 +459,7 @@ describe("SharedTreeCore", () => {
 		it("enriches commits on first submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTree([], machine, enricher);
+			const tree = createTreeSharedObject([], machine, enricher);
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -496,7 +470,7 @@ describe("SharedTreeCore", () => {
 				objectStorage: new MockStorage(),
 			});
 			assert.equal(enricher.enrichmentLog.length, 0);
-			changeTree(tree);
+			changeTree(tree.kernel);
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(machine.submissionLog.length, 1);
 			assert.equal(enricher.enrichmentLog[0].input, tree.getLocalBranch().getHead().change);
@@ -506,7 +480,7 @@ describe("SharedTreeCore", () => {
 		it("enriches transactions on first submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTree([], machine, enricher);
+			const tree = createTreeSharedObject([], machine, enricher);
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -518,13 +492,13 @@ describe("SharedTreeCore", () => {
 			});
 			tree.transaction.start();
 			assert.equal(enricher.enrichmentLog.length, 0);
-			changeTree(tree);
+			changeTree(tree.kernel);
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(
 				enricher.enrichmentLog[0].input,
 				tree.transaction.activeBranch.getHead().change,
 			);
-			changeTree(tree);
+			changeTree(tree.kernel);
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(
 				enricher.enrichmentLog[1].input,
@@ -542,7 +516,7 @@ describe("SharedTreeCore", () => {
 		it("handles aborted outer transaction", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTree([], machine, enricher);
+			const tree = createTreeSharedObject([], machine, enricher);
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -554,7 +528,7 @@ describe("SharedTreeCore", () => {
 			});
 			tree.transaction.start();
 			assert.equal(enricher.enrichmentLog.length, 0);
-			changeTree(tree);
+			changeTree(tree.kernel);
 			assert.equal(enricher.enrichmentLog.length, 1);
 			assert.equal(
 				enricher.enrichmentLog[0].input,
@@ -568,7 +542,7 @@ describe("SharedTreeCore", () => {
 		it("update commit enrichments on re-submit", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
-			const tree = createTree([], machine, enricher);
+			const tree = createTreeSharedObject([], machine, enricher);
 			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
@@ -580,8 +554,8 @@ describe("SharedTreeCore", () => {
 			});
 			runtime.connected = false;
 			assert.equal(enricher.enrichmentLog.length, 0);
-			changeTree(tree);
-			changeTree(tree);
+			changeTree(tree.kernel);
+			changeTree(tree.kernel);
 			assert.equal(enricher.enrichmentLog.length, 2);
 			assert.equal(machine.resubmitQueue.length, 0);
 			assert.equal(machine.submissionLog.length, 2);
@@ -602,22 +576,6 @@ describe("SharedTreeCore", () => {
 
 	function isSummaryTree(summaryObject: SummaryObject): summaryObject is ISummaryTree {
 		return summaryObject.type === SummaryType.Tree;
-	}
-
-	function createTree<TIndexes extends readonly Summarizable[]>(
-		indexes: TIndexes,
-		resubmitMachine?: ResubmitMachine<DefaultChangeset>,
-		enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
-	): TestSharedTreeCore {
-		return new TestSharedTreeCore(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			undefined,
-			indexes,
-			undefined,
-			undefined,
-			resubmitMachine,
-			enricher,
-		);
 	}
 
 	interface MockSummarizableEvents extends IEvent {
