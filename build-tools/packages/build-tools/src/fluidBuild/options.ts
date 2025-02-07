@@ -12,7 +12,7 @@ import { commonOptionString, parseOption } from "./commonOptions";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";
 
-const { log, warning, errorLog } = defaultLogger;
+const { log, errorLog } = defaultLogger;
 
 interface FastBuildOptions extends IPackageMatchedOptions {
 	nolint: boolean;
@@ -29,6 +29,10 @@ interface FastBuildOptions extends IPackageMatchedOptions {
 	concurrency: number;
 	worker: boolean;
 	workerThreads: boolean;
+	/**
+	 * Per worker, in bytes.
+	 * When a worker is finished with a task, if this is exceeded, a new worker is spawned.
+	 */
 	workerMemoryLimit: number;
 }
 
@@ -62,21 +66,24 @@ function printUsage() {
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-     --all            Operate on all packages/monorepo (default: client monorepo). See also "-g" or "--releaseGroup".
-  -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
-  -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
-     --fix            Auto fix warning from package check if possible
-  -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
-  -? --help           Print this message
-     --install        Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
-  -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
-     --reinstall      Same as --uninstall --install.
-  -g --releaseGroup   Release group to operate on
-     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-  -t --task <name>    target to execute (default:build)
-     --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
-     --vscode         Output error message to work with default problem matcher in vscode
-     --worker         Reuse worker threads for some tasks, increasing memory use but lowering overhead.
+     --all                  Operate on all packages/monorepo (default: client monorepo). See also "-g" or "--releaseGroup".
+  -c --clean                Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+  -d --dep                  Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --fix                  Auto fix warning from package check if possible
+  -f --force                Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+  -? --help                 Print this message
+     --install              Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
+     --workerMemoryLimitMB  Memory limit for worker threads in MB
+  -r --rebuild              Clean and build on matched packages (all if package regexp is not specified)
+     --reinstall            Same as --uninstall --install.
+  -g --releaseGroup         Release group to operate on
+     --root <path>          Root directory of the Fluid repo (default: env _FLUID_ROOT_)
+  -t --task <name>          target to execute (default:build)
+     --symlink              Deprecated. Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
+     --symlink:full         Deprecated. Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
+     --uninstall            Clean all node_modules. This errors if some node_modules folder do not exist. If hitting this limitation, you can do an install first to work around it.
+     --vscode               Output error message to work with default problem matcher in vscode
+     --worker               Reuse worker threads for some tasks, increasing memory use but lowering overhead.
 ${commonOptionString}
 `,
 	);
@@ -251,25 +258,6 @@ export function parseOptions(argv: string[]) {
 			}
 			error = true;
 			break;
-		}
-
-		// Back compat switches
-		if (arg === "--azure") {
-			warning("'--azure' is deprecated.  Use '-g azure' instead");
-			options.releaseGroups.push("azure");
-			continue;
-		}
-
-		if (arg === "--buildTools") {
-			warning("'--buildTools' is deprecated.  Use '-g build-tools' instead");
-			options.releaseGroups.push("build-tools");
-			continue;
-		}
-
-		if (arg === "--server") {
-			warning("'--server' is deprecated.  Use '-g server' instead");
-			options.releaseGroups.push("server");
-			continue;
 		}
 
 		// Package regexp or paths

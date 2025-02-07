@@ -26,9 +26,9 @@ import {
 } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
-class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number> {
-	protected getKey(item: PartialSequenceLength): number {
-		return item.seq;
+class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
+	protected compare(a: PartialSequenceLength, b: PartialSequenceLength): number {
+		return a.seq - b.seq;
 	}
 
 	public addOrUpdate(
@@ -43,8 +43,8 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
 		}
 
 		// update the len of all following elements
-		for (let i = this.keySortedItems.length - 1; i >= 0; i--) {
-			const element = this.keySortedItems[i];
+		for (let i = this.sortedItems.length - 1; i >= 0; i--) {
+			const element = this.sortedItems[i];
 			if (!element || element.seq <= newItem.seq) {
 				break;
 			}
@@ -71,7 +71,7 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
 	 * @param key - sequence number
 	 */
 	latestLeq(key: number): PartialSequenceLength | undefined {
-		return this.keySortedItems[this.latestLeqIndex(key)];
+		return this.sortedItems[this.latestLeqIndex(key)];
 	}
 
 	/**
@@ -81,7 +81,7 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
 	 */
 	firstGte(key: number): PartialSequenceLength | undefined {
 		const { index } = this.findItemPosition({ seq: key, len: 0, seglen: 0 });
-		return this.keySortedItems[index];
+		return this.sortedItems[index];
 	}
 
 	private latestLeqIndex(key: number): number {
@@ -93,17 +93,17 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength, number>
 		const mindex = this.latestLeqIndex(minSeq);
 		let minLength = 0;
 		if (mindex >= 0) {
-			minLength = this.keySortedItems[mindex].len;
+			minLength = this.sortedItems[mindex].len;
 			const seqCount = this.size;
 			if (mindex <= seqCount - 1) {
 				// Still some entries remaining
 				const remainingCount = seqCount - mindex - 1;
 				// Copy down
 				for (let i = 0; i < remainingCount; i++) {
-					this.keySortedItems[i] = this.keySortedItems[i + mindex + 1];
-					this.keySortedItems[i].len -= minLength;
+					this.sortedItems[i] = this.sortedItems[i + mindex + 1];
+					this.sortedItems[i].len -= minLength;
 				}
-				this.keySortedItems.length = remainingCount;
+				this.sortedItems.length = remainingCount;
 			}
 		}
 		return minLength;
