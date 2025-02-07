@@ -23,7 +23,7 @@
 	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
 	--ifm-navbar-search-input-icon: url("@site/static/assets/search-icon-light.svg");
 
-	//Text color for classes in code blocks
+	//Text color for classes in code blocks. Ref: https://prismjs.com/tokens.html
 	--ifm-attr-name-color: #345094;
 }
 
