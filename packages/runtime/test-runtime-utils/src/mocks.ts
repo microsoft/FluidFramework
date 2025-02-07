@@ -198,6 +198,10 @@ export interface IInternalMockRuntimeMessage {
 	localOpMetadata?: unknown;
 }
 
+interface IInternalMockRuntimeMessageExt extends IInternalMockRuntimeMessage {
+	clientSequenceNumber: number;
+}
+
 /**
  * Mock implementation of IContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
@@ -213,12 +217,12 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 */
 	protected readonly deltaConnections: MockDeltaConnection[] = [];
 	protected readonly pendingMessages: IMockContainerRuntimePendingMessage[] = [];
-	protected readonly outbox: IInternalMockRuntimeMessage[] = [];
-	private readonly idAllocationOutbox: IInternalMockRuntimeMessage[] = [];
+	protected readonly outbox: IInternalMockRuntimeMessageExt[] = [];
+	private readonly idAllocationOutbox: IInternalMockRuntimeMessageExt[] = [];
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
 	 */
-	private readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
+	protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
@@ -271,9 +275,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 	public submit(messageContent: any, localOpMetadata?: unknown): number {
 		const clientSequenceNumber = ++this.deltaManager.clientSequenceNumber;
-		const message: IInternalMockRuntimeMessage = {
+		const message: IInternalMockRuntimeMessageExt = {
 			content: messageContent,
 			localOpMetadata,
+			clientSequenceNumber,
 		};
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
@@ -281,12 +286,12 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		switch (this.runtimeOptions.flushMode) {
 			case FlushMode.Immediate: {
 				if (!isAllocationMessage) {
-					const idAllocationOp = this.generateIdAllocationOp();
+					const idAllocationOp = this.generateIdAllocationOp(clientSequenceNumber);
 					if (idAllocationOp !== undefined) {
-						this.submitInternal(idAllocationOp, clientSequenceNumber);
+						this.submitInternal(idAllocationOp);
 					}
 				}
-				this.submitInternal(message, clientSequenceNumber);
+				this.submitInternal(message);
 				break;
 			}
 
@@ -307,7 +312,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return clientSequenceNumber;
 	}
 
-	private isSequencedAllocationMessage(
+	protected isSequencedAllocationMessage(
 		message: ISequencedDocumentMessage,
 	): message is IMockContainerRuntimeSequencedIdAllocationMessage {
 		return this.isAllocationMessage(message.contents);
@@ -336,10 +341,17 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			return;
 		}
 
+		const enableGroupedBatching = this.runtimeOptions.enableGroupedBatching;
+
+		let fakeClientSequenceNumber = 0;
+		const idAllocationOpClientSeq = this.runtimeOptions.enableGroupedBatching
+			? ++fakeClientSequenceNumber
+			: ++this.deltaManager.clientSequenceNumber;
+
 		// This mimics the runtime behavior of the IdCompressor by generating an IdAllocationOp
 		// and sticking it in front of any op that might rely on that id. It differs slightly in that
 		// in the actual runtime it would get put in its own separate batch
-		const idAllocationOp = this.generateIdAllocationOp();
+		const idAllocationOp = this.generateIdAllocationOp(idAllocationOpClientSeq);
 		if (idAllocationOp !== undefined) {
 			this.idAllocationOutbox.push(idAllocationOp);
 		}
@@ -349,18 +361,15 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.idAllocationOutbox.length = 0;
 		this.outbox.length = 0;
 
-		let fakeClientSequenceNumber = 1;
 		messagesToSubmit.forEach((message) => {
-			this.submitInternal(
-				message,
-				// When grouped batching is used, the ops within the same grouped batch will have
-				// fake sequence numbers when they're ungrouped. The submit function will still
-				// return the clientSequenceNumber but this will ensure that the readers will always
-				// read the fake client sequence numbers.
-				this.runtimeOptions.enableGroupedBatching
-					? fakeClientSequenceNumber++
-					: this.deltaManager.clientSequenceNumber,
-			);
+			// When grouped batching is used, the ops within the same grouped batch will have
+			// fake sequence numbers when they're ungrouped. The submit function will still
+			// return the clientSequenceNumber but this will ensure that the readers will always
+			// read the fake client sequence numbers.
+			const clientSequenceNumber = enableGroupedBatching
+				? ++fakeClientSequenceNumber
+				: message.clientSequenceNumber;
+			this.submitInternal({ ...message, clientSequenceNumber });
 		});
 	}
 
@@ -408,7 +417,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		});
 	}
 
-	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
+	private generateIdAllocationOp(
+		clientSequenceNumber: number,
+	): IInternalMockRuntimeMessageExt | undefined {
 		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
@@ -417,22 +428,27 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			};
 			return {
 				content: allocationOp,
+				clientSequenceNumber,
 			};
 		}
 		return undefined;
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+	private submitInternal(message: IInternalMockRuntimeMessageExt) {
 		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
 		this.deltaManager.outbound.push([
 			{
-				clientSequenceNumber,
+				clientSequenceNumber: message.clientSequenceNumber,
 				contents: message.content,
 				referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 				type: MessageType.Operation,
 			},
 		]);
-		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
+		this.addPendingMessage(
+			message.content,
+			message.localOpMetadata,
+			message.clientSequenceNumber,
+		);
 	}
 
 	public process(message: ISequencedDocumentMessage) {
@@ -460,7 +476,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.pendingMessages.push(pendingMessage);
 	}
 
-	private processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
+	protected processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
 		let localOpMetadata: unknown;
 		const local = this.clientId === message.clientId;
 		if (local) {
@@ -571,8 +587,8 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
-	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
-	private processFirstMessage() {
+	protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
+	protected getFirstMessageToProcess() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
@@ -584,13 +600,19 @@ export class MockContainerRuntimeFactory {
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
 		if (
 			this.runtimeOptions.flushMode === FlushMode.Immediate ||
-			this.lastProcessedMessage?.clientId !== message.clientId
+			(this.lastProcessedMessage?.clientId !== message.clientId &&
+				this.lastProcessedMessage?.referenceSequenceNumber !== message.referenceSequenceNumber)
 		) {
 			this.sequenceNumber++;
 		}
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 		this.lastProcessedMessage = message;
+		return message;
+	}
+
+	private processFirstMessage() {
+		const message = this.getFirstMessageToProcess();
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
 		}
@@ -1015,17 +1037,23 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
-		for (const {
-			contents,
-			localOpMetadata,
-			clientSequenceNumber,
-		} of messageCollection.messagesContent) {
-			this.process(
-				{ ...messageCollection.envelope, contents, clientSequenceNumber },
-				messageCollection.local,
-				localOpMetadata,
-			);
-		}
+		this.deltaConnections.forEach((dc) => {
+			if (dc.processMessages !== undefined) {
+				dc.processMessages(messageCollection);
+			} else {
+				for (const {
+					contents,
+					localOpMetadata,
+					clientSequenceNumber,
+				} of messageCollection.messagesContent) {
+					dc.process(
+						{ ...messageCollection.envelope, contents, clientSequenceNumber },
+						messageCollection.local,
+						localOpMetadata,
+					);
+				}
+			}
+		});
 	}
 
 	public processSignal(message: any, local: boolean) {

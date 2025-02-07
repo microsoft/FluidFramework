@@ -27,7 +27,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	/**
 	 * Contains messages from other clients that were sequenced while this runtime was marked as disconnected.
 	 */
-	private readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
+	protected readonly pendingRemoteMessages: ISequencedDocumentMessage[] = [];
 
 	public get connected(): boolean {
 		return this._connected;
@@ -35,6 +35,12 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 
 	public set connected(connected: boolean) {
 		this.setConnectedState(connected);
+	}
+
+	protected processPendingMessages(pendingMessages: ISequencedDocumentMessage[]) {
+		for (const remoteMessage of pendingMessages) {
+			this.process(remoteMessage);
+		}
 	}
 
 	protected setConnectedState(connected: boolean): void {
@@ -46,9 +52,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		this._connected = connected;
 
 		if (connected) {
-			for (const remoteMessage of this.pendingRemoteMessages) {
-				this.process(remoteMessage);
-			}
+			this.processPendingMessages(this.pendingRemoteMessages);
 			this.pendingRemoteMessages.length = 0;
 			this.deltaManager.clientSequenceNumber = 0;
 			// We should get a new clientId on reconnection.
@@ -79,7 +83,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	}
 
 	private _connected = true;
-	private readonly processedOps?: ISequencedDocumentMessage[];
+	protected readonly processedOps?: ISequencedDocumentMessage[];
 	constructor(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected override readonly factory: MockContainerRuntimeFactoryForReconnection,
