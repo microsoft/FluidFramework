@@ -406,13 +406,7 @@ export async function visualizeSharedTreeBySchema(
 ): Promise<VisualSharedTreeNode> {
 	const schemaFactory = new SchemaFactory(undefined);
 
-	return Tree.is(tree, [
-		schemaFactory.boolean,
-		schemaFactory.null,
-		schemaFactory.number,
-		schemaFactory.handle,
-		schemaFactory.string,
-	])
+	return Tree.is(tree, SchemaFactory.leaves)
 		? {
 				schema: {
 					schemaName: Tree.schema(tree).identifier,
