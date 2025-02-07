@@ -27,6 +27,7 @@ export interface IBasicRestWrapperMetricProps {
 	url: string;
 	correlationId: string;
 	durationInMs: number;
+	timoutInMs: number | string;
 }
 
 /**
@@ -325,6 +326,7 @@ export class BasicRestWrapper extends RestWrapper {
 							url: options.url ?? "URL_UNAVAILABLE",
 							correlationId,
 							durationInMs: performance.now() - startTime,
+							timoutInMs: options.timeout ?? "TIMEOUT_UNAVAILABLE",
 						};
 						this.logHttpMetrics(requestProps);
 					}

@@ -246,6 +246,8 @@ export interface IBasicRestWrapperMetricProps {
     // (undocumented)
     status: number | string;
     // (undocumented)
+    timoutInMs: number | string;
+    // (undocumented)
     url: string;
 }
 
