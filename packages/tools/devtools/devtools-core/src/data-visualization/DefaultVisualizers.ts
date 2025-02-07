@@ -20,9 +20,8 @@ import {
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 import type { ITreeInternal, IChannelView } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { FieldKind, SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
 

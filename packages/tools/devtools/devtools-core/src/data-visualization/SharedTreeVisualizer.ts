@@ -404,8 +404,6 @@ export async function visualizeSharedTreeBySchema(
 	{ allowedTypes, isRequired }: FieldSchemaProperties,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const schemaFactory = new SchemaFactory(undefined);
-
 	return Tree.is(tree, SchemaFactory.leaves)
 		? {
 				schema: {
