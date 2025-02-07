@@ -550,6 +550,7 @@ extends:
           - job: Coverage_tests
             displayName: "Coverage tests"
             dependsOn: build
+            timeoutInMinutes: 25 # Normally takes around 20 minutes. Decreasing timeout to speed up iteration while I find which tests are timing out
             variables:
               - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                 - name: targetBranchName
@@ -701,6 +702,7 @@ extends:
             - job: Test_${{ test.jobName }}
               displayName: "Run Task Test ${{ test.jobName }}"
               dependsOn: build
+              condition: false # Disabling while I troubleshoot, to not waste compute time
               variables:
                 - ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
                   - name: targetBranchName
