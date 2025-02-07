@@ -6,7 +6,7 @@
 
 /* You can override the default Infima variables here. */
 :root {
-	--ifm-color-primary: #3900bd;
+	--ifm-color-primary: #558cf4;
 	--ifm-color-primary-dark: #3300aa;
 	--ifm-color-primary-darker: #3000a1;
 	--ifm-color-primary-darkest: #280084;
@@ -52,3 +52,6 @@
 .token.attr-name {
 	color: var(--ifm-attr-name-color) !important;
 }
+.markdown a {
+	text-decoration: underline;
+  }
