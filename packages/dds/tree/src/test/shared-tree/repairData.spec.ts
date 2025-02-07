@@ -162,7 +162,7 @@ describe("Repair Data", () => {
 				1,
 				undefined /* factory */,
 				undefined /* useDeterministicSessionIds */,
-				FlushMode.TurnBased,
+				{ flushMode: FlushMode.TurnBased },
 			);
 			const tree1 = provider.trees[0];
 			const view1 = tree1.viewWith(

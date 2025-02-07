@@ -59,7 +59,6 @@ import {
 	VisibilityState,
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
-	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -486,11 +485,15 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		);
 	}
 
-	/**
-	 * deprecated - use processMessages instead
-	 */
 	public process(message: ISequencedDocumentMessage) {
-		this.processMessages([message]);
+		this.deltaManager.process(message);
+		const [local, localOpMetadata] = this.processInternal(message);
+
+		if (this.isSequencedAllocationMessage(message)) {
+			this.finalizeIdRange(message.contents.contents);
+		} else {
+			this.dataStoreRuntime.process(message, local, localOpMetadata);
+		}
 	}
 
 	/**
@@ -498,59 +501,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 * from same clients in a bunch.
 	 */
 	public processMessages(messages: ISequencedDocumentMessage[]) {
-		if (messages.length === 0) {
-			return;
-		}
-
-		let bunchedMessagesContent: IRuntimeMessagesContent[] = [];
-		let previousMessage: ISequencedDocumentMessage | undefined;
-		let previousLocal: boolean | undefined;
-
-		const sendBunchedMessages = (): void => {
-			if (previousMessage === undefined) {
-				return;
-			}
-			assert(previousLocal !== undefined, "previous local must exist");
-			const messageCollection: IRuntimeMessageCollection = {
-				envelope: previousMessage,
-				local: previousLocal,
-				messagesContent: bunchedMessagesContent,
-			};
-			this.dataStoreRuntime.processMessages(messageCollection);
-			bunchedMessagesContent = [];
-		};
-
 		for (const message of messages) {
-			this.deltaManager.process(message);
-			const [local, localOpMetadata] = this.processInternal(message);
-
-			// Id allocation messages are for the runtime, so process it here directly.
-			if (this.isSequencedAllocationMessage(message)) {
-				sendBunchedMessages();
-				this.finalizeIdRange(message.contents.contents);
-				previousMessage = undefined;
-				previousLocal = undefined;
-				bunchedMessagesContent = [];
-				continue;
-			}
-
-			// If the message is from a different batch, send the previous bunch of messages to the
-			// data store for processing.
-			if (!areMessagesFromSameBatch(previousMessage, message, this.runtimeOptions.flushMode)) {
-				sendBunchedMessages();
-			}
-
-			previousLocal = local;
-			previousMessage = message;
-
-			bunchedMessagesContent.push({
-				contents: message.contents,
-				localOpMetadata,
-				clientSequenceNumber: message.clientSequenceNumber,
-			});
+			this.process(message);
 		}
-
-		sendBunchedMessages();
 	}
 
 	protected addPendingMessage(
@@ -746,7 +699,7 @@ export class MockContainerRuntimeFactory {
 	/**
 	 * Process a given number of queued messages.
 	 * In Immediate flush mode, it processes the messages one by one.
-	 * In TurnBased flush mode, it flushes any pending messages. It then sends the given number of
+	 * In TurnBased flush mode, it flushes any pending messages, if any. It then sends the given number of
 	 * messages to all the runtimes.
 	 * @param count - the number of messages to process
 	 */
@@ -784,9 +737,7 @@ export class MockContainerRuntimeFactory {
 	/**
 	 * Process all messages in the queue.
 	 * In Immediate flush mode, it processes all the messages one by one.
-	 * In TurnBased flush mode, it flushes any pending messages. It then sends all the messages to all the runtimes.
-	 *
-	 * Note that this will also process messages that were added to the queue after the call to this method.
+	 * In TurnBased flush mode, it flushes pending messages, if any. It then sends all the messages to all the runtimes.
 	 */
 	public processAllMessages() {
 		if (this.runtimeOptions.flushMode === FlushMode.TurnBased) {
@@ -1185,23 +1136,17 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection) {
-		this.deltaConnections.forEach((dc) => {
-			if (dc.processMessages !== undefined) {
-				dc.processMessages(messageCollection);
-			} else {
-				for (const {
-					contents,
-					localOpMetadata,
-					clientSequenceNumber,
-				} of messageCollection.messagesContent) {
-					dc.process(
-						{ ...messageCollection.envelope, contents, clientSequenceNumber },
-						messageCollection.local,
-						localOpMetadata,
-					);
-				}
-			}
-		});
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+		} of messageCollection.messagesContent) {
+			this.process(
+				{ ...messageCollection.envelope, contents, clientSequenceNumber },
+				messageCollection.local,
+				localOpMetadata,
+			);
+		}
 	}
 
 	public processSignal(message: any, local: boolean) {

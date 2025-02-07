@@ -361,6 +361,12 @@ export interface ConnectionSetter {
 
 export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
 
+const defaultContainerRuntimeOptions: IMockContainerRuntimeOptions = {
+	flushMode: FlushMode.TurnBased,
+	enableGroupedBatching: true,
+	flushAutomatically: true,
+};
+
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
@@ -393,16 +399,13 @@ export class TestTreeProviderLite {
 		useDeterministicSessionIds = true,
 		// Default to turn based flush mode with grouped batching enabled which is what the runtime uses by default.
 		// The fuzz tests cover immediate flush mode and non-grouped batching.
-		private readonly containerRuntimeOptions: IMockContainerRuntimeOptions = {
-			flushMode: FlushMode.TurnBased,
-			enableGroupedBatching: true,
-			flushAutomatically: true,
-		},
+		private readonly containerRuntimeOptions: IMockContainerRuntimeOptions = defaultContainerRuntimeOptions,
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
-		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection(
-			containerRuntimeOptions,
-		);
+		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection({
+			...defaultContainerRuntimeOptions,
+			...containerRuntimeOptions,
+		});
 		const t: SharedTreeWithConnectionStateSetter[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
@@ -434,10 +437,13 @@ export class TestTreeProviderLite {
 	}
 
 	public processMessages(count?: number): void {
-		// In TurnBased mode, flush the messages from all the runtimes before processing the messages.
-		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
-		// flush messages from individual runtimes in the order they were created.
-		if (this.containerRuntimeOptions.flushMode === FlushMode.TurnBased) {
+		// In TurnBased mode, if flushAutomatically is false, flush the messages from all the runtimes before processing.
+		// Note that this does not preserve the order in which the messages were sent. To do so, tests should either
+		// set flushAutomatically to true or flush messages from individual runtimes in the order they were created.
+		if (
+			this.containerRuntimeOptions.flushMode === FlushMode.TurnBased &&
+			this.containerRuntimeOptions.flushAutomatically === false
+		) {
 			this.containerRuntimes.forEach((containerRuntime) => {
 				containerRuntime.flush();
 			});

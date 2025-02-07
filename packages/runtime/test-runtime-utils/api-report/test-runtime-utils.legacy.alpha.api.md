@@ -86,6 +86,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     } | undefined;
     // (undocumented)
     protected readonly pendingMessages: IMockContainerRuntimePendingMessage[];
+    // (undocumented)
     process(message: ISequencedDocumentMessage): void;
     processMessages(messages: ISequencedDocumentMessage[]): void;
     rebase(): void;
