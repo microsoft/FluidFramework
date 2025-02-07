@@ -263,16 +263,16 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
 	// All schema definitions for the SharedTree.
-	const treeDefinitions = sharedTree.exportSimpleSchema().definitions;
+	const treeSimpleSchema = sharedTree.exportSimpleSchema();
+	const treeDefinitions = treeSimpleSchema.definitions;
 
 	/**
 	 * {@link visualizeSharedTreeBySchema} passes `allowedTypes` into co-recursive functions while constructing the visual representation.
 	 * Since the {@link SimpleTreeSchema.allowedTypes} of each children node is only accessible at the parent field level,
 	 * each node's allowed types are computed at the parent field level.
 	 */
-	const allowedTypes = sharedTree.exportSimpleSchema().allowedTypes;
-	const isRequired =
-		sharedTree.exportSimpleSchema().kind === FieldKind.Required ? true : false;
+	const allowedTypes = treeSimpleSchema.allowedTypes;
+	const isRequired = treeSimpleSchema.kind === FieldKind.Required;
 
 	if (treeView === undefined) {
 		return {
@@ -289,7 +289,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 						},
 						isRequired: {
 							nodeKind: VisualNodeKind.ValueNode,
-							value: isRequired?.toString(),
+							value: isRequired.toString(),
 						},
 					},
 				},
@@ -309,6 +309,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	// Maps the `visualTreeRepresentation` in the format compatible to {@link visualizeChildData} function.
 	const visualTree = toVisualTree(visualTreeRepresentation);
 
+	// TODO: Validate the type casting.
 	const visualTreeResult: FluidObjectNode = {
 		...visualTree,
 		fluidObjectId: sharedTree.id,
