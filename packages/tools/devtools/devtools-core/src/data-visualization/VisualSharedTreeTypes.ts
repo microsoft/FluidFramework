@@ -36,7 +36,7 @@ export interface SharedTreeSchemaNode {
 	readonly allowedTypes?: string | Record<string, string>;
 
 	/**
-	 * If the field or node is required or optional.
+	 * If the field is required or optional.
 	 * - When {@link FieldKind.Required}: The field must be present
 	 * - When {@link FieldKind.Optional}: The field may be omitted
 	 * - When undefined: Treated the same as {@link FieldKind.Optional}
