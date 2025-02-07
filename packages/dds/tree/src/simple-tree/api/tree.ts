@@ -13,11 +13,6 @@ import type {
 } from "../../core/index.js";
 
 import type {
-	RunTransactionParams,
-	VoidTransactionCallbackStatus,
-	TransactionCallbackStatus,
-	TransactionResult,
-	TransactionResultExt,
 	// This is referenced by doc comments.
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
@@ -44,6 +39,13 @@ import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { VerboseTree } from "./verboseTree.js";
 import type { SimpleTreeSchema } from "./simpleSchema.js";
+import type {
+	RunTransactionParams,
+	TransactionCallbackStatus,
+	TransactionResult,
+	TransactionResultExt,
+	VoidTransactionCallbackStatus,
+} from "./transactionTypes.js";
 /**
  * A tree from which a {@link TreeView} can be created.
  *
