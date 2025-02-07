@@ -12,6 +12,7 @@ import {
 	IResolvedUrl,
 	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
+import { DataCorruptionError, DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import { Socket } from "socket.io-client";
 
@@ -197,18 +198,7 @@ describe("R11s Socket Tests", () => {
 	});
 
 	it("Socket error with Data Corruption error", async () => {
-		const clientError = new Error("Data corruption detected") as Error & {
-			code: number;
-			retryAfterMs: number;
-			internalErrorCode: string;
-			errorType: string;
-			canRetry: boolean;
-		};
-		clientError.code = 500;
-		clientError.retryAfterMs = 0;
-		clientError.internalErrorCode = "DataCorruption";
-		clientError.errorType = FluidErrorTypes.dataCorruptionError;
-		clientError.canRetry = false;
+		const clientError = new DataCorruptionError("Data corruption error", {});
 
 		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
@@ -250,18 +240,10 @@ describe("R11s Socket Tests", () => {
 	});
 
 	it("Socket error with Data Processing error", async () => {
-		const clientError = new Error("Data processing error") as Error & {
-			code: number;
-			retryAfterMs: number;
-			internalErrorCode: string;
-			errorType: string;
-			canRetry: boolean;
-		};
-		clientError.code = 500;
-		clientError.retryAfterMs = 0;
-		clientError.internalErrorCode = "DataProcessing";
-		clientError.errorType = FluidErrorTypes.dataProcessingError;
-		clientError.canRetry = false;
+		const clientError = DataProcessingError.create(
+			"DataProcessingError",
+			"test"
+		);;
 
 		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
