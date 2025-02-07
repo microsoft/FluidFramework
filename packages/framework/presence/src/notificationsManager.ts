@@ -241,15 +241,12 @@ class NotificationsManagerImpl<
 			>;
 			this.notificationsInternal.emit(eventName, ...args);
 		} else {
-			return [
-				() =>
-					this.events.emit(
-						"unattendedNotification",
-						value.value.name,
-						client,
-						...value.value.args,
-					),
-			];
+			this.events.emit(
+				"unattendedNotification",
+				value.value.name,
+				client,
+				...value.value.args,
+			);
 		}
 		return [];
 	}
