@@ -79,11 +79,13 @@ describe(`Presence with AzureClient`, () => {
 			*/
 			if (index === 0) {
 				await timeoutPromise(
-					(resolve) => {
+					(resolve, reject) => {
 						child.once("message", (msg: MessageFromChild) => {
 							if (msg.event === "ready") {
 								containerId = msg.containerId;
 								resolve();
+							} else {
+								reject(new Error(`Non-ready message from child0: ${JSON.stringify(msg)}`));
 							}
 						});
 					},
