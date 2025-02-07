@@ -17,7 +17,7 @@ import { PureDataObject } from "./pureDataObject.js";
 
 /**
  * {@link @fluidframework/tree#SharedTree}-backed {@link PureDataObject | data object}.
- * @alpha
+ * @internal
  */
 export abstract class TreeDataObject<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
