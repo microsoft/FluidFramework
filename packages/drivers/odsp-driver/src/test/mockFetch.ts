@@ -5,7 +5,13 @@
 
 import assert from "node:assert";
 
+<<<<<<< HEAD
+=======
+import { Headers } from "node-fetch";
+>>>>>>> main
 import { stub } from "sinon";
+
+import { fetchHelper } from "../odspUtils.js";
 
 /**
  * Mock response returned by {@link createResponse}.
@@ -87,7 +93,11 @@ export async function mockFetchError<T>(
 	response: Error,
 	type: FetchCallType = "single",
 ): Promise<T> {
+<<<<<<< HEAD
 	const fetchStub = stub(globalThis, "fetch");
+=======
+	const fetchStub = stub(fetchHelper, "fetch");
+>>>>>>> main
 	fetchStub.callsFake(async () => {
 		if (type === "external") {
 			fetchStub.restore();

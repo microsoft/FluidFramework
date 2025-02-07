@@ -219,6 +219,8 @@ export async function fetchHelper(
 		},
 	);
 }
+// This allows `fetch` to be mocked (e.g. with sinon `stub()`)
+fetchHelper.fetch = fetch;
 
 /**
  * A utility function to fetch and parse as JSON with support for retries
