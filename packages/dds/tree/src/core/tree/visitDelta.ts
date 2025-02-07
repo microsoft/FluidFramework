@@ -236,7 +236,7 @@ function transferRoots(
 			const oldField = detachedFieldIndex.toFieldKey(oldRootId);
 			const newField = detachedFieldIndex.toFieldKey(newRootId);
 			visitor.enterField(oldField);
-			visitor.detach({ start: 0, end: 1 }, newField);
+			visitor.detach({ start: 0, end: 1 }, newField, newId);
 			visitor.exitField(oldField);
 			detachedFieldIndex.deleteEntry(oldId);
 		}
@@ -266,7 +266,11 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(content: ProtoNodes, destination: FieldKey): void;
+	create(
+		content: ProtoNodes,
+		destination: FieldKey,
+		detachedNodeId: Delta.DetachedNodeId,
+	): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
@@ -281,14 +285,23 @@ export interface DeltaVisitor {
 	 * Expected to match the number of nodes in the source detached field.
 	 * @param destination - The index at which to attach the nodes.
 	 */
-	attach(source: FieldKey, count: number, destination: PlaceIndex): void;
+	attach(
+		source: FieldKey,
+		sourceDetachedNodeId: Delta.DetachedNodeId,
+		count: number,
+		destination: PlaceIndex,
+	): void;
 	/**
 	 * Transfers a range of nodes from the current field to a new detached field.
 	 * @param source - The bounds of the range of nodes to detach.
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	detach(source: Range, destination: FieldKey): void;
+	detach(
+		source: Range,
+		destination: FieldKey,
+		destinationDetachedNodeId: Delta.DetachedNodeId,
+	): void;
 	/**
 	 * Replaces a range of nodes in the current field by transferring them out to a new detached field
 	 * and transferring in all the nodes from an existing detached field in their place.
@@ -297,7 +310,13 @@ export interface DeltaVisitor {
 	 * @param range - The bounds of the range of nodes to replace.
 	 * @param oldContentDestination - The key for a new detached field to transfer the old nodes to.
 	 */
-	replace(newContentSource: FieldKey, range: Range, oldContentDestination: FieldKey): void;
+	replace(
+		newContentSource: FieldKey,
+		sourceDetachedNodeId: Delta.DetachedNodeId,
+		range: Range,
+		oldContentDestination: FieldKey,
+		destinationDetachedNodeId: Delta.DetachedNodeId,
+	): void;
 
 	/**
 	 * Tells the visitor that it should update its "current location" to be the Node at the specified index
@@ -444,7 +463,7 @@ function detachPass(
 					config.attachPassRoots.set(root, mark.fields);
 				}
 				const field = config.detachedFieldIndex.toFieldKey(root);
-				visitor.detach({ start: index, end: index + 1 }, field);
+				visitor.detach({ start: index, end: index + 1 }, field, id);
 			}
 		} else if (!isAttachMark(mark)) {
 			index += mark.count;
@@ -465,7 +484,7 @@ function buildTrees(
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
 		root = detachedFieldIndex.createEntry(offsettedId, latestRevision);
 		const field = detachedFieldIndex.toFieldKey(root);
-		visitor.create([tree], field);
+		visitor.create([tree], field, offsettedId);
 	}
 }
 
@@ -558,16 +577,19 @@ function attachPass(
 				const sourceField = config.detachedFieldIndex.toFieldKey(sourceRoot);
 				const offsetIndex = index + i;
 				if (isReplaceMark(mark)) {
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const destinationId = offsetDetachId(mark.detach!, i);
 					const rootDestination = config.detachedFieldIndex.createEntry(
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						offsetDetachId(mark.detach!, i),
+						destinationId,
 						config.latestRevision,
 					);
 					const destinationField = config.detachedFieldIndex.toFieldKey(rootDestination);
 					visitor.replace(
 						sourceField,
+						offsetAttachId,
 						{ start: offsetIndex, end: offsetIndex + 1 },
 						destinationField,
+						destinationId,
 					);
 					// We may need to do a second pass on the detached nodes
 					if (mark.fields !== undefined) {
@@ -575,7 +597,7 @@ function attachPass(
 					}
 				} else {
 					// This a simple attach
-					visitor.attach(sourceField, 1, offsetIndex);
+					visitor.attach(sourceField, offsetAttachId, 1, offsetIndex);
 				}
 				config.detachedFieldIndex.deleteEntry(offsetAttachId);
 				const fields = config.attachPassRoots.get(sourceRoot);

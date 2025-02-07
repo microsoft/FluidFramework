@@ -10,7 +10,7 @@ import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
 import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
-import type { ProtoNodes, Root } from "./delta.js";
+import type { DetachedNodeId, ProtoNodes, Root } from "./delta.js";
 import { DetachedFieldIndex } from "./detachedFieldIndex.js";
 import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 import type { NodeIndex, PlaceIndex, Range } from "./pathTree.js";
@@ -82,27 +82,75 @@ export function combineVisitors(
 			announcedVisitors.forEach((v) => v.beforeDestroy(...args));
 			visitors.forEach((v) => v.destroy(...args));
 		},
-		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
-			announcedVisitors.forEach((v) => v.beforeAttach(source, count, destination));
-			visitors.forEach((v) => v.attach(source, count, destination));
+		attach: (
+			source: FieldKey,
+			sourceDetachedNodeId: DetachedNodeId,
+			count: number,
+			destination: PlaceIndex,
+		) => {
 			announcedVisitors.forEach((v) =>
-				v.afterAttach(source, { start: destination, end: destination + count }),
+				v.beforeAttach(source, sourceDetachedNodeId, count, destination),
+			);
+			visitors.forEach((v) => v.attach(source, sourceDetachedNodeId, count, destination));
+			announcedVisitors.forEach((v) =>
+				v.afterAttach(source, sourceDetachedNodeId, {
+					start: destination,
+					end: destination + count,
+				}),
 			);
 		},
-		detach: (source: Range, destination: FieldKey) => {
-			announcedVisitors.forEach((v) => v.beforeDetach(source, destination));
-			visitors.forEach((v) => v.detach(source, destination));
+		detach: (
+			source: Range,
+			destination: FieldKey,
+			destinationDetachedNodeId: DetachedNodeId,
+		) => {
 			announcedVisitors.forEach((v) =>
-				v.afterDetach(source.start, source.end - source.start, destination),
+				v.beforeDetach(source, destination, destinationDetachedNodeId),
+			);
+			visitors.forEach((v) => v.detach(source, destination, destinationDetachedNodeId));
+			announcedVisitors.forEach((v) =>
+				v.afterDetach(
+					source.start,
+					source.end - source.start,
+					destination,
+					destinationDetachedNodeId,
+				),
 			);
 		},
-		replace: (newContent: FieldKey, oldContent: Range, oldContentDestination: FieldKey) => {
+		replace: (
+			newContent: FieldKey,
+			sourceDetachedNodeId: DetachedNodeId,
+			oldContent: Range,
+			oldContentDestination: FieldKey,
+			destinationDetachedNodeId: DetachedNodeId,
+		) => {
 			announcedVisitors.forEach((v) =>
-				v.beforeReplace(newContent, oldContent, oldContentDestination),
+				v.beforeReplace(
+					newContent,
+					sourceDetachedNodeId,
+					oldContent,
+					oldContentDestination,
+					destinationDetachedNodeId,
+				),
 			);
-			visitors.forEach((v) => v.replace(newContent, oldContent, oldContentDestination));
+			visitors.forEach((v) =>
+				v.replace(
+					newContent,
+					sourceDetachedNodeId,
+					oldContent,
+					oldContentDestination,
+					destinationDetachedNodeId,
+				),
+			);
 			announcedVisitors.forEach((v) =>
-				v.afterReplace(newContent, oldContent, oldContentDestination),
+				// TODO understand how these change after the replace
+				v.afterReplace(
+					newContent,
+					oldContent,
+					sourceDetachedNodeId,
+					oldContentDestination,
+					destinationDetachedNodeId,
+				),
 			);
 		},
 		enterNode: (...args) => visitors.forEach((v) => v.enterNode(...args)),
@@ -120,18 +168,44 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 	/**
 	 * A hook that is called after all nodes have been created.
 	 */
-	afterCreate(content: ProtoNodes, destination: FieldKey): void;
+	afterCreate(
+		content: ProtoNodes,
+		destination: FieldKey,
+		detachedNodeId: DetachedNodeId,
+	): void;
 	beforeDestroy(field: FieldKey, count: number): void;
-	beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void;
-	afterAttach(source: FieldKey, destination: Range): void;
-	beforeDetach(source: Range, destination: FieldKey): void;
-	afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void;
+	beforeAttach(
+		source: FieldKey,
+		sourceDetachedNodeId: DetachedNodeId,
+		count: number,
+		destination: PlaceIndex,
+	): void;
+	afterAttach(
+		source: FieldKey,
+		sourceDetachedNodeId: DetachedNodeId,
+		destination: Range,
+	): void;
+	beforeDetach(source: Range, destination: FieldKey, detachedNodeId: DetachedNodeId): void;
+	afterDetach(
+		source: PlaceIndex,
+		count: number,
+		destination: FieldKey,
+		detachedNodeId: DetachedNodeId,
+	): void;
 	beforeReplace(
 		newContent: FieldKey,
+		sourceDetachedNodeId: DetachedNodeId,
 		oldContent: Range,
 		oldContentDestination: FieldKey,
+		destinationDetachedNodeId: DetachedNodeId,
 	): void;
-	afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void;
+	afterReplace(
+		newContentSource: FieldKey,
+		newContent: Range,
+		sourceDetachedNodeId: DetachedNodeId,
+		oldContent: FieldKey,
+		destinationDetachedNodeId: DetachedNodeId,
+	): void;
 }
 
 /**
@@ -141,26 +215,54 @@ export interface AnnouncedVisitor extends DeltaVisitor {
 export function createAnnouncedVisitor(visitorFunctions: {
 	free?: () => void;
 	create?: (content: ProtoNodes, destination: FieldKey) => void;
-	afterCreate?: (content: ProtoNodes, destination: FieldKey) => void;
+	afterCreate?: (
+		content: ProtoNodes,
+		destination: FieldKey,
+		detachedNodeId: DetachedNodeId,
+	) => void;
 	beforeDestroy?: (field: FieldKey, count: number) => void;
 	destroy?: (detachedField: FieldKey, count: number) => void;
-	beforeAttach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;
-	attach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;
-	afterAttach?: (source: FieldKey, destination: Range) => void;
+	beforeAttach?: (
+		source: FieldKey,
+		sourceDetachedNodeId: DetachedNodeId,
+		count: number,
+		destination: PlaceIndex,
+	) => void;
+	attach?: (
+		source: FieldKey,
+		sourceDetachedNodeId: DetachedNodeId,
+		count: number,
+		destination: PlaceIndex,
+	) => void;
+	afterAttach?: (
+		source: FieldKey,
+		sourceDetachedNodeId: DetachedNodeId,
+		destination: Range,
+	) => void;
 	beforeDetach?: (source: Range, destination: FieldKey) => void;
 	afterDetach?: (source: PlaceIndex, count: number, destination: FieldKey) => void;
 	detach?: (source: Range, destination: FieldKey) => void;
 	beforeReplace?: (
 		newContent: FieldKey,
+		sourceDetachedNodeId: DetachedNodeId,
 		oldContent: Range,
 		oldContentDestination: FieldKey,
+		destinationDetachedNodeId: DetachedNodeId,
 	) => void;
 	replace?: (
 		newContentSource: FieldKey,
+		sourceDetachedNodeId: DetachedNodeId,
 		range: Range,
 		oldContentDestination: FieldKey,
+		destinationDetachedNodeId: DetachedNodeId,
 	) => void;
-	afterReplace?: (newContentSource: FieldKey, newContent: Range, oldContent: FieldKey) => void;
+	afterReplace?: (
+		newContentSource: FieldKey,
+		newContent: Range,
+		sourceDetachedNodeId: DetachedNodeId,
+		oldContent: FieldKey,
+		destinationDetachedNodeId: DetachedNodeId,
+	) => void;
 	enterNode?: (index: NodeIndex) => void;
 	exitNode?: (index: NodeIndex) => void;
 	enterField?: (key: FieldKey) => void;
