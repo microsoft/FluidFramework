@@ -11,7 +11,6 @@ import {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { type AzureUser, ScopeType } from "@fluidframework/azure-client/internal";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
@@ -26,6 +25,7 @@ import {
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
+import { ScopeType } from "../AzureClientFactory.js";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { configProvider } from "../utils.js";
 
@@ -33,6 +33,10 @@ import { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 type MessageFromParent = MessageToChild;
 type MessageToParent = Required<MessageFromChild>;
+interface UserIdAndName {
+	id: string;
+	name: string;
+}
 
 const connectTimeoutMs = 10_000;
 // Identifier given to child process
@@ -52,7 +56,7 @@ if (useAzure && endPoint === undefined) {
  */
 const getOrCreatePresenceContainer = async (
 	id: string | undefined,
-	user: AzureUser,
+	user: UserIdAndName,
 	config?: ReturnType<typeof configProvider>,
 	scopes?: ScopeType[],
 ): Promise<{
@@ -136,7 +140,7 @@ class MessageHandler {
 		switch (msg.command) {
 			// Respond to connect command by connecting to Fluid container with the provided user information.
 			case "connect": {
-				// Check if valid user information has been provided by parent/orchestator
+				// Check if valid user information has been provided by parent/orchestrator
 				if (!msg.user) {
 					send({ event: "error", error: `${process_id}: No azure user information given` });
 					break;
