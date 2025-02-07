@@ -52,6 +52,8 @@
 .token.attr-name {
 	color: var(--ifm-attr-name-color) !important;
 }
+
+// Applies text-decoration to all links in markdown/MDX content
 .markdown a {
 	text-decoration: underline;
 }
