@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { baseSharedStringModel, defaultFuzzOptions } from "./fuzzUtils.js";
+import {
+	baseSharedStringModel,
+	defaultFuzzOptions,
+	makeIntervalOperationGenerator,
+} from "./fuzzUtils.js";
 
 describe("SharedString fuzz testing", () => {
 	createDDSFuzzSuite(
@@ -29,6 +34,39 @@ describe("SharedString fuzz with stashing", () => {
 				maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 				stashableClientProbability: 0.2,
 			},
+			// Uncomment this line to replay a specific seed from its failure file:
+			// replay: 0,
+		},
+	);
+});
+
+describe("SharedString fuzz with obliterate", () => {
+	const model: typeof baseSharedStringModel = {
+		...baseSharedStringModel,
+		generatorFactory: () =>
+			takeAsync(
+				100,
+				makeIntervalOperationGenerator({
+					weights: {
+						addText: 3,
+						removeRange: 2,
+						annotateRange: 1,
+						obliterateRange: 3,
+						// TODO:AB#29766: Enable interval operations. They currently cause failures.
+						addInterval: 0,
+						deleteInterval: 0,
+						changeInterval: 0,
+						revertWeight: 0,
+					},
+				}),
+			),
+	};
+	createDDSFuzzSuite(
+		{ ...model, workloadName: "SharedString with obliterate" },
+		{
+			...defaultFuzzOptions,
+			// Sided obliterate doesn't support reconnect yet.
+			reconnectProbability: 0,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
 		},

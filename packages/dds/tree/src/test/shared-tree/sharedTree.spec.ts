@@ -201,7 +201,7 @@ describe("SharedTree", () => {
 		const sharedTree = treeTestFactory();
 		const view = sharedTree.viewWith(
 			new TreeViewConfiguration({
-				schema: new SchemaFactory(undefined).number,
+				schema: SchemaFactory.number,
 				enableSchemaValidation,
 			}),
 		);
@@ -2157,8 +2157,7 @@ describe("SharedTree", () => {
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
-		const sf = new SchemaFactory(undefined);
-		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(sf.optional([])));
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(SchemaFactory.optional([])));
 
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
