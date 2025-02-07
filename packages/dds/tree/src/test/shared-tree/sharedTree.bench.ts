@@ -434,7 +434,7 @@ describe("SharedTree benchmarks", () => {
 	});
 
 	// In this context "op bunch" refers to a group of ops for the same DDS that are sent by a peer in a single message.
-	describe.only("rebasing over op bunch", () => {
+	describe("rebasing over op bunch", () => {
 		// The number of commits in a bunch for a given run of this test suite.
 		const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
 		// Number of local commits to rebase over the inbound bunch
@@ -462,7 +462,7 @@ describe("SharedTree benchmarks", () => {
 								2,
 								factory,
 								undefined /* useDeterministicSessionIds */,
-								FlushMode.Immediate,
+								FlushMode.TurnBased,
 							);
 							const sender = provider.trees[0];
 							const receiver = provider.trees[1];
