@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/devtools",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "Fluid Framework developer tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -78,7 +78,7 @@
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob _api-extractor-temp nyc dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp nyc dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint src",
 		"eslint:fix": "eslint src --fix",
 		"format": "npm run format:biome",
@@ -129,7 +129,7 @@
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.20.0",
+		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.21.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",

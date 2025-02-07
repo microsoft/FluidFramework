@@ -8,7 +8,7 @@ import {
 	bufferToString,
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -36,7 +36,6 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	GenericError,
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
@@ -180,7 +179,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 	// blobPath's format - `/<basePath>/<blobId>`.
 	private readonly isBlobDeleted: (blobPath: string) => boolean;
 	private readonly runtime: IBlobManagerRuntime;
-	private readonly closeContainer: (error?: ICriticalContainerError) => void;
 	private readonly localBlobIdGenerator: () => string;
 	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
 		new Map();
@@ -210,7 +208,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		readonly isBlobDeleted: (blobPath: string) => boolean;
 		readonly runtime: IBlobManagerRuntime;
 		stashedBlobs: IPendingBlobs | undefined;
-		readonly closeContainer: (error?: ICriticalContainerError) => void;
 		readonly localBlobIdGenerator?: (() => string) | undefined;
 	}) {
 		super();
@@ -223,7 +220,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 			isBlobDeleted,
 			runtime,
 			stashedBlobs,
-			closeContainer,
 			localBlobIdGenerator,
 		} = props;
 		this.routeContext = routeContext;
@@ -231,7 +227,6 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 		this.blobRequested = blobRequested;
 		this.isBlobDeleted = isBlobDeleted;
 		this.runtime = runtime;
-		this.closeContainer = closeContainer;
 		this.localBlobIdGenerator = localBlobIdGenerator ?? uuid;
 
 		this.mc = createChildMonitoringContext({
@@ -300,14 +295,16 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 					expired,
 				});
 				if (expired) {
-					// we want to avoid submitting ops with broken handles
-					this.closeContainer(
-						new GenericError("Trying to submit a BlobAttach for expired blob", undefined, {
-							localId,
-							blobId,
-							secondsSinceUpload,
-						}),
-					);
+					// reupload blob and reset previous fields
+					this.pendingBlobs.set(localId, {
+						...pendingEntry,
+						storageId: undefined,
+						uploadTime: undefined,
+						minTTLInSeconds: undefined,
+						opsent: false,
+						uploadP: this.uploadBlob(localId, pendingEntry.blob),
+					});
+					return;
 				}
 			}
 			pendingEntry.opsent = true;
@@ -867,10 +864,10 @@ export class BlobManager extends TypedEventEmitter<IBlobManagerEvents> {
 											resolve();
 										}
 									};
-									if (!entry.attached) {
-										this.on("blobAttached", onBlobAttached);
-									} else {
+									if (entry.attached) {
 										resolve();
+									} else {
+										this.on("blobAttached", onBlobAttached);
 									}
 								}),
 							);

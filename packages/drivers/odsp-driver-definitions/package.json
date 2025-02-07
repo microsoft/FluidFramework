@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver-definitions",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,7 +75,7 @@
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -97,7 +97,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.20.0",
+		"@fluidframework/odsp-driver-definitions-previous": "npm:@fluidframework/odsp-driver-definitions@2.21.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

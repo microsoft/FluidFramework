@@ -1,6 +1,6 @@
 {
 	"name": "fluid-framework",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "The main entry point into Fluid Framework public packages",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -86,7 +86,7 @@
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob _api-extractor-temp dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\"",
+		"clean": "rimraf --glob _api-extractor-temp dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
