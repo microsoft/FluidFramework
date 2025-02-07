@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/replay-tool",
-	"version": "2.21.0",
+	"version": "2.21.1",
 	"private": true,
 	"description": "A tool that lets the user to replay ops.",
 	"homepage": "https://fluidframework.com",
