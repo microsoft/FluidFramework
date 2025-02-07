@@ -75,29 +75,34 @@ describe(`Presence with AzureClient`, () => {
 		for (const [index, child] of children.entries()) {
 			const user = { id: `test-user-id-${index}`, name: `test-user-name-${index}` };
 			const message: MessageToChild = { command: "connect", containerId, user };
+
+			const postWait =
+				index === 0
+					? timeoutPromise(
+							(resolve, reject) => {
+								child.once("message", (msg: MessageFromChild) => {
+									if (msg.event === "ready") {
+										containerId = msg.containerId;
+										resolve();
+									} else {
+										reject(new Error(`Non-ready message from child0: ${JSON.stringify(msg)}`));
+									}
+								});
+							},
+							{
+								durationMs,
+								errorMsg: "did not receive 'ready' from child process",
+							},
+						)
+					: undefined;
+
+			// Now send the connect command
 			child.send(message);
-			/*
-			 The initial child process will create the container,
-			 so we must wait to receive the containerId so future child clients can use it
-			*/
-			if (index === 0) {
-				await timeoutPromise(
-					(resolve, reject) => {
-						child.once("message", (msg: MessageFromChild) => {
-							if (msg.event === "ready") {
-								containerId = msg.containerId;
-								resolve();
-							} else {
-								reject(new Error(`Non-ready message from child0: ${JSON.stringify(msg)}`));
-							}
-						});
-					},
-					{
-						durationMs,
-						errorMsg: "did not receive 'ready' from child process",
-					},
-				);
+
+			if (postWait) {
+				await postWait;
 			}
+
 			// Add removal of child process listeners to after test cleanup
 			afterCleanUp.push(() => child.removeAllListeners());
 		}
