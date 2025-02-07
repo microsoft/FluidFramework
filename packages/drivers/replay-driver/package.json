@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/replay-driver",
-	"version": "2.21.0",
+	"version": "2.21.1",
 	"description": "Document replay version of Socket.IO implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {

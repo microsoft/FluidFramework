@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/pact-map",
-	"version": "2.21.0",
+	"version": "2.21.1",
 	"description": "Distributed data structure for key-value pairs using pact consensus",
 	"homepage": "https://fluidframework.com",
 	"repository": {

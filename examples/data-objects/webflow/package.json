@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webflow",
-	"version": "2.21.0",
+	"version": "2.21.1",
 	"private": true,
 	"description": "Collaborative markdown editor.",
 	"homepage": "https://fluidframework.com",
