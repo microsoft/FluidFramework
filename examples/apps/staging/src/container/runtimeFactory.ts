@@ -11,9 +11,9 @@ import type {
 } from "@fluidframework/container-definitions/legacy";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import type { FluidObject } from "@fluidframework/core-interfaces";
 
 import { GroceryListFactory, type IGroceryList } from "./groceryList/index.js";
+import type { ISuggestionGroceryList } from "./interfaces.js";
 import { SuggestionGroceryList } from "./suggestionGroceryList.js";
 
 const groceryListId = "grocery-list";
@@ -31,7 +31,7 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 	): Promise<IRuntime> {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
-		): Promise<FluidObject> => {
+		): Promise<ISuggestionGroceryList> => {
 			const groceryList = await getDataStoreEntryPoint<IGroceryList>(
 				containerRuntime,
 				groceryListId,
