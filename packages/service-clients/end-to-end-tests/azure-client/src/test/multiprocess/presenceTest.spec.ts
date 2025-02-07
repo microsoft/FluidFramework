@@ -65,6 +65,9 @@ describe(`Presence with AzureClient`, () => {
 			const child = fork("./lib/test/multiprocess/childClient.js", [
 				`child${i}` /* identifier passed to child process */,
 			]);
+			child.on("error", (error) => {
+				assert.fail(`Child${i} process errored: ${error.message}`);
+			});
 			children.push(child);
 		}
 
@@ -97,12 +100,6 @@ describe(`Presence with AzureClient`, () => {
 			}
 			// Add removal of child process listeners to after test cleanup
 			afterCleanUp.push(() => child.removeAllListeners());
-		}
-
-		for (const [index, child] of children.entries()) {
-			child.on("error", (error) => {
-				assert.fail(`Child${index} process errored: ${error.message}`);
-			});
 		}
 	});
 
