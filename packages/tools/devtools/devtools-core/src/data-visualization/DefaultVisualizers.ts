@@ -271,8 +271,7 @@ export const visualizeSharedTree: VisualizeSharedObject = async (
 	 * each node's allowed types are computed at the parent field level.
 	 */
 	const allowedTypes = sharedTree.exportSimpleSchema().allowedTypes;
-	const isRequired =
-		sharedTree.exportSimpleSchema().kind === FieldKind.Required ? true : false;
+	const isRequired = sharedTree.exportSimpleSchema().kind === FieldKind.Required;
 
 	if (treeView === undefined) {
 		return {
