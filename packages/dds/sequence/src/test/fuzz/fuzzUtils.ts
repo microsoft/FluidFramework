@@ -81,8 +81,8 @@ export interface AnnotateAdjustRange extends RangeSpec {
 
 export interface ObliterateRange {
 	type: "obliterateRange";
-	start: InteriorSequencePlace;
-	end: InteriorSequencePlace;
+	start: number | InteriorSequencePlace;
+	end: number | InteriorSequencePlace;
 }
 
 // For non-interval collection fuzzing, annotating text would also be useful.
@@ -346,6 +346,10 @@ export function createSharedStringGeneratorOperations(
 	}
 
 	async function obliterateRange(state: ClientOpState): Promise<ObliterateRange> {
+		if (state.client.channel.getLength() > 0 && state.random.bool(0.2)) {
+			return { type: "obliterateRange", ...exclusiveRange(state) };
+		}
+
 		const max = state.client.channel.getLength() - 1;
 		const num1 = state.random.integer(0, max);
 		const num2 = state.random.integer(0, max);
