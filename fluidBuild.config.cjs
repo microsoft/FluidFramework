@@ -430,6 +430,7 @@ module.exports = {
 				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
 				"^azure/",
 				"^build-tools/packages/build-tools/package.json",
+				"^build-tools/packages/build-infrastructure/package.json",
 				"^common/",
 				"^examples/",
 				"^experimental/",
@@ -584,15 +585,7 @@ module.exports = {
 	},
 
 	assertTagging: {
-		enabledPaths: [
-			/^common\/lib\/common-utils/i,
-			/^experimental/i,
-			/^packages/i,
-			/^server\/routerlicious\/packages\/protocol-base/i,
-		],
-		assertionFunctions: {
-			assert: 1,
-		},
+		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
 	},
 
 	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be

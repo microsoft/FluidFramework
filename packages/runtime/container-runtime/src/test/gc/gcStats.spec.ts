@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
@@ -62,7 +62,7 @@ describe("Garbage Collection Stats", () => {
 
 	function createGarbageCollector(
 		createParams: Partial<IGarbageCollectorCreateParams> = {},
-		gcBlobsMap: Map<string, any> = new Map(),
+		gcBlobsMap: Map<string, unknown> = new Map(),
 		gcMetadata: IGCMetadata = {},
 		closeFn: (error?: ICriticalContainerError) => void = () => {},
 		isSummarizerClient: boolean = true,
@@ -172,7 +172,9 @@ describe("Garbage Collection Stats", () => {
 	let garbageCollector: IGarbageCollector;
 	let initialStats: IGCStats;
 
-	/** Helper function that makes the garbage collector process the last GC message */
+	/**
+	 * Makes the garbage collector process the last GC message
+	 */
 	function processLastGCMessage() {
 		if (lastGCMessage === undefined) {
 			return;
@@ -276,7 +278,7 @@ describe("Garbage Collection Stats", () => {
 			);
 
 			// Add 2 new nodes and make one of them unreferenced.
-			defaultGCData.gcNodes["/"]?.push(nodes[4]);
+			defaultGCData.gcNodes["/"].push(nodes[4]);
 			defaultGCData.gcNodes[nodes[4]] = [];
 			defaultGCData.gcNodes[nodes[5]] = [];
 

@@ -5,6 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
@@ -130,12 +131,14 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public clientValue(client: ISessionClient): LatestValueData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientSessionId = client.sessionId;
-		if (clientSessionId in allKnownStates.states) {
-			const { value, rev: revision } = allKnownStates.states[clientSessionId];
-			return { value, metadata: { revision, timestamp: Date.now() } };
+		const clientState = allKnownStates.states[client.sessionId];
+		if (clientState === undefined) {
+			throw new Error("No entry for clientId");
 		}
-		throw new Error("No entry for clientId");
+		return {
+			value: clientState.value,
+			metadata: { revision: clientState.rev, timestamp: Date.now() },
+		};
 	}
 
 	public update(
@@ -145,11 +148,9 @@ class LatestValueManagerImpl<T, Key extends string>
 	): void {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
-		if (clientSessionId in allKnownStates.states) {
-			const currentState = allKnownStates.states[clientSessionId];
-			if (currentState.rev >= value.rev) {
-				return;
-			}
+		const currentState = allKnownStates.states[clientSessionId];
+		if (currentState !== undefined && currentState.rev >= value.rev) {
+			return;
 		}
 		this.datastore.update(this.key, clientSessionId, value);
 		this.events.emit("updated", {
@@ -178,7 +179,7 @@ export function Latest<T extends object, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: { ...initialValue },
+		value: shallowCloneObject(initialValue),
 	};
 	const factory = (
 		key: Key,

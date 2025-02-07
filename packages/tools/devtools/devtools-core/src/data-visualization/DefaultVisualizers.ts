@@ -15,13 +15,12 @@ import {
 	type ISharedMap,
 	SharedMap,
 	type ISharedDirectory,
-	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import type { ITreeInternal } from "@fluidframework/tree/internal";
+import type { ITreeInternal, IChannelView } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
 import { EditType } from "../CommonInterfaces.js";
@@ -250,13 +249,13 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 };
 
 /**
- * {@link VisualizeSharedObject} for {@link ISharedTree}.
+ * {@link VisualizeSharedObject} for {@link ITree}.
  */
 export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
-	const sharedTree = sharedObject as ITreeInternal;
+	const sharedTree = sharedObject as IChannelView as ITreeInternal;
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();
@@ -309,7 +308,6 @@ export const visualizeUnknownSharedObject: VisualizeSharedObject = async (
 export const defaultVisualizers: Record<string, VisualizeSharedObject> = {
 	[SharedCell.getFactory().type]: visualizeSharedCell,
 	[SharedCounter.getFactory().type]: visualizeSharedCounter,
-	// eslint-disable-next-line import/no-deprecated
 	[SharedDirectory.getFactory().type]: visualizeSharedDirectory,
 	[SharedMap.getFactory().type]: visualizeSharedMap,
 	[SharedMatrix.getFactory().type]: visualizeSharedMatrix,

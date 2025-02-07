@@ -1,8 +1,72 @@
 # @fluid-tools/api-markdown-documenter
 
-## 0.18.0
+## 0.19.0
+
+### Add the ability to filter out individual API items (and their descendants) from documentation generation
+
+A new property `exclude` has been added to the options for documentation suite generation.
+This can be used to omit API items (and their descendants) from documentation generation.
+
+#### Example
+
+My repo uses a custom `TSDoc` tag `@hideDocs` for API items we don't wish to include in public documentation.
+To exclude such items, I could provide the following in my configuration:
+
+```typescript
+exclude: (apiItem) => {
+	return ApiItemUtilities.hasModifierTag(apiItem, "@hideDocs");
+};
+```
 
 ### ⚠ BREAKING CHANGES
+
+#### `skipPackage` option has been removed
+
+With the addition of `exclude`, `skipPackage` has been removed.
+This usage can be migrated as follows:
+
+```typescript
+skipPackage: (packageItem) => {
+    ...
+}
+```
+
+becomes
+
+```typescript
+exclude: (apiItem) => {
+    if (apiItem.kind === ApiItemKind.Package) {
+        ...
+    } else {
+        return false;
+    }
+}
+```
+
+#### `ApiItemUtilities.getReleaseTag` has been removed
+
+This function would get the exact release tag with which the corresponding API item was annotated.
+This is not generally useful information, however, as it does not account for inheritance.
+
+E.g., if an item was untagged, but its parent was tagged with `@beta`, this API would have returned `None`.
+
+Additionally, consider the following malformed case: an interface is tagged as `@public`, but its parent namespace is tagged as `@beta`.
+The effective release level of the interface should be `Beta`, not `Public`.
+
+A new API, `ApiItemUtilities.getEffectiveReleaseLevel` can now be used to get the appropriate release level of an item, accounting for inheritance.
+
+## 0.18.0
+
+-   The default suite structure has been updated as follows:
+    -   `Package` and `Namespace` items now generate documents _inside_ of their own folder hierarchy, yielding documents named "index".
+    -   `Enum` and `TypeAlias` items now generate their own documents (rather than being rendered as sections under their parent document).
+-   `uriRoot` parameter is now optional.
+    The default value is "".
+
+### ⚠ BREAKING CHANGES
+
+The default output format has been updated, as noted above.
+Additionally...
 
 #### Simplify the parameters given to `MarkdownRenderer` and `HtmlRenderer` methods.
 
@@ -25,7 +89,7 @@ const apiModel = await loadModel({
 
 const transformConfig = {
 	apiModel,
-	uriRoot: ".",
+	uriRoot: "",
 };
 
 await MarkdownRenderer.renderApiModel(transformConfig, {}, { outputDirectoryPath });
@@ -46,9 +110,130 @@ const apiModel = await loadModel({
 
 await MarkdownRenderer.renderApiModel({
 	apiModel,
-	uriRoot: ".",
+	uriRoot: "", // Note: this parameter is also now optional. Default: "".
 	outputDirectoryPath,
 });
+```
+
+#### Update pattern for controlling file-wise hierarchy
+
+Previously, users could control certain aspects of the output documentation suite's file-system hierarchy via the `documentBoundaries` and `hierarchyBoundaries` properties of the transformation configuration.
+One particular limitation of this setup was that items yielding folder-wise hierarchy (`hierarchyBoundaries`) could never place their own document _inside_ of their own hierarchy.
+This naturally lent itself to a pattern where output would commonly be formatted as:
+
+```
+- foo.md
+- foo
+    - bar.md
+    - baz.md
+```
+
+This pattern works fine for many site generation systems - a link to `/foo` will end up pointing `foo.md` and a link to `/foo/bar` will end up pointing to `foo/bar.md`.
+But some systems (e.g. `Docusaurus`) don't handle this well, and instead prefer setups like the following:
+
+```
+- foo
+    - index.md
+    - bar.md
+    - baz.md
+```
+
+With the previous configuration options, this pattern was not possible, but now is.
+Additionally, this pattern is _more_ commonly accepted, so lack of support for this was a real detriment.
+
+Such patterns can now be produced via the consolidated `hierarchy` property, while still allowing full file-naming flexibility.
+
+##### Related changes
+
+For consistency / discoverability, the `DocumentationSuiteConfiguration.getFileNameForItem` property has also been moved under the new `hierarchy` property (`HierarchyConfiguration`) and renamed to `getDocumentName`.
+
+Additionally, where previously that property controlled both the document _and_ folder naming corresponding to a given API item, folder naming can now be controlled independently via the `getFolderName` property.
+
+##### Example migration
+
+Consider the following configuration:
+
+```typescript
+const config = {
+    ...
+    documentBoundaries: [
+        ApiItemKind.Class,
+        ApiItemKind.Interface,
+        ApiItemKind.Namespace,
+    ],
+    hierarchyBoundaries: [
+        ApiItemKind.Namespace,
+    ]
+    ...
+}
+```
+
+With this configuration, `Class`, `Interface`, and `Namespace` API items would yield their own documents (rather than being rendered to a parent item's document), and `Namespace` items would additionally generate folder hierarchy (child items rendered to their own documents would be placed under a sub-directory).
+
+Output for this case might look something like the following:
+
+```
+- package.md
+- class.md
+- interface.md
+- namespace.md
+- namespace
+    - namespace-member-a.md
+    - namespace-member-b.md
+```
+
+This same behavior can now be configured via the following:
+
+```typescript
+const config = {
+    ...
+    hierarchy: {
+        [ApiItemKind.Class]: HierarchyKind.Document,
+        [ApiItemKind.Interface]: HierarchyKind.Document,
+        [ApiItemKind.Namespace]: {
+            kind: HierarchyKind.Folder,
+            documentPlacement: FolderDocumentPlacement.Outside,
+        },
+    }
+    ...
+}
+```
+
+Further, if you would prefer to place the resulting `Namespace` documents _under_ their resulting folder, you could use a configuration like the following:
+
+```typescript
+const config = {
+    ...
+    hierarchy: {
+        [ApiItemKind.Class]: HierarchyKind.Document,
+        [ApiItemKind.Interface]: HierarchyKind.Document,
+        [ApiItemKind.Namespace]: {
+            kind: HierarchyKind.Folder,
+            documentPlacement: FolderDocumentPlacement.Inside, // <=
+        },
+        getDocumentName: (apiItem) => {
+            switch(apiItem.kind) {
+                case ApiItemKind.Namespace:
+                    return "index";
+                default:
+                    ...
+            }
+        }
+    }
+    ...
+}
+```
+
+Output for this updated case might look something like the following:
+
+```
+- package.md
+- class.md
+- interface.md
+- namespace
+    - index.md
+    - namespace-member-a.md
+    - namespace-member-b.md
 ```
 
 #### Type-renames
@@ -68,6 +253,7 @@ await MarkdownRenderer.renderApiModel({
 -   `ApiItemTransformations`
 -   `ApiItemTransformationConfiguration`
 -   `DocumentationSuiteOptions`
+-   `FileSystemConfiguration`
 -   `HtmlRenderer.RenderHtmlConfig`
 -   `LintApiModelConfiguration`
 -   `MarkdownRenderer.Renderers`

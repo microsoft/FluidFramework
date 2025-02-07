@@ -248,7 +248,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 			const runtimeOptions: IContainerRuntimeOptionsInternal = {
 				...testContainerConfig.runtimeOptions,
 				compressionOptions: {
-					minimumBatchSizeInBytes: 1,
+					minimumBatchSizeInBytes: enableGroupedBatching ? 1 : Number.POSITIVE_INFINITY,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 				enableGroupedBatching,

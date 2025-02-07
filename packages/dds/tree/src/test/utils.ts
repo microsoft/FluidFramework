@@ -30,10 +30,12 @@ import type {
 import type { SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
@@ -92,6 +94,8 @@ import {
 	CursorLocationType,
 	type RevertibleAlpha,
 	type RevertibleAlphaFactory,
+	type DeltaDetachedNodeChanges,
+	type DeltaDetachedNodeRename,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -112,11 +116,10 @@ import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 import {
 	type CheckoutEvents,
 	CheckoutFlexTreeView,
-	type ISharedTree,
+	type ITreePrivate,
 	type ITreeCheckout,
 	SharedTree,
 	type SharedTreeContentSnapshot,
-	SharedTreeFactory,
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
@@ -128,7 +131,6 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
 import type {
 	SharedTreeOptions,
 	SharedTreeOptionsInternal,
@@ -156,6 +158,9 @@ import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
+import { TreeFactory } from "../treeFactory.js";
 
 // Testing utilities
 
@@ -230,7 +235,7 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: SharedTreeFactory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+		factory: TreeFactory = new TreeFactory({ jsonValidator: typeboxValidator }),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -279,7 +284,7 @@ export class TestTreeProvider {
 	}
 
 	/**
-	 * Create and initialize a new {@link ISharedTree} that is connected to all other trees from this provider.
+	 * Create and initialize a new {@link ITreePrivate} that is connected to all other trees from this provider.
 	 * @returns the tree that was created. For convenience, the tree can also be accessed via `this[i]` where
 	 * _i_ is the index of the tree in order of creation.
 	 */
@@ -320,7 +325,7 @@ export class TestTreeProvider {
 		return summarizeNow(this.summarizer, "TestTreeProvider");
 	}
 
-	public [Symbol.iterator](): IterableIterator<ISharedTree> {
+	public [Symbol.iterator](): IterableIterator<ITreePrivate> {
 		return this.trees[Symbol.iterator]();
 	}
 
@@ -360,15 +365,18 @@ export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	private readonly runtimeFactory: MockContainerRuntimeFactoryForReconnection;
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
+	private readonly containerRuntimes: Set<MockContainerRuntime> = new Set();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
 	 * @param trees - the number of trees created by this provider.
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
+	 * @param flushMode - The flush mode to use for the container runtime. This is FlushMode.Immediate by default. Tests
+	 * that need ops to be processed in a batch or bunch should use FlushMode.TurnBased.
 	 * @example
 	 *
 	 * ```typescript
@@ -380,9 +388,13 @@ export class TestTreeProviderLite {
 	 */
 	public constructor(
 		trees = 1,
-		private readonly factory = new SharedTreeFactory({ jsonValidator: typeboxValidator }),
+		private readonly factory = new TreeFactory({ jsonValidator: typeboxValidator }),
 		useDeterministicSessionIds = true,
+		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
+		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection({
+			flushMode,
+		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTreeWithConnectionStateSetter[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
@@ -399,6 +411,7 @@ export class TestTreeProviderLite {
 				TestTreeProviderLite.treeId,
 			) as SharedTreeWithConnectionStateSetter;
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			this.containerRuntimes.add(containerRuntime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -414,6 +427,14 @@ export class TestTreeProviderLite {
 	}
 
 	public processMessages(count?: number): void {
+		// In TurnBased mode, flush the messages from all the runtimes before processing the messages.
+		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
+		// flush messages from individual runtimes in the order they were created.
+		if (this.flushMode === FlushMode.TurnBased) {
+			this.containerRuntimes.forEach((containerRuntime) => {
+				containerRuntime.flush();
+			});
+		}
 		this.runtimeFactory.processSomeMessages(
 			count ?? this.runtimeFactory.outstandingMessageCount,
 		);
@@ -460,8 +481,8 @@ export function spyOnMethod(
 /**
  * Determines whether or not the given delta has a visible impact on the document tree.
  */
-export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
-	for (const mark of delta.local ?? []) {
+export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boolean {
+	for (const mark of fieldChanges ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
 		}
@@ -479,7 +500,7 @@ export function isDeltaVisible(delta: DeltaFieldChanges): boolean {
 /**
  * Assert two MarkList are equal, handling cursors.
  */
-export function assertFieldChangesEqual(a: DeltaFieldChanges, b: DeltaFieldChanges): void {
+export function assertFieldChangesEqual(a: FieldChangeDelta, b: FieldChangeDelta): void {
 	assert.deepStrictEqual(a, b);
 }
 
@@ -509,7 +530,7 @@ export function assertDeltaEqual(a: DeltaRoot, b: DeltaRoot): void {
 /**
  * A test helper that allows custom code to be injected when a tree is created/loaded.
  */
-export class SharedTreeTestFactory extends SharedTreeFactory {
+export class SharedTreeTestFactory extends TreeFactory {
 	/**
 	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
@@ -561,7 +582,7 @@ export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]
  * This does NOT check that the trees have the same edits, same edit manager state or anything like that.
  * This ONLY checks if the content of the forest of the main branch of the trees match.
  */
-export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+export function validateTreeConsistency(treeA: ITreePrivate, treeB: ITreePrivate): void {
 	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
 	validateSnapshotConsistency(
 		treeA.contentSnapshot(),
@@ -571,8 +592,8 @@ export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree):
 }
 
 export function validateFuzzTreeConsistency(
-	treeA: Client<SharedTreeFactory>,
-	treeB: Client<SharedTreeFactory>,
+	treeA: Client<TreeFactory>,
+	treeB: Client<TreeFactory>,
 ): void {
 	validateSnapshotConsistency(
 		treeA.channel.contentSnapshot(),
@@ -1004,15 +1025,22 @@ export function defaultRevInfosFromChanges(
 	return revInfos;
 }
 
+export interface DeltaParams {
+	detachedFieldIndex?: DetachedFieldIndex;
+	revision?: RevisionTag;
+	global?: readonly DeltaDetachedNodeChanges[];
+	rename?: readonly DeltaDetachedNodeRename[];
+	build?: readonly DeltaDetachedNodeBuild[];
+	destroy?: readonly DeltaDetachedNodeDestruction[];
+}
+
 export function applyTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor },
-	detachedFieldIndex?: DetachedFieldIndex,
-	revision?: RevisionTag,
-	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DeltaDetachedNodeDestruction[],
+	params?: DeltaParams,
 ): void {
-	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
+	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
+	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
 	applyDelta(
 		rootDelta,
 		revision,
@@ -1025,12 +1053,10 @@ export function applyTestDelta(
 export function announceTestDelta(
 	delta: DeltaFieldMap,
 	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
-	detachedFieldIndex?: DetachedFieldIndex,
-	revision?: RevisionTag,
-	build?: readonly DeltaDetachedNodeBuild[],
-	destroy?: readonly DeltaDetachedNodeDestruction[],
+	params?: DeltaParams,
 ): void {
-	const rootDelta = rootFromDeltaFieldMap(delta, build, destroy);
+	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
+	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
 	announceDelta(
 		rootDelta,
 		revision,
@@ -1042,10 +1068,18 @@ export function announceTestDelta(
 
 export function rootFromDeltaFieldMap(
 	delta: DeltaFieldMap,
+	global?: readonly DeltaDetachedNodeChanges[],
+	rename?: readonly DeltaDetachedNodeRename[],
 	build?: readonly DeltaDetachedNodeBuild[],
 	destroy?: readonly DeltaDetachedNodeDestruction[],
 ): Mutable<DeltaRoot> {
 	const rootDelta: Mutable<DeltaRoot> = { fields: delta };
+	if (global !== undefined) {
+		rootDelta.global = global;
+	}
+	if (rename !== undefined) {
+		rootDelta.rename = rename;
+	}
 	if (build !== undefined) {
 		rootDelta.build = build;
 	}
@@ -1127,7 +1161,7 @@ const testSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 /**
  * Simple non-factory based wrapper around `new SharedTree` with test appropriate defaults.
  *
- * See TestTreeProvider, TestTreeProviderLite and SharedTreeFactory for other ways to build trees.
+ * See TestTreeProvider, TestTreeProviderLite and TreeFactory for other ways to build trees.
  *
  * If what is needed is a view, see options to create one without making a SharedTree instance.
  */
@@ -1148,7 +1182,7 @@ export function treeTestFactory(
 				clientId: "test-client",
 				id: "test",
 			}),
-		options.attributes ?? new SharedTreeFactory().attributes,
+		options.attributes ?? new TreeFactory({}).attributes,
 		options.options ?? { jsonValidator: typeboxValidator },
 		options.telemetryContextPrefix,
 	);

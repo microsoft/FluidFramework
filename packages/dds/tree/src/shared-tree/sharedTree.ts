@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
-	IChannelFactory,
 	IFluidDataStoreRuntime,
-	IChannelServices,
 	IChannelStorageService,
+	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -74,6 +73,7 @@ import {
 	FieldKind,
 	type CustomTreeNode,
 	type CustomTreeValue,
+	type ITreeAlpha,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -86,7 +86,7 @@ import { breakingClass, fail, throwIfBroken } from "../util/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
- * Copy of data from an {@link ISharedTree} at some point in time.
+ * Copy of data from an {@link ITreePrivate} at some point in time.
  * @remarks
  * This is unrelated to Fluids concept of "snapshots".
  */
@@ -110,30 +110,26 @@ export interface SharedTreeContentSnapshot {
 }
 
 /**
+ * Information about a Fluid channel.
+ * @privateRemarks
+ * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
+ * @internal
+ */
+export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;
+
+/**
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
-export interface ITreeInternal extends ISharedObject, ITree {
-	/**
-	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
-	 * @privateRemarks
-	 * TODO:
-	 * This should probably get promoted to a public API on ITree eventually.
-	 */
-	exportVerbose(): VerboseTree | undefined;
-
-	/**
-	 * Exports the SimpleTreeSchema that is stored in the tree, using stored keys for object fields.
-	 * @remarks
-	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
-	 */
-	exportSimpleSchema(): SimpleTreeSchema;
-}
+export interface ITreeInternal extends IChannelView, ITreeAlpha {}
 
 /**
  * {@link ITreeInternal} extended with some non-exported APIs.
+ * @remarks
+ * This allows access to the tree content using the internal data model used at the storage and "flex" layers,
+ * and should only be needed for testing and debugging this package's internals.
  */
-export interface ISharedTree extends ISharedObject, ITreeInternal {
+export interface ITreePrivate extends ITreeInternal {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -143,6 +139,13 @@ export interface ISharedTree extends ISharedObject, ITreeInternal {
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
 }
+
+/**
+ * {@link ITreePrivate} extended with ISharedObject.
+ * @remarks
+ * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
+ */
+export interface ISharedTree extends ISharedObject, ITreePrivate {}
 
 /**
  * Has an entry for each codec which writes an explicit version into its data.
@@ -184,30 +187,6 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 	const versions = formatVersionToTopLevelCodecVersions.get(formatVersion);
 	assert(versions !== undefined, 0x90e /* Unknown format version */);
 	return versions;
-}
-
-/**
- * Build and return a forest of the requested type.
- */
-export function buildConfiguredForest(
-	type: ForestType,
-	schema: TreeStoredSchemaSubscription,
-	idCompressor: IIdCompressor,
-): IEditableForest {
-	switch (type) {
-		case ForestType.Optimized:
-			return buildChunkedForest(
-				makeTreeChunker(schema, defaultSchemaPolicy),
-				undefined,
-				idCompressor,
-			);
-		case ForestType.Reference:
-			return buildForest();
-		case ForestType.Expensive:
-			return buildForest(undefined, true);
-		default:
-			unreachableCase(type);
-	}
 }
 
 /**
@@ -596,62 +575,74 @@ export interface SharedTreeFormatOptions {
 
 /**
  * Used to distinguish between different forest types.
+ * @remarks
+ * Current options are {@link ForestTypeReference}, {@link ForestTypeOptimized} and {@link ForestTypeExpensiveDebug}.
+ * @sealed @alpha
+ */
+export interface ForestType extends ErasedType<"ForestType"> {}
+
+/**
+ * Reference implementation of forest.
+ * @remarks
+ * A simple implementation with minimal complexity and moderate debuggability, validation and performance.
+ * @privateRemarks
+ * The "ObjectForest" forest type.
  * @alpha
  */
-export enum ForestType {
-	/**
-	 * The "ObjectForest" forest type.
-	 */
-	Reference = 0,
-	/**
-	 * The "ChunkedForest" forest type.
-	 */
-	Optimized = 1,
-	/**
-	 * The "ObjectForest" forest type with expensive asserts for debugging.
-	 */
-	Expensive = 2,
+export const ForestTypeReference = toForestType(() => buildForest());
+
+/**
+ * Optimized implementation of forest.
+ * @remarks
+ * A complex optimized forest implementation, which has minimal validation and debuggability to optimize for performance.
+ * Uses an internal representation optimized for size designed to scale to larger datasets with reduced overhead.
+ * @privateRemarks
+ * The "ChunkedForest" forest type.
+ * @alpha
+ */
+export const ForestTypeOptimized = toForestType(
+	(schema: TreeStoredSchemaSubscription, idCompressor: IIdCompressor) =>
+		buildChunkedForest(makeTreeChunker(schema, defaultSchemaPolicy), undefined, idCompressor),
+);
+
+/**
+ * Slow implementation of forest intended only for debugging.
+ * @remarks
+ * Includes validation with scales poorly.
+ * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
+ * @privateRemarks
+ * The "ObjectForest" forest type with expensive asserts for debugging.
+ * @alpha
+ */
+export const ForestTypeExpensiveDebug = toForestType(() => buildForest(undefined, true));
+
+type ForestFactory = (
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+) => IEditableForest;
+
+function toForestType(factory: ForestFactory): ForestType {
+	return factory as unknown as ForestType;
+}
+
+/**
+ * Build and return a forest of the requested type.
+ */
+export function buildConfiguredForest(
+	factory: ForestType,
+	schema: TreeStoredSchemaSubscription,
+	idCompressor: IIdCompressor,
+): IEditableForest {
+	return (factory as unknown as ForestFactory)(schema, idCompressor);
 }
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
-	forest: ForestType.Reference,
+	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
 	disposeForksAfterTransaction: true,
 };
-
-/**
- * A channel factory that creates {@link ISharedTree}s.
- */
-export class SharedTreeFactory implements IChannelFactory<ISharedTree> {
-	public readonly type: string = "https://graph.microsoft.com/types/tree";
-
-	public readonly attributes: IChannelAttributes = {
-		type: this.type,
-		snapshotFormatVersion: "0.0.0",
-		packageVersion: "0.0.0",
-	};
-
-	public constructor(private readonly options: SharedTreeOptionsInternal = {}) {}
-
-	public async load(
-		runtime: IFluidDataStoreRuntime,
-		id: string,
-		services: IChannelServices,
-		channelAttributes: Readonly<IChannelAttributes>,
-	): Promise<SharedTree> {
-		const tree = new SharedTree(id, runtime, channelAttributes, this.options);
-		await tree.load(services);
-		return tree;
-	}
-
-	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTree {
-		const tree = new SharedTree(id, runtime, this.attributes, this.options);
-		tree.initializeLocal();
-		return tree;
-	}
-}
 
 function verboseFromCursor(
 	reader: ITreeCursor,

@@ -19,7 +19,6 @@ import type { ISharedObject } from "@fluidframework/shared-object-base/internal"
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
 
-import type { Edit, EditSharedObject, SharedObjectEdit } from "./DataEditing.js";
 import { visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
 import {
 	type FluidObjectNode,
@@ -101,23 +100,6 @@ export interface SharedObjectVisualizers {
 }
 
 /**
- * Specifies editors for different {@link @fluidframework/shared-object-base#ISharedObject} types.
- *
- * @remarks
- *
- * - `key`: The type of Shared object ({@link @fluidframework/datastore-definitions#IChannelFactory.Type}).
- *
- * - `value`: A editor that takes a {@link @fluidframework/shared-object-base#ISharedObject} of the
- * specified type and preforms the corresponding edit for it.
- */
-export interface SharedObjectEditors {
-	/**
-	 * Individual Fluid object editors, keyed by {@link SharedObjectType}.
-	 */
-	[k: SharedObjectType]: EditSharedObject;
-}
-
-/**
  * Data visualization update events.
  */
 export interface DataVisualizerEvents extends IEvent {
@@ -178,11 +160,6 @@ export class DataVisualizerGraph
 		 * Policy object for visualizing different kinds of shared objects.
 		 */
 		private readonly visualizers: SharedObjectVisualizers,
-
-		/**
-		 * Policy object for editing different kinds of shared objects.
-		 */
-		private readonly editors: SharedObjectEditors,
 	) {
 		super();
 
@@ -244,15 +221,6 @@ export class DataVisualizerGraph
 	}
 
 	/**
-	 * Applies an edit to a Fluid object.
-	 * @param edit - is a Edit object that describes an edit to a Fluid object.
-	 * @returns A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
-	 */
-	public async applyEdit(edit: SharedObjectEdit): Promise<void> {
-		return this.visualizerNodes.get(edit.fluidObjectId)?.applyEdit(edit);
-	}
-
-	/**
 	 * Adds a visualizer node to the collection for the specified
 	 * {@link @fluidframework/shared-object-base#ISharedObject} if one does not already exist.
 	 */
@@ -262,14 +230,9 @@ export class DataVisualizerGraph
 			const visualizationFunction =
 				this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject;
 
-			// Create visualizer node for the shared object
-			const editorFunction: EditSharedObject | undefined =
-				this.editors[sharedObject.attributes.type];
-
 			const visualizerNode = new VisualizerNode(
 				sharedObject,
 				visualizationFunction,
-				editorFunction,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
 
@@ -380,12 +343,6 @@ export class VisualizerNode
 		private readonly visualizeSharedObject: VisualizeSharedObject,
 
 		/**
-		 * Callback for editing {@link VisualizerNode.sharedObject}.
-		 * Encapsulates the policies for editing different kinds of DDSs.
-		 */
-		private readonly editSharedObject: EditSharedObject,
-
-		/**
 		 * Registers some child handle to a Fluid object for future rendering.
 		 *
 		 * @remarks
@@ -441,15 +398,6 @@ export class VisualizerNode
 		return this.visualizeSharedObject(this.sharedObject, async (data) =>
 			this.renderChildData(data),
 		);
-	}
-
-	/**
-	 * Edits a {@link @fluidframework/shared-object-base#ISharedObject}
-	 * @param edit - Describes an edit to a Fluid object.
-	 * @returns A promise that resolves when the editing of a {@link @fluidframework/shared-object-base#ISharedObject} is complete
-	 */
-	public async applyEdit(edit: Edit): Promise<void> {
-		return this.editSharedObject(this.sharedObject, edit);
 	}
 
 	/**
