@@ -197,109 +197,106 @@ describe("R11s Socket Tests", () => {
 	});
 
 	it("Socket error with Data Corruption error", async () => {
-		const errorToThrow = {
-			code: 500,
-			message: "Data corruption detected",
-			retryAfterMs: 0,
-			internalErrorCode: "DataCorruption",
-			errorType: FluidErrorTypes.dataCorruptionError,
-			canRetry: false,
+		const clientError = new Error("Data corruption detected") as Error & {
+			code: number;
+			retryAfterMs: number;
+			internalErrorCode: string;
+			errorType: string;
+			canRetry: boolean;
 		};
-		const errorEventName = "connect_document_success";
+		clientError.code = 500;
+		clientError.retryAfterMs = 0;
+		clientError.internalErrorCode = "DataCorruption";
+		clientError.errorType = FluidErrorTypes.dataCorruptionError;
+		clientError.canRetry = false;
+
+		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: errorEventName },
+			connect_document: { eventToEmit: socketEventName },
 		});
 
 		const connection = await mockSocket(socket as unknown as Socket, async () =>
 			documentService.connectToDeltaStream(client),
 		);
-		let error: IAnyDriverError | undefined;
-		connection.on("disconnect", (reason: IAnyDriverError) => {
-			error = reason;
-		});
 
-		// Send Data Corruption error
-		socket.sendErrorEvent(errorToThrow);
-
-		assert(
-			error?.errorType === FluidErrorTypes.dataCorruptionError,
-			"Error type should be dataCorruptionError",
-		);
-		assert(error.scenarioName === "error", "Error scenario name should be error");
-		assert(
-			(error as any).internalErrorCode === "DataCorruption",
-			"Error internal code should be DataCorruption",
-		);
-	});
-
-	it("Socket error with Data Processing error", async () => {
-		const errorToThrow = {
-			code: 500,
-			message: "Data processing error",
-			retryAfterMs: 0,
-			internalErrorCode: "DataProcessing",
-			errorType: FluidErrorTypes.dataProcessingError,
-			canRetry: false,
-		};
-		const errorEventName = "connect_document_success";
-		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: errorEventName },
-		});
-
-		const connection = await mockSocket(socket as unknown as Socket, async () =>
-			documentService.connectToDeltaStream(client),
-		);
-		let error: IAnyDriverError | undefined;
-		connection.on("disconnect", (reason: IAnyDriverError) => {
-			error = reason;
-		});
-
-		// Send Data Processing error
-		socket.sendErrorEvent(errorToThrow);
-
-		assert(
-			error?.errorType === "dataProcessingError",
-			"Error type should be dataProcessingError",
-		);
-		assert(error.scenarioName === "error", "Error scenario name should be error");
-		assert(
-			(error as any).internalErrorCode === "DataProcessing",
-			"Error internal code should be DataProcessing",
-		);
-	});
-
-	it("Verifies disconnect_document event is emitted with corruption flag for data corruption", async () => {
-		const errorToThrow = {
-			code: 500,
-			message: "Data corruption detected",
-			retryAfterMs: 0,
-			internalErrorCode: "DataCorruption",
-			errorType: "dataCorruptionError",
-			canRetry: false,
-		};
-		const errorEventName = "connect_document_success";
-		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: errorEventName },
-		});
-
-		await mockSocket(socket as unknown as Socket, async () =>
-			documentService.connectToDeltaStream(client),
-		);
-
+		// Track disconnect_document events from client
 		let disconnectDocumentCalled = false;
-		let isCorruptionFlag = false;
+		let receivedClientId: string | undefined;
+		let receivedErrorType: string | undefined;
+		let receivedIsCorruption: boolean | undefined;
+
 		socket.on(
 			"disconnect_document",
-			(clientId: string, docId: string, errorType: string, isCorruption: boolean) => {
+			(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
 				disconnectDocumentCalled = true;
-				isCorruptionFlag = isCorruption;
+				receivedClientId = clientId;
+				receivedErrorType = errorType;
+				receivedIsCorruption = isCorruption;
 			},
 		);
 
-		// Send Data Corruption error
-		socket.sendErrorEvent(errorToThrow);
+		// Simulate client detecting corruption and disconnecting
+		connection.dispose(clientError);
+
+		// Verify the client sent the correct disconnect_document event
+		assert(disconnectDocumentCalled, "disconnect_document event should be emitted");
+		assert.strictEqual(receivedClientId, connection.clientId, "Client ID should match");
+		assert.strictEqual(
+			receivedErrorType,
+			FluidErrorTypes.dataCorruptionError,
+			"Error type should be dataCorruptionError"
+		);
+		assert(receivedIsCorruption, "isCorruption flag should be true");
+	});
+
+	it("Socket error with Data Processing error", async () => {
+		const clientError = new Error("Data processing error") as Error & {
+			code: number;
+			retryAfterMs: number;
+			internalErrorCode: string;
+			errorType: string;
+			canRetry: boolean;
+		};
+		clientError.code = 500;
+		clientError.retryAfterMs = 0;
+		clientError.internalErrorCode = "DataProcessing";
+		clientError.errorType = FluidErrorTypes.dataProcessingError;
+		clientError.canRetry = false;
+
+		const socketEventName = "connect_document_success";
+		socket = new ClientSocketMock({
+			connect_document: { eventToEmit: socketEventName },
+		});
+
+		const connection = await mockSocket(socket as unknown as Socket, async () =>
+			documentService.connectToDeltaStream(client),
+		);
+
+		// Track disconnect_document events from client
+		let disconnectDocumentCalled = false;
+		let receivedClientId: string | undefined;
+		let receivedErrorType: string | undefined;
+		let receivedIsCorruption: boolean | undefined;
+
+		socket.on(
+			"disconnect_document",
+			(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
+				disconnectDocumentCalled = true;
+				receivedClientId = clientId;
+				receivedErrorType = errorType;
+				receivedIsCorruption = isCorruption;
+			},
+		);
+
+		connection.dispose(clientError);
 
 		assert(disconnectDocumentCalled, "disconnect_document event should be emitted");
-		assert(isCorruptionFlag, "isCorruption flag should be true for data corruption error");
+		assert.strictEqual(receivedClientId, connection.clientId, "Client ID should match");
+		assert.strictEqual(
+			receivedErrorType,
+			FluidErrorTypes.dataProcessingError,
+			"Error type should be dataProcessingError"
+		);
+		assert(receivedIsCorruption, "isCorruption flag should be true for data processing error");
 	});
 });
