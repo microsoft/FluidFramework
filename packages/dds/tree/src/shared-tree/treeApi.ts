@@ -451,14 +451,11 @@ function runTransactionInCheckout<TResult>(
 				unreachableCase(constraint.type);
 		}
 	}
-	let result: ReturnType<typeof transaction>;
-	try {
-		result = transaction();
-	} catch (error) {
-		// If the transaction has an unhandled error, abort and rollback the transaction but continue to propagate the error.
-		checkout.transaction.abort();
-		throw error;
-	}
+
+	// If the transaction has an unhandled error,
+	// trying to abort and rollback the transaction could trigger events that would observe invalid states.
+	// Thus if an exception is thrown just put checkout into a broken state and rethrow.
+	const result = checkout.breaker.run(transaction);
 
 	if (result === rollback) {
 		checkout.transaction.abort();

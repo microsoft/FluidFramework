@@ -12,7 +12,6 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ITestFluidObject,
@@ -2122,8 +2121,7 @@ describe("SharedTree", () => {
 					});
 				});
 			},
-			(e: Error) =>
-				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
+			validateUsageError(/^Cannot attach while a transaction is in progress/),
 		);
 	});
 

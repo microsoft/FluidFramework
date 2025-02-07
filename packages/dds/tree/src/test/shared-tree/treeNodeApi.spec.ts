@@ -94,7 +94,7 @@ describe("treeApi", () => {
 					assert.equal(view.root.content, 42);
 				});
 
-				it("rolls back transactions on error", () => {
+				it("breaks view on error", () => {
 					const view = getTestObjectView();
 					try {
 						run(view, (root) => {
@@ -105,7 +105,7 @@ describe("treeApi", () => {
 						assert(error instanceof Error);
 						assert.equal(error.message, "Oh no");
 					}
-					assert.equal(view.root.content, 42);
+					assert.throws(() => view.root);
 				});
 
 				it("undoes and redoes entire transaction", () => {
