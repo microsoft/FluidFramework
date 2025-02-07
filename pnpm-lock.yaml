@@ -4137,9 +4137,6 @@ importers:
       lodash.isequal:
         specifier: ^4.5.0
         version: 4.5.0
-      node-fetch:
-        specifier: ^2.6.9
-        version: 2.7.0(encoding@0.1.13)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -4186,9 +4183,6 @@ importers:
       '@types/lodash.isequal':
         specifier: ^4.5.6
         version: 4.5.8
-      '@types/node-fetch':
-        specifier: ^2.6.11
-        version: 2.6.12
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
