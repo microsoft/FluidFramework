@@ -4,11 +4,13 @@
  */
 
 /**
- * Note that this import is not realistic and is just for my convenience in implementing the pseudo-service.
- * We'd probably expect the network service to be unaware of the grocery list type, and rather operate
- * on the data in a more abstract manner.
+ * Note that knowledge of this type is not realistic and is just copied here for my convenience in
+ * implementing the pseudo-service.  We'd probably expect the network service to be unaware of the
+ * grocery list type, and rather operate on the data in a more abstract manner.
  */
-import type { GroceryListPOJO } from "./container/index.js";
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+type GroceryListItemPOJO = { id: string; name: string };
+type GroceryListPOJO = GroceryListItemPOJO[];
 
 /**
  * Simulating the case that we're making a network request to get suggestions for edits to the content,

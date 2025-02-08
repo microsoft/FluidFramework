@@ -5,42 +5,39 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import type { IGroceryItem, IGroceryList, GroceryListChanges } from "../container/index.js";
+import type { ISuggestionGroceryList, ISuggestionGroceryItem } from "../container/index.js";
 
-export interface IGroceryItemViewProps {
-	groceryItem: IGroceryItem;
-	suggestRemoval: boolean;
+interface IGroceryItemViewProps {
+	groceryItem: ISuggestionGroceryItem;
 }
 
-export const GroceryItemView: FC<IGroceryItemViewProps> = ({
+const GroceryItemView: FC<IGroceryItemViewProps> = ({
 	groceryItem,
-	suggestRemoval,
 }: IGroceryItemViewProps) => {
+	const backgroundColor =
+		groceryItem.suggestion === "add"
+			? "#cfc"
+			: groceryItem.suggestion === "remove"
+				? "#fcc"
+				: undefined;
+
+	const action =
+		groceryItem.suggestion === "remove" ? (
+			<button
+				onClick={groceryItem.rejectRemovalSuggestion}
+				style={{ border: "none", background: "none" }}
+			>
+				↩️
+			</button>
+		) : (
+			<button onClick={groceryItem.removeItem} style={{ border: "none", background: "none" }}>
+				❌
+			</button>
+		);
 	return (
-		<tr style={suggestRemoval ? { backgroundColor: "#fcc" } : undefined}>
+		<tr style={backgroundColor !== undefined ? { backgroundColor } : undefined}>
 			<td>{groceryItem.name}</td>
-			<td>
-				<button
-					onClick={groceryItem.deleteItem}
-					style={{ border: "none", background: "none" }}
-				>
-					❌
-				</button>
-			</td>
-		</tr>
-	);
-};
-
-export interface ISuggestedGroceryItemViewProps {
-	name: string;
-}
-
-export const SuggestedGroceryItemView: FC<ISuggestedGroceryItemViewProps> = ({
-	name,
-}: ISuggestedGroceryItemViewProps) => {
-	return (
-		<tr>
-			<td style={{ backgroundColor: "#cfc" }}>{name}</td>
+			<td>{action}</td>
 		</tr>
 	);
 };
@@ -84,15 +81,15 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
 };
 
 export interface IGroceryListViewProps {
-	groceryList: IGroceryList;
-	suggestions?: GroceryListChanges | undefined;
+	groceryList: ISuggestionGroceryList;
 }
 
 export const GroceryListView: FC<IGroceryListViewProps> = ({
 	groceryList,
-	suggestions,
 }: IGroceryListViewProps) => {
-	const [groceryItems, setGroceryItems] = useState<IGroceryItem[]>(groceryList.getItems());
+	const [groceryItems, setGroceryItems] = useState<ISuggestionGroceryItem[]>(
+		groceryList.getItems(),
+	);
 	useEffect(() => {
 		const updateItems = () => {
 			// TODO: This blows away all the grocery items, making the granular add/delete events
@@ -100,38 +97,27 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 			setGroceryItems(groceryList.getItems());
 		};
 		groceryList.events.on("itemAdded", updateItems);
-		groceryList.events.on("itemDeleted", updateItems);
+		groceryList.events.on("itemRemoved", updateItems);
+		groceryList.events.on("itemSuggestionChanged", updateItems);
 
 		return () => {
 			groceryList.events.off("itemAdded", updateItems);
-			groceryList.events.off("itemDeleted", updateItems);
+			groceryList.events.off("itemRemoved", updateItems);
+			groceryList.events.off("itemSuggestionChanged", updateItems);
 		};
 	}, [groceryList]);
 
-	const groceryItemViews = groceryItems.map((groceryItem) => {
-		const suggestRemoval =
-			suggestions?.removals.find((removal) => removal.id === groceryItem.id) !== undefined;
-		return (
-			<GroceryItemView
-				key={groceryItem.id}
-				groceryItem={groceryItem}
-				suggestRemoval={suggestRemoval}
-			/>
-		);
-	});
-	const suggestedGroceryItemViews =
-		suggestions?.adds.map((add, index) => (
-			<SuggestedGroceryItemView key={index} name={add.name} />
-		)) ?? [];
+	// This should already be sorted, but adding it here too in case I want to do something fancy later
+	// regarding more granular updates as noted in the above TODO.
+	const groceryItemViews = groceryItems
+		.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }))
+		.map((groceryItem) => <GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />);
 
-	// TODO: Consider modifying the AddItemView to add to the suggestions.adds rather than groceryList.addItem
-	// when we have suggestions.  Same for the groceryItem provided to GroceryItemView for its removal.
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<tbody>
 				{groceryItemViews}
-				{suggestedGroceryItemViews}
-				{groceryItemViews.length === 0 && suggestedGroceryItemViews.length === 0 && (
+				{groceryItemViews.length === 0 && (
 					<tr>
 						<td colSpan={1}>No items on grocery list</td>
 					</tr>
