@@ -56,7 +56,7 @@ const rootNode2: UpPath = {
 };
 
 const emptyJsonContent: TreeStoredContent = {
-	schema: toStoredSchema(new SchemaFactory("").optional(JsonUnion)),
+	schema: toStoredSchema(SchemaFactory.optional(JsonUnion)),
 	initialTree: undefined,
 };
 

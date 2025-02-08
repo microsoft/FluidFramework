@@ -497,7 +497,7 @@ describe("sharedTreeView", () => {
 			},
 			{
 				initialContent: {
-					schema: new SchemaFactory("fork schema").number,
+					schema: SchemaFactory.number,
 					initialTree: 3,
 				},
 			},

@@ -52,7 +52,6 @@ describe("SharedString fuzz with obliterate", () => {
 						removeRange: 2,
 						annotateRange: 1,
 						obliterateRange: 3,
-						// TODO:AB#29766: Enable interval operations. They currently cause failures.
 						addInterval: 1,
 						deleteInterval: 1,
 						changeInterval: 1,
