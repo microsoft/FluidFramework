@@ -2103,12 +2103,13 @@ export class MergeTree {
 				const existingRemoval = toRemovalInfo(movedSeg);
 				if (existingRemoval === undefined) {
 					movedSegments.push(movedSeg);
-				} else if (existingRemoval.removedSeq === UnassignedSequenceNumber) {
+				} else if (
+					existingRemoval.removedSeq === UnassignedSequenceNumber &&
+					segment.localRefs?.empty === false
+				) {
 					// We removed this locally already so we don't need to event it again, but it might have references
 					// that need sliding now that a move may have been acked.
-					if (segment.localRefs?.empty === false) {
-						localOverlapWithRefs.push(segment);
-					}
+					localOverlapWithRefs.push(segment);
 				}
 			} else {
 				_overwrite = true;
@@ -2264,12 +2265,13 @@ export class MergeTree {
 				const existingMoveInfo = toMoveInfo(removed);
 				if (existingMoveInfo === undefined) {
 					removedSegments.push(removed);
-				} else if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
+				} else if (
+					existingMoveInfo.movedSeq === UnassignedSequenceNumber &&
+					segment.localRefs?.empty === false
+				) {
 					// We moved this locally already so we don't need to event it again, but it might have references
 					// that need sliding now that a remove may have been acked.
-					if (segment.localRefs?.empty === false) {
-						localOverlapWithRefs.push(segment);
-					}
+					localOverlapWithRefs.push(segment);
 				}
 			} else {
 				_overwrite = true;

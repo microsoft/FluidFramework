@@ -22,13 +22,13 @@ import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { DetachedReferencePosition } from "../referencePositions.js";
 import { toRemovalInfo } from "../segmentInfos.js";
-import { TextSegment } from "../textSegment.js";
 import { Side } from "../sequencePlace.js";
+import { TextSegment } from "../textSegment.js";
 
+import { ReconnectTestHelper } from "./reconnectHelper.js";
 import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
 import { validateRefCount } from "./testUtils.js";
-import { ReconnectTestHelper } from "./reconnectHelper.js";
 
 function getSlideOnRemoveReferencePosition(
 	client: Client,
