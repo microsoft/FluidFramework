@@ -115,6 +115,13 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 		return -1;
 	}
 
+	override flush() {
+		// Flush messages only if we are connection, otherwise, just ignore it.
+		if (this.connected) {
+			super.flush();
+		}
+	}
+
 	public async initializeWithStashedOps(
 		fromContainerRuntime: MockContainerRuntimeForReconnection,
 	) {

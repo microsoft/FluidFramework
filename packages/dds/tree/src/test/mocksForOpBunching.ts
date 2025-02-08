@@ -16,7 +16,6 @@ import {
 	type MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 
 /**
  * Returns whether the two messages are from the same batch for the purposes of op bunching.
@@ -78,11 +77,6 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
 		}
 		this.lastProcessedMessage = undefined;
 	}
-}
-
-interface IMockContainerRuntimeIdAllocationMessage {
-	type: "idAllocation";
-	contents: IdCreationRange;
 }
 
 /**
@@ -158,12 +152,5 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 		}
 
 		sendBunchedMessages();
-	}
-
-	public override flush() {
-		// Flush messages only if we are connection, otherwise, just ignore it.
-		if (this.connected) {
-			super.flush();
-		}
 	}
 }
