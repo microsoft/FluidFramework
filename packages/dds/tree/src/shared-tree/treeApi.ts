@@ -395,6 +395,7 @@ function createRunTransaction(): RunTransaction {
  * Run the given transaction.
  * @remarks
  * This API is not publicly exported but is exported outside of this module so that test code may unit test the `Tree.runTransaction` function directly without being restricted to its public API overloads.
+ * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link TreeView.runTransaction} instead which does not try to editing content in the error case.
  */
 export function runTransaction<
 	TNode extends TreeNode,
@@ -428,6 +429,10 @@ export function runTransaction<
 	}
 }
 
+/**
+ * Run the given transaction.
+ * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link TreeView.runTransaction} instead which does not try to editing content in the error case.
+ */
 function runTransactionInCheckout<TResult>(
 	checkout: ITreeCheckout,
 	transaction: () => TResult | typeof rollback,
@@ -452,10 +457,16 @@ function runTransactionInCheckout<TResult>(
 		}
 	}
 
-	// If the transaction has an unhandled error,
-	// trying to abort and rollback the transaction could trigger events that would observe invalid states.
-	// Thus if an exception is thrown just put checkout into a broken state and rethrow.
-	const result = checkout.breaker.run(transaction);
+	let result: ReturnType<typeof transaction>;
+	try {
+		result = transaction();
+	} catch (error) {
+		// If the transaction has an unhandled error, abort and rollback the transaction but continue to propagate the error.
+		// This might try and modify the tree or trigger events while things are in an inconsistent state.
+		// It is up to the user of runTransaction to ensure that does not cause problems (and they have no robust way to do that, which is why its deprecated).
+		checkout.transaction.abort();
+		throw error;
+	}
 
 	if (result === rollback) {
 		checkout.transaction.abort();

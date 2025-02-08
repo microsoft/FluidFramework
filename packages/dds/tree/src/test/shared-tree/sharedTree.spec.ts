@@ -2114,7 +2114,7 @@ describe("SharedTree", () => {
 		view.initialize([]);
 		assert.throws(
 			() => {
-				Tree.runTransaction(view, () => {
+				view.runTransaction(() => {
 					tree.connect({
 						deltaConnection: runtime.createDeltaConnection(),
 						objectStorage: new MockStorage(),
