@@ -216,7 +216,7 @@ async function visualizeVerboseNodeFields(
 /**
  * Extracts and stores allowed types & kind from {@link SimpleFieldSchema}.
  */
-function storeObjectAllowedTypes(schema: SimpleObjectNodeSchema): {
+function getFieldTooltipProperties(schema: SimpleObjectNodeSchema): {
 	allowedTypes: Record<string, ReadonlySet<string>>;
 	elementIsRequired: Record<string, boolean>;
 } {
@@ -247,7 +247,7 @@ async function visualizeObjectNode(
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const { allowedTypes: objectNodeAllowedTypes, elementIsRequired: objectNodeIsRequired } =
-		storeObjectAllowedTypes(treeDefinitions.get(tree.type) as SimpleObjectNodeSchema);
+		getFieldTooltipProperties(treeDefinitions.get(tree.type) as SimpleObjectNodeSchema);
 
 	return {
 		schema: {
