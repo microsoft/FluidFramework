@@ -242,8 +242,7 @@ export async function visualizeSharedTreeNodeBySchema(
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const sf = new SchemaFactory(undefined);
-	if (Tree.is(tree, [sf.boolean, sf.null, sf.number, sf.handle, sf.string])) {
+	if (Tree.is(tree, SchemaFactory.leaves)) {
 		const nodeSchema = Tree.schema(tree);
 		return {
 			schema: {

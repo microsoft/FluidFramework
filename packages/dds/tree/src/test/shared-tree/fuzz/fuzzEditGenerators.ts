@@ -24,7 +24,7 @@ import type {
 	TreeNodeSchemaIdentifier,
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
-import { Tree, type ISharedTree, type SharedTree } from "../../../shared-tree/index.js";
+import { Tree, type ITreePrivate, type SharedTree } from "../../../shared-tree/index.js";
 import { fail, getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
@@ -109,7 +109,7 @@ export interface FuzzTestState extends DDSFuzzTestState<TreeFactory> {
 	 * Maintaining a separate view here is necessary since async transactions are not supported on the root checkout,
 	 * and the fuzz testing model only simulates async transactions.
 	 */
-	transactionViews?: Map<ISharedTree, FuzzTransactionView>;
+	transactionViews?: Map<ITreePrivate, FuzzTransactionView>;
 }
 
 export function viewFromState(
