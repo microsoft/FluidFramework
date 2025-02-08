@@ -16,6 +16,7 @@ import {
 	type MockFluidDataStoreRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IdCreationRange } from "@fluidframework/id-compressor/internal";
 
 /**
  * Returns whether the two messages are from the same batch for the purposes of op bunching.
@@ -79,6 +80,11 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
 	}
 }
 
+interface IMockContainerRuntimeIdAllocationMessage {
+	type: "idAllocation";
+	contents: IdCreationRange;
+}
+
 /**
  * Extension of MockContainerRuntimeForReconnection that mocks op bunching.
  * @internal
@@ -127,9 +133,8 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 			const [local, localOpMetadata] = this.processInternal(message);
 
 			// Id allocation messages are for the runtime, so process it here directly.
-			if (this.isSequencedAllocationMessage(message)) {
+			if (this.maybeProcessIdAllocationMessage(message)) {
 				sendBunchedMessages();
-				this.finalizeIdRange(message.contents.contents);
 				previousMessage = undefined;
 				previousLocal = undefined;
 				bunchedMessagesContent = [];
