@@ -128,7 +128,8 @@ export class Context {
 		let ver = "";
 
 		if (isMonoRepoKind(key)) {
-			const rgRepo = this.repo.releaseGroups.get(key);
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+			const rgRepo = this.repo.releaseGroups.get(key as any);
 			if (rgRepo === undefined) {
 				throw new Error(`Release group not found: ${key}`);
 			}

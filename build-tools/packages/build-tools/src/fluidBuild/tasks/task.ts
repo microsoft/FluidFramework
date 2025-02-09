@@ -8,7 +8,7 @@ import { AsyncPriorityQueue, priorityQueue } from "async";
 import * as assert from "assert";
 import registerDebug from "debug";
 import type { BuildContext } from "../buildContext";
-import { BuildPackage, BuildResult } from "../buildGraph";
+import { BuildGraphPackage, BuildResult } from "../buildGraph";
 import { options } from "../options";
 import { LeafTask } from "./leaf/leafTask";
 
@@ -50,7 +50,7 @@ export abstract class Task {
 	}
 
 	protected constructor(
-		protected readonly node: BuildPackage,
+		protected readonly node: BuildGraphPackage,
 		public readonly command: string,
 		protected readonly context: BuildContext,
 		public readonly taskName: string | undefined,
