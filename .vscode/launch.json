@@ -406,7 +406,7 @@
 				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
 				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
 				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
-				// "FLUID_TEST_VERBOSE": "1",
+				"FLUID_TEST_VERBOSE": "1",
 			},
 			"runtimeExecutable": "${workspaceFolder}/node_modules/.bin/mocha",
 			"windows": {
