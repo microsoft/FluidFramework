@@ -33,6 +33,9 @@ export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
 	return morgan(loggerFormat, { stream });
 }
 
+morgan.token("http-version", (req: express.Request, res: express.Response) => req.httpVersion);
+morgan.token("scheme", (req: express.Request, res: express.Response) => req.protocol);
+
 /**
  * @internal
  */
@@ -146,6 +149,8 @@ export function jsonMorganLoggerMiddleware(
 				[HttpProperties.requestContentLength]: tokens.req(req, res, "content-length"),
 				[HttpProperties.responseContentLength]: tokens.res(req, res, "content-length"),
 				[HttpProperties.responseTime]: tokens["response-time"](req, res),
+				[HttpProperties.httpVersion]: tokens["http-version"](req, res),
+				[HttpProperties.scheme]: tokens.scheme(req, res),
 				[BaseTelemetryProperties.correlationId]: getTelemetryContextPropertiesWithHttpInfo(
 					req,
 					res,
