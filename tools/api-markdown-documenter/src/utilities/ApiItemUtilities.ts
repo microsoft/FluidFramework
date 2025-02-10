@@ -103,8 +103,6 @@ export type ApiFunctionLike =
 
 /**
  * `ApiItem` union type representing type-like API kinds.
- *
- * @public
  */
 export type ApiTypeLike = ApiInterface | ApiClass | ApiTypeAlias;
 
