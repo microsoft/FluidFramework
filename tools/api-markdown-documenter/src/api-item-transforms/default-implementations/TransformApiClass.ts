@@ -82,11 +82,13 @@ export function transformApiClass(
 		for (const child of filteredChildren) {
 			const childKind = getApiItemKind(child);
 			switch (childKind) {
+				case ApiItemKind.ConstructSignature:
 				case ApiItemKind.Constructor: {
 					constructors.push(child as ApiConstructor);
 					break;
 				}
-				case ApiItemKind.Property: {
+				case ApiItemKind.Property:
+				case ApiItemKind.PropertySignature: {
 					allProperties.push(child as ApiPropertyItem);
 					break;
 				}
@@ -98,7 +100,8 @@ export function transformApiClass(
 					indexSignatures.push(child as ApiIndexSignature);
 					break;
 				}
-				case ApiItemKind.Method: {
+				case ApiItemKind.Method:
+				case ApiItemKind.MethodSignature: {
 					allMethods.push(child as ApiMethod);
 					break;
 				}
