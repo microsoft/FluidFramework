@@ -586,8 +586,7 @@ export class MockContainerRuntimeFactory {
 		this.minSeq.set(message.clientId as string, message.referenceSequenceNumber);
 		if (
 			this.runtimeOptions.flushMode === FlushMode.Immediate ||
-			(this.lastProcessedMessage?.clientId !== message.clientId &&
-				this.lastProcessedMessage?.referenceSequenceNumber !== message.referenceSequenceNumber)
+			this.lastProcessedMessage?.clientId !== message.clientId
 		) {
 			this.sequenceNumber++;
 		}

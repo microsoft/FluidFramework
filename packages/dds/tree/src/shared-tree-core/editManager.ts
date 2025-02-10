@@ -648,7 +648,7 @@ export class EditManager<
 
 	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Add a bunch of sequenced changes. A bunch is group of sequenced commits that have the following properties:
+	 * Add a bunch of sequenced changes. A bunch is a group of sequenced commits that have the following properties:
 	 * - They are not interleaved with messages from other DDSes in the container.
 	 * - They are all part of the same batch, which entails:
 	 *   - They are contiguous in sequencing order.

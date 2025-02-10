@@ -19,7 +19,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 
 /**
  * Returns whether the two messages are from the same batch for the purposes of op bunching.
- * Messages in the same batch will have the same clientId and reference sequence number.
+ * Messages in the same batch will have the same clientId and sequence number.
  * @internal
  */
 function areMessagesFromSameBatch(
@@ -30,7 +30,7 @@ function areMessagesFromSameBatch(
 	return (
 		flushMode === FlushMode.TurnBased &&
 		message1?.clientId === message2.clientId &&
-		message1?.referenceSequenceNumber === message2.referenceSequenceNumber
+		message1?.sequenceNumber === message2.sequenceNumber
 	);
 }
 
@@ -135,7 +135,7 @@ export class MockContainerRuntimeWithOpBunching extends MockContainerRuntimeForR
 				continue;
 			}
 
-			// If the client Id in the message changes, send the previous bunch of messages to the
+			// If the messages are from different batches, send the previous bunch of messages to the
 			// data store for processing.
 			if (!areMessagesFromSameBatch(previousMessage, message, this.runtimeOptions.flushMode)) {
 				sendBunchedMessages();
