@@ -29,18 +29,20 @@ import type {
 import { applyAgentEdit } from "./agentEditReducer.js";
 import type { EditWrapper, TreeEdit } from "./agentEditTypes.js";
 import {
-	type ApplyEditFailureDebugEvent,
-	type ApplyEditSuccessDebugEvent,
-	type GenerateTreeEditCompletedDebugEvent,
-	type GenerateTreeEditStartedDebugEvent,
-	type FinalReviewCompletedDebugEvent,
-	type FinalReviewStartedDebugEvent,
+	type ApplyEditFailure,
+	type ApplyEditSuccess,
+	type GenerateTreeEditCompleted,
+	type GenerateTreeEditStarted,
+	type FinalReviewCompleted,
+	type FinalReviewStarted,
 	type LlmApiCallDebugEvent,
-	type PlanningPromptCompletedDebugEvent,
-	type CoreEventLoopStartedDebugEvent,
-	type CoreEventLoopCompletedDebugEvent,
+	type PlanningPromptCompleted,
+	type CoreEventLoopStarted,
+	type CoreEventLoopCompleted,
 	generateDebugEvent,
-	type PlanningPromptStartedDebugEvent,
+	type PlanningPromptStarted,
+	type EventFlowDebugName,
+	EventFlowDebugNames,
 } from "./debugEvents.js";
 import { IdGenerator } from "./idGenerator.js";
 import {
@@ -55,17 +57,20 @@ import { fail } from "./utils.js";
 
 // TODO: Create a proper index file and move the logic of this file to a new location
 export type {
-	ApplyEditFailureDebugEvent,
-	ApplyEditSuccessDebugEvent,
-	CoreEventLoopCompletedDebugEvent,
-	CoreEventLoopStartedDebugEvent,
-	FinalReviewCompletedDebugEvent,
-	FinalReviewStartedDebugEvent,
-	GenerateTreeEditCompletedDebugEvent,
-	GenerateTreeEditStartedDebugEvent,
+	ApplyEditFailure,
+	ApplyEditSuccess,
+	CoreEventLoopCompleted,
+	CoreEventLoopStarted,
+	FinalReviewCompleted,
+	FinalReviewStarted,
+	GenerateTreeEditCompleted,
+	GenerateTreeEditStarted,
 	LlmApiCallDebugEvent,
-	PlanningPromptCompletedDebugEvent,
-	PlanningPromptStartedDebugEvent,
+	PlanningPromptCompleted,
+	PlanningPromptStarted,
+	LlmTreeEdit,
+	EventFlowDebugName,
+	EventFlowDebugNames,
 } from "./debugEvents.js";
 
 /**
@@ -134,12 +139,11 @@ export async function generateTreeEdits(
 
 	const coreEventFlowTraceId = uuidv4();
 	options.debugEventLogHandler?.({
-		...generateDebugEvent(debugLogTraceId),
-		eventName: "CORE_EVENT_LOOP_STARTED",
-		eventFlowName: "CORE_EVENT_LOOP",
+		...generateDebugEvent("CORE_EVENT_LOOP_STARTED", debugLogTraceId),
+		eventFlowName: EventFlowDebugNames.CORE_EVENT_LOOP,
 		eventFlowStatus: "STARTED",
 		eventFlowTraceId: coreEventFlowTraceId,
-	} satisfies CoreEventLoopStartedDebugEvent);
+	} satisfies CoreEventLoopStarted);
 
 	try {
 		for await (const generateEditResult of generateEdits(
@@ -149,7 +153,7 @@ export async function generateTreeEdits(
 			editLog,
 			options.limiters?.tokenLimits,
 			tokensUsed,
-			{
+			options.debugEventLogHandler && {
 				eventLogHandler: options.debugEventLogHandler,
 				traceId: debugLogTraceId,
 			},
@@ -166,20 +170,22 @@ export async function generateTreeEdits(
 				sequentialErrorCount = 0;
 
 				options.debugEventLogHandler?.({
-					...generateDebugEvent(debugLogTraceId),
-					eventName: "APPLIED_EDIT_SUCCESS",
+					...generateDebugEvent("APPLIED_EDIT_SUCCESS", debugLogTraceId),
+					eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+					eventFlowStatus: "IN_PROGRESS",
 					eventFlowTraceId: generateEditResult.eventFlowTraceId,
-					edit: generateEditResult.edit,
-				} satisfies ApplyEditSuccessDebugEvent);
+					edit: generateEditResult.edit as unknown as Record<string, unknown>,
+				} satisfies ApplyEditSuccess);
 			} catch (error: unknown) {
 				options.debugEventLogHandler?.({
-					...generateDebugEvent(debugLogTraceId),
-					eventName: "APPLIED_EDIT_FAILURE",
+					...generateDebugEvent("APPLIED_EDIT_FAILURE", debugLogTraceId),
+					eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+					eventFlowStatus: "IN_PROGRESS",
 					eventFlowTraceId: generateEditResult.eventFlowTraceId,
-					edit: generateEditResult.edit,
+					edit: generateEditResult.edit as unknown as Record<string, unknown>,
 					errorMessage: (error as Error)?.message,
 					sequentialErrorCount,
-				} satisfies ApplyEditFailureDebugEvent);
+				} satisfies ApplyEditFailure);
 
 				if (error instanceof UsageError) {
 					sequentialErrorCount += 1;
@@ -215,30 +221,28 @@ export async function generateTreeEdits(
 
 			if (shouldExitEarly) {
 				options.debugEventLogHandler?.({
-					...generateDebugEvent(debugLogTraceId),
-					eventName: "CORE_EVENT_LOOP_COMPLETED",
-					eventFlowName: "CORE_EVENT_LOOP",
+					...generateDebugEvent("CORE_EVENT_LOOP_COMPLETED", debugLogTraceId),
+					eventFlowName: EventFlowDebugNames.CORE_EVENT_LOOP,
 					eventFlowStatus: "COMPLETED",
 					status: "failure",
 					failureReason: completionResponse.errorMessage,
 					eventFlowTraceId: coreEventFlowTraceId,
-				} satisfies CoreEventLoopCompletedDebugEvent);
+				} satisfies CoreEventLoopCompleted);
 
 				return completionResponse;
 			}
 		}
 	} catch (error: unknown) {
 		options.debugEventLogHandler?.({
-			...generateDebugEvent(debugLogTraceId),
-			eventName: "CORE_EVENT_LOOP_COMPLETED",
-			eventFlowName: "CORE_EVENT_LOOP",
+			...generateDebugEvent("CORE_EVENT_LOOP_COMPLETED", debugLogTraceId),
+			eventFlowName: EventFlowDebugNames.CORE_EVENT_LOOP,
 			eventFlowStatus: "COMPLETED",
 			status: "failure",
 			eventFlowTraceId: coreEventFlowTraceId,
 			failureReason:
 				error instanceof TokenLimitExceededError ? "tokenLimitExceeded" : "unexpectedError",
 			errorMessage: (error as Error)?.message,
-		} satisfies CoreEventLoopCompletedDebugEvent);
+		} satisfies CoreEventLoopCompleted);
 
 		if (error instanceof TokenLimitExceededError) {
 			return {
@@ -252,13 +256,12 @@ export async function generateTreeEdits(
 	}
 
 	options.debugEventLogHandler?.({
-		...generateDebugEvent(debugLogTraceId),
-		eventName: "CORE_EVENT_LOOP_COMPLETED",
-		eventFlowName: "CORE_EVENT_LOOP",
+		...generateDebugEvent("CORE_EVENT_LOOP_COMPLETED", debugLogTraceId),
+		eventFlowName: EventFlowDebugNames.CORE_EVENT_LOOP,
 		eventFlowStatus: "COMPLETED",
 		eventFlowTraceId: coreEventFlowTraceId,
 		status: "success",
-	} satisfies CoreEventLoopCompletedDebugEvent);
+	} satisfies CoreEventLoopCompleted);
 
 	return {
 		status: "success",
@@ -287,8 +290,8 @@ async function* generateEdits(
 	tokenLimits: TokenLimits | undefined,
 	tokensUsed: TokenUsage,
 	debugOptions?: {
-		eventLogHandler?: DebugEventLogHandler;
-		traceId?: string;
+		eventLogHandler: DebugEventLogHandler;
+		traceId: string;
 	},
 ): AsyncGenerator<{ edit: TreeEdit; eventFlowTraceId: string }> {
 	const [types, rootTypeName] = generateGenericEditTypes(simpleSchema, true);
@@ -303,28 +306,31 @@ async function* generateEdits(
 
 		const generatePlanningPromptEventFlowId = uuidv4();
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent(debugOptions.traceId),
-			eventName: "GENERATE_PLANNING_PROMPT_STARTED",
-			eventFlowName: "GENERATE_PLANNING_PROMPT",
+			...generateDebugEvent("GENERATE_PLANNING_PROMPT_STARTED", debugOptions.traceId),
+			eventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
 			eventFlowTraceId: generatePlanningPromptEventFlowId,
 			eventFlowStatus: "STARTED",
-		} satisfies PlanningPromptStartedDebugEvent);
+		} satisfies PlanningPromptStarted);
 
-		plan = await getStringFromLlm(planningPrompt, options.openAI, tokensUsed, {
-			...debugOptions,
-			triggeringEventFlowName: "GENERATE_PLANNING_PROMPT",
-			eventFlowTraceId: generatePlanningPromptEventFlowId,
-		});
+		plan = await getStringFromLlm(
+			planningPrompt,
+			options.openAI,
+			tokensUsed,
+			debugOptions && {
+				...debugOptions,
+				triggeringEventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
+				eventFlowTraceId: generatePlanningPromptEventFlowId,
+			},
+		);
 
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent(debugOptions.traceId),
-			eventName: "GENERATE_PLANNING_PROMPT_COMPLETED",
-			eventFlowName: "GENERATE_PLANNING_PROMPT",
+			...generateDebugEvent("GENERATE_PLANNING_PROMPT_COMPLETED", debugOptions.traceId),
+			eventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
 			eventFlowStatus: "COMPLETED",
 			eventFlowTraceId: generatePlanningPromptEventFlowId,
-			requestOutcome: plan === undefined ? "failure" : "success",
+			isLlmResponseValid: plan !== undefined,
 			llmGeneratedPlan: plan,
-		} satisfies PlanningPromptCompletedDebugEvent);
+		} satisfies PlanningPromptCompleted);
 	}
 
 	const originalDecoratedJson =
@@ -349,13 +355,12 @@ async function* generateEdits(
 
 		const generateTreeEditEventFlowId = uuidv4();
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent(debugOptions.traceId),
-			eventName: "GENERATE_TREE_EDIT_STARTED",
-			eventFlowName: "GENERATE_TREE_EDIT",
+			...generateDebugEvent("GENERATE_TREE_EDIT_STARTED", debugOptions.traceId),
+			eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
 			eventFlowStatus: "STARTED",
 			eventFlowTraceId: generateTreeEditEventFlowId,
 			llmPrompt: systemPrompt,
-		} satisfies GenerateTreeEditStartedDebugEvent);
+		} satisfies GenerateTreeEditStarted);
 
 		const wrapper = await getStructuredOutputFromLlm<EditWrapper>(
 			systemPrompt,
@@ -363,22 +368,21 @@ async function* generateEdits(
 			schema,
 			"A JSON object that represents an edit to a JSON tree.",
 			tokensUsed,
-			{
+			debugOptions && {
 				...debugOptions,
-				triggeringEventFlowName: "GENERATE_TREE_EDIT",
+				triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
 				eventFlowTraceId: generateTreeEditEventFlowId,
 			},
 		);
 
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent(debugOptions.traceId),
-			eventName: "GENERATE_TREE_EDIT_COMPLETED",
-			eventFlowName: "GENERATE_TREE_EDIT",
+			...generateDebugEvent("GENERATE_TREE_EDIT_COMPLETED", debugOptions.traceId),
+			eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
 			eventFlowStatus: "COMPLETED",
 			eventFlowTraceId: generateTreeEditEventFlowId,
-			requestOutcome: wrapper === undefined ? "failure" : "success",
-			...(wrapper !== undefined && { llmGeneratedEdit: wrapper.edit }),
-		} satisfies GenerateTreeEditCompletedDebugEvent);
+			isLlmResponseValid: wrapper?.edit !== undefined,
+			llmGeneratedEdit: wrapper?.edit as Record<string, unknown> | null,
+		} satisfies GenerateTreeEditCompleted);
 
 		if (wrapper === undefined) {
 			return undefined;
@@ -422,36 +426,36 @@ async function* generateEdits(
 
 		const finalReviewEventFlowTraceId = uuidv4();
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent(debugOptions.traceId),
-			eventName: "FINAL_REVIEW_STARTED",
-			eventFlowName: "FINAL_REVIEW",
+			...generateDebugEvent("FINAL_REVIEW_STARTED", debugOptions.traceId),
+			eventFlowName: EventFlowDebugNames.FINAL_REVIEW,
 			eventFlowStatus: "STARTED",
 			eventFlowTraceId: finalReviewEventFlowTraceId,
 			llmPrompt: systemPrompt,
-		} satisfies FinalReviewStartedDebugEvent);
+		} satisfies FinalReviewStarted);
 
+		// TODO: In the future, when using structured output isn't guarenteed, we will
+		// need to add a custom type guard to ensure that output is in the right shape.
 		const output = await getStructuredOutputFromLlm<ReviewResult>(
 			systemPrompt,
 			options.openAI,
 			schema,
 			undefined,
 			tokensUsed,
-			{
+			debugOptions && {
 				...debugOptions,
-				triggeringEventFlowName: "FINAL_REVIEW",
+				triggeringEventFlowName: EventFlowDebugNames.FINAL_REVIEW,
 				eventFlowTraceId: finalReviewEventFlowTraceId,
 			},
 		);
 
 		debugOptions?.eventLogHandler?.({
-			...generateDebugEvent(debugOptions.traceId),
-			eventName: "FINAL_REVIEW_COMPLETED",
-			eventFlowName: "FINAL_REVIEW",
+			...generateDebugEvent("FINAL_REVIEW_COMPLETED", debugOptions.traceId),
+			eventFlowName: EventFlowDebugNames.FINAL_REVIEW,
 			eventFlowStatus: "COMPLETED",
 			eventFlowTraceId: finalReviewEventFlowTraceId,
-			status: output === undefined ? "failure" : "success",
-			...(output !== undefined && { llmReviewResponse: output }),
-		} satisfies FinalReviewCompletedDebugEvent);
+			isLlmResponseValid: output !== undefined,
+			didLlmAccomplishGoal: output?.goalAccomplished,
+		} satisfies FinalReviewCompleted);
 
 		return output;
 	}
@@ -479,13 +483,10 @@ async function getStructuredOutputFromLlm<T>(
 	description?: string,
 	tokensUsed?: TokenUsage,
 	debugOptions?: {
-		eventLogHandler?: DebugEventLogHandler;
-		traceId?: string;
-		triggeringEventFlowName?:
-			| "GENERATE_TREE_EDIT"
-			| "GENERATE_PLANNING_PROMPT"
-			| "FINAL_REVIEW";
-		eventFlowTraceId?: string;
+		eventLogHandler: DebugEventLogHandler;
+		traceId: string;
+		triggeringEventFlowName: EventFlowDebugName;
+		eventFlowTraceId: string;
 	},
 ): Promise<T | undefined> {
 	const response_format = zodResponseFormat(structuredOutputSchema, "SharedTreeAI", {
@@ -501,8 +502,7 @@ async function getStructuredOutputFromLlm<T>(
 	const result = await openAi.client.beta.chat.completions.parse(body);
 
 	debugOptions?.eventLogHandler?.({
-		...generateDebugEvent(debugOptions.traceId),
-		eventName: "LLM_API_CALL",
+		...generateDebugEvent("LLM_API_CALL", debugOptions.traceId),
 		triggeringEventFlowName: debugOptions.triggeringEventFlowName,
 		eventFlowTraceId: debugOptions.eventFlowTraceId,
 		modelName: openAi.modelName ?? "gpt-4o",
@@ -523,6 +523,7 @@ async function getStructuredOutputFromLlm<T>(
 
 	// TODO: fix types so this isn't null and doesn't need a cast
 	// The type should be derived from the zod schema
+	// TODO: Determine why this value would be undefined.
 	return result.choices[0]?.message.parsed as T | undefined;
 }
 
@@ -534,13 +535,10 @@ async function getStringFromLlm(
 	openAi: OpenAiClientOptions,
 	tokensUsed?: TokenUsage,
 	debugOptions?: {
-		eventLogHandler?: DebugEventLogHandler;
-		traceId?: string;
-		triggeringEventFlowName?:
-			| "GENERATE_TREE_EDIT"
-			| "GENERATE_PLANNING_PROMPT"
-			| "FINAL_REVIEW";
-		eventFlowTraceId?: string;
+		eventLogHandler: DebugEventLogHandler;
+		traceId: string;
+		triggeringEventFlowName: EventFlowDebugName;
+		eventFlowTraceId: string;
 	},
 ): Promise<string | undefined> {
 	const body: ChatCompletionCreateParams = {
@@ -551,8 +549,7 @@ async function getStringFromLlm(
 	const result = await openAi.client.chat.completions.create(body);
 
 	debugOptions?.eventLogHandler?.({
-		...generateDebugEvent(debugOptions.traceId),
-		eventName: "LLM_API_CALL",
+		...generateDebugEvent("LLM_API_CALL", debugOptions.traceId),
 		triggeringEventFlowName: debugOptions.triggeringEventFlowName,
 		eventFlowTraceId: debugOptions.eventFlowTraceId,
 		modelName: openAi.modelName ?? "gpt-4o",

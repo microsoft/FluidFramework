@@ -28,17 +28,20 @@ export {
 } from "./implicit-strategy/index.js";
 
 export type {
-	ApplyEditFailureDebugEvent,
-	ApplyEditSuccessDebugEvent,
-	CoreEventLoopCompletedDebugEvent,
-	CoreEventLoopStartedDebugEvent,
-	FinalReviewCompletedDebugEvent,
-	FinalReviewStartedDebugEvent,
-	GenerateTreeEditCompletedDebugEvent,
-	GenerateTreeEditStartedDebugEvent,
+	ApplyEditFailure,
+	ApplyEditSuccess,
+	CoreEventLoopCompleted,
+	CoreEventLoopStarted,
+	FinalReviewCompleted,
+	FinalReviewStarted,
+	GenerateTreeEditCompleted,
+	GenerateTreeEditStarted,
 	LlmApiCallDebugEvent,
-	PlanningPromptCompletedDebugEvent,
-	PlanningPromptStartedDebugEvent,
+	PlanningPromptCompleted,
+	PlanningPromptStarted,
+	LlmTreeEdit,
+	EventFlowDebugName,
+	EventFlowDebugNames,
 } from "./explicit-strategy/index.js";
 
 export {
@@ -50,6 +53,7 @@ export {
 	type OpenAiClientOptions,
 	type DebugEvent,
 	type DebugEventLogHandler,
+	type EventFlowDebugEvent,
 } from "./aiCollabApi.js";
 
 export { aiCollab } from "./aiCollab.js";

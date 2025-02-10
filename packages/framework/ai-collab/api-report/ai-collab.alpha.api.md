@@ -41,25 +41,33 @@ export interface AiCollabSuccessResponse {
 }
 
 // @alpha
-export interface ApplyEditFailureDebugEvent extends DebugEvent {
-    edit: TreeEdit;
+export interface ApplyEditFailure extends EventFlowDebugEvent {
+    edit: LlmTreeEdit;
     errorMessage: string;
-    eventFlowTraceId?: string;
+    // (undocumented)
+    eventFlowName: "GENERATE_AND_APPLY_TREE_EDIT";
+    // (undocumented)
+    eventFlowStatus: "IN_PROGRESS";
+    eventFlowTraceId: string;
     // (undocumented)
     eventName: "APPLIED_EDIT_FAILURE";
     sequentialErrorCount: number;
 }
 
 // @alpha
-export interface ApplyEditSuccessDebugEvent extends DebugEvent {
-    edit: TreeEdit;
-    eventFlowTraceId?: string;
+export interface ApplyEditSuccess extends EventFlowDebugEvent {
+    edit: LlmTreeEdit;
+    // (undocumented)
+    eventFlowName: "GENERATE_AND_APPLY_TREE_EDIT";
+    // (undocumented)
+    eventFlowStatus: "IN_PROGRESS";
+    eventFlowTraceId: string;
     // (undocumented)
     eventName: "APPLIED_EDIT_SUCCESS";
 }
 
 // @alpha
-export interface CoreEventLoopCompletedDebugEvent extends EventFlowDebugEvent {
+export interface CoreEventLoopCompleted extends EventFlowDebugEvent {
     // (undocumented)
     errorMessage?: string;
     // (undocumented)
@@ -75,7 +83,7 @@ export interface CoreEventLoopCompletedDebugEvent extends EventFlowDebugEvent {
 }
 
 // @alpha
-export interface CoreEventLoopStartedDebugEvent extends EventFlowDebugEvent {
+export interface CoreEventLoopStarted extends EventFlowDebugEvent {
     // (undocumented)
     eventFlowName: "CORE_EVENT_LOOP";
     // (undocumented)
@@ -92,7 +100,7 @@ export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference
 
 // @alpha
 export interface DebugEvent {
-    eventName?: string;
+    eventName: string;
     id: string;
     timestamp: string;
     traceId?: string;
@@ -155,21 +163,37 @@ export interface DifferenceRemove {
 }
 
 // @alpha
-export interface FinalReviewCompletedDebugEvent extends EventFlowDebugEvent {
+export interface EventFlowDebugEvent extends DebugEvent {
+    eventFlowName: string;
+    eventFlowStatus: "STARTED" | "COMPLETED" | "IN_PROGRESS";
+    eventFlowTraceId: string;
+}
+
+// @alpha
+export type EventFlowDebugName = (typeof EventFlowDebugNames)[keyof typeof EventFlowDebugNames];
+
+// @alpha
+export const EventFlowDebugNames: {
+    readonly CORE_EVENT_LOOP: "CORE_EVENT_LOOP";
+    readonly GENERATE_PLANNING_PROMPT: "GENERATE_PLANNING_PROMPT";
+    readonly GENERATE_AND_APPLY_TREE_EDIT: "GENERATE_AND_APPLY_TREE_EDIT";
+    readonly FINAL_REVIEW: "FINAL_REVIEW";
+};
+
+// @alpha
+export interface FinalReviewCompleted<TIsLlmResponseValid = boolean, TReviewResponse = TIsLlmResponseValid extends true ? "yes" | "no" : undefined> extends EventFlowDebugEvent {
+    didLlmAccomplishGoal: TReviewResponse;
     // (undocumented)
     eventFlowName: "FINAL_REVIEW";
     // (undocumented)
     eventFlowStatus: "COMPLETED";
     // (undocumented)
     eventName: "FINAL_REVIEW_COMPLETED";
-    llmReviewResponse?: {
-        goalAccomplished: "yes" | "no";
-    };
-    status: "success" | "failure";
+    isLlmResponseValid: TIsLlmResponseValid;
 }
 
 // @alpha
-export interface FinalReviewStartedDebugEvent extends EventFlowDebugEvent {
+export interface FinalReviewStarted extends EventFlowDebugEvent {
     // (undocumented)
     eventFlowName: "FINAL_REVIEW";
     // (undocumented)
@@ -180,21 +204,21 @@ export interface FinalReviewStartedDebugEvent extends EventFlowDebugEvent {
 }
 
 // @alpha
-export interface GenerateTreeEditCompletedDebugEvent extends EventFlowDebugEvent {
+export interface GenerateTreeEditCompleted<TIsLlmResponseValid = boolean, TEdit = TIsLlmResponseValid extends true ? LlmTreeEdit | null : undefined> extends EventFlowDebugEvent {
     // (undocumented)
-    eventFlowName: "GENERATE_TREE_EDIT";
+    eventFlowName: "GENERATE_AND_APPLY_TREE_EDIT";
     // (undocumented)
     eventFlowStatus: "COMPLETED";
     // (undocumented)
     eventName: "GENERATE_TREE_EDIT_COMPLETED";
-    llmGeneratedEdit?: TreeEdit | null;
-    requestOutcome: "success" | "failure";
+    isLlmResponseValid: TIsLlmResponseValid;
+    llmGeneratedEdit: TEdit;
 }
 
 // @alpha
-export interface GenerateTreeEditStartedDebugEvent extends EventFlowDebugEvent {
+export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
     // (undocumented)
-    eventFlowName: "GENERATE_TREE_EDIT";
+    eventFlowName: "GENERATE_AND_APPLY_TREE_EDIT";
     // (undocumented)
     eventFlowStatus: "STARTED";
     // (undocumented)
@@ -205,7 +229,7 @@ export interface GenerateTreeEditStartedDebugEvent extends EventFlowDebugEvent {
 
 // @alpha
 export interface LlmApiCallDebugEvent extends DebugEvent {
-    eventFlowTraceId?: string;
+    eventFlowTraceId: string;
     // (undocumented)
     eventName: "LLM_API_CALL";
     modelName: string;
@@ -215,8 +239,11 @@ export interface LlmApiCallDebugEvent extends DebugEvent {
         promptTokens: number;
         completionTokens: number;
     };
-    triggeringEventFlowName?: "GENERATE_PLANNING_PROMPT" | "GENERATE_TREE_EDIT" | "FINAL_REVIEW";
+    triggeringEventFlowName: EventFlowDebugName;
 }
+
+// @alpha
+export type LlmTreeEdit = Record<string, unknown>;
 
 // @alpha
 export type ObjectPath = (string | number)[];
@@ -238,20 +265,19 @@ export interface Options {
 }
 
 // @alpha
-export interface PlanningPromptCompletedDebugEvent extends EventFlowDebugEvent {
+export interface PlanningPromptCompleted<TIsLlmResponseValid = boolean, TPlan = TIsLlmResponseValid extends true ? string : undefined> extends EventFlowDebugEvent {
     // (undocumented)
     eventFlowName: "GENERATE_PLANNING_PROMPT";
     // (undocumented)
     eventFlowStatus: "COMPLETED";
     // (undocumented)
     eventName: "GENERATE_PLANNING_PROMPT_COMPLETED";
-    // (undocumented)
-    llmGeneratedPlan: string | undefined;
-    requestOutcome: "success" | "failure";
+    isLlmResponseValid: TIsLlmResponseValid;
+    llmGeneratedPlan: TPlan;
 }
 
 // @alpha
-export interface PlanningPromptStartedDebugEvent extends EventFlowDebugEvent {
+export interface PlanningPromptStarted extends EventFlowDebugEvent {
     // (undocumented)
     eventFlowName: "GENERATE_PLANNING_PROMPT";
     // (undocumented)

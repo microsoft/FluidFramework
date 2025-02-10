@@ -20,11 +20,11 @@ export interface DebugEvent {
 	 * An id that will be shared across all debug events that originate from the same single execution of ai-collab.
 	 * @remarks This is intended to be used to correlate all debug events that originate from the same execution
 	 */
-	traceId?: string;
+	traceId: string;
 	/**
 	 * The name of the debug event.
 	 */
-	eventName?: string;
+	eventName: string;
 	/**
 	 * The date and time at which the debug event was created.
 	 */
@@ -43,7 +43,7 @@ export interface EventFlowDebugEvent extends DebugEvent {
 	/**
 	 * The status of the particular event flow.
 	 */
-	eventFlowStatus: "STARTED" | "COMPLETED";
+	eventFlowStatus: "STARTED" | "COMPLETED" | "IN_PROGRESS";
 	/**
 	 * A unique id that will be shared across all debug events that are part of the same event flow.
 	 */

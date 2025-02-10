@@ -10422,9 +10422,6 @@ importers:
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../dds/tree
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
       openai:
         specifier: ^4.67.3
         version: 4.76.1(zod@3.24.0)
@@ -10474,6 +10471,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.8
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
