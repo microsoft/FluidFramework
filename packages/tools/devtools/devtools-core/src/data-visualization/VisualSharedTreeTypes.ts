@@ -33,7 +33,7 @@ export interface SharedTreeSchemaNode {
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
 	 * - InternalNode: `Record<string, string>`.
 	 */
-	readonly allowedTypes?: string | Record<string, string>;
+	readonly allowedTypes: string | Record<string, string>;
 
 	/**
 	 * If the field is required or optional.
