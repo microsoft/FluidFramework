@@ -429,6 +429,7 @@ module.exports = {
 				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
 				"^azure/",
 				"^build-tools/packages/build-tools/package.json",
+				"^build-tools/packages/build-infrastructure/package.json",
 				"^common/",
 				"^examples/",
 				"^experimental/",
