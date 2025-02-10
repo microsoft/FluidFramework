@@ -12,7 +12,10 @@ import {
 	IResolvedUrl,
 	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
-import { DataCorruptionError, DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+import {
+	DataCorruptionError,
+	DataProcessingError,
+} from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import { Socket } from "socket.io-client";
 
@@ -210,12 +213,16 @@ describe("R11s Socket Tests", () => {
 		);
 
 		// Set up Promise to await disconnect_document event
-		const disconnectEventP = new Promise<{clientId: string, errorType: string, isCorruption: boolean}>((resolve) => {
+		const disconnectEventP = new Promise<{
+			clientId: string;
+			errorType: string;
+			isCorruption: boolean;
+		}>((resolve) => {
 			assert(socket !== undefined, "Socket should be defined");
 			socket.on(
 				"disconnect_document",
 				(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
-					resolve({clientId, errorType, isCorruption});
+					resolve({ clientId, errorType, isCorruption });
 				},
 			);
 		});
@@ -225,20 +232,21 @@ describe("R11s Socket Tests", () => {
 
 		// Wait for and verify the disconnect_document event
 		const disconnectResult = await disconnectEventP;
-		assert.strictEqual(disconnectResult.clientId, connection.clientId, "Client ID should match");
+		assert.strictEqual(
+			disconnectResult.clientId,
+			connection.clientId,
+			"Client ID should match",
+		);
 		assert.strictEqual(
 			disconnectResult.errorType,
 			FluidErrorTypes.dataCorruptionError,
-			"Error type should be dataCorruptionError"
+			"Error type should be dataCorruptionError",
 		);
 		assert(disconnectResult.isCorruption, "isCorruption flag should be true");
 	});
 
 	it("Socket error with Data Processing error", async () => {
-		const clientError = DataProcessingError.create(
-			"DataProcessingError",
-			"test"
-		);
+		const clientError = DataProcessingError.create("DataProcessingError", "test");
 
 		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
@@ -250,12 +258,16 @@ describe("R11s Socket Tests", () => {
 		);
 
 		// Set up Promise to await disconnect_document event
-		const disconnectEventP = new Promise<{clientId: string, errorType: string, isCorruption: boolean}>((resolve) => {
+		const disconnectEventP = new Promise<{
+			clientId: string;
+			errorType: string;
+			isCorruption: boolean;
+		}>((resolve) => {
 			assert(socket !== undefined, "Socket should be defined");
 			socket.on(
 				"disconnect_document",
 				(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
-					resolve({clientId, errorType, isCorruption});
+					resolve({ clientId, errorType, isCorruption });
 				},
 			);
 		});
@@ -265,12 +277,19 @@ describe("R11s Socket Tests", () => {
 
 		// Wait for and verify the disconnect_document event
 		const disconnectResult = await disconnectEventP;
-		assert.strictEqual(disconnectResult.clientId, connection.clientId, "Client ID should match");
+		assert.strictEqual(
+			disconnectResult.clientId,
+			connection.clientId,
+			"Client ID should match",
+		);
 		assert.strictEqual(
 			disconnectResult.errorType,
 			FluidErrorTypes.dataProcessingError,
-			"Error type should be dataProcessingError"
+			"Error type should be dataProcessingError",
 		);
-		assert(disconnectResult.isCorruption, "isCorruption flag should be true for data processing error");
+		assert(
+			disconnectResult.isCorruption,
+			"isCorruption flag should be true for data processing error",
+		);
 	});
 });
