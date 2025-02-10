@@ -10,7 +10,7 @@ import { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	IResolvedUrl,
-	type IAnyDriverError,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
@@ -201,7 +201,9 @@ describe("R11s Socket Tests", () => {
 	});
 
 	it("Socket error with Data Corruption error", async () => {
-		const clientError = new DataCorruptionError("Data corruption error", {});
+		const clientError = new DataCorruptionError("Data corruption error", {
+			driverVersion: "1.0",
+		});
 
 		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
@@ -221,14 +223,18 @@ describe("R11s Socket Tests", () => {
 			assert(socket !== undefined, "Socket should be defined");
 			socket.on(
 				"disconnect_document",
-				(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
-					resolve({ clientId, errorType, isCorruption });
+				(clientId: string, documentId: string, errorType: string, isCorruption: boolean) => {
+					resolve({
+						clientId,
+						errorType,
+						isCorruption,
+					});
 				},
 			);
 		});
 
-		// Simulate client detecting corruption and disconnecting
-		connection.dispose(clientError);
+		// Call disconnect directly with the error
+		(connection as any).disconnect(clientError);
 
 		// Wait for and verify the disconnect_document event
 		const disconnectResult = await disconnectEventP;
@@ -246,7 +252,12 @@ describe("R11s Socket Tests", () => {
 	});
 
 	it("Socket error with Data Processing error", async () => {
-		const clientError = DataProcessingError.create("DataProcessingError", "test");
+		const clientError = DataProcessingError.create(
+			"Data processing error",
+			"test",
+			undefined,
+			{ driverVersion: "1.0" },
+		);
 
 		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
@@ -266,14 +277,18 @@ describe("R11s Socket Tests", () => {
 			assert(socket !== undefined, "Socket should be defined");
 			socket.on(
 				"disconnect_document",
-				(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
-					resolve({ clientId, errorType, isCorruption });
+				(clientId: string, documentId: string, errorType: string, isCorruption: boolean) => {
+					resolve({
+						clientId,
+						errorType,
+						isCorruption,
+					});
 				},
 			);
 		});
 
-		// Simulate client detecting processing error and disconnecting
-		connection.dispose(clientError);
+		// Call disconnect directly with the error
+		(connection as any).disconnect(clientError);
 
 		// Wait for and verify the disconnect_document event
 		const disconnectResult = await disconnectEventP;
