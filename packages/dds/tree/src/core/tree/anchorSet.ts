@@ -814,12 +814,7 @@ export class AnchorSet implements AnchorLocator {
 					() => {},
 				);
 			},
-			beforeAttach(
-				source: FieldKey,
-				sourceDetachedNodeId: Delta.DetachedNodeId,
-				count: number,
-				destination: PlaceIndex,
-			): void {
+			beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a0 /* Must be in a field in order to attach */,
@@ -831,7 +826,6 @@ export class AnchorSet implements AnchorLocator {
 				};
 				const sourcePath: DetachedRangeUpPath = brand({
 					field: source,
-					detachedNodeId: sourceDetachedNodeId,
 					start: 0,
 					end: count,
 				});
@@ -841,11 +835,7 @@ export class AnchorSet implements AnchorLocator {
 					}
 				}
 			},
-			afterAttach(
-				source: FieldKey,
-				sourceDetachedNodeId: Delta.DetachedNodeId,
-				destination: Range,
-			): void {
+			afterAttach(source: FieldKey, destination: Range): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a1 /* Must be in a field in order to attach */,
@@ -853,7 +843,6 @@ export class AnchorSet implements AnchorLocator {
 				const sourcePath: DetachedPlaceUpPath = brand({
 					field: source,
 					index: 0,
-					detachedNodeId: sourceDetachedNodeId,
 				});
 				const destinationPath: RangeUpPath = {
 					parent: this.parent,
@@ -901,11 +890,7 @@ export class AnchorSet implements AnchorLocator {
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
-			beforeDetach(
-				source: Range,
-				destination: FieldKey,
-				detachedNodeId: Delta.DetachedNodeId,
-			): void {
+			beforeDetach(source: Range, destination: FieldKey): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a3 /* Must be in a field in order to attach */,
@@ -918,7 +903,6 @@ export class AnchorSet implements AnchorLocator {
 				const destinationPath: DetachedPlaceUpPath = brand({
 					field: destination,
 					index: 0,
-					detachedNodeId,
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -926,12 +910,7 @@ export class AnchorSet implements AnchorLocator {
 					}
 				}
 			},
-			afterDetach(
-				source: PlaceIndex,
-				count: number,
-				destination: FieldKey,
-				detachedNodeId: Delta.DetachedNodeId,
-			): void {
+			afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a4 /* Must be in a field in order to attach */,
@@ -945,7 +924,6 @@ export class AnchorSet implements AnchorLocator {
 					field: destination,
 					start: 0,
 					end: count,
-					detachedNodeId,
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -985,13 +963,7 @@ export class AnchorSet implements AnchorLocator {
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
-			beforeReplace(
-				newContent: FieldKey,
-				sourceDetachedNodeId: Delta.DetachedNodeId,
-				oldContent: Range,
-				destination: FieldKey,
-				destinationDetachedNodeId: Delta.DetachedNodeId,
-			): void {
+			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a6 /* Must be in a field in order to replace */,
@@ -1005,12 +977,10 @@ export class AnchorSet implements AnchorLocator {
 					field: newContent,
 					start: 0,
 					end: oldContent.end - oldContent.start,
-					detachedNodeId: sourceDetachedNodeId,
 				});
 				const oldNodesDestinationPath: DetachedPlaceUpPath = brand({
 					field: destination,
 					index: 0,
-					detachedNodeId: destinationDetachedNodeId,
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -1022,13 +992,7 @@ export class AnchorSet implements AnchorLocator {
 					}
 				}
 			},
-			afterReplace(
-				newContentSource: FieldKey,
-				newContent: Range,
-				sourceDetachedNodeId: Delta.DetachedNodeId,
-				oldContent: FieldKey,
-				destinationDetachedNodeId: Delta.DetachedNodeId,
-			): void {
+			afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a7 /* Must be in a field in order to replace */,
@@ -1041,13 +1005,11 @@ export class AnchorSet implements AnchorLocator {
 				const newNodesSourcePath: DetachedPlaceUpPath = brand({
 					field: newContentSource,
 					index: 0,
-					detachedNodeId: sourceDetachedNodeId,
 				});
 				const oldNodesDestinationPath: DetachedRangeUpPath = brand({
 					field: oldContent,
 					start: 0,
 					end: newContent.end - newContent.start,
-					detachedNodeId: destinationDetachedNodeId,
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -1086,16 +1048,11 @@ export class AnchorSet implements AnchorLocator {
 					count,
 				);
 			},
-			beforeDestroy(
-				detachedField: FieldKey,
-				detachedNodeId: Delta.DetachedNodeId,
-				count: number,
-			): void {
+			beforeDestroy(detachedField: FieldKey, count: number): void {
 				const range: DetachedRangeUpPath = brand({
 					field: detachedField,
 					start: 0,
 					end: count,
-					detachedNodeId,
 				});
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
@@ -1107,18 +1064,13 @@ export class AnchorSet implements AnchorLocator {
 				// Nothing to do since content can only be created in a new detached field,
 				// which cannot contain any anchors.
 			},
-			afterCreate(
-				content: Delta.ProtoNodes,
-				destination: FieldKey,
-				detachedNodeId: Delta.DetachedNodeId,
-			): void {
+			afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void {
 				for (const visitors of this.pathVisitors.values()) {
 					for (const pathVisitor of visitors) {
 						const rangePath: DetachedRangeUpPath = brand({
 							field: destination,
 							start: 0,
 							end: content.length,
-							detachedNodeId,
 						});
 						pathVisitor.afterCreate(rangePath);
 					}
