@@ -431,7 +431,7 @@ export function runTransaction<
 
 /**
  * Run the given transaction.
- * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link TreeView.runTransaction} instead which does not try to editing content in the error case.
+ * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link TreeViewAlpha.runTransaction} instead which does not try to editing content in the error case.
  */
 function runTransactionInCheckout<TResult>(
 	checkout: ITreeCheckout,
