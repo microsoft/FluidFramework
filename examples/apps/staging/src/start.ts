@@ -20,9 +20,7 @@ import { createRoot } from "react-dom/client";
 
 import {
 	GroceryListContainerRuntimeFactory,
-	type GroceryListAppEntryPoint,
-	type IGroceryList,
-	type PrivateChanges,
+	type ISuggestionGroceryList,
 } from "./container/index.js";
 import { AppView, DebugView } from "./view/index.js";
 
@@ -34,10 +32,10 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const render = (groceryList: IGroceryList, getSuggestions: () => Promise<PrivateChanges>) => {
+const render = (groceryList: ISuggestionGroceryList) => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	const appRoot = createRoot(appDiv);
-	appRoot.render(createElement(AppView, { groceryList, getSuggestions }));
+	appRoot.render(createElement(AppView, { groceryList }));
 
 	// The DebugView is just for demo purposes, in case we want to access internal state or have debug controls.
 	const debugDiv = document.getElementById("debug") as HTMLDivElement;
@@ -51,7 +49,7 @@ const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory()
 
 async function start(): Promise<void> {
 	let id: string;
-	let entryPoint: GroceryListAppEntryPoint;
+	let groceryList: ISuggestionGroceryList;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
@@ -60,7 +58,7 @@ async function start(): Promise<void> {
 			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader,
 		});
-		entryPoint = (await container.getEntryPoint()) as GroceryListAppEntryPoint;
+		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
 		await container.attach(createTinyliciousTestCreateNewRequest());
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url not available on attached container");
@@ -74,10 +72,10 @@ async function start(): Promise<void> {
 			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader,
 		});
-		entryPoint = (await container.getEntryPoint()) as GroceryListAppEntryPoint;
+		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
 	}
 
-	render(entryPoint.groceryList, entryPoint.getSuggestions);
+	render(groceryList);
 	updateTabForId(id);
 }
 
