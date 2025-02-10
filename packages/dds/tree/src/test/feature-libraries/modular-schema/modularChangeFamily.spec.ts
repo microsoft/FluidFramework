@@ -13,7 +13,6 @@ import {
 	genericFieldKind,
 	type ModularChangeset,
 	FieldKindWithEditor,
-	type RelevantRemovedRootsFromChild,
 	chunkTree,
 	defaultChunkPolicy,
 	type TreeChunk,
@@ -142,8 +141,6 @@ const singleNodeHandler: FieldChangeHandler<SingleNodeChangeset> = {
 	intoDelta: (change, deltaFromChild): DeltaFieldChanges => [
 		{ count: 1, fields: change !== undefined ? deltaFromChild(change) : undefined },
 	],
-	relevantRemovedRoots: (change, relevantRemovedRootsFromChild) =>
-		change !== undefined ? relevantRemovedRootsFromChild(change) : [],
 
 	// We create changesets by composing an empty single node field with a change to the child.
 	// We don't want the temporarily empty single node field to be pruned away leaving us with a generic field instead.
@@ -1147,108 +1144,109 @@ describe("ModularChangeFamily", () => {
 		});
 	});
 
-	describe("relevantRemovedRoots", () => {
-		const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
-		interface HasRemovedRootsRefs {
-			shallow: DeltaDetachedNodeId[];
-			nested: NodeId[];
-		}
+	// XXX
+	// describe("relevantRemovedRoots", () => {
+	// 	const fieldKind: FieldKindIdentifier = brand("HasRemovedRootsRefs");
+	// 	interface HasRemovedRootsRefs {
+	// 		shallow: DeltaDetachedNodeId[];
+	// 		nested: NodeId[];
+	// 	}
 
-		const handler: FieldChangeHandler<
-			HasRemovedRootsRefs,
-			FieldEditor<HasRemovedRootsRefs>
-		> = {
-			relevantRemovedRoots: (
-				change: HasRemovedRootsRefs,
-				relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-			) => {
-				return [
-					...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
-					...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
-				];
-			},
-		} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
-		const hasRemovedRootsRefsField = new FieldKindWithEditor(
-			fieldKind,
-			Multiplicity.Single,
-			handler,
-			() => false,
-			new Set(),
-		);
-		const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
+	// 	const handler: FieldChangeHandler<
+	// 		HasRemovedRootsRefs,
+	// 		FieldEditor<HasRemovedRootsRefs>
+	// 	> = {
+	// 		relevantRemovedRoots: (
+	// 			change: HasRemovedRootsRefs,
+	// 			relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
+	// 		) => {
+	// 			return [
+	// 				...change.shallow.map((id) => makeDetachedNodeId(id.major, id.minor)),
+	// 				...change.nested.flatMap((c) => Array.from(relevantRemovedRootsFromChild(c))),
+	// 			];
+	// 		},
+	// 	} as unknown as FieldChangeHandler<HasRemovedRootsRefs, FieldEditor<HasRemovedRootsRefs>>;
+	// 	const hasRemovedRootsRefsField = new FieldKindWithEditor(
+	// 		fieldKind,
+	// 		Multiplicity.Single,
+	// 		handler,
+	// 		() => false,
+	// 		new Set(),
+	// 	);
+	// 	const mockFieldKinds = new Map([[fieldKind, hasRemovedRootsRefsField]]);
 
-		function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
-			deepFreeze(input);
-			return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
-		}
+	// 	function relevantRemovedRoots(input: ModularChangeset): DeltaDetachedNodeId[] {
+	// 		deepFreeze(input);
+	// 		return Array.from(relevantDetachedTreesImplementation(input, mockFieldKinds));
+	// 	}
 
-		function nodeChangeFromHasRemovedRootsRefs(changeset: HasRemovedRootsRefs): NodeChangeset {
-			return {
-				fieldChanges: new Map([[fieldA, { fieldKind, change: brand(changeset) }]]),
-			};
-		}
+	// 	function nodeChangeFromHasRemovedRootsRefs(changeset: HasRemovedRootsRefs): NodeChangeset {
+	// 		return {
+	// 			fieldChanges: new Map([[fieldA, { fieldKind, change: brand(changeset) }]]),
+	// 		};
+	// 	}
 
-		it("sibling fields", () => {
-			const aMajor = mintRevisionTag();
-			const a1 = { major: aMajor, minor: 1 };
-			const a2 = { major: aMajor, minor: 2 };
-			const bMajor = mintRevisionTag();
-			const b1 = { major: bMajor, minor: 1 };
+	// 	it("sibling fields", () => {
+	// 		const aMajor = mintRevisionTag();
+	// 		const a1 = { major: aMajor, minor: 1 };
+	// 		const a2 = { major: aMajor, minor: 2 };
+	// 		const bMajor = mintRevisionTag();
+	// 		const b1 = { major: bMajor, minor: 1 };
 
-			const changeA: HasRemovedRootsRefs = {
-				shallow: [a1, a2],
-				nested: [],
-			};
-			const changeB: HasRemovedRootsRefs = {
-				shallow: [b1],
-				nested: [],
-			};
-			const input: ModularChangeset = {
-				...Change.empty(),
-				fieldChanges: new Map([
-					[brand("fA"), { fieldKind, change: brand(changeA) }],
-					[brand("fB"), { fieldKind, change: brand(changeB) }],
-				]),
-			};
+	// 		const changeA: HasRemovedRootsRefs = {
+	// 			shallow: [a1, a2],
+	// 			nested: [],
+	// 		};
+	// 		const changeB: HasRemovedRootsRefs = {
+	// 			shallow: [b1],
+	// 			nested: [],
+	// 		};
+	// 		const input: ModularChangeset = {
+	// 			...Change.empty(),
+	// 			fieldChanges: new Map([
+	// 				[brand("fA"), { fieldKind, change: brand(changeA) }],
+	// 				[brand("fB"), { fieldKind, change: brand(changeB) }],
+	// 			]),
+	// 		};
 
-			const actual = relevantRemovedRoots(input);
-			assertEqual(actual, [a1, a2, b1]);
-		});
+	// 		const actual = relevantRemovedRoots(input);
+	// 		assertEqual(actual, [a1, a2, b1]);
+	// 	});
 
-		it("nested fields", () => {
-			const aMajor = mintRevisionTag();
-			const cMajor = mintRevisionTag();
-			const a1 = { major: aMajor, minor: 1 };
-			const c1 = { major: cMajor, minor: 1 };
+	// 	it("nested fields", () => {
+	// 		const aMajor = mintRevisionTag();
+	// 		const cMajor = mintRevisionTag();
+	// 		const a1 = { major: aMajor, minor: 1 };
+	// 		const c1 = { major: cMajor, minor: 1 };
 
-			const changeC: HasRemovedRootsRefs = {
-				shallow: [c1],
-				nested: [],
-			};
+	// 		const changeC: HasRemovedRootsRefs = {
+	// 			shallow: [c1],
+	// 			nested: [],
+	// 		};
 
-			const changeB: HasRemovedRootsRefs = {
-				shallow: [],
-				nested: [nodeId2],
-			};
+	// 		const changeB: HasRemovedRootsRefs = {
+	// 			shallow: [],
+	// 			nested: [nodeId2],
+	// 		};
 
-			const changeA: HasRemovedRootsRefs = {
-				shallow: [a1],
-				nested: [nodeId1],
-			};
+	// 		const changeA: HasRemovedRootsRefs = {
+	// 			shallow: [a1],
+	// 			nested: [nodeId1],
+	// 		};
 
-			const input: ModularChangeset = {
-				...Change.empty(),
-				nodeChanges: newTupleBTree([
-					[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
-					[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
-				]),
-				fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
-			};
+	// 		const input: ModularChangeset = {
+	// 			...Change.empty(),
+	// 			nodeChanges: newTupleBTree([
+	// 				[[nodeId1.revision, nodeId1.localId], nodeChangeFromHasRemovedRootsRefs(changeB)],
+	// 				[[nodeId2.revision, nodeId2.localId], nodeChangeFromHasRemovedRootsRefs(changeC)],
+	// 			]),
+	// 			fieldChanges: new Map([[brand("fA"), { fieldKind, change: brand(changeA) }]]),
+	// 		};
 
-			const actual = relevantRemovedRoots(input);
-			assertEqual(actual, [a1, c1]);
-		});
-	});
+	// 		const actual = relevantRemovedRoots(input);
+	// 		assertEqual(actual, [a1, c1]);
+	// 	});
+	// });
 
 	describe("update refreshers", () => {
 		const aMajor = mintRevisionTag();

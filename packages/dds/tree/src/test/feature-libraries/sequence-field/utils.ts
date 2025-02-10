@@ -808,7 +808,7 @@ function newComposeManager(): TestComposeManager {
 	const manager: TestComposeManager = {
 		...newTestNodeManager(),
 
-		getChangesForBaseDetach(
+		getNewChangesForBaseDetach(
 			baseDetachId: ChangeAtomId,
 			count: number,
 		): RangeQueryResult<ChangeAtomId, NodeId> {

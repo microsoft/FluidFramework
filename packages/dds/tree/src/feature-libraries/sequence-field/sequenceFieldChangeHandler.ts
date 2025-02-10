@@ -5,7 +5,6 @@
 
 import type { FieldChangeHandler } from "../modular-schema/index.js";
 
-import { relevantRemovedRoots } from "./relevantRemovedRoots.js";
 import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser.js";
 import { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
 import { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
@@ -20,7 +19,6 @@ export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	codecsFactory: sequenceFieldChangeCodecFactory,
 	editor: sequenceFieldEditor,
 	intoDelta: sequenceFieldToDelta,
-	relevantRemovedRoots,
 	isEmpty,
 	getNestedChanges,
 	createEmpty,

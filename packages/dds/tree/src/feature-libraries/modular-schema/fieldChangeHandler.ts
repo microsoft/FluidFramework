@@ -26,6 +26,7 @@ import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 export type NestedChangesIndices = [
 	NodeId,
 	number | undefined /* inputIndex */,
+	// XXX: This should not be needed
 	number | undefined /* outputIndex */,
 ][];
 
@@ -49,26 +50,6 @@ export interface FieldChangeHandler<
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): DeltaFieldChanges;
-	/**
-	 * Returns the set of removed roots that should be in memory for the given change to be applied.
-	 * A removed root is relevant if any of the following is true:
-	 * - It is being inserted
-	 * - It is being restored
-	 * - It is being edited
-	 * - The ID it is associated with is being changed
-	 *
-	 * Implementations are allowed to be conservative by returning more removed roots than strictly necessary
-	 * (though they should, for the sake of performance, try to avoid doing so).
-	 *
-	 * Implementations are not allowed to return IDs for non-root trees, even if they are removed.
-	 *
-	 * @param change - The change to be applied.
-	 * @param relevantRemovedRootsFromChild - Delegate for collecting relevant removed roots from child changes.
-	 */
-	readonly relevantRemovedRoots: (
-		change: TChangeset,
-		relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-	) => Iterable<DeltaDetachedNodeId>;
 
 	/**
 	 * Returns whether this change is empty, meaning that it represents no modifications to the field
@@ -229,11 +210,6 @@ export type NodeChangeComposer = (
 /**
  */
 export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
-
-/**
- * A function that returns the set of removed roots that should be in memory for a given node changeset to be applied.
- */
-export type RelevantRemovedRootsFromChild = (child: NodeId) => Iterable<DeltaDetachedNodeId>;
 
 export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 	readonly getRevisionToRebase: () => RevisionTag | undefined;

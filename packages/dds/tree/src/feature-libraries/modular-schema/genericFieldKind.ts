@@ -4,7 +4,6 @@
  */
 
 import {
-	type DeltaDetachedNodeId,
 	type DeltaMark,
 	type RevisionMetadataSource,
 	Multiplicity,
@@ -20,7 +19,6 @@ import type {
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
-	RelevantRemovedRootsFromChild,
 	ToDelta,
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
@@ -61,7 +59,6 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		}
 		return markList;
 	},
-	relevantRemovedRoots,
 	isEmpty: (change: GenericChangeset): boolean => change.length === 0,
 	getNestedChanges,
 	createEmpty: newGenericChangeset,
@@ -202,16 +199,7 @@ export function convertGenericChange<TChange>(
 
 const invalidFunc = (): never => fail("Should not be called when converting generic changes");
 const invalidComposeManager: ComposeNodeManager = {
-	getChangesForBaseDetach: invalidFunc,
+	getNewChangesForBaseDetach: invalidFunc,
 	composeBaseAttach: invalidFunc,
 	composeDetachAttach: invalidFunc,
 };
-
-function* relevantRemovedRoots(
-	change: GenericChangeset,
-	relevantRemovedRootsFromChild: RelevantRemovedRootsFromChild,
-): Iterable<DeltaDetachedNodeId> {
-	for (const nodeChange of change.values()) {
-		yield* relevantRemovedRootsFromChild(nodeChange);
-	}
-}

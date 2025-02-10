@@ -7,7 +7,6 @@ import { testCompose } from "./compose.test.js";
 import { testInvert } from "./invert.test.js";
 import { testMarkListFactory } from "./markListFactory.test.js";
 import { testRebase } from "./rebase.test.js";
-import { testRelevantRemovedRoots } from "./relevantRemovedRoots.test.js";
 import { testReplaceRevisions } from "./replaceRevisions.test.js";
 import {
 	testComposedSandwichRebasing,
@@ -32,7 +31,6 @@ describe("SequenceField", () => {
 	testRebase();
 	testCompose();
 	testToDelta();
-	testRelevantRemovedRoots();
 	testRebaserAxioms();
 	testStateBasedRebaserAxioms();
 	testSandwichRebasing();

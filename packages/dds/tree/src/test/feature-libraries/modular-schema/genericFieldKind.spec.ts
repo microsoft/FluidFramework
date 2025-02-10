@@ -229,20 +229,4 @@ describe("GenericField", () => {
 		assert.deepEqual(change1, newGenericChangeset([[1, nodeId2]]));
 		assert.deepEqual(change2, newGenericChangeset([[2, nodeId3]]));
 	});
-
-	it("relevantRemovedRoots", () => {
-		const actual = genericChangeHandler.relevantRemovedRoots(
-			newGenericChangeset([
-				[0, nodeId1],
-				[2, nodeId2],
-			]),
-			(child) =>
-				child === nodeId1
-					? [{ minor: 42 }]
-					: child === nodeId2
-						? [{ minor: 43 }]
-						: assert.fail("Unexpected child"),
-		);
-		assert.deepEqual(Array.from(actual), [{ minor: 42 }, { minor: 43 }]);
-	});
 });

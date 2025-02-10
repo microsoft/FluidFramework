@@ -38,7 +38,6 @@ export {
 	type NodeChangePruner,
 	referenceFreeFieldChangeRebaser,
 	type RebaseRevisionMetadata,
-	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	NodeAttachState,
 	type FieldChangeEncodingContext,

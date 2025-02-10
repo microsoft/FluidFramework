@@ -68,7 +68,6 @@ export {
 	type NodeExistsConstraint,
 	FieldKindWithEditor,
 	ModularChangeFamily,
-	type RelevantRemovedRootsFromChild,
 	EncodedModularChangeset,
 	updateRefreshers,
 	type NodeId,

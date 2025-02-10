@@ -67,14 +67,6 @@ export function makeOptionalFieldCodec(
 	return {
 		encode: (change: OptionalChangeset, context: FieldChangeEncodingContext) => {
 			const encoded: EncodedOptionalChangeset<TAnySchema> = {};
-
-			if (change.moves.length > 0) {
-				encoded.m = change.moves.map(([src, dst]) => [
-					changeAtomIdCodec.encode(src, context.baseContext),
-					changeAtomIdCodec.encode(dst, context.baseContext),
-				]);
-			}
-
 			if (change.valueReplace !== undefined) {
 				encoded.r = {
 					e: change.valueReplace.isEmpty,
@@ -85,16 +77,7 @@ export function makeOptionalFieldCodec(
 				}
 			}
 
-			if (change.childChanges.length > 0) {
-				encoded.c = [];
-				for (const [id, childChange] of change.childChanges) {
-					encoded.c.push([
-						registerIdCodec.encode(id, context.baseContext),
-						context.encodeNode(childChange),
-					]);
-				}
-			}
-
+			// XXX
 			return encoded;
 		},
 
@@ -103,16 +86,7 @@ export function makeOptionalFieldCodec(
 			context: FieldChangeEncodingContext,
 		) => {
 			const decoded: Mutable<OptionalChangeset> = {
-				moves:
-					encoded.m?.map(([encodedSrc, encodedDst]) => [
-						changeAtomIdCodec.decode(encodedSrc, context.baseContext),
-						changeAtomIdCodec.decode(encodedDst, context.baseContext),
-					]) ?? [],
-				childChanges:
-					encoded.c?.map(([id, encodedChange]) => [
-						registerIdCodec.decode(id, context.baseContext),
-						context.decodeNode(encodedChange),
-					]) ?? [],
+				// XXX
 			};
 
 			if (encoded.r !== undefined) {

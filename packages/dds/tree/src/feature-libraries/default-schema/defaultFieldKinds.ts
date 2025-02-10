@@ -5,7 +5,6 @@
 
 import {
 	type ChangeAtomId,
-	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
@@ -44,7 +43,6 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 	codecsFactory: () => noChangeCodecFamily,
 	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
 	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => [],
-	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
 	getNestedChanges: (change: 0) => [],
 	createEmpty: () => 0,

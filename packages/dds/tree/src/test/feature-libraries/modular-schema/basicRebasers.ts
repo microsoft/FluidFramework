@@ -96,7 +96,6 @@ export const valueHandler = {
 		return [];
 	},
 
-	relevantRemovedRoots: (change) => [],
 	isEmpty: (change) => change === 0,
 	getNestedChanges: (change) => [],
 	createEmpty: () => 0,

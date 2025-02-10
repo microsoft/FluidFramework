@@ -47,5 +47,3 @@ export {
 	isMoveMark,
 	type MoveMark,
 } from "./moveEffectTable.js";
-
-export { relevantRemovedRoots } from "./relevantRemovedRoots.js";

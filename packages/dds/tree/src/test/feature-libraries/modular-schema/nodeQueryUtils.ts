@@ -18,7 +18,7 @@ export const failRebaseManager: RebaseNodeManager = {
 };
 
 export const failComposeManager: ComposeNodeManager = {
-	getChangesForBaseDetach: failingDelegate,
+	getNewChangesForBaseDetach: failingDelegate,
 	composeBaseAttach: failingDelegate,
 	composeDetachAttach: failingDelegate,
 };

@@ -242,7 +242,7 @@ function addNodeToField(
 const unsupportedFunc = () => fail("Not supported");
 
 const dummyComposeManager: ComposeNodeManager = {
-	getChangesForBaseDetach(
+	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId> {

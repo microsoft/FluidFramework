@@ -271,7 +271,7 @@ export class ComposeQueue {
 		private readonly revisionMetadata: RevisionMetadataSource,
 	) {
 		const queryFunc: NodeRangeQueryFunc = (id, count) =>
-			moveEffects.getChangesForBaseDetach(id, count).length;
+			moveEffects.getNewChangesForBaseDetach(id, count).length;
 
 		this.baseMarks = new MarkQueue(baseMarks, queryFunc);
 		this.newMarks = new MarkQueue(newMarks, queryFunc);
@@ -400,5 +400,5 @@ function getMovedChangesFromMark(
 		return undefined;
 	}
 
-	return moveEffects.getChangesForBaseDetach(getDetachOutputCellId(markEffect), 1).value;
+	return moveEffects.getNewChangesForBaseDetach(getDetachOutputCellId(markEffect), 1).value;
 }

@@ -1462,29 +1462,7 @@ export class ModularChangeFamily
 		revertConstraintState: ConstraintState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 	): void {
-		for (const field of fields.values()) {
-			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
-			for (const [nodeId, inputIndex, outputIndex] of handler.getNestedChanges(field.change)) {
-				const isInputDetached = inputIndex === undefined;
-				const inputAttachState =
-					parentInputAttachState === NodeAttachState.Detached || isInputDetached
-						? NodeAttachState.Detached
-						: NodeAttachState.Attached;
-				const isOutputDetached = outputIndex === undefined;
-				const outputAttachState =
-					parentOutputAttachState === NodeAttachState.Detached || isOutputDetached
-						? NodeAttachState.Detached
-						: NodeAttachState.Attached;
-				this.updateConstraintsForNode(
-					nodeId,
-					inputAttachState,
-					outputAttachState,
-					nodes,
-					constraintState,
-					revertConstraintState,
-				);
-			}
-		}
+		// XXX
 	}
 
 	private updateConstraintsForNode(
@@ -1938,20 +1916,7 @@ function* relevantRemovedRootsFromFields(
 	nodeChanges: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor>,
 ): Iterable<DeltaDetachedNodeId> {
-	for (const [_, fieldChange] of change) {
-		const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
-		const delegate = function* (node: NodeId): Iterable<DeltaDetachedNodeId> {
-			const nodeChangeset = nodeChangeFromId(nodeChanges, node);
-			if (nodeChangeset.fieldChanges !== undefined) {
-				yield* relevantRemovedRootsFromFields(
-					nodeChangeset.fieldChanges,
-					nodeChanges,
-					fieldKinds,
-				);
-			}
-		};
-		yield* handler.relevantRemovedRoots(fieldChange.change, delegate);
-	}
+	// XXX
 }
 
 /**
@@ -2506,7 +2471,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		private readonly allowInval: boolean = false,
 	) {}
 
-	public getChangesForBaseDetach(
+	public getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId> {

@@ -34,7 +34,7 @@ export interface InvertNodeManager {
 }
 
 export interface ComposeNodeManager {
-	getChangesForBaseDetach(
+	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId>;
