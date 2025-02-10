@@ -5,12 +5,14 @@
 
 import {
 	type ApiCallSignature,
+	type ApiClass,
 	type ApiConstructSignature,
 	type ApiConstructor,
 	ApiDocumentedItem,
 	type ApiEntryPoint,
 	type ApiFunction,
 	type ApiIndexSignature,
+	type ApiInterface,
 	type ApiItem,
 	ApiItemKind,
 	type ApiMethod,
@@ -23,6 +25,7 @@ import {
 	ApiReadonlyMixin,
 	type ApiReleaseTagMixin,
 	ApiStaticMixin,
+	type ApiTypeAlias,
 	type Excerpt,
 	type IResolveDeclarationReferenceResult,
 	ReleaseTag,
@@ -97,6 +100,13 @@ export type ApiFunctionLike =
 	| ApiFunction
 	| ApiMethod
 	| ApiMethodSignature;
+
+/**
+ * `ApiItem` union type representing type-like API kinds.
+ *
+ * @public
+ */
+export type ApiTypeLike = ApiInterface | ApiClass | ApiTypeAlias;
 
 /**
  * `ApiItem` union type representing call-signature-like API kinds.

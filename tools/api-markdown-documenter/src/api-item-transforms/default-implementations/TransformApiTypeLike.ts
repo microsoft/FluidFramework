@@ -5,7 +5,6 @@
 
 import {
 	type ApiCallSignature,
-	type ApiClass,
 	type ApiConstructor,
 	type ApiIndexSignature,
 	type ApiItem,
@@ -20,6 +19,7 @@ import {
 	getApiItemKind,
 	getScopedMemberNameForDiagnostics,
 	isStatic,
+	type ApiTypeLike,
 } from "../../utilities/index.js";
 import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
@@ -64,14 +64,14 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
  *
  * - index-signatures
  */
-export function transformApiClass(
-	apiClass: ApiClass,
+export function transformApiTypeLike(
+	apiItem: ApiTypeLike,
 	config: ApiItemTransformationConfiguration,
 	generateChildContent: (apiItem: ApiItem) => SectionNode[],
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	const filteredChildren = getFilteredMembers(apiClass, config);
+	const filteredChildren = getFilteredMembers(apiItem, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const constructors: ApiConstructor[] = [];
@@ -82,8 +82,8 @@ export function transformApiClass(
 		for (const child of filteredChildren) {
 			const childKind = getApiItemKind(child);
 			switch (childKind) {
-				case ApiItemKind.ConstructSignature:
-				case ApiItemKind.Constructor: {
+				case ApiItemKind.Constructor:
+				case ApiItemKind.ConstructSignature: {
 					constructors.push(child as ApiConstructor);
 					break;
 				}
@@ -107,10 +107,10 @@ export function transformApiClass(
 				}
 				default: {
 					config.logger?.error(
-						`Child item "${
-							child.displayName
-						}" of Class "${getScopedMemberNameForDiagnostics(
-							apiClass,
+						`Child item "${child.displayName}" of ${
+							apiItem.kind
+						} "${getScopedMemberNameForDiagnostics(
+							apiItem,
 						)}" is of unsupported API item kind: "${childKind}"`,
 					);
 					break;
@@ -259,5 +259,5 @@ export function transformApiClass(
 		}
 	}
 
-	return config.defaultSectionLayout(apiClass, sections, config);
+	return config.defaultSectionLayout(apiItem, sections, config);
 }
