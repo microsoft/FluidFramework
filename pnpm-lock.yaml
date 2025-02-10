@@ -4776,6 +4776,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
