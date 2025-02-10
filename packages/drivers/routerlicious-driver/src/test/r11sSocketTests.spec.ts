@@ -209,41 +209,36 @@ describe("R11s Socket Tests", () => {
 			documentService.connectToDeltaStream(client),
 		);
 
-		// Track disconnect_document events from client
-		let disconnectDocumentCalled = false;
-		let receivedClientId: string | undefined;
-		let receivedErrorType: string | undefined;
-		let receivedIsCorruption: boolean | undefined;
-
-		socket.on(
-			"disconnect_document",
-			(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
-				disconnectDocumentCalled = true;
-				receivedClientId = clientId;
-				receivedErrorType = errorType;
-				receivedIsCorruption = isCorruption;
-			},
-		);
+		// Set up Promise to await disconnect_document event
+		const disconnectEventP = new Promise<{clientId: string, errorType: string, isCorruption: boolean}>((resolve) => {
+			assert(socket !== undefined, "Socket should be defined");
+			socket.on(
+				"disconnect_document",
+				(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
+					resolve({clientId, errorType, isCorruption});
+				},
+			);
+		});
 
 		// Simulate client detecting corruption and disconnecting
 		connection.dispose(clientError);
 
-		// Verify the client sent the correct disconnect_document event
-		assert(disconnectDocumentCalled, "disconnect_document event should be emitted");
-		assert.strictEqual(receivedClientId, connection.clientId, "Client ID should match");
+		// Wait for and verify the disconnect_document event
+		const disconnectResult = await disconnectEventP;
+		assert.strictEqual(disconnectResult.clientId, connection.clientId, "Client ID should match");
 		assert.strictEqual(
-			receivedErrorType,
+			disconnectResult.errorType,
 			FluidErrorTypes.dataCorruptionError,
 			"Error type should be dataCorruptionError"
 		);
-		assert(receivedIsCorruption, "isCorruption flag should be true");
+		assert(disconnectResult.isCorruption, "isCorruption flag should be true");
 	});
 
 	it("Socket error with Data Processing error", async () => {
 		const clientError = DataProcessingError.create(
 			"DataProcessingError",
 			"test"
-		);;
+		);
 
 		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
@@ -254,31 +249,28 @@ describe("R11s Socket Tests", () => {
 			documentService.connectToDeltaStream(client),
 		);
 
-		// Track disconnect_document events from client
-		let disconnectDocumentCalled = false;
-		let receivedClientId: string | undefined;
-		let receivedErrorType: string | undefined;
-		let receivedIsCorruption: boolean | undefined;
+		// Set up Promise to await disconnect_document event
+		const disconnectEventP = new Promise<{clientId: string, errorType: string, isCorruption: boolean}>((resolve) => {
+			assert(socket !== undefined, "Socket should be defined");
+			socket.on(
+				"disconnect_document",
+				(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
+					resolve({clientId, errorType, isCorruption});
+				},
+			);
+		});
 
-		socket.on(
-			"disconnect_document",
-			(clientId: string, _: string, errorType: string, isCorruption: boolean) => {
-				disconnectDocumentCalled = true;
-				receivedClientId = clientId;
-				receivedErrorType = errorType;
-				receivedIsCorruption = isCorruption;
-			},
-		);
-
+		// Simulate client detecting processing error and disconnecting
 		connection.dispose(clientError);
 
-		assert(disconnectDocumentCalled, "disconnect_document event should be emitted");
-		assert.strictEqual(receivedClientId, connection.clientId, "Client ID should match");
+		// Wait for and verify the disconnect_document event
+		const disconnectResult = await disconnectEventP;
+		assert.strictEqual(disconnectResult.clientId, connection.clientId, "Client ID should match");
 		assert.strictEqual(
-			receivedErrorType,
+			disconnectResult.errorType,
 			FluidErrorTypes.dataProcessingError,
 			"Error type should be dataProcessingError"
 		);
-		assert(receivedIsCorruption, "isCorruption flag should be true for data processing error");
+		assert(disconnectResult.isCorruption, "isCorruption flag should be true for data processing error");
 	});
 });
