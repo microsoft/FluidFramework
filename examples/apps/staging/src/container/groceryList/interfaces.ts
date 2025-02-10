@@ -5,7 +5,7 @@
 
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-// #region GroceryList interfaces
+// #region GroceryList
 /**
  * Interfaces for the GroceryList data object.
  */
@@ -13,11 +13,11 @@ import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 export interface IGroceryItem {
 	readonly id: string;
 	readonly name: string;
-	readonly deleteItem: () => void;
+	readonly removeItem: () => void;
 }
 
 export interface IGroceryListEvents extends IEvent {
-	(event: "itemAdded" | "itemDeleted", listener: (item: IGroceryItem) => void);
+	(event: "itemAdded" | "itemRemoved", listener: (item: IGroceryItem) => void);
 	(event: "disposed", listener: () => void);
 }
 
@@ -27,23 +27,11 @@ export interface IGroceryList {
 	readonly addItem: (name: string) => void;
 	readonly getItems: () => IGroceryItem[];
 	readonly removeItem: (id: string) => void;
+
+	readonly disposed: boolean;
 }
 
-// #region Utils interfaces
-/**
- * Interfaces used for extracting, diffing, and applying changes to an IGroceryList.
- */
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type GroceryListItemPOJO = { id: string; name: string };
-export type GroceryListPOJO = GroceryListItemPOJO[];
-// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
-export type GroceryListChanges = {
-	adds: GroceryListItemPOJO[];
-	removals: GroceryListItemPOJO[];
-};
-
-// #region Runtime interfaces
+// #region Runtime
 /**
  * Interfaces that really should probably be in some runtime package instead.  Describe runtime objects
  * with scoped capabilities.

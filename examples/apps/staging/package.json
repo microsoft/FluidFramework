@@ -1,13 +1,13 @@
 {
-	"name": "@fluid-example/branching",
+	"name": "@fluid-example/staging",
 	"version": "2.22.0",
 	"private": true,
-	"description": "Using the experimental branching feature.",
+	"description": "Using the experimental staging feature.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "examples/apps/branching"
+		"directory": "examples/apps/staging"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
