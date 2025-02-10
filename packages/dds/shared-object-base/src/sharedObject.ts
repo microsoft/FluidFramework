@@ -658,13 +658,75 @@ export abstract class SharedObjectCore<
 				clientSequenceNumber,
 			};
 			decodedMessagesContent.push(decodedMessageContent);
+
+			const decodedMessage: ISequencedDocumentMessage = {
+				...envelope,
+				contents: decodedMessageContent.contents,
+				clientSequenceNumber,
+			};
+			this.emitInternal("pre-op", decodedMessage, local, this);
+
+			// back-compat: Until processCore is removed and processMessagesCore becomes required, if processMessagesCore
+			// is not implemented, call processCore for each message and emit the "op" event.
+			if (this.processMessagesCore === undefined) {
+				this.opProcessingHelper.measure(
+					(): ICustomData<ProcessTelemetryProperties> => {
+						this.processCore(decodedMessage, local, localOpMetadata);
+						const telemetryProperties: ProcessTelemetryProperties = {
+							sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+						};
+						return {
+							customData: telemetryProperties,
+						};
+					},
+					local ? "local" : "remote",
+				);
+				this.emitInternal("op", decodedMessage, local, this);
+			}
 		}
 
+		<<<<<<< HEAD
 		const decodedMessagesCollection: IRuntimeMessageCollection = {
 			...messagesCollection,
 			messagesContent: decodedMessagesContent,
 		};
 		this.processMessagesHelper(decodedMessagesCollection);
+		=======
+		// This case is taken care of in the previous for-loop.
+		if (this.processMessagesCore === undefined) {
+			return;
+		}
+
+		this.opProcessingHelper.measure(
+			(): ICustomData<ProcessTelemetryProperties> => {
+				assert(
+					this.processMessagesCore !== undefined,
+					"processMessagesCore should be defined",
+				);
+				this.processMessagesCore({
+					envelope,
+					local,
+					messagesContent: decodedMessagesContent,
+				});
+				const telemetryProperties: ProcessTelemetryProperties = {
+					sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+				};
+				return {
+					customData: telemetryProperties,
+				};
+			},
+			local ? "local" : "remote",
+		);
+
+		for (const { contents, clientSequenceNumber } of decodedMessagesContent) {
+			const message: ISequencedDocumentMessage = {
+				...envelope,
+				contents,
+				clientSequenceNumber,
+			};
+			this.emitInternal("op", message, local, this);
+		}
+		>>>>>>> 3976e46c3d (Deprecate process and processCore)
 	}
 
 	/**
