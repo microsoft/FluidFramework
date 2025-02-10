@@ -98,7 +98,7 @@ function createToolTipContents(schema: SharedTreeSchemaNode): VisualTreeNode {
 }
 
 /**
- * Converts the visual representation from {@link visualizeInternalNodeBySchema} to a visual tree compatible with the devtools-view.
+ * Converts the visual representation from {@link visualizeNodeBySchema} to a visual tree compatible with the devtools-view.
  * @param tree - the visual representation of the SharedTree.
  * @returns - the visual representation of type {@link VisualChildNode}
  */
@@ -169,14 +169,14 @@ interface FieldSchemaProperties {
 	 * Set of type names that are valid for this specific node position in the tree.
 	 * This is a subset of the types defined in treeDefinitions.
 	 */
-	allowedTypes?: ReadonlySet<string>;
+	allowedTypes: ReadonlySet<string> | undefined;
 
 	/**
 	 * Whether this field is required in its parent object schema.
 	 * Only meaningful for direct children of object nodes.
 	 * Undefined for array/map elements since they are always required within their parent.
 	 */
-	isRequired?: boolean;
+	isRequired: boolean | undefined;
 }
 
 /**
@@ -218,7 +218,7 @@ async function visualizeVerboseNodeFields(
  */
 function getFieldTooltipProperties(schema: SimpleObjectNodeSchema): {
 	allowedTypes: Record<string, ReadonlySet<string>>;
-	elementIsRequired: Record<string, boolean>;
+	isRequired: Record<string, boolean>;
 } {
 	const allowedTypes: Record<string, ReadonlySet<string>> = {};
 
@@ -226,15 +226,14 @@ function getFieldTooltipProperties(schema: SimpleObjectNodeSchema): {
 	 * Maps each field or node identifier to a boolean indicating
 	 * whether it is required (true) or optional (false).
 	 */
-	const elementIsRequired: Record<string, boolean> = {};
+	const isRequired: Record<string, boolean> = {};
 
 	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
 		allowedTypes[fieldKey] = treeFieldSimpleSchema.allowedTypes;
-		elementIsRequired[fieldKey] =
-			treeFieldSimpleSchema.kind === FieldKind.Required ? true : false;
+		isRequired[fieldKey] = treeFieldSimpleSchema.kind === FieldKind.Required ? true : false;
 	}
 
-	return { allowedTypes, elementIsRequired };
+	return { allowedTypes, isRequired };
 }
 
 /**
@@ -246,7 +245,7 @@ async function visualizeObjectNode(
 	{ allowedTypes, isRequired }: FieldSchemaProperties,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const { allowedTypes: objectNodeAllowedTypes, elementIsRequired: objectNodeIsRequired } =
+	const { allowedTypes: objectNodeAllowedTypes, isRequired: objectNodeIsRequired } =
 		getFieldTooltipProperties(treeDefinitions.get(tree.type) as SimpleObjectNodeSchema);
 
 	return {
@@ -307,7 +306,7 @@ async function visualizeMapNode(
  *
  * @remarks
  */
-async function visualizeInternalNodeBySchema(
+async function visualizeNodeBySchema(
 	tree: VerboseTreeNode,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	{ allowedTypes, isRequired }: FieldSchemaProperties,
@@ -353,7 +352,7 @@ async function visualizeInternalNodeBySchema(
 				fields[i] = await visualizeSharedTreeBySchema(
 					child,
 					treeDefinitions,
-					{ allowedTypes: arrayNodeAllowedTypes[i] },
+					{ allowedTypes: arrayNodeAllowedTypes[i], isRequired: undefined },
 					visualizeChildData,
 				);
 			}
@@ -396,7 +395,7 @@ async function visualizeInternalNodeBySchema(
  * @remarks
  * This function handles both leaf nodes (primitive values, handles) and internal nodes (objects, maps, arrays).
  * For leaf nodes, it creates a visual representation with the node's schema and value.
- * For internal nodes, it recursively processes the node's fields using {@link visualizeInternalNodeBySchema}.
+ * For internal nodes, it recursively processes the node's fields using {@link visualizeNodeBySchema}.
  */
 export async function visualizeSharedTreeBySchema(
 	tree: VerboseTree,
@@ -414,7 +413,7 @@ export async function visualizeSharedTreeBySchema(
 				value: await visualizeChildData(tree),
 				kind: VisualSharedTreeNodeKind.LeafNode,
 			}
-		: visualizeInternalNodeBySchema(
+		: visualizeNodeBySchema(
 				tree,
 				treeDefinitions,
 				{ allowedTypes, isRequired },
