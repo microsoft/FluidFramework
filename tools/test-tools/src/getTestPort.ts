@@ -8,6 +8,7 @@ import os from "os";
 import path from "path";
 
 const defaultPort = 8081;
+const commonErrorString = `Using default port ${defaultPort}. If you encounter port collisions, be sure to run assign-test-ports.`;
 
 /**
  * Get the port for the pkg from the mapping.  Use a default if the file or the entry doesn't exist
@@ -16,8 +17,6 @@ const defaultPort = 8081;
  */
 export function getTestPort(pkgName: string): number {
 	let mappedPort: number;
-
-	const commonErrorString = `Using default port ${defaultPort}. If you encounter port collisions, be sure to run assign-test-ports.`;
 
 	try {
 		const portMapRaw: string = fs
