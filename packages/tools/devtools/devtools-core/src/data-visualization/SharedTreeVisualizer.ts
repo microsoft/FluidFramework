@@ -166,7 +166,7 @@ export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
  */
 interface FieldSchemaProperties {
 	/**
-	 * Set of type names that are valid for this specific node position in the tree.
+	 * Set of node schema (represented by name) that are valid under this field.
 	 * This is a subset of the types defined in treeDefinitions.
 	 */
 	allowedTypes: ReadonlySet<string> | undefined;
