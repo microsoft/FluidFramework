@@ -29,10 +29,11 @@ export {
 export {
 	unscopedPackageNameString,
 	BaseCommand,
+	BaseCommandWithBuildProject,
 	GenerateEntrypointsCommand,
 } from "./commands/index.js";
 export { Context, VersionDetails, isMonoRepoKind, MonoRepoKind } from "./context.js";
-export { Repository } from "./git.js";
+export { Repository, getVersionsFromTags } from "./git.js";
 export {
 	ensureDevDependencyExists,
 	filterVersionsOlderThan,

@@ -9,29 +9,29 @@ import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-d
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ContainerSchema, DataObjectClass, LoadableObjectClass } from "./types.js";
+import type { ContainerSchema, DataObjectKind, LoadableObjectKind } from "./types.js";
 
 /**
- * Runtime check to determine if a class is a DataObject type.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export function isDataObjectClass<T extends IFluidLoadable>(
-	obj: LoadableObjectClass<T>,
-): obj is DataObjectClass<T>;
+export function isDataObjectKind<T extends IFluidLoadable>(
+	obj: LoadableObjectKind<T>,
+): obj is DataObjectKind<T>;
 
 /**
- * Runtime check to determine if a class is a DataObject type.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export function isDataObjectClass(
-	obj: LoadableObjectClass,
-): obj is DataObjectClass<IFluidLoadable>;
+export function isDataObjectKind(
+	obj: LoadableObjectKind,
+): obj is DataObjectKind<IFluidLoadable>;
 
 /**
- * Runtime check to determine if a class is a DataObject type.
+ * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
-export function isDataObjectClass(
-	obj: LoadableObjectClass,
-): obj is DataObjectClass<IFluidLoadable> {
-	const maybe = obj as Partial<DataObjectClass<IFluidLoadable>> | undefined;
+export function isDataObjectKind(
+	obj: LoadableObjectKind,
+): obj is DataObjectKind<IFluidLoadable> {
+	const maybe = obj as Partial<DataObjectKind<IFluidLoadable>> | undefined;
 	const isDataObject =
 		maybe?.factory?.IFluidDataStoreFactory !== undefined &&
 		maybe.factory.IFluidDataStoreFactory === maybe.factory;
@@ -52,9 +52,9 @@ export function isDataObjectClass(
  * Runtime check to determine if a class is a SharedObject type
  */
 export function isSharedObjectKind(
-	obj: LoadableObjectClass,
+	obj: LoadableObjectKind,
 ): obj is ISharedObjectKind<IFluidLoadable> {
-	return !isDataObjectClass(obj);
+	return !isDataObjectKind(obj);
 }
 
 /**
@@ -68,10 +68,10 @@ export const parseDataObjectsFromSharedObjects = (
 	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
 	const sharedObjects = new Set<IChannelFactory>();
 
-	const tryAddObject = (obj: LoadableObjectClass): void => {
+	const tryAddObject = (obj: LoadableObjectKind): void => {
 		if (isSharedObjectKind(obj)) {
 			sharedObjects.add(obj.getFactory());
-		} else if (isDataObjectClass(obj)) {
+		} else if (isDataObjectKind(obj)) {
 			registryEntries.add([obj.factory.type, Promise.resolve(obj.factory)]);
 		} else {
 			throw new Error(`Entry is neither a DataObject or a SharedObject`);
@@ -84,7 +84,7 @@ export const parseDataObjectsFromSharedObjects = (
 		...(schema.dynamicObjectTypes ?? []),
 	]);
 	for (const obj of dedupedObjects) {
-		tryAddObject(obj as unknown as LoadableObjectClass);
+		tryAddObject(obj as unknown as LoadableObjectKind);
 	}
 
 	if (registryEntries.size === 0 && sharedObjects.size === 0) {
