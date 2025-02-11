@@ -51,7 +51,7 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	getBranch,
-	type ISharedTree,
+	type ITreePrivate,
 	type SharedTree,
 	Tree,
 	type TreeCheckout,
@@ -201,7 +201,7 @@ describe("SharedTree", () => {
 		const sharedTree = treeTestFactory();
 		const view = sharedTree.viewWith(
 			new TreeViewConfiguration({
-				schema: new SchemaFactory(undefined).number,
+				schema: SchemaFactory.number,
 				enableSchemaValidation,
 			}),
 		);
@@ -1861,7 +1861,7 @@ describe("SharedTree", () => {
 				pendingOps,
 			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
+			const tree = await dataStore.getSharedObject<ITreePrivate>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
 
@@ -2160,8 +2160,7 @@ describe("SharedTree", () => {
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
-		const sf = new SchemaFactory(undefined);
-		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(sf.optional([])));
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(SchemaFactory.optional([])));
 
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,

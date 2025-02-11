@@ -104,7 +104,6 @@ export class MockRuntime
 			isBlobDeleted: (blobPath: string) => this.isBlobDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: stashed[1] as IPendingBlobs | undefined,
-			closeContainer: () => (this.closed = true),
 		});
 	}
 
@@ -469,7 +468,7 @@ describe("BlobManager", () => {
 		assert.strictEqual(summaryData.redirectTable?.length, 1);
 	});
 
-	it("close container if blob expired", async () => {
+	it("reupload blob if expired", async () => {
 		await runtime.attach();
 		await runtime.connect();
 		runtime.attachedStorage.minTTL = 0.001; // force expired TTL being less than connection time (50ms)
@@ -478,7 +477,6 @@ describe("BlobManager", () => {
 		runtime.disconnect();
 		await new Promise<void>((resolve) => setTimeout(resolve, 50));
 		await runtime.connect();
-		assert.strictEqual(runtime.closed, true);
 		await runtime.processAll();
 	});
 

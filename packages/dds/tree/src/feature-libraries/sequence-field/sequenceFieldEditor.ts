@@ -75,8 +75,19 @@ export interface SequenceFieldEditor extends FieldEditor<Changeset> {
 }
 
 export const sequenceFieldEditor = {
-	buildChildChange: (index: number, change: NodeId): Changeset =>
-		markAtIndex(index, { count: 1, changes: change }),
+	buildChildChanges: (changes: Iterable<[number, NodeId]>): Changeset => {
+		const changeset: Changeset = [];
+		let currentIndex = 0;
+		for (const [index, change] of changes) {
+			assert(index >= currentIndex, "Child changes must be in order.");
+			if (index > currentIndex) {
+				changeset.push({ count: index - currentIndex });
+			}
+			changeset.push({ count: 1, changes: change });
+			currentIndex = index + 1;
+		}
+		return changeset;
+	},
 	insert: (
 		index: number,
 		count: number,

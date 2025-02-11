@@ -35,7 +35,8 @@ export interface SeqTime {
 
 /**
  * Implementation of {@link Perspective}.
- * See {@link Client.createPerspective}.
+ * @privateRemarks
+ * TODO:AB#29765: This class does not support non-local-client perspectives, but should.
  */
 export class PerspectiveImpl implements Perspective {
 	/**
@@ -85,6 +86,8 @@ export class PerspectiveImpl implements Perspective {
  * @param seq - The latest sequence number to consider.
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was removed in the given perspective.
+ * @privateRemarks
+ * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasRemovedBefore(
 	seg: SegmentWithInfo<IInsertionInfo & IRemovalInfo>,
@@ -106,6 +109,8 @@ export function wasRemovedBefore(
  * @param refSeq - The latest sequence number to consider.
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was moved (aka obliterated) in the given perspective.
+ * @privateRemarks
+ * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasMovedBefore(
 	seg: SegmentWithInfo<IInsertionInfo & IMoveInfo>,
@@ -123,6 +128,8 @@ export function wasMovedBefore(
 
 /**
  * See {@link wasRemovedBefore} and {@link wasMovedBefore}.
+ * @privateRemarks
+ * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
 	return (
@@ -138,6 +145,8 @@ export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): bo
  * @param seqTime - The latest sequence number and local sequence number to consider.
  * @returns true iff this segment was inserted before the given perspective,
  * and it was not removed or moved in the given perspective.
+ * @privateRemarks
+ * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function isSegmentPresent(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
 	const { refSeq, localSeq } = seqTime;

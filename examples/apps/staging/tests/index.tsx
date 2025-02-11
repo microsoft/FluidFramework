@@ -21,8 +21,10 @@ import { createElement } from "react";
 import { createRoot } from "react-dom/client";
 import { v4 as uuid } from "uuid";
 
-import { GroceryListContainerRuntimeFactory } from "../src/model/index.js";
-import type { IGroceryList } from "../src/modelInterfaces.js";
+import {
+	GroceryListContainerRuntimeFactory,
+	type ISuggestionGroceryList,
+} from "../src/container/index.js";
 import { AppView, DebugView } from "../src/view/index.js";
 
 const updateTabForId = (id: string) => {
@@ -43,7 +45,7 @@ const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory()
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	let id: string;
-	let groceryList: IGroceryList;
+	let groceryList: ISuggestionGroceryList;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
@@ -52,7 +54,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
 		const documentId = uuid();
 		await container.attach(createLocalResolverCreateNewRequest(documentId));
 		if (container.resolvedUrl === undefined) {
@@ -68,13 +70,13 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
 	}
 
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
-	const render = (groceryList: IGroceryList) => {
+	const render = (groceryList: ISuggestionGroceryList) => {
 		const appRoot = createRoot(appDiv);
 		appRoot.render(createElement(AppView, { groceryList }));
 

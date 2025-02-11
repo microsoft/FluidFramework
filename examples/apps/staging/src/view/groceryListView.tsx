@@ -5,26 +5,39 @@
 
 import React, { FC, useEffect, useRef, useState } from "react";
 
-import { IGroceryItem, IGroceryList } from "../modelInterfaces.js";
+import type { ISuggestionGroceryList, ISuggestionGroceryItem } from "../container/index.js";
 
-export interface IGroceryItemViewProps {
-	groceryItem: IGroceryItem;
+interface IGroceryItemViewProps {
+	groceryItem: ISuggestionGroceryItem;
 }
 
-export const GroceryItemView: FC<IGroceryItemViewProps> = ({
+const GroceryItemView: FC<IGroceryItemViewProps> = ({
 	groceryItem,
 }: IGroceryItemViewProps) => {
+	const backgroundColor =
+		groceryItem.suggestion === "add"
+			? "#cfc"
+			: groceryItem.suggestion === "remove"
+				? "#fcc"
+				: undefined;
+
+	const action =
+		groceryItem.suggestion === "remove" ? (
+			<button
+				onClick={groceryItem.rejectRemovalSuggestion}
+				style={{ border: "none", background: "none" }}
+			>
+				↩️
+			</button>
+		) : (
+			<button onClick={groceryItem.removeItem} style={{ border: "none", background: "none" }}>
+				❌
+			</button>
+		);
 	return (
-		<tr>
+		<tr style={backgroundColor !== undefined ? { backgroundColor } : undefined}>
 			<td>{groceryItem.name}</td>
-			<td>
-				<button
-					onClick={groceryItem.deleteItem}
-					style={{ border: "none", background: "none" }}
-				>
-					❌
-				</button>
-			</td>
+			<td>{action}</td>
 		</tr>
 	);
 };
@@ -68,13 +81,15 @@ const AddItemView: FC<IAddItemViewProps> = ({ addItem }: IAddItemViewProps) => {
 };
 
 export interface IGroceryListViewProps {
-	groceryList: IGroceryList;
+	groceryList: ISuggestionGroceryList;
 }
 
 export const GroceryListView: FC<IGroceryListViewProps> = ({
 	groceryList,
 }: IGroceryListViewProps) => {
-	const [groceryItems, setGroceryItems] = useState<IGroceryItem[]>(groceryList.getItems());
+	const [groceryItems, setGroceryItems] = useState<ISuggestionGroceryItem[]>(
+		groceryList.getItems(),
+	);
 	useEffect(() => {
 		const updateItems = () => {
 			// TODO: This blows away all the grocery items, making the granular add/delete events
@@ -82,24 +97,27 @@ export const GroceryListView: FC<IGroceryListViewProps> = ({
 			setGroceryItems(groceryList.getItems());
 		};
 		groceryList.events.on("itemAdded", updateItems);
-		groceryList.events.on("itemDeleted", updateItems);
+		groceryList.events.on("itemRemoved", updateItems);
+		groceryList.events.on("itemSuggestionChanged", updateItems);
 
 		return () => {
 			groceryList.events.off("itemAdded", updateItems);
-			groceryList.events.off("itemDeleted", updateItems);
+			groceryList.events.off("itemRemoved", updateItems);
+			groceryList.events.off("itemSuggestionChanged", updateItems);
 		};
 	}, [groceryList]);
 
-	const groceryItemViews = groceryItems.map((groceryItem) => {
-		return <GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />;
-	});
+	// This should already be sorted, but adding it here too in case I want to do something fancy later
+	// regarding more granular updates as noted in the above TODO.
+	const groceryItemViews = groceryItems
+		.sort((a, b) => a.id.localeCompare(b.id, "en", { sensitivity: "base" }))
+		.map((groceryItem) => <GroceryItemView key={groceryItem.id} groceryItem={groceryItem} />);
 
 	return (
 		<table style={{ margin: "0 auto", textAlign: "left", borderCollapse: "collapse" }}>
 			<tbody>
-				{groceryItemViews.length > 0 ? (
-					groceryItemViews
-				) : (
+				{groceryItemViews}
+				{groceryItemViews.length === 0 && (
 					<tr>
 						<td colSpan={1}>No items on grocery list</td>
 					</tr>

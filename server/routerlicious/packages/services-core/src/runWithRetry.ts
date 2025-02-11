@@ -73,7 +73,7 @@ export async function runWithRetry<T>(
 				);
 				if (shouldIgnoreError !== undefined && shouldIgnoreError(error) === true) {
 					Lumberjack.info(`Should ignore error for ${callName}`, telemetryProperties);
-					break;
+					return undefined as unknown as T; // Ensure a value of type T is returned
 				} else if (shouldRetry !== undefined && shouldRetry(error) === false) {
 					Lumberjack.error(
 						`Should not retry ${callName} for the current error, rejecting`,

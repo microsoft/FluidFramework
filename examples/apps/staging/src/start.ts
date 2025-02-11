@@ -18,8 +18,10 @@ import { createElement } from "react";
 // eslint-disable-next-line import/no-internal-modules
 import { createRoot } from "react-dom/client";
 
-import { GroceryListContainerRuntimeFactory } from "./model/index.js";
-import type { IGroceryList } from "./modelInterfaces.js";
+import {
+	GroceryListContainerRuntimeFactory,
+	type ISuggestionGroceryList,
+} from "./container/index.js";
 import { AppView, DebugView } from "./view/index.js";
 
 const updateTabForId = (id: string) => {
@@ -30,7 +32,7 @@ const updateTabForId = (id: string) => {
 	document.title = id;
 };
 
-const render = (groceryList: IGroceryList) => {
+const render = (groceryList: ISuggestionGroceryList) => {
 	const appDiv = document.getElementById("app") as HTMLDivElement;
 	const appRoot = createRoot(appDiv);
 	appRoot.render(createElement(AppView, { groceryList }));
@@ -47,7 +49,7 @@ const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory()
 
 async function start(): Promise<void> {
 	let id: string;
-	let groceryList: IGroceryList;
+	let groceryList: ISuggestionGroceryList;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
@@ -56,7 +58,7 @@ async function start(): Promise<void> {
 			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
 		await container.attach(createTinyliciousTestCreateNewRequest());
 		if (container.resolvedUrl === undefined) {
 			throw new Error("Resolved Url not available on attached container");
@@ -70,7 +72,7 @@ async function start(): Promise<void> {
 			documentServiceFactory: createRouterliciousDocumentServiceFactory(tokenProvider),
 			codeLoader,
 		});
-		groceryList = (await container.getEntryPoint()) as IGroceryList;
+		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
 	}
 
 	render(groceryList);

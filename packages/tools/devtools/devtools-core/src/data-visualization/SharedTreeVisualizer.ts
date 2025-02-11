@@ -242,8 +242,7 @@ export async function visualizeSharedTreeNodeBySchema(
 	treeSchema: SimpleTreeSchema,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const sf = new SchemaFactory(undefined);
-	if (Tree.is(tree, [sf.boolean, sf.null, sf.number, sf.handle, sf.string])) {
+	if (Tree.is(tree, SchemaFactory.leaves)) {
 		const nodeSchema = Tree.schema(tree);
 		return {
 			schema: {
@@ -280,9 +279,9 @@ export async function visualizeSharedTreeNodeBySchema(
 				throw new TypeError("Invalid array");
 			}
 
-			for (let i = 0; i < children.length; i++) {
+			for (const [i, child] of children.entries()) {
 				fields[i] = await visualizeSharedTreeNodeBySchema(
-					children[i],
+					child,
 					treeSchema,
 					visualizeChildData,
 				);

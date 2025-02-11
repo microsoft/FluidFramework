@@ -14,12 +14,13 @@ import {
 	type TreeView,
 	getOrCreateInnerNode,
 	treeNodeApi,
+	rollback,
+	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
 import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import { rollback, type TransactionConstraint } from "./transactionTypes.js";
 
 /**
  * A function which runs a transaction in a SharedTree.

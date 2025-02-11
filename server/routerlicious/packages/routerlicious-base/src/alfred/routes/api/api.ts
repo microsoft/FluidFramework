@@ -14,6 +14,8 @@ import {
 	getParam,
 	getBooleanFromConfig,
 	verifyToken,
+	verifyStorageToken,
+	logHttpMetrics,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import {
@@ -333,6 +335,8 @@ const uploadBlob = async (
 			getGlobalTelemetryContext().getProperties().correlationId ??
 			uuid() /* getCorrelationId */,
 		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+		undefined /* refreshTokenIfNeeded */,
+		logHttpMetrics /* logHttpMetrics */,
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",

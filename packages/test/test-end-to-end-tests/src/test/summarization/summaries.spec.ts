@@ -408,7 +408,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 	}
 
-	it("Can summarize after hitting nack on unsummarized ops", async function () {
+	// AB#29483: This test is flaky on local server.
+	it.skip("Can summarize after hitting nack on unsummarized ops", async function () {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}

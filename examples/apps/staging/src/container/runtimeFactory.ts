@@ -11,9 +11,10 @@ import type {
 } from "@fluidframework/container-definitions/legacy";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import type { FluidObject } from "@fluidframework/core-interfaces";
 
-import { GroceryListFactory } from "./groceryList.js";
+import { GroceryListFactory, type IGroceryList } from "./groceryList/index.js";
+import type { ISuggestionGroceryList } from "./interfaces.js";
+import { SuggestionGroceryList } from "./suggestionGroceryList.js";
 
 const groceryListId = "grocery-list";
 const groceryListRegistryKey = "grocery-list";
@@ -30,7 +31,14 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 	): Promise<IRuntime> {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
-		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, groceryListId);
+		): Promise<ISuggestionGroceryList> => {
+			const groceryList = await getDataStoreEntryPoint<IGroceryList>(
+				containerRuntime,
+				groceryListId,
+			);
+			// TODO: Here we could pass in the capability to enter staging mode if it lives on the containerRuntime.
+			return new SuggestionGroceryList(groceryList);
+		};
 
 		const runtime = await loadContainerRuntime({
 			context,
@@ -45,7 +53,6 @@ export class GroceryListContainerRuntimeFactory implements IRuntimeFactory {
 			const groceryList = await runtime.createDataStore(groceryListRegistryKey);
 			await groceryList.trySetAlias(groceryListId);
 		}
-		// Any onLoad work would happen here, none needed so far though.
 
 		return runtime;
 	}

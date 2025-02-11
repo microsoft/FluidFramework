@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import fetch from "node-fetch";
-
 /**
  * Represents a webhook subscriber URL.
  * This is the URL that will be notified of the external data changes monitored by {@link MockWebhook}.

@@ -22,10 +22,11 @@ import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "../../epochTracker.js";
+import { mockify } from "../../mockify.js";
 import { LocalPersistentCache } from "../../odspCache.js";
 import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
 import { getHashedDocumentId } from "../../odspPublicUtils.js";
-import * as socketModule from "../../socketModule.js";
+import { SocketIOClientStatic } from "../../socketModule.js";
 
 import { ClientSocketMock } from "./socketMock.js";
 
@@ -115,7 +116,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 	});
 
 	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
-		const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
+		const getSocketCreationStub = stub(SocketIOClientStatic, mockify.key);
 		getSocketCreationStub.returns(_response);
 		try {
 			return await callback();
