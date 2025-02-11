@@ -65,9 +65,6 @@ function getEventLoopMetrics(histogram: IntervalHistogram) {
 		max: (histogram.max / 1e6).toFixed(3),
 		min: (histogram.min / 1e6).toFixed(3),
 		mean: (histogram.mean / 1e6).toFixed(3),
-		p50: (histogram.percentile(0.5) / 1e6).toFixed(3),
-		p95: (histogram.percentile(0.95) / 1e6).toFixed(3),
-		p99: (histogram.percentile(0.99) / 1e6).toFixed(3),
 	};
 }
 
@@ -82,7 +79,7 @@ export function jsonMorganLoggerMiddleware(
 		res: express.Response,
 	) => Record<string, any>,
 	enableLatencyMetric: boolean = false,
-	enableEventLoopLagMetric: boolean = false,
+	enableEventLoopLagMetric: boolean = false, // This metric has performance overhead, so it should be enabled with caution.
 ): express.RequestHandler {
 	return (request, response, next): void => {
 		response.locals.clientDisconnected = false;
