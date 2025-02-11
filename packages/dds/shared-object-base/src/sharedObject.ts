@@ -33,6 +33,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -384,12 +385,33 @@ export abstract class SharedObjectCore<
 	 * @param local - True if the shared object is local
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 *
+	 * @deprecated - Replaced by processMessagesCore.
 	 */
 	protected abstract processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void;
+
+	/* eslint-disable jsdoc/check-indentation */
+	/**
+	 * Process a 'bunch' of messages for this shared object.
+	 *
+	 * @remarks
+	 * A 'bunch is group of messages that have the following properties:
+	 * - They are all part of the same grouped batch, which entails:
+	 *   - They are contiguous in sequencing order.
+	 *   - They are all from the same client.
+	 *   - They are all based on the same reference sequence number.
+	 *   - They are not interleaved with messages from other clients.
+	 * - They are not interleaved with messages from other DDS in the container.
+	 * Derived classes should override this if they need to do custom processing on a 'bunch' of remote messages.
+	 * @param messageCollection - The collection of messages to process.
+	 *
+	 */
+	/* eslint-enable jsdoc/check-indentation */
+	protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
@@ -557,6 +579,8 @@ export abstract class SharedObjectCore<
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 *
+	 * @deprecated - Replaced by processMessages.
 	 */
 	private process(
 		message: ISequencedDocumentMessage,
@@ -582,22 +606,92 @@ export abstract class SharedObjectCore<
 		this.emitInternal("op", message, local, this);
 	}
 
+	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Process messages for this shared object. The messages here are contiguous messages for this object in a batch.
+	 * Process a bunch of messages for this shared object. A bunch is group of messages that have the following properties:
+	 * - They are all part of the same grouped batch, which entails:
+	 *   - They are contiguous in sequencing order.
+	 *   - They are all from the same client.
+	 *   - They are all based on the same reference sequence number.
+	 *   - They are not interleaved with messages from other clients.
+	 * - They are not interleaved with messages from other DDS in the container.
 	 * @param messageCollection - The collection of messages to process.
+	 *
 	 */
+	/* eslint-enable jsdoc/check-indentation */
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
-		const { envelope, messagesContent, local } = messagesCollection;
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-			this.process(
-				{
-					...envelope,
-					clientSequenceNumber,
-					contents: parseHandles(contents, this.serializer),
-				},
-				local,
+		this.verifyNotClosed(); // This will result in container closure.
+		const { envelope, local, messagesContent: encodedMessagesContent } = messagesCollection;
+
+		// Decode any handles in the contents and emit the "pre-op" event.
+		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
+		for (const { contents, localOpMetadata, clientSequenceNumber } of encodedMessagesContent) {
+			const decodedMessageContent: IRuntimeMessagesContent = {
+				contents: parseHandles(contents, this.serializer),
 				localOpMetadata,
-			);
+				clientSequenceNumber,
+			};
+			decodedMessagesContent.push(decodedMessageContent);
+
+			const decodedMessage: ISequencedDocumentMessage = {
+				...envelope,
+				contents: decodedMessageContent.contents,
+				clientSequenceNumber,
+			};
+			this.emitInternal("pre-op", decodedMessage, local, this);
+
+			// back-compat: Until processCore is removed and processMessagesCore becomes required, if processMessagesCore
+			// is not implemented, call processCore for each message and emit the "op" event.
+			if (this.processMessagesCore === undefined) {
+				this.opProcessingHelper.measure(
+					(): ICustomData<ProcessTelemetryProperties> => {
+						this.processCore(decodedMessage, local, localOpMetadata);
+						const telemetryProperties: ProcessTelemetryProperties = {
+							sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+						};
+						return {
+							customData: telemetryProperties,
+						};
+					},
+					local ? "local" : "remote",
+				);
+				this.emitInternal("op", decodedMessage, local, this);
+			}
+		}
+
+		// This case is taken care of in the previous for-loop.
+		if (this.processMessagesCore === undefined) {
+			return;
+		}
+
+		this.opProcessingHelper.measure(
+			(): ICustomData<ProcessTelemetryProperties> => {
+				assert(
+					this.processMessagesCore !== undefined,
+					"processMessagesCore should be defined",
+				);
+				this.processMessagesCore({
+					envelope,
+					local,
+					messagesContent: decodedMessagesContent,
+				});
+				const telemetryProperties: ProcessTelemetryProperties = {
+					sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+				};
+				return {
+					customData: telemetryProperties,
+				};
+			},
+			local ? "local" : "remote",
+		);
+
+		for (const { contents, clientSequenceNumber } of decodedMessagesContent) {
+			const message: ISequencedDocumentMessage = {
+				...envelope,
+				contents,
+				clientSequenceNumber,
+			};
+			this.emitInternal("op", message, local, this);
 		}
 	}
 
