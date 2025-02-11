@@ -182,7 +182,11 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
-			public detach(source: Range, destination: FieldKey): void {
+			public detach(
+				source: Range,
+				destination: FieldKey,
+				destinationDetachedNodeId: DeltaDetachedNodeId,
+			): void {
 				preEdit();
 				this.detachEdit(source, destination);
 			}

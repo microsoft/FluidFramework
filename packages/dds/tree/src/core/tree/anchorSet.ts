@@ -855,7 +855,6 @@ export class AnchorSet implements AnchorLocator {
 					}
 				}
 			},
-			// TODO is it actually necessary for attach? check to see what's going on in moveChildren
 			attach(
 				source: FieldKey,
 				sourceDetachedNodeId: Delta.DetachedNodeId,
