@@ -54,7 +54,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" --exit --ignore \"lib/test/types/*\" -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:base": "mocha --ignore \"dist/test/types/*\" --ignore \"lib/test/types/*\" -r node_modules/@fluid-internal/mocha-test-setup",
 		"test:mocha:cjs": "pnpm test:mocha:base --recursive \"dist/test/**/*.spec.*js\"",
 		"test:mocha:esm": "pnpm test:mocha:base --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:suite": "pnpm test:mocha:base \"lib/test/ddsSuiteCases/*js\"",
