@@ -52,16 +52,16 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 
 /**
  * {@link @fluidframework/tree#SharedTree}-backed {@link PureDataObject | data object}.
+ *
  * @internal
  */
-export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
-	extends PureDataObject
-	implements ITreeDataObject<TSchema>
-{
+export abstract class TreeDataObject<
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> extends PureDataObject {
 	private internalRoot: ITree | undefined;
 	private readonly rootTreeId = "root";
 
-	#tree?: TreeView<TSchema>;
+	#tree: TreeView<TSchema> | undefined;
 
 	/**
 	 * Gets the root of the underlying tree
@@ -104,6 +104,8 @@ export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = Impli
 	/**
 	 * Generates an error string indicating an item is uninitialized.
 	 * @param item - The name of the item that was uninitialized.
+	 *
+	 * @virtual
 	 */
 	protected getUninitializedErrorString(item: string): string {
 		return `${item} must be initialized before being accessed.`;
