@@ -124,6 +124,7 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
+	type schemaStatics,
 	type ITreeAlpha,
 	type TransactionConstraint,
 	type NodeInDocumentConstraint,

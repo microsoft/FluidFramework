@@ -50,6 +50,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
+		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
