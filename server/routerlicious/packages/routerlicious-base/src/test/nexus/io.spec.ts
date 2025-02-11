@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { Deferred } from "@fluidframework/common-utils";
+import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IClientJoin,
 	IConnect,
@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
-import { configureWebSocketServices } from "@fluidframework/server-lambdas";
+import { configureWebSocketServices, type ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { LocalOrderManager, PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import { generateToken } from "@fluidframework/server-services-utils";
@@ -111,6 +111,7 @@ describe("Routerlicious", () => {
 				let testClientManager: IClientManager;
 				let testClusterDrainingChecker: TestClusterDrainingChecker;
 				let testRevokedTokenChecker: TestRevokedTokenChecker;
+				let collaborationSessionEventEmitter: TypedEventEmitter<ICollaborationSessionEvents>;
 
 				const throttleLimitTenant = 7;
 				const throttleLimitConnectDoc = 4;
@@ -169,6 +170,8 @@ describe("Routerlicious", () => {
 					testClusterDrainingChecker = new TestClusterDrainingChecker();
 					testRevokedTokenChecker = new TestRevokedTokenChecker();
 
+					collaborationSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+
 					configureWebSocketServices(
 						webSocketServer,
 						testOrderer,
@@ -192,7 +195,7 @@ describe("Routerlicious", () => {
 						undefined,
 						undefined,
 						testRevokedTokenChecker,
-						undefined,
+						collaborationSessionEventEmitter,
 						testClusterDrainingChecker,
 					);
 				});
@@ -603,6 +606,7 @@ describe("Routerlicious", () => {
 									),
 								);
 								listenForSignals(clients);
+								assert.equal(collaborationSessionEventEmitter.listenerCount("broadcastSignal"), 1);
 							});
 							describe("sending one signal", () => {
 								[0, 1].forEach((clientIndex) => {
