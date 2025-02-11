@@ -361,9 +361,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processMessagesCore}
+	 * Process a bunch of messages from the runtime. SharedObject will call this method with a bunch of messages.
 	 */
-	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		const commits: GraphCommit<TChange>[] = [];
 		let messagesSessionId: SessionId | undefined;

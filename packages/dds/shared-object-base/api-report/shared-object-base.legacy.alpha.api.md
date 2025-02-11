@@ -78,9 +78,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected newAckBasedPromise<T>(executor: (resolve: (value: T | PromiseLike<T>) => void, reject: (reason?: unknown) => void) => void): Promise<T>;
     protected onConnect(): void;
     protected abstract onDisconnect(): void;
-    // @deprecated
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
-    protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     // (undocumented)
