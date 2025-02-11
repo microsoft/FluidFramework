@@ -23,9 +23,7 @@ import { v4 as uuid } from "uuid";
 
 import {
 	GroceryListContainerRuntimeFactory,
-	type GroceryListAppEntryPoint,
-	type IGroceryList,
-	type PrivateChanges,
+	type ISuggestionGroceryList,
 } from "../src/container/index.js";
 import { AppView, DebugView } from "../src/view/index.js";
 
@@ -47,7 +45,7 @@ const codeLoader = new StaticCodeLoader(new GroceryListContainerRuntimeFactory()
  */
 export async function createContainerAndRenderInElement(element: HTMLDivElement) {
 	let id: string;
-	let entryPoint: GroceryListAppEntryPoint;
+	let groceryList: ISuggestionGroceryList;
 
 	if (location.hash.length === 0) {
 		const container = await createDetachedContainer({
@@ -56,7 +54,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		entryPoint = (await container.getEntryPoint()) as GroceryListAppEntryPoint;
+		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
 		const documentId = uuid();
 		await container.attach(createLocalResolverCreateNewRequest(documentId));
 		if (container.resolvedUrl === undefined) {
@@ -72,18 +70,15 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader,
 		});
-		entryPoint = (await container.getEntryPoint()) as GroceryListAppEntryPoint;
+		groceryList = (await container.getEntryPoint()) as ISuggestionGroceryList;
 	}
 
 	const appDiv = document.createElement("div");
 	const debugDiv = document.createElement("div");
 
-	const render = (
-		groceryList: IGroceryList,
-		getSuggestions: () => Promise<PrivateChanges>,
-	) => {
+	const render = (groceryList: ISuggestionGroceryList) => {
 		const appRoot = createRoot(appDiv);
-		appRoot.render(createElement(AppView, { groceryList, getSuggestions }));
+		appRoot.render(createElement(AppView, { groceryList }));
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		const debugRoot = createRoot(debugDiv);
@@ -93,7 +88,7 @@ export async function createContainerAndRenderInElement(element: HTMLDivElement)
 	// update the browser URL and the window title with the actual container ID
 	updateTabForId(id);
 	// Render it
-	render(entryPoint.groceryList, entryPoint.getSuggestions);
+	render(groceryList);
 
 	element.append(appDiv, debugDiv);
 
