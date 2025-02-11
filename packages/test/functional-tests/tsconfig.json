@@ -6,7 +6,7 @@
 		"outDir": "./lib",
 		// This is a test-only project so it uses these types
 		"types": ["mocha", "node"],
-		"noUncheckedIndexedAccess": true,
+		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
 }

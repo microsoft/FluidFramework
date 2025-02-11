@@ -9,7 +9,7 @@ module.exports = {
 		"prettier",
 	],
 	rules: {
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
+		"@fluid-internal/fluid/no-unchecked-record-access": "error",
 	},
 	overrides: [
 		{

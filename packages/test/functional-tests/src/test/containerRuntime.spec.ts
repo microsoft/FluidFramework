@@ -219,10 +219,8 @@ describe("Container Runtime", () => {
 
 			const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
 			// Add batch begin and batch end metadata to the messages.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			messages[0]!.metadata = { batch: true };
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			messages[count - 1]!.metadata = { batch: false };
+			messages[0].metadata = { batch: true };
+			messages[count - 1].metadata = { batch: false };
 			await emitMessages(messages);
 
 			// Batch messages are processed in a single turn. So, we should have received the batch events.
@@ -284,10 +282,8 @@ describe("Container Runtime", () => {
 
 			const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
 			// Add batch begin and batch end metadata to the messages.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			messages[1]!.metadata = { batch: true };
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			messages[count - 1]!.metadata = { batch: false };
+			messages[1].metadata = { batch: true };
+			messages[count - 1].metadata = { batch: false };
 			await emitMessages(messages);
 
 			// We should have received the batch events for the non-batch message in the first turn.
@@ -322,10 +318,8 @@ describe("Container Runtime", () => {
 
 			const messages: ISequencedDocumentMessage[] = getMessages(clientId, count);
 			// Add batch begin and batch end metadata to the messages.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			messages[0]!.metadata = { batch: true };
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			messages[count - 2]!.metadata = { batch: false };
+			messages[0].metadata = { batch: true };
+			messages[count - 2].metadata = { batch: false };
 			await emitMessages(messages);
 
 			// We should have received the batch events for the batch messages in the first turn.
