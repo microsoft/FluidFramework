@@ -173,7 +173,7 @@ describe("Presence", () => {
 			});
 
 			describe.skip("DatastoreUpdate", () => {
-				it("with emitting 'workspaceActivated' event for unregistered States workspace ", () => {
+				it("with emitting 'workspaceActivated' event for unregistered States workspace", () => {
 					// Setup
 					const listener = spy();
 					presence.events.on("workspaceActivated", listener);
