@@ -436,7 +436,7 @@ describe("SharedTree benchmarks", () => {
 	// In this context "op bunch" refers to a group of ops for the same DDS that are sent by a peer in a single message.
 	describe("rebasing over op bunch", () => {
 		// The number of commits in a bunch for a given run of this test suite.
-		const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
+		const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [10];
 		// Number of local commits to rebase over the inbound bunch
 		const localBranchSizes = isInPerformanceTestingMode ? [10, 100] : [2];
 		// If op bunching is used, then the time taken to rebase the local branch over the bunch should be proportional to `bunchSize + localBranchSize` instead of `bunchSize * localBranchSize`.

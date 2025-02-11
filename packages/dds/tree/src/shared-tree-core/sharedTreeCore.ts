@@ -338,25 +338,26 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
 	}
 
+	/**
+	 * Process a message from the runtime.
+	 * @deprecated - Use processMessagesCore to process a bunch of messages together.
+	 */
 	public processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const { commit, sessionId } = this.messageCodec.decode(message.contents, {
-			idCompressor: this.idCompressor,
+		this.processMessagesCore({
+			envelope: message,
+			local,
+			messagesContent: [
+				{
+					clientSequenceNumber: message.clientSequenceNumber,
+					contents: message.contents,
+					localOpMetadata,
+				},
+			],
 		});
-
-		this.editManager.addSequencedChanges(
-			[commit],
-			sessionId,
-			brand(message.sequenceNumber),
-			brand(message.referenceSequenceNumber),
-		);
-		this.resubmitMachine.onSequencedCommitApplied(local);
-
-		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
 	/**

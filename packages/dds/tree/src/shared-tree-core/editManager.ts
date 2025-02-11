@@ -674,9 +674,18 @@ export class EditManager<
 			0xa64 /* Attempted to sequence change with an outdated sequence number */,
 		);
 
-		const getSequenceId: () => SequenceId = () => {
-			const commitsSequenceNumber = this.getBatch(sequenceNumber);
-			return commitsSequenceNumber.length === 0
+		// Returns the sequence id for the next commit to be processed in the bunch. Since all the commits have the
+		// same sequence number, only the index in the batch needs to be incremented.
+		const getNextSequenceId = (sequenceId: SequenceId): SequenceId => {
+			return {
+				sequenceNumber: sequenceId.sequenceNumber,
+				indexInBatch: (sequenceId.indexInBatch ?? 0) + 1,
+			};
+		};
+		const commitsSequenceNumber = this.getBatch(sequenceNumber);
+		// The sequence id for the next commit to be processed in the bunch.
+		let nextSequenceId =
+			commitsSequenceNumber.length === 0
 				? {
 						sequenceNumber,
 					}
@@ -684,14 +693,13 @@ export class EditManager<
 						sequenceNumber,
 						indexInBatch: commitsSequenceNumber.length,
 					};
-		};
 
 		// Local changes, i.e., changes from this client are applied by fast forwarding the local branch commit onto
 		// the trunk.
 		if (sessionId === this.localSessionId) {
 			for (const _ of newCommits) {
-				const sequenceId = getSequenceId();
-				this.fastForwardNextLocalCommit(sequenceId);
+				this.fastForwardNextLocalCommit(nextSequenceId);
+				nextSequenceId = getNextSequenceId(nextSequenceId);
 			}
 			return;
 		}
@@ -699,7 +707,6 @@ export class EditManager<
 		// Remote changes, i.e., changes from remote clients are applied in three steps.
 		for (const newCommit of newCommits) {
 			// Step 1 - Recreate the peer remote client's local environment.
-			const sequenceId = getSequenceId();
 			// Get the revision that the remote change is based on
 			const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
 			// Rebase that peer local branch over the part of the trunk up to the base revision
@@ -715,7 +722,7 @@ export class EditManager<
 			// Step 2 - Append the change to the peer branch. Rebase the change to the tip of the trunk.
 			if (peerLocalBranch.getHead() === this.trunk.getHead()) {
 				// If the branch is fully caught up and empty after being rebased, then push to the trunk directly
-				this.pushCommitToTrunk(sequenceId, { ...newCommit, sessionId });
+				this.pushCommitToTrunk(nextSequenceId, { ...newCommit, sessionId });
 				peerLocalBranch.setHead(this.trunk.getHead());
 			} else {
 				// Otherwise, rebase the change over the trunk and append it, and append the original change to the peer branch.
@@ -735,12 +742,14 @@ export class EditManager<
 				});
 
 				peerLocalBranch.apply(tagChange(newCommit.change, newCommit.revision));
-				this.pushCommitToTrunk(sequenceId, {
+				this.pushCommitToTrunk(nextSequenceId, {
 					...newCommit,
 					sessionId,
 					change: newChangeFullyRebased.change,
 				});
 			}
+
+			nextSequenceId = getNextSequenceId(nextSequenceId);
 		}
 
 		// Step 3 - Rebase the local branch over the updated trunk.
