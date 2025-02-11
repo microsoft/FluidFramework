@@ -143,7 +143,7 @@ export abstract class SequenceEventClass<
 	/**
 	 * The last of the modified ranges.
 	 */
-	public get last(): Readonly<ISequenceDeltaRange<TOperation> | undefined> {
+	public get last(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
 		return this.pLast.value;
 	}
 }
