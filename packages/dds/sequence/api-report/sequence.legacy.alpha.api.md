@@ -307,8 +307,8 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
     readonly deltaArgs: IMergeTreeDeltaCallbackArgs<TOperation>;
     // (undocumented)
     readonly deltaOperation: TOperation;
-    readonly first: Readonly<ISequenceDeltaRange<TOperation>>;
-    readonly last: Readonly<ISequenceDeltaRange<TOperation>>;
+    readonly first: Readonly<ISequenceDeltaRange<TOperation> | undefined>;
+    readonly last: Readonly<ISequenceDeltaRange<TOperation> | undefined>;
     readonly ranges: readonly Readonly<ISequenceDeltaRange<TOperation>>[];
 }
 

@@ -204,7 +204,17 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_SequenceMaintenanceEvent": {
+				"backCompat": false
+			},
+			"Interface_SequenceEvent": {
+				"backCompat": false
+			},
+			"Interface_SequenceDeltaEvent": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

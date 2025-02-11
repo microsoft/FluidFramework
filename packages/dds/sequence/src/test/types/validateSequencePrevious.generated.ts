@@ -562,6 +562,7 @@ declare type old_as_current_for_Interface_SequenceDeltaEvent = requireAssignable
  * typeValidation.broken:
  * "Interface_SequenceDeltaEvent": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_SequenceDeltaEvent = requireAssignableTo<TypeOnly<current.SequenceDeltaEvent>, TypeOnly<old.SequenceDeltaEvent>>
 
 /*
@@ -580,6 +581,7 @@ declare type old_as_current_for_Interface_SequenceEvent = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_SequenceEvent": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_SequenceEvent = requireAssignableTo<TypeOnly<current.SequenceEvent>, TypeOnly<old.SequenceEvent>>
 
 /*
@@ -616,6 +618,7 @@ declare type old_as_current_for_Interface_SequenceMaintenanceEvent = requireAssi
  * typeValidation.broken:
  * "Interface_SequenceMaintenanceEvent": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_SequenceMaintenanceEvent = requireAssignableTo<TypeOnly<current.SequenceMaintenanceEvent>, TypeOnly<old.SequenceMaintenanceEvent>>
 
 /*
