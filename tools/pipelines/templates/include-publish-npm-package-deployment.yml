@@ -34,7 +34,7 @@ parameters:
 
 - name: buildToolsVersionToInstall
   type: string
-  default: not-repo
+  default: latest
 
 # The path to the pnpm store.
 - name: pnpmStorePath
@@ -60,12 +60,14 @@ jobs:
     runOnce:
         deploy:
           steps:
+          - checkout: none
+            clean: true
           # - checkout: self
-          #   clean: true
+          #    clean: true
           #   persistCredentials: true # Necessary for creation of git tags to work
           # - download: current
           #   artifact: pack
-          # - template: /tools/pipelines/templates/include-use-node-version.yml@self
+          - template: /tools/pipelines/templates/include-use-node-version.yml@self
           - template: /tools/pipelines/templates/include-install-build-tools.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
