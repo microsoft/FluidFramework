@@ -180,7 +180,7 @@ describe("DDS Handle Encoding", () => {
 
 				const rootNode = tree.currentView.getViewNode(tree.currentView.root);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const nodeId = rootNode.traits.get(legacyNodeId)![0]!;
+				const nodeId = rootNode.traits.get(legacyNodeId)![0];
 				const change: Change = Change.setPayload(nodeId, handle);
 				tree.applyEdit(change);
 			},
@@ -241,7 +241,7 @@ describe("DDS Handle Encoding", () => {
 
 				const rootNode = tree.currentView.getViewNode(tree.currentView.root);
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const nodeId = rootNode.traits.get(legacyNodeId)![0]!;
+				const nodeId = rootNode.traits.get(legacyNodeId)![0];
 				const change: Change = Change.setPayload(nodeId, { handle });
 				tree.applyEdit(change);
 			},
