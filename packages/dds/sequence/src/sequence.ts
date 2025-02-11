@@ -979,8 +979,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			const twentyethMessageSinceMSNChange = this.messagesSinceMSNChange[20];
 			if (
 				this.messagesSinceMSNChange.length > 20 &&
-				twentyethMessageSinceMSNChange !== undefined &&
-				twentyethMessageSinceMSNChange.sequenceNumber < message.minimumSequenceNumber
+				// Non null asserting here because of the length check above
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				twentyethMessageSinceMSNChange!.sequenceNumber < message.minimumSequenceNumber
 			) {
 				this.processMinSequenceNumberChanged(message.minimumSequenceNumber);
 			}
