@@ -420,166 +420,6 @@ importers:
         specifier: ^6.0.1
         version: 6.0.1
 
-  examples/apps/branching:
-    dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
-      '@fluid-internal/client-utils':
-        specifier: workspace:~
-        version: link:../../../packages/common/client-utils
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/container-definitions
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../../packages/loader/container-loader
-      '@fluidframework/container-runtime':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-utils
-      '@fluidframework/datastore':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/local-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/local-driver
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../packages/dds/map
-      '@fluidframework/routerlicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/routerlicious-driver
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/tinylicious-driver
-      react:
-        specifier: ^18.3.1
-        version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
-      uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
-      '@fluid-tools/build-cli':
-        specifier: ^0.51.0
-        version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.51.0
-        version: 0.51.0(@types/node@18.19.67)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.3
-        version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-tools':
-        specifier: ^1.0.195075
-        version: 1.0.195075
-      '@types/jest':
-        specifier: 29.5.3
-        version: 29.5.3
-      '@types/jest-environment-puppeteer':
-        specifier: workspace:~
-        version: link:../../../packages/test/types_jest-environment-puppeteer
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.67
-      '@types/react':
-        specifier: ^18.3.11
-        version: 18.3.15
-      '@types/react-dom':
-        specifier: ^18.3.0
-        version: 18.3.3(@types/react@18.3.15)
-      '@types/uuid':
-        specifier: ^9.0.2
-        version: 9.0.8
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      css-loader:
-        specifier: ^7.1.2
-        version: 7.1.2(webpack@5.97.1)
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      expect-puppeteer:
-        specifier: ^9.0.2
-        version: 9.0.2
-      html-webpack-plugin:
-        specifier: ^5.6.0
-        version: 5.6.3(webpack@5.97.1)
-      jest:
-        specifier: ^29.6.2
-        version: 29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5))
-      jest-environment-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
-      jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
-      jest-puppeteer:
-        specifier: ^10.1.3
-        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
-      prettier:
-        specifier: ~3.0.3
-        version: 3.0.3
-      process:
-        specifier: ^0.11.10
-        version: 0.11.10
-      puppeteer:
-        specifier: ^23.6.0
-        version: 23.10.3(typescript@5.4.5)
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      style-loader:
-        specifier: ^4.0.0
-        version: 4.0.0(webpack@5.97.1)
-      ts-jest:
-        specifier: ^29.1.1
-        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-      webpack:
-        specifier: ^5.94.0
-        version: 5.97.1(webpack-cli@5.1.4)
-      webpack-cli:
-        specifier: ^5.1.4
-        version: 5.1.4(webpack-dev-server@4.15.2)(webpack@5.97.1)
-      webpack-dev-server:
-        specifier: ~4.15.2
-        version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
-
   examples/apps/collaborative-textarea:
     dependencies:
       '@fluid-example/example-utils':
@@ -671,8 +511,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -801,8 +641,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -979,8 +819,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1112,8 +952,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1135,6 +975,166 @@ importers:
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
+      ts-jest:
+        specifier: ^29.1.1
+        version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
+      ts-loader:
+        specifier: ^9.5.1
+        version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+      webpack:
+        specifier: ^5.94.0
+        version: 5.97.1(webpack-cli@5.1.4)
+      webpack-cli:
+        specifier: ^5.1.4
+        version: 5.1.4(webpack-dev-server@4.15.2)(webpack@5.97.1)
+      webpack-dev-server:
+        specifier: ~4.15.2
+        version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
+      webpack-merge:
+        specifier: ^6.0.1
+        version: 6.0.1
+
+  examples/apps/staging:
+    dependencies:
+      '@fluid-example/example-utils':
+        specifier: workspace:~
+        version: link:../../utils/example-utils
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/client-utils
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../packages/loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/container-runtime-definitions
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../../packages/common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore
+      '@fluidframework/datastore-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/datastore-definitions
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/local-driver
+      '@fluidframework/map':
+        specifier: workspace:~
+        version: link:../../../packages/dds/map
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/routerlicious-driver
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-definitions
+      '@fluidframework/server-local-server':
+        specifier: ^5.0.0
+        version: 5.0.0
+      '@fluidframework/tinylicious-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/tinylicious-driver
+      react:
+        specifier: ^18.3.1
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluid-tools/build-cli':
+        specifier: ^0.51.0
+        version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.51.0
+        version: 0.51.0(@types/node@18.19.67)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.7.3
+        version: 5.7.3(eslint@8.55.0)(typescript@5.4.5)
+      '@fluidframework/test-tools':
+        specifier: ^1.0.195075
+        version: 1.0.195075
+      '@types/jest':
+        specifier: 29.5.3
+        version: 29.5.3
+      '@types/jest-environment-puppeteer':
+        specifier: workspace:~
+        version: link:../../../packages/test/types_jest-environment-puppeteer
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.67
+      '@types/react':
+        specifier: ^18.3.11
+        version: 18.3.15
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      css-loader:
+        specifier: ^7.1.2
+        version: 7.1.2(webpack@5.97.1)
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      expect-puppeteer:
+        specifier: ^9.0.2
+        version: 9.0.2
+      html-webpack-plugin:
+        specifier: ^5.6.0
+        version: 5.6.3(webpack@5.97.1)
+      jest:
+        specifier: ^29.6.2
+        version: 29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5))
+      jest-environment-puppeteer:
+        specifier: ^10.1.3
+        version: 10.1.4(typescript@5.4.5)
+      jest-junit:
+        specifier: ^16.0.0
+        version: 16.0.0
+      jest-puppeteer:
+        specifier: ^10.1.3
+        version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
+      prettier:
+        specifier: ~3.0.3
+        version: 3.0.3
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
+      puppeteer:
+        specifier: ^23.6.0
+        version: 23.10.3(typescript@5.4.5)
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      style-loader:
+        specifier: ^4.0.0
+        version: 4.0.0(webpack@5.97.1)
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
@@ -1242,8 +1242,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1457,8 +1457,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1569,8 +1569,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1751,8 +1751,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1866,8 +1866,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -1972,8 +1972,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -2320,8 +2320,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -2426,8 +2426,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -2544,8 +2544,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -2750,8 +2750,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -2856,8 +2856,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -3181,8 +3181,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -3867,8 +3867,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -4220,8 +4220,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -4368,8 +4368,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -4776,6 +4776,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      copyfiles:
+        specifier: ^2.4.1
+        version: 2.4.1
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -5146,8 +5149,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5315,8 +5318,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5499,8 +5502,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5659,8 +5662,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5792,8 +5795,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -5943,8 +5946,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -6067,8 +6070,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -7453,8 +7456,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -15299,8 +15302,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       jest-puppeteer:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
@@ -15631,8 +15634,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(typescript@5.4.5)
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -15833,8 +15836,8 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5))
       jest-junit:
-        specifier: ^10.0.0
-        version: 10.0.0
+        specifier: ^16.0.0
+        version: 16.0.0
       mocha:
         specifier: ^10.2.0
         version: 10.8.2
@@ -18348,10 +18351,6 @@ packages:
     resolution: {integrity: sha512-ok/BTPFzFKVMwO5eOHRrvnBVHdRy9IrsrW1GpMaQ9MCnilNLXQKmAX8s1YXDFaai9xJpac2ySzV0YeRRECr2Vw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  '@jest/types@24.9.0':
-    resolution: {integrity: sha512-XKK7ze1apu5JWQ5eZjHITP66AX+QsLlbaJRBGYr8pNzwcAE2JVkwnf0yqjHTsDRcjR0mujy/NmZMXw5kl+kGBw==}
-    engines: {node: '>= 6'}
-
   '@jest/types@29.6.3':
     resolution: {integrity: sha512-u3UPsIilWKOM3F9CXtrG8LEJmNxwoCQC/XVj4IKYXvvpx7QIi/Kg1LI5uDmDpKlac62NUtX7eLjRh+jVZcLOzw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -19545,9 +19544,6 @@ packages:
   '@types/istanbul-lib-report@3.0.3':
     resolution: {integrity: sha512-NQn7AHQnk/RSLOxrBbGyJM/aVQ+pjj5HCgasFxc0K/KhoATfQ/47AyUl15I2yBUpihjmas+a+VJBOqecrFH+uA==}
 
-  '@types/istanbul-reports@1.1.2':
-    resolution: {integrity: sha512-P/W9yOX/3oPZSpaYOCQzGqgCQRXn0FFO/V8bWrCQs+wLmvVVxk6CRBXALEvNs9OHIatlnlFokfhuDo2ug01ciw==}
-
   '@types/istanbul-reports@3.0.4':
     resolution: {integrity: sha512-pk2B1NWalF9toCRu6gjBzR69syFjP4Od8WRAX+0mmf9lAjCRicLOWc+ZrxZHx/0XRjotgkF9t6iaMJ+aXcOdZQ==}
 
@@ -19779,9 +19775,6 @@ packages:
 
   '@types/yargs-parser@21.0.3':
     resolution: {integrity: sha512-I4q9QU9MQv4oEOz4tAHJtNz1cwuLxn2F3xcc2iV5WdqLPpUnj30aUuxt1mAxYTG+oe8CZMV/+6rU4S4gRDzqtQ==}
-
-  '@types/yargs@13.0.12':
-    resolution: {integrity: sha512-qCxJE1qgz2y0hA4pIxjBR+PelCH0U5CK1XJXFwCNqfmliatKp47UCXXE9Dyk1OXBDLvsCF57TqQEJaeLfDYEOQ==}
 
   '@types/yargs@17.0.33':
     resolution: {integrity: sha512-WpxBCKWPLr4xSsHgz511rFJAM+wS28w2zEO1QDNY5zM/S8ok70NNfztH0xwhqKyaK0OHCbN98LDAZuy1ctxDkA==}
@@ -23510,10 +23503,6 @@ packages:
     resolution: {integrity: sha512-cx2jzf1qZb6/vdmLbRccF0k/zSsoWlrXi8bg10GzrODxiwsRomVDszTfoOCRsQ+C1sbJ+ubI1PlryIvvYjITrA==}
     engines: {node: '>=16'}
 
-  jest-get-type@24.9.0:
-    resolution: {integrity: sha512-lUseMzAley4LhIcpSP9Jf+fTrQ4a1yHQwLNeeVa2cEmbCGeoZAtYPOIv8JaxLD/sUpKxetKGP+gsHl8f8TSj8Q==}
-    engines: {node: '>= 6'}
-
   jest-get-type@29.6.3:
     resolution: {integrity: sha512-zrteXnqYxfQh7l5FHyL38jL39di8H8rHoecLH3JNxH3BwOrBsNeabdap5e0I23lD4HHI8W5VFBZqG4Eaq5LNcw==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
@@ -23522,9 +23511,9 @@ packages:
     resolution: {integrity: sha512-fP8u2pyfqx0K1rGn1R9pyE0/KTn+G7PxktWidOBTqFPLYX0b9ksaMFkhK5vrS3DVun09pckLdlx90QthlW7AmA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  jest-junit@10.0.0:
-    resolution: {integrity: sha512-dbOVRyxHprdSpwSAR9/YshLwmnwf+RSl5hf0kCGlhAcEeZY9aRqo4oNmaT0tLC16Zy9D0zekDjWkjHGjXlglaQ==}
-    engines: {node: '>=8.0.0'}
+  jest-junit@16.0.0:
+    resolution: {integrity: sha512-A94mmw6NfJab4Fg/BlvVOUXzXgF0XIH6EmTgJ5NDPp4xoKq0Kr7sErb+4Xs9nZvu58pJojz5RFGpqnZYJTrRfQ==}
+    engines: {node: '>=10.12.0'}
 
   jest-leak-detector@29.7.0:
     resolution: {integrity: sha512-kYA8IJcSYtST2BY9I+SMC32nDpBT3J2NvWJx8+JCuCdl/CR1I4EKUJROiP8XtCcxqgTTBGJNdbB1A8XRKbTetw==}
@@ -23584,10 +23573,6 @@ packages:
   jest-util@29.7.0:
     resolution: {integrity: sha512-z6EbKajIpqGKU56y5KBUgy1dt1ihhQJgWzUlZHArA/+X2ad7Cb5iF+AK1EWVL/Bo7Rz9uurpqw6SiBCefUbCGA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
-
-  jest-validate@24.9.0:
-    resolution: {integrity: sha512-HPIt6C5ACwiqSiwi+OfSSHbK8sG7akG8eATl+IPKaeIjtPOeBUd/g3J7DghugzxrGjI93qS/+RPKe1H6PqvhRQ==}
-    engines: {node: '>= 6'}
 
   jest-validate@29.7.0:
     resolution: {integrity: sha512-ZB7wHqaRGVw/9hST/OuFUReG7M8vKeq0/J2egIGLdvjHCmYqGARhzXmtgi+gVeZ5uXFF219aOc3Ls2yLg27tkw==}
@@ -25439,10 +25424,6 @@ packages:
 
   pretty-error@4.0.0:
     resolution: {integrity: sha512-AoJ5YMAcXKYxKhuJGdcvse+Voc6v1RgnsR3nWcYU7q4t6z0Q6T86sv5Zq8VIRbOWWFpvdGE83LtdSMNd+6Y0xw==}
-
-  pretty-format@24.9.0:
-    resolution: {integrity: sha512-00ZMZUiHaJrNfk33guavqgvfJS30sLYf0f8+Srklv0AMPodGGHcoHgksZ3OThYnIvOd+8yMCn0YiEOogjlgsnA==}
-    engines: {node: '>= 6'}
 
   pretty-format@27.5.1:
     resolution: {integrity: sha512-Qb1gy5OrP5+zDf2Bvnzdl3jsTf1qXVMazbvCoKhtKqVs4/YK4ozX4gKQJJVyNe+cajNPn0KoC0MC3FUmaHWEmQ==}
@@ -27463,11 +27444,6 @@ packages:
   utils-merge@1.0.1:
     resolution: {integrity: sha512-pMZTvIkT1d+TFGvDOqodOclx0QWkkgi6Tdoa8gC8ffGAAqz9pzPTZWAybbsHHoED/ztMtkv/VoYTYyShUn81hA==}
     engines: {node: '>= 0.4.0'}
-
-  uuid@3.4.0:
-    resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
-    deprecated: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
-    hasBin: true
 
   uuid@8.3.2:
     resolution: {integrity: sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==}
@@ -32338,12 +32314,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@jest/types@24.9.0':
-    dependencies:
-      '@types/istanbul-lib-coverage': 2.0.6
-      '@types/istanbul-reports': 1.1.2
-      '@types/yargs': 13.0.12
-
   '@jest/types@29.6.3':
     dependencies:
       '@jest/schemas': 29.6.3
@@ -34086,11 +34056,6 @@ snapshots:
     dependencies:
       '@types/istanbul-lib-coverage': 2.0.6
 
-  '@types/istanbul-reports@1.1.2':
-    dependencies:
-      '@types/istanbul-lib-coverage': 2.0.6
-      '@types/istanbul-lib-report': 3.0.3
-
   '@types/istanbul-reports@3.0.4':
     dependencies:
       '@types/istanbul-lib-report': 3.0.3
@@ -34333,10 +34298,6 @@ snapshots:
       '@types/node': 18.19.67
 
   '@types/yargs-parser@21.0.3': {}
-
-  '@types/yargs@13.0.12':
-    dependencies:
-      '@types/yargs-parser': 21.0.3
 
   '@types/yargs@17.0.33':
     dependencies:
@@ -38913,8 +38874,6 @@ snapshots:
       - supports-color
       - typescript
 
-  jest-get-type@24.9.0: {}
-
   jest-get-type@29.6.3: {}
 
   jest-haste-map@29.7.0:
@@ -38933,12 +38892,11 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  jest-junit@10.0.0:
+  jest-junit@16.0.0:
     dependencies:
-      jest-validate: 24.9.0
-      mkdirp: 0.5.6
-      strip-ansi: 5.2.0
-      uuid: 3.4.0
+      mkdirp: 1.0.4
+      strip-ansi: 6.0.1
+      uuid: 8.3.2
       xml: 1.0.1
 
   jest-leak-detector@29.7.0:
@@ -39092,15 +39050,6 @@ snapshots:
       ci-info: 3.9.0
       graceful-fs: 4.2.11
       picomatch: 2.3.1
-
-  jest-validate@24.9.0:
-    dependencies:
-      '@jest/types': 24.9.0
-      camelcase: 5.3.1
-      chalk: 2.4.2
-      jest-get-type: 24.9.0
-      leven: 3.1.0
-      pretty-format: 24.9.0
 
   jest-validate@29.7.0:
     dependencies:
@@ -41518,13 +41467,6 @@ snapshots:
     dependencies:
       lodash: 4.17.21
       renderkid: 3.0.0
-
-  pretty-format@24.9.0:
-    dependencies:
-      '@jest/types': 24.9.0
-      ansi-regex: 4.1.1
-      ansi-styles: 3.2.1
-      react-is: 16.13.1
 
   pretty-format@27.5.1:
     dependencies:
@@ -43999,8 +43941,6 @@ snapshots:
   utila@0.4.0: {}
 
   utils-merge@1.0.1: {}
-
-  uuid@3.4.0: {}
 
   uuid@8.3.2: {}
 
