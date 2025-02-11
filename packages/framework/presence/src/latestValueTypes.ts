@@ -73,12 +73,22 @@ export interface LatestValueClientData<T> extends LatestValueData<T> {
 // }
 
 /**
+ * A function that can adjust or fix data that fails validation.
+ *
+ * @alpha
+ */
+export type ValueTypeSchemaFixer<T> = (invalidData: unknown) => T | undefined;
+
+/**
  * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
  * presence workspace and managed by a value manager.
  *
  * @alpha
  */
-export type ValueTypeSchemaValidator<T> = (unvalidatedData: unknown) => T | undefined;
+export type ValueTypeSchemaValidator<T> = (
+	unvalidatedData: unknown,
+	fixer?: ValueTypeSchemaFixer<T>,
+) => T | undefined;
 
 /**
  * A

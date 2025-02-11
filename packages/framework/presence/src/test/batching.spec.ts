@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
@@ -16,7 +14,6 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
 	createNullValidator,
-	createSpiedValidator,
 	prepareConnectedPresence,
 } from "./testUtils.js";
 
@@ -147,17 +144,13 @@ describe("Presence", () => {
 					],
 				);
 
-				const [v, s] = createSpiedValidator<{ num: 0 }>(createNullValidator());
-
 				// Configure a state workspace
 				// SIGNAL #1 - intial data is sent immediately
 				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
-					count: Latest({ num: 0 }, v, { allowableUpdateLatencyMs: 0 }),
+					count: Latest({ num: 0 }, createNullValidator(), { allowableUpdateLatencyMs: 0 }),
 				});
 
 				const { count } = stateWorkspace.props;
-
-				assert.equal(s.callCount, 0);
 
 				clock.tick(10); // Time is now 1020
 
@@ -166,14 +159,6 @@ describe("Presence", () => {
 
 				// SIGNAL #3
 				count.local = { num: 84 };
-
-				// Reading the data should cause the validator to get called.
-				const value = count.clientValue(presence.getMyself());
-				// const values = count.clientValues();
-
-				// assert.equal([...values].length, 2);
-				assert.equal(s.callCount, 1);
-				assert.equal(value.value.num, 84);
 
 				assertFinalExpectations(runtime, logger);
 			});

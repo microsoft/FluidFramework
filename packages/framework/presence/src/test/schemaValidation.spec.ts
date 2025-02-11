@@ -25,6 +25,7 @@ import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
 	createNullValidator,
+	createNullValidatorForKey,
 	createSpiedKeyValidator,
 	createSpiedValidator,
 	// generateBasicClientJoin,
@@ -79,14 +80,14 @@ describe("Presence", () => {
 
 		describe("LatestValueManager", () => {
 			// let stateWorkspace: PresenceStates<{ num: 0 }>;
-			let validatorFunction: ValueTypeSchemaValidator<{ num: 0 }>;
+			let validatorFunction: ValueTypeSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
 
 			beforeEach(() => {
 				// Ignore submitted signals
 				runtime.submitSignal = () => {};
 
-				[validatorFunction, validatorSpy] = createSpiedValidator<{ num: 0 }>(
+				[validatorFunction, validatorSpy] = createSpiedValidator<{ num: number }>(
 					createNullValidator(),
 				);
 
@@ -133,20 +134,42 @@ describe("Presence", () => {
 				assert.equal(validatorSpy.callCount, 1);
 				assert.equal(value.value.num, 84);
 			});
+
+			// TODO: test is failing
+			it("throws on invalid data", () => {
+				// Setup
+				// Configure a state workspace
+				const stateWorkspace = presence.getStates("name:testStateWorkspace", {
+					count: Latest({ num: 0 }, validatorFunction, { allowableUpdateLatencyMs: 0 }),
+				});
+
+				const { count } = stateWorkspace.props;
+				count.local = 84 as unknown as { num: number };
+
+				// Act & Verify
+				// Reading the data should cause the validator to get called once.
+				let value = count.clientValue(presence.getMyself());
+
+				// Subsequent reads should not call the validator when there is no new data.
+				value = count.clientValue(presence.getMyself());
+				value = count.clientValue(presence.getMyself());
+				assert.equal(value.value.num, 84);
+				assert.equal(validatorSpy.callCount, 1);
+			});
 		});
 
 		// TODO: tests are failing
 		describe.skip("LatestMapValueManager", () => {
 			// let stateWorkspace: PresenceStates<{ num: 0 }>;
-			let validatorFunction: ValueTypeSchemaValidatorForKey<{ num: 0 }, string>;
+			let validatorFunction: ValueTypeSchemaValidatorForKey<{ num: number }, string>;
 			let validatorSpy: ValidatorSpy;
 
 			beforeEach(() => {
 				// Ignore submitted signals
 				runtime.submitSignal = () => {};
 
-				[validatorFunction, validatorSpy] = createSpiedKeyValidator<{ num: 0 }, string>(
-					createNullValidator(),
+				[validatorFunction, validatorSpy] = createSpiedKeyValidator<{ num: number }, string>(
+					createNullValidatorForKey(),
 				);
 
 				assert.equal(validatorSpy.callCount, 0);

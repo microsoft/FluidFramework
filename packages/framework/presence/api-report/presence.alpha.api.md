@@ -246,7 +246,10 @@ export interface ValueMap<K extends string | number, V> {
 }
 
 // @alpha
-export type ValueTypeSchemaValidator<T> = (unvalidatedData: unknown) => T | undefined;
+export type ValueTypeSchemaFixer<T> = (invalidData: unknown) => T | undefined;
+
+// @alpha
+export type ValueTypeSchemaValidator<T> = (unvalidatedData: unknown, fixer?: ValueTypeSchemaFixer<T>) => T | undefined;
 
 // @alpha
 export type ValueTypeSchemaValidatorForKey<T, Keys extends string | number = string | number> = (key: Keys, unvalidatedData: unknown) => ValueTypeSchemaValidator<InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>> | undefined;
