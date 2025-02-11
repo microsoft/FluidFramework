@@ -298,6 +298,8 @@ async function visualizeMapNode(
 
 /**
  * Creates the visual representation of non-leaf SharedTree nodes.
+ *
+ * @remarks
  * Processes internal tree nodes based on their schema type (e.g., ObjectNodeStoredSchema, MapNodeStoredSchema, ArrayNodeStoredSchema),
  * producing the visual representation for each type.
  *
