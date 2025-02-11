@@ -185,7 +185,6 @@ interface FieldSchemaProperties {
  *
  * @param treeFields - The fields of the tree node to visualize. Can be either an array of VerboseTree (for array nodes) or a Record of field names to VerboseTree (for object/map nodes).
  * @param treeDefinitions - Map containing all schema definitions for the entire tree structure. Each definition describes the shape and constraints of a particular node type.
- * @param allowedTypes - Record mapping field names to their allowed type sets. Specifies which types are valid for each field in the tree.
  * @param requirements - Optional record mapping field names to boolean values indicating whether each field is required (true) or optional (false). Only meaningful for object node fields.
  *
  * @returns A record mapping field names/indices to their visual tree representations.
