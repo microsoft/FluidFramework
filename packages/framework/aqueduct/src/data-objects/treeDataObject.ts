@@ -16,12 +16,48 @@ import {
 import { PureDataObject } from "./pureDataObject.js";
 
 /**
+ * A schema-aware Tree DataObject.
+ *
+ * @remarks
+ * Allows for the Tree's schema to be baked into the container schema.
+ *
+ * @public
+ */
+export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
+	/**
+	 * The key under the root DataObject in which the {@link @fluidframework/tree#SharedTree} is stored.
+	 */
+	readonly key: string;
+
+	/**
+	 * TreeViewConfiguration used to initialize new documents, as well as to interpret (schematize) existing ones.
+	 *
+	 * @remarks
+	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
+	 * Since the view schema currently does not provide any adapters for handling differences between view and stored schema,
+	 * its also impossible for this single view schema to handle multiple different stored schema.
+	 * Therefor, with this current API, two different applications (or different versions of the same application)
+	 * with differing stored schema requirements (as implied by their view schema) can not collaborate on the same tree.
+	 * The only schema evolution thats currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
+	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
+	 * Future work on tree as well as these utilities should address this limitation.
+	 */
+	readonly config: TreeViewConfiguration<TSchema>;
+
+	/**
+	 * The TreeView.
+	 */
+	readonly tree: TreeView<TSchema>;
+}
+
+/**
  * {@link @fluidframework/tree#SharedTree}-backed {@link PureDataObject | data object}.
  * @internal
  */
-export abstract class TreeDataObject<
-	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-> extends PureDataObject {
+export abstract class TreeDataObject<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema>
+	extends PureDataObject
+	implements ITreeDataObject<TSchema>
+{
 	private internalRoot: ITree | undefined;
 	private readonly rootTreeId = "root";
 
