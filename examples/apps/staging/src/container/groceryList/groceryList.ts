@@ -36,7 +36,7 @@ class GroceryItem implements IGroceryItem {
 	public constructor(
 		public readonly id: string,
 		public readonly name: string,
-		public readonly deleteItem: () => void,
+		public readonly removeItem: () => void,
 	) {}
 }
 
@@ -75,11 +75,14 @@ class GroceryList implements IGroceryList {
 	}
 
 	public readonly addItem = (name: string) => {
-		this.map.set(uuid(), name);
+		// Use timestamp as a hack for a consistent sortable order.
+		this.map.set(`${Date.now()}-${uuid()}`, name);
 	};
 
 	public readonly getItems = (): IGroceryItem[] => {
-		return [...this._groceryItems.values()];
+		return [...this._groceryItems.values()].sort((a, b) =>
+			a.id.localeCompare(b.id, "en", { sensitivity: "base" }),
+		);
 	};
 
 	public readonly removeItem = (id: string) => {
@@ -90,14 +93,15 @@ class GroceryList implements IGroceryList {
 		const changedId = changed.key;
 		const newName = this.map.get(changedId);
 		if (newName === undefined) {
+			const removedItem = this._groceryItems.get(changedId);
 			this._groceryItems.delete(changedId);
-			this._events.emit("itemDeleted");
+			this._events.emit("itemRemoved", removedItem);
 		} else {
 			const newGroceryItem = new GroceryItem(changedId, newName, () => {
 				this.removeItem(changedId);
 			});
 			this._groceryItems.set(changedId, newGroceryItem);
-			this._events.emit("itemAdded");
+			this._events.emit("itemAdded", newGroceryItem);
 		}
 	};
 
@@ -143,9 +147,11 @@ export class GroceryListFactory implements IFluidDataStoreFactory {
 			map = (await runtime.getChannel(mapId)) as ISharedMap;
 		} else {
 			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
-			map.set(uuid(), "apple");
-			map.set(uuid(), "banana");
-			map.set(uuid(), "chocolate");
+			// Use timestamp as a hack for a consistent sortable order.
+			const timestamp = Date.now();
+			map.set(`${timestamp}-${uuid()}`, "apple");
+			map.set(`${timestamp + 1}-${uuid()}`, "banana");
+			map.set(`${timestamp + 2}-${uuid()}`, "chocolate");
 			map.bindToContext();
 		}
 

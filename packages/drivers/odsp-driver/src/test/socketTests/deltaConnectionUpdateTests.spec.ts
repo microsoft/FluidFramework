@@ -15,14 +15,15 @@ import { Socket } from "socket.io-client";
 import { OdspFluidDataStoreLocator } from "../../contractsPublic.js";
 import { createOdspUrl } from "../../createOdspUrl.js";
 import { EpochTracker } from "../../epochTracker.js";
+import { mockify } from "../../mockify.js";
 import { LocalPersistentCache } from "../../odspCache.js";
 import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
 import { OdspDocumentService } from "../../odspDocumentService.js";
 import { OdspDocumentServiceFactory } from "../../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../../odspPublicUtils.js";
-import * as socketModule from "../../socketModule.js";
-import * as joinSession from "../../vroom.js";
+import { SocketIOClientStatic } from "../../socketModule.js";
+import { fetchJoinSession } from "../../vroom.js";
 
 import { ClientSocketMock } from "./socketMock.js";
 
@@ -78,7 +79,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 			labels: label,
 			timestamp: Date.now(),
 		});
-		const joinSessionStub = stub(joinSession, "fetchJoinSession").callsFake(
+		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
 			async () => joinSessionResponse,
 		);
 		return joinSessionStub;
@@ -121,7 +122,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 	});
 
 	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
-		const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
+		const getSocketCreationStub = stub(SocketIOClientStatic, mockify.key);
 		getSocketCreationStub.returns(_response);
 		try {
 			return await callback();

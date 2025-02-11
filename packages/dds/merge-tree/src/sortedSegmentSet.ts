@@ -28,11 +28,10 @@ export type SortedSegmentSetItem =
  *
  * @internal
  */
-
 export class SortedSegmentSet<
 	T extends SortedSegmentSetItem = ISegmentInternal,
-> extends SortedSet<T, string> {
-	protected getKey(item: T): string {
+> extends SortedSet<T> {
+	private getOrdinal(item: T): string {
 		const maybeRef = item as Partial<LocalReferencePosition>;
 		if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
 			const lref = maybeRef as LocalReferencePosition;
@@ -49,55 +48,47 @@ export class SortedSegmentSet<
 		return toMergeNodeInfo(item)?.ordinal ?? "";
 	}
 
-	protected findItemPosition(item: T): { exists: boolean; index: number } {
-		if (this.keySortedItems.length === 0) {
-			return { exists: false, index: 0 };
+	private getOffset(item: T): number {
+		const maybeRef = item as Partial<LocalReferencePosition>;
+		if (maybeRef.getSegment !== undefined && maybeRef.isLeaf?.() === false) {
+			const lref = maybeRef as LocalReferencePosition;
+			return lref.getOffset();
 		}
-		let start = 0;
-		let end = this.keySortedItems.length - 1;
-		const itemKey = this.getKey(item);
-		let index = -1;
+		return 0;
+	}
 
-		while (start <= end) {
-			index = start + Math.floor((end - start) / 2);
-			const indexKey = this.getKey(this.keySortedItems[index]);
-			if (indexKey > itemKey) {
-				if (start === index) {
-					return { exists: false, index };
-				}
-				end = index - 1;
-			} else if (indexKey < itemKey) {
-				if (index === end) {
-					return { exists: false, index: index + 1 };
-				}
-				start = index + 1;
-			} else if (indexKey === itemKey) {
-				// at this point we've found the key of the item
-				// so we need to find the index of the item instance
-				//
-				if (item === this.keySortedItems[index]) {
-					return { exists: true, index };
-				}
-				for (
-					let b = index - 1;
-					b >= 0 && this.getKey(this.keySortedItems[b]) === itemKey;
-					b--
-				) {
-					if (this.keySortedItems[b] === item) {
-						return { exists: true, index: b };
-					}
-				}
-				for (
-					index + 1;
-					index < this.keySortedItems.length &&
-					this.getKey(this.keySortedItems[index]) === itemKey;
-					index++
-				) {
-					if (this.keySortedItems[index] === item) {
-						return { exists: true, index };
-					}
-				}
-				return { exists: false, index };
+	protected compare(a: T, b: T): number {
+		const aOrdinal = this.getOrdinal(a);
+		const bOrdinal = this.getOrdinal(b);
+
+		if (aOrdinal < bOrdinal) {
+			return -1;
+		}
+		if (aOrdinal > bOrdinal) {
+			return 1;
+		}
+		return this.getOffset(a) - this.getOffset(b);
+	}
+
+	protected onFindEquivalent(item: T, startIndex: number): { exists: boolean; index: number } {
+		// SortedSegmentSet may contain multiple items with the same key (e.g. a local ref at offset 0 and the segment it is on).
+		// Items should compare as reference-equal, so we do a linear walk to find the actual item in this case.
+		let index = startIndex;
+		if (item === this.sortedItems[index]) {
+			return { exists: true, index };
+		}
+		for (let b = index - 1; b >= 0 && this.compare(item, this.sortedItems[b]) === 0; b--) {
+			if (this.sortedItems[b] === item) {
+				return { exists: true, index: b };
+			}
+		}
+		for (
+			index + 1;
+			index < this.sortedItems.length && this.compare(item, this.sortedItems[index]) === 0;
+			index++
+		) {
+			if (this.sortedItems[index] === item) {
+				return { exists: true, index };
 			}
 		}
 		return { exists: false, index };

@@ -5,10 +5,10 @@
 
 import React from "react";
 
-import type { IGroceryList } from "../container/index.js";
+import type { ISuggestionGroceryList } from "../container/index.js";
 
 export interface IDebugViewProps {
-	groceryList: IGroceryList;
+	groceryList: ISuggestionGroceryList;
 }
 
 export const DebugView: React.FC<IDebugViewProps> = ({ groceryList }: IDebugViewProps) => {

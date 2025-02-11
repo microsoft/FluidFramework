@@ -113,7 +113,7 @@
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.20.0",
+		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.21.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^10.0.10",

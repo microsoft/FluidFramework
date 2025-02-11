@@ -145,6 +145,7 @@ import {
 	type TreeBranchEvents,
 } from "../simple-tree/index.js";
 import {
+	Breakable,
 	type JsonCompatible,
 	type Mutable,
 	nestedMapFromFlatList,
@@ -1232,6 +1233,7 @@ export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
  * A mock implementation of `ITreeCheckout` that provides read access to the forest, and nothing else.
  */
 export class MockTreeCheckout implements ITreeCheckout {
+	public readonly breaker: Breakable = new Breakable("MockTreeCheckout");
 	public constructor(
 		public readonly forest: IForestSubscription,
 		private readonly options?: {

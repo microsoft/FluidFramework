@@ -5,14 +5,7 @@
 
 export { GroceryListFactory } from "./groceryList.js";
 export {
-	applyDiffToGroceryList,
-	diffGroceryListPOJO,
-	extractGroceryListPOJO,
-} from "./groceryListUtils.js";
-export {
-	GroceryListItemPOJO,
-	GroceryListPOJO,
-	GroceryListChanges,
 	IGroceryItem,
 	IGroceryList,
+	IGroceryListEvents,
 } from "./interfaces.js";

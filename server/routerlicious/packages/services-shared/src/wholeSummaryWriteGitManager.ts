@@ -19,6 +19,7 @@ import {
 	NetworkError,
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry): SummaryObject {
 	if ((entry as IWholeSummaryTreeHandleEntry).id !== undefined) {
@@ -43,6 +44,7 @@ function getSummaryObjectFromWholeSummaryTreeEntry(entry: WholeSummaryTreeEntry)
 			unreferenced: (entry as IWholeSummaryTreeValueEntry).unreferenced,
 		};
 	}
+	Lumberjack.error("Unknown entry type", { entryType: entry.type });
 	throw new NetworkError(400, `Unknown entry type: ${entry.type}`);
 }
 

@@ -36,7 +36,7 @@ module.exports = (env) => {
 				library: "[name]",
 				// https://github.com/webpack/webpack/issues/5767
 				// https://github.com/webpack/webpack/issues/7939
-				devtoolNamespace: "fluid-example/branching",
+				devtoolNamespace: "fluid-example/staging",
 				libraryTarget: "umd",
 			},
 			plugins: [

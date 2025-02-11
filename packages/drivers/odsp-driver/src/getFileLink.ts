@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { mockify } from "./mockify.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -42,64 +43,66 @@ const fileLinkCache = new Map<string, Promise<string>>();
  * @param logger - used to log results of operation, including any error
  * @returns Promise which resolves to file link url when successful; otherwise, undefined.
  */
-export async function getFileLink(
-	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-	resolvedUrl: IOdspResolvedUrl,
-	logger: ITelemetryLoggerExt,
-): Promise<string> {
-	const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}`;
-	const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
-	if (maybeFileLinkCacheEntry !== undefined) {
-		return maybeFileLinkCacheEntry;
-	}
-
-	const fileLinkGenerator = async function (): Promise<string> {
-		let fileLinkCore: string;
-		try {
-			let retryCount = 0;
-			fileLinkCore = await runWithRetry(
-				async () =>
-					runWithRetryForCoherencyAndServiceReadOnlyErrors(
-						async () =>
-							getFileLinkWithLocationRedirectionHandling(getToken, resolvedUrl, logger),
-						"getFileLinkCore",
-						logger,
-					),
-				"getShareLink",
-				logger,
-				{
-					// TODO: use a stronger type
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					onRetry(delayInMs: number, error: any) {
-						retryCount++;
-						if (retryCount === 5) {
-							if (error !== undefined && typeof error === "object") {
-								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-								error.canRetry = false;
-								throw error;
-							}
-							throw error;
-						}
-					},
-				},
-			);
-		} catch (error) {
-			// Delete from the cache to permit retrying later.
-			fileLinkCache.delete(cacheKey);
-			throw error;
+export const getFileLink = mockify(
+	async (
+		getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+		resolvedUrl: IOdspResolvedUrl,
+		logger: ITelemetryLoggerExt,
+	): Promise<string> => {
+		const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}`;
+		const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
+		if (maybeFileLinkCacheEntry !== undefined) {
+			return maybeFileLinkCacheEntry;
 		}
 
-		// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
-		assert(
-			fileLinkCore !== undefined,
-			0x292 /* "Unexpected undefined result from getFileLinkCore" */,
-		);
-		return fileLinkCore;
-	};
-	const fileLink = fileLinkGenerator();
-	fileLinkCache.set(cacheKey, fileLink);
-	return fileLink;
-}
+		const fileLinkGenerator = async function (): Promise<string> {
+			let fileLinkCore: string;
+			try {
+				let retryCount = 0;
+				fileLinkCore = await runWithRetry(
+					async () =>
+						runWithRetryForCoherencyAndServiceReadOnlyErrors(
+							async () =>
+								getFileLinkWithLocationRedirectionHandling(getToken, resolvedUrl, logger),
+							"getFileLinkCore",
+							logger,
+						),
+					"getShareLink",
+					logger,
+					{
+						// TODO: use a stronger type
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						onRetry(delayInMs: number, error: any) {
+							retryCount++;
+							if (retryCount === 5) {
+								if (error !== undefined && typeof error === "object") {
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+									error.canRetry = false;
+									throw error;
+								}
+								throw error;
+							}
+						},
+					},
+				);
+			} catch (error) {
+				// Delete from the cache to permit retrying later.
+				fileLinkCache.delete(cacheKey);
+				throw error;
+			}
+
+			// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
+			assert(
+				fileLinkCore !== undefined,
+				0x292 /* "Unexpected undefined result from getFileLinkCore" */,
+			);
+			return fileLinkCore;
+		};
+		const fileLink = fileLinkGenerator();
+		fileLinkCache.set(cacheKey, fileLink);
+		return fileLink;
+	},
+);
 
 /**
  * Handles location redirection while fulfilling the getFileLink call. We don't want browser to handle

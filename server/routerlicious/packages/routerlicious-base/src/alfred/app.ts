@@ -63,6 +63,7 @@ export function create(
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
+	const enableEventLoopLagMetric = config.get("alfred:enableEventLoopLagMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 
 	// Express app configuration
@@ -147,6 +148,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {

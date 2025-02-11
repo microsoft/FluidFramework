@@ -60,7 +60,13 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import { Breakable, disposeSymbol, fail, getOrCreate } from "../util/index.js";
+import {
+	Breakable,
+	disposeSymbol,
+	fail,
+	getOrCreate,
+	type WithBreakable,
+} from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -182,7 +188,7 @@ export interface TreeBranchFork extends BranchableTree, IDisposable {
  * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
  */
-export interface ITreeCheckout extends AnchorLocator, ViewableTree {
+export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakable {
 	/**
 	 * Read and Write access for schema stored in the document.
 	 *
@@ -391,7 +397,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		),
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
-		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
 		private readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = new SquashingTransactionStack(
@@ -558,6 +564,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 	}
 
 	private checkNotDisposed(usageError?: string): void {
+		this.breaker.use();
 		if (this.disposed) {
 			if (usageError !== undefined) {
 				throw new UsageError(usageError);
@@ -659,7 +666,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this,
 			config,
 			createNodeKeyManager(this.idCompressor),
-			this.breaker,
 			() => {
 				this.views.delete(view);
 			},

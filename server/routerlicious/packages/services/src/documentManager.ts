@@ -18,6 +18,7 @@ import {
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
 import { getRefreshTokenIfNeededCallback } from "./tenant";
+import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 /**
  * Manager to fetch document from Alfred using the internal URL.
@@ -150,6 +151,7 @@ export class DocumentManager implements IDocumentManager {
 			() => getGlobalTelemetryContext().getProperties().correlationId /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			refreshTokenIfNeeded /* refreshTokenIfNeeded */,
+			logHttpMetrics,
 		);
 		return restWrapper;
 	}
