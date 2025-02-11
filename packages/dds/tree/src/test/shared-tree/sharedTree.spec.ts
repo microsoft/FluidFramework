@@ -786,20 +786,15 @@ describe("SharedTree", () => {
 		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
 		// if we'll ever expose some memory stats in which the trunk length would be included.
 		// If we do then this test should be updated to use that code path.
-		const t1 = provider.trees[0] as unknown as {
+		interface EditManagerKludge {
 			editManager?: EditManager<
 				ChangeFamilyEditor,
 				unknown,
 				ChangeFamily<ChangeFamilyEditor, unknown>
 			>;
-		};
-		const t2 = provider.trees[1] as unknown as {
-			editManager?: EditManager<
-				ChangeFamilyEditor,
-				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
-			>;
-		};
+		}
+		const t1 = provider.trees[0] as unknown as EditManagerKludge;
+		const t2 = provider.trees[1] as unknown as EditManagerKludge;
 		assert(
 			t1.editManager !== undefined && t2.editManager !== undefined,
 			"EditManager has moved. This test must be updated.",

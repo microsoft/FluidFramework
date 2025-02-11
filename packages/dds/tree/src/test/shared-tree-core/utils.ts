@@ -92,6 +92,20 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		);
 		this.changeFamily = changeFamily;
 
+		this.transaction = new SquashingTransactionStack(
+			this.getLocalBranch(),
+			(commits: GraphCommit<DefaultChangeset>[]) => {
+				const revision = this.mintRevisionTag();
+				return tagChange(
+					this.changeFamily.rebaser.changeRevision(
+						this.changeFamily.rebaser.compose(commits),
+						revision,
+					),
+					revision,
+				);
+			},
+		);
+
 		this.transaction.events.on("started", () => {
 			if (this.isAttached()) {
 				this.commitEnricher.startTransaction();
@@ -122,17 +136,5 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		return this.transaction.activeBranchEditor;
 	}
 
-	public transaction = new SquashingTransactionStack(
-		this.getLocalBranch(),
-		(commits: GraphCommit<DefaultChangeset>[]) => {
-			const revision = this.mintRevisionTag();
-			return tagChange(
-				this.changeFamily.rebaser.changeRevision(
-					this.changeFamily.rebaser.compose(commits),
-					revision,
-				),
-				revision,
-			);
-		},
-	);
+	public readonly transaction: SquashingTransactionStack<DefaultEditBuilder, DefaultChangeset>;
 }
