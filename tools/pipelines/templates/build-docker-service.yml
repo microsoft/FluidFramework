@@ -148,10 +148,11 @@ extends:
       # Tentative workaround for the occasional Credscan failures
       credscan:
         batchSize: 4
-      # Temporarily disable SBOM task until the 1ES Container Security team addresses the problem
-      sbom:
-        enabled: false
-        justificationForDisabling: "'Container Security - SBOM' task 0.0.29597235 has issues and causes the pipeline to timeout"
+      # For routerlicious, temporarily disable SBOM task until the 1ES Container Security team addresses an outstanding problem
+      ${{ if (eq(parameters.tagName, "server")) }}:
+        sbom:
+          enabled: false
+          justificationForDisabling: "'Container Security - SBOM' task 0.0.29597235 has issues and causes the pipeline to timeout"
     # Skip tagging if Github PR coming from a fork;  This skips Microsoft security checks that won't work on forks.
     settings:
       skipBuildTagsForGitHubPullRequests: true
