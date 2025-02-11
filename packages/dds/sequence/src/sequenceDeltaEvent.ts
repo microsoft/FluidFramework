@@ -136,7 +136,7 @@ export abstract class SequenceEventClass<
 	/**
 	 * The first of the modified ranges.
 	 */
-	public get first(): Readonly<ISequenceDeltaRange<TOperation> | undefined> {
+	public get first(): Readonly<ISequenceDeltaRange<TOperation>> | undefined {
 		return this.pFirst.value;
 	}
 
