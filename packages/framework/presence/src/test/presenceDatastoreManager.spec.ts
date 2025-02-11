@@ -54,315 +54,325 @@ describe("Presence", () => {
 			// Setup, Act (call to createPresenceManager), & Verify (post createPresenceManager call)
 			prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 		});
-		describe("responds to", () => {
+
+		describe("responds to ClientJoin", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
+
 			beforeEach(() => {
 				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
 			});
-			describe("ClientJoin", () => {
-				it("with broadcast immediately when preferred responder", () => {
-					// Setup
-					logger.registerExpectedEvent({
-						eventName: "Presence:JoinResponse",
-						details: JSON.stringify({
-							type: "broadcastAll",
-							requestor: "client4",
-							role: "primary",
-						}),
-					});
-					runtime.signalsExpected.push([
-						"Pres:DatastoreUpdate",
-						{
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": initialTime,
-											"value": "sessionId-2",
-										},
+
+			it("with broadcast immediately when preferred responder", () => {
+				// Setup
+				logger.registerExpectedEvent({
+					eventName: "Presence:JoinResponse",
+					details: JSON.stringify({
+						type: "broadcastAll",
+						requestor: "client4",
+						role: "primary",
+					}),
+				});
+				runtime.signalsExpected.push([
+					"Pres:DatastoreUpdate",
+					{
+						"avgLatency": 10,
+						"data": {
+							"system:presence": {
+								"clientToSessionId": {
+									"client2": {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": "sessionId-2",
 									},
 								},
 							},
-							"isComplete": true,
-							"sendTimestamp": clock.now,
 						},
-					]);
+						"isComplete": true,
+						"sendTimestamp": clock.now,
+					},
+				]);
 
-					// Act
-					presence.processSignal(
-						"",
-						{
-							type: "Pres:ClientJoin",
-							content: {
-								sendTimestamp: clock.now - 50,
-								avgLatency: 50,
-								data: {},
-								updateProviders: ["client2"],
-							},
-							clientId: "client4",
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:ClientJoin",
+						content: {
+							sendTimestamp: clock.now - 50,
+							avgLatency: 50,
+							data: {},
+							updateProviders: ["client2"],
 						},
-						false,
-					);
+						clientId: "client4",
+					},
+					false,
+				);
 
-					// Verify
-					assertFinalExpectations(runtime, logger);
-				});
-
-				it("with broadcast after delay when NOT preferred responder", () => {
-					// #region Part 1 (no response)
-					// Act
-					presence.processSignal(
-						"",
-						{
-							type: "Pres:ClientJoin",
-							content: {
-								sendTimestamp: clock.now - 20,
-								avgLatency: 0,
-								data: {},
-								updateProviders: ["client0", "client1"],
-							},
-							clientId: "client4",
-						},
-						false,
-					);
-					// #endregion
-
-					// #region Part 2 (response after delay)
-					// Setup
-					logger.registerExpectedEvent({
-						eventName: "Presence:JoinResponse",
-						details: JSON.stringify({
-							type: "broadcastAll",
-							requestor: "client4",
-							role: "secondary",
-							order: 2,
-						}),
-					});
-					runtime.signalsExpected.push([
-						"Pres:DatastoreUpdate",
-						{
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										"client2": {
-											"rev": 0,
-											"timestamp": initialTime,
-											"value": "sessionId-2",
-										},
-									},
-								},
-							},
-							"isComplete": true,
-							"sendTimestamp": clock.now + 180,
-						},
-					]);
-
-					// Act
-					clock.tick(200);
-
-					// Verify
-					assertFinalExpectations(runtime, logger);
-					// #endregion
-				});
+				// Verify
+				assertFinalExpectations(runtime, logger);
 			});
 
-			describe.skip("DatastoreUpdate", () => {
-				it("with emitting 'workspaceActivated' event for unregistered States workspace", () => {
-					// Setup
-					const listener = spy();
-					presence.events.on("workspaceActivated", listener);
+			it("with broadcast after delay when NOT preferred responder", () => {
+				// #region Part 1 (no response)
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:ClientJoin",
+						content: {
+							sendTimestamp: clock.now - 20,
+							avgLatency: 0,
+							data: {},
+							updateProviders: ["client0", "client1"],
+						},
+						clientId: "client4",
+					},
+					false,
+				);
+				// #endregion
 
-					// Act
-					presence.processSignal(
-						"",
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": {
-										"clientToSessionId": {
-											"client1": {
-												"rev": 0,
-												"timestamp": 0,
-												"value": "sessionId-2",
-											},
+				// #region Part 2 (response after delay)
+				// Setup
+				logger.registerExpectedEvent({
+					eventName: "Presence:JoinResponse",
+					details: JSON.stringify({
+						type: "broadcastAll",
+						requestor: "client4",
+						role: "secondary",
+						order: 2,
+					}),
+				});
+				runtime.signalsExpected.push([
+					"Pres:DatastoreUpdate",
+					{
+						"avgLatency": 10,
+						"data": {
+							"system:presence": {
+								"clientToSessionId": {
+									"client2": {
+										"rev": 0,
+										"timestamp": initialTime,
+										"value": "sessionId-2",
+									},
+								},
+							},
+						},
+						"isComplete": true,
+						"sendTimestamp": clock.now + 180,
+					},
+				]);
+
+				// Act
+				clock.tick(200);
+
+				// Verify
+				assertFinalExpectations(runtime, logger);
+				// #endregion
+			});
+		});
+
+		describe.skip("responds to DatastoreUpdate", () => {
+			let presence: ReturnType<typeof createPresenceManager>;
+
+			beforeEach(() => {
+				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
+
+				// Pass a little time (to mimic reality)
+				clock.tick(10);
+			});
+
+			it("with emitting 'workspaceActivated' event for unregistered States workspace", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": {
+									"clientToSessionId": {
+										"client1": {
+											"rev": 0,
+											"timestamp": 0,
+											"value": "sessionId-2",
 										},
 									},
-									"s:name:testStateWorkspace": {
-										"latest": {
-											"sessionId-1": {
-												"rev": 1,
-												"timestamp": 0,
-												"value": { x: 1, y: 1, z: 1 },
-											},
+								},
+								"s:name:testStateWorkspace": {
+									"latest": {
+										"sessionId-1": {
+											"rev": 1,
+											"timestamp": 0,
+											"value": { x: 1, y: 1, z: 1 },
 										},
 									},
 								},
 							},
-							clientId: "client1",
 						},
-						false,
-					);
+						clientId: "client1",
+					},
+					false,
+				);
 
-					// Verify
-					assert.strictEqual(listener.calledOnce, true);
-					assert.strictEqual(listener.calledWith("name:testStateWorkspace", "States"), true);
-				});
-				it("with emitting 'workspaceActivated' event for unregistered Notifications workspace", () => {
-					// Setup
-					const listener = spy();
-					presence.events.on("workspaceActivated", listener);
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(listener.calledWith("name:testStateWorkspace", "States"), true);
+			});
+			it("with emitting 'workspaceActivated' event for unregistered Notifications workspace", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
 
-					// Act
-					presence.processSignal(
-						"",
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": {
-										"clientToSessionId": {
-											"client1": {
-												"rev": 0,
-												"timestamp": 0,
-												"value": "sessionId-2",
-											},
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": {
+									"clientToSessionId": {
+										"client1": {
+											"rev": 0,
+											"timestamp": 0,
+											"value": "sessionId-2",
 										},
 									},
-									"n:name:testNotificationWorkspace": {
-										"testEvents": {
-											"sessionId-1": {
-												"rev": 0,
-												"timestamp": 0,
-												"value": { "name": "newId", "args": [77] },
-												"ignoreUnmonitored": true,
-											},
+								},
+								"n:name:testNotificationWorkspace": {
+									"testEvents": {
+										"sessionId-1": {
+											"rev": 0,
+											"timestamp": 0,
+											"value": { "name": "newId", "args": [77] },
+											"ignoreUnmonitored": true,
 										},
 									},
 								},
 							},
-							clientId: "client1",
 						},
-						false,
-					);
+						clientId: "client1",
+					},
+					false,
+				);
 
-					// Verify
-					assert.strictEqual(listener.calledOnce, true);
-					assert.strictEqual(
-						listener.calledWith("name:testNotificationWorkspace", "Notifications"),
-						true,
-					);
-				});
-				it("with emitting 'workspaceActivated' event for unregistered workspace of unknown type ", () => {
-					// Setup
-					const listener = spy();
-					presence.events.on("workspaceActivated", listener);
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(
+					listener.calledWith("name:testNotificationWorkspace", "Notifications"),
+					true,
+				);
+			});
+			it("with emitting 'workspaceActivated' event for unregistered workspace of unknown type ", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
 
-					// Act
-					presence.processSignal(
-						"",
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": {
-										"clientToSessionId": {
-											"client1": {
-												"rev": 0,
-												"timestamp": 0,
-												"value": "sessionId-2",
-											},
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": {
+									"clientToSessionId": {
+										"client1": {
+											"rev": 0,
+											"timestamp": 0,
+											"value": "sessionId-2",
 										},
 									},
-									"u:name:testUnknownWorkspace": {
-										"latest": {
-											"sessionId-1": {
-												"rev": 1,
-												"timestamp": 0,
-												"value": { x: 1, y: 1, z: 1 },
-											},
+								},
+								"u:name:testUnknownWorkspace": {
+									"latest": {
+										"sessionId-1": {
+											"rev": 1,
+											"timestamp": 0,
+											"value": { x: 1, y: 1, z: 1 },
 										},
 									},
 								},
 							},
-							clientId: "client1",
 						},
-						false,
-					);
+						clientId: "client1",
+					},
+					false,
+				);
 
-					// Verify
-					assert.strictEqual(listener.calledOnce, true);
-					assert.strictEqual(
-						listener.calledWith("name:name:testUnknownWorkspace", "Unknown"),
-						true,
-					);
-				});
-				it("with NOT emitting 'workspaceActivated' event for already registered workspace", () => {
-					// Setup
-					const listener = spy();
-					presence.events.on("workspaceActivated", listener);
-					presence.getStates("name:testStateWorkspace", {});
-					presence.getNotifications("name:testNotificationWorkspace", {});
+				// Verify
+				assert.strictEqual(listener.calledOnce, true);
+				assert.strictEqual(
+					listener.calledWith("name:name:testUnknownWorkspace", "Unknown"),
+					true,
+				);
+			});
+			it("with NOT emitting 'workspaceActivated' event for already registered workspace", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+				presence.getStates("name:testStateWorkspace", {});
+				presence.getNotifications("name:testNotificationWorkspace", {});
 
-					// Act
-					presence.processSignal(
-						"",
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": {
-										"clientToSessionId": {
-											"client1": {
-												"rev": 0,
-												"timestamp": 0,
-												"value": "sessionId-2",
-											},
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": {
+									"clientToSessionId": {
+										"client1": {
+											"rev": 0,
+											"timestamp": 0,
+											"value": "sessionId-2",
 										},
 									},
-									"s:name:testStateWorkspace": {
-										"latest": {
-											"sessionId-1": {
-												"rev": 1,
-												"timestamp": 0,
-												"value": { x: 1, y: 1, z: 1 },
-											},
+								},
+								"s:name:testStateWorkspace": {
+									"latest": {
+										"sessionId-1": {
+											"rev": 1,
+											"timestamp": 0,
+											"value": { x: 1, y: 1, z: 1 },
 										},
 									},
-									"n:name:testNotificationWorkspace": {
-										"testEvents": {
-											"sessionId-1": {
-												"rev": 0,
-												"timestamp": 0,
-												"value": { "name": "newId", "args": [77] },
-												"ignoreUnmonitored": true,
-											},
+								},
+								"n:name:testNotificationWorkspace": {
+									"testEvents": {
+										"sessionId-1": {
+											"rev": 0,
+											"timestamp": 0,
+											"value": { "name": "newId", "args": [77] },
+											"ignoreUnmonitored": true,
 										},
 									},
 								},
 							},
-							clientId: "client1",
 						},
-						false,
-					);
+						clientId: "client1",
+					},
+					false,
+				);
 
-					// Verify
-					assert.strictEqual(listener.called, false);
-				});
+				// Verify
+				assert.strictEqual(listener.called, false);
 			});
 		});
 	});
