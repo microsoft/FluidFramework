@@ -40,6 +40,7 @@ describe(`Presence with AzureClient`, () => {
 	const numClients = 5; // Set the total number of Fluid clients to create
 	assert(numClients > 1, "Must have at least two clients");
 	let children: ChildProcess[] = [];
+	let childErrorPromises: Promise<void>[];
 	const durationMs = 10_000;
 
 	const afterCleanUp: (() => void)[] = [];
@@ -59,15 +60,18 @@ describe(`Presence with AzureClient`, () => {
 	beforeEach("setup", async () => {
 		// Create inital child process
 		let containerId: string | undefined;
-
+		childErrorPromises = [];
 		// Fork child processes
 		for (let i = 0; i < numClients; i++) {
 			const child = fork("./lib/test/multiprocess/childClient.js", [
 				`child${i}` /* identifier passed to child process */,
 			]);
-			child.on("error", (error) => {
-				assert.fail(`Child${i} process errored: ${error.message}`);
+			const childErrorPromise = new Promise<void>((_, reject) => {
+				child.on("error", (error) => {
+					reject(new Error(`Child${i} process errored: ${error.message}`));
+				});
 			});
+			childErrorPromises.push(childErrorPromise);
 			children.push(child);
 		}
 
@@ -75,7 +79,11 @@ describe(`Presence with AzureClient`, () => {
 		for (const [index, child] of children.entries()) {
 			const user = { id: `test-user-id-${index}`, name: `test-user-name-${index}` };
 			const message: MessageToChild = { command: "connect", containerId, user };
-
+			/**
+			 * If this is the first child process (that creates the container), we must wait for the 'ready' message from the child process.
+			 * This is because subsequent child processes will need the containerId to connect to the same container.
+			 * We await this promise after sending the connect command to the first child process.
+			 */
 			const postWait =
 				index === 0
 					? timeoutPromise(
@@ -110,7 +118,7 @@ describe(`Presence with AzureClient`, () => {
 
 	it("announces 'attendeeJoined' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
 		let attendeesJoined = 0;
-		await timeoutPromise(
+		const attendeeJoinedPromise = timeoutPromise(
 			(resolve) => {
 				children[0].on("message", (msg: MessageFromChild) => {
 					if (msg.event === "attendeeJoined") {
@@ -126,6 +134,8 @@ describe(`Presence with AzureClient`, () => {
 				errorMsg: "did not receive all 'attendeeJoined' events",
 			},
 		);
+
+		await Promise.race([attendeeJoinedPromise, ...childErrorPromises]);
 
 		children[0].send({ command: "disconnectSelf" });
 		// Wait for child processes to receive attendeeDisconnected event
@@ -147,6 +157,6 @@ describe(`Presence with AzureClient`, () => {
 				),
 			);
 
-		await Promise.all(waitForDisconnected);
+		await Promise.race([Promise.all(waitForDisconnected), ...childErrorPromises]);
 	});
 });
