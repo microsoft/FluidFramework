@@ -100,7 +100,10 @@ import {
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { newChangeAtomIdTransform } from "../../core/rebase/types.js";
+import {
+	newChangeAtomIdTransform,
+	type ChangeAtomIdRangeMap,
+} from "../../core/rebase/types.js";
 import type { RangeQueryEntry } from "../../util/rangeMap.js";
 
 /**
@@ -2421,7 +2424,14 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			// XXX: Store fieldData
 
 			if (newDetachId !== undefined) {
-				renameNodes(this.table.rebasedRootNodes, baseAttachId, newDetachId, length);
+				renameNodes(
+					this.table.rebasedRootNodes,
+					baseAttachId,
+					newDetachId,
+					length,
+					this.table.newChange.rootNodes.newToOldId,
+					this.table.newChange.rootNodes.oldToNewId,
+				);
 			}
 		}
 
@@ -2504,7 +2514,14 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		newChanges: NodeId | undefined,
 	): void {
 		if (newDetachId !== undefined) {
-			renameNodes(this.table.composedRootNodes, baseAttachId, newDetachId, count);
+			renameNodes(
+				this.table.composedRootNodes,
+				baseAttachId,
+				newDetachId,
+				count,
+				this.table.baseChange.rootNodes.newToOldId,
+				this.table.newChange.rootNodes.oldToNewId,
+			);
 		}
 
 		const { value: baseDetachId, length } = firstDetachIdFromAttachId(
@@ -2542,6 +2559,17 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 	public composeDetachAttach(baseDetachId: ChangeAtomId, count: number): void {
 		deleteNodeRename(this.table.composedRootNodes, baseDetachId, count);
+	}
+
+	public renameNewAttach(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void {
+		renameNodes(
+			this.table.composedRootNodes,
+			oldId,
+			newId,
+			count,
+			this.table.baseChange.rootNodes.newToOldId,
+			this.table.newChange.rootNodes.oldToNewId,
+		);
 	}
 }
 
@@ -2923,8 +2951,9 @@ export interface RenameDescription {
 
 function renameTableFromRenameDescriptions(renames: RenameDescription[]): RootNodeTable {
 	const table = newRootTable();
+	const emptyMap = newChangeAtomIdRangeMap<ChangeAtomId>();
 	for (const rename of renames) {
-		renameNodes(table, rename.oldId, rename.newId, rename.count);
+		renameNodes(table, rename.oldId, rename.newId, rename.count, emptyMap, emptyMap);
 	}
 
 	return table;
@@ -3154,7 +3183,14 @@ function composeRootTables(
 ): RootNodeTable {
 	const mergedTable = cloneRootTable(change1.rootNodes);
 	for (const entry of change2.rootNodes.oldToNewId.entries()) {
-		renameNodes(mergedTable, entry.start, entry.value, entry.length);
+		renameNodes(
+			mergedTable,
+			entry.start,
+			entry.value,
+			entry.length,
+			change1.rootNodes.newToOldId,
+			change2.rootNodes.oldToNewId,
+		);
 	}
 
 	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
@@ -3210,9 +3246,13 @@ function renameNodes(
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
 	count: number,
+	newToOldIds: ChangeAtomIdRangeMap<ChangeAtomId>,
+	oldToNewIds: ChangeAtomIdRangeMap<ChangeAtomId>,
 ): void {
-	const oldEntry = table.newToOldId.getFirst(oldId, count);
-	const newEntry = table.oldToNewId.getFirst(newId, count);
+	const oldEntry1 = table.newToOldId.getFirst(oldId, count);
+	const newEntry1 = table.oldToNewId.getFirst(newId, count);
+	const oldEntry = newToOldIds.getFirst(oldId, count);
+	const newEntry = oldToNewIds.getFirst(newId, count);
 	const countToRename = Math.min(newEntry.length, oldEntry.length);
 
 	let adjustedOldId = oldId;
@@ -3229,7 +3269,10 @@ function renameNodes(
 
 	// If `newId` had previously been renamed to `oldId` then we are renaming the node back to its original name
 	// and do not need to have a rename entry.
-	if (!areEqualChangeAtomIds(adjustedOldId, newId)) {
+	if (
+		!areEqualChangeAtomIds(adjustedOldId, newId) &&
+		!areEqualChangeAtomIdOpts(oldId, adjustedNewId)
+	) {
 		setNodeRenameEntry(table, adjustedOldId, adjustedNewId, countToRename);
 	}
 
@@ -3239,6 +3282,8 @@ function renameNodes(
 			offsetChangeAtomId(oldId, countToRename),
 			offsetChangeAtomId(newId, countToRename),
 			count - countToRename,
+			newToOldIds,
+			oldToNewIds,
 		);
 	}
 }

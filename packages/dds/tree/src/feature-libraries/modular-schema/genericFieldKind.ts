@@ -202,4 +202,5 @@ const invalidComposeManager: ComposeNodeManager = {
 	getNewChangesForBaseDetach: invalidFunc,
 	composeBaseAttach: invalidFunc,
 	composeDetachAttach: invalidFunc,
+	renameNewAttach: invalidFunc,
 };

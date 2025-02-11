@@ -132,6 +132,11 @@ function composeMarksIgnoreChild(
 		return { ...baseMark, idOverride: newMark.idOverride };
 	} else if (isRename(baseMark)) {
 		assert(isAttach(newMark), 0x9f1 /* Unexpected mark type */);
+		assert(
+			baseMark.cellId !== undefined && newMark.cellId !== undefined,
+			"Expected marks to target an empty cell",
+		);
+		moveEffects.renameNewAttach(newMark.cellId, baseMark.cellId, baseMark.count);
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
 		assert(isDetach(baseMark), 0x9f2 /* Unexpected mark type */);

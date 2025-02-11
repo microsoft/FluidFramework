@@ -21,4 +21,5 @@ export const failComposeManager: ComposeNodeManager = {
 	getNewChangesForBaseDetach: failingDelegate,
 	composeBaseAttach: failingDelegate,
 	composeDetachAttach: failingDelegate,
+	renameNewAttach: failingDelegate,
 };

@@ -251,6 +251,7 @@ const dummyComposeManager: ComposeNodeManager = {
 
 	composeBaseAttach: unsupportedFunc,
 	composeDetachAttach: unsupportedFunc,
+	renameNewAttach: unsupportedFunc,
 };
 
 const dummyRevisionMetadata: RevisionMetadataSource = {

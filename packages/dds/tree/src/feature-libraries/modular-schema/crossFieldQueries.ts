@@ -47,6 +47,9 @@ export interface ComposeNodeManager {
 	): void;
 
 	composeDetachAttach(baseDetachId: ChangeAtomId, count: number): void;
+
+	// XXX: Should we get rid of this method?
+	renameNewAttach(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void;
 }
 
 export interface RebaseNodeManager<T = unknown> {

@@ -826,6 +826,8 @@ function newComposeManager(): TestComposeManager {
 		},
 
 		composeDetachAttach(baseDetachId, count): void {},
+
+		renameNewAttach(oldId, newId, count): void {},
 	};
 
 	return manager;
