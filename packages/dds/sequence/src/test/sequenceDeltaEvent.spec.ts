@@ -3087,7 +3087,7 @@ describe("collab", () => {
 			);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
-				insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length,
+				insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart),
 			);
 			assert.equal(event.ranges.length, 1);
 			assert.equal(event.first?.segment.cachedLength, insertText.length);
@@ -3149,7 +3149,7 @@ describe("collab", () => {
 			);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
-				insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length,
+				insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart),
 			);
 			assert.equal(event.ranges.length, 1);
 			assert.equal(event.first?.segment.cachedLength, insertText.length);
