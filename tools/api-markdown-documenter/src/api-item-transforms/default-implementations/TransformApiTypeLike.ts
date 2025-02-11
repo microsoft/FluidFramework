@@ -26,7 +26,7 @@ import type { ApiItemTransformationConfiguration } from "../configuration/index.
 import { createChildDetailsSection, createMemberTables } from "../helpers/index.js";
 
 /**
- * Default documentation transform for `Class` items.
+ * Default documentation transform for {@link ApiTypeLike | type-like} API items.
  *
  * @remarks Format:
  *
