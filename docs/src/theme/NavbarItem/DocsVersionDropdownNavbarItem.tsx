@@ -134,7 +134,7 @@ export default function DocsVersionDropdownNavbarItem({
 				to={dropdownTo}
 				items={items}
 				aria-label="Select documentation version"
-				role="combobox"
+				role="menu"
 				aria-haspopup="listbox"
 			/>
 		</div>
