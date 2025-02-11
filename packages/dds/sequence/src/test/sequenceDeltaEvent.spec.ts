@@ -3068,6 +3068,7 @@ describe("collab", () => {
 			const segment1 = event.first?.segment as TextSegment;
 			assert.equal(segment1.text, "lazy ");
 
+			client.applyMsg(localRemoveMessage);
 			const remoteInsertMessage = client.makeOpMessage(
 				createInsertSegmentOp(insertPos, new TextSegment(insertText)),
 				currentSeqNumber + 2,
