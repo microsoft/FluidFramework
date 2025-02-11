@@ -137,7 +137,7 @@
 		"postpack": "tar -cf ./container-runtime.test-files.tar ./src/test ./dist/test ./lib/test",
 		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"test": "npm run test:mocha",
-		"test:benchmark:report": "mocha --timeout 10s --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js \"./dist/**/*.perf.spec.*js\" --exit",
+		"test:benchmark:report": "mocha --timeout 10s --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js \"./dist/**/*.perf.spec.*js\"",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\"",
