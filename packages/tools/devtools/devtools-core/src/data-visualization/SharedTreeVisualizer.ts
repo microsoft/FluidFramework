@@ -165,10 +165,6 @@ export function concatenateTypes(fieldTypes: ReadonlySet<string>): string {
  * Properties that describe schema constraints for a field in the tree
  */
 interface FieldSchemaProperties {
-	/**
-	 * Set of node schema (represented by name) that are valid under this field.
-	 * This is a subset of the types defined in treeDefinitions.
-	 */
 	allowedTypes: ReadonlySet<string> | undefined;
 
 	/**
@@ -185,7 +181,8 @@ interface FieldSchemaProperties {
  *
  * @param treeFields - The fields of the tree node to visualize. Can be either an array of VerboseTree (for array nodes) or a Record of field names to VerboseTree (for object/map nodes).
  * @param treeDefinitions - Map containing all schema definitions for the entire tree structure. Each definition describes the shape and constraints of a particular node type.
- * @param requirements - Optional record mapping field names to boolean values indicating whether each field is required (true) or optional (false). Only meaningful for object node fields.
+ * @param fieldSchemaProperties - Record mapping field names to their schema properties, including allowed types and whether they are required.
+ * @param visualizeChildData - Callback function to visualize child node data.
  *
  * @returns A record mapping field names/indices to their visual tree representations.
  */
@@ -348,15 +345,16 @@ async function visualizeNodeBySchema(
 
 			const arrayNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
 			for (const [i, child] of children.entries()) {
-				arrayNodeSchemaProperties[i] = {
+				const fieldSchema = {
 					allowedTypes: schema.allowedTypes,
 					isRequired: undefined,
 				};
+				arrayNodeSchemaProperties[i] = fieldSchema;
 
 				fields[i] = await visualizeSharedTreeBySchema(
 					child,
 					treeDefinitions,
-					{ allowedTypes: arrayNodeSchemaProperties[i]?.allowedTypes, isRequired: undefined },
+					{ allowedTypes: fieldSchema.allowedTypes, isRequired: undefined },
 					visualizeChildData,
 				);
 			}
@@ -387,9 +385,10 @@ async function visualizeNodeBySchema(
  * @param tree - The {@link VerboseTree} to visualize
  * @param treeDefinitions - Map containing all schema definitions for the entire tree structure. Each definition
  * describes the shape and constraints of a particular node type.
- * @param allowedTypes - Set of type names that are valid for this specific node position in the tree. This is a
- * subset of the types defined in treeDefinitions.
- * @param isRequired - Whether this field is required in its parent object schema.
+ * @param fieldSchemaProperties - Properties describing schema constraints for this field:
+ * - `allowedTypes`: Set of type names that are valid for this specific node position in the tree.
+ * This is a subset of the types defined in treeDefinitions.
+ * - `isRequired`: Whether this field is required in its parent object schema.
  * Only meaningful for direct children of object nodes.
  * Undefined for array/map elements since they are always required within their parent.
  * @param visualizeChildData - Callback function to visualize child node data
