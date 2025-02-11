@@ -12,7 +12,6 @@ import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ITestFluidObject,
@@ -51,7 +50,7 @@ import {
 	ForestTypeOptimized,
 	ForestTypeReference,
 	getBranch,
-	type ISharedTree,
+	type ITreePrivate,
 	type SharedTree,
 	Tree,
 	type TreeCheckout,
@@ -201,7 +200,7 @@ describe("SharedTree", () => {
 		const sharedTree = treeTestFactory();
 		const view = sharedTree.viewWith(
 			new TreeViewConfiguration({
-				schema: new SchemaFactory(undefined).number,
+				schema: SchemaFactory.number,
 				enableSchemaValidation,
 			}),
 		);
@@ -1861,7 +1860,7 @@ describe("SharedTree", () => {
 				pendingOps,
 			);
 			const dataStore = (await loadedContainer.getEntryPoint()) as ITestFluidObject;
-			const tree = await dataStore.getSharedObject<ISharedTree>("TestSharedTree");
+			const tree = await dataStore.getSharedObject<ITreePrivate>("TestSharedTree");
 			await waitForContainerConnection(loadedContainer, true);
 			await provider.ensureSynchronized();
 
@@ -2115,15 +2114,14 @@ describe("SharedTree", () => {
 		view.initialize([]);
 		assert.throws(
 			() => {
-				Tree.runTransaction(view, () => {
+				view.runTransaction(() => {
 					tree.connect({
 						deltaConnection: runtime.createDeltaConnection(),
 						objectStorage: new MockStorage(),
 					});
 				});
 			},
-			(e: Error) =>
-				validateAssertionError(e, /Cannot attach while a transaction is in progress/),
+			validateUsageError(/^Cannot attach while a transaction is in progress/),
 		);
 	});
 
@@ -2160,8 +2158,7 @@ describe("SharedTree", () => {
 	it("exportVerbose & exportSimpleSchema", () => {
 		const tree = treeTestFactory();
 		assert.deepEqual(tree.exportVerbose(), undefined);
-		const sf = new SchemaFactory(undefined);
-		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(sf.optional([])));
+		assert.deepEqual(tree.exportSimpleSchema(), getSimpleSchema(SchemaFactory.optional([])));
 
 		const config = new TreeViewConfiguration({
 			schema: numberSchema,
