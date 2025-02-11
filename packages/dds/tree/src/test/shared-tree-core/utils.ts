@@ -50,6 +50,7 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 		packageVersion: "0.0.0",
 	};
 
+	public readonly transaction: SquashingTransactionStack<DefaultEditBuilder, DefaultChangeset>;
 	private readonly changeFamily: DefaultChangeFamily;
 
 	public constructor(
@@ -135,6 +136,4 @@ export class TestSharedTreeCore extends SharedTreeCore<DefaultEditBuilder, Defau
 	public override get editor(): DefaultEditBuilder {
 		return this.transaction.activeBranchEditor;
 	}
-
-	public readonly transaction: SquashingTransactionStack<DefaultEditBuilder, DefaultChangeset>;
 }
