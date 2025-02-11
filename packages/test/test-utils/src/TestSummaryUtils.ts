@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	IContainer,
 	IHostLoader,
@@ -30,6 +29,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { createTestConfigProvider } from "./TestConfigs.js";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
 import { waitForContainerConnection } from "./containerUtils.js";
 import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";

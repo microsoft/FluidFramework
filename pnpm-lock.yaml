@@ -14675,9 +14675,6 @@ importers:
       '@fluid-internal/test-driver-definitions':
         specifier: workspace:~
         version: link:../test-driver-definitions
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -14729,6 +14726,9 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
+      '@fluidframework/synthesize':
+        specifier: workspace:~
+        version: link:../../framework/synthesize
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
