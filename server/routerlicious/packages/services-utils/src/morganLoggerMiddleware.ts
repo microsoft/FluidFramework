@@ -13,6 +13,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
+import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
@@ -59,6 +60,17 @@ interface IResponseLatency {
 	closeTime: number;
 }
 
+function getEventLoopMetrics(historian: IntervalHistogram) {
+	return {
+		max: (historian.max / 1e6).toFixed(3),
+		min: (historian.min / 1e6).toFixed(3),
+		mean: (historian.mean / 1e6).toFixed(3),
+		p50: (historian.percentile(0.5) / 1e6).toFixed(3),
+		p95: (historian.percentile(0.95) / 1e6).toFixed(3),
+		p99: (historian.percentile(0.99) / 1e6).toFixed(3),
+	};
+}
+
 /**
  * @internal
  */
@@ -70,6 +82,7 @@ export function jsonMorganLoggerMiddleware(
 		res: express.Response,
 	) => Record<string, any>,
 	enableLatencyMetric: boolean = false,
+	enableEventLoopLagMetric: boolean = false,
 ): express.RequestHandler {
 	return (request, response, next): void => {
 		response.locals.clientDisconnected = false;
@@ -123,6 +136,11 @@ export function jsonMorganLoggerMiddleware(
 			  })
 			: undefined;
 		const startTime = performance.now();
+		let histogram: IntervalHistogram;
+		if (enableEventLoopLagMetric) {
+			histogram = monitorEventLoopDelay();
+			histogram.enable();
+		}
 		const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
 		morgan<express.Request, express.Response>((tokens, req, res) => {
 			let additionalProperties = {};
@@ -166,6 +184,10 @@ export function jsonMorganLoggerMiddleware(
 			};
 			httpMetric.setProperties(properties);
 			const resolveMetric = () => {
+				if (enableEventLoopLagMetric) {
+					histogram.disable();
+					httpMetric.setProperty("eventLoopLagMs", getEventLoopMetrics(histogram));
+				}
 				if (properties.status?.startsWith("2")) {
 					httpMetric.success("Request successful");
 				} else {
