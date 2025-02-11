@@ -14,7 +14,6 @@ import {
 	getParam,
 	getBooleanFromConfig,
 	verifyToken,
-	verifyStorageToken,
 	logHttpMetrics,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";

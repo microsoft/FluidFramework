@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
@@ -141,8 +139,6 @@ describe("Routerlicious", () => {
 			const defaultDeltaService = new DeltaService(deltasCollection, defaultTenantManager);
 			const defaultDocumentRepository = new TestNotImplementedDocumentRepository();
 			const defaultDocumentDeleteService = new DocumentDeleteService();
-			const defaultCollaborationSessionEventEmitter =
-				new TypedEventEmitter<ICollaborationSessionEvents>();
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			let testFluidAccessTokenGenerator: TestFluidAccessTokenGenerator;
@@ -208,7 +204,6 @@ describe("Routerlicious", () => {
 						startupCheck,
 						undefined,
 						undefined,
-						defaultCollaborationSessionEventEmitter,
 						undefined,
 						undefined,
 						undefined,
@@ -425,7 +420,6 @@ describe("Routerlicious", () => {
 						startupCheck,
 						undefined,
 						undefined,
-						defaultCollaborationSessionEventEmitter,
 						undefined,
 						undefined,
 						undefined,
@@ -470,39 +464,6 @@ describe("Routerlicious", () => {
 							.send(body)
 							.expect(400);
 					});
-					// it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
-					// 	const body = {
-					// 		signalContent: {
-					// 			contents: {
-					// 				type: "ExternalDataChanged_V1.0.0",
-					// 				content: { taskListId: "task-list-1" },
-					// 			},
-					// 		},
-					// 	};
-
-					// 	await supertest
-					// 		.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-					// 		.send(body)
-					// 		.set("Authorization", tenantToken1)
-					// 		.set("Content-Type", "application/json")
-					// 		.expect(200);
-					// });
-					// it("/api/v1/:tenantId/:id/broadcast-signal invalid-token", async () => {
-					// 	const body = {
-					// 		signalContent: {
-					// 			contents: {
-					// 				type: "ExternalDataChanged_V1.0.0",
-					// 				content: { taskListId: "task-list-1" },
-					// 			},
-					// 		},
-					// 	};
-
-					// 	await supertest
-					// 		.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-					// 		.send(body)
-					// 		.set("Content-Type", "application/json")
-					// 		.expect(403);
-					// });
 				});
 
 				describe("/documents", () => {
@@ -634,7 +595,6 @@ describe("Routerlicious", () => {
 						startupCheck,
 						undefined,
 						undefined,
-						defaultCollaborationSessionEventEmitter,
 						undefined,
 						undefined,
 						undefined,
@@ -679,12 +639,6 @@ describe("Routerlicious", () => {
 							"post",
 						);
 					});
-					// it("/api/v1/:tenantId/:id/broadcast-signal", async () => {
-					// 	await assertCorrelationId(
-					// 		`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`,
-					// 		"post",
-					// 	);
-					// });
 				});
 
 				describe("/documents", () => {
@@ -768,7 +722,6 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						undefined,
 						undefined,
 						undefined,
 						undefined,
@@ -861,7 +814,6 @@ describe("Routerlicious", () => {
 						defaultDocumentRepository,
 						defaultDocumentDeleteService,
 						startupCheck,
-						undefined,
 						undefined,
 						undefined,
 						testClusterDrainingStatusChecker,
@@ -1051,7 +1003,6 @@ describe("Routerlicious", () => {
 						startupCheck,
 						undefined,
 						undefined,
-						defaultCollaborationSessionEventEmitter,
 						testClusterDrainingStatusChecker,
 						undefined,
 						undefined,
@@ -1097,39 +1048,6 @@ describe("Routerlicious", () => {
 							.expect(403);
 					});
 				});
-
-				// describe("/api/v1/:tenantId/:id/broadcast-signal", () => {
-				// 	it("Successful request", async () => {
-				// 		const body = {
-				// 			signalContent: {
-				// 				contents: {
-				// 					type: "ExternalDataChanged_V1.0.0",
-				// 					content: { taskListId: "task-list-1" },
-				// 				},
-				// 			},
-				// 		};
-
-				// 		await supertest
-				// 			.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-				// 			.send(body)
-				// 			.set("Authorization", tenantToken1)
-				// 			.set("Content-Type", "application/json")
-				// 			.expect(200);
-				// 	});
-
-				// 	it("Invalid request content", async () => {
-				// 		const body = {
-				// 			signalContent: {},
-				// 		};
-
-				// 		await supertest
-				// 			.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-				// 			.send(body)
-				// 			.set("Authorization", tenantToken1)
-				// 			.set("Content-Type", "application/json")
-				// 			.expect(400);
-				// 	});
-				// });
 
 				describe("/documents", () => {
 					it("/:tenantId cluster in draining status", async () => {

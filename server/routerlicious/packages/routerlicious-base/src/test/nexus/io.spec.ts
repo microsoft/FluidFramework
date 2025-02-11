@@ -22,7 +22,10 @@ import {
 } from "@fluidframework/protocol-definitions";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
-import { configureWebSocketServices, type ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import {
+	configureWebSocketServices,
+	type ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
 import { LocalOrderManager, PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import { generateToken } from "@fluidframework/server-services-utils";
@@ -170,7 +173,8 @@ describe("Routerlicious", () => {
 					testClusterDrainingChecker = new TestClusterDrainingChecker();
 					testRevokedTokenChecker = new TestRevokedTokenChecker();
 
-					collaborationSessionEventEmitter = new TypedEventEmitter<ICollaborationSessionEvents>();
+					collaborationSessionEventEmitter =
+						new TypedEventEmitter<ICollaborationSessionEvents>();
 
 					configureWebSocketServices(
 						webSocketServer,
@@ -606,7 +610,12 @@ describe("Routerlicious", () => {
 									),
 								);
 								listenForSignals(clients);
-								assert.equal(collaborationSessionEventEmitter.listenerCount("broadcastSignal"), 1);
+								assert.equal(
+									collaborationSessionEventEmitter.listenerCount(
+										"broadcastSignal",
+									),
+									1,
+								);
 							});
 							describe("sending one signal", () => {
 								[0, 1].forEach((clientIndex) => {
