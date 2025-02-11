@@ -3249,8 +3249,6 @@ function renameNodes(
 	newToOldIds: ChangeAtomIdRangeMap<ChangeAtomId>,
 	oldToNewIds: ChangeAtomIdRangeMap<ChangeAtomId>,
 ): void {
-	const oldEntry1 = table.newToOldId.getFirst(oldId, count);
-	const newEntry1 = table.oldToNewId.getFirst(newId, count);
 	const oldEntry = newToOldIds.getFirst(oldId, count);
 	const newEntry = oldToNewIds.getFirst(newId, count);
 	const countToRename = Math.min(newEntry.length, oldEntry.length);

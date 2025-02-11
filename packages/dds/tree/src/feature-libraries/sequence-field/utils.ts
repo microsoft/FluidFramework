@@ -769,7 +769,7 @@ function addRevision(effect: MarkEffect, revision: RevisionTag): void {
 export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 	const keys: CrossFieldKeyRange[] = [];
 	for (const mark of change) {
-		const key = getCrossFieldKeysForMarkEffect(mark, mark.count);
+		const key = getCrossFieldKeysForMark(mark, mark.count);
 		if (key !== undefined) {
 			keys.push(key);
 		}
@@ -778,26 +778,24 @@ export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 	return keys;
 }
 
-function getCrossFieldKeysForMarkEffect(
-	effect: MarkEffect,
-	count: number,
-): CrossFieldKeyRange | undefined {
-	switch (effect.type) {
+function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange | undefined {
+	switch (mark.type) {
 		case "Insert":
+			if (mark.cellId === undefined) {
+				return undefined;
+			}
 			return {
 				key: {
+					...mark.cellId,
 					target: CrossFieldTarget.Destination,
-					revision: effect.revision,
-					localId: effect.id,
 				},
 				count,
 			};
 		case "Remove":
 			return {
 				key: {
+					...getDetachOutputCellId(mark),
 					target: CrossFieldTarget.Source,
-					revision: effect.revision,
-					localId: effect.id,
 				},
 				count,
 			};
