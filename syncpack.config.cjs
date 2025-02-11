@@ -19,6 +19,10 @@ module.exports = {
 		},
 	},
 
+	// The "local" dependency type is not used in our repo because we use workspaces and the "workspace:" protocol
+	// This setting enables all dependencyTypes to be checked EXCEPT "local".
+	dependencyTypes: ["!local"],
+
 	/**
 	 * SemverGroups are used to ensure that groups of packages use the same semver range for dependencies.
 	 *
@@ -26,18 +30,6 @@ module.exports = {
 	 * `syncpack lint-semver-ranges`, the output is grouped by label.
 	 */
 	semverGroups: [
-		// Workaround for compatibility issues.
-		// Ideally this section would be empty (and removed).
-		// Items should be removed from here when possible.
-		{
-			label:
-				"Version compatibility workarounds should be used, or removed from syncpack.config.cjs if no longer needed.",
-			dependencies: ["@oclif/core"],
-			dependencyTypes: ["pnpmOverrides"],
-			packages: ["**"],
-			range: "~",
-		},
-
 		{
 			label: "engines.node should always use >= ranges",
 			dependencyTypes: ["engines"],
@@ -62,8 +54,9 @@ module.exports = {
 			range: "",
 		},
 
-		// PropertyDDS packages' dependencies are ignored because they use a lot of exact deps.
 		{
+			label:
+				"PropertyDDS packages' dependencies are ignored because they use a lot of exact deps",
 			dependencies: ["**"],
 			packages: ["@fluid-experimental/property-*"],
 			isIgnored: true,
@@ -82,6 +75,14 @@ module.exports = {
 		},
 
 		{
+			label: "Ignore previous version deps (used for type tests)",
+			dependencies: ["@fluid*/*-previous"],
+			dependencyTypes: ["dev"],
+			packages: ["**"],
+			isIgnored: true,
+		},
+
+		{
 			label: "Deps in pnpm overrides can use whatever dependency ranges they need",
 			dependencyTypes: ["pnpmOverrides"],
 			dependencies: ["**"],
@@ -90,7 +91,7 @@ module.exports = {
 		},
 
 		{
-			label: "Must use exact dependency ranges",
+			label: "Some deps must use exact dependency ranges",
 			dependencies: [
 				"@tiny-calc/*",
 				"@graphql-codegen/cli",
@@ -116,7 +117,7 @@ module.exports = {
 		// Some dependencies, like typescript and eslint, recommend to use tilde deps because minors introduce
 		// changes that may break linting
 		{
-			label: "Must use tilde dependency ranges",
+			label: "Some deps must use tilde dependency ranges",
 			dependencies: [
 				"@biomejs/biome",
 				"eslint-plugin-*",
@@ -165,14 +166,34 @@ module.exports = {
 			packages: ["**"],
 			isIgnored: true,
 		},
-		// Workaround for this private internal package. Can be removed once our types wrapper around
-		// the package is no longer needed - see https://github.com/argos-ci/jest-puppeteer/issues/568.
+
+		// Workaround for our type test prevous version deps
 		{
-			label: "Ignore private workaround package @types/jest-environment-puppeteer",
-			dependencies: ["@types/jest-environment-puppeteer"],
-			dependencyTypes: ["dev", "prod"],
+			label: "Ignore previous version deps (used for type tests)",
+			dependencies: ["@fluid*/*-previous"],
 			packages: ["**"],
 			isIgnored: true,
+		},
+
+		{
+			label: "Versions of common Fluid packages should all match",
+			dependencies: [
+				// These are Fluid packages that are not part of the client release group
+				"@fluid-internal/eslint-plugin-fluid",
+				"@fluid-tools/benchmark",
+				"@fluid-tools/build-cli",
+				"@fluidframework/build-common",
+				"@fluidframework/build-tools",
+				"@fluidframework/common-utils",
+				"@fluidframework/eslint-config-fluid",
+				"@fluidframework/protocol-definitions",
+			],
+		},
+
+		{
+			label: "Use workspace protocol for in-workspace dependencies",
+			dependencies: ["$LOCAL"],
+			pinVersion: "workspace:~",
 		},
 
 		{
@@ -203,30 +224,6 @@ module.exports = {
 			dependencyTypes: ["packageManager"],
 			dependencies: ["**"],
 			packages: ["**"],
-		},
-
-		{
-			label:
-				"Ignore interdependencies on other Fluid packages. This is needed because syncpack doesn't understand our >= < semver ranges",
-			isIgnored: true,
-			packages: [
-				"@fluid-example/**",
-				"@fluid-experimental/**",
-				"@fluid-internal/**",
-				"@fluid-private/**",
-				"@fluid-tools/**",
-				"@fluidframework/**",
-				"fluid-framework",
-			],
-			dependencies: [
-				"@fluid-example/**",
-				"@fluid-experimental/**",
-				"@fluid-internal/**",
-				"@fluid-private/**",
-				"@fluid-tools/**",
-				"@fluidframework/**",
-				"fluid-framework",
-			],
 		},
 	],
 };

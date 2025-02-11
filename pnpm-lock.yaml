@@ -105,8 +105,8 @@ importers:
         specifier: ^1.1.6
         version: 1.1.6
       syncpack:
-        specifier: ^9.8.4
-        version: 9.8.6
+        specifier: 14.0.0-alpha.9
+        version: 14.0.0-alpha.9
       ts2esm:
         specifier: ^1.4.0
         version: 1.4.0
@@ -15012,7 +15012,7 @@ importers:
         version: 0.51.0(@types/node@22.10.1)
       jest-environment-puppeteer:
         specifier: ^10.1.3
-        version: 10.1.4(typescript@5.4.5)
+        version: 10.1.4(typescript@5.7.3)
       prettier:
         specifier: ~3.0.3
         version: 3.0.3
@@ -21122,10 +21122,6 @@ packages:
     resolution: {integrity: sha512-AdmX6xUzdNASswsFtmwSt7Vj8po9IuqXm0UXz7QKPuEUmPB4XyjGfaAr2PSuELMwkRMVH1EpIkX5bTZGRB3eCA==}
     engines: {node: '>=10'}
 
-  cosmiconfig@8.1.3:
-    resolution: {integrity: sha512-/UkO2JKI18b5jVMJUp0lvKFMpa/Gye+ZgZjKD+DGEN9y7NRcf/nK1A0sp67ONmKtnDCNMS44E6jrk0Yc3bDuUw==}
-    engines: {node: '>=14'}
-
   cosmiconfig@8.3.6:
     resolution: {integrity: sha512-kcZ6+W5QzcJ3P1Mt+83OUv/oHFqZHIx8DuxG6eZ5RGMERoLqp4BuGjhHLYGK+Kf5XVkQvqBSmAy/nGWN3qDgEA==}
     engines: {node: '>=14'}
@@ -22439,10 +22435,6 @@ packages:
   fs-exists-sync@0.1.0:
     resolution: {integrity: sha512-cR/vflFyPZtrN6b38ZyWxpWdhlXrzZEBawlpBQMq7033xVY7/kg0GDMBK5jg8lDYQckdJ5x/YC88lM3C7VMsLg==}
     engines: {node: '>=0.10.0'}
-
-  fs-extra@11.1.1:
-    resolution: {integrity: sha512-MGIE4HOvQCeUCzmlHs0vXpih4ysz4wg9qiSAu6cd42lVwPbTM1TjV7RusoyQqMmk/95gdQZX72u+YW+c3eEpFQ==}
-    engines: {node: '>=14.14'}
 
   fs-extra@11.2.0:
     resolution: {integrity: sha512-PmDi3uwK5nFuXh7XDTlVnS17xJS7vW36is2+w3xcv8SVxiB4NyATf4ctkVY5bkSjX0Y4nbvZCq1/EjtEyr9ktw==}
@@ -24424,10 +24416,6 @@ packages:
     resolution: {integrity: sha512-lKwV/1brpG6mBUFHtb7NUmtABCb2WZZmm2wNiOA5hAb8VdCS4B3dtMWyvcoViccwAW/COERjXLt0zP1zXUN26g==}
     engines: {node: '>=10'}
 
-  minimatch@6.2.0:
-    resolution: {integrity: sha512-sauLxniAmvnhhRjFwPNnJKaPFYyddAgbYdeUpHULtCT/GhzdCx/MDNy+Y40lBxTQUrMzDE8e0S43Z5uqfO0REg==}
-    engines: {node: '>=10'}
-
   minimatch@7.4.6:
     resolution: {integrity: sha512-sBz8G/YjVniEz6lKPNpKxXwazJe4c19fEfV2GDMX6AjFz+MX9uDWIZW8XreVhkFW3fkIdTv/gxWr/Kks5FFAVw==}
     engines: {node: '>=10'}
@@ -25792,10 +25780,6 @@ packages:
     resolution: {integrity: sha512-VIMnQi/Z4HT2Fxuwg5KrY174U1VdUIASQVWXXyqtNRtxSr9IYkn1rsI6Tb6HsrHCmB7gVpNwX6JxPTHcH6IoTA==}
     engines: {node: '>=6'}
 
-  read-yaml-file@2.1.0:
-    resolution: {integrity: sha512-UkRNRIwnhG+y7hpqnycCL/xbTk7+ia9VuVTC0S+zVbwd65DI9eUpRMfsWIGrCWxTU/mi+JW8cHQCrv+zfCbEPQ==}
-    engines: {node: '>=10.13'}
-
   read@1.0.7:
     resolution: {integrity: sha512-rSOKNYUmaxy0om1BNjMN4ezNT6VKK+2xF4GBhc81mkH7L60i6dp8qPYrkndNLT3QPphoII3maL9PVC9XmhHwVQ==}
     engines: {node: '>=0.8'}
@@ -26220,11 +26204,6 @@ packages:
 
   semver@6.3.1:
     resolution: {integrity: sha512-BR7VvDCVHO+q2xBEWskxS6DJE1qRnb7DxzUrogb71CWoSficBxYsiAGd+Kl0mmq/MprG9yArRkyrQxTO6XjMzA==}
-    hasBin: true
-
-  semver@7.5.0:
-    resolution: {integrity: sha512-+XC0AD/R7Q2mPSRuy2Id0+CGTZ98+8f+KvwirxOKIEyid+XSx6HbC63p+O4IndTHuX5Z+JxQ0TghCkO5Cg/2HA==}
-    engines: {node: '>=10'}
     hasBin: true
 
   semver@7.5.4:
@@ -26781,9 +26760,39 @@ packages:
   sync-rpc@1.3.6:
     resolution: {integrity: sha512-J8jTXuZzRlvU7HemDgHi3pGnh/rkoqR/OZSjhTyyZrEkkYQbk7Z33AXp37mkPfPpfdOuj7Ex3H/TJM1z48uPQw==}
 
-  syncpack@9.8.6:
-    resolution: {integrity: sha512-4S4cUoKK9WenA/Wdk9GvlekzPR9PxC7sqcsUIsK4ypsa/pIYv8Ju1vxGNvp6Y1yI2S9EdCk0QJsB3/wRB8XYVw==}
-    engines: {node: '>=14'}
+  syncpack-darwin-arm64@14.0.0-alpha.9:
+    resolution: {integrity: sha512-JVQxPpJo4c+M16QAGWB2MF2hTjtEKO9Z78V1Bl7BrPBI9Aj46JeF1cgZFHdm7Rv4DZbkqAylrsc6VDKCPlEK8g==}
+    cpu: [arm64]
+    os: [darwin]
+
+  syncpack-darwin-x64@14.0.0-alpha.9:
+    resolution: {integrity: sha512-bAiWyCt6Xl95NxDGr76yYrR3753xLQJBSPVBtQ9UUmJG9p44mBR+z5jHe1x6n/eT978eTLEWYAHj1b+LLJyjIQ==}
+    cpu: [x64]
+    os: [darwin]
+
+  syncpack-linux-arm64@14.0.0-alpha.9:
+    resolution: {integrity: sha512-d96qoTGCN0agK961LleqE4OT8EAaqKIkyLjSM5VP5s7fyvvcqTDD+Fo7njWuwigKazQ6OHIO0nKzDQ15l+zo0w==}
+    cpu: [arm64]
+    os: [linux]
+
+  syncpack-linux-x64@14.0.0-alpha.9:
+    resolution: {integrity: sha512-mcrDJhzWtEZpj4TNjGu8l/6SFwU4g6qe5YEvCWjL2pQJq9IVnAiQtlpg6pzrgWazG3Pxmw5rGWheyOg7+fQXtw==}
+    cpu: [x64]
+    os: [linux]
+
+  syncpack-windows-arm64@14.0.0-alpha.9:
+    resolution: {integrity: sha512-zLg6kzIIUn6Dtad9N6u6GoTsBLGTG72mdN+mg9vd4Qni7xD174znsRGynrsubdmMC3lwevIqSabkoIVI+6qNKA==}
+    cpu: [arm64]
+    os: [win32]
+
+  syncpack-windows-x64@14.0.0-alpha.9:
+    resolution: {integrity: sha512-WGsEK/0evaNoTC80r3yhaepZJLp8UMR4JmeizJl/Ni/It8v6wwBSspdbD1FkT9rmCUKBIEM+TJUNlC06QvkXeA==}
+    cpu: [x64]
+    os: [win32]
+
+  syncpack@14.0.0-alpha.9:
+    resolution: {integrity: sha512-J369ROzD6JshQWT6+sL0MwX7TcWEmV1AhZcz+60w9KEYUat59w3YcEHWPe0542ErxcEP9eUFTpSTYDhxDIk4/g==}
+    engines: {node: '>=14.17.0'}
     hasBin: true
 
   systeminformation@5.23.8:
@@ -26905,10 +26914,6 @@ packages:
 
   thunky@1.1.0:
     resolution: {integrity: sha512-eHY7nBftgThBqOyHGVN+l8gF0BucP09fMo0oO/Lb0w1OF80dJv+lDVpXG60WMQvkcxAkNybKsrEIE3ZtKGmPrA==}
-
-  tightrope@0.1.0:
-    resolution: {integrity: sha512-HHHNYdCAIYwl1jOslQBT455zQpdeSo8/A346xpIb/uuqhSg+tCvYNsP5f11QW+z9VZ3vSX8YIfzTApjjuGH63w==}
-    engines: {node: '>=14'}
 
   tiny-invariant@1.3.3:
     resolution: {integrity: sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==}
@@ -27230,6 +27235,11 @@ packages:
 
   typescript@5.6.1-rc:
     resolution: {integrity: sha512-E3b2+1zEFu84jB0YQi9BORDjz9+jGbwwy1Zi3G0LUNw7a7cePUrHMRNy8aPh53nXpkFGVHSxIZo5vKTfYaFiBQ==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  typescript@5.7.3:
+    resolution: {integrity: sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -27946,9 +27956,6 @@ packages:
     resolution: {integrity: sha512-D7eujBWkLa3p2sIpJA0d1pr7es+a7m0vFAnZLlCEKq/Ij2k0MLi9Br2UPxoxdYystm5K1yeBGzub0FlYUEWj2Q==}
     engines: {node: '>=8.0.0'}
     hasBin: true
-
-  zod@3.21.4:
-    resolution: {integrity: sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==}
 
   zod@3.23.8:
     resolution: {integrity: sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==}
@@ -35925,13 +35932,6 @@ snapshots:
       path-type: 4.0.0
       yaml: 1.10.2
 
-  cosmiconfig@8.1.3:
-    dependencies:
-      import-fresh: 3.3.0
-      js-yaml: 4.1.0
-      parse-json: 5.2.0
-      path-type: 4.0.0
-
   cosmiconfig@8.3.6(typescript@5.4.5):
     dependencies:
       import-fresh: 3.3.0
@@ -35941,6 +35941,15 @@ snapshots:
     optionalDependencies:
       typescript: 5.4.5
 
+  cosmiconfig@8.3.6(typescript@5.7.3):
+    dependencies:
+      import-fresh: 3.3.0
+      js-yaml: 4.1.0
+      parse-json: 5.2.0
+      path-type: 4.0.0
+    optionalDependencies:
+      typescript: 5.7.3
+
   cosmiconfig@9.0.0(typescript@5.4.5):
     dependencies:
       env-paths: 2.2.1
@@ -35949,6 +35958,15 @@ snapshots:
       parse-json: 5.2.0
     optionalDependencies:
       typescript: 5.4.5
+
+  cosmiconfig@9.0.0(typescript@5.7.3):
+    dependencies:
+      env-paths: 2.2.1
+      import-fresh: 3.3.0
+      js-yaml: 4.1.0
+      parse-json: 5.2.0
+    optionalDependencies:
+      typescript: 5.7.3
 
   crc-32@1.2.0:
     dependencies:
@@ -37517,12 +37535,6 @@ snapshots:
 
   fs-exists-sync@0.1.0: {}
 
-  fs-extra@11.1.1:
-    dependencies:
-      graceful-fs: 4.2.11
-      jsonfile: 6.1.0
-      universalify: 2.0.1
-
   fs-extra@11.2.0:
     dependencies:
       graceful-fs: 4.2.11
@@ -38872,6 +38884,18 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       cosmiconfig: 8.3.6(typescript@5.4.5)
+      deepmerge: 4.3.1
+      jest-dev-server: 10.1.4
+      jest-environment-node: 29.7.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+      - typescript
+
+  jest-environment-puppeteer@10.1.4(typescript@5.7.3):
+    dependencies:
+      chalk: 4.1.2
+      cosmiconfig: 8.3.6(typescript@5.7.3)
       deepmerge: 4.3.1
       jest-dev-server: 10.1.4
       jest-environment-node: 29.7.0
@@ -40240,10 +40264,6 @@ snapshots:
       brace-expansion: 1.1.11
 
   minimatch@5.1.6:
-    dependencies:
-      brace-expansion: 2.0.1
-
-  minimatch@6.2.0:
     dependencies:
       brace-expansion: 2.0.1
 
@@ -41947,11 +41967,6 @@ snapshots:
       pify: 4.0.1
       strip-bom: 3.0.0
 
-  read-yaml-file@2.1.0:
-    dependencies:
-      js-yaml: 4.1.0
-      strip-bom: 4.0.0
-
   read@1.0.7:
     dependencies:
       mute-stream: 0.0.8
@@ -42431,10 +42446,6 @@ snapshots:
   semver@5.7.2: {}
 
   semver@6.3.1: {}
-
-  semver@7.5.0:
-    dependencies:
-      lru-cache: 6.0.0
 
   semver@7.5.4:
     dependencies:
@@ -43152,18 +43163,35 @@ snapshots:
     dependencies:
       get-port: 3.2.0
 
-  syncpack@9.8.6:
+  syncpack-darwin-arm64@14.0.0-alpha.9:
+    optional: true
+
+  syncpack-darwin-x64@14.0.0-alpha.9:
+    optional: true
+
+  syncpack-linux-arm64@14.0.0-alpha.9:
+    optional: true
+
+  syncpack-linux-x64@14.0.0-alpha.9:
+    optional: true
+
+  syncpack-windows-arm64@14.0.0-alpha.9:
+    optional: true
+
+  syncpack-windows-x64@14.0.0-alpha.9:
+    optional: true
+
+  syncpack@14.0.0-alpha.9:
     dependencies:
-      chalk: 4.1.2
-      commander: 10.0.1
-      cosmiconfig: 8.1.3
-      fs-extra: 11.1.1
-      glob: 8.1.0
-      minimatch: 6.2.0
-      read-yaml-file: 2.1.0
-      semver: 7.5.0
-      tightrope: 0.1.0
-      zod: 3.21.4
+      cosmiconfig: 9.0.0(typescript@5.7.3)
+      typescript: 5.7.3
+    optionalDependencies:
+      syncpack-darwin-arm64: 14.0.0-alpha.9
+      syncpack-darwin-x64: 14.0.0-alpha.9
+      syncpack-linux-arm64: 14.0.0-alpha.9
+      syncpack-linux-x64: 14.0.0-alpha.9
+      syncpack-windows-arm64: 14.0.0-alpha.9
+      syncpack-windows-x64: 14.0.0-alpha.9
 
   systeminformation@5.23.8:
     optional: true
@@ -43336,8 +43364,6 @@ snapshots:
   through@2.3.8: {}
 
   thunky@1.1.0: {}
-
-  tightrope@0.1.0: {}
 
   tiny-invariant@1.3.3: {}
 
@@ -43715,6 +43741,8 @@ snapshots:
   typescript@5.4.5: {}
 
   typescript@5.6.1-rc: {}
+
+  typescript@5.7.3: {}
 
   typeson-registry@1.0.0-alpha.39:
     dependencies:
@@ -44606,8 +44634,6 @@ snapshots:
       validator: 13.12.0
     optionalDependencies:
       commander: 9.5.0
-
-  zod@3.21.4: {}
 
   zod@3.23.8: {}
 
