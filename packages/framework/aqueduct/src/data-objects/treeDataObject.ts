@@ -28,8 +28,9 @@ export abstract class TreeDataObject<
 	#tree?: TreeView<TSchema>;
 
 	/**
-	 * The root tree will either be ready or will return an error. If an error is thrown
-	 * the root has not been correctly created/set.
+	 * Gets the root of the underlying tree
+	 *
+	 * @throws If the root has not yet been initialized, this will throw an error.
 	 */
 	protected get root(): ITree {
 		if (!this.internalRoot) {
@@ -73,7 +74,9 @@ export abstract class TreeDataObject<
 	}
 
 	public get tree(): TreeView<TSchema> {
-		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
+		if (this.#tree === undefined) {
+			throw new Error(this.getUninitializedErrorString("tree"));
+		}
 		return this.#tree;
 	}
 
@@ -89,7 +92,9 @@ export abstract class TreeDataObject<
 	}
 
 	protected override async hasInitialized(): Promise<void> {
-		if (this.#tree === undefined) throw new Error(this.getUninitializedErrorString("tree"));
+		if (this.#tree === undefined) {
+			throw new Error(this.getUninitializedErrorString("tree"));
+		}
 	}
 
 	public abstract readonly key: string;
