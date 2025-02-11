@@ -361,7 +361,7 @@ describe("Presence", () => {
 					);
 
 					// Verify
-					assert.strictEqual(listener.calledOn, false);
+					assert.strictEqual(listener.called, false);
 				});
 			});
 		});
