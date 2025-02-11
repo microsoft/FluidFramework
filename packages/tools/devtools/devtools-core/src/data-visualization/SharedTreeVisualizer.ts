@@ -235,13 +235,12 @@ function getFieldTooltipProperties(
  */
 async function visualizeObjectNode(
 	tree: VerboseTreeNode,
+	schema: SimpleObjectNodeSchema,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	{ allowedTypes, isRequired }: FieldSchemaProperties,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
-	const objectNodeSchemaProperties = getFieldTooltipProperties(
-		treeDefinitions.get(tree.type) as SimpleObjectNodeSchema,
-	);
+	const objectNodeSchemaProperties = getFieldTooltipProperties(schema);
 
 	return {
 		schema: {
@@ -320,6 +319,7 @@ async function visualizeNodeBySchema(
 		case NodeKind.Object: {
 			const objectVisualized = visualizeObjectNode(
 				tree,
+				schema,
 				treeDefinitions,
 				{ allowedTypes, isRequired },
 				visualizeChildData,
