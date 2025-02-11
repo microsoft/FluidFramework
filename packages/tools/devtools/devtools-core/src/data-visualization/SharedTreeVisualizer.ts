@@ -216,7 +216,7 @@ async function visualizeVerboseNodeFields(
 }
 
 /**
- * Extracts and stores allowed types & kind from {@link SimpleFieldSchema}.
+ * Extracts and stores allowed types & kind for each field ({@link SimpleFieldSchema}) of a node schema ({@link SimpleObjectNodeSchema}).
  */
 function getFieldTooltipProperties(
 	schema: SimpleObjectNodeSchema,
