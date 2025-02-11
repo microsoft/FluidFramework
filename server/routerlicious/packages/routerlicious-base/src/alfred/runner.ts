@@ -4,7 +4,7 @@
  */
 
 import cluster from "cluster";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred } from "@fluidframework/common-utils";
 import {
 	ICache,
 	IClusterDrainingChecker,
@@ -26,7 +26,6 @@ import { Provider } from "nconf";
 import * as winston from "winston";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
@@ -57,7 +56,6 @@ export class AlfredRunner implements IRunner {
 		private readonly startupCheck: IReadinessCheck,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
-		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly enableClientIPLogging?: boolean,
 		private readonly readinessCheck?: IReadinessCheck,
@@ -89,7 +87,6 @@ export class AlfredRunner implements IRunner {
 				this.startupCheck,
 				this.tokenRevocationManager,
 				this.revokedTokenChecker,
-				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.enableClientIPLogging,
 				this.readinessCheck,
