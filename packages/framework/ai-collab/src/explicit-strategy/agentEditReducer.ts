@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	Tree,
 	NodeKind,
@@ -200,7 +200,7 @@ export function applyAgentEdit(
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 					(node as any)[treeEdit.field] = modification;
 				} catch (error) {
-					if (error instanceof UsageError === false) {
+					if (!isFluidError(error)) {
 						throw error;
 					}
 					// If the LLM attempts to use the wrong type for a field, we generate a useful error message that can be used as part of the feedback loop.
