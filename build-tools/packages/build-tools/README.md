@@ -49,7 +49,7 @@ Options:
   -f --force                Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help                 Print this message
      --install              Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
-     --workerMemoryLimitMB  Memory limit for worker threads in MB
+     --workerMemoryLimitMB  Memory limit for worker threads in MiB
   -r --rebuild              Clean and build on matched packages (all if package regexp is not specified)
      --reinstall            Same as --uninstall --install.
   -g --releaseGroup         Release group to operate on
