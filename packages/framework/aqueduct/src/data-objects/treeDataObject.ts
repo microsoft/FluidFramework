@@ -21,7 +21,7 @@ import { PureDataObject } from "./pureDataObject.js";
  * @remarks
  * Allows for the Tree's schema to be baked into the container schema.
  *
- * @public
+ * @internal
  */
 export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	/**
