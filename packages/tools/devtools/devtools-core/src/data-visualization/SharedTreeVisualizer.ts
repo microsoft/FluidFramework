@@ -172,9 +172,10 @@ interface FieldSchemaProperties {
 	allowedTypes: ReadonlySet<string> | undefined;
 
 	/**
-	 * Whether this field is required in its parent object schema.
-	 * Only meaningful for direct children of object nodes.
-	 * Undefined for array/map elements since they are always required within their parent.
+	 * Whether the field is required (true) or optional (false).
+	 *
+	 * `undefined` indicates that the field is implicitly required.
+	 * In this case, no requirement information will be displayed by the devtools.
 	 */
 	isRequired: boolean | undefined;
 }
