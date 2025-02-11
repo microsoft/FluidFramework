@@ -239,7 +239,11 @@ export function apiItemToSections(
 		}
 
 		case ApiItemKind.TypeAlias: {
-			sections = transformations[ApiItemKind.TypeAlias](apiItem as ApiTypeAlias, config);
+			sections = transformations[ApiItemKind.TypeAlias](
+				apiItem as ApiTypeAlias,
+				config,
+				transformChildren,
+			);
 			break;
 		}
 
