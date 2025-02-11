@@ -76,7 +76,7 @@ export const options: FastBuildOptions = {
 	workerThreads: false,
 	// Setting this lower causes more worker restarts, but uses less memory.
 	// Since using too much memory can cause slow downs, and too many worker restarts can also cause slowdowns,
-	// its a tradeoff.
+	// it's a tradeoff.
 	// Around 2 GB seems to be ideal.
 	// Both larger and smaller values have shown to be slower (even with plenty of free ram), and too large of values (4 GiB) on low concurrency runs (4) has resulted in
 	// "build:esnext: Internal uncaught exception: Error: Worker disconnect" likely due to node processes exceeding 4 GiB of memory.
