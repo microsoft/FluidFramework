@@ -30,9 +30,6 @@ Then either:
     version of it used in the root package (which is the `client` release group, but often used to build other as well).
     This will make scripts like `build:fast` use the linked version.
 
-NOTE: Using `fluid-build`'s `--symlink:full` does **NOT** symlink the version of build tools in the repo into the root package:
-the root package will still use the published build-tools package.
-
 ## `fluid-build`
 
 `fluid-build` is a build task scheduler. It support declarative task and dependencies definition, incremental
@@ -106,20 +103,6 @@ Clean and rebuild:
 fluid-build --rebuild merge     # clean and build packages matching 'merge' in any repo
 fluid-build --clean common      # cleaning packages containing 'common' in any repo
 ```
-
-Symlink commands to change the symlink to either limit to single monorepo (collection of packages managed by lerna), or cross monorepo
-
-```sh
-fluid-build --symlink:full    # switch to full link mode (cross monorepos)
-fluid-build                   # build
-```
-
-```sh
-fluid-build --symlink         # switch to isolate link mode (within monorepo)
-fluid-build                   # build
-```
-
-Note that --symlink\* changes any symlink, the tool will run the clean script for all the packages to make sure everything rebuilt every the next time.
 
 ### Task and dependency definition
 
@@ -270,4 +253,3 @@ These traces show the execution flow of the task, to show the task invocation in
 ### Other fluid-build:\* traces
 
 -   `fluid-build:task:error` - Trace of detailed error messages on any operation in a task
--   `fluid-build:symlink` - Trace the action of the `--symlink` switch
