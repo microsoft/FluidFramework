@@ -399,7 +399,7 @@ export abstract class SharedObjectCore<
 	 * Process a 'bunch' of messages for this shared object.
 	 *
 	 * @remarks
-	 * A 'bunch is group of messages that have the following properties:
+	 * A 'bunch' is a group of messages that have the following properties:
 	 * - They are all part of the same grouped batch, which entails:
 	 *   - They are contiguous in sequencing order.
 	 *   - They are all from the same client.
