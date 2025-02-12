@@ -60,11 +60,9 @@ jobs:
     runOnce:
         deploy:
           steps:
-          - checkout: none
+          - checkout: self
             clean: true
-          # - checkout: self
-          #    clean: true
-          #   persistCredentials: true # Necessary for creation of git tags to work
+            persistCredentials: true # Necessary for creation of git tags to work
           # - download: current
           #   artifact: pack
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
