@@ -49,7 +49,7 @@ export function initializeReactions(presence: IPresence, mouseTracker: MouseTrac
 		if (presence.getMyself().getConnectionStatus() === "Connected") {
 			notificationsWorkspace.props.reactions.emit.broadcast(
 				"reaction",
-				mouseTracker.getClientMousePosition(presence.getMyself()),
+				mouseTracker.getMyMousePosition(),
 				reactionValue ?? "?",
 			);
 		}

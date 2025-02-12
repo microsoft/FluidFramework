@@ -106,9 +106,9 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	}
 
 	/**
-	 * The most recent mouse position of the provided client.
+	 * The most recent mouse position of the current client.
 	 */
-	public getClientMousePosition(client: ISessionClient): IMousePosition {
-		return this.cursor.clientValue(client).value;
+	public getMyMousePosition(): IMousePosition {
+		return this.cursor.local;
 	}
 }
