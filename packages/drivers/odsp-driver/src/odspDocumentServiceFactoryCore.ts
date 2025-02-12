@@ -129,6 +129,8 @@ export class OdspDocumentServiceFactoryCore
 				filePath,
 				filename: odspResolvedUrl.fileName,
 				createLinkType: createShareLinkParam,
+				containerPackageName: searchParams.get("containerPackageName") ?? undefined,
+				appName: searchParams.get("appName") ?? undefined,
 			};
 		} else {
 			throw new Error("A new or existing file must be specified to create container!");

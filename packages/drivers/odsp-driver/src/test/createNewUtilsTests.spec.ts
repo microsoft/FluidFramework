@@ -472,18 +472,6 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 	it("Should set the appropriate nav param info when a resolved url is sent", async () => {
-		const mockOdspResolvedUrl: IOdspResolvedUrl = {
-			...resolvedUrl,
-			odspResolvedUrl: true,
-			summarizer: true,
-			dataStorePath: "/dataStorePath",
-			codeHint: {
-				containerPackageName: "mockContainerPackageName",
-			},
-			fileVersion: "mockFileVersion",
-			context: "mockContext",
-			appName: "mockAppName",
-		};
 		const odspResolvedUrl = await useCreateNewModule(createChildLogger(), async (module) =>
 			mockFetchOk(
 				async () =>
@@ -498,7 +486,6 @@ describe("Create New Utils Tests", () => {
 						false /* forceAccessTokenViaAuthorizationHeader */,
 						undefined /* isClpCompliantApp */,
 						true /* enableSingleRequestForShareLinkWithCreate */,
-						mockOdspResolvedUrl,
 					),
 				{
 					itemId: "mockItemId",

@@ -64,7 +64,6 @@ export async function createNewFluidFile(
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
 	enableSingleRequestForShareLinkWithCreate?: boolean,
-	resolvedUrl?: IOdspResolvedUrl,
 ): Promise<IOdspResolvedUrl> {
 	// Check for valid filename before the request to create file is actually made.
 	if (isInvalidFileName(newFileInfo.filename)) {
@@ -113,9 +112,8 @@ export async function createNewFluidFile(
 	fileEntry.docId = odspResolvedUrl.hashedDocumentId;
 	fileEntry.resolvedUrl = odspResolvedUrl;
 
-	odspResolvedUrl.context = resolvedUrl?.context;
-	odspResolvedUrl.appName = resolvedUrl?.appName;
-	odspResolvedUrl.codeHint = resolvedUrl?.codeHint;
+	odspResolvedUrl.appName = newFileInfo.appName;
+	odspResolvedUrl.codeHint = { containerPackageName: newFileInfo.containerPackageName };
 
 	if (shareLinkInfo?.createLink?.link) {
 		let newWebUrl = shareLinkInfo.createLink.link.webUrl;

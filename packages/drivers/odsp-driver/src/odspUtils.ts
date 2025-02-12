@@ -318,6 +318,8 @@ export interface INewFileInfo extends IFileInfoBase {
 	 * by passing in an optional param to specify the kind of sharing link
 	 */
 	createLinkType?: ISharingLinkKind;
+	containerPackageName?: string;
+	appName?: string;
 }
 
 export interface IExistingFileInfo extends IFileInfoBase {
@@ -594,7 +596,6 @@ export function appendNavParam(
 		appName: odspResolvedUrl.appName,
 		containerPackageName,
 		fileVersion: odspResolvedUrl.fileVersion,
-		context: odspResolvedUrl.context,
 	});
 
 	return url.href;
