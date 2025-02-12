@@ -7,7 +7,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 import { queue } from "async";
 import detectIndent from "detect-indent";
-import { readJsonSync, writeJson, writeJsonSync } from "fs-extra";
+import { readJsonSync, writeJsonSync } from "fs-extra";
 import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 
@@ -25,7 +25,6 @@ import {
 	rimrafWithErrorAsync,
 } from "./utils";
 
-import { readFile } from "node:fs/promises";
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
