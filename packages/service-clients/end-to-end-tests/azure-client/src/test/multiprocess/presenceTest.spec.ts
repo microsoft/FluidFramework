@@ -40,7 +40,9 @@ describe(`Presence with AzureClient`, () => {
 	const numClients = 5; // Set the total number of Fluid clients to create
 	assert(numClients > 1, "Must have at least two clients");
 	let children: ChildProcess[] = [];
-	let childErrorPromises: Promise<void>[];
+	// This promise is used to capture all errors that occur in the child processes.
+	// It will never resolve successfully, it is only used to reject on child process error.
+	let childErrorPromise: Promise<void>;
 	const durationMs = 10_000;
 
 	const afterCleanUp: (() => void)[] = [];
@@ -60,18 +62,19 @@ describe(`Presence with AzureClient`, () => {
 	beforeEach("setup", async () => {
 		// Create inital child process
 		let containerId: string | undefined;
-		childErrorPromises = [];
+		// Collect all child process error promises into this array
+		const childErrorPromises: Promise<void>[] = [];
 		// Fork child processes
 		for (let i = 0; i < numClients; i++) {
 			const child = fork("./lib/test/multiprocess/childClient.js", [
 				`child${i}` /* identifier passed to child process */,
 			]);
-			const childErrorPromise = new Promise<void>((_, reject) => {
+			const errorPromise = new Promise<void>((_, reject) => {
 				child.on("error", (error) => {
 					reject(new Error(`Child${i} process errored: ${error.message}`));
 				});
 			});
-			childErrorPromises.push(childErrorPromise);
+			childErrorPromises.push(errorPromise);
 			children.push(child);
 		}
 
@@ -114,6 +117,8 @@ describe(`Presence with AzureClient`, () => {
 			// Add removal of child process listeners to after test cleanup
 			afterCleanUp.push(() => child.removeAllListeners());
 		}
+		// This race will be used to reject any of the following tests on any child process errors
+		childErrorPromise = Promise.race(childErrorPromises);
 	});
 
 	it("announces 'attendeeJoined' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
@@ -135,7 +140,7 @@ describe(`Presence with AzureClient`, () => {
 			},
 		);
 
-		await Promise.race([attendeeJoinedPromise, ...childErrorPromises]);
+		await Promise.race([attendeeJoinedPromise, childErrorPromise]);
 
 		children[0].send({ command: "disconnectSelf" });
 		// Wait for child processes to receive attendeeDisconnected event
@@ -157,6 +162,6 @@ describe(`Presence with AzureClient`, () => {
 				),
 			);
 
-		await Promise.race([Promise.all(waitForDisconnected), ...childErrorPromises]);
+		await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
 	});
 });
