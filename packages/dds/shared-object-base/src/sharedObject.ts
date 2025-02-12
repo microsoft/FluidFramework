@@ -386,7 +386,7 @@ export abstract class SharedObjectCore<
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 *
-	 * @deprecated - Replaced by processMessagesCore.
+	 * @deprecated Replaced by {@link SharedObjectCore.processMessagesCore}.
 	 */
 	protected abstract processCore(
 		message: ISequencedDocumentMessage,
@@ -580,7 +580,7 @@ export abstract class SharedObjectCore<
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 *
-	 * @deprecated - Replaced by processMessages.
+	 * @deprecated Replaced by {@link SharedObjectCore.processMessages}.
 	 */
 	private process(
 		message: ISequencedDocumentMessage,
