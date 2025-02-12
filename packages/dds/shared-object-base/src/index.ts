@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { createDataObjectKind, type DataObjectKind } from "./dataObject.js";
 export { FluidSerializer, IFluidSerializer } from "./serializer.js";
 export {
 	SharedObject,

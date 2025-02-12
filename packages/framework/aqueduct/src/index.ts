@@ -18,9 +18,12 @@
  * @packageDocumentation
  */
 
-export { DataObjectFactory, PureDataObjectFactory } from "./data-object-factories/index.js";
 export {
-	createDataObjectKind,
+	DataObjectFactory,
+	PureDataObjectFactory,
+	TreeDataObjectFactory,
+} from "./data-object-factories/index.js";
+export {
 	DataObject,
 	type DataObjectTypes,
 	type IDataObjectProps,
@@ -34,3 +37,9 @@ export {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "./container-runtime-factories/index.js";
+
+// Re-export types until we can relocate them here
+export {
+	createDataObjectKind,
+	type DataObjectKind,
+} from "@fluidframework/shared-object-base/internal";

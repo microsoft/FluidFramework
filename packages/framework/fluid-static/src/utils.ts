@@ -6,10 +6,13 @@
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type {
+	DataObjectKind,
+	ISharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ContainerSchema, DataObjectKind, LoadableObjectKind } from "./types.js";
+import type { ContainerSchema, LoadableObjectKind } from "./types.js";
 
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
@@ -17,14 +20,12 @@ import type { ContainerSchema, DataObjectKind, LoadableObjectKind } from "./type
 export function isDataObjectKind<T extends IFluidLoadable>(
 	obj: LoadableObjectKind<T>,
 ): obj is DataObjectKind<T>;
-
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
 export function isDataObjectKind(
 	obj: LoadableObjectKind,
 ): obj is DataObjectKind<IFluidLoadable>;
-
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
  */

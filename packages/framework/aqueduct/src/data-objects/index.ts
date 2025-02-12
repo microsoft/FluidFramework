@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { DataObject, createDataObjectKind } from "./dataObject.js";
+export { DataObject } from "./dataObject.js";
 export { PureDataObject } from "./pureDataObject.js";
-export { type ITreeDataObject, TreeDataObject } from "./treeDataObject.js";
+export {
+	type ITreeDataObject,
+	TreeDataObject,
+} from "./treeDataObject.js";
 export type { DataObjectTypes, IDataObjectProps } from "./types.js";
