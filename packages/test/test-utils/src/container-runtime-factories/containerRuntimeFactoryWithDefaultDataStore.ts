@@ -17,7 +17,6 @@ import type {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
-import type { IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
 
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 
@@ -42,10 +41,6 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * The data store registry for containers produced.
 	 */
 	registryEntries: NamedFluidDataStoreRegistryEntries;
-	/**
-	 * @deprecated Will be removed in a future release.
-	 */
-	dependencyContainer?: IFluidDependencySynthesizer;
 	/**
 	 * Request handlers for containers produced.
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
