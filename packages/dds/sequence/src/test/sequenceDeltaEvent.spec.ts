@@ -71,19 +71,16 @@ describe("non-collab", () => {
 			const event = new SequenceDeltaEventClass({ op }, deltaArgs, client);
 
 			assert(event.isLocal);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.position, offset);
-			assert.equal(event.first?.segment.cachedLength, text.length);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, offset);
+			assert.equal(event.first.segment.cachedLength, text.length);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				offset + text.length,
 			);
-			const segment = event.first?.segment as TextSegment;
+			const segment = event.first.segment as TextSegment;
 			assert.equal(segment.text, text);
 		}
 	});
@@ -125,14 +122,11 @@ describe("non-collab", () => {
 			const event = new SequenceDeltaEventClass({ op }, deltaArgs, client);
 
 			assert(event.isLocal);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.position, start);
-			assert.equal(event.first?.segment.cachedLength, end - start);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, start);
+			assert.equal(event.first.segment.cachedLength, end - start);
 			assert.equal(event.last.position + event.last.segment.cachedLength, end);
 		}
 	});
@@ -250,12 +244,9 @@ describe("non-collab", () => {
 			const event = new SequenceDeltaEventClass({ op }, deltaArgs, client);
 
 			assert(event.isLocal);
-			assert.equal(event.first?.position, start);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, start);
 			assert.equal(event.last.position + event.last.segment.cachedLength, end);
 			assert.equal(event.ranges.length, expected.length);
 			for (let i = 0; i < expected.length; i = i + 1) {
@@ -321,12 +312,14 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localInsertPos);
-			assert.equal(event.last?.position, localInsertPos);
-			assert.equal(event.first?.segment.cachedLength, localInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText.length);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localInsertPos);
+			assert.equal(event.last.position, localInsertPos);
+			assert.equal(event.first.segment.cachedLength, localInsertText.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment1 = event.first?.segment as TextSegment;
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, localInsertText);
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -339,12 +332,12 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, remoteInsertPos + localInsertText.length);
-			assert.equal(event.last?.position, remoteInsertPos + localInsertText.length);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+			assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment2 = event.first?.segment as TextSegment;
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, remoteInsertText);
 		});
 
@@ -369,12 +362,14 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localInsertPos);
-			assert.equal(event.last?.position, localInsertPos);
-			assert.equal(event.first?.segment.cachedLength, localInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText.length);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localInsertPos);
+			assert.equal(event.last.position, localInsertPos);
+			assert.equal(event.first.segment.cachedLength, localInsertText.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment1 = event.first?.segment as TextSegment;
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, localInsertText);
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -389,12 +384,12 @@ describe("collab", () => {
 			client.applyMsg(localInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, remoteInsertPos);
-			assert.equal(event.last?.position, remoteInsertPos);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.first.position, remoteInsertPos);
+			assert.equal(event.last.position, remoteInsertPos);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment2 = event.first?.segment as TextSegment;
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, remoteInsertText);
 		});
 
@@ -421,12 +416,14 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localInsertPos);
-			assert.equal(event.last?.position, localInsertPos);
-			assert.equal(event.first?.segment.cachedLength, localInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText.length);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localInsertPos);
+			assert.equal(event.last.position, localInsertPos);
+			assert.equal(event.first.segment.cachedLength, localInsertText.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment1 = event.first?.segment as TextSegment;
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, localInsertText);
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -439,13 +436,13 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, remoteInsertPos);
-			assert.equal(event.last?.position, remoteInsertPos);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.first.position, remoteInsertPos);
+			assert.equal(event.last.position, remoteInsertPos);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.position, remoteInsertPos);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.position, remoteInsertPos);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, remoteInsertText);
 		});
 
@@ -470,12 +467,14 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.position, localInsertPos);
-			assert.equal(event.last?.position, localInsertPos);
-			assert.equal(event.first?.segment.cachedLength, localInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.position, localInsertPos);
+			assert.equal(event.last.position, localInsertPos);
+			assert.equal(event.first.segment.cachedLength, localInsertText.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, localInsertText);
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -491,11 +490,11 @@ describe("collab", () => {
 
 			assert(!event.isLocal);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.position, remoteInsertPos + localInsertText.length);
-			assert.equal(event.last?.position, remoteInsertPos + localInsertText.length);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+			assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, remoteInsertText);
 		});
 
@@ -524,12 +523,14 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localInsertPos);
-			assert.equal(event.last?.position, localInsertPos);
-			assert.equal(event.first?.segment.cachedLength, localInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText.length);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localInsertPos);
+			assert.equal(event.last.position, localInsertPos);
+			assert.equal(event.first.segment.cachedLength, localInsertText.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment1 = event.first?.segment as TextSegment;
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, localInsertText);
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -542,12 +543,12 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, remoteInsertPos);
-			assert.equal(event.last?.position, remoteInsertPos);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.first.position, remoteInsertPos);
+			assert.equal(event.last.position, remoteInsertPos);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment2 = event.first?.segment as TextSegment;
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, remoteInsertText);
 		});
 
@@ -572,12 +573,14 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localInsertPos);
-			assert.equal(event.last?.position, localInsertPos);
-			assert.equal(event.first?.segment.cachedLength, localInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText.length);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localInsertPos);
+			assert.equal(event.last.position, localInsertPos);
+			assert.equal(event.first.segment.cachedLength, localInsertText.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment1 = event.first?.segment as TextSegment;
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, localInsertText);
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -592,12 +595,12 @@ describe("collab", () => {
 			client.applyMsg(localInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, remoteInsertPos + localInsertText.length);
-			assert.equal(event.last?.position, remoteInsertPos + localInsertText.length);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.first.position, remoteInsertPos + localInsertText.length);
+			assert.equal(event.last.position, remoteInsertPos + localInsertText.length);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment2 = event.first?.segment as TextSegment;
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, remoteInsertText);
 		});
 
@@ -630,12 +633,14 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localInsertPos);
-			assert.equal(event.last?.position, localInsertPos);
-			assert.equal(event.first?.segment.cachedLength, localInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText.length);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localInsertPos);
+			assert.equal(event.last.position, localInsertPos);
+			assert.equal(event.first.segment.cachedLength, localInsertText.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment1 = event.first?.segment as TextSegment;
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, localInsertText);
 
 			const remoteInsertMessage1 = client.makeOpMessage(
@@ -648,12 +653,12 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage1);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, remoteInsertPos1);
-			assert.equal(event.last?.position, remoteInsertPos1);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText1.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText1.length);
+			assert.equal(event.first.position, remoteInsertPos1);
+			assert.equal(event.last.position, remoteInsertPos1);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText1.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText1.length);
 			assert.equal(event.ranges.length, 1);
-			const segment2 = event.first?.segment as TextSegment;
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, remoteInsertText1);
 
 			const remoteInsertMessage2 = client.makeOpMessage(
@@ -666,12 +671,12 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage2);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, remoteInsertPos2);
-			assert.equal(event.last?.position, remoteInsertPos2);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText2.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText2.length);
+			assert.equal(event.first.position, remoteInsertPos2);
+			assert.equal(event.last.position, remoteInsertPos2);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText2.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText2.length);
 			assert.equal(event.ranges.length, 1);
-			const segment3 = event.first?.segment as TextSegment;
+			const segment3 = event.first.segment as TextSegment;
 			assert.equal(segment3.text, remoteInsertText2);
 		});
 
@@ -702,12 +707,14 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localInsertPos1);
-			assert.equal(event.last?.position, localInsertPos1);
-			assert.equal(event.first?.segment.cachedLength, localInsertText1.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText1.length);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localInsertPos1);
+			assert.equal(event.last.position, localInsertPos1);
+			assert.equal(event.first.segment.cachedLength, localInsertText1.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText1.length);
 			assert.equal(event.ranges.length, 1);
-			const segment1 = event.first?.segment as TextSegment;
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, localInsertText1);
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -722,12 +729,12 @@ describe("collab", () => {
 			client.applyMsg(localInsertMessage1);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, remoteInsertPos + localInsertText1.length);
-			assert.equal(event.last?.position, remoteInsertPos + localInsertText1.length);
-			assert.equal(event.first?.segment.cachedLength, remoteInsertText.length);
-			assert.equal(event.last?.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.first.position, remoteInsertPos + localInsertText1.length);
+			assert.equal(event.last.position, remoteInsertPos + localInsertText1.length);
+			assert.equal(event.first.segment.cachedLength, remoteInsertText.length);
+			assert.equal(event.last.segment.cachedLength, remoteInsertText.length);
 			assert.equal(event.ranges.length, 1);
-			const segment2 = event.first?.segment as TextSegment;
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, remoteInsertText);
 
 			const localInsertMessage2 = client.makeOpMessage(
@@ -739,12 +746,14 @@ describe("collab", () => {
 			client.applyMsg(localInsertMessage2);
 
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localInsertPos2);
-			assert.equal(event.last?.position, localInsertPos2);
-			assert.equal(event.first?.segment.cachedLength, localInsertText2.length);
-			assert.equal(event.last?.segment.cachedLength, localInsertText2.length);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localInsertPos2);
+			assert.equal(event.last.position, localInsertPos2);
+			assert.equal(event.first.segment.cachedLength, localInsertText2.length);
+			assert.equal(event.last.segment.cachedLength, localInsertText2.length);
 			assert.equal(event.ranges.length, 1);
-			const segment3 = event.first?.segment as TextSegment;
+			const segment3 = event.first.segment as TextSegment;
 			assert.equal(segment3.text, localInsertText2);
 		});
 	});
@@ -779,16 +788,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "quick ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -802,21 +808,19 @@ describe("collab", () => {
 
 			assert(!event.isLocal);
 			assert.equal(
-				event.first?.position,
+				event.first.position,
 				remoteRemovePosStart - localRemovePosEnd + localRemovePosStart,
 			);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
+			assert.equal(
+				event.last.position + event.last.segment.cachedLength,
+				remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart,
 			);
-			assert.equal(event.last.position + event.last.segment.cachedLength, remoteRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
 			assert.equal(
-				event.first?.segment.cachedLength,
+				event.first.segment.cachedLength,
 				remoteRemovePosEnd - remoteRemovePosStart,
 			);
-			const segment2 = event.first?.segment as TextSegment;
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "lazy ");
 		});
 
@@ -841,16 +845,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "quick ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -866,21 +867,19 @@ describe("collab", () => {
 
 			assert(!event.isLocal);
 			assert.equal(
-				event.first?.position,
+				event.first.position,
 				remoteRemovePosStart - localRemovePosEnd + localRemovePosStart,
 			);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
+			assert.equal(
+				event.last.position + event.last.segment.cachedLength,
+				remoteRemovePosEnd - localRemovePosEnd + localRemovePosStart,
 			);
-			assert.equal(event.last.position + event.last.segment.cachedLength, remoteRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
 			assert.equal(
-				event.first?.segment.cachedLength,
+				event.first.segment.cachedLength,
 				remoteRemovePosEnd - remoteRemovePosStart,
 			);
-			const segment2 = event.first?.segment as TextSegment;
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "lazy ");
 		});
 
@@ -908,16 +907,13 @@ describe("collab", () => {
 			assert.equal(events.length, 1);
 			const [event] = events;
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment = event.first.segment as TextSegment;
 			assert.equal(segment.text, "quick brown ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -955,16 +951,13 @@ describe("collab", () => {
 			assert.equal(events.length, 1);
 			const [event] = events;
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment = event.first.segment as TextSegment;
 			assert.equal(segment.text, "quick brown ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1006,16 +999,13 @@ describe("collab", () => {
 			assert.equal(events.length, 1);
 			const [event] = events;
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment = event.first.segment as TextSegment;
 			assert.equal(segment.text, "quick brown ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1052,16 +1042,13 @@ describe("collab", () => {
 			assert.equal(events.length, 1);
 			const [event] = events;
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment = event.first.segment as TextSegment;
 			assert.equal(segment.text, "quick brown ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1103,16 +1090,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "quick ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1131,16 +1115,11 @@ describe("collab", () => {
 			const end = 10;
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, start);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, start);
 			assert.equal(event.last.position + event.last.segment.cachedLength, end);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, end - start);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, end - start);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "brown ");
 		});
 
@@ -1166,16 +1145,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "quick ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1196,16 +1172,11 @@ describe("collab", () => {
 			const end = 10;
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, start);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, start);
 			assert.equal(event.last.position + event.last.segment.cachedLength, end);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, end - start);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, end - start);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "brown ");
 		});
 
@@ -1233,16 +1204,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, " brown ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1261,16 +1229,11 @@ describe("collab", () => {
 			const end = 9;
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, start);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, start);
 			assert.equal(event.last.position + event.last.segment.cachedLength, end);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, end - start);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, end - start);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "quick");
 		});
 
@@ -1296,16 +1259,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, " brown ");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1326,16 +1286,11 @@ describe("collab", () => {
 			const end = 9;
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, start);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, start);
 			assert.equal(event.last.position + event.last.segment.cachedLength, end);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, end - start);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, end - start);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "quick");
 		});
 
@@ -1362,16 +1317,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "brown");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1385,10 +1337,10 @@ describe("collab", () => {
 
 			assert(!event.isLocal);
 			assert.equal(event.ranges.length, 2);
-			assert.equal(event.first?.position, remoteRemovePosStart);
+			assert.equal(event.first.position, remoteRemovePosStart);
 			// -1 is for split
-			assert.equal(event.first?.segment.cachedLength, "quick ".length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, "quick ".length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "quick ");
 			assert.equal(event.ranges[1].position, remoteRemovePosStart);
 			// -1 is for split
@@ -1418,16 +1370,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, localRemovePosStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, localRemovePosStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, localRemovePosEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, localRemovePosEnd - localRemovePosStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "brown");
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -1443,10 +1392,10 @@ describe("collab", () => {
 
 			assert(!event.isLocal);
 			assert.equal(event.ranges.length, 2);
-			assert.equal(event.first?.position, remoteRemovePosStart);
+			assert.equal(event.first.position, remoteRemovePosStart);
 			// -1 is for split
-			assert.equal(event.first?.segment.cachedLength, "quick ".length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, "quick ".length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "quick ");
 			assert.equal(event.ranges[1].position, remoteRemovePosStart);
 			// -1 is for split
@@ -2080,12 +2029,9 @@ describe("collab", () => {
 			expected: IExpectedSegmentInfo[],
 		): void {
 			assert(event.isLocal === isLocal);
-			assert.equal(event.first?.position, start);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, start);
 			assert.equal(event.last.position + event.last.segment.cachedLength, end);
 			assert.equal(event.ranges.length, expected.length);
 			for (let i = 0; i < expected.length; i = i + 1) {
@@ -2151,19 +2097,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -2176,19 +2119,14 @@ describe("collab", () => {
 			client.applyMsg(remoteRemoveMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart + insertText.length);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart + insertText.length);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				deleteRangeEnd + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "lazy ");
 
 			assert.equal(client.getText(), output);
@@ -2216,19 +2154,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -2241,19 +2176,14 @@ describe("collab", () => {
 			client.applyMsg(remoteRemoveMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart + insertText.length);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart + insertText.length);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				deleteRangeEnd + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "lazy ");
 
 			client.applyMsg(localInsertMessage);
@@ -2285,16 +2215,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "lazy ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -2307,19 +2234,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			assert.equal(client.getText(), output);
@@ -2347,16 +2269,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "lazy ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -2369,19 +2288,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			client.applyMsg(localRemoveMessage);
@@ -2413,19 +2327,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -2438,16 +2349,11 @@ describe("collab", () => {
 			client.applyMsg(remoteRemoveMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "brown ");
 
 			assert.equal(client.getText(), output);
@@ -2475,19 +2381,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -2500,16 +2403,11 @@ describe("collab", () => {
 			client.applyMsg(remoteRemoveMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "brown ");
 
 			client.applyMsg(localInsertMessage);
@@ -2541,16 +2439,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "brown ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -2563,19 +2458,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, insertPos - (deleteRangeEnd - deleteRangeStart));
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			assert.equal(client.getText(), output);
@@ -2603,16 +2493,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "brown ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -2625,19 +2512,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, insertPos - (deleteRangeEnd - deleteRangeStart));
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos - (deleteRangeEnd - deleteRangeStart) + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			client.applyMsg(localRemoveMessage);
@@ -2669,19 +2551,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -2694,19 +2573,14 @@ describe("collab", () => {
 			client.applyMsg(remoteRemoveMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart + insertText.length);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart + insertText.length);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				deleteRangeEnd + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "lazy ");
 			assert.equal(client.getText(), output);
 		});
@@ -2733,19 +2607,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -2758,19 +2629,14 @@ describe("collab", () => {
 			client.applyMsg(remoteRemoveMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart + insertText.length);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart + insertText.length);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				deleteRangeEnd + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "lazy ");
 
 			client.applyMsg(localInsertMessage);
@@ -2802,16 +2668,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "lazy ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -2824,19 +2687,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			assert.equal(client.getText(), output);
@@ -2864,16 +2722,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "lazy ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -2886,19 +2741,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			client.applyMsg(localRemoveMessage);
@@ -2930,19 +2780,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -2955,16 +2802,11 @@ describe("collab", () => {
 			client.applyMsg(remoteRemoveMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "lazy ");
 
 			assert.equal(client.getText(), output);
@@ -2992,19 +2834,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -3017,16 +2856,11 @@ describe("collab", () => {
 			client.applyMsg(remoteRemoveMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "lazy ");
 
 			client.applyMsg(localInsertMessage);
@@ -3056,19 +2890,17 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "lazy ");
 
 			client.applyMsg(localRemoveMessage);
+
 			const remoteInsertMessage = client.makeOpMessage(
 				createInsertSegmentOp(insertPos, new TextSegment(insertText)),
 				currentSeqNumber + 2,
@@ -3079,19 +2911,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, insertPos - (deleteRangeEnd - deleteRangeStart));
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart),
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			assert.equal(client.getText(), output);
@@ -3119,16 +2946,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "lazy ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -3141,19 +2965,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, insertPos - (deleteRangeEnd - deleteRangeStart));
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, insertPos - (deleteRangeEnd - deleteRangeStart));
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length - (deleteRangeEnd - deleteRangeStart),
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			client.applyMsg(localRemoveMessage);
@@ -3185,19 +3004,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -3216,16 +3032,11 @@ describe("collab", () => {
 			const expectedRangeEnd2 = expectedRangeStart2 + "fox ".length;
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, expectedRangeStart1);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, expectedRangeStart1);
 			assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
 			assert.equal(event.ranges.length, 2);
-			assert.equal(event.first?.segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "brown ");
 			assert.equal(event.ranges[1].position, expectedRangeStart2);
 			assert.equal(
@@ -3259,19 +3070,16 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, insertPos);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, insertPos);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				insertPos + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, insertText);
 
 			const remoteRemoveMessage = client.makeOpMessage(
@@ -3290,16 +3098,11 @@ describe("collab", () => {
 			const expectedRangeEnd2 = expectedRangeStart2 + "fox ".length;
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, expectedRangeStart1);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, expectedRangeStart1);
 			assert.equal(event.last.position + event.last.segment.cachedLength, expectedRangeEnd2);
 			assert.equal(event.ranges.length, 2);
-			assert.equal(event.first?.segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, expectedRangeEnd1 - expectedRangeStart1);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, "brown ");
 			assert.equal(event.ranges[1].position, expectedRangeStart2);
 			assert.equal(
@@ -3338,16 +3141,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "brown fox ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -3360,19 +3160,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				deleteRangeStart + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			assert.equal(client.getText(), output);
@@ -3400,16 +3195,13 @@ describe("collab", () => {
 
 			assert(event);
 			assert(event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(event.last.position + event.last.segment.cachedLength, deleteRangeEnd);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
-			const segment1 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, deleteRangeEnd - deleteRangeStart);
+			const segment1 = event.first.segment as TextSegment;
 			assert.equal(segment1.text, "brown fox ");
 
 			const remoteInsertMessage = client.makeOpMessage(
@@ -3422,19 +3214,14 @@ describe("collab", () => {
 			client.applyMsg(remoteInsertMessage);
 
 			assert(!event.isLocal);
-			assert.equal(event.first?.position, deleteRangeStart);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, deleteRangeStart);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				deleteRangeStart + insertText.length,
 			);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			const segment2 = event.first?.segment as TextSegment;
+			assert.equal(event.first.segment.cachedLength, insertText.length);
+			const segment2 = event.first.segment as TextSegment;
 			assert.equal(segment2.text, insertText);
 
 			client.applyMsg(localRemoveMessage);
@@ -3469,14 +3256,11 @@ describe("SequenceDeltaEventClass", () => {
 			const event = new SequenceDeltaEventClass({ op }, deltaArgs, client);
 
 			assert(event.isLocal);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
 			assert.equal(event.ranges.length, 1);
-			assert.equal(event.first?.position, 0);
-			assert.equal(event.first?.segment.cachedLength, insertText.length);
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
+			assert.equal(event.first.position, 0);
+			assert.equal(event.first.segment.cachedLength, insertText.length);
 			assert.equal(event.last.position + event.last.segment.cachedLength, insertText.length);
 		});
 
@@ -3506,18 +3290,15 @@ describe("SequenceDeltaEventClass", () => {
 			const event = new SequenceDeltaEventClass({ op }, deltaArgs, client);
 
 			assert(event.isLocal);
+			assert(event.first !== undefined);
+			assert(event.last !== undefined);
 			assert.equal(event.ranges.length, segmentCount);
-			assert.equal(event.first?.position, insertText.length);
+			assert.equal(event.first.position, insertText.length);
 			for (let i = 0; i < segmentCount; i = i + 1) {
 				assert.equal(event.ranges[i].position, (i + 1) * insertText.length);
 				assert.equal(event.ranges[i].segment.cachedLength, insertText.length);
 				assert.equal(event.ranges[i].propertyDeltas.foo, null);
 			}
-			assert(event.last?.position !== undefined, "event.last.position should be defined");
-			assert(
-				event.last?.segment.cachedLength !== undefined,
-				"event.last.segment.cachedLength should be defined",
-			);
 			assert.equal(
 				event.last.position + event.last.segment.cachedLength,
 				client.getLength() - insertText.length,
