@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
@@ -100,7 +100,7 @@ describe("Runtime", () => {
 				minIdleTime: 5000, // 5 sec (idle)
 				maxIdleTime: 5000, // This must remain the same as minIdleTime for tests to pass nicely
 				nonRuntimeOpWeight: 0.1,
-				runtimeOpWeight: 1.0,
+				runtimeOpWeight: 1,
 				nonRuntimeHeuristicThreshold: 20,
 				...summaryCommon,
 			};
@@ -1096,7 +1096,9 @@ describe("Runtime", () => {
 					try {
 						summarizer.summarizeOnDemand({ reason });
 						resolved = true;
-					} catch {}
+					} catch {
+						// Eat the error
+					}
 
 					await flushPromises();
 					assert(resolved === false, "already running promise should not resolve yet");
@@ -1164,7 +1166,7 @@ describe("Runtime", () => {
 						"should be nack",
 					);
 					assert(
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
 						JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
 						"summary nack error should be test-nack",
 					);
@@ -1186,25 +1188,24 @@ describe("Runtime", () => {
 						fullTree,
 					});
 
-					const allResults = (
-						await Promise.all([
+					const allResults = [
+						...(await Promise.all([
 							result1.summarySubmitted,
 							result1.summaryOpBroadcasted,
 							result1.receivedSummaryAckOrNack,
 							result2.summarySubmitted,
 							result2.summaryOpBroadcasted,
 							result2.receivedSummaryAckOrNack,
-						])
-					).concat(
-						await Promise.all([
+						])),
+						...(await Promise.all([
 							result3.summarySubmitted,
 							result3.summaryOpBroadcasted,
 							result3.receivedSummaryAckOrNack,
 							result4.summarySubmitted,
 							result4.summaryOpBroadcasted,
 							result4.receivedSummaryAckOrNack,
-						]),
-					);
+						])),
+					];
 					for (const result of allResults) {
 						assert(!result.success, "all results should fail");
 					}

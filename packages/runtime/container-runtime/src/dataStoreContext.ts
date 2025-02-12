@@ -300,7 +300,8 @@ export abstract class FluidDataStoreContext
 			return aliasedDataStores.has(this.id);
 		}
 
-		return (await this.getInitialSnapshotDetails()).isRootDataStore;
+		const snapshotDetails = await this.getInitialSnapshotDetails();
+		return snapshotDetails.isRootDataStore;
 	}
 
 	/**
@@ -383,15 +384,9 @@ export abstract class FluidDataStoreContext
 				? this.parentContext.attachState
 				: AttachState.Detached;
 
-		const thisSummarizeInternal = async (
-			fullTree: boolean,
-			trackState: boolean,
-			telemetryContext?: ITelemetryContext,
-		): Promise<ISummarizeInternalResult> =>
-			this.summarizeInternal(fullTree, trackState, telemetryContext);
-
 		this.summarizerNode = props.createSummarizerNodeFn(
-			thisSummarizeInternal,
+			async (fullTree, trackState, telemetryContext) =>
+				this.summarizeInternal(fullTree, trackState, telemetryContext),
 			async (fullGC?: boolean) => this.getGCDataInternal(fullGC),
 		);
 
@@ -619,9 +614,7 @@ export abstract class FluidDataStoreContext
 		channel: IFluidDataStoreChannel,
 		messageCollection: IRuntimeMessageCollection,
 	): void {
-		if (channel.processMessages !== undefined) {
-			channel.processMessages(messageCollection);
-		} else {
+		if (channel.processMessages === undefined) {
 			const { envelope, messagesContent, local } = messageCollection;
 			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
 				channel.process(
@@ -630,6 +623,8 @@ export abstract class FluidDataStoreContext
 					localOpMetadata,
 				);
 			}
+		} else {
+			channel.processMessages(messageCollection);
 		}
 	}
 
@@ -657,7 +652,7 @@ export abstract class FluidDataStoreContext
 			);
 			this.pendingMessagesState.messageCollections.push({
 				...messageCollection,
-				messagesContent: Array.from(messagesContent),
+				messagesContent: [...messagesContent],
 			});
 			this.pendingMessagesState.pendingCount += messagesContent.length;
 			this.thresholdOpsCounter.sendIfMultiple(
@@ -1149,6 +1144,7 @@ export class RemoteFluidDataStoreContext extends FluidDataStoreContext {
 	 */
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {}
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		// Sequence number of the snapshot.
 		let sequenceNumber: number | undefined;
@@ -1281,7 +1277,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 
 	public setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void {
 		switch (attachState) {
-			case AttachState.Attaching:
+			case AttachState.Attaching: {
 				assert(
 					this.attachState === AttachState.Detached,
 					0x14d /* "Should move from detached to attaching" */,
@@ -1295,7 +1291,8 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					this.emit("attaching");
 				}
 				break;
-			case AttachState.Attached:
+			}
+			case AttachState.Attached: {
 				// We can get called into here twice, as result of both container and data store being attached, if
 				// those processes overlapped, for example, in a flow like that one:
 				// 1. Container attach started
@@ -1318,8 +1315,10 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 					}
 				}
 				break;
-			default:
+			}
+			default: {
 				unreachableCase(attachState, "unreached");
+			}
 		}
 	}
 
@@ -1364,6 +1363,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		return this.channel.getAttachGCData(telemetryContext);
 	}
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly initialSnapshotDetailsP = new LazyPromise<ISnapshotDetails>(async () => {
 		let snapshot = this.snapshotTree;
 		// eslint-disable-next-line import/no-deprecated

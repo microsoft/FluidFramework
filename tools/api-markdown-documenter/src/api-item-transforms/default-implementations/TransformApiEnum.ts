@@ -12,7 +12,7 @@ import {
 
 import type { DocumentationNode, SectionNode } from "../../documentation-domain/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
-import { filterChildMembers } from "../ApiItemTransformUtilities.js";
+import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createMemberTables, wrapInSection } from "../helpers/index.js";
 
@@ -26,7 +26,7 @@ export function transformApiEnum(
 ): SectionNode[] {
 	const sections: SectionNode[] = [];
 
-	const filteredChildren = filterChildMembers(apiEnum, config);
+	const filteredChildren = getFilteredMembers(apiEnum, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const flags: ApiEnumMember[] = [];

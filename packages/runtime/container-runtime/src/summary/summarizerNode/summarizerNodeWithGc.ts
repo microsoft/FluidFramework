@@ -51,7 +51,7 @@ interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
  * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
  * and to determine if the node's used state changed since last summary.
  *
- * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
+ *- Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
@@ -156,8 +156,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			this.gcData = cloneGCData(baseGCDetails.gcData);
 		}
 		if (baseGCDetails.usedRoutes !== undefined) {
-			this.usedRoutes = Array.from(baseGCDetails.usedRoutes).sort();
-			this.referenceUsedRoutes = Array.from(baseGCDetails.usedRoutes).sort();
+			this.usedRoutes = [...baseGCDetails.usedRoutes].sort();
+			this.referenceUsedRoutes = [...baseGCDetails.usedRoutes].sort();
 		}
 	}
 
@@ -427,7 +427,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			const pendingSummaryWithGC = pendingSummary as PendingSummaryInfoWithGC;
 			if (pendingSummaryWithGC.serializedUsedRoutes !== undefined) {
 				const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
-					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes),
+					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes) as string[],
 				);
 				const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
 				const childPendingSummaryInfo = {

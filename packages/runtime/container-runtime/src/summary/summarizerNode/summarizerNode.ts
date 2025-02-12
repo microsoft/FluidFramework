@@ -198,20 +198,23 @@ export class SummarizerNode implements IRootSummarizerNode {
 		this.wipSummarizeCalled = true;
 
 		// Try to reuse the tree if unchanged
-		if (this.canReuseHandle && !fullTree && !this.hasChanged()) {
-			if (this._lastSummaryReferenceSequenceNumber !== undefined) {
-				this.wipSkipRecursion = true;
-				const stats = mergeStats();
-				stats.handleNodeCount++;
-				return {
-					summary: {
-						type: SummaryType.Handle,
-						handle: this.summaryHandleId,
-						handleType: SummaryType.Tree,
-					},
-					stats,
-				};
-			}
+		if (
+			this.canReuseHandle &&
+			!fullTree &&
+			!this.hasChanged() &&
+			this._lastSummaryReferenceSequenceNumber !== undefined
+		) {
+			this.wipSkipRecursion = true;
+			const stats = mergeStats();
+			stats.handleNodeCount++;
+			return {
+				summary: {
+					type: SummaryType.Handle,
+					handle: this.summaryHandleId,
+					handleType: SummaryType.Tree,
+				},
+				stats,
+			};
 		}
 
 		let incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined;
@@ -221,14 +224,14 @@ export class SummarizerNode implements IRootSummarizerNode {
 				0x5df /* Summarize should not be called when not tracking the summary */,
 			);
 			incrementalSummaryContext =
-				this._lastSummaryReferenceSequenceNumber !== undefined
-					? {
+				this._lastSummaryReferenceSequenceNumber === undefined
+					? undefined
+					: {
 							summarySequenceNumber: this.wipReferenceSequenceNumber,
 							latestSummarySequenceNumber: this._lastSummaryReferenceSequenceNumber,
 							// TODO: remove summaryPath.
 							summaryPath: this.summaryHandleId,
-						}
-					: undefined;
+						};
 		}
 
 		const result = await this.summarizeInternalFn(
@@ -340,17 +343,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 			this.wipReferenceSequenceNumber !== undefined,
 			0x1a4 /* "Not tracking a summary" */,
 		);
-		if (parentSkipRecursion) {
-			if (this._lastSummaryReferenceSequenceNumber === undefined) {
-				// This case the child is added after the latest non-failure summary.
-				// This node and all children should consider themselves as still not
-				// having a successful summary yet.
-				// We cannot "reuse" this node if unchanged since that summary, because
-				// handles will be unable to point to that node. It never made it to the
-				// tree itself, and only exists as an attach op in the _outstandingOps.
-				this.clearSummary();
-				return;
-			}
+		if (parentSkipRecursion && this._lastSummaryReferenceSequenceNumber === undefined) {
+			// This case the child is added after the latest non-failure summary.
+			// This node and all children should consider themselves as still not
+			// having a successful summary yet.
+			// We cannot "reuse" this node if unchanged since that summary, because
+			// handles will be unable to point to that node. It never made it to the
+			// tree itself, and only exists as an attach op in the _outstandingOps.
+			this.clearSummary();
+			return;
 		}
 
 		for (const child of this.children.values()) {
@@ -617,9 +618,9 @@ export class SummarizerNode implements IRootSummarizerNode {
 		}
 		// In case we have pending summaries on the parent, let's initialize it on the child.
 		if (child._lastSummaryReferenceSequenceNumber !== undefined) {
-			this.pendingSummaries.forEach((pendingSummaryInfo, proposedHandle) => {
+			for (const [proposedHandle, pendingSummaryInfo] of this.pendingSummaries.entries()) {
 				child.addPendingSummary(proposedHandle, pendingSummaryInfo);
-			});
+			}
 		}
 	}
 

@@ -4,13 +4,13 @@
  */
 
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { _dirname } from "./dirname.cjs";
 
 /**
- * The absolute path to the test data for this package.
+ * Absolute path to the test data.
  */
-export function getTestDataPath(): string {
-	return path.resolve(__dirname, "../../src/test/data");
-}
+const testDataPath = path.resolve(_dirname, "../../../build-infrastructure/src/test/data");
+/**
+ * Absolute path to the test repo.
+ */
+export const testRepoRoot = path.join(testDataPath, "testRepo");

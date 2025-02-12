@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import sinon from "sinon";
 
@@ -24,7 +24,7 @@ describe("Throttler", () => {
 	afterEach(() => clock.reset());
 
 	function assertAscending(array: readonly number[]): void {
-		if (array.length < 1) {
+		if (array.length === 0) {
 			return;
 		}
 		let prev = array[0];
@@ -72,12 +72,13 @@ describe("Throttler", () => {
 			});
 
 			it("Should increase as expected with instant failures", () => {
-				for (const expectedDelay of expectedDelays.concat([
+				for (const expectedDelay of [
+					...expectedDelays,
 					maxDelayMs,
 					maxDelayMs,
 					maxDelayMs,
 					maxDelayMs,
-				])) {
+				]) {
 					assert.strictEqual(getDelayAndTick(), expectedDelay);
 				}
 			});

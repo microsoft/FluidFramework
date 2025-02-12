@@ -30,6 +30,9 @@ interface IPackedContentsContents {
  * 2. Messages in the middle of a compressed batch will have neither batch metadata nor the compression property set
  * 3. The final message of a batch will have batch metadata set to false
  * 4. An individually compressed op will have undefined batch metadata and compression set to true
+ *
+ * Compressed batches from current code are always a single message but this class needs to handle a legacy compressed batch with multiple messages
+ * because we need that functionality for back compat.
  */
 export class OpDecompressor {
 	private activeBatch = false;
@@ -79,7 +82,7 @@ export class OpDecompressor {
 				});
 				return true;
 			}
-		} catch (err) {
+		} catch {
 			return false;
 		}
 

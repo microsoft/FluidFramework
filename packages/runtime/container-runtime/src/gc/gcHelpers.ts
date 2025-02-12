@@ -15,8 +15,11 @@ import {
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
+	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
 	gcVersionUpgradeToV4Key,
 	nextGCVersion,
@@ -28,6 +31,7 @@ import {
 	IGarbageCollectionState,
 } from "./gcSummaryDefinitions.js";
 
+// eslint-disable-next-line import/no-deprecated
 export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	if (!metadata) {
 		// Force to 0/disallowed in prior versions
@@ -63,6 +67,7 @@ export function getGCVersionInEffect(configProvider: IConfigProvider): number {
  * @returns true if GC Sweep should be allowed for this document
  */
 export function shouldAllowGcSweep(
+	// eslint-disable-next-line import/no-deprecated
 	featureMatrix: GCFeatureMatrix,
 	currentGeneration: number | undefined,
 ): boolean {
@@ -105,7 +110,7 @@ export function concatGarbageCollectionStates(
 	const combinedGCNodes: { [id: string]: IGarbageCollectionNodeData } = {};
 	for (const [nodeId, nodeData] of Object.entries(gcState1.gcNodes)) {
 		combinedGCNodes[nodeId] = {
-			outboundRoutes: Array.from(nodeData.outboundRoutes),
+			outboundRoutes: [...nodeData.outboundRoutes],
 			unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
 		};
 	}
@@ -114,7 +119,7 @@ export function concatGarbageCollectionStates(
 		let combineNodeData = combinedGCNodes[nodeId];
 		if (combineNodeData === undefined) {
 			combineNodeData = {
-				outboundRoutes: Array.from(nodeData.outboundRoutes),
+				outboundRoutes: [...nodeData.outboundRoutes],
 				unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
 			};
 		} else {
@@ -149,7 +154,7 @@ export function concatGarbageCollectionStates(
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		clonedGCNodes[id] = Array.from(outboundRoutes);
+		clonedGCNodes[id] = [...outboundRoutes];
 	}
 	return {
 		gcNodes: clonedGCNodes,
@@ -166,7 +171,7 @@ export function concatGarbageCollectionData(
 	const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
 	for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
 		if (combinedGCData.gcNodes[id] === undefined) {
-			combinedGCData.gcNodes[id] = Array.from(routes);
+			combinedGCData.gcNodes[id] = [...routes];
 		} else {
 			const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]];
 			combinedGCData.gcNodes[id] = [...new Set(combinedRoutes)];

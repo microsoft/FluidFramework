@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
+import { IDisposable, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	extractSafePropertiesFromMessage,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
@@ -194,6 +195,7 @@ export class PendingStateManager implements IDisposable {
 	 */
 	private savedOps: IPendingMessage[] = [];
 
+	// eslint-disable-next-line unicorn/consistent-function-scoping -- Property is defined once; no need to extract inner lambda
 	private readonly disposeOnce = new Lazy<void>(() => {
 		this.initialMessages.clear();
 		this.pendingMessages.clear();
@@ -244,27 +246,30 @@ export class PendingStateManager implements IDisposable {
 			);
 			return message.sequenceNumber > (snapshotSequenceNumber ?? 0);
 		});
-		this.pendingMessages.toArray().forEach((message) => {
+		for (const message of this.pendingMessages.toArray()) {
 			if (
 				snapshotSequenceNumber !== undefined &&
 				message.referenceSequenceNumber < snapshotSequenceNumber
 			) {
 				throw new LoggingError("trying to stash ops older than our latest snapshot");
 			}
-		});
+		}
 		return {
 			pendingStates: [
 				...newSavedOps,
-				...this.pendingMessages.toArray().map(withoutLocalOpMetadata),
+				...this.pendingMessages.toArray().map((message) => withoutLocalOpMetadata(message)),
 			],
 		};
 	}
 
+	private readonly logger: ITelemetryLoggerExt;
+
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		stashedLocalState: IPendingLocalState | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		logger: ITelemetryBaseLogger,
 	) {
+		this.logger = createChildLogger({ logger });
 		if (stashedLocalState?.pendingStates) {
 			this.initialMessages.push(...stashedLocalState.pendingStates);
 		}
@@ -352,15 +357,15 @@ export class PendingStateManager implements IDisposable {
 				}
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
 				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
-				if (!this.stateHandler.isAttached()) {
-					if (localOpMetadata !== undefined) {
-						throw new Error("Local Op Metadata must be undefined when not attached");
-					}
-				} else {
+				if (this.stateHandler.isAttached()) {
 					nextMessage.localOpMetadata = localOpMetadata;
 					// then we push onto pendingMessages which will cause PendingStateManager to resubmit when we connect
 					patchbatchInfo(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
+				} else {
+					if (localOpMetadata !== undefined) {
+						throw new Error("Local Op Metadata must be undefined when not attached");
+					}
 				}
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);

@@ -12,6 +12,7 @@ import {
 	AsyncReducer,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
+	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	DDSFuzzModel,
@@ -26,7 +27,12 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { PropertySet, Side, type AdjustParams } from "@fluidframework/merge-tree/internal";
 
-import type { MapLike, SequenceInterval, SharedStringClass } from "../../index.js";
+import type {
+	InteriorSequencePlace,
+	MapLike,
+	SequenceInterval,
+	SharedStringClass,
+} from "../../index.js";
 import { type IIntervalCollection } from "../../intervalCollection.js";
 import { SharedStringRevertible, revertSharedStringRevertibles } from "../../revertibles.js";
 import { SharedStringFactory } from "../../sequenceFactory.js";
@@ -73,8 +79,10 @@ export interface AnnotateAdjustRange extends RangeSpec {
 	adjust: { key: string; value: AdjustParams }[];
 }
 
-export interface ObliterateRange extends RangeSpec {
+export interface ObliterateRange {
 	type: "obliterateRange";
+	start: number | InteriorSequencePlace;
+	end: number | InteriorSequencePlace;
 }
 
 // For non-interval collection fuzzing, annotating text would also be useful.
@@ -338,9 +346,22 @@ export function createSharedStringGeneratorOperations(
 	}
 
 	async function obliterateRange(state: ClientOpState): Promise<ObliterateRange> {
+		if (state.client.channel.getLength() > 0 && state.random.bool(0.2)) {
+			return { type: "obliterateRange", ...exclusiveRange(state) };
+		}
+
+		const max = state.client.channel.getLength() - 1;
+		const num1 = state.random.integer(0, max);
+		const num2 = state.random.integer(0, max);
+		const start = Math.min(num1, num2);
+		const end = Math.max(num1, num2);
+		const startSide =
+			start === end ? Side.Before : state.random.pick([Side.Before, Side.After]);
+		const endSide = start === end ? Side.After : state.random.pick([Side.Before, Side.After]);
 		return {
 			type: "obliterateRange",
-			...exclusiveRange(state),
+			start: { pos: start, side: startSide },
+			end: { pos: end, side: endSide },
 		};
 	}
 
@@ -407,6 +428,7 @@ function setSharedStringRuntimeOptions(runtime: IFluidDataStoreRuntime) {
 	runtime.options.intervalStickinessEnabled = true;
 	runtime.options.mergeTreeEnableObliterate = true;
 	runtime.options.mergeTreeEnableAnnotateAdjust = true;
+	runtime.options.mergeTreeEnableSidedObliterate = true;
 }
 export class SharedStringFuzzFactory extends SharedStringFactory {
 	public async load(
@@ -648,3 +670,56 @@ export function makeIntervalOperationGenerator(
 		[changeInterval, usableWeights.changeInterval, all(hasAnInterval, hasNonzeroLength)],
 	]);
 }
+
+export const baseIntervalModel = {
+	...baseModel,
+	generatorFactory: () =>
+		takeAsync(100, makeIntervalOperationGenerator(defaultIntervalOperationGenerationConfig)),
+};
+
+export function makeSharedStringOperationGenerator(
+	optionsParam?: SharedStringOperationGenerationConfig,
+	alwaysLeaveChar: boolean = false,
+): AsyncGenerator<Operation, FuzzTestState> {
+	const {
+		addText,
+		removeRange,
+		annotateRange,
+		annotateAdjustRange,
+		removeRangeLeaveChar,
+		lengthSatisfies,
+		obliterateRange,
+		hasNonzeroLength,
+		isShorterThanMaxLength,
+	} = createSharedStringGeneratorOperations(optionsParam);
+
+	const usableWeights =
+		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
+	return createWeightedAsyncGenerator<Operation, FuzzTestState>([
+		[addText, usableWeights.addText, isShorterThanMaxLength],
+		[
+			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
+			usableWeights.removeRange,
+			alwaysLeaveChar
+				? lengthSatisfies((length) => {
+						return length > 1;
+					})
+				: hasNonzeroLength,
+		],
+		// TODO:AB#17785: Once sided obliterates support specifying the start/end of the sequence,
+		// we can drop the `hasNonzeroLength` condition here and adjust the obliterate generation logic
+		// to get coverage of that in fuzz testing.
+		[obliterateRange, usableWeights.obliterateRange, hasNonzeroLength],
+		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
+		[annotateAdjustRange, usableWeights.annotateRange, hasNonzeroLength],
+	]);
+}
+
+export const baseSharedStringModel = {
+	...baseModel,
+	generatorFactory: () =>
+		takeAsync(
+			100,
+			makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig),
+		),
+};

@@ -15,6 +15,7 @@ import { pkgVersion } from "../packageVersion.js";
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
@@ -59,6 +60,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  *
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
@@ -80,6 +82,7 @@ export interface IDocumentSchema {
  * @see ContainerRuntimeDocumentSchemaMessage
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
@@ -91,6 +94,7 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
  *
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
@@ -121,6 +125,7 @@ export interface IDocumentSchemaFeatures {
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const currentDocumentVersionSchema = 1;
 
@@ -128,6 +133,7 @@ export const currentDocumentVersionSchema = 1;
  * Current document schema.
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IDocumentSchemaCurrent = {
@@ -437,6 +443,7 @@ function arrayToProp(arr: string[]): string[] | undefined {
  *
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  * @sealed
  */
 export class DocumentsSchemaController {
@@ -496,9 +503,8 @@ export class DocumentsSchemaController {
 		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
 		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
 		// Latter is importnat sure that's what will go into summary.
-		this.documentSchema = !existing
-			? this.desiredSchema
-			: ((documentMetadataSchema as IDocumentSchemaCurrent) ??
+		this.documentSchema = existing
+			? ((documentMetadataSchema as IDocumentSchemaCurrent) ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
@@ -508,7 +514,8 @@ export class DocumentsSchemaController {
 					runtime: {
 						explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
 					},
-				} satisfies IDocumentSchemaCurrent));
+				} satisfies IDocumentSchemaCurrent))
+			: this.desiredSchema;
 
 		checkRuntimeCompatibility(this.documentSchema, "document");
 		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
