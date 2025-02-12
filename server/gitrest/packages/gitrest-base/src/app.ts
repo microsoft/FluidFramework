@@ -98,15 +98,15 @@ export function create(
 	// v2 routes do not use bodyParser to avoid loading the entire body into memory
 	v1Router.use(json({ limit: requestSize }));
 	v1Router.use(urlencoded({ limit: requestSize, extended: false }));
-	app.use(v1ApiRoutes.git.blobs);
-	app.use(v1ApiRoutes.git.refs);
-	app.use(v1ApiRoutes.git.repos);
-	app.use(v1ApiRoutes.git.tags);
-	app.use(v1ApiRoutes.git.trees);
-	app.use(v1ApiRoutes.git.commits);
-	app.use(v1ApiRoutes.repository.commits);
-	app.use(v1ApiRoutes.repository.contents);
-	app.use(v1ApiRoutes.summaries);
+	v1Router.use(v1ApiRoutes.git.blobs);
+	v1Router.use(v1ApiRoutes.git.refs);
+	v1Router.use(v1ApiRoutes.git.repos);
+	v1Router.use(v1ApiRoutes.git.tags);
+	v1Router.use(v1ApiRoutes.git.trees);
+	v1Router.use(v1ApiRoutes.git.commits);
+	v1Router.use(v1ApiRoutes.repository.commits);
+	v1Router.use(v1ApiRoutes.repository.contents);
+	v1Router.use(v1ApiRoutes.summaries);
 
 	const v2Router = express.Router();
 	const v2ApiRoutes = routes.createV2(
@@ -114,6 +114,9 @@ export function create(
 		fileSystemManagerFactories,
 		repositoryManagerFactory,
 	);
+	v2Router.use(v2ApiRoutes.git.refs);
+	v2Router.use(v2ApiRoutes.git.repos);
+	v2Router.use(v2ApiRoutes.repository.commits);
 	v2Router.use(v2ApiRoutes.summaries);
 
 	// Split v1 and v2 routes by version param

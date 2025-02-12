@@ -12,10 +12,20 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
+/* eslint-disable import/no-internal-modules */
+import * as refs from "./git/refs";
+import * as repositoryCommits from "./repository/commits";
+/* eslint-enable import/no-internal-modules */
 import * as summaries from "./summaries";
 import { CommonRouteParams } from "../utils";
 
 export interface IRoutes {
+	git: {
+		refs: Router;
+	};
+	repository: {
+		commits: Router;
+	};
 	summaries: Router;
 }
 
@@ -46,6 +56,12 @@ export function create(
 		simplifiedCustomDataRetriever,
 	];
 	return {
+		git: {
+			refs: refs.create(...commonRouteParams),
+		},
+		repository: {
+			commits: repositoryCommits.create(...commonRouteParams),
+		},
 		summaries: summaries.create(...commonRouteParams),
 	};
 }

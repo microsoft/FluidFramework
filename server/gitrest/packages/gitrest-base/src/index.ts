@@ -5,7 +5,14 @@
 
 export { ExternalStorageManager, IExternalStorageManager } from "./externalStorageManager";
 export { configureGitRestLogging } from "./logger";
-export { create, IRoutes } from "./routes";
+export {
+	createV1 as create,
+	IV1Routes as IRoutes,
+	createV1,
+	IV1Routes,
+	createV2,
+	IV2Routes,
+} from "./routes";
 export { GitrestRunner } from "./runner";
 export { GitrestResources, GitrestResourcesFactory, GitrestRunnerFactory } from "./runnerFactory";
 export {
