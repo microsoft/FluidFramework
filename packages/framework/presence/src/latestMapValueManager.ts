@@ -5,7 +5,6 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
@@ -425,7 +424,7 @@ class LatestMapValueManagerImpl<
 			client,
 			items: new Map<Keys, LatestValueData<T>>(),
 		};
-		const postUpdateActions: (() => void)[] = [];
+		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const item = value.items[key]!;
@@ -433,17 +432,15 @@ class LatestMapValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				const emitItemUpdated = (): void => {
-					assert(item.value !== undefined, "Item value must be defined.");
-					this.events.emit("itemUpdated", {
-						client,
-						key,
-						value: item.value,
-						metadata,
-					});
+				const itemValue = item.value;
+				const updatedItem = {
+					client,
+					key,
+					value: itemValue,
+					metadata,
 				};
-				postUpdateActions.push(emitItemUpdated);
-				allUpdates.items.set(key, { value: item.value, metadata });
+				postUpdateActions.push(() => this.events.emit("itemUpdated", updatedItem));
+				allUpdates.items.set(key, { value: itemValue, metadata });
 			} else if (hadPriorValue !== undefined) {
 				postUpdateActions.push(() =>
 					this.events.emit("itemRemoved", {
@@ -455,7 +452,8 @@ class LatestMapValueManagerImpl<
 			}
 		}
 		this.datastore.update(this.key, clientSessionId, currentState);
-		return [() => this.events.emit("updated", allUpdates), ...postUpdateActions];
+		postUpdateActions.push(() => this.events.emit("updated", allUpdates));
+		return postUpdateActions;
 	}
 }
 

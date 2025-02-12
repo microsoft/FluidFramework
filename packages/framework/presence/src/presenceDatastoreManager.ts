@@ -9,7 +9,7 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
-import type { IEphemeralRuntime } from "./internalTypes.js";
+import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
@@ -383,7 +383,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				this.refreshBroadcastRequested = false;
 			}
 		}
-		const postUpdateActions: (() => void)[] = [];
+		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [workspaceAddress, remoteDatastore] of Object.entries(message.content.data)) {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);

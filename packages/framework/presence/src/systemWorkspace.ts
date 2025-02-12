@@ -138,8 +138,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		senderConnectionId: ClientConnectionId,
 	): PostUpdateAction[] {
 		const audienceMembers = this.audience.getMembers();
-		const joiningAttendees = new Set<SessionClient>();
-		const postUpdateActions: (() => void)[] = [];
+		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
@@ -155,7 +154,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			);
 			// If the attendee is joining the session, add them to the list of joining attendees to be announced later.
 			if (isJoining) {
-				joiningAttendees.add(attendee);
+				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
 			}
 
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
@@ -167,9 +166,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			}
 		}
 
-		for (const announcedAttendee of joiningAttendees) {
-			postUpdateActions.push(() => this.events.emit("attendeeJoined", announcedAttendee));
-		}
 		return postUpdateActions;
 	}
 

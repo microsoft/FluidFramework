@@ -409,7 +409,7 @@ class PresenceStatesImpl<TSchema extends PresenceStatesSchema>
 		timeModifier: number,
 		remoteDatastore: ValueUpdateRecord,
 	): PostUpdateAction[] {
-		const postUpdateActions: (() => void)[] = [];
+		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {
 			const brandedIVM = this.nodes[key];
 			if (brandedIVM === undefined) {

@@ -232,6 +232,7 @@ class NotificationsManagerImpl<
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
+		const postUpdateActions: PostUpdateAction[] = [];
 		const eventName = value.value.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
@@ -239,16 +240,18 @@ class NotificationsManagerImpl<
 			const args = [client, ...value.value.args] as Parameters<
 				NotificationSubscriptions<T>[typeof eventName]
 			>;
-			this.notificationsInternal.emit(eventName, ...args);
+			postUpdateActions.push(() => this.notificationsInternal.emit(eventName, ...args));
 		} else {
-			this.events.emit(
-				"unattendedNotification",
-				value.value.name,
-				client,
-				...value.value.args,
+			postUpdateActions.push(() =>
+				this.events.emit(
+					"unattendedNotification",
+					value.value.name,
+					client,
+					...value.value.args,
+				),
 			);
 		}
-		return [];
+		return postUpdateActions;
 	}
 }
 
