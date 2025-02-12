@@ -5,7 +5,6 @@
 
 import assert from "assert";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
@@ -20,6 +19,8 @@ import {
 	IProvideFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
+
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
 
 /**
  * @internal

@@ -6,11 +6,7 @@
 import * as crypto from "crypto";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
@@ -31,6 +27,7 @@ import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/inter
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/test-utils/internal";
 
 import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";

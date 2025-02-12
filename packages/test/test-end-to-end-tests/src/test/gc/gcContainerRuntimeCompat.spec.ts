@@ -11,7 +11,6 @@ import {
 	type getDataRuntimeApi,
 	type getLoaderApi,
 } from "@fluid-private/test-version-utils";
-import type { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntimeOptions,
@@ -21,6 +20,7 @@ import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
+	type ContainerRuntimeFactoryWithDefaultDataStore,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerCore,
 	getContainerEntryPointBackCompat,

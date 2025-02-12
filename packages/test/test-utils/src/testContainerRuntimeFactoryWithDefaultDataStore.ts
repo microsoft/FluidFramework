@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -13,6 +12,8 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
+
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
