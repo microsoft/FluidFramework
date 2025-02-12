@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance, type TypedEventEmitter } from "@fluid-internal/client-utils";
+import { performanceNow, type TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IContainerRuntimeBaseEvents } from "@fluidframework/runtime-definitions/internal";
@@ -59,15 +59,15 @@ export class DeltaScheduler {
 		runtimeEventsEmitter.on("batchEnd", this.batchEnd);
 	}
 
-	public dispose() {
+	public dispose(): void {
 		this.deltaManager.inbound.off("idle", this.inboundQueueIdle);
 		this.runtimeEventsEmitter.off("batchBegin", this.batchBegin);
 		this.runtimeEventsEmitter.off("batchEnd", this.batchEnd);
 	}
 
-	private readonly batchBegin = (message: ISequencedDocumentMessage) => {
+	private readonly batchBegin = (message: ISequencedDocumentMessage): void => {
 		if (!this.processingStartTime) {
-			this.processingStartTime = performance.now();
+			this.processingStartTime = performanceNow();
 		}
 		if (this.schedulingLog === undefined && this.schedulingCount % 500 === 0) {
 			// Every 500th time we are scheduling the inbound queue, we log telemetry for the
@@ -79,12 +79,12 @@ export class DeltaScheduler {
 				numberOfBatchesProcessed: 0,
 				firstSequenceNumber: message.sequenceNumber,
 				lastSequenceNumber: message.sequenceNumber,
-				startTime: performance.now(),
+				startTime: performanceNow(),
 			};
 		}
 	};
 
-	private readonly batchEnd = (error: any, message: ISequencedDocumentMessage) => {
+	private readonly batchEnd = (error: unknown, message: ISequencedDocumentMessage): void => {
 		if (this.schedulingLog) {
 			this.schedulingLog.numberOfBatchesProcessed++;
 			this.schedulingLog.lastSequenceNumber = message.sequenceNumber;
@@ -92,7 +92,7 @@ export class DeltaScheduler {
 		}
 
 		if (this.shouldRunScheduler()) {
-			const currentTime = performance.now();
+			const currentTime = performanceNow();
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const elapsedTime = currentTime - this.processingStartTime!;
 			if (elapsedTime > this.currentAllowedProcessingTimeForTurn) {
@@ -126,7 +126,7 @@ export class DeltaScheduler {
 							processingTime: formatTick(this.schedulingLog.totalProcessingTime),
 							numberOfTurns: this.schedulingLog.numberOfTurns,
 							batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
-							timeToResume: formatTick(performance.now() - currentTime),
+							timeToResume: formatTick(performanceNow() - currentTime),
 						});
 					}
 					this.deltaManager.inbound.resume();
@@ -137,11 +137,11 @@ export class DeltaScheduler {
 		}
 	};
 
-	private readonly inboundQueueIdle = () => {
+	private readonly inboundQueueIdle = (): void => {
 		if (this.schedulingLog) {
 			// Add the time taken for processing the final ops to the total processing time in the
 			// telemetry log object.
-			const currentTime = performance.now();
+			const currentTime = performanceNow();
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.schedulingLog.totalProcessingTime += currentTime - this.processingStartTime!;
 

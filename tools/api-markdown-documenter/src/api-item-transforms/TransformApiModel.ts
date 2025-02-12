@@ -30,7 +30,7 @@ import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "
  */
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(options);
-	const { apiModel, logger, skipPackage } = config;
+	const { apiModel, logger, exclude: excludeItem } = config;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
@@ -50,7 +50,7 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 	}
 
 	// Filter out packages not wanted per user config
-	const filteredPackages = apiModel.packages.filter((apiPackage) => !skipPackage(apiPackage));
+	const filteredPackages = apiModel.packages.filter((apiPackage) => !excludeItem(apiPackage));
 
 	if (filteredPackages.length === 0) {
 		logger.warning("No packages found after filtering per `skipPackages` configuration.");
@@ -127,13 +127,13 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
  * @param config - See {@link ApiItemTransformationConfiguration}
  */
 function getDocumentItems(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ApiItem[] {
-	const { documentBoundaries } = config;
+	const { hierarchy } = config;
 
 	const result: ApiItem[] = [];
 	for (const childItem of apiItem.members) {
 		if (
 			shouldItemBeIncluded(childItem, config) &&
-			doesItemRequireOwnDocument(childItem, documentBoundaries)
+			doesItemRequireOwnDocument(childItem, hierarchy)
 		) {
 			result.push(childItem);
 		}
@@ -158,7 +158,7 @@ function createDocumentForApiModel(
 
 	logger.verbose(`Generating API Model document...`);
 
-	// Note: We don't render the breadcrumb for Model document, as it is always the root of the file hierarchical
+	// Note: We don't render the breadcrumb for Model document, as it is always the root of the file hierarchy.
 
 	// Render body contents
 	const sections = transformations[ApiItemKind.Model](apiModel, config);
@@ -239,7 +239,7 @@ function createDocumentForMultiEntryPointPackage(
 		sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
 	}
 
-	// Render list of entry-points
+	// Render list of links to entry-points, each of which will get its own document.
 	const renderedEntryPointList = createEntryPointList(apiEntryPoints, config);
 	if (renderedEntryPointList !== undefined) {
 		sections.push(

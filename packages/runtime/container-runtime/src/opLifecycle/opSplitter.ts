@@ -11,6 +11,7 @@ import {
 	DataCorruptionError,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
+	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ContainerMessageType, ContainerRuntimeChunkedOpMessage } from "../messageTypes.js";
@@ -23,12 +24,12 @@ export function isChunkedMessage(message: ISequencedDocumentMessage): boolean {
 }
 
 interface IChunkedContents {
-	type: typeof ContainerMessageType.ChunkedOp;
-	contents: IChunkedOp;
+	readonly type: typeof ContainerMessageType.ChunkedOp;
+	readonly contents: IChunkedOp;
 }
 
-function isChunkedContents(contents: any): contents is IChunkedContents {
-	return contents?.type === ContainerMessageType.ChunkedOp;
+function isChunkedContents(contents: unknown): contents is IChunkedContents {
+	return (contents as Partial<IChunkedContents>)?.type === ContainerMessageType.ChunkedOp;
 }
 
 /**
@@ -37,7 +38,7 @@ function isChunkedContents(contents: any): contents is IChunkedContents {
 export class OpSplitter {
 	// Local copy of incomplete received chunks.
 	private readonly chunkMap: Map<string, string[]>;
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(
 		chunks: [string, string[]][],
@@ -62,7 +63,7 @@ export class OpSplitter {
 		return this.chunkMap;
 	}
 
-	public clearPartialChunks(clientId: string) {
+	public clearPartialChunks(clientId: string): void {
 		if (this.chunkMap.has(clientId)) {
 			this.chunkMap.delete(clientId);
 		}
@@ -72,7 +73,7 @@ export class OpSplitter {
 		clientId: string,
 		chunkedContent: IChunkedOp,
 		originalMessage: ISequencedDocumentMessage,
-	) {
+	): void {
 		let map = this.chunkMap.get(clientId);
 		if (map === undefined) {
 			map = [];
@@ -98,25 +99,28 @@ export class OpSplitter {
 	 * Splits the first op of a compressed batch in chunks, sends the chunks separately and
 	 * returns a new batch composed of the last chunk and the rest of the ops in the original batch.
 	 *
-	 * A compressed batch is formed by one large op at the first position, followed by a series of placeholder ops
-	 * which are used in order to reserve the sequence numbers for when the first op gets unrolled into the original
-	 * uncompressed ops at ingestion in the runtime.
+	 * A compressed batch is formed by one large op at the first position.
 	 *
-	 * If the first op is too large, it can be chunked (split into smaller op) which can be sent individually over the wire
+	 * If the op is too large, it can be chunked (split into smaller op) which can be sent individually over the wire
 	 * and accumulate at ingestion, until the last op in the chunk is processed, when the original op is unrolled.
 	 *
-	 * This method will send the first N - 1 chunks separately and use the last chunk as the first message in the result batch
-	 * and then appends the original placeholder ops. This will ensure that the batch semantics of the original (non-compressed) batch
-	 * are preserved, as the original chunked op will be unrolled by the runtime when the first message in the batch is processed
-	 * (as it is the last chunk).
+	 * This method will send the first N - 1 chunks separately and use the last chunk as the first message in the result batch.
+	 * This will ensure that the batch semantics of the original (non-compressed) batch are preserved, as the original chunked op
+	 * will be unrolled by the runtime when the first message in the batch is processed (as it is the last chunk).
 	 *
-	 * To illustrate, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
+	 * To handle legacy compressed batches with empty placeholders this method can attach the empty placeholder ops at the end
+	 * of the result batch, ensuring that the batch semantics are preserved.
+	 *
+	 * To illustrate the current functionality, if the input is `[largeOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
+	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4]` will be returned.
+	 *
+	 * With the legacy code, if the input is `[largeOp, emptyOp, emptyOp]`, `largeOp` will be split into `[chunk1, chunk2, chunk3, chunk4]`.
 	 * `chunk1`, `chunk2` and `chunk3` will be sent individually and `[chunk4, emptyOp, emptyOp]` will be returned.
 	 *
 	 * @remarks - A side effect here is that 1 or more chunks are queued immediately for sending in next JS turn.
 	 *
 	 * @param batch - the compressed batch which needs to be processed
-	 * @returns A new adjusted batch (last chunk + empty placeholders) which can be sent over the wire
+	 * @returns A batch with the last chunk of the original message
 	 */
 	public splitFirstBatchMessage(batch: IBatch): IBatch {
 		assert(this.isBatchChunkingEnabled, 0x513 /* Chunking needs to be enabled */);
@@ -215,6 +219,7 @@ export class OpSplitter {
 		// back-compat with 1.x builds
 		// This is only required / present for non-compressed, chunked ops
 		// For compressed ops, we have op grouping enabled, and type of each op is preserved within compressed content.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 		completeMessage.type = (chunkedContent as any).originalType;
 		completeMessage.metadata = chunkedContent.originalMetadata;
 		completeMessage.compression = chunkedContent.originalCompression;
@@ -280,7 +285,7 @@ export const splitOp = (
 	for (let chunkId = 1; chunkId <= chunkCount; chunkId++) {
 		const chunk: IChunkedOp = {
 			chunkId,
-			contents: op.contents.substr(offset, chunkSizeInBytes),
+			contents: op.contents.slice(offset, offset + chunkSizeInBytes),
 			totalChunks: chunkCount,
 		};
 
@@ -298,6 +303,7 @@ export const splitOp = (
 			// This is really bad, as we will crash on later ops and it's very hard to debug these cases.
 			// If we put some known type here, then we will crash on it (as 1.x does not understand compression, and thus will not
 			// find info on the op like address of the channel to deliver the op)
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(chunk as any).originalType = "component";
 		}
 

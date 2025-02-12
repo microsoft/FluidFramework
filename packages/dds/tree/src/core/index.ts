@@ -67,8 +67,6 @@ export {
 	forEachField,
 	type PathRootPrefix,
 	deltaForRootInitialization,
-	emptyFieldChanges,
-	isEmptyFieldChanges,
 	makeDetachedNodeId,
 	offsetDetachId,
 	emptyDelta,
@@ -198,11 +196,15 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	subtractChangeAtomIds,
 	replaceAtomRevisions,
 	replaceChange,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
 	isAncestor,
+	type ChangeAtomIdRangeMap,
+	newChangeAtomIdRangeMap,
+	compareRevisions,
 } from "./rebase/index.js";
 
 export {
@@ -218,5 +220,4 @@ export {
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
-	cloneRevertibles,
 } from "./revertible.js";

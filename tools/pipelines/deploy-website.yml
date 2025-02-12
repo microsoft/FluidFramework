@@ -26,6 +26,7 @@ parameters:
     values:
       - new
       - old
+      - staging
   # determines whether to retain guardian assets
   - name: guardianAssetRetentionOverride
     displayName: Guardian Asset Retention Override (default = based on branch)
@@ -54,6 +55,8 @@ variables:
       value: "$(FLUID_WEBSITE_TORUS_API_TOKEN)"
     ${{ if eq( parameters['deployEnvironment'], 'old') }}:
       value: "$(AZURE_STATIC_WEB_APPS_API_TOKEN)"
+    ${{ if eq(parameters['deployEnvironment'], 'staging') }}:
+      value: "$(AZURE_STATIC_WEB_APPS_STAGING_API_TOKEN)"
   # skip injected CG detection as we manually trigger it in a parallel job
   - name: skipComponentGovernanceDetection
     value: true
@@ -109,14 +112,15 @@ stages:
           submodules: false
           clean: true
 
-        - template: templates/include-use-node-version.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-        - template: templates/include-install-pnpm.yml
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
             buildDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies
+          retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)/docs
@@ -130,6 +134,8 @@ stages:
             command: 'custom'
             workingDir: $(Build.SourcesDirectory)/docs
             customCommand: 'run build'
+          env:
+            INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
 
         # Run the tests
         - task: Npm@1
@@ -166,7 +172,7 @@ stages:
           submodules: false
           clean: true
 
-        - template: templates/include-use-node-version.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         - task: UseDotNet@2
           displayName: 'Use .NET Core 3.x'
@@ -232,14 +238,15 @@ stages:
           submodules: false
           clean: true
 
-        - template: templates/include-use-node-version.yml
+        - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-        - template: templates/include-install-pnpm.yml
+        - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
             buildDirectory: $(Build.SourcesDirectory)/docs
 
         - task: Bash@3
           displayName: Install dependencies
+          retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
             workingDirectory: $(Build.SourcesDirectory)/docs

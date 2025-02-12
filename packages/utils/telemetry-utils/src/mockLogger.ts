@@ -7,7 +7,6 @@ import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
 	LogLevel,
-	type Tagged,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
@@ -16,7 +15,6 @@ import type {
 	ITelemetryEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPropertiesExt,
-	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
 
 /**
@@ -266,9 +264,11 @@ ${JSON.stringify(actualEvents)}`);
 	): number {
 		let iExpectedEvent = 0;
 		for (const event of this._events) {
+			const expectedEvent = expectedEvents[iExpectedEvent];
 			if (
 				iExpectedEvent < expectedEvents.length &&
-				MockLogger.eventsMatch(event, expectedEvents[iExpectedEvent], inlineDetailsProp)
+				expectedEvent !== undefined &&
+				MockLogger.eventsMatch(event, expectedEvent, inlineDetailsProp)
 			) {
 				// We found the next expected event; increment
 				++iExpectedEvent;
@@ -332,10 +332,7 @@ function matchObjects(
 	expected: ITelemetryPropertiesExt,
 ): boolean {
 	for (const [expectedKey, expectedValue] of Object.entries(expected)) {
-		const actualValue:
-			| TelemetryEventPropertyTypeExt
-			| Tagged<TelemetryEventPropertyTypeExt>
-			| undefined = actual[expectedKey];
+		const actualValue = actual[expectedKey];
 		if (
 			!Array.isArray(expectedValue) &&
 			expectedValue !== null &&

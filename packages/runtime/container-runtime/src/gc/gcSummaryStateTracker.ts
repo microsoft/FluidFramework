@@ -16,6 +16,7 @@ import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/in
 
 import { IRefreshSummaryResult } from "../summary/index.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
 import {
@@ -61,7 +62,9 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called during GC initialization. Initialize the latest summary data from the base snapshot data.
 	 */
-	public initializeBaseState(baseSnapshotData: IGarbageCollectionSnapshotData | undefined) {
+	public initializeBaseState(
+		baseSnapshotData: IGarbageCollectionSnapshotData | undefined,
+	): void {
 		if (baseSnapshotData === undefined) {
 			return;
 		}
@@ -96,7 +99,7 @@ export class GCSummaryStateTracker {
 		// Serialize and write deleted nodes, if any. This is done irrespective of whether sweep is enabled or not so
 		// to identify deleted nodes' usage.
 		const serializedDeletedNodes =
-			deletedNodes.size > 0 ? JSON.stringify(Array.from(deletedNodes).sort()) : undefined;
+			deletedNodes.size > 0 ? JSON.stringify([...deletedNodes].sort()) : undefined;
 		// Serialize and write tombstones, if any.
 		const serializedTombstones =
 			tombstones.length > 0 ? JSON.stringify(tombstones.sort()) : undefined;
@@ -228,7 +231,8 @@ export class GCSummaryStateTracker {
 	/**
 	 * Called to update the state from a GC run's stats. Used to update the count of data stores whose state updated.
 	 */
-	public updateStateFromGCRunStats(stats: IGCStats) {
+	// eslint-disable-next-line import/no-deprecated
+	public updateStateFromGCRunStats(stats: IGCStats): void {
 		this.updatedDSCountSinceLastSummary += stats.updatedDataStoreCount;
 	}
 }

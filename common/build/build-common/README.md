@@ -94,6 +94,3 @@ src/test/tsconfig.cjs.json:
 
 This package also contains a legacy base tsconfig, `ts-common-config.json`. This config is still used in some places
 within the repo but is considered deprecated.
-
-And there are a handful of tsconfigs that we thought we'd want but no longer think they have common purpose:
-`tsconfig.cjs.json`, `tsconfig.esm.json`, `tsconfig.esm-only.json`, and `tsconfig.test.json`
