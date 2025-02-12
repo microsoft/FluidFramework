@@ -1036,23 +1036,19 @@ export class PartialSequenceLengths {
 	 * constructed with `computeLocalPartials` set to true and not subsequently updated with `update`.
 	 */
 	public getPartialLength(refSeq: number, clientId: number, localSeq?: number): number {
-		let pLen = this.minLength;
-		const cliLatestIndex = this.cliLatest(clientId);
-		const cliSeq = this.clientSeqNumbers[clientId];
-		pLen += this.partialLengths.latestLeq(refSeq)?.len ?? 0;
+		let length = this.minLength;
+		length += this.partialLengths.latestLeq(refSeq)?.len ?? 0;
 
 		if (localSeq === undefined) {
-			if (cliLatestIndex >= 0) {
-				const cliLatest = cliSeq.items[cliLatestIndex];
-				if (cliLatest.seq > refSeq) {
-					// The client has local edits after refSeq, add in the length adjustments
-					pLen += cliLatest.len;
-					const precedingCli = this.cliLatestLEQ(clientId, refSeq);
-					if (precedingCli) {
-						// Subtract out double-counted lengths: segments still in the collab window but before
-						// the refSeq submitted by the client we're querying for were counted in each addition above.
-						pLen -= precedingCli.len;
-					}
+			const latestClientEntry = this.latestClientEntry(clientId);
+			if (latestClientEntry !== undefined && latestClientEntry.seq > refSeq) {
+				// The client has local edits after refSeq, add in the length adjustments
+				length += latestClientEntry.len;
+				const precedingCli = this.latestClientEntryLEQ(clientId, refSeq);
+				if (precedingCli) {
+					// Subtract out double-counted lengths: segments still in the collab window but before
+					// the refSeq submitted by the client we're querying for were counted in each addition above.
+					length -= precedingCli.len;
 				}
 			}
 		} else {
@@ -1064,14 +1060,14 @@ export class PartialSequenceLengths {
 			// Local segments at or before localSeq should also be included
 			const local = unsequencedPartialLengths.latestLeq(localSeq);
 			if (local) {
-				pLen += local.len;
+				length += local.len;
 
 				// Lastly, we must subtract out any double-counted removes, which occur if a currently un-acked local
 				// remove overlaps with a remote client's remove that occurred at sequence number <=refSeq.
-				pLen -= this.computeOverlappingLocalRemoves(refSeq, localSeq);
+				length -= this.computeOverlappingLocalRemoves(refSeq, localSeq);
 			}
 		}
-		return pLen;
+		return length;
 	}
 
 	/**
@@ -1190,13 +1186,24 @@ export class PartialSequenceLengths {
 		}
 	}
 
-	private cliLatestLEQ(clientId: number, refSeq: number): PartialSequenceLength | undefined {
+	/**
+	 * @returns The partial lengths associated with the latest change associated with `clientId` at or before `refSeq`.
+	 * Returns undefined if no such change exists.
+	 */
+	private latestClientEntryLEQ(
+		clientId: number,
+		refSeq: number,
+	): PartialSequenceLength | undefined {
 		return this.clientSeqNumbers[clientId]?.latestLeq(refSeq);
 	}
 
-	private cliLatest(clientId: number): number {
+	/**
+	 * @returns The partial lengths associated with the most recent change received by `clientId`, or undefined
+	 * if this client has made no changes in this block within the collab window.
+	 */
+	private latestClientEntry(clientId: number): PartialSequenceLength | undefined {
 		const cliSeqs = this.clientSeqNumbers[clientId];
-		return cliSeqs && cliSeqs.size > 0 ? cliSeqs.size - 1 : -1;
+		return cliSeqs && cliSeqs.size > 0 ? cliSeqs.items[cliSeqs.size - 1] : undefined;
 	}
 }
 
