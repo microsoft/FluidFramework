@@ -164,10 +164,22 @@ describe("ValueManager eventing", () => {
 		// Wait for whichever event fires first.
 		const { latestValue, attendee } = await Promise.race([latestPromise, attendeePromise]);
 		// Verify - Immediately verify consistency on the first event.
-		assert.deepEqual(latestValue, { x: 1, y: 1, z: 1 });
-		assert.ok(attendee);
-		assert.strictEqual(attendee.sessionId, "sessionId-1");
-		assert.strictEqual(attendee.getConnectionId(), "client1");
+		assert.deepEqual(
+			latestValue,
+			{ x: 1, y: 1, z: 1 },
+			"Eventing does not reflect latest value",
+		);
+		assert.ok(attendee, "Eventing does not reflect new attendee");
+		assert.strictEqual(
+			attendee.sessionId,
+			"sessionId-1",
+			"Eventing does not reflect new attendee's sessionId",
+		);
+		assert.strictEqual(
+			attendee.getConnectionId(),
+			"client1",
+			"Eventing does not reflect new attendee's connection id",
+		);
 		// Wait for both events to eventually fire.
 		await Promise.all([latestPromise, attendeePromise]);
 	});
@@ -223,11 +235,27 @@ describe("ValueManager eventing", () => {
 			attendeePromise,
 		]);
 		// Verify - Immediately verify consistency on the first event.
-		assert.deepEqual(latestMapValue.get("key1")?.value, { a: 1, b: 1 });
-		assert.deepEqual(latestMapValue.get("key2")?.value, { c: 1, d: 1 });
-		assert.ok(attendee);
-		assert.strictEqual(attendee.sessionId, "sessionId-1");
-		assert.strictEqual(attendee.getConnectionId(), "client1");
+		assert.deepEqual(
+			latestMapValue.get("key1")?.value,
+			{ a: 1, b: 1 },
+			"Eventing does not reflect latest map value",
+		);
+		assert.deepEqual(
+			latestMapValue.get("key2")?.value,
+			{ c: 1, d: 1 },
+			"Eventing does not reflect latest map value",
+		);
+		assert.ok(attendee, "Eventing does not reflect new attendee");
+		assert.strictEqual(
+			attendee.sessionId,
+			"sessionId-1",
+			"Eventing does not reflect new attendee's sessionId",
+		);
+		assert.strictEqual(
+			attendee.getConnectionId(),
+			"client1",
+			"Eventing does not reflect new attendee's connection id",
+		);
 		// Wait for both events to eventually fire.
 		await Promise.all([latestMapPromise, attendeePromise]);
 	});
@@ -270,9 +298,17 @@ describe("ValueManager eventing", () => {
 		// Wait for whichever event fires first.
 		const { attendee } = await Promise.race([notificationPromise, attendeePromise]);
 		// Verify - Immediately verify consistency on the first event.
-		assert.ok(attendee);
-		assert.strictEqual(attendee.sessionId, "sessionId-1");
-		assert.strictEqual(attendee.getConnectionId(), "client1");
+		assert.ok(attendee, "Eventing does not reflect new attendee");
+		assert.strictEqual(
+			attendee.sessionId,
+			"sessionId-1",
+			"Eventing does not reflect new attendee's sessionId",
+		);
+		assert.strictEqual(
+			attendee.getConnectionId(),
+			"client1",
+			"Eventing does not reflect new attendee's connection id",
+		);
 		// Wait for both events to eventually fire.
 		await Promise.all([notificationPromise, attendeePromise]);
 	});
@@ -362,12 +398,32 @@ describe("ValueManager eventing", () => {
 			attendeePromise,
 		]);
 		// Verify - Immediately verify consistency on the first event.
-		assert.deepEqual(latestValue, { x: 1, y: 1, z: 1 });
-		assert.deepEqual(latestMapValue.get("key1")?.value, { a: 1, b: 1 });
-		assert.deepEqual(latestMapValue.get("key2")?.value, { c: 1, d: 1 });
-		assert.ok(attendee);
-		assert.strictEqual(attendee.sessionId, "sessionId-1");
-		assert.strictEqual(attendee.getConnectionId(), "client1");
+		assert.deepEqual(
+			latestValue,
+			{ x: 1, y: 1, z: 1 },
+			"Eventing does not reflect latest value",
+		);
+		assert.deepEqual(
+			latestMapValue.get("key1")?.value,
+			{ a: 1, b: 1 },
+			"Eventing does not reflect latest map value",
+		);
+		assert.deepEqual(
+			latestMapValue.get("key2")?.value,
+			{ c: 1, d: 1 },
+			"Eventing does not reflect latest map value",
+		);
+		assert.ok(attendee, "Eventing does not reflect new attendee");
+		assert.strictEqual(
+			attendee.sessionId,
+			"sessionId-1",
+			"Eventing does not reflect new attendee's sessionId",
+		);
+		assert.strictEqual(
+			attendee.getConnectionId(),
+			"client1",
+			"Eventing does not reflect new attendee's connection id",
+		);
 		// Wait for both events to eventually fire.
 		await Promise.all([latestPromise, latestMapPromise, attendeePromise]);
 	});
