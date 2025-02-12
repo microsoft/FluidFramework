@@ -72,8 +72,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	 * This hint is used by link handling logic which determines which app to redirect to when user
 	 * navigates directly to the link.
 	 * @param getContext - callback function which is used to get context for given resolved url. If context
-	 * @param containerPackageInfo - container package information which will be used to extract the container package name.
 	 * is returned then it will be embedded into url returned by getAbsoluteUrl() method.
+	 * @param containerPackageInfo - container package information which will be used to extract the container package name.
 	 */
 	public constructor(
 		shareLinkFetcherProps?: ShareLinkFetcherProps | undefined,
