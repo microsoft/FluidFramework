@@ -116,7 +116,7 @@ export class MockContainerRuntimeForReconnection extends MockContainerRuntime {
 	}
 
 	override flush() {
-		// Flush messages only if we are connection, otherwise, just ignore it.
+		// Flush messages only if we are connected, otherwise, just ignore it.
 		if (this.connected) {
 			super.flush();
 		}
