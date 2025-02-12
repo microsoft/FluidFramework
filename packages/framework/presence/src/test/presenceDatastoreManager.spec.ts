@@ -174,8 +174,46 @@ describe("Presence", () => {
 			});
 		});
 
-		describe.skip("responds to DatastoreUpdate", () => {
+		/**
+		 * These tests are skipped as 'workspaceActivated' event is not yet implemented.
+		 */
+		describe.skip("receiving DatastoreUpdate", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
+
+			const systemWorkspaceUpdate = {
+				"system:presence": {
+					"clientToSessionId": {
+						"client1": {
+							"rev": 0,
+							"timestamp": 0,
+							"value": "sessionId-1",
+						},
+					},
+				},
+			};
+			const statesWorkspaceUpdate = {
+				"s:name:testStateWorkspace": {
+					"latest": {
+						"sessionId-1": {
+							"rev": 1,
+							"timestamp": 0,
+							"value": {},
+						},
+					},
+				},
+			};
+			const notificationsWorkspaceUpdate = {
+				"n:name:testNotificationWorkspace": {
+					"testEvents": {
+						"sessionId-1": {
+							"rev": 0,
+							"timestamp": 0,
+							"value": {},
+							"ignoreUnmonitored": true,
+						},
+					},
+				},
+			};
 
 			beforeEach(() => {
 				presence = prepareConnectedPresence(runtime, "sessionId-2", "client2", clock, logger);
@@ -184,7 +222,7 @@ describe("Presence", () => {
 				clock.tick(10);
 			});
 
-			it("with emitting 'workspaceActivated' event for unregistered States workspace", () => {
+			it("with unregistered States workspace emits 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
 				presence.events.on("workspaceActivated", listener);
@@ -198,24 +236,8 @@ describe("Presence", () => {
 							sendTimestamp: clock.now - 10,
 							avgLatency: 20,
 							data: {
-								"system:presence": {
-									"clientToSessionId": {
-										"client1": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": "sessionId-2",
-										},
-									},
-								},
-								"s:name:testStateWorkspace": {
-									"latest": {
-										"sessionId-1": {
-											"rev": 1,
-											"timestamp": 0,
-											"value": { x: 1, y: 1, z: 1 },
-										},
-									},
-								},
+								...systemWorkspaceUpdate,
+								...statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -227,7 +249,7 @@ describe("Presence", () => {
 				assert.strictEqual(listener.calledOnce, true);
 				assert.strictEqual(listener.calledWith("name:testStateWorkspace", "States"), true);
 			});
-			it("with emitting 'workspaceActivated' event for unregistered Notifications workspace", () => {
+			it("with unregistered Notifications workspace 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
 				presence.events.on("workspaceActivated", listener);
@@ -241,25 +263,8 @@ describe("Presence", () => {
 							sendTimestamp: clock.now - 10,
 							avgLatency: 20,
 							data: {
-								"system:presence": {
-									"clientToSessionId": {
-										"client1": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": "sessionId-2",
-										},
-									},
-								},
-								"n:name:testNotificationWorkspace": {
-									"testEvents": {
-										"sessionId-1": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": { "name": "newId", "args": [77] },
-											"ignoreUnmonitored": true,
-										},
-									},
-								},
+								...systemWorkspaceUpdate,
+								...notificationsWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -274,7 +279,7 @@ describe("Presence", () => {
 					true,
 				);
 			});
-			it("with emitting 'workspaceActivated' event for unregistered workspace of unknown type ", () => {
+			it("with unregistered workspace of unknown type emits 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
 				presence.events.on("workspaceActivated", listener);
@@ -288,15 +293,7 @@ describe("Presence", () => {
 							sendTimestamp: clock.now - 10,
 							avgLatency: 20,
 							data: {
-								"system:presence": {
-									"clientToSessionId": {
-										"client1": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": "sessionId-2",
-										},
-									},
-								},
+								...systemWorkspaceUpdate,
 								"u:name:testUnknownWorkspace": {
 									"latest": {
 										"sessionId-1": {
@@ -320,7 +317,7 @@ describe("Presence", () => {
 					true,
 				);
 			});
-			it("with NOT emitting 'workspaceActivated' event for already registered workspace", () => {
+			it("with registered workspace does NOT emit 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
 				presence.events.on("workspaceActivated", listener);
@@ -336,34 +333,9 @@ describe("Presence", () => {
 							sendTimestamp: clock.now - 10,
 							avgLatency: 20,
 							data: {
-								"system:presence": {
-									"clientToSessionId": {
-										"client1": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": "sessionId-2",
-										},
-									},
-								},
-								"s:name:testStateWorkspace": {
-									"latest": {
-										"sessionId-1": {
-											"rev": 1,
-											"timestamp": 0,
-											"value": { x: 1, y: 1, z: 1 },
-										},
-									},
-								},
-								"n:name:testNotificationWorkspace": {
-									"testEvents": {
-										"sessionId-1": {
-											"rev": 0,
-											"timestamp": 0,
-											"value": { "name": "newId", "args": [77] },
-											"ignoreUnmonitored": true,
-										},
-									},
-								},
+								...systemWorkspaceUpdate,
+								...statesWorkspaceUpdate,
+								...notificationsWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
