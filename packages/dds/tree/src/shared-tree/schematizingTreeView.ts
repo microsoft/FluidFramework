@@ -46,26 +46,27 @@ import {
 	type TreeBranchEvents,
 	getOrCreateInnerNode,
 	getKernel,
-} from "../simple-tree/index.js";
-import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
-
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
-import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import {
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type RunTransactionParams,
+	type TransactionConstraint,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
-import type {
-	VoidTransactionCallbackStatus,
-	TransactionCallbackStatus,
-	TransactionResult,
-	TransactionResultExt,
-	RunTransactionParams,
-	TransactionConstraint,
-} from "./transactionTypes.js";
+import {
+	type Breakable,
+	breakingClass,
+	disposeSymbol,
+	type WithBreakable,
+} from "../util/index.js";
+
+import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -111,14 +112,15 @@ export class SchematizingSimpleTreeView<
 	private midUpgrade = false;
 
 	private readonly rootFieldSchema: FieldSchema;
+	public readonly breaker: Breakable;
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 		private readonly onDispose?: () => void,
 	) {
+		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}

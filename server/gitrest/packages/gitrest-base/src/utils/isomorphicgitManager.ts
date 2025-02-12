@@ -352,6 +352,7 @@ export class IsomorphicGitRepositoryManager extends RepositoryManagerBase {
 				ref: refId,
 			});
 		} catch (e: any) {
+			Lumberjack.error("Failed to delete ref", this.lumberjackBaseProperties, e);
 			throw new NetworkError(500, `Failed to delete ref. Error: ${e}`);
 		}
 	}
