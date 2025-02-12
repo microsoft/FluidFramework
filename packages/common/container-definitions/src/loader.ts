@@ -361,6 +361,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * Get the package info for the code details that were used to load the container.
 	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined if
 	 * the container package doesn't have a name.
+	 * @deprecated was not used and is no longer needed
 	 */
 	getContainerPackageInfo?(): IContainerPackageInfo | undefined;
 
