@@ -44,7 +44,7 @@ import {
 
 const sf = new SchemaFactory("TestApp");
 class TestAppSchema extends sf.object("TestAppSchema", {
-	title: sf.string,
+	title: SchemaFactory.string,
 	tasks: sf.array(
 		sf.object("Task", {
 			title: sf.string,
@@ -57,6 +57,12 @@ const factory = SharedTree.getFactory();
 
 const OPENAI_API_KEY = ""; // DON'T COMMIT THIS
 
+// This test suite is currently skipped because it requires an OpenAI API key and actual LLM API calls to run.
+// In the future, we will revisit this test suite to mock the OpenAI calls.
+
+// This test suite is meant to test the debug log events that are generated during an ai-collab execution
+// One stream of debug logs is created by making a single ai-collab() function call. Then, different segments
+// of the resulting list of debug events is analyzed to ensure that the events are in the expected order and contain the expected information.
 describe.skip("Debug Log Works as expected", () => {
 	let tree: ITree;
 	let view: TreeView<typeof TestAppSchema>;
@@ -114,8 +120,7 @@ describe.skip("Debug Log Works as expected", () => {
 								: "Failed to appply"
 						} tree edit: ${JSON.stringify(
 							(event as unknown as ApplyEditSuccess).edit,
-							// eslint-disable-next-line unicorn/no-null
-							null,
+							undefined,
 							2,
 						)}`,
 					);
@@ -171,7 +176,7 @@ describe.skip("Debug Log Works as expected", () => {
 		} satisfies CoreEventLoopCompleted);
 
 		assertDebugEventCoreInterfaceIsValid(debugEvent2);
-	}).timeout(20000);
+	});
 
 	it("Has generate planning prompt event flows and in the expected order with matching eventFlowTraceId", () => {
 		const expectedTraceId = (debugLog[0] as DebugEvent).traceId; // All debug events from the same execution should have the same trace id
@@ -226,7 +231,7 @@ describe.skip("Debug Log Works as expected", () => {
 			llmGeneratedPlan: expectedPlanningPromptCompleted?.llmGeneratedPlan,
 		} satisfies PlanningPromptCompleted);
 		assert.strictEqual(expectedPlanningPromptCompleted.llmGeneratedPlan !== undefined, true);
-	}).timeout(20000);
+	});
 
 	it("Has generate tree edit event flows and in the expected order with matching eventFlowTraceId", () => {
 		const expectedTraceId = (debugLog[0] as DebugEvent).traceId; // All debug events from the same execution should have the same trace id
@@ -348,7 +353,7 @@ describe.skip("Debug Log Works as expected", () => {
 				assert(applyEditEvent.sequentialErrorCount !== undefined);
 			}
 		}
-	}).timeout(20000);
+	});
 
 	it("Has final review event flows and in the expected order with matching eventFlowTraceId", () => {
 		const expectedTraceId = (debugLog[0] as DebugEvent).traceId; // All debug events from the same execution should have the same trace id
@@ -408,7 +413,7 @@ describe.skip("Debug Log Works as expected", () => {
 			didLlmAccomplishGoal: expectedFinalReviewCompleted.didLlmAccomplishGoal,
 		} satisfies FinalReviewCompleted);
 		assert(expectedFinalReviewCompleted.didLlmAccomplishGoal !== undefined);
-	}).timeout(20000);
+	});
 
 	it("Has a single matching trace id for all debug events from the same ai-collab execution", () => {
 		let expectedTraceId: string | undefined;
@@ -419,5 +424,5 @@ describe.skip("Debug Log Works as expected", () => {
 				assert.strictEqual(debugEvent.traceId, expectedTraceId);
 			}
 		}
-	}).timeout(20000);
+	});
 });

@@ -103,7 +103,7 @@ export interface DebugEvent {
     eventName: string;
     id: string;
     timestamp: string;
-    traceId?: string;
+    traceId: string;
 }
 
 // @alpha
