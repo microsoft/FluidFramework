@@ -14669,9 +14669,6 @@ importers:
       '@fluid-internal/test-driver-definitions':
         specifier: workspace:~
         version: link:../test-driver-definitions
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
