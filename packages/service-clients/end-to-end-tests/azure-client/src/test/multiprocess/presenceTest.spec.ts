@@ -48,8 +48,11 @@ describe(`Presence with AzureClient`, () => {
 
 	const afterCleanUp: (() => void)[] = [];
 
-	async function connectChildProcesses(childProcesses: ChildProcess[]): Promise<void> {
+	async function connectChildProcesses(
+		childProcesses: ChildProcess[],
+	): Promise<string | undefined> {
 		let containerIdPromise: Promise<string> | undefined;
+		let containerCreatorSessionId: string | undefined;
 		for (const [index, child] of childProcesses.entries()) {
 			const user = { id: `test-user-id-${index}`, name: `test-user-name-${index}` };
 			const message: MessageToChild = { command: "connect", user };
@@ -60,6 +63,7 @@ describe(`Presence with AzureClient`, () => {
 					(resolve, reject) => {
 						child.once("message", (msg: MessageFromChild) => {
 							if (msg.event === "ready" && msg.containerId) {
+								containerCreatorSessionId = msg.sessionId;
 								resolve(msg.containerId);
 							} else {
 								reject(new Error(`Non-ready message from child0: ${JSON.stringify(msg)}`));
@@ -78,6 +82,7 @@ describe(`Presence with AzureClient`, () => {
 
 			child.send(message);
 		}
+		return containerCreatorSessionId;
 	}
 
 	// After each test, kill each child process and call any cleanup functions that were registered
@@ -135,7 +140,7 @@ describe(`Presence with AzureClient`, () => {
 		);
 
 		// Act - connect all child processes
-		await connectChildProcesses(children);
+		const creatorSessionId = await connectChildProcesses(children);
 
 		// Verify - wait for all 'attendeeJoined' events
 		await Promise.race([attendeeJoinedPromise, childErrorPromise]);
@@ -147,7 +152,7 @@ describe(`Presence with AzureClient`, () => {
 				timeoutPromise(
 					(resolve) => {
 						child.on("message", (msg: MessageFromChild) => {
-							if (msg.event === "attendeeDisconnected") {
+							if (msg.event === "attendeeDisconnected" && msg.sessionId === creatorSessionId) {
 								resolve();
 							}
 						});
