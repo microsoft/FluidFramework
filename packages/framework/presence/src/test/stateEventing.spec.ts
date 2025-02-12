@@ -221,7 +221,7 @@ describe("ValueManager eventing", () => {
 	});
 
 	it("is consistent with attendee + latest value manager + latest map value manager + notifications updates", () => {
-		// VERIFY - consistent state in update eventing
+		// VERIFY - consistency in update eventing
 		latest.events.on("updated", () => {
 			assert(presence.getAttendee("client1") !== undefined);
 			const attendee = presence.getAttendee("client1");
