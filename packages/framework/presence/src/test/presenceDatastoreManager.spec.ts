@@ -182,36 +182,32 @@ describe("Presence", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
 
 			const systemWorkspaceUpdate = {
-				"system:presence": {
-					"clientToSessionId": {
-						"client1": {
-							"rev": 0,
-							"timestamp": 0,
-							"value": "sessionId-1",
-						},
+				"clientToSessionId": {
+					"client1": {
+						"rev": 0,
+						"timestamp": 0,
+						"value": "sessionId-1",
 					},
 				},
 			};
+
 			const statesWorkspaceUpdate = {
-				"s:name:testStateWorkspace": {
-					"latest": {
-						"sessionId-1": {
-							"rev": 1,
-							"timestamp": 0,
-							"value": {},
-						},
+				"latest": {
+					"sessionId-1": {
+						"rev": 1,
+						"timestamp": 0,
+						"value": {},
 					},
 				},
 			};
+
 			const notificationsWorkspaceUpdate = {
-				"n:name:testNotificationWorkspace": {
-					"testEvents": {
-						"sessionId-1": {
-							"rev": 0,
-							"timestamp": 0,
-							"value": {},
-							"ignoreUnmonitored": true,
-						},
+				"testEvents": {
+					"sessionId-1": {
+						"rev": 0,
+						"timestamp": 0,
+						"value": {},
+						"ignoreUnmonitored": true,
 					},
 				},
 			};
@@ -237,8 +233,8 @@ describe("Presence", () => {
 							sendTimestamp: clock.now - 10,
 							avgLatency: 20,
 							data: {
-								...systemWorkspaceUpdate,
-								...statesWorkspaceUpdate,
+								"system:presence": systemWorkspaceUpdate,
+								"n:name:testStateWorkspace": statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -264,8 +260,8 @@ describe("Presence", () => {
 							sendTimestamp: clock.now - 10,
 							avgLatency: 20,
 							data: {
-								...systemWorkspaceUpdate,
-								...notificationsWorkspaceUpdate,
+								"system:presence": systemWorkspaceUpdate,
+								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -294,7 +290,7 @@ describe("Presence", () => {
 							sendTimestamp: clock.now - 10,
 							avgLatency: 20,
 							data: {
-								...systemWorkspaceUpdate,
+								"system:presence": systemWorkspaceUpdate,
 								"u:name:testUnknownWorkspace": {
 									"latest": {
 										"sessionId-1": {
@@ -334,9 +330,9 @@ describe("Presence", () => {
 							sendTimestamp: clock.now - 10,
 							avgLatency: 20,
 							data: {
-								...systemWorkspaceUpdate,
-								...statesWorkspaceUpdate,
-								...notificationsWorkspaceUpdate,
+								"system:presence": systemWorkspaceUpdate,
+								"n:name:testStateWorkspace": statesWorkspaceUpdate,
+								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
