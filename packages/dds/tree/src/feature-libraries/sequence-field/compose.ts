@@ -194,6 +194,7 @@ function composeMarksIgnoreChild(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(newMark);
 
+		// XXX: Is it a problem that we can call this twice? (see handleNodeChanges)
 		moveEffects.composeBaseAttach(
 			baseMark.cellId,
 			getOutputCellId(newMark),

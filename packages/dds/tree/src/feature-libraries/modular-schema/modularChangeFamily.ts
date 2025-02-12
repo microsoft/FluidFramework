@@ -309,7 +309,6 @@ export class ModularChangeFamily
 		const pendingCompositions: PendingCompositions = {
 			nodeIdsToCompose: [],
 			affectedBaseFields: newTupleBTree(),
-			affectedNewFields: newTupleBTree(),
 		};
 
 		const composedNodeRenames = composeRootTables(change1, change2, pendingCompositions);
@@ -397,7 +396,7 @@ export class ModularChangeFamily
 	 * - discovering that two node changesets refer to the same node (`nodeIdsToCompose`)
 	 * - a previously composed field being invalidated by a cross field effect (`invalidatedFields`)
 	 * - a field which was copied directly from an input changeset being invalidated by a cross field effect
-	 * (`affectedBaseFields` and `affectedNewFields`)
+	 * (`affectedBaseFields`)
 	 *
 	 * Updating an element may invalidate further elements. This function runs until there is no more invalidation.
 	 */
@@ -414,8 +413,7 @@ export class ModularChangeFamily
 		while (
 			table.invalidatedFields.size > 0 ||
 			pending.nodeIdsToCompose.length > 0 ||
-			pending.affectedBaseFields.length > 0 ||
-			pending.affectedNewFields.length > 0
+			pending.affectedBaseFields.length > 0
 		) {
 			// Note that the call to `composeNodesById` can add entries to `crossFieldTable.nodeIdPairs`.
 			for (const [id1, id2] of pending.nodeIdsToCompose) {
@@ -440,17 +438,6 @@ export class ModularChangeFamily
 				table.baseChange,
 				true,
 				pending.affectedBaseFields,
-				composedFields,
-				composedNodes,
-				genId,
-				metadata,
-			);
-
-			this.composeAffectedFields(
-				table,
-				table.newChange,
-				false,
-				pending.affectedNewFields,
 				composedFields,
 				composedNodes,
 				genId,
@@ -505,6 +492,9 @@ export class ModularChangeFamily
 				// This function handles fields which were not part of the intersection of the two changesets but which need to be updated anyway.
 				// If we've already processed this field then either it is up to date
 				// or there is pending inval which will be handled in processInvalidatedCompositions.
+				// XXX: Ensure when processing a field we remove its entry from affectedBaseFields
+				// so we avoid rerunning the field unnecessarily.
+				table.invalidatedFields.add(fieldChange);
 				continue;
 			}
 
@@ -593,7 +583,7 @@ export class ModularChangeFamily
 	 * will be added to `crossFieldTable.pendingCompositions.nodeIdsToCompose`.
 	 *
 	 * Any fields which had cross-field information sent to them as part of this field composition
-	 * will be added to either `affectedBaseFields` or `affectedNewFields` in `crossFieldTable.pendingCompositions`.
+	 * will be added to `affectedBaseFields` in `crossFieldTable.pendingCompositions`.
 	 *
 	 * Any composed `FieldChange` which is invalidated by new cross-field information will be added to `crossFieldTable.invalidatedFields`.
 	 */
@@ -1077,9 +1067,10 @@ export class ModularChangeFamily
 				baseFieldChange !== undefined,
 				0x9c2 /* Cross field key registered for empty field */,
 			);
+
 			if (crossFieldTable.baseFieldToContext.has(baseFieldChange)) {
-				// This field has already been processed because there were changes to rebase.
-				// We add it to the set of invalidated fields to be processed during `rebaseInvalidatedFields`
+				// XXX: Ensure when processing a field we remove its entry from affectedBaseFields
+				// so we avoid rerunning the field unnecessarily.
 				crossFieldTable.invalidatedFields.add(baseFieldChange);
 				continue;
 			}
@@ -2306,11 +2297,6 @@ interface PendingCompositions {
 	 * The set of fields in the base changeset which have been affected by a cross field effect.
 	 */
 	readonly affectedBaseFields: BTree<FieldIdKey, true>;
-
-	/**
-	 * The set of fields in the new changeset which have been affected by a cross field effect.
-	 */
-	readonly affectedNewFields: BTree<FieldIdKey, true>;
 }
 
 interface ComposeFieldContext {
@@ -2355,10 +2341,10 @@ class InvertNodeManagerI implements InvertNodeManager {
 		// XXX: Need to record something even if there is no node change
 		// as we may need to create a detached node entry in the inverse changeset?
 		// Or should the changeset only have an entry if there is data associated with the detached change?
-		// XXX: Add inval
 		if (nodeChange !== undefined) {
 			// XXX: If there is no inverted attach for this entry we should put the node changes in a root entry
 			// XXX: Need to use attachId
+			// XXX: Add inval
 			setInCrossFieldMap(this.table.entries, detachId, count, {
 				nodeChange,
 			});
@@ -2406,7 +2392,14 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			count,
 		);
 
-		if (isAttachId(this.table.baseChange, baseAttachId, count)) {
+		// XXX: Handle the case where some of the keys in this range have an attach and some don't.
+		const attachFields = getFieldsForCrossFieldKey(
+			this.table.baseChange,
+			{ ...baseAttachId, target: CrossFieldTarget.Destination },
+			count,
+		);
+
+		if (attachFields.length > 0) {
 			// The base detach is part of a move in the base changeset.
 			setInCrossFieldMap(this.table.entries, baseAttachId, length, {
 				nodeChange,
@@ -2422,7 +2415,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			}
 
 			// XXX: Store fieldData
-
 			if (newDetachId !== undefined) {
 				renameNodes(
 					this.table.rebasedRootNodes,
@@ -2435,24 +2427,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			}
 		}
 
-		if (this.allowInval) {
-			const baseFieldIds = getFieldsForCrossFieldKey(
-				this.table.baseChange,
-				{
-					target: CrossFieldTarget.Destination,
-					revision: baseAttachId.revision,
-					localId: baseAttachId.localId,
-				},
-				length,
-			);
-
-			for (const baseFieldId of baseFieldIds) {
-				this.table.affectedBaseFields.set(
-					[baseFieldId.nodeId?.revision, baseFieldId.nodeId?.localId, baseFieldId.field],
-					true,
-				);
-			}
-		}
+		this.invalidateBaseFields(attachFields);
 
 		if (length < count) {
 			const remainingCount = count - length;
@@ -2472,13 +2447,21 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			);
 		}
 	}
+
+	private invalidateBaseFields(fields: FieldId[]): void {
+		if (this.allowInval) {
+			for (const fieldId of fields) {
+				this.table.affectedBaseFields.set(fieldIdKeyFromFieldId(fieldId), true);
+			}
+		}
+	}
 }
 
 class ComposeNodeManagerI implements ComposeNodeManager {
 	public constructor(
 		private readonly table: ComposeTable,
 		private readonly fieldId: FieldId,
-		private readonly allowInval: boolean = false,
+		private readonly allowInval: boolean = true,
 	) {}
 
 	public getNewChangesForBaseDetach(
@@ -2533,7 +2516,17 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		assert(length === count, "XXX");
 
 		if (newChanges !== undefined) {
-			if (isDetachId(this.table.baseChange, baseDetachId, count)) {
+			const detachFields = getFieldsForCrossFieldKey(
+				this.table.baseChange,
+				{
+					...baseDetachId,
+					target: CrossFieldTarget.Source,
+				},
+				count,
+			);
+
+			if (detachFields.length > 0) {
+				// XXX: Handle the case where some of the IDs in the range have a detach and some do not.
 				// The base attach is part of a move in the base changeset.
 				setInCrossFieldMap(this.table.entries, baseDetachId, count, {
 					nodeChange: newChanges,
@@ -2554,6 +2547,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 					);
 				}
 			}
+
+			this.invalidateBaseFields(detachFields);
 		}
 	}
 
@@ -2570,6 +2565,17 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			this.table.baseChange.rootNodes.newToOldId,
 			this.table.newChange.rootNodes.oldToNewId,
 		);
+	}
+
+	private invalidateBaseFields(fields: FieldId[]): void {
+		if (this.allowInval) {
+			for (const fieldId of fields) {
+				this.table.pendingCompositions.affectedBaseFields.set(
+					fieldIdKeyFromFieldId(fieldId),
+					true,
+				);
+			}
+		}
 	}
 }
 
@@ -3056,6 +3062,10 @@ function fieldIdFromFieldIdKey([revision, localId, field]: FieldIdKey): FieldId 
 	return { nodeId, field };
 }
 
+function fieldIdKeyFromFieldId(fieldId: FieldId): FieldIdKey {
+	return [fieldId.nodeId?.revision, fieldId.nodeId?.localId, fieldId.field];
+}
+
 function cloneNodeChangeset(nodeChangeset: NodeChangeset): NodeChangeset {
 	if (nodeChangeset.fieldChanges !== undefined) {
 		return { ...nodeChangeset, fieldChanges: new Map(nodeChangeset.fieldChanges) };
@@ -3342,40 +3352,4 @@ function replaceRootTableRevision(
 	);
 
 	return { oldToNewId, newToOldId, nodeChanges };
-}
-
-function isAttachId(
-	changeset: ModularChangeset,
-	attachId: ChangeAtomId,
-	count: number,
-): boolean {
-	return hasEditForId(changeset, attachId, CrossFieldTarget.Destination, count);
-}
-
-function isDetachId(
-	changeset: ModularChangeset,
-	detachId: ChangeAtomId,
-	count: number,
-): boolean {
-	return hasEditForId(changeset, detachId, CrossFieldTarget.Source, count);
-}
-
-// XXX: Should return a range
-function hasEditForId(
-	changeset: ModularChangeset,
-	id: ChangeAtomId,
-	target: CrossFieldTarget,
-	count: number,
-): boolean {
-	return (
-		getFieldsForCrossFieldKey(
-			changeset,
-			{
-				target,
-				revision: id.revision,
-				localId: id.localId,
-			},
-			count,
-		).length > 0
-	);
 }
