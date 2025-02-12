@@ -1,0 +1,81 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+# Creates an .npmrc file which uses the appropriate feeds from our ADO
+# org to download packages from the right locations, adds the necessary authentication to it, and sets configuration so
+# for the rest of the job execution all invocations of npm (EXCEPT installs through Npm@ tasks) use it.
+# The file is created in a "global" location that should not interfere with anything else.
+#
+# Npm@ tasks always override the user-level .npmrc file with one of their own, so they do not work with this
+# configuration. For that reason, using them to install dependencies should be avoided. Using them for other kinds
+# of npm invocations should be fine.
+
+parameters:
+# Location for the .npmrc file.
+# NOTE: Do not override the default value. It's a parameter just for reusability.
+- name: npmrcLocation
+  type: string
+  default: $(Agent.TempDirectory)/global-download-npmrc
+
+steps:
+# Force a parsing error so the pipeline run cannot even start if the conditions are incorrect for the use of this template.
+# Note this will always show up as a syntax error/warning (squiggly line) in IDEs that validate the structure of the
+# pipeline YAML file.
+- ${{ if ne(variables['System.TeamProject'], 'internal')}}:
+  - "Something tried to use the 'include-setup-npmrc-for-download.yml' template outside the 'internal' ADO project. This is not supported."
+
+- task: Bash@3
+  displayName: Ensure necessary values exist
+  inputs:
+    targetType: 'inline'
+    script: |
+      set -eu -o pipefail
+
+      if [ -z "$(ado-feeds-ff-download-only)" ]; then
+        echo "##vso[task.logissue type=error]Runtime variable 'ado-feeds-ff-download-only' must have a value. Make sure the 'ado-feeds' variable group is in scope."
+        exit 1
+      fi
+
+      if [ -z "$(ado-feeds-office)" ]; then
+        echo "##vso[task.logissue type=error]Runtime variable 'ado-feeds-office' must have a value. Make sure the 'ado-feeds' variable group is in scope."
+        exit 1
+      fi
+
+- task: Bash@3
+  displayName: Initialize .npmrc
+  inputs:
+    targetType: 'inline'
+    script: |
+      set -eu -o pipefail
+
+      mkdir -p ${{ parameters.npmrcLocation }}
+      cd ${{ parameters.npmrcLocation }}
+
+      echo "Generating .npmrc"
+
+      # Default feed that contains all our internal builds and mirrors external sources like npm.
+      echo "registry=$(ado-feeds-ff-download-only)" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+
+      # For some internal dependencies in the @microsoft scope
+      echo "@microsoft:registry=$(ado-feeds-office)" >> ./.npmrc
+      echo "always-auth=true" >> ./.npmrc
+      cat .npmrc
+
+- task: npmAuthenticate@0
+  displayName: 'Authenticate to internal ADO feeds'
+  retryCountOnTaskFailure: 1
+  inputs:
+    workingFile: ${{ parameters.npmrcLocation }}/.npmrc
+
+- task: Bash@3
+  displayName: Use the authenticated .npmrc file globally
+  inputs:
+    targetType: 'inline'
+    script: |
+      TARGET_FILE=${{ parameters.npmrcLocation }}/.npmrc
+
+      # Configure the copied file to be the default user-level .npmrc file, so all invocations of npm use it.
+      # Particularly relevant for the ones that occur when we install older version for compat tests.
+      echo "Setting NPM_CONFIG_USERCONFIG to '$TARGET_FILE'"
+      echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$TARGET_FILE"
