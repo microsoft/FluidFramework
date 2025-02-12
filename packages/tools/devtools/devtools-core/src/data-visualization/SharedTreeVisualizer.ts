@@ -5,6 +5,7 @@
 
 import { FieldKind } from "@fluidframework/tree";
 import type {
+	SimpleArrayNodeSchema,
 	SimpleMapNodeSchema,
 	SimpleNodeSchema,
 	SimpleObjectNodeSchema,
@@ -177,6 +178,24 @@ interface FieldSchemaProperties {
 }
 
 /**
+ * Extracts and stores allowed types & kind for each field ({@link SimpleFieldSchema}) of a node schema ({@link SimpleObjectNodeSchema}).
+ */
+function getFieldTooltipProperties(
+	schema: SimpleObjectNodeSchema,
+): Record<string, FieldSchemaProperties> {
+	const result: Record<string, FieldSchemaProperties> = {};
+
+	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
+		result[fieldKey] = {
+			allowedTypes: treeFieldSimpleSchema.allowedTypes,
+			isRequired: treeFieldSimpleSchema.kind === FieldKind.Required ? true : false,
+		};
+	}
+
+	return result;
+}
+
+/**
  * Processes and visualizes the fields of a verbose tree node.
  *
  * @param treeFields - The fields of the tree node to visualize. Can be either an array of VerboseTree (for array nodes) or a Record of field names to VerboseTree (for object/map nodes).
@@ -210,24 +229,6 @@ async function visualizeVerboseNodeFields(
 	}
 
 	return fields;
-}
-
-/**
- * Extracts and stores allowed types & kind for each field ({@link SimpleFieldSchema}) of a node schema ({@link SimpleObjectNodeSchema}).
- */
-function getFieldTooltipProperties(
-	schema: SimpleObjectNodeSchema,
-): Record<string, FieldSchemaProperties> {
-	const result: Record<string, FieldSchemaProperties> = {};
-
-	for (const [fieldKey, treeFieldSimpleSchema] of Object.entries(schema.fields)) {
-		result[fieldKey] = {
-			allowedTypes: treeFieldSimpleSchema.allowedTypes,
-			isRequired: treeFieldSimpleSchema.kind === FieldKind.Required ? true : false,
-		};
-	}
-
-	return result;
 }
 
 /**
@@ -265,7 +266,7 @@ async function visualizeMapNode(
 	tree: VerboseTreeNode,
 	nodeSchema: SimpleMapNodeSchema,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
-	isRequired: boolean | undefined,
+	{ allowedTypes, isRequired }: FieldSchemaProperties,
 	visualizeChildData: VisualizeChildData,
 ): Promise<VisualSharedTreeNode> {
 	const mapNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
@@ -279,13 +280,52 @@ async function visualizeMapNode(
 	return {
 		schema: {
 			schemaName: tree.type,
-			allowedTypes: concatenateTypes(nodeSchema.allowedTypes),
+			allowedTypes: concatenateTypes(allowedTypes ?? new Set()),
 			isRequired: isRequired?.toString(),
 		},
 		fields: await visualizeVerboseNodeFields(
 			tree.fields,
 			treeDefinitions,
 			mapNodeSchemaProperties,
+			visualizeChildData,
+		),
+		kind: VisualSharedTreeNodeKind.InternalNode,
+	};
+}
+
+/**
+ * Returns the schema & fields of the node with type {@link ArrayNodeStoredSchema}.
+ */
+async function visualizeArrayNode(
+	tree: VerboseTreeNode,
+	schema: SimpleArrayNodeSchema,
+	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
+	{ allowedTypes, isRequired }: FieldSchemaProperties,
+	visualizeChildData: VisualizeChildData,
+): Promise<VisualSharedTreeNode> {
+	const children = tree.fields;
+	if (!Array.isArray(children)) {
+		throw new TypeError("Invalid array");
+	}
+
+	const arrayNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
+	for (const [i] of children.entries()) {
+		arrayNodeSchemaProperties[i] = {
+			allowedTypes: schema.allowedTypes,
+			isRequired: undefined,
+		};
+	}
+
+	return {
+		schema: {
+			schemaName: tree.type,
+			allowedTypes: concatenateTypes(allowedTypes ?? new Set()),
+			isRequired: isRequired?.toString(),
+		},
+		fields: await visualizeVerboseNodeFields(
+			tree.fields,
+			treeDefinitions,
+			arrayNodeSchemaProperties,
 			visualizeChildData,
 		),
 		kind: VisualSharedTreeNodeKind.InternalNode,
@@ -331,48 +371,19 @@ async function visualizeNodeBySchema(
 				tree,
 				schema,
 				treeDefinitions,
-				isRequired,
+				{ allowedTypes, isRequired },
 				visualizeChildData,
 			);
 			return mapVisualized;
 		}
 		case NodeKind.Array: {
-			const fields: Record<number, VisualSharedTreeNode> = {};
-			const children = tree.fields;
-			if (!Array.isArray(children)) {
-				throw new TypeError("Invalid array");
-			}
-
-			const arrayNodeSchemaProperties: Record<string, FieldSchemaProperties> = {};
-			for (const [i, child] of children.entries()) {
-				const fieldSchema = {
-					allowedTypes: schema.allowedTypes,
-					isRequired: undefined,
-				};
-				arrayNodeSchemaProperties[i] = fieldSchema;
-
-				fields[i] = await visualizeSharedTreeBySchema(
-					child,
-					treeDefinitions,
-					{ allowedTypes: fieldSchema.allowedTypes, isRequired: undefined },
-					visualizeChildData,
-				);
-			}
-
-			return {
-				schema: {
-					schemaName: tree.type,
-					allowedTypes: concatenateTypes(schema.allowedTypes),
-					isRequired: isRequired?.toString(),
-				},
-				fields: await visualizeVerboseNodeFields(
-					tree.fields,
-					treeDefinitions,
-					arrayNodeSchemaProperties,
-					visualizeChildData,
-				),
-				kind: VisualSharedTreeNodeKind.InternalNode,
-			};
+			return visualizeArrayNode(
+				tree,
+				schema,
+				treeDefinitions,
+				{ allowedTypes, isRequired },
+				visualizeChildData,
+			);
 		}
 		default: {
 			throw new TypeError("Unrecognized schema type.");
