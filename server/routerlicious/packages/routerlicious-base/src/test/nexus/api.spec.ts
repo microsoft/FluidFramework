@@ -118,10 +118,10 @@ describe("Routerlicious", () => {
 						defaultProvider,
 						defaultStartupCheck,
 						defaultTenantManager,
-						undefined,
 						restTenantThrottlers,
-						defaultCollaborationSessionEventEmitter,
 						defaultStorage,
+						undefined,
+						defaultCollaborationSessionEventEmitter,
 					);
 					supertest = request(app);
 				});
@@ -176,10 +176,10 @@ describe("Routerlicious", () => {
 						defaultProvider,
 						defaultStartupCheck,
 						defaultTenantManager,
-						undefined,
 						restTenantThrottlers,
-						defaultCollaborationSessionEventEmitter,
 						defaultStorage,
+						undefined,
+						defaultCollaborationSessionEventEmitter,
 					);
 					supertest = request(app);
 				});
@@ -238,10 +238,10 @@ describe("Routerlicious", () => {
 						defaultProvider,
 						defaultStartupCheck,
 						defaultTenantManager,
-						undefined,
 						restTenantThrottlers,
-						defaultCollaborationSessionEventEmitter,
 						defaultStorage,
+						undefined,
+						defaultCollaborationSessionEventEmitter,
 					);
 					supertest = request(app);
 				});
@@ -283,10 +283,10 @@ describe("Routerlicious", () => {
 						defaultProvider,
 						defaultStartupCheck,
 						defaultTenantManager,
-						undefined,
 						restTenantThrottlers,
-						defaultCollaborationSessionEventEmitter,
 						defaultStorage,
+						undefined,
+						defaultCollaborationSessionEventEmitter,
 					);
 					supertest = request(app);
 				});
@@ -467,10 +467,10 @@ describe("Routerlicious", () => {
 							defaultProvider,
 							defaultStartupCheck,
 							defaultTenantManager,
-							undefined,
 							restTenantThrottlers,
-							undefined,
 							defaultStorage,
+							undefined,
+							undefined,
 						);
 						supertest = request(appWithoutEmitter);
 

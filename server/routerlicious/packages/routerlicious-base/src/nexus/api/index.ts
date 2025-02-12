@@ -14,9 +14,9 @@ import * as api from "./api";
 export function create(
 	config: Provider,
 	tenantManager: core.ITenantManager,
-	tenantThrottlers?: Map<string, core.IThrottler>,
+	tenantThrottlers: Map<string, core.IThrottler>,
+	storage: core.IDocumentStorage,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
-	storage?: core.IDocumentStorage,
 ): Router {
 	const router = Router();
 
@@ -24,8 +24,8 @@ export function create(
 		config,
 		tenantManager,
 		tenantThrottlers,
-		collaborationSessionEventEmitter,
 		storage,
+		collaborationSessionEventEmitter,
 	);
 
 	router.use(cors());

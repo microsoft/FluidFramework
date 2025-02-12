@@ -26,9 +26,9 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 export function create(
 	config: Provider,
 	tenantManager: core.ITenantManager,
-	tenantThrottlers?: Map<string, core.IThrottler>,
+	tenantThrottlers: Map<string, core.IThrottler>,
+	storage: core.IDocumentStorage,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
-	storage?: core.IDocumentStorage,
 ): Router {
 	const router: Router = Router();
 

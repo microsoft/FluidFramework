@@ -610,12 +610,14 @@ function setUpSignalListenerForRoomBroadcasting(
 	}
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
 		const { signalRoom, signalContent } = broadcastSignal;
+
 		// No-op if the room (collab session) that signal came in from is different
 		// than the current room. We reuse websockets so there could be multiple rooms
 		// that we are sending the signal to, and we don't want to do that.
 		if (signalRoom.documentId === room.documentId && signalRoom.tenantId === room.tenantId) {
 			try {
 				const runtimeMessage = createRuntimeMessage(signalContent);
+
 				try {
 					socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
 				} catch (error) {
@@ -799,6 +801,7 @@ export async function connectDocument(
 			"signal",
 			createRoomJoinMessage(result.connection.clientId, result.details),
 		);
+
 		connectionTrace.stampStage(ConnectDocumentStage.JoinSignalEmitted);
 
 		connectMetric.setProperties({

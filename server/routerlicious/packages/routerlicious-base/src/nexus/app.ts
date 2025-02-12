@@ -28,10 +28,10 @@ export function create(
 	config: Provider,
 	startupCheck: IReadinessCheck,
 	tenantManager: ITenantManager,
+	restThrottler: Map<string, IThrottler>,
+	storage: IDocumentStorage,
 	readinessCheck?: IReadinessCheck,
-	restThrottler?: Map<string, IThrottler>,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
-	storage?: IDocumentStorage,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -65,8 +65,8 @@ export function create(
 			config,
 			tenantManager,
 			restThrottler,
-			collaborationSessionEventEmitter,
 			storage,
+			collaborationSessionEventEmitter,
 		);
 		app.use(routes);
 	}
