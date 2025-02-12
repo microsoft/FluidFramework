@@ -368,9 +368,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	}
 
 	public didAttach(): void {
-		if (this.detachedRevision !== undefined) {
-			this.detachedRevision = undefined;
-		}
+		this.detachedRevision = undefined;
 	}
 
 	public reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
