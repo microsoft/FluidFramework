@@ -9,6 +9,7 @@ import { Command, Flags, Interfaces } from "@oclif/core";
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 
+import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
 import { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";
@@ -273,5 +274,33 @@ export abstract class BaseCommand<T extends typeof Command>
 			this.log(color(`VERBOSE: ${message}`));
 		}
 		return message;
+	}
+}
+
+export abstract class BaseCommandWithBuildProject<
+	T extends typeof Command,
+> extends BaseCommand<T> {
+	private _buildProject: IBuildProject | undefined;
+
+	/**
+	 * This method is deprecated and should only be called in BaseCommand instances.
+	 *
+	 * @deprecated This method should only be called in BaseCommand instances.
+	 */
+	public getContext(): never {
+		throw new Error("getContext method should only be called in BaseCommand instances");
+	}
+
+	/**
+	 * Gets the build project for the current command. The build project is loaded from the closest build root to searchPath.
+	 *
+	 * @param searchPath - The path to search for the build project.
+	 * @returns The build project.
+	 */
+	public getBuildProject(searchPath = process.cwd()): IBuildProject {
+		if (this._buildProject === undefined) {
+			this._buildProject = loadBuildProject(searchPath);
+		}
+		return this._buildProject;
 	}
 }

@@ -43,6 +43,7 @@ import { v4 as uuid } from "uuid";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
+import { isNonEmptyArray } from "./nonEmptyArrayType.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
 const defaultCodeDetails: IFluidCodeDetails = {
@@ -354,7 +355,7 @@ export class EventAndErrorTrackingLogger
 	}
 
 	send(event: ITelemetryBaseEvent): void {
-		if (this.expectedEvents.length > 0) {
+		if (isNonEmptyArray(this.expectedEvents)) {
 			const ee = this.expectedEvents[0].event;
 			if (ee.eventName === event.eventName) {
 				let matches = true;

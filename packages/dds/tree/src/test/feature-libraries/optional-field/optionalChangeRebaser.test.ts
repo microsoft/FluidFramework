@@ -94,7 +94,7 @@ const OptionalChange = {
 	},
 
 	buildChildChange(childChange: NodeId) {
-		return optionalFieldEditor.buildChildChange(0, childChange);
+		return optionalFieldEditor.buildChildChanges([[0, childChange]]);
 	},
 };
 

@@ -1,5 +1,12 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.20.0
+
+### Rename "Construct Signature" headings to "Constructor" for interface API items.
+
+Updates default transformation logic for `ApiInterface` items to generate headings that read "Constructor" rather than "Construct Signature" for constructor-like members.
+This better aligns with similar policies for members like interface methods which are labeled "Method" and not "Method Signature", despite the underlying TypeScript AST entry being a "method signature".
+
 ## 0.19.0
 
 ### Add the ability to filter out individual API items (and their descendants) from documentation generation

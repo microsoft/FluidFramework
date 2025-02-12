@@ -48,6 +48,7 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
 import type { Transactor } from "../../shared-tree-core/index.js";
+import { Breakable } from "../../util/index.js";
 
 const builder = new SchemaFactory("test");
 const root = builder.number;
@@ -157,6 +158,7 @@ describe("schematizeTree", () => {
 	function mockCheckout(InputSchema: ImplicitFieldSchema, isEmpty: boolean): ITreeCheckout {
 		const storedSchema = new TreeStoredSchemaRepository(toStoredSchema(InputSchema));
 		const checkout: ITreeCheckout = {
+			breaker: new Breakable("mockCheckout"),
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
