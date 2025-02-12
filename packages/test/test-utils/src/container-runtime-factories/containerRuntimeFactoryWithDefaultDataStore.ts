@@ -10,8 +10,6 @@ import type {
 	IContainerRuntimeWithResolveHandle_Deprecated,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-deprecated
-import type { RuntimeRequestHandler } from "@fluidframework/request-handler/internal";
 import type {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
@@ -41,16 +39,12 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 * The data store registry for containers produced.
 	 */
 	registryEntries: NamedFluidDataStoreRegistryEntries;
-	/**
-	 * Request handlers for containers produced.
-	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	requestHandlers?: RuntimeRequestHandler[];
+
 	/**
 	 * The runtime options passed to the IContainerRuntime when instantiating it
 	 */
 	runtimeOptions?: IContainerRuntimeOptions;
+
 	/**
 	 * Function that will initialize the entryPoint of the IContainerRuntime instances
 	 * created with this factory
@@ -70,7 +64,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 	protected readonly defaultFactory: IFluidDataStoreFactory;
 
 	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
-		const requestHandlers = props.requestHandlers ?? [];
 		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
 
 		const getDefaultObject = async (
@@ -92,7 +85,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 
 		super({
 			...props,
-			requestHandlers: [getDefaultObject, ...requestHandlers],
+			requestHandlers: [getDefaultObject],
 			provideEntryPoint,
 		});
 
