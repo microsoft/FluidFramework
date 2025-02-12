@@ -336,7 +336,7 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			await this.routeToHandlers(filePath, commandContext);
 		} catch (error: unknown) {
 			throw new Error(
-				`Error routing ${filePath} to handler: ${error}Stack: ${(error as Error).stack}`,
+				`Error routing ${filePath} to handler: ${error}\nStack: ${(error as Error).stack}`,
 			);
 		}
 
