@@ -47,39 +47,11 @@ describe(`Presence with AzureClient`, () => {
 
 	const afterCleanUp: (() => void)[] = [];
 
-	// After each test, kill each child process and call any cleanup functions that were registered
-	afterEach(async () => {
-		for (const child of children) {
-			child.kill();
-		}
-		children = [];
-		for (const cleanUp of afterCleanUp) {
-			cleanUp();
-		}
-		afterCleanUp.length = 0;
-	});
-
-	beforeEach("setup", async () => {
+	async function connectChildProcesses(childProcesses: ChildProcess[]): Promise<void> {
 		// Create inital child process
 		let containerId: string | undefined;
-		// Collect all child process error promises into this array
-		const childErrorPromises: Promise<void>[] = [];
-		// Fork child processes
-		for (let i = 0; i < numClients; i++) {
-			const child = fork("./lib/test/multiprocess/childClient.js", [
-				`child${i}` /* identifier passed to child process */,
-			]);
-			const errorPromise = new Promise<void>((_, reject) => {
-				child.on("error", (error) => {
-					reject(new Error(`Child${i} process errored: ${error.message}`));
-				});
-			});
-			childErrorPromises.push(errorPromise);
-			children.push(child);
-		}
-
 		// Send connect command to each child process
-		for (const [index, child] of children.entries()) {
+		for (const [index, child] of childProcesses.entries()) {
 			const user = { id: `test-user-id-${index}`, name: `test-user-name-${index}` };
 			const message: MessageToChild = { command: "connect", containerId, user };
 			/**
@@ -117,18 +89,49 @@ describe(`Presence with AzureClient`, () => {
 			// Add removal of child process listeners to after test cleanup
 			afterCleanUp.push(() => child.removeAllListeners());
 		}
+	}
+
+	// After each test, kill each child process and call any cleanup functions that were registered
+	afterEach(async () => {
+		for (const child of children) {
+			child.kill();
+		}
+		children = [];
+		for (const cleanUp of afterCleanUp) {
+			cleanUp();
+		}
+		afterCleanUp.length = 0;
+	});
+
+	beforeEach("setup", async () => {
+		// Collect all child process error promises into this array
+		const childErrorPromises: Promise<void>[] = [];
+		// Fork child processes
+		for (let i = 0; i < numClients; i++) {
+			const child = fork("./lib/test/multiprocess/childClient.js", [
+				`child${i}` /* identifier passed to child process */,
+			]);
+			const errorPromise = new Promise<void>((_, reject) => {
+				child.on("error", (error) => {
+					reject(new Error(`Child${i} process errored: ${error.message}`));
+				});
+			});
+			childErrorPromises.push(errorPromise);
+			children.push(child);
+		}
 		// This race will be used to reject any of the following tests on any child process errors
 		childErrorPromise = Promise.race(childErrorPromises);
 	});
 
 	it("announces 'attendeeJoined' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
-		let attendeesJoined = 0;
+		// Setup
 		const attendeeJoinedPromise = timeoutPromise(
 			(resolve) => {
+				let attendeesJoinedEvents = 0;
 				children[0].on("message", (msg: MessageFromChild) => {
 					if (msg.event === "attendeeJoined") {
-						attendeesJoined++;
-						if (attendeesJoined === numClients - 1) {
+						attendeesJoinedEvents++;
+						if (attendeesJoinedEvents === numClients - 1) {
 							resolve();
 						}
 					}
@@ -140,10 +143,13 @@ describe(`Presence with AzureClient`, () => {
 			},
 		);
 
+		// Act - connect all child processes
+		await connectChildProcesses(children);
+
+		// Verify - wait for all 'attendeeJoined' events
 		await Promise.race([attendeeJoinedPromise, childErrorPromise]);
 
-		children[0].send({ command: "disconnectSelf" });
-		// Wait for child processes to receive attendeeDisconnected event
+		// Setup
 		const waitForDisconnected = children
 			.filter((_, index) => index !== 0)
 			.map(async (child, index) =>
@@ -162,6 +168,10 @@ describe(`Presence with AzureClient`, () => {
 				),
 			);
 
+		// Act - disconnect first child process
+		children[0].send({ command: "disconnectSelf" });
+
+		// Verify - wait for all 'attendeeDisconnected' events
 		await Promise.race([Promise.all(waitForDisconnected), childErrorPromise]);
 	});
 });
