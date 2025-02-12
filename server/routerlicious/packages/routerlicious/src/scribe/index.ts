@@ -53,7 +53,6 @@ export async function scribeCreate(
 	const kafkaClientId = config.get("scribe:kafkaClientId");
 	const mongoExpireAfterSeconds = config.get("mongo:expireAfterSeconds") as number;
 	const enableWholeSummaryUpload = config.get("storage:enableWholeSummaryUpload") as boolean;
-	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const internalAlfredUrl = config.get("worker:alfredUrl");
 	const getDeltasViaAlfred = config.get("scribe:getDeltasViaAlfred") as boolean;
 	const maxLogtailLength = (config.get("scribe:maxLogtailLength") as number) ?? 2000;
@@ -72,7 +71,11 @@ export async function scribeCreate(
 
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
-	const tenantManager = new TenantManager(authEndpoint, internalHistorianUrl);
+	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
+	const enableHistorianApiV2: boolean = config.get("storage:enableHistorianApiV2") ?? false;
+	const tenantManager = new TenantManager(authEndpoint, internalHistorianUrl, {
+		enableHistorianApiV2,
+	});
 
 	const deltaManager = new DeltaManager(authEndpoint, internalAlfredUrl);
 	const factory = await getDbFactory(config);

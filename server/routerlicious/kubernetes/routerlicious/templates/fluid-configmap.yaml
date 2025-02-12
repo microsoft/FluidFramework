@@ -83,7 +83,8 @@ data:
         "storage": {
             "enableWholeSummaryUpload": {{ .Values.storage.enableWholeSummaryUpload }},
             "ephemeralDocumentTTLSec": {{ .Values.storage.ephemeralDocumentTTLSec }},
-            "storageUrl": "{{ .Values.storage.storageUrl }}"
+            "storageUrl": "{{ .Values.storage.storageUrl }}",
+            "enableHistorianV2Api": {{ .Values.storage.enableHistorianV2Api }}
         },
         "checkpoints": {
             "localCheckpointEnabled": {{ .Values.checkpoints.localCheckpointEnabled }},

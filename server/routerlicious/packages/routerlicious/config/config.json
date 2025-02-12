@@ -67,9 +67,10 @@
 		"endpoint": "zookeeper:2181"
 	},
 	"storage": {
-		"enableWholeSummaryUpload": false,
+		"enableWholeSummaryUpload": true,
 		"ephemeralDocumentTTLSec": 86400,
-		"storageUrl": "http://gitrest:3000"
+		"storageUrl": "http://gitrest:3000",
+		"enableHistorianV2Api": true
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,

@@ -95,6 +95,10 @@ export class Tenant implements core.ITenant {
 	) {}
 }
 
+export interface ITenantManagerOptions {
+	enableHistorianApiV2?: boolean;
+}
+
 /**
  * Manages a collection of tenants
  * @internal
@@ -103,6 +107,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 	constructor(
 		private readonly endpoint: string,
 		private readonly internalHistorianUrl: string,
+		private readonly options?: ITenantManagerOptions,
 	) {}
 
 	public async createTenant(tenantId?: string): Promise<core.ITenantConfig & { key: string }> {
@@ -198,6 +203,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 					const tenantManager = new TenantManager(
 						this.endpoint,
 						this.internalHistorianUrl,
+						this.options,
 					);
 					const newAccessToken = await getValidAccessToken(
 						currentAccessToken,
@@ -239,7 +245,13 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			refreshTokenIfNeeded,
 			logHttpMetrics,
 		);
-		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
+		const historian = new Historian(
+			baseUrl,
+			true,
+			false,
+			tenantRestWrapper,
+			this.options?.enableHistorianApiV2,
+		);
 		const gitManager = new GitManager(historian);
 
 		return gitManager;

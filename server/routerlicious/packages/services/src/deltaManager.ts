@@ -11,6 +11,10 @@ import { getGlobalTelemetryContext } from "@fluidframework/server-services-telem
 import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
+export interface IDeltaManagerOptions {
+	enableHistorianApiV2?: boolean;
+}
+
 /**
  * Manager to fetch deltas from Alfred using the internal URL.
  * @internal
@@ -20,8 +24,11 @@ export class DeltaManager implements IDeltaService {
 	constructor(
 		private readonly authEndpoint,
 		private readonly internalAlfredUrl: string,
+		options?: IDeltaManagerOptions,
 	) {
-		this.tenantManager = new TenantManager(this.authEndpoint, "");
+		this.tenantManager = new TenantManager(this.authEndpoint, "", {
+			enableHistorianApiV2: options?.enableHistorianApiV2,
+		});
 	}
 
 	public async getDeltas(
