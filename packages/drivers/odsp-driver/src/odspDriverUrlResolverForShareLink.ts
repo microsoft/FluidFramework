@@ -82,6 +82,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			resolvedUrl: IOdspResolvedUrl,
 			dataStorePath: string,
 		) => Promise<string | undefined>,
+		private readonly containerPackageInfo?: IContainerPackageInfo | undefined,
 	) {
 		this.logger = createOdspLogger(logger);
 		if (shareLinkFetcherProps) {
@@ -256,7 +257,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		odspResolvedUrl.context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
 		const containerPackageName: string | undefined =
-			getContainerPackageName(packageInfoSource) ??
+			getContainerPackageName(this.containerPackageInfo) ??
 			odspResolvedUrl.codeHint?.containerPackageName;
 
 		odspResolvedUrl.appName = this.appName;

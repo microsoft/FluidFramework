@@ -594,6 +594,7 @@ export function appendNavParam(
 		appName: odspResolvedUrl.appName,
 		containerPackageName,
 		fileVersion: odspResolvedUrl.fileVersion,
+		context: odspResolvedUrl.context,
 	});
 
 	return url.href;
