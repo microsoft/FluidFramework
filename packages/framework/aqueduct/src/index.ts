@@ -27,7 +27,6 @@ export {
 	DataObject,
 	type DataObjectTypes,
 	type IDataObjectProps,
-	type ITreeDataObject,
 	PureDataObject,
 	TreeDataObject,
 } from "./data-objects/index.js";

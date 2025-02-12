@@ -9,8 +9,8 @@
  */
 
 export type {
-	ITreeDataObject,
 	IReactTreeDataObject,
+	ITreeDataObject,
 	TreeViewProps,
 	SchemaIncompatibleProps,
 } from "./reactSharedTreeView.js";
