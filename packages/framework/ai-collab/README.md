@@ -181,8 +181,8 @@ Once the `aiCollab` function call is initiated, an LLM will immediately begin at
 - `/implicit-strategy`: The original implicit strategy, currently not used under the exported aiCollab API surface.
 
 ## Debug Events
-This package allows users to consume `DebugEvents` that can very helpful in understanding what's going on internally and debugging potential issues.
-Users can consume these events by providing a callback to the ai-collab function's `debugEventLogHandler` parameter:
+This package allows users to consume `DebugEvents` that can be very helpful in understanding what's going on internally and debugging potential issues.
+Users can consume these events by passing in a `debugEventLogHandler` when calling the `aiCollab()` function:
 ```ts
 aiCollab({
 	openAI: {
@@ -207,9 +207,9 @@ aiCollab({
 
 ```
 
-There are two types of debug events, `DebugEvent` which is the core interface and is used to describe ALL debug events and `EventFlowDebugEvent` which is for more specific debug events that mark a progress point in a specific logic flow within a single ai-collab function call.
+All debug events implement the `DebugEvent` interface. Some also implement `EventFlowDebugEvent`, which lets them mark a progress point in a specific logic flow within a given execution of `aiCollab()`.
 
-### There are a few primary event flow names:
+### Event flows
 1. `CORE_EVENT_LOOP`: All events with this `eventFlowName` are used to mark the start and end of the life cycle of a single execution of the ai-collab function.
 	- Events:
 		1. `CoreEventLoopStartedDebugEvent`: Events with the `eventName` `CORE_EVENT_LOOP_STARTED`. This event marks the start of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
@@ -236,8 +236,8 @@ There are two types of debug events, `DebugEvent` which is the core interface an
 
 ### using Trace Id's
 Debug Events in ai-collab have two different types of trace id's:
-- `traceId`: This field exists on all debug events and can be used to coorelate all debug events that happened in a single execution. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
-- `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to coorelate all events from a particular event flow together. Additionally all `LlmApiCallDebugEvent` events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
+- `traceId`: This field exists on all debug events and can be used to correlate all debug events that happened in a single execution of `aiCollab()`. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
+- `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all `LlmApiCallDebugEvent` events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
 
 
 ## Known Issues & limitations
