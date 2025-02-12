@@ -5,7 +5,6 @@
 
 /* eslint-disable prefer-object-has-own */
 
-import * as child_process from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
@@ -14,6 +13,7 @@ import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
+import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
@@ -357,10 +357,8 @@ async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
 	}
 
 	computedPrivatePackages = new Set();
-	const pathToGitRoot = child_process
-		.execSync("git rev-parse --show-cdup", { encoding: "utf8" })
-		.trim();
-	const repo = new Repository({ baseDir: pathToGitRoot }, "microsoft/FluidFramework");
+	const baseDir = findGitRootSync();
+	const repo = new Repository({ baseDir }, "microsoft/FluidFramework");
 	const packageJsons = await repo.getFiles("**/package.json");
 
 	for (const filePath of packageJsons) {
