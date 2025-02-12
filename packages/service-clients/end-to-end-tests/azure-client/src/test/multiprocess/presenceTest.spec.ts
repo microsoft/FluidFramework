@@ -43,51 +43,40 @@ describe(`Presence with AzureClient`, () => {
 	// This promise is used to capture all errors that occur in the child processes.
 	// It will never resolve successfully, it is only used to reject on child process error.
 	let childErrorPromise: Promise<void>;
+	// Timeout duration used when waiting for response messages from child processes.
 	const durationMs = 10_000;
 
 	const afterCleanUp: (() => void)[] = [];
 
 	async function connectChildProcesses(childProcesses: ChildProcess[]): Promise<void> {
-		// Create inital child process
-		let containerId: string | undefined;
-		// Send connect command to each child process
+		let containerIdPromise: Promise<string> | undefined;
 		for (const [index, child] of childProcesses.entries()) {
 			const user = { id: `test-user-id-${index}`, name: `test-user-name-${index}` };
-			const message: MessageToChild = { command: "connect", containerId, user };
-			/**
-			 * If this is the first child process (that creates the container), we must wait for the 'ready' message from the child process.
-			 * This is because subsequent child processes will need the containerId to connect to the same container.
-			 * We await this promise after sending the connect command to the first child process.
-			 */
-			const postWait =
-				index === 0
-					? timeoutPromise(
-							(resolve, reject) => {
-								child.once("message", (msg: MessageFromChild) => {
-									if (msg.event === "ready") {
-										containerId = msg.containerId;
-										resolve();
-									} else {
-										reject(new Error(`Non-ready message from child0: ${JSON.stringify(msg)}`));
-									}
-								});
-							},
-							{
-								durationMs,
-								errorMsg: "did not receive 'ready' from child process",
-							},
-						)
-					: undefined;
+			const message: MessageToChild = { command: "connect", user };
 
-			// Now send the connect command
-			child.send(message);
-
-			if (postWait) {
-				await postWait;
+			if (index === 0) {
+				// For the first child, create a promise that resolves with the containerId from the created container.
+				containerIdPromise = timeoutPromise<string>(
+					(resolve, reject) => {
+						child.once("message", (msg: MessageFromChild) => {
+							if (msg.event === "ready" && msg.containerId) {
+								resolve(msg.containerId);
+							} else {
+								reject(new Error(`Non-ready message from child0: ${JSON.stringify(msg)}`));
+							}
+						});
+					},
+					{
+						durationMs,
+						errorMsg: "did not receive 'ready' from child process",
+					},
+				);
+			} else if (containerIdPromise !== undefined) {
+				// For subsequent children, wait for containerId from the promise only when needed.
+				message.containerId = await containerIdPromise;
 			}
 
-			// Add removal of child process listeners to after test cleanup
-			afterCleanUp.push(() => child.removeAllListeners());
+			child.send(message);
 		}
 	}
 
@@ -118,6 +107,8 @@ describe(`Presence with AzureClient`, () => {
 			});
 			childErrorPromises.push(errorPromise);
 			children.push(child);
+			// Register cleanup for the child process listeners.
+			afterCleanUp.push(() => child.removeAllListeners());
 		}
 		// This race will be used to reject any of the following tests on any child process errors
 		childErrorPromise = Promise.race(childErrorPromises);
