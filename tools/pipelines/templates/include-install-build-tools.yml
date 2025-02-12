@@ -23,27 +23,27 @@ steps:
 
   # These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
   # with the next group of steps.
-  - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
-    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-      parameters:
-        buildDirectory: $(Build.SourcesDirectory)/build-tools
-        pnpmStorePath: ${{ parameters.pnpmStorePath }}
-        enableCache: false
+  # - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
+  #   - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+  #     parameters:
+  #       buildDirectory: $(Build.SourcesDirectory)/build-tools
+  #       pnpmStorePath: ${{ parameters.pnpmStorePath }}
+  #       enableCache: false
 
-    - task: Bash@3
-      name: InstallBuildTools
-      displayName: Install Fluid Build Tools (from repo)
-      inputs:
-        targetType: 'inline'
-        workingDirectory: $(Build.SourcesDirectory)/build-tools
-        script: |
-          set -eu -o pipefail
-          pnpm i --frozen-lockfile
-          pnpm build:compile
-          cd packages/build-cli
-          # Use npm link instead of pnpm link because it handles bins better
-          npm link
-          echo "which flub: $(which flub)"
+  #   - task: Bash@3
+  #     name: InstallBuildTools
+  #     displayName: Install Fluid Build Tools (from repo)
+  #     inputs:
+  #       targetType: 'inline'
+  #       workingDirectory: $(Build.SourcesDirectory)/build-tools
+  #       script: |
+  #         set -eu -o pipefail
+  #         pnpm i --frozen-lockfile
+  #         pnpm build:compile
+  #         cd packages/build-cli
+  #         # Use npm link instead of pnpm link because it handles bins better
+  #         npm link
+  #         echo "which flub: $(which flub)"
 
   # These steps install a version of build-tools from the npm registry. As noted above, these steps are mutually exclusive
   # with the previous group of steps.
@@ -53,7 +53,7 @@ steps:
       displayName: Install Fluid Build Tools (from npm)
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Build.SourcesDirectory)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           echo "${{ parameters.buildToolsVersionToInstall }}"
