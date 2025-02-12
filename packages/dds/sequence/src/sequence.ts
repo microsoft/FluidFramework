@@ -991,7 +991,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	private processMinSequenceNumberChanged(minSeq: number) {
 		let index = 0;
 		for (; index < this.messagesSinceMSNChange.length; index++) {
-			// This is causing issues when I change this pattern
+			// Non null is guarenteed by the bounds condition above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			if (this.messagesSinceMSNChange[index]!.sequenceNumber > minSeq) {
 				break;
