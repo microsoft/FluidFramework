@@ -124,7 +124,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 */
 	public constructor(
 		public readonly breaker: Breakable,
-		// TODO: replace with smaller interface
 		public readonly sharedObject: IChannelView & IFluidLoadable,
 		public readonly serializer: IFluidSerializer,
 		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,

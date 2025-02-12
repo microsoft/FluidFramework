@@ -336,8 +336,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 
 	public constructor(
 		breaker: Breakable,
-		// TODO: replace with smaller interface
-		sharedObject: IChannelView & IFluidLoadable & Pick<ISharedObject, "isAttached">,
+		sharedObject: IChannelView & IFluidLoadable,
 		serializer: IFluidSerializer,
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
