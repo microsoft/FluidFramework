@@ -50,6 +50,7 @@ export function create(
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =
 			store.get("enableResponseCloseLatencyMetric") ?? false;
+		const enableEventLoopLagMetric = store.get("enableEventLoopLagMetric") ?? false;
 		app.use(
 			jsonMorganLoggerMiddleware(
 				"gitrest",
@@ -75,6 +76,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableResponseCloseLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {
