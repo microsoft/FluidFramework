@@ -32,13 +32,12 @@ export function createOdspCreateContainerRequest(
 	fileName: string,
 	createShareLinkType?: ISharingLinkKind,
 	containerPackageInfo?: IContainerPackageInfo | undefined,
-	appName?: string,
 ): IRequest {
 	const shareLinkRequestParams = buildOdspShareLinkReqParams(createShareLinkType);
 	const createNewRequest: IRequest = {
 		url: `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(
 			filePath,
-		)}${containerPackageInfo ? `&containerPackageName=${encodeURIComponent(getContainerPackageName(containerPackageInfo) ?? "")}` : ""}${appName ? `&appName=${encodeURIComponent(appName)}` : ""}${shareLinkRequestParams ? `&${shareLinkRequestParams}` : ""}`,
+		)}${containerPackageInfo ? `&containerPackageName=${getContainerPackageName(containerPackageInfo)}` : ""}${shareLinkRequestParams ? `&${shareLinkRequestParams}` : ""}`,
 		headers: {
 			[DriverHeader.createNew]: {
 				fileName,
