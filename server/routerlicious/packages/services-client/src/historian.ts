@@ -77,7 +77,7 @@ export class Historian implements IHistorian {
 		private readonly historianApi: boolean,
 		disableCache: boolean,
 		restWrapper?: RestWrapper,
-		enableHistorianApiV2 = false,
+		historianApiVersion?: string,
 	) {
 		if (disableCache && this.historianApi) {
 			this.defaultQueryString.disableCache = disableCache;
@@ -86,8 +86,8 @@ export class Historian implements IHistorian {
 			this.cacheBust = disableCache;
 		}
 
-		if (enableHistorianApiV2) {
-			this.defaultQueryString["api-version"] = "2.0";
+		if (historianApiVersion) {
+			this.defaultQueryString["api-version"] = historianApiVersion;
 		}
 
 		this.restWrapper = restWrapper ?? new BasicRestWrapper(this.endpoint);

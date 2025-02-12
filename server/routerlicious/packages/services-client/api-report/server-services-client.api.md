@@ -180,7 +180,7 @@ export class Heap<T> {
 
 // @internal
 export class Historian implements IHistorian {
-    constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper, enableHistorianApiV2?: boolean);
+    constructor(endpoint: string, historianApi: boolean, disableCache: boolean, restWrapper?: RestWrapper, historianApiVersion?: string);
     // (undocumented)
     createBlob(blob: resources.ICreateBlobParams): Promise<resources.ICreateBlobResponse>;
     // (undocumented)

@@ -12,7 +12,7 @@ import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 export interface IDeltaManagerOptions {
-	enableHistorianApiV2?: boolean;
+	historianApiVersion?: string;
 }
 
 /**
@@ -27,7 +27,7 @@ export class DeltaManager implements IDeltaService {
 		options?: IDeltaManagerOptions,
 	) {
 		this.tenantManager = new TenantManager(this.authEndpoint, "", {
-			enableHistorianApiV2: options?.enableHistorianApiV2,
+			historianApiVersion: options?.historianApiVersion,
 		});
 	}
 

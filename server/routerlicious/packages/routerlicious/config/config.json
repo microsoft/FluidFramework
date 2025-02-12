@@ -70,7 +70,7 @@
 		"enableWholeSummaryUpload": true,
 		"ephemeralDocumentTTLSec": 86400,
 		"storageUrl": "http://gitrest:3000",
-		"enableHistorianV2Api": true
+		"historianApiVersion": "2.0"
 	},
 	"checkpoints": {
 		"localCheckpointEnabled": true,

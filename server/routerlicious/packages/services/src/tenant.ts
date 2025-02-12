@@ -96,7 +96,7 @@ export class Tenant implements core.ITenant {
 }
 
 export interface ITenantManagerOptions {
-	enableHistorianApiV2?: boolean;
+	historianApiVersion?: string;
 }
 
 /**
@@ -250,7 +250,7 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			true,
 			false,
 			tenantRestWrapper,
-			this.options?.enableHistorianApiV2,
+			this.options?.historianApiVersion,
 		);
 		const gitManager = new GitManager(historian);
 

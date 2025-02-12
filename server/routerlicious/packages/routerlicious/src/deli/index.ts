@@ -63,9 +63,9 @@ export async function deliCreate(
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-	const enableHistorianApiV2: boolean = config.get("storage:enableHistorianApiV2") ?? false;
+	const historianApiVersion: string = config.get("storage:historianApiVersion") ?? "1.0";
 	const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl, {
-		enableHistorianApiV2,
+		historianApiVersion,
 	});
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
 	// Database connection for global db if enabled

@@ -306,9 +306,9 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 		const authEndpoint = config.get("auth:endpoint");
-		const enableHistorianApiV2: boolean = config.get("storage:enableHistorianApiV2") ?? false;
+		const historianApiVersion: string = config.get("storage:historianApiVersion") ?? "1.0";
 		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl, {
-			enableHistorianApiV2,
+			historianApiVersion,
 		});
 
 		// Redis connection for throttling.

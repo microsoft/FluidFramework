@@ -69,7 +69,7 @@ nexus:
 storage:
   enableWholeSummaryUpload: false
   ephemeralDocumentTTLSec: 86400
-  enableHistorianV2Api: false
+  historianApiVersion: "1.0"
   storageUrl: storage_url
 
 checkpoints:

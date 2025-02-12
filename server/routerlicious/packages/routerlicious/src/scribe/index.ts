@@ -72,9 +72,9 @@ export async function scribeCreate(
 	// Generate tenant manager which abstracts access to the underlying storage provider
 	const authEndpoint = config.get("auth:endpoint");
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-	const enableHistorianApiV2: boolean = config.get("storage:enableHistorianApiV2") ?? false;
+	const historianApiVersion: string = config.get("storage:historianApiVersion") ?? "1.0";
 	const tenantManager = new TenantManager(authEndpoint, internalHistorianUrl, {
-		enableHistorianApiV2,
+		historianApiVersion,
 	});
 
 	const deltaManager = new DeltaManager(authEndpoint, internalAlfredUrl);
