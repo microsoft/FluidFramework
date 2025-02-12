@@ -141,6 +141,12 @@ export function create(
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 	);
+	// TEMP: use bodyParser for v2 routes until implementation changes are made
+	// or body parser is used more specifically
+	v2Router.use(json({ limit: requestSize }));
+	v2Router.use(urlencoded({ limit: requestSize, extended: false }));
+	v2Router.use(v2ApiRoutes.git.refs);
+	v2Router.use(v2ApiRoutes.repository.commits);
 	v2Router.use(v2ApiRoutes.summaries);
 
 	// Split v1 and v2 routes by version param
