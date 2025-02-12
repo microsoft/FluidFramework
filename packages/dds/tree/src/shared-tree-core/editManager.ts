@@ -31,7 +31,7 @@ import type {
 	SummarySessionBranch,
 } from "./editManagerFormat.js";
 import {
-	decrementSequenceId,
+	getUpperBoundOfPreviousSequenceId,
 	equalSequenceIds,
 	maxSequenceId,
 	minSequenceId,
@@ -362,7 +362,7 @@ export class EditManager<
 		if (minimumBranchBaseSequenceId !== undefined) {
 			// If that branch is behind the minimum sequence id, we only want to evict commits older than it,
 			// even if those commits are behind the minimum sequence id
-			const sequenceIdBeforeMinimumBranchBase = decrementSequenceId(
+			const sequenceIdBeforeMinimumBranchBase = getUpperBoundOfPreviousSequenceId(
 				minimumBranchBaseSequenceId,
 			);
 			trunkTailSequenceId = minSequenceId(
