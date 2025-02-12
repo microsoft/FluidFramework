@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IHeader } from "@fluidframework/gitresources";
+import * as git from "@fluidframework/gitresources";
 import {
 	IStorageNameRetriever,
 	IThrottler,
@@ -15,9 +15,14 @@ import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
-import { Constants } from "../../utils";
+import {
+	ICache,
+	IDenyList,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+} from "../../../services";
+import * as utils from "../../utils";
+import { Constants } from "../../../utils";
 
 export function create(
 	config: nconf.Provider,
@@ -42,12 +47,11 @@ export function create(
 		Constants.generalRestCallThrottleIdPrefix,
 	);
 
-	async function getHeader(
+	async function createTree(
 		tenantId: string,
 		authorization: string | undefined,
-		sha: string,
-		useCache: boolean,
-	): Promise<IHeader> {
+		params: git.ICreateTreeParams,
+	): Promise<git.ITree> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -58,16 +62,18 @@ export function create(
 			cache,
 			denyList,
 			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 		});
-		return service.getHeader(sha, useCache);
+		return service.createTree(params);
 	}
 
 	async function getTree(
 		tenantId: string,
 		authorization: string | undefined,
 		sha: string,
+		recursive: boolean,
 		useCache: boolean,
-	): Promise<any> {
+	): Promise<git.ITree> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -77,42 +83,40 @@ export function create(
 			documentManager,
 			cache,
 			denyList,
-			ephemeralDocumentTTLSec,
 		});
-		return service.getFullTree(sha, useCache);
+		return service.getTree(sha, recursive, useCache);
 	}
 
-	router.get(
-		"/repos/:ignored?/:tenantId/headers/:sha",
-		validateRequestParams("tenantId", "sha"),
+	router.post(
+		"/repos/:ignored?/:tenantId/git/trees",
+		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
-			const useCache = !("disableCache" in request.query);
-			const headerP = getHeader(
+			const treeP = createTree(
 				request.params.tenantId,
 				request.get("Authorization"),
-				request.params.sha,
-				useCache,
+				request.body,
 			);
-			utils.handleResponse(headerP, response, useCache);
+			utils.handleResponse(treeP, response, false, undefined, 201);
 		},
 	);
 
 	router.get(
-		"/repos/:ignored?/:tenantId/tree/:sha",
+		"/repos/:ignored?/:tenantId/git/trees/:sha",
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
-			const headerP = getTree(
+			const treeP = getTree(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.params.sha,
+				request.query.recursive === "1",
 				useCache,
 			);
-			utils.handleResponse(headerP, response, useCache);
+			utils.handleResponse(treeP, response, useCache);
 		},
 	);
 

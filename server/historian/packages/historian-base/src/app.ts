@@ -13,7 +13,7 @@ import {
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cors from "cors";
-import express from "express";
+import express, { Router } from "express";
 import * as nconf from "nconf";
 import { DriverVersionHeaderName } from "@fluidframework/server-services-client";
 import {
@@ -46,6 +46,7 @@ export function create(
 	const app: express.Express = express();
 
 	const requestSize = config.get("requestSizeLimit");
+	const v1Router = Router();
 	// initialize RestLess server translation
 	const restLessMiddleware: () => express.RequestHandler = () => {
 		const restLessServer = new RestLessServer({ requestSizeLimit: requestSize });
@@ -56,7 +57,8 @@ export function create(
 				.catch(next);
 		};
 	};
-	app.use(restLessMiddleware());
+	// Only use restLessMiddleware for v1 routes
+	v1Router.use(restLessMiddleware());
 
 	app.use(bindTelemetryContext());
 	const loggerFormat = config.get("logger:morganFormat");
@@ -95,13 +97,10 @@ export function create(
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
 
-	app.use(json({ limit: requestSize }));
-	app.use(urlencoded({ limit: requestSize, extended: false }));
-
 	app.use(compression());
 	app.use(cors());
 
-	const apiRoutes = routes.create(
+	const v1ApiRoutes = routes.createV1(
 		config,
 		tenantService,
 		storageNameRetriever,
@@ -114,15 +113,46 @@ export function create(
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 	);
-	app.use(apiRoutes.git.blobs);
-	app.use(apiRoutes.git.refs);
-	app.use(apiRoutes.git.tags);
-	app.use(apiRoutes.git.trees);
-	app.use(apiRoutes.git.commits);
-	app.use(apiRoutes.repository.commits);
-	app.use(apiRoutes.repository.contents);
-	app.use(apiRoutes.repository.headers);
-	app.use(apiRoutes.summaries);
+	// Only use bodyParser for v1 routes
+	// v2 routes do not use bodyParser to avoid loading the entire body into memory
+	v1Router.use(json({ limit: requestSize }));
+	v1Router.use(urlencoded({ limit: requestSize, extended: false }));
+	v1Router.use(v1ApiRoutes.git.blobs);
+	v1Router.use(v1ApiRoutes.git.refs);
+	v1Router.use(v1ApiRoutes.git.tags);
+	v1Router.use(v1ApiRoutes.git.trees);
+	v1Router.use(v1ApiRoutes.git.commits);
+	v1Router.use(v1ApiRoutes.repository.commits);
+	v1Router.use(v1ApiRoutes.repository.contents);
+	v1Router.use(v1ApiRoutes.repository.headers);
+	v1Router.use(v1ApiRoutes.summaries);
+
+	const v2Router = Router();
+	const v2ApiRoutes = routes.createV2(
+		config,
+		tenantService,
+		storageNameRetriever,
+		restTenantThrottlers,
+		restClusterThrottlers,
+		documentManager,
+		cache,
+		revokedTokenChecker,
+		denyList,
+		ephemeralDocumentTTLSec,
+		simplifiedCustomDataRetriever,
+	);
+	v2Router.use(v2ApiRoutes.summaries);
+
+	// Split v1 and v2 routes by version param
+	app.use((req, res, next) => {
+		// Any request without a valid version is sent to v1
+		const version = routes.getApiVersion(req);
+		if (version === routes.ApiVersion.V1) {
+			v1Router(req, res, next);
+		} else if (version === routes.ApiVersion.V2) {
+			v2Router(req, res, next);
+		}
+	});
 
 	const healthCheckEndpoints = createHealthCheckEndpoints(
 		"historian",

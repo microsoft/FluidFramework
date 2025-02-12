@@ -11,13 +11,22 @@ import {
 	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
-import { validateRequestParams } from "@fluidframework/server-services-shared";
+import {
+	containsPathTraversal,
+	validateRequestParams,
+} from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
-import { Constants } from "../../utils";
+import {
+	ICache,
+	IDenyList,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+} from "../../../services";
+import * as utils from "../../utils";
+import { Constants } from "../../../utils";
+import { NetworkError } from "@fluidframework/server-services-client";
 
 export function create(
 	config: nconf.Provider,
@@ -42,11 +51,15 @@ export function create(
 		Constants.generalRestCallThrottleIdPrefix,
 	);
 
-	async function createTree(
+	async function getCommits(
 		tenantId: string,
 		authorization: string | undefined,
-		params: git.ICreateTreeParams,
-	): Promise<git.ITree> {
+		sha: string,
+		count: number = 1,
+	): Promise<git.ICommitDetails[]> {
+		if (sha === undefined) {
+			throw new NetworkError(400, "Missing required parameter 'sha'");
+		}
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -57,61 +70,41 @@ export function create(
 			cache,
 			denyList,
 			ephemeralDocumentTTLSec,
-			simplifiedCustomDataRetriever,
 		});
-		return service.createTree(params);
+		return service.getCommits(sha, count);
 	}
 
-	async function getTree(
-		tenantId: string,
-		authorization: string | undefined,
-		sha: string,
-		recursive: boolean,
-		useCache: boolean,
-	): Promise<git.ITree> {
-		const service = await utils.createGitService({
-			config,
-			tenantId,
-			authorization,
-			tenantService,
-			storageNameRetriever,
-			documentManager,
-			cache,
-			denyList,
-		});
-		return service.getTree(sha, recursive, useCache);
-	}
-
-	router.post(
-		"/repos/:ignored?/:tenantId/git/trees",
+	router.get(
+		"/repos/:ignored?/:tenantId/commits",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
-			const treeP = createTree(
+			const sha = utils.queryParamToString(request.query.sha);
+			if (sha === undefined) {
+				utils.handleResponse(
+					Promise.reject(new NetworkError(400, "Missing required parameter 'sha'")),
+					response,
+					false,
+				);
+				return;
+			}
+			if (containsPathTraversal(sha)) {
+				utils.handleResponse(
+					Promise.reject(new NetworkError(400, "Invalid sha")),
+					response,
+					false,
+				);
+				return;
+			}
+			const commitsP = getCommits(
 				request.params.tenantId,
 				request.get("Authorization"),
-				request.body,
+				sha,
+				utils.queryParamToNumber(request.query.count),
 			);
-			utils.handleResponse(treeP, response, false, undefined, 201);
-		},
-	);
 
-	router.get(
-		"/repos/:ignored?/:tenantId/git/trees/:sha",
-		validateRequestParams("tenantId", "sha"),
-		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
-		(request, response, next) => {
-			const useCache = !("disableCache" in request.query);
-			const treeP = getTree(
-				request.params.tenantId,
-				request.get("Authorization"),
-				request.params.sha,
-				request.query.recursive === "1",
-				useCache,
-			);
-			utils.handleResponse(treeP, response, useCache);
+			utils.handleResponse(commitsP, response, false);
 		},
 	);
 
