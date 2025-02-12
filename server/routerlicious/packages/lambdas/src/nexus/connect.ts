@@ -601,7 +601,13 @@ function setUpSignalListenerForRoomBroadcasting(
 	socket: IWebSocket,
 	room: IRoom,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
-): () => void {
+): (() => void) | undefined {
+	if (
+		!collaborationSessionEventEmitter ||
+		collaborationSessionEventEmitter.listenerCount("broadcastSignal") > 0
+	) {
+		return;
+	}
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
 		const { signalRoom, signalContent } = broadcastSignal;
 
@@ -807,7 +813,7 @@ export async function connectDocument(
 			connectVersions,
 			details: messageClient,
 			dispose: (): void => {
-				disposeSignalListenerForRoomBroadcasting();
+				disposeSignalListenerForRoomBroadcasting?.();
 				disposeOrdererConnectionListener();
 			},
 		};

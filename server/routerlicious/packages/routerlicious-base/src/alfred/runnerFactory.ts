@@ -5,8 +5,6 @@
 
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
@@ -51,7 +49,6 @@ export class AlfredResources implements core.IResources {
 		public redisClientConnectionManagers: utils.IRedisClientConnectionManager[],
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
-		public collaborationSessionEvents?: TypedEventEmitter<ICollaborationSessionEvents>,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
@@ -395,9 +392,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		}
 		const startupCheck = new StartupCheck();
 
-		const collaborationSessionEventEmitter =
-			new TypedEventEmitter<ICollaborationSessionEvents>();
-
 		return new AlfredResources(
 			config,
 			producer,
@@ -418,7 +412,6 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			redisClientConnectionManagers,
 			tokenRevocationManager,
 			revokedTokenChecker,
-			collaborationSessionEventEmitter,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
@@ -450,7 +443,6 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			undefined,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,
