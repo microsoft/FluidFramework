@@ -8,9 +8,6 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
-	rules: {
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
-	},
 	overrides: [
 		{
 			// Rules only for test files
