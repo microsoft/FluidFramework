@@ -176,6 +176,7 @@ describe("Presence", () => {
 
 		/**
 		 * These tests are skipped as 'workspaceActivated' event is not yet implemented.
+		 * TODO: Re-enable tests once {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/29939} is completed
 		 */
 		describe.skip("receiving DatastoreUpdate", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
