@@ -82,24 +82,50 @@ export function create(
 	}
 
 	const requestSize = store.get("requestSizeLimit");
-	app.use(json({ limit: requestSize }));
-	app.use(urlencoded({ limit: requestSize, extended: false }));
 
 	app.use(cors());
 	const responseSizeLimitInMegabytes = store.get("responseSizeLimitInMegabytes") ?? 97; // 97MB
 	const responseSizeMiddleware = new ResponseSizeMiddleware(responseSizeLimitInMegabytes);
 	app.use(responseSizeMiddleware.validateResponseSize());
 
-	const apiRoutes = routes.create(store, fileSystemManagerFactories, repositoryManagerFactory);
-	app.use(apiRoutes.git.blobs);
-	app.use(apiRoutes.git.refs);
-	app.use(apiRoutes.git.repos);
-	app.use(apiRoutes.git.tags);
-	app.use(apiRoutes.git.trees);
-	app.use(apiRoutes.git.commits);
-	app.use(apiRoutes.repository.commits);
-	app.use(apiRoutes.repository.contents);
-	app.use(apiRoutes.summaries);
+	const v1Router = express.Router();
+	const v1ApiRoutes = routes.createV1(
+		store,
+		fileSystemManagerFactories,
+		repositoryManagerFactory,
+	);
+	// Only use bodyParser for v1 routes
+	// v2 routes do not use bodyParser to avoid loading the entire body into memory
+	v1Router.use(json({ limit: requestSize }));
+	v1Router.use(urlencoded({ limit: requestSize, extended: false }));
+	app.use(v1ApiRoutes.git.blobs);
+	app.use(v1ApiRoutes.git.refs);
+	app.use(v1ApiRoutes.git.repos);
+	app.use(v1ApiRoutes.git.tags);
+	app.use(v1ApiRoutes.git.trees);
+	app.use(v1ApiRoutes.git.commits);
+	app.use(v1ApiRoutes.repository.commits);
+	app.use(v1ApiRoutes.repository.contents);
+	app.use(v1ApiRoutes.summaries);
+
+	const v2Router = express.Router();
+	const v2ApiRoutes = routes.createV2(
+		store,
+		fileSystemManagerFactories,
+		repositoryManagerFactory,
+	);
+	v2Router.use(v2ApiRoutes.summaries);
+
+	// Split v1 and v2 routes by version param
+	app.use((req, res, next) => {
+		// Any request without a valid version is sent to v1
+		const version = routes.getApiVersion(req);
+		if (version === routes.ApiVersion.V1) {
+			v1Router(req, res, next);
+		} else if (version === routes.ApiVersion.V2) {
+			v2Router(req, res, next);
+		}
+	});
 
 	const healthCheckEndpoints = createHealthCheckEndpoints(
 		"gitrest",

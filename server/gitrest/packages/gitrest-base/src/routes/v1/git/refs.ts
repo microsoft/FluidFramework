@@ -19,7 +19,7 @@ import {
 	IFileSystemManagerFactories,
 	IRepositoryManagerFactory,
 	logAndThrowApiError,
-} from "../../utils";
+} from "../../../utils";
 
 /**
  * Simple method to convert from a path id to the git reference ID

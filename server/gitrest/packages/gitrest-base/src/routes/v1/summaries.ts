@@ -38,7 +38,7 @@ import {
 	retrieveLatestFullSummaryFromStorage,
 	isFilesystemError,
 	throwFileSystemErrorAsNetworkError,
-} from "../utils";
+} from "../../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
 	return `${repoManager.path}/${documentId}`;

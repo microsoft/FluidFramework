@@ -11,7 +11,7 @@ import {
 	getRepoManagerParamsFromRequest,
 	IRepositoryManagerFactory,
 	logAndThrowApiError,
-} from "../../utils";
+} from "../../../utils";
 
 export function create(
 	store: nconf.Provider,
