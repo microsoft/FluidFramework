@@ -602,7 +602,7 @@ function setUpSignalListenerForRoomBroadcasting(
 	room: IRoom,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
 	clientId: string,
-): (() => void) {
+): () => void {
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
 		const { signalRoom, signalContent } = broadcastSignal;
 
