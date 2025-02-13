@@ -235,6 +235,9 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
+		if (runtime.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
 		this.kernel = new SharedTreeKernel(
 			this.breaker,
 			this,
@@ -242,7 +245,7 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
 			() => this.deltaManager.lastSequenceNumber,
 			this.logger,
-			runtime,
+			runtime.idCompressor,
 			optionsParam,
 		);
 	}
@@ -341,25 +344,21 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		logger: ITelemetryLoggerExt | undefined,
-		runtime: IFluidDataStoreRuntime,
+		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
-		if (runtime.idCompressor === undefined) {
-			throw new UsageError("IdCompressor must be enabled to use SharedTree");
-		}
-
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest = buildConfiguredForest(options.forest, schema, runtime.idCompressor);
-		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const forest = buildConfiguredForest(options.forest, schema, idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
-			runtime.idCompressor,
+			idCompressor,
 			options,
 		);
-		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
+		const schemaSummarizer = new SchemaSummarizer(schema, options, {
 			getCurrentSeq: lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
@@ -370,8 +369,8 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
-			originatorId: runtime.idCompressor.localSessionId,
-			idCompressor: runtime.idCompressor,
+			originatorId: idCompressor.localSessionId,
+			idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -379,7 +378,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			fieldBatchCodec,
 			encoderContext,
 			options,
-			runtime.idCompressor,
+			idCompressor,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -387,7 +386,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			fieldBatchCodec,
 			options,
 			options.treeEncodeType,
-			runtime.idCompressor,
+			idCompressor,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -422,7 +421,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			changeFamily,
 			options,
 			codecVersions,
-			runtime,
+			idCompressor,
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
@@ -433,23 +432,18 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			changeEnricher,
 		);
 		const localBranch = this.getLocalBranch();
-		this.checkout = createTreeCheckout(
-			runtime.idCompressor,
-			this.mintRevisionTag,
-			revisionTagCodec,
-			{
-				branch: localBranch,
-				changeFamily,
-				schema,
-				forest,
-				fieldBatchCodec,
-				removedRoots,
-				chunkCompressionStrategy: options.treeEncodeType,
-				logger,
-				breaker: this.breaker,
-				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
-			},
-		);
+		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
+			branch: localBranch,
+			changeFamily,
+			schema,
+			forest,
+			fieldBatchCodec,
+			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
+			logger,
+			breaker: this.breaker,
+			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
+		});
 
 		this.checkout.transaction.events.on("started", () => {
 			if (sharedObject.isAttached()) {
