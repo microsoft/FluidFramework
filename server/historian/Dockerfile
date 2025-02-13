@@ -52,7 +52,12 @@ ENV PNPM_HOME="/pnpm"
 # Add package dependency's executables to the PATH. We also add global pnpm executables by including $PNPM_HOME,
 # though it's not leveraged currently.
 ENV PATH="$PNPM_HOME:$HISTORIAN_ROOT/node_modules/.bin:$PATH"
-RUN corepack enable
+
+# Note: `npm install -g corepack` was added as a temporary workaround in response to https://github.com/nodejs/corepack/issues/612.
+# The NPM registry recently rotated some keys but non-latest corepack versions (like those distributed with Node18)
+# have hardcoded references to the old keys and thus fail to install packages that were signed with the new keys.
+# So install the latest corepack globally to work around the problem.
+RUN npm install -g corepack && corepack enable
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files

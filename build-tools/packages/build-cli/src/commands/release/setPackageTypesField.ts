@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 import path from "node:path";
-import { Package, PackageJson, updatePackageJsonFile } from "@fluidframework/build-tools";
+import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
+import { Package, PackageJson } from "@fluidframework/build-tools";
 import { ExtractorConfig } from "@microsoft/api-extractor";
 import { Flags } from "@oclif/core";
 import { PackageCommand } from "../../BasePackageCommand.js";
