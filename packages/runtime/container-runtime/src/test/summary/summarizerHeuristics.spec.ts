@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
@@ -42,7 +42,7 @@ describe("Runtime", () => {
 				minIdleTime: 5000, // 5 sec (idle)
 				maxIdleTime: 5000, // 5 sec (idle)
 				nonRuntimeOpWeight: 0.1,
-				runtimeOpWeight: 1.0,
+				runtimeOpWeight: 1,
 			};
 			let summaryConfig: Readonly<ISummaryConfiguration>;
 			let data: ISummarizeHeuristicData;
@@ -237,7 +237,7 @@ describe("Runtime", () => {
 
 			it("Should summarize on close if enough outstanding ops", () => {
 				const minOpsForLastSummaryAttempt = 10;
-				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1.0 });
+				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1 });
 
 				data.numRuntimeOps = minOpsForLastSummaryAttempt;
 				assert.strictEqual(runner.shouldRunLastSummary(), true, "should run on close");
@@ -245,7 +245,7 @@ describe("Runtime", () => {
 
 			it("Should not summarize on close if insufficient outstanding ops", () => {
 				const minOpsForLastSummaryAttempt = 10;
-				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1.0 });
+				initialize({ minOpsForLastSummaryAttempt, runtimeOpWeight: 1 });
 
 				data.numRuntimeOps = minOpsForLastSummaryAttempt - 1;
 				assert.strictEqual(runner.shouldRunLastSummary(), false, "should not run on close");
@@ -297,8 +297,8 @@ describe("Runtime", () => {
 				const maxIdleTime = 1;
 				const maxTime = 1000;
 				const maxOps = 1000;
-				const runtimeOpWeight = 1.0;
-				const nonRuntimeOpWeight = 1.0;
+				const runtimeOpWeight = 1;
+				const nonRuntimeOpWeight = 1;
 				initialize({
 					minIdleTime,
 					maxIdleTime,

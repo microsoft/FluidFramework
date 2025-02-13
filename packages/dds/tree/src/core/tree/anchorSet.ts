@@ -22,20 +22,9 @@ import {
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import type {
-	DetachedPlaceUpPath,
-	DetachedRangeUpPath,
-	DetachedUpPath,
-	PlaceIndex,
-	PlaceUpPath,
-	Range,
-	RangeUpPath,
-	UpPath,
-} from "./pathTree.js";
+import type { DetachedUpPath, PlaceIndex, Range, UpPath } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
-import type { PathVisitor } from "./visitPath.js";
-import type { AnnouncedVisitor } from "./visitorUtils.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -138,10 +127,9 @@ export interface AnchorEvents {
 	 * rooted at `anchor` _may_ be about to change due to updates from the batch.
 	 *
 	 * @remarks
-	 * The event can optionally return a {@link PathVisitor} to traverse the subtree.
 	 * Called on every parent (transitively) when a change is occurring.
 	 */
-	subtreeChanging(anchor: AnchorNode): PathVisitor | void;
+	subtreeChanging(anchor: AnchorNode): void;
 
 	/**
 	 * Emitted in the middle of applying a batch of changes (i.e. during a delta a visit), if something in the subtree
@@ -690,7 +678,7 @@ export class AnchorSet implements AnchorLocator {
 	 * It is invalid to acquire a visitor without releasing the previous one,
 	 * and this method will throw an error if this is attempted.
 	 */
-	public acquireVisitor(): AnnouncedVisitor & DeltaVisitor {
+	public acquireVisitor(): DeltaVisitor {
 		assert(
 			this.activeVisitor === undefined,
 			0x767 /* Must release existing visitor before acquiring another */,
@@ -717,10 +705,6 @@ export class AnchorSet implements AnchorLocator {
 					}
 				}
 			},
-			// Lookup table for path visitors collected from {@link AnchorEvents.visitSubtreeChanging} emitted events.
-			// The key is the path of the node that the visitor is registered on. The code ensures that the path visitor visits only the appropriate subtrees
-			// by maintaining the mapping only during time between the {@link DeltaVisitor.enterNode} and {@link DeltaVisitor.exitNode} calls for a given anchorNode.
-			pathVisitors: new Map<PathNode, Set<PathVisitor>>(),
 			parentField: undefined as FieldKey | undefined,
 			parent: undefined as UpPath | undefined,
 
@@ -814,53 +798,7 @@ export class AnchorSet implements AnchorLocator {
 					() => {},
 				);
 			},
-			beforeAttach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a0 /* Must be in a field in order to attach */,
-				);
-				const destinationPath: PlaceUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					index: destination,
-				};
-				const sourcePath: DetachedRangeUpPath = brand({
-					field: source,
-					start: 0,
-					end: count,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeAttach(sourcePath, destinationPath);
-					}
-				}
-			},
-			afterAttach(source: FieldKey, destination: Range): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a1 /* Must be in a field in order to attach */,
-				);
-				const sourcePath: DetachedPlaceUpPath = brand({
-					field: source,
-					index: 0,
-				});
-				const destinationPath: RangeUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					...destination,
-				};
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.afterAttach(sourcePath, destinationPath);
-					}
-				}
-			},
-			attach(
-				source: FieldKey,
-				sourceDetachedNodeId: Delta.DetachedNodeId,
-				count: number,
-				destination: PlaceIndex,
-			): void {
+			attach(source: FieldKey, sourceDetachedNodeId: Delta.DetachedNodeId, count: number, destination: PlaceIndex): void {
 				this.notifyChildrenChanging();
 				this.attachEdit(source, sourceDetachedNodeId, count, destination);
 				this.notifyChildrenChanged();
@@ -889,52 +827,7 @@ export class AnchorSet implements AnchorLocator {
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
-			beforeDetach(source: Range, destination: FieldKey): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a3 /* Must be in a field in order to attach */,
-				);
-				const sourcePath: RangeUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					...source,
-				};
-				const destinationPath: DetachedPlaceUpPath = brand({
-					field: destination,
-					index: 0,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeDetach(sourcePath, destinationPath);
-					}
-				}
-			},
-			afterDetach(source: PlaceIndex, count: number, destination: FieldKey): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a4 /* Must be in a field in order to attach */,
-				);
-				const sourcePath: PlaceUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					index: source,
-				};
-				const destinationPath: DetachedRangeUpPath = brand({
-					field: destination,
-					start: 0,
-					end: count,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.afterDetach(sourcePath, destinationPath);
-					}
-				}
-			},
-			detach(
-				source: Range,
-				destination: FieldKey,
-				detachedNodeId: Delta.DetachedNodeId,
-			): void {
+			detach(source: Range, destination: FieldKey, detachedNodeId: Delta.DetachedNodeId): void {
 				this.notifyChildrenChanging();
 				this.detachEdit(source, destination, detachedNodeId);
 				this.notifyChildrenChanged();
@@ -961,64 +854,6 @@ export class AnchorSet implements AnchorLocator {
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
-			},
-			beforeReplace(newContent: FieldKey, oldContent: Range, destination: FieldKey): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a6 /* Must be in a field in order to replace */,
-				);
-				const oldContentPath: RangeUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					...oldContent,
-				};
-				const newNodesSourcePath: DetachedRangeUpPath = brand({
-					field: newContent,
-					start: 0,
-					end: oldContent.end - oldContent.start,
-				});
-				const oldNodesDestinationPath: DetachedPlaceUpPath = brand({
-					field: destination,
-					index: 0,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeReplace(
-							newNodesSourcePath,
-							oldContentPath,
-							oldNodesDestinationPath,
-						);
-					}
-				}
-			},
-			afterReplace(newContentSource: FieldKey, newContent: Range, oldContent: FieldKey): void {
-				assert(
-					this.parentField !== undefined,
-					0x7a7 /* Must be in a field in order to replace */,
-				);
-				const newContentPath: RangeUpPath = {
-					parent: this.parent,
-					field: this.parentField,
-					...newContent,
-				};
-				const newNodesSourcePath: DetachedPlaceUpPath = brand({
-					field: newContentSource,
-					index: 0,
-				});
-				const oldNodesDestinationPath: DetachedRangeUpPath = brand({
-					field: oldContent,
-					start: 0,
-					end: newContent.end - newContent.start,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.afterReplace(
-							newNodesSourcePath,
-							newContentPath,
-							oldNodesDestinationPath,
-						);
-					}
-				}
 			},
 			replace(
 				newContentSource: FieldKey,
@@ -1047,33 +882,9 @@ export class AnchorSet implements AnchorLocator {
 					count,
 				);
 			},
-			beforeDestroy(detachedField: FieldKey, count: number): void {
-				const range: DetachedRangeUpPath = brand({
-					field: detachedField,
-					start: 0,
-					end: count,
-				});
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						pathVisitor.beforeDestroy(range);
-					}
-				}
-			},
 			create(content: Delta.ProtoNodes, destination: FieldKey): void {
 				// Nothing to do since content can only be created in a new detached field,
 				// which cannot contain any anchors.
-			},
-			afterCreate(content: Delta.ProtoNodes, destination: FieldKey): void {
-				for (const visitors of this.pathVisitors.values()) {
-					for (const pathVisitor of visitors) {
-						const rangePath: DetachedRangeUpPath = brand({
-							field: destination,
-							start: 0,
-							end: content.length,
-						});
-						pathVisitor.afterCreate(rangePath);
-					}
-				}
 			},
 			enterNode(index: number): void {
 				assert(this.parentField !== undefined, 0x3ab /* Must be in a field to enter node */);
@@ -1085,19 +896,7 @@ export class AnchorSet implements AnchorLocator {
 				};
 				this.parentField = undefined;
 				this.maybeWithNode((p) => {
-					// avoid multiple pass side-effects
-					if (!this.pathVisitors.has(p)) {
-						const visitors: (PathVisitor | void)[] = p.events.emitAndCollect(
-							"subtreeChanging",
-							p,
-						);
-						if (visitors.length > 0) {
-							this.pathVisitors.set(
-								p,
-								new Set(visitors.filter((v): v is PathVisitor => v !== undefined)),
-							);
-						}
-					}
+					p.events.emit("subtreeChanging", p);
 				});
 				this.currentDepth++;
 			},
@@ -1112,8 +911,6 @@ export class AnchorSet implements AnchorLocator {
 						});
 						this.depthThresholdForSubtreeChanged--;
 					}
-					// Remove subtree path visitors added at this node if there are any
-					this.pathVisitors.delete(p);
 				});
 				const parent = this.parent;
 				this.parentField = parent.parentField;

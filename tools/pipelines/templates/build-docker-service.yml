@@ -26,6 +26,8 @@ parameters:
     type: boolean
     default: false
 
+  # The workspace directory in the container's base image.
+  # This directory is used to run tests from within the container.
   - name: containerBaseDir
     type: string
     default: /home/node/server
@@ -239,7 +241,7 @@ extends:
                   exit -1;
                 fi
 
-                if [ -f "lerna.json" ]; then
+                if [ -f ".releaseGroup" ]; then
                   grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
                 else
                   grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
@@ -289,6 +291,7 @@ extends:
         - ${{ if eq(parameters.setVersion, true) }}:
           - task: Bash@3
             displayName: Install dependencies
+            retryCountOnTaskFailure: 4
             inputs:
               targetType: 'inline'
               workingDirectory: ${{ parameters.buildDirectory }}

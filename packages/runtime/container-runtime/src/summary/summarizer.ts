@@ -21,20 +21,25 @@ import {
 
 import { ISummaryConfiguration } from "../containerRuntime.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import {
 	EnqueueSummarizeResult,
+	// eslint-disable-next-line import/no-deprecated
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizeHeuristicData,
 	ISummarizeResults,
 	ISummarizer,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerInternalsProvider,
+	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
 	ISummarizingWarning,
+	type IRetriableFailureError,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryGenerator.js";
@@ -77,6 +82,7 @@ export const createSummarizingWarning = (
  * It is created only by summarizing container (i.e. one with clientType === "summarizer")
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
 	public get ISummarizer(): this {
@@ -95,17 +101,21 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		 * Reference to runtime that created this object.
 		 * i.e. runtime with clientType === "summarizer"
 		 */
+		// eslint-disable-next-line import/no-deprecated
 		private readonly runtime: ISummarizerRuntime,
 		private readonly configurationGetter: () => ISummaryConfiguration,
 		/**
 		 * Represents an object that can generate summary.
 		 * In practical terms, it's same runtime (this.runtime) with clientType === "summarizer".
 		 */
+		// eslint-disable-next-line import/no-deprecated
 		private readonly internalsProvider: ISummarizerInternalsProvider,
 		handleContext: IFluidHandleContext,
 		public readonly summaryCollection: SummaryCollection,
 		private readonly runCoordinatorCreateFn: (
+			// eslint-disable-next-line import/no-deprecated
 			runtime: IConnectableRuntime,
+			// eslint-disable-next-line import/no-deprecated
 		) => Promise<ICancellableSummarizerController>,
 	) {
 		super();
@@ -155,12 +165,14 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	}
 
 	private async runCore(onBehalfOf: string): Promise<SummarizerStopReason> {
+		// eslint-disable-next-line import/no-deprecated
 		const runCoordinator: ICancellableSummarizerController = await this.runCoordinatorCreateFn(
 			this.runtime,
 		);
 
 		// Wait for either external signal to cancel, or loss of connectivity.
 		const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);
+		// eslint-disable-next-line no-void
 		void stopP.then((reason) => {
 			this.logger.sendTelemetryEvent({
 				eventName: "StoppingSummarizer",
@@ -239,6 +251,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	 */
 	private async start(
 		onBehalfOf: string,
+		// eslint-disable-next-line import/no-deprecated
 		runCoordinator: ICancellableSummarizerController,
 	): Promise<RunningSummarizer> {
 		if (this.runningSummarizer) {
@@ -358,12 +371,12 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 							runCoordinator.stop(stopReason);
 							this.close();
 						})
-						.catch((reason) => {
-							builder.fail("Failed to start summarizer", reason);
+						.catch((error: IRetriableFailureError) => {
+							builder.fail("Failed to start summarizer", error);
 						});
 				})
-				.catch((reason) => {
-					builder.fail("Failed to create cancellation token", reason);
+				.catch((error: IRetriableFailureError) => {
+					builder.fail("Failed to create cancellation token", error);
 				});
 
 			return builder.build();
@@ -390,21 +403,21 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 	private readonly forwardedEvents = new Map<string, () => void>();
 
 	private setupForwardedEvents(): void {
-		["summarize", "summarizeAllAttemptsFailed"].forEach((event) => {
-			const listener = (...args: any[]): void => {
+		for (const event of ["summarize", "summarizeAllAttemptsFailed"]) {
+			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);
 			};
 			// TODO: better typing here
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
 			this.runningSummarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
-		});
+		}
 	}
 
 	private cleanupForwardedEvents(): void {
-		this.forwardedEvents.forEach((listener, event) =>
-			this.runningSummarizer?.off(event, listener),
-		);
+		for (const [event, listener] of this.forwardedEvents.entries()) {
+			this.runningSummarizer?.off(event, listener);
+		}
 		this.forwardedEvents.clear();
 	}
 }

@@ -12,12 +12,12 @@ import { typeboxValidator } from "../../external-utilities/index.js";
 import {
 	getBranch,
 	type ISharedTree,
-	SharedTreeFactory,
 	type SharedTreeOptions,
 	Tree,
 } from "../../shared-tree/index.js";
 import { TestTreeProviderLite, treeTestFactory } from "../utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -37,7 +37,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		jsonValidator: typeboxValidator,
 		...options,
 	};
-	const factory = new SharedTreeFactory(factoryOptions);
+	const factory = new TreeFactory(factoryOptions);
 	const testTrees: {
 		only?: boolean;
 		skip?: boolean;
@@ -265,7 +265,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 						StringArray,
 					]) {}
 
-					const provider = new TestTreeProviderLite(1, new SharedTreeFactory(options), true);
+					const provider = new TestTreeProviderLite(1, new TreeFactory(options), true);
 					const tree = provider.trees[0];
 					const view = tree.viewWith(
 						new TreeViewConfiguration({

@@ -1,5 +1,18 @@
 # @fluidframework/container-definitions
 
+## 2.21.0
+
+### Minor Changes
+
+-   The IContainerContext.supportedFeatures property is now deprecated ([#22877](https://github.com/microsoft/FluidFramework/pull/22877)) [4c06412bb3](https://github.com/microsoft/FluidFramework/commit/4c06412bb365d680430f83b87c456d132d9da1be)
+
+    The `IContainerContext.supportedFeatures` optional property was used internally to communicate features supported by the
+    Loader layer to the Runtime layer. This has since been replaced with functionality that is not exposed externally.
+
+## 2.20.0
+
+Dependency updates only.
+
 ## 2.13.0
 
 Dependency updates only.

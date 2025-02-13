@@ -101,6 +101,7 @@ module.exports = {
 				"Dependencies on other fluid packages within the workspace should use tilde dependency ranges",
 			dependencies: [
 				"@fluid-tools/build-cli",
+				"@fluid-tools/build-infrastructure",
 				"@fluid-tools/version-tools",
 				"@fluidframework/build-tools",
 				"@fluidframework/bundle-size-tools",
