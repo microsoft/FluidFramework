@@ -100,6 +100,11 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
 	)[0];
 }
 
+/**
+ * Create a SharedObject wrapping a SharedTreeCore.
+ * @remarks
+ * TODO: See note on {@link TestSharedTreeCore}.
+ */
 export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>(
 	indexes: TIndexes,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
@@ -166,6 +171,18 @@ function createTreeInner(
  * SharedObject powered by `SharedTreeCore` with
  * - some protected methods exposed
  * - encoded data schema validation enabled
+ *
+ * @remarks
+ * This reimplements various functionality from `SharedTree`.
+ * TODO:
+ * Usage of this type should be adjusted by doing one of:
+ * 1. Use SharedTreeCore directly. (where possible).
+ * 2. Port functionality being tested to SharedTreeCore, then use SharedTreeCore directly.
+ * 3. Move the test (or split relevant portion of the test) to SharedTreeKernel tests, or SharedTree's tests, and use them and not TestSharedTreeCore.
+ * 4. Find a place to put integration tests, and move the test there, and have it use SharedTree instead of TestSharedTreeCore.
+ * 5. Use a generic wrapper for making SharedObjects from Kernels so there is no shared tree logic in the wrapper duplicating logic from SharedTree.
+ *
+ * Once the above is done for all users, this class should be removed.
  */
 export class TestSharedTreeCore extends SharedObject {
 	public readonly kernel: SharedTreeCore<DefaultEditBuilder, DefaultChangeset>;

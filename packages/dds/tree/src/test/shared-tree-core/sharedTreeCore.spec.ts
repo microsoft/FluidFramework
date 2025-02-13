@@ -132,39 +132,41 @@ describe("SharedTreeCore", () => {
 
 	it("evicts trunk commits behind the minimum sequence number", () => {
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = new TestSharedTreeCore(runtime);
+		const sharedObject = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
-		tree.connect({
+		sharedObject.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
+		const tree = sharedObject.kernel;
 
-		changeTree(tree.kernel);
+		changeTree(tree);
 		factory.processAllMessages(); // Minimum sequence number === 0
-		assert.equal(getTrunkLength(tree.kernel), 1);
-		changeTree(tree.kernel);
-		changeTree(tree.kernel);
+		assert.equal(getTrunkLength(tree), 1);
+		changeTree(tree);
+		changeTree(tree);
 		// One commit is at the minimum sequence number and is evicted
 		factory.processAllMessages(); // Minimum sequence number === 1
-		assert.equal(getTrunkLength(tree.kernel), 2);
-		changeTree(tree.kernel);
-		changeTree(tree.kernel);
-		changeTree(tree.kernel);
+		assert.equal(getTrunkLength(tree), 2);
+		changeTree(tree);
+		changeTree(tree);
+		changeTree(tree);
 		// Three commits are behind or at the minimum sequence number and are evicted
 		factory.processAllMessages(); // Minimum sequence number === 3
-		assert.equal(getTrunkLength(tree.kernel), 6 - 3);
+		assert.equal(getTrunkLength(tree), 6 - 3);
 	});
 
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
-		const tree = new TestSharedTreeCore(runtime);
+		const sharedObject = new TestSharedTreeCore(runtime);
 		const factory = new MockContainerRuntimeFactory();
 		factory.createContainerRuntime(runtime);
-		tree.connect({
+		sharedObject.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		});
+		const tree = sharedObject.kernel;
 
 		// The following scenario tests that branches are tracked across rebases and untracked after disposal.
 		// Calling `factory.processAllMessages()` will result in the minimum sequence number being set to the the
@@ -174,38 +176,38 @@ describe("SharedTreeCore", () => {
 		// Additionally, by policy, the base commit of the trunk is never evicted, which adds another "off by one".
 		//
 		//                                            trunk: [seqNum1, (branchBaseA, branchBaseB, ...), seqNum2, ...]
-		changeTree(tree.kernel);
+		changeTree(tree);
 		factory.processAllMessages(); //                     [1]
-		assert.equal(getTrunkLength(tree.kernel), 1);
+		assert.equal(getTrunkLength(tree), 1);
 		const branch1 = tree.getLocalBranch().fork();
 		const branch2 = tree.getLocalBranch().fork();
 		const branch3 = branch2.fork();
-		changeTree(tree.kernel);
+		changeTree(tree);
 		factory.processAllMessages(); //                     [x (b1, b2, b3), 2]
-		changeTree(tree.kernel);
+		changeTree(tree);
 		factory.processAllMessages(); //                     [x (b1, b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree.kernel), 3);
+		assert.equal(getTrunkLength(tree), 3);
 		branch1.dispose(); //                                [x (b2, b3), 2, 3]
-		assert.equal(getTrunkLength(tree.kernel), 3);
+		assert.equal(getTrunkLength(tree), 3);
 		branch2.dispose(); //                                [x (b3), 2, 3]
-		assert.equal(getTrunkLength(tree.kernel), 3);
+		assert.equal(getTrunkLength(tree), 3);
 		branch3.dispose(); //                                [x, x, 3]
-		assert.equal(getTrunkLength(tree.kernel), 1);
+		assert.equal(getTrunkLength(tree), 1);
 		const branch4 = tree.getLocalBranch().fork(); //     [x, x, 3 (b4)]
-		changeTree(tree.kernel);
-		changeTree(tree.kernel);
+		changeTree(tree);
+		changeTree(tree);
 		factory.processAllMessages(); //                     [x, x, x (b4), 4, 5]
-		assert.equal(getTrunkLength(tree.kernel), 3);
+		assert.equal(getTrunkLength(tree), 3);
 		const branch5 = tree.getLocalBranch().fork(); //     [x, x, x (b4), 4, 5 (b5)]
 		branch4.rebaseOnto(branch5); //                      [x, x, x, 4, 5 (b4, b5)]
 		branch4.dispose(); //                                [x, x, x, 4, 5 (b5)]
-		assert.equal(getTrunkLength(tree.kernel), 2);
-		changeTree(tree.kernel);
+		assert.equal(getTrunkLength(tree), 2);
+		changeTree(tree);
 		factory.processAllMessages(); //                     [x, x, x, x, 5 (b5), 6]
-		assert.equal(getTrunkLength(tree.kernel), 2);
-		changeTree(tree.kernel);
+		assert.equal(getTrunkLength(tree), 2);
+		changeTree(tree);
 		branch5.dispose(); //                                [x, x, x, x, x, x, 7]
-		assert.equal(getTrunkLength(tree.kernel), 1);
+		assert.equal(getTrunkLength(tree), 1);
 	});
 
 	/**
