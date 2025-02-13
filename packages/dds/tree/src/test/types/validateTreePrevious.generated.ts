@@ -308,6 +308,15 @@ declare type current_as_old_for_Interface_ITreeViewConfiguration = requireAssign
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_Listenable": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_Listenable = requireAssignableTo<TypeOnly<current.Listenable<never>>, TypeOnly<old.Listenable<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_MakeNominal": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_MakeNominal = requireAssignableTo<TypeOnly<current.MakeNominal>, TypeOnly<old.MakeNominal>>
@@ -572,24 +581,6 @@ declare type old_as_current_for_TypeAlias_LazyItem = requireAssignableTo<TypeOnl
  * "TypeAlias_LazyItem": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_LazyItem = requireAssignableTo<TypeOnly<current.LazyItem>, TypeOnly<old.LazyItem>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_Listenable": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_Listenable = requireAssignableTo<TypeOnly<old.Listenable<never>>, TypeOnly<current.Listenable<never>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_Listenable": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_Listenable = requireAssignableTo<TypeOnly<current.Listenable<never>>, TypeOnly<old.Listenable<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

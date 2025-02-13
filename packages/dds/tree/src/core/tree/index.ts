@@ -55,8 +55,6 @@ export {
 	type PlaceUpPath,
 	type PlaceIndex,
 	type NodeIndex,
-	type DetachedPlaceUpPath,
-	type DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
 	getDetachedFieldContainingPath,

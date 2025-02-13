@@ -13,13 +13,9 @@ import {
 	type DeltaMark,
 	type DeltaVisitor,
 	type DetachedField,
-	type DetachedPlaceUpPath,
-	type DetachedRangeUpPath,
 	type FieldKey,
 	type FieldUpPath,
 	type JsonableTree,
-	type PlaceUpPath,
-	type RangeUpPath,
 	type UpPath,
 	anchorSlot,
 	clonePath,
@@ -616,11 +612,4 @@ function makeFieldDelta(changes: DeltaFieldChanges, path: FieldUpPath): DeltaFie
 	}
 
 	return makeDelta({ count: 1, fields }, path.parent);
-}
-
-function rangeToString(range: RangeUpPath | DetachedRangeUpPath): string {
-	return `${range.field}[${range.start}, ${range.end}]`;
-}
-function placeToString(place: PlaceUpPath | DetachedPlaceUpPath): string {
-	return `${place.field}[${place.index}]`;
 }

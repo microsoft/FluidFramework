@@ -16,8 +16,6 @@ export {
 	type PlaceUpPath,
 	type PlaceIndex,
 	type NodeIndex,
-	type DetachedPlaceUpPath,
-	type DetachedRangeUpPath,
 	type FieldUpPath,
 	type Anchor,
 	type RootField,
