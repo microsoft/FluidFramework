@@ -4,15 +4,33 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces/internal";
+import type {
+	ErasedType,
+	IFluidHandle,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	SharedObject,
+	type IFluidSerializer,
+	type ISharedObject,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
+	ITelemetryContext,
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
@@ -82,8 +100,13 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
-import { breakingClass, fail, throwIfBroken } from "../util/index.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	Breakable,
+	breakingClass,
+	fail,
+	throwIfBroken,
+	type WithBreakable,
+} from "../util/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -190,19 +213,19 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 }
 
 /**
- * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
- *
- * TODO: detail compatibility requirements.
+ * Shared object wrapping {@link SharedTreeKernel}.
  */
-@breakingClass
-export class SharedTree
-	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
-	implements ISharedTree
-{
-	public readonly checkout: TreeCheckout;
+export class SharedTree extends SharedObject implements ISharedTree, WithBreakable {
+	public readonly breaker: Breakable = new Breakable("Shared Tree");
+
+	public get checkout(): TreeCheckout {
+		return this.kernel.checkout;
+	}
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
 	}
+
+	private readonly kernel: SharedTreeKernel;
 
 	public constructor(
 		id: string,
@@ -210,6 +233,116 @@ export class SharedTree
 		attributes: IChannelAttributes,
 		optionsParam: SharedTreeOptionsInternal,
 		telemetryContextPrefix: string = "fluid_sharedTree_",
+	) {
+		super(id, runtime, attributes, telemetryContextPrefix);
+		this.kernel = new SharedTreeKernel(
+			this.breaker,
+			this,
+			this.serializer,
+			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
+			() => this.deltaManager.lastSequenceNumber,
+			this.logger,
+			runtime,
+			optionsParam,
+		);
+	}
+
+	public get editor(): SharedTreeEditBuilder {
+		return this.kernel.getEditor();
+	}
+
+	public summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+	): ISummaryTreeWithStats {
+		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+	}
+
+	protected processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): void {
+		this.kernel.processCore(message, local, localOpMetadata);
+	}
+
+	protected onDisconnect(): void {}
+
+	public exportVerbose(): VerboseTree | undefined {
+		return this.kernel.exportVerbose();
+	}
+
+	public exportSimpleSchema(): SimpleTreeSchema {
+		return this.kernel.exportSimpleSchema();
+	}
+
+	public contentSnapshot(): SharedTreeContentSnapshot {
+		return this.kernel.contentSnapshot();
+	}
+
+	// For the new TreeViewAlpha API
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+
+	// For the old TreeView API
+	public viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<TRoot>;
+
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
+		return this.kernel.viewWith(config);
+	}
+
+	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+		await this.kernel.loadCore(services);
+	}
+
+	protected override didAttach(): void {
+		this.kernel.didAttach();
+	}
+
+	protected override applyStashedOp(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+		>
+	): void {
+		this.kernel.applyStashedOp(...args);
+	}
+
+	protected override reSubmitCore(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["reSubmitCore"]
+		>
+	): void {
+		this.kernel.reSubmitCore(...args);
+	}
+}
+
+/**
+ * SharedTreeCore, configured with a good set of indexes and field kinds which will maintain compatibility over time.
+ *
+ * TODO: detail compatibility requirements.
+ */
+@breakingClass
+class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
+	public readonly checkout: TreeCheckout;
+	public get storedSchema(): TreeStoredSchemaRepository {
+		return this.checkout.storedSchema;
+	}
+
+	public constructor(
+		breaker: Breakable,
+		sharedObject: IChannelView & IFluidLoadable,
+		serializer: IFluidSerializer,
+		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
+		lastSequenceNumber: () => number | undefined,
+		logger: ITelemetryLoggerExt | undefined,
+		runtime: IFluidDataStoreRuntime,
+		optionsParam: SharedTreeOptionsInternal,
 	) {
 		if (runtime.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
@@ -227,7 +360,7 @@ export class SharedTree
 			options,
 		);
 		const schemaSummarizer = new SchemaSummarizer(runtime, schema, options, {
-			getCurrentSeq: () => this.deltaManager.lastSequenceNumber,
+			getCurrentSeq: lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
@@ -280,14 +413,16 @@ export class SharedTree
 		);
 		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
+			breaker,
+			sharedObject,
+			serializer,
+			submitLocalMessage,
+			logger,
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
 			codecVersions,
-			id,
 			runtime,
-			attributes,
-			telemetryContextPrefix,
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
@@ -310,32 +445,32 @@ export class SharedTree
 				fieldBatchCodec,
 				removedRoots,
 				chunkCompressionStrategy: options.treeEncodeType,
-				logger: this.logger,
+				logger,
 				breaker: this.breaker,
 				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 			},
 		);
 
 		this.checkout.transaction.events.on("started", () => {
-			if (this.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.startTransaction();
 			}
 		});
 		this.checkout.transaction.events.on("aborting", () => {
-			if (this.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.abortTransaction();
 			}
 		});
 		this.checkout.transaction.events.on("committing", () => {
-			if (this.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.commitTransaction();
 			}
 		});
 		this.checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && this.isAttached()) {
+			if (event.type === "append" && sharedObject.isAttached()) {
 				if (this.checkout.transaction.isInProgress()) {
 					this.commitEnricher.addTransactionCommits(event.newCommits);
 				}
@@ -404,12 +539,12 @@ export class SharedTree
 			TreeView<ReadSchema<TRoot>>;
 	}
 
-	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+	public override async loadCore(services: IChannelStorageService): Promise<void> {
 		await super.loadCore(services);
 		this.checkout.load();
 	}
 
-	protected override didAttach(): void {
+	public override didAttach(): void {
 		if (this.checkout.transaction.isInProgress()) {
 			// Attaching during a transaction is not currently supported.
 			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
@@ -420,7 +555,7 @@ export class SharedTree
 		super.didAttach();
 	}
 
-	protected override applyStashedOp(
+	public override applyStashedOp(
 		...args: Parameters<
 			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
 		>

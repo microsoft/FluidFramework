@@ -5,7 +5,6 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
-	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
@@ -17,10 +16,7 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import {
-	type IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -38,7 +34,7 @@ import {
 import {
 	type JsonCompatibleReadOnly,
 	brand,
-	Breakable,
+	type Breakable,
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
@@ -56,6 +52,8 @@ import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IChannelView } from "../shared-tree/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -74,11 +72,8 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
  */
 @breakingClass
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
-	extends SharedObject
 	implements WithBreakable
 {
-	public readonly breaker: Breakable = new Breakable("Shared Tree");
-
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
 	/**
@@ -87,14 +82,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
-
-	/**
-	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
-	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
-	 */
-	public get editor(): TEditor {
-		return this.getLocalBranch().editor;
-	}
 
 	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
@@ -115,9 +102,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	private readonly idCompressor: IIdCompressor;
 
 	private readonly resubmitMachine: ResubmitMachine<TChange>;
-	protected readonly commitEnricher: BranchCommitEnricher<TChange>;
+	public readonly commitEnricher: BranchCommitEnricher<TChange>;
 
-	protected readonly mintRevisionTag: () => RevisionTag;
+	public readonly mintRevisionTag: () => RevisionTag;
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
@@ -125,35 +112,34 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
-	 * @param id - The id of the shared object
 	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
-	 * @param attributes - Attributes of the shared object
-	 * @param telemetryContextPrefix - The property prefix for telemetry pertaining to this object. See {@link ITelemetryContext}
+	 * @param editor - Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
 	public constructor(
+		public readonly breaker: Breakable,
+		public readonly sharedObject: IChannelView & IFluidLoadable,
+		public readonly serializer: IFluidSerializer,
+		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
+		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
-		// Base class arguments
-		id: string,
 		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		telemetryContextPrefix: string,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
 		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
+		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
 	) {
-		super(id, runtime, attributes, telemetryContextPrefix);
-
 		this.schemaAndPolicy = {
 			schema,
 			policy: schemaPolicy,
 		};
 
 		const rebaseLogger = createChildLogger({
-			logger: this.logger,
+			logger,
 			namespace: "Rebase",
 		});
 
@@ -230,7 +216,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
 	// We might want to not subclass it, or override/reimplement most of its functionality.
 	@throwIfBroken
-	protected summarizeCore(
+	public summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
@@ -242,7 +228,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(
-					(contents) => serializer.stringify(contents, this.handle),
+					(contents) => serializer.stringify(contents, this.sharedObject.handle),
 					undefined,
 					undefined,
 					telemetryContext,
@@ -255,7 +241,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return builder.getSummaryTree();
 	}
 
-	protected async loadCore(services: IChannelStorageService): Promise<void> {
+	public async loadCore(services: IChannelStorageService): Promise<void> {
 		assert(
 			this.editManager.localBranch.getHead() === this.editManager.getTrunkHead(),
 			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
@@ -310,7 +296,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		isResubmit: boolean,
 	): void {
 		assert(
-			this.isAttached() === (this.detachedRevision === undefined),
+			this.sharedObject.isAttached() === (this.detachedRevision === undefined),
 			0x95a /* Detached revision should only be set when not attached */,
 		);
 
@@ -351,7 +337,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
 	}
 
-	protected processCore(
+	public processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
@@ -371,20 +357,15 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
+	public getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
 		return this.editManager.localBranch;
 	}
 
-	protected onDisconnect(): void {}
-
-	protected override didAttach(): void {
+	public didAttach(): void {
 		this.detachedRevision = undefined;
 	}
 
-	protected override reSubmitCore(
-		content: JsonCompatibleReadOnly,
-		localOpMetadata: unknown,
-	): void {
+	public reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
@@ -413,7 +394,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 
-	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
+	public applyStashedOp(content: JsonCompatibleReadOnly): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision, change },
