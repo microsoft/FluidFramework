@@ -10,7 +10,7 @@ import { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
 	IResolvedUrl,
-	IAnyDriverError,
+	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DataCorruptionError,
@@ -74,81 +74,59 @@ describe("R11s Socket Tests", () => {
 		)) as DocumentService;
 	});
 
-	it("connect_document_error with Token Revoked error", async () => {
-		const errorToThrow = {
-			code: 403,
-			message: "TokenRevokedError",
-			retryAfterMs: 10,
-			internalErrorCode: "TokenRevoked",
-			errorType: DriverErrorTypes.authorizationError,
-			canRetry: false,
+	interface ErrorTestCase {
+		name: string;
+		error: {
+			code: number;
+			message: string;
+			retryAfterMs: number;
+			internalErrorCode: string;
+			errorType: string;
+			canRetry: boolean;
 		};
-		const errorEventName = "connect_document_error";
-		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: errorEventName, errorToThrow },
-		});
+		expectedError: {
+			errorType: string;
+			internalErrorCode: string;
+		};
+	}
 
-		await assert.rejects(
-			mockSocket(socket as unknown as Socket, async () =>
-				documentService.connectToDeltaStream(client),
-			),
-			{
+	const errorTestCases: ErrorTestCase[] = [
+		{
+			name: "Token Revoked error",
+			error: {
+				code: 403,
+				message: "TokenRevokedError",
+				retryAfterMs: 10,
+				internalErrorCode: "TokenRevoked",
 				errorType: DriverErrorTypes.authorizationError,
-				scenarioName: "connect_document_error",
+				canRetry: false,
+			},
+			expectedError: {
+				errorType: DriverErrorTypes.authorizationError,
 				internalErrorCode: "TokenRevoked",
 			},
-			"Error should have occurred",
-		);
-	});
+		},
+		{
+			name: "Cluster Draining error",
+			error: {
+				code: 503,
+				message: "ClusterDrainingError",
+				retryAfterMs: 1000,
+				internalErrorCode: R11sServiceClusterDrainingErrorCode,
+				errorType: RouterliciousErrorTypes.clusterDrainingError,
+				canRetry: true,
+			},
+			expectedError: {
+				errorType: RouterliciousErrorTypes.clusterDrainingError,
+				internalErrorCode: R11sServiceClusterDrainingErrorCode,
+			},
+		},
+	];
 
-	it("Socket error with Token Revoked error", async () => {
-		const errorToThrow = {
-			code: 403,
-			message: "TokenRevokedError",
-			retryAfterMs: 10,
-			internalErrorCode: "TokenRevoked",
-			errorType: DriverErrorTypes.authorizationError,
-			canRetry: false,
-		};
-		const errorEventName = "connect_document_success";
-		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: errorEventName },
-		});
-
-		const connection = await mockSocket(socket as unknown as Socket, async () =>
-			documentService.connectToDeltaStream(client),
-		);
-		let error: IAnyDriverError | undefined;
-		connection.on("disconnect", (reason: IAnyDriverError) => {
-			error = reason;
-		});
-
-		// Send Token Revoked error
-		socket.sendErrorEvent(errorToThrow);
-
-		assert(
-			error?.errorType === DriverErrorTypes.authorizationError,
-			"Error type should be authorizationError",
-		);
-		assert(error.scenarioName === "error", "Error scenario name should be error");
-		assert(
-			(error as any).internalErrorCode === "TokenRevoked",
-			"Error internal code should be TokenRevoked",
-		);
-	});
-
-	it("connect_document_error with Cluster Draining error", async () => {
-		const errorToThrow = {
-			code: 503,
-			message: "ClusterDrainingError",
-			retryAfterMs: 1000,
-			internalErrorCode: R11sServiceClusterDrainingErrorCode,
-			errorType: RouterliciousErrorTypes.clusterDrainingError,
-			canRetry: true,
-		};
+	async function testConnectDocumentError(testCase: ErrorTestCase) {
 		const errorEventName = "connect_document_error";
 		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: errorEventName, errorToThrow },
+			connect_document: { eventToEmit: errorEventName, errorToThrow: testCase.error },
 		});
 
 		await assert.rejects(
@@ -156,23 +134,15 @@ describe("R11s Socket Tests", () => {
 				documentService.connectToDeltaStream(client),
 			),
 			{
-				errorType: RouterliciousErrorTypes.clusterDrainingError,
+				errorType: testCase.expectedError.errorType,
 				scenarioName: "connect_document_error",
-				internalErrorCode: R11sServiceClusterDrainingErrorCode,
+				internalErrorCode: testCase.expectedError.internalErrorCode,
 			},
 			"Error should have occurred",
 		);
-	});
+	}
 
-	it("Socket error with Cluster Draining error", async () => {
-		const errorToThrow = {
-			code: 503,
-			message: "ClusterDrainingError",
-			retryAfterMs: 1000,
-			internalErrorCode: R11sServiceClusterDrainingErrorCode,
-			errorType: RouterliciousErrorTypes.clusterDrainingError,
-			canRetry: true,
-		};
+	async function testSocketError(testCase: ErrorTestCase) {
 		const errorEventName = "connect_document_success";
 		socket = new ClientSocketMock({
 			connect_document: { eventToEmit: errorEventName },
@@ -186,24 +156,37 @@ describe("R11s Socket Tests", () => {
 			error = reason;
 		});
 
-		// Send Token Revoked error
-		socket.sendErrorEvent(errorToThrow);
+		socket.sendErrorEvent(testCase.error);
 
 		assert(
-			error?.errorType === RouterliciousErrorTypes.clusterDrainingError,
-			"Error type should be clusterDrainingError",
+			error?.errorType === testCase.expectedError.errorType,
+			`Error type should be ${testCase.expectedError.errorType}`,
 		);
 		assert(error.scenarioName === "error", "Error scenario name should be error");
 		assert(
-			(error as any).internalErrorCode === R11sServiceClusterDrainingErrorCode,
-			"Error internal code should be R11sServiceClusterDrainingErrorCode",
+			(error as any).internalErrorCode === testCase.expectedError.internalErrorCode,
+			`Error internal code should be ${testCase.expectedError.internalErrorCode}`,
 		);
-	});
+	}
 
-	it("Socket error with Data Corruption error", async () => {
-		const clientError = new DataCorruptionError("Data corruption error", {
-			driverVersion: "1.0",
+	// Generate tests for each error case
+	for (const testCase of errorTestCases) {
+		it(`connect_document_error with ${testCase.name}`, async () => {
+			await testConnectDocumentError(testCase);
 		});
+
+		it(`Socket error with ${testCase.name}`, async () => {
+			await testSocketError(testCase);
+		});
+	}
+
+	async function testDataError(
+		errorConstructor: typeof DataCorruptionError | typeof DataProcessingError,
+		expectedErrorType: string,
+	) {
+		const clientError = errorConstructor === DataCorruptionError
+			? new DataCorruptionError("Data corruption error", { driverVersion: "1.0" })
+			: DataProcessingError.create("Data processing error", "test", undefined, { driverVersion: "1.0" });
 
 		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
@@ -214,7 +197,6 @@ describe("R11s Socket Tests", () => {
 			documentService.connectToDeltaStream(client),
 		);
 
-		// Set up Promise to await disconnect_document event
 		const disconnectEventP = new Promise<{
 			clientId: string;
 			errorType: string;
@@ -233,10 +215,8 @@ describe("R11s Socket Tests", () => {
 			);
 		});
 
-		// Call disconnect directly with the error
 		(connection as any).disconnect(clientError);
 
-		// Wait for and verify the disconnect_document event
 		const disconnectResult = await disconnectEventP;
 		assert.strictEqual(
 			disconnectResult.clientId,
@@ -245,66 +225,20 @@ describe("R11s Socket Tests", () => {
 		);
 		assert.strictEqual(
 			disconnectResult.errorType,
-			FluidErrorTypes.dataCorruptionError,
-			"Error type should be dataCorruptionError",
-		);
-		assert(disconnectResult.isCorruption, "isCorruption flag should be true");
-	});
-
-	it("Socket error with Data Processing error", async () => {
-		const clientError = DataProcessingError.create(
-			"Data processing error",
-			"test",
-			undefined,
-			{ driverVersion: "1.0" },
-		);
-
-		const socketEventName = "connect_document_success";
-		socket = new ClientSocketMock({
-			connect_document: { eventToEmit: socketEventName },
-		});
-
-		const connection = await mockSocket(socket as unknown as Socket, async () =>
-			documentService.connectToDeltaStream(client),
-		);
-
-		// Set up Promise to await disconnect_document event
-		const disconnectEventP = new Promise<{
-			clientId: string;
-			errorType: string;
-			isCorruption: boolean;
-		}>((resolve) => {
-			assert(socket !== undefined, "Socket should be defined");
-			socket.on(
-				"disconnect_document",
-				(clientId: string, documentId: string, errorType: string, isCorruption: boolean) => {
-					resolve({
-						clientId,
-						errorType,
-						isCorruption,
-					});
-				},
-			);
-		});
-
-		// Call disconnect directly with the error
-		(connection as any).disconnect(clientError);
-
-		// Wait for and verify the disconnect_document event
-		const disconnectResult = await disconnectEventP;
-		assert.strictEqual(
-			disconnectResult.clientId,
-			connection.clientId,
-			"Client ID should match",
-		);
-		assert.strictEqual(
-			disconnectResult.errorType,
-			FluidErrorTypes.dataProcessingError,
-			"Error type should be dataProcessingError",
+			expectedErrorType,
+			`Error type should be ${expectedErrorType}`,
 		);
 		assert(
 			disconnectResult.isCorruption,
-			"isCorruption flag should be true for data processing error",
+			"isCorruption flag should be true",
 		);
+	}
+
+	it("Socket error with Data Corruption error", async () => {
+		await testDataError(DataCorruptionError, FluidErrorTypes.dataCorruptionError);
+	});
+
+	it("Socket error with Data Processing error", async () => {
+		await testDataError(DataProcessingError, FluidErrorTypes.dataProcessingError);
 	});
 });
