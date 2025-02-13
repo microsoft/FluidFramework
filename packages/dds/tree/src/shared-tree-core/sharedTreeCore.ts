@@ -4,10 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -99,8 +96,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		MessageEncodingContext
 	>;
 
-	private readonly idCompressor: IIdCompressor;
-
 	private readonly resubmitMachine: ResubmitMachine<TChange>;
 	public readonly commitEnricher: BranchCommitEnricher<TChange>;
 
@@ -126,7 +121,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
-		runtime: IFluidDataStoreRuntime,
+		private readonly idCompressor: IIdCompressor,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
@@ -143,18 +138,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			namespace: "Rebase",
 		});
 
-		assert(
-			runtime.idCompressor !== undefined,
-			0x886 /* IdCompressor must be enabled to use SharedTree */,
-		);
-		this.idCompressor = runtime.idCompressor;
 		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
-		const localSessionId = runtime.idCompressor.localSessionId;
+		const localSessionId = idCompressor.localSessionId;
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
@@ -174,7 +164,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			}
 		});
 
-		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
 			this.editManager.changeFamily.codecs,
 			revisionTagCodec,
@@ -197,7 +187,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs,
-			new RevisionTagCodec(runtime.idCompressor),
+			new RevisionTagCodec(idCompressor),
 			options,
 			formatOptions.message,
 		);
