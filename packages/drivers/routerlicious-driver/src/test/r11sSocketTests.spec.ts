@@ -184,9 +184,12 @@ describe("R11s Socket Tests", () => {
 		errorConstructor: typeof DataCorruptionError | typeof DataProcessingError,
 		expectedErrorType: string,
 	) {
-		const clientError = errorConstructor === DataCorruptionError
-			? new DataCorruptionError("Data corruption error", { driverVersion: "1.0" })
-			: DataProcessingError.create("Data processing error", "test", undefined, { driverVersion: "1.0" });
+		const clientError =
+			errorConstructor === DataCorruptionError
+				? new DataCorruptionError("Data corruption error", { driverVersion: "1.0" })
+				: DataProcessingError.create("Data processing error", "test", undefined, {
+						driverVersion: "1.0",
+					});
 
 		const socketEventName = "connect_document_success";
 		socket = new ClientSocketMock({
@@ -228,10 +231,7 @@ describe("R11s Socket Tests", () => {
 			expectedErrorType,
 			`Error type should be ${expectedErrorType}`,
 		);
-		assert(
-			disconnectResult.isCorruption,
-			"isCorruption flag should be true",
-		);
+		assert(disconnectResult.isCorruption, "isCorruption flag should be true");
 	}
 
 	it("Socket error with Data Corruption error", async () => {
