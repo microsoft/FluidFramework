@@ -4,14 +4,23 @@
  */
 
 import path from "node:path";
+
 import { _dirname } from "./dirname.cjs";
 
 /**
- * Absolute path to the test data.
+ * Absolute path to the test data. It's rooted two directories up because the tests get executed from lib/test.
  */
-const testDataPath = path.resolve(_dirname, "../../../build-infrastructure/src/test/data");
+export const testDataPath = path.resolve(_dirname, "../../src/test/data");
+
+/**
+ * Absolute path to the build-infra test data.
+ */
+const infraTestDataPath = path.resolve(
+	_dirname,
+	"../../../build-infrastructure/src/test/data",
+);
 
 /**
  * Absolute path to the test repo.
  */
-export const testRepoRoot = path.join(testDataPath, "testRepo");
+export const testRepoRoot = path.join(infraTestDataPath, "testRepo");

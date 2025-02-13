@@ -10,9 +10,9 @@ import { _dirname } from "./dirname.cjs";
 export const packageRootPath = path.resolve(_dirname, "../..");
 
 /**
- * Absolute path to the test data. It's rooted two directories up because the tests get executed from lib/.
+ * Absolute path to the test data. It's rooted two directories up because the tests get executed from lib/test.
  */
-export const testDataPath = path.resolve(_dirname, packageRootPath, "src/test/data");
+export const testDataPath = path.resolve(_dirname, "../../src/test/data");
 
 /**
  * Absolute path to the test repo.

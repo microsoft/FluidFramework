@@ -10,10 +10,10 @@ import { runCommand } from "@oclif/test";
 import { expect } from "chai";
 import { readJsonSync, writeJson } from "fs-extra/esm";
 
-import { testRepoRoot } from "../../init.js";
+import { testDataPath } from "../../init.js";
 
 describe("flub check dependencyRanges", () => {
-	const examplePackagePath = path.join(testRepoRoot, "example-package", "package.json");
+	const examplePackagePath = path.join(testDataPath, "example-package", "package.json");
 	const originalJson = readJsonSync(examplePackagePath) as PackageJson;
 
 	afterEach(async () => {
