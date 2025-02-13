@@ -13,6 +13,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
+import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
@@ -32,6 +33,9 @@ const stream = split().on("data", (message) => {
 export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
 	return morgan(loggerFormat, { stream });
 }
+
+morgan.token("http-version", (req: express.Request, res: express.Response) => req.httpVersion);
+morgan.token("scheme", (req: express.Request, res: express.Response) => req.protocol);
 
 /**
  * @internal
@@ -56,6 +60,14 @@ interface IResponseLatency {
 	closeTime: number;
 }
 
+function getEventLoopMetrics(histogram: IntervalHistogram) {
+	return {
+		max: (histogram.max / 1e6).toFixed(3),
+		min: (histogram.min / 1e6).toFixed(3),
+		mean: (histogram.mean / 1e6).toFixed(3),
+	};
+}
+
 /**
  * @internal
  */
@@ -67,6 +79,7 @@ export function jsonMorganLoggerMiddleware(
 		res: express.Response,
 	) => Record<string, any>,
 	enableLatencyMetric: boolean = false,
+	enableEventLoopLagMetric: boolean = false, // This metric has performance overhead, so it should be enabled with caution.
 ): express.RequestHandler {
 	return (request, response, next): void => {
 		response.locals.clientDisconnected = false;
@@ -121,6 +134,11 @@ export function jsonMorganLoggerMiddleware(
 			: undefined;
 		// HTTP Metric durationInMs should only track internal server time, so manually set it before waiting for response close.
 		const startTime = performance.now();
+		let histogram: IntervalHistogram;
+		if (enableEventLoopLagMetric) {
+			histogram = monitorEventLoopDelay();
+			histogram.enable();
+		}
 		const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
 		morgan<express.Request, express.Response>((tokens, req, res) => {
 			let additionalProperties = {};
@@ -153,6 +171,8 @@ export function jsonMorganLoggerMiddleware(
 				[HttpProperties.requestContentLength]: tokens.req(req, res, "content-length"),
 				[HttpProperties.responseContentLength]: tokens.res(req, res, "content-length"),
 				[HttpProperties.responseTime]: tokens["response-time"](req, res),
+				[HttpProperties.httpVersion]: tokens["http-version"](req, res),
+				[HttpProperties.scheme]: tokens.scheme(req, res),
 				[BaseTelemetryProperties.correlationId]: getTelemetryContextPropertiesWithHttpInfo(
 					req,
 					res,
@@ -168,6 +188,10 @@ export function jsonMorganLoggerMiddleware(
 			};
 			httpMetric.setProperties(properties);
 			const resolveMetric = () => {
+				if (enableEventLoopLagMetric) {
+					histogram.disable();
+					httpMetric.setProperty("eventLoopLagMs", getEventLoopMetrics(histogram));
+				}
 				if (properties.status?.startsWith("2")) {
 					httpMetric.success("Request successful");
 				} else {

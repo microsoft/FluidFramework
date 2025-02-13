@@ -378,9 +378,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	protected onDisconnect(): void {}
 
 	protected override didAttach(): void {
-		if (this.detachedRevision !== undefined) {
-			this.detachedRevision = undefined;
-		}
+		this.detachedRevision = undefined;
 	}
 
 	protected override reSubmitCore(
