@@ -264,7 +264,7 @@ async function visualizeObjectNode(
  */
 async function visualizeMapNode(
 	tree: VerboseTreeNode,
-	nodeSchema: SimpleMapNodeSchema,
+	schema: SimpleMapNodeSchema,
 	treeDefinitions: ReadonlyMap<string, SimpleNodeSchema>,
 	{ allowedTypes, isRequired }: FieldSchemaProperties,
 	visualizeChildData: VisualizeChildData,
@@ -273,7 +273,7 @@ async function visualizeMapNode(
 
 	for (const key of Object.keys(tree.fields)) {
 		mapNodeSchemaProperties[key] = {
-			allowedTypes: nodeSchema.allowedTypes,
+			allowedTypes: schema.allowedTypes,
 			isRequired: undefined,
 		};
 	}
