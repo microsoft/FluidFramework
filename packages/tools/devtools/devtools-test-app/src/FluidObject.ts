@@ -177,22 +177,32 @@ export class AppData extends DataObject {
 	private populateSharedTree(sharedTree: ITree): void {
 		const builder = new SchemaFactory("TodoList_Schema");
 
-		class TodoItem extends builder.object("todo-item", {
+		class WorkItem extends builder.object("work-item", {
 			title: builder.string,
 			completed: builder.boolean,
-			dueDate: builder.optional(builder.string),
-			assignee: builder.optional(builder.string),
+			dueDate: builder.string,
+			assignee: builder.string,
 			collaborators: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		class TodoObject extends builder.object("todo-list", {
-			items: builder.array(TodoItem),
+		class PersonalItem extends builder.object("personal-item", {
+			title: builder.string,
+			completed: builder.boolean,
+			dueDate: builder.string,
+			location: builder.optional(builder.string),
+			with: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		const TodoCategory = builder.map("todo-category", [TodoObject]);
+		class Work extends builder.object("work-category", {
+			work: [builder.map([WorkItem]), builder.array(WorkItem)],
+		}) {}
+
+		class Personal extends builder.object("personal-category", {
+			personal: [builder.map([PersonalItem]), builder.array(PersonalItem)],
+		}) {}
 
 		class TodoWorkspace extends builder.object("todo-workspace", {
-			lists: TodoCategory,
+			categories: [Work, Personal],
 		}) {}
 
 		const config = new TreeViewConfiguration({
@@ -201,36 +211,41 @@ export class AppData extends DataObject {
 
 		const view = sharedTree.viewWith(config);
 		view.initialize({
-			lists: {
-				work: {
-					items: [
+			categories: {
+				work: [
+					{
+						title: "Submit a PR",
+						completed: false,
+						dueDate: "2026-01-01",
+						assignee: "Alice",
+						collaborators: ["Bob, Charlie"],
+					},
+					{
+						title: "Review a PR",
+						completed: true,
+						dueDate: "2025-01-01",
+						assignee: "David",
+					},
+				],
+				personal: new Map([
+					[
+						"Health",
 						{
-							title: "Finish design doc.",
-							completed: false,
-							dueDate: "2048-01-01",
-							assignee: "Kevin",
-							collaborators: ["Rick"],
-						},
-						{
-							title: "Review pull requests",
+							title: "Go to the gym",
 							completed: true,
-							assignee: "Bob",
+							dueDate: "2025-01-01",
+							with: ["Wayne", "Tyler"],
 						},
 					],
-				},
-				personal: {
-					items: [
+					[
+						"Education",
 						{
-							title: "Buy groceries",
+							title: "Finish reading the book",
 							completed: false,
-						},
-						{
-							title: "Schedule dentist appointment",
-							completed: false,
-							dueDate: "2024-05-04",
+							dueDate: "2026-01-01",
 						},
 					],
-				},
+				]),
 			},
 		});
 	}
