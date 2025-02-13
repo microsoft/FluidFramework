@@ -81,8 +81,8 @@ describe("ValueManager eventing", () => {
 	let latestMap: LatestMapValueManager<{ a: number; b: number } | { c: number; d: number }>;
 	let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
 
-	function verifyFinalState(attendee: ISessionClient): void {
-		// Verify attendee state
+	function verifyFinalState(attendee: ISessionClient, permutation: string[]): void {
+		// Verify attendee state (always check since system:presence is always included)
 		assert.ok(attendee, "Eventing does not reflect new attendee");
 		assert.strictEqual(
 			attendee.sessionId,
@@ -95,26 +95,29 @@ describe("ValueManager eventing", () => {
 			"Eventing does not reflect new attendee's connection id",
 		);
 
-		// Verify latest value state
-		const latestValue = latest.clientValue(attendee).value;
-		assert.deepEqual(
-			latestValue,
-			{ x: 1, y: 1, z: 1 },
-			"Eventing does not reflect latest value",
-		);
+		// Only verify states that are included in the permutation
+		if (permutation.includes("latest")) {
+			const latestValue = latest.clientValue(attendee).value;
+			assert.deepEqual(
+				latestValue,
+				{ x: 1, y: 1, z: 1 },
+				"Eventing does not reflect latest value",
+			);
+		}
 
-		// Verify latest map state
-		const latestMapValue = latestMap.clientValue(attendee);
-		assert.deepEqual(
-			latestMapValue.get("key1")?.value,
-			{ a: 1, b: 1 },
-			"Eventing does not reflect latest map value",
-		);
-		assert.deepEqual(
-			latestMapValue.get("key2")?.value,
-			{ c: 1, d: 1 },
-			"Eventing does not reflect latest map value",
-		);
+		if (permutation.includes("latestMap")) {
+			const latestMapValue = latestMap.clientValue(attendee);
+			assert.deepEqual(
+				latestMapValue.get("key1")?.value,
+				{ a: 1, b: 1 },
+				"Eventing does not reflect latest map value",
+			);
+			assert.deepEqual(
+				latestMapValue.get("key2")?.value,
+				{ c: 1, d: 1 },
+				"Eventing does not reflect latest map value",
+			);
+		}
 	}
 
 	before(() => {
@@ -196,21 +199,21 @@ describe("ValueManager eventing", () => {
 		it(`handles update order: ${permutation.join(" -> ")}`, async () => {
 			const latestSpy = spy(() => {
 				const attendee = presence.getAttendee("client1");
-				verifyFinalState(attendee);
+				verifyFinalState(attendee, permutation);
 			});
 
 			const latestMapSpy = spy(() => {
 				const attendee = presence.getAttendee("client1");
-				verifyFinalState(attendee);
+				verifyFinalState(attendee, permutation);
 			});
 
 			const notificationsSpy = spy(() => {
 				const attendee = presence.getAttendee("client1");
-				verifyFinalState(attendee);
+				verifyFinalState(attendee, permutation);
 			});
 
 			const attendeeSpy = spy((attendee: ISessionClient) => {
-				verifyFinalState(attendee);
+				verifyFinalState(attendee, permutation);
 			});
 
 			latest.events.on("updated", latestSpy);
@@ -249,6 +252,10 @@ describe("ValueManager eventing", () => {
 	// Test all possible permutations
 	testPermutation(["latest", "latestMap"]);
 	testPermutation(["latestMap", "latest"]);
+	testPermutation(["latest", "notifications"]);
+	testPermutation(["notifications", "latest"]);
+	testPermutation(["latestMap", "notifications"]);
+	testPermutation(["notifications", "latestMap"]);
 	testPermutation(["latest", "latestMap", "notifications"]);
 	testPermutation(["latest", "notifications", "latestMap"]);
 	testPermutation(["latestMap", "latest", "notifications"]);
