@@ -9,7 +9,6 @@
 		// This is needed for type assertions.
 		"noUnusedLocals": false,
 		"noImplicitOverride": true,
-		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
 }

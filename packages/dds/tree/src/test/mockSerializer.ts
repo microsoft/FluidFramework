@@ -26,4 +26,10 @@ class MockHandleContext implements IFluidHandleContext {
 		return create404Response(request);
 	}
 }
+
+/**
+ * A minimal test FluidSerializer which will error if on resolveHandle and attachGraph.
+ *
+ * Mainly useful when an IFluidSerializer is required but when handles being encoded don't need to be decoded and resolved.
+ */
 export const mockSerializer = new FluidSerializer(new MockHandleContext());

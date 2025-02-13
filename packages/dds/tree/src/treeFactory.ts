@@ -13,14 +13,32 @@ import {
 } from "@fluidframework/shared-object-base/internal";
 
 import {
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
 	SharedTree as SharedTreeImpl,
 	type ISharedTree,
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
+
+import { pkgVersion } from "./packageVersion.js";
+
+/**
+ * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
+ * @alpha
+ * @legacy
+ */
+export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
+
+/**
+ * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory.attributes}
+ * @alpha
+ * @legacy
+ */
+export const SharedTreeAttributes: IChannelAttributes = {
+	type: SharedTreeFactoryType,
+	snapshotFormatVersion: "0.0.0",
+	packageVersion: pkgVersion,
+};
 
 /**
  * Creates a factory for shared tree kernels with the given options.

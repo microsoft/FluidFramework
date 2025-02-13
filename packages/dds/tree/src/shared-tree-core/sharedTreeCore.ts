@@ -4,7 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+} from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -13,11 +16,7 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type {
-	IFluidSerializer,
-	KernelArgs,
-	SharedKernel,
-} from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -35,7 +34,7 @@ import {
 import {
 	type JsonCompatibleReadOnly,
 	brand,
-	Breakable,
+	type Breakable,
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
@@ -53,6 +52,8 @@ import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IChannelView } from "../shared-tree/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -71,10 +72,8 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
  */
 @breakingClass
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
-	implements SharedKernel, WithBreakable
+	implements WithBreakable
 {
-	public readonly breaker: Breakable = new Breakable("Shared Tree");
-
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
 	/**
@@ -83,14 +82,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
-
-	/**
-	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
-	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
-	 */
-	public get editor(): TEditor {
-		return this.getLocalBranch().editor;
-	}
 
 	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
@@ -111,9 +102,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	private readonly idCompressor: IIdCompressor;
 
 	private readonly resubmitMachine: ResubmitMachine<TChange>;
-	protected readonly commitEnricher: BranchCommitEnricher<TChange>;
+	public readonly commitEnricher: BranchCommitEnricher<TChange>;
 
-	protected readonly mintRevisionTag: () => RevisionTag;
+	public readonly mintRevisionTag: () => RevisionTag;
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
@@ -121,22 +112,26 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
-	 * @param id - The id of the shared object
 	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
-	 * @param attributes - Attributes of the shared object
-	 * @param telemetryContextPrefix - The property prefix for telemetry pertaining to this object. See {@link ITelemetryContext}
+	 * @param editor - Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
 	public constructor(
-		private readonly kernelArgs: KernelArgs,
+		public readonly breaker: Breakable,
+		public readonly sharedObject: IChannelView & IFluidLoadable,
+		public readonly serializer: IFluidSerializer,
+		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
+		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
-		idCompressor: IIdCompressor,
+		runtime: IFluidDataStoreRuntime,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
 		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
+		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
 	) {
 		this.schemaAndPolicy = {
 			schema,
@@ -144,7 +139,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		};
 
 		const rebaseLogger = createChildLogger({
-			logger: this.kernelArgs.logger,
+			logger,
 			namespace: "Rebase",
 		});
 
@@ -233,7 +228,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(
-					(contents) => serializer.stringify(contents, this.kernelArgs.handle),
+					(contents) => serializer.stringify(contents, this.sharedObject.handle),
 					undefined,
 					undefined,
 					telemetryContext,
@@ -301,7 +296,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		isResubmit: boolean,
 	): void {
 		assert(
-			this.kernelArgs.isAttached() === (this.detachedRevision === undefined),
+			this.sharedObject.isAttached() === (this.detachedRevision === undefined),
 			0x95a /* Detached revision should only be set when not attached */,
 		);
 
@@ -362,16 +357,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
+	public getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
 		return this.editManager.localBranch;
 	}
 
-	public onDisconnect(): void {}
-
-	protected didAttach(): void {
-		if (this.detachedRevision !== undefined) {
-			this.detachedRevision = undefined;
-		}
+	public didAttach(): void {
+		this.detachedRevision = undefined;
 	}
 
 	public reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {

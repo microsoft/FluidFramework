@@ -4,10 +4,33 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ErasedType, IFluidHandle } from "@fluidframework/core-interfaces/internal";
-import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { KernelArgs } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type {
+	ErasedType,
+	IFluidHandle,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces/internal";
+import type {
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IChannelStorageService,
+	IChannel,
+} from "@fluidframework/datastore-definitions/internal";
+import {
+	SharedObject,
+	type IFluidSerializer,
+	type ISharedObject,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	UsageError,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
+	ITelemetryContext,
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { type ICodecOptions, noopValidator } from "../codec/index.js";
 import {
@@ -68,6 +91,7 @@ import {
 	FieldKind,
 	type CustomTreeNode,
 	type CustomTreeValue,
+	type ITreeAlpha,
 } from "../simple-tree/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -76,11 +100,16 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
-import { breakingClass, fail, throwIfBroken } from "../util/index.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import {
+	Breakable,
+	breakingClass,
+	fail,
+	throwIfBroken,
+	type WithBreakable,
+} from "../util/index.js";
 
 /**
- * Copy of data from an {@link ISharedTree} at some point in time.
+ * Copy of data from an {@link ITreePrivate} at some point in time.
  * @remarks
  * This is unrelated to Fluids concept of "snapshots".
  */
@@ -104,30 +133,26 @@ export interface SharedTreeContentSnapshot {
 }
 
 /**
+ * Information about a Fluid channel.
+ * @privateRemarks
+ * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
+ * @internal
+ */
+export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;
+
+/**
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
-export interface ITreeInternal extends ITree {
-	/**
-	 * Exports root in the same format as {@link TreeAlpha.(exportVerbose:1)} using stored keys.
-	 * @privateRemarks
-	 * TODO:
-	 * This should probably get promoted to a public API on ITree eventually.
-	 */
-	exportVerbose(): VerboseTree | undefined;
-
-	/**
-	 * Exports the SimpleTreeSchema that is stored in the tree, using stored keys for object fields.
-	 * @remarks
-	 * To get the schema using property keys, use {@link getSimpleSchema} on the view schema.
-	 */
-	exportSimpleSchema(): SimpleTreeSchema;
-}
+export interface ITreeInternal extends IChannelView, ITreeAlpha {}
 
 /**
  * {@link ITreeInternal} extended with some non-exported APIs.
+ * @remarks
+ * This allows access to the tree content using the internal data model used at the storage and "flex" layers,
+ * and should only be needed for testing and debugging this package's internals.
  */
-export interface ISharedTree extends ITreeInternal {
+export interface ITreePrivate extends ITreeInternal {
 	/**
 	 * Provides a copy of the current content of the tree.
 	 * This can be useful for inspecting the tree when no suitable view schema is available.
@@ -137,6 +162,13 @@ export interface ISharedTree extends ITreeInternal {
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
 }
+
+/**
+ * {@link ITreePrivate} extended with ISharedObject.
+ * @remarks
+ * This is used when integration testing this package with the Fluid runtime as it exposes the APIs the runtime consumes to manipulate the tree.
+ */
+export interface ISharedTree extends ISharedObject, ITreePrivate {}
 
 /**
  * Has an entry for each codec which writes an explicit version into its data.
@@ -181,24 +213,138 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 }
 
 /**
- * Shared tree, configured with a good set of indexes and field kinds which will maintain compatibility over time.
+ * Shared object wrapping {@link SharedTreeKernel}.
+ */
+export class SharedTree extends SharedObject implements ISharedTree, WithBreakable {
+	public readonly breaker: Breakable = new Breakable("Shared Tree");
+
+	public get checkout(): TreeCheckout {
+		return this.kernel.checkout;
+	}
+	public get storedSchema(): TreeStoredSchemaRepository {
+		return this.checkout.storedSchema;
+	}
+
+	private readonly kernel: SharedTreeKernel;
+
+	public constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+		optionsParam: SharedTreeOptionsInternal,
+		telemetryContextPrefix: string = "fluid_sharedTree_",
+	) {
+		super(id, runtime, attributes, telemetryContextPrefix);
+		this.kernel = new SharedTreeKernel(
+			this.breaker,
+			this,
+			this.serializer,
+			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
+			() => this.deltaManager.lastSequenceNumber,
+			this.logger,
+			runtime,
+			optionsParam,
+		);
+	}
+
+	public get editor(): SharedTreeEditBuilder {
+		return this.kernel.getEditor();
+	}
+
+	public summarizeCore(
+		serializer: IFluidSerializer,
+		telemetryContext?: ITelemetryContext,
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+	): ISummaryTreeWithStats {
+		return this.kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+	}
+
+	protected processCore(
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	): void {
+		this.kernel.processCore(message, local, localOpMetadata);
+	}
+
+	protected onDisconnect(): void {}
+
+	public exportVerbose(): VerboseTree | undefined {
+		return this.kernel.exportVerbose();
+	}
+
+	public exportSimpleSchema(): SimpleTreeSchema {
+		return this.kernel.exportSimpleSchema();
+	}
+
+	public contentSnapshot(): SharedTreeContentSnapshot {
+		return this.kernel.contentSnapshot();
+	}
+
+	// For the new TreeViewAlpha API
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+
+	// For the old TreeView API
+	public viewWith<TRoot extends ImplicitFieldSchema>(
+		config: TreeViewConfiguration<TRoot>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<TRoot>;
+
+	public viewWith<TRoot extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+		config: TreeViewConfiguration<ReadSchema<TRoot>>,
+	): SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>> {
+		return this.kernel.viewWith(config);
+	}
+
+	protected override async loadCore(services: IChannelStorageService): Promise<void> {
+		await this.kernel.loadCore(services);
+	}
+
+	protected override didAttach(): void {
+		this.kernel.didAttach();
+	}
+
+	protected override applyStashedOp(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+		>
+	): void {
+		this.kernel.applyStashedOp(...args);
+	}
+
+	protected override reSubmitCore(
+		...args: Parameters<
+			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["reSubmitCore"]
+		>
+	): void {
+		this.kernel.reSubmitCore(...args);
+	}
+}
+
+/**
+ * SharedTreeCore, configured with a good set of indexes and field kinds which will maintain compatibility over time.
  *
  * TODO: detail compatibility requirements.
  */
 @breakingClass
-export class SharedTree extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
-	/**
-	 * User facing API surface for users of the tree (does not include stuff needed by the runtime to manage the tree).
-	 */
-	public readonly view: ISharedTree;
-
+class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
 	}
 
-	public constructor(args: KernelArgs, optionsParam: SharedTreeOptionsInternal) {
-		if (args.idCompressor === undefined) {
+	public constructor(
+		breaker: Breakable,
+		sharedObject: IChannelView & IFluidLoadable,
+		serializer: IFluidSerializer,
+		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
+		lastSequenceNumber: () => number | undefined,
+		logger: ITelemetryLoggerExt | undefined,
+		runtime: IFluidDataStoreRuntime,
+		optionsParam: SharedTreeOptionsInternal,
+	) {
+		if (runtime.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
 
@@ -405,7 +551,7 @@ export class SharedTree extends SharedTreeCore<SharedTreeEditBuilder, SharedTree
 		this.checkout.load();
 	}
 
-	protected override didAttach(): void {
+	public override didAttach(): void {
 		if (this.checkout.transaction.isInProgress()) {
 			// Attaching during a transaction is not currently supported.
 			// At least part of of the system is known to not handle this case correctly - commit enrichment - and there may be others.
