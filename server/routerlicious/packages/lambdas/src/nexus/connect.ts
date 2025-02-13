@@ -601,13 +601,8 @@ function setUpSignalListenerForRoomBroadcasting(
 	socket: IWebSocket,
 	room: IRoom,
 	{ collaborationSessionEventEmitter, logger }: INexusLambdaDependencies,
-): (() => void) | undefined {
-	if (
-		!collaborationSessionEventEmitter ||
-		collaborationSessionEventEmitter.listenerCount("broadcastSignal") > 0
-	) {
-		return;
-	}
+	clientId: string,
+): (() => void) {
 	const broadCastSignalListener = (broadcastSignal: IBroadcastSignalEventPayload): void => {
 		const { signalRoom, signalContent } = broadcastSignal;
 
@@ -619,7 +614,7 @@ function setUpSignalListenerForRoomBroadcasting(
 				const runtimeMessage = createRuntimeMessage(signalContent);
 
 				try {
-					socket.emitToRoom(getRoomId(signalRoom), "signal", runtimeMessage);
+					socket.emitToRoom(getClientSpecificRoomId(clientId), "signal", runtimeMessage);
 				} catch (error) {
 					const errorMsg = `Failed to broadcast signal from external API.`;
 					Lumberjack.error(
@@ -786,6 +781,7 @@ export async function connectDocument(
 			socket,
 			room,
 			lambdaDependencies,
+			clientId,
 		);
 		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
 
@@ -813,7 +809,7 @@ export async function connectDocument(
 			connectVersions,
 			details: messageClient,
 			dispose: (): void => {
-				disposeSignalListenerForRoomBroadcasting?.();
+				disposeSignalListenerForRoomBroadcasting();
 				disposeOrdererConnectionListener();
 			},
 		};
