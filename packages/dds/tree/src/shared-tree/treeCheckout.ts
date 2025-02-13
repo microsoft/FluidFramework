@@ -549,10 +549,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
 		const anchorVisitor = this.forest.anchors.acquireVisitor();
-		const combinedVisitor = combineVisitors(
-			[this.forest.acquireVisitor(), anchorVisitor],
-			[anchorVisitor],
-		);
+		const combinedVisitor = combineVisitors([this.forest.acquireVisitor(), anchorVisitor]);
 		fn(combinedVisitor);
 		combinedVisitor.free();
 	}

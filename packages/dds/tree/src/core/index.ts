@@ -55,7 +55,6 @@ export {
 	setGenericTreeField,
 	type DeltaVisitor,
 	type AnnouncedVisitor,
-	type PathVisitor,
 	SparseNode,
 	getDescendant,
 	compareUpPaths,

@@ -98,7 +98,6 @@ export {
 	combineVisitors,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
-export type { PathVisitor } from "./visitPath.js";
 
 export { SparseNode, getDescendant } from "./sparseTree.js";
 
