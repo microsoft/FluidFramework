@@ -16,14 +16,7 @@ import {
 	seqLTE,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
-import {
-	toRemovalInfo,
-	toMoveInfo,
-	IRemovalInfo,
-	IMoveInfo,
-	assertInserted,
-	isRemoved,
-} from "./segmentInfos.js";
+import { toRemovalInfo, toMoveInfo, assertInserted, isRemoved } from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
@@ -288,7 +281,6 @@ export class PartialSequenceLengths {
 	 */
 	public static combine(
 		block: MergeBlock,
-
 		collabWindow: CollaborationWindow,
 		recur = false,
 		computeLocalPartials = false,
@@ -395,7 +387,7 @@ export class PartialSequenceLengths {
 				if (segment.seq !== undefined && seqLTE(segment.seq, collabWindow.minSeq)) {
 					combinedPartialLengths.minLength += segment.cachedLength;
 				} else {
-					PartialSequenceLengths.insertSegment(combinedPartialLengths, segment);
+					PartialSequenceLengths.accountForInsertion(combinedPartialLengths, segment);
 				}
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
@@ -406,12 +398,7 @@ export class PartialSequenceLengths {
 				) {
 					combinedPartialLengths.minLength -= segment.cachedLength;
 				} else if (removalInfo !== undefined || moveInfo !== undefined) {
-					PartialSequenceLengths.insertSegment(
-						combinedPartialLengths,
-						segment,
-						removalInfo,
-						moveInfo,
-					);
+					PartialSequenceLengths.accountForRemoval(combinedPartialLengths, segment);
 				}
 			}
 		}
@@ -640,29 +627,73 @@ export class PartialSequenceLengths {
 	 * `combinedPartialLengths` is meant to compute such records, this does the
 	 * analogous addition to the bookkeeping for the local segment in
 	 * `combinedPartialLengths.unsequencedRecords`.
+	 *
+	 * TODO: Update this comment
 	 */
-	private static insertSegment(
+	private static accountForInsertion(
 		combinedPartialLengths: PartialSequenceLengths,
 		segment: ISegmentPrivate,
-		removalInfo?: IRemovalInfo,
-		moveInfo?: IMoveInfo,
 	): void {
 		assertInserted(segment);
+
+		const isLocal = segment.seq === UnassignedSequenceNumber;
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq;
+		let segmentLen = segment.cachedLength;
+		let clientId = segment.clientId;
+		let remoteObliteratedLen: number | undefined;
+
+		if (toMoveInfo(segment)?.wasMovedOnInsert) {
+			// if this segment was obliterated on insert, its length is only
+			// visible to the client that inserted it
+			segmentLen = 0;
+			remoteObliteratedLen = segment.cachedLength;
+		}
+
+		const partials = isLocal
+			? combinedPartialLengths.unsequencedRecords?.partialLengths
+			: combinedPartialLengths.partialLengths;
+		if (partials === undefined) {
+			// Local partial but its computation isn't required
+			return;
+		}
+
+		PartialSequenceLengths.updatePartialsAfterInsertion(
+			segment,
+			segmentLen,
+			remoteObliteratedLen,
+			undefined,
+			partials,
+			seqOrLocalSeq,
+			clientId,
+			undefined /* removeClientOverlap */,
+			undefined /* moveClientOverlap */,
+		);
+	}
+
+	private static accountForRemoval(
+		combinedPartialLengths: PartialSequenceLengths,
+		segment: ISegmentPrivate,
+	): void {
+		assertInserted(segment);
+
+		const removalInfo = toRemovalInfo(segment);
+		const moveInfo = toMoveInfo(segment);
 
 		const removalIsLocal =
 			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
 		const isLocal =
-			segment.seq === UnassignedSequenceNumber ||
-			(!!removalInfo && removalIsLocal && (!moveInfo || moveIsLocal)) ||
-			(!!moveInfo && moveIsLocal && (!removalInfo || removalIsLocal));
+			(removalIsLocal && (!moveInfo || moveIsLocal)) ||
+			(moveIsLocal && (!removalInfo || removalIsLocal));
+
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		let seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq;
-		let segmentLen = segment.cachedLength;
-		let clientId = segment.clientId;
+
+		let lenDelta: number;
+		let clientId: number;
+		let seqOrLocalSeq: number;
 		let removeClientOverlap: number[] | undefined;
 		let moveClientOverlap: number[] | undefined;
-		let remoteObliteratedLen: number | undefined;
 
 		// it's not possible to have an overlapping obliterate and remove that are both local
 		assert(
@@ -679,13 +710,17 @@ export class PartialSequenceLengths {
 		if (removeHappenedFirst) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			seqOrLocalSeq = removalIsLocal ? removalInfo.localRemovedSeq! : removalInfo.removedSeq;
-			segmentLen = -segmentLen;
+			lenDelta = -segment.cachedLength;
 			// The client who performed the remove is always stored
 			// in the first position of removalInfo.
 			clientId = removalInfo.removedClientIds[0];
 			const hasOverlap = removalInfo.removedClientIds.length > 1;
 			removeClientOverlap = hasOverlap ? removalInfo.removedClientIds : undefined;
-		} else if (moveInfo) {
+		} else {
+			assert(
+				moveInfo !== undefined,
+				"Expected move to exist if remove either did not exist or didn't happen first",
+			);
 			// The client who performed the move is always stored
 			// in the first position of moveInfo.
 			clientId = moveInfo.movedClientIds[0];
@@ -694,25 +729,28 @@ export class PartialSequenceLengths {
 			seqOrLocalSeq = moveIsLocal ? moveInfo.localMovedSeq! : moveInfo.movedSeq;
 
 			if (moveInfo.wasMovedOnInsert) {
+				if (
+					segment.seq !== UnassignedSequenceNumber &&
+					moveInfo.movedSeq !== UnassignedSequenceNumber &&
+					segment.seq < moveInfo.movedSeq
+				) {
+					// I'd like to remove wasMovedOnInsert and use comparison between segment.seq and segment.movedSeq
+					// (or their local counterparts for local edits) to determine if the segment was moved on insert.
+					// This currently doesn't get hit if I move the properties tracking wasMovedOnInsert, but that causes
+					// issues in the current partial lengths code.
+					throw new Error("TODO: Enforce this is impossible in the future");
+				}
 				assert(
 					moveInfo.movedSeq !== -1,
 					0x871 /* wasMovedOnInsert should only be set on acked obliterates */,
 				);
-				segmentLen = 0;
+				lenDelta = 0;
 			} else {
-				segmentLen = -segmentLen;
+				lenDelta = -segment.cachedLength;
 			}
 
 			const hasOverlap = moveInfo.movedClientIds.length > 1;
 			moveClientOverlap = hasOverlap ? moveInfo.movedClientIds : undefined;
-		} // BUG BUG: something fishy here around how/when move info is passed or not
-		// this condition only hits if it is not passed, so we can't rely on the passed move info
-		// and need to inspect the segment directly. maybe related to AB#15630.
-		else if (toMoveInfo(segment)?.wasMovedOnInsert) {
-			// if this segment was obliterated on insert, its length is only
-			// visible to the client that inserted it
-			segmentLen = 0;
-			remoteObliteratedLen = segment.cachedLength;
 		}
 
 		const partials = isLocal
@@ -734,7 +772,7 @@ export class PartialSequenceLengths {
 				segment,
 				0,
 				-segment.cachedLength,
-				segmentLen,
+				lenDelta,
 				partials,
 				moveInfo.movedSeq,
 				moveClientId,
@@ -757,7 +795,7 @@ export class PartialSequenceLengths {
 				segment,
 				0,
 				-segment.cachedLength,
-				segmentLen,
+				lenDelta,
 				partials,
 				removeSeqOrLocalSeq,
 				removeClientId,
@@ -768,8 +806,8 @@ export class PartialSequenceLengths {
 
 		PartialSequenceLengths.updatePartialsAfterInsertion(
 			segment,
-			segmentLen,
-			remoteObliteratedLen,
+			lenDelta,
+			undefined /* remoteObliteratedLen */,
 			undefined,
 			partials,
 			seqOrLocalSeq,
@@ -793,7 +831,7 @@ export class PartialSequenceLengths {
 				localSeq,
 				clientId,
 				len: 0,
-				seglen: segmentLen,
+				seglen: lenDelta,
 			};
 			let localIndexFirstGTE = 0;
 			for (
