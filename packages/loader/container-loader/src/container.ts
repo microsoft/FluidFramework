@@ -128,6 +128,7 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
 import { IDetachedBlobStorage } from "./loader.js";
 import { RelativeLoader } from "./loader.js";
