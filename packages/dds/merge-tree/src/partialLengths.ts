@@ -268,6 +268,59 @@ export class PartialSequenceLengths {
 	};
 
 	/**
+	 * Length of the block this PartialSequenceLength corresponds to when viewed at `minSeq`.
+	 */
+	private minLength = 0;
+
+	/**
+	 * Total number of segments in the subtree rooted at the block this PartialSequenceLength corresponds to.
+	 */
+	private segmentCount = 0;
+
+	/**
+	 * List of PartialSequenceLength objects--ordered by increasing seq--giving length information about
+	 * the block associated with this PartialSequenceLengths object.
+	 *
+	 * `partialLengths[i].len` contains the length of this block considering only sequenced segments with
+	 * `sequenceNumber <= partialLengths[i].seq`.
+	 */
+	private readonly partialLengths: PartialSequenceLengthsSet = new PartialSequenceLengthsSet();
+
+	/**
+	 * clientSeqNumbers[clientId] is a list of partial lengths for sequenced ops which either:
+	 * - were submitted by `clientId`.
+	 * - deleted a range containing segments that were concurrently deleted by `clientId`
+	 *
+	 * The second case is referred to as the "overlapping delete" case. It is necessary to avoid double-counting
+	 * the removal of those segments in queries including clientId.
+	 */
+	private readonly clientSeqNumbers: PartialSequenceLengthsSet[] = [];
+
+	/**
+	 * Contains information required to answer queries for the length of this segment from the perspective of
+	 * the local client but not including all local segments (i.e., `localSeq !== collabWindow.localSeq`).
+	 * This field is only computed if requested in the constructor (i.e. `computeLocalPartials === true`).
+	 */
+	private unsequencedRecords: UnsequencedPartialLengthInfo | undefined;
+
+	constructor(
+		/**
+		 * The minimumSequenceNumber as defined by the collab window used in the last call to `update`,
+		 * or if no such calls have been made, the one used on construction.
+		 */
+		public minSeq: number,
+		computeLocalPartials: boolean,
+	) {
+		if (computeLocalPartials) {
+			this.unsequencedRecords = {
+				partialLengths: new PartialSequenceLengthsSet(),
+				overlappingRemoves: [],
+				cachedOverlappingByRefSeq: new Map(),
+			};
+		}
+	}
+
+	/**
 	 * Combine the partial lengths of block's children
 	 * @param block - an interior node. If `recur` is false, it is assumed that each interior node child of this block
 	 * has its partials up to date.
@@ -895,59 +948,6 @@ export class PartialSequenceLengths {
 			seqPartialLen.seglen = seqSeglen;
 			seqPartialLen.len = len;
 			// Assert client id matches
-		}
-	}
-
-	/**
-	 * Length of the block this PartialSequenceLength corresponds to when viewed at `minSeq`.
-	 */
-	private minLength = 0;
-
-	/**
-	 * Total number of segments in the subtree rooted at the block this PartialSequenceLength corresponds to.
-	 */
-	private segmentCount = 0;
-
-	/**
-	 * List of PartialSequenceLength objects--ordered by increasing seq--giving length information about
-	 * the block associated with this PartialSequenceLengths object.
-	 *
-	 * `partialLengths[i].len` contains the length of this block considering only sequenced segments with
-	 * `sequenceNumber <= partialLengths[i].seq`.
-	 */
-	private readonly partialLengths: PartialSequenceLengthsSet = new PartialSequenceLengthsSet();
-
-	/**
-	 * clientSeqNumbers[clientId] is a list of partial lengths for sequenced ops which either:
-	 * - were submitted by `clientId`.
-	 * - deleted a range containing segments that were concurrently deleted by `clientId`
-	 *
-	 * The second case is referred to as the "overlapping delete" case. It is necessary to avoid double-counting
-	 * the removal of those segments in queries including clientId.
-	 */
-	private readonly clientSeqNumbers: PartialSequenceLengthsSet[] = [];
-
-	/**
-	 * Contains information required to answer queries for the length of this segment from the perspective of
-	 * the local client but not including all local segments (i.e., `localSeq !== collabWindow.localSeq`).
-	 * This field is only computed if requested in the constructor (i.e. `computeLocalPartials === true`).
-	 */
-	private unsequencedRecords: UnsequencedPartialLengthInfo | undefined;
-
-	constructor(
-		/**
-		 * The minimumSequenceNumber as defined by the collab window used in the last call to `update`,
-		 * or if no such calls have been made, the one used on construction.
-		 */
-		public minSeq: number,
-		computeLocalPartials: boolean,
-	) {
-		if (computeLocalPartials) {
-			this.unsequencedRecords = {
-				partialLengths: new PartialSequenceLengthsSet(),
-				overlappingRemoves: [],
-				cachedOverlappingByRefSeq: new Map(),
-			};
 		}
 	}
 
