@@ -84,14 +84,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
 
 	/**
-	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
-	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
-	 */
-	public get editor(): TEditor {
-		return this.getLocalBranch().editor;
-	}
-
-	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
 	 *
 	 * @remarks Since there is currently only one format, this can just be cached on the class.
@@ -121,6 +113,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
 	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
+	 * @param editor - Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
 	public constructor(
 		public readonly breaker: Breakable,
@@ -137,6 +131,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
 		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
+		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
 	) {
 		this.schemaAndPolicy = {
 			schema,

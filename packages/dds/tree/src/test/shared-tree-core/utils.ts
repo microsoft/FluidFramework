@@ -102,6 +102,7 @@ function createTreeInner(
 	schema: TreeStoredSchemaRepository,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
+	editor?: () => DefaultEditBuilder,
 ): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
 	assert(runtime.idCompressor !== undefined, "The runtime must provide an ID compressor");
 
@@ -130,6 +131,7 @@ function createTreeInner(
 			defaultSchemaPolicy,
 			resubmitMachine,
 			enricher,
+			editor,
 		),
 		changeFamily,
 	];
@@ -175,6 +177,7 @@ export class TestSharedTreeCore extends SharedObject {
 			schema,
 			resubmitMachine,
 			enricher,
+			() => this.transaction.activeBranchEditor,
 		);
 
 		this.transaction = new SquashingTransactionStack(
@@ -250,6 +253,6 @@ export class TestSharedTreeCore extends SharedObject {
 	}
 
 	public get editor(): DefaultEditBuilder {
-		return this.transaction.activeBranchEditor;
+		return this.kernel.getEditor();
 	}
 }

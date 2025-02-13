@@ -248,7 +248,7 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 	}
 
 	public get editor(): SharedTreeEditBuilder {
-		return this.kernel.editor;
+		return this.kernel.getEditor();
 	}
 
 	public summarizeCore(

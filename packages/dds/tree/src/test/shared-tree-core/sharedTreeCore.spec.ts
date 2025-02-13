@@ -646,7 +646,7 @@ describe("SharedTreeCore", () => {
 function changeTree<TChange, TEditor extends DefaultEditBuilder>(
 	tree: SharedTreeCore<TEditor, TChange>,
 ): void {
-	const field = tree.editor.sequenceField({ parent: undefined, field: rootFieldKey });
+	const field = tree.getEditor().sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, cursorForJsonableTreeNode({ type: brand("Node"), value: 42 }));
 }
 
