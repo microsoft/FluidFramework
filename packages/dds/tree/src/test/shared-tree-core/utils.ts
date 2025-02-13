@@ -252,6 +252,12 @@ export class TestSharedTreeCore extends SharedObject {
 		return this.kernel.getLocalBranch();
 	}
 
+	protected override reSubmitCore(
+		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["reSubmitCore"]>
+	): void {
+		this.kernel.reSubmitCore(...args);
+	}
+
 	public get editor(): DefaultEditBuilder {
 		return this.kernel.getEditor();
 	}
