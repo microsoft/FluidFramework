@@ -193,16 +193,11 @@ export class AppData extends DataObject {
 			with: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		class Work extends builder.object("work-category", {
-			work: [builder.map([WorkItem]), builder.array(WorkItem)],
-		}) {}
-
-		class Personal extends builder.object("personal-category", {
-			personal: [builder.map([PersonalItem]), builder.array(PersonalItem)],
-		}) {}
-
 		class TodoWorkspace extends builder.object("todo-workspace", {
-			categories: [Work, Personal],
+			categories: builder.object("todo-categories", {
+				work: [builder.map([WorkItem]), builder.array(WorkItem)],
+				personal: [builder.map([PersonalItem]), builder.array(PersonalItem)],
+			}),
 		}) {}
 
 		const config = new TreeViewConfiguration({
@@ -210,43 +205,45 @@ export class AppData extends DataObject {
 		});
 
 		const view = sharedTree.viewWith(config);
-		view.initialize({
-			categories: {
-				work: [
-					{
-						title: "Submit a PR",
-						completed: false,
-						dueDate: "2026-01-01",
-						assignee: "Alice",
-						collaborators: ["Bob, Charlie"],
-					},
-					{
-						title: "Review a PR",
-						completed: true,
-						dueDate: "2025-01-01",
-						assignee: "David",
-					},
-				],
-				personal: new Map([
-					[
-						"Health",
+		view.initialize(
+			new TodoWorkspace({
+				categories: {
+					work: [
 						{
-							title: "Go to the gym",
-							completed: true,
-							dueDate: "2025-01-01",
-							with: ["Wayne", "Tyler"],
-						},
-					],
-					[
-						"Education",
-						{
-							title: "Finish reading the book",
+							title: "Submit a PR",
 							completed: false,
 							dueDate: "2026-01-01",
+							assignee: "Alice",
+							collaborators: ["Bob", "Charlie"],
+						},
+						{
+							title: "Review a PR",
+							completed: true,
+							dueDate: "2025-01-01",
+							assignee: "David",
 						},
 					],
-				]),
-			},
-		});
+					personal: new Map([
+						[
+							"Health",
+							{
+								title: "Go to the gym",
+								completed: true,
+								dueDate: "2025-01-01",
+								with: ["Wayne", "Tyler"],
+							},
+						],
+						[
+							"Education",
+							{
+								title: "Finish reading the book",
+								completed: false,
+								dueDate: "2026-01-01",
+							},
+						],
+					]),
+				},
+			}),
+		);
 	}
 }
