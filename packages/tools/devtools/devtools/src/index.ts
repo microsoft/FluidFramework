@@ -21,12 +21,17 @@
  * @packageDocumentation
  */
 
-import type { IDisposable, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	IDisposable,
+	IFluidLoadable,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
 	type HasContainerKey,
 	type IFluidDevtools as IDevtoolsBase,
 	type IDevtoolsLogger,
+	type IFluidDevtools,
 	initializeDevtools as initializeDevtoolsBase,
 } from "@fluidframework/devtools-core/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
@@ -185,6 +190,17 @@ function mapContainerProps(
 		containerKey,
 		containerData: container.initialObjects as Record<string, IFluidLoadable>,
 	};
+}
+
+/**
+ * Attempts to retrieve the global Fluid Devtools instance, initializing it if it's not exists.
+ * @beta
+ */
+export function tryGetIFluidDevtools(logger?: ITelemetryBaseLogger): IFluidDevtools {
+	if (globalThis.IFluidDevtools === undefined) {
+		globalThis.IFluidDevtools = initializeDevtools({ logger });
+	}
+	return globalThis.IFluidDevtools;
 }
 
 // Convenience re-exports. Need to cover the things we export form this package,
