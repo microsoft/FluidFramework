@@ -94,11 +94,7 @@ const getOrCreatePresenceContainer = async (
 		containerId = id;
 		({ container, services } = await client.getContainer(containerId, schema, "2"));
 	}
-	/**
-	 * Fluid container should be connected here as the creating client connects to a container when it calls the container's attach method.
-	 * A subsequent client connects to the attached container by calling the client's getContainer method.
-	 * See {@link https://fluidframework.com/docs/build/containers#connecting-to-a-container}
-	 */
+	// wait for 'ConnectionState.Connected' so we return with client connected to container
 	if (container.connectionState !== ConnectionState.Connected) {
 		await timeoutPromise((resolve) => container.once("connected", () => resolve()), {
 			durationMs: connectTimeoutMs,

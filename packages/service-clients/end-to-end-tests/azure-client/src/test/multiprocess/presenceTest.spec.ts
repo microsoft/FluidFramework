@@ -57,8 +57,8 @@ describe(`Presence with AzureClient`, () => {
 			const user = { id: `test-user-id-${index}`, name: `test-user-name-${index}` };
 			const message: MessageToChild = { command: "connect", user };
 
-			if (index === 0) {
-				// For the first child, create a promise that resolves with the containerId from the created container.
+			if (containerIdPromise === undefined) {
+				// Create a promise that resolves with the containerId from the created container.
 				containerIdPromise = timeoutPromise<string>(
 					(resolve, reject) => {
 						child.once("message", (msg: MessageFromChild) => {
@@ -75,7 +75,7 @@ describe(`Presence with AzureClient`, () => {
 						errorMsg: "did not receive 'ready' from child process",
 					},
 				);
-			} else if (containerIdPromise !== undefined) {
+			} else {
 				// For subsequent children, wait for containerId from the promise only when needed.
 				message.containerId = await containerIdPromise;
 			}
@@ -84,18 +84,6 @@ describe(`Presence with AzureClient`, () => {
 		}
 		return containerCreatorSessionId;
 	}
-
-	// After each test, kill each child process and call any cleanup functions that were registered
-	afterEach(async () => {
-		for (const child of children) {
-			child.kill();
-		}
-		children = [];
-		for (const cleanUp of afterCleanUp) {
-			cleanUp();
-		}
-		afterCleanUp.length = 0;
-	});
 
 	beforeEach("setup", async () => {
 		// Collect all child process error promises into this array
@@ -117,6 +105,18 @@ describe(`Presence with AzureClient`, () => {
 		}
 		// This race will be used to reject any of the following tests on any child process errors
 		childErrorPromise = Promise.race(childErrorPromises);
+	});
+
+	// After each test, kill each child process and call any cleanup functions that were registered
+	afterEach(async () => {
+		for (const child of children) {
+			child.kill();
+		}
+		children = [];
+		for (const cleanUp of afterCleanUp) {
+			cleanUp();
+		}
+		afterCleanUp.length = 0;
 	});
 
 	it("announces 'attendeeJoined' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
