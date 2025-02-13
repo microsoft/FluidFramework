@@ -406,6 +406,40 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.equal(redoStack.length, 1);
 	});
 
+	const schemaFactory = new SchemaFactory(undefined);
+	class ChildObject extends schemaFactory.object("ChildObject", {
+		content: schemaFactory.number,
+	}) {}
+	class TestObject extends schemaFactory.object("TestObject", {
+		content: schemaFactory.number,
+		child: schemaFactory.optional(ChildObject),
+	}) {}
+
+	function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
+		const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+		view.initialize({
+			content: 42,
+			child,
+		});
+		return view;
+	}
+
+	it("breaks on error", () => {
+		const view = getTestObjectView();
+		const node = view.root;
+		assert.throws(() => view.breaker.break(new Error("Oh no")));
+
+		assert.throws(() => view.root, validateUsageError(/Oh no/));
+
+		// Ideally this would error, but thats not too important: reads are less dangerous.
+		// assert.throws(() => node.content, validateUsageError(/Oh no/));
+
+		// Its important that editing errors when we might be in an invalid state.
+		assert.throws(() => {
+			node.content = 5;
+		}, validateUsageError(/Oh no/));
+	});
+
 	describe("events", () => {
 		it("schemaChanged", () => {
 			const content = {
@@ -474,24 +508,6 @@ describe("SchematizingSimpleTreeView", () => {
 	});
 
 	describe("runTransaction", () => {
-		const schemaFactory = new SchemaFactory(undefined);
-		class ChildObject extends schemaFactory.object("ChildObject", {
-			content: schemaFactory.number,
-		}) {}
-		class TestObject extends schemaFactory.object("TestObject", {
-			content: schemaFactory.number,
-			child: schemaFactory.optional(ChildObject),
-		}) {}
-
-		function getTestObjectView(child?: InsertableTypedNode<typeof ChildObject>) {
-			const view = getView(new TreeViewConfiguration({ schema: TestObject }));
-			view.initialize({
-				content: 42,
-				child,
-			});
-			return view;
-		}
-
 		describe("transaction callback return values", () => {
 			it("implicit success", () => {
 				const view = getTestObjectView();
@@ -647,6 +663,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("breaks the view on error", () => {
 				const view = getTestObjectView();
+				const node = view.root;
 				assert.throws(
 					() =>
 						view.runTransaction(() => {
@@ -657,7 +674,7 @@ describe("SchematizingSimpleTreeView", () => {
 						return e instanceof Error && e.message === "Oh no";
 					},
 				);
-				assert.throws(() => view.root.content, "View should be broken");
+				assert.throws(() => view.root, validateUsageError(/Oh no/));
 			});
 
 			it("undoes and redoes entire transaction", () => {
