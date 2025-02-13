@@ -78,10 +78,14 @@ variables:
   - name: pnpmStorePath
     value: $(Pipeline.Workspace)/.pnpm-store
 
-trigger:
-  branches:
-    include:
-    - release/client/*
+resources:
+  pipelines:
+  - pipeline: client
+    source: Build - client packages
+    trigger:
+      branches:
+        include:
+        - release/client/*
 pr: none
 
 stages:
