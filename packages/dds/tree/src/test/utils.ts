@@ -160,7 +160,13 @@ import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
-import { configuredSharedTree, TreeFactory } from "../treeFactory.js";
+import { configuredSharedTree, configuredSharedTreeOptions } from "../treeFactory.js";
+import {
+	makeChannelFactory,
+	type ISharedObject,
+	type KernelArgs,
+	type SharedObjectOptions,
+} from "@fluidframework/shared-object-base/internal";
 
 // Testing utilities
 
@@ -204,11 +210,11 @@ export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
 
 	private readonly provider: ITestObjectProvider;
-	private readonly _trees: SharedTree[] = [];
+	private readonly _trees: (SharedTree & ISharedObject)[] = [];
 	private readonly _containers: IContainer[] = [];
 	private readonly summarizer?: ISummarizer;
 
-	public get trees(): readonly SharedTree[] {
+	public get trees(): readonly (SharedTree & ISharedObject)[] {
 		return this._trees;
 	}
 
@@ -265,7 +271,9 @@ export class TestTreeProvider {
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
 			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			const firstTree = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
+			const firstTree = await dataObject.getSharedObject<SharedTree & ISharedObject>(
+				TestTreeProvider.treeId,
+			);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
@@ -290,7 +298,7 @@ export class TestTreeProvider {
 	 * @returns the tree that was created. For convenience, the tree can also be accessed via `this[i]` where
 	 * _i_ is the index of the tree in order of creation.
 	 */
-	public async createTree(): Promise<SharedTree> {
+	public async createTree(): Promise<SharedTree & ISharedObject> {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
@@ -308,9 +316,9 @@ export class TestTreeProvider {
 
 		this._containers.push(container);
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		return (this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(
-			TestTreeProvider.treeId,
-		));
+		return (this._trees[this.trees.length] = await dataObject.getSharedObject<
+			SharedTree & ISharedObject
+		>(TestTreeProvider.treeId));
 	}
 
 	/**
@@ -333,7 +341,7 @@ export class TestTreeProvider {
 
 	private constructor(
 		provider: ITestObjectProvider,
-		firstTreeParams?: [IContainer, SharedTree, ISummarizer],
+		firstTreeParams?: [IContainer, SharedTree & ISharedObject, ISummarizer],
 	) {
 		this.provider = provider;
 		if (firstTreeParams !== undefined) {
@@ -360,7 +368,9 @@ export interface ConnectionSetter {
 	readonly setConnected: (connectionState: boolean) => void;
 }
 
-export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
+export type SharedTreeWithConnectionStateSetter = SharedTree &
+	ConnectionSetter &
+	ISharedObject;
 
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
@@ -387,7 +397,9 @@ export class TestTreeProviderLite {
 	 */
 	public constructor(
 		trees = 1,
-		private readonly factory = new TreeFactory({ jsonValidator: typeboxValidator }),
+		private readonly factory = configuredSharedTree({
+			jsonValidator: typeboxValidator,
+		}).getFactory(),
 		useDeterministicSessionIds = true,
 	) {
 		assert(trees >= 1, "Must initialize provider with at least one tree");
@@ -516,7 +528,11 @@ export function assertDeltaEqual(a: DeltaRoot, b: DeltaRoot): void {
 /**
  * A test helper that allows custom code to be injected when a tree is created/loaded.
  */
-export class SharedTreeTestFactory extends TreeFactory {
+export class SharedTreeTestFactory extends makeChannelFactory<SharedTree>(
+	configuredSharedTreeOptions({
+		jsonValidator: typeboxValidator,
+	}) as SharedObjectOptions<SharedTree>,
+) {
 	/**
 	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
@@ -524,9 +540,8 @@ export class SharedTreeTestFactory extends TreeFactory {
 	public constructor(
 		protected readonly onCreate: (tree: SharedTree) => void,
 		protected readonly onLoad?: (tree: SharedTree) => void,
-		options: SharedTreeOptionsInternal = {},
 	) {
-		super({ ...options, jsonValidator: typeboxValidator });
+		super();
 	}
 
 	public override async load(
@@ -568,7 +583,10 @@ export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]
  * This does NOT check that the trees have the same edits, same edit manager state or anything like that.
  * This ONLY checks if the content of the forest of the main branch of the trees match.
  */
-export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+export function validateTreeConsistency(
+	treeA: ISharedTree & { id?: string },
+	treeB: ISharedTree & { id?: string },
+): void {
 	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
 	validateSnapshotConsistency(
 		treeA.contentSnapshot(),
@@ -1161,17 +1179,22 @@ export function treeTestFactory(
 	} = {},
 ): SharedTree {
 	return new SharedTree(
-		options.id ?? "tree",
-		options.runtime ??
-			new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(testSessionId),
-				clientId: "test-client",
-				id: "test",
-			}),
-		options.attributes ?? new TreeFactory({}).attributes,
+		testKernelArgs(options),
 		options.options ?? { jsonValidator: typeboxValidator },
-		options.telemetryContextPrefix,
 	);
+}
+
+function testKernelArgs(options: {
+	id?: string;
+}): KernelArgs {
+	return {
+		idCompressor: createIdCompressor(testSessionId),
+		eventEmitter: new EventEmitter(),
+		logger: createMockLoggerExt(),
+		handle,
+		handleContext: { getAbsoluteUrl: () => "" },
+		id: options.id ?? "tree",
+	};
 }
 
 /**

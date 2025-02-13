@@ -9,6 +9,7 @@ import {
 	makeSharedObjectKind,
 	type KernelArgs,
 	type SharedKernelFactory,
+	type SharedObjectOptions,
 } from "@fluidframework/shared-object-base/internal";
 
 import {
@@ -73,10 +74,16 @@ export const SharedTree = configuredSharedTree({});
 export function configuredSharedTree(
 	options: SharedTreeOptions,
 ): ISharedObjectKind<ITree> & SharedObjectKind<ITree> {
-	return makeSharedObjectKind<ITree>({
+	return makeSharedObjectKind<ITree>(configuredSharedTreeOptions(options));
+}
+
+export function configuredSharedTreeOptions(
+	options: SharedTreeOptions,
+): SharedObjectOptions<ITree> {
+	return {
 		type: SharedTreeFactoryType,
 		attributes: SharedTreeAttributes,
 		telemetryContextPrefix: "fluid_sharedTree_",
 		factory: treeKernelFactory(options),
-	});
+	};
 }
