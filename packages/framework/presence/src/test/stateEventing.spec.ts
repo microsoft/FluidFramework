@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers } from "sinon";
+import { useFakeTimers, spy } from "sinon";
 
-import type { ISessionClient, LatestValueData } from "../index.js";
+import type { ISessionClient } from "../index.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
@@ -80,9 +80,47 @@ describe("ValueManager eventing", () => {
 	let latest: LatestValueManager<{ x: number; y: number; z: number }>;
 	let latestMap: LatestMapValueManager<{ a: number; b: number } | { c: number; d: number }>;
 	let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
+
+	function verifyFinalState(attendee: ISessionClient): void {
+		// Verify attendee state
+		assert.ok(attendee, "Eventing does not reflect new attendee");
+		assert.strictEqual(
+			attendee.sessionId,
+			"sessionId-1",
+			"Eventing does not reflect new attendee's sessionId",
+		);
+		assert.strictEqual(
+			attendee.getConnectionId(),
+			"client1",
+			"Eventing does not reflect new attendee's connection id",
+		);
+
+		// Verify latest value state
+		const latestValue = latest.clientValue(attendee).value;
+		assert.deepEqual(
+			latestValue,
+			{ x: 1, y: 1, z: 1 },
+			"Eventing does not reflect latest value",
+		);
+
+		// Verify latest map state
+		const latestMapValue = latestMap.clientValue(attendee);
+		assert.deepEqual(
+			latestMapValue.get("key1")?.value,
+			{ a: 1, b: 1 },
+			"Eventing does not reflect latest map value",
+		);
+		assert.deepEqual(
+			latestMapValue.get("key2")?.value,
+			{ c: 1, d: 1 },
+			"Eventing does not reflect latest map value",
+		);
+	}
+
 	before(() => {
 		clock = useFakeTimers();
 	});
+
 	beforeEach(() => {
 		logger = new EventAndErrorTrackingLogger();
 		runtime = new MockEphemeralRuntime(logger);
@@ -92,10 +130,7 @@ describe("ValueManager eventing", () => {
 			latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
 		});
 		const notifications = presence.getNotifications("name:testWorkspace", {
-			testEvents: Notifications<// Below explicit generic specification should not be required.
-			{
-				newId: (id: number) => void;
-			}>({
+			testEvents: Notifications<{ newId: (id: number) => void }>({
 				newId: (_client: ISessionClient, _id: number) => {},
 			}),
 		});
@@ -103,10 +138,9 @@ describe("ValueManager eventing", () => {
 		latestMap = states.props.latestMap;
 		notificationManager = notifications.props.testEvents;
 	});
+
 	afterEach(function (done: Mocha.Done) {
 		clock.reset();
-
-		// If the test passed so far, check final expectations.
 		if (this.currentTest?.state === "passed") {
 			assertFinalExpectations(runtime, logger);
 		}
@@ -117,314 +151,108 @@ describe("ValueManager eventing", () => {
 		clock.restore();
 	});
 
-	/**
-	 * Each of these tests will have multiple attendee/valuemanager updates in one datastore update message.
-	 * The idea here is to make sure every event triggered by the datastore message has consistent state.
-	 * This is done checking that every update within the message is reflected in every event, no matter the order.
-	 */
-	it("is consistent with attendee + latest value manager updates", async () => {
-		// Setup - Create promises that resolve when each event fires.
-		const latestPromise = new Promise<{
-			latestValue: { x: number; y: number; z: number };
-			attendee: ISessionClient;
-		}>((resolve) => {
-			latest.events.on("updated", (value) => {
-				const newAttendee = presence.getAttendee("client1");
-				resolve({ latestValue: value.value, attendee: newAttendee });
-			});
-		});
-		const attendeePromise = new Promise<{
-			latestValue: { x: number; y: number; z: number };
-			attendee: ISessionClient;
-		}>((resolve) => {
-			presence.events.on("attendeeJoined", (newAttendee) => {
-				const newLatestValue = latest.clientValue(newAttendee).value;
-				resolve({ latestValue: newLatestValue, attendee: newAttendee });
-			});
-		});
+	type UpdateContent =
+		| typeof attendeeUpdate
+		| (typeof latestUpdate & typeof latestMapUpdate)
+		| typeof notificationsUpdate;
 
-		// ACT - Process datastore update signal message
-		presence.processSignal(
-			"",
-			{
-				type: datastoreUpdateType,
-				content: {
-					sendTimestamp: clock.now - 10,
-					avgLatency: 20,
-					data: {
-						"system:presence": attendeeUpdate,
-						"s:name:testWorkspace": latestUpdate,
+	const createUpdatePermutation = (order: string[]): Record<string, UpdateContent> => {
+		const updates: Record<string, UpdateContent> = {
+			"system:presence": attendeeUpdate,
+		};
+
+		for (const key of order) {
+			switch (key) {
+				case "latest": {
+					const existingUpdates = updates["s:name:testWorkspace"] ?? {};
+					updates["s:name:testWorkspace"] = {
+						...existingUpdates,
+						...latestUpdate,
+					};
+					break;
+				}
+				case "latestMap": {
+					const existingUpdates = updates["s:name:testWorkspace"] ?? {};
+					updates["s:name:testWorkspace"] = {
+						...existingUpdates,
+						...latestMapUpdate,
+					};
+					break;
+				}
+				case "notifications": {
+					updates["n:name:testWorkspace"] = notificationsUpdate;
+					break;
+				}
+				default: {
+					break;
+				}
+			}
+		}
+
+		return updates;
+	};
+
+	function testPermutation(permutation: string[]): void {
+		it(`handles update order: ${permutation.join(" -> ")}`, async () => {
+			const latestSpy = spy(() => {
+				const attendee = presence.getAttendee("client1");
+				verifyFinalState(attendee);
+			});
+
+			const latestMapSpy = spy(() => {
+				const attendee = presence.getAttendee("client1");
+				verifyFinalState(attendee);
+			});
+
+			const notificationsSpy = spy(() => {
+				const attendee = presence.getAttendee("client1");
+				verifyFinalState(attendee);
+			});
+
+			const attendeeSpy = spy((attendee: ISessionClient) => {
+				verifyFinalState(attendee);
+			});
+
+			latest.events.on("updated", latestSpy);
+			latestMap.events.on("updated", latestMapSpy);
+			notificationManager.notifications.on("newId", notificationsSpy);
+			presence.events.on("attendeeJoined", attendeeSpy);
+
+			presence.processSignal(
+				"",
+				{
+					type: datastoreUpdateType,
+					content: {
+						sendTimestamp: clock.now - 10,
+						avgLatency: 20,
+						data: createUpdatePermutation(permutation),
 					},
+					clientId: "client1",
 				},
-				clientId: "client1",
-			},
-			false,
-		);
+				false,
+			);
 
-		// Wait for whichever event fires first.
-		const { latestValue, attendee } = await Promise.race([latestPromise, attendeePromise]);
-		// Verify - Immediately verify consistency on the first event.
-		assert.deepEqual(
-			latestValue,
-			{ x: 1, y: 1, z: 1 },
-			"Eventing does not reflect latest value",
-		);
-		assert.ok(attendee, "Eventing does not reflect new attendee");
-		assert.strictEqual(
-			attendee.sessionId,
-			"sessionId-1",
-			"Eventing does not reflect new attendee's sessionId",
-		);
-		assert.strictEqual(
-			attendee.getConnectionId(),
-			"client1",
-			"Eventing does not reflect new attendee's connection id",
-		);
-		// Wait for both events to eventually fire.
-		await Promise.all([latestPromise, attendeePromise]);
-	});
-
-	it("is consistent with attendee + latest map value manager updates", async () => {
-		// Setup - Create promises that resolve when each event fires.
-		const latestMapPromise = new Promise<{
-			latestMapValue: ReadonlyMap<
-				string | number,
-				LatestValueData<{ a: number; b: number } | { c: number; d: number }>
-			>;
-			attendee: ISessionClient;
-		}>((resolve) => {
-			latestMap.events.on("updated", (updatedMap) => {
-				const newAttendee = presence.getAttendee("client1");
-				resolve({ latestMapValue: updatedMap.items, attendee: newAttendee });
-			});
+			// Verify each spy was called exactly once
+			assert(attendeeSpy.calledOnce, "attendeeJoined event should fire exactly once");
+			if (permutation.includes("latest")) {
+				assert(latestSpy.calledOnce, "latest update event should fire exactly once");
+			}
+			if (permutation.includes("latestMap")) {
+				assert(latestMapSpy.calledOnce, "latestMap update event should fire exactly once");
+			}
+			if (permutation.includes("notifications")) {
+				assert(notificationsSpy.calledOnce, "notifications event should fire exactly once");
+			}
 		});
-		const attendeePromise = new Promise<{
-			latestMapValue: ReadonlyMap<
-				string | number,
-				LatestValueData<{ a: number; b: number } | { c: number; d: number }>
-			>;
-			attendee: ISessionClient;
-		}>((resolve) => {
-			presence.events.on("attendeeJoined", (newAttendee) => {
-				const newLatestMapValue = latestMap.clientValue(newAttendee);
-				resolve({ latestMapValue: newLatestMapValue, attendee: newAttendee });
-			});
-		});
+	}
 
-		// ACT - Process datastore update signal message
-		presence.processSignal(
-			"",
-			{
-				type: datastoreUpdateType,
-				content: {
-					sendTimestamp: clock.now - 10,
-					avgLatency: 20,
-					data: {
-						"system:presence": attendeeUpdate,
-						"s:name:testWorkspace": latestMapUpdate,
-					},
-				},
-				clientId: "client1",
-			},
-			false,
-		);
-
-		// Wait for whichever event fires first.
-		const { latestMapValue, attendee } = await Promise.race([
-			latestMapPromise,
-			attendeePromise,
-		]);
-		// Verify - Immediately verify consistency on the first event.
-		assert.deepEqual(
-			latestMapValue.get("key1")?.value,
-			{ a: 1, b: 1 },
-			"Eventing does not reflect latest map value",
-		);
-		assert.deepEqual(
-			latestMapValue.get("key2")?.value,
-			{ c: 1, d: 1 },
-			"Eventing does not reflect latest map value",
-		);
-		assert.ok(attendee, "Eventing does not reflect new attendee");
-		assert.strictEqual(
-			attendee.sessionId,
-			"sessionId-1",
-			"Eventing does not reflect new attendee's sessionId",
-		);
-		assert.strictEqual(
-			attendee.getConnectionId(),
-			"client1",
-			"Eventing does not reflect new attendee's connection id",
-		);
-		// Wait for both events to eventually fire.
-		await Promise.all([latestMapPromise, attendeePromise]);
-	});
-
-	it("is consistent with attendee + notifications manager updates", async () => {
-		// Setup - Create promises that resolve when each event fires.
-		const notificationPromise = new Promise<{
-			attendee: ISessionClient;
-		}>((resolve) => {
-			notificationManager.notifications.on("newId", (newAttendee, newId) => {
-				resolve({ attendee: newAttendee });
-			});
-		});
-		const attendeePromise = new Promise<{
-			attendee: ISessionClient;
-		}>((resolve) => {
-			presence.events.on("attendeeJoined", (newAttendee) => {
-				resolve({ attendee: newAttendee });
-			});
-		});
-
-		// ACT - Process datastore update signal message
-		presence.processSignal(
-			"",
-			{
-				type: datastoreUpdateType,
-				content: {
-					sendTimestamp: clock.now - 10,
-					avgLatency: 20,
-					data: {
-						"system:presence": attendeeUpdate,
-						"n:name:testWorkspace": notificationsUpdate,
-					},
-				},
-				clientId: "client1",
-			},
-			false,
-		);
-
-		// Wait for whichever event fires first.
-		const { attendee } = await Promise.race([notificationPromise, attendeePromise]);
-		// Verify - Immediately verify consistency on the first event.
-		assert.ok(attendee, "Eventing does not reflect new attendee");
-		assert.strictEqual(
-			attendee.sessionId,
-			"sessionId-1",
-			"Eventing does not reflect new attendee's sessionId",
-		);
-		assert.strictEqual(
-			attendee.getConnectionId(),
-			"client1",
-			"Eventing does not reflect new attendee's connection id",
-		);
-		// Wait for both events to eventually fire.
-		await Promise.all([notificationPromise, attendeePromise]);
-	});
-
-	it("is consistent with attendee + latest value manager + latest map value manager updates", async () => {
-		// Setup - Create promises that resolve when each event fires.
-		const latestMapPromise = new Promise<{
-			latestValue: { x: number; y: number; z: number };
-			latestMapValue: ReadonlyMap<
-				string | number,
-				LatestValueData<{ a: number; b: number } | { c: number; d: number }>
-			>;
-			attendee: ISessionClient;
-		}>((resolve) => {
-			latestMap.events.on("updated", (updatedMap) => {
-				const newAttendee = presence.getAttendee("client1");
-				const newLatestValue = latest.clientValue(newAttendee).value;
-				resolve({
-					latestValue: newLatestValue,
-					latestMapValue: updatedMap.items,
-					attendee: newAttendee,
-				});
-			});
-		});
-		const attendeePromise = new Promise<{
-			latestValue: { x: number; y: number; z: number };
-			latestMapValue: ReadonlyMap<
-				string | number,
-				LatestValueData<{ a: number; b: number } | { c: number; d: number }>
-			>;
-			attendee: ISessionClient;
-		}>((resolve) => {
-			presence.events.on("attendeeJoined", (newAttendee) => {
-				const newLatestMapValue = latestMap.clientValue(newAttendee);
-				const newLatestValue = latest.clientValue(newAttendee).value;
-				resolve({
-					latestValue: newLatestValue,
-					latestMapValue: newLatestMapValue,
-					attendee: newAttendee,
-				});
-			});
-		});
-		const latestPromise = new Promise<{
-			latestValue: { x: number; y: number; z: number };
-			latestMapValue: ReadonlyMap<
-				string | number,
-				LatestValueData<{ a: number; b: number } | { c: number; d: number }>
-			>;
-			attendee: ISessionClient;
-		}>((resolve) => {
-			latest.events.on("updated", (value) => {
-				const newAttendee = presence.getAttendee("client1");
-				const newLatestMapValue = latestMap.clientValue(newAttendee);
-				resolve({
-					latestValue: value.value,
-					latestMapValue: newLatestMapValue,
-					attendee: newAttendee,
-				});
-			});
-		});
-
-		// ACT - Process datastore update signal message
-		presence.processSignal(
-			"",
-			{
-				type: datastoreUpdateType,
-				content: {
-					sendTimestamp: clock.now - 10,
-					avgLatency: 20,
-					data: {
-						"system:presence": attendeeUpdate,
-						"s:name:testWorkspace": {
-							...latestUpdate,
-							...latestMapUpdate,
-						},
-					},
-				},
-				clientId: "client1",
-			},
-			false,
-		);
-
-		// Wait for whichever event fires first.
-		const { latestValue, latestMapValue, attendee } = await Promise.race([
-			latestPromise,
-			latestMapPromise,
-			attendeePromise,
-		]);
-		// Verify - Immediately verify consistency on the first event.
-		assert.deepEqual(
-			latestValue,
-			{ x: 1, y: 1, z: 1 },
-			"Eventing does not reflect latest value",
-		);
-		assert.deepEqual(
-			latestMapValue.get("key1")?.value,
-			{ a: 1, b: 1 },
-			"Eventing does not reflect latest map value",
-		);
-		assert.deepEqual(
-			latestMapValue.get("key2")?.value,
-			{ c: 1, d: 1 },
-			"Eventing does not reflect latest map value",
-		);
-		assert.ok(attendee, "Eventing does not reflect new attendee");
-		assert.strictEqual(
-			attendee.sessionId,
-			"sessionId-1",
-			"Eventing does not reflect new attendee's sessionId",
-		);
-		assert.strictEqual(
-			attendee.getConnectionId(),
-			"client1",
-			"Eventing does not reflect new attendee's connection id",
-		);
-		// Wait for both events to eventually fire.
-		await Promise.all([latestPromise, latestMapPromise, attendeePromise]);
-	});
+	// Test all possible permutations
+	testPermutation(["latest", "latestMap"]);
+	testPermutation(["latestMap", "latest"]);
+	testPermutation(["latest", "latestMap", "notifications"]);
+	testPermutation(["latest", "notifications", "latestMap"]);
+	testPermutation(["latestMap", "latest", "notifications"]);
+	testPermutation(["latestMap", "notifications", "latest"]);
+	testPermutation(["notifications", "latest", "latestMap"]);
+	testPermutation(["notifications", "latestMap", "latest"]);
 });
