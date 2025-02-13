@@ -787,7 +787,6 @@ export async function connectDocument(
 			room,
 			lambdaDependencies,
 		);
-
 		connectionTrace.stampStage(ConnectDocumentStage.SignalListenerSetUp);
 
 		const result = {
@@ -801,7 +800,6 @@ export async function connectDocument(
 			"signal",
 			createRoomJoinMessage(result.connection.clientId, result.details),
 		);
-
 		connectionTrace.stampStage(ConnectDocumentStage.JoinSignalEmitted);
 
 		connectMetric.setProperties({
