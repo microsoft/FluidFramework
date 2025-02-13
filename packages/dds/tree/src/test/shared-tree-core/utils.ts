@@ -8,7 +8,10 @@ import type {
 	IChannelStorageService,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockFluidDataStoreRuntime,
+	MockHandle,
+} from "@fluidframework/test-runtime-utils/internal";
 
 import type { ICodecOptions } from "../../codec/index.js";
 import {
@@ -49,9 +52,14 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandle,
+	IFluidLoadable,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import type { IChannelView } from "../../shared-tree/index.js";
 import { Breakable } from "../../util/index.js";
+import { mockSerializer } from "../mockSerializer.js";
 
 const codecOptions: ICodecOptions = {
 	jsonValidator: typeboxValidator,
@@ -63,16 +71,33 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
 	enricher?: ChangeEnricherReadonlyCheckout<DefaultChangeset>,
 ): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
-	// TODO: consider using createTreeInner directly and avoiding the need for a SharedObject
-	return new TestSharedTreeCore(
-		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-		undefined,
+	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
+
+	const handle = new MockHandle({});
+	const dummyChannel: IChannelView & IFluidLoadable = {
+		attributes: { snapshotFormatVersion: "", type: "", packageVersion: "" },
+		get handle(): IFluidHandle {
+			return handle;
+		},
+		get IFluidLoadable(): IChannelView & IFluidLoadable {
+			return this;
+		},
+		id: "createTree",
+		isAttached: () => false,
+	};
+	const logger: ITelemetryBaseLogger = { send() {} };
+	return createTreeInner(
+		dummyChannel,
+		mockSerializer,
+		() => {},
+		logger,
 		indexes,
-		undefined,
-		undefined,
+		TreeCompressionStrategy.Uncompressed,
+		new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+		new TreeStoredSchemaRepository(),
 		resubmitMachine,
 		enricher,
-	).kernel;
+	)[0];
 }
 
 export function createTreeSharedObject<TIndexes extends readonly Summarizable[]>(
