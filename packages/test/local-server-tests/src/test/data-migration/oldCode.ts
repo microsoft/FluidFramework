@@ -7,13 +7,10 @@ import { strict as assert } from "assert";
 
 import type { BuildNode, TraitLabel } from "@fluid-experimental/tree";
 import { SharedTree as LegacySharedTree, Change, StablePlace } from "@fluid-experimental/tree";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedDirectory, type IDirectory } from "@fluidframework/map/internal";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/test-utils/internal";
 
 import { runtimeOptions } from "./utils.js";
 

@@ -7,15 +7,13 @@ import { strict as assert } from "assert";
 
 import { SharedTree as LegacySharedTree } from "@fluid-experimental/tree";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
+import { DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
+	ContainerRuntimeFactoryWithDefaultDataStore,
 	TestObjectProvider,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";

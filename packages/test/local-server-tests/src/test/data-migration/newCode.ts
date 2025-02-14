@@ -5,13 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	DataObject,
-	DataObjectFactory,
-} from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/test-utils/internal";
 import { SchemaFactory } from "@fluidframework/tree";
 import {
 	ITree,
