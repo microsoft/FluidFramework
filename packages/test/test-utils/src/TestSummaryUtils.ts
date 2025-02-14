@@ -32,7 +32,7 @@ import { createTestConfigProvider } from "./TestConfigs.js";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
 import { waitForContainerConnection } from "./containerUtils.js";
 import {
-	type ContainerRuntimeFactoryConstructor,
+	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
@@ -121,7 +121,7 @@ export async function createSummarizerFromFactory(
 	container: IContainer,
 	dataStoreFactory: IFluidDataStoreFactory,
 	summaryVersion?: string,
-	containerRuntimeFactoryType?: ContainerRuntimeFactoryConstructor,
+	containerRuntimeFactoryType?: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),

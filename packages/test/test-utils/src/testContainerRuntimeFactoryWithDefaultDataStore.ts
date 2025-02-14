@@ -23,11 +23,11 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 };
 
 /**
- * {@link ContainerRuntimeFactoryConstructor} input properties.
+ * {@link ContainerRuntimeFactoryWithDefaultDataStoreConstructor} input properties.
  *
  * @internal
  */
-export interface ContainerRuntimeFactoryConstructorProps {
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	defaultFactory: IFluidDataStoreFactory;
 	registryEntries: NamedFluidDataStoreRegistryEntries;
 	dependencyContainer?: any;
@@ -42,8 +42,8 @@ export interface ContainerRuntimeFactoryConstructorProps {
  *
  * @internal
  */
-export type ContainerRuntimeFactoryConstructor = new (
-	props: ContainerRuntimeFactoryConstructorProps,
+export type ContainerRuntimeFactoryWithDefaultDataStoreConstructor = new (
+	props: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ) => IRuntimeFactory;
 
 /**
@@ -54,8 +54,8 @@ export type ContainerRuntimeFactoryConstructor = new (
  * @internal
  */
 export const createContainerRuntimeFactoryWithDefaultDataStore = (
-	ctor: ContainerRuntimeFactoryConstructor,
-	ctorProps: ContainerRuntimeFactoryConstructorProps,
+	ctor: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	ctorProps: ContainerRuntimeFactoryWithDefaultDataStoreProps,
 ): IRuntimeFactory => {
 	try {
 		return new ctor(ctorProps);

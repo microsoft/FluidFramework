@@ -61,7 +61,7 @@ export {
 	getDataStoreEntryPointBackCompat,
 } from "./containerUtils.js";
 export {
-	type ContainerRuntimeFactoryConstructor,
-	type ContainerRuntimeFactoryConstructorProps,
+	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
