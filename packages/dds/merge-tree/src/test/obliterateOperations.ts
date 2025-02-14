@@ -122,7 +122,7 @@ export const obliterateField: TestOperation = (
 			const insertOp = insertFieldText(client, startPos + 1, random);
 			assert(insertOp !== undefined, "Insert op should not be undefined");
 			// TODO: AB#31001: We should be able to sometimes use group ops here rather than submit two separate ops,
-			// but this causes failures which likely indicate there are bugs with the insersection of obliterate and grouped batching.
+			// but this causes failures which likely indicate there are bugs with the intersection of obliterate and grouped batching.
 			// const op = createGroupOp(obliterateOp, insertOp);
 			return [obliterateOp, insertOp];
 		} else {
