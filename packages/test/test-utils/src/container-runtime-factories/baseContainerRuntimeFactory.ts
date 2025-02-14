@@ -26,11 +26,6 @@ import type {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
-import {
-	DependencyContainer,
-	type IFluidDependencySynthesizer,
-	type IProvideFluidDependencySynthesizer,
-} from "@fluidframework/synthesize/internal";
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
@@ -41,26 +36,25 @@ export interface BaseContainerRuntimeFactoryProps {
 	/**
 	 * The data store registry for containers produced.
 	 */
-	registryEntries: NamedFluidDataStoreRegistryEntries;
-	/**
-	 * @deprecated Will be removed in a future release.
-	 */
-	dependencyContainer?: IFluidDependencySynthesizer;
+	readonly registryEntries: NamedFluidDataStoreRegistryEntries;
+
 	/**
 	 * Request handlers for containers produced.
 	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
 	 */
 	// eslint-disable-next-line import/no-deprecated
-	requestHandlers?: RuntimeRequestHandler[];
+	readonly requestHandlers?: readonly RuntimeRequestHandler[];
+
 	/**
 	 * The runtime options passed to the ContainerRuntime when instantiating it
 	 */
-	runtimeOptions?: IContainerRuntimeOptions;
+	readonly runtimeOptions?: IContainerRuntimeOptions;
+
 	/**
 	 * Function that will initialize the entryPoint of the ContainerRuntime instances
 	 * created with this factory
 	 */
-	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }
 
 /**
@@ -83,17 +77,15 @@ export class BaseContainerRuntimeFactory
 	private readonly registry: IFluidDataStoreRegistry;
 
 	private readonly registryEntries: NamedFluidDataStoreRegistryEntries;
-	private readonly dependencyContainer?: IFluidDependencySynthesizer;
 	private readonly runtimeOptions?: IContainerRuntimeOptions;
 	// eslint-disable-next-line import/no-deprecated
-	private readonly requestHandlers: RuntimeRequestHandler[];
+	private readonly requestHandlers: readonly RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
 
 		this.registryEntries = props.registryEntries;
-		this.dependencyContainer = props.dependencyContainer;
 		this.runtimeOptions = props.runtimeOptions;
 		this.provideEntryPoint = props.provideEntryPoint;
 		this.requestHandlers = props.requestHandlers ?? [];
@@ -128,21 +120,12 @@ export class BaseContainerRuntimeFactory
 		context: IContainerContext,
 		existing: boolean,
 	): Promise<IContainerRuntime & IRuntime> {
-		const scope: Partial<IProvideFluidDependencySynthesizer> = context.scope;
-		if (this.dependencyContainer) {
-			const dc = new DependencyContainer<FluidObject>(
-				this.dependencyContainer,
-				scope.IFluidDependencySynthesizer,
-			);
-			scope.IFluidDependencySynthesizer = dc;
-		}
-
 		return loadContainerRuntime({
 			context,
 			existing,
 			runtimeOptions: this.runtimeOptions,
 			registryEntries: this.registryEntries,
-			containerScope: scope,
+			containerScope: context.scope,
 			// eslint-disable-next-line import/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
@@ -152,14 +135,16 @@ export class BaseContainerRuntimeFactory
 	/**
 	 * Subclasses may override containerInitializingFirstTime to perform any setup steps at the time the container
 	 * is created. This likely includes creating any initial data stores that are expected to be there at the outset.
-	 * @param runtime - The container runtime for the container being initialized
+	 * @param runtime - The container runtime for the container being initialized.
+	 * @virtual
 	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {}
 
 	/**
 	 * Subclasses may override containerHasInitialized to perform any steps after the container has initialized.
 	 * This likely includes loading any data stores that are expected to be there at the outset.
-	 * @param runtime - The container runtime for the container being initialized
+	 * @param runtime - The container runtime for the container being initialized.
+	 * @virtual
 	 */
 	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {}
 }

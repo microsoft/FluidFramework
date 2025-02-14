@@ -38,18 +38,18 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	/**
 	 * The data store registry for containers produced.
 	 */
-	registryEntries: NamedFluidDataStoreRegistryEntries;
+	readonly registryEntries: NamedFluidDataStoreRegistryEntries;
 
 	/**
 	 * The runtime options passed to the IContainerRuntime when instantiating it
 	 */
-	runtimeOptions?: IContainerRuntimeOptions;
+	readonly runtimeOptions?: IContainerRuntimeOptions;
 
 	/**
 	 * Function that will initialize the entryPoint of the IContainerRuntime instances
 	 * created with this factory
 	 */
-	provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }
 
 /**
