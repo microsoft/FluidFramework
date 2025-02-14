@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
@@ -38,7 +39,7 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 		runtimeOptions?: IContainerRuntimeOptions;
 		provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	},
-): ContainerRuntimeFactoryWithDefaultDataStore => {
+): IRuntimeFactory => {
 	try {
 		return new Base(ctorArgs);
 	} catch (err) {
