@@ -4,10 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -99,8 +96,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		MessageEncodingContext
 	>;
 
-	private readonly idCompressor: IIdCompressor;
-
 	private readonly resubmitMachine: ResubmitMachine<TChange>;
 	public readonly commitEnricher: BranchCommitEnricher<TChange>;
 
@@ -126,7 +121,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
-		runtime: IFluidDataStoreRuntime,
+		private readonly idCompressor: IIdCompressor,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
@@ -143,11 +138,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			namespace: "Rebase",
 		});
 
-		assert(
-			idCompressor !== undefined,
-			0x886 /* IdCompressor must be enabled to use SharedTree */,
-		);
-		this.idCompressor = idCompressor;
 		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.

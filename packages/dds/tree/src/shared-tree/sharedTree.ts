@@ -235,6 +235,9 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 		telemetryContextPrefix: string = "fluid_sharedTree_",
 	) {
 		super(id, runtime, attributes, telemetryContextPrefix);
+		if (runtime.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
 		this.kernel = new SharedTreeKernel(
 			this.breaker,
 			this,
@@ -242,7 +245,7 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 			(content, localOpMetadata) => this.submitLocalMessage(content, localOpMetadata),
 			() => this.deltaManager.lastSequenceNumber,
 			this.logger,
-			runtime,
+			runtime.idCompressor,
 			optionsParam,
 		);
 	}
@@ -341,13 +344,9 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		logger: ITelemetryLoggerExt | undefined,
-		runtime: IFluidDataStoreRuntime,
+		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
-		if (runtime.idCompressor === undefined) {
-			throw new UsageError("IdCompressor must be enabled to use SharedTree");
-		}
-
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
