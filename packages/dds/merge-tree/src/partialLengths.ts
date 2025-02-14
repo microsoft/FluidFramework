@@ -791,10 +791,18 @@ export class PartialSequenceLengths {
 	): void {
 		// In the current implementation, this method gets invoked multiple times for the same sequence number (i.e. mid-operation).
 		// We counter this by first zeroing out existing entries from previous updates, but it isn't ideal.
+		// Even if we fix this at the merge-tree level, the same type of issue can crop up with grouped batching enabled.
 		const latest = this.partialLengths.latestLeq(seq);
 		if (latest?.seq === seq) {
 			this.partialLengths.addOrUpdate({ seq, len: 0, seglen: -latest.seglen, clientId });
 		}
+
+		this.perClientAdjustments.forEach((clientAdjustments, id) => {
+			const leqPartial = clientAdjustments.latestLeq(seq);
+			if (leqPartial && leqPartial.seq === seq) {
+				this.addClientAdjustment(id, seq, -leqPartial.seglen);
+			}
+		});
 
 		/**
 		 * If any of the changes made by the client at `seq` necessitate partial length entries at sequence numbers other than `seq`,
