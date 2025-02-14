@@ -15965,9 +15965,6 @@ importers:
 
   packages/tools/fluid-runner:
     dependencies:
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../framework/aqueduct
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
@@ -16020,6 +16017,9 @@ importers:
       '@fluidframework/fluid-runner-previous':
         specifier: npm:@fluidframework/fluid-runner@2.21.0
         version: '@fluidframework/fluid-runner@2.21.0(encoding@0.1.13)'
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../../test/test-utils
       '@microsoft/api-extractor':
         specifier: 7.47.8
         version: 7.47.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
