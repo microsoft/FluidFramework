@@ -27,12 +27,10 @@ import {
 	type HasContainerKey,
 	type IFluidDevtools as IDevtoolsBase,
 	type IDevtoolsLogger,
-	type IFluidDevtools,
 	initializeDevtools as initializeDevtoolsBase,
 } from "@fluidframework/devtools-core/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
-import { FluidDevtools } from "../../devtools-core/lib/FluidDevtools.js";
 
 /**
  * Properties for configuring {@link IDevtools}.
@@ -187,14 +185,6 @@ function mapContainerProps(
 		containerKey,
 		containerData: container.initialObjects as Record<string, IFluidLoadable>,
 	};
-}
-
-/**
- * Gets the Devtools singleton if it has been initialized, otherwise returns `undefined`.
- * @beta
- */
-export function tryGetFluidDevtools(): IFluidDevtools | undefined {
-	return FluidDevtools.tryGet();
 }
 
 // Convenience re-exports. Need to cover the things we export form this package,

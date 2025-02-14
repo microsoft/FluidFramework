@@ -418,3 +418,11 @@ export class FluidDevtools implements IFluidDevtools {
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return FluidDevtools.initialize(props);
 }
+
+/**
+ * Gets the Devtools singleton if it has been initialized, otherwise returns `undefined`.
+ * @alpha
+ */
+export function tryGetFluidDevtools(): IFluidDevtools | undefined {
+	return FluidDevtools.tryGet();
+}
