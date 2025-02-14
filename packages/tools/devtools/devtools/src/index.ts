@@ -193,7 +193,7 @@ function mapContainerProps(
  * Gets the Devtools singleton if it has been initialized, otherwise returns `undefined`.
  * @beta
  */
-export function tryGetIFluidDevtools(): IFluidDevtools | undefined {
+export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 	return FluidDevtools.tryGet();
 }
 
