@@ -76,6 +76,7 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/map-legacy": "npm:@fluidframework/map@^1.4.0",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",

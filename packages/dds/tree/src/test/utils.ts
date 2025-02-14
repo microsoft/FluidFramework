@@ -52,7 +52,6 @@ import {
 
 import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
-	type AnnouncedVisitor,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
@@ -77,7 +76,6 @@ import {
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type UpPath,
-	announceDelta,
 	applyDelta,
 	clonePath,
 	compareUpPaths,
@@ -145,6 +143,7 @@ import {
 	type TreeBranchEvents,
 } from "../simple-tree/index.js";
 import {
+	Breakable,
 	type JsonCompatible,
 	type Mutable,
 	nestedMapFromFlatList,
@@ -1050,22 +1049,6 @@ export function applyTestDelta(
 	);
 }
 
-export function announceTestDelta(
-	delta: DeltaFieldMap,
-	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
-	params?: DeltaParams,
-): void {
-	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
-	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
-	announceDelta(
-		rootDelta,
-		revision,
-		deltaProcessor,
-		detachedFieldIndex ??
-			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
-	);
-}
-
 export function rootFromDeltaFieldMap(
 	delta: DeltaFieldMap,
 	global?: readonly DeltaDetachedNodeChanges[],
@@ -1232,6 +1215,7 @@ export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
  * A mock implementation of `ITreeCheckout` that provides read access to the forest, and nothing else.
  */
 export class MockTreeCheckout implements ITreeCheckout {
+	public readonly breaker: Breakable = new Breakable("MockTreeCheckout");
 	public constructor(
 		public readonly forest: IForestSubscription,
 		private readonly options?: {

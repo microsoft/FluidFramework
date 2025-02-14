@@ -95,8 +95,8 @@
 		"test:coverage": "c8 npm test",
 		"test:jest": "jest --ci",
 		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\" --exit",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/mocha/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/mocha/**/*.spec.*js\"",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
