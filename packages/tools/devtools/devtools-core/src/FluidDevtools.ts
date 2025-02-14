@@ -420,7 +420,7 @@ export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 }
 
 /**
- * Gets the Devtools singleton if it has been initialized, otherwise returns `undefined`.
+ * Gets the Devtools singleton if it has been {@link initializeFluidDevtools | initialized}, otherwise returns `undefined`.
  * @alpha
  */
 export function tryGetFluidDevtools(): IFluidDevtools | undefined {
