@@ -197,10 +197,7 @@ function mapContainerProps(
  * @beta
  */
 export function tryGetIFluidDevtools(logger?: ITelemetryBaseLogger): IFluidDevtools {
-	if (globalThis.IFluidDevtools === undefined) {
-		globalThis.IFluidDevtools = initializeDevtools({ logger });
-	}
-	return globalThis.IFluidDevtools;
+	return FluidDevtools.tryGet();
 }
 
 // Convenience re-exports. Need to cover the things we export form this package,
