@@ -4,36 +4,6 @@
 
 ```ts
 
-// @public
-export function identityAdapter<T>(value: T): T;
-
-// @public (undocumented)
-export interface MigrationOptions<in Before = never, out After extends object = object, out Common = unknown> {
-    // (undocumented)
-    afterAdapter(from: After): Common;
-    // (undocumented)
-    beforeAdapter(from: Before): Common;
-    // (undocumented)
-    readonly defaultMigrated: boolean;
-    migrate(from: Before, to: After, adaptedTo: Common): void;
-    readonly migrationIdentifier: string;
-    // (undocumented)
-    readonly to: SharedKernelFactory<After>;
-}
-
-// @public (undocumented)
-export interface MigrationSet<in out TFrom extends object = object, out Common = unknown, out After extends object = object> {
-    // (undocumented)
-    readonly fromKernel: SharedKernelFactory<TFrom>;
-    // (undocumented)
-    readonly fromSharedObject: ISharedObjectKind<unknown>;
-    // (undocumented)
-    selector(id: string): MigrationOptions<TFrom, After, Common>;
-}
-
-// @public
-export function unsupportedAdapter<T>(value: T): never;
-
 // (No @packageDocumentation comment for this package)
 
 ```

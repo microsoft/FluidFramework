@@ -97,26 +97,38 @@ export interface MigrationSet<
 }
 
 /**
- *
+ * Symbol used to store {@link IMigrationShim} on SharedObjects undergoing migrations.
+ * @beta
  */
 export const shimInfo: unique symbol = Symbol("shimInfo");
 
 /**
- *
+ * Information about migration status.
+ * @beta
  */
 export interface IMigrationShim {
 	readonly [shimInfo]: MigrationShimInfo;
 }
 
-interface MigrationShimInfo {
+/**
+ * Information about migration status.
+ * @beta
+ */
+export interface MigrationShimInfo {
 	readonly status: MigrationStatus;
-	cast<const T extends MigrationOptions>(
-		options: T,
-	): T extends MigrationOptions<never, object, infer Common> ? Common : never;
+	// TODO: expose MigrationOptions (possibly type erased) to make this safe to package export.
+	// cast<const T extends MigrationOptions>(
+	// 	options: T,
+	// ): T extends MigrationOptions<never, object, infer Common> ? Common : never;
+	cast<const T extends never>(options: T): unknown;
 	upgrade(): void;
 }
 
-enum MigrationStatus {
+/**
+ * Information about migration status.
+ * @beta
+ */
+export enum MigrationStatus {
 	Before,
 	After,
 }

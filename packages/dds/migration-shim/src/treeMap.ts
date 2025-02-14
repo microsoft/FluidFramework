@@ -50,9 +50,17 @@ import {
 const schemaFactory = new SchemaFactory("com.fluidframework/adapters/map");
 
 /**
- *
+ * @alpha
+ * @system
+ * @sealed
  */
-export class Handles extends schemaFactory.map("Handles", schemaFactory.handle) {}
+export const Handles_base = schemaFactory.map("Handles", schemaFactory.handle);
+
+/**
+ * @alpha
+ * @sealed
+ */
+export class Handles extends Handles_base {}
 
 function tryGetHandleKey(value: unknown): undefined | string {
 	if (typeof value === "object" && value !== null && "handle" in value) {
@@ -65,13 +73,21 @@ function tryGetHandleKey(value: unknown): undefined | string {
 }
 
 /**
- * TODO: this approach leads to extra escaping. Consider replacing it with a the JSON (+handles) domain.
- * Concise import and export APIs should handle data conversion into tree format in that case.
+ * @alpha
+ * @system
+ * @sealed
  */
-export class MapAdapterItem extends schemaFactory.object("Item", {
+export const MapAdapterItem_base = schemaFactory.object("Item", {
 	json: schemaFactory.string,
 	handles: Handles,
-}) {
+});
+
+/**
+ * TODO: this approach leads to extra escaping. Consider replacing it with a the JSON (+handles) domain.
+ * Concise import and export APIs should handle data conversion into tree format in that case.
+ * @alpha
+ */
+export class MapAdapterItem extends MapAdapterItem_base {
 	public static encode(value: JsonCompatible<IFluidHandle>): MapAdapterItem {
 		const handles = new Handles();
 		const handleKeys = new Set<string>();
@@ -144,9 +160,16 @@ export class MapAdapterItem extends schemaFactory.object("Item", {
 }
 
 /**
- *
+ * @alpha
+ * @system
+ * @sealed
  */
-export class MapAdapterRoot extends schemaFactory.map("Root", [MapAdapterItem]) {
+export const MapAdapterRoot_base = schemaFactory.map("Root", [MapAdapterItem]);
+
+/**
+ * @alpha
+ */
+export class MapAdapterRoot extends MapAdapterRoot_base {
 	public setRaw(key: string, value: JsonCompatible<IFluidHandle>): void {
 		this.set(key, MapAdapterItem.encode(value));
 	}
@@ -287,25 +310,9 @@ const mapToTree: MigrationSet<ISharedMap, ISharedMap, ITree> = {
 };
 
 /**
- * Entrypoint for {@link ISharedMap} creation, supporting migration to {@link ITree}.
+ * {@link @fluidframework/map#SharedMap} that can be converted internally to a {@link @fluidframework/tree#SharedTree}.
  * @remarks
- * This supports loading data in {@link SharedMap} and {@link MapToTree} formats.
- * Data converted from {@link SharedMap} uses the {@link MapAdapterRoot} schema.
- *
- * Until {@link IntoTree.intoTree} is called (or a client uses {@link TreeFromMap}),
- * can collaborate with clients using {@link ISharedMap}.
- *
- * Migration process from Map to Tree is as follows:
- * 1. Replace use of {@link SharedMap} with `MapToTree`.
- * 2. Wait for active sessions to update to the new code.
- * 3. Optionally call {@link IntoTree.intoTree} to convert the data to a tree:
- * this can be used to test that the conversion works before commit to the migration,
- * or to perform the conversion at a controlled time.
- * 4. Replace `MapToTree` with {@link TreeFromMap} to gain access to {@link ITree} APIs.
- * 5. Optionally create new data using {@link SharedTree} directly to avoid using the adapter.
- *
- * Using {@link TreeFromMap} will result in errors in clients still using {@link SharedMap}.
- *
+ * Once all active clients are using this, switch to {@link TreeFromMap} if access to the data using tree APIs is desired.
  * @legacy
  * @alpha
  */
@@ -339,11 +346,10 @@ const mapToTreePhase2: MigrationSet<ISharedMapCore, ITree, ITree> = {
 };
 
 /**
- * Entrypoint for {@link ITree} creation that supports legacy map data.
+ * Entrypoint for {@link @fluidframework/tree#ITree} creation that supports legacy map data.
  * @remarks
- * This supports loading data in {@link SharedMap} and {@link MapToTree} formats.
- * Data converted from {@link SharedMap} uses the {@link MapAdapterRoot} schema.
- * @legacy
- * @public
+ * This supports loading data in {@link @fluidframework/map#SharedMap} and {@link MapToTree} formats.
+ * Data converted from {@link @fluidframework/map#SharedMap} uses the {@link MapAdapterRoot} schema.
+ * @alpha
  */
 export const TreeFromMap = makeSharedObjectAdapter<ISharedMapCore, ITree>(mapToTreePhase2);
