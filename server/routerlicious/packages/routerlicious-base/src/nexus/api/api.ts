@@ -53,7 +53,23 @@ export function create(
 				storage,
 				collaborationSessionEventEmitter,
 			);
-			handleResponse(handleBroadcastSignalP, response);
+			handleResponse(
+				handleBroadcastSignalP,
+				response,
+				undefined,
+				500,
+				200,
+				undefined,
+				(error: any) =>
+					Lumberjack.error(
+						"Error handling broadcast-signal",
+						{
+							tenantId: request.params.tenantId,
+							documentId: request.params.documentId,
+						},
+						error,
+					),
+			);
 		},
 	);
 
@@ -71,46 +87,46 @@ async function handleBroadcastSignal(
 	const documentId = request.params.id;
 	const signalContent = request?.body?.signalContent;
 	if (!isValidSignalEnvelope(signalContent)) {
+		Lumberjack.error(
+			"signalContent should contain 'contents.content' and 'contents.type' key",
+			{ tenantId, documentId },
+		);
 		throw new NetworkError(
 			400,
-			`signalContent should contain 'contents.content' and 'contents.type' keys.`,
+			`signalContent should contain 'contents.content' and 'contents.type' keys`,
 		);
 	}
 	if (!collaborationSessionEventEmitter) {
-		throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint.`);
+		Lumberjack.error("No emitter configured for the broadcast-signal endpoint", {
+			tenantId,
+			documentId,
+		});
+		throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
 	}
-	try {
-		const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
-		// This will be removed shortly. Used to test in dev clusters and force a redirect.
-		const redirect: boolean = config.get("redirect");
-		const document = await storage?.getDocument(tenantId, documentId);
-		if (!document || !document.session.isSessionActive) {
-			Lumberjack.info("Document not found", { tenantId, documentId });
-			throw new NetworkError(404, "Document not found.");
-		}
-		if (!document.session.isSessionAlive) {
-			Lumberjack.info("Document session not alive", { tenantId, documentId });
-			throw new NetworkError(410, "Document session not alive.");
-		}
-		if (document.session.deltaStreamUrl !== deltaStreamUrl || redirect) {
-			Lumberjack.info("Redirecting to docs cluster", {
-				documentUrl: document.session.deltaStreamUrl,
-				currentUrl: deltaStreamUrl,
-				targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
-			});
-			response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
-			return;
-		}
-		const signalRoom: IRoom = { tenantId, documentId };
-		const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-		collaborationSessionEventEmitter.emit("broadcastSignal", payload);
-	} catch (error: any) {
-		Lumberjack.error("Error handling broadcast signal", { tenantId, documentId }, error);
-		if (error instanceof Error && error?.name === "NetworkError") {
-			throw error;
-		}
-		throw new NetworkError(500, error.message);
+	const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
+	// This will be removed shortly. Used to test in dev clusters and force a redirect.
+	const redirect: boolean = config.get("redirect");
+	const document = await storage?.getDocument(tenantId, documentId);
+	if (!document || !document.session.isSessionActive) {
+		Lumberjack.error("Document not found", { tenantId, documentId });
+		throw new NetworkError(404, "Document not found");
 	}
+	if (!document.session.isSessionAlive) {
+		Lumberjack.warning("Document session not alive", { tenantId, documentId });
+		throw new NetworkError(410, "Document session not alive");
+	}
+	if (document.session.deltaStreamUrl !== deltaStreamUrl || redirect) {
+		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
+			documentUrl: document.session.deltaStreamUrl,
+			currentUrl: deltaStreamUrl,
+			targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
+		});
+		response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
+		return;
+	}
+	const signalRoom: IRoom = { tenantId, documentId };
+	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+	collaborationSessionEventEmitter.emit("broadcastSignal", payload);
 }
 
 function isValidSignalEnvelope(
