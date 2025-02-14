@@ -136,14 +136,19 @@ interface UnsequencedPartialLengthInfo {
 	 * Like PerClientAdjustments, except we store one set of PartialSequenceLengthsSet for each refSeq. The "seq" keys in these sets
 	 * are all local seqs.
 	 *
-	 * TODO: Explain the lazy computation bit and how it works.
+	 * These entries are aggregated by {@link PartialSequenceLengths.computeOverallRefSeqAdjustment} when a local perspective for a
+	 * given refSeq is requested.
+	 *
+	 * In general, adjustments in this map are added to avoid double-counting an operation performed by both the local client and some
+	 * remote client, and an adjustment at (refSeq = A, clientSeq = B) takes effect for all perspectives (refSeq = C, clientSeq = D) where
+	 * A \<= C and B \<= D.
 	 */
 	perRefSeqAdjustments: Map<number, PartialSequenceLengthsSet>;
 
 	/**
 	 * Cache keyed on refSeq which stores length information for the total overlap of removed segments at
 	 * that refSeq.
-	 * This information is derivable from the entries of `overlappingRemoves`.
+	 * This information is derivable from the entries of `perRefSeqAdjustments`.
 	 *
 	 * Like the `partialLengths` field, `seq` on each entry is actually the local seq.
 	 * See `computeOverlappingLocalRemoves` for more information.
@@ -171,13 +176,13 @@ export interface PartialSequenceLengthsOptions {
  * "What is the length of `block` from the perspective of some particular seq and clientId?".
  *
  * It also supports incremental updating of state for newly-sequenced ops that don't affect the structure of the
- * MergeTree.
+ * MergeTree (in most cases--see AB#31003 or comments on {@link PartialSequenceLengths.update}).
  *
  * To answer these queries, it pre-builds several lists which track the length of the block at a per-sequence-number
  * level. These lists are:
  *
  * 1. (`partialLengths`): Stores the total length of the block.
- * 2. (`clientSeqNumbers[clientId]`): Stores only the total lengths of segments submitted by `clientId`. [see footnote]
+ * 2. (`perClientAdjustments[clientId]`): Stores adjustments to the base length which account for all changes submitted by `clientId`. [see footnote]
  *
  * The reason both lists are necessary is that resolving the length of the block from the perspective of
  * (clientId, refSeq) requires including both of the following types of segments:
@@ -200,13 +205,19 @@ export interface PartialSequenceLengthsOptions {
  * (length of the block at the minimum sequence number)
  * + (partialLengths total length at refSeq)
  * + (unsequenced edits' total length submitted before localSeq)
- * - (overlapping remove of the unsequenced edits' total length at refSeq)
+ * + (adjustments for changes double-counted by happening at or before both localSeq and refSeq)
  *
  * This algorithm scales roughly linearly with number of editing clients and the size of the collab window.
  * (certain unlikely sequences of operations may introduce log factors on those variables)
  *
- * Note: there is some slight complication with clientSeqNumbers resulting from the possibility of different clients
- * concurrently removing the same segment. See the field's documentation for more details.
+ * @privateRemarks
+ * If you are looking to understand this class in more detail, a suggested order of internalization is:
+ *
+ * 1. The above description and how it relates to the implementation of `getPartialLength` (which implements the above high-level description
+ * 2. `PartialSequenceLengthsSet`, which allows binary searching for overall length deltas at a given sequence number and handles updates.
+ * 3. The `fromLeaves` method, which is the base case for the [potential] recursion in `combine`
+ * 4. The logic in `combine` to aggregate smaller block entries into larger ones
+ * 5. The incremental code path of `update`
  */
 export class PartialSequenceLengths {
 	public static options: PartialSequenceLengthsOptions = {
@@ -275,6 +286,18 @@ export class PartialSequenceLengths {
 	 * Contains information required to answer queries for the length of this segment from the perspective of
 	 * the local client but not including all local segments (i.e., `localSeq !== collabWindow.localSeq`).
 	 * This field is only computed if requested in the constructor (i.e. `computeLocalPartials === true`).
+	 *
+	 * Note that the usage pattern for this list is a bit different from perClientAdjustments: when dealing with perspectives of remote clients,
+	 * we generally want to know what their view of the block was accounting for all changes made by that client as well as all \<= some refSeq.
+	 *
+	 * However, when dealing with perspectives relevant to the local client, we are still interested in changes made \<= some refSeq, but instead
+	 * of caring about all changes made by the local client, we additionally want the subset of them that were made \<= some localSeq.
+	 *
+	 * The PartialSequenceLengthsSets stored in this field therefore track localSeqs rather than seqs (it's still named seq for ease of implementation).
+	 * Furthermore, when computing the length of the block at a given refSeq/localSeq perspective,
+	 * rather than add something like `perClientAdjustments[clientId].latestLeq(latestSeq) - perClientAdjustments[clientId].latestLeq(refSeq)` [to
+	 * get the tail end of adjustments necessary for a remote client client], we instead add `unsequencedRecords.partialLengths.latestLeq(localSeq)`
+	 * [to get the head end of adjustments necessary for the local client].
 	 */
 	private unsequencedRecords: UnsequencedPartialLengthInfo | undefined;
 
@@ -290,7 +313,6 @@ export class PartialSequenceLengths {
 			this.unsequencedRecords = {
 				partialLengths: new PartialSequenceLengthsSet(),
 				perRefSeqAdjustments: new Map(),
-				// overlappingRemoves: [],
 				cachedAdjustmentByRefSeq: new Map(),
 			};
 		}
@@ -407,7 +429,11 @@ export class PartialSequenceLengths {
 						}
 
 						for (const partial of perClientAdjustments[clientId].items) {
-							combinedPartialLengths.addClientSeqNumber(clientId, partial.seq, partial.seglen);
+							combinedPartialLengths.addClientAdjustment(
+								clientId,
+								partial.seq,
+								partial.seglen,
+							);
 						}
 					}
 				}
@@ -467,6 +493,11 @@ export class PartialSequenceLengths {
 		return combinedPartialLengths;
 	}
 
+	/**
+	 * Assuming this segment was moved on insertion, inserts length information about that operation
+	 * into the appropriate per-client adjustments (the overall view needs no such adjustment since
+	 * from an observing client's perspective, the segment never exists).
+	 */
 	private static accountForMoveOnInsert(
 		combinedPartialLengths: PartialSequenceLengths,
 		segment: ISegmentPrivate,
@@ -525,27 +556,14 @@ export class PartialSequenceLengths {
 			if (!wasRemovedByInsertingClient && !wasMovedByInsertingClient) {
 				const moveSeq = moveInfo?.movedSeq;
 				assert(moveSeq !== undefined, "ObliterateOnInsertion implies moveSeq is defined");
-				combinedPartialLengths.addClientSeqNumber(clientId, moveSeq, segment.cachedLength);
+				combinedPartialLengths.addClientAdjustment(clientId, moveSeq, segment.cachedLength);
 			}
 		}
 	}
 
 	/**
 	 * Inserts length information about the insertion of `segment` into
-	 * `combinedPartialLengths.partialLengths`.
-	 *
-	 * Does not update the clientSeqNumbers field to account for this segment.
-	 *
-	 * If `removalInfo` or `moveInfo` are defined, this operation updates the
-	 * bookkeeping to account for the (re)moval of this segment at the (re)movedSeq
-	 * instead.
-	 *
-	 * When the insertion or (re)moval of the segment is un-acked and
-	 * `combinedPartialLengths` is meant to compute such records, this does the
-	 * analogous addition to the bookkeeping for the local segment in
-	 * `combinedPartialLengths.unsequencedRecords`.
-	 *
-	 * TODO: Update this comment
+	 * `combinedPartialLengths.partialLengths` and the appropriate per-client adjustments.
 	 */
 	private static accountForInsertion(
 		combinedPartialLengths: PartialSequenceLengths,
@@ -586,10 +604,14 @@ export class PartialSequenceLengths {
 				len: 0,
 				seglen: segmentLen,
 			});
-			combinedPartialLengths.addClientSeqNumber(clientId, seqOrLocalSeq, segmentLen);
+			combinedPartialLengths.addClientAdjustment(clientId, seqOrLocalSeq, segmentLen);
 		}
 	}
 
+	/**
+	 * Inserts length information about the removal or obliteration of `segment` into
+	 * `combinedPartialLengths.partialLengths` and the appropriate per-client adjustments.
+	 */
 	private static accountForRemoval(
 		combinedPartialLengths: PartialSequenceLengths,
 		segment: ISegmentPrivate,
@@ -732,7 +754,7 @@ export class PartialSequenceLengths {
 				} else {
 					// Note that all clients that have a remove or obliterate operation on this segment
 					// use the seq of the winning move/obliterate in their per-client adjustments!
-					combinedPartialLengths.addClientSeqNumber(id, seqOrLocalSeq, lenDelta);
+					combinedPartialLengths.addClientAdjustment(id, seqOrLocalSeq, lenDelta);
 
 					// Also ensure that all these clients have seen the segment as inserted before being removed
 					// This is technically not necessary for removes (we never ask for the length of this block with
@@ -740,7 +762,7 @@ export class PartialSequenceLengths {
 					// We already add this entry as part of the accountForInsertion codepath for the client that
 					// actually did insert the segment, hence not doing so [again] here.
 					if (segment.seq > collabWindow.minSeq && id !== segment.clientId) {
-						combinedPartialLengths.addClientSeqNumber(id, segment.seq, segment.cachedLength);
+						combinedPartialLengths.addClientAdjustment(id, segment.seq, segment.cachedLength);
 					}
 				}
 			}
@@ -801,11 +823,11 @@ export class PartialSequenceLengths {
 						moveInfo.movedSeq < segment.seq &&
 						moveInfo.wasMovedOnInsert
 					) {
-						this.addClientSeqNumber(clientId, moveInfo.movedSeq, segment.cachedLength);
+						this.addClientAdjustment(clientId, moveInfo.movedSeq, segment.cachedLength);
 						failIncrementalPropagation = true;
 					} else {
 						seqSeglen += segment.cachedLength;
-						this.addClientSeqNumber(clientId, seq, segment.cachedLength);
+						this.addClientAdjustment(clientId, seq, segment.cachedLength);
 					}
 				}
 
@@ -816,9 +838,9 @@ export class PartialSequenceLengths {
 				if (segment.seq !== UnassignedSequenceNumber && seq === earlierDeletion) {
 					seqSeglen -= segment.cachedLength;
 					if (clientId !== collabWindow.clientId) {
-						this.addClientSeqNumber(clientId, seq, -segment.cachedLength);
+						this.addClientAdjustment(clientId, seq, -segment.cachedLength);
 						if (segment.seq > collabWindow.minSeq && segment.clientId !== clientId) {
-							this.addClientSeqNumber(clientId, segment.seq, segment.cachedLength);
+							this.addClientAdjustment(clientId, segment.seq, segment.cachedLength);
 							failIncrementalPropagation = true;
 						}
 					}
@@ -849,7 +871,7 @@ export class PartialSequenceLengths {
 				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments, id) => {
 					const leqBranchPartial = clientAdjustments.latestLeq(seq);
 					if (leqBranchPartial && leqBranchPartial.seq === seq) {
-						this.addClientSeqNumber(id, seq, leqBranchPartial.seglen);
+						this.addClientAdjustment(id, seq, leqBranchPartial.seglen);
 					}
 				});
 			}
@@ -914,24 +936,7 @@ export class PartialSequenceLengths {
 	}
 
 	/**
-	 * TODO: Adjust this comment
-	 * Computes the seglen for the double-counted removed overlap at (refSeq, localSeq). This logic is equivalent
-	 * to the following:
-	 *
-	 * ```typescript
-	 *   let total = 0;
-	 *   for (const partialLength of this.unsequencedRecords!.overlappingRemoves) {
-	 *       if (partialLength.seq > refSeq) {
-	 *           break;
-	 *       }
-	 *
-	 *      if (partialLength.localSeq <= localSeq) {
-	 *          total += partialLength.seglen;
-	 *      }
-	 *   }
-	 *
-	 *   return total;
-	 * ```
+	 * Computes the seglen for the double-counted removed overlap at (refSeq, localSeq).
 	 *
 	 * Reconnect happens to only need to compute these lengths for two refSeq values: before and
 	 * after the rebase. Since these lists potentially scale with O(collab window * number of local edits)
@@ -952,17 +957,17 @@ export class PartialSequenceLengths {
 				adjustments,
 			] of this.unsequencedRecords.perRefSeqAdjustments.entries()) {
 				if (seq > refSeq) {
-					// TODO: Prior code path got away with an early exit here by sorting the entries by seq.
-					// You could consider doing the same to restore some perf.
+					// TODO: Prior code path got away with an early exit here by sorting the entries by refSeq.
+					// We could do the same here if we wanted.
 					// Old codepath basically flattened the 2d array into a 1d array with both dimensions listed.
 					continue;
 				}
 
 				for (const partial of adjustments.items) {
+					// This coalesces entries with the same localSeq as well as computes overall lengths.
 					partials.addOrUpdate(partial);
 				}
 			}
-			// This coalesces entries with the same localSeq as well as computes overall lengths.
 			cachedAdjustment = partials;
 			this.unsequencedRecords.cachedAdjustmentByRefSeq.set(refSeq, cachedAdjustment);
 		}
@@ -1007,8 +1012,7 @@ export class PartialSequenceLengths {
 		}
 	}
 
-	// TODO: Rename this
-	private addClientSeqNumber(clientId: number, seq: number, seglen: number): void {
+	private addClientAdjustment(clientId: number, seq: number, seglen: number): void {
 		this.perClientAdjustments[clientId] ??= new PartialSequenceLengthsSet();
 		const cli = this.perClientAdjustments[clientId];
 		cli.addOrUpdate({ seq, len: 0, seglen });

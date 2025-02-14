@@ -41,9 +41,6 @@ const posInField = (
 
 	while (endPos < client.getLength() && client.getText(endPos, endPos + 1) !== "}") {
 		const text = client.getText(endPos, endPos + 1);
-		if (!(Number.isInteger(Number(text)) || text === "{")) {
-			throw new Error("uh oh");
-		}
 		assert(
 			Number.isInteger(Number(text)) || text === "{",
 			"Non-integer character found within a field",
