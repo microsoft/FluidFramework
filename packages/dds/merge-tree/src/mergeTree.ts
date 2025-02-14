@@ -553,8 +553,11 @@ class Obliterates {
 					overlapping.push(ob);
 				}
 			} else {
+				// TODO: Restore this.
+				// The test you're looking at has the start segment of one on a "y" that gets removed from the tree in zamboni, likely
+				// since it was removed at seq1 but also obliterated at seq 5. We need to decide to clean up the obliterate data
 				// the start is past the seg, so exit
-				break;
+				// break;
 			}
 		}
 		return overlapping;
@@ -566,7 +569,7 @@ class Obliterates {
  */
 export class MergeTree {
 	public static readonly options = {
-		incrementalUpdate: true,
+		incrementalUpdate: false, // TODO: Re-enable incremental update
 		insertAfterRemovedSegs: true,
 		zamboniSegments: true,
 	};
@@ -1083,7 +1086,7 @@ export class MergeTree {
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
 			if (node.isLeaf()) {
 				return this.localNetLength(node, refSeq, localSeq);
-			} else if (localSeq === undefined) {
+			} else if (localSeq === undefined || localSeq === this.collabWindow.localSeq) {
 				// Local client sees all segments, even when collaborating
 				return node.cachedLength;
 			} else {
@@ -1782,7 +1785,10 @@ export class MergeTree {
 				continue;
 			}
 
-			assert(len >= 0, 0x4bc /* Length should not be negative */);
+			if (len < 0) {
+				this.nodeUpdateLengthNewStructure(child as MergeBlock, true);
+				assert(len >= 0, 0x4bc /* Length should not be negative */);
+			}
 
 			if (_pos < len || (_pos === len && this.breakTie(_pos, child, seq))) {
 				// Found entry containing pos
@@ -1856,13 +1862,18 @@ export class MergeTree {
 				// Don't update ordinals because higher block will do it
 				const newNodeFromSplit = this.split(block);
 
-				PartialSequenceLengths.options.verifyExpected?.(this, block, refSeq, clientId);
-				PartialSequenceLengths.options.verifyExpected?.(
-					this,
-					newNodeFromSplit,
-					refSeq,
-					clientId,
-				);
+				try {
+					PartialSequenceLengths.options.verifyExpected?.(this, block, refSeq, clientId);
+					PartialSequenceLengths.options.verifyExpected?.(
+						this,
+						newNodeFromSplit,
+						refSeq,
+						clientId,
+					);
+				} catch (error) {
+					this.nodeUpdateLengthNewStructure(block);
+					throw error;
+				}
 
 				return newNodeFromSplit;
 			}
@@ -2085,19 +2096,14 @@ export class MergeTree {
 				return true;
 			}
 
-			const wasMovedOnInsert =
-				clientId !== segment.clientId &&
-				seq !== UnassignedSequenceNumber &&
-				segment.seq !== undefined &&
-				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber);
-
 			if (existingMoveInfo === undefined) {
 				const movedSeg = overwriteInfo<IMoveInfo, ISegmentLeaf>(segment, {
 					movedClientIds: [clientId],
 					movedSeq: seq,
 					localMovedSeq: localSeq,
 					movedSeqs: [seq],
-					wasMovedOnInsert,
+					wasMovedOnInsert:
+						segment.seq === UnassignedSequenceNumber && seq !== UnassignedSequenceNumber,
 				});
 
 				const existingRemoval = toRemovalInfo(movedSeg);
@@ -2113,9 +2119,18 @@ export class MergeTree {
 				}
 			} else {
 				_overwrite = true;
-				// never move wasMovedOnInsert from true to false
-				existingMoveInfo.wasMovedOnInsert ||= wasMovedOnInsert;
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
+					// Should not need explicit set here, but this should be implied:
+					assert(
+						!existingMoveInfo.wasMovedOnInsert,
+						"Local obliterate cannot have removed a segment as soon as it was inserted",
+					);
+					// never move wasMovedOnInsert from true to false
+					assert(
+						seq !== UnassignedSequenceNumber,
+						"Cannot obliterate the same segment locally twice",
+					);
+					existingMoveInfo.wasMovedOnInsert = segment.seq === UnassignedSequenceNumber;
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
