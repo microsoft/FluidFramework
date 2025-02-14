@@ -148,9 +148,9 @@ export const mapKernelFactory: SharedKernelFactory<ISharedMapCore> = {
 	create: (args: KernelArgs) => {
 		const k = new MapKernel(
 			args.serializer,
-			args.handle,
+			args.sharedObject.handle,
 			args.submitLocalMessage,
-			args.isAttached,
+			args.sharedObject.isAttached,
 			args.eventEmitter,
 		);
 		return { kernel: k, view: k };

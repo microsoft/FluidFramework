@@ -10,17 +10,28 @@ import {
 	type KernelArgs,
 	type SharedKernelFactory,
 	type SharedObjectOptions,
+	type FactoryOut,
 } from "@fluidframework/shared-object-base/internal";
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	SharedTree as SharedTreeImpl,
-	type ISharedTree,
+	type ITreePrivate,
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
 } from "./shared-tree/index.js";
 import type { ITree } from "./simple-tree/index.js";
 
 import { pkgVersion } from "./packageVersion.js";
+import { SharedTreeKernel } from "./shared-tree/index.js";
+import { Breakable } from "./util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * {@inheritDoc @fluidframework/shared-object-base#ISharedObjectFactory."type"}
@@ -42,17 +53,59 @@ export const SharedTreeAttributes: IChannelAttributes = {
 
 /**
  * Creates a factory for shared tree kernels with the given options.
- * @internal
  */
 export function treeKernelFactory(
 	options: SharedTreeOptionsInternal,
-): SharedKernelFactory<ISharedTree> {
+): SharedKernelFactory<ITreePrivate> {
 	return {
-		create: (args: KernelArgs) => {
-			const k = new SharedTreeImpl(args, options);
+		create: (args: KernelArgs): FactoryOut<ITreePrivate> => {
+			if (args.idCompressor === undefined) {
+				throw new UsageError("IdCompressor must be enabled to use SharedTree");
+			}
+			const k = new SharedTreeKernel(
+				new Breakable("Shared Tree"),
+				args.sharedObject,
+				args.serializer,
+				args.submitLocalMessage,
+				args.lastSequenceNumber,
+				args.logger,
+				args.idCompressor,
+				options,
+			);
 			return { kernel: k, view: k.view };
 		},
 	};
+}
+
+/**
+ * A channel factory that creates an {@link ITree}.
+ * @deprecated Use the public APIs instead if a SHaredObject is needed, or construct the internal types directly if not.
+ */
+export class TreeFactory implements IChannelFactory<ITree> {
+	public static Type: string = SharedTreeFactoryType;
+	public readonly type: string = SharedTreeFactoryType;
+
+	public readonly attributes: IChannelAttributes = SharedTreeAttributes;
+
+	public constructor(private readonly options: SharedTreeOptionsInternal) {}
+	/* eslint-disable import/no-deprecated */
+	public async load(
+		runtime: IFluidDataStoreRuntime,
+		id: string,
+		services: IChannelServices,
+		channelAttributes: Readonly<IChannelAttributes>,
+	): Promise<SharedTreeImpl> {
+		const tree = new SharedTreeImpl(id, runtime, channelAttributes, this.options);
+		await tree.load(services);
+		return tree;
+	}
+
+	public create(runtime: IFluidDataStoreRuntime, id: string): SharedTreeImpl {
+		const tree = new SharedTreeImpl(id, runtime, this.attributes, this.options);
+		tree.initializeLocal();
+		return tree;
+	}
+	/* eslint-enable import/no-deprecated */
 }
 
 /**

@@ -32,4 +32,5 @@ export {
 	FactoryOut,
 	SharedObjectOptions,
 	mergeAPIs,
+	IChannelView,
 } from "./sharedObjectKernel.js";

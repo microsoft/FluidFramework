@@ -13,12 +13,13 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedObject,
+	type IChannelView,
 	type IFluidSerializer,
 	type ISharedObject,
+	type SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	UsageError,
@@ -133,14 +134,6 @@ export interface SharedTreeContentSnapshot {
 }
 
 /**
- * Information about a Fluid channel.
- * @privateRemarks
- * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
- * @internal
- */
-export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;
-
-/**
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
@@ -214,6 +207,7 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 
 /**
  * Shared object wrapping {@link SharedTreeKernel}.
+ * @deprecated Use the public APIs instead if a SharedObject is needed, or construct the internal types directly if not.
  */
 export class SharedTree extends SharedObject implements ISharedTree, WithBreakable {
 	public readonly breaker: Breakable = new Breakable("Shared Tree");
@@ -270,7 +264,9 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 		this.kernel.processCore(message, local, localOpMetadata);
 	}
 
-	protected onDisconnect(): void {}
+	protected onDisconnect(): void {
+		this.kernel.onDisconnect();
+	}
 
 	public exportVerbose(): VerboseTree | undefined {
 		return this.kernel.exportVerbose();
@@ -331,11 +327,16 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
  * TODO: detail compatibility requirements.
  */
 @breakingClass
-class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange> {
+export class SharedTreeKernel
+	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	implements SharedKernel
+{
 	public readonly checkout: TreeCheckout;
 	public get storedSchema(): TreeStoredSchemaRepository {
 		return this.checkout.storedSchema;
 	}
+
+	public readonly view: ITreePrivate;
 
 	public constructor(
 		breaker: Breakable,
@@ -350,16 +351,16 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 		const options = { ...defaultSharedTreeOptions, ...optionsParam };
 		const codecVersions = getCodecVersions(options.formatVersion);
 		const schema = new TreeStoredSchemaRepository();
-		const forest = buildConfiguredForest(options.forest, schema, args.idCompressor);
-		const revisionTagCodec = new RevisionTagCodec(args.idCompressor);
+		const forest = buildConfiguredForest(options.forest, schema, idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRoots = makeDetachedFieldIndex(
 			"repair",
 			revisionTagCodec,
-			args.idCompressor,
+			idCompressor,
 			options,
 		);
 		const schemaSummarizer = new SchemaSummarizer(schema, options, {
-			getCurrentSeq: () => args.lastSequenceNumber(),
+			getCurrentSeq: lastSequenceNumber,
 		});
 		const fieldBatchCodec = makeFieldBatchCodec(options, codecVersions.fieldBatch);
 
@@ -369,8 +370,8 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
-			originatorId: args.idCompressor.localSessionId,
-			idCompressor: args.idCompressor,
+			originatorId: idCompressor.localSessionId,
+			idCompressor,
 		};
 		const forestSummarizer = new ForestSummarizer(
 			forest,
@@ -378,7 +379,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			fieldBatchCodec,
 			encoderContext,
 			options,
-			args.idCompressor,
+			idCompressor,
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(removedRoots);
 		const innerChangeFamily = new SharedTreeChangeFamily(
@@ -386,7 +387,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			fieldBatchCodec,
 			options,
 			options.treeEncodeType,
-			args.idCompressor,
+			idCompressor,
 		);
 		const changeFamily = makeMitigatedChangeFamily(
 			innerChangeFamily,
@@ -412,12 +413,16 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 		);
 		const changeEnricher = new SharedTreeReadonlyChangeEnricher(forest, schema, removedRoots);
 		super(
-			args,
+			breaker,
+			sharedObject,
+			serializer,
+			submitLocalMessage,
+			logger,
 			[schemaSummarizer, forestSummarizer, removedRootsSummarizer],
 			changeFamily,
 			options,
 			codecVersions,
-			args.idCompressor,
+			idCompressor,
 			schema,
 			defaultSchemaPolicy,
 			new DefaultResubmitMachine(
@@ -428,44 +433,39 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			changeEnricher,
 		);
 		const localBranch = this.getLocalBranch();
-		this.checkout = createTreeCheckout(
-			args.idCompressor,
-			this.mintRevisionTag,
-			revisionTagCodec,
-			{
-				branch: localBranch,
-				changeFamily,
-				schema,
-				forest,
-				fieldBatchCodec,
-				removedRoots,
-				chunkCompressionStrategy: options.treeEncodeType,
-				logger: args.logger,
-				breaker: this.breaker,
-				disposeForksAfterTransaction: options.disposeForksAfterTransaction,
-			},
-		);
+		this.checkout = createTreeCheckout(idCompressor, this.mintRevisionTag, revisionTagCodec, {
+			branch: localBranch,
+			changeFamily,
+			schema,
+			forest,
+			fieldBatchCodec,
+			removedRoots,
+			chunkCompressionStrategy: options.treeEncodeType,
+			logger,
+			breaker: this.breaker,
+			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
+		});
 
 		this.checkout.transaction.events.on("started", () => {
-			if (args.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.startTransaction();
 			}
 		});
 		this.checkout.transaction.events.on("aborting", () => {
-			if (args.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.abortTransaction();
 			}
 		});
 		this.checkout.transaction.events.on("committing", () => {
-			if (args.isAttached()) {
+			if (sharedObject.isAttached()) {
 				// It is currently forbidden to attach during a transaction, so transaction state changes can be ignored until after attaching.
 				this.commitEnricher.commitTransaction();
 			}
 		});
 		this.checkout.events.on("beforeBatch", (event) => {
-			if (event.type === "append" && args.isAttached()) {
+			if (event.type === "append" && sharedObject.isAttached()) {
 				if (this.checkout.transaction.isInProgress()) {
 					this.commitEnricher.addTransactionCommits(event.newCommits);
 				}
@@ -477,10 +477,13 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			exportSimpleSchema: () => this.exportSimpleSchema(),
 			exportVerbose: () => this.exportVerbose(),
 			viewWith: this.viewWith.bind(this),
-			handle: args.handle,
+			handle: sharedObject.handle,
 			get IFluidLoadable() {
-				return this;
+				return sharedObject;
 			},
+			id: sharedObject.id,
+			attributes: sharedObject.attributes,
+			isAttached: () => sharedObject.isAttached(),
 		};
 	}
 
@@ -593,6 +596,8 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			super.submitCommit(commit, schemaAndPolicy, isResubmit),
 		);
 	}
+
+	public onDisconnect(): void {}
 }
 
 /**

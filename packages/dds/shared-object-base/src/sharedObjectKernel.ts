@@ -4,7 +4,7 @@
  */
 
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	IChannelStorageService,
@@ -167,14 +167,20 @@ export interface SharedKernelFactory<T extends object> {
 }
 
 /**
+ * Information about a Fluid channel.
+ * @privateRemarks
+ * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
+ * @internal
+ */
+export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;
+
+/**
  * @internal
  */
 export interface KernelArgs {
-	readonly id: string;
+	readonly sharedObject: IChannelView & IFluidLoadable;
 	readonly serializer: IFluidSerializer;
-	readonly handle: IFluidHandle;
 	readonly submitLocalMessage: (op: unknown, localOpMetadata: unknown) => void;
-	readonly isAttached: () => boolean;
 	readonly eventEmitter: TypedEventEmitter<ISharedObjectEvents>;
 	readonly logger: ITelemetryLoggerExt;
 	readonly idCompressor: IIdCompressor | undefined;
@@ -217,12 +223,10 @@ class SharedObjectFromKernelFull<
 		this.handle = new SharedObjectHandle(merged, id, runtime.IFluidHandleContext);
 
 		this.kernelArgs = {
-			id,
+			sharedObject: this,
 			serializer: this.serializer,
-			handle: this.handle,
 			submitLocalMessage: (op, localOpMetadata) =>
 				this.submitLocalMessage(op, localOpMetadata),
-			isAttached: () => this.isAttached(),
 			eventEmitter: merged,
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
