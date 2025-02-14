@@ -119,7 +119,8 @@ export function viewFromState(
 	state.clientViews ??= new Map();
 	const view =
 		state.transactionViews?.get(client.channel) ??
-		(getOrCreate(state.clientViews, client.channel, (tree) => {
+		(getOrCreate(state.clientViews, client.channel, (sharedTree) => {
+			const tree = sharedTree.kernel;
 			const treeSchema = simpleSchemaFromStoredSchema(tree.storedSchema);
 			const config = new TreeViewConfiguration({
 				schema: treeSchema,

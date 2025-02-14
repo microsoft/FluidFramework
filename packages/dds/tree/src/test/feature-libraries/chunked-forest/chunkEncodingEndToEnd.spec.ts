@@ -408,7 +408,7 @@ describe("End to end chunked encoding", () => {
 			const tree = factory.create(
 				runtime,
 				"TestSharedTree",
-			) as unknown as SharedTreeWithConnectionStateSetter;
+			) as SharedTreeWithConnectionStateSetter;
 
 			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 

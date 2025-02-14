@@ -157,7 +157,7 @@ describe("sharedTreeView", () => {
 
 			it("is fired for data and schema changes", () => {
 				const provider = new TestTreeProviderLite(1);
-				const checkout = provider.trees[0].checkout;
+				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
 				const unsubscribe = checkout.events.on("changed", () => log.push("changed"));
@@ -185,7 +185,7 @@ describe("sharedTreeView", () => {
 
 			it("does not allow schema changes to be reverted", () => {
 				const provider = new TestTreeProviderLite(1);
-				const checkout = provider.trees[0].checkout;
+				const checkout = provider.trees[0].kernel.checkout;
 
 				const log: string[] = [];
 				const unsubscribe = checkout.events.on("changed", (data, getRevertible) =>
@@ -923,19 +923,19 @@ describe("sharedTreeView", () => {
 		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
 		const sf2 = new SchemaFactory("schema2");
-		provider.trees[0].checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
+		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
 		assert.equal(checkout1Revertibles.redoStack.length, 1);
-		assert.deepEqual(provider.trees[0].checkout.getRemovedRoots().length, 2);
+		assert.deepEqual(provider.trees[0].kernel.checkout.getRemovedRoots().length, 2);
 
 		provider.processMessages();
 
 		assert.equal(checkout2Revertibles.undoStack.length, 1);
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		// trunk trimming causes a removed root to be garbage collected
-		assert.deepEqual(provider.trees[1].checkout.getRemovedRoots().length, 1);
+		assert.deepEqual(provider.trees[1].kernel.checkout.getRemovedRoots().length, 1);
 
 		checkout1Revertibles.unsubscribe();
 		checkout2Revertibles.unsubscribe();

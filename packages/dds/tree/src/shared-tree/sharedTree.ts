@@ -101,13 +101,7 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
-import {
-	Breakable,
-	breakingClass,
-	fail,
-	throwIfBroken,
-	type WithBreakable,
-} from "../util/index.js";
+import { Breakable, breakingClass, fail, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -154,6 +148,11 @@ export interface ITreePrivate extends ITreeInternal {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
+
+	/**
+	 * Access to internals for testing.
+	 */
+	readonly kernel: SharedTreeKernel;
 }
 
 /**
@@ -209,17 +208,10 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
  * Shared object wrapping {@link SharedTreeKernel}.
  * @deprecated Use the public APIs instead if a SharedObject is needed, or construct the internal types directly if not.
  */
-export class SharedTree extends SharedObject implements ISharedTree, WithBreakable {
-	public readonly breaker: Breakable = new Breakable("Shared Tree");
+export class SharedTree extends SharedObject implements ISharedTree {
+	private readonly breaker: Breakable = new Breakable("Shared Tree");
 
-	public get checkout(): TreeCheckout {
-		return this.kernel.checkout;
-	}
-	public get storedSchema(): TreeStoredSchemaRepository {
-		return this.checkout.storedSchema;
-	}
-
-	private readonly kernel: SharedTreeKernel;
+	public readonly kernel: SharedTreeKernel;
 
 	public constructor(
 		id: string,
@@ -242,10 +234,6 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 			runtime.idCompressor,
 			optionsParam,
 		);
-	}
-
-	public get editor(): SharedTreeEditBuilder {
-		return this.kernel.getEditor();
 	}
 
 	public summarizeCore(
@@ -484,6 +472,7 @@ export class SharedTreeKernel
 			id: sharedObject.id,
 			attributes: sharedObject.attributes,
 			isAttached: () => sharedObject.isAttached(),
+			kernel: this,
 		};
 	}
 
@@ -624,13 +613,13 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	treeOrView: ITree | TreeViewAlpha<T>,
 ): BranchableTree {
-	assert(
-		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
-		0xa48 /* Unsupported implementation */,
-	);
-	const checkout: TreeCheckout = treeOrView.checkout;
+	if (treeOrView instanceof SchematizingSimpleTreeView) {
+		return treeOrView.checkout as unknown as BranchableTree;
+	}
+	const kernel = (treeOrView as ITree as ITreePrivate).kernel;
+	assert(kernel instanceof SharedTreeKernel, "Invalid ITree");
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return checkout as unknown as BranchableTree;
+	return kernel.checkout as unknown as BranchableTree;
 }
 
 /**

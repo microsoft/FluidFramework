@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type {
+	IChannelAttributes,
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+	IChannelServices,
+} from "@fluidframework/datastore-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ISharedObjectKind,
@@ -12,12 +18,6 @@ import {
 	type SharedObjectOptions,
 	type FactoryOut,
 } from "@fluidframework/shared-object-base/internal";
-import type {
-	IChannelAttributes,
-	IChannelFactory,
-	IChannelServices,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
 
 import {
 	// eslint-disable-next-line import/no-deprecated
@@ -81,14 +81,15 @@ export function treeKernelFactory(
  * A channel factory that creates an {@link ITree}.
  * @deprecated Use the public APIs instead if a SHaredObject is needed, or construct the internal types directly if not.
  */
-export class TreeFactory implements IChannelFactory<ITree> {
+/* eslint-disable import/no-deprecated */
+export class TreeFactory implements IChannelFactory<SharedTreeImpl> {
 	public static Type: string = SharedTreeFactoryType;
 	public readonly type: string = SharedTreeFactoryType;
 
 	public readonly attributes: IChannelAttributes = SharedTreeAttributes;
 
 	public constructor(private readonly options: SharedTreeOptionsInternal) {}
-	/* eslint-disable import/no-deprecated */
+
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
@@ -105,8 +106,8 @@ export class TreeFactory implements IChannelFactory<ITree> {
 		tree.initializeLocal();
 		return tree;
 	}
-	/* eslint-enable import/no-deprecated */
 }
+/* eslint-enable import/no-deprecated */
 
 /**
  * SharedTree is a hierarchical data structure for collaboratively editing strongly typed JSON-like trees

@@ -354,13 +354,13 @@ function advanceCollabWindow(provider: TestTreeProviderLite, removeSequenceNumbe
 	provider.processMessages();
 	while (provider.minimumSequenceNumber <= removeSequenceNumber) {
 		for (const tree of provider.trees) {
-			tree.editor.enterTransaction();
-			tree.editor.addNodeExistsConstraint({
+			tree.kernel.getEditor().enterTransaction();
+			tree.kernel.getEditor().addNodeExistsConstraint({
 				parent: undefined,
 				parentField: rootFieldKey,
 				parentIndex: 0,
 			});
-			tree.editor.exitTransaction();
+			tree.kernel.getEditor().exitTransaction();
 			provider.processMessages();
 		}
 	}

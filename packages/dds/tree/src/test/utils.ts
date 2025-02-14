@@ -161,13 +161,8 @@ import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
-import { configuredSharedTree, configuredSharedTreeOptions } from "../treeFactory.js";
-import {
-	makeChannelFactory,
-	type ISharedObject,
-	type KernelArgs,
-	type SharedObjectOptions,
-} from "@fluidframework/shared-object-base/internal";
+import { TreeFactory, configuredSharedTree } from "../treeFactory.js";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 // Testing utilities
 
@@ -369,6 +364,7 @@ export interface ConnectionSetter {
 	readonly setConnected: (connectionState: boolean) => void;
 }
 
+// TODO: use ITreePrivate
 export type SharedTreeWithConnectionStateSetter = SharedTree &
 	ConnectionSetter &
 	ISharedObject;
@@ -545,11 +541,7 @@ export function assertDeltaEqual(a: DeltaRoot, b: DeltaRoot): void {
 /**
  * A test helper that allows custom code to be injected when a tree is created/loaded.
  */
-export class SharedTreeTestFactory extends makeChannelFactory<SharedTree>(
-	configuredSharedTreeOptions({
-		jsonValidator: typeboxValidator,
-	}) as SharedObjectOptions<SharedTree>,
-) {
+export class SharedTreeTestFactory extends TreeFactory {
 	/**
 	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
 	 * @param onLoad - Called once for each tree that is loaded from a summary.
@@ -557,8 +549,9 @@ export class SharedTreeTestFactory extends makeChannelFactory<SharedTree>(
 	public constructor(
 		protected readonly onCreate: (tree: SharedTree) => void,
 		protected readonly onLoad?: (tree: SharedTree) => void,
+		options: SharedTreeOptionsInternal = {},
 	) {
-		super();
+		super({ ...options, jsonValidator: typeboxValidator });
 	}
 
 	public override async load(
@@ -1177,22 +1170,17 @@ export function treeTestFactory(
 	} = {},
 ): SharedTree {
 	return new SharedTree(
-		testKernelArgs(options),
+		options.id ?? "tree",
+		options.runtime ??
+			new MockFluidDataStoreRuntime({
+				idCompressor: createIdCompressor(testSessionId),
+				clientId: "test-client",
+				id: "test",
+			}),
+		options.attributes ?? new TreeFactory({}).attributes,
 		options.options ?? { jsonValidator: typeboxValidator },
+		options.telemetryContextPrefix,
 	);
-}
-
-function testKernelArgs(options: {
-	id?: string;
-}): KernelArgs {
-	return {
-		idCompressor: createIdCompressor(testSessionId),
-		eventEmitter: new EventEmitter(),
-		logger: createMockLoggerExt(),
-		handle,
-		handleContext: { getAbsoluteUrl: () => "" },
-		id: options.id ?? "tree",
-	};
 }
 
 /**

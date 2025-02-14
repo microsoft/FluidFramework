@@ -92,6 +92,11 @@ export interface SharedKernel {
 	 * {@inheritDoc SharedObjectCore.rollback}
 	 */
 	rollback?(content: unknown, localOpMetadata: unknown): void;
+
+	/**
+	 * {@inheritDoc SharedObjectCore.didAttach}
+	 */
+	didAttach?(): void;
 }
 
 /**
@@ -140,6 +145,10 @@ export abstract class SharedObjectFromKernel<
 		} else {
 			this.kernel.rollback(content, localOpMetadata);
 		}
+	}
+
+	protected override didAttach(): void {
+		this.kernel.didAttach?.();
 	}
 }
 
