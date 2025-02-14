@@ -190,7 +190,7 @@ function mapContainerProps(
 }
 
 /**
- * Attempts to retrieve the global Fluid Devtools instance, initializing it if it's not exists.
+ * Gets the Devtools singleton if it has been initialized, otherwise returns `undefined`.
  * @beta
  */
 export function tryGetIFluidDevtools(): IFluidDevtools | undefined {
