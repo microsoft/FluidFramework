@@ -151,7 +151,7 @@ interface UnsequencedPartialLengthInfo {
 	 * This information is derivable from the entries of `perRefSeqAdjustments`.
 	 *
 	 * Like the `partialLengths` field, `seq` on each entry is actually the local seq.
-	 * See `computeOverlappingLocalRemoves` for more information.
+	 * See `computeOverallRefSeqAdjustment` for more information.
 	 */
 	cachedAdjustmentByRefSeq: Map<number, PartialSequenceLengthsSet>;
 }
@@ -254,7 +254,7 @@ export class PartialSequenceLengths {
 	 *
 	 * (since these are ordered by sequence number and we cache cumulative sums, this is implemented using two lookups and a subtraction).
 	 *
-	 * The specific adjustments that are made roughly categorize as follows:
+	 * The specific adjustments are roughly categorized as follows:
 	 *
 	 * - Ops submitted by a given client generally receive a partial lengths entry corresponding to their sequence number.
 	 * e.g. insert of "ABC" at seq 5 will have a per-client adjustment entry of \{ seq: 5, seglen: 3 \}.
@@ -412,7 +412,7 @@ export class PartialSequenceLengths {
 							);
 						}
 						for (const item of partials.items) {
-							combinedPartials.addOrUpdate(item);
+							combinedPartials.addOrUpdate({ ...item });
 						}
 					}
 				}
@@ -448,6 +448,9 @@ export class PartialSequenceLengths {
 		return combinedPartialLengths;
 	}
 
+	/**
+	 * Create a `PartialSequenceLengths` which tracks only changes incurred by direct child leaves of `block`.
+	 */
 	private static fromLeaves(
 		block: MergeBlock,
 
@@ -747,8 +750,11 @@ export class PartialSequenceLengths {
 					combinedPartialLengths.addLocalAdjustment({
 						refSeq: seqOrLocalSeq,
 						localSeq,
-						// This adjustment gets added to the overall length when localSeq and refSeq are high enough.
-						// Because we already have two entries which mark the segment removed (one added immediately above)
+						// combinedPartialLengths.partialLengths has an entry removing this segment from a perspective >= seqOrLocalSeq.
+						// combinedPartialLengths.unsequencedRecords.partialLengths now has an entry removing this segment from a perspective
+						// with local seq >= `localSeq`.
+						// In order to only remove this segment once, we add back in the length (where this entry only takes effect when
+						// both above are true due to logic in computeOverallRefSeqAdjustment).
 						seglen: segment.cachedLength,
 					});
 				} else {
@@ -797,10 +803,12 @@ export class PartialSequenceLengths {
 			this.partialLengths.addOrUpdate({ seq, len: 0, seglen: -latest.seglen, clientId });
 		}
 
-		this.perClientAdjustments.forEach((clientAdjustments, id) => {
+		// .forEach natively ignores undefined entries.
+		// eslint-disable-next-line unicorn/no-array-for-each
+		this.perClientAdjustments.forEach((clientAdjustments) => {
 			const leqPartial = clientAdjustments.latestLeq(seq);
 			if (leqPartial && leqPartial.seq === seq) {
-				this.addClientAdjustment(id, seq, -leqPartial.seglen);
+				this.addClientAdjustment(clientId, seq, -leqPartial.seglen);
 			}
 		});
 
@@ -873,13 +881,12 @@ export class PartialSequenceLengths {
 				}
 				segCount += branchPartialLengths.segmentCount;
 
-				// The suggested for..of alternative doesn't give easy access to the index while
-				// exploiting sparseness.
+				// .forEach natively ignores undefined entries.
 				// eslint-disable-next-line unicorn/no-array-for-each
-				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments, id) => {
+				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments) => {
 					const leqBranchPartial = clientAdjustments.latestLeq(seq);
 					if (leqBranchPartial && leqBranchPartial.seq === seq) {
-						this.addClientAdjustment(id, seq, leqBranchPartial.seglen);
+						this.addClientAdjustment(clientId, seq, leqBranchPartial.seglen);
 					}
 				});
 			}
@@ -973,7 +980,7 @@ export class PartialSequenceLengths {
 
 				for (const partial of adjustments.items) {
 					// This coalesces entries with the same localSeq as well as computes overall lengths.
-					partials.addOrUpdate(partial);
+					partials.addOrUpdate({ ...partial });
 				}
 			}
 			cachedAdjustment = partials;
@@ -1153,9 +1160,21 @@ export function verifyExpectedPartialLengths(
 	}
 
 	if (expected !== partialLen) {
+		const nonIncrementalPartials = PartialSequenceLengths.combine(
+			node,
+			mergeTree.collabWindow,
+			false,
+			true,
+		);
+		const nonIncrementalLength = nonIncrementalPartials.getPartialLength(
+			refSeq,
+			clientId,
+			localSeq,
+		);
 		node.partialLengths?.getPartialLength(refSeq, clientId, localSeq);
+
 		throw new Error(
-			`expected partial length of ${expected} but found ${partialLen}. refSeq: ${refSeq}, clientId: ${clientId}`,
+			`expected partial length of ${expected} but found ${partialLen}. refSeq: ${refSeq}, clientId: ${clientId}. (non-incremental codepath returned ${nonIncrementalLength})`,
 		);
 	}
 }
