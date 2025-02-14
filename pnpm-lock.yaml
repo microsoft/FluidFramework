@@ -899,6 +899,9 @@ importers:
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
+      emoji-picker-element:
+        specifier: ^1.26.1
+        version: 1.26.1
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
@@ -9943,9 +9946,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      node-fetch:
-        specifier: ^2.6.9
-        version: 2.7.0(encoding@0.1.13)
       socket.io-client:
         specifier: ~4.7.5
         version: 4.7.5
@@ -9986,9 +9986,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/node-fetch':
-        specifier: ^2.6.11
-        version: 2.6.12
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -13166,6 +13163,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../framework/presence
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
@@ -21687,6 +21687,9 @@ packages:
   emittery@0.13.1:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
     engines: {node: '>=12'}
+
+  emoji-picker-element@1.26.1:
+    resolution: {integrity: sha512-XgQ9s2JdmworiqLfJC7eGbzQHGv8yb8U9XofjeRAnOMYaeLh0MfwVAz9oG1YE2U2WnzU0Pys1axMjYtPKJ7YSg==}
 
   emoji-regex@10.4.0:
     resolution: {integrity: sha512-EC+0oUMY1Rqm4O6LLrgjtYDvcVYTy7chDnM4Q7030tP4Kwj3u/pR6gP9ygnp2CJMK5Gq+9Q2oqmrFJAz01DXjw==}
@@ -36552,6 +36555,8 @@ snapshots:
   embla-carousel@8.5.1: {}
 
   emittery@0.13.1: {}
+
+  emoji-picker-element@1.26.1: {}
 
   emoji-regex@10.4.0: {}
 
