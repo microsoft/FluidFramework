@@ -157,6 +157,10 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		odspResolvedUrl.appName = this.appName;
 
+		odspResolvedUrl.codeHint = odspResolvedUrl.codeHint?.containerPackageName
+			? odspResolvedUrl.codeHint
+			: { containerPackageName: getContainerPackageName(this.containerPackageInfo) };
+
 		if (isSharingLinkToRedeem) {
 			// We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
 			// when redeeming the share link during the redeem fallback for trees latest call becomes greater than
