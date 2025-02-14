@@ -69,7 +69,6 @@ export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRu
 		const getDefaultObject = async (
 			request: IRequest,
 			runtime: IContainerRuntime,
-			// eslint-disable-next-line unicorn/consistent-function-scoping
 		): Promise<IResponse | undefined> => {
 			const parser = RequestParser.create(request);
 			if (parser.pathParts.length === 0) {
