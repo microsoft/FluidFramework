@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
+import { createPresenceManager } from "../presenceManager.js";
+
 import { addControlsTests } from "./broadcastControlsTests.js";
+import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
 import type {
 	BroadcastControlSettings,
@@ -12,12 +17,14 @@ import type {
 } from "@fluidframework/presence/alpha";
 import { LatestMap } from "@fluidframework/presence/alpha";
 
+const testWorkspaceName = "name:testWorkspaceA";
+
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createLatestMapManager(
 	presence: IPresence,
 	valueControlSettings?: BroadcastControlSettings,
 ) {
-	const states = presence.getStates("name:testWorkspaceA", {
+	const states = presence.getStates(testWorkspaceName, {
 		fixedMap: LatestMap(
 			{ key1: { x: 0, y: 0 }, key2: { ref: "default", someId: 0 } },
 			valueControlSettings,
@@ -34,6 +41,53 @@ describe("Presence", () => {
 		it("API use compiles", () => {});
 
 		addControlsTests(createLatestMapManager);
+
+		it("localItemUpdated event is fired with new value when local value is updated", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				fixedMap: LatestMap<
+					{
+						x: number;
+						y: number;
+					},
+					string
+				>({ key1: { x: 0, y: 0 } }),
+			});
+			const fixedMap = states.props.fixedMap;
+
+			let localUpdateCount = 0;
+			fixedMap.events.on("localItemUpdated", (update) => {
+				localUpdateCount++;
+				assert.strictEqual(update.key, "key1");
+				assert.deepStrictEqual(update.value, { x: 1, y: 2 });
+			});
+
+			fixedMap.local.set("key1", { x: 1, y: 2 });
+			assert.strictEqual(localUpdateCount, 1);
+		});
+
+		it("localItemRemoved event is fired with new value when local value is deleted", () => {
+			const presence = createPresenceManager(new MockEphemeralRuntime());
+			const states = presence.getStates(testWorkspaceName, {
+				fixedMap: LatestMap<
+					{
+						x: number;
+						y: number;
+					},
+					string
+				>({ key1: { x: 0, y: 0 } }),
+			});
+			const fixedMap = states.props.fixedMap;
+
+			let localRemovalCount = 0;
+			fixedMap.events.on("localItemRemoved", (update) => {
+				localRemovalCount++;
+				assert.strictEqual(update.key, "key1");
+			});
+
+			fixedMap.local.delete("key1");
+			assert.strictEqual(localRemovalCount, 1);
+		});
 	});
 });
 
