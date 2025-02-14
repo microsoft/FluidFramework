@@ -189,20 +189,22 @@ export async function loadContainer(
 	);
 
 	// Add a config provider to the Loader to enable / disable features.
-	const settings: Record<string, ConfigTypes> = {};
+	const settings: Record<string, ConfigTypes> = {
+		// This is to enable single-commit-summaries in loader layer
+		"Fluid.Container.summarizeProtocolTree2": true,
+		// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
+		"Fluid.GarbageCollection.GCVersionUpgradeToV4": false,
+	};
 	const configProvider: IConfigProviderBase = {
 		getRawConfig: (name: string): ConfigTypes => settings[name],
 	};
-	// This is to align with the snapshot tests which may upgrade GC Version before the default is changed.
-	settings["Fluid.GarbageCollection.GCVersionUpgradeToV4"] = false;
+
 	// Load the Fluid document while forcing summarizeProtocolTree option
 	const loader = new Loader({
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
-		options: loaderOptions
-			? { ...loaderOptions, summarizeProtocolTree: true }
-			: { summarizeProtocolTree: true },
+		options: loaderOptions ? { ...loaderOptions } : {},
 		logger,
 		configProvider,
 	});
