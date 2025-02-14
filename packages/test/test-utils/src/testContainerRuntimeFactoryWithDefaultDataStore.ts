@@ -14,8 +14,6 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
-
 const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 	if (entryPoint === undefined) {
@@ -25,25 +23,43 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 };
 
 /**
- * ! Note: This function is purely needed for back-compat as the constructor argument structure was changed
+ * {@link ContainerRuntimeFactoryConstructor} input properties.
+ *
+ * @internal
+ */
+export interface ContainerRuntimeFactoryConstructorProps {
+	defaultFactory: IFluidDataStoreFactory;
+	registryEntries: NamedFluidDataStoreRegistryEntries;
+	dependencyContainer?: any;
+	// eslint-disable-next-line import/no-deprecated
+	requestHandlers?: RuntimeRequestHandler[];
+	runtimeOptions?: IContainerRuntimeOptions;
+	provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+}
+
+/**
+ * {@link IRuntimeFactory} construct signature.
+ *
+ * @internal
+ */
+export type ContainerRuntimeFactoryConstructor = new (
+	props: ContainerRuntimeFactoryConstructorProps,
+) => IRuntimeFactory;
+
+/**
+ * ! Note: This function is purely needed for back-compat as the constructor argument structure of
+ * {@link ContainerRuntimeFactoryWithDefaultDataStore} was changed.
+ *
  * @internal
  */
 export const createContainerRuntimeFactoryWithDefaultDataStore = (
-	Base: typeof ContainerRuntimeFactoryWithDefaultDataStore = ContainerRuntimeFactoryWithDefaultDataStore,
-	ctorArgs: {
-		defaultFactory: IFluidDataStoreFactory;
-		registryEntries: NamedFluidDataStoreRegistryEntries;
-		dependencyContainer?: any;
-		// eslint-disable-next-line import/no-deprecated
-		requestHandlers?: RuntimeRequestHandler[];
-		runtimeOptions?: IContainerRuntimeOptions;
-		provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	},
+	ctor: ContainerRuntimeFactoryConstructor,
+	ctorProps: ContainerRuntimeFactoryConstructorProps,
 ): IRuntimeFactory => {
 	try {
-		return new Base(ctorArgs);
+		return new ctor(ctorProps);
 	} catch (err) {
-		// IMPORTANT: The constructor argument structure changed, so this is needed for dynamically using older ContainerRuntimeFactoryWithDefaultDataStore's
+		// IMPORTANT: The constructor argument structure changed, so this is needed for dynamically using older `ContainerRuntimeFactoryWithDefaultDataStore`s
 		const {
 			defaultFactory,
 			registryEntries,
@@ -51,9 +67,9 @@ export const createContainerRuntimeFactoryWithDefaultDataStore = (
 			requestHandlers,
 			runtimeOptions,
 			provideEntryPoint,
-		} = ctorArgs;
+		} = ctorProps;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return new (Base as any)(
+		return new (ctor as any)(
 			defaultFactory,
 			registryEntries,
 			dependencyContainer,
