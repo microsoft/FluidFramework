@@ -1083,7 +1083,7 @@ export class MergeTree {
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
 			if (node.isLeaf()) {
 				return this.localNetLength(node, refSeq, localSeq);
-			} else if (localSeq === undefined || localSeq === this.collabWindow.localSeq) {
+			} else if (localSeq === undefined) {
 				// Local client sees all segments, even when collaborating
 				return node.cachedLength;
 			} else {
