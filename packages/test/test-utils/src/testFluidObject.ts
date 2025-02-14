@@ -110,6 +110,7 @@ export class TestFluidObject implements ITestFluidObject {
 }
 
 /**
+ * Iterable\<[ChannelId, IChannelFactory]\>.
  * @internal
  */
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;

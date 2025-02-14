@@ -382,6 +382,7 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, ISharedMapC
  * @sealed
  * @legacy
  * @alpha
+ * @system
  */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

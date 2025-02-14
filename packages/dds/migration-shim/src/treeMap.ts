@@ -92,7 +92,7 @@ export class MapAdapterItem extends MapAdapterItem_base {
 		const handles = new Handles();
 		const handleKeys = new Set<string>();
 
-		// Find existing objects with a "handle" property that is a string, and add those strings to handleKeys to avoid collisions when including fluid handles.
+		// Find existing objects with a "handle" property that is a string, and add those strings to handleKeys to avoid collisions when including Fluid handles.
 		{
 			const queue = [value];
 			while (queue.length > 0) {

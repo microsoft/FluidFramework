@@ -501,7 +501,6 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 					view: before.view,
 					kernel: before.kernel,
 					adapter,
-					migrated: this.migrationOptions,
 				};
 			}
 		}

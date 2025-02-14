@@ -733,6 +733,12 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, ISharedMapC
 }
 
 // @alpha @sealed
+export interface ISharedMapCore extends Map<string, any> {
+    get<T = any>(key: string): T | undefined;
+    set<T = unknown>(key: string, value: T): this;
+}
+
+// @alpha @sealed
 export interface ISharedMapEvents extends ISharedObjectEvents {
     (event: "valueChanged", listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void): any;
     (event: "clear", listener: (local: boolean, target: IEventThisPlaceHolder) => void): any;
