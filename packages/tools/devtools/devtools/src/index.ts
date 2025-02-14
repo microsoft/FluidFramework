@@ -21,11 +21,7 @@
  * @packageDocumentation
  */
 
-import type {
-	IDisposable,
-	IFluidLoadable,
-	ITelemetryBaseLogger,
-} from "@fluidframework/core-interfaces";
+import type { IDisposable, IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	type ContainerDevtoolsProps as ContainerDevtoolsPropsBase,
 	type HasContainerKey,
@@ -36,6 +32,7 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
 import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
+import { FluidDevtools } from "../../devtools-core/lib/FluidDevtools.js";
 
 /**
  * Properties for configuring {@link IDevtools}.
@@ -196,7 +193,7 @@ function mapContainerProps(
  * Attempts to retrieve the global Fluid Devtools instance, initializing it if it's not exists.
  * @beta
  */
-export function tryGetIFluidDevtools(logger?: ITelemetryBaseLogger): IFluidDevtools {
+export function tryGetIFluidDevtools(): IFluidDevtools | undefined {
 	return FluidDevtools.tryGet();
 }
 
