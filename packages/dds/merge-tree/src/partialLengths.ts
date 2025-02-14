@@ -5,14 +5,12 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { Property, RedBlackTree } from "./collections/index.js";
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import {
 	CollaborationWindow,
 	IMergeNode,
 	ISegmentPrivate,
-	compareNumbers,
 	seqLTE,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
@@ -28,6 +26,10 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
 		newItem: PartialSequenceLength,
 		update?: (existingItem: PartialSequenceLength, newItem: PartialSequenceLength) => void,
 	): void {
+		if (newItem.seglen === 0) {
+			// Don't bother doing any updates for deltas of 0.
+			return;
+		}
 		const prev = this.latestLeq(newItem.seq);
 
 		if (prev?.seq !== newItem.seq) {
@@ -97,11 +99,6 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
 	}
 }
 
-interface IOverlapClient {
-	clientId: number;
-	seglen: number;
-}
-
 /**
  * Tracks length information for a part of a MergeTree (block) at a given time (seq).
  * These objects are associated with internal nodes (i.e. blocks).
@@ -123,43 +120,6 @@ export interface PartialSequenceLength {
 	 * clientId for the client that submitted the op with sequence number `seq`.
 	 */
 	clientId?: number;
-	/**
-	 * If this partial length obliterated remote segments, this is the length of
-	 * those segments
-	 */
-	remoteObliteratedLen?: number;
-	/**
-	 * This field maps each client to the size of the intersection between segments deleted at this seq
-	 * and segments concurrently deleted by that client.
-	 *
-	 * For example, this PartialSequenceLength:
-	 * ```typescript
-	 * {
-	 *     seq: 5,
-	 *     len: 100,
-	 *     seglen: -10,
-	 *     clientId: 0,
-	 *     overlapRemoveClients: <RedBlack tree with key-values expressed by>{
-	 *         1: { clientId: 1, seglen: -5 },
-	 *         3: { clientId: 3, seglen: -10 }
-	 *     }
-	 * }
-	 * ```
-	 *
-	 * corresponds to an op submitted by client 0 which:
-	 * - reduces the length of this block by 10 (it may have deleted a single segment of length 10,
-	 *     several segments totalling length 10, or even delete and add content for a total reduction of 10 length)
-	 * - was concurrent to one or more ops submitted by client 1 that also removed some of the same segments,
-	 *     whose length totalled 5
-	 * - was concurrent to one or more ops submitted by client 3 that removed some of the same segments,
-	 *     whose length totalled 10
-	 */
-	overlapRemoveClients?: RedBlackTree<number, IOverlapClient>;
-	/**
-	 * This field is the same as `overlapRemoveClients`, except that it tracks
-	 * overlapping obliterates rather than removes.
-	 */
-	overlapObliterateClients?: RedBlackTree<number, IOverlapClient>;
 }
 
 interface UnsequencedPartialLengthInfo {
@@ -188,8 +148,7 @@ interface UnsequencedPartialLengthInfo {
 	 * Like the `partialLengths` field, `seq` on each entry is actually the local seq.
 	 * See `computeOverlappingLocalRemoves` for more information.
 	 */
-	// TODO: Rename to cachedAdjustmentByRefSeq.
-	cachedOverlappingByRefSeq: Map<number, PartialSequenceLengthsSet>;
+	cachedAdjustmentByRefSeq: Map<number, PartialSequenceLengthsSet>;
 }
 
 export interface PartialSequenceLengthsOptions {
@@ -332,7 +291,7 @@ export class PartialSequenceLengths {
 				partialLengths: new PartialSequenceLengthsSet(),
 				perRefSeqAdjustments: new Map(),
 				// overlappingRemoves: [],
-				cachedOverlappingByRefSeq: new Map(),
+				cachedAdjustmentByRefSeq: new Map(),
 			};
 		}
 	}
@@ -412,18 +371,10 @@ export class PartialSequenceLengths {
 
 			mergePartialLengths(childPartialLengths, combinedPartialLengths.partialLengths);
 
-			// Could consider this instead:
-			// for (const partial of combinedPartialLengths.partialLengths.items) {
-			// 	combinedPartialLengths.partialLengths.addOrUpdate(partial);
-			// 	// combinedPartialLengths.addClientSeqNumberFromPartial(partial);
-			// }
-
 			if (computeLocalPartials) {
 				combinedPartialLengths.unsequencedRecords = {
 					partialLengths: mergePartialLengths(childUnsequencedPartialLengths),
-					// overlappingRemoves: [...mergeSortedListsBySeq(childOverlapRemoves)],
-					cachedOverlappingByRefSeq: new Map(),
-					// TODO: This needs to be populated by aggregating others!!
+					cachedAdjustmentByRefSeq: new Map(),
 					perRefSeqAdjustments: new Map(),
 				};
 
@@ -825,8 +776,6 @@ export class PartialSequenceLengths {
 	): void {
 		// In the current implementation, this method gets invoked multiple times for the same sequence number (i.e. mid-operation).
 		// We counter this by first zeroing out existing entries from previous updates, but it isn't ideal.
-		// TODO: Zeroing out the overall partial lengths doesn't necessarily mean we've zero'd out the per-client adjustments correctly.
-		// It does seem like we only ever invoke length updating multiple times for segment insertion though, so this might be fine.
 		const latest = this.partialLengths.latestLeq(seq);
 		if (latest?.seq === seq) {
 			this.partialLengths.addOrUpdate({ seq, len: 0, seglen: -latest.seglen, clientId });
@@ -1005,7 +954,7 @@ export class PartialSequenceLengths {
 			return 0;
 		}
 
-		let cachedAdjustment = this.unsequencedRecords.cachedOverlappingByRefSeq.get(refSeq);
+		let cachedAdjustment = this.unsequencedRecords.cachedAdjustmentByRefSeq.get(refSeq);
 		if (!cachedAdjustment) {
 			const partials: PartialSequenceLengthsSet = new PartialSequenceLengthsSet();
 			for (const [
@@ -1025,7 +974,7 @@ export class PartialSequenceLengths {
 			}
 			// This coalesces entries with the same localSeq as well as computes overall lengths.
 			cachedAdjustment = partials;
-			this.unsequencedRecords.cachedOverlappingByRefSeq.set(refSeq, cachedAdjustment);
+			this.unsequencedRecords.cachedAdjustmentByRefSeq.set(refSeq, cachedAdjustment);
 		}
 
 		const overlap = cachedAdjustment.latestLeq(localSeq);
@@ -1166,30 +1115,6 @@ function verifyPartialLengthsInner(
 				assert(false, 0x057 /* "Negative length after length adjustment!" */);
 			}
 		}
-
-		if (partialLength.overlapRemoveClients) {
-			// Only the flat partialLengths can have overlapRemoveClients, the per client view shouldn't
-			assert(
-				!clientPartials,
-				0x058 /* "Both overlapRemoveClients and clientPartials are set!" */,
-			);
-
-			// Each overlap client counts as one, but the first remove to sequence was already counted.
-			// (this aligns with the logic to omit the removing client in `addClientSeqNumberFromPartial`)
-			count += partialLength.overlapRemoveClients.size() - 1;
-		}
-
-		if (partialLength.overlapObliterateClients) {
-			// Only the flat partialLengths can have overlapObliterateClients, the per client view shouldn't
-			assert(
-				!clientPartials,
-				0x872 /* Both overlapObliterateClients and clientPartials are set! */,
-			);
-
-			// Each overlap client counts as one, but the first move to sequence was already counted.
-			// (this aligns with the logic to omit the moving client in `addClientSeqNumberFromPartial`)
-			count += partialLength.overlapObliterateClients.size() - 1;
-		}
 	}
 	return count;
 }
@@ -1259,72 +1184,6 @@ export function verifyPartialLengths(partialSeqLengths: PartialSequenceLengths):
 /* eslint-enable @typescript-eslint/dot-notation */
 
 /**
- * Clones an `overlapRemoveClients` red-black tree.
- */
-function cloneOverlapRemoveClients(
-	oldTree: RedBlackTree<number, IOverlapClient> | undefined,
-): RedBlackTree<number, IOverlapClient> | undefined {
-	if (!oldTree) {
-		return undefined;
-	}
-	const newTree = new RedBlackTree<number, IOverlapClient>(compareNumbers);
-	oldTree.map((bProp: Property<number, IOverlapClient>) => {
-		newTree.put(bProp.data.clientId, { ...bProp.data });
-		return true;
-	});
-	return newTree;
-}
-
-function combineForOverlapClients(
-	treeA: RedBlackTree<number, IOverlapClient> | undefined,
-	treeB: RedBlackTree<number, IOverlapClient> | undefined,
-): RedBlackTree<number, IOverlapClient> | undefined {
-	if (treeA) {
-		if (treeB) {
-			treeB.map((bProp: Property<number, IOverlapClient>) => {
-				const aProp = treeA.get(bProp.key);
-				if (aProp) {
-					aProp.data.seglen += bProp.data.seglen;
-				} else {
-					treeA.put(bProp.data.clientId, { ...bProp.data });
-				}
-				return true;
-			});
-		}
-	} else {
-		return cloneOverlapRemoveClients(treeB);
-	}
-}
-
-/**
- * Combines the `overlapRemoveClients` and `overlapObliterateClients` fields of
- * two `PartialSequenceLength` objects, modifying the first PartialSequenceLength's
- * bookkeeping in-place.
- *
- * Combination is performed additively on `seglen` on a per-client basis.
- */
-export function combineOverlapClients(
-	a: PartialSequenceLength,
-	b: PartialSequenceLength,
-): void {
-	const overlapRemoveClients = combineForOverlapClients(
-		a.overlapRemoveClients,
-		b.overlapRemoveClients,
-	);
-	if (overlapRemoveClients) {
-		a.overlapRemoveClients = overlapRemoveClients;
-	}
-
-	const overlapObliterateClients = combineForOverlapClients(
-		a.overlapObliterateClients,
-		b.overlapObliterateClients,
-	);
-	if (overlapObliterateClients) {
-		a.overlapObliterateClients = overlapObliterateClients;
-	}
-}
-
-/**
  * Given a number of seq-sorted `partialLength` lists, merges them into a combined seq-sorted `partialLength`
  * list. This merge includes coalescing `PartialSequenceLength` entries at the same seq.
  *
@@ -1345,10 +1204,6 @@ function mergePartialLengths(
 	for (const partialLength of mergeSortedListsBySeq(childPartialLengths)) {
 		mergedLengths.addOrUpdate({
 			...partialLength,
-			overlapRemoveClients: cloneOverlapRemoveClients(partialLength.overlapRemoveClients),
-			overlapObliterateClients: cloneOverlapRemoveClients(
-				partialLength.overlapObliterateClients,
-			),
 		});
 	}
 	return mergedLengths;
