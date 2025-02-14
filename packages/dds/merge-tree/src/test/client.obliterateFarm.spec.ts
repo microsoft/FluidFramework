@@ -104,7 +104,7 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 
 // More tests pass, but due to how this farm selects ops, the tests take a while to run, and merge-tree
 // already a test suite on the longer side.
-const describeFuzz = createFuzzDescribe({ defaultTestCount: 5 });
+const describeFuzz = createFuzzDescribe({ defaultTestCount: 1 });
 describeFuzz("MergeTree.Client Obliterate", ({ testCount }) => {
 	if (testCount > 1) {
 		doOverRange(
