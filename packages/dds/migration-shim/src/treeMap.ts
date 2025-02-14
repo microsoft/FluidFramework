@@ -13,14 +13,12 @@ import {
 	type ISharedMapCore,
 } from "@fluidframework/map/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
-import type {
-	KernelArgs,
-	SharedKernelFactory,
-} from "@fluidframework/shared-object-base/internal";
+import type { SharedKernelFactory } from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree";
 import {
 	SchemaFactory,
 	Tree,
+	treeKernelFactory,
 	TreeViewConfiguration,
 	type JsonCompatible,
 	type TreeView,
@@ -190,11 +188,7 @@ function dataFromTree(tree: ITree): TreeData | ErrorData {
 	}
 }
 
-const treeFactory: SharedKernelFactory<ITree> = {
-	create: (args: KernelArgs) => {
-		throw new Error("Not implemented");
-	},
-};
+const treeFactory: SharedKernelFactory<ITree> = treeKernelFactory({});
 
 /**
  * Map which can be based on a SharedMap or a SharedTree.

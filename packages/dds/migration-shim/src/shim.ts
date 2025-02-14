@@ -211,7 +211,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		public readonly kernelArgs: KernelArgs,
 		public readonly migrationSet: MigrationSet<TFrom, TOut>,
 	) {
-		this.migrationOptions = this.migrationSet.selector(this.kernelArgs.id);
+		this.migrationOptions = this.migrationSet.selector(this.kernelArgs.sharedObject.id);
 		const shim: MigrationShimInfo = {
 			cast: <const T extends MigrationOptions>(options: T) => {
 				if ((options as MigrationOptions) !== this.migrationOptions) {
@@ -379,7 +379,11 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				unreachableCase(meta.migrated);
 			}
 		}
-		this.data.kernel.rollback(content, meta.inner);
+		if (this.data.kernel.rollback === undefined) {
+			throw new Error("rollback not supported");
+		} else {
+			this.data.kernel.rollback(content, meta.inner);
+		}
 	}
 
 	/**
@@ -406,7 +410,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				opMigrationIdFromContents(op) === this.migrationOptions.migrationIdentifier,
 				"Migration op must have migration identifier",
 			);
-			this.kernelArgs.submitMessage(op, {
+			this.kernelArgs.submitLocalMessage(op, {
 				inner: {},
 				migrated: MigrationPhase.Migration,
 			} satisfies LocalOpMetadata);
@@ -429,7 +433,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 			opMigrationIdFromContents(op) === this.migrationOptions.migrationIdentifier,
 			"Migration op must have migration identifier",
 		);
-		this.kernelArgs.submitMessage(op, {
+		this.kernelArgs.submitLocalMessage(op, {
 			inner: {},
 			migrated: MigrationPhase.Migration,
 		} satisfies LocalOpMetadata);
@@ -442,8 +446,8 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	} {
 		const adjustedArgs: KernelArgs = {
 			...this.kernelArgs,
-			submitMessage: (content, localOpMetadata) => {
-				this.kernelArgs.submitMessage(content, {
+			submitLocalMessage: (content, localOpMetadata) => {
+				this.kernelArgs.submitLocalMessage(content, {
 					migrated: migrated ? MigrationPhase.After : MigrationPhase.Before,
 					inner: localOpMetadata,
 				} satisfies LocalOpMetadata);
@@ -499,5 +503,9 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 			this.#data = this.init(this.migrationOptions.defaultMigrated);
 		}
 		return this.#data;
+	}
+
+	public didAttach(): void {
+		this.data.kernel.didAttach?.();
 	}
 }

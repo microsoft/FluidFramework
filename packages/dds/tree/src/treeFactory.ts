@@ -22,6 +22,7 @@ import {
 import {
 	// eslint-disable-next-line import/no-deprecated
 	SharedTree as SharedTreeImpl,
+	type ITreeInternal,
 	type ITreePrivate,
 	type SharedTreeOptions,
 	type SharedTreeOptionsInternal,
@@ -53,8 +54,10 @@ export const SharedTreeAttributes: IChannelAttributes = {
 
 /**
  * Creates a factory for shared tree kernels with the given options.
+ * @remarks
+ * Exposes {@link ITreePrivate} to allow access to internals in tests without a cast.
  */
-export function treeKernelFactory(
+function treeKernelFactoryPrivate(
 	options: SharedTreeOptionsInternal,
 ): SharedKernelFactory<ITreePrivate> {
 	return {
@@ -76,6 +79,14 @@ export function treeKernelFactory(
 		},
 	};
 }
+
+/**
+ * Creates a factory for shared tree kernels with the given options.
+ * @internal
+ */
+export const treeKernelFactory: (
+	options: SharedTreeOptions,
+) => SharedKernelFactory<ITreeInternal> = treeKernelFactoryPrivate;
 
 /**
  * A channel factory that creates an {@link ITree}.
