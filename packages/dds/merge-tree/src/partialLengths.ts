@@ -239,30 +239,30 @@ export class PartialSequenceLengths {
 	 *
 	 * As per doc comment on {@link PartialSequenceLengths}, the overall adjustment performed for the perspective of
 	 * (clientId, refSeq) is given by the sum of length deltas in `perClientAdjustments[clientId]`
-	 * for all sequence numbers S such that S >= refSeq.
+	 * for all sequence numbers S such that S \>= refSeq.
 	 *
 	 * (since these are ordered by sequence number and we cache cumulative sums, this is implemented using two lookups and a subtraction).
 	 *
 	 * The specific adjustments that are made roughly categorize as follows:
 	 *
 	 * - Ops submitted by a given client generally receive a partial lengths entry corresponding to their sequence number.
-	 *   e.g. insert of "ABC" at seq 5 will have a per-client adjustment entry of { seq: 5, seglen: 3 }.
+	 * e.g. insert of "ABC" at seq 5 will have a per-client adjustment entry of \{ seq: 5, seglen: 3 \}.
 	 *
 	 * - When client A deletes a segment concurrently with client B and loses the race (B's delete is sequenced first),
-	 *   A's per-client adjustments will contain an entry with a negative `seglen` corresponding to the length of the segment
-	 *   and a sequence number corresponding to that of B's delete. It will *not* receive a per-client adjustment for its own delete.
-	 *   This ensures that for perspectives (A, refSeq), the deleted segment will show up as a negative delta for all values of refSeq, since:
-	 *   - For refSeq < B's delete, the per-client adjustment will apply and be added to the total length
-	 *   - For refSeq >= B's delete, B's partial length entry in the overall set will apply, and the per-client adjustment will not apply
+	 * A's per-client adjustments will contain an entry with a negative `seglen` corresponding to the length of the segment
+	 * and a sequence number corresponding to that of B's delete. It will *not* receive a per-client adjustment for its own delete.
+	 * This ensures that for perspectives (A, refSeq), the deleted segment will show up as a negative delta for all values of refSeq, since:
+	 * 1. For refSeq \< B's delete, the per-client adjustment will apply and be added to the total length
+	 * 2. For refSeq \>= B's delete, B's partial length entry in the overall set will apply, and the per-client adjustment will not apply
 	 *
 	 * - When client A attempts to insert a segment into a location that is concurrently obliterated by client B immediately upon insertion,
-	 *   A's per-client adjustments will again not include an entry for its own insert.
-	 *   Instead, the entry which would normally contain `seq` equal to that of A's insert would instead have `seq` equal to that of B's obliterate.
-	 *   This gives the overall correct behavior: for any perspective which isn't client A, there is no adjustment necessary anywhere (it's as if
-	 *   the segment never existed). For client A's perspective, the segment should be considered visible until A has acked B's obliterate.
-	 *   This is accomplished as for the perspective (A, refSeq):
-	 *   - For refSeq < B's obliterate, the segment length will be included as part of the per-client adjustment for A
-	 * 	 - For refSeq >= B's obliterate, the segment will be omitted from the per-client adjustment for A
+	 * A's per-client adjustments will again not include an entry for its own insert.
+	 * Instead, the entry which would normally contain `seq` equal to that of A's insert would instead have `seq` equal to that of B's obliterate.
+	 * This gives the overall correct behavior: for any perspective which isn't client A, there is no adjustment necessary anywhere (it's as if
+	 * the segment never existed). For client A's perspective, the segment should be considered visible until A has acked B's obliterate.
+	 * This is accomplished as for the perspective (A, refSeq):
+	 * 1. For refSeq \< B's obliterate, the segment length will be included as part of the per-client adjustment for A
+	 * 2. For refSeq \>= B's obliterate, the segment will be omitted from the per-client adjustment for A
 	 *
 	 * Note that the special-casing for inserting segments that are immediately obliterated is only necessary for segments that never were visible
 	 * in the tree. If an insert and obliterate are concurrent but the insert is sequenced first, the normal per-client adjustment is fine.
@@ -463,16 +463,7 @@ export class PartialSequenceLengths {
 			}
 		}
 
-		// TODO: Consider putting the overall length post-process bit back, but for now this should be handled
-		// by addOrUpdate
-		try {
-			PartialSequenceLengths.options.verifier?.(combinedPartialLengths);
-		} catch (err) {
-			if (retry) {
-				this.fromLeaves(block, collabWindow, computeLocalPartials, false);
-			}
-			throw err;
-		}
+		PartialSequenceLengths.options.verifier?.(combinedPartialLengths);
 		return combinedPartialLengths;
 	}
 
@@ -506,8 +497,10 @@ export class PartialSequenceLengths {
 			// Implication -> this is a local segment which will be obliterated as soon as it is acked.
 			// For refSeqs preceding that movedSeq and localSeqs following the localSeq, it will be visible.
 			// For the rest, it will not be visible.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const localSeq = segment.localSeq!;
 			partials.addOrUpdate({
-				seq: segment.localSeq!,
+				seq: localSeq,
 				len: 0,
 				seglen: segment.cachedLength,
 				clientId,
@@ -515,7 +508,7 @@ export class PartialSequenceLengths {
 
 			combinedPartialLengths.addLocalAdjustment({
 				refSeq: moveInfo.movedSeq,
-				localSeq: segment.localSeq!,
+				localSeq,
 				seglen: -segment.cachedLength,
 			});
 		} else {
@@ -850,18 +843,15 @@ export class PartialSequenceLengths {
 				}
 				segCount += branchPartialLengths.segmentCount;
 
-				// I kinda like the sparse loop, but Number.parseInt it forces is pretty ugly.
-				for (const clientId in branchPartialLengths.perClientAdjustments) {
-					const clientAdjustments = branchPartialLengths.perClientAdjustments[clientId];
-					if (clientAdjustments === undefined) {
-						continue;
+				// The suggested for..of alternative doesn't give easy access to the index while
+				// exploiting sparseness.
+				// eslint-disable-next-line unicorn/no-array-for-each
+				branchPartialLengths.perClientAdjustments.forEach((clientAdjustments, id) => {
+					const leqBranchPartial = clientAdjustments.latestLeq(seq);
+					if (leqBranchPartial && leqBranchPartial.seq === seq) {
+						this.addClientSeqNumber(id, seq, leqBranchPartial.seglen);
 					}
-
-					const leqPartial = clientAdjustments.latestLeq(seq);
-					if (leqPartial && leqPartial.seq === seq) {
-						this.addClientSeqNumber(Number.parseInt(clientId), seq, leqPartial.seglen);
-					}
-				}
+				});
 			}
 		}
 
@@ -1041,7 +1031,7 @@ export class PartialSequenceLengths {
 	}
 
 	/**
-	 * @returns The partial lengths associated with the latest change associated with `clientId` at or before `refSeq`.
+	 * Returns the partial lengths associated with the latest change associated with `clientId` at or before `refSeq`.
 	 * Returns undefined if no such change exists.
 	 */
 	private latestClientEntryLEQ(
@@ -1052,7 +1042,7 @@ export class PartialSequenceLengths {
 	}
 
 	/**
-	 * @returns The partial lengths associated with the most recent change received by `clientId`, or undefined
+	 * Get the partial lengths associated with the most recent change received by `clientId`, or undefined
 	 * if this client has made no changes in this block within the collab window.
 	 */
 	private latestClientEntry(clientId: number): PartialSequenceLength | undefined {

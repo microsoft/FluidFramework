@@ -99,13 +99,13 @@ export class PartialSyncTestHelper {
 			"Cannot attempt to advance clients to sequence numbers that don't yet exist",
 		);
 		let startIndex: number;
-		if (lastApplied !== undefined) {
+		if (lastApplied === undefined) {
+			startIndex = 0;
+		} else {
 			if (lastApplied >= seq) {
 				return;
 			}
 			startIndex = lastApplied;
-		} else {
-			startIndex = 0;
 		}
 		for (let i = startIndex; i < seq; i++) {
 			const nextMessage = this.ops[i];

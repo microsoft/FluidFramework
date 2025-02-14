@@ -8,11 +8,11 @@ import { strict as assert } from "node:assert";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTree } from "../mergeTree.js";
+import { Side } from "../sequencePlace.js";
 
 import { PartialSyncTestHelper } from "./partialSyncHelper.js";
 import { ReconnectTestHelper } from "./reconnectHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
-import { Side } from "../sequencePlace.js";
 
 /**
  * Some tests contain ASCII diagrams of the trees to make it easier to reason about

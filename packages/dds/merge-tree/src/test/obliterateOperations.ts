@@ -20,7 +20,7 @@ const posInField = (
 	client: TestClient,
 	pos: number,
 ): { startPos: number; endPos: number } | undefined => {
-	const isFieldCharacter = (char: string) =>
+	const isFieldCharacter = (char: string): boolean =>
 		Number.isInteger(Number(char)) || char === "{" || char === "}";
 	if (pos >= client.getLength() || !isFieldCharacter(client.getText(pos, pos + 1))) {
 		// pos is not within a field.
