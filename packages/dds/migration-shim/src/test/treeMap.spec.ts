@@ -32,7 +32,7 @@ import {
 import { TreeViewConfiguration, type ITree } from "@fluidframework/tree/internal";
 
 import { MigrationStatus, shimInfo, type IMigrationShim } from "../shim.js";
-import { MapAdapterRoot, MapToTree, TreeFromMap } from "../treeMap.js";
+import { MapAdapterRoot, MapToTree, TreeFromMap, treeFromMapPartial } from "../treeMap.js";
 
 describe("treeMap", () => {
 	it("conversion", () => {
@@ -206,6 +206,8 @@ describe("treeMap", () => {
 
 		let first = true;
 
+		const containerErrors: unknown[] = [];
+
 		async function connect<T>(kind: ISharedObjectKind<T>): Promise<{
 			container: IContainer;
 			sharedObject: T;
@@ -220,6 +222,14 @@ describe("treeMap", () => {
 
 			// eslint-disable-next-line require-atomic-updates
 			first = false;
+			container.on("closed", (error) => {
+				if (error !== undefined) {
+					containerErrors.push(error);
+				}
+			});
+			container.on("warning", (error) => {
+				containerErrors.push(error);
+			});
 			return { container, sharedObject };
 		}
 
@@ -241,20 +251,36 @@ describe("treeMap", () => {
 		a.container.close();
 
 		assert.equal(b.sharedObject[shimInfo].status, MigrationStatus.Before);
+		assert.deepEqual(containerErrors, []);
+
+		// to simplify things (and avoid resubmit of migration)
+		// make and edit to rejoin in readwrite mode:
+		b.sharedObject.set("K2", "V2");
+		await objProvider.ensureSynchronized();
+		assert.deepEqual(containerErrors, []);
+
 		b.sharedObject[shimInfo].upgrade();
+		assert.deepEqual(containerErrors, []);
 		assert.equal(b.sharedObject[shimInfo].status, MigrationStatus.After);
 		assert.equal(b.sharedObject.get("K"), "V");
 		await objProvider.ensureSynchronized();
 
 		// C
-
-		const c = await connect(TreeFromMap);
+		assert.deepEqual(containerErrors, []);
+		// testFluidObject uses a map internally which we don't want to migrate, so filter it out.
+		const treeKind = treeFromMapPartial((id: string): boolean => id === mapId);
+		const c = await connect(treeKind);
 		const config = new TreeViewConfiguration({
 			schema: MapAdapterRoot,
 			enableSchemaValidation: true,
 			preventAmbiguity: true,
 		});
-		const view = c.sharedObject.viewWith(config);
+		// TODO: cast
+		// c.sharedObject[shimInfo].cast();
+		const tree = c.sharedObject as ITree;
+		const view = tree.viewWith(config);
 		assert.equal(view.root.get("K")?.json, "V");
+
+		assert.deepEqual(containerErrors, []);
 	});
 });

@@ -13,13 +13,17 @@ import {
 	type ISharedMapCore,
 } from "@fluidframework/map/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
-import type { SharedKernelFactory } from "@fluidframework/shared-object-base/internal";
+import type {
+	ISharedObjectKind,
+	SharedKernelFactory,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree";
 import {
 	SchemaFactory,
-	Tree,
 	treeKernelFactory,
 	TreeViewConfiguration,
+	typeboxValidator,
 	type JsonCompatible,
 	type TreeView,
 	// SharedTree,
@@ -28,6 +32,7 @@ import {
 import {
 	makeSharedObjectAdapter,
 	unsupportedAdapter,
+	type IMigrationShim,
 	type MigrationOptions,
 	type MigrationSet,
 } from "./shim.js";
@@ -198,11 +203,11 @@ interface ErrorData {
 	readonly message: string;
 }
 
-/**
- * TODO: use this.
- */
 function dataFromTree(tree: ITree): TreeData | ErrorData {
 	const view = tree.viewWith(config);
+	if (view.compatibility.canInitialize) {
+		view.initialize(new MapAdapterRoot());
+	}
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (view.compatibility.isEquivalent) {
 		return { tree, view, root: view.root, mode: "tree" };
@@ -211,7 +216,9 @@ function dataFromTree(tree: ITree): TreeData | ErrorData {
 	}
 }
 
-const treeFactory: SharedKernelFactory<ITree> = treeKernelFactory({});
+const treeFactory: SharedKernelFactory<ITree> = treeKernelFactory({
+	jsonValidator: typeboxValidator,
+});
 
 /**
  * Map which can be based on a SharedMap or a SharedTree.
@@ -327,11 +334,11 @@ const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITree, ITree> = {
 	},
 	migrate(from: SharedMap, to: ITree, adaptedTo: ITree) {
 		const view = to.viewWith(config);
-		Tree.runTransaction(view, (tx) => {
-			for (const [key, value] of from.entries()) {
-				view.root.set(key, MapAdapterItem.encode(value as JsonCompatible<IFluidHandle>));
-			}
-		});
+		const root = new MapAdapterRoot();
+		for (const [key, value] of from.entries()) {
+			root.set(key, MapAdapterItem.encode(value as JsonCompatible<IFluidHandle>));
+		}
+		view.initialize(root);
 		view.dispose();
 	},
 	defaultMigrated: true,
@@ -350,6 +357,38 @@ const mapToTreePhase2: MigrationSet<ISharedMapCore, ITree, ITree> = {
  * @remarks
  * This supports loading data in {@link @fluidframework/map#SharedMap} and {@link MapToTree} formats.
  * Data converted from {@link @fluidframework/map#SharedMap} uses the {@link MapAdapterRoot} schema.
- * @alpha
+ *
+ * TODO: strip off ISharedObjectKind for alpha version.
+ * @internal
  */
 export const TreeFromMap = makeSharedObjectAdapter<ISharedMapCore, ITree>(mapToTreePhase2);
+
+function mapToTreePhase2Partial(
+	filter: (id: string) => boolean,
+): MigrationSet<ISharedMapCore, ITree | ISharedMapCore, ITree | ISharedMapCore> {
+	return {
+		...mapToTreePhase2,
+		selector(id: string) {
+			return filter(id)
+				? mapToTreeOptionsPhase2
+				: (mapToTreeOptions as MigrationOptions<ISharedMapCore, ITree, ISharedMap>);
+		},
+	};
+}
+
+/**
+ * Entrypoint for {@link @fluidframework/tree#ITree} creation that supports legacy map data.
+ * @remarks
+ * This supports loading data in {@link @fluidframework/map#SharedMap} and {@link MapToTree} formats.
+ * Data converted from {@link @fluidframework/map#SharedMap} uses the {@link MapAdapterRoot} schema.
+ * TODO: strip off ISharedObjectKind for alpha version.
+ * @internal
+ */
+export function treeFromMapPartial(
+	filter: (id: string) => boolean,
+): ISharedObjectKind<(ITree | ISharedMapCore) & IMigrationShim> &
+	SharedObjectKind<(ITree | ISharedMapCore) & IMigrationShim> {
+	return makeSharedObjectAdapter<ISharedMapCore, ITree | ISharedMapCore>(
+		mapToTreePhase2Partial(filter),
+	);
+}

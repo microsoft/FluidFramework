@@ -54,6 +54,25 @@ describe("Reconnection", () => {
 			map2.connect(services2);
 		});
 
+		// Ensures that the setup for these tests is working properly, but doesn't actually test reconnection
+		it("can send ops", async () => {
+			const key = "testKey";
+			const value = "testValue";
+
+			assert(map1.isAttached());
+			assert(map2.isAttached());
+
+			// Set a value on the first SharedMap.
+			map1.set(key, value);
+
+			// Process the messages.
+			containerRuntimeFactory.processAllMessages();
+
+			// Verify that the set value is processed by both clients.
+			assert.equal(map1.get(key), value, "The local client did not process the set");
+			assert.equal(map2.get(key), value, "The remote client did not process the set");
+		});
+
 		it("can resend unacked ops on reconnection", async () => {
 			const key = "testKey";
 			const value = "testValue";

@@ -134,6 +134,7 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
+		"@sinclair/typebox": "^0.34.13",
 		"path-browserify": "^1.0.1"
 	},
 	"devDependencies": {

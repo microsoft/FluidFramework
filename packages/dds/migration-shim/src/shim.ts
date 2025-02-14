@@ -25,6 +25,10 @@ import {
 	type SharedObjectOptions,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { type Static, Type } from "@sinclair/typebox";
+// This export is documented as supported in typebox's documentation.
+// eslint-disable-next-line import/no-internal-modules
+import { TypeCompiler } from "@sinclair/typebox/compiler";
 
 /**
  * Design constraints:
@@ -79,6 +83,8 @@ export interface MigrationOptions<
 	 * This should use editing APis which emit Ops to send the changes to remote clients.
 	 *
 	 * `to` is in the default initial state when this is called.
+	 *
+	 * TODO: How should this handle local ops? Copy state from before local ops, then rebase them?
 	 */
 	migrate(from: Before, to: After, adaptedTo: Common): void;
 }
@@ -180,10 +186,61 @@ function opMigrationId(op: ISequencedDocumentMessage): string | undefined {
 }
 
 /**
+ * Randomly generated UUIDv4 to help ensure no non-migration op is ever accidentally interpreted as a migration op.
+ */
+const migrationTag = "26f3e70a-2e99-4d09-8923-5538f05a051a";
+
+/**
+ * A migration op.
+ * @remarks
+ * This is the format used for migration ops, and thus they can be stored in trailing ops for unlimited amounts of time.
+ * Thus changes to this must be extremely carefully considered for compatibility.
+ */
+const MigrationOp = Type.Object(
+	{
+		/**
+		 * Type key intentionally collides with how SharedMap ops do types in a way to make non-adapter maps error reasonably.
+		 */
+		type: Type.Const("migration" as const),
+
+		/**
+		 * Unique identifier for this migration.
+		 * @remarks
+		 * Since a given DDS may have multiple migrations, this is used to detect which migration this op is for.
+		 */
+		id: Type.String(),
+
+		/**
+		 * Of the migration system being used.
+		 * @remarks
+		 * Integer, counting up from one.
+		 * Every time a possibly breaking change is made to how migrations are handled.
+		 */
+		version: Type.Number({ minimum: 1, multipleOf: 1 }),
+
+		migrationTag: Type.Const<typeof migrationTag>(migrationTag),
+	},
+	{ additionalProperties: false },
+);
+
+type MigrationOp = Static<typeof MigrationOp>;
+
+const compiledMigrationOp = TypeCompiler.Compile(MigrationOp);
+
+/**
  * If op is a migration op, return the migration identifier.
  */
 function opMigrationIdFromContents(op: unknown): string | undefined {
-	throw new Error("Not implemented");
+	if (typeof op === "object" && op !== null) {
+		const tag = (op as MigrationOp).migrationTag;
+		if (tag === migrationTag) {
+			const validated = compiledMigrationOp.Check(op);
+			assert(validated, "Unsupported migration op format");
+			assert(op.version === 1, "Unsupported migration version");
+			return op.id;
+		}
+	}
+	return undefined;
 }
 
 interface LocalOpMetadata {
@@ -224,6 +281,9 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		public readonly migrationSet: MigrationSet<TFrom, TOut>,
 	) {
 		this.migrationOptions = this.migrationSet.selector(this.kernelArgs.sharedObject.id);
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		const getStatus = (): MigrationStatus =>
+			this.data.migrated === undefined ? MigrationStatus.Before : MigrationStatus.After;
 		const shim: MigrationShimInfo = {
 			cast: <const T extends MigrationOptions>(options: T) => {
 				if ((options as MigrationOptions) !== this.migrationOptions) {
@@ -233,7 +293,9 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 					? Common
 					: never;
 			},
-			status: MigrationStatus.Before,
+			get status(): MigrationStatus {
+				return getStatus();
+			},
 			upgrade: () => this.upgrade(true),
 		};
 		// Proxy which forwards to the current adapter's APIs.
@@ -295,8 +357,10 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				break;
 			}
 			case MigrationPhase.Migration: {
-				// TODO: maybe support this?
-				throw new Error("Cannot reSubmitCore migration");
+				// TODO: how do we detect/handle ops which happened between initial migration and reSubmit?
+				// Maybe need to track local pending ops as well as remove sequenced ops during migration directly?
+				this.kernelArgs.submitLocalMessage(content, localOpMetadata);
+				return;
 			}
 			case MigrationPhase.After: {
 				assert(
@@ -326,7 +390,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		if (migration === this.migrationOptions.migrationIdentifier) {
 			if (this.migrationSequenced === undefined) {
 				if (!local) {
-					// TODO: migrate
+					this.upgrade(false);
 				}
 				assert(message.clientId !== null, "server should not migrate");
 				this.migrationSequenced = {
@@ -405,8 +469,6 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
 	 */
 	private upgrade(doEdits: boolean): void {
-		// TODO: upgrade op, upgrade rebasing etc.
-
 		const data = this.data;
 		if (data.migrated !== undefined) {
 			// Already migrated
@@ -416,17 +478,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		const after = this.init(true);
 
 		if (doEdits) {
-			// TODO: actual op
-			const op = { migration: this.migrationOptions.migrationIdentifier };
-			assert(
-				opMigrationIdFromContents(op) === this.migrationOptions.migrationIdentifier,
-				"Migration op must have migration identifier",
-			);
-			this.kernelArgs.submitLocalMessage(op, {
-				inner: {},
-				migrated: MigrationPhase.Migration,
-			} satisfies LocalOpMetadata);
-			this.migrationOptions.migrate(data.view as TFrom, after.view, after.adapter);
+			this.sendUpgrade(data.view as TFrom, after.view, after.adapter);
 		}
 
 		this.#data = after;
@@ -439,8 +491,12 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	 * until `viewWith` is called, the map APIs are still available and will be implemented on-top of the tree structure.
 	 */
 	private sendUpgrade(from: TFrom, to: object, adaptedTo: TOut): void {
-		// TODO: actual op
-		const op = { migration: this.migrationOptions.migrationIdentifier };
+		const op: MigrationOp = {
+			id: this.migrationOptions.migrationIdentifier,
+			migrationTag,
+			version: 1,
+			type: "migration",
+		};
 		assert(
 			opMigrationIdFromContents(op) === this.migrationOptions.migrationIdentifier,
 			"Migration op must have migration identifier",
@@ -449,6 +505,15 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 			inner: {},
 			migrated: MigrationPhase.Migration,
 		} satisfies LocalOpMetadata);
+		// Signal the new kernel that it is attached, so it should emit ops.
+		// Doing this now (before migration) means that the edits migration does to initialize the kernel are sent as ops.
+		// That means only one client has to do the conversion, making the conversion itself not required to be deterministic.
+		// TODO: consider an alternative where the migration is run on every client (and attach happens after) as part of the migration op.
+		// This might be better from an events perspective.
+		// It would be a big change to how local ops during the migration (which thus need rebase) work.
+		if (this.kernelArgs.sharedObject.isAttached()) {
+			this.data.kernel.didAttach?.();
+		}
 		this.migrationOptions.migrate(from, to, adaptedTo);
 	}
 
@@ -468,6 +533,9 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		if (migrated) {
 			// Create post migration
 			const { kernel, view } = this.migrationOptions.to.create(adjustedArgs);
+			if (this.kernelArgs.sharedObject.isAttached()) {
+				kernel.didAttach?.();
+			}
 			const adapter = this.migrationOptions.afterAdapter(view);
 			return {
 				view,
@@ -484,8 +552,11 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 					"defaultMigrated must be set if no beforeAdapter",
 				);
 				const after = this.migrationOptions.to.create(adjustedArgs);
+				if (this.kernelArgs.sharedObject.isAttached()) {
+					after.kernel.didAttach?.();
+				}
 				const adapter = this.migrationOptions.afterAdapter(after.view);
-				// TODO: handle read only case.
+				// TODO: document and test read only case
 				this.sendUpgrade(before.view, after.view, adapter);
 				return {
 					view: before.view,
@@ -495,7 +566,9 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				};
 			} else {
 				// Create pre migration
-
+				if (this.kernelArgs.sharedObject.isAttached()) {
+					before.kernel.didAttach?.();
+				}
 				const adapter = this.migrationOptions.beforeAdapter(before.view);
 				return {
 					view: before.view,

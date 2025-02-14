@@ -150,7 +150,7 @@ export const mapKernelFactory: SharedKernelFactory<ISharedMapCore> = {
 			args.serializer,
 			args.sharedObject.handle,
 			args.submitLocalMessage,
-			args.sharedObject.isAttached,
+			() => args.sharedObject.isAttached(),
 			args.eventEmitter,
 		);
 		return { kernel: k, view: k };
