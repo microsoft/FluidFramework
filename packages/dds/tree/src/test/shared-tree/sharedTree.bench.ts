@@ -434,12 +434,17 @@ describe("SharedTree benchmarks", () => {
 	});
 
 	// In this context "op bunch" refers to a group of ops for the same DDS that are sent by a peer in a single message.
-	describe("rebasing over op bunch", () => {
+	describe.only("rebasing over op bunch", () => {
 		// The number of commits in a bunch for a given run of this test suite.
-		const bunchSizes = isInPerformanceTestingMode ? [1, 10] : [2];
+		const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
 		// Number of local commits to rebase over the inbound bunch
 		const localBranchSizes = isInPerformanceTestingMode ? [10, 100] : [2];
-		// If op bunching is used, then the time taken to rebase the local branch over the bunch should be proportional to `bunchSize + localBranchSize` instead of `bunchSize * localBranchSize`.
+		// The time taken by each scenario can be broken down into 4 time costs:
+		// 1. Constant factor overhead (we ignore this).
+		// 2. The time taken to rebase inbound commits onto the tip of the trunk.
+		// 3. The time taken compose all inbound commits from a bunch into a single commit.
+		// 4. The time taken rebase the local branch over the composed commit from #3.
+		//
 		// For the following timings:
 		// +----------------------+-------------+--------------+
 		// |                      | bunchSize:1 | bunchSize:10 |
@@ -447,7 +452,12 @@ describe("SharedTree benchmarks", () => {
 		// | localBranchSize: 10  | t1          | t2           |
 		// | localBranchSize: 100 | t3          | t4           |
 		// +----------------------+-------------+--------------+
-		// Then, if op bunching is used, then t4 should be roughly equal to t1 + (t2-t1) + (t3-t1)
+		// If op bunching is used, the time taken for each scenario is as follows:
+		// t1 = rebase 1  inbound commit  onto trunk + compose 1  commit  + rebase the local branch of size 10  over one commit
+		// t2 = rebase 10 inbound commits onto trunk + compose 10 commits + rebase the local branch of size 10  over one commit
+		// t3 = rebase 1  inbound commit  onto trunk + compose 1  commit  + rebase the local branch of size 100 over one commit
+		// t4 = rebase 10 inbound commits onto trunk + compose 10 commits + rebase the local branch of size 100 over one commit
+		// Therefore, if op bunching is used, then t4 should be roughly equal to t3 + t2 - t1.
 		for (const bunchSize of bunchSizes) {
 			for (const localBranchSize of localBranchSizes) {
 				const test = benchmark({
@@ -462,7 +472,7 @@ describe("SharedTree benchmarks", () => {
 								2,
 								factory,
 								undefined /* useDeterministicSessionIds */,
-								FlushMode.TurnBased,
+								FlushMode.Immediate,
 							);
 							const sender = provider.trees[0];
 							const receiver = provider.trees[1];
@@ -483,7 +493,7 @@ describe("SharedTree benchmarks", () => {
 							// Allow the receiver to receive the bunched commits.
 							// This should force the local branch to be rebased over the bunch.
 							receiver.setConnected(true);
-							provider.processMessages();
+							// provider.processMessages();
 							const after = state.timer.now();
 							duration = state.timer.toSeconds(before, after);
 						} while (state.recordBatch(duration));

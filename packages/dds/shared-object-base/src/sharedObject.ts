@@ -33,6 +33,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -426,6 +427,8 @@ export abstract class SharedObjectCore<
 	/* eslint-enable jsdoc/check-indentation */
 	protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
 
+	<<<<<<<
+	HEAD;
 	/**
 	 * Calls {@link SharedObjectCore.processCore} or {@link SharedObjectCore.processMessagesCore} depending on whether
 	 * processMessagesCore is defined. This helper is used to keep the code cleaner while we have to support both these
@@ -435,6 +438,12 @@ export abstract class SharedObjectCore<
 		messagesCollection: IRuntimeMessageCollection,
 	) => void;
 
+	=======
+>>>>>>> 33dbcd8b71 (
+	Update;
+	test;
+	comments;
+	)
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
@@ -628,10 +637,19 @@ export abstract class SharedObjectCore<
 		this.emitInternal("op", message, local, this);
 	}
 
+	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Process messages for this shared object. The messages here are contiguous messages for this object in a batch.
+	 * Process a bunch of messages for this shared object. A bunch is group of messages that have the following properties:
+	 * - They are all part of the same grouped batch, which entails:
+	 *   - They are contiguous in sequencing order.
+	 *   - They are all from the same client.
+	 *   - They are all based on the same reference sequence number.
+	 *   - They are not interleaved with messages from other clients.
+	 * - They are not interleaved with messages from other DDS in the container.
 	 * @param messageCollection - The collection of messages to process.
+	 *
 	 */
+	/* eslint-enable jsdoc/check-indentation */
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed(); // This will result in container closure.
 
