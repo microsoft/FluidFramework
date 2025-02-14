@@ -190,7 +190,7 @@ function mapContainerProps(
 }
 
 /**
- * Gets the Devtools singleton if it has been initialized, otherwise returns `undefined`.
+ * Gets the Devtools singleton if it has been {@link initializeFluidDevtools | initialized}, otherwise returns `undefined`.
  * @beta
  */
 export function tryGetFluidDevtools(): IFluidDevtools | undefined {
