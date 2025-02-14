@@ -1305,7 +1305,7 @@ export class MergeTree {
 			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {
 				const overlappingRemove = !ackSegment(pendingSegment, pendingSegmentGroup, opArgs);
 
-				overwrite ||= overlappingRemove || toRemovalInfo(pendingSegment) !== undefined;
+				overwrite ||= overlappingRemove || toMoveInfo(pendingSegment) !== undefined;
 
 				overlappingRemoves.push(overlappingRemove);
 				if (MergeTree.options.zamboniSegments) {
@@ -2787,6 +2787,12 @@ export class MergeTree {
 				clientId !== NonCollabClient
 			) {
 				node.partialLengths.update(node, seq, clientId, this.collabWindow);
+				if (
+					node.partialLengths.toString() !==
+					PartialSequenceLengths.combine(node, this.collabWindow).toString()
+				) {
+					debugger;
+				}
 			} else {
 				node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
 			}

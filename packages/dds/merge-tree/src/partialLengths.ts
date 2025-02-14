@@ -684,8 +684,6 @@ export class PartialSequenceLengths {
 			throw new Error("Should have handled this codepath in wasMovedOnInsertion");
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-
 		const lenDelta = -segment.cachedLength;
 		let clientId: number;
 		let seqOrLocalSeq: number;
@@ -805,6 +803,13 @@ export class PartialSequenceLengths {
 		}
 	}
 
+	/**
+	 * If incremental update of partial lengths fails, this gets set to the seq of the failed update.
+	 * When higher up blocks attempt to incrementally update, they first check if the seq they are updating for
+	 * matches this value. If it does, they propagate a full refresh instead.
+	 */
+	private lastIncrementalInvalidationSeq = Number.NEGATIVE_INFINITY;
+
 	// Assume: seq is latest sequence number; no structural change to sub-tree, but this partial lengths
 	// entry needs to account for the change made by the client with `clientId` at sequence number `seq`.
 	// (and `update` has been called on all descendant PartialSequenceLengths).
@@ -827,6 +832,15 @@ export class PartialSequenceLengths {
 			this.partialLengths.addOrUpdate({ seq, len: 0, seglen: -latest.seglen, clientId });
 		}
 
+		/**
+		 * If any of the changes made by the client at `seq` necessitate partial length entries at sequence numbers other than `seq`,
+		 * this flag is set to true. This propagates upwards when aggregating parents as well.
+		 *
+		 * Note: it seems feasible to update parents more incrementally by tracking the changes made to child blocks for a given update.
+		 * There isn't a great place for this information to flow today.
+		 */
+		let failIncrementalPropagation = false;
+
 		let seqSeglen = 0;
 		let segCount = 0;
 		// Compute length for seq across children
@@ -846,6 +860,7 @@ export class PartialSequenceLengths {
 						moveInfo.wasMovedOnInsert
 					) {
 						this.addClientSeqNumber(clientId, moveInfo.movedSeq, segment.cachedLength);
+						failIncrementalPropagation = true;
 					} else {
 						seqSeglen += segment.cachedLength;
 						this.addClientSeqNumber(clientId, seq, segment.cachedLength);
@@ -858,9 +873,12 @@ export class PartialSequenceLengths {
 				);
 				if (segment.seq !== UnassignedSequenceNumber && seq === earlierDeletion) {
 					seqSeglen -= segment.cachedLength;
-					this.addClientSeqNumber(clientId, seq, -segment.cachedLength);
-					if (segment.seq > collabWindow.minSeq && segment.clientId !== clientId) {
-						this.addClientSeqNumber(clientId, segment.seq, segment.cachedLength);
+					if (clientId !== collabWindow.clientId) {
+						this.addClientSeqNumber(clientId, seq, -segment.cachedLength);
+						if (segment.seq > collabWindow.minSeq && segment.clientId !== clientId) {
+							this.addClientSeqNumber(clientId, segment.seq, segment.cachedLength);
+							failIncrementalPropagation = true;
+						}
 					}
 				}
 
@@ -869,6 +887,13 @@ export class PartialSequenceLengths {
 				const childBlock = child;
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				const branchPartialLengths = childBlock.partialLengths!;
+				if (branchPartialLengths.lastIncrementalInvalidationSeq === seq) {
+					// Bail out.
+					const newPartials = PartialSequenceLengths.combine(node, collabWindow, false);
+					newPartials.lastIncrementalInvalidationSeq = seq;
+					node.partialLengths = newPartials;
+					return;
+				}
 				const partialLengths = branchPartialLengths.partialLengths;
 				const leqPartial = partialLengths.latestLeq(seq);
 				if (leqPartial && leqPartial.seq === seq) {
@@ -889,6 +914,10 @@ export class PartialSequenceLengths {
 					}
 				}
 			}
+		}
+
+		if (failIncrementalPropagation) {
+			this.lastIncrementalInvalidationSeq = seq;
 		}
 		this.segmentCount = segCount;
 		this.unsequencedRecords = undefined;
