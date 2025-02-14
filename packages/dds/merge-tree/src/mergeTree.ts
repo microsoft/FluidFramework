@@ -569,7 +569,7 @@ class Obliterates {
  */
 export class MergeTree {
 	public static readonly options = {
-		incrementalUpdate: false, // TODO: Re-enable incremental update
+		incrementalUpdate: true,
 		insertAfterRemovedSegs: true,
 		zamboniSegments: true,
 	};
@@ -1305,7 +1305,7 @@ export class MergeTree {
 			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {
 				const overlappingRemove = !ackSegment(pendingSegment, pendingSegmentGroup, opArgs);
 
-				overwrite = overlappingRemove || overwrite;
+				overwrite ||= overlappingRemove || toRemovalInfo(pendingSegment) !== undefined;
 
 				overlappingRemoves.push(overlappingRemove);
 				if (MergeTree.options.zamboniSegments) {
@@ -1672,7 +1672,17 @@ export class MergeTree {
 				}
 
 				if (newSegment.parent) {
-					this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
+					// The incremental update codepath in theory can handle most cases where segments are obliterated upon insertion,
+					// but it's not idempotent with respect to segment insertion in the first place. Since we already update partial
+					// lengths inside the inserting walk, we'd be at risk of double-counting the insertion in any case if we allow
+					// incremental updates here.
+					const newStructure = true;
+					this.blockUpdatePathLengths(
+						newSegment.parent,
+						moveInfo.movedSeq,
+						clientId,
+						newStructure,
+					);
 				}
 			}
 
@@ -2096,6 +2106,9 @@ export class MergeTree {
 				return true;
 			}
 
+			// Partial lengths incrementality is not supported for overlapping obliterate/removes.
+			_overwrite ||= existingMoveInfo !== undefined || toRemovalInfo(segment) !== undefined;
+
 			if (existingMoveInfo === undefined) {
 				const movedSeg = overwriteInfo<IMoveInfo, ISegmentLeaf>(segment, {
 					movedClientIds: [clientId],
@@ -2118,7 +2131,6 @@ export class MergeTree {
 					localOverlapWithRefs.push(segment);
 				}
 			} else {
-				_overwrite = true;
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
 					// Should not need explicit set here, but this should be implied:
 					assert(
@@ -2270,6 +2282,8 @@ export class MergeTree {
 		): boolean => {
 			const existingRemovalInfo = toRemovalInfo(segment);
 
+			// Partial lengths incrementality is not supported for overlapping obliterate/removes.
+			_overwrite ||= existingRemovalInfo !== undefined || toMoveInfo(segment) !== undefined;
 			if (existingRemovalInfo === undefined) {
 				const removed = overwriteInfo<IRemovalInfo, ISegmentLeaf>(segment, {
 					removedClientIds: [clientId],
@@ -2289,7 +2303,6 @@ export class MergeTree {
 					localOverlapWithRefs.push(segment);
 				}
 			} else {
-				_overwrite = true;
 				if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
 					// we removed this locally, but someone else removed it first
 					// so put them at the head of the list
