@@ -95,7 +95,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.52.0",
+		"@fluidframework/build-tools": "^0.53.0",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
