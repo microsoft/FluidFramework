@@ -553,11 +553,8 @@ class Obliterates {
 					overlapping.push(ob);
 				}
 			} else {
-				// TODO: Restore this.
-				// The test you're looking at has the start segment of one on a "y" that gets removed from the tree in zamboni, likely
-				// since it was removed at seq1 but also obliterated at seq 5. We need to decide to clean up the obliterate data
 				// the start is past the seg, so exit
-				// break;
+				break;
 			}
 		}
 		return overlapping;
@@ -1795,10 +1792,7 @@ export class MergeTree {
 				continue;
 			}
 
-			if (len < 0) {
-				this.nodeUpdateLengthNewStructure(child as MergeBlock, true);
-				assert(len >= 0, 0x4bc /* Length should not be negative */);
-			}
+			assert(len >= 0, 0x4bc /* Length should not be negative */);
 
 			if (_pos < len || (_pos === len && this.breakTie(_pos, child, seq))) {
 				// Found entry containing pos
@@ -1872,18 +1866,13 @@ export class MergeTree {
 				// Don't update ordinals because higher block will do it
 				const newNodeFromSplit = this.split(block);
 
-				try {
-					PartialSequenceLengths.options.verifyExpected?.(this, block, refSeq, clientId);
-					PartialSequenceLengths.options.verifyExpected?.(
-						this,
-						newNodeFromSplit,
-						refSeq,
-						clientId,
-					);
-				} catch (error) {
-					this.nodeUpdateLengthNewStructure(block);
-					throw error;
-				}
+				PartialSequenceLengths.options.verifyExpected?.(this, block, refSeq, clientId);
+				PartialSequenceLengths.options.verifyExpected?.(
+					this,
+					newNodeFromSplit,
+					refSeq,
+					clientId,
+				);
 
 				return newNodeFromSplit;
 			}
@@ -2137,7 +2126,6 @@ export class MergeTree {
 						!existingMoveInfo.wasMovedOnInsert,
 						"Local obliterate cannot have removed a segment as soon as it was inserted",
 					);
-					// never move wasMovedOnInsert from true to false
 					assert(
 						seq !== UnassignedSequenceNumber,
 						"Cannot obliterate the same segment locally twice",
@@ -2787,12 +2775,6 @@ export class MergeTree {
 				clientId !== NonCollabClient
 			) {
 				node.partialLengths.update(node, seq, clientId, this.collabWindow);
-				if (
-					node.partialLengths.toString() !==
-					PartialSequenceLengths.combine(node, this.collabWindow).toString()
-				) {
-					debugger;
-				}
 			} else {
 				node.partialLengths = PartialSequenceLengths.combine(node, this.collabWindow);
 			}
