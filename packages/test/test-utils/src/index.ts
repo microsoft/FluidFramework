@@ -3,12 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export {
-	BaseContainerRuntimeFactory,
-	type BaseContainerRuntimeFactoryProps,
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-} from "./container-runtime-factories/index.js";
 export { IProvideTestFluidObject, ITestFluidObject } from "./interfaces.js";
 export { LoaderContainerTracker } from "./loaderContainerTracker.js";
 export {
@@ -66,4 +60,8 @@ export {
 	getContainerEntryPointBackCompat,
 	getDataStoreEntryPointBackCompat,
 } from "./containerUtils.js";
-export { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+export {
+	type ContainerRuntimeFactoryConstructor,
+	type ContainerRuntimeFactoryConstructorProps,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";

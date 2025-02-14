@@ -11,7 +11,12 @@ import { DriverApi } from "@fluid-private/test-drivers";
 
 // Loader API
 import * as agentScheduler from "@fluidframework/agent-scheduler/internal";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import {
+	BaseContainerRuntimeFactory,
+	ContainerRuntimeFactoryWithDefaultDataStore,
+	DataObject,
+	DataObjectFactory,
+} from "@fluidframework/aqueduct/internal";
 import * as cell from "@fluidframework/cell/internal";
 import { SharedCell } from "@fluidframework/cell/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
@@ -34,11 +39,7 @@ import * as registerCollection from "@fluidframework/register-collection/interna
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import * as sequence from "@fluidframework/sequence/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import {
-	BaseContainerRuntimeFactory,
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	TestFluidObjectFactory,
-} from "@fluidframework/test-utils/internal";
+import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 
 // ContainerRuntime and Data Runtime API
 import * as semver from "semver";

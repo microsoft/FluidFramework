@@ -31,7 +31,10 @@ import {
 import { createTestConfigProvider } from "./TestConfigs.js";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
 import { waitForContainerConnection } from "./containerUtils.js";
-import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+import {
+	type ContainerRuntimeFactoryConstructor,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
 
@@ -118,13 +121,13 @@ export async function createSummarizerFromFactory(
 	container: IContainer,
 	dataStoreFactory: IFluidDataStoreFactory,
 	summaryVersion?: string,
-	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
+	containerRuntimeFactoryType?: ContainerRuntimeFactoryConstructor,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		containerRuntimeFactoryType,
+		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataStoreFactory,
 			registryEntries: registryEntries ?? [
@@ -182,10 +185,8 @@ export async function createSummarizer(
  */
 export async function summarizeNow(
 	summarizer: ISummarizer,
-	// eslint-disable-next-line import/no-deprecated
 	inputs: string | IOnDemandSummarizeOptions = "end-to-end test",
 ): Promise<SummaryInfo> {
-	// eslint-disable-next-line import/no-deprecated
 	const options: IOnDemandSummarizeOptions =
 		typeof inputs === "string" ? { reason: inputs } : inputs;
 	const result = summarizer.summarizeOnDemand(options);

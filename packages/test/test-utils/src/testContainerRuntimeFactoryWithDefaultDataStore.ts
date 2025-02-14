@@ -38,7 +38,7 @@ export interface ContainerRuntimeFactoryConstructorProps {
 }
 
 /**
- * {@link IRuntimeFactory} construct signature.
+ * {@link @fluidframework/container-definitions#IRuntimeFactory} construct signature.
  *
  * @internal
  */
@@ -48,7 +48,7 @@ export type ContainerRuntimeFactoryConstructor = new (
 
 /**
  * ! Note: This function is purely needed for back-compat as the constructor argument structure of
- * {@link ContainerRuntimeFactoryWithDefaultDataStore} was changed.
+ * `ContainerRuntimeFactoryWithDefaultDataStore` was changed.
  *
  * @internal
  */

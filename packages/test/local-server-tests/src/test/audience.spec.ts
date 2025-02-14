@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	ICodeDetailsLoader,
 	IContainer,
@@ -18,7 +19,6 @@ import {
 import { SharedMap } from "@fluidframework/map/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
 	TestFluidObjectFactory,
 	timeoutPromise,
 	waitForContainerConnection,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	type IFluidCodeDetails,
 	type ILoaderOptions,
@@ -21,11 +22,7 @@ import {
 import { SharedMap } from "@fluidframework/map/internal";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	LocalCodeLoader,
-	TestFluidObjectFactory,
-} from "@fluidframework/test-utils/internal";
+import { LocalCodeLoader, TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 
 /**
  * This allows the input object to be general,
@@ -60,7 +57,7 @@ export interface CreateLoaderDefaultResults
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
 	defaultDataStoreFactory: TestFluidObjectFactory;
-	runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
+	runtimeFactory: IRuntimeFactory;
 	loaderProps: ILoaderProps;
 }
 

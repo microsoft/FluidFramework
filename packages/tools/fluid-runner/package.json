@@ -118,6 +118,7 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"dependencies": {
+		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
@@ -137,7 +138,6 @@
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/fluid-runner-previous": "npm:@fluidframework/fluid-runner@2.21.0",
-		"@fluidframework/test-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",

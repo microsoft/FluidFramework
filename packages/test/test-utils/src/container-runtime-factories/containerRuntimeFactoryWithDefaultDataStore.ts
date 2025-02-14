@@ -30,8 +30,6 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
 
 /**
  * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
- *
- * @internal
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	defaultFactory: IFluidDataStoreFactory;
@@ -55,8 +53,6 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
  * the container with an empty URL.
- *
- * @internal
  */
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
 	public static readonly defaultDataStoreId = defaultDataStoreId;

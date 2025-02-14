@@ -5,6 +5,7 @@
 
 import { strict as assert } from "assert";
 
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import { type ILoaderProps } from "@fluidframework/container-loader/internal";
@@ -19,7 +20,6 @@ import {
 } from "@fluidframework/server-local-server";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ContainerRuntimeFactoryWithDefaultDataStore,
 	createAndAttachContainerUsingProps,
 	ITestFluidObject,
 	LoaderContainerTracker,
