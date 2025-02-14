@@ -47,7 +47,8 @@ export type ContainerRuntimeFactoryConstructor = new (
 ) => IRuntimeFactory;
 
 /**
- * ! Note: This function is purely needed for back-compat as the constructor argument structure of
+ * @remarks
+ * This function is purely needed for back-compat as the constructor argument structure of
  * `ContainerRuntimeFactoryWithDefaultDataStore` was changed.
  *
  * @internal
