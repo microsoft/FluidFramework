@@ -620,16 +620,13 @@ export const makeBranchEditGenerator = (
 				}
 
 				const forkedBranchIndex = state.random.integer(0, forkedViewsLength - 1);
-				const forkedIndexes = forkedViews
-					.map((_, i) => i)
+				const forkedIndexes = forkedViews.map((_, i) => i);
 
 				return {
 					type: "forkMergeOperation",
 					contents: {
 						type: "merge",
-						baseBranch: forkedIndexes.length
-							? state.random.pick(forkedIndexes)
-							: undefined,
+						baseBranch: forkedIndexes.length ? state.random.pick(forkedIndexes) : undefined,
 						forkBranch: forkedBranchIndex,
 					},
 				};
