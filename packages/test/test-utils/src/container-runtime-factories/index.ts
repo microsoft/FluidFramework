@@ -4,10 +4,6 @@
  */
 
 export {
-	BaseContainerRuntimeFactory,
-	type BaseContainerRuntimeFactoryProps,
-} from "./baseContainerRuntimeFactory.js";
-export {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "./containerRuntimeFactoryWithDefaultDataStore.js";
