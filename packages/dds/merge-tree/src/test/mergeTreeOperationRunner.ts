@@ -27,7 +27,7 @@ export type TestOperation = (
 	opStart: number,
 	opEnd: number,
 	random: IRandom,
-) => IMergeTreeOp | undefined;
+) => IMergeTreeOp[] | IMergeTreeOp | undefined;
 
 export const removeRange: TestOperation = (
 	client: TestClient,
@@ -367,7 +367,7 @@ export function generateOperationMessagesForClients(
 
 		const len = client.getLength();
 		const sg = client.peekPendingSegmentGroups();
-		let op: IMergeTreeOp | undefined;
+		let op: IMergeTreeOp[] | IMergeTreeOp | undefined;
 		if (len === 0 || len < minLength) {
 			op =
 				insertText === undefined ? generateInsert(client, random) : insertText(client, random);
@@ -391,14 +391,28 @@ export function generateOperationMessagesForClients(
 					`op created but segment group not enqueued.${logger}`,
 				);
 			}
-			const message = client.makeOpMessage(op, ++runningSeq);
-			message.minimumSequenceNumber = minimumSequenceNumber;
-			messages.push([
-				message,
-				client.peekPendingSegmentGroups(
+
+			const ops = Array.isArray(op) ? op : [op];
+			const totalIndividualOps = ops
+				.map((o) => (o.type === MergeTreeDeltaType.GROUP ? o.ops.length : 1))
+				.reduce((a, b) => a + b, 0);
+			let allSegmentGroups = client.peekPendingSegmentGroups(totalIndividualOps)!;
+			if (!Array.isArray(allSegmentGroups)) {
+				allSegmentGroups = [allSegmentGroups];
+			}
+			assert(Array.isArray(allSegmentGroups), "Expected array of segment groups");
+			for (const op of ops) {
+				const message = client.makeOpMessage(op, ++runningSeq);
+				message.minimumSequenceNumber = minimumSequenceNumber;
+				const segmentGroups = allSegmentGroups.splice(
+					0,
 					op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1,
-				)!,
-			]);
+				);
+				messages.push([
+					message,
+					op.type === MergeTreeDeltaType.GROUP ? segmentGroups : segmentGroups[0],
+				]);
+			}
 		}
 	}
 
