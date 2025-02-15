@@ -14723,9 +14723,6 @@ importers:
       '@fluidframework/runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/runtime-utils
-      '@fluidframework/synthesize':
-        specifier: workspace:~
-        version: link:../../framework/synthesize
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
