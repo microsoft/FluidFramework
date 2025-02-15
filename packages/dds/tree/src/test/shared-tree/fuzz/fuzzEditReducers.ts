@@ -204,7 +204,6 @@ export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMe
 					: viewFromState(state);
 			assert(view !== undefined);
 			const forkedView = asFuzzView(view.fork(), view.currentSchema);
-			forkedView.currentSchema = view.currentSchema;
 			clientForkedViews?.push(forkedView);
 			forkedViews.set(state.client.channel, clientForkedViews);
 			state.forkedViews = forkedViews;
