@@ -300,6 +300,15 @@ function isFluidBuildEnabled(root: string, json: Readonly<PackageJson>): boolean
 	return getFluidPackageMap(root).get(json.name) !== undefined;
 }
 
+function getOrSet<T>(map: Map<string, T>, key: string, defaultValue: T): T {
+	const value = map.get(key);
+	if (value !== undefined) {
+		return value;
+	}
+	map.set(key, defaultValue);
+	return defaultValue;
+}
+
 /**
  * Check if a task has a specific dependency
  * @param root - directory of the Fluid repo root
@@ -322,6 +331,17 @@ function hasTaskDependency(
 	// given package's name (json.name) will alway return false as package is
 	// not a dependency of itself. Skip "name# prefix for self dependencies.
 	const packageSpecificSearchDeps = searchDeps.filter((d) => d.includes("#"));
+	const secondaryPackagesTasksToConsider = new Map<
+		string,
+		{ searchDeps: string[]; tasks: Set<string> }
+	>();
+	for (const d of packageSpecificSearchDeps) {
+		const [pkg, task] = d.split("#");
+		getOrSet(secondaryPackagesTasksToConsider, pkg, {
+			searchDeps: [],
+			tasks: new Set<string>(),
+		}).searchDeps.push(task);
+	}
 	/**
 	 * Set of package dependencies
 	 */
@@ -352,10 +372,13 @@ function hasTaskDependency(
 		if (dep.startsWith("^")) {
 			// ^ means "depends on the task of the same name in all package dependencies".
 			// dep of exactly ^* means "_all_ tasks in all package dependencies".
-			const regexSearchMatches = new RegExp(dep === "^*" ? "." : `#${dep.slice(1)}$`);
+			const depPattern = dep.slice(1);
+			const regexSearchMatches = new RegExp(depPattern === "*" ? "." : `#${depPattern}$`);
+			// Check for task matches
 			const possibleSearchMatches = packageSpecificSearchDeps.filter((searchDep) =>
 				regexSearchMatches.test(searchDep),
 			);
+			// Check if there is matching dependency
 			if (
 				possibleSearchMatches.some((searchDep) =>
 					packageDependencies.has(searchDep.split("#")[0]),
@@ -363,20 +386,57 @@ function hasTaskDependency(
 			) {
 				return true;
 			}
+			if (depPattern === "*") {
+				// No possible match even through transitive dependencies since
+				// ^* would already consider all tasks in all dependencies.
+				continue;
+			}
+			for (const [packageName, secondaryData] of secondaryPackagesTasksToConsider) {
+				// If there is a matching dependency package, add this task to
+				// transitive dependency in secondary package search list.
+				if (packageDependencies.has(packageName)) {
+					secondaryData.tasks.add(depPattern);
+				}
+			}
 			continue;
 		}
-		if (dep.includes("#")) {
-			// Current "pending" dependency is from another package and could possibly
-			// be successor to given queried deps, but we are not doing such a deep or
-			// exhaustive search at this time.
-			continue;
-		}
-		// Do expand transitive dependencies from local tasks.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		if (taskDefinitions[dep]) {
-			pending.push(...taskDefinitions[dep].dependsOn);
+		const packageDepMatch = dep.match(/^([^#]*)#(.*)$/);
+		if (packageDepMatch) {
+			// Consider one level deep of package's tasks to handle multi-task dependencies.
+			const secondaryPackageSet = secondaryPackagesTasksToConsider.get(packageDepMatch[1]);
+			if (secondaryPackageSet) {
+				secondaryPackageSet.tasks.add(packageDepMatch[2]);
+			}
+		} else {
+			// Do expand transitive dependencies from local tasks.
+			const dependsOn = taskDefinitions[dep]?.dependsOn;
+			if (dependsOn !== undefined) {
+				pending.push(...dependsOn);
+			}
 		}
 	}
+
+	// Consider secondary package dependencies transitive dependencies
+	const packageMap = getFluidPackageMap(root);
+	for (const [packageName, secondaryData] of secondaryPackagesTasksToConsider.entries()) {
+		const pkgJson = packageMap.get(packageName)?.packageJson;
+		if (pkgJson === undefined) {
+			throw new Error(`Dependent package ${packageName} not found in repo`);
+		}
+		const secondaryTaskDefinitions = getTaskDefinitions(pkgJson, globalTaskDefinitions, false);
+		pending.push(...secondaryData.tasks);
+		let dep;
+		while ((dep = pending.pop()) !== undefined) {
+			if (secondaryData.searchDeps.includes(dep)) {
+				return true;
+			}
+			const dependsOn = secondaryTaskDefinitions[dep]?.dependsOn;
+			if (dependsOn !== undefined) {
+				pending.push(...dependsOn);
+			}
+		}
+	}
+
 	return false;
 }
 
