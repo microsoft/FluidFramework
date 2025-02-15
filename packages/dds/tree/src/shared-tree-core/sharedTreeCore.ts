@@ -4,17 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-<<<<<<< HEAD
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-=======
-import type {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
->>>>>>> a6015ab49c ((tree) Added op bunching processing to shared tree)
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
@@ -363,7 +354,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	/**
 	 * Process a bunch of messages from the runtime. SharedObject will call this method with a bunch of messages.
 	 */
-	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		const commits: GraphCommit<TChange>[] = [];
 		let messagesSessionId: SessionId | undefined;

@@ -33,7 +33,6 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
-	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -399,8 +398,6 @@ export abstract class SharedObjectCore<
 	 * @param local - True if the shared object is local
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 *
-	 * @deprecated Replaced by {@link SharedObjectCore.processMessagesCore}.
 	 */
 	protected abstract processCore(
 		message: ISequencedDocumentMessage,
@@ -408,6 +405,8 @@ export abstract class SharedObjectCore<
 		localOpMetadata: unknown,
 	): void;
 
+	<<<<<<<
+	HEAD;
 	/* eslint-disable jsdoc/check-indentation */
 	/**
 	 * Process a 'bunch' of messages for this shared object.
@@ -443,6 +442,11 @@ export abstract class SharedObjectCore<
 	Update;
 	test;
 	comments;
+	)
+=======
+>>>>>>> 3b3c7f11af (
+	merge;
+	changes;
 	)
 	/**
 	 * Called when the object has disconnected from the delta stream.
@@ -610,8 +614,6 @@ export abstract class SharedObjectCore<
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 *
-	 * @deprecated Replaced by {@link SharedObjectCore.processMessages}.
 	 */
 	private process(
 		message: ISequencedDocumentMessage,
@@ -637,19 +639,10 @@ export abstract class SharedObjectCore<
 		this.emitInternal("op", message, local, this);
 	}
 
-	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Process a bunch of messages for this shared object. A bunch is group of messages that have the following properties:
-	 * - They are all part of the same grouped batch, which entails:
-	 *   - They are contiguous in sequencing order.
-	 *   - They are all from the same client.
-	 *   - They are all based on the same reference sequence number.
-	 *   - They are not interleaved with messages from other clients.
-	 * - They are not interleaved with messages from other DDS in the container.
+	 * Process messages for this shared object. The messages here are contiguous messages for this object in a batch.
 	 * @param messageCollection - The collection of messages to process.
-	 *
 	 */
-	/* eslint-enable jsdoc/check-indentation */
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed(); // This will result in container closure.
 
@@ -693,13 +686,6 @@ export abstract class SharedObjectCore<
 			}
 		}
 
-		<<<<<<< HEAD
-		const decodedMessagesCollection: IRuntimeMessageCollection = {
-			...messagesCollection,
-			messagesContent: decodedMessagesContent,
-		};
-		this.processMessagesHelper(decodedMessagesCollection);
-		=======
 		// This case is taken care of in the previous for-loop.
 		if (this.processMessagesCore === undefined) {
 			return;
