@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
@@ -166,6 +165,18 @@ export function makeSharedObjectAdapter<TFrom extends object, Common extends obj
 				view: shim.view,
 			};
 		},
+
+		async loadCore(
+			args: KernelArgs,
+			storage: IChannelStorageService,
+		): Promise<FactoryOut<Common & IMigrationShim>> {
+			const shim = new MigrationShim<TFrom, Common>(args, migration);
+			await shim.loadCore(storage);
+			return {
+				kernel: shim,
+				view: shim.view,
+			};
+		},
 	};
 
 	const options: SharedObjectOptions<Common & IMigrationShim> = {
@@ -322,23 +333,10 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 	public async loadCore(storage: IChannelStorageService): Promise<void> {
 		assert(this.#data === undefined, "loadCore should only be called once, and called first");
 
-		const isMigrated = await storage.contains(this.migrationOptions.migrationIdentifier);
+		const migrated = await storage.contains(this.migrationOptions.migrationIdentifier);
+
 		// This could cause an upgrade if no beforeAdapter is provided. TODO: is that ok? Handle readonly.
-		this.#data = this.init(isMigrated);
-		if (isMigrated) {
-			const migrationBlob = await storage.readBlob(this.migrationOptions.migrationIdentifier);
-			const migrationString = bufferToString(migrationBlob, "utf8");
-			// TODO: validate migration data
-			const migrationData = JSON.parse(migrationString) as {
-				sequenceNumber: number;
-				clientId: string;
-			};
-			this.migrationSequenced = migrationData;
-
-			// TODO: there does not seem to be a way to scope storage to a subpath so we can hide the migration data from it.
-		}
-
-		return this.data.kernel.loadCore(storage);
+		this.#data = await this.initLoadCore(migrated, storage);
 	}
 
 	public onDisconnect(): void {
@@ -518,11 +516,8 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		this.migrationOptions.migrate(from, to, adaptedTo);
 	}
 
-	private init(migrated: boolean): FactoryOut<object> & {
-		readonly adapter: TOut;
-		migrated?: MigrationOptions;
-	} {
-		const adjustedArgs: KernelArgs = {
+	private adjustedKernelArgs(migrated: boolean): KernelArgs {
+		return {
 			...this.kernelArgs,
 			submitLocalMessage: (content, localOpMetadata) => {
 				this.kernelArgs.submitLocalMessage(content, {
@@ -531,51 +526,97 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				} satisfies LocalOpMetadata);
 			},
 		};
+	}
+
+	private finishInit<T extends object>(
+		data: FactoryOut<T>,
+		migrated: MigrationOptions | undefined,
+		adapterFunction: (from: T) => TOut,
+	): ShimData<TOut> {
+		// Create pre migration
+		if (this.kernelArgs.sharedObject.isAttached()) {
+			data.kernel.didAttach?.();
+		}
+		const adapter = adapterFunction(data.view);
+		return {
+			view: data.view,
+			kernel: data.kernel,
+			adapter,
+			migrated,
+		};
+	}
+
+	private async initLoadCore(
+		migrated: boolean,
+		storage: IChannelStorageService,
+	): Promise<ShimData<TOut>> {
 		if (migrated) {
 			// Create post migration
-			const { kernel, view } = this.migrationOptions.to.create(adjustedArgs);
-			if (this.kernelArgs.sharedObject.isAttached()) {
-				kernel.didAttach?.();
-			}
-			const adapter = this.migrationOptions.afterAdapter(view);
-			return {
-				view,
-				kernel,
-				adapter,
-				migrated: this.migrationOptions,
-			};
+			const after = await this.migrationOptions.to.loadCore(
+				this.adjustedKernelArgs(true),
+				storage,
+			);
+			return this.finishInit(after, this.migrationOptions, (view) =>
+				this.migrationOptions.afterAdapter(view),
+			);
 		} else {
-			const before = this.migrationSet.fromKernel.create(adjustedArgs);
+			const before = await this.migrationSet.fromKernel.loadCore(
+				this.adjustedKernelArgs(false),
+				storage,
+			);
 			if (this.migrationOptions.beforeAdapter === unsupportedAdapter) {
 				// Migrate
 				assert(
 					this.migrationOptions.defaultMigrated,
 					"defaultMigrated must be set if no beforeAdapter",
 				);
-				const after = this.migrationOptions.to.create(adjustedArgs);
-				if (this.kernelArgs.sharedObject.isAttached()) {
-					after.kernel.didAttach?.();
-				}
-				const adapter = this.migrationOptions.afterAdapter(after.view);
+				const after = this.migrationOptions.to.create(this.adjustedKernelArgs(true));
 				// TODO: document and test read only case
-				this.sendUpgrade(before.view, after.view, adapter);
-				return {
-					view: before.view,
-					kernel: before.kernel,
-					adapter,
-					migrated: this.migrationOptions,
-				};
+				return this.finishInit(after, this.migrationOptions, (view) => {
+					const adapter = this.migrationOptions.afterAdapter(view);
+					this.sendUpgrade(before.view, after.view, adapter);
+					return adapter;
+				});
 			} else {
 				// Create pre migration
-				if (this.kernelArgs.sharedObject.isAttached()) {
-					before.kernel.didAttach?.();
-				}
-				const adapter = this.migrationOptions.beforeAdapter(before.view);
-				return {
-					view: before.view,
-					kernel: before.kernel,
-					adapter,
-				};
+				return this.finishInit(
+					before,
+					undefined,
+					this.migrationOptions.beforeAdapter.bind(this.migrationOptions),
+				);
+			}
+		}
+	}
+
+	private init(migrated: boolean): ShimData<TOut> {
+		if (migrated) {
+			// Create post migration
+			const after = this.migrationOptions.to.create(this.adjustedKernelArgs(true));
+			return this.finishInit(after, this.migrationOptions, (view) =>
+				this.migrationOptions.afterAdapter(view),
+			);
+		} else {
+			const before = this.migrationSet.fromKernel.create(this.adjustedKernelArgs(false));
+			if (this.migrationOptions.beforeAdapter === unsupportedAdapter) {
+				// Migrate
+				assert(
+					this.migrationOptions.defaultMigrated,
+					"defaultMigrated must be set if no beforeAdapter",
+				);
+				const after = this.migrationOptions.to.create(this.adjustedKernelArgs(true));
+				// TODO: document and test read only case
+				return this.finishInit(after, this.migrationOptions, (view) => {
+					const adapter = this.migrationOptions.afterAdapter(view);
+					this.sendUpgrade(before.view, after.view, adapter);
+					return adapter;
+				});
+			} else {
+				// Create pre migration
+				return this.finishInit(
+					before,
+					undefined,
+					this.migrationOptions.beforeAdapter.bind(this.migrationOptions),
+				);
 			}
 		}
 	}

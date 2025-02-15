@@ -57,13 +57,6 @@ export interface SharedKernel {
 		telemetryContext?: ITelemetryContext,
 	): ISummaryTreeWithStats;
 
-	// TODO: maybe this should be part of the factory, not a method here?
-	// That would enable lazy loading the kernel code during this call.
-	/**
-	 * {@inheritDoc SharedObjectCore.loadCore}
-	 */
-	loadCore(storage: IChannelStorageService): Promise<void>;
-
 	/**
 	 * {@inheritDoc SharedObjectCore.onDisconnect}
 	 */
@@ -101,12 +94,57 @@ export interface SharedKernel {
 
 /**
  * SharedObject implementation that delegates to a SharedKernel.
- * @internal
  */
-export abstract class SharedObjectFromKernel<
+class SharedObjectFromKernel<
+	TOut extends object,
 	TEvent extends ISharedObjectEvents,
 > extends SharedObject<TEvent> {
-	protected abstract get kernel(): SharedKernel;
+	// Lazy init here so correct kernel constructed in loadCore when loading from existing data.
+	private lazyData: FactoryOut<TOut> | undefined;
+
+	private readonly kernelArgs: KernelArgs;
+
+	private get data(): FactoryOut<TOut> {
+		this.lazyData ??= this.factory.create(this.kernelArgs);
+		return this.lazyData;
+	}
+
+	private get kernel(): SharedKernel {
+		return this.data.kernel;
+	}
+
+	/**
+	 * @param id - String identifier.
+	 * @param runtime - Data store runtime.
+	 * @param attributes - The attributes for the map.
+	 */
+	public constructor(
+		id: string,
+		runtime: IFluidDataStoreRuntime,
+		attributes: IChannelAttributes,
+		public readonly factory: SharedKernelFactory<TOut>,
+		telemetryContextPrefix: string,
+	) {
+		super(id, runtime, attributes, telemetryContextPrefix);
+
+		// Proxy which grafts the adapter's APIs onto this object.
+		const merged = mergeAPIs(this, () => this.data.view);
+
+		this.handle = new SharedObjectHandle(merged, id, runtime.IFluidHandleContext);
+
+		this.kernelArgs = {
+			sharedObject: this,
+			serializer: this.serializer,
+			submitLocalMessage: (op, localOpMetadata) =>
+				this.submitLocalMessage(op, localOpMetadata),
+			eventEmitter: merged,
+			logger: this.logger,
+			idCompressor: runtime.idCompressor,
+			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+		};
+
+		return merged;
+	}
 
 	protected override summarizeCore(
 		serializer: IFluidSerializer,
@@ -116,7 +154,8 @@ export abstract class SharedObjectFromKernel<
 	}
 
 	protected override async loadCore(storage: IChannelStorageService): Promise<void> {
-		return this.kernel.loadCore(storage);
+		assert(this.lazyData === undefined, "loadCore must be called first and only once");
+		this.lazyData ??= await this.factory.loadCore(this.kernelArgs, storage);
 	}
 
 	protected override onDisconnect(): void {
@@ -173,6 +212,11 @@ export interface FactoryOut<T extends object> {
  */
 export interface SharedKernelFactory<T extends object> {
 	create(args: KernelArgs): FactoryOut<T>;
+
+	/**
+	 * Create combined with {@link SharedObjectCore.loadCore}.
+	 */
+	loadCore(args: KernelArgs, storage: IChannelStorageService): Promise<FactoryOut<T>>;
 }
 
 /**
@@ -194,65 +238,6 @@ export interface KernelArgs {
 	readonly logger: ITelemetryLoggerExt;
 	readonly idCompressor: IIdCompressor | undefined;
 	readonly lastSequenceNumber: () => number;
-}
-
-/**
- * Map which can be based on a SharedMap or a SharedTree.
- *
- * Once this has been accessed as a SharedTree, the SharedMap APIs are no longer accessible.
- *
- * TODO: events
- */
-class SharedObjectFromKernelFull<
-	TOut extends object,
-	TEvents extends ISharedObjectEvents,
-> extends SharedObjectFromKernel<TEvents> {
-	// Lazy init here so correct kernel constructed in loadCore when loading from existing data.
-	#data: FactoryOut<TOut> | undefined;
-
-	private readonly kernelArgs: KernelArgs;
-
-	/**
-	 * @param id - String identifier.
-	 * @param runtime - Data store runtime.
-	 * @param attributes - The attributes for the map.
-	 */
-	public constructor(
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		public readonly factory: SharedKernelFactory<TOut>,
-		telemetryContextPrefix: string,
-	) {
-		super(id, runtime, attributes, telemetryContextPrefix);
-
-		// Proxy which grafts the adapter's APIs onto this object.
-		const merged = mergeAPIs(this, () => this.data.view);
-
-		this.handle = new SharedObjectHandle(merged, id, runtime.IFluidHandleContext);
-
-		this.kernelArgs = {
-			sharedObject: this,
-			serializer: this.serializer,
-			submitLocalMessage: (op, localOpMetadata) =>
-				this.submitLocalMessage(op, localOpMetadata),
-			eventEmitter: merged,
-			logger: this.logger,
-			idCompressor: runtime.idCompressor,
-			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
-		};
-
-		return merged;
-	}
-
-	private get data(): FactoryOut<TOut> {
-		this.#data ??= this.factory.create(this.kernelArgs);
-		return this.#data;
-	}
-
-	protected override get kernel(): SharedKernel {
-		return this.data.kernel;
-	}
 }
 
 /**
@@ -354,7 +339,7 @@ export function makeChannelFactory<T extends object>(options: SharedObjectOption
 			services: IChannelServices,
 			attributes: IChannelAttributes,
 		): Promise<T & IChannel> {
-			const shared = new SharedObjectFromKernelFull(
+			const shared = new SharedObjectFromKernel(
 				id,
 				runtime,
 				attributes,
@@ -369,7 +354,7 @@ export function makeChannelFactory<T extends object>(options: SharedObjectOption
 		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.create}
 		 */
 		public create(runtime: IFluidDataStoreRuntime, id: string): T & IChannel {
-			const shared = new SharedObjectFromKernelFull(
+			const shared = new SharedObjectFromKernel(
 				id,
 				runtime,
 				ChannelFactory.Attributes,

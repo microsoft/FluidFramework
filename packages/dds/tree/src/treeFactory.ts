@@ -8,6 +8,7 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
+	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
@@ -60,21 +61,37 @@ export const SharedTreeAttributes: IChannelAttributes = {
 function treeKernelFactoryPrivate(
 	options: SharedTreeOptionsInternal,
 ): SharedKernelFactory<ITreePrivate> {
+	function treeFromKernelArgs(args: KernelArgs): SharedTreeKernel {
+		if (args.idCompressor === undefined) {
+			throw new UsageError("IdCompressor must be enabled to use SharedTree");
+		}
+		return new SharedTreeKernel(
+			new Breakable("Shared Tree"),
+			args.sharedObject,
+			args.serializer,
+			args.submitLocalMessage,
+			args.lastSequenceNumber,
+			args.logger,
+			args.idCompressor,
+			options,
+		);
+	}
+
 	return {
 		create: (args: KernelArgs): FactoryOut<ITreePrivate> => {
 			if (args.idCompressor === undefined) {
 				throw new UsageError("IdCompressor must be enabled to use SharedTree");
 			}
-			const k = new SharedTreeKernel(
-				new Breakable("Shared Tree"),
-				args.sharedObject,
-				args.serializer,
-				args.submitLocalMessage,
-				args.lastSequenceNumber,
-				args.logger,
-				args.idCompressor,
-				options,
-			);
+			const k = treeFromKernelArgs(args);
+			return { kernel: k, view: k.view };
+		},
+
+		async loadCore(
+			args: KernelArgs,
+			storage: IChannelStorageService,
+		): Promise<FactoryOut<ITreePrivate>> {
+			const k = treeFromKernelArgs(args);
+			await k.loadCore(storage);
 			return { kernel: k, view: k.view };
 		},
 	};

@@ -22,7 +22,6 @@ export {
 } from "./utils.js";
 export { ValueType } from "./valueType.js";
 export {
-	SharedObjectFromKernel,
 	SharedKernel,
 	makeChannelFactory,
 	thisWrap,

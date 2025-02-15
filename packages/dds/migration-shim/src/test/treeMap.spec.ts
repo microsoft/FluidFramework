@@ -14,6 +14,7 @@ import {
 	SharedMap,
 	type ISharedDirectory,
 	type ISharedMap,
+	type ISharedMapCore,
 } from "@fluidframework/map/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import {
@@ -100,11 +101,6 @@ describe("treeMap", () => {
 		const channelC = await dataStoreRuntimeC.getChannel("TestMap");
 		channelC.connect(servicesC);
 		const mapC = channelC as unknown as ITree & IMigrationShim;
-		const config = new TreeViewConfiguration({
-			schema: MapAdapterRoot,
-			enableSchemaValidation: true,
-			preventAmbiguity: true,
-		});
 
 		const view = mapC.viewWith(config);
 
@@ -187,6 +183,12 @@ describe("treeMap", () => {
 		assert.equal(b.sharedObject.get("K"), "V");
 	});
 
+	const config = new TreeViewConfiguration({
+		schema: MapAdapterRoot,
+		enableSchemaValidation: true,
+		preventAmbiguity: true,
+	});
+
 	it("collab2", async () => {
 		const driver = new LocalServerTestDriver();
 		const mapId = "TestMap";
@@ -222,14 +224,7 @@ describe("treeMap", () => {
 
 			// eslint-disable-next-line require-atomic-updates
 			first = false;
-			container.on("closed", (error) => {
-				if (error !== undefined) {
-					containerErrors.push(error);
-				}
-			});
-			container.on("warning", (error) => {
-				containerErrors.push(error);
-			});
+			logErrors(container, containerErrors);
 			return { container, sharedObject };
 		}
 
@@ -270,11 +265,7 @@ describe("treeMap", () => {
 		// testFluidObject uses a map internally which we don't want to migrate, so filter it out.
 		const treeKind = treeFromMapPartial((id: string): boolean => id === mapId);
 		const c = await connect(treeKind);
-		const config = new TreeViewConfiguration({
-			schema: MapAdapterRoot,
-			enableSchemaValidation: true,
-			preventAmbiguity: true,
-		});
+
 		// TODO: cast
 		// c.sharedObject[shimInfo].cast();
 		const tree = c.sharedObject as ITree;
@@ -282,5 +273,99 @@ describe("treeMap", () => {
 		assert.equal(view.root.get("K")?.json, "V");
 
 		assert.deepEqual(containerErrors, []);
+	});
+
+	function logErrors(container: IContainer, containerErrors: unknown[]): void {
+		container.on("closed", (error) => {
+			if (error !== undefined) {
+				containerErrors.push(error);
+			}
+		});
+		container.on("warning", (error) => {
+			containerErrors.push(error);
+		});
+	}
+
+	it.only("migration", async () => {
+		const driver = new LocalServerTestDriver();
+		const mapId = "TestMap";
+
+		let registry: ChannelFactoryRegistry = [[mapId, MapToTree.getFactory()]];
+
+		const containerRuntimeFactory = (): fluidEntryPoint =>
+			new TestContainerRuntimeFactory(
+				"@fluid-example/test-dataStore",
+				new TestFluidObjectFactory(registry),
+				{
+					enableRuntimeIdCompressor: "on",
+				},
+			);
+
+		const objProvider = new TestObjectProvider(Loader, driver, containerRuntimeFactory);
+		const container = await objProvider.makeTestContainer();
+
+		const containerErrors: unknown[] = [];
+		logErrors(container, containerErrors);
+
+		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
+		const a = await dataObject.getSharedObject<ISharedMap & IMigrationShim>(mapId);
+
+		assert.deepEqual(containerErrors, []);
+		await objProvider.ensureSynchronized();
+		assert.deepEqual(containerErrors, []);
+
+		a.set("K", "V");
+
+		assert.deepEqual(containerErrors, []);
+		await objProvider.ensureSynchronized();
+		assert.deepEqual(containerErrors, []);
+
+		assert.equal(a.get("K"), "V");
+		assert(a.isAttached());
+
+		assert.deepEqual(containerErrors, []);
+		assert.equal(a[shimInfo].status, MigrationStatus.Before);
+		a[shimInfo].upgrade();
+
+		assert.deepEqual(containerErrors, []);
+
+		assert.equal(a[shimInfo].status, MigrationStatus.After);
+		assert.equal(a.get("K"), "V");
+
+		assert.deepEqual(containerErrors, []);
+		await objProvider.ensureSynchronized();
+		assert.deepEqual(containerErrors, []);
+
+		a.set("K", "V2");
+		assert.equal(a.get("K"), "V2");
+
+		assert.deepEqual(containerErrors, []);
+		await objProvider.ensureSynchronized();
+		assert.deepEqual(containerErrors, []);
+
+		container.close();
+
+		assert.deepEqual(containerErrors, []);
+		await objProvider.ensureSynchronized();
+		assert.deepEqual(containerErrors, []);
+
+		// Phase 2
+
+		const treeKind: ISharedObjectKind<(ITree | ISharedMapCore) & IMigrationShim> =
+			treeFromMapPartial((id: string): boolean => id === mapId);
+		registry = [[mapId, treeKind.getFactory()]];
+
+		const container2 = await objProvider.loadTestContainer();
+		logErrors(container2, containerErrors);
+
+		const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const tree = await dataObject2.getSharedObject<ITree & IMigrationShim>(mapId);
+
+		assert.deepEqual(containerErrors, []);
+		await objProvider.ensureSynchronized();
+		assert.deepEqual(containerErrors, []);
+
+		const view = tree.viewWith(config);
+		assert.equal(view.root.get("K")?.json, "V2");
 	});
 });

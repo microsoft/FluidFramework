@@ -16,6 +16,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type {
+	FactoryOut,
 	IFluidSerializer,
 	KernelArgs,
 	SharedKernel,
@@ -141,18 +142,31 @@ function createKeyLocalOpMetadata(
 	return localMetadata;
 }
 
+function mapFromKernelArgs(args: KernelArgs): MapKernel {
+	return new MapKernel(
+		args.serializer,
+		args.sharedObject.handle,
+		args.submitLocalMessage,
+		() => args.sharedObject.isAttached(),
+		args.eventEmitter,
+	);
+}
+
 /**
  * @internal
  */
 export const mapKernelFactory: SharedKernelFactory<ISharedMapCore> = {
-	create: (args: KernelArgs) => {
-		const k = new MapKernel(
-			args.serializer,
-			args.sharedObject.handle,
-			args.submitLocalMessage,
-			() => args.sharedObject.isAttached(),
-			args.eventEmitter,
-		);
+	create: (args: KernelArgs): FactoryOut<MapKernel> => {
+		const k = mapFromKernelArgs(args);
+		return { kernel: k, view: k };
+	},
+
+	async loadCore(
+		args: KernelArgs,
+		storage: IChannelStorageService,
+	): Promise<FactoryOut<ISharedMapCore>> {
+		const k = mapFromKernelArgs(args);
+		await k.loadCore(storage);
 		return { kernel: k, view: k };
 	},
 };
