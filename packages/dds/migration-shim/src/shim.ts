@@ -359,7 +359,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 			case MigrationPhase.Migration: {
 				// TODO: how do we detect/handle ops which happened between initial migration and reSubmit?
 				// Maybe need to track local pending ops as well as remove sequenced ops during migration directly?
-				this.kernelArgs.submitLocalMessage(content, localOpMetadata);
+				this.kernelArgs.submitLocalMessage(content, meta);
 				return;
 			}
 			case MigrationPhase.After: {
@@ -386,6 +386,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
+		const meta = localOpMetadata as LocalOpMetadata | undefined;
 		const migration = opMigrationId(message);
 		if (migration === this.migrationOptions.migrationIdentifier) {
 			if (this.migrationSequenced === undefined) {
@@ -410,7 +411,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 
 			if (this.migrationSequenced === undefined) {
 				// Before migration
-				this.data.kernel.processCore(message, local, localOpMetadata);
+				this.data.kernel.processCore(message, local, meta?.inner);
 			} else {
 				// Already migrated
 				if (
@@ -425,7 +426,7 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 				} else {
 					// This op is after the migration from a client that observed the migration.
 					// Must be in new format, send to new kernel:
-					this.data.kernel.processCore(message, local, localOpMetadata);
+					this.data.kernel.processCore(message, local, meta?.inner);
 				}
 			}
 		}
