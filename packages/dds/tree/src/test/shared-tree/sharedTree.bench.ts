@@ -472,7 +472,7 @@ describe("SharedTree benchmarks", () => {
 								2,
 								factory,
 								undefined /* useDeterministicSessionIds */,
-								FlushMode.Immediate,
+								FlushMode.TurnBased,
 							);
 							const sender = provider.trees[0];
 							const receiver = provider.trees[1];
@@ -493,7 +493,6 @@ describe("SharedTree benchmarks", () => {
 							// Allow the receiver to receive the bunched commits.
 							// This should force the local branch to be rebased over the bunch.
 							receiver.setConnected(true);
-							// provider.processMessages();
 							const after = state.timer.now();
 							duration = state.timer.toSeconds(before, after);
 						} while (state.recordBatch(duration));
