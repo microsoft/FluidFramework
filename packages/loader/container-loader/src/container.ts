@@ -994,7 +994,8 @@ export class Container
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
-		// Whether the combined summary tree has been forced on by either supportedFeatures flag.
+		// Feature gate to enable single-commit summaries. The expected enablement is through driver layer's policies,
+		// but here we also specify config setting to use for testing purposes.
 		const enableSummarizeProtocolTree = this.mc.config.getBoolean(
 			"Fluid.Container.summarizeProtocolTree2",
 		);
