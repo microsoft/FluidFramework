@@ -513,7 +513,7 @@ export const makeTreeEditGenerator = (
 		const clientForkedViews = state.forkedViews?.get(state.client.channel);
 		const forkedViewIndex =
 			clientForkedViews !== undefined && clientForkedViews.length > 0
-				? state.random.pick(Array.from({ length: clientForkedViews.length }, (_, i) => i))
+				? state.random.integer(0, clientForkedViews.length - 1)
 				: undefined;
 		const forkOrMain = state.random.pick(["fork", "main"]);
 		const selectedForkIndex = forkOrMain === "fork" ? forkedViewIndex : undefined;
@@ -626,7 +626,8 @@ export const makeBranchEditGenerator = (
 					type: "forkMergeOperation",
 					contents: {
 						type: "merge",
-						baseBranch: forkedIndexes.length ? state.random.pick(forkedIndexes) : undefined,
+						baseBranch:
+							forkedIndexes.length > 0 ? state.random.pick(forkedIndexes) : undefined,
 						forkBranch: forkedBranchIndex,
 					},
 				};

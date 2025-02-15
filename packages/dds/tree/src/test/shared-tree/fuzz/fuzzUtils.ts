@@ -24,7 +24,12 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import type { ITreeCheckout, SharedTree, TreeCheckout } from "../../../shared-tree/index.js";
+import type {
+	ITreeCheckout,
+	SchematizingSimpleTreeView,
+	SharedTree,
+	TreeCheckout,
+} from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
 import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
 import type {
@@ -43,6 +48,7 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-internal-modules
 import type { SharedTreeOptionsInternal } from "../../../shared-tree/sharedTree.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
+import type { FuzzView } from "./fuzzEditGenerators.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
@@ -181,6 +187,14 @@ export function createOnCreate(
 		view.initialize(initialState);
 		view.dispose();
 	};
+}
+
+export function asFuzzView(
+	view: SchematizingSimpleTreeView<typeof fuzzFieldSchema>,
+	currentSchema: typeof FuzzNode,
+): FuzzView {
+	(view as FuzzView).currentSchema = currentSchema;
+	return view as FuzzView;
 }
 
 /**
