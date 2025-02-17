@@ -4,6 +4,7 @@
  */
 
 import { PackageJson } from "../common/npmPackage";
+import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands";
 
 /**
  * Task definitions (type `TaskDefinitions`) is an object describing build tasks for fluid-build.
@@ -202,6 +203,57 @@ function expandDotDotDot(config: string[], inherited: string[]) {
 }
 
 /**
+ * Extracts the all of the first directly called scripts from a command line.
+ * @param script - command line to parse
+ * @param allScriptNames - all the script names in the package.json
+ * @returns first elements of script that are other scripts and whether the script only references other scripts
+ */
+function findDirectlyCalledScripts(
+	script: string,
+	allScriptNames: string[],
+): { directlyCalledScripts: string[]; onlyScripts: boolean } {
+	const directlyCalledScripts: string[] = [];
+	let onlyScripts = true;
+	const commands = script.split("&&");
+	for (const step of commands) {
+		const commandLine = step.trim();
+		if (isConcurrentlyCommand(commandLine)) {
+			parseConcurrentlyCommand(
+				commandLine,
+				allScriptNames,
+				(scriptName) => {
+					directlyCalledScripts.push(scriptName);
+				},
+				() => {
+					onlyScripts = false;
+				},
+			);
+		} else if (commandLine.startsWith("npm run ")) {
+			const scriptName = commandLine.substring("npm run ".length);
+			if (scriptName.includes(" ")) {
+				// If the "script name" has a space, it is a "direct" call, but probably
+				// has additional arguments that change exact execution of the script
+				// and therefore is excluded as a "direct" call.
+				onlyScripts = false;
+			} else if (allScriptNames.includes(scriptName)) {
+				directlyCalledScripts.push(scriptName);
+			} else {
+				// This may not be relevant to the calling context, but there aren't
+				// any known reasons why this should be preserved; so raise as an error.
+				throw new Error(
+					`Script '${scriptName}' not found processing command line: '${script}'`,
+				);
+			}
+		} else {
+			onlyScripts = false;
+		}
+		// Stop processing if a non-script command is found.
+		if (!onlyScripts) break;
+	}
+	return { directlyCalledScripts, onlyScripts };
+}
+
+/**
  * Combine and fill in default values for task definitions for a package.
  * @param json package.json content for the package
  * @param root root for the Fluid repo
@@ -212,13 +264,14 @@ export function getTaskDefinitions(
 	globalTaskDefinitions: TaskDefinitions,
 	isReleaseGroupRoot: boolean,
 ) {
+	const packageScripts = json.scripts ?? {};
 	const packageTaskDefinitions = json.fluidBuild?.tasks;
 	const taskDefinitions: TaskDefinitions = {};
 
 	// Initialize from global TaskDefinition, and filter out script tasks if the package doesn't have the script
 	for (const name in globalTaskDefinitions) {
 		const globalTaskDefinition = globalTaskDefinitions[name];
-		if (globalTaskDefinition.script && json.scripts?.[name] === undefined) {
+		if (globalTaskDefinition.script && packageScripts[name] === undefined) {
 			// Skip script tasks if the package doesn't have the script
 			continue;
 		}
@@ -227,7 +280,7 @@ export function getTaskDefinitions(
 	const globalAllow = (value) =>
 		value.startsWith("^") ||
 		taskDefinitions[value] !== undefined ||
-		json.scripts?.[value] !== undefined;
+		packageScripts[value] !== undefined;
 	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
 	// Only keep task or script references that exists
 	for (const name in taskDefinitions) {
@@ -243,7 +296,7 @@ export function getTaskDefinitions(
 			const packageTaskDefinition = packageTaskDefinitions[name];
 			const full = getFullTaskConfig(packageTaskDefinition);
 			if (full.script) {
-				const script = json.scripts?.[name];
+				const script = packageScripts[name];
 				if (script === undefined) {
 					throw new Error(`Script not found for task definition '${name}'`);
 				} else if (script.startsWith("fluid-build ")) {
@@ -262,6 +315,29 @@ export function getTaskDefinitions(
 			full.before = expandDotDotDot(full.before, currentTaskConfig?.before);
 			full.after = expandDotDotDot(full.after, currentTaskConfig?.after);
 			taskDefinitions[name] = full;
+		}
+	}
+
+	// Add implicit task definitions for the package.json scripts
+	const allScriptNames = Object.keys(packageScripts);
+	for (const [name, script] of Object.entries(packageScripts)) {
+		const { directlyCalledScripts, onlyScripts } = findDirectlyCalledScripts(
+			// `undefined` is not a possible JSON result.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			script!,
+			allScriptNames,
+		);
+		const taskDefinition = (taskDefinitions[name] ??= {
+			dependsOn: [],
+			before: [],
+			after: [],
+			script: onlyScripts,
+		});
+		const dependsOn = taskDefinition.dependsOn;
+		for (const directlyCalledScript of directlyCalledScripts) {
+			if (!dependsOn.includes(directlyCalledScript)) {
+				dependsOn.push(directlyCalledScript);
+			}
 		}
 	}
 
