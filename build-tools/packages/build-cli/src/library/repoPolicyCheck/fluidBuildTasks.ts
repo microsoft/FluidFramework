@@ -408,10 +408,10 @@ function hasTaskDependency(
 				secondaryPackageSet.tasks.add(packageDepMatch[2]);
 			}
 		} else {
-			// Do expand transitive dependencies from local tasks.
-			const dependsOn = taskDefinitions[dep]?.dependsOn;
-			if (dependsOn !== undefined) {
-				pending.push(...dependsOn);
+			// Do expand transitive dependencies and included tasks from local tasks.
+			const taskDef = taskDefinitions[dep];
+			if (taskDef !== undefined) {
+				pending.push(...taskDef.dependsOn, ...taskDef.includes);
 			}
 		}
 	}
@@ -430,9 +430,9 @@ function hasTaskDependency(
 			if (secondaryData.searchDeps.includes(dep)) {
 				return true;
 			}
-			const dependsOn = secondaryTaskDefinitions[dep]?.dependsOn;
-			if (dependsOn !== undefined) {
-				pending.push(...dependsOn);
+			const taskDef = secondaryTaskDefinitions[dep];
+			if (taskDef !== undefined) {
+				pending.push(...taskDef.dependsOn, ...taskDef.includes);
 			}
 		}
 	}
