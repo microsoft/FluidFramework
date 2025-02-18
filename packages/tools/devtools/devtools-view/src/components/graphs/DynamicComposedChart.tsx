@@ -56,20 +56,19 @@ interface DataPoint {
 const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 	const xAxisDataPointToYAxisDataPointMap: Record<
 		string,
-		Record<string, number | string>
+		Record<string, number | string | undefined>
 	> = {};
 
 	for (const dataSet of dataSets) {
 		const { yAxisDataKey, xAxisDataKey, uuid } = dataSet.schema;
 		for (const dataPoint of dataSet.data) {
 			const xAxisDataPoint = dataPoint[xAxisDataKey];
-			const yAxisDataPoint = dataPoint[yAxisDataKey];
-			if (xAxisDataPoint === undefined || yAxisDataPoint === undefined) {
+			if (xAxisDataPoint === undefined) {
 				continue;
 			}
 			xAxisDataPointToYAxisDataPointMap[xAxisDataPoint] = {
 				...xAxisDataPointToYAxisDataPointMap[xAxisDataPoint],
-				[uuid]: yAxisDataPoint,
+				[uuid]: dataPoint[yAxisDataKey],
 			};
 		}
 	}
