@@ -18,6 +18,8 @@ export {
 export {
 	normalizeGlobalTaskDefinitions,
 	getTaskDefinitions,
+	isTaskDependencies,
+	WriteableTaskDefinitionsOnDisk,
 } from "./fluidBuild/fluidTaskDefinitions";
 export {
 	getApiExtractorConfigFilePath,

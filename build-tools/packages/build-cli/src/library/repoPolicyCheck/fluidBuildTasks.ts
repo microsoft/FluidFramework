@@ -15,9 +15,11 @@ import {
 	Package,
 	PackageJson,
 	TscUtils,
+	type WriteableTaskDefinitionsOnDisk,
 	getEsLintConfigFilePath,
 	getFluidBuildConfig,
 	getTaskDefinitions,
+	isTaskDependencies,
 	normalizeGlobalTaskDefinitions,
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
@@ -468,6 +470,12 @@ function checkTaskDeps(
 		: undefined;
 }
 
+type DeeplyMutable<T> = { -readonly [K in keyof T]: DeeplyMutable<T[K]> };
+
+function asWriteable<T>(onlyReadable: T): DeeplyMutable<T> {
+	return onlyReadable as DeeplyMutable<T>;
+}
+
 /**
  * Fix up the actual dependencies of a task against an expected set of dependent tasks
  * @param root - directory of the Fluid repo root
@@ -488,9 +496,11 @@ function patchTaskDeps(
 	);
 
 	if (missingTaskDependencies.length > 0) {
-		const fileDep = json.fluidBuild?.tasks?.[taskName];
+		const fileDep = json.fluidBuild?.tasks?.[taskName] as
+			| WriteableTaskDefinitionsOnDisk[string]
+			| undefined;
 		if (fileDep === undefined) {
-			let tasks: Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>;
+			let tasks: WriteableTaskDefinitionsOnDisk;
 			if (json.fluidBuild === undefined) {
 				tasks = {};
 				json.fluidBuild = { tasks, version: 1 };
@@ -498,13 +508,13 @@ function patchTaskDeps(
 				tasks = {};
 				json.fluidBuild.tasks = tasks;
 			} else {
-				tasks = json.fluidBuild.tasks;
+				tasks = asWriteable(json.fluidBuild.tasks);
 			}
 
 			tasks[taskName] = taskDeps.map((dep) => {
 				if (Array.isArray(dep)) {
 					throw new TypeError(
-						`build-tools patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${dep.join(
+						`build-cli patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${dep.join(
 							" or ",
 						)}`,
 					);
@@ -513,18 +523,18 @@ function patchTaskDeps(
 			});
 		} else {
 			let depArray: string[];
-			if (Array.isArray(fileDep)) {
+			if (isTaskDependencies(fileDep)) {
 				depArray = fileDep;
 			} else if (fileDep.dependsOn === undefined) {
 				depArray = [];
 				fileDep.dependsOn = depArray;
 			} else {
-				depArray = fileDep.dependsOn;
+				depArray = asWriteable(fileDep.dependsOn);
 			}
 			for (const missingDep of missingTaskDependencies) {
 				if (Array.isArray(missingDep)) {
 					throw new TypeError(
-						`build-tools patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${missingDep.join(
+						`build-cli patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${missingDep.join(
 							" or ",
 						)}`,
 					);

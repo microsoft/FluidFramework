@@ -13,7 +13,7 @@ import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands
  * dependencies or a full description (type `TaskConfigFull`).
  */
 export interface TaskDefinitions {
-	[name: string]: TaskConfig;
+	readonly [name: string]: TaskConfig;
 }
 
 /**
@@ -44,14 +44,14 @@ type TaskDependency =
 	| `${PackageName}#${TaskName | AnyTaskName}`
 	| "...";
 
-export type TaskDependencies = TaskDependency[];
+export type TaskDependencies = readonly TaskDependency[];
 
 export interface TaskConfig {
 	/**
 	 * Task dependencies as a plain string array. Matched task will be scheduled to run before the current task.
 	 * The strings specify dependencies for the task. See Task Dependencies Expansion above for details.
 	 */
-	dependsOn: TaskDependencies;
+	readonly dependsOn: TaskDependencies;
 
 	/**
 	 * Tasks that needs to run before the current task (example clean). See Task Dependencies Expansion above for
@@ -61,7 +61,7 @@ export interface TaskConfig {
 	 * Notes 'before' is disallowed for non-script tasks since it has no effect on non-script tasks as they has no
 	 * action to perform.
 	 */
-	before: TaskDependencies;
+	readonly before: TaskDependencies;
 
 	/**
 	 * Tasks that this task includes. The included tasks will be scheduled to
@@ -70,7 +70,7 @@ export interface TaskConfig {
 	 *
 	 * This should not be custom specified but derived from definition.
 	 */
-	includes: TaskName[];
+	readonly includes: readonly TaskName[];
 
 	/**
 	 * Tasks that needs to run after the current task (example copy tasks). See Task Dependencies Expansion above for
@@ -80,7 +80,7 @@ export interface TaskConfig {
 	 * Notes 'after' is disallowed for non-script tasks since it has no effect on non-script tasks as they has no
 	 * action to perform.
 	 */
-	after: TaskDependencies;
+	readonly after: TaskDependencies;
 
 	/**
 	 * Specify whether this is a script task or not. Default to true when this is omitted
@@ -92,30 +92,48 @@ export interface TaskConfig {
 	 * If false, the task will only trigger the dependencies (and not look for the script in package.json).
 	 * It can be used as an alias to a group of tasks.
 	 */
-	script: boolean;
+	readonly script: boolean;
+}
+
+type Mutable<T> = { -readonly [P in keyof T]: T[P] };
+
+type MutableTaskConfig = Mutable<TaskConfig>;
+interface MutableTaskDefinitions {
+	[name: TaskName]: MutableTaskConfig;
 }
 
 // On file versions that allow fields to be omitted
 export type TaskConfigOnDisk = TaskDependencies | Omit<Partial<TaskConfig>, "includes">;
 export interface TaskDefinitionsOnDisk {
-	[name: string]: TaskConfigOnDisk;
+	readonly [name: TaskName]: TaskConfigOnDisk;
 }
+
+export interface WriteableTaskDefinitionsOnDisk {
+	[name: TaskName]: Mutable<TaskConfigOnDisk>;
+}
+
+export const isTaskDependencies = (value: TaskConfigOnDisk): value is TaskDependencies => {
+	return Array.isArray(value);
+};
+
+const makeClonedOrEmptyArray = <T>(value: readonly T[] | undefined): T[] =>
+	value ? [...value] : [];
 
 /**
  * Convert and fill out default values from TaskConfigOnDisk to TaskConfig in memory
  * @param config TaskConfig info loaded from a file
  * @returns TaskConfig filled out with default values
  */
-function getFullTaskConfig(config: TaskConfigOnDisk): TaskConfig {
-	if (Array.isArray(config)) {
-		return { dependsOn: config, script: true, includes: [], before: [], after: [] };
+function getFullTaskConfig(config: TaskConfigOnDisk): MutableTaskConfig {
+	if (isTaskDependencies(config)) {
+		return { dependsOn: [...config], script: true, includes: [], before: [], after: [] };
 	} else {
 		return {
-			dependsOn: config.dependsOn ?? [],
+			dependsOn: makeClonedOrEmptyArray(config.dependsOn),
 			script: config.script ?? true,
-			before: config.before ?? [],
+			before: makeClonedOrEmptyArray(config.before),
 			includes: [],
-			after: config.after ?? [],
+			after: makeClonedOrEmptyArray(config.after),
 		};
 	}
 }
@@ -136,7 +154,7 @@ export const defaultCleanTaskName = "clean";
 //   subtasks that has no name inherit the dependency. (where as normally, all subtask does)
 //	 (i.e. isDefault: true)
 
-export type TaskDefinition = TaskConfig & { isDefault?: boolean };
+export type TaskDefinition = TaskConfig & { readonly isDefault?: boolean };
 
 /**
  * Get the default task definition for the given task name
@@ -156,17 +174,17 @@ const defaultTaskDefinition = {
 	includes: [],
 	after: ["^*"], // TODO: include "*" so the user configured task will run first, but we need to make sure it doesn't cause circular dependency first
 	isDefault: true, // only propagate to unnamed sub tasks if it is a group task
-} satisfies TaskDefinition;
+} as const satisfies TaskDefinition;
 const defaultCleanTaskDefinition = {
 	dependsOn: [],
 	script: true,
 	before: ["*"], // clean are ran before all the tasks, add a week dependency.
 	includes: [],
 	after: [],
-} satisfies TaskDefinition;
+} as const satisfies TaskDefinition;
 
 const detectInvalid = (
-	config: string[],
+	config: readonly string[],
 	isInvalid: (value: string) => boolean,
 	name: string,
 	kind: string,
@@ -186,7 +204,7 @@ export function normalizeGlobalTaskDefinitions(
 	globalTaskDefinitionsOnDisk: TaskDefinitionsOnDisk | undefined,
 ): TaskDefinitions {
 	// Normalize all on disk config to full config and validate
-	const taskDefinitions: TaskDefinitions = {};
+	const taskDefinitions: MutableTaskDefinitions = {};
 	if (globalTaskDefinitionsOnDisk) {
 		for (const name in globalTaskDefinitionsOnDisk) {
 			const full = getFullTaskConfig(globalTaskDefinitionsOnDisk[name]);
@@ -224,7 +242,7 @@ export function normalizeGlobalTaskDefinitions(
 	return taskDefinitions;
 }
 
-function expandDotDotDot(config: string[], inherited: string[]) {
+function expandDotDotDot(config: readonly string[], inherited: readonly string[]) {
 	const expanded = config.filter((value) => value !== "...");
 	if (inherited !== undefined && expanded.length !== config.length) {
 		return expanded.concat(inherited);
@@ -285,7 +303,13 @@ export function getTaskDefinitions(
 ): TaskDefinitions {
 	const packageScripts = json.scripts ?? {};
 	const packageTaskDefinitions = json.fluidBuild?.tasks;
-	const taskDefinitions: TaskDefinitions = {};
+	const taskDefinitions: MutableTaskDefinitions = {};
+
+	const globalAllow = (value) =>
+		value.startsWith("^") ||
+		(globalTaskDefinitions[value] !== undefined && !globalTaskDefinitions[value].script) ||
+		packageScripts[value] !== undefined;
+	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
 
 	// Initialize from global TaskDefinition, and filter out script tasks if the package doesn't have the script
 	for (const name in globalTaskDefinitions) {
@@ -294,19 +318,16 @@ export function getTaskDefinitions(
 			// Skip script tasks if the package doesn't have the script
 			continue;
 		}
-		taskDefinitions[name] = { ...globalTaskDefinition };
-	}
-	const globalAllow = (value) =>
-		value.startsWith("^") ||
-		taskDefinitions[value] !== undefined ||
-		packageScripts[value] !== undefined;
-	const globalAllowExpansionsStar = (value) => value === "*" || globalAllow(value);
-	// Only keep task or script references that exists
-	for (const name in taskDefinitions) {
-		const taskDefinition = taskDefinitions[name];
-		taskDefinition.dependsOn = taskDefinition.dependsOn.filter(globalAllow);
-		taskDefinition.before = taskDefinition.before.filter(globalAllowExpansionsStar);
-		taskDefinition.after = taskDefinition.after.filter(globalAllowExpansionsStar);
+		// Only keep task or script references that exists
+		// and make array clones in the process.
+		taskDefinitions[name] = {
+			dependsOn: globalTaskDefinition.dependsOn.filter(globalAllow),
+			script: globalTaskDefinition.script,
+			before: globalTaskDefinition.before.filter(globalAllowExpansionsStar),
+			// `includes` are not inherited from the global task definitions (which should always be empty anyway)
+			includes: [],
+			after: globalTaskDefinition.after.filter(globalAllowExpansionsStar),
+		};
 	}
 
 	// Override from the package.json, and resolve "..." to the global dependencies if any

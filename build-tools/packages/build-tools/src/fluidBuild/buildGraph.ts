@@ -276,7 +276,7 @@ export class BuildPackage {
 	}
 
 	// Create or get the task with names in the `deps` array
-	private getMatchedTasks(deps: string[], pendingInitDep?: Task[]) {
+	private getMatchedTasks(deps: readonly string[], pendingInitDep?: Task[]) {
 		const matchedTasks: Task[] = [];
 		for (const dep of deps) {
 			// If pendingInitDep is undefined, that mean we don't expect the task to be found, so pretend that we already found it.
@@ -355,7 +355,7 @@ export class BuildPackage {
 		};
 
 		// Expand the star entry to all scheduled tasks
-		const expandStar = (deps: string[], getTaskNames: () => string[]) => {
+		const expandStar = (deps: readonly string[], getTaskNames: () => string[]) => {
 			const newDeps = deps.filter((dep) => dep !== "*");
 			if (newDeps.length === deps.length) {
 				return newDeps;
