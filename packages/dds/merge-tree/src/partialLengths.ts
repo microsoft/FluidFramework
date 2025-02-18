@@ -48,7 +48,7 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
 		}
 
 		super.addOrUpdate(newItem, (currentPartial, partialLength) => {
-			assert(partialLength.clientId === currentPartial.clientId, "clientId mismatch");
+			assert(partialLength.clientId === currentPartial.clientId, 0xab6 /* clientId mismatch */);
 			currentPartial.seglen += partialLength.seglen;
 			currentPartial.len += partialLength.seglen;
 		});
@@ -508,7 +508,7 @@ export class PartialSequenceLengths {
 	): void {
 		assertInserted(segment);
 		const moveInfo = toMoveInfo(segment);
-		assert(moveInfo?.wasMovedOnInsert === true, "Segment was not moved on insert");
+		assert(moveInfo?.wasMovedOnInsert === true, 0xab7 /* Segment was not moved on insert */);
 		if (moveInfo.movedSeq <= collabWindow.minSeq) {
 			// This segment was obliterated as soon as it was inserted, and everyone was aware of the obliterate.
 			// Thus every single client treats this segment as length 0 from every perspective, and no adjustments
@@ -558,7 +558,7 @@ export class PartialSequenceLengths {
 
 			if (!wasRemovedByInsertingClient && !wasMovedByInsertingClient) {
 				const moveSeq = moveInfo?.movedSeq;
-				assert(moveSeq !== undefined, "ObliterateOnInsertion implies moveSeq is defined");
+				assert(moveSeq !== undefined, 0xab8 /* ObliterateOnInsertion implies moveSeq is defined */);
 				combinedPartialLengths.addClientAdjustment(clientId, moveSeq, segment.cachedLength);
 			}
 		}
@@ -683,7 +683,7 @@ export class PartialSequenceLengths {
 		} else {
 			assert(
 				moveInfo !== undefined,
-				"Expected move to exist if remove either did not exist or didn't happen first",
+				0xab9 /* Expected move to exist if remove either did not exist or didn't happen first */,
 			);
 			// The client who performed the move is always stored
 			// in the first position of moveInfo.
@@ -735,7 +735,7 @@ export class PartialSequenceLengths {
 					}
 					assert(
 						localSeq !== undefined,
-						"Local client was in move/removed client ids but segment has no local seq for either",
+						0xaba /* Local client was in move/removed client ids but segment has no local seq for either */,
 					);
 
 					unsequencedRecords.partialLengths.addOrUpdate({
@@ -1040,7 +1040,7 @@ export class PartialSequenceLengths {
 	}: { refSeq: number; localSeq: number; seglen: number }): void {
 		assert(
 			this.unsequencedRecords !== undefined,
-			"Local adjustment computed without partials",
+			0xabb /* Local adjustment computed without partials */,
 		);
 		const adjustments =
 			this.unsequencedRecords.perRefSeqAdjustments.get(refSeq) ??

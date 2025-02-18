@@ -650,7 +650,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 			assert(index === 0, 0x404 /* Optional fields only support a single child node */);
 			return ["self", childChange];
 		});
-		assert(childChanges.length <= 1, "Optional fields only support a single child node");
+		assert(childChanges.length <= 1, 0xabd /* Optional fields only support a single child node */);
 		return {
 			moves: [],
 			childChanges,
