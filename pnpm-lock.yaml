@@ -9946,9 +9946,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      node-fetch:
-        specifier: ^2.6.9
-        version: 2.7.0(encoding@0.1.13)
       socket.io-client:
         specifier: ~4.7.5
         version: 4.7.5
@@ -9989,9 +9986,6 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
-      '@types/node-fetch':
-        specifier: ^2.6.11
-        version: 2.6.12
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
@@ -13169,6 +13163,9 @@ importers:
       '@fluidframework/matrix':
         specifier: workspace:~
         version: link:../../../dds/matrix
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../framework/presence
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
