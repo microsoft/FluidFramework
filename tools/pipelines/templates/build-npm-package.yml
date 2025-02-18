@@ -513,8 +513,6 @@ extends:
 
                       - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                         parameters:
-                          devFeedUrl: $(ado-feeds-dev)
-                          officeFeedUrl: $(ado-feeds-office)
                           pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
                       - task: Bash@3
@@ -674,8 +672,6 @@ extends:
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
-                  devFeedUrl: $(ado-feeds-dev)
-                  officeFeedUrl: $(ado-feeds-office)
                   pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
               - task: Bash@3
                 displayName: Get stage timing and result data from ADO

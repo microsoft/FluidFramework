@@ -11,11 +11,10 @@ import { defaultLogger } from "../common/logging";
 import { commonOptionString, parseOption } from "./commonOptions";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";
-import { ISymlinkOptions } from "./symlinkUtils";
 
 const { log, errorLog } = defaultLogger;
 
-interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
+interface FastBuildOptions extends IPackageMatchedOptions {
 	nolint: boolean;
 	lintonly: boolean;
 	showExec: boolean;
@@ -24,21 +23,6 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	buildTaskNames: string[];
 	build?: boolean;
 	vscode: boolean;
-
-	/**
-	 * @deprecated symlink-related functionality will be removed in an upcoming release.
-	 */
-	symlink: boolean;
-
-	/**
-	 * @deprecated symlink-related functionality will be removed in an upcoming release.
-	 */
-	fullSymlink: boolean | undefined;
-
-	/**
-	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
-	 */
-	depcheck: boolean;
 	force: boolean;
 	install: boolean;
 	uninstall: boolean;
@@ -64,9 +48,6 @@ export const options: FastBuildOptions = {
 	matchedOnly: true,
 	buildTaskNames: [],
 	vscode: false,
-	symlink: false,
-	fullSymlink: undefined,
-	depcheck: false,
 	force: false,
 	install: false,
 	uninstall: false,
@@ -74,7 +55,13 @@ export const options: FastBuildOptions = {
 	all: false,
 	worker: false,
 	workerThreads: false,
-	workerMemoryLimit: Number.POSITIVE_INFINITY,
+	// Setting this lower causes more worker restarts, but uses less memory.
+	// Since using too much memory can cause slow downs, and too many worker restarts can also cause slowdowns,
+	// it's a tradeoff.
+	// Around 2 GB seems to be ideal.
+	// Both larger and smaller values have shown to be slower (even with plenty of free ram), and too large of values (4 GiB) on low concurrency runs (4) has resulted in
+	// "build:esnext: Internal uncaught exception: Error: Worker disconnect" likely due to node processes exceeding 4 GiB of memory.
+	workerMemoryLimit: 2 * 1024 * 1024 * 1024,
 };
 
 // This string is duplicated in the readme: update readme if changing this.
@@ -92,7 +79,7 @@ Options:
   -f --force                Force build and ignore dependency check on matched packages (all if package regexp is not specified)
   -? --help                 Print this message
      --install              Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
-     --workerMemoryLimitMB  Memory limit for worker threads in MB
+     --workerMemoryLimitMB  Memory limit for worker threads in MiB
   -r --rebuild              Clean and build on matched packages (all if package regexp is not specified)
      --reinstall            Same as --uninstall --install.
   -g --releaseGroup         Release group to operate on
@@ -132,12 +119,6 @@ function setInstall() {
 
 function setUninstall() {
 	options.uninstall = true;
-	setBuild(false);
-}
-
-function setSymlink(fullSymlink: boolean) {
-	options.symlink = true;
-	options.fullSymlink = fullSymlink;
 	setBuild(false);
 }
 
@@ -225,31 +206,6 @@ export function parseOptions(argv: string[]) {
 
 		if (arg === "--vscode") {
 			options.vscode = true;
-			continue;
-		}
-
-		if (arg === "--symlink") {
-			console.warn(
-				"The --symlink flag is deprecated and will be removed in an upcoming release.",
-			);
-			setSymlink(false);
-			continue;
-		}
-
-		if (arg === "--symlink:full") {
-			console.warn(
-				"The --symlink:full flag is deprecated and will be removed in an upcoming release.",
-			);
-			setSymlink(true);
-			continue;
-		}
-
-		if (arg === "--depcheck") {
-			console.warn(
-				"The --depcheck flag is deprecated and will be removed in an upcoming release.",
-			);
-			options.depcheck = true;
-			setBuild(false);
 			continue;
 		}
 
