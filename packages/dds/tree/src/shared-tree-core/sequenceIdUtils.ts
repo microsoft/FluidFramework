@@ -34,7 +34,7 @@ export const maxSequenceId = (a: SequenceId, b: SequenceId): SequenceId =>
 export const getUpperBoundOfPreviousSequenceId = (sequenceId: SequenceId): SequenceId => {
 	assert(
 		sequenceId.indexInBatch === undefined || Number.isFinite(sequenceId.indexInBatch),
-		"indexInBatch must not be infinity",
+		0xabc /* indexInBatch must not be infinity */,
 	);
 	return sequenceId.indexInBatch === undefined || sequenceId.indexInBatch === 0
 		? {
