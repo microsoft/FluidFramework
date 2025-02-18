@@ -22,6 +22,7 @@ import {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
@@ -30,9 +31,9 @@ import {
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
-	IDeltaManager,
 	ReadOnlyInfo,
 	type ILoader,
+	type ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -129,7 +130,8 @@ import {
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import { IDetachedBlobStorage } from "./loader.js";
+import { RelativeLoader } from "./loader.js";
 import {
 	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
@@ -226,7 +228,6 @@ export interface IContainerCreateProps {
 	 * A property bag of options used by various layers
 	 * to control features
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly options: ILoaderOptions;
 
 	/**
@@ -488,7 +489,6 @@ export class Container
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
-	// eslint-disable-next-line import/no-deprecated
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
@@ -994,10 +994,11 @@ export class Container
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
-		// Whether the combined summary tree has been forced on by either the supportedFeatures flag by the service or the the loader option or the monitoring context
-		const enableSummarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			options.summarizeProtocolTree;
+		// Feature gate to enable single-commit summaries. The expected enablement is through driver layer's policies,
+		// but here we also specify config setting to use for testing purposes.
+		const enableSummarizeProtocolTree = this.mc.config.getBoolean(
+			"Fluid.Container.summarizeProtocolTree2",
+		);
 
 		this.detachedBlobStorage =
 			detachedBlobStorage ??
