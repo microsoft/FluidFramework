@@ -103,9 +103,8 @@ async function handleBroadcastSignal(
 		});
 		throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
 	}
+
 	const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
-	// This will be removed shortly. Used to test in dev clusters and force a redirect.
-	const redirect: boolean = config.get("redirect");
 	const document = await storage?.getDocument(tenantId, documentId);
 	if (!document || !document.session.isSessionActive) {
 		Lumberjack.error("Document not found", { tenantId, documentId });
@@ -115,7 +114,7 @@ async function handleBroadcastSignal(
 		Lumberjack.warning("Document session not alive", { tenantId, documentId });
 		throw new NetworkError(410, "Document session not alive");
 	}
-	if (document.session.deltaStreamUrl !== deltaStreamUrl || redirect) {
+	if (document.session.deltaStreamUrl !== deltaStreamUrl) {
 		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
 			documentUrl: document.session.deltaStreamUrl,
 			currentUrl: deltaStreamUrl,
@@ -124,6 +123,7 @@ async function handleBroadcastSignal(
 		response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
 		return;
 	}
+
 	const signalRoom: IRoom = { tenantId, documentId };
 	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
 	collaborationSessionEventEmitter.emit("broadcastSignal", payload);
