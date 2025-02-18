@@ -91,7 +91,7 @@ export class EscapedPath {
 	 * @param path - Id or path part of a node
 	 */
 	public static create(path: string): EscapedPath {
-		return new EscapedPath(encodeURIComponent(path));
+		return new EscapedPath(path);
 	}
 	public toString(): string {
 		return this.path;
@@ -101,7 +101,7 @@ export class EscapedPath {
 	 */
 	public createChildPath(childNodePath: EscapedPath): EscapedPath {
 		return new EscapedPath(
-			`${this.path}/${encodeURIComponent(channelsTreeName)}/${childNodePath.path}`,
+			`${this.path}/${channelsTreeName}/${childNodePath.path}`,
 		);
 	}
 }

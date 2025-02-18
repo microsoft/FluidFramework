@@ -402,8 +402,8 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (auto build)",
 			"env": {
-				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
-				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				"fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				"fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
 				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
 				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1",
@@ -452,8 +452,8 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (ESM-lib;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
-				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				"fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				"fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
 				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
 				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1",
@@ -494,8 +494,8 @@
 			"request": "launch",
 			"name": "Debug Current Mocha Test (CommonJS-dist;no build)",
 			"env": {
-				// "fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
-				// "fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
+				"fluid__test__driver": "odsp", //values: local, t9s, r11s, odsp,
+				"fluid__test__odspEndpointName": "odsp-df", //values: odsp, odsp-df
 				// "fluid__test__r11sEndpointName": "docker", //values: frs, docker
 				// "fluid__test__backCompat": "FULL", //values: FULL This tests loader-driver compatibility for describeCompat tests
 				// "FLUID_TEST_VERBOSE": "1",
