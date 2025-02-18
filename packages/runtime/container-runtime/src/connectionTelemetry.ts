@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
@@ -92,7 +92,7 @@ class OpPerfTelemetry {
 
 	private firstConnection = true;
 	private connectionOpSeqNumber: number | undefined;
-	private readonly bootTime = performance.now();
+	private readonly bootTime = performanceNow();
 	private connectionStartTime = 0;
 	private gap = 0;
 
@@ -204,7 +204,7 @@ class OpPerfTelemetry {
 			if (opsBehind !== undefined) {
 				this.connectionOpSeqNumber = this.deltaManager.lastKnownSeqNumber;
 				this.gap = opsBehind;
-				this.connectionStartTime = performance.now();
+				this.connectionStartTime = performanceNow();
 
 				// We might be already up-today. If so, report it right away.
 				if (this.gap <= 0) {
@@ -306,7 +306,7 @@ class OpPerfTelemetry {
 		this.connectionOpSeqNumber = undefined;
 		this.logger.sendPerformanceEvent({
 			eventName: "ConnectionSpeed",
-			duration: performance.now() - this.connectionStartTime,
+			duration: performanceNow() - this.connectionStartTime,
 			ops: this.gap,
 			// track time to connect only for first connection.
 			timeToConnect: this.firstConnection

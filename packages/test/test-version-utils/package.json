@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.21.0",
+	"version": "2.22.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,7 +48,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout=10000",
+		"test:mocha": "mocha --recursive \"lib/test/**/*.spec.*js\" --timeout=10000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
