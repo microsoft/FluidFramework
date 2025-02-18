@@ -122,9 +122,9 @@ describeCompat(
 
 		beforeEach(async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-			if (provider.driver.type !== "local") {
-				this.skip();
-			}
+			// if (provider.driver.type !== "local") {
+			// 	this.skip();
+			// }
 			container = await provider.makeTestContainer();
 			dataObject1 = await getContainerEntryPointBackCompat(container);
 			containerRuntime = dataObject1._context.containerRuntime;
@@ -183,6 +183,7 @@ describeCompat(
 			);
 		});
 
+		// Pragya fixme
 		it("can do incremental dds summary", async () => {
 			const directory2 = SharedDirectory.create(dataObject1._runtime);
 			dataObject1._root.set("directory2", directory2.handle);

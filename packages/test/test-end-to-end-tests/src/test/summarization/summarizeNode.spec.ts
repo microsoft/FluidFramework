@@ -25,7 +25,8 @@ import {
  *
  * ADO:18003
  */
-describeCompat.skip(
+// Pragya fixme
+describeCompat(
 	"Summary handles work as expected",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
