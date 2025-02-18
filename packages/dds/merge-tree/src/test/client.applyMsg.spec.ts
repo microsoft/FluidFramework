@@ -13,9 +13,15 @@ import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { UnassignedSequenceNumber } from "../constants.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegment, ISegmentLeaf, SegmentGroup } from "../mergeTreeNodes.js";
+import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import {
+	assertInserted,
+	assertRemoved,
+	toInsertionInfo,
+	toRemovalInfo,
+} from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -87,6 +93,7 @@ describe("client.applyMsg", () => {
 				switch (i % 6) {
 					case 0:
 					case 5: {
+						assertRemoved(seg);
 						assert.equal(
 							seg.removedSeq,
 							msg.sequenceNumber,
@@ -97,6 +104,7 @@ describe("client.applyMsg", () => {
 
 					case 1:
 					case 4: {
+						assertInserted(seg);
 						assert.equal(seg.seq, msg.sequenceNumber, "inserted segment has unexpected id");
 						break;
 					}
@@ -107,10 +115,10 @@ describe("client.applyMsg", () => {
 		}
 		assert.equal(client.mergeTree.pendingSegments?.length, 0);
 		for (let i = 0; i < client.getText().length; i++) {
-			const segmentInfo = client.getContainingSegment<ISegmentLeaf>(i);
+			const segmentInfo = client.getContainingSegment<ISegmentPrivate>(i);
 
 			assert.notEqual(
-				segmentInfo.segment?.seq,
+				toInsertionInfo(segmentInfo.segment)?.seq,
 				UnassignedSequenceNumber,
 				"all segments should be acked",
 			);
@@ -124,25 +132,24 @@ describe("client.applyMsg", () => {
 	it("insertTextLocal", () => {
 		const op = client.insertTextLocal(0, "abc");
 
-		const segmentInfo = client.getContainingSegment<ISegmentLeaf>(0);
+		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
-		assert.equal(segmentInfo.segment?.seq, UnassignedSequenceNumber);
+		assert.equal(toInsertionInfo(segmentInfo.segment)?.seq, UnassignedSequenceNumber);
 
 		client.applyMsg(client.makeOpMessage(op, 17));
 
-		assert.equal(segmentInfo.segment?.seq, 17);
+		assert.equal(toInsertionInfo(segmentInfo.segment)?.seq, 17);
 	});
 
 	it("removeRangeLocal", () => {
-		const segmentInfo = client.getContainingSegment<ISegmentLeaf>(0);
+		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
 		const removeOp = client.removeRangeLocal(0, 1);
-
-		assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, UnassignedSequenceNumber);
 
 		client.applyMsg(client.makeOpMessage(removeOp, 17));
 
-		assert.equal(segmentInfo.segment?.removedSeq, 17);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, 17);
 	});
 
 	it("annotateSegmentLocal", () => {
@@ -159,7 +166,7 @@ describe("client.applyMsg", () => {
 	});
 
 	it("annotateSegmentLocal then removeRangeLocal", () => {
-		const segmentInfo = client.getContainingSegment<ISegmentLeaf>(0);
+		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
 		const start = 0;
 		const end = client.getText().length;
@@ -174,17 +181,17 @@ describe("client.applyMsg", () => {
 
 		const removeOp = client.removeRangeLocal(start, end);
 
-		assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, UnassignedSequenceNumber);
 		assert.equal(client.mergeTree.pendingSegments?.length, 2);
 
 		client.applyMsg(client.makeOpMessage(annotateOp, 17));
 
-		assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, UnassignedSequenceNumber);
 		assert.equal(client.mergeTree.pendingSegments?.length, 1);
 
 		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
-		assert.equal(segmentInfo.segment?.removedSeq, 18);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, 18);
 		assert.equal(client.mergeTree.pendingSegments?.length, 0);
 	});
 
@@ -212,19 +219,19 @@ describe("client.applyMsg", () => {
 	});
 
 	it("overlapping deletes", () => {
-		const segmentInfo = client.getContainingSegment<ISegmentLeaf>(0);
+		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
 		const start = 0;
 		const end = 5;
 		const initialText = client.getText();
 		const initialLength = initialText.length;
 
-		assert.equal(segmentInfo.segment?.removedSeq, undefined);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, undefined);
 		assert(segmentInfo.segment?.segmentGroups?.empty !== false);
 
 		const removeOp = client.removeRangeLocal(start, end);
 
-		assert.equal(segmentInfo.segment?.removedSeq, UnassignedSequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, UnassignedSequenceNumber);
 		assert.equal(segmentInfo.segment?.segmentGroups?.size, 1);
 
 		const remoteMessage = client.makeOpMessage(removeOp, 17);
@@ -232,12 +239,12 @@ describe("client.applyMsg", () => {
 
 		client.applyMsg(remoteMessage);
 
-		assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, remoteMessage.sequenceNumber);
 		assert.equal(segmentInfo.segment?.segmentGroups.size, 1);
 
 		client.applyMsg(client.makeOpMessage(removeOp, 18, 0));
 
-		assert.equal(segmentInfo.segment?.removedSeq, remoteMessage.sequenceNumber);
+		assert.equal(toRemovalInfo(segmentInfo.segment)?.removedSeq, remoteMessage.sequenceNumber);
 		assert(segmentInfo.segment?.segmentGroups.empty);
 		assert.equal(client.getLength(), initialLength - (end - start));
 		assert.equal(
@@ -532,7 +539,7 @@ describe("client.applyMsg", () => {
 
 		// op with no reference sequence should count removed segment
 		const insertMessage2 = clientB.makeOpMessage(insertOp2, ++seq);
-		let seg = clientA.getContainingSegment<ISegmentLeaf>(2, {
+		let seg = clientA.getContainingSegment<ISegmentPrivate>(2, {
 			referenceSequenceNumber: insertMessage2.referenceSequenceNumber,
 			clientId: insertMessage2.clientId,
 		});
@@ -541,7 +548,7 @@ describe("client.applyMsg", () => {
 
 		// op with reference sequence >= remove op sequence should not count removed segment
 		const insertMessage3 = clientB.makeOpMessage(insertOp2, seq, removeSequence);
-		seg = clientA.getContainingSegment<ISegmentLeaf>(2, {
+		seg = clientA.getContainingSegment<ISegmentPrivate>(2, {
 			referenceSequenceNumber: insertMessage3.referenceSequenceNumber,
 			clientId: insertMessage3.clientId,
 		});
@@ -640,7 +647,7 @@ describe("client.applyMsg", () => {
 		};
 
 		// TODO: tracking group
-		const { segment, offset } = clients.C.getContainingSegment<ISegmentLeaf>(5);
+		const { segment, offset } = clients.C.getContainingSegment<ISegmentPrivate>(5);
 		assert(segment !== undefined, "expected segment");
 		const ref = clients.C.createLocalReferencePosition(
 			segment,
@@ -670,7 +677,7 @@ describe("client.applyMsg", () => {
 		ops.push(clients.B.makeOpMessage(clients.B.regeneratePendingOp(bOp.op, bOp.sg), ++seq));
 
 		const trackingGroup = new TrackingGroup();
-		const trackedSegs: ISegment[] = [];
+		const trackedSegs: ISegmentPrivate[] = [];
 		walkAllChildSegments(clients.C.mergeTree.root, (seg) => {
 			trackedSegs.push(seg);
 			trackingGroup.link(seg);
@@ -1007,6 +1014,46 @@ describe("client.applyMsg", () => {
 				}
 
 			logger.validate({ baseText: "BBBBBB B" });
+		});
+
+		it("obliterate with mismatched final states", () => {
+			const clients = createClientsAtInitialState(
+				{
+					initialState: "0{zzzzzzz}123{yyyyyy}45",
+					options: {
+						mergeTreeEnableObliterate: true,
+						mergeTreeEnableSidedObliterate: true,
+						mergeTreeEnableAnnotateAdjust: true,
+					},
+				},
+				"A",
+				"B",
+			);
+			let seq = 0;
+			const logger = new TestClientLogger(clients.all);
+			const ops: ISequencedDocumentMessage[] = [];
+			const b = clients.B;
+
+			ops.push(
+				b.makeOpMessage(
+					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 9, side: Side.Before }),
+					++seq,
+				),
+				b.makeOpMessage(b.insertTextLocal(2, "xx"), ++seq),
+				b.makeOpMessage(b.insertTextLocal(8, "BB"), ++seq),
+				b.makeOpMessage(
+					b.obliterateRangeLocal({ pos: 1, side: Side.After }, { pos: 4, side: Side.Before }),
+					++seq,
+				),
+				b.makeOpMessage(b.insertTextLocal(2, "6666666666"), ++seq),
+			);
+
+			for (const op of ops.splice(0))
+				for (const c of clients.all) {
+					c.applyMsg(op);
+				}
+
+			logger.validate({ baseText: "0{6666666666}123BB{yyyyyy}45" });
 		});
 	});
 

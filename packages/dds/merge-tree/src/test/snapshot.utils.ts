@@ -13,7 +13,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { type IMergeTreeOptionsInternal } from "../mergeTree.js";
-import { ISegment } from "../mergeTreeNodes.js";
+import { type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, ReferenceType } from "../ops.js";
 import { PropertySet } from "../properties.js";
 import { SnapshotV1 } from "../snapshotV1.js";
@@ -174,8 +174,8 @@ export class TestString {
 		);
 	}
 
-	public getSegment(pos: number): ISegment {
-		const { segment } = this.client.getContainingSegment(pos);
+	public getSegment(pos: number): ISegmentPrivate {
+		const { segment } = this.client.getContainingSegment<ISegmentPrivate>(pos);
 		assert(segment !== undefined);
 		return segment;
 	}

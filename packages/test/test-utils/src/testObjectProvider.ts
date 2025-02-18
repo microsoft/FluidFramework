@@ -15,7 +15,7 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -43,6 +43,7 @@ import { v4 as uuid } from "uuid";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
+import { isNonEmptyArray } from "./nonEmptyArrayType.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
 const defaultCodeDetails: IFluidCodeDetails = {
@@ -235,7 +236,7 @@ export interface ITestContainerConfig {
 	registry?: ChannelFactoryRegistry;
 
 	/** Container runtime options for the container instance */
-	runtimeOptions?: IContainerRuntimeOptions;
+	runtimeOptions?: IContainerRuntimeOptionsInternal;
 
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
@@ -354,7 +355,7 @@ export class EventAndErrorTrackingLogger
 	}
 
 	send(event: ITelemetryBaseEvent): void {
-		if (this.expectedEvents.length > 0) {
+		if (isNonEmptyArray(this.expectedEvents)) {
 			const ee = this.expectedEvents[0].event;
 			if (ee.eventName === event.eventName) {
 				let matches = true;

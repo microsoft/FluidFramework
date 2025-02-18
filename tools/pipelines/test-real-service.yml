@@ -33,14 +33,12 @@ resources:
     branch: main # Default branch for manual/scheduled triggers if none is selected
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
 - name: testPackage
   value: "@fluid-private/test-end-to-end-tests"
-  readonly: true
-- name: absolutePathToTelemetryGenerator
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
   readonly: true
 - name: pipelineIdentifierForTelemetry
   value: 'EndToEndTests'
@@ -52,7 +50,7 @@ variables:
 lockBehavior: sequential
 stages:
 
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_local_server
       stageDisplayName: e2e - local server
@@ -69,7 +67,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests tinylicious
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_tinylicious
       stageDisplayName: e2e - tinylicious
@@ -91,7 +89,7 @@ stages:
         logger__morganFormat: tiny
 
   # end-to-end tests routerlicious
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_routerlicious
       stageDisplayName: e2e - routerlicious
@@ -184,7 +182,7 @@ stages:
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
 
   # end-to-end tests AFR
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_frs
       stageDisplayName: e2e - AFR
@@ -216,7 +214,7 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # end-to-end tests odsp
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_odsp
       stageDisplayName: e2e - odsp

@@ -16,7 +16,6 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
@@ -36,8 +35,6 @@ import {
 	PropertySet,
 	ReferencePosition,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	SegmentGroup,
 	SlidingPreference,
 	createAnnotateRangeOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -391,15 +388,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	implements ISharedSegmentSequence<T>
 {
 	/**
-	 * This promise is always immediately resolved, and awaiting it has no effect.
-	 * @deprecated SharedSegmentSequence no longer supports partial loading.
-	 * References to this promise may safely be deleted without affecting behavior.
-	 */
-	get loaded(): Promise<void> {
-		return Promise.resolve();
-	}
-
-	/**
 	 * This is a safeguard to avoid problematic reentrancy of local ops. This type of scenario occurs if the user of SharedString subscribes
 	 * to the `sequenceDelta` event and uses the callback for a local op to submit further local ops.
 	 * Historically (before 2.0.0-internal.6.1.0), doing so would result in eventual consistency issues or a corrupted document.
@@ -504,7 +492,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		return this.ongoingResubmitRefSeq ?? this.deltaManager.lastSequenceNumber;
 	}
 
-	// eslint-disable-next-line import/no-deprecated
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
 	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
@@ -543,7 +530,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			dataStoreRuntime.options,
 		);
 
-		// eslint-disable-next-line import/no-deprecated
 		this.client = new Client(
 			segmentFromSpec,
 			createChildLogger({
@@ -812,11 +798,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				)
 			) {
 				this.submitSequenceMessage(
-					this.client.regeneratePendingOp(
-						content as IMergeTreeOp,
-						// eslint-disable-next-line import/no-deprecated
-						localOpMetadata as SegmentGroup | SegmentGroup[],
-					),
+					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata),
 				);
 			}
 		});

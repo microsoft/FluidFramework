@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-drivers",
-	"version": "2.12.0",
+	"version": "2.22.0",
 	"description": "A driver abstraction and implementations for testing against server",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -75,12 +75,12 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.16.4",
+		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",

@@ -1,5 +1,33 @@
 # @fluid-experimental/property-changeset
 
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+### Minor Changes
+
+-   Fix 'Error: PR-008: Trying to remove a non-existing entry' error in IndexedCollection class ([#23243](https://github.com/microsoft/FluidFramework/pull/23243)) [5996be1436](https://github.com/microsoft/FluidFramework/commit/5996be14364a1193e20ed9583de493cbfe6d8669)
+
+    The `IndexedCollection` class would throw the following error when applying a changeset:
+
+    ```
+    Error: PR-008: Trying to remove a non-existing entry:
+    ```
+
+    The underlying problem has been fixed and this error should no longer occur.
+
+    _Thanks to [@neerajcharokar](https://github.com/neerajcharokar) for submitting this fix!_
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
 ## 2.11.0
 
 Dependency updates only.

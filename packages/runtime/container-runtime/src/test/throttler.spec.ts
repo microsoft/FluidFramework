@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import sinon from "sinon";
 
@@ -23,8 +23,8 @@ describe("Throttler", () => {
 	after(() => clock.restore());
 	afterEach(() => clock.reset());
 
-	function assertAscending(array: readonly number[]) {
-		if (array.length < 1) {
+	function assertAscending(array: readonly number[]): void {
+		if (array.length === 0) {
 			return;
 		}
 		let prev = array[0];
@@ -58,13 +58,13 @@ describe("Throttler", () => {
 		maxDelayMs: number;
 		delayFn: (numAttempts: number) => number;
 		expectedDelays: number[];
-	}) {
+	}): void {
 		describe(message, () => {
 			beforeEach(() => {
 				throttler = new Throttler(delayWindowMs, maxDelayMs, delayFn);
 			});
 			const expectedMaxAttempts = expectedDelays.length;
-			const expectedDelayAt = (attempt: number) =>
+			const expectedDelayAt = (attempt: number): number =>
 				attempt >= expectedMaxAttempts ? maxDelayMs : expectedDelays[attempt];
 
 			it("Should initially have zero delay", () => {
@@ -72,12 +72,13 @@ describe("Throttler", () => {
 			});
 
 			it("Should increase as expected with instant failures", () => {
-				for (const expectedDelay of expectedDelays.concat([
+				for (const expectedDelay of [
+					...expectedDelays,
 					maxDelayMs,
 					maxDelayMs,
 					maxDelayMs,
 					maxDelayMs,
-				])) {
+				]) {
 					assert.strictEqual(getDelayAndTick(), expectedDelay);
 				}
 			});
@@ -156,7 +157,9 @@ describe("Throttler", () => {
 		maxDelayMs: 30 * 1000,
 		// Exponential delay: [prev x 2 + 20] (0ms, 20ms, 60ms, 140ms, etc)
 		// Equivalent reduction with G = 1, F = 0:
-		/** f(n) = C x (B^n - G) + F = C x B^n + (F - C x G) = C x B^n - C */
+		/**
+		 * f(n) = C x (B^n - G) + F = C x B^n + (F - C x G) = C x B^n - C
+		 */
 		delayFn: formExponentialFn({ coefficient: 20, offset: -20 }),
 		expectedDelays: [0, 20, 60, 140, 300, 620, 1260, 2540, 5100, 10220, 20460],
 	});

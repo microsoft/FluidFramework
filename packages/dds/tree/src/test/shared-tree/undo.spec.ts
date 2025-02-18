@@ -11,7 +11,7 @@ import {
 	rootFieldKey,
 } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
-import { SharedTreeFactory, type ITreeCheckout } from "../../shared-tree/index.js";
+import type { ITreeCheckout } from "../../shared-tree/index.js";
 import { type JsonCompatible, brand } from "../../util/index.js";
 import {
 	createTestUndoRedoStacks,
@@ -34,6 +34,7 @@ import {
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { initialize } from "../../shared-tree/schematizeTree.js";
+import { TreeFactory } from "../../treeFactory.js";
 
 const rootPath: UpPath = {
 	parent: undefined,
@@ -485,7 +486,7 @@ describe("Undo and redo", () => {
 	it("can undo while detached", () => {
 		const sf = new SchemaFactory(undefined);
 		class Schema extends sf.object("Object", { foo: sf.number }) {}
-		const sharedTreeFactory = new SharedTreeFactory();
+		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = sharedTreeFactory.create(runtime, "tree");
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: Schema }));
@@ -648,7 +649,10 @@ describe("Undo and redo", () => {
 
 		const undoOriginalPropertyOne = undoStack.pop();
 
-		assert.throws(() => undoOriginalPropertyOne?.clone(viewB).revert(), "Error: 0x576");
+		assert.throws(
+			() => undoOriginalPropertyOne?.clone(viewB),
+			/Cannot clone revertible for a commit that is not present on the given branch./,
+		);
 	});
 
 	// TODO:#24414: Enable forkable revertibles tests to run on attached/detached mode.
@@ -680,7 +684,7 @@ describe("Undo and redo", () => {
  * @param attachTree - whether or not the SharedTree should be attached to the Fluid runtime
  */
 export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITreeCheckout {
-	const sharedTreeFactory = new SharedTreeFactory();
+	const sharedTreeFactory = new TreeFactory({});
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();

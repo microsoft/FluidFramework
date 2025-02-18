@@ -8,7 +8,7 @@ import {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {
 	generateHandleContextPath,
 	isSerializedHandle,
@@ -31,8 +31,7 @@ export interface IFluidSerializer {
 	 * The original `input` object is not mutated.  This method will shallowly clones all objects in the path from
 	 * the root to any replaced handles.  (If no handles are found, returns the original object.)
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	encode(value: any, bind: IFluidHandle): any;
+	encode(value: unknown, bind: IFluidHandle): unknown;
 
 	/**
 	 * Given a fully-jsonable object tree that may have encoded handle objects embedded within, will return an
@@ -43,21 +42,18 @@ export interface IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	decode(input: any): any;
+	decode(input: unknown): unknown;
 
 	/**
 	 * Stringifies a given value. Converts any IFluidHandle to its stringified equivalent.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	stringify(value: any, bind: IFluidHandle): string;
+	stringify(value: unknown, bind: IFluidHandle): string;
 
 	/**
 	 * Parses the given JSON input string and returns the JavaScript object defined by it. Any Fluid
 	 * handles will be realized as part of the parse
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 use unknown instead of any (legacy breaking)
-	parse(value: string): any;
+	parse(value: string): unknown;
 }
 
 /**
@@ -87,14 +83,12 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * Any unbound handles encountered are bound to the provided IFluidHandle.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any -- TODO: AB#26129 ddsFuzzHarness breaks when we update any->unknown
-	public encode(input: any, bind: IFluidHandleInternal): any {
+	public encode(input: unknown, bind: IFluidHandleInternal): unknown {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
 		return !!input && typeof input === "object"
-			? // eslint-disable-next-line @typescript-eslint/no-unsafe-argument -- TODO: AB#26129 ddsFuzzHarness breaks when we update any->unknown
-				this.recursivelyReplace(input, this.encodeValue, bind)
+			? this.recursivelyReplace(input, this.encodeValue, bind)
 			: input;
 	}
 
@@ -107,8 +101,7 @@ export class FluidSerializer implements IFluidSerializer {
 	 *
 	 * The decoded handles are implicitly bound to the handle context of this serializer.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: AB#26129 ddsFuzzHarness breaks when we update any->unknown
-	public decode(input: unknown): any {
+	public decode(input: unknown): unknown {
 		// If the given 'input' cannot contain handles, return it immediately.  Otherwise,
 		// return the result of 'recursivelyReplace()'.
 		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
@@ -132,7 +125,7 @@ export class FluidSerializer implements IFluidSerializer {
 	private readonly encodeValue = (value: unknown, bind?: IFluidHandleInternal): unknown => {
 		// If 'value' is an IFluidHandle return its encoded form.
 		if (isFluidHandle(value)) {
-			assert(bind !== undefined, "Cannot encode a handle without a bind context");
+			assert(bind !== undefined, 0xa93 /* Cannot encode a handle without a bind context */);
 			return this.serializeHandle(toFluidHandleInternal(value), bind);
 		}
 		return value;
@@ -192,8 +185,7 @@ export class FluidSerializer implements IFluidSerializer {
 				// current property is replaced by the `replaced` value.
 				if (replaced !== value) {
 					// Lazily create a shallow clone of the `input` object if we haven't done so already.
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: not sure if there's a good solution
-					clone = clone ?? (Array.isArray(input) ? [...input] : { ...input });
+					clone ??= shallowCloneObject(input);
 
 					// Overwrite the current property `key` in the clone with the `replaced` value.
 					clone[key] = replaced;

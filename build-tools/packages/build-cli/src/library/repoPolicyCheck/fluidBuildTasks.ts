@@ -7,6 +7,10 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import {
+	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
+} from "@fluid-tools/build-infrastructure";
+import {
 	FluidRepo,
 	Package,
 	PackageJson,
@@ -15,8 +19,6 @@ import {
 	getFluidBuildConfig,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
 import * as semver from "semver";

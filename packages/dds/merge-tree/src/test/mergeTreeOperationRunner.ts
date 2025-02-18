@@ -12,8 +12,9 @@ import { IRandom } from "@fluid-private/stochastic-test-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { ISegment, SegmentGroup, toMoveInfo, toRemovalInfo } from "../mergeTreeNodes.js";
+import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -26,7 +27,7 @@ export type TestOperation = (
 	opStart: number,
 	opEnd: number,
 	random: IRandom,
-) => IMergeTreeOp | undefined;
+) => IMergeTreeOp[] | IMergeTreeOp | undefined;
 
 export const removeRange: TestOperation = (
 	client: TestClient,
@@ -72,7 +73,6 @@ export const annotateRange: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	// eslint-disable-next-line unicorn/prefer-ternary
 	if (random.bool()) {
 		return client.annotateRangeLocal(opStart, opEnd, {
 			[random.integer(1, 5)]: client.longClientId,
@@ -96,7 +96,7 @@ export const insertAtRefPos: TestOperation = (
 	opEnd: number,
 	random: IRandom,
 ) => {
-	const segs: ISegment[] = [];
+	const segs: ISegmentPrivate[] = [];
 	// gather all the segments at the pos, including removed segments
 	walkAllChildSegments(client.mergeTree.root, (seg) => {
 		const pos = client.getPosition(seg);
@@ -141,6 +141,12 @@ export const insert: TestOperation = (
 	const start = random.integer(0, client.getLength());
 	const text = client.longClientId!.repeat(random.integer(1, 3));
 	return client.insertTextLocal(start, text);
+};
+
+const generateInsert = (client: TestClient, random: IRandom): IMergeTreeOp | undefined => {
+	const len = client.getLength();
+	const text = client.longClientId!.repeat(random.integer(1, 3));
+	return client.insertTextLocal(random.integer(0, len), text);
 };
 
 export interface IConfigRange {
@@ -263,6 +269,8 @@ export interface IMergeTreeOperationRunnerConfig {
 	readonly applyOpDuringGeneration?: boolean;
 	growthFunc(input: number): number;
 	resultsFilePostfix?: string;
+	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined;
+	updateEndpoints?: (client: TestClient, random: IRandom) => { start: number; end: number };
 }
 
 export interface ReplayGroup {
@@ -308,6 +316,7 @@ export function runMergeTreeOperationRunner(
 				minLength,
 				config.operations,
 				config.applyOpDuringGeneration,
+				config.insertText,
 			);
 			seq = apply(messageData[0][0].sequenceNumber - 1, messageData, clients, logger, random);
 			const resultText = logger.validate();
@@ -338,6 +347,7 @@ export function generateOperationMessagesForClients(
 	minLength: number,
 	operations: readonly TestOperation[],
 	applyOpDuringGeneration?: boolean,
+	insertText?: (client: TestClient, random: IRandom) => IMergeTreeOp | undefined,
 ): [ISequencedDocumentMessage, SegmentGroup | SegmentGroup[]][] {
 	const minimumSequenceNumber = startingSeq;
 	let runningSeq = startingSeq;
@@ -357,22 +367,22 @@ export function generateOperationMessagesForClients(
 
 		const len = client.getLength();
 		const sg = client.peekPendingSegmentGroups();
-		let op: IMergeTreeOp | undefined;
+		let opOrOps: IMergeTreeOp[] | IMergeTreeOp | undefined;
 		if (len === 0 || len < minLength) {
-			const text = client.longClientId!.repeat(random.integer(1, 3));
-			op = client.insertTextLocal(random.integer(0, len), text);
+			opOrOps =
+				insertText === undefined ? generateInsert(client, random) : insertText(client, random);
 		} else {
 			let opIndex = random.integer(0, operations.length - 1);
 			const start = random.integer(0, len - 1);
 			const end = random.integer(start + 1, len);
 
-			for (let y = 0; y < operations.length && op === undefined; y++) {
-				op = operations[opIndex](client, start, end, random);
+			for (let y = 0; y < operations.length && opOrOps === undefined; y++) {
+				opOrOps = operations[opIndex](client, start, end, random);
 				opIndex++;
 				opIndex %= operations.length;
 			}
 		}
-		if (op !== undefined) {
+		if (opOrOps !== undefined) {
 			// Pre-check to avoid logger.toString() in the string template
 			if (sg === client.peekPendingSegmentGroups()) {
 				assert.notEqual(
@@ -381,14 +391,28 @@ export function generateOperationMessagesForClients(
 					`op created but segment group not enqueued.${logger}`,
 				);
 			}
-			const message = client.makeOpMessage(op, ++runningSeq);
-			message.minimumSequenceNumber = minimumSequenceNumber;
-			messages.push([
-				message,
-				client.peekPendingSegmentGroups(
+
+			const ops = Array.isArray(opOrOps) ? opOrOps : [opOrOps];
+			const totalIndividualOps = ops
+				.map((o) => (o.type === MergeTreeDeltaType.GROUP ? o.ops.length : 1))
+				.reduce((a, b) => a + b, 0);
+			let allSegmentGroups = client.peekPendingSegmentGroups(totalIndividualOps)!;
+			if (!Array.isArray(allSegmentGroups)) {
+				allSegmentGroups = [allSegmentGroups];
+			}
+			assert(Array.isArray(allSegmentGroups), "Expected array of segment groups");
+			for (const op of ops) {
+				const message = client.makeOpMessage(op, ++runningSeq);
+				message.minimumSequenceNumber = minimumSequenceNumber;
+				const segmentGroups = allSegmentGroups.splice(
+					0,
 					op.type === MergeTreeDeltaType.GROUP ? op.ops.length : 1,
-				)!,
-			]);
+				);
+				messages.push([
+					message,
+					op.type === MergeTreeDeltaType.GROUP ? segmentGroups : segmentGroups[0],
+				]);
+			}
 		}
 	}
 

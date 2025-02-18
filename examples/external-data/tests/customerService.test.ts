@@ -5,10 +5,8 @@
 
 import type { Server } from "node:http";
 
-import { delay } from "@fluidframework/core-utils/internal";
 import cors from "cors";
 import express from "express";
-import fetch, { Response } from "node-fetch";
 
 import { initializeCustomerService } from "../src/mock-customer-service/index.js";
 import { customerServicePort } from "../src/mock-customer-service-interface/index.js";
@@ -19,7 +17,7 @@ import {
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
 import { ITaskData } from "../src/model-interface/index.js";
 
-import { closeServer } from "./utilities.js";
+import { closeServer, delay } from "./utilities.js";
 
 const localServicePort = 5002;
 const externalTaskListId = "task-list-1";
@@ -47,7 +45,7 @@ const registerExternalServiceWebhook = async (taskListId: string): Promise<Respo
 
 /**
  * Helper function for updating data within the external data service.
- * It also tests the response for a given code as well and will fail if it doesnt match.
+ * It also tests the response for a given code as well and will fail if it doesn't match.
  */
 const updateExternalData = async (data: ITaskData, taskListId: string): Promise<Response> => {
 	const dataUpdateResponse = await fetch(

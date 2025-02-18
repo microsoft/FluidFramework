@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/version-tools",
-	"version": "0.52.0",
+	"version": "0.54.0",
 	"description": "Versioning tools for Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {

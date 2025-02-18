@@ -9,8 +9,8 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
-import { brandedObjectEntries } from "./internalTypes.js";
 import type { IEphemeralRuntime } from "./internalTypes.js";
+import { objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
 	ClientUpdateEntry,
@@ -115,13 +115,11 @@ function mergeGeneralDatastoreMessageContent(
 		const mergedData = queueDatastore[workspaceName] ?? {};
 
 		// Iterate over each value manager and its data, merging it as needed.
-		for (const valueManagerKey of Object.keys(workspaceData)) {
-			for (const [clientSessionId, value] of brandedObjectEntries(
-				workspaceData[valueManagerKey],
-			)) {
-				mergedData[valueManagerKey] ??= {};
-				const oldData = mergedData[valueManagerKey][clientSessionId];
-				mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
+		for (const [valueManagerKey, valueManagerValue] of objectEntries(workspaceData)) {
+			for (const [clientSessionId, value] of objectEntries(valueManagerValue)) {
+				const mergeObject = (mergedData[valueManagerKey] ??= {});
+				const oldData = mergeObject[clientSessionId];
+				mergeObject[clientSessionId] = mergeValueDirectory(
 					oldData,
 					value,
 					0, // local values do not need a time shift
@@ -191,7 +189,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			return existing.internal.ensureContent(requestedContent, controls);
 		}
 
-		let workspaceDatastore = this.datastore[internalWorkspaceAddress];
+		let workspaceDatastore: ValueElementMap<PresenceStatesSchema> | undefined =
+			this.datastore[internalWorkspaceAddress];
 		if (workspaceDatastore === undefined) {
 			workspaceDatastore = this.datastore[internalWorkspaceAddress] = {};
 		}
@@ -302,7 +301,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const clientConnectionId = this.runtime.clientId;
 		assert(clientConnectionId !== undefined, 0xa59 /* Client connected without clientId */);
 		const currentClientToSessionValueState =
-			this.datastore["system:presence"].clientToSessionId[clientConnectionId];
+			// When connected, `clientToSessionId` must always have current connection entry.
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.datastore["system:presence"].clientToSessionId[clientConnectionId]!;
 
 		const newMessage = {
 			sendTimestamp: Date.now(),

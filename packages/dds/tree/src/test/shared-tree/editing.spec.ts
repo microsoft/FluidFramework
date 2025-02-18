@@ -8,15 +8,8 @@ import { strict as assert } from "node:assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	type AnchorNode,
-	type DetachedPlaceUpPath,
-	type DetachedRangeUpPath,
 	EmptyKey,
 	type FieldUpPath,
-	type PathVisitor,
-	type PlaceUpPath,
-	type ProtoNodes,
-	type RangeUpPath,
 	TreeNavigationResult,
 	type UpPath,
 	moveToDetachedField,
@@ -24,7 +17,7 @@ import {
 } from "../../core/index.js";
 import { cursorForJsonableTreeNode } from "../../feature-libraries/index.js";
 import type { ITreeCheckout, TreeStoredContent } from "../../shared-tree/index.js";
-import { type JsonCompatible, brand, makeArray } from "../../util/index.js";
+import { type JsonCompatible, brand, fail, makeArray } from "../../util/index.js";
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
@@ -56,7 +49,7 @@ const rootNode2: UpPath = {
 };
 
 const emptyJsonContent: TreeStoredContent = {
-	schema: toStoredSchema(new SchemaFactory("").optional(JsonUnion)),
+	schema: toStoredSchema(SchemaFactory.optional(JsonUnion)),
 	initialTree: undefined,
 };
 
@@ -1752,61 +1745,6 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, { baz: "b" }] }]);
 		});
 
-		it("can be registered a path visitor that can read new content being inserted into the tree when afterAttach is invoked", () => {
-			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, { baz: "B" }] });
-			const cursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(0);
-			const anchor = cursor.buildAnchor();
-			const node = tree.locate(anchor) ?? assert.fail();
-			cursor.free();
-
-			let valueAfterInsert: string | undefined;
-			const pathVisitor: PathVisitor = {
-				onRemove(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: ProtoNodes): void {},
-				afterCreate(content: DetachedRangeUpPath): void {},
-				beforeReplace(
-					newContent: DetachedRangeUpPath,
-					oldContent: RangeUpPath,
-					oldContentDestination: DetachedPlaceUpPath,
-				): void {},
-
-				afterReplace(
-					newContentSource: DetachedPlaceUpPath,
-					newContent: RangeUpPath,
-					oldContent: DetachedRangeUpPath,
-				): void {},
-				beforeDestroy(content: DetachedRangeUpPath): void {},
-				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},
-				afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
-					const cursor2 = tree.forest.allocateCursor();
-					moveToDetachedField(tree.forest, cursor2);
-					cursor2.enterNode(0);
-					cursor2.enterField(brand("foo"));
-					cursor2.enterNode(1);
-					valueAfterInsert = cursor2.value as string;
-					cursor2.free();
-				},
-				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
-				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
-			};
-			const unsubscribePathVisitor = node.events.on(
-				"subtreeChanging",
-				(n: AnchorNode) => pathVisitor,
-			);
-			const field = tree.editor.sequenceField({
-				parent: rootNode,
-				field: brand("foo"),
-			});
-			field.insert(
-				1,
-				cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "C" }),
-			);
-			assert.equal(valueAfterInsert, "C");
-			unsubscribePathVisitor();
-		});
-
 		it("throws when moved under child node", () => {
 			const tree = makeTreeFromJson({ foo: { bar: "A" } });
 			const fooPath: UpPath = {
@@ -2596,56 +2534,6 @@ describe("Editing", () => {
 			});
 		});
 
-		it("can be registered a path visitor that can read new content being inserted into the tree when afterAttach is invoked", () => {
-			const tree = makeTreeFromJson({ foo: "A" });
-			const cursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(0);
-			const anchor = cursor.buildAnchor();
-			const node = tree.locate(anchor) ?? assert.fail();
-			cursor.free();
-
-			let valueAfterInsert: string | undefined;
-			const pathVisitor: PathVisitor = {
-				onRemove(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: ProtoNodes): void {},
-				afterCreate(content: DetachedRangeUpPath): void {},
-				beforeReplace(
-					newContent: DetachedRangeUpPath,
-					oldContent: RangeUpPath,
-					oldContentDestination: DetachedPlaceUpPath,
-				): void {},
-
-				afterReplace(
-					newContentSource: DetachedPlaceUpPath,
-					newContent: RangeUpPath,
-					oldContent: DetachedRangeUpPath,
-				): void {},
-				beforeDestroy(content: DetachedRangeUpPath): void {},
-				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},
-				afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
-					const cursor2 = tree.forest.allocateCursor();
-					moveToDetachedField(tree.forest, cursor2);
-					cursor2.enterNode(0);
-					cursor2.enterField(brand("foo"));
-					cursor2.enterNode(0);
-					valueAfterInsert = cursor2.value as string;
-					cursor2.free();
-				},
-				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
-				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
-			};
-			const unsubscribePathVisitor = node.events.on(
-				"subtreeChanging",
-				(n: AnchorNode) => pathVisitor,
-			);
-			tree.editor
-				.optionalField({ parent: rootNode, field: brand("foo") })
-				.set(singleJsonCursor("43"), true);
-			assert.equal(valueAfterInsert, "43");
-			unsubscribePathVisitor();
-		});
-
 		it("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {
 			const tree = makeTreeFromJson(1);
 			const fork = tree.branch();
@@ -3143,6 +3031,119 @@ describe("Editing", () => {
 				tree2.rebaseOnto(tree);
 
 				expectJsonTree([tree, tree2], [{}]);
+			});
+		});
+
+		describe("Inverse preconditions", () => {
+			it("inverse constraint not violated by interim change", () => {
+				const tree = makeTreeFromJson({ foo: "A" });
+				const stack = createTestUndoRedoStacks(tree.events);
+
+				// Make transaction on a branch that does the following:
+				// 1. Changes value of "foo" to "B".
+				// 2. Adds inverse constraint on existence of node "B" on field "foo".
+				tree.transaction.start();
+				tree.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(singleJsonCursor("B"));
+				tree.editor.addNodeExistsConstraintOnRevert({
+					parent: rootNode,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				tree.transaction.commit();
+				expectJsonTree(tree, [{ foo: "B" }]);
+
+				const changedFooAtoB = stack.undoStack[0] ?? fail("Missing undo");
+
+				// This change should not violate the constraint in the inverse because it is changing
+				// a different node on filed "bar".
+				tree.editor
+					.optionalField({ parent: rootNode, field: brand("bar") })
+					.set(singleJsonCursor("C"), true);
+
+				// This revert should apply since its constraint has not been violated
+				changedFooAtoB.revert();
+				expectJsonTree(tree, [{ foo: "A", bar: "C" }]);
+
+				stack.unsubscribe();
+			});
+
+			it("inverse constraint violated by a change between the original and the revert", () => {
+				const tree = makeTreeFromJson({ foo: "A" });
+				const stack = createTestUndoRedoStacks(tree.events);
+
+				// Make transaction on a branch that does the following:
+				// 1. Changes value of "foo" to "B".
+				// 2. Adds inverse constraint on existence of node "B" on field "foo".
+				tree.transaction.start();
+				tree.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(singleJsonCursor("B"));
+				tree.editor.addNodeExistsConstraintOnRevert({
+					parent: rootNode,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				tree.transaction.commit();
+				expectJsonTree(tree, [{ foo: "B" }]);
+
+				const changedFooAtoB = stack.undoStack[0] ?? fail("Missing undo");
+
+				// This change should violate the inverse constraint because it changes the
+				// node "B" to "C" on field "foo".
+				tree.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(singleJsonCursor("C"));
+
+				// This revert should do nothing since its constraint has been violated.
+				changedFooAtoB.revert();
+				expectJsonTree(tree, [{ foo: "C" }]);
+
+				stack.unsubscribe();
+			});
+
+			it("inverse constraint violated while rebasing the original change", () => {
+				const tree = makeTreeFromJson({ foo: "A", bar: "old" });
+				const branch = tree.branch();
+
+				// Make transaction on a branch that does the following:
+				// 1. Changes value of "bar" to "new".
+				// 2. Adds inverse constraint on existence of node "A" on field "foo".
+				branch.transaction.start();
+				branch.editor
+					.valueField({ parent: rootNode, field: brand("bar") })
+					.set(singleJsonCursor("new"));
+				branch.editor.addNodeExistsConstraintOnRevert({
+					parent: rootNode,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				});
+				branch.transaction.commit();
+				expectJsonTree(branch, [{ foo: "A", bar: "new" }]);
+
+				// This change replaces the node "A" on field "foo" to "C" which would violate
+				// the undo constraint on the branch transaction when the branch is rebased into tree.
+				tree.editor
+					.valueField({ parent: rootNode, field: brand("foo") })
+					.set(singleJsonCursor("C"));
+				branch.rebaseOnto(tree);
+
+				const stack = createTestUndoRedoStacks(tree.events);
+				// This is done after the rebase so that the rebased transaction is at the tip of the branch
+				// and doesn't go through any more rebases. This validates the scenario where an inverse is
+				// directly applied without any rebases.
+				tree.merge(branch);
+				const changedBarOldToNew = stack.undoStack[0] ?? fail("Missing undo");
+
+				expectJsonTree(tree, [{ foo: "C", bar: "new" }]);
+
+				// The inverse constraint will be violated and so the revert will not be applied, leaving the value
+				// of "bar" at "new"
+				changedBarOldToNew.revert();
+				expectJsonTree(tree, [{ foo: "C", bar: "new" }]);
+
+				stack.unsubscribe();
 			});
 		});
 
