@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/version-migration-same-container",
-	"version": "2.22.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Migrate data between two formats by exporting and reimporting in the same container",
 	"homepage": "https://fluidframework.com",
