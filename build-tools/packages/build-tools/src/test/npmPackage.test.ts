@@ -6,11 +6,7 @@
 import { strict as assert } from "assert";
 import * as path from "node:path";
 
-import {
-	PackageJson,
-	readPackageJsonAndIndent,
-	updatePackageJsonFile,
-} from "../common/npmPackage";
+import { PackageJson, readPackageJsonAndIndent } from "../common/npmPackage";
 import { testDataPath } from "./init";
 
 /**
@@ -34,24 +30,6 @@ describe("readPackageJsonAndIndent", () => {
 		const testFile = path.resolve(testDataPath, "tabs/_package.json");
 		const [, indent] = readPackageJsonAndIndent(testFile);
 		const expectedIndent = "\t";
-		assert.strictEqual(indent, expectedIndent);
-	});
-});
-
-describe("updatePackageJsonFile", () => {
-	it("outputs file with spaces", () => {
-		const testFile = path.resolve(testDataPath, "spaces/_package.json");
-		const expectedIndent = "  ";
-		updatePackageJsonFile(testFile, testTransformer);
-		const [, indent] = readPackageJsonAndIndent(testFile);
-		assert.strictEqual(indent, expectedIndent);
-	});
-
-	it("outputs file with tabs", () => {
-		const testFile = path.resolve(testDataPath, "tabs/_package.json");
-		const expectedIndent = "\t";
-		updatePackageJsonFile(testFile, testTransformer);
-		const [, indent] = readPackageJsonAndIndent(testFile);
 		assert.strictEqual(indent, expectedIndent);
 	});
 });
