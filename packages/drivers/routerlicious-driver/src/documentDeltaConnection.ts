@@ -112,16 +112,18 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Disconnect from the websocket
 	 */
-	protected disconnectCore(err: IAnyDriverError): void {
+	protected disconnectCore(err?: IAnyDriverError): void {
+		const errorMsg = err?.errorType ?? "Clean disconnect";
 		const isCorruption =
-			err.errorType === FluidErrorTypes.dataCorruptionError ||
-			err.errorType === FluidErrorTypes.dataProcessingError;
+			err !== undefined &&
+			(err.errorType === FluidErrorTypes.dataCorruptionError ||
+				err.errorType === FluidErrorTypes.dataProcessingError);
 		// tell the server we are disconnecting this client from the document
 		this.socket.emit(
 			"disconnect_document",
 			this.clientId,
 			this.documentId,
-			err.errorType,
+			errorMsg,
 			isCorruption,
 		);
 		super.disconnectCore(err);

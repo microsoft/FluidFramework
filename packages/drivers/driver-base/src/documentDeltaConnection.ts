@@ -409,17 +409,10 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		this.disconnect(
-			createGenericNetworkError(
-				// pre-0.58 error message: clientClosingConnection
-				"Client closing delta connection",
-				{ canRetry: true },
-				{ driverVersion },
-			),
-		);
+		this.disconnect();
 	}
 
-	protected disconnect(err: IAnyDriverError) {
+	protected disconnect(err?: IAnyDriverError) {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -455,7 +448,7 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore(err: IAnyDriverError) {
+	protected disconnectCore(err?: IAnyDriverError) {
 		this.socket.disconnect();
 	}
 
