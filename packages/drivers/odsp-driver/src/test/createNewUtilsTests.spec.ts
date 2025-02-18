@@ -344,6 +344,9 @@ describe("Create New Utils Tests", () => {
 		// Compare the values to make sure that the nav parameter was added correctly
 		assert.equal(decodedValue, "s=%2FsiteUrl&d=driveId&f=mockItemId&c=%2F&fluid=1");
 
+		// Reset the webUrl to the original value
+		mockSharingLinkData.webUrl = "https://mock.url";
+
 		// Test that error message is set appropriately when it is received in the response from ODSP
 		const mockSharingError = {
 			error: {
@@ -482,7 +485,7 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	it("Should set the appropriate nav param info when a resolved url is sent", async () => {
+	it("Should set the appropriate nav param info when a request is made", async () => {
 		const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
 			async (_options) => "token",
 			async (_options) => "token",
