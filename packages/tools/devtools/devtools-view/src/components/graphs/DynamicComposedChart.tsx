@@ -63,9 +63,13 @@ const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 		const { yAxisDataKey, xAxisDataKey, uuid } = dataSet.schema;
 		for (const dataPoint of dataSet.data) {
 			const xAxisDataPoint = dataPoint[xAxisDataKey];
+			const yAxisDataPoint = dataPoint[yAxisDataKey];
+			if (xAxisDataPoint === undefined || yAxisDataPoint === undefined) {
+				continue;
+			}
 			xAxisDataPointToYAxisDataPointMap[xAxisDataPoint] = {
 				...xAxisDataPointToYAxisDataPointMap[xAxisDataPoint],
-				[uuid]: dataPoint[yAxisDataKey],
+				[uuid]: yAxisDataPoint,
 			};
 		}
 	}
