@@ -12,6 +12,7 @@ import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
+import { initializeReactions } from "./reactions.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 // Define the schema of the Fluid container.
@@ -70,6 +71,8 @@ async function start() {
 	// Initialize the trackers
 	const focusTracker = new FocusTracker(presence, appPresence);
 	const mouseTracker = new MouseTracker(presence, appPresence);
+
+	initializeReactions(presence, mouseTracker);
 
 	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	renderFocusPresence(focusTracker, focusDiv);

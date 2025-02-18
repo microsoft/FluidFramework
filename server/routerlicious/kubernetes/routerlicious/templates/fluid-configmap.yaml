@@ -153,7 +153,8 @@ data:
             "socketIo" : {
                 "perMessageDeflate": {{ .Values.nexus.socketIo.perMessageDeflate}},
                 "gracefulShutdownEnabled": {{ .Values.nexus.socketIo.gracefulShutdownEnabled}},
-                "pingPongLatencyTrackingEnabled": {{ .Values.nexus.socketIo.pingPongLatencyTrackingEnabled}}
+                "pingPongLatencyTrackingEnabled": {{ .Values.nexus.socketIo.pingPongLatencyTrackingEnabled}},
+                "pingPongLatencyTrackingAggregationThreshold": {{ .Values.nexus.socketIo.pingPongLatencyTrackingAggregationThreshold}}
             },
             "enableCollaborationSessionTracking": {{ .Values.nexus.enableCollaborationSessionTracking }},
             "enableCollaborationSessionPruning": {{ .Values.nexus.enableCollaborationSessionPruning }},

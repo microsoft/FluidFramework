@@ -47,7 +47,7 @@
 		"test:coverage": "c8 npm run test:report",
 		"test:jest": "jest --ci",
 		"test:jest:report": "npm run test:jest -- --coverage",
-		"test:mocha": "mocha --unhandled-rejections=strict  --recursive \"dist/test/mocha/**/*.spec.*js\" --exit",
+		"test:mocha": "mocha --unhandled-rejections=strict  --recursive \"dist/test/mocha/**/*.spec.*js\"",
 		"test:mocha:multireport": "cross-env FLUID_TEST_MULTIREPORT=1 npm run test:mocha",
 		"test:mocha:report": "npm run test:mocha -- -- --reporter xunit --reporter-option output=nyc/mocha-junit-report.xml",
 		"test:report": "npm run test:mocha:report && npm run test:jest:report",

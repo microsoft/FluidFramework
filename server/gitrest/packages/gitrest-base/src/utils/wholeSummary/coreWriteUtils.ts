@@ -22,6 +22,7 @@ import {
 	convertFullSummaryToWholeSummaryEntries,
 	convertWholeSummaryTreeEntryToSummaryObject,
 } from "./conversions";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Options and flags for writing a summary tree.
@@ -135,6 +136,7 @@ async function getShaFromTreeHandleEntry(
 	options: IWriteSummaryTreeOptions,
 ): Promise<string> {
 	if (!entry.id) {
+		Lumberjack.error("Empty summary tree handle");
 		throw new NetworkError(400, `Empty summary tree handle`);
 	}
 	if (entry.id.split("/").length === 1) {
@@ -175,6 +177,10 @@ async function getShaFromTreeHandleEntry(
 	}
 	const sha = options.entryHandleToObjectShaCache.get(entry.id);
 	if (!sha) {
+		Lumberjack.error("Summary tree handle object not found", {
+			id: entry.id,
+			path: entry.path,
+		});
 		throw new NetworkError(
 			404,
 			`Summary tree handle object not found: id: ${entry.id}, path: ${entry.path}`,

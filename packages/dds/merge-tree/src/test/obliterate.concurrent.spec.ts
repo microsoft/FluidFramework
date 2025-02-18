@@ -8,7 +8,9 @@ import { strict as assert } from "node:assert";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTree } from "../mergeTree.js";
+import { Side } from "../sequencePlace.js";
 
+import { PartialSyncTestHelper } from "./partialSyncHelper.js";
 import { ReconnectTestHelper } from "./reconnectHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
@@ -1514,7 +1516,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// fails only for incremental
 		it("combines remote obliterated length ", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1843,6 +1844,72 @@ for (const incremental of [true, false]) {
 				assert.equal(helper.clients.A.getText(), "jihagSCdfeD");
 
 				helper.logger.validate();
+			});
+
+			it("Fuzz regression for negative partial lengths", () => {
+				// This is a regression test for AB#15630.
+				// Strict partial lengths checks reported an inconsistency when B applies A's
+				// obliterateRange op for the length of the string at refSeq 4.
+				// With strict partial lengths disabled, this manifested in 0x4bc on the subsequent op application.
+				const helper = new PartialSyncTestHelper();
+
+				helper.insertText("D", 0, "ABCDEFGH");
+				helper.processAllOps();
+				helper.insertText("B", 0, "123456xxxxx7890");
+				helper.advanceClients("C");
+				helper.obliterateRange("B", 15, 20);
+				helper.advanceClients("A", "B");
+				helper.insertText("A", 4, "a");
+				helper.advanceClients("A");
+				helper.insertText("C", 0, "c");
+				helper.obliterateRange(
+					"C",
+					{ pos: 4, side: Side.After },
+					{ pos: 10, side: Side.After },
+				);
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.Before },
+					{ pos: 7, side: Side.After },
+				);
+				helper.removeRange("A", 0, 1);
+				helper.processAllOps();
+
+				helper.logger.validate({ baseText: "cx7890FGH" });
+			});
+
+			it("Avoids adding entries for insert with subsequent removal", () => {
+				const helper = new PartialSyncTestHelper();
+				helper.insertText("D", 0, "bZL4aQd");
+				helper.processAllOps();
+				helper.insertText("A", 0, "8mvaLcEa4nwhELu");
+				helper.processAllOps();
+
+				// These 3 ops are the crux of the test: A's inserted segment is both obliterated by C as soon as it is inserted
+				// as well as removed by A before the insertion is acked.
+				// This is an interesting case for partial lengths of observing clients, as:
+				// - obliteration by C on insertion means the segment would normally only be visible to the inserting client
+				// - ... but after some client receives the notice of A's removal, it shouldn't be visible there either!
+				helper.obliterateRange(
+					"C",
+					{ pos: 2, side: Side.After },
+					{ pos: 21, side: Side.After },
+				);
+				helper.insertText("A", 3, "Y");
+				helper.removeRange("A", 2, 4);
+
+				// The subsequent operations forced failure at the time the code was defective, since clients with incorrect
+				// partial lengths adjustments for A would misinterpret where these ops should go.
+				helper.obliterateRange(
+					"A",
+					{ pos: 2, side: Side.After },
+					{ pos: 6, side: Side.After },
+				);
+				helper.obliterateRange("A", 2, 3);
+				helper.insertText("A", 3, "X");
+				helper.processAllOps();
+
+				helper.logger.validate({ baseText: "8m" });
 			});
 		});
 	});
