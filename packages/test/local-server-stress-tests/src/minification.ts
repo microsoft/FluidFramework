@@ -210,7 +210,7 @@ export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 			return false;
 		} catch (error: unknown) {
 			if (
-				!error ||
+				error === undefined ||
 				!(error instanceof Error) ||
 				error instanceof ReducerPreconditionError ||
 				error.stack === undefined

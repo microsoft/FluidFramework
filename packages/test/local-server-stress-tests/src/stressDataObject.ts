@@ -21,7 +21,12 @@ import type {
 	FluidObject,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	Lazy,
+	LazyPromise,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
@@ -118,14 +123,13 @@ export class StressDataObject extends DataObject {
 		return this.runtime.attachState === AttachState.Attached;
 	}
 
-	public uploadBlob(tag: `blob-${number}`, contents: string) {
-		void this.runtime.uploadBlob(stringToBuffer(contents, "utf-8")).then((handle) =>
-			this.defaultStressObject.registerLocallyCreatedObject({
-				type: "newBlob",
-				handle,
-				tag,
-			}),
-		);
+	public async uploadBlob(tag: `blob-${number}`, contents: string) {
+		const handle = await this.runtime.uploadBlob(stringToBuffer(contents, "utf-8"));
+		this.defaultStressObject.registerLocallyCreatedObject({
+			type: "newBlob",
+			handle,
+			tag,
+		});
 	}
 
 	public createChannel(tag: `channel-${number}`, type: string) {
@@ -133,24 +137,21 @@ export class StressDataObject extends DataObject {
 		this.channelNameMap.set(tag, type);
 	}
 
-	public createDataStore(tag: `datastore-${number}`, asChild: boolean) {
-		void this.context.containerRuntime
-			.createDataStore(
-				asChild
-					? [...this.context.packagePath, StressDataObject.factory.value.type]
-					: StressDataObject.factory.value.type,
-			)
-			.then(async (dataStore) => {
-				const maybe: FluidObject<StressDataObject> | undefined =
-					await dataStore.entryPoint.get();
-				assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
-				this.defaultStressObject.registerLocallyCreatedObject({
-					type: "stressDataObject",
-					handle: dataStore.entryPoint,
-					tag,
-					stressDataObject: maybe.StressDataObject,
-				});
-			});
+	public async createDataStore(tag: `datastore-${number}`, asChild: boolean) {
+		const dataStore = await this.context.containerRuntime.createDataStore(
+			asChild
+				? [...this.context.packagePath, StressDataObject.factory.value.type]
+				: StressDataObject.factory.value.type,
+		);
+
+		const maybe: FluidObject<StressDataObject> | undefined = await dataStore.entryPoint.get();
+		assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
+		this.defaultStressObject.registerLocallyCreatedObject({
+			type: "stressDataObject",
+			handle: dataStore.entryPoint,
+			tag,
+			stressDataObject: maybe.StressDataObject,
+		});
 	}
 }
 export type ContainerObjects =
@@ -176,10 +177,13 @@ export class DefaultStressDataObject extends StressDataObject {
 	 */
 	private readonly _locallyCreatedObjects: ContainerObjects[] = [];
 	public async getContainerObjects(): Promise<readonly Readonly<ContainerObjects>[]> {
-		const globalObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
+		const containerObjects: Readonly<ContainerObjects>[] = [...this._locallyCreatedObjects];
 		const containerRuntime = // eslint-disable-next-line import/no-deprecated
 			this.context.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
-		for (const url of this.containerObjectMap.keys()) {
+		for (const [url, entry] of this.containerObjectMap as any as [
+			string,
+			ContainerObjects,
+		][]) {
 			// the container objects map will see things before they are attached,
 			// so they may not be available to remote clients yet.
 			// Additionally, there is no way to observe when an
@@ -195,10 +199,10 @@ export class DefaultStressDataObject extends StressDataObject {
 				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
 				const handle = maybe?.IFluidLoadable?.handle;
 				if (handle !== undefined) {
-					const entry = this.containerObjectMap.get<ContainerObjects>(url);
-					switch (entry?.type) {
+					const type = entry?.type;
+					switch (type) {
 						case "newBlob":
-							globalObjects.push({
+							containerObjects.push({
 								...entry,
 								handle,
 							});
@@ -206,7 +210,7 @@ export class DefaultStressDataObject extends StressDataObject {
 						case "stressDataObject":
 							assert(maybe?.StressDataObject !== undefined, "must be stressDataObject");
 
-							globalObjects.push({
+							containerObjects.push({
 								type: "stressDataObject",
 								tag: entry.tag,
 								handle,
@@ -214,11 +218,12 @@ export class DefaultStressDataObject extends StressDataObject {
 							});
 							break;
 						default:
+							unreachableCase(type, `${type}`);
 					}
 				}
 			}
 		}
-		return globalObjects;
+		return containerObjects;
 	}
 
 	protected override async getDefaultStressDataObject(): Promise<DefaultStressDataObject> {
@@ -251,7 +256,7 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	public registerLocallyCreatedObject(obj: ContainerObjects) {
-		if (obj.handle) {
+		if (obj.handle !== undefined) {
 			const handle = toFluidHandleInternal(obj.handle);
 			if (this.containerObjectMap.get(handle.absolutePath) === undefined) {
 				this.containerObjectMap.set(handle.absolutePath, { tag: obj.tag, type: obj.type });

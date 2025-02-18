@@ -77,6 +77,9 @@ const generateSubModelMap = (
 	return modelMap;
 };
 
+/**
+ * here we import the dds models, and do some minor changes to make this easier to nest in the local server stress model.
+ */
 export const ddsModelMap = generateSubModelMap(
 	baseMapModel,
 	baseDirModel,
@@ -116,6 +119,11 @@ const covertLocalServerStateToDdsState = async (
 		random: {
 			...state.random,
 			handle: () => {
+				/**
+				 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
+				 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
+				 * handles.
+				 */
 				const { tag, handle } = state.random.pick(allHandles);
 				const realHandle = toFluidHandleInternal(handle);
 				return {
@@ -181,6 +189,11 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
 	const buildChannelMap = async (client: Client) => {
+		/**
+		 * here we build a map of all the channels in the container based on their absolute path,
+		 * once we have this we can match channels in different container (clientA and clientB),
+		 * and then reuse the per dds validators to ensure eventual consistency.
+		 */
 		const channelMap = new Map<string, IChannel>();
 		for (const entry of (await client.entryPoint.getContainerObjects()).map((v) =>
 			v.type === "stressDataObject" ? v : undefined,

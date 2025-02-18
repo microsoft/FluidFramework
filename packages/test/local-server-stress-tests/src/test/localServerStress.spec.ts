@@ -31,15 +31,13 @@ import { _dirname } from "./dirname.cjs";
 type StressOperations = StressDataObjectOperations | DDSModelOp;
 
 const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
-	createDataStore: async (state, op) => {
-		state.datastore.createDataStore(op.tag, op.asChild);
-	},
+	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
 	},
-	uploadBlob: async (state, op) => {
-		state.datastore.uploadBlob(op.tag, state.random.string(state.random.integer(1, 16)));
-	},
+	uploadBlob: async (state, op) =>
+		// this will hang if we are offline due to disconnect, so we don't wait for blob upload
+		void state.datastore.uploadBlob(op.tag, state.random.string(state.random.integer(1, 16))),
 	DDSModelOp: DDSModelOpReducer,
 });
 
