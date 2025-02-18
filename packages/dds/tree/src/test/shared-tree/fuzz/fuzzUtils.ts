@@ -36,6 +36,7 @@ import {
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
+	type ViewableTree,
 } from "../../../simple-tree/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
@@ -166,7 +167,7 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 	}
 }
 
-export const FuzzTestOnCreate = (tree: SharedTree) => {
+export const FuzzTestOnCreate = (tree: ViewableTree) => {
 	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 	view.initialize(populatedInitialState);
 	view.dispose();
@@ -174,8 +175,8 @@ export const FuzzTestOnCreate = (tree: SharedTree) => {
 
 export function createOnCreate(
 	initialState: NodeBuilderData<typeof FuzzNode> | undefined,
-): (tree: SharedTree) => void {
-	return (tree: SharedTree) => {
+): (tree: ViewableTree) => void {
+	return (tree: ViewableTree) => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 		view.initialize(initialState);
 		view.dispose();
