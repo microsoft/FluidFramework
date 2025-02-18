@@ -790,7 +790,7 @@ export class FluidDataStoreRuntime
 
 	/**
 	 * back-compat ADO 21575.
-	 * @deprecated processMessages should be used instead to process messages. This is still here for back-compat
+	 * @deprecated {@link FluidDataStoreRuntime.processMessages} should be used instead to process messages. This is still here for back-compat
 	 * because it exists on IFluidDataStoreChannel. Once it is removed from the interface, this method can be removed.
 	 */
 	public process(
