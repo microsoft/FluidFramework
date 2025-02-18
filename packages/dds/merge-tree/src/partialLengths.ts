@@ -48,7 +48,10 @@ class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
 		}
 
 		super.addOrUpdate(newItem, (currentPartial, partialLength) => {
-			assert(partialLength.clientId === currentPartial.clientId, 0xab6 /* clientId mismatch */);
+			assert(
+				partialLength.clientId === currentPartial.clientId,
+				0xab6 /* clientId mismatch */,
+			);
 			currentPartial.seglen += partialLength.seglen;
 			currentPartial.len += partialLength.seglen;
 		});
@@ -558,7 +561,10 @@ export class PartialSequenceLengths {
 
 			if (!wasRemovedByInsertingClient && !wasMovedByInsertingClient) {
 				const moveSeq = moveInfo?.movedSeq;
-				assert(moveSeq !== undefined, 0xab8 /* ObliterateOnInsertion implies moveSeq is defined */);
+				assert(
+					moveSeq !== undefined,
+					0xab8 /* ObliterateOnInsertion implies moveSeq is defined */,
+				);
 				combinedPartialLengths.addClientAdjustment(clientId, moveSeq, segment.cachedLength);
 			}
 		}
