@@ -303,8 +303,9 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 						: overChange.valueReplace.src === undefined,
 				dst: change.valueReplace.dst,
 			};
+
 			if (change.valueReplace.src !== undefined) {
-				replace.src = change.valueReplace.src;
+				replace.src = rebaseReplaceSource(change.valueReplace.src, overChange.valueReplace);
 			}
 			rebased.valueReplace = replace;
 		}
@@ -352,6 +353,19 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return updated;
 	},
 };
+
+function rebaseReplaceSource(
+	source: RegisterId,
+	baseReplace: Replace | undefined,
+): RegisterId {
+	if (source === "self" && baseReplace !== undefined) {
+		return baseReplace.dst;
+	} else if (areEqualRegisterIdsOpt(baseReplace?.src, source)) {
+		return "self";
+	} else {
+		return source;
+	}
+}
 
 function replaceReplaceRevisions(
 	replace: Replace,

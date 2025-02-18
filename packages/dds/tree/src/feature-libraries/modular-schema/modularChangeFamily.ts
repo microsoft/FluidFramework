@@ -256,7 +256,7 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: idState.maxId,
 			revisions: revInfos,
-			nodeRenames,
+			rootNodes: nodeRenames,
 			builds: allBuilds,
 			destroys: allDestroys,
 			refreshers: allRefreshers,
@@ -825,7 +825,7 @@ export class ModularChangeFamily
 			fieldChanges: invertedFields,
 			nodeChanges: invertedNodes,
 			nodeToParent: crossFieldTable.invertedNodeToParent,
-			nodeRenames: crossFieldTable.invertedNodeRenames,
+			rootNodes: crossFieldTable.invertedNodeRenames,
 			nodeAliases: change.change.nodeAliases,
 			crossFieldKeys,
 			maxId: genId.getMaxId(),
@@ -991,7 +991,7 @@ export class ModularChangeFamily
 			fieldChanges: this.pruneFieldMap(rebasedFields, rebasedNodes),
 			nodeChanges: rebasedNodes,
 			nodeToParent: crossFieldTable.rebasedNodeToParent,
-			nodeRenames: crossFieldTable.rebasedRootNodes,
+			rootNodes: crossFieldTable.rebasedRootNodes,
 			nodeAliases: change.nodeAliases,
 			crossFieldKeys: crossFieldTable.rebasedCrossFieldKeys,
 			maxId: idState.maxId,
@@ -2572,7 +2572,7 @@ function makeModularChangeset(
 	props: {
 		fieldChanges?: FieldChangeMap;
 		nodeChanges?: ChangeAtomIdBTree<NodeChangeset>;
-		nodeRenames?: RootNodeTable;
+		rootNodes?: RootNodeTable;
 		nodeToParent?: ChangeAtomIdBTree<FieldId>;
 		nodeAliases?: ChangeAtomIdBTree<NodeId>;
 		crossFieldKeys?: CrossFieldKeyTable;
@@ -2590,7 +2590,7 @@ function makeModularChangeset(
 	const changeset: Mutable<ModularChangeset> = {
 		fieldChanges: props.fieldChanges ?? new Map(),
 		nodeChanges: props.nodeChanges ?? newTupleBTree(),
-		rootNodes: props.nodeRenames ?? newRootTable(),
+		rootNodes: props.rootNodes ?? newRootTable(),
 		nodeToParent: props.nodeToParent ?? newTupleBTree(),
 		nodeAliases: props.nodeAliases ?? newTupleBTree(),
 		crossFieldKeys: props.crossFieldKeys ?? newCrossFieldRangeTable(),
@@ -2728,7 +2728,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 					? makeModularChangeset({
 							maxId: this.idAllocator.getMaxId(),
 							builds: change.builds,
-							nodeRenames: renameTableFromRenameDescriptions(change.renames ?? []),
+							rootNodes: renameTableFromRenameDescriptions(change.renames ?? []),
 							revisions: [{ revision: change.revision }],
 						})
 					: buildModularChangesetFromField({
