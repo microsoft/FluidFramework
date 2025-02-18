@@ -614,7 +614,7 @@ describe("Routerlicious", () => {
 									collaborationSessionEventEmitter.listenerCount(
 										"broadcastSignal",
 									),
-									1,
+									clients.length,
 								);
 							});
 							describe("sending one signal", () => {

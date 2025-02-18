@@ -52,7 +52,6 @@ import {
 
 import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
-	type AnnouncedVisitor,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
@@ -77,7 +76,6 @@ import {
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type UpPath,
-	announceDelta,
 	applyDelta,
 	clonePath,
 	compareUpPaths,
@@ -1043,22 +1041,6 @@ export function applyTestDelta(
 	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
 	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
 	applyDelta(
-		rootDelta,
-		revision,
-		deltaProcessor,
-		detachedFieldIndex ??
-			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
-	);
-}
-
-export function announceTestDelta(
-	delta: DeltaFieldMap,
-	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
-	params?: DeltaParams,
-): void {
-	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
-	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
-	announceDelta(
 		rootDelta,
 		revision,
 		deltaProcessor,

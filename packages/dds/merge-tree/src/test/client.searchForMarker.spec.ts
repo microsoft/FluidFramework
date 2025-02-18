@@ -677,7 +677,7 @@ describe("TestClient", () => {
 						[reservedMarkerIdKey]: "marker",
 						[reservedTileLabelsKey]: ["Eop"],
 					}),
-					seq,
+					++seq,
 				);
 				client.applyMsg(textMsg);
 				client2.applyMsg(textMsg);
@@ -687,7 +687,7 @@ describe("TestClient", () => {
 				assert.equal(client.getLength(), 4, "length not expected - client");
 				assert.equal(client2.getLength(), 4, "length not expected - client 2");
 
-				const mRemoveMsg = client2.makeOpMessage(client2.removeRangeLocal(0, 1), seq);
+				const mRemoveMsg = client2.makeOpMessage(client2.removeRangeLocal(0, 1), ++seq);
 				client.applyMsg(mRemoveMsg);
 				client2.applyMsg(mRemoveMsg);
 

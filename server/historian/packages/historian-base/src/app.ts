@@ -63,6 +63,7 @@ export function create(
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =
 			config.get("enableResponseCloseLatencyMetric") ?? false;
+		const enableEventLoopLagMetric = config.get("enableEventLoopLagMetric") ?? false;
 		app.use(
 			jsonMorganLoggerMiddleware(
 				"historian",
@@ -89,6 +90,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableResponseCloseLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {

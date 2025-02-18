@@ -787,20 +787,22 @@ describe("SharedTree", () => {
 		// if we'll ever expose some memory stats in which the trunk length would be included.
 		// If we do then this test should be updated to use that code path.
 		interface EditManagerKludge {
-			editManager?: EditManager<
-				ChangeFamilyEditor,
-				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
-			>;
+			kernel?: {
+				editManager?: EditManager<
+					ChangeFamilyEditor,
+					unknown,
+					ChangeFamily<ChangeFamilyEditor, unknown>
+				>;
+			};
 		}
 		const t1 = provider.trees[0] as unknown as EditManagerKludge;
 		const t2 = provider.trees[1] as unknown as EditManagerKludge;
 		assert(
-			t1.editManager !== undefined && t2.editManager !== undefined,
+			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
 			"EditManager has moved. This test must be updated.",
 		);
-		assert(t1.editManager.getTrunkChanges().length < 10);
-		assert(t2.editManager.getTrunkChanges().length < 10);
+		assert(t1.kernel.editManager.getTrunkChanges().length < 10);
+		assert(t2.kernel.editManager.getTrunkChanges().length < 10);
 	});
 
 	it("can process changes while detached", async () => {

@@ -336,12 +336,12 @@ export function validateRefCount(collection?: LocalReferenceCollection): void {
  * fuzz tests).
  */
 export function useStrictPartialLengthChecks(): void {
-	beforeEach(() => {
+	beforeEach("Enable strict partial lengths", () => {
 		PartialSequenceLengths.options.verifier = verifyPartialLengths;
 		PartialSequenceLengths.options.verifyExpected = verifyExpectedPartialLengths;
 	});
 
-	afterEach(() => {
+	afterEach("Disable strict partial lengths", () => {
 		PartialSequenceLengths.options.verifier = undefined;
 		PartialSequenceLengths.options.verifyExpected = undefined;
 	});

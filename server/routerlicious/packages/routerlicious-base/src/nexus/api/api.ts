@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { validateRequestParams } from "@fluidframework/server-services-shared";
+import { handleResponse, validateRequestParams } from "@fluidframework/server-services-shared";
 import {
 	throttle,
 	IThrottleMiddlewareOptions,
@@ -17,11 +17,12 @@ import {
 	IRoom,
 	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import winston from "winston";
 import { Provider } from "nconf";
 import { Constants } from "../../utils";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import { NetworkError } from "@fluidframework/server-services-client";
 
 export function create(
 	config: Provider,
@@ -45,60 +46,87 @@ export function create(
 		verifyStorageToken(tenantManager, config),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			const tenantId = request.params.tenantId;
-			const documentId = request.params.id;
-			const signalContent = request?.body?.signalContent;
-			if (!isValidSignalEnvelope(signalContent)) {
-				response
-					.status(400)
-					.send(
-						`signalContent should contain 'contents.content' and 'contents.type' keys.`,
-					);
-				return;
-			}
-			if (!collaborationSessionEventEmitter) {
-				response
-					.status(500)
-					.send(`No emitter configured for the broadcast-signal endpoint.`);
-				return;
-			}
-			try {
-				const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
-				// This will be removed shortly. Used to test in dev clusters and force a redirect.
-				const redirect: boolean = config.get("redirect");
-				const document = await storage?.getDocument(tenantId, documentId);
-				if (!document || !document.session.isSessionActive) {
-					Lumberjack.info("Document not found", { tenantId, documentId });
-					response.status(404).send("Document not found.");
-					return;
-				}
-				if (!document.session.isSessionAlive) {
-					Lumberjack.info("Document session not alive", { tenantId, documentId });
-					response.status(410).send("Document session not alive.");
-					return;
-				}
-				if (document.session.deltaStreamUrl !== deltaStreamUrl || redirect) {
-					Lumberjack.info("Redirecting to docs cluster", {
-						documentUrl: document.session.deltaStreamUrl,
-						currentUrl: deltaStreamUrl,
-						targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
-					});
-					response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
-					return;
-				}
-				const signalRoom: IRoom = { tenantId, documentId };
-				const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-				collaborationSessionEventEmitter.emit("broadcastSignal", payload);
-				response.status(200).send("OK");
-				return;
-			} catch (error) {
-				response.status(500).send(error);
-				return;
-			}
+			const handleBroadcastSignalP = handleBroadcastSignal(
+				request,
+				response,
+				config,
+				storage,
+				collaborationSessionEventEmitter,
+			);
+			handleResponse(
+				handleBroadcastSignalP,
+				response,
+				undefined,
+				500,
+				200,
+				undefined,
+				(error: any) =>
+					Lumberjack.error(
+						"Error handling broadcast-signal",
+						{
+							tenantId: request.params.tenantId,
+							documentId: request.params.documentId,
+						},
+						error,
+					),
+			);
 		},
 	);
 
 	return router;
+}
+
+async function handleBroadcastSignal(
+	request: Request,
+	response: Response,
+	config: Provider,
+	storage: core.IDocumentStorage,
+	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+): Promise<void> {
+	const tenantId = request.params.tenantId;
+	const documentId = request.params.id;
+	const signalContent = request?.body?.signalContent;
+	if (!isValidSignalEnvelope(signalContent)) {
+		Lumberjack.error(
+			"signalContent should contain 'contents.content' and 'contents.type' key",
+			{ tenantId, documentId },
+		);
+		throw new NetworkError(
+			400,
+			`signalContent should contain 'contents.content' and 'contents.type' keys`,
+		);
+	}
+	if (!collaborationSessionEventEmitter) {
+		Lumberjack.error("No emitter configured for the broadcast-signal endpoint", {
+			tenantId,
+			documentId,
+		});
+		throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
+	}
+
+	const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
+	const document = await storage?.getDocument(tenantId, documentId);
+	if (!document || !document.session.isSessionActive) {
+		Lumberjack.error("Document not found", { tenantId, documentId });
+		throw new NetworkError(404, "Document not found");
+	}
+	if (!document.session.isSessionAlive) {
+		Lumberjack.warning("Document session not alive", { tenantId, documentId });
+		throw new NetworkError(410, "Document session not alive");
+	}
+	if (document.session.deltaStreamUrl !== deltaStreamUrl) {
+		Lumberjack.info("Redirecting broadcast-signal to correct cluster", {
+			documentUrl: document.session.deltaStreamUrl,
+			currentUrl: deltaStreamUrl,
+			targetUrlAndPath: `${document.session.deltaStreamUrl}${request.originalUrl}`,
+		});
+		response.redirect(`${document.session.deltaStreamUrl}${request.originalUrl}`);
+		return;
+	}
+
+	const signalRoom: IRoom = { tenantId, documentId };
+	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+	collaborationSessionEventEmitter.emit("broadcastSignal", payload);
 }
 
 function isValidSignalEnvelope(

@@ -55,8 +55,6 @@ export {
 	type PlaceUpPath,
 	type PlaceIndex,
 	type NodeIndex,
-	type DetachedPlaceUpPath,
-	type DetachedRangeUpPath,
 	compareUpPaths,
 	compareFieldUpPaths,
 	getDetachedFieldContainingPath,
@@ -98,7 +96,6 @@ export {
 	combineVisitors,
 	makeDetachedFieldIndex,
 } from "./visitorUtils.js";
-export type { PathVisitor } from "./visitPath.js";
 
 export { SparseNode, getDescendant } from "./sparseTree.js";
 
