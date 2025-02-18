@@ -727,7 +727,8 @@ export class Container
 	/**
 	 * Get the package info for the code details that were used to load the container.
 	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
-	 * @deprecated was not used and is no longer needed
+	 * @deprecated Deprecating since container package info is app specific information, which mistakenly got included in the container layer.
+	 * Deprecating the function here to avoid polluting public container api surface.
 	 */
 	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
 		return getPackageName(this._loadedCodeDetails);
