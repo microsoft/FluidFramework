@@ -1,4 +1,5 @@
 ---
+"fluid-framework": minor
 ---
 ---
 "section": other
