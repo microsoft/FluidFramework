@@ -12,6 +12,8 @@ import * as semver from "semver";
 import { SimpleGit, SimpleGitOptions, simpleGit } from "simple-git";
 import type { SetRequired } from "type-fest";
 
+import type { IReleaseGroup } from "@fluid-tools/build-infrastructure";
+import { getVersionsFromStrings } from "@fluid-tools/version-tools";
 import { parseISO } from "date-fns";
 import { CommandLogger } from "../logging.js";
 import { ReleaseGroup } from "../releaseGroups.js";
@@ -41,6 +43,43 @@ function getVersionFromTag(tag: string): string | undefined {
 	}
 
 	return ver.version;
+}
+
+/**
+ * Get all version tags for a given prefix.
+ *
+ * @param git - The git repository.
+ * @param prefix - Prefix to search for.
+ * @returns List of version tags.
+ */
+async function getVersionTags(git: SimpleGit, prefix: string): Promise<string[]> {
+	const raw_tags = git.tags(["--list", `${prefix}_v*`]);
+	const tags = await raw_tags;
+	return tags.all;
+}
+
+/**
+ * Get all the versions for a release group. This function only considers the tags in the repo.
+ *
+ * @param git - The git repository.
+ * @param releaseGroup - The release group to get versions for.
+ * @returns List of version details, or undefined if one could not be found.
+ */
+export async function getVersionsFromTags(
+	git: Readonly<SimpleGit>,
+	releaseGroup: IReleaseGroup,
+	tags?: string[],
+): Promise<string[] | undefined> {
+	// use the tags passed in for testing, otherwise get the tags from the repo
+	const versionTags = tags ?? (await getVersionTags(git, releaseGroup.name));
+
+	if (versionTags.length === 0) {
+		return undefined;
+	}
+
+	const versions = getVersionsFromStrings(releaseGroup.name, versionTags);
+
+	return versions;
 }
 
 /**

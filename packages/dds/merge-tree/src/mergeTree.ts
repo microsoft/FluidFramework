@@ -593,6 +593,8 @@ export class MergeTree {
 	public mergeTreeDeltaCallback?: MergeTreeDeltaCallback;
 	public mergeTreeMaintenanceCallback?: MergeTreeMaintenanceCallback;
 
+	// TODO:AB#29553: This property doesn't seem to be adequately round-tripped through summarization.
+	// Specifically, it seems like we drop information about obliterates within the collab window for at least V1 summaries.
 	private readonly obliterates = new Obliterates(this);
 
 	public constructor(public options?: IMergeTreeOptionsInternal) {
@@ -1300,7 +1302,7 @@ export class MergeTree {
 			pendingSegmentGroup.segments.map((pendingSegment: ISegmentLeaf) => {
 				const overlappingRemove = !ackSegment(pendingSegment, pendingSegmentGroup, opArgs);
 
-				overwrite = overlappingRemove || overwrite;
+				overwrite ||= overlappingRemove || toMoveInfo(pendingSegment) !== undefined;
 
 				overlappingRemoves.push(overlappingRemove);
 				if (MergeTree.options.zamboniSegments) {
@@ -1619,15 +1621,22 @@ export class MergeTree {
 						? Number.MAX_SAFE_INTEGER - this.collabWindow.localSeq + ob.localSeq!
 						: ob.seq;
 				if (normalizedObSeq > refSeq) {
-					if (oldest === undefined || normalizedOldestSeq > normalizedObSeq) {
-						normalizedOldestSeq = normalizedObSeq;
-						oldest = ob;
-						movedClientIds.unshift(ob.clientId);
-						movedSeqs.unshift(ob.seq);
-					} else {
-						movedClientIds.push(ob.clientId);
-						movedSeqs.push(ob.seq);
+					// Any obliterate from the same client that's inserting this segment cannot cause the segment to be marked as
+					// obliterated (since that client must have performed the obliterate before this insertion).
+					// We still need to consider such obliterates when determining the winning obliterate for the insertion point,
+					// see `obliteratePrecedingInsertion` docs.
+					if (clientId !== ob.clientId) {
+						if (oldest === undefined || normalizedOldestSeq > normalizedObSeq) {
+							normalizedOldestSeq = normalizedObSeq;
+							oldest = ob;
+							movedClientIds.unshift(ob.clientId);
+							movedSeqs.unshift(ob.seq);
+						} else {
+							movedClientIds.push(ob.clientId);
+							movedSeqs.push(ob.seq);
+						}
 					}
+
 					if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
 						normalizedNewestSeq = normalizedObSeq;
 						newest = ob;
@@ -1635,6 +1644,10 @@ export class MergeTree {
 				}
 			}
 
+			newSegment.obliteratePrecedingInsertion = newest;
+			// See doc comment on obliteratePrecedingInsertion for more details: if the newest obliterate was performed
+			// by the same client that's inserting this segment, we let them insert into this range and therefore don't
+			// mark it obliterated.
 			if (oldest && newest?.clientId !== clientId) {
 				const moveInfo: IMoveInfo = {
 					movedClientIds,
@@ -1656,10 +1669,18 @@ export class MergeTree {
 				}
 
 				if (newSegment.parent) {
-					this.blockUpdatePathLengths(newSegment.parent, seq, clientId);
+					// The incremental update codepath in theory can handle most cases where segments are obliterated upon insertion,
+					// but it's not idempotent with respect to segment insertion in the first place. Since we already update partial
+					// lengths inside the inserting walk, we'd be at risk of double-counting the insertion in any case if we allow
+					// incremental updates here.
+					const newStructure = true;
+					this.blockUpdatePathLengths(
+						newSegment.parent,
+						moveInfo.movedSeq,
+						clientId,
+						newStructure,
+					);
 				}
-			} else if (oldest && newest?.clientId === clientId) {
-				newSegment.prevObliterateByInserter = newest;
 			}
 
 			saveIfLocal(newSegment);
@@ -1682,8 +1703,8 @@ export class MergeTree {
 			segment.segmentGroups.copyTo(next.segmentGroups);
 		}
 
-		if (segment.prevObliterateByInserter) {
-			next.prevObliterateByInserter = segment.prevObliterateByInserter;
+		if (segment.obliteratePrecedingInsertion) {
+			next.obliteratePrecedingInsertion = segment.obliteratePrecedingInsertion;
 		}
 		copyPropertiesAndManager(segment, next);
 		if (segment.localRefs) {
@@ -2050,7 +2071,8 @@ export class MergeTree {
 				(start.side === Side.After && startPos === pos + segment.cachedLength) || // exclusive start segment
 				(end.side === Side.Before &&
 					endPos === pos &&
-					isSegmentPresent(segment, { refSeq, localSeq })) // exclusive end segment
+					// TODO:AB#29765: The clientId check here should be handled by isSegmentPresent and/or PerspectiveImpl
+					(segment.clientId === clientId || isSegmentPresent(segment, { refSeq, localSeq }))) // exclusive end segment
 			) {
 				// We walk these segments because we want to also walk any concurrently inserted segments between here and the obliterated segments.
 				// These segments are outside of the obliteration range though, so return true to keep walking.
@@ -2058,18 +2080,23 @@ export class MergeTree {
 			}
 			const existingMoveInfo = toMoveInfo(segment);
 
-			if (segment.prevObliterateByInserter?.seq === UnassignedSequenceNumber) {
+			// The "last-to-obliterate-gets-to-insert" policy described by the doc comment on `obliteratePrecedingInsertion`
+			// is mostly handled by logic at insertion time, but we need a small bit of handling here.
+			// Specifically, we want to avoid marking a local-only segment as obliterated when we know one of our own local obliterates
+			// will win against the obliterate we're processing, hence the early exit.
+			if (
+				segment.seq === UnassignedSequenceNumber &&
+				segment.obliteratePrecedingInsertion?.seq === UnassignedSequenceNumber &&
+				seq !== UnassignedSequenceNumber
+			) {
 				// We chose to not obliterate this segment because we are aware of an unacked local obliteration.
 				// The local obliterate has not been sequenced yet, so it is still the newest obliterate we are aware of.
 				// Other clients will also choose not to obliterate this segment because the most recent obliteration has the same clientId
 				return true;
 			}
 
-			const wasMovedOnInsert =
-				clientId !== segment.clientId &&
-				segment.seq !== undefined &&
-				seq !== UnassignedSequenceNumber &&
-				(refSeq < segment.seq || segment.seq === UnassignedSequenceNumber);
+			// Partial lengths incrementality is not supported for overlapping obliterate/removes.
+			_overwrite ||= existingMoveInfo !== undefined || toRemovalInfo(segment) !== undefined;
 
 			if (existingMoveInfo === undefined) {
 				const movedSeg = overwriteInfo<IMoveInfo, ISegmentLeaf>(segment, {
@@ -2077,17 +2104,33 @@ export class MergeTree {
 					movedSeq: seq,
 					localMovedSeq: localSeq,
 					movedSeqs: [seq],
-					wasMovedOnInsert,
+					wasMovedOnInsert:
+						segment.seq === UnassignedSequenceNumber && seq !== UnassignedSequenceNumber,
 				});
 
-				if (!toRemovalInfo(movedSeg)) {
+				const existingRemoval = toRemovalInfo(movedSeg);
+				if (existingRemoval === undefined) {
 					movedSegments.push(movedSeg);
+				} else if (
+					existingRemoval.removedSeq === UnassignedSequenceNumber &&
+					segment.localRefs?.empty === false
+				) {
+					// We removed this locally already so we don't need to event it again, but it might have references
+					// that need sliding now that a move may have been acked.
+					localOverlapWithRefs.push(segment);
 				}
 			} else {
-				_overwrite = true;
-				// never move wasMovedOnInsert from true to false
-				existingMoveInfo.wasMovedOnInsert ||= wasMovedOnInsert;
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
+					// Should not need explicit set here, but this should be implied:
+					assert(
+						!existingMoveInfo.wasMovedOnInsert,
+						"Local obliterate cannot have removed a segment as soon as it was inserted",
+					);
+					assert(
+						seq !== UnassignedSequenceNumber,
+						"Cannot obliterate the same segment locally twice",
+					);
+					existingMoveInfo.wasMovedOnInsert = segment.seq === UnassignedSequenceNumber;
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
@@ -2227,6 +2270,8 @@ export class MergeTree {
 		): boolean => {
 			const existingRemovalInfo = toRemovalInfo(segment);
 
+			// Partial lengths incrementality is not supported for overlapping obliterate/removes.
+			_overwrite ||= existingRemovalInfo !== undefined || toMoveInfo(segment) !== undefined;
 			if (existingRemovalInfo === undefined) {
 				const removed = overwriteInfo<IRemovalInfo, ISegmentLeaf>(segment, {
 					removedClientIds: [clientId],
@@ -2234,11 +2279,18 @@ export class MergeTree {
 					localRemovedSeq: localSeq,
 				});
 
-				if (!toMoveInfo(removed)) {
+				const existingMoveInfo = toMoveInfo(removed);
+				if (existingMoveInfo === undefined) {
 					removedSegments.push(removed);
+				} else if (
+					existingMoveInfo.movedSeq === UnassignedSequenceNumber &&
+					segment.localRefs?.empty === false
+				) {
+					// We moved this locally already so we don't need to event it again, but it might have references
+					// that need sliding now that a remove may have been acked.
+					localOverlapWithRefs.push(segment);
 				}
 			} else {
-				_overwrite = true;
 				if (existingRemovalInfo.removedSeq === UnassignedSequenceNumber) {
 					// we removed this locally, but someone else removed it first
 					// so put them at the head of the list

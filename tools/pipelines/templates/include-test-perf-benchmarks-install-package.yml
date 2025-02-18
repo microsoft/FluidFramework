@@ -3,6 +3,7 @@
 
 # This template is intended to be used for common steps across stages of the test-perf-benchmarks.yml pipeline.
 # It downloads (from the artifacts produced by another pipeline) and installs a specified package that has performance tests.
+# It assumes an appropriate .npmrc file was already setup so dependencies can be resolved from our feeds.
 
 parameters:
 # Identifier for the pipeline that produced the artifact with the package to be installed.
@@ -19,8 +20,7 @@ parameters:
 - name: testPackageName
   type: string
 
-# Path where the package should be installed. This template assumes an appropriate .npmrc file was already setup there
-# so dependencies can be resolved from our feeds.
+# Path where the package should be installed.
 - name: installPath
   type: string
 

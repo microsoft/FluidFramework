@@ -182,7 +182,7 @@ function getVersions(prefix: TagPrefix): string[] {
  * @param tags - An array of tags as strings.
  * @returns An array of versions extracted from the provided tags.
  */
-function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[] {
+export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[] {
 	const versions = tags
 		.filter((v) => v.startsWith(`${prefix}_v`))
 		.map((tag) => tag.slice(`${prefix}_v`.length));
