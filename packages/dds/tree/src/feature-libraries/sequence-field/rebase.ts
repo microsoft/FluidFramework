@@ -40,6 +40,7 @@ import {
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
 	getDetachOutputCellId,
+	getDetachedNodeId,
 	getInputCellId,
 	isAttach,
 	isDetach,
@@ -291,7 +292,7 @@ function rebaseMarkIgnoreChild(
 		const { remains, follows } = separateEffectsForMove(extractMarkEffect(currMark));
 		moveRebasedChanges(
 			moveEffects,
-			getDetachOutputCellId(baseMark),
+			getDetachedNodeId(baseMark),
 			baseMark.count,
 			currMark.changes,
 			follows,
@@ -352,7 +353,7 @@ function moveRebasedChanges(
 	nodeChange: NodeId | undefined,
 	newDetach: Detach | undefined,
 ): void {
-	const newId = newDetach !== undefined ? getDetachOutputCellId(newDetach) : undefined;
+	const newId = newDetach !== undefined ? getDetachedNodeId(newDetach) : undefined;
 	moveEffects.rebaseOverDetach(baseId, count, newId, nodeChange, newDetach);
 }
 

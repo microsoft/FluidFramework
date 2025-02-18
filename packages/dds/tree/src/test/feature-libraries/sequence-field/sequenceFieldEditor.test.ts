@@ -28,7 +28,13 @@ export function testEditor() {
 
 		it("insert one node", () => {
 			const revision = mintRevisionTag();
-			const actual = SF.sequenceFieldEditor.insert(42, 1, { localId: id, revision }, revision);
+			const actual = SF.sequenceFieldEditor.insert(
+				42,
+				1,
+				{ localId: id, revision },
+				revision,
+				id,
+			);
 			const expected: SF.Changeset = [
 				{ count: 42 },
 				Mark.revive(1, { localId: id, revision }, { revision }),
@@ -38,7 +44,13 @@ export function testEditor() {
 
 		it("insert multiple nodes", () => {
 			const revision = mintRevisionTag();
-			const actual = SF.sequenceFieldEditor.insert(42, 2, { localId: id, revision }, revision);
+			const actual = SF.sequenceFieldEditor.insert(
+				42,
+				2,
+				{ localId: id, revision },
+				revision,
+				id,
+			);
 			const expected: SF.Changeset = [
 				{ count: 42 },
 				Mark.insert(2, { localId: id, revision }, { revision }),

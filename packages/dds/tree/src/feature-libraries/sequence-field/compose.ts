@@ -32,7 +32,9 @@ import {
 	cellSourcesFromMarks,
 	compareCellPositionsUsingTombstones,
 	extractMarkEffect,
+	getAttachedNodeId,
 	getDetachOutputCellId,
+	getDetachedNodeId,
 	getInputCellId,
 	getOutputCellId,
 	isAttach,
@@ -136,7 +138,6 @@ function composeMarksIgnoreChild(
 			baseMark.cellId !== undefined && newMark.cellId !== undefined,
 			"Expected marks to target an empty cell",
 		);
-		moveEffects.renameNewAttach(newMark.cellId, baseMark.cellId, baseMark.count);
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
 		assert(isDetach(baseMark), 0x9f2 /* Unexpected mark type */);
@@ -196,8 +197,8 @@ function composeMarksIgnoreChild(
 
 		// XXX: Is it a problem that we can call this twice? (see handleNodeChanges)
 		moveEffects.composeBaseAttach(
-			baseMark.cellId,
-			getOutputCellId(newMark),
+			getAttachedNodeId(baseMark),
+			getDetachedNodeId(newMark),
 			baseMark.count,
 			newMark.changes,
 		);
@@ -209,7 +210,7 @@ function composeMarksIgnoreChild(
 		return normalizeCellRename(baseMark.cellId, baseMark.count, attach, detach);
 	} else {
 		assert(baseMark.type === "Remove", "Unexpected mark type");
-		moveEffects.composeDetachAttach(getDetachOutputCellId(baseMark), baseMark.count);
+		moveEffects.composeDetachAttach(getDetachedNodeId(baseMark), baseMark.count);
 		return createNoopMark(baseMark.count, undefined);
 	}
 }
@@ -243,7 +244,7 @@ function handleNodeChanges(
 				newId = getDetachOutputCellId(newMark);
 			}
 
-			moveEffects.composeBaseAttach(baseMark.cellId, newId, 1, newMark.changes);
+			moveEffects.composeBaseAttach(getAttachedNodeId(baseMark), newId, 1, newMark.changes);
 			return undefined;
 		}
 	}
@@ -406,5 +407,5 @@ function getMovedChangesFromMark(
 		return undefined;
 	}
 
-	return moveEffects.getNewChangesForBaseDetach(getDetachOutputCellId(markEffect), 1).value;
+	return moveEffects.getNewChangesForBaseDetach(getDetachedNodeId(markEffect), 1).value;
 }

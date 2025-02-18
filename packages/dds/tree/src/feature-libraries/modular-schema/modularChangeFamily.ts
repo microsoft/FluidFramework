@@ -2556,17 +2556,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		deleteNodeRename(this.table.composedRootNodes, baseDetachId, count);
 	}
 
-	public renameNewAttach(oldId: ChangeAtomId, newId: ChangeAtomId, count: number): void {
-		renameNodes(
-			this.table.composedRootNodes,
-			oldId,
-			newId,
-			count,
-			this.table.baseChange.rootNodes.newToOldId,
-			this.table.newChange.rootNodes.oldToNewId,
-		);
-	}
-
 	private invalidateBaseFields(fields: FieldId[]): void {
 		if (this.allowInval) {
 			for (const fieldId of fields) {

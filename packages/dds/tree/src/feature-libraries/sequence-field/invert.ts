@@ -114,7 +114,7 @@ function invertMark(
 					id: mark.id,
 					cellId: outputId,
 					count: mark.count,
-					revision,
+					revision: mark.revision,
 				};
 				return [inverse];
 			} else {
@@ -139,12 +139,10 @@ function invertMark(
 				type: "Remove",
 				count: mark.count,
 				id: mark.id,
-				revision,
+				revision: mark.revision,
 			};
 
-			if (isRollback) {
-				removeMark.idOverride = inputId;
-			}
+			removeMark.idOverride = isRollback ? inputId : { revision, localId: mark.id };
 
 			return applyMovedChanges(removeMark, mark.revision, crossFieldManager);
 		}

@@ -22,12 +22,7 @@ import {
 	type NestedChangesIndices,
 } from "../modular-schema/index.js";
 
-import type {
-	CellRename,
-	DetachOfRemovedNodes,
-	EmptyInputCellMark,
-	MoveMarkEffect,
-} from "./helperTypes.js";
+import type { CellRename, DetachOfRemovedNodes, EmptyInputCellMark } from "./helperTypes.js";
 import {
 	type Attach,
 	type CellId,
@@ -298,19 +293,17 @@ export function getDetachOutputCellId(mark: Detach | Rename): ChangeAtomId {
 }
 
 /**
+ * @returns the ID of the node to be attached in the input context of the given detach `mark`.
+ */
+export function getAttachedNodeId(mark: Attach): ChangeAtomId {
+	return makeChangeAtomId(mark.id, mark.revision);
+}
+
+/**
  * @returns the ID of the detached node in the output context of the given detach `mark`.
  */
-export function getDetachedNodeId(mark: Detach | Rename): ChangeAtomId {
-	switch (mark.type) {
-		case "Rename": {
-			return getDetachOutputCellId(mark);
-		}
-		case "Remove": {
-			return makeChangeAtomId(mark.id, mark.revision);
-		}
-		default:
-			unreachableCase(mark);
-	}
+export function getDetachedNodeId(mark: Detach): ChangeAtomId {
+	return makeChangeAtomId(mark.id, mark.revision);
 }
 
 /**
@@ -386,6 +379,7 @@ export function markHasCellEffect(mark: Mark): boolean {
 	return areInputCellsEmpty(mark) !== areOutputCellsEmpty(mark);
 }
 
+// XXX: Remove this
 export function isDetachOfRemovedNodes(mark: Mark): mark is CellMark<DetachOfRemovedNodes> {
 	return isDetach(mark) && mark.cellId !== undefined;
 }
@@ -781,12 +775,10 @@ export function getCrossFieldKeys(change: Changeset): CrossFieldKeyRange[] {
 function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange | undefined {
 	switch (mark.type) {
 		case "Insert":
-			if (mark.cellId === undefined) {
-				return undefined;
-			}
 			return {
 				key: {
-					...mark.cellId,
+					revision: mark.revision,
+					localId: mark.id,
 					target: CrossFieldTarget.Destination,
 				},
 				count,
@@ -794,7 +786,8 @@ function getCrossFieldKeysForMark(mark: Mark, count: number): CrossFieldKeyRange
 		case "Remove":
 			return {
 				key: {
-					...getDetachOutputCellId(mark),
+					revision: mark.revision,
+					localId: mark.id,
 					target: CrossFieldTarget.Source,
 				},
 				count,

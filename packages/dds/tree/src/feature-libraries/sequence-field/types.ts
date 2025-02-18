@@ -88,6 +88,7 @@ export interface HasMoveFields extends HasMoveId, HasRevisionTag {
 export interface DetachFields {
 	/**
 	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
+	 * Note that this does not affect the ID associated with the detached node.
 	 *
 	 * This is used in two situations:
 	 * - to restore the prior ID of a cell in a rollback changeset

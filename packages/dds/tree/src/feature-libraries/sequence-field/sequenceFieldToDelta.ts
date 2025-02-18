@@ -12,6 +12,7 @@ import { type MarkList, NoopMarkType } from "./types.js";
 import {
 	areInputCellsEmpty,
 	areOutputCellsEmpty,
+	getAttachedNodeId,
 	getDetachedNodeId,
 	getInputCellId,
 } from "./utils.js";
@@ -50,8 +51,7 @@ export function sequenceFieldToDelta(
 					break;
 				}
 				case "Insert": {
-					assert(mark.cellId !== undefined, "Unexpected cell state");
-					const buildId = nodeIdFromChangeAtom(mark.cellId);
+					const buildId = nodeIdFromChangeAtom(getAttachedNodeId(mark));
 					deltaMark.attach = buildId;
 					deltaMarks.push(deltaMark);
 					break;

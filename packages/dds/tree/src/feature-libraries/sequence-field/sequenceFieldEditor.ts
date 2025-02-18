@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
+import type { ChangeAtomId, ChangesetLocalId, RevisionTag } from "../../core/index.js";
 import type { FieldEditor, NodeId } from "../modular-schema/index.js";
 
 import { MarkListFactory } from "./markListFactory.js";
@@ -22,7 +22,13 @@ import type {
 import { splitMark } from "./utils.js";
 
 export interface SequenceFieldEditor extends FieldEditor<Changeset> {
-	insert(index: number, count: number, firstId: CellId, revision: RevisionTag): Changeset;
+	insert(
+		index: number,
+		count: number,
+		cellId: CellId,
+		revision: RevisionTag,
+		moveId: ChangesetLocalId,
+	): Changeset;
 	remove(index: number, count: number, id: ChangesetLocalId, revision: RevisionTag): Changeset;
 	revive(
 		index: number,
@@ -80,14 +86,15 @@ export const sequenceFieldEditor = {
 	insert: (
 		index: number,
 		count: number,
-		firstId: CellId,
+		cellId: CellId,
 		revision: RevisionTag | undefined,
+		moveId: ChangesetLocalId,
 	): Changeset => {
 		const mark: CellMark<Insert> = {
 			type: "Insert",
-			id: firstId.localId,
+			id: moveId,
 			count,
-			cellId: firstId,
+			cellId,
 			revision,
 		};
 		return markAtIndex(index, mark);
@@ -127,7 +134,7 @@ export const sequenceFieldEditor = {
 	): Changeset {
 		const moveIn: Mark = {
 			type: "Insert",
-			id: attachCellId.localId,
+			id: detachCellId,
 			count,
 			cellId: attachCellId,
 			revision,

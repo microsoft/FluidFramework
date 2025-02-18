@@ -1194,6 +1194,7 @@ describe("Editing", () => {
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 			// Move to bar: [{}, { bar: ["a"] }}]
+			// TODO: Is this edit supposed to be to tree2?
 			tree.editor.move(
 				{ parent: first, field: brand("foo") },
 				0,

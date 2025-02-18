@@ -26,19 +26,18 @@ export function getAttach(effect: MarkEffect): Attach | undefined {
 // TODO: Does this also need to take a CrossFieldTarget?
 export type NodeRangeQueryFunc = (id: ChangeAtomId, count: number) => number;
 
-export function splitMarkForMoveEffects(mark: Mark, effects: NodeRangeQueryFunc): Mark[] {
-	const length = getFirstMoveEffectLength(mark, mark.count, effects);
+export function splitMarkForMoveEffects(mark: Mark, getLength: NodeRangeQueryFunc): Mark[] {
+	const length = getFirstMoveEffectLength(mark, mark.count, getLength);
 	return length < mark.count ? splitMark(mark, length) : [mark];
 }
 
 function getFirstMoveEffectLength(
 	markEffect: MarkEffect,
 	count: number,
-	effects: NodeRangeQueryFunc,
+	getLength: NodeRangeQueryFunc,
 ): number {
-	// XXX: Should check for attach or detach instead
 	if (isMoveMark(markEffect)) {
-		return effects({ revision: markEffect.revision, localId: markEffect.id }, count);
+		return getLength({ revision: markEffect.revision, localId: markEffect.id }, count);
 	}
 
 	return count;
