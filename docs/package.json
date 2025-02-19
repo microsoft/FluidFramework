@@ -42,7 +42,7 @@
 		"serve": "docusaurus serve",
 		"serve-with-azure-emulation": "swa start --config-name ff-doc-site",
 		"prestart": "npm run generate-versions",
-		"start": "docusaurus start",
+		"start": "docusaurus start --port 80",
 		"pretest": "playwright install --with-deps",
 		"test": "playwright test"
 	},
@@ -87,6 +87,7 @@
 		"cross-env": "^7.0.3",
 		"dill-cli": "^0.1.3",
 		"docusaurus-plugin-sass": "^0.2.5",
+		"docusaurus-theme-search-typesense": "0.23.1-0",
 		"dotenv": "^16.4.7",
 		"dotenv-cli": "^7.4.3",
 		"eslint": "~8.55.0",
