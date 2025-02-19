@@ -162,8 +162,10 @@ export abstract class SharedObjectCore<
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
+
+		const processMessagesCore = this.processMessagesCore?.bind(this);
 		this.processMessagesHelper =
-			this.processMessagesCore === undefined
+			processMessagesCore === undefined
 				? (messagesCollection: IRuntimeMessageCollection) =>
 						processHelper(messagesCollection, this.process.bind(this))
 				: (messagesCollection: IRuntimeMessageCollection) => {
@@ -171,8 +173,7 @@ export abstract class SharedObjectCore<
 							messagesCollection,
 							this.opProcessingHelper,
 							this.emitInternal.bind(this),
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							this.processMessagesCore!.bind(this),
+							processMessagesCore,
 						);
 					};
 	}
