@@ -535,6 +535,7 @@ describe("Create New Utils Tests", () => {
 			{ name: "containerPackageName" } /* IContainerPackageInfo */,
 		);
 
+		// We emulate the container behavior where we first have a resolved request and then create a container based on said request.
 		const resolved = await shareLinkResolver.resolve(request);
 		const summary = createSummary();
 		const docService = await mockFetchOk(
