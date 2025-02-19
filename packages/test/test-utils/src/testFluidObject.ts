@@ -72,11 +72,14 @@ export class TestFluidObject implements ITestFluidObject {
 			throw new Error("Shared objects were not provided during creation.");
 		}
 
-		for (const key of this.factoryEntriesMap.keys()) {
-			if (key === id) {
-				const handle = this.root.get<IFluidHandle>(id);
-				return handle?.get() as Promise<T>;
+		if (this.factoryEntriesMap.has(id)) {
+			const handle = this.root.get<IFluidHandle<T>>(id);
+			if (handle === undefined) {
+				throw new Error(
+					`Shared object with id ${id} is in factoryEntriesMap but not found under root.`,
+				);
 			}
+			return handle.get();
 		}
 
 		throw new Error(`Shared object with id ${id} not found.`);
@@ -110,6 +113,7 @@ export class TestFluidObject implements ITestFluidObject {
 }
 
 /**
+ * Iterable\<[ChannelId, IChannelFactory]\>.
  * @internal
  */
 export type ChannelFactoryRegistry = Iterable<[string | undefined, IChannelFactory]>;
