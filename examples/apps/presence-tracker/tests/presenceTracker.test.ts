@@ -264,6 +264,7 @@ describe("presence-tracker", () => {
 			);
 		});
 
+		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
 		it.skip("First client shows two clients connected in UI", async () => {
 			await waitForAttendeeState(
 				page,
@@ -291,6 +292,7 @@ describe("presence-tracker", () => {
 			expect(clientListHtml).toMatch(session2id);
 		});
 
+		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
 		// This test should not be enabled without the prior test being enabled as it
 		// may have false positives. It has also been demonstrated to fail occasionally.
 		// Occasional failures are likely due to same issue impact the prior "in UI" test.
