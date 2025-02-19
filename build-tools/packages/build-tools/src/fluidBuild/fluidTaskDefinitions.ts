@@ -64,13 +64,13 @@ export interface TaskConfig {
 	readonly before: TaskDependencies;
 
 	/**
-	 * Tasks that this task includes. The included tasks will be scheduled to
-	 * run while the current task. Thus any tasks that depend on this will
-	 * satisfy a requirement of dependency on the included tasks.
+	 * Tasks that this task includes. The children tasks will be scheduled to
+	 * run under the current task. Thus any tasks that depend on this will
+	 * satisfy a requirement of dependency on the children tasks.
 	 *
 	 * This should not be custom specified but derived from definition.
 	 */
-	readonly includes: readonly TaskName[];
+	readonly children: readonly TaskName[];
 
 	/**
 	 * Tasks that needs to run after the current task (example copy tasks). See Task Dependencies Expansion above for
@@ -106,7 +106,7 @@ interface MutableTaskDefinitions {
 }
 
 // On file versions that allow fields to be omitted
-export type TaskConfigOnDisk = TaskDependencies | Omit<Partial<TaskConfig>, "includes">;
+export type TaskConfigOnDisk = TaskDependencies | Omit<Partial<TaskConfig>, "children">;
 export interface TaskDefinitionsOnDisk {
 	readonly [name: TaskName]: TaskConfigOnDisk;
 }
@@ -125,13 +125,13 @@ const makeClonedOrEmptyArray = <T>(value: readonly T[] | undefined): T[] =>
  */
 function getFullTaskConfig(config: TaskConfigOnDisk): MutableTaskConfig {
 	if (isTaskDependencies(config)) {
-		return { dependsOn: [...config], script: true, includes: [], before: [], after: [] };
+		return { dependsOn: [...config], script: true, before: [], children: [], after: [] };
 	} else {
 		return {
 			dependsOn: makeClonedOrEmptyArray(config.dependsOn),
 			script: config.script ?? true,
 			before: makeClonedOrEmptyArray(config.before),
-			includes: [],
+			children: [],
 			after: makeClonedOrEmptyArray(config.after),
 		};
 	}
@@ -170,7 +170,7 @@ const defaultTaskDefinition = {
 	dependsOn: [],
 	script: true,
 	before: [],
-	includes: [],
+	children: [],
 	after: ["^*"], // TODO: include "*" so the user configured task will run first, but we need to make sure it doesn't cause circular dependency first
 	isDefault: true, // only propagate to unnamed sub tasks if it is a group task
 } as const satisfies TaskDefinition;
@@ -178,7 +178,7 @@ const defaultCleanTaskDefinition = {
 	dependsOn: [],
 	script: true,
 	before: ["*"], // clean are ran before all the tasks, add a week dependency.
-	includes: [],
+	children: [],
 	after: [],
 } as const satisfies TaskDefinition;
 
@@ -323,8 +323,8 @@ export function getTaskDefinitions(
 			dependsOn: globalTaskDefinition.dependsOn.filter(globalAllow),
 			script: globalTaskDefinition.script,
 			before: globalTaskDefinition.before.filter(globalAllowExpansionsStar),
-			// `includes` are not inherited from the global task definitions (which should always be empty anyway)
-			includes: [],
+			// `children` are not inherited from the global task definitions (which should always be empty anyway)
+			children: [],
 			after: globalTaskDefinition.after.filter(globalAllowExpansionsStar),
 		};
 	}
@@ -377,7 +377,7 @@ export function getTaskDefinitions(
 		}
 	}
 
-	// Add `includes` task definitions for the package.json scripts
+	// Add `children` task definitions for the package.json scripts
 	const allScriptNames = Object.keys(packageScripts);
 	for (const [name, script] of Object.entries(packageScripts)) {
 		const directlyCalledScripts = getDirectlyCalledScripts(
@@ -393,18 +393,18 @@ export function getTaskDefinitions(
 				taskDefinitions[name] = {
 					dependsOn: [],
 					before: [],
-					includes: directlyCalledScripts,
+					children: directlyCalledScripts,
 					after: [],
 					script: true,
 				};
 			} else {
-				// Confirm `includes` is not specified in the manual task specifications
-				if (taskDefinition.includes.length > 0) {
+				// Confirm `children` is not specified in the manual task specifications
+				if (taskDefinition.children.length > 0) {
 					throw new Error(
-						`'includes' is not expected in manual task definition for '${name}'`,
+						`'children' is not expected in manual task definition for '${name}'`,
 					);
 				}
-				taskDefinition.includes = directlyCalledScripts;
+				taskDefinition.children = directlyCalledScripts;
 			}
 		}
 	}

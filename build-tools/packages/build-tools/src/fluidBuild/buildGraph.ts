@@ -159,7 +159,7 @@ export class BuildPackage {
 				dependsOn: [`^${taskName}`],
 				script: false,
 				before: [],
-				includes: [],
+				children: [],
 				after: [],
 			};
 		}

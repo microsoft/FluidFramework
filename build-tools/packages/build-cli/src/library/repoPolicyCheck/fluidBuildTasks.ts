@@ -408,10 +408,10 @@ function hasTaskDependency(
 				secondaryPackageSet.tasks.add(packageDepMatch[2]);
 			}
 		} else {
-			// Do expand transitive dependencies and included tasks from local tasks.
+			// Do expand transitive dependencies and child tasks from local tasks.
 			const taskDef = taskDefinitions[dep];
 			if (taskDef !== undefined) {
-				pending.push(...taskDef.dependsOn, ...taskDef.includes);
+				pending.push(...taskDef.dependsOn, ...taskDef.children);
 			}
 		}
 	}
@@ -432,7 +432,7 @@ function hasTaskDependency(
 			}
 			const taskDef = secondaryTaskDefinitions[dep];
 			if (taskDef !== undefined) {
-				pending.push(...taskDef.dependsOn, ...taskDef.includes);
+				pending.push(...taskDef.dependsOn, ...taskDef.children);
 			}
 		}
 	}
