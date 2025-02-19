@@ -5,7 +5,10 @@
 
 import assert from "node:assert";
 
+import { Headers } from "node-fetch";
 import { stub } from "sinon";
+
+import { fetchHelper } from "../odspUtils.js";
 
 /**
  * Mock response returned by {@link createResponse}.
@@ -47,7 +50,7 @@ export async function mockFetchMultiple<T>(
 	responses: (() => Promise<object>)[],
 	type: FetchCallType = "single",
 ): Promise<T> {
-	const fetchStub = stub(globalThis, "fetch");
+	const fetchStub = stub(fetchHelper, "fetch");
 	fetchStub.callsFake(async () => {
 		if (type === "external") {
 			fetchStub.restore();
@@ -87,7 +90,7 @@ export async function mockFetchError<T>(
 	response: Error,
 	type: FetchCallType = "single",
 ): Promise<T> {
-	const fetchStub = stub(globalThis, "fetch");
+	const fetchStub = stub(fetchHelper, "fetch");
 	fetchStub.callsFake(async () => {
 		if (type === "external") {
 			fetchStub.restore();
