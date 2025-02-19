@@ -33,6 +33,9 @@ describe("object-forest", () => {
 	};
 	const detachedFieldKey: FieldKey = brand("detached");
 
+	// used for calling delta visitor functions, the actual value doesn't matter for these tests
+	const dummyDetachedNodeId = { minor: 0 };
+
 	describe("Throws an error for invalid edits", () => {
 		it("attaching content into the detached field it is being transferred from", () => {
 			const forest = buildForest();
@@ -45,7 +48,7 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() => visitor.attach(rootFieldKey, 1, 0),
+				() => visitor.attach(rootFieldKey, dummyDetachedNodeId, 1, 0),
 				(e: Error) =>
 					validateAssertionError(
 						e,
@@ -67,7 +70,7 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey),
+				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey, dummyDetachedNodeId),
 				(e: Error) =>
 					validateAssertionError(
 						e,
@@ -77,7 +80,6 @@ describe("object-forest", () => {
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 		});
-
 		it("replacing content by transferring to and from the same detached field", () => {
 			const forest = buildForest();
 			initializeForest(
@@ -89,7 +91,14 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() => visitor.replace(detachedFieldKey, { start: 0, end: 1 }, detachedFieldKey),
+				() =>
+					visitor.replace(
+						detachedFieldKey,
+						dummyDetachedNodeId,
+						{ start: 0, end: 1 },
+						detachedFieldKey,
+						dummyDetachedNodeId,
+					),
 				(e: Error) =>
 					validateAssertionError(
 						e,
