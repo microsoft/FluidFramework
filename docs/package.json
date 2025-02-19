@@ -42,7 +42,7 @@
 		"serve": "docusaurus serve",
 		"serve-with-azure-emulation": "swa start --config-name ff-doc-site",
 		"prestart": "npm run generate-versions",
-		"start": "docusaurus start --port 80",
+		"start": "docusaurus start",
 		"pretest": "playwright install --with-deps",
 		"test": "playwright test"
 	},
