@@ -489,12 +489,15 @@ describe("Create New Utils Tests", () => {
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
-	it("Should set the appropriate nav param info when a request is made", async () => {
+	describe("Adds nav parameter to sharing link when the file is created", () => {
 		const odspDocumentServiceFactory = new OdspDocumentServiceFactory(
 			async (_options) => "token",
 			async (_options) => "token",
 			new LocalPersistentCache(2000),
-			{ snapshotOptions: { timeout: 2000 }, enableSingleRequestForShareLinkWithCreate: true },
+			{
+				snapshotOptions: { timeout: 2000 },
+				enableSingleRequestForShareLinkWithCreate: true,
+			},
 		);
 
 		const expectedResponse = {
@@ -527,36 +530,73 @@ describe("Create New Utils Tests", () => {
 			}
 			return url.dataStorePath ?? "context";
 		};
-		const shareLinkResolver = new OdspDriverUrlResolverForShareLink(
-			sharingLinkFetcherProps,
-			logger,
-			"appName",
-			getContext,
-			{ name: "containerPackageName" } /* IContainerPackageInfo */,
-		);
 
-		// We emulate the container behavior where we first have a resolved request and then create a container based on said request.
-		const resolved = await shareLinkResolver.resolve(request);
-		const summary = createSummary();
-		const docService = await mockFetchOk(
-			async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
-			expectedResponse,
-			{ "x-fluid-epoch": "epoch1" },
-		);
+		it("Should set the appropriate nav param info when a request is made", async () => {
+			const shareLinkResolver = new OdspDriverUrlResolverForShareLink(
+				sharingLinkFetcherProps,
+				logger,
+				"appName",
+				getContext,
+				{ name: "containerPackageName" } /* IContainerPackageInfo */,
+			);
 
-		const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
+			// We emulate the container behavior where we first have a resolved request and then create a container based on said request.
+			const resolved = await shareLinkResolver.resolve(request);
+			const summary = createSummary();
+			const docService = await mockFetchOk(
+				async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
+				expectedResponse,
+				{ "x-fluid-epoch": "epoch1" },
+			);
 
-		// Extract the Base64 encoded value of `nav`
-		const base64Value = finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl.match(
-			/nav=([^&]*)/,
-		)?.[1] as string;
-		// Decode the Base64 value to UTF-8, \r�� is being stored at the end of the string so we slice it off
-		const decodedValue = fromBase64ToUtf8(base64Value).slice(0, -3);
+			const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
 
-		// Compare the values to make sure that the nav parameter was added correctly
-		assert.equal(
-			decodedValue,
-			"s=%2FsiteUrl&d=driveId&f=itemId&c=%2F&fluid=1&a=appName&p=containerPackageName&x=context",
-		);
+			// Extract the Base64 encoded value of `nav`
+			const base64Value = finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl.match(
+				/nav=([^&]*)/,
+			)?.[1] as string;
+			// Decode the Base64 value to UTF-8, \r�� is being stored at the end of the string so we slice it off
+			const decodedValue = fromBase64ToUtf8(base64Value).slice(0, -3);
+
+			// Compare the values to make sure that the nav parameter was added correctly
+			assert.equal(
+				decodedValue,
+				"s=%2FsiteUrl&d=driveId&f=itemId&c=%2F&fluid=1&a=appName&p=containerPackageName&x=context",
+			);
+		});
+
+		it("Should set the appropriate nav param info when a request is made without an app name", async () => {
+			const shareLinkResolver = new OdspDriverUrlResolverForShareLink(
+				sharingLinkFetcherProps,
+				logger,
+				undefined,
+				getContext,
+				{ name: "containerPackageName" } /* IContainerPackageInfo */,
+			);
+
+			// We emulate the container behavior where we first have a resolved request and then create a container based on said request.
+			const resolved = await shareLinkResolver.resolve(request);
+			const summary = createSummary();
+			const docService = await mockFetchOk(
+				async () => odspDocumentServiceFactory.createContainer(summary, resolved, logger),
+				expectedResponse,
+				{ "x-fluid-epoch": "epoch1" },
+			);
+
+			const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
+
+			// Extract the Base64 encoded value of `nav`
+			const base64Value = finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl.match(
+				/nav=([^&]*)/,
+			)?.[1] as string;
+			// Decode the Base64 value to UTF-8, \r�� is being stored at the end of the string so we slice it off
+			const decodedValue = fromBase64ToUtf8(base64Value);
+
+			// Compare the values to make sure that the nav parameter was added correctly
+			assert.equal(
+				decodedValue,
+				"s=%2FsiteUrl&d=driveId&f=itemId&c=%2F&fluid=1&p=containerPackageName&x=context",
+			);
+		});
 	});
 });
