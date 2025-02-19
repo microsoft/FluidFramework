@@ -270,7 +270,7 @@ export function create(
 					message: "Server is unavailable. Please retry create document later.",
 					internalErrorCode: InternalErrorCode.ClusterDraining,
 				});
-				handleResponse(Promise.reject(error), response);
+				return handleResponse(Promise.reject(error), response);
 			}
 			// Tenant and document
 			const tenantId = request.params.tenantId;
@@ -417,7 +417,7 @@ export function create(
 					message: "Server is unavailable. Please retry session discovery later.",
 					internalErrorCode: InternalErrorCode.ClusterDraining,
 				});
-				handleResponse(Promise.reject(error), response);
+				return handleResponse(Promise.reject(error), response);
 			}
 			connectionTrace?.stampStage("ClusterDrainingChecked");
 			const readDocumentRetryDelay: number = config.get("getSession:readDocumentRetryDelay");
