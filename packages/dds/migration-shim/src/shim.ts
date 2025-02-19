@@ -103,13 +103,15 @@ export interface MigrationSet<
 
 /**
  * Symbol used to store {@link IMigrationShim} on SharedObjects undergoing migrations.
- * @beta
+ *
+ * Warning: Actually "alpha" and unstable, but shared between alpha and legacy+alpha APIs so it has to be public to build.
+ * @alpha
  */
 export const shimInfo: unique symbol = Symbol("shimInfo");
 
 /**
  * Information about migration status.
- * @beta
+ * @alpha
  */
 export interface IMigrationShim {
 	readonly [shimInfo]: MigrationShimInfo;
@@ -117,7 +119,7 @@ export interface IMigrationShim {
 
 /**
  * Information about migration status.
- * @beta
+ * @alpha
  */
 export interface MigrationShimInfo {
 	readonly status: MigrationStatus;
@@ -131,7 +133,7 @@ export interface MigrationShimInfo {
 
 /**
  * Information about migration status.
- * @beta
+ * @alpha
  */
 export enum MigrationStatus {
 	Before,

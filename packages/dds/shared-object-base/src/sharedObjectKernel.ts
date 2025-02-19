@@ -44,7 +44,7 @@ import { ISharedObjectEvents, type ISharedObject } from "./types.js";
  * SharedKernel describes the portion of the behavior required by the runtime which
  * differs between different kinds of shared objects.
  *
- * {@link SharedObjectFromKernel} is then used to wrap up the kernel into a full {@link SharedObject}.
+ * {@link makeSharedObjectKind} is then used to wrap up the kernel into a full {@link SharedObject}.
  * The runtime specific APIs are then type erased into a {@link SharedObjectKind}.
  * @internal
  */

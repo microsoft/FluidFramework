@@ -320,7 +320,8 @@ const mapToTree: MigrationSet<ISharedMap, ISharedMap, ITree> = {
  * {@link @fluidframework/map#SharedMap} that can be converted internally to a {@link @fluidframework/tree#SharedTree}.
  * @remarks
  * Once all active clients are using this, switch to {@link TreeFromMap} if access to the data using tree APIs is desired.
- * @legacy
+ *
+ * Note: This will get promoted to alpha+legacy (not public) once stable.
  * @alpha
  */
 export const MapToTree = makeSharedObjectAdapter<SharedMap, ISharedMap>(mapToTree);
@@ -358,8 +359,11 @@ const mapToTreePhase2: MigrationSet<ISharedMapCore, ITree, ITree> = {
  * This supports loading data in {@link @fluidframework/map#SharedMap} and {@link MapToTree} formats.
  * Data converted from {@link @fluidframework/map#SharedMap} uses the {@link MapAdapterRoot} schema.
  *
- * TODO: strip off ISharedObjectKind for alpha version.
- * @internal
+ * Note: This can get split into two APIs:
+ *
+ * 1. With ISharedKind which will get promoted to alpha+legacy (not public) once stable.
+ * 2. Without ISharedKind which will get promoted to beta then public once stable.
+ * @alpha
  */
 export const TreeFromMap = makeSharedObjectAdapter<ISharedMapCore, ITree>(mapToTreePhase2);
 
@@ -382,7 +386,9 @@ function mapToTreePhase2Partial(
  * This supports loading data in {@link @fluidframework/map#SharedMap} and {@link MapToTree} formats.
  * Data converted from {@link @fluidframework/map#SharedMap} uses the {@link MapAdapterRoot} schema.
  * TODO: strip off ISharedObjectKind for alpha version.
- * @internal
+ *
+ * Note: This will get promoted to alpha+legacy (not public) once stable.
+ * @alpha
  */
 export function treeFromMapPartial(
 	filter: (id: string) => boolean,

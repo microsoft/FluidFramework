@@ -42,6 +42,9 @@ API documentation for **@fluidframework/migration-shim** is available at <https:
 
 This library provides some DDSes which can be used to migrate from `legacy` DDSes like `SharedMap` to `SharedTree`.
 
+Currently all APIs are unstable (alpha).
+API extractor powered linting is also not setup for alpha, and thus alpha APIs using the more stable legacy+alpha APIs are allowed (and used) for the purpose of having unstable legacy APIs.
+
 TODO: usage instructions and package status information.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:) -->

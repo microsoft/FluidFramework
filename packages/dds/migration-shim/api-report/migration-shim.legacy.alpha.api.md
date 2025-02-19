@@ -4,9 +4,6 @@
 
 ```ts
 
-// @alpha
-export const MapToTree: ISharedObjectKind<ISharedMap & IMigrationShim> & SharedObjectKind<ISharedMap & IMigrationShim>;
-
 // (No @packageDocumentation comment for this package)
 
 ```
