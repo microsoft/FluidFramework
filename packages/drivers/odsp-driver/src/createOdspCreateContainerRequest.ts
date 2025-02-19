@@ -4,10 +4,7 @@
  */
 
 import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	DriverHeader,
-	type IContainerPackageInfo,
-} from "@fluidframework/driver-definitions/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { buildOdspShareLinkReqParams } from "./odspUtils.js";
@@ -20,7 +17,6 @@ import { buildOdspShareLinkReqParams } from "./odspUtils.js";
  * @param fileName - name of the new file to be created
  * @param createShareLinkType - type of sharing link you would like to create for this file. ShareLinkTypes
  * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
- * @param containerPackageInfo - *DEPRECATED* container package information which will be used to extract the container package name.
  * If not given that means that the container package does not have a name.
  * @legacy
  * @alpha
@@ -31,7 +27,6 @@ export function createOdspCreateContainerRequest(
 	filePath: string,
 	fileName: string,
 	createShareLinkType?: ISharingLinkKind,
-	containerPackageInfo?: IContainerPackageInfo | undefined,
 ): IRequest {
 	const shareLinkRequestParams = buildOdspShareLinkReqParams(createShareLinkType);
 	const createNewRequest: IRequest = {
