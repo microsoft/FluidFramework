@@ -111,10 +111,29 @@ describe("Presence", () => {
 		let latestMap: LatestMapValueManager<{ a: number; b: number } | { c: number; d: number }>;
 		let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
 
+		interface LatestMapValue {
+			key1: { a: number; b: number } | undefined;
+			key2: { c: number; d: number } | undefined;
+		}
+
+		interface LatestValue {
+			x: number;
+			y: number;
+			z: number;
+		}
+		type StateVerification =
+			| {
+					manager: "latest";
+					expectedValue: LatestValue;
+			  }
+			| {
+					manager: "latestMap";
+					expectedValue: LatestMapValue;
+			  };
+
 		function verifyFinalState(
 			attendee: ISessionClient,
-			permutation: string[],
-			itemRemovedWithLatestUpdate: boolean = false,
+			verifications: StateVerification[],
 		): void {
 			// Verify attendee state (always check since system:presence is always included)
 			assert.ok(attendee, "Eventing does not reflect new attendee");
@@ -129,48 +148,33 @@ describe("Presence", () => {
 				"Eventing does not reflect new attendee's connection id",
 			);
 
-			// Only verify states that are included in the permutation
-			if (permutation.includes("latest")) {
-				const latestValue = latest.clientValue(attendee).value;
-				if (itemRemovedWithLatestUpdate) {
-					assert.deepEqual(
-						latestValue,
-						{ x: 2, y: 2, z: 2 },
-						"Eventing does not reflect latest value",
-					);
-				} else {
-					assert.deepEqual(
-						latestValue,
-						{ x: 1, y: 1, z: 1 },
-						"Eventing does not reflect latest value",
-					);
-				}
-			}
+			for (const { manager, expectedValue } of verifications) {
+				switch (manager) {
+					case "latest": {
+						assert.deepEqual(
+							latest.clientValue(attendee).value,
+							expectedValue,
+							"Eventing does not reflect latest value",
+						);
+						break;
+					}
 
-			if (permutation.includes("latestMap")) {
-				const latestMapValue = latestMap.clientValue(attendee);
-				if (itemRemovedWithLatestUpdate) {
-					assert.deepEqual(
-						latestMapValue.get("key1")?.value,
-						{ a: 1, b: 1 },
-						"Eventing does not reflect latest map value",
-					);
-					assert.strictEqual(
-						latestMapValue.get("key2"),
-						undefined,
-						"Eventing does not reflect latest map value",
-					);
-				} else {
-					assert.deepEqual(
-						latestMapValue.get("key1")?.value,
-						{ a: 1, b: 1 },
-						"Eventing does not reflect latest map value",
-					);
-					assert.deepEqual(
-						latestMapValue.get("key2")?.value,
-						{ c: 1, d: 1 },
-						"Eventing does not reflect latest map value",
-					);
+					case "latestMap": {
+						assert.deepEqual(
+							latestMap.clientValue(attendee).get("key1")?.value,
+							expectedValue.key1,
+							"Eventing does not reflect latest map value",
+						);
+						assert.deepEqual(
+							latestMap.clientValue(attendee).get("key2")?.value,
+							expectedValue.key2,
+							"Eventing does not reflect latest map value",
+						);
+						break;
+					}
+					default: {
+						break;
+					}
 				}
 			}
 		}
@@ -207,24 +211,27 @@ describe("Presence", () => {
 			| typeof itemRemovedMapUpdate
 			| typeof notificationsUpdate;
 
-		function presenceSetup(sharedStatesWorkspace: boolean = true): void {
-			if (sharedStatesWorkspace) {
-				const states = presence.getStates("name:testWorkspace", {
-					latest: Latest({ x: 0, y: 0, z: 0 }),
-					latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
-				});
-				latest = states.props.latest;
-				latestMap = states.props.latestMap;
-			} else {
-				const latestsStates = presence.getStates("name:testWorkspace1", {
-					latest: Latest({ x: 0, y: 0, z: 0 }),
-				});
-				const latesetMapStates = presence.getStates("name:testWorkspace2", {
-					latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
-				});
-				latest = latestsStates.props.latest;
-				latestMap = latesetMapStates.props.latestMap;
-			}
+		function setupSharedStatesWorkspace(): void {
+			const states = presence.getStates("name:testWorkspace", {
+				latest: Latest({ x: 0, y: 0, z: 0 }),
+				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+			});
+			latest = states.props.latest;
+			latestMap = states.props.latestMap;
+		}
+
+		function setupMultipleStatesWorkspaces(): void {
+			const latestsStates = presence.getStates("name:testWorkspace1", {
+				latest: Latest({ x: 0, y: 0, z: 0 }),
+			});
+			const latesetMapStates = presence.getStates("name:testWorkspace2", {
+				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+			});
+			latest = latestsStates.props.latest;
+			latestMap = latesetMapStates.props.latestMap;
+		}
+
+		function setupNotificationsWorkspace(): void {
 			const notificationsWorkspace = presence.getNotifications("name:testWorkspace", {
 				notifications: Notifications<{ newId: (id: number) => void }>({
 					newId: (_client: ISessionClient, _id: number) => {},
@@ -232,85 +239,14 @@ describe("Presence", () => {
 			});
 			notificationManager = notificationsWorkspace.props.notifications;
 		}
-		function getSpies(
-			valueManagers: string[],
-			itemRemovedWithLatestUpdate: boolean = false,
-		): SinonSpy[] {
-			const spies: SinonSpy[] = [];
-			for (const valueManager of valueManagers) {
-				switch (valueManager) {
-					case "latest": {
-						const updatedEventSpy = spy(() => {
-							getAttendeeAndVerifyFinalState(valueManagers, itemRemovedWithLatestUpdate);
-						}).named("latestUpdated");
-						spies.push(updatedEventSpy);
-						latest.events.on("updated", updatedEventSpy);
-						break;
-					}
-					case "latestMap": {
-						const updatedEventSpy = spy(() => {
-							getAttendeeAndVerifyFinalState(valueManagers, itemRemovedWithLatestUpdate);
-						}).named("latestMapUpdated");
-						latestMap.events.on("updated", updatedEventSpy);
-						spies.push(updatedEventSpy);
-						const itemUpdatedEventSpy = spy(() => {
-							getAttendeeAndVerifyFinalState(valueManagers, itemRemovedWithLatestUpdate);
-						}).named("latestMapItemUpdated");
-						latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
-
-						const itemRemovedEventSpy = spy(() => {
-							getAttendeeAndVerifyFinalState(valueManagers, itemRemovedWithLatestUpdate);
-						}).named("latestMapItemRemoved");
-						latestMap.events.on("itemRemoved", itemRemovedEventSpy);
-						spies.push(
-							itemRemovedWithLatestUpdate ? itemRemovedEventSpy : itemUpdatedEventSpy,
-						);
-						break;
-					}
-					case "notifications": {
-						const notificationsEventSpy = spy(() => {
-							getAttendeeAndVerifyFinalState(valueManagers, itemRemovedWithLatestUpdate);
-						});
-						spies.push(notificationsEventSpy);
-						notificationManager.notifications.on("newId", notificationsEventSpy);
-					}
-					default: {
-						break;
-					}
-				}
-			}
-			if (!itemRemovedWithLatestUpdate) {
-				const attendeeSpy = spy((attendee: ISessionClient) => {
-					verifyFinalState(attendee, valueManagers, itemRemovedWithLatestUpdate);
-				});
-				spies.push(attendeeSpy);
-				presence.events.on("attendeeJoined", attendeeSpy);
-			}
-			return spies;
-		}
-
-		function getAttendeeAndVerifyFinalState(
-			valueManagers: string[],
-			itemRemovedWithLatestUpdate: boolean = false,
-		): void {
-			const attendee = presence.getAttendee("client1");
-			verifyFinalState(attendee, valueManagers, itemRemovedWithLatestUpdate);
-		}
 
 		function processUpdates(
 			valueManagerUpdates: Record<string, UpdateContent>,
-			itemRemovedWithLatestUpdate: boolean = false,
-		): SinonSpy[] {
-			const valueManagersUpdated = [];
-			for (const update of Object.values(valueManagerUpdates)) {
-				for (const valueManager of Object.keys(update)) {
-					valueManagersUpdated.push(valueManager);
-				}
-			}
-			const spies = getSpies(valueManagersUpdated, itemRemovedWithLatestUpdate);
-			const updates = itemRemovedWithLatestUpdate
-				? valueManagerUpdates
-				: { "system:presence": attendeeUpdate, ...valueManagerUpdates };
+			systemWorkspaceUpdate: boolean = true,
+		): void {
+			const updates = systemWorkspaceUpdate
+				? { "system:presence": attendeeUpdate, ...valueManagerUpdates }
+				: valueManagerUpdates;
 			presence.processSignal(
 				"",
 				{
@@ -324,132 +260,237 @@ describe("Presence", () => {
 				},
 				false,
 			);
-			return spies;
 		}
 
-		function assertSpies(spies: SinonSpy[]): void {
-			for (const s of spies) {
-				if (s.name === "latestMapItemUpdated") {
-					assert(s.calledTwice, `${s} should fire exactly twice`);
-				} else if (s.name === "latestMapItemRemoved") {
-					assert(s.calledOnce, `${s} should fire exactly once`);
-				} else {
-					assert(s.calledOnce, `${s} should fire exactly once`);
+		function getTestAttendee(): ISessionClient {
+			return presence.getAttendee("sessionId-1");
+		}
+
+		describe("states workspace", () => {
+			let latestUpdatedEventSpy: SinonSpy;
+			let latestMapUpdatedEventSpy: SinonSpy;
+			describe("value is updated", () => {
+				let itemUpdatedEventSpy: SinonSpy;
+				let atteendeeEventSpy: SinonSpy;
+
+				function verify(): void {
+					verifyFinalState(getTestAttendee(), [
+						{ manager: "latest", expectedValue: { x: 1, y: 1, z: 1 } },
+						{
+							manager: "latestMap",
+							expectedValue: { key1: { a: 1, b: 1 }, key2: { c: 1, d: 1 } },
+						},
+					]);
 				}
-			}
-		}
 
-		it("latest update comes before latestMap update in single workspace", async () => {
-			presenceSetup(true /* sharedStatesWorkspaces */);
-			const workspace = { "s:name:testWorkspace": { ...latestUpdate, ...latestMapUpdate } };
-			const eventSpies = processUpdates(workspace);
-			assertSpies(eventSpies);
+				function assertSpies(): void {
+					assert.ok(atteendeeEventSpy.calledOnce, "attendee event not fired exactly once");
+					assert.ok(
+						latestUpdatedEventSpy.calledOnce,
+						"latest update event not fired exactly once",
+					);
+					assert.ok(
+						latestMapUpdatedEventSpy.calledOnce,
+						"latestMap update event not fired exactly once",
+					);
+					assert.ok(
+						itemUpdatedEventSpy.calledTwice,
+						"latestMap item update event not fired exactly twice",
+					);
+				}
+
+				function setupListeners(): void {
+					latest.events.on("updated", latestUpdatedEventSpy);
+					latestMap.events.on("updated", latestMapUpdatedEventSpy);
+					latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
+					presence.events.on("attendeeJoined", atteendeeEventSpy);
+				}
+
+				beforeEach(() => {
+					latestUpdatedEventSpy = spy(() => verify());
+					latestMapUpdatedEventSpy = spy(() => verify());
+					itemUpdatedEventSpy = spy(() => verify());
+					atteendeeEventSpy = spy(() => verify());
+				});
+
+				it("latest update comes before latestMap update in single workspace", async () => {
+					setupSharedStatesWorkspace();
+					setupListeners();
+					const workspace = {
+						"s:name:testWorkspace": { ...latestUpdate, ...latestMapUpdate },
+					};
+					processUpdates(workspace);
+					assertSpies();
+				});
+
+				it("latestMap update comes before latest update in single workspace", async () => {
+					setupSharedStatesWorkspace();
+					setupListeners();
+					const workspace = {
+						"s:name:testWorkspace": { ...latestMapUpdate, ...latestUpdate },
+					};
+					processUpdates(workspace);
+					assertSpies();
+				});
+
+				it("latest update comes before latestMap update in multiple workspaces", async () => {
+					setupMultipleStatesWorkspaces();
+					setupListeners();
+					const workspace = {
+						"s:name:testWorkspace1": latestUpdate,
+						"s:name:testWorkspace2": latestMapUpdate,
+					};
+					processUpdates(workspace);
+					assertSpies();
+				});
+				it("latestMap update comes before latest update in multiple workspaces", async () => {
+					setupMultipleStatesWorkspaces();
+					setupListeners();
+					const workspace = {
+						"s:name:testWorkspace2": latestMapUpdate,
+						"s:name:testWorkspace1": latestUpdate,
+					};
+					processUpdates(workspace);
+					assertSpies();
+				});
+			});
+			describe("map item is removed", () => {
+				let itemRemovedSpy: SinonSpy;
+
+				function verify(): void {
+					verifyFinalState(getTestAttendee(), [
+						{ manager: "latest", expectedValue: { x: 2, y: 2, z: 2 } },
+						{ manager: "latestMap", expectedValue: { key1: { a: 1, b: 1 }, key2: undefined } },
+					]);
+				}
+
+				function setupSpiesAndListeners(): void {
+					itemRemovedSpy = spy(() => verify());
+					latestUpdatedEventSpy = spy(() => verify());
+					latestMapUpdatedEventSpy = spy(() => verify());
+					latest.events.on("updated", latestUpdatedEventSpy);
+					latestMap.events.on("updated", latestMapUpdatedEventSpy);
+					latestMap.events.on("itemRemoved", itemRemovedSpy);
+				}
+
+				function assertSpies(): void {
+					assert.ok(
+						latestUpdatedEventSpy.calledOnce,
+						`latest update event not fired exactly once`,
+					);
+					assert.ok(
+						latestMapUpdatedEventSpy.calledOnce,
+						"latestMap update event not fired exactly once",
+					);
+					assert.ok(
+						itemRemovedSpy.calledOnce,
+						"latestMap item remove event not fired exactly once",
+					);
+				}
+
+				it("item removed from latestMap and latest update in shared workspace", async () => {
+					setupSharedStatesWorkspace();
+					const workspace = {
+						"s:name:testWorkspace": { ...latestMapUpdate, ...latestUpdate },
+					};
+					processUpdates(workspace);
+					setupSpiesAndListeners();
+
+					const itemRemovedUpdate = {
+						"s:name:testWorkspace": { ...latestUpdateRev2, ...itemRemovedMapUpdate },
+					};
+					processUpdates(itemRemovedUpdate, false /* systemWorkspaceUpdate */);
+					assertSpies();
+				});
+
+				it("item removed from latestMap and latest update in multiple workspaces", async () => {
+					setupMultipleStatesWorkspaces();
+					const workspace = {
+						"s:name:testWorkspace2": latestMapUpdate,
+						"s:name:testWorkspace1": latestUpdate,
+					};
+					processUpdates(workspace);
+					setupSpiesAndListeners();
+
+					const itemRemovedUpdate = {
+						"s:name:testWorkspace1": latestUpdateRev2,
+						"s:name:testWorkspace2": itemRemovedMapUpdate,
+					};
+					processUpdates(itemRemovedUpdate, false /* systemWorkspaceUpdate */);
+					assertSpies();
+				});
+			});
 		});
-		it("latestMap update comes before latest update in single workspace", async () => {
-			presenceSetup(true /* sharedStatesWorkspaces */);
-			const workspace = { "s:name:testWorkspace": { ...latestMapUpdate, ...latestUpdate } };
-			const eventSpies = processUpdates(workspace);
-			assertSpies(eventSpies);
-		});
-		it("latest update comes before latestMap update in multiple workspaces", async () => {
-			presenceSetup(false /* sharedStatesWorkspaces */);
-			const workspace = {
-				"s:name:testWorkspace1": latestUpdate,
-				"s:name:testWorkspace2": latestMapUpdate,
-			};
-			const eventSpies = processUpdates(workspace);
-			assertSpies(eventSpies);
-		});
-		it("latestMap update comes before latest update in multiple workspaces", async () => {
-			presenceSetup(false /* sharedStatesWorkspaces */);
-			const workspace = {
-				"s:name:testWorkspace2": latestMapUpdate,
-				"s:name:testWorkspace1": latestUpdate,
-			};
-			const eventSpies = processUpdates(workspace);
-			assertSpies(eventSpies);
-		});
-		it("item removed from latestMap and latest update in shared workspace", async () => {
-			presenceSetup(true /* sharedStatesWorkspaces */);
-			const workspace = { "s:name:testWorkspace": { ...latestMapUpdate, ...latestUpdate } };
-			presence.processSignal(
-				"",
-				{
-					type: datastoreUpdateType,
-					content: {
-						sendTimestamp: clock.now - 10,
-						avgLatency: 20,
-						data: { "system:presence": attendeeUpdate, ...workspace },
+		describe("Notifications update", () => {
+			let notificationSpy: SinonSpy;
+			let latestSpy: SinonSpy;
+			let attendeeSpy: SinonSpy;
+			let latestMapSpy: SinonSpy;
+
+			function verify(): void {
+				verifyFinalState(getTestAttendee(), [
+					{ manager: "latest", expectedValue: { x: 1, y: 1, z: 1 } },
+					{
+						manager: "latestMap",
+						expectedValue: { key1: { a: 1, b: 1 }, key2: { c: 1, d: 1 } },
 					},
-					clientId: "client1",
-				},
-				false,
-			);
-			const itemRemovedUpdate = {
-				"s:name:testWorkspace": { ...latestMapItemRemovedAndLatestUpdate },
-			};
-			const eventSpies = processUpdates(
-				itemRemovedUpdate,
-				true /* itemRemovedWithLatestUpdate */,
-			);
-			assertSpies(eventSpies);
-		});
-		it("item removed from latestMap and latest update in multiple workspaces", async () => {
-			presenceSetup(false /* sharedStatesWorkspaces */);
-			const workspace = {
-				"s:name:testWorkspace2": latestMapUpdate,
-				"s:name:testWorkspace1": latestUpdate,
-			};
-			presence.processSignal(
-				"",
-				{
-					type: datastoreUpdateType,
-					content: {
-						sendTimestamp: clock.now - 10,
-						avgLatency: 20,
-						data: { "system:presence": attendeeUpdate, ...workspace },
-					},
-					clientId: "client1",
-				},
-				false,
-			);
-			const itemRemovedUpdate = {
-				"s:name:testWorkspace1": latestUpdateRev2,
-				"s:name:testWorkspace2": itemRemovedMapUpdate,
-			};
-			const eventSpies = processUpdates(
-				itemRemovedUpdate,
-				true /* itemRemovedWithLatestUpdate */,
-			);
-			assertSpies(eventSpies);
-		});
-		it("Notifications workspace comes before States workspace", async () => {
-			presenceSetup(true /* sharedStatesWorkspaces */);
-			const workspace = {
-				"n:name:testWorkspace": notificationsUpdate,
-				"s:name:testWorkspace": latestUpdate,
-			};
-			const eventSpies = processUpdates(workspace);
-			assertSpies(eventSpies);
-		});
-		it("States workspace comes before Notifications workspace", async () => {
-			presenceSetup(true /* sharedStatesWorkspaces */);
-			const workspace = {
-				"s:name:testWorkspace": latestUpdate,
-				"n:name:testWorkspace": notificationsUpdate,
-			};
-			const eventSpies = processUpdates(workspace);
-			assertSpies(eventSpies);
-		});
-		it("Notifications workspace comes in the middle of States workspaces", async () => {
-			presenceSetup(false /* sharedStatesWorkspaces */);
-			const workspace = {
-				"s:name:testWorkspace1": latestUpdate,
-				"n:name:testWorkspace": notificationsUpdate,
-				"s:name:testWorkspace2": latestMapUpdate,
-			};
-			const eventSpies = processUpdates(workspace);
-			assertSpies(eventSpies);
+				]);
+			}
+
+			function setupListeners(): void {
+				notificationManager.notifications.on("newId", notificationSpy);
+				latest.events.on("updated", latestSpy);
+				latestMap.events.on("updated", latestMapSpy);
+				presence.events.on("attendeeJoined", attendeeSpy);
+			}
+
+			function assertSpies(): void {
+				assert.ok(notificationSpy.calledOnce, "notification event not fired exactly once");
+				assert.ok(latestSpy.calledOnce, "latest update event not fired exactly once");
+				assert.ok(attendeeSpy.calledOnce, "attendee event not fired exactly once");
+			}
+
+			beforeEach(() => {
+				notificationSpy = spy(() => verify());
+				latestSpy = spy(() => verify());
+				attendeeSpy = spy(() => verify());
+				latestMapSpy = spy(() => verify());
+			});
+
+			it("comes before states workspace update", async () => {
+				setupSharedStatesWorkspace();
+				setupNotificationsWorkspace();
+				setupListeners();
+				const workspace = {
+					"n:name:testWorkspace": notificationsUpdate,
+					"s:name:testWorkspace": { ...latestUpdate, ...latestMapUpdate },
+				};
+				processUpdates(workspace);
+				assertSpies();
+			});
+			it("comes after states workspace update", async () => {
+				setupSharedStatesWorkspace();
+				setupNotificationsWorkspace();
+				setupListeners();
+				const workspace = {
+					"s:name:testWorkspace": { ...latestUpdate, ...latestMapUpdate },
+					"n:name:testWorkspace": notificationsUpdate,
+				};
+				processUpdates(workspace);
+				assertSpies();
+			});
+			it("comes in the middle of states workspaces", async () => {
+				setupMultipleStatesWorkspaces();
+				setupNotificationsWorkspace();
+				setupListeners();
+				const workspace = {
+					"s:name:testWorkspace1": latestUpdate,
+					"n:name:testWorkspace": notificationsUpdate,
+					"s:name:testWorkspace2": latestMapUpdate,
+				};
+				processUpdates(workspace);
+				assertSpies();
+			});
 		});
 	});
 });
