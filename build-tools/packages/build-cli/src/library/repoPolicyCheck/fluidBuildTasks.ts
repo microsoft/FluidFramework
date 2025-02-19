@@ -468,8 +468,15 @@ function checkTaskDeps(
 		: undefined;
 }
 
+/**
+ * Recursive inverse of Readonly
+ * Makes all properties writeable through entire structure.
+ */
 type DeeplyMutable<T> = { -readonly [K in keyof T]: DeeplyMutable<T[K]> };
 
+/**
+ * Reinterprets a readonly object as a mutable object
+ */
 function asWriteable<T>(onlyReadable: T): DeeplyMutable<T> {
 	return onlyReadable as DeeplyMutable<T>;
 }
@@ -538,7 +545,7 @@ function patchTaskDeps(
 						)}`,
 					);
 				}
-				// Check if already added in previous interation to avoid duplicates.
+				// Check if already added in previous iteration to avoid duplicates.
 				if (!depArray.includes(missingDep)) {
 					depArray.push(missingDep);
 				}

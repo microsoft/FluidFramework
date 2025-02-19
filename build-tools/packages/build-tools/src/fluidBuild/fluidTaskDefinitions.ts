@@ -95,6 +95,9 @@ export interface TaskConfig {
 	readonly script: boolean;
 }
 
+/**
+ * Inverse of Readonly, make all fields mutable.
+ */
 type Mutable<T> = { -readonly [P in keyof T]: T[P] };
 
 type MutableTaskConfig = Mutable<TaskConfig>;
@@ -314,7 +317,7 @@ export function getTaskDefinitions(
 			// Skip script tasks if the package doesn't have the script
 			continue;
 		}
-		// Only keep task or script references that exists
+		// Only keep task or script references that exist
 		// and make array clones in the process.
 		taskDefinitions[name] = {
 			dependsOn: globalTaskDefinition.dependsOn.filter(globalAllow),
