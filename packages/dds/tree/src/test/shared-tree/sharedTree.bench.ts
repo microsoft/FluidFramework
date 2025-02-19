@@ -434,7 +434,7 @@ describe("SharedTree benchmarks", () => {
 	});
 
 	// In this context "op bunch" refers to a group of ops for the same DDS that are sent by a peer in a single message.
-	describe.only("rebasing over op bunch", () => {
+	describe("rebasing over op bunch", () => {
 		// The number of commits in a bunch for a given run of this test suite.
 		const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
 		// Number of local commits to rebase over the inbound bunch
@@ -442,8 +442,8 @@ describe("SharedTree benchmarks", () => {
 		// The time taken by each scenario can be broken down into 4 time costs:
 		// 1. Constant factor overhead (we ignore this).
 		// 2. The time taken to rebase inbound commits onto the tip of the trunk.
-		// 3. The time taken compose all inbound commits from a bunch into a single commit.
-		// 4. The time taken rebase the local branch over the composed commit from #3.
+		// 3. The time taken to compose all inbound commits from a bunch into a single commit.
+		// 4. The time taken to rebase the local branch over the composed commit from #3.
 		//
 		// For the following timings:
 		// +----------------------+-------------+--------------+
