@@ -187,6 +187,7 @@ export class OdspDocumentServiceFactoryCore
 								!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 								odspResolvedUrl.isClpCompliantApp,
 								this.hostPolicy.enableSingleRequestForShareLinkWithCreate,
+								something,
 							)
 						: module.createNewContainerOnExistingFile(
 								getAuthHeader,
