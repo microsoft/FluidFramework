@@ -56,7 +56,7 @@ export type { ContainerDevtoolsFeatureFlags, DevtoolsFeatureFlags } from "./Feat
 export type { IFluidDevtools } from "./IFluidDevtools.js";
 export { createDevtoolsLogger, type IDevtoolsLogger } from "./DevtoolsLogger.js";
 export type { FluidDevtoolsProps } from "./FluidDevtools.js";
-export { initializeDevtools } from "./FluidDevtools.js";
+export { initializeDevtools, tryGetFluidDevtools } from "./FluidDevtools.js";
 export type {
 	AudienceChangeLogEntry,
 	ConnectionStateChangeLogEntry,
