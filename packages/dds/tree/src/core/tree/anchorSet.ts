@@ -798,7 +798,12 @@ export class AnchorSet implements AnchorLocator {
 					() => {},
 				);
 			},
-			attach(source: FieldKey, sourceDetachedNodeId: Delta.DetachedNodeId, count: number, destination: PlaceIndex): void {
+			attach(
+				source: FieldKey,
+				sourceDetachedNodeId: Delta.DetachedNodeId,
+				count: number,
+				destination: PlaceIndex,
+			): void {
 				this.notifyChildrenChanging();
 				this.attachEdit(source, sourceDetachedNodeId, count, destination);
 				this.notifyChildrenChanged();
@@ -827,7 +832,11 @@ export class AnchorSet implements AnchorLocator {
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
-			detach(source: Range, destination: FieldKey, detachedNodeId: Delta.DetachedNodeId): void {
+			detach(
+				source: Range,
+				destination: FieldKey,
+				detachedNodeId: Delta.DetachedNodeId,
+			): void {
 				this.notifyChildrenChanging();
 				this.detachEdit(source, destination, detachedNodeId);
 				this.notifyChildrenChanged();
