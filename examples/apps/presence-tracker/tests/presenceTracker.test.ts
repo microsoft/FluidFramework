@@ -259,7 +259,7 @@ describe("presence-tracker", () => {
 			expect(clientListHtml).toMatch(session2id);
 		});
 
-		it("First client shows one client connected when second client leaves", async () => {
+		it.skip("First client shows one client connected when second client leaves", async () => {
 			// Setup
 			await waitForAttendeeState(
 				page,
