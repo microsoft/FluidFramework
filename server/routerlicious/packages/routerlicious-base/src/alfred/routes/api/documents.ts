@@ -449,7 +449,15 @@ export function create(
 				getSessionMetric.error("GetSession failed.", error);
 			};
 
-			return handleResponse(session, response, false, undefined, undefined, onSuccess, onError);
+			return handleResponse(
+				session,
+				response,
+				false,
+				undefined,
+				undefined,
+				onSuccess,
+				onError,
+			);
 		},
 	);
 
