@@ -325,14 +325,18 @@ describe("Create New Utils Tests", () => {
 		mockSharingLinkData.webUrl =
 			"https://mock.url/?nav=cz0lMkZzaXRlVXJsJmQ9ZHJpdmVJZCZmPW1vY2tJdGVtSWQmYz0lMkYmZmx1aWQ9MQ%3D%3D";
 
-		assert.deepStrictEqual(odspResolvedUrl.shareLinkInfo?.createLink, {
-			shareId: mockSharingData.shareId,
-			link: {
-				role: mockSharingData.sharingLink.type,
-				...mockSharingData.sharingLink,
+		assert.deepStrictEqual(
+			odspResolvedUrl.shareLinkInfo?.createLink,
+			{
+				shareId: mockSharingData.shareId,
+				link: {
+					role: mockSharingData.sharingLink.type,
+					...mockSharingData.sharingLink,
+				},
+				error: undefined,
 			},
-			error: undefined,
-		});
+			"shareLinkInfo should be set",
+		);
 
 		// Extract the Base64 encoded value of `nav`
 		const base64Value = odspResolvedUrl.shareLinkInfo.createLink.link.webUrl.match(
@@ -494,10 +498,10 @@ describe("Create New Utils Tests", () => {
 		);
 
 		const expectedResponse = {
-			context: "http://sp.devinstall/_api/v2.1/$metadata#",
+			context: "mockContext",
 			sequenceNumber: 1,
 			sha: "shaxxshaxx",
-			itemUrl: `http://fake.microsoft.com/_api/v2.1/drives/${driveId}/items/${itemId}`,
+			itemUrl: `mockItemUrl`,
 			driveId,
 			itemId,
 			id: "Summary Handle",
