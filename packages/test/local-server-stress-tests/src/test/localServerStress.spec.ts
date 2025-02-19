@@ -12,13 +12,13 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 
+import { ddsModelMap } from "../ddsModels.js";
 import {
-	ddsModelMap,
 	DDSModelOpGenerator,
 	DDSModelOpReducer,
 	validateConsistencyOfAllDDS,
 	type DDSModelOp,
-} from "../ddsModels.js";
+} from "../ddsOperations";
 import {
 	createLocalServerStressSuite,
 	LocalServerStressModel,

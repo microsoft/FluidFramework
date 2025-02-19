@@ -21,18 +21,13 @@ import type {
 	FluidObject,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import {
-	assert,
-	Lazy,
-	LazyPromise,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
-import { ddsModelMap } from "./ddsModels";
-import { makeUnreachableCodePathProxy } from "./localServerStressHarness";
+import { ddsModelMap } from "./ddsModels.js";
+import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface UploadBlob {
 	type: "uploadBlob";
@@ -53,16 +48,13 @@ export interface CreateChannel {
 export type StressDataObjectOperations = UploadBlob | CreateDataStore | CreateChannel;
 
 export class StressDataObject extends DataObject {
-	public static readonly factory = new Lazy(() => {
-		const factory = new DataObjectFactory(
-			"StressDataObject",
-			StressDataObject,
-			[...ddsModelMap.values()].map((v) => v.factory),
-			{},
-			[["StressDataObject", new LazyPromise(() => factory)]],
-		);
-		return factory;
-	});
+	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory(
+		"StressDataObject",
+		StressDataObject,
+		[...ddsModelMap.values()].map((v) => v.factory),
+		{},
+		[["StressDataObject", new LazyPromise(async () => StressDataObject.factory)]],
+	);
 
 	get StressDataObject() {
 		return this;
@@ -140,8 +132,8 @@ export class StressDataObject extends DataObject {
 	public async createDataStore(tag: `datastore-${number}`, asChild: boolean) {
 		const dataStore = await this.context.containerRuntime.createDataStore(
 			asChild
-				? [...this.context.packagePath, StressDataObject.factory.value.type]
-				: StressDataObject.factory.value.type,
+				? [...this.context.packagePath, StressDataObject.factory.type]
+				: StressDataObject.factory.type,
 		);
 
 		const maybe: FluidObject<StressDataObject> | undefined = await dataStore.entryPoint.get();
@@ -272,7 +264,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 		DefaultStressDataObject,
 		[...ddsModelMap.values()].map((v) => v.factory),
 		{},
-		[[StressDataObject.factory.value.type, StressDataObject.factory.value]],
+		[[StressDataObject.factory.type, StressDataObject.factory]],
 	);
 
 	const runtimeOptions: IContainerRuntimeOptionsInternal = {
@@ -289,7 +281,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			return this;
 		},
 		instantiateRuntime: async (context, existing) => {
-			return loadContainerRuntime({
+			const runtime = await loadContainerRuntime({
 				context,
 				existing,
 				runtimeOptions,
@@ -298,28 +290,24 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 						defaultStressDataObjectFactory.type,
 						Promise.resolve(defaultStressDataObjectFactory),
 					],
-					[
-						StressDataObject.factory.value.type,
-						Promise.resolve(StressDataObject.factory.value),
-					],
+					[StressDataObject.factory.type, Promise.resolve(StressDataObject.factory)],
 				],
 				provideEntryPoint: async (rt) => {
-					const maybeDefault = await rt.getAliasedDataStoreEntryPoint(
-						DefaultStressDataObject.alias,
-					);
-					if (maybeDefault === undefined) {
-						const ds = await rt.createDataStore(defaultStressDataObjectFactory.type);
-						await ds.trySetAlias(DefaultStressDataObject.alias);
-					}
 					const aliasedDefault = await rt.getAliasedDataStoreEntryPoint(
 						DefaultStressDataObject.alias,
 					);
 					assert(aliasedDefault !== undefined, "default must exist");
 
-					const maybe: FluidObject<StressDataObject> | undefined = await aliasedDefault.get();
-					return maybe;
+					return aliasedDefault.get();
 				},
 			});
+
+			if (!existing) {
+				const ds = await runtime.createDataStore(defaultStressDataObjectFactory.type);
+				await ds.trySetAlias(DefaultStressDataObject.alias);
+			}
+
+			return runtime;
 		},
 	};
 };

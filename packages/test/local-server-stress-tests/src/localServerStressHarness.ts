@@ -61,6 +61,7 @@ import {
 	StressDataObject,
 	type DefaultStressDataObject,
 } from "./stressDataObject.js";
+import { makeUnreachableCodePathProxy } from "./utils.js";
 
 const isOperationType = <O extends BaseOperation>(
 	type: O["type"],
@@ -896,17 +897,6 @@ async function runInStateWithClient<TState extends LocalServerStressState, Resul
 		state.datastore = old.datastore;
 		state.channel = old.channel;
 	}
-}
-
-export function makeUnreachableCodePathProxy<T extends object>(name: string): T {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	return new Proxy({} as T, {
-		get: (): never => {
-			throw new Error(
-				`Unexpected read of '${name}:' this indicates a bug in the DDS eventual consistency harness.`,
-			);
-		},
-	});
 }
 
 async function createDetachedClient(
