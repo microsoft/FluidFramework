@@ -165,18 +165,14 @@ export abstract class SharedObjectCore<
 		this.processMessagesHelper =
 			this.processMessagesCore === undefined
 				? (messagesCollection: IRuntimeMessageCollection) =>
-						processCoreHelper(messagesCollection, this.processCore.bind(this))
+						processHelper(messagesCollection, this.process.bind(this))
 				: (messagesCollection: IRuntimeMessageCollection) => {
-						// This assert is needed to work around the compilation error that this.processMessagesCore could be undefined.
-						assert(
-							this.processMessagesCore !== undefined,
-							"processMessagesCore should be defined",
-						);
 						processMessagesCoreHelper(
 							messagesCollection,
 							this.opProcessingHelper,
 							this.emitInternal.bind(this),
-							this.processMessagesCore.bind(this),
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							this.processMessagesCore!.bind(this),
 						);
 					};
 	}
@@ -1014,7 +1010,7 @@ function isChannel(loadable: IFluidLoadable): loadable is IChannel {
 }
 
 /**
- * Utility that processes the given messages in the message collection together by calling processMessagesCore.
+ * Utility that processes the given messages in the message collection together by calling `processMessagesCore`.
  * This will be called when {@link SharedObjectCore.processMessagesCore} is defined.
  */
 function processMessagesCoreHelper(
@@ -1060,12 +1056,12 @@ function processMessagesCoreHelper(
 }
 
 /**
- * Utility that processes the given messages in the message collection one by one by calling processCore. This will
+ * Utility that processes the given messages in the message collection one by one by calling `process`. This will
  * be called when {@link SharedObjectCore.processMessagesCore} is not defined.
  */
-function processCoreHelper(
+function processHelper(
 	messagesCollection: IRuntimeMessageCollection,
-	processCore: (
+	process: (
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
@@ -1073,7 +1069,7 @@ function processCoreHelper(
 ): void {
 	const { envelope, local, messagesContent } = messagesCollection;
 	for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-		processCore(
+		process(
 			{
 				...envelope,
 				contents,
