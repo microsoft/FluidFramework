@@ -30,7 +30,7 @@ import {
 	type ArrayChildren,
 	nodeSchemaFromTreeSchema,
 	type GUIDNode,
-	asFuzzView,
+	convertToFuzzView,
 } from "./fuzzUtils.js";
 
 import {
@@ -203,7 +203,8 @@ export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMe
 					? clientForkedViews[branchEdit.contents.branchNumber]
 					: viewFromState(state);
 			assert(view !== undefined);
-			const forkedView = asFuzzView(view.fork(), view.currentSchema);
+			const forkedView = view.fork();
+			convertToFuzzView(forkedView, view.currentSchema);
 			clientForkedViews?.push(forkedView);
 			forkedViews.set(state.client.channel, clientForkedViews);
 			state.forkedViews = forkedViews;

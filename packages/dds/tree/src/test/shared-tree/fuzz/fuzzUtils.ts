@@ -189,12 +189,13 @@ export function createOnCreate(
 	};
 }
 
-export function asFuzzView(
+export function convertToFuzzView(
 	view: SchematizingSimpleTreeView<typeof fuzzFieldSchema>,
 	currentSchema: typeof FuzzNode,
-): FuzzView {
-	(view as FuzzView).currentSchema = currentSchema;
-	return view as FuzzView;
+): asserts view is FuzzView {
+	type UnschematizedFuzzView = Omit<FuzzView, "currentSchema"> &
+		Partial<Pick<FuzzView, "currentSchema">>;
+	(view as UnschematizedFuzzView).currentSchema = currentSchema;
 }
 
 /**
