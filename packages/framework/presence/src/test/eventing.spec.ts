@@ -24,6 +24,10 @@ import {
 } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
+
+/**
+ * Workspace updates
+ */
 const attendeeUpdate = {
 	"clientToSessionId": {
 		"client1": {
@@ -70,7 +74,6 @@ const latestUpdateRev2 = {
 		},
 	},
 };
-
 const itemRemovedMapUpdate = {
 	"latestMap": {
 		"sessionId-1": {
@@ -84,13 +87,10 @@ const itemRemovedMapUpdate = {
 		},
 	},
 };
-
-// Test case where a removed map item is updated with a latest update
 const latestMapItemRemovedAndLatestUpdate = {
 	latestUpdateRev2,
 	itemRemovedMapUpdate,
 } as const;
-
 const notificationsUpdate = {
 	"notifications": {
 		"sessionId-1": {
@@ -101,6 +101,7 @@ const notificationsUpdate = {
 		},
 	},
 };
+
 describe("Presence", () => {
 	describe("events are fired with consistent and final state when", () => {
 		let runtime: MockEphemeralRuntime;
@@ -115,7 +116,6 @@ describe("Presence", () => {
 			key1: { a: number; b: number } | undefined;
 			key2: { c: number; d: number } | undefined;
 		}
-
 		interface LatestValue {
 			x: number;
 			y: number;
@@ -135,7 +135,6 @@ describe("Presence", () => {
 			attendee: ISessionClient,
 			verifications: StateVerification[],
 		): void {
-			// Verify attendee state (always check since system:presence is always included)
 			assert.ok(attendee, "Eventing does not reflect new attendee");
 			assert.strictEqual(
 				attendee.sessionId,
@@ -158,7 +157,6 @@ describe("Presence", () => {
 						);
 						break;
 					}
-
 					case "latestMap": {
 						assert.deepEqual(
 							latestMap.clientValue(attendee).get("key1")?.value,
