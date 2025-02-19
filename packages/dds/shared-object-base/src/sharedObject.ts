@@ -162,6 +162,23 @@ export abstract class SharedObjectCore<
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
+		this.processMessagesHelper =
+			this.processMessagesCore === undefined
+				? (messagesCollection: IRuntimeMessageCollection) =>
+						processCoreHelper(messagesCollection, this.processCore.bind(this))
+				: (messagesCollection: IRuntimeMessageCollection) => {
+						// This assert is needed to work around the compilation error that this.processMessagesCore could be undefined.
+						assert(
+							this.processMessagesCore !== undefined,
+							"processMessagesCore should be defined",
+						);
+						processMessagesCoreHelper(
+							messagesCollection,
+							this.opProcessingHelper,
+							this.emitInternal.bind(this),
+							this.processMessagesCore.bind(this),
+						);
+					};
 	}
 
 	/**
@@ -414,6 +431,15 @@ export abstract class SharedObjectCore<
 	protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
 
 	/**
+	 * Calls {@link SharedObjectCore.processCore} or {@link SharedObjectCore.processMessagesCore} depending on whether
+	 * processMessagesCore is defined. This helper is used to keep the code cleaner while we have to support both these
+	 * function.
+	 */
+	private readonly processMessagesHelper: (
+		messagesCollection: IRuntimeMessageCollection,
+	) => void;
+
+	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
 
@@ -621,78 +647,27 @@ export abstract class SharedObjectCore<
 	/* eslint-enable jsdoc/check-indentation */
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
 		this.verifyNotClosed(); // This will result in container closure.
-		const { envelope, local, messagesContent: encodedMessagesContent } = messagesCollection;
 
-		// Decode any handles in the contents and emit the "pre-op" event.
+		// Decode any handles in the contents before processing the messages.
 		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
-		for (const { contents, localOpMetadata, clientSequenceNumber } of encodedMessagesContent) {
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+		} of messagesCollection.messagesContent) {
 			const decodedMessageContent: IRuntimeMessagesContent = {
 				contents: parseHandles(contents, this.serializer),
 				localOpMetadata,
 				clientSequenceNumber,
 			};
 			decodedMessagesContent.push(decodedMessageContent);
-
-			const decodedMessage: ISequencedDocumentMessage = {
-				...envelope,
-				contents: decodedMessageContent.contents,
-				clientSequenceNumber,
-			};
-			this.emitInternal("pre-op", decodedMessage, local, this);
-
-			// back-compat: Until processCore is removed and processMessagesCore becomes required, if processMessagesCore
-			// is not implemented, call processCore for each message and emit the "op" event.
-			if (this.processMessagesCore === undefined) {
-				this.opProcessingHelper.measure(
-					(): ICustomData<ProcessTelemetryProperties> => {
-						this.processCore(decodedMessage, local, localOpMetadata);
-						const telemetryProperties: ProcessTelemetryProperties = {
-							sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
-						};
-						return {
-							customData: telemetryProperties,
-						};
-					},
-					local ? "local" : "remote",
-				);
-				this.emitInternal("op", decodedMessage, local, this);
-			}
 		}
 
-		// This case is taken care of in the previous for-loop.
-		if (this.processMessagesCore === undefined) {
-			return;
-		}
-
-		this.opProcessingHelper.measure(
-			(): ICustomData<ProcessTelemetryProperties> => {
-				assert(
-					this.processMessagesCore !== undefined,
-					"processMessagesCore should be defined",
-				);
-				this.processMessagesCore({
-					envelope,
-					local,
-					messagesContent: decodedMessagesContent,
-				});
-				const telemetryProperties: ProcessTelemetryProperties = {
-					sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
-				};
-				return {
-					customData: telemetryProperties,
-				};
-			},
-			local ? "local" : "remote",
-		);
-
-		for (const { contents, clientSequenceNumber } of decodedMessagesContent) {
-			const message: ISequencedDocumentMessage = {
-				...envelope,
-				contents,
-				clientSequenceNumber,
-			};
-			this.emitInternal("op", message, local, this);
-		}
+		const decodedMessagesCollection: IRuntimeMessageCollection = {
+			...messagesCollection,
+			messagesContent: decodedMessagesContent,
+		};
+		this.processMessagesHelper(decodedMessagesCollection);
 	}
 
 	/**
@@ -1036,4 +1011,76 @@ export function createSharedObjectKind<TSharedObject>(
 function isChannel(loadable: IFluidLoadable): loadable is IChannel {
 	// This assumes no other IFluidLoadable has an `attributes` field, and thus may not be fully robust.
 	return (loadable as IChannel).attributes !== undefined;
+}
+
+/**
+ * Utility that processes the given messages in the message collection together by calling processMessagesCore.
+ * This will be called when {@link SharedObjectCore.processMessagesCore} is defined.
+ */
+function processMessagesCoreHelper(
+	messagesCollection: IRuntimeMessageCollection,
+	opProcessingHelper: SampledTelemetryHelper<void, ProcessTelemetryProperties>,
+	emitInternal: (
+		event: "pre-op" | "op",
+		op: ISequencedDocumentMessage,
+		local: boolean,
+	) => void,
+	processMessagesCore: (messagesCollection: IRuntimeMessageCollection) => void,
+): void {
+	const { envelope, local, messagesContent } = messagesCollection;
+
+	const emitEvents = (
+		event: "pre-op" | "op",
+		messagesContentForEvent: readonly IRuntimeMessagesContent[],
+	): void => {
+		for (const { contents, clientSequenceNumber } of messagesContentForEvent) {
+			const message: ISequencedDocumentMessage = {
+				...envelope,
+				contents,
+				clientSequenceNumber,
+			};
+			emitInternal(event, message, local);
+		}
+	};
+
+	emitEvents("pre-op", messagesContent);
+	opProcessingHelper.measure(
+		(): ICustomData<ProcessTelemetryProperties> => {
+			processMessagesCore(messagesCollection);
+			const telemetryProperties: ProcessTelemetryProperties = {
+				sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+			};
+			return {
+				customData: telemetryProperties,
+			};
+		},
+		local ? "local" : "remote",
+	);
+	emitEvents("op", messagesContent);
+}
+
+/**
+ * Utility that processes the given messages in the message collection one by one by calling processCore. This will
+ * be called when {@link SharedObjectCore.processMessagesCore} is not defined.
+ */
+function processCoreHelper(
+	messagesCollection: IRuntimeMessageCollection,
+	processCore: (
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) => void,
+): void {
+	const { envelope, local, messagesContent } = messagesCollection;
+	for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+		processCore(
+			{
+				...envelope,
+				contents,
+				clientSequenceNumber,
+			},
+			local,
+			localOpMetadata,
+		);
+	}
 }
