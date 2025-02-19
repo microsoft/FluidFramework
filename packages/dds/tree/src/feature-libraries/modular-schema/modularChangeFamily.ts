@@ -3181,6 +3181,7 @@ function composeRootTables(
 	pendingCompositions: PendingCompositions,
 ): RootNodeTable {
 	const mergedTable = cloneRootTable(change1.rootNodes);
+	const emptyMap = newChangeAtomIdRangeMap<ChangeAtomId>();
 	for (const entry of change2.rootNodes.oldToNewId.entries()) {
 		renameNodes(
 			mergedTable,
@@ -3188,7 +3189,7 @@ function composeRootTables(
 			entry.value,
 			entry.length,
 			change1.rootNodes.newToOldId,
-			change2.rootNodes.oldToNewId,
+			emptyMap,
 		);
 	}
 

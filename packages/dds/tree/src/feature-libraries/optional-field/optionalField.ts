@@ -193,7 +193,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		if (
 			isReplaceEffectful(change1.valueReplace) &&
 			!change1.valueReplace.isEmpty &&
-			change2.valueReplace?.src === change1.valueReplace.dst
+			areEqualRegisterIdsOpt(change2.valueReplace?.src, change1.valueReplace.dst)
 		) {
 			nodeManager.composeDetachAttach(change1.valueReplace.dst, 1);
 		}
