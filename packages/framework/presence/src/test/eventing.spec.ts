@@ -269,7 +269,7 @@ describe("Presence", () => {
 		describe("states workspace", () => {
 			let latestUpdatedEventSpy: SinonSpy;
 			let latestMapUpdatedEventSpy: SinonSpy;
-			describe("value is updated", () => {
+			describe("value is updated where", () => {
 				let itemUpdatedEventSpy: SinonSpy;
 				let atteendeeEventSpy: SinonSpy;
 
@@ -388,7 +388,7 @@ describe("Presence", () => {
 					);
 				}
 
-				it("item removed from latestMap and latest update in shared workspace", async () => {
+				it("from latestMap and latest update in shared workspace", async () => {
 					setupSharedStatesWorkspace();
 					const workspace = {
 						"s:name:testWorkspace": { ...latestMapUpdate, ...latestUpdate },
@@ -403,7 +403,7 @@ describe("Presence", () => {
 					assertSpies();
 				});
 
-				it("item removed from latestMap and latest update in multiple workspaces", async () => {
+				it("from latestMap and latest update in multiple workspaces", async () => {
 					setupMultipleStatesWorkspaces();
 					const workspace = {
 						"s:name:testWorkspace2": latestMapUpdate,
