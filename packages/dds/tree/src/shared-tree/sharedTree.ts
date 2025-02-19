@@ -271,7 +271,7 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 		this.kernel.processCore(message, local, localOpMetadata);
 	}
 
-	protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		this.kernel.processMessagesCore(messagesCollection);
 	}
 
