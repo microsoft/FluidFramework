@@ -532,7 +532,7 @@ describe("Create New Utils Tests", () => {
 			logger,
 			"appName",
 			getContext,
-			{ name: "containerPackageName" },
+			{ name: "containerPackageName" } /* IContainerPackageInfo */,
 		);
 
 		const resolved = await shareLinkResolver.resolve(request);
