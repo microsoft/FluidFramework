@@ -108,11 +108,7 @@ export interface TaskDefinitionsOnDisk {
 	readonly [name: TaskName]: TaskConfigOnDisk;
 }
 
-export interface WriteableTaskDefinitionsOnDisk {
-	[name: TaskName]: Mutable<TaskConfigOnDisk>;
-}
-
-export const isTaskDependencies = (value: TaskConfigOnDisk): value is TaskDependencies => {
+const isTaskDependencies = (value: TaskConfigOnDisk): value is TaskDependencies => {
 	return Array.isArray(value);
 };
 

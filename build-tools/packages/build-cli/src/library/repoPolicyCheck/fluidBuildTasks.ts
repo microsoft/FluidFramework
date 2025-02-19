@@ -15,11 +15,9 @@ import {
 	Package,
 	PackageJson,
 	TscUtils,
-	type WriteableTaskDefinitionsOnDisk,
 	getEsLintConfigFilePath,
 	getFluidBuildConfig,
 	getTaskDefinitions,
-	isTaskDependencies,
 	normalizeGlobalTaskDefinitions,
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
@@ -496,11 +494,11 @@ function patchTaskDeps(
 	);
 
 	if (missingTaskDependencies.length > 0) {
-		const fileDep = json.fluidBuild?.tasks?.[taskName] as
-			| WriteableTaskDefinitionsOnDisk[string]
-			| undefined;
-		if (fileDep === undefined) {
-			let tasks: WriteableTaskDefinitionsOnDisk;
+		const readonlyFileDep = json.fluidBuild?.tasks?.[taskName];
+		if (readonlyFileDep === undefined) {
+			let tasks: DeeplyMutable<
+				Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>
+			>;
 			if (json.fluidBuild === undefined) {
 				tasks = {};
 				json.fluidBuild = { tasks, version: 1 };
@@ -522,14 +520,15 @@ function patchTaskDeps(
 				return dep;
 			});
 		} else {
+			const fileDep = asWriteable(readonlyFileDep);
 			let depArray: string[];
-			if (isTaskDependencies(fileDep)) {
+			if (Array.isArray(fileDep)) {
 				depArray = fileDep;
 			} else if (fileDep.dependsOn === undefined) {
 				depArray = [];
 				fileDep.dependsOn = depArray;
 			} else {
-				depArray = asWriteable(fileDep.dependsOn);
+				depArray = fileDep.dependsOn;
 			}
 			for (const missingDep of missingTaskDependencies) {
 				if (Array.isArray(missingDep)) {
