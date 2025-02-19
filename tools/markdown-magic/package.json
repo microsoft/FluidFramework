@@ -19,8 +19,8 @@
 		"build": "npm run build:docs",
 		"build:docs": "node src/index.cjs --files README.md",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"lint": "npm run prettier",
+		"lint:fix": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache",
 		"prettier:fix": "prettier --write . --cache",
 		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"

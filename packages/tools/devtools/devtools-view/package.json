@@ -29,7 +29,6 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
-		"build-and-test-mocha": "npm run build && npm run test:mocha:verbose",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "fluid-tsc module --project ./tsconfig.esm.json && copyfiles -f ../../../../common/build/build-common/src/esm/package.json ./lib",
