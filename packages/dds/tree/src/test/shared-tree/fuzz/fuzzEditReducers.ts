@@ -12,9 +12,9 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { Revertible } from "../../../core/index.js";
 import type { DownPath } from "../../../feature-libraries/index.js";
-import { Tree } from "../../../shared-tree/index.js";
+import { Tree, type SharedTree } from "../../../shared-tree/index.js";
 import { fail } from "../../../util/index.js";
-import { validateFuzzTreeConsistency, viewCheckout } from "../../utils.js";
+import { validateFuzzTreeConsistency } from "../../utils.js";
 
 import {
 	type FuzzTestState,
@@ -22,7 +22,6 @@ import {
 	type FuzzView,
 	getAllowableNodeTypes,
 	viewFromState,
-	simpleSchemaFromStoredSchema,
 } from "./fuzzEditGenerators.js";
 import {
 	createTreeViewSchema,
@@ -31,6 +30,7 @@ import {
 	type ArrayChildren,
 	nodeSchemaFromTreeSchema,
 	type GUIDNode,
+	convertToFuzzView,
 } from "./fuzzUtils.js";
 
 import {
@@ -50,6 +50,7 @@ import {
 	GeneratedFuzzValueType,
 	type NodeObjectValue,
 	type GUIDNodeValue,
+	type ForkMergeOperation,
 } from "./operationTypes.js";
 
 import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
@@ -65,10 +66,10 @@ import {
 import type { TreeFactory } from "../../../treeFactory.js";
 
 const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<TreeFactory>>({
-	treeEdit: (state, { edit }) => {
+	treeEdit: (state, { edit, forkedViewIndex }) => {
 		switch (edit.type) {
 			case "fieldEdit": {
-				applyFieldEdit(viewFromState(state), edit);
+				applyFieldEdit(viewFromState(state, state.client, forkedViewIndex), edit);
 				break;
 			}
 			default:
@@ -91,6 +92,9 @@ const syncFuzzReducer = combineReducers<Operation, DDSFuzzTestState<TreeFactory>
 	},
 	constraint: (state, operation) => {
 		applyConstraint(state, operation);
+	},
+	forkMergeOperation: (state, operation) => {
+		applyForkMergeOperation(state, operation);
 	},
 });
 export const fuzzReducer: AsyncReducer<Operation, DDSFuzzTestState<TreeFactory>> = async (
@@ -182,6 +186,60 @@ export function applySchemaOp(state: FuzzTestState, operation: SchemaChange) {
 	const transactionViews = state.transactionViews ?? new Map();
 	transactionViews.set(state.client.channel, newView);
 	state.transactionViews = transactionViews;
+}
+
+export function applyForkMergeOperation(state: FuzzTestState, branchEdit: ForkMergeOperation) {
+	switch (branchEdit.contents.type) {
+		case "fork": {
+			const forkedViews = state.forkedViews ?? new Map<SharedTree, FuzzView[]>();
+			const clientForkedViews = forkedViews.get(state.client.channel) ?? [];
+
+			if (branchEdit.contents.branchNumber !== undefined) {
+				assert(clientForkedViews.length > branchEdit.contents.branchNumber);
+			}
+
+			const view =
+				branchEdit.contents.branchNumber !== undefined
+					? clientForkedViews[branchEdit.contents.branchNumber]
+					: viewFromState(state);
+			assert(view !== undefined);
+			const forkedView = view.fork();
+			convertToFuzzView(forkedView, view.currentSchema);
+			clientForkedViews?.push(forkedView);
+			forkedViews.set(state.client.channel, clientForkedViews);
+			state.forkedViews = forkedViews;
+			break;
+		}
+		case "merge": {
+			const forkBranchIndex = branchEdit.contents.forkBranch;
+			const forkedViews = state.forkedViews ?? new Map<SharedTree, FuzzView[]>();
+			const clientForkedViews = forkedViews.get(state.client.channel) ?? [];
+
+			const baseBranch =
+				branchEdit.contents.baseBranch !== undefined
+					? clientForkedViews[branchEdit.contents.baseBranch]
+					: viewFromState(state);
+			assert(forkBranchIndex !== undefined);
+			const forkedBranch = clientForkedViews[forkBranchIndex];
+			if (baseBranch.checkout.transaction.isInProgress() === true) {
+				return;
+			}
+
+			baseBranch.merge(forkedBranch, false);
+
+			const updatedClientForkedViews = clientForkedViews.filter(
+				(_, index) => index !== forkBranchIndex,
+			);
+			if (branchEdit.contents.baseBranch !== undefined) {
+				updatedClientForkedViews.push(baseBranch);
+			}
+			forkedViews.set(state.client.channel, updatedClientForkedViews);
+			state.forkedViews = forkedViews;
+			break;
+		}
+		default:
+			break;
+	}
 }
 
 /**
@@ -311,15 +369,12 @@ export function applyTransactionBoundary(
 			boundary === "start",
 			"Forked view should be present in the fuzz state unless a (non-nested) transaction is being started.",
 		);
-		const treeViewFork = viewFromState(state).checkout.branch();
-		const treeSchema = simpleSchemaFromStoredSchema(state.client.channel.kernel.storedSchema);
-		const treeView = viewCheckout(
-			treeViewFork,
-			new TreeViewConfiguration({ schema: treeSchema }),
-		);
-		view = treeView as FuzzTransactionView;
-		const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
-		view.currentSchema = nodeSchema ?? assert.fail("nodeSchema should not be undefined");
+		const treeView = viewFromState(state);
+		const treeSchema = treeView.currentSchema;
+		const treeViewFork = treeView.fork();
+
+		view = treeViewFork as FuzzTransactionView;
+		view.currentSchema = treeSchema ?? assert.fail("nodeSchema should not be undefined");
 		state.transactionViews.set(state.client.channel, view);
 	}
 
