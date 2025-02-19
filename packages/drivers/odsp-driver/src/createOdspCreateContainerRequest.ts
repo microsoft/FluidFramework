@@ -31,7 +31,7 @@ export function createOdspCreateContainerRequest(
 	filePath: string,
 	fileName: string,
 	createShareLinkType?: ISharingLinkKind,
-	containerPackageInfo?: IContainerPackageInfo | undefined,
+	_containerPackageInfo?: IContainerPackageInfo | undefined,
 ): IRequest {
 	const shareLinkRequestParams = buildOdspShareLinkReqParams(createShareLinkType);
 	const createNewRequest: IRequest = {

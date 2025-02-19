@@ -261,6 +261,12 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		odspResolvedUrl.context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
+		/**
+		 * containerPackageName can be provided by various ways, in the order of priority:
+		 * 1. packageInfoSource - passed by the call of appendLocatorParams
+		 * 2. odspResolvedUrl.codeHint?.containerPackageName - passed by the odsp-driver's resolvedURL object
+		 * 3. this.containerPackageInfo - passed by the constructor of OdspDrvierUrlResolverForShareLink
+		 * */
 		const containerPackageName: string | undefined =
 			getContainerPackageName(packageInfoSource) ??
 			odspResolvedUrl.codeHint?.containerPackageName ??
