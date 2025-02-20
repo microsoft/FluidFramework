@@ -100,9 +100,13 @@ export function getOdspCredentials(
 		const tenants: LoginTenants = JSON.parse(loginTenants);
 		const tenantNames = Object.keys(tenants);
 		const tenant = tenantNames[tenantIndex % tenantNames.length];
-		// TODO Why non null assert here
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const tenantInfo = tenants[tenant!]!;
+		if(tenant === undefined){
+			throw new Error("tenant should not be undefined");
+		}
+		const tenantInfo = tenants[tenant];
+		if(tenantInfo === undefined){
+			throw new Error("tenantInfo should not be undefined");
+		}
 		// Translate all the user from that user to the full user principle name by appending the tenant domain
 		const range = tenantInfo.range;
 
@@ -205,8 +209,8 @@ export class OdspTestDriver implements ITestDriver {
 		let siteUrl: string;
 		let tenantName: string;
 		if (
-			emailServer.startsWith("http://") === true ||
-			emailServer.startsWith("https://") === true
+			emailServer.startsWith("http://") ||
+			emailServer.startsWith("https://")
 		) {
 			// it's already a site url
 			tenantName = new URL(emailServer).hostname;
