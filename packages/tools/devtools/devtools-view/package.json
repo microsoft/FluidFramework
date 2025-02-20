@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/devtools-view",
-	"version": "2.22.0",
+	"version": "2.22.1",
 	"private": true,
 	"description": "Contains a visualization suite for use alongside the Fluid Devtools",
 	"homepage": "https://fluidframework.com",
