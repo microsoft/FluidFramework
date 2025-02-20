@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { JsonArray } from "@fluidframework/tree/internal";
+import { JsonArray } from "@fluidframework/tree/alpha";
 
 import { RecursiveMap } from "../testExports.js";
 
