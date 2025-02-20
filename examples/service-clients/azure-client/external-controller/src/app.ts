@@ -4,18 +4,19 @@
  */
 
 import {
-	acquirePresenceViaDataObject,
-	ExperimentalPresenceManager,
-} from "@fluid-experimental/presence";
-import {
 	AzureClient,
 	AzureContainerServices,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/internal";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
+import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/legacy";
+import {
+	acquirePresenceViaDataObject,
+	ExperimentalPresenceManager,
+} from "@fluidframework/presence/alpha";
+import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import type { ContainerSchema } from "fluid-framework";
 import { IFluidContainer } from "fluid-framework";
@@ -180,7 +181,6 @@ async function start(): Promise<void> {
 	document.title = id;
 
 	// Biome insist on no semicolon - https://dev.azure.com/fluidframework/internal/_workitems/edit/9083
-	// eslint-disable-next-line @typescript-eslint/member-delimiter-style
 	const lastRoll: { die1?: DieValue; die2?: DieValue } = {};
 	const presence = acquirePresenceViaDataObject(container.initialObjects.presence);
 	const states = buildDicePresence(presence).props;

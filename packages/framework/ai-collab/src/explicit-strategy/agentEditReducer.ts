@@ -18,12 +18,8 @@ import {
 	FieldSchema,
 	normalizeAllowedTypes,
 	type ImplicitFieldSchema,
-	booleanSchema,
-	handleSchema,
-	nullSchema,
-	numberSchema,
-	stringSchema,
 	type IterableTreeArrayContent,
+	SchemaFactory,
 } from "@fluidframework/tree/internal";
 
 import {
@@ -57,10 +53,10 @@ function populateDefaults(
 		} else {
 			assert(
 				typeof json[typeField] === "string",
-				"The typeField must be present in new JSON content",
+				0xa73 /* The typeField must be present in new JSON content */,
 			);
 			const nodeSchema = definitionMap.get(json[typeField]);
-			assert(nodeSchema?.kind === NodeKind.Object, "Expected object schema");
+			assert(nodeSchema?.kind === NodeKind.Object, 0xa74 /* Expected object schema */);
 		}
 	}
 }
@@ -68,23 +64,23 @@ function populateDefaults(
 function getSchemaIdentifier(content: TreeEditValue): string | undefined {
 	switch (typeof content) {
 		case "boolean": {
-			return booleanSchema.identifier;
+			return SchemaFactory.boolean.identifier;
 		}
 		case "number": {
-			return numberSchema.identifier;
+			return SchemaFactory.number.identifier;
 		}
 		case "string": {
-			return stringSchema.identifier;
+			return SchemaFactory.string.identifier;
 		}
 		case "object": {
 			if (content === null) {
-				return nullSchema.identifier;
+				return SchemaFactory.null.identifier;
 			}
 			if (Array.isArray(content)) {
 				throw new UsageError("Arrays are not currently supported in this context");
 			}
 			if (isFluidHandle(content)) {
-				return handleSchema.identifier;
+				return SchemaFactory.handle.identifier;
 			}
 			return content[typeField];
 		}
@@ -200,10 +196,10 @@ export function applyAgentEdit(
 				if (Array.isArray(modification)) {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 					const field = (node as any)[treeEdit.field] as TreeArrayNode;
-					assert(Array.isArray(field), "the field must be an array node");
+					assert(Array.isArray(field), 0xa75 /* the field must be an array node */);
 					assert(
 						Array.isArray(constructedModification),
-						"the modification must be an array node",
+						0xa76 /* the modification must be an array node */,
 					);
 					field.removeRange(0);
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
@@ -266,7 +262,7 @@ export function applyAgentEdit(
 					...normalizeAllowedTypes(destinationArraySchema.info as ImplicitAllowedTypes),
 				];
 				const nodeToMove = sourceArrayNode.at(sourceIndex);
-				assert(nodeToMove !== undefined, "node to move must exist");
+				assert(nodeToMove !== undefined, 0xa77 /* node to move must exist */);
 				if (isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
 					destinationArrayNode.moveRangeToIndex(
 						destinationIndex,
@@ -289,7 +285,7 @@ export function applyAgentEdit(
 				];
 				for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
 					const nodeToMove = array.at(i);
-					assert(nodeToMove !== undefined, "node to move must exist");
+					assert(nodeToMove !== undefined, 0xa78 /* node to move must exist */);
 					if (!isNodeAllowedType(nodeToMove as TreeNode, allowedTypes)) {
 						throw new UsageError("Illegal node type in destination array");
 					}
@@ -399,7 +395,7 @@ function getPlaceInfo(
  */
 function getNodeFromTarget(target: ObjectTarget, idGenerator: IdGenerator): TreeNode {
 	const node = idGenerator.getNode(target.target);
-	assert(node !== undefined, "objectId does not exist in nodeMap");
+	assert(node !== undefined, 0xa79 /* objectId does not exist in nodeMap */);
 	return node;
 }
 

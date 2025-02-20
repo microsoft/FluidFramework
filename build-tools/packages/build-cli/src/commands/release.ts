@@ -11,7 +11,7 @@ import {
 } from "@fluid-tools/version-tools";
 import { rawlist } from "@inquirer/prompts";
 import { Config } from "@oclif/core";
-import chalk from "chalk";
+import chalk from "picocolors";
 
 import { findPackageOrReleaseGroup } from "../args.js";
 import {
@@ -95,8 +95,8 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 		}
 		const releaseGroup = packageOrReleaseGroup.name;
 		const releaseVersion = packageOrReleaseGroup.version;
-
-		const currentBranch = await context.gitRepo.getCurrentBranchName();
+		const gitRepo = await context.getGitRepository();
+		const currentBranch = await gitRepo.getCurrentBranchName();
 		const bumpType = await getBumpType(flags.bumpType, currentBranch, releaseVersion);
 
 		// eslint-disable-next-line no-warning-comments
@@ -116,7 +116,7 @@ export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCo
 
 		const branchPolicyCheckDefault = getRunPolicyCheckDefault(
 			releaseGroup,
-			context.originalBranchName,
+			gitRepo.originalBranchName,
 		);
 
 		this.handler = new FluidReleaseStateHandler(machine, logger);

@@ -4,7 +4,7 @@
  */
 
 import type { EventEmitter } from "@fluid-example/example-utils";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { v4 as uuid } from "uuid";
 
 /**

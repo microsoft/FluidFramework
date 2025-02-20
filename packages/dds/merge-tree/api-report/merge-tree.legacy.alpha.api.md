@@ -5,6 +5,13 @@
 ```ts
 
 // @alpha
+export interface AdjustParams {
+    delta: number;
+    max?: number | undefined;
+    min?: number | undefined;
+}
+
+// @alpha
 export function appendToMergeTreeDeltaRevertibles(deltaArgs: IMergeTreeDeltaCallbackArgs, revertibles: MergeTreeDeltaRevertible[]): void;
 
 // @alpha (undocumented)
@@ -21,8 +28,6 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     canAppend(segment: ISegment): boolean;
     // (undocumented)
-    clientId: number;
-    // (undocumented)
     abstract clone(): ISegment;
     // (undocumented)
     protected cloneInto(b: ISegment): void;
@@ -31,33 +36,9 @@ export abstract class BaseSegment implements ISegment {
     // (undocumented)
     hasProperty(key: string): boolean;
     // (undocumented)
-    index: number;
-    // (undocumented)
     isLeaf(): this is ISegment;
     // (undocumented)
-    localMovedSeq?: number;
-    // (undocumented)
-    localRefs?: LocalReferenceCollection;
-    // (undocumented)
-    localRemovedSeq?: number;
-    // (undocumented)
-    localSeq?: number;
-    // (undocumented)
-    movedClientIds?: number[];
-    // (undocumented)
-    movedSeq?: number;
-    // (undocumented)
-    movedSeqs?: number[];
-    // (undocumented)
-    ordinal: string;
-    // (undocumented)
     properties?: PropertySet;
-    // (undocumented)
-    removedClientIds?: number[];
-    // (undocumented)
-    removedSeq?: number;
-    // (undocumented)
-    seq: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
@@ -66,8 +47,6 @@ export abstract class BaseSegment implements ISegment {
     readonly trackingCollection: TrackingGroupCollection;
     // (undocumented)
     abstract readonly type: string;
-    // (undocumented)
-    wasMovedOnInsert?: boolean | undefined;
 }
 
 // @alpha
@@ -153,16 +132,28 @@ export interface IMarkerDef {
     refType?: ReferenceType;
 }
 
-// @alpha
-export interface IMergeNodeCommon {
-    index: number;
+// @alpha (undocumented)
+export interface IMergeTreeAnnotateAdjustMsg extends IMergeTreeDelta {
     // (undocumented)
-    isLeaf(): this is ISegment;
-    ordinal: string;
+    adjust: Record<string, AdjustParams>;
+    // (undocumented)
+    pos1?: number;
+    // (undocumented)
+    pos2?: number;
+    // (undocumented)
+    props?: never;
+    // (undocumented)
+    relativePos1?: undefined;
+    // (undocumented)
+    relativePos2?: undefined;
+    // (undocumented)
+    type: typeof MergeTreeDeltaType.ANNOTATE;
 }
 
 // @alpha (undocumented)
 export interface IMergeTreeAnnotateMsg extends IMergeTreeDelta {
+    // (undocumented)
+    adjust?: never;
     // (undocumented)
     pos1?: number;
     // (undocumented)
@@ -189,7 +180,7 @@ export interface IMergeTreeDeltaCallbackArgs<TOperationType extends MergeTreeDel
 }
 
 // @alpha (undocumented)
-export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
+export type IMergeTreeDeltaOp = IMergeTreeInsertMsg | IMergeTreeRemoveMsg | IMergeTreeAnnotateMsg | IMergeTreeAnnotateAdjustMsg | IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 
 // @alpha (undocumented)
 export interface IMergeTreeDeltaOpArgs {
@@ -263,6 +254,7 @@ export type IMergeTreeOp = IMergeTreeDeltaOp | IMergeTreeGroupMsg;
 export interface IMergeTreeOptions {
     // (undocumented)
     catchUpBlobName?: string;
+    mergeTreeEnableAnnotateAdjust?: boolean;
     mergeTreeEnableObliterate?: boolean;
     mergeTreeEnableObliterateReconnect?: boolean;
     mergeTreeEnableSidedObliterate?: boolean;
@@ -293,16 +285,6 @@ export interface IMergeTreeSegmentDelta {
 }
 
 // @alpha
-export interface IMoveInfo {
-    localMovedSeq?: number;
-    movedClientIds: number[];
-    movedSeq: number;
-    movedSeqs: number[];
-    moveDst?: ReferencePosition;
-    wasMovedOnInsert: boolean;
-}
-
-// @alpha
 export interface InteriorSequencePlace {
     // (undocumented)
     pos: number;
@@ -318,29 +300,18 @@ export interface IRelativePosition {
 }
 
 // @alpha
-export interface IRemovalInfo {
-    localRemovedSeq?: number;
-    removedClientIds: number[];
-    removedSeq: number;
-}
-
-// @alpha
-export interface ISegment extends IMergeNodeCommon, Partial<IRemovalInfo>, Partial<IMoveInfo> {
+export interface ISegment {
     // (undocumented)
     append(segment: ISegment): void;
     attribution?: IAttributionCollection<AttributionKey>;
     cachedLength: number;
     // (undocumented)
     canAppend(segment: ISegment): boolean;
-    clientId: number;
     // (undocumented)
     clone(): ISegment;
-    readonly endpointType?: "start" | "end";
-    localRefs?: LocalReferenceCollection;
-    localRemovedSeq?: number;
-    localSeq?: number;
+    // (undocumented)
+    isLeaf(): this is ISegment;
     properties?: PropertySet;
-    seq?: number;
     // (undocumented)
     splitAt(pos: number): ISegment | undefined;
     // (undocumented)
@@ -369,29 +340,6 @@ export interface ITrackingGroup {
     tracked: readonly Trackable[];
     // (undocumented)
     unlink(trackable: Trackable): boolean;
-}
-
-// @alpha @sealed
-export class LocalReferenceCollection {
-    [Symbol.iterator](): {
-        next(): IteratorResult<LocalReferencePosition>;
-        [Symbol.iterator](): IterableIterator<LocalReferencePosition>;
-    };
-    addAfterTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    addBeforeTombstones(...refs: Iterable<LocalReferencePosition>[]): void;
-    addLocalRef(lref: LocalReferencePosition, offset: number): void;
-    // (undocumented)
-    static append(seg1: ISegment, seg2: ISegment): void;
-    append(other: LocalReferenceCollection): void;
-    createLocalRef(offset: number, refType: ReferenceType, properties: PropertySet | undefined, slidingPreference?: SlidingPreference, canSlideToEndpoint?: boolean): LocalReferencePosition;
-    get empty(): boolean;
-    has(lref: ReferencePosition): boolean;
-    isAfterTombstone(lref: LocalReferencePosition): boolean;
-    removeLocalRef(lref: LocalReferencePosition): LocalReferencePosition | undefined;
-    // (undocumented)
-    static setOrGet(segment: ISegment): LocalReferenceCollection;
-    split(offset: number, splitSeg: ISegment): void;
-    walkReferences(visitor: (lref: LocalReferencePosition) => boolean | void | undefined, start?: LocalReferencePosition, forward?: boolean): boolean;
 }
 
 // @alpha @sealed (undocumented)
@@ -539,6 +487,9 @@ export const reservedMarkerIdKey = "markerId";
 
 // @alpha
 export function revertMergeTreeDeltaRevertibles(driver: MergeTreeRevertibleDriver, revertibles: MergeTreeDeltaRevertible[]): void;
+
+// @alpha
+export function segmentIsRemoved(segment: ISegment): boolean;
 
 // @alpha (undocumented)
 export interface SequenceOffsets {

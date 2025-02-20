@@ -37,9 +37,9 @@ export function create(store: nconf.Provider): Router {
 		const contentP = getContent(
 			store,
 			request.params.tenantId,
-			request.get("Authorization"),
+			request.get("Authorization") ?? "",
 			request.params[0],
-			queryParamToString(request.query.ref),
+			queryParamToString(request.query.ref) ?? "",
 		);
 
 		utils.handleResponse(contentP, response, false);

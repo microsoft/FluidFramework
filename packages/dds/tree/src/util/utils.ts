@@ -16,7 +16,7 @@ export interface MapGetSet<K, V> {
 }
 
 /**
- * Make all transitive properties in T readonly
+ * Make all transitive properties in `T` readonly
  */
 export type RecursiveReadonly<T> = {
 	readonly [P in keyof T]: RecursiveReadonly<T[P]>;
@@ -48,9 +48,16 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 export const clone = structuredClone;
 
 /**
+ * Throw an error with a constant message.
+ * @remarks
+ * Works like {@link @fluidframework/core-utils/internal#assert}.
  */
-export function fail(message: string): never {
-	throw new Error(message);
+export function fail(message: string | number): never {
+	// Declaring this here aliased to a different name avoids the assert tagging objecting to the usages of `assert` below.
+	// Since users of `fail` do the assert message tagging instead, suppressing tagging errors here makes sense.
+	const assertNoTag: (condition: boolean, message: string | number) => asserts condition =
+		assert;
+	assertNoTag(false, message);
 }
 
 /**
@@ -77,6 +84,44 @@ export function makeArray<T>(size: number, filler: (index: number) => T): T[] {
 		array.push(filler(i));
 	}
 	return array;
+}
+
+/**
+ * Returns the last element of an array, or `undefined` if the array has no elements.
+ * @param array - The array to get the last element from.
+ * @remarks
+ * If the type of the array has been narrowed by e.g. {@link hasSome | hasSome(array)} or {@link hasSingle | hasOne(array)} then the return type will be `T` rather than `T | undefined`.
+ */
+export function getLast<T>(array: readonly [T, ...T[]]): T;
+export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined;
+export function getLast<T>(array: { [index: number]: T; length: number }): T | undefined {
+	return array[array.length - 1];
+}
+
+/**
+ * Returns true if and only if the given array has at least one element.
+ * @param array - The array to check.
+ * @remarks
+ * If `array` contains at least one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
+ */
+export function hasSome<T>(array: T[]): array is [T, ...T[]];
+export function hasSome<T>(array: readonly T[]): array is readonly [T, ...T[]];
+export function hasSome<T>(array: readonly T[]): array is [T, ...T[]] {
+	return array.length > 0;
+}
+
+/**
+ * Returns true if and only if the given array has exactly one element.
+ * @param array - The array to check.
+ * @remarks
+ * If `array` contains exactly one element, its type will be narrowed and can benefit from improved typing from e.g. `array[0]` and {@link getLast | getLast(array)}.
+ * This is especially useful when "noUncheckedIndexedAccess" is enabled in the TypeScript compiler options, since the return type of `array[0]` will be `T` rather than `T | undefined`.
+ */
+export function hasSingle<T>(array: T[]): array is [T];
+export function hasSingle<T>(array: readonly T[]): array is readonly [T];
+export function hasSingle<T>(array: readonly T[]): array is [T] {
+	return array.length === 1;
 }
 
 /**
@@ -498,4 +543,76 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
  */
 export function compareStrings<T extends string>(a: T, b: T): number {
 	return a > b ? 1 : a === b ? 0 : -1;
+}
+
+/**
+ * Defines a property on an object that is lazily initialized and cached.
+ * @remarks This is useful for properties that are expensive to compute and it is not guaranteed that they will be accessed.
+ * This function initially defines a getter on the object, but after first read it replaces the getter with a value property.
+ * @param obj - The object on which to define the property.
+ * @param key - The key of the property to define.
+ * @param get - The function (called either once or not at all) to compute the value of the property.
+ * @returns `obj`, typed such that it has the new property.
+ * This allows for the new property to be read off of `obj` in a type-safe manner after calling this function.
+ */
+export function defineLazyCachedProperty<
+	T extends object,
+	K extends string | number | symbol,
+	V,
+>(obj: T, key: K, get: () => V): typeof obj & { [P in K]: V } {
+	Reflect.defineProperty(obj, key, {
+		get() {
+			const value = get();
+			Reflect.defineProperty(obj, key, { value });
+			return value;
+		},
+		configurable: true,
+	});
+	return obj as typeof obj & { [P in K]: V };
+}
+
+/**
+ * Copies a given property from one object to another if and only if the property is defined.
+ * @param source - The object to copy the property from.
+ * If `source` is undefined or does not have the property defined, then this function will do nothing.
+ * @param property - The property to copy.
+ * @param destination - The object to copy the property to.
+ * @remarks This function is useful for copying properties from one object to another while minimizing the presence of `undefined` values.
+ * If `property` is not present on `source` - or if `property` is present, but has a value of `undefined` - then this function will not modify `destination`.
+ * This is different from doing `destination.foo = source.foo`, which would define a `"foo"` property on `destination` with the value `undefined`.
+ *
+ * If the type of `source` is known to have `property`, then this function asserts that the type of `destination` has `property` as well after the call.
+ *
+ * This function first reads the property value (if present) from `source` and then sets it on `destination`, as opposed to e.g. directly copying the property descriptor.
+ * @privateRemarks The first overload of this function allows auto-complete to suggest property names from `source`, but by having the second overload we still allow for arbitrary property names.
+ */
+export function copyPropertyIfDefined<S extends object, K extends keyof S, D extends object>(
+	source: S | undefined,
+	property: K,
+	destination: D,
+): asserts destination is K extends keyof S ? D & { [P in K]: S[K] } : D;
+export function copyPropertyIfDefined<
+	S extends object,
+	K extends string | number | symbol,
+	D extends object,
+>(
+	source: S | undefined,
+	property: K,
+	destination: D,
+): asserts destination is K extends keyof S ? D & { [P in K]: S[K] } : D;
+export function copyPropertyIfDefined<
+	S extends object,
+	K extends string | number | symbol,
+	D extends object,
+>(
+	source: S | undefined,
+	property: K,
+	destination: D,
+): asserts destination is K extends keyof S ? D & { [P in K]: S[K] } : D {
+	if (source !== undefined) {
+		const value = (source as { [P in K]?: unknown })[property];
+		if (value !== undefined) {
+			(destination as { [P in K]: unknown })[property] = value;
+		}
+	}
 }

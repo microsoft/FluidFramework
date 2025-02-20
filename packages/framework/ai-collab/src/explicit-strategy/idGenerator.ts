@@ -78,7 +78,7 @@ export class IdGenerator {
 		// Check if the last segment already exists with a different prefix
 		assert(
 			!this.prefixMap.has(lastSegment) || this.prefixMap.get(lastSegment) === prefix,
-			"Different scopes not supported yet.",
+			0xa7a /* Different scopes not supported yet. */,
 		);
 
 		this.prefixMap.set(lastSegment, prefix);

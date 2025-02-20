@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces";
+import { shallowCloneObject } from "@fluidframework/core-utils/internal";
+
+import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
+import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { ValueManager } from "./internalTypes.js";
-import { brandedObjectEntries } from "./internalTypes.js";
-import type { LatestValueControls } from "./latestValueControls.js";
-import { LatestValueControl } from "./latestValueControls.js";
+import { objectEntries } from "./internalUtils.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
@@ -15,11 +19,9 @@ import { brandIVM } from "./valueManager.js";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
-import type { ISubscribable } from "@fluid-experimental/presence/internal/events";
-import { createEmitter } from "@fluid-experimental/presence/internal/events";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
-import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
+} from "@fluidframework/presence/internal/core-interfaces";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
+import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
 /**
  * @sealed
@@ -47,12 +49,12 @@ export interface LatestValueManager<T> {
 	/**
 	 * Events for Latest value manager.
 	 */
-	readonly events: ISubscribable<LatestValueManagerEvents<T>>;
+	readonly events: Listenable<LatestValueManagerEvents<T>>;
 
 	/**
 	 * Controls for management of sending updates.
 	 */
-	readonly controls: LatestValueControls;
+	readonly controls: BroadcastControls;
 
 	/**
 	 * Current state for this client.
@@ -65,7 +67,6 @@ export interface LatestValueManager<T> {
 
 	/**
 	 * Iterable access to remote clients' values.
-	 * @remarks This is not yet implemented.
 	 */
 	clientValues(): IterableIterator<LatestValueClientData<T>>;
 	/**
@@ -84,15 +85,15 @@ class LatestValueManagerImpl<T, Key extends string>
 		Required<ValueManager<T, InternalTypes.ValueRequiredState<T>>>
 {
 	public readonly events = createEmitter<LatestValueManagerEvents<T>>();
-	public readonly controls: LatestValueControl;
+	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
-		controlSettings: LatestValueControls,
+		controlSettings: BroadcastControlSettings | undefined,
 	) {
-		this.controls = new LatestValueControl(controlSettings);
+		this.controls = new OptionalBroadcastControl(controlSettings);
 	}
 
 	public get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>> {
@@ -103,12 +104,14 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.value.rev += 1;
 		this.value.timestamp = Date.now();
 		this.value.value = value;
-		this.datastore.localUpdate(this.key, this.value, /* forceUpdate */ false);
+		this.datastore.localUpdate(this.key, this.value, {
+			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
+		});
 	}
 
 	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		for (const [clientSessionId, value] of brandedObjectEntries(allKnownStates.states)) {
+		for (const [clientSessionId, value] of objectEntries(allKnownStates.states)) {
 			if (clientSessionId !== allKnownStates.self) {
 				yield {
 					client: this.datastore.lookupClient(clientSessionId),
@@ -128,12 +131,14 @@ class LatestValueManagerImpl<T, Key extends string>
 
 	public clientValue(client: ISessionClient): LatestValueData<T> {
 		const allKnownStates = this.datastore.knownValues(this.key);
-		const clientSessionId = client.sessionId;
-		if (clientSessionId in allKnownStates.states) {
-			const { value, rev: revision } = allKnownStates.states[clientSessionId];
-			return { value, metadata: { revision, timestamp: Date.now() } };
+		const clientState = allKnownStates.states[client.sessionId];
+		if (clientState === undefined) {
+			throw new Error("No entry for clientId");
 		}
-		throw new Error("No entry for clientId");
+		return {
+			value: clientState.value,
+			metadata: { revision: clientState.rev, timestamp: Date.now() },
+		};
 	}
 
 	public update(
@@ -143,11 +148,9 @@ class LatestValueManagerImpl<T, Key extends string>
 	): void {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
-		if (clientSessionId in allKnownStates.states) {
-			const currentState = allKnownStates.states[clientSessionId];
-			if (currentState.rev >= value.rev) {
-				return;
-			}
+		const currentState = allKnownStates.states[clientSessionId];
+		if (currentState !== undefined && currentState.rev >= value.rev) {
+			return;
 		}
 		this.datastore.update(this.key, clientSessionId, value);
 		this.events.emit("updated", {
@@ -165,7 +168,7 @@ class LatestValueManagerImpl<T, Key extends string>
  */
 export function Latest<T extends object, Key extends string = string>(
 	initialValue: JsonSerializable<T> & JsonDeserialized<T> & object,
-	controls?: LatestValueControls,
+	controls?: BroadcastControlSettings,
 ): InternalTypes.ManagerFactory<
 	Key,
 	InternalTypes.ValueRequiredState<T>,
@@ -176,14 +179,8 @@ export function Latest<T extends object, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: { ...initialValue },
+		value: shallowCloneObject(initialValue),
 	};
-	const controlSettings = controls
-		? { ...controls }
-		: {
-				allowableUpdateLatency: 60,
-				forcedRefreshInterval: 0,
-			};
 	const factory = (
 		key: Key,
 		datastoreHandle: InternalTypes.StateDatastoreHandle<
@@ -191,17 +188,12 @@ export function Latest<T extends object, Key extends string = string>(
 			InternalTypes.ValueRequiredState<T>
 		>,
 	): {
-		value: typeof value;
+		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
 		manager: InternalTypes.StateValue<LatestValueManager<T>>;
 	} => ({
-		value,
+		initialData: { value, allowableUpdateLatencyMs: controls?.allowableUpdateLatencyMs },
 		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
-			new LatestValueManagerImpl(
-				key,
-				datastoreFromHandle(datastoreHandle),
-				value,
-				controlSettings,
-			),
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, controls),
 		),
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });

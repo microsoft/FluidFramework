@@ -5,8 +5,8 @@
 
 import type { ISessionClient } from "./presence.js";
 
-import type { JsonDeserialized } from "@fluid-experimental/presence/internal/core-interfaces";
-import type { InternalUtilityTypes } from "@fluid-experimental/presence/internal/exposedUtilityTypes";
+import type { JsonDeserialized } from "@fluidframework/presence/internal/core-interfaces";
+import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 
 /**
  * Metadata for the value state.

@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import {
+	IContainerRuntimeEvents,
+	type ISummarizeEventProps,
+} from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -31,7 +34,6 @@ import sinon from "sinon";
 import { ISummaryConfiguration } from "../../containerRuntime.js";
 import {
 	IGeneratedSummaryStats,
-	ISummarizeEventProps,
 	ISummarizeHeuristicData,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
@@ -98,7 +100,7 @@ describe("Runtime", () => {
 				minIdleTime: 5000, // 5 sec (idle)
 				maxIdleTime: 5000, // This must remain the same as minIdleTime for tests to pass nicely
 				nonRuntimeOpWeight: 0.1,
-				runtimeOpWeight: 1.0,
+				runtimeOpWeight: 1,
 				nonRuntimeHeuristicThreshold: 20,
 				...summaryCommon,
 			};
@@ -298,12 +300,11 @@ describe("Runtime", () => {
 					(reason) => {
 						stopCall++;
 					},
-					mockRuntime as any as ISummarizerRuntime,
+					mockRuntime as unknown as ISummarizerRuntime,
 				);
 			};
 
 			before(() => {
-				// eslint-disable-next-line import/no-named-as-default-member
 				clock = sinon.useFakeTimers();
 			});
 
@@ -786,7 +787,7 @@ describe("Runtime", () => {
 							maxAttempts,
 							0,
 							`Summarization should not have been attempted more than ${maxAttempts} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 
@@ -849,7 +850,7 @@ describe("Runtime", () => {
 							maxAttempts,
 							0,
 							`Summarization should not have been attempted more than ${maxAttempts} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 
@@ -889,7 +890,7 @@ describe("Runtime", () => {
 							maxAttemptsOverride,
 							0,
 							`Summarization should not have been attempted more than ${maxAttemptsOverride} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 				}
@@ -971,7 +972,7 @@ describe("Runtime", () => {
 							`Summarization should not have been attempted more than ${
 								maxAttempts + 1
 							} times`,
-							1 /** expectedStopCount */,
+							1 /* expectedStopCount */,
 						);
 					});
 				}
@@ -1095,7 +1096,9 @@ describe("Runtime", () => {
 					try {
 						summarizer.summarizeOnDemand({ reason });
 						resolved = true;
-					} catch {}
+					} catch {
+						// Eat the error
+					}
 
 					await flushPromises();
 					assert(resolved === false, "already running promise should not resolve yet");
@@ -1163,6 +1166,7 @@ describe("Runtime", () => {
 						"should be nack",
 					);
 					assert(
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
 						JSON.parse((ackNackResult.data.summaryNackOp as any).data).message === "test-nack",
 						"summary nack error should be test-nack",
 					);
@@ -1184,25 +1188,24 @@ describe("Runtime", () => {
 						fullTree,
 					});
 
-					const allResults = (
-						await Promise.all([
+					const allResults = [
+						...(await Promise.all([
 							result1.summarySubmitted,
 							result1.summaryOpBroadcasted,
 							result1.receivedSummaryAckOrNack,
 							result2.summarySubmitted,
 							result2.summaryOpBroadcasted,
 							result2.receivedSummaryAckOrNack,
-						])
-					).concat(
-						await Promise.all([
+						])),
+						...(await Promise.all([
 							result3.summarySubmitted,
 							result3.summaryOpBroadcasted,
 							result3.receivedSummaryAckOrNack,
 							result4.summarySubmitted,
 							result4.summaryOpBroadcasted,
 							result4.receivedSummaryAckOrNack,
-						]),
-					);
+						])),
+					];
 					for (const result of allResults) {
 						assert(!result.success, "all results should fail");
 					}
@@ -1671,16 +1674,9 @@ describe("Runtime", () => {
 					await emitAck();
 
 					const eventProps = await summarizePromiseP;
-					const expectedEventProps: ISummarizeEventProps = {
-						result: "success",
-						currentAttempt: 1,
-						maxAttempts: defaultMaxAttempts,
-					};
-					assert.deepStrictEqual(
-						eventProps,
-						expectedEventProps,
-						"Summarize event not as expected",
-					);
+					assert.strictEqual(eventProps.result, "success");
+					assert.strictEqual(eventProps.currentAttempt, 1);
+					assert.strictEqual(eventProps.maxAttempts, defaultMaxAttempts);
 				});
 
 				it("should emit summarize event with failed result", async () => {
@@ -1690,17 +1686,11 @@ describe("Runtime", () => {
 					await emitNextOp(summaryConfig.maxOps + 1);
 					await emitNack();
 
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const { error, ...eventProps } = await summarizePromiseP;
-					const expectedEventProps: ISummarizeEventProps = {
-						result: "failure",
-						currentAttempt: 1,
-						maxAttempts: defaultMaxAttempts,
-					};
-					assert.deepStrictEqual(
-						eventProps,
-						expectedEventProps,
-						"Summarize event not as expected",
-					);
+					assert.strictEqual(eventProps.result, "failure");
+					assert.strictEqual(eventProps.currentAttempt, 1);
+					assert.strictEqual(eventProps.maxAttempts, defaultMaxAttempts);
 				});
 
 				it("should emit summarize event with canceled result", async () => {
@@ -1718,16 +1708,9 @@ describe("Runtime", () => {
 					await emitNack();
 
 					const eventProps = await summarizePromiseP;
-					const expectedEventProps: ISummarizeEventProps = {
-						result: "canceled",
-						currentAttempt: 1,
-						maxAttempts: defaultMaxAttempts,
-					};
-					assert.deepStrictEqual(
-						eventProps,
-						expectedEventProps,
-						"Summarize event not as expected",
-					);
+					assert.strictEqual(eventProps.result, "canceled");
+					assert.strictEqual(eventProps.currentAttempt, 1);
+					assert.strictEqual(eventProps.maxAttempts, defaultMaxAttempts);
 				});
 
 				it("should emit summarize event for every attempt with nack failure", async () => {
@@ -1740,17 +1723,11 @@ describe("Runtime", () => {
 					// Nack failures are attempted defaultMaxAttempts times. Each attempt should emit "summarize" event.
 					for (let attemptNumber = 1; attemptNumber <= defaultMaxAttempts; attemptNumber++) {
 						await emitNack(retryAfterSeconds);
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 						const { error, ...eventProps } = await summarizePromiseP;
-						const expectedEventProps: ISummarizeEventProps = {
-							result: "failure",
-							currentAttempt: attemptNumber,
-							maxAttempts: defaultMaxAttempts,
-						};
-						assert.deepStrictEqual(
-							eventProps,
-							expectedEventProps,
-							`Summarize event for attempt ${attemptNumber} not as expected`,
-						);
+						assert.strictEqual(eventProps.result, "failure");
+						assert.strictEqual(eventProps.currentAttempt, attemptNumber);
+						assert.strictEqual(eventProps.maxAttempts, defaultMaxAttempts);
 
 						summarizePromiseP = getSummarizeEventPromise();
 
@@ -1790,17 +1767,11 @@ describe("Runtime", () => {
 						attemptNumber <= defaultMaxAttemptsForSubmitFailures;
 						attemptNumber++
 					) {
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 						const { error, ...eventProps } = await summarizePromiseP;
-						const expectedEventProps: ISummarizeEventProps = {
-							result: "failure",
-							currentAttempt: attemptNumber,
-							maxAttempts: defaultMaxAttemptsForSubmitFailures,
-						};
-						assert.deepStrictEqual(
-							eventProps,
-							expectedEventProps,
-							`Summarize event for attempt ${attemptNumber} not as expected`,
-						);
+						assert.strictEqual(eventProps.result, "failure");
+						assert.strictEqual(eventProps.currentAttempt, attemptNumber);
+						assert.strictEqual(eventProps.maxAttempts, defaultMaxAttemptsForSubmitFailures);
 						summarizePromiseP = getSummarizeEventPromise();
 						// Wait for "retryAfterSeconds". The next attempt should start after this.
 						await tickAndFlushPromises(retryAfterSeconds * 1000 + 1);

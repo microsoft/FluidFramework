@@ -6,9 +6,9 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import * as path from "node:path";
 import { queue } from "async";
-import * as chalk from "chalk";
 import detectIndent from "detect-indent";
-import { readJsonSync, writeJson, writeJsonSync } from "fs-extra";
+import { readJsonSync, writeJsonSync } from "fs-extra";
+import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
@@ -25,7 +25,6 @@ import {
 	rimrafWithErrorAsync,
 } from "./utils";
 
-import { readFile } from "node:fs/promises";
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
 
@@ -72,24 +71,27 @@ interface PackageDependency {
 	depClass: "prod" | "dev" | "peer";
 }
 
+/**
+ * @deprecated Should not be used outside the build-tools package.
+ */
 export class Package {
 	private static packageCount: number = 0;
 	private static readonly chalkColor = [
-		chalk.default.red,
-		chalk.default.green,
-		chalk.default.yellow,
-		chalk.default.blue,
-		chalk.default.magenta,
-		chalk.default.cyan,
-		chalk.default.white,
-		chalk.default.grey,
-		chalk.default.redBright,
-		chalk.default.greenBright,
-		chalk.default.yellowBright,
-		chalk.default.blueBright,
-		chalk.default.magentaBright,
-		chalk.default.cyanBright,
-		chalk.default.whiteBright,
+		chalk.red,
+		chalk.green,
+		chalk.yellow,
+		chalk.blue,
+		chalk.magenta,
+		chalk.cyan,
+		chalk.white,
+		chalk.gray,
+		chalk.redBright,
+		chalk.greenBright,
+		chalk.yellowBright,
+		chalk.blueBright,
+		chalk.magentaBright,
+		chalk.cyanBright,
+		chalk.whiteBright,
 	];
 
 	private _packageJson: PackageJson;
@@ -492,40 +494,12 @@ export class Packages {
 }
 
 /**
- * Reads the contents of package.json, applies a transform function to it, then writes the results back to the source
- * file.
- *
- * @param packagePath - A path to a package.json file or a folder containing one. If the path is a directory, the
- * package.json from that directory will be used.
- * @param packageTransformer - A function that will be executed on the package.json contents before writing it
- * back to the file.
- *
- * @remarks
- *
- * The package.json is always sorted using sort-package-json.
- *
- * @internal
- */
-export function updatePackageJsonFile(
-	packagePath: string,
-	packageTransformer: (json: PackageJson) => void,
-): void {
-	packagePath = packagePath.endsWith("package.json")
-		? packagePath
-		: path.join(packagePath, "package.json");
-	const [pkgJson, indent] = readPackageJsonAndIndent(packagePath);
-
-	// Transform the package.json
-	packageTransformer(pkgJson);
-
-	writePackageJson(packagePath, pkgJson, indent);
-}
-
-/**
  * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
  * indentation.
  *
  * @internal
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export function readPackageJsonAndIndent(
 	pathToJson: string,
@@ -541,47 +515,4 @@ export function readPackageJsonAndIndent(
  */
 function writePackageJson(packagePath: string, pkgJson: PackageJson, indent: string) {
 	return writeJsonSync(packagePath, sortPackageJson(pkgJson), { spaces: indent });
-}
-
-/**
- * Reads the contents of package.json, applies a transform function to it, then writes
- * the results back to the source file.
- *
- * @param packagePath - A path to a package.json file or a folder containing one. If the
- * path is a directory, the package.json from that directory will be used.
- * @param packageTransformer - A function that will be executed on the package.json
- * contents before writing it back to the file.
- *
- * @remarks
- * The package.json is always sorted using sort-package-json.
- *
- * @internal
- */
-export async function updatePackageJsonFileAsync(
-	packagePath: string,
-	packageTransformer: (json: PackageJson) => Promise<void>,
-): Promise<void> {
-	packagePath = packagePath.endsWith("package.json")
-		? packagePath
-		: path.join(packagePath, "package.json");
-	const [pkgJson, indent] = await readPackageJsonAndIndentAsync(packagePath);
-
-	// Transform the package.json
-	await packageTransformer(pkgJson);
-
-	await writeJson(packagePath, sortPackageJson(pkgJson), { spaces: indent });
-}
-
-/**
- * Reads a package.json file from a path, detects its indentation, and returns both the JSON as an object and
- * indentation.
- */
-async function readPackageJsonAndIndentAsync(
-	pathToJson: string,
-): Promise<[json: PackageJson, indent: string]> {
-	return readFile(pathToJson, { encoding: "utf8" }).then((contents) => {
-		const indentation = detectIndent(contents).indent || "\t";
-		const pkgJson: PackageJson = JSON.parse(contents);
-		return [pkgJson, indentation];
-	});
 }

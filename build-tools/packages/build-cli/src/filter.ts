@@ -4,9 +4,9 @@
  */
 
 import path from "node:path";
-import { Package } from "@fluidframework/build-tools";
+import { type MonoRepo, Package } from "@fluidframework/build-tools";
 import { type PackageSelectionDefault, filterFlags, selectionFlags } from "./flags.js";
-import { Context, Repository } from "./library/index.js";
+import { Context } from "./library/index.js";
 import { ReleaseGroup, knownReleaseGroups } from "./releaseGroups.js";
 
 /**
@@ -29,9 +29,9 @@ export interface PackageSelectionCriteria {
 	releaseGroupRoots: ReleaseGroup[];
 
 	/**
-	 * If set, only selects the single package in this directory.
+	 * Selects a package rooted in a directory.
 	 */
-	directory?: string;
+	directory?: string[];
 
 	/**
 	 * If set, only selects packages that have changes when compared with the branch of this name.
@@ -97,7 +97,7 @@ export const parsePackageSelectionFlags = (
 			independentPackages: false,
 			releaseGroups: [],
 			releaseGroupRoots: [],
-			directory: ".",
+			directory: ["."],
 		};
 	}
 
@@ -172,67 +172,71 @@ export type PackageWithKind = Package & { kind: PackageKind };
  * @param selection - The selection criteria to use to select packages.
  * @returns An array containing the selected packages.
  */
-const selectPackagesFromContext = async (
+export async function selectPackagesFromContext(
 	context: Context,
 	selection: PackageSelectionCriteria,
-): Promise<PackageWithKind[]> => {
-	const selected: PackageWithKind[] = [];
+): Promise<PackageWithKind[]> {
+	// package name -> package
+	// If two kinds result in loading a package, the first is used.
+	const selected: Map<string, PackageWithKind> = new Map();
+	function addPackage(
+		packageJsonFileName: string,
+		group: string,
+		monoRepo?: MonoRepo,
+		additionalProperties?: {
+			kind: PackageKind;
+		},
+	): void {
+		const pkg = Package.load(packageJsonFileName, group, monoRepo, additionalProperties);
+		if (!selected.has(pkg.name)) {
+			selected.set(pkg.name, pkg);
+		}
+	}
 
 	if (selection.changedSinceBranch !== undefined) {
-		const git = new Repository({ baseDir: context.gitRepo.resolvedRoot });
-		const remote = await git.getRemote(context.originRemotePartialUrl);
+		const git = await context.getGitRepository();
+		const remote = await git.getRemote(git.upstreamRemotePartialUrl);
 		if (remote === undefined) {
-			throw new Error(`Can't find a remote with ${context.originRemotePartialUrl}`);
+			throw new Error(`Can't find a remote with ${git.upstreamRemotePartialUrl}`);
 		}
 		const { packages } = await git.getChangedSinceRef(
 			selection.changedSinceBranch,
 			remote,
 			context,
 		);
-		selected.push(
-			...packages.map((p) => {
-				const pkg = Package.load(p.packageJsonFileName, "none", undefined, {
-					kind: "packageFromDirectory" as PackageKind,
-				});
-				return pkg;
-			}),
-		);
+		for (const p of packages) {
+			addPackage(p.packageJsonFileName, "none", undefined, {
+				kind: "packageFromDirectory",
+			});
+		}
 	}
 
-	if (selection.directory !== undefined) {
-		const pkg = Package.load(
-			path.join(
-				selection.directory === "." ? process.cwd() : selection.directory,
-				"package.json",
-			),
+	for (const directory of selection.directory ?? []) {
+		addPackage(
+			path.join(directory === "." ? process.cwd() : directory, "package.json"),
 			"none",
 			undefined,
 			{
 				kind: "packageFromDirectory" as PackageKind,
 			},
 		);
-		selected.push(pkg);
 	}
 
 	// Select independent packages
 	if (selection.independentPackages === true) {
 		for (const pkg of context.independentPackages) {
-			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
-					kind: "independentPackage",
-				}),
-			);
+			addPackage(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+				kind: "independentPackage",
+			});
 		}
 	}
 
 	// Select release group packages
 	for (const rg of selection.releaseGroups) {
 		for (const pkg of context.packagesInReleaseGroup(rg)) {
-			selected.push(
-				Package.load(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
-					kind: "releaseGroupChildPackage",
-				}),
-			);
+			addPackage(pkg.packageJsonFileName, pkg.group, pkg.monoRepo, {
+				kind: "releaseGroupChildPackage",
+			});
 		}
 	}
 
@@ -248,12 +252,13 @@ const selectPackagesFromContext = async (
 		}
 
 		const dir = packages[0].monoRepo.directory;
-		const pkg = Package.loadDir(dir, rg);
-		selected.push(Package.loadDir(dir, rg, pkg.monoRepo, { kind: "releaseGroupRootPackage" }));
+		addPackage(path.join(dir, "package.json"), rg, packages[0].monoRepo, {
+			kind: "releaseGroupRootPackage",
+		});
 	}
 
-	return selected;
-};
+	return [...selected.values()];
+}
 
 /**
  * Selects packages from the context based on the selection. The selected packages will be filtered by the filter

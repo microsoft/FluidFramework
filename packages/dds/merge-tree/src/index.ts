@@ -58,19 +58,13 @@ export {
 export {
 	BaseSegment,
 	CollaborationWindow,
-	debugMarkerToString,
 	IJSONMarkerSegment,
-	IMergeNodeCommon,
-	IMoveInfo,
-	IRemovalInfo,
+	segmentIsRemoved,
 	ISegment,
 	ISegmentAction,
 	Marker,
 	reservedMarkerIdKey,
 	reservedMarkerSimpleTypeKey,
-	SegmentGroup,
-	toRemovalInfo,
-	ObliterateInfo,
 	ISegmentInternal,
 } from "./mergeTreeNodes.js";
 export {
@@ -88,6 +82,7 @@ export {
 	createObliterateRangeOp,
 } from "./opBuilder.js";
 export {
+	AdjustParams,
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeAnnotateMsg,
@@ -97,6 +92,7 @@ export {
 	IMergeTreeInsertMsg,
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
+	IMergeTreeAnnotateAdjustMsg,
 	IRelativePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
@@ -124,6 +120,7 @@ export {
 	reservedTileLabelsKey,
 } from "./referencePositions.js";
 export {
+	PropsOrAdjust,
 	copyPropertiesAndManager,
 	PropertiesManager,
 	PropertiesRollback,

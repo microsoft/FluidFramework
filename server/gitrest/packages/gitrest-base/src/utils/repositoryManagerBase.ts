@@ -11,14 +11,44 @@ import {
 	GitRestLumberEventName,
 	GitRestRepositoryApiCategory,
 } from "./gitrestTelemetryDefinitions";
+import sizeof from "object-sizeof";
+import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
+export interface IRepositoryManagerBaseOptions {
+	/**
+	 * Maximum allowed size of a blob in bytes.
+	 * If not provided or limit is less than 1, no size limit is enforced.
+	 */
+	maxBlobSizeBytes: number;
+	/**
+	 * Flag to enable repository manager metrics.
+	 * When enabled, metrics are generated for each repository manager API call.
+	 * If not provided, defaults to false.
+	 */
+	enableRepositoryManagerMetrics: boolean;
+	/**
+	 * Sampling period for repository manager metrics when enabled.
+	 * If not provided, no sampling is performed and all metrics are emitted.
+	 * If provided, metrics are sampled at the specified period (e.g. 1/N calls where N is the sampling period).
+	 */
+	apiMetricsSamplingPeriod: number;
+}
 
 export abstract class RepositoryManagerBase implements IRepositoryManager {
+	protected readonly apiMetricsSamplingPeriod: number | undefined;
+	protected readonly enableRepositoryManagerMetrics: boolean;
+	protected readonly maxBlobSizeBytes: number | undefined;
+
 	constructor(
 		protected readonly directory: string,
 		protected readonly lumberjackBaseProperties: Record<string, any>,
-		private readonly enableRepositoryManagerMetrics: boolean = false,
-		private readonly apiMetricsSamplingPeriod?: number,
-	) {}
+		options: Partial<IRepositoryManagerBaseOptions>,
+	) {
+		this.apiMetricsSamplingPeriod = options.apiMetricsSamplingPeriod;
+		this.enableRepositoryManagerMetrics = options.enableRepositoryManagerMetrics ?? false;
+		this.maxBlobSizeBytes = options.maxBlobSizeBytes;
+	}
 
 	protected abstract getCommitCore(sha: string): Promise<git.ICommit>;
 	protected abstract getCommitsCore(
@@ -160,6 +190,18 @@ export abstract class RepositoryManagerBase implements IRepositoryManager {
 	public async createBlob(
 		createBlobParams: git.ICreateBlobParams,
 	): Promise<git.ICreateBlobResponse> {
+		if (
+			this.maxBlobSizeBytes !== undefined &&
+			this.maxBlobSizeBytes > 0 &&
+			sizeof(createBlobParams.content) > this.maxBlobSizeBytes
+		) {
+			Lumberjack.error("Blob size exceeds the limit.", {
+				...this.lumberjackBaseProperties,
+				maxBlobSizeBytes: this.maxBlobSizeBytes,
+				contentSize: sizeof(createBlobParams.content),
+			});
+			throw new NetworkError(413, "Blob size exceeds the limit.");
+		}
 		return executeApiWithMetric(
 			async () => this.createBlobCore(createBlobParams),
 			GitRestLumberEventName.RepositoryManager,

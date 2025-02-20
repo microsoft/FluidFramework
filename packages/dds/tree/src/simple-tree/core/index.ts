@@ -10,8 +10,9 @@ export {
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
-	tryGetTreeNodeFromMapNode,
+	unhydratedFlexTreeNodeToTreeNode,
 	getOrCreateInnerNode,
+	treeNodeFromAnchor,
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {

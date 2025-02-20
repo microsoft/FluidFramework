@@ -24,7 +24,7 @@ import { JsonPrimitive, JsonUnion } from "../../../jsonDomainSchema.js";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
-const schema2 = toStoredSchema(new SchemaFactory("testSchemas").optional(JsonPrimitive));
+const schema2 = toStoredSchema(SchemaFactory.optional(JsonPrimitive));
 
 const testCases: EncodingTestData<TreeStoredSchema, Format> = {
 	successes: [

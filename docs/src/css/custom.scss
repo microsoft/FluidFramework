@@ -1,0 +1,59 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a CSS framework designed to
+ * work well for content-centric websites.
+ */
+
+/* You can override the default Infima variables here. */
+:root {
+	--ifm-color-primary: #558cf4;
+	--ifm-color-primary-dark: #3300aa;
+	--ifm-color-primary-darker: #3000a1;
+	--ifm-color-primary-darkest: #280084;
+	--ifm-color-primary-light: #3f00d0;
+	--ifm-color-primary-lighter: #4200d9;
+	--ifm-color-primary-lightest: #4a00f6;
+	--ifm-code-font-size: 95%;
+	--docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+
+	// Search bar
+	--ifm-navbar-search-input-placeholder-color: dimgray;
+	--ifm-navbar-search-input-color: black;
+
+	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
+	--ifm-navbar-search-input-icon: url("@site/static/assets/search-icon-light.svg");
+
+	//Text color for classes in code blocks. Ref: https://prismjs.com/tokens.html
+	--ifm-attr-name-color: #345094;
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme="dark"] {
+	--ifm-color-primary: #00bcf2;
+	--ifm-color-primary-dark: #00b3e6;
+	--ifm-color-primary-darker: #00a9da;
+	--ifm-color-primary-darkest: #00a0ce;
+	--ifm-color-primary-light: #0bc9ff;
+	--ifm-color-primary-lighter: #23ceff;
+	--ifm-color-primary-lightest: #3cd3ff;
+	--docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+
+	// Search bar
+	--ifm-navbar-search-input-placeholder-color: lightgray;
+	--ifm-navbar-search-input-color: white;
+
+	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
+	--ifm-navbar-search-input-icon: url("@site/static/assets/search-icon-dark.svg");
+
+	//Text color for classes in code blocks
+	--ifm-attr-name-color: #00b3e6;
+}
+
+.token.attr-name {
+	color: var(--ifm-attr-name-color) !important;
+}
+
+// Applies text-decoration to all links in markdown/MDX content
+.markdown a {
+	text-decoration: underline;
+}

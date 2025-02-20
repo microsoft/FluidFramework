@@ -6,6 +6,7 @@
 import * as isomorphicGit from "isomorphic-git";
 import * as resources from "@fluidframework/gitresources";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 type IsomorphicGitTreeEntryType = "commit" | "blob" | "tree";
 type IsomorphicGitTagObjectType = IsomorphicGitTreeEntryType | "tag";
@@ -53,6 +54,7 @@ function getIsoGitAuthorOrCommitterOrTaggerFromCommitOrTag(
 	| isomorphicGit.TagObject["tagger"] {
 	const date = Date.parse(data.date);
 	if (isNaN(date)) {
+		Lumberjack.error("Invalid input date");
 		throw new NetworkError(400, "Invalid input");
 	}
 
@@ -79,7 +81,7 @@ export function commitToICommit(commitResult: isomorphicGit.ReadCommitResult): r
 		parents:
 			commitResult.commit.parent && commitResult.commit.parent.length > 0
 				? commitResult.commit.parent.map((parent) => oidToCommitHash(parent))
-				: null,
+				: [],
 		sha: commitResult.oid,
 		tree: {
 			sha: commitResult.commit.tree,
@@ -97,7 +99,7 @@ export function iCreateCommitParamsToCommitObject(
 	commitParams: resources.ICreateCommitParams,
 ): isomorphicGit.CommitObject {
 	const parent =
-		commitParams.parents && commitParams.parents.length > 0 ? commitParams.parents : null;
+		commitParams.parents && commitParams.parents.length > 0 ? commitParams.parents : [];
 	return {
 		message: commitParams.message,
 		tree: commitParams.tree,

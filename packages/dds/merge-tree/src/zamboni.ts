@@ -10,15 +10,15 @@ import { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	type MergeBlock,
+	assignChild,
 	IMergeNode,
-	ISegment,
+	ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
 	seqLTE,
-	toMoveInfo,
-	toRemovalInfo,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
+import { toRemovalInfo, toMoveInfo, removeMergeNodeInfo } from "./segmentInfos.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {
@@ -35,6 +35,9 @@ export function zamboniSegments(
 
 	for (let i = 0; i < zamboniSegmentsMaxCount; i++) {
 		let segmentToScour = mergeTree.segmentsToScour.peek()?.value;
+
+		segmentToScour?.segment?.propertyManager?.updateMsn(mergeTree.collabWindow.minSeq);
+
 		if (!segmentToScour || segmentToScour.maxSeq > mergeTree.collabWindow.minSeq) {
 			break;
 		}
@@ -57,7 +60,7 @@ export function zamboniSegments(
 				block.childCount = newChildCount;
 				block.children = childrenCopy;
 				for (let j = 0; j < newChildCount; j++) {
-					block.assignChild(childrenCopy[j], j, false);
+					assignChild(block, childrenCopy[j], j, false);
 				}
 
 				if (underflow(block) && block.parent) {
@@ -107,7 +110,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 			const packedBlock = mergeTree.makeBlock(nodeCount);
 			for (let packedNodeIndex = 0; packedNodeIndex < nodeCount; packedNodeIndex++) {
 				const nodeToPack = holdNodes[childrenPackedCount++];
-				packedBlock.assignChild(nodeToPack, packedNodeIndex, false);
+				assignChild(packedBlock, nodeToPack, packedNodeIndex, false);
 			}
 			packedBlock.parent = parent;
 			packedBlocks[nodeIndex] = packedBlock;
@@ -115,7 +118,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 		}
 		parent.children = packedBlocks;
 		for (let j = 0; j < childCount; j++) {
-			parent.assignChild(packedBlocks[j], j, false);
+			assignChild(parent, packedBlocks[j], j, false);
 		}
 		parent.childCount = childCount;
 	} else {
@@ -133,7 +136,7 @@ export function packParent(parent: MergeBlock, mergeTree: MergeTree): void {
 function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTree): void {
 	// The previous segment is tracked while scouring for the purposes of merging adjacent segments
 	// when possible.
-	let prevSegment: ISegment | undefined;
+	let prevSegment: ISegmentPrivate | undefined;
 	for (let k = 0; k < node.childCount; k++) {
 		// TODO Non null asserting, why is this not null?
 		const childNode = node.children[k]!;
@@ -161,19 +164,17 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 					},
 					undefined,
 				);
-
-				segment.parent = undefined;
-
 				if (Marker.is(segment)) {
 					mergeTree.unlinkMarker(segment);
 				}
+				removeMergeNodeInfo(segment);
 			} else {
 				holdNodes.push(segment);
 			}
 
 			prevSegment = undefined;
 		} else {
-			if (segment.seq! <= mergeTree.collabWindow.minSeq) {
+			if (segment.seq <= mergeTree.collabWindow.minSeq) {
 				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&
@@ -191,8 +192,8 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 						undefined,
 					);
 
-					segment.parent = undefined;
 					for (const tg of segment.trackingCollection.trackingGroups) tg.unlink(segment);
+					removeMergeNodeInfo(segment);
 				} else {
 					holdNodes.push(segment);
 					prevSegment = segmentHasPositiveLength ? segment : undefined;

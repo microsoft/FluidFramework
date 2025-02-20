@@ -17,7 +17,7 @@ import {
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
-	getAllowedContentIncompatibilities,
+	getAllowedContentDiscrepancies,
 	allowsRepoSuperset,
 	isRepoSuperset as isRepoSupersetOriginal,
 	type FlexFieldKind,
@@ -117,41 +117,53 @@ describe("Schema Discrepancies", () => {
 			root,
 		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(objectNodeSchema, mapNodeSchema), [
-			{
-				identifier: testTreeNodeIdentifier,
-				mismatch: "nodeKind",
-				view: "object",
-				stored: "map",
-			},
-		]);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(objectNodeSchema, mapNodeSchema)),
+			[
+				{
+					identifier: testTreeNodeIdentifier,
+					mismatch: "nodeKind",
+					view: "object",
+					stored: "map",
+				},
+			],
+		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema, leafNodeSchema), [
-			{
-				identifier: testTreeNodeIdentifier,
-				mismatch: "nodeKind",
-				view: "map",
-				stored: "leaf",
-			},
-		]);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(mapNodeSchema, leafNodeSchema)),
+			[
+				{
+					identifier: testTreeNodeIdentifier,
+					mismatch: "nodeKind",
+					view: "map",
+					stored: "leaf",
+				},
+			],
+		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(leafNodeSchema, objectNodeSchema), [
-			{
-				identifier: testTreeNodeIdentifier,
-				mismatch: "nodeKind",
-				view: "leaf",
-				stored: "object",
-			},
-		]);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(leafNodeSchema, objectNodeSchema)),
+			[
+				{
+					identifier: testTreeNodeIdentifier,
+					mismatch: "nodeKind",
+					view: "leaf",
+					stored: "object",
+				},
+			],
+		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema, mapNodeSchema), []);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(mapNodeSchema, mapNodeSchema)),
+			[],
+		);
 
 		/**
 		 * Below is an inconsistency between 'isRepoSuperset' and 'allowsRepoSuperset'. The 'isRepoSuperset' will
 		 * halt further validation if an inconsistency in `nodeKind` is found. However, the current logic of
 		 * 'allowsRepoSuperset' permits relaxing an object node to a map node, which allows for a union of all types
 		 * permitted on the object node's fields. It is unclear if this behavior is desired, as
-		 * 'getAllowedContentIncompatibilities' currently does not support it.
+		 * 'getAllowedContentDiscrepancies' currently does not support it.
 		 *
 		 * TODO: If we decide to support this behavior, we will need better e2e tests for this scenario. Additionally,
 		 * we may need to adjust the encoding of map nodes and object nodes to ensure consistent encoding.
@@ -199,35 +211,45 @@ describe("Schema Discrepancies", () => {
 			root1,
 		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema1, mapNodeSchema2), [
-			{
-				identifier: undefined,
-				mismatch: "fieldKind",
-				view: "Optional",
-				stored: "Value",
-			},
-			{
-				identifier: testTreeNodeIdentifier,
-				mismatch: "allowedTypes",
-				view: [],
-				stored: ["string"],
-			},
-			{
-				identifier: testTreeNodeIdentifier,
-				mismatch: "fieldKind",
-				view: "Value",
-				stored: "Optional",
-			},
-		]);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(mapNodeSchema1, mapNodeSchema2)),
+			[
+				{
+					identifier: undefined,
+					fieldKey: undefined,
+					mismatch: "fieldKind",
+					view: "Optional",
+					stored: "Value",
+				},
+				{
+					identifier: testTreeNodeIdentifier,
+					fieldKey: undefined,
+					mismatch: "allowedTypes",
+					view: [],
+					stored: ["string"],
+				},
+				{
+					identifier: testTreeNodeIdentifier,
+					fieldKey: undefined,
+					mismatch: "fieldKind",
+					view: "Value",
+					stored: "Optional",
+				},
+			],
+		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema2, mapNodeSchema3), [
-			{
-				identifier: testTreeNodeIdentifier,
-				mismatch: "allowedTypes",
-				view: ["number"],
-				stored: ["array"],
-			},
-		]);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(mapNodeSchema2, mapNodeSchema3)),
+			[
+				{
+					identifier: testTreeNodeIdentifier,
+					fieldKey: undefined,
+					mismatch: "allowedTypes",
+					view: ["number"],
+					stored: ["array"],
+				},
+			],
+		);
 
 		validateStrictSuperset(mapNodeSchema4, mapNodeSchema1);
 	});
@@ -265,7 +287,7 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			getAllowedContentIncompatibilities(objectNodeSchema1, objectNodeSchema2),
+			Array.from(getAllowedContentDiscrepancies(objectNodeSchema1, objectNodeSchema2)),
 			[
 				{
 					identifier: testTreeNodeIdentifier,
@@ -282,20 +304,23 @@ describe("Schema Discrepancies", () => {
 			],
 		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(mapNodeSchema, objectNodeSchema2), [
-			{
-				identifier: testTreeNodeIdentifier,
-				mismatch: "nodeKind",
-				view: "map",
-				stored: undefined,
-			},
-			{
-				identifier: "tree2",
-				mismatch: "nodeKind",
-				view: undefined,
-				stored: "object",
-			},
-		]);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(mapNodeSchema, objectNodeSchema2)),
+			[
+				{
+					identifier: testTreeNodeIdentifier,
+					mismatch: "nodeKind",
+					view: "map",
+					stored: undefined,
+				},
+				{
+					identifier: "tree2",
+					mismatch: "nodeKind",
+					view: undefined,
+					stored: "object",
+				},
+			],
+		);
 	});
 
 	it("Differing fields on object node schema", () => {
@@ -321,28 +346,31 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			getAllowedContentIncompatibilities(objectNodeSchema1, objectNodeSchema2),
+			Array.from(getAllowedContentDiscrepancies(objectNodeSchema1, objectNodeSchema2)),
 			[
 				{
 					identifier: testTreeNodeIdentifier,
 					mismatch: "fields",
 					differences: [
 						{
-							identifier: "x",
+							fieldKey: "x",
+							identifier: testTreeNodeIdentifier,
 							mismatch: "allowedTypes",
 							view: ["number"],
 							stored: ["string"],
 						},
 						{
-							identifier: "x",
+							fieldKey: "x",
+							identifier: testTreeNodeIdentifier,
 							mismatch: "fieldKind",
 							view: "Value",
 							stored: "Optional",
 						},
 						{
-							identifier: "y",
+							fieldKey: "y",
+							identifier: testTreeNodeIdentifier,
 							mismatch: "fieldKind",
-							view: undefined,
+							view: "Forbidden",
 							stored: "Optional",
 						},
 					],
@@ -370,16 +398,22 @@ describe("Schema Discrepancies", () => {
 			root,
 		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(leafNodeSchema1, leafNodeSchema2), [
-			{
-				identifier: testTreeNodeIdentifier,
-				mismatch: "valueSchema",
-				view: ValueSchema.Number,
-				stored: ValueSchema.Boolean,
-			},
-		]);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(leafNodeSchema1, leafNodeSchema2)),
+			[
+				{
+					identifier: testTreeNodeIdentifier,
+					mismatch: "valueSchema",
+					view: ValueSchema.Number,
+					stored: ValueSchema.Boolean,
+				},
+			],
+		);
 
-		assert.deepEqual(getAllowedContentIncompatibilities(leafNodeSchema1, leafNodeSchema3), []);
+		assert.deepEqual(
+			Array.from(getAllowedContentDiscrepancies(leafNodeSchema1, leafNodeSchema3)),
+			[],
+		);
 	});
 
 	describe("Special types of tree schemas", () => {
@@ -404,7 +438,7 @@ describe("Schema Discrepancies", () => {
 		);
 
 		it("neverTree", () => {
-			assert.deepEqual(getAllowedContentIncompatibilities(neverTree, neverTree2), [
+			assert.deepEqual(Array.from(getAllowedContentDiscrepancies(neverTree, neverTree2)), [
 				{
 					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
@@ -413,29 +447,34 @@ describe("Schema Discrepancies", () => {
 				},
 			]);
 
-			assert.deepEqual(getAllowedContentIncompatibilities(neverTree, mapNodeSchema), [
+			assert.deepEqual(Array.from(getAllowedContentDiscrepancies(neverTree, mapNodeSchema)), [
 				{
 					identifier: testTreeNodeIdentifier,
+					fieldKey: undefined,
 					mismatch: "allowedTypes",
 					view: [],
 					stored: ["number"],
 				},
 			]);
 
-			assert.deepEqual(getAllowedContentIncompatibilities(neverTree2, objectNodeSchema), [
-				{
-					identifier: testTreeNodeIdentifier,
-					mismatch: "fields",
-					differences: [
-						{
-							identifier: "x",
-							mismatch: "allowedTypes",
-							view: [],
-							stored: ["number"],
-						},
-					],
-				},
-			]);
+			assert.deepEqual(
+				Array.from(getAllowedContentDiscrepancies(neverTree2, objectNodeSchema)),
+				[
+					{
+						identifier: testTreeNodeIdentifier,
+						mismatch: "fields",
+						differences: [
+							{
+								identifier: testTreeNodeIdentifier,
+								fieldKey: "x",
+								mismatch: "allowedTypes",
+								view: [],
+								stored: ["number"],
+							},
+						],
+					},
+				],
+			);
 		});
 
 		it("emptyTree", () => {
@@ -446,51 +485,56 @@ describe("Schema Discrepancies", () => {
 				root,
 			);
 
-			assert.deepEqual(getAllowedContentIncompatibilities(emptyTree, emptyLocalFieldTree), [
-				{
-					identifier: testTreeNodeIdentifier,
-					mismatch: "fields",
-					differences: [
-						{
-							identifier: "x",
-							mismatch: "fieldKind",
-							view: undefined,
-							stored: "Forbidden",
-						},
-					],
-				},
-			]);
-
-			assert.deepEqual(getAllowedContentIncompatibilities(emptyTree, objectNodeSchema), [
-				{
-					identifier: testTreeNodeIdentifier,
-					mismatch: "fields",
-					differences: [
-						{
-							identifier: "x",
-							mismatch: "fieldKind",
-							view: undefined,
-							stored: "Value",
-						},
-					],
-				},
-			]);
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, emptyTree, emptyLocalFieldTree),
+				true,
+			);
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, emptyLocalFieldTree, emptyTree),
+				true,
+			);
 
 			assert.deepEqual(
-				getAllowedContentIncompatibilities(emptyLocalFieldTree, objectNodeSchema),
+				Array.from(getAllowedContentDiscrepancies(emptyTree, emptyLocalFieldTree)),
+				[],
+			);
+
+			assert.deepEqual(
+				Array.from(getAllowedContentDiscrepancies(emptyTree, objectNodeSchema)),
 				[
 					{
 						identifier: testTreeNodeIdentifier,
 						mismatch: "fields",
 						differences: [
 							{
-								identifier: "x",
+								identifier: testTreeNodeIdentifier,
+								fieldKey: "x",
+								mismatch: "fieldKind",
+								view: "Forbidden",
+								stored: "Value",
+							},
+						],
+					},
+				],
+			);
+
+			assert.deepEqual(
+				Array.from(getAllowedContentDiscrepancies(emptyLocalFieldTree, objectNodeSchema)),
+				[
+					{
+						identifier: testTreeNodeIdentifier,
+						mismatch: "fields",
+						differences: [
+							{
+								identifier: testTreeNodeIdentifier,
+								fieldKey: "x",
 								mismatch: "allowedTypes",
 								view: [],
 								stored: ["number"],
 							},
 							{
-								identifier: "x",
+								identifier: testTreeNodeIdentifier,
+								fieldKey: "x",
 								mismatch: "fieldKind",
 								view: "Forbidden",
 								stored: "Value",

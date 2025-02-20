@@ -9,6 +9,7 @@
  */
 import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
+
 import type { HeadingNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
@@ -50,7 +51,7 @@ export function headingToHtml(headingNode: HeadingNode, context: TransformationC
 	} else {
 		const transformedChildren: HastElement[] = [];
 		if (headingNode.id !== undefined) {
-			transformedChildren.push(h("a", { name: headingNode.id }));
+			transformedChildren.push(h("a", { id: headingNode.id }));
 		}
 		transformedChildren.push(
 			transformChildrenUnderTag({ name: "b" }, headingNode.children, context),

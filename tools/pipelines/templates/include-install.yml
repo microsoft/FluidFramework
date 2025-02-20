@@ -15,12 +15,13 @@ parameters:
 
 steps:
   - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-    - template: include-install-pnpm.yml
+    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
         buildDirectory: ${{ parameters.buildDirectory }}
 
   - task: Bash@3
     displayName: Install dependencies
+    retryCountOnTaskFailure: 4
     inputs:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}

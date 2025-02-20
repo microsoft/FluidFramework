@@ -1,5 +1,40 @@
 # @fluidframework/telemetry-utils
 
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+### Minor Changes
+
+-   The MockLogger class has been removed ([#23473](https://github.com/microsoft/FluidFramework/pull/23473)) [237f04204d](https://github.com/microsoft/FluidFramework/commit/237f04204d2ebd1cf7d80a5ec97fffcd5d8a55a4)
+
+    The `MockLogger` class, which was previously part of the alpha+legacy API in `@fluidframework/telemetry-utils`, has
+    been removed.
+    No replacement is provided. This class was only intended for use in testing scenarios and should be trivial to
+    re-implement in any codebase that still needs it.
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+Dependency updates only.
+
+## 2.10.0
+
+Dependency updates only.
+
 ## 2.5.0
 
 Dependency updates only.

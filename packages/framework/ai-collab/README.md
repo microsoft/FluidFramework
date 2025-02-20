@@ -1,4 +1,4 @@
-# @fluid-experimental/ai-collab
+# @fluidframework/ai-collab
 
 ## Description
 
@@ -85,7 +85,7 @@ export class PlannerAppState extends sf.object("PlannerAppState", {
 ### Example 1: Collaborate with AI
 
 ```ts
-import { aiCollab } from "@fluid-experimental/ai-collab";
+import { aiCollab } from "@fluidframework/ai-collab/alpha";
 import { PlannerAppState } from "./types.ts"
 // This is not a real file, this is meant to represent how you initialize your app data.
 import { initializeAppState } from "./yourAppInitializationFile.ts"
@@ -210,6 +210,7 @@ When making such a request please include if the configuration already works (an
 ### Supported Runtimes
 
 -   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 
 ### Supported Tools

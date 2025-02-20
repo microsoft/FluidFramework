@@ -62,7 +62,7 @@ export function initializeForest(
 	if (visitAnchors) {
 		assert(forest.anchors.isEmpty(), 0x9b7 /* anchor set must be empty */);
 		const anchorVisitor = forest.anchors.acquireVisitor();
-		visitor = combineVisitors([visitor, anchorVisitor], [anchorVisitor]);
+		visitor = combineVisitors([visitor, anchorVisitor]);
 	}
 
 	// any detached trees built here are immediately attached so the revision used here doesn't matter

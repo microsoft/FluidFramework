@@ -6,7 +6,9 @@
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
+	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaFieldMap,
 	EncodedRevisionTag,
@@ -14,11 +16,34 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import type { IdAllocator, Invariant } from "../../util/index.js";
-import type { MemoizedIdRangeAllocator } from "../memoizedIdRangeAllocator.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
+
+export type NestedChangesIndices = [
+	NodeId,
+	number | undefined /* inputIndex */,
+	number | undefined /* outputIndex */,
+][];
+
+/**
+ * The return value of calling {@link FieldChangeHandler.intoDelta}.
+ */
+export interface FieldChangeDelta {
+	/**
+	 * {@inheritdoc DeltaFieldChanges}
+	 */
+	readonly local?: DeltaFieldChanges;
+	/**
+	 * {@inheritdoc DeltaRoot.global}
+	 */
+	readonly global?: readonly DeltaDetachedNodeChanges[];
+	/**
+	 * {@inheritdoc DeltaRoot.rename}
+	 */
+	readonly rename?: readonly DeltaDetachedNodeRename[];
+}
 
 /**
  * Functionality provided by a field kind which will be composed with other `FieldChangeHandler`s to
@@ -39,11 +64,7 @@ export interface FieldChangeHandler<
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
 	readonly editor: TEditor;
-	intoDelta(
-		change: TChangeset,
-		deltaFromChild: ToDelta,
-		idAllocator: MemoizedIdRangeAllocator,
-	): DeltaFieldChanges;
+	intoDelta(change: TChangeset, deltaFromChild: ToDelta): FieldChangeDelta;
 	/**
 	 * Returns the set of removed roots that should be in memory for the given change to be applied.
 	 * A removed root is relevant if any of the following is true:
@@ -75,13 +96,16 @@ export interface FieldChangeHandler<
 	 * @param change - The field change to get the child changes from.
 	 *
 	 * @returns The set of `NodeId`s that correspond to nested changes in the given `change`.
-	 * Each `NodeId` is associated with the index of the node in the field in the input context of the changeset
-	 * (or `undefined` if the node is not attached in the input context).
+	 * Each `NodeId` is associated with the following:
+	 * - index of the node in the field in the input context of the changeset (or `undefined` if the node is not
+	 * attached in the input context).
+	 * - index of the node in the field in the output context of the changeset (or `undefined` if the node is not
+	 * attached in the output context).
 	 * For all returned entries where the index is defined,
 	 * the indices are are ordered from smallest to largest (with no duplicates).
 	 * The returned array is owned by the caller.
 	 */
-	getNestedChanges(change: TChangeset): [NodeId, number | undefined][];
+	getNestedChanges(change: TChangeset): NestedChangesIndices;
 
 	/**
 	 * @returns A list of all cross-field keys contained in the change.
@@ -177,9 +201,13 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 
 export interface FieldEditor<TChangeset> {
 	/**
-	 * Creates a changeset which represents the given `change` to the child at `childIndex` of this editor's field.
+	 * Creates a changeset which represents the given changes to the children of this editor's field.
+	 * For each element in the given iterable
+	 * - The number represents the index of the child node in the field.
+	 * - The `NodeId` represents the nested changes for that child node.
+	 * Note: The indices in the iterable must be ordered from smallest to largest (with no duplicates).
 	 */
-	buildChildChange(childIndex: number, change: NodeId): TChangeset;
+	buildChildChanges(changes: Iterable<[index: number, change: NodeId]>): TChangeset;
 }
 
 /**

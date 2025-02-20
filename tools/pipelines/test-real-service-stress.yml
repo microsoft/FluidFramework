@@ -21,12 +21,10 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: absolutePathToTelemetryGenerator
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
-  readonly: true
 - name: testPackage
   value: "@fluid-internal/test-service-load"
   readonly: true
@@ -40,11 +38,11 @@ variables:
 lockBehavior: sequential
 stages:
   # stress tests odsp
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_odsp
       stageDisplayName: Stress tests - Odsp
-      poolBuild: Large
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -61,11 +59,11 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests odsp dogfood
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_odspdf
       stageDisplayName: Stress tests - Odspdf
-      poolBuild: Large
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -82,11 +80,11 @@ stages:
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests tinylicious
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_tinylicious
       stageDisplayName: Stress tests - tinylicious
-      poolBuild: Large
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -101,12 +99,12 @@ stages:
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
 
-  # stress tests frs
-  - template: templates/include-test-real-service.yml
+  # stress tests AFR
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_frs
-      stageDisplayName: Stress tests - frs
-      poolBuild: Large
+      stageDisplayName: Stress tests - AFR
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)
@@ -121,12 +119,12 @@ stages:
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
-  # stress tests frs canary
-  - template: templates/include-test-real-service.yml
+  # stress tests AFR canary
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: stress_tests_frs_canary
-      stageDisplayName: Stress tests - frs canary
-      poolBuild: Large
+      stageDisplayName: Stress tests - AFR canary
+      poolBuild: Large-eastus2
       testPackage: ${{ variables.testPackage }}
       testWorkspace: ${{ variables.testWorkspace }}
       artifactBuildId: $(resources.pipeline.client.runID)

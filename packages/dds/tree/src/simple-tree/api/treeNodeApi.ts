@@ -24,7 +24,7 @@ import {
 } from "../leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "../../events/index.js";
+import type { Off } from "@fluidframework/core-interfaces";
 import {
 	getKernel,
 	isTreeNode,
@@ -174,7 +174,7 @@ export const treeNodeApi: TreeNodeApi = {
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail(`Could not find stored key '${field}' in schema.`),
+									fail("Could not find stored key in schema."),
 							),
 						);
 						listener({ changedProperties });

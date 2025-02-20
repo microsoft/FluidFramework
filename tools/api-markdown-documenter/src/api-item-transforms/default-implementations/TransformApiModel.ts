@@ -6,7 +6,7 @@
 import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
 import { ParagraphNode, SectionNode, SpanNode } from "../../documentation-domain/index.js";
-import { type ApiItemTransformationConfiguration } from "../configuration/index.js";
+import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createTableWithHeading } from "../helpers/index.js";
 
 /**
@@ -14,7 +14,7 @@ import { createTableWithHeading } from "../helpers/index.js";
  */
 export function transformApiModel(
 	apiModel: ApiModel,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): SectionNode[] {
 	if (apiModel.packages.length === 0) {
 		// If no packages under model, print simple note.
@@ -30,9 +30,7 @@ export function transformApiModel(
 	}
 
 	// Filter out packages not wanted per user config
-	const filteredPackages = apiModel.packages.filter(
-		(apiPackage) => !config.skipPackage(apiPackage),
-	);
+	const filteredPackages = apiModel.packages.filter((apiPackage) => !config.exclude(apiPackage));
 
 	// Render packages table
 	const packagesTableSection = createTableWithHeading(

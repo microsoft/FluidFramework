@@ -445,7 +445,7 @@ export class DocumentDeltaConnection
 		this.removeTrackedListeners();
 
 		// Clear the connection/socket before letting the deltaManager/connection manager know about the disconnect.
-		this.disconnectCore();
+		this.disconnectCore(err);
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
@@ -455,7 +455,7 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore() {
+	protected disconnectCore(err: IAnyDriverError) {
 		this.socket.disconnect();
 	}
 

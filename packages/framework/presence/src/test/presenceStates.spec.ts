@@ -5,11 +5,13 @@
 
 import type { IPresence } from "../presence.js";
 
+import { addControlsTests } from "./broadcastControlsTests.js";
+
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluid-experimental/presence/internal/core-interfaces";
-import type { InternalTypes } from "@fluid-experimental/presence/internal/exposedInternalTypes";
+} from "@fluidframework/presence/internal/core-interfaces";
+import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 
 describe("Presence", () => {
 	describe("PresenceStates", () => {
@@ -17,6 +19,10 @@ describe("Presence", () => {
 		 * See {@link checkCompiles} below
 		 */
 		it("API use compiles", () => {});
+
+		addControlsTests((presence, controlSettings) => {
+			return presence.getStates("name:testWorkspaceA", {}, controlSettings);
+		});
 	});
 });
 

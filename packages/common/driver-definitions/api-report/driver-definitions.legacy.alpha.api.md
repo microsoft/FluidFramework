@@ -70,7 +70,7 @@ export enum FileMode {
 }
 
 // @alpha (undocumented)
-export type FiveDaysMs = 432000000;
+export type FiveDaysMs = 432_000_000;
 
 // @alpha
 export interface IAnyDriverError extends Omit<IDriverErrorBase, "errorType"> {
@@ -600,7 +600,6 @@ export interface ISummaryProposal {
 // @public
 export interface ISummaryTree {
     groupId?: string;
-    // (undocumented)
     tree: {
         [path: string]: SummaryObject;
     };

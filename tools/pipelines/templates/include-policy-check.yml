@@ -28,7 +28,7 @@ stages:
 - stage: run_checks
   dependsOn: [] # Has no prereqs
   displayName: Policy checks
-  pool: Small-1ES
+  pool: Small-eastus2
   jobs:
   - job:
     displayName: Run checks
@@ -41,6 +41,7 @@ stages:
 
     - task: Bash@3
       displayName: Install dependencies
+      retryCountOnTaskFailure: 4
       inputs:
         targetType: 'inline'
         workingDirectory: ${{ parameters.buildDirectory }}
