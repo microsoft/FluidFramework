@@ -73,12 +73,12 @@ export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {}
 /**
  * D.ts bug workaround, see {@link FixRecursiveArraySchema}.
  * @privateRemarks
- * Normally this would reference JsonArray, but when combining this workaround with the other workaround, this has to reference the base type.
- * Testing for this has to be in a separate package, and is thus part of experimental/framework/tree-react-api/src/test/importer.spec.ts.
+ * In the past this this had to reference the base type (_APIExtractorWorkaroundJsonArrayBase).
+ * Testing for this in examples/utils/import-testing now shows it has to reference JsonArray instead..
  * @system @alpha
  */
 export declare const _RecursiveArrayWorkaroundJsonArray: FixRecursiveArraySchema<
-	typeof _APIExtractorWorkaroundJsonArrayBase
+	typeof JsonArray
 >;
 
 /**
