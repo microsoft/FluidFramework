@@ -68,7 +68,7 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 				},
 			},
 			{
-				name: "obliterate exact range with zero length",
+				name: "obliterate exact range allowing zero length",
 				config: {
 					...opts,
 					operations: [
@@ -118,7 +118,7 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 // More tests pass, but due to how this farm selects ops, the tests take a while to run, and merge-tree
 // already a test suite on the longer side.
 const describeFuzz = createFuzzDescribe({ defaultTestCount: 1 });
-describeFuzz.only("MergeTree.Client Obliterate", ({ testCount }) => {
+describeFuzz("MergeTree.Client Obliterate", ({ testCount }) => {
 	if (testCount > 1) {
 		doOverRange(
 			{ min: 0, max: testCount - 1 },
