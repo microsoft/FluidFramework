@@ -7,6 +7,7 @@ import {
 	aiCollab,
 	type AiCollabErrorResponse,
 	type AiCollabSuccessResponse,
+	type ApplyEditSuccess,
 	type Difference,
 	SharedTreeBranchManager,
 } from "@fluidframework/ai-collab/alpha";
@@ -229,8 +230,25 @@ export function TaskGroup(props: {
 				},
 				planningStep: true,
 				finalReviewStep: false,
-				dumpDebugLog: true,
 				validator: aiCollabLlmTreeNodeValidator,
+				debugEventLogHandler: (event) => {
+					console.log(`Received event: ${event.eventName}`);
+					if (
+						event.eventName === "APPLIED_EDIT_SUCCESS" ||
+						event.eventName === "APPLIED_EDIT_FAILURE"
+					) {
+						console.log(
+							`${event.eventName === "APPLIED_EDIT_SUCCESS"
+								? "Succesfully applied"
+								: "Failed to appply"
+							} tree edit: ${JSON.stringify(
+								(event as unknown as ApplyEditSuccess).edit,
+								undefined,
+								2,
+							)}`,
+						);
+					}
+				},
 			});
 
 			// 3. Handle the response from the ai collaboration

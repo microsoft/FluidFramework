@@ -11,7 +11,7 @@ export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessRespo
 export interface AiCollabErrorResponse {
     readonly errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted" | "unexpectedError";
     readonly status: "failure" | "partial-failure";
-    tokensUsed: TokenUsage;
+    readonly tokensUsed: TokenUsage;
 }
 
 // @alpha

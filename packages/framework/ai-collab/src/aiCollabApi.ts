@@ -199,7 +199,7 @@ export interface AiCollabErrorResponse {
 	/**
 	 * {@inheritDoc TokenUsage}
 	 */
-	tokensUsed: TokenUsage;
+	readonly tokensUsed: TokenUsage;
 }
 
 /**

@@ -212,26 +212,26 @@ All debug events implement the `DebugEvent` interface. Some also implement `Even
 ### Event flows
 1. `CORE_EVENT_LOOP`: All events with this `eventFlowName` are used to mark the start and end of the life cycle of a single execution of the ai-collab function.
 	- Events:
-		1. `CoreEventLoopStartedDebugEvent`: Events with the `eventName` `CORE_EVENT_LOOP_STARTED`. This event marks the start of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
-		1. `CoreEventLoopCompletedDebugEvent`:Events with the `eventName` `CORE_EVENT_LOOP_COMPLETED`. This event marks the end of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
+		1. `CoreEventLoopStarted`: Events with the `eventName` `CORE_EVENT_LOOP_STARTED`. This event marks the start of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
+		1. `CoreEventLoopCompleted`:Events with the `eventName` `CORE_EVENT_LOOP_COMPLETED`. This event marks the end of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
 2. `GENERATE_PLANNING_PROMPT`: All events with this `eventFlowName` are used to mark the start, end and outcome of the LLM generating the planning prompt used to assist the LLM to plan how it will edit the SharedTree based on the user ask
 	- Events
-		1. `PlanningPromptStartedDebugEvent`:Events with the `eventName` `GENERATE_PLANNING_PROMPT_STARTED`. This event marks the start of the logic flow for generating the planning prompt. There will be exactly 1 of these events per ai-collab function execution.
+		1. `PlanningPromptStarted`:Events with the `eventName` `GENERATE_PLANNING_PROMPT_STARTED`. This event marks the start of the logic flow for generating the planning prompt. There will be exactly 1 of these events per ai-collab function execution.
 			- Child `DebugEvent`'s triggered:
 				1. `LlmApiCallDebugEvent`: In order to generate the planning prompt, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
-		1. `PlanningPromptCompletedDebugEvent`:Events with the `eventName` `GENERATE_PLANNING_PROMPT_COMPLETED`: This event marks the end and outcome of the LLM generating the planning prompt There will be exactly 1 of these events per ai-collab function execution.
+		1. `PlanningPromptCompleted`:Events with the `eventName` `GENERATE_PLANNING_PROMPT_COMPLETED`: This event marks the end and outcome of the LLM generating the planning prompt There will be exactly 1 of these events per ai-collab function execution.
 3. `GENERATE_TREE_EDIT`: All events with this `eventFlowName` are used to mark the start, end and outcome of the LLM generating a single TreeEdit that will be applied to the tree. It is expected that the LLM will generate multiple of these events when it must generate multiple tree edits to satisfy the user request
 	- Events:
-		1. `GenerateTreeEditStartedDebugEvent`: Events with the `eventName` `GENERATE_TREE_EDIT_STARTED`: This event marks the start of the logic flow for generating a single tree edit
+		1. `GenerateTreeEditStarted`: Events with the `eventName` `GENERATE_TREE_EDIT_STARTED`: This event marks the start of the logic flow for generating a single tree edit
 			- Child `DebugEvent`'s triggered:
 				1. `LlmApiCallDebugEvent`: In order to generate a Tree Edit, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
-		1. `GenerateTreeEditCompletedDebugEvent`: Events with the `eventName` `GENERATE_TREE_EDIT_COMPLETED`. This event marks the end and outcome of the LLM generating a single tree edit. Note that if the LLM returns `null` as its edit at this step, it is signaling that it things no more edits are necessary.
+		1. `GenerateTreeEditCompleted`: Events with the `eventName` `GENERATE_TREE_EDIT_COMPLETED`. This event marks the end and outcome of the LLM generating a single tree edit. Note that if the LLM returns `null` as its edit at this step, it is signaling that it things no more edits are necessary.
 4. `FINAL_REVIEW`: All events with this `eventFlowName` are used to mark the start, end and outcome of the requesting the LLM to review its work and determine whether the users ask was accomplished or more edits are needed.
 	- Events:
-		- `FinalReviewStartedDebugEvent`: Events with the `eventName` `FINAL_REVIEW_STARTED`: This event marks the start of the logic flow for requesting the LLM complete a final review of the edits it has created and whether it believes the users ask was accomplished or more edits are needed. If the LLM thinks more edits are needed, the `GENERATE_TREE_EDIT` will start again.
+		- `FinalReviewStarted`: Events with the `eventName` `FINAL_REVIEW_STARTED`: This event marks the start of the logic flow for requesting the LLM complete a final review of the edits it has created and whether it believes the users ask was accomplished or more edits are needed. If the LLM thinks more edits are needed, the `GENERATE_TREE_EDIT` will start again.
 			- Child `DebugEvent`'s triggered:
 				1. `LlmApiCallDebugEvent`: In order to conduct the final review, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
-		- `FinalReviewCompletedDebugEvent`: Events with the `eventName` `FINAL_REVIEW_COMPLETED`. This event marks the end and outcome of the logic flow for requesting the LLM complete a final review of the edits it has created.
+		- `FinalReviewCompleted`: Events with the `eventName` `FINAL_REVIEW_COMPLETED`. This event marks the end and outcome of the logic flow for requesting the LLM complete a final review of the edits it has created.
 
 
 ### using Trace Id's

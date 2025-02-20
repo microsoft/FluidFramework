@@ -13,19 +13,12 @@ import {
 	SharedTree,
 	SchemaFactory,
 	TreeViewConfiguration,
-	type TreeView,
-	type ITree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { OpenAI } from "openai";
 
 import { aiCollab } from "../../aiCollab.js";
-import type {
-	AiCollabErrorResponse,
-	AiCollabSuccessResponse,
-	DebugEvent,
-	EventFlowDebugEvent,
-} from "../../aiCollabApi.js";
+import type { DebugEvent, EventFlowDebugEvent } from "../../aiCollabApi.js";
 import {
 	type ApplyEditFailure,
 	type ApplyEditSuccess,
@@ -63,19 +56,20 @@ const OPENAI_API_KEY = ""; // DON'T COMMIT THIS
 // This test suite is meant to test the debug log events that are generated during an ai-collab execution
 // One stream of debug logs is created by making a single ai-collab() function call. Then, different segments
 // of the resulting list of debug events is analyzed to ensure that the events are in the expected order and contain the expected information.
-describe.skip("Debug Log Works as expected", () => {
-	let tree: ITree;
-	let view: TreeView<typeof TestAppSchema>;
-	const debugLog: DebugEvent[] = [];
-	let aiCollabResponse: AiCollabSuccessResponse | AiCollabErrorResponse;
+describe("Debug Log", () => {
+	const assertDebugEventCoreInterfaceIsValid = (event: DebugEvent | undefined): void => {
+		assert(event !== undefined);
+		assert(event.id !== undefined, "debug event has an id");
+		assert(event.timestamp !== undefined, "debug event has a timestamp");
+		assert(event.traceId !== undefined, "debug event has a trace id");
+	};
 
-	before(async function () {
-		this.timeout(20000);
-		tree = factory.create(
+	it("debugEventLogHandler produces the expected number, order, type and shape of debug events from a single aiCollab() call", async () => {
+		const tree = factory.create(
 			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
 			"tree",
 		);
-		view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppSchema }));
 		view.initialize({
 			title: "This is a group of tasks",
 			tasks: [
@@ -89,8 +83,8 @@ describe.skip("Debug Log Works as expected", () => {
 				},
 			],
 		});
-
-		aiCollabResponse = await aiCollab({
+		const debugLog: DebugEvent[] = [];
+		const aiCollabResponse = await aiCollab({
 			openAI: {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
@@ -134,83 +128,92 @@ describe.skip("Debug Log Works as expected", () => {
 		// confirming we get a successful response with a filled debug log.
 		assert.strictEqual(aiCollabResponse.status, "success");
 		assert.strictEqual(debugLog.length > 0, true);
-	});
 
-	const assertDebugEventCoreInterfaceIsValid = (event: DebugEvent | undefined): void => {
-		assert(event !== undefined);
-		assert(event.id !== undefined);
-		assert(event.timestamp !== undefined);
-		assert(event.traceId !== undefined);
-	};
-
-	it("Contains the core event loop started and ended events", () => {
 		const expectedTraceId = (debugLog[0] as DebugEvent).traceId; // All debug events from the same execution should have the same trace id
 		assert(expectedTraceId !== undefined);
 
+		// #region - Testing CoreEventLoopStarted and CoreEventLoopCompleted events
 		const debugEvent1: CoreEventLoopStarted = debugLog[0] as CoreEventLoopStarted;
-
 		assertDebugEventCoreInterfaceIsValid(debugEvent1);
-		assert.deepStrictEqual(debugLog[0], {
-			id: debugEvent1.id,
-			traceId: expectedTraceId,
-			timestamp: debugEvent1.timestamp,
-			eventName: "CORE_EVENT_LOOP_STARTED",
-			eventFlowName: "CORE_EVENT_LOOP",
-			eventFlowStatus: "STARTED",
-			eventFlowTraceId: debugEvent1.eventFlowTraceId,
-		} satisfies CoreEventLoopStarted);
-		assert(debugEvent1.eventFlowTraceId !== undefined);
+		assert.deepStrictEqual(
+			debugLog[0],
+			{
+				id: debugEvent1.id,
+				traceId: expectedTraceId,
+				timestamp: debugEvent1.timestamp,
+				eventName: "CORE_EVENT_LOOP_STARTED",
+				eventFlowName: "CORE_EVENT_LOOP",
+				eventFlowStatus: "STARTED",
+				eventFlowTraceId: debugEvent1.eventFlowTraceId,
+			} satisfies CoreEventLoopStarted,
+			"CoreEventLoopStarted event exists and is valid",
+		);
+		assert(
+			debugEvent1.eventFlowTraceId !== undefined,
+			"CoreEventLoopStarted event has a trace id",
+		);
 
 		const debugEvent2: CoreEventLoopCompleted = debugLog[
 			debugLog.length - 1
 		] as CoreEventLoopCompleted;
-		assert.deepStrictEqual(debugEvent2, {
-			id: debugEvent2.id,
-			traceId: expectedTraceId,
-			timestamp: debugEvent2.timestamp,
-			eventName: "CORE_EVENT_LOOP_COMPLETED",
-			eventFlowName: "CORE_EVENT_LOOP",
-			eventFlowStatus: "COMPLETED",
-			status: "success",
-			eventFlowTraceId: debugEvent1.eventFlowTraceId,
-		} satisfies CoreEventLoopCompleted);
-
+		assert.deepStrictEqual(
+			debugEvent2,
+			{
+				id: debugEvent2.id,
+				traceId: expectedTraceId,
+				timestamp: debugEvent2.timestamp,
+				eventName: "CORE_EVENT_LOOP_COMPLETED",
+				eventFlowName: "CORE_EVENT_LOOP",
+				eventFlowStatus: "COMPLETED",
+				status: "success",
+				eventFlowTraceId: debugEvent1.eventFlowTraceId,
+			} satisfies CoreEventLoopCompleted,
+			"CoreEventLoopCompleted event exists and is valid",
+		);
 		assertDebugEventCoreInterfaceIsValid(debugEvent2);
-	});
+		// #endregion - Testing CoreEventLoopStarted and CoreEventLoopCompleted events
 
-	it("Has generate planning prompt event flows and in the expected order with matching eventFlowTraceId", () => {
-		const expectedTraceId = (debugLog[0] as DebugEvent).traceId; // All debug events from the same execution should have the same trace id
-		assert(expectedTraceId !== undefined);
+		// #region - Planning Prompt events
 
-		const debugEvent1: PlanningPromptStarted = debugLog[1] as PlanningPromptStarted;
-		assertDebugEventCoreInterfaceIsValid(debugEvent1);
-		assert.deepStrictEqual(debugLog[1], {
-			id: debugEvent1.id,
-			traceId: expectedTraceId,
-			timestamp: debugEvent1.timestamp,
-			eventName: "GENERATE_PLANNING_PROMPT_STARTED",
-			eventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
-			eventFlowStatus: "STARTED",
-			eventFlowTraceId: debugEvent1.eventFlowTraceId,
-		} satisfies PlanningPromptStarted);
-		const expectedPlanningPromptEventFlowTraceId = debugEvent1.eventFlowTraceId;
+		const expectedPlanningPromptEvent: PlanningPromptStarted =
+			debugLog[1] as PlanningPromptStarted;
+		assertDebugEventCoreInterfaceIsValid(expectedPlanningPromptEvent);
+		assert.deepStrictEqual(
+			debugLog[1],
+			{
+				id: expectedPlanningPromptEvent.id,
+				traceId: expectedTraceId,
+				timestamp: expectedPlanningPromptEvent.timestamp,
+				eventName: "GENERATE_PLANNING_PROMPT_STARTED",
+				eventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
+				eventFlowStatus: "STARTED",
+				eventFlowTraceId: expectedPlanningPromptEvent.eventFlowTraceId,
+			} satisfies PlanningPromptStarted,
+			"PlanningPromptStarted event exists and is valid",
+		);
+		const expectedPlanningPromptEventFlowTraceId =
+			expectedPlanningPromptEvent.eventFlowTraceId;
 		assert(expectedPlanningPromptEventFlowTraceId !== undefined);
 
 		const expectedPlanningPromptLLmApiCall: LlmApiCallDebugEvent =
 			debugLog[2] as LlmApiCallDebugEvent;
 		assertDebugEventCoreInterfaceIsValid(expectedPlanningPromptLLmApiCall);
-		assert.deepStrictEqual(debugLog[2], {
-			id: expectedPlanningPromptLLmApiCall.id,
-			traceId: expectedTraceId,
-			timestamp: expectedPlanningPromptLLmApiCall.timestamp,
-			triggeringEventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
-			eventFlowTraceId: expectedPlanningPromptEventFlowTraceId,
-			eventName: "LLM_API_CALL",
-			modelName: "gpt-4o",
-			requestParams: expectedPlanningPromptLLmApiCall.requestParams,
-			response: expectedPlanningPromptLLmApiCall.response,
-			tokenUsage: expectedPlanningPromptLLmApiCall.tokenUsage,
-		} satisfies LlmApiCallDebugEvent);
+		assert.deepStrictEqual(
+			debugLog[2],
+			{
+				id: expectedPlanningPromptLLmApiCall.id,
+				traceId: expectedTraceId,
+				timestamp: expectedPlanningPromptLLmApiCall.timestamp,
+				triggeringEventFlowName: EventFlowDebugNames.GENERATE_PLANNING_PROMPT,
+				eventFlowTraceId: expectedPlanningPromptEventFlowTraceId,
+				eventName: "LLM_API_CALL",
+				modelName: "gpt-4o",
+				requestParams: expectedPlanningPromptLLmApiCall.requestParams,
+				response: expectedPlanningPromptLLmApiCall.response,
+				tokenUsage: expectedPlanningPromptLLmApiCall.tokenUsage,
+			} satisfies LlmApiCallDebugEvent,
+			"PlanningPromptStarted LlmApiCall event exists and is valid",
+		);
 		assert(expectedPlanningPromptLLmApiCall.requestParams !== undefined);
 		assert(expectedPlanningPromptLLmApiCall.response !== undefined);
 		assert(expectedPlanningPromptLLmApiCall.tokenUsage?.completionTokens !== undefined);
@@ -231,11 +234,10 @@ describe.skip("Debug Log Works as expected", () => {
 			llmGeneratedPlan: expectedPlanningPromptCompleted?.llmGeneratedPlan,
 		} satisfies PlanningPromptCompleted);
 		assert.strictEqual(expectedPlanningPromptCompleted.llmGeneratedPlan !== undefined, true);
-	});
 
-	it("Has generate tree edit event flows and in the expected order with matching eventFlowTraceId", () => {
-		const expectedTraceId = (debugLog[0] as DebugEvent).traceId; // All debug events from the same execution should have the same trace id
-		assert(expectedTraceId !== undefined);
+		// #endregion - Planning Prompt events
+
+		// #region - Generate Tree Edit events
 
 		// The following two indexes give us the slice of the debug log that should contain the generate tree edit event flows.
 		const finalReviewIndex = debugLog.findIndex(
@@ -272,44 +274,56 @@ describe.skip("Debug Log Works as expected", () => {
 			const expectedEventFlowTraceId = generateTreeEditStartedEvent.eventFlowTraceId;
 			assert.strictEqual(expectedEventFlowTraceId !== undefined, true);
 
-			assert.deepStrictEqual(generateTreeEditStartedEvent, {
-				id: generateTreeEditStartedEvent.id,
-				traceId: expectedTraceId,
-				timestamp: generateTreeEditStartedEvent.timestamp,
-				eventName: "GENERATE_TREE_EDIT_STARTED",
-				eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
-				eventFlowStatus: "STARTED",
-				eventFlowTraceId: expectedEventFlowTraceId,
-				llmPrompt: generateTreeEditStartedEvent.llmPrompt,
-			} satisfies GenerateTreeEditStarted);
+			assert.deepStrictEqual(
+				generateTreeEditStartedEvent,
+				{
+					id: generateTreeEditStartedEvent.id,
+					traceId: expectedTraceId,
+					timestamp: generateTreeEditStartedEvent.timestamp,
+					eventName: "GENERATE_TREE_EDIT_STARTED",
+					eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+					eventFlowStatus: "STARTED",
+					eventFlowTraceId: expectedEventFlowTraceId,
+					llmPrompt: generateTreeEditStartedEvent.llmPrompt,
+				} satisfies GenerateTreeEditStarted,
+				"GenerateTreeEditStarted event exists and is valid",
+			);
 
 			const llmApiCallEvent: LlmApiCallDebugEvent = events[1] as LlmApiCallDebugEvent;
-			assert.deepStrictEqual(llmApiCallEvent, {
-				id: llmApiCallEvent.id,
-				traceId: expectedTraceId,
-				timestamp: llmApiCallEvent.timestamp,
-				eventName: "LLM_API_CALL",
-				triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
-				eventFlowTraceId: expectedEventFlowTraceId,
-				modelName: "gpt-4o",
-				requestParams: llmApiCallEvent.requestParams,
-				response: llmApiCallEvent.response,
-				tokenUsage: llmApiCallEvent.tokenUsage,
-			} satisfies LlmApiCallDebugEvent);
+			assert.deepStrictEqual(
+				llmApiCallEvent,
+				{
+					id: llmApiCallEvent.id,
+					traceId: expectedTraceId,
+					timestamp: llmApiCallEvent.timestamp,
+					eventName: "LLM_API_CALL",
+					triggeringEventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+					eventFlowTraceId: expectedEventFlowTraceId,
+					modelName: "gpt-4o",
+					requestParams: llmApiCallEvent.requestParams,
+					response: llmApiCallEvent.response,
+					tokenUsage: llmApiCallEvent.tokenUsage,
+				} satisfies LlmApiCallDebugEvent,
+				"GenerateTreeEditCompleted linked LlmApiCallDebugEvent event exists and is valid",
+			);
 
 			const generateTreeEditCompletedEvent = events[2] as GenerateTreeEditCompleted;
 
-			assert.deepStrictEqual(generateTreeEditCompletedEvent, {
-				id: generateTreeEditCompletedEvent.id,
-				traceId: expectedTraceId,
-				timestamp: generateTreeEditCompletedEvent.timestamp,
-				eventName: "GENERATE_TREE_EDIT_COMPLETED",
-				eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
-				eventFlowStatus: "COMPLETED",
-				eventFlowTraceId: expectedEventFlowTraceId,
-				isLlmResponseValid: true,
-				llmGeneratedEdit: generateTreeEditCompletedEvent.llmGeneratedEdit,
-			} satisfies GenerateTreeEditCompleted);
+			assert.deepStrictEqual(
+				generateTreeEditCompletedEvent,
+				{
+					id: generateTreeEditCompletedEvent.id,
+					traceId: expectedTraceId,
+					timestamp: generateTreeEditCompletedEvent.timestamp,
+					eventName: "GENERATE_TREE_EDIT_COMPLETED",
+					eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+					eventFlowStatus: "COMPLETED",
+					eventFlowTraceId: expectedEventFlowTraceId,
+					isLlmResponseValid: true,
+					llmGeneratedEdit: generateTreeEditCompletedEvent.llmGeneratedEdit,
+				} satisfies GenerateTreeEditCompleted,
+				"GenerateTreeEditCompleted event exists and is valid",
+			);
 
 			// If the LLM generates null as its edit, this means it thinks no more edits are necessary.
 			if (generateTreeEditCompletedEvent.llmGeneratedEdit === null) {
@@ -326,73 +340,90 @@ describe.skip("Debug Log Works as expected", () => {
 			);
 
 			if (applyEditEventName === "APPLIED_EDIT_SUCCESS") {
-				assert.deepStrictEqual(applyEditEvent, {
-					id: applyEditEvent.id,
-					traceId: expectedTraceId,
-					timestamp: applyEditEvent.timestamp,
-					eventName: "APPLIED_EDIT_SUCCESS",
-					eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
-					eventFlowStatus: "IN_PROGRESS",
-					eventFlowTraceId: expectedEventFlowTraceId,
-					edit: applyEditEvent.edit,
-				} satisfies ApplyEditSuccess);
+				assert.deepStrictEqual(
+					applyEditEvent,
+					{
+						id: applyEditEvent.id,
+						traceId: expectedTraceId,
+						timestamp: applyEditEvent.timestamp,
+						eventName: "APPLIED_EDIT_SUCCESS",
+						eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+						eventFlowStatus: "IN_PROGRESS",
+						eventFlowTraceId: expectedEventFlowTraceId,
+						edit: applyEditEvent.edit,
+					} satisfies ApplyEditSuccess,
+					"ApplyEditSuccess event exists and is valid",
+				);
 			} else {
-				assert.deepStrictEqual(applyEditEvent, {
-					id: applyEditEvent.id,
-					traceId: expectedTraceId,
-					timestamp: applyEditEvent.timestamp,
-					eventName: "APPLIED_EDIT_FAILURE",
-					eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
-					eventFlowStatus: "IN_PROGRESS",
-					eventFlowTraceId: expectedEventFlowTraceId,
-					edit: applyEditEvent.edit,
-					errorMessage: applyEditEvent.errorMessage,
-					sequentialErrorCount: applyEditEvent.sequentialErrorCount,
-				} satisfies ApplyEditFailure);
-				assert(applyEditEvent.errorMessage !== undefined);
+				assert.deepStrictEqual(
+					applyEditEvent,
+					{
+						id: applyEditEvent.id,
+						traceId: expectedTraceId,
+						timestamp: applyEditEvent.timestamp,
+						eventName: "APPLIED_EDIT_FAILURE",
+						eventFlowName: EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT,
+						eventFlowStatus: "IN_PROGRESS",
+						eventFlowTraceId: expectedEventFlowTraceId,
+						edit: applyEditEvent.edit,
+						errorMessage: applyEditEvent.errorMessage,
+						sequentialErrorCount: applyEditEvent.sequentialErrorCount,
+					} satisfies ApplyEditFailure,
+					"ApplyEditFailure event exists and is valid",
+				);
+				assert(
+					applyEditEvent.errorMessage !== undefined,
+					"ApplyEditFailure event has an error message",
+				);
 				assert(applyEditEvent.sequentialErrorCount !== undefined);
 			}
 		}
-	});
 
-	it("Has final review event flows and in the expected order with matching eventFlowTraceId", () => {
-		const expectedTraceId = (debugLog[0] as DebugEvent).traceId; // All debug events from the same execution should have the same trace id
-		assert(expectedTraceId !== undefined);
+		// #endregion - Generate Tree Edit events
 
 		// The following index give us the slice of the debug log that should contain the final review edits.
-		const finalReviewIndex = debugLog.findIndex(
-			(event) => event.eventName === "FINAL_REVIEW_STARTED",
-		);
 		const expectedFinalReviewStarted = debugLog[finalReviewIndex] as FinalReviewStarted;
 		assertDebugEventCoreInterfaceIsValid(expectedFinalReviewStarted);
-		assert.deepStrictEqual(expectedFinalReviewStarted, {
-			id: expectedFinalReviewStarted.id,
-			traceId: expectedTraceId,
-			timestamp: expectedFinalReviewStarted.timestamp,
-			eventName: "FINAL_REVIEW_STARTED",
-			eventFlowName: EventFlowDebugNames.FINAL_REVIEW,
-			eventFlowStatus: "STARTED",
-			eventFlowTraceId: expectedFinalReviewStarted.eventFlowTraceId,
-			llmPrompt: expectedFinalReviewStarted.llmPrompt,
-		} satisfies FinalReviewStarted);
+		assert.deepStrictEqual(
+			expectedFinalReviewStarted,
+			{
+				id: expectedFinalReviewStarted.id,
+				traceId: expectedTraceId,
+				timestamp: expectedFinalReviewStarted.timestamp,
+				eventName: "FINAL_REVIEW_STARTED",
+				eventFlowName: EventFlowDebugNames.FINAL_REVIEW,
+				eventFlowStatus: "STARTED",
+				eventFlowTraceId: expectedFinalReviewStarted.eventFlowTraceId,
+				llmPrompt: expectedFinalReviewStarted.llmPrompt,
+			} satisfies FinalReviewStarted,
+			"FinalReviewStarted event exists and is valid",
+		);
 		const expectedFinalReviewEventFlowTraceId = expectedFinalReviewStarted?.eventFlowTraceId;
-		assert.strictEqual(expectedFinalReviewEventFlowTraceId !== undefined, true);
+		assert.strictEqual(
+			expectedFinalReviewEventFlowTraceId !== undefined,
+			true,
+			"FinalReviewStarted event has a trace id",
+		);
 
 		const expectedFinalReviewLLmApiCall: LlmApiCallDebugEvent = debugLog[
 			finalReviewIndex + 1
 		] as LlmApiCallDebugEvent;
-		assert.deepStrictEqual(expectedFinalReviewLLmApiCall, {
-			id: expectedFinalReviewLLmApiCall.id,
-			traceId: expectedTraceId,
-			timestamp: expectedFinalReviewLLmApiCall.timestamp,
-			eventName: "LLM_API_CALL",
-			triggeringEventFlowName: EventFlowDebugNames.FINAL_REVIEW,
-			eventFlowTraceId: expectedFinalReviewEventFlowTraceId,
-			modelName: "gpt-4o",
-			requestParams: expectedFinalReviewLLmApiCall.requestParams,
-			response: expectedFinalReviewLLmApiCall.response,
-			tokenUsage: expectedFinalReviewLLmApiCall.tokenUsage,
-		} satisfies LlmApiCallDebugEvent);
+		assert.deepStrictEqual(
+			expectedFinalReviewLLmApiCall,
+			{
+				id: expectedFinalReviewLLmApiCall.id,
+				traceId: expectedTraceId,
+				timestamp: expectedFinalReviewLLmApiCall.timestamp,
+				eventName: "LLM_API_CALL",
+				triggeringEventFlowName: EventFlowDebugNames.FINAL_REVIEW,
+				eventFlowTraceId: expectedFinalReviewEventFlowTraceId,
+				modelName: "gpt-4o",
+				requestParams: expectedFinalReviewLLmApiCall.requestParams,
+				response: expectedFinalReviewLLmApiCall.response,
+				tokenUsage: expectedFinalReviewLLmApiCall.tokenUsage,
+			} satisfies LlmApiCallDebugEvent,
+			"FinalReviewStarted linked LlmApiCall event exists and is valid",
+		);
 		assert(expectedFinalReviewLLmApiCall.requestParams !== undefined);
 		assert(expectedFinalReviewLLmApiCall.response !== undefined);
 		assert(expectedFinalReviewLLmApiCall.tokenUsage?.completionTokens !== undefined);
@@ -401,28 +432,24 @@ describe.skip("Debug Log Works as expected", () => {
 		const expectedFinalReviewCompleted = debugLog[
 			finalReviewIndex + 2
 		] as FinalReviewCompleted;
-		assert.deepStrictEqual(expectedFinalReviewCompleted, {
-			id: expectedFinalReviewCompleted.id,
-			traceId: expectedTraceId,
-			timestamp: expectedFinalReviewCompleted.timestamp,
-			eventName: "FINAL_REVIEW_COMPLETED",
-			eventFlowName: EventFlowDebugNames.FINAL_REVIEW,
-			eventFlowStatus: "COMPLETED",
-			eventFlowTraceId: expectedFinalReviewEventFlowTraceId,
-			isLlmResponseValid: true,
-			didLlmAccomplishGoal: expectedFinalReviewCompleted.didLlmAccomplishGoal,
-		} satisfies FinalReviewCompleted);
-		assert(expectedFinalReviewCompleted.didLlmAccomplishGoal !== undefined);
-	});
-
-	it("Has a single matching trace id for all debug events from the same ai-collab execution", () => {
-		let expectedTraceId: string | undefined;
-		for (const debugEvent of debugLog) {
-			if (expectedTraceId === undefined) {
-				expectedTraceId = debugEvent.traceId;
-			} else {
-				assert.strictEqual(debugEvent.traceId, expectedTraceId);
-			}
-		}
-	});
+		assert.deepStrictEqual(
+			expectedFinalReviewCompleted,
+			{
+				id: expectedFinalReviewCompleted.id,
+				traceId: expectedTraceId,
+				timestamp: expectedFinalReviewCompleted.timestamp,
+				eventName: "FINAL_REVIEW_COMPLETED",
+				eventFlowName: EventFlowDebugNames.FINAL_REVIEW,
+				eventFlowStatus: "COMPLETED",
+				eventFlowTraceId: expectedFinalReviewEventFlowTraceId,
+				isLlmResponseValid: true,
+				didLlmAccomplishGoal: expectedFinalReviewCompleted.didLlmAccomplishGoal,
+			} satisfies FinalReviewCompleted,
+			"FinalReviewCompleted event exists and is valid",
+		);
+		assert(
+			expectedFinalReviewCompleted.didLlmAccomplishGoal !== undefined,
+			"FinalReviewCompleted event has a defined didLlmAccomplishGoal field",
+		);
+	}).timeout(20000);
 });
