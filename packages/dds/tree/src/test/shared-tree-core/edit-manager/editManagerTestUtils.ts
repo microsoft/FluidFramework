@@ -135,7 +135,13 @@ export function rebaseLocalEditsOverTrunkEdits<TChange>(
 	});
 	const run = () => {
 		for (let iChange = 0; iChange < trunkEditCount; iChange++) {
-			manager.addSequencedChange(trunkEdits[iChange], brand(iChange + 1), brand(iChange));
+			const commit = trunkEdits[iChange];
+			manager.addSequencedChanges(
+				[commit],
+				commit.sessionId,
+				brand(iChange + 1),
+				brand(iChange),
+			);
 		}
 	};
 	return defer ? run : run();
@@ -207,12 +213,14 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < trunkEditCount; iChange++) {
 		const revision = mintRevisionTag();
-		manager.addSequencedChange(
-			{
-				change: mintChange(revision),
-				revision,
-				sessionId: "trunk" as SessionId,
-			},
+		manager.addSequencedChanges(
+			[
+				{
+					change: mintChange(revision),
+					revision,
+				},
+			],
+			"trunk" as SessionId,
 			brand(iChange + 1),
 			brand(iChange),
 		);
@@ -227,8 +235,10 @@ export function rebasePeerEditsOverTrunkEdits<TChange>(
 	});
 	const run = () => {
 		for (let iChange = 0; iChange < peerEditCount; iChange++) {
-			manager.addSequencedChange(
-				peerEdits[iChange],
+			const commit = peerEdits[iChange];
+			manager.addSequencedChanges(
+				[commit],
+				commit.sessionId,
 				brand(iChange + trunkEditCount + 1),
 				brand(0),
 			);
@@ -304,12 +314,14 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	subscribeToLocalBranch(manager);
 	for (let iChange = 0; iChange < editCount; iChange++) {
 		const revision = mintRevisionTag();
-		manager.addSequencedChange(
-			{
-				change: mintChange(revision),
-				revision,
-				sessionId: "trunk" as SessionId,
-			},
+		manager.addSequencedChanges(
+			[
+				{
+					change: mintChange(revision),
+					revision,
+				},
+			],
+			"trunk" as SessionId,
 			brand(iChange + 1),
 			brand(iChange),
 		);
@@ -324,8 +336,10 @@ export function rebaseAdvancingPeerEditsOverTrunkEdits<TChange>(
 	});
 	const run = () => {
 		for (let iChange = 0; iChange < editCount; iChange++) {
-			manager.addSequencedChange(
-				peerEdits[iChange],
+			const commit = peerEdits[iChange];
+			manager.addSequencedChanges(
+				[commit],
+				commit.sessionId,
 				brand(iChange + editCount + 1),
 				brand(iChange),
 			);
@@ -410,7 +424,8 @@ export function rebaseConcurrentPeerEdits<TChange>(
 	}
 	const run = () => {
 		for (let iChange = 0; iChange < peerEdits.length; iChange++) {
-			manager.addSequencedChange(peerEdits[iChange], brand(iChange + 1), brand(0));
+			const commit = peerEdits[iChange];
+			manager.addSequencedChanges([commit], commit.sessionId, brand(iChange + 1), brand(0));
 		}
 	};
 	return defer ? run : run();
@@ -425,9 +440,9 @@ export function getAllChanges(manager: TestEditManager): RecursiveReadonly<TestC
 }
 
 /** Adds a sequenced change to an `EditManager` and returns the delta that was caused by the change */
-export function addSequencedChange(
+export function addSequencedChanges(
 	editManager: TestEditManager,
-	...args: Parameters<(typeof editManager)["addSequencedChange"]>
+	...args: Parameters<(typeof editManager)["addSequencedChanges"]>
 ): DeltaRoot {
 	let delta: DeltaRoot = emptyDelta;
 	const offChange = editManager.localBranch.events.on("afterChange", ({ change }) => {
@@ -435,7 +450,7 @@ export function addSequencedChange(
 			delta = asDelta(change.change.intentions);
 		}
 	});
-	editManager.addSequencedChange(...args);
+	editManager.addSequencedChanges(...args);
 	offChange();
 	return delta;
 }
