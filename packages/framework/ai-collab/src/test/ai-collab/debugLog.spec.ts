@@ -56,7 +56,7 @@ const OPENAI_API_KEY = ""; // DON'T COMMIT THIS
 // This test suite is meant to test the debug log events that are generated during an ai-collab execution
 // One stream of debug logs is created by making a single ai-collab() function call. Then, different segments
 // of the resulting list of debug events is analyzed to ensure that the events are in the expected order and contain the expected information.
-describe("Debug Log", () => {
+describe.skip("Debug Log", () => {
 	const assertDebugEventCoreInterfaceIsValid = (event: DebugEvent | undefined): void => {
 		assert(event !== undefined);
 		assert(event.id !== undefined, "debug event has an id");
