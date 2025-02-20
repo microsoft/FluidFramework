@@ -942,7 +942,7 @@ TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
 // @alpha
-export const _RecursiveArrayWorkaroundJsonArray: FixRecursiveArraySchema<typeof JsonArray>;
+export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof JsonArray>;
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

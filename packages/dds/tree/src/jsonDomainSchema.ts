@@ -74,10 +74,10 @@ export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {}
  * D.ts bug workaround, see {@link FixRecursiveArraySchema}.
  * @privateRemarks
  * In the past this this had to reference the base type (_APIExtractorWorkaroundJsonArrayBase).
- * Testing for this in examples/utils/import-testing now shows it has to reference JsonArray instead..
+ * Testing for this in examples/utils/import-testing now shows it has to reference JsonArray instead.
  * @system @alpha
  */
-export declare const _RecursiveArrayWorkaroundJsonArray: FixRecursiveArraySchema<
+export declare type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<
 	typeof JsonArray
 >;
 

@@ -589,7 +589,7 @@ TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
 // @alpha
-export const _RecursiveArrayWorkaroundJsonArray: FixRecursiveArraySchema<typeof JsonArray>;
+export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof JsonArray>;
 
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {

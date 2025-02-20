@@ -265,7 +265,7 @@ export {
 	JsonArray,
 	JsonObject,
 	JsonPrimitive,
-	_RecursiveArrayWorkaroundJsonArray,
-	_APIExtractorWorkaroundJsonObjectBase,
-	_APIExtractorWorkaroundJsonArrayBase,
+	type _RecursiveArrayWorkaroundJsonArray,
+	type _APIExtractorWorkaroundJsonObjectBase,
+	type _APIExtractorWorkaroundJsonArrayBase,
 } from "./jsonDomainSchema.js";
