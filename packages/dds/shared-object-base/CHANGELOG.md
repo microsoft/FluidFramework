@@ -1,5 +1,23 @@
 # @fluidframework/shared-object-base
 
+## 2.22.0
+
+### Minor Changes
+
+-   Change when the `pre-op` and `op` events on `ISharedObjectEvents` are emitted ([#23836](https://github.com/microsoft/FluidFramework/pull/23836)) [5eb19a0fc6](https://github.com/microsoft/FluidFramework/commit/5eb19a0fc6f00ba47ddc338a1a5932e683a6039c)
+
+    Previous behavior - `pre-op` was emitted immediately before an op was processed. Then the op was processed and `op` was emitted immediately after that.
+
+    New behavior - `pre-op` will still be emitted before an op is processed and `op` will still be emitted after an op is processed. However, these won't be immediate and other ops in a batch for the shared object may be processed in between.
+
+    Note that these events are for internal use only as mentioned in the @remarks section of their definition.
+
+-   Deprecate `processCore` on `SharedObject` and `SharedObjectCore` in favor of `processMessagesCore` ([#23836](https://github.com/microsoft/FluidFramework/pull/23836)) [5eb19a0fc6](https://github.com/microsoft/FluidFramework/commit/5eb19a0fc6f00ba47ddc338a1a5932e683a6039c)
+
+    A new function `processMessagesCore` has been added in place of `processCore`, which will be called to process multiple messages instead of a single one on the channel. This is part of a feature called "Op bunching" where contiguous ops in a grouped batch are bunched and processed together by the shared object.
+
+    Implementations of `SharedObject` and `SharedObjectCore` must now also implement `processMessagesCore`. A basic implementation could be to iterate over the messages' content and process them one by one as it happens now. Note that some DDS may be able to optimize processing by processing the messages together.
+
 ## 2.21.0
 
 Dependency updates only.

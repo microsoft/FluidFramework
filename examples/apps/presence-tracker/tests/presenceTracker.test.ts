@@ -232,33 +232,6 @@ describe("presence-tracker", () => {
 			);
 		});
 
-		it.skip("First client shows two clients connected in UI", async () => {
-			await waitForAttendeeState(
-				page,
-				{
-					[session1id]: "Connected",
-					[session2id]: "Connected",
-				},
-				"failed waiting for app to observe two connected attendees",
-			);
-
-			// Get the client list from the first browser instance; it should show two connected.
-			const elementHandle = await page.waitForFunction(() =>
-				document.getElementById("focus-div"),
-			);
-			const clientListHtml = await page.evaluate(
-				(element) => element?.innerHTML?.trim(),
-				elementHandle,
-			);
-			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
-			// connected.
-			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
-			// Expect that first page's session id is listed.
-			expect(clientListHtml).toMatch(session1id);
-			// Expect that page2's session id is listed.
-			expect(clientListHtml).toMatch(session2id);
-		});
-
 		it("First client shows one client connected when second client leaves", async () => {
 			// Setup
 			await waitForAttendeeState(
@@ -289,11 +262,70 @@ describe("presence-tracker", () => {
 				},
 				"failed waiting for app to observe second attendee as disconnected",
 			);
+		});
 
-			// Important: this portion of the test is a false positive.
-			// Until "First client shows two clients connected in UI" is enabled,
-			// the below verification is not fully valid. This test is enabled as the
-			// above verification is expected to pass and is important to have in place.
+		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
+		it.skip("First client shows two clients connected in UI", async () => {
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
+
+			// Get the client list from the first browser instance; it should show two connected.
+			const elementHandle = await page.waitForFunction(() =>
+				document.getElementById("focus-div"),
+			);
+			const clientListHtml = await page.evaluate(
+				(element) => element?.innerHTML?.trim(),
+				elementHandle,
+			);
+			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
+			// connected.
+			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
+			// Expect that first page's session id is listed.
+			expect(clientListHtml).toMatch(session1id);
+			// Expect that page2's session id is listed.
+			expect(clientListHtml).toMatch(session2id);
+		});
+
+		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
+		// This test should not be enabled without the prior test being enabled as it
+		// may have false positives. It has also been demonstrated to fail occasionally.
+		// Occasional failures are likely due to same issue impact the prior "in UI" test.
+		it.skip("First client shows one client connected in UI when second client leaves", async () => {
+			// Setup
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
+
+			// Act
+
+			// Navigate the second client away.
+			const response = await page2.goto("about:blank", { waitUntil: "load" });
+			// Loosely verify that a navigation happened. Puppeteer docs note:
+			//    "Navigation to about:blank or navigation to the same URL with a different hash will succeed and
+			//    return null."
+			expect(response).toBe(null);
+
+			// Verify
+
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Disconnected",
+				},
+				"failed waiting for app to observe second attendee as disconnected",
+			);
 
 			// Get the client list from the first browser; it should have a single element.
 			const elementHandle = await page.waitForFunction(() =>
