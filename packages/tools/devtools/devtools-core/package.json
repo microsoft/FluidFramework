@@ -133,7 +133,7 @@
 		"@fluid-tools/build-cli": "^0.51.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/devtools-core-previous": "npm:@fluidframework/devtools-core@2.21.0",
+		"@fluidframework/devtools-core-previous": "npm:@fluidframework/devtools-core@2.22.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
