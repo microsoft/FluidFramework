@@ -5,26 +5,31 @@
 
 import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
-import path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	AsyncGenerator,
 	AsyncReducer,
 	BaseFuzzTestState,
+	BaseOperation,
 	IRandom,
+	MinimizationTransform,
 	SaveDestination,
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	ExitBehavior,
-	StressMode,
+	FuzzTestMinimizer,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
 	defaultOptions,
 	done,
+	generateTestSeeds,
+	getSaveDirectory,
+	getSaveInfo,
 	interleaveAsync,
+	isOperationType,
 	makeRandom,
 	performFuzzActionsAsync,
 	saveOpsToFile,
@@ -54,19 +59,12 @@ import {
 } from "@fluidframework/server-local-server";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
-import { FuzzTestMinimizer } from "./minification.js";
-import type { MinimizationTransform } from "./minification.js";
 import {
 	createRuntimeFactory,
 	StressDataObject,
 	type DefaultStressDataObject,
 } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
-
-const isOperationType = <O extends BaseOperation>(
-	type: O["type"],
-	op: BaseOperation,
-): op is O => op.type === type;
 
 export interface Client {
 	container: IContainer;
@@ -102,13 +100,6 @@ interface SelectedClientSpec {
 /**
  * @internal
  */
-export interface BaseOperation {
-	type: number | string;
-}
-
-/**
- * @internal
- */
 interface Attach {
 	type: "attach";
 }
@@ -136,39 +127,6 @@ interface RemoveClient {
 interface Synchronize {
 	type: "synchronize";
 	clients?: Client[];
-}
-
-/**
- * @internal
- */
-interface HasWorkloadName {
-	workloadName: string;
-}
-
-function getSaveDirectory(directory: string, model: HasWorkloadName): string {
-	const workloadFriendly = model.workloadName.replace(/[\s_]+/g, "-").toLowerCase();
-	return path.join(directory, workloadFriendly);
-}
-
-function getSavePath(directory: string, model: HasWorkloadName, seed: number): string {
-	return path.join(getSaveDirectory(directory, model), `${seed}.json`);
-}
-
-function getSaveInfo(
-	model: HasWorkloadName,
-	options: LocalServerStressOptions,
-	seed: number,
-): SaveInfo {
-	return {
-		saveOnFailure:
-			options.saveFailures !== undefined
-				? { path: getSavePath(options.saveFailures.directory, model, seed) }
-				: false,
-		saveOnSuccess:
-			options.saveSuccesses !== undefined
-				? { path: getSavePath(options.saveSuccesses.directory, model, seed) }
-				: false,
-	};
 }
 
 export interface LocalServerStressModel<
@@ -966,8 +924,9 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		package: "local-server-stress-tests",
 	};
 	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
-	let tagCount = 0;
-	const tag: LocalServerStressState["tag"] = (prefix) => `${prefix}-${tagCount++}`;
+	const tagCount: Partial<Record<string, number>> = {};
+	const tag: LocalServerStressState["tag"] = (prefix) =>
+		`${prefix}-${(tagCount[prefix] = (tagCount[prefix] ??= 0) + 1)}`;
 	const initialClient = await createDetachedClient(
 		localDeltaConnectionServer,
 		codeLoader,
@@ -1067,7 +1026,13 @@ function runTest<TOperation extends BaseOperation>(
 				throw error;
 			}
 			const operations = JSON.parse(file.toString()) as TOperation[];
-			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
+			const minimizer = new FuzzTestMinimizer<TOperation>(
+				model.minimizationTransforms,
+				operations,
+				saveInfo,
+				async (generator) => replayTest<TOperation>(model, seed, generator, saveInfo, options),
+				3,
+			);
 
 			const minimized = await minimizer.minimize();
 			await saveOpsToFile(savePath, minimized);
@@ -1087,16 +1052,6 @@ function isInternalOptions(options: LocalServerStressOptions): options is Intern
 }
 
 /**
- * Some reducers require preconditions be met which are validated by their generator.
- * The validation can be lost if the generator is not run.
- * The primary case where this happens is during minimization. If a reducer detects this
- * problem, they can throw this error type, and minimization will consider the current
- * test invalid, rather than continuing to test invalid scenarios.
- * @internal
- */
-export class ReducerPreconditionError extends Error {}
-
-/**
  * Performs the test again to verify if the DDS still fails with the same error message.
  *
  * @internal
@@ -1104,7 +1059,7 @@ export class ReducerPreconditionError extends Error {}
 export async function replayTest<TOperation extends BaseOperation>(
 	ddsModel: LocalServerStressModel<TOperation>,
 	seed: number,
-	operations: TOperation[],
+	generator: AsyncGenerator<TOperation, unknown>,
 	saveInfo?: SaveInfo,
 	providedOptions?: Partial<LocalServerStressOptions>,
 ): Promise<void> {
@@ -1120,36 +1075,10 @@ export async function replayTest<TOperation extends BaseOperation>(
 	const model = {
 		..._model,
 		// We lose some type safety here because the options interface isn't generic
-		generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
-			asyncGeneratorFromArray(operations),
+		generatorFactory: () => generator,
 	};
 
 	await runTestForSeed(model, options, seed, saveInfo);
-}
-
-function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
-	switch (stressMode) {
-		case StressMode.Short:
-		case StressMode.Normal: {
-			// Deterministic, fixed seeds
-			return Array.from({ length: testCount }, (_, i) => i);
-		}
-
-		case StressMode.Long: {
-			// Non-deterministic, random seeds
-			const random = makeRandom();
-			const longModeFactor = 2;
-			const initialSeed = random.integer(
-				0,
-				Number.MAX_SAFE_INTEGER - longModeFactor * testCount,
-			);
-			return Array.from({ length: testCount * longModeFactor }, (_, i) => initialSeed + i);
-		}
-
-		default: {
-			throw new Error(`Unsupported stress mode: ${stressMode}`);
-		}
-	}
 }
 
 /**
