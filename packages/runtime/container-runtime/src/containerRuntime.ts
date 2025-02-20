@@ -1942,7 +1942,6 @@ export class ContainerRuntime
 			isBlobDeleted: (blobPath: string) => this.garbageCollector.isNodeDeleted(blobPath),
 			runtime: this,
 			stashedBlobs: pendingRuntimeState?.pendingAttachmentBlobs,
-			closeContainer: (error?: ICriticalContainerError) => this.closeFn(error),
 		});
 
 		this.deltaScheduler = new DeltaScheduler(

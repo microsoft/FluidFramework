@@ -22,8 +22,10 @@ import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { DetachedReferencePosition } from "../referencePositions.js";
 import { toRemovalInfo } from "../segmentInfos.js";
+import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
+import { ReconnectTestHelper } from "./reconnectHelper.js";
 import { TestClient } from "./testClient.js";
 import { createClientsAtInitialState } from "./testClientLogger.js";
 import { validateRefCount } from "./testUtils.js";
@@ -195,6 +197,80 @@ describe("MergeTree.Client", () => {
 			client1.localReferencePositionToPosition(c1LocalRef),
 			client2.getLength() - 1,
 		);
+	});
+
+	describe("Slides on first ack of remove/obliterate when both are present", () => {
+		// This suite demonstrates that even when we decide we don't need to emit events for segments going away (since
+		// they have already been removed locally), we still need to slide local references that are on those segments.
+		// Failure to do so can break eventual consistency in features relying on SlideOnRemove references (such as
+		// IntervalCollection).
+		it("Remove then move", () => {
+			const helper = new ReconnectTestHelper({
+				mergeTreeEnableSidedObliterate: true,
+			});
+			const { A, B } = helper.clients;
+			helper.insertText("A", 0, "AxxC");
+			helper.processAllOps();
+			const [localRefA, localRefB] = [A, B].map((client) => {
+				const { segment, offset } = client.getContainingSegment(2);
+				assert(segment !== undefined && offset !== undefined);
+				return client.createLocalReferencePosition(
+					segment,
+					offset,
+					ReferenceType.SlideOnRemove,
+					undefined,
+					SlidingPreference.BACKWARD,
+				);
+			});
+
+			helper.removeRange("A", 1, 3);
+			helper.insertText("A", 1, "should not be placed here");
+			helper.obliterateRange(
+				"B",
+				{ pos: 1, side: Side.Before },
+				{ pos: 3, side: Side.Before },
+			);
+
+			helper.processAllOps();
+			assert.equal(A.localReferencePositionToPosition(localRefA), 0);
+			assert.equal(B.localReferencePositionToPosition(localRefB), 0);
+
+			helper.logger.validate({ baseText: "Ashould not be placed hereC" });
+		});
+
+		it("Obliterate then remove", () => {
+			const helper = new ReconnectTestHelper({
+				mergeTreeEnableSidedObliterate: true,
+			});
+			const { A, B } = helper.clients;
+			helper.insertText("A", 0, "AxxC");
+			helper.processAllOps();
+			const [localRefA, localRefB] = [A, B].map((client) => {
+				const { segment, offset } = client.getContainingSegment(2);
+				assert(segment !== undefined && offset !== undefined);
+				return client.createLocalReferencePosition(
+					segment,
+					offset,
+					ReferenceType.SlideOnRemove,
+					undefined,
+					SlidingPreference.BACKWARD,
+				);
+			});
+
+			helper.obliterateRange(
+				"B",
+				{ pos: 1, side: Side.Before },
+				{ pos: 3, side: Side.Before },
+			);
+			helper.insertText("B", 1, "should not be placed here");
+			helper.removeRange("A", 1, 3);
+
+			helper.processAllOps();
+			assert.equal(A.localReferencePositionToPosition(localRefA), 0);
+			assert.equal(B.localReferencePositionToPosition(localRefB), 0);
+
+			helper.logger.validate({ baseText: "Ashould not be placed hereC" });
+		});
 	});
 
 	it("Remove segments from end with sliding local reference", () => {

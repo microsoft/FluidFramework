@@ -468,9 +468,9 @@ function serializationTests({
 							...testContainerConfig,
 							loaderProps: {
 								detachedBlobStorage,
-								options: { summarizeProtocolTree },
 								configProvider: createTestConfigProvider({
 									"Fluid.Container.MemoryBlobStorageEnabled": true,
+									"Fluid.Container.summarizeProtocolTree2": summarizeProtocolTree,
 								}),
 							},
 						});
