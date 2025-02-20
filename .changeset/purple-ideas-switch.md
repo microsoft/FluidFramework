@@ -5,7 +5,7 @@
 "section": deprecation
 ---
 
-The SharedTreeCore.processCore on SharedTreeCore is now deprecated
+The SharedTreeCore.processCore function is now deprecated
 
 A new function `processMessagesCore` has been added in place of `processCore`, which will be called to process multiple messages instead of a single one on the channel. This is part of a feature called "Op bunching" where contiguous ops in a grouped batch are bunched and processed together by the shared object.
 
