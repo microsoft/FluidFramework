@@ -134,7 +134,7 @@
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/shared-summary-block-previous": "npm:@fluidframework/shared-summary-block@2.21.0",
+		"@fluidframework/shared-summary-block-previous": "npm:@fluidframework/shared-summary-block@2.22.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/benchmark": "^2.1.0",
