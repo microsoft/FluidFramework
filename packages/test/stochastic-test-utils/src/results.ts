@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
+import path from "path-browserify";
 
 import type { SaveInfo } from "./types.js";
 

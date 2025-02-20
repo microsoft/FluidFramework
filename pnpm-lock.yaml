@@ -14166,6 +14166,9 @@ importers:
       best-random:
         specifier: ^1.0.0
         version: 1.0.3
+      path-browserify:
+        specifier: ^1.0.1
+        version: 1.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -14200,6 +14203,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/path-browserify':
+        specifier: ^1.0.0
+        version: 1.0.3
       c8:
         specifier: ^8.0.1
         version: 8.0.1
