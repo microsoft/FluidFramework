@@ -995,6 +995,12 @@ export function defaultRevisionMetadataFromChanges(
 export function defaultRevInfosFromChanges(
 	changes: readonly TaggedChange<unknown>[],
 ): RevisionInfo[] {
+	const allUndefined = changes.every((change) => change.change === undefined);
+	const allDefined = changes.every((change) => change.change !== undefined);
+	assert(
+		allDefined === true || allUndefined === true,
+		"all changes must either be defined or undefined.",
+	);
 	const revInfos: RevisionInfo[] = [];
 	const revisions = new Set<RevisionTag>();
 	const rolledBackRevisions: RevisionTag[] = [];
