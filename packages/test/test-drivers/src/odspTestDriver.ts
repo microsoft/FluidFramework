@@ -101,11 +101,11 @@ export function getOdspCredentials(
 		const tenantNames = Object.keys(tenants);
 		const tenant = tenantNames[tenantIndex % tenantNames.length];
 		if(tenant === undefined){
-			throw new Error("tenant should not be undefined");
+			throw new Error("tenant should not be undefined when getting odsp credentials");
 		}
 		const tenantInfo = tenants[tenant];
 		if(tenantInfo === undefined){
-			throw new Error("tenantInfo should not be undefined");
+			throw new Error("tenantInfo should not be undefined when getting odsp credentials");
 		}
 		// Translate all the user from that user to the full user principle name by appending the tenant domain
 		const range = tenantInfo.range;
@@ -137,9 +137,10 @@ export function getOdspCredentials(
 		const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
 
 		// Need to choose one out of the set as these account might be from different tenant
-		// TODO Why non null assert here
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const username = requestedUserName ?? Object.keys(passwords)[0]!;
+		const username = requestedUserName ?? Object.keys(passwords)[0];
+		if(username === undefined){
+			throw new Error("username should not be undefined when getting odsp credentials");
+		}
 		const userPass = passwords[username];
 		assert(userPass, `No password for username: ${username}`);
 		creds.push({ username, password: userPass });
