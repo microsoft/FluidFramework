@@ -409,7 +409,14 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		this.disconnect();
+		this.disconnect(
+			createGenericNetworkError(
+				// pre-0.58 error message: clientClosingConnection
+				"Client closing delta connection",
+				{ canRetry: true },
+				{ driverVersion },
+			),
+		);
 	}
 
 	protected disconnect(err?: IAnyDriverError) {
