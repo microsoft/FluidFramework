@@ -19,6 +19,7 @@ import {
 	insertAvoidField,
 	insertField,
 	obliterateField,
+	obliterateFieldZeroLength,
 	// removeWithField,
 } from "./obliterateOperations.js";
 import { TestClient } from "./testClient.js";
@@ -66,6 +67,18 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 					// applyOpDuringGeneration: true,
 				},
 			},
+			{
+				name: "obliterate exact range with zero length",
+				config: {
+					...opts,
+					operations: [
+						annotateWithField,
+						insertAvoidField,
+						insertField,
+						obliterateFieldZeroLength,
+					],
+				},
+			},
 		])
 			it(`${name}: ObliterateFarm_${minLength}`, async () => {
 				const random = makeRandom(0xdeadbeef, 0xfeedbed, minLength, extraSeed ?? 0);
@@ -105,7 +118,7 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 // More tests pass, but due to how this farm selects ops, the tests take a while to run, and merge-tree
 // already a test suite on the longer side.
 const describeFuzz = createFuzzDescribe({ defaultTestCount: 1 });
-describeFuzz("MergeTree.Client Obliterate", ({ testCount }) => {
+describeFuzz.only("MergeTree.Client Obliterate", ({ testCount }) => {
 	if (testCount > 1) {
 		doOverRange(
 			{ min: 0, max: testCount - 1 },
