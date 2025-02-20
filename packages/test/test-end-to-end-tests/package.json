@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.22.0",
+	"version": "2.22.1",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {

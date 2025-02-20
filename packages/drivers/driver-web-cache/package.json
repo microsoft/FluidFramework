@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-web-cache",
-	"version": "2.22.0",
+	"version": "2.22.1",
 	"description": "Implementation of the driver caching API for a web browser",
 	"homepage": "https://fluidframework.com",
 	"repository": {

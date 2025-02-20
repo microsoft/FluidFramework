@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/app-insights-logger",
-	"version": "2.22.0",
+	"version": "2.22.1",
 	"description": "Contains a Fluid logging client that sends telemetry events to Azure App Insights",
 	"homepage": "https://fluidframework.com",
 	"repository": {

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/presence-tracker",
-	"version": "2.22.0",
+	"version": "2.22.1",
 	"private": true,
 	"description": "Example application that tracks page focus and mouse position using the Fluid Framework presence features.",
 	"homepage": "https://fluidframework.com",

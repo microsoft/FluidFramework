@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-changeset",
-	"version": "2.22.0",
+	"version": "2.22.1",
 	"description": "property changeset definitions and related functionalities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
