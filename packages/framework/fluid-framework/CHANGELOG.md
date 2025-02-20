@@ -1,5 +1,30 @@
 # fluid-framework
 
+## 2.22.0
+
+### Minor Changes
+
+-   Target ES2021 ([#23307](https://github.com/microsoft/FluidFramework/pull/23307)) [36ed18289b](https://github.com/microsoft/FluidFramework/commit/36ed18289bd9b076a996dc48965a9ef12a95bda6)
+
+    The TypeScript build for Fluid Framework packages has been updated to target ES2021 instead of ES2020.
+    This may result in newer JavaScript language features being used.
+    This does not change TypeScript types, nor the JavaScript libraries being used.
+    We only support users which support ES2022, so updating to target ES2021 should not break any supported use-case.
+    Any users which do not have at least ES2021 language feature support may need to transpile out some additional cases after this change.
+
+    This should result in slightly reduced bundle size and slightly improved performance for users not transpiling these features out.
+    No major impact is expected.
+
+-   Add `leaves` and statics to `SchemaFactory`. ([#23787](https://github.com/microsoft/FluidFramework/pull/23787)) [efa90f6274](https://github.com/microsoft/FluidFramework/commit/efa90f6274152cadb55329b7bbf6a6cd8e299847)
+
+    `SchemaFactory` now has a `leaves` member that is an array of all leaf schema.
+
+    `SchemaFactory` now has static members to access leaf schema and create field schema.
+
+## 2.21.0
+
+Dependency updates only.
+
 ## 2.20.0
 
 Dependency updates only.
