@@ -100,11 +100,11 @@ export function getOdspCredentials(
 		const tenants: LoginTenants = JSON.parse(loginTenants);
 		const tenantNames = Object.keys(tenants);
 		const tenant = tenantNames[tenantIndex % tenantNames.length];
-		if(tenant === undefined){
+		if (tenant === undefined) {
 			throw new Error("tenant should not be undefined when getting odsp credentials");
 		}
 		const tenantInfo = tenants[tenant];
-		if(tenantInfo === undefined){
+		if (tenantInfo === undefined) {
 			throw new Error("tenantInfo should not be undefined when getting odsp credentials");
 		}
 		// Translate all the user from that user to the full user principle name by appending the tenant domain
@@ -138,7 +138,7 @@ export function getOdspCredentials(
 
 		// Need to choose one out of the set as these account might be from different tenant
 		const username = requestedUserName ?? Object.keys(passwords)[0];
-		if(username === undefined){
+		if (username === undefined) {
 			throw new Error("username should not be undefined when getting odsp credentials");
 		}
 		assert(passwords[username], `No password for username: ${username}`);
@@ -208,10 +208,7 @@ export class OdspTestDriver implements ITestDriver {
 
 		let siteUrl: string;
 		let tenantName: string;
-		if (
-			emailServer.startsWith("http://") ||
-			emailServer.startsWith("https://")
-		) {
+		if (emailServer.startsWith("http://") || emailServer.startsWith("https://")) {
 			// it's already a site url
 			tenantName = new URL(emailServer).hostname;
 			siteUrl = emailServer;
