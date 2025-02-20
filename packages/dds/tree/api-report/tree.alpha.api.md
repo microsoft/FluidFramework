@@ -379,7 +379,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
-// @alpha
+// @alpha @sealed
 export class JsonArray extends _APIExtractorWorkaroundJsonArrayBase {
 }
 
@@ -428,7 +428,7 @@ export interface JsonNodeSchemaBase<TNodeKind extends NodeKind, TJsonSchemaType 
     readonly type: TJsonSchemaType;
 }
 
-// @alpha
+// @alpha @sealed
 export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {
 }
 
@@ -589,7 +589,7 @@ TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
 // @alpha
-export const _RecursiveArrayWorkaroundJsonArray: FixRecursiveArraySchema<typeof _APIExtractorWorkaroundJsonArrayBase>;
+export const _RecursiveArrayWorkaroundJsonArray: FixRecursiveArraySchema<typeof JsonArray>;
 
 // @public @deprecated
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {

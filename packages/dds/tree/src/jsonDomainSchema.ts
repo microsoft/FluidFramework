@@ -63,7 +63,7 @@ export const _APIExtractorWorkaroundJsonObjectBase = sf.mapRecursive("object", J
  * // Node API is like a Map:
  * const value = imported.get("a");
  * ```
- * @alpha
+ * @alpha @sealed
  */
 export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {}
 {
@@ -102,7 +102,7 @@ export const _APIExtractorWorkaroundJsonArrayBase = sf.arrayRecursive("array", J
  * assert(Tree.is(outer, JsonArray));
  * const inner = outer[0];
  * ```
- * @alpha
+ * @alpha @sealed
  */
 export class JsonArray extends _APIExtractorWorkaroundJsonArrayBase {}
 {
