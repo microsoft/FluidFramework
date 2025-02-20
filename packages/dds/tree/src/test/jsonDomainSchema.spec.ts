@@ -28,11 +28,11 @@ describe("JsonDomainSchema", () => {
 			const usingConstructor = new JsonArray(["a", 0, new JsonArray([1])]);
 			// Using `importConcise` can work better for JSON data:
 			const imported = TreeAlpha.importConcise(JsonArray, ["a", 0, [1]]);
+			assert(Tree.is(imported, JsonArray));
 			// Node API is like an Array:
-			const outer: JsonUnion = imported[0];
-			assert(Tree.is(outer, JsonArray));
-			const inner = outer[0];
-			assert.equal(inner, 1);
+			const inner: JsonUnion = imported[2];
+			assert(Tree.is(inner, JsonArray));
+			assert.deepEqual([...inner], [1]);
 		}
 	});
 });
