@@ -13,7 +13,10 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type {
+	IChannelView,
+	IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -50,7 +53,6 @@ import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IChannelView } from "../shared-tree/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
