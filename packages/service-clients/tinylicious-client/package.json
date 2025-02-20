@@ -111,7 +111,7 @@
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.21.0",
+		"@fluidframework/tinylicious-client-previous": "npm:@fluidframework/tinylicious-client@2.22.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
