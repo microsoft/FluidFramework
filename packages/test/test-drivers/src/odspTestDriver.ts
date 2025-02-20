@@ -141,8 +141,13 @@ export function getOdspCredentials(
 		if (username === undefined) {
 			throw new Error("username should not be undefined when getting odsp credentials");
 		}
-		assert(passwords[username], `No password for username: ${username}`);
-		creds.push({ username, password: passwords[username] });
+		const userPass = passwords[username];
+		if (userPass === undefined) {
+			throw new Error(
+				"password for username should not be undefined when getting odsp credentials",
+			);
+		}
+		creds.push({ username, password: userPass });
 	}
 	return creds;
 }
