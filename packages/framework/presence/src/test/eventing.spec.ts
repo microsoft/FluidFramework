@@ -231,24 +231,22 @@ describe("Presence", () => {
 		function setupSharedStatesWorkspace({
 			notifications = false,
 		}: { notifications?: boolean } = {}): void {
-			let states;
-			if (notifications) {
-				states = presence.getStates("name:testWorkspace", {
-					latest: Latest({ x: 0, y: 0, z: 0 }),
-					notifications: Notifications<{ newId: (id: number) => void }>({
-						newId: (_client: ISessionClient, _id: number) => {},
-					}),
-					latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
-				});
-				notificationManager = states.props.notifications;
-			} else {
-				states = presence.getStates("name:testWorkspace", {
-					latest: Latest({ x: 0, y: 0, z: 0 }),
-					latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
-				});
-			}
+			const states = presence.getStates("name:testWorkspace", {
+				latest: Latest({ x: 0, y: 0, z: 0 }),
+				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+			});
 			latest = states.props.latest;
 			latestMap = states.props.latestMap;
+			if (notifications) {
+				const workspace: typeof states = states;
+				workspace.add(
+					"notifications",
+					Notifications<{ newId: (id: number) => void }>({
+						newId: (_client: ISessionClient, _id: number) => {},
+					}),
+				);
+				notificationManager = workspace.props.notifications;
+			}
 		}
 
 		function setupMultipleStatesWorkspaces(): void {
