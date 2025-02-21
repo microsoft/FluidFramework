@@ -78,7 +78,6 @@ jobs:
         artifactName: pack
         buildType: current
         destinationPath: $(Pipeline.Workspace)/pack
-
   workspace:
     clean: all
   variables:
