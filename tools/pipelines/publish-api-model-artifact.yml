@@ -133,6 +133,18 @@ stages:
       variables:
         isLatestMinorOfMajorTrain: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.shouldDeploy'] ]
         majorVersion: $[ dependencies.check_branch_version.outputs['SetShouldDeploy.majorVersion'] ]
+      templateContext:
+        type: releaseJob  # Required, this indicates this deployment job is a release job
+        isProduction: true  # Required, must be 'true' or 'false' TODO - update this to be dynamic
+        inputs:
+        - input:
+          buildType: specific
+          project: internal
+          pipeline: 'Build - client packages'
+          buildVersionToDownload: latestFromBranch
+          branchName: ${{ variables['Build.SourceBranch'] }}
+          artifact: _api-extractor-temp
+          allowPartiallySucceededBuilds: true
       strategy:
         runOnce:
           deploy:
@@ -152,15 +164,15 @@ stages:
               # Setting allowPartiallySucceededBuilds to true so that builds which complete with
               # warnings will be included as well. This is especially needed for archived builds
               # with warnings such as driver-definitions and core-interfaces.
-              - task: DownloadPipelineArtifact@2
-                inputs:
-                  buildType: specific
-                  project: internal
-                  pipeline: 'Build - client packages'
-                  buildVersionToDownload: latestFromBranch
-                  branchName: ${{ variables['Build.SourceBranch'] }}
-                  artifact: _api-extractor-temp
-                  allowPartiallySucceededBuilds: true
+              # - task: DownloadPipelineArtifact@2
+              #   inputs:
+              #     buildType: specific
+              #     project: internal
+              #     pipeline: 'Build - client packages'
+              #     buildVersionToDownload: latestFromBranch
+              #     branchName: ${{ variables['Build.SourceBranch'] }}
+              #     artifact: _api-extractor-temp
+              #     allowPartiallySucceededBuilds: true
 
               # Copy and merge the api-extractor outputs to a central location
               - task: CopyFiles@2
