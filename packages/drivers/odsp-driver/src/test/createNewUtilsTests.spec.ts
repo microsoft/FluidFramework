@@ -533,7 +533,6 @@ describe("Create New Utils Tests", () => {
 			decodedValue,
 			"s=%2FsiteUrl&d=driveId&f=mockItemId&c=%2F&fluid=1&a=mockAppName&p=mockContainerPackageName&x=mockContext",
 		);
-
 		// Reset the webUrl to the original value
 		mockSharingLinkData.webUrl = "https://mock.url";
 	});

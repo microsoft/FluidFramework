@@ -428,15 +428,17 @@ interface LoggingInfo {
 }
 
 function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: LoggingInfo): void {
-	for (const id of loggingInfo.clientIds) {
-		const { channel: sharedDirectory } =
-			clients.find((s) => s.containerRuntime.clientId === id) ?? {};
-		if (sharedDirectory !== undefined) {
-			console.log(`Client ${id}:`);
-			console.log(
-				JSON.stringify(sharedDirectory.getAttachSummary(true).summary, undefined, 4),
-			);
-			console.log("\n");
+	if (loggingInfo.printConsoleLogs === true) {
+		for (const id of loggingInfo.clientIds) {
+			const { channel: sharedDirectory } =
+				clients.find((s) => s.containerRuntime.clientId === id) ?? {};
+			if (sharedDirectory !== undefined) {
+				console.log(`Client ${id}:`);
+				console.log(
+					JSON.stringify(sharedDirectory.getAttachSummary(true).summary, undefined, 4),
+				);
+				console.log("\n");
+			}
 		}
 	}
 }
@@ -452,7 +454,7 @@ export function makeDirReducer(
 	const withLogging =
 		<T>(baseReducer: AsyncReducer<T, DirFuzzTestState>): AsyncReducer<T, DirFuzzTestState> =>
 		async (state, operation) => {
-			if (loggingInfo !== undefined && loggingInfo.printConsoleLogs) {
+			if (loggingInfo?.printConsoleLogs === true) {
 				logCurrentState(state.clients, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
@@ -460,7 +462,7 @@ export function makeDirReducer(
 			try {
 				await baseReducer(state, operation);
 			} catch (error) {
-				if (loggingInfo !== undefined) {
+				if (loggingInfo?.printConsoleLogs === true) {
 					logCurrentState(state.clients, loggingInfo);
 				}
 				throw error;
