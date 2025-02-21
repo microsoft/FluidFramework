@@ -57,6 +57,7 @@ import {
 	mergeTupleBTrees,
 	type TupleBTree,
 	RangeMap,
+	hasSingle,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -197,9 +198,8 @@ export class ModularChangeFamily
 		// It benefits from the same principle that makes merge sort faster than insertion sort,
 		// making it O(N*log(N)) instead of O(N²) for N changesets each containing 1 change atom.
 		const balancedCompose = (slice: readonly ModularChangeset[]): ModularChangeset => {
-			if (slice.length === 1) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				return slice[0]!;
+			if (hasSingle(slice)) {
+				return slice[0];
 			}
 			const mid = Math.floor(slice.length / 2);
 			const left = balancedCompose(slice.slice(0, mid));
