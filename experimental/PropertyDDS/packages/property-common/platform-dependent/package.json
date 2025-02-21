@@ -17,5 +17,10 @@
 		"disabled": true,
 		"broken": {},
 		"entrypoint": "internal"
-	}
+	},
+	"scripts": {
+		"format": "npm run format:biome",
+		"check:format": "npm run check:biome"
+	},
+	"devDependencies": {}
 }

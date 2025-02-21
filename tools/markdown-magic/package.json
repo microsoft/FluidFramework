@@ -1,47 +1,45 @@
 {
-	"name": "@fluid-tools/markdown-magic",
-	"version": "2.23.0",
-	"private": true,
-	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
-	"homepage": "https://fluidframework.com",
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "tools/markdown-magic"
-	},
-	"license": "MIT",
-	"author": "Microsoft and contributors",
-	"sideEffects": false,
-	"bin": {
-		"markdown-magic": "bin/markdown-magic"
-	},
-	"scripts": {
-		"build": "npm run build:docs",
-		"build:docs": "node src/index.cjs --files README.md",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier",
-		"lint:fix": "npm run prettier:fix",
-		"prettier": "prettier --check . --cache",
-		"prettier:fix": "prettier --write . --cache",
-		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
-	},
-	"dependencies": {
-		"@rushstack/node-core-library": "^3.61.0",
-		"@tylerbu/markdown-magic": "2.4.0-tylerbu-1",
-		"chalk": "^4.1.2",
-		"markdown-magic-package-scripts": "^1.2.2",
-		"yargs": "17.7.2"
-	},
-	"devDependencies": {
-		"@fluidframework/build-common": "^2.0.3",
-		"prettier": "~3.0.3"
-	},
-	"dependencyComments": [
-		"chalk is left at version 4 (not 5) to keep CommonJS support."
-	],
-	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
-	}
+  "name": "@fluid-tools/markdown-magic",
+  "version": "2.23.0",
+  "private": true,
+  "description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
+  "homepage": "https://fluidframework.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/microsoft/FluidFramework.git",
+    "directory": "tools/markdown-magic"
+  },
+  "license": "MIT",
+  "author": "Microsoft and contributors",
+  "sideEffects": false,
+  "bin": {
+    "markdown-magic": "bin/markdown-magic"
+  },
+  "scripts": {
+    "build": "npm run build:docs",
+    "build:docs": "node src/index.cjs --files README.md",
+    "format": "npm run format:biome",
+    "lint": "npm run prettier",
+    "lint:fix": "npm run prettier:fix",
+    "test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md",
+    "check:format": "npm run check:biome"
+  },
+  "dependencies": {
+    "@rushstack/node-core-library": "^3.61.0",
+    "@tylerbu/markdown-magic": "2.4.0-tylerbu-1",
+    "chalk": "^4.1.2",
+    "markdown-magic-package-scripts": "^1.2.2",
+    "yargs": "17.7.2"
+  },
+  "devDependencies": {
+    "@fluidframework/build-common": "^2.0.3"
+  },
+  "dependencyComments": [
+    "chalk is left at version 4 (not 5) to keep CommonJS support."
+  ],
+  "typeValidation": {
+    "disabled": true,
+    "broken": {},
+    "entrypoint": "internal"
+  }
 }
