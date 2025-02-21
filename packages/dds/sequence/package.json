@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.22.0",
+	"version": "2.23.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -172,7 +172,7 @@
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.21.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.22.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
