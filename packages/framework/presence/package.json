@@ -65,6 +65,7 @@
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
 		"check:exports:cjs:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json",
 		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
+		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
@@ -81,8 +82,7 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize",
-		"check:format": "npm run check:biome"
+		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
 		"all": true,

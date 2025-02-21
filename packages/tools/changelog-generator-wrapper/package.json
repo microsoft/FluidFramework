@@ -22,14 +22,14 @@
     "build": "concurrently npm:build:compile npm:lint",
     "build:commonjs": "npm run tsc",
     "build:compile": "npm run build:commonjs",
+    "check:format": "npm run check:biome",
     "clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
     "eslint": "eslint --format stylish src",
     "eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
     "format": "npm run format:biome",
     "lint": "npm run prettier && npm run eslint",
     "lint:fix": "npm run prettier:fix && npm run eslint:fix",
-    "tsc": "echo \"No build required.\"",
-    "check:format": "npm run check:biome"
+    "tsc": "echo \"No build required.\""
   },
   "dependencies": {
     "@changesets/cli": "^2.27.8",

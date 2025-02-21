@@ -18,11 +18,11 @@
   "scripts": {
     "build": "npm run build:docs",
     "build:docs": "node src/index.cjs --files README.md",
+    "check:format": "npm run check:biome",
     "format": "npm run format:biome",
     "lint": "npm run prettier",
     "lint:fix": "npm run prettier:fix",
-    "test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md",
-    "check:format": "npm run check:biome"
+    "test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
   },
   "dependencies": {
     "@rushstack/node-core-library": "^3.61.0",
