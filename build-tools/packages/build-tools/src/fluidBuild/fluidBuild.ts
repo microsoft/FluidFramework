@@ -85,9 +85,13 @@ async function main() {
 		let buildGraph: BuildGraph;
 		const spinner = new Spinner("Creating build graph...");
 		try {
+			// Warning any text output to terminal before spinner is halted
+			// risks being lost. It is known to drop text that exceeds a single
+			// line or the terminal width.
 			spinner.start();
 			buildGraph = repo.createBuildGraph(options.buildTaskNames);
 		} catch (e: unknown) {
+			spinner.stop();
 			error((e as Error).message);
 			process.exit(-11);
 		}

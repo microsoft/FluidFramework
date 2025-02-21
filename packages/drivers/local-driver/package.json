@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/local-driver",
-	"version": "2.22.0",
+	"version": "2.23.0",
 	"description": "Fluid local driver",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -142,7 +142,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.21.0",
+		"@fluidframework/local-driver-previous": "npm:@fluidframework/local-driver@2.22.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.10",

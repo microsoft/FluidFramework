@@ -3,18 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { SaveInfo } from "@fluid-private/stochastic-test-utils";
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-
-import type {
-	BaseOperation,
-	DDSFuzzHarnessEvents,
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-} from "./ddsFuzzHarness.js";
-import { ReducerPreconditionError, replayTest } from "./ddsFuzzHarness.js";
+import { ReducerPreconditionError, type BaseOperation } from "./combineReducers.js";
+import { makeRandom } from "./random.js";
+import { type SaveInfo, type AsyncGenerator, done } from "./types.js";
 
 /**
  * A function which takes in an operation and modifies it by reference to be more
@@ -44,24 +35,22 @@ import { ReducerPreconditionError, replayTest } from "./ddsFuzzHarness.js";
  * @internal
  */
 export type MinimizationTransform<TOperation extends BaseOperation> = (op: TOperation) => void;
-
-export class FuzzTestMinimizer<
-	TChannelFactory extends IChannelFactory,
-	TOperation extends BaseOperation,
-> {
+/**
+ * @internal
+ */
+export class FuzzTestMinimizer<TOperation extends BaseOperation> {
 	private initialError?: { message: string; op: BaseOperation };
 	private readonly transforms: MinimizationTransform<TOperation>[];
 	private readonly random = makeRandom();
 
 	constructor(
-		readonly ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
-		readonly providedOptions: Partial<DDSFuzzSuiteOptions>,
+		minimizationTransforms: MinimizationTransform<TOperation>[] | undefined,
 		readonly operations: TOperation[],
-		readonly seed: number,
 		readonly saveInfo: SaveInfo,
+		readonly replayTest: (generator: AsyncGenerator<TOperation, unknown>) => Promise<void>,
 		readonly numIterations: number = 1000,
 	) {
-		this.transforms = ddsModel.minimizationTransforms ?? [];
+		this.transforms = minimizationTransforms ?? [];
 	}
 
 	async minimize(): Promise<TOperation[]> {
@@ -195,26 +184,21 @@ export class FuzzTestMinimizer<
 	 * to avoid dealing with transforms that would result in invalid ops
 	 */
 	private async assertFails(): Promise<boolean> {
-		const emitter = (this.providedOptions.emitter ??=
-			new TypedEventEmitter<DDSFuzzHarnessEvents>());
-
 		let lastOp: BaseOperation = { type: "___none___" };
-		const lastOpTracker = (op: BaseOperation): void => {
-			lastOp = op;
+		const operationsIterator = this.operations[Symbol.iterator]();
+		const generator: AsyncGenerator<TOperation, unknown> = async () => {
+			const val = operationsIterator.next();
+			if (val.done === true) {
+				return done;
+			}
+			return (lastOp = val.value);
 		};
-		emitter.on("operationStart", lastOpTracker);
 		try {
-			await replayTest(
-				this.ddsModel,
-				this.seed,
-				this.operations,
-				undefined,
-				this.providedOptions,
-			);
+			await this.replayTest(generator);
 			return false;
 		} catch (error: unknown) {
 			if (
-				!error ||
+				error === undefined ||
 				!(error instanceof Error) ||
 				error instanceof ReducerPreconditionError ||
 				error.stack === undefined
@@ -243,8 +227,6 @@ export class FuzzTestMinimizer<
 			return (
 				message === this.initialError.message && this.initialError.op.type === lastOp.type
 			);
-		} finally {
-			emitter.off("operation", lastOpTracker);
 		}
 	}
 }
