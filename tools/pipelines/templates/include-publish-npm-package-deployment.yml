@@ -46,6 +46,13 @@ jobs:
   displayName: Publish ${{ parameters.environment }}
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
+  templateContext:
+    type: releaseJob
+    isProduction: true
+    inputs:
+    - input: checkout
+      repository: self
+      persistCredentials: true # Necessary for creation of git tags to work
   workspace:
     clean: all
   variables:
@@ -55,9 +62,9 @@ jobs:
     runOnce:
         deploy:
           steps:
-          - checkout: self
-            clean: true
-            persistCredentials: true # Necessary for creation of git tags to work
+          # - checkout: self
+          #   clean: true
+          #   persistCredentials: true # Necessary for creation of git tags to work
           - download: current
             artifact: pack
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
