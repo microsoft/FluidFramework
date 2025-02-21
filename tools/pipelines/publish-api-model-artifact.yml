@@ -143,9 +143,9 @@ stages:
           pipeline: 'Build - client packages'
           buildVersionToDownload: latestFromBranch
           branchName: ${{ variables['Build.SourceBranch'] }}
-          artifact: _api-extractor-temp
+          artifactName: _api-extractor-temp
           allowPartiallySucceededBuilds: true
-          destinationPath: $(Build.SourcesDirectory)
+          targetPath: $(Pipeline.Workspace)
       strategy:
         runOnce:
           deploy:
