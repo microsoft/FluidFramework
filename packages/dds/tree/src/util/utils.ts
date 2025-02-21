@@ -624,7 +624,7 @@ export function copyPropertyIfDefined<
  *
  * When compared with an approach like reducing all the values left-to-right,
  * this balanced approach is beneficial when the cost of invoking `callbackFn` is proportional to the number reduced values that its parameters collectively represent.
- * For example, if `T` is and array, and `callbackFn` concatenates its inputs,
+ * For example, if `T` is an array, and `callbackFn` concatenates its inputs,
  * then `balancedReduce` will have O(N*log(N)) time complexity instead of `Array.prototype.reduce`'s O(N²).
  * However, if `callbackFn` is O(1) then both `balancedReduce` and `Array.prototype.reduce` will have O(N) complexity.
  *
