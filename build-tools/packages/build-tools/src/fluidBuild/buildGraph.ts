@@ -100,11 +100,9 @@ export class BuildPackage {
 		public readonly pkg: Package,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
-		this._taskDefinitions = getTaskDefinitions(
-			this.pkg.packageJson,
-			globalTaskDefinitions,
-			this.pkg.isReleaseGroupRoot,
-		);
+		this._taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions, {
+			isReleaseGroupRoot: this.pkg.isReleaseGroupRoot,
+		});
 		traceTaskDef(
 			`${pkg.nameColored}: Task def: ${JSON.stringify(this._taskDefinitions, undefined, 2)}`,
 		);

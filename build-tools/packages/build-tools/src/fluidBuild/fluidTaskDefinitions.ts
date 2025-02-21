@@ -291,14 +291,15 @@ function getDirectlyCalledScripts(script: string, allScriptNames: string[]): str
 
 /**
  * Combine and fill in default values for task definitions for a package.
- * @param json package.json content for the package
- * @param root root for the Fluid repo
+ * @param json - package.json content for the package
+ * @param globalTaskDefinitions - global task definitions
+ * @param isReleaseGroupRoot - whether the package is the root of a release group
  * @returns full task definitions for the package.
  */
 export function getTaskDefinitions(
 	json: PackageJson,
 	globalTaskDefinitions: TaskDefinitions,
-	isReleaseGroupRoot: boolean,
+	{ isReleaseGroupRoot }: { isReleaseGroupRoot: boolean },
 ): TaskDefinitions {
 	const packageScripts = json.scripts ?? {};
 	const packageTaskDefinitions = json.fluidBuild?.tasks;

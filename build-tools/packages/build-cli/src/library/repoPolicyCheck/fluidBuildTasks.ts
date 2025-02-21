@@ -325,7 +325,9 @@ function hasTaskDependency(
 ): boolean {
 	const rootConfig = getFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
-	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
+	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, {
+		isReleaseGroupRoot: false,
+	});
 	// Searched deps that are package specific (e.g. <packageName>#<taskName>)
 	// It is expected that all packageNames are other packages' names; using
 	// given package's name (json.name) will alway return false as package is
@@ -423,7 +425,9 @@ function hasTaskDependency(
 		if (pkgJson === undefined) {
 			throw new Error(`Dependent package ${packageName} not found in repo`);
 		}
-		const secondaryTaskDefinitions = getTaskDefinitions(pkgJson, globalTaskDefinitions, false);
+		const secondaryTaskDefinitions = getTaskDefinitions(pkgJson, globalTaskDefinitions, {
+			isReleaseGroupRoot: false,
+		});
 		pending.push(...secondaryData.tasks);
 		let dep;
 		while ((dep = pending.pop()) !== undefined) {
