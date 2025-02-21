@@ -145,6 +145,7 @@ stages:
           branchName: ${{ variables['Build.SourceBranch'] }}
           artifact: _api-extractor-temp
           allowPartiallySucceededBuilds: true
+          targetPath: '$(Build.SourcesDirectory)/_api-extractor-temp'
       strategy:
         runOnce:
           deploy:
