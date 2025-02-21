@@ -28,6 +28,10 @@
 	"strip_chars": " .,;:#",
 	"custom_settings": {
 	  "separatorsToIndex": "_",
+	  "minWordSizefor1Typo": 4,
+	  "minWordSizefor2Typos": 8,
+	  "splitWords": true,
+	  "typoTolerance": "min",
 	  "attributesForFaceting": [
 		"language",
 		"version",

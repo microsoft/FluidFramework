@@ -172,22 +172,17 @@ const config: Config = {
 		},
 
 		typesense: {
-			// Replace this with the name of your index/collection.
 			typesenseCollectionName: 'fluidframeworkdocs',
 			typesenseServerConfig: {
 			  nodes: [
 				{
-				  host: 'localhost',
+				  host: '20.64.178.109',
 				  port: 8108,
-				  protocol: 'http',
+				  protocol: 'https',
 				},
 			  ],
-			  apiKey: 'xyz',
+			  apiKey: 'abcxyz',
 			},
-
-			// Optional: Typesense search parameters: https://typesense.org/docs/0.24.0/api/search.html#search-parameters
-			typesenseSearchParameters: {},
-
 			// Optional
 			contextualSearch: true,
 		},
