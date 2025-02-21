@@ -57,7 +57,7 @@ import {
 	mergeTupleBTrees,
 	type TupleBTree,
 	RangeMap,
-	hasSingle,
+	balancedReduce,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -184,29 +184,15 @@ export class ModularChangeFamily
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
-		if (changes.length === 0) {
-			return makeModularChangeset();
-		}
-
-		const innerChanges = changes.map((change) => change.change);
-
-		// Recursively compose the left and right halves of the changeset list before composing their respective compositions.
-		// This leads to the same number of compositions as when composing the changesets in order,
-		// but in scenarios where the changesets grow as they are composed
-		// (e.g., when composing changesets that target different elements of a sequence),
-		// this approach reduces the number of times the individual change atoms within the changesets are processed.
-		// It benefits from the same principle that makes merge sort faster than insertion sort,
-		// making it O(N*log(N)) instead of O(N²) for N changesets each containing 1 change atom.
-		const balancedCompose = (slice: readonly ModularChangeset[]): ModularChangeset => {
-			if (hasSingle(slice)) {
-				return slice[0];
-			}
-			const mid = Math.floor(slice.length / 2);
-			const left = balancedCompose(slice.slice(0, mid));
-			const right = balancedCompose(slice.slice(mid));
+		const pairwiseDelegate = (
+			left: ModularChangeset,
+			right: ModularChangeset,
+		): ModularChangeset => {
 			return this.composePair(left, right, revInfos, idState);
 		};
-		return balancedCompose(innerChanges);
+
+		const innerChanges = changes.map((change) => change.change);
+		return balancedReduce(innerChanges, pairwiseDelegate, makeModularChangeset);
 	}
 
 	private composePair(
