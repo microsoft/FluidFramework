@@ -13,6 +13,7 @@ import {
 	type Brand,
 	type BrandedKey,
 	type BrandedMapSubset,
+	type Mutable,
 	type Opaque,
 	ReferenceCountedBase,
 	brand,
@@ -22,7 +23,13 @@ import {
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import type { DetachedUpPath, PlaceIndex, Range, UpPath } from "./pathTree.js";
+import {
+	isDetachedUpPath,
+	type DetachedUpPath,
+	type PlaceIndex,
+	type Range,
+	type UpPath,
+} from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
 
@@ -567,6 +574,12 @@ export class AnchorSet implements AnchorLocator {
 			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = destinationPath;
 			node.parentField = destination.parentField;
+			// If the destination is a DetachedUpPath, propagate its detachedNodeId
+			// TODO does the id need to be incremented? it doesn't seem like it so are there ever multiple nodes that get passed here and if so, how do we handle this?
+			if (isDetachedUpPath(destination)) {
+				(node as unknown as Mutable<DetachedUpPath>).detachedNodeId =
+					destination.detachedNodeId;
+			}
 		}
 
 		// Update new parent to add children

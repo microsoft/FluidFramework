@@ -71,6 +71,20 @@ export interface DetachedUpPath extends UpPath {
 }
 
 /**
+ * TODO
+ */
+export function isDetachedUpPath(path: UpPath): path is DetachedUpPath {
+	return (path as DetachedUpPath).detachedNodeId !== undefined;
+}
+
+/**
+ * TODO
+ */
+export function getDetachedUpPath(path: UpPath): DetachedUpPath | undefined {
+	return isDetachedUpPath(path) ? path : undefined;
+}
+
+/**
  * Delimits the extend of a range.
  */
 export interface Range {
