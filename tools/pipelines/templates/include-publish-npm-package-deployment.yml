@@ -73,11 +73,11 @@ jobs:
     inputs:
       - input: pipelineArtifact
         artifactName: MyDrop
-        destinationPath: ${{ parameters.buildDirectory }}
+        targetPath: ${{ parameters.buildDirectory }}
       - input: pipelineArtifact
         artifactName: pack
         buildType: current
-        destinationPath: $(Pipeline.Workspace)/pack
+        targetPath: $(Pipeline.Workspace)/pack
   workspace:
     clean: all
   variables:
