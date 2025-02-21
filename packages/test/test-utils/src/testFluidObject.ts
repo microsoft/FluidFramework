@@ -76,7 +76,7 @@ export class TestFluidObject implements ITestFluidObject {
 			const handle = this.root.get<IFluidHandle<T>>(id);
 			if (handle === undefined) {
 				throw new Error(
-					`Shared object with id ${id} is in factoryEntriesMap but not found under root.`,
+					`Shared object with id '${id}' is in factoryEntriesMap but not found under root.`,
 				);
 			}
 			return handle.get();
