@@ -12,6 +12,7 @@ import type { ContainerSchema, IFluidContainer } from "fluid-framework";
 
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
+import { initializeReactions } from "./reactions.js";
 import { renderControlPanel, renderFocusPresence, renderMousePresence } from "./view.js";
 
 // Define the schema of the Fluid container.
@@ -71,6 +72,8 @@ async function start() {
 	const focusTracker = new FocusTracker(presence, appPresence);
 	const mouseTracker = new MouseTracker(presence, appPresence);
 
+	initializeReactions(presence, mouseTracker);
+
 	const focusDiv = document.getElementById("focus-content") as HTMLDivElement;
 	renderFocusPresence(focusTracker, focusDiv);
 
@@ -80,9 +83,47 @@ async function start() {
 	const controlPanelDiv = document.getElementById("control-panel") as HTMLDivElement;
 	renderControlPanel(mouseTracker, controlPanelDiv);
 
-	// Setting "fluidStarted" is just for our test automation
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	window["fluidStarted"] = true;
+	// Setting "fluid*" and these helpers are just for our test automation
+	const buildAttendeeMap = () => {
+		return [...presence.getAttendees()].reduce((map, a) => {
+			map[a.sessionId] = a.getConnectionStatus();
+			return map;
+		}, {});
+	};
+	const checkAttendees = (expected: Record<string, string>): boolean => {
+		const actual = buildAttendeeMap();
+		const entriesActual = Object.entries(actual);
+		const entriesExpected = Object.entries(expected);
+		if (entriesActual.length !== entriesExpected.length) {
+			return false;
+		}
+		for (const [k, v] of entriesExpected) {
+			if (actual[k] !== v) {
+				return false;
+			}
+		}
+		return true;
+	};
+	/* eslint-disable @typescript-eslint/dot-notation */
+	window["fluidSessionAttendeeCheck"] = checkAttendees;
+	window["fluidSessionAttendees"] = buildAttendeeMap();
+	window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
+	presence.events.on("attendeeJoined", (attendee) => {
+		console.log(`Attendee joined: ${attendee.sessionId}`);
+		window["fluidSessionAttendees"] = buildAttendeeMap();
+		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
+		window["fluidAttendeeJoinedCalled"] = true;
+	});
+	presence.events.on("attendeeDisconnected", (attendee) => {
+		console.log(`Attendee left: ${attendee.sessionId}`);
+		window["fluidSessionAttendees"] = buildAttendeeMap();
+		window["fluidSessionAttendeeCount"] = presence.getAttendees().size;
+		window["fluidAttendeeDisconnectedCalled"] = true;
+	});
+	window["fluidSessionId"] = presence.getMyself().sessionId;
+	// Always set last as it is used as fence for load completion
+	window["fluidContainerId"] = id;
+	/* eslint-enable @typescript-eslint/dot-notation */
 }
 
 start().catch(console.error);

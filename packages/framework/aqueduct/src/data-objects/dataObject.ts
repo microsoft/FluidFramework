@@ -85,6 +85,7 @@ export abstract class DataObject<
 
 /**
  * Utility for creating SharedObjectKind instances for data objects.
+ * @typeParam T - The kind of data object.
  * @internal
  */
 export function createDataObjectKind<T extends new (...any) => DataObject>(
