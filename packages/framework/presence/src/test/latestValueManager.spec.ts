@@ -76,6 +76,7 @@ describe("Presence", () => {
 		addControlsTests(createLatestManager);
 
 		it("localUpdate event is fired with new value when local value is updated", () => {
+			// Setup
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.getStates(testWorkspaceName, {
 				camera: Latest({ x: 0, y: 0, z: 0 }),
@@ -88,6 +89,7 @@ describe("Presence", () => {
 				assert.deepStrictEqual(update.value, { x: 1, y: 2, z: 3 });
 			});
 
+			// Act & Verify
 			camera.local = { x: 1, y: 2, z: 3 };
 			assert.strictEqual(localUpdateCount, 1);
 		});

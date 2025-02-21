@@ -14,6 +14,7 @@ import type {
 	BroadcastControlSettings,
 	IPresence,
 	LatestMapItemValueClientData,
+	LatestMapValueManager,
 } from "@fluidframework/presence/alpha";
 import { LatestMap } from "@fluidframework/presence/alpha";
 
@@ -42,50 +43,48 @@ describe("Presence", () => {
 
 		addControlsTests(createLatestMapManager);
 
-		it("localItemUpdated event is fired with new value when local value is updated", () => {
+		function setupMapValueManager(): LatestMapValueManager<
+			{
+				x: number;
+				y: number;
+			},
+			string
+		> {
 			const presence = createPresenceManager(new MockEphemeralRuntime());
 			const states = presence.getStates(testWorkspaceName, {
-				fixedMap: LatestMap<
-					{
-						x: number;
-						y: number;
-					},
-					string
-				>({ key1: { x: 0, y: 0 } }),
+				fixedMap: LatestMap({ key1: { x: 0, y: 0 } }),
 			});
-			const fixedMap = states.props.fixedMap;
+			return states.props.fixedMap;
+		}
+
+		it("localItemUpdated event is fired with new value when local value is updated", () => {
+			// Setup
+			const mapVM = setupMapValueManager();
 
 			let localUpdateCount = 0;
-			fixedMap.events.on("localItemUpdated", (update) => {
+			mapVM.events.on("localItemUpdated", (update) => {
 				localUpdateCount++;
 				assert.strictEqual(update.key, "key1");
 				assert.deepStrictEqual(update.value, { x: 1, y: 2 });
 			});
 
-			fixedMap.local.set("key1", { x: 1, y: 2 });
+			// Act & Verify
+			mapVM.local.set("key1", { x: 1, y: 2 });
 			assert.strictEqual(localUpdateCount, 1);
 		});
 
 		it("localItemRemoved event is fired with new value when local value is deleted", () => {
-			const presence = createPresenceManager(new MockEphemeralRuntime());
-			const states = presence.getStates(testWorkspaceName, {
-				fixedMap: LatestMap<
-					{
-						x: number;
-						y: number;
-					},
-					string
-				>({ key1: { x: 0, y: 0 } }),
-			});
-			const fixedMap = states.props.fixedMap;
+			// Setup
+			const mapVM = setupMapValueManager();
 
 			let localRemovalCount = 0;
-			fixedMap.events.on("localItemRemoved", (update) => {
+			mapVM.events.on("localItemRemoved", (update) => {
 				localRemovalCount++;
 				assert.strictEqual(update.key, "key1");
 			});
 
-			fixedMap.local.delete("key1");
+			// Act & Verify
+			mapVM.local.delete("key1");
 			assert.strictEqual(localRemovalCount, 1);
 		});
 	});
