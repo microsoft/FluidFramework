@@ -4,23 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
+	IRuntimeMessageCollection,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import {
-	type IFluidSerializer,
-	SharedObject,
-} from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -38,7 +32,7 @@ import {
 import {
 	type JsonCompatibleReadOnly,
 	brand,
-	Breakable,
+	type Breakable,
 	type WithBreakable,
 	throwIfBroken,
 	breakingClass,
@@ -56,6 +50,8 @@ import type { ResubmitMachine } from "./resubmitMachine.js";
 import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IChannelView } from "../shared-tree/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -74,11 +70,8 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
  */
 @breakingClass
 export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
-	extends SharedObject
 	implements WithBreakable
 {
-	public readonly breaker: Breakable = new Breakable("Shared Tree");
-
 	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
 	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
 	/**
@@ -87,14 +80,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * Is `undefined` after (and only after) this instance is attached.
 	 */
 	private detachedRevision: SeqNumber | undefined = minimumPossibleSequenceNumber;
-
-	/**
-	 * Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
-	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
-	 */
-	public get editor(): TEditor {
-		return this.getLocalBranch().editor;
-	}
 
 	/**
 	 * Used to encode/decode messages sent to/received from the Fluid runtime.
@@ -112,12 +97,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		MessageEncodingContext
 	>;
 
-	private readonly idCompressor: IIdCompressor;
-
 	private readonly resubmitMachine: ResubmitMachine<TChange>;
-	protected readonly commitEnricher: BranchCommitEnricher<TChange>;
+	public readonly commitEnricher: BranchCommitEnricher<TChange>;
 
-	protected readonly mintRevisionTag: () => RevisionTag;
+	public readonly mintRevisionTag: () => RevisionTag;
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
@@ -125,50 +108,44 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
 	 * @param editManager - The edit manager
-	 * @param id - The id of the shared object
 	 * @param runtime - The IFluidDataStoreRuntime which contains the shared object
-	 * @param attributes - Attributes of the shared object
-	 * @param telemetryContextPrefix - The property prefix for telemetry pertaining to this object. See {@link ITelemetryContext}
+	 * @param editor - Used to edit the state of the tree. Edits will be immediately applied locally to the tree.
+	 * If there is no transaction currently ongoing, then the edits will be submitted to Fluid immediately as well.
 	 */
 	public constructor(
+		public readonly breaker: Breakable,
+		public readonly sharedObject: IChannelView & IFluidLoadable,
+		public readonly serializer: IFluidSerializer,
+		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
+		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
 		changeFamily: ChangeFamily<TEditor, TChange>,
 		options: ICodecOptions,
 		formatOptions: ExplicitCoreCodecVersions,
-		// Base class arguments
-		id: string,
-		runtime: IFluidDataStoreRuntime,
-		attributes: IChannelAttributes,
-		telemetryContextPrefix: string,
+		private readonly idCompressor: IIdCompressor,
 		schema: TreeStoredSchemaRepository,
 		schemaPolicy: SchemaPolicy,
 		resubmitMachine?: ResubmitMachine<TChange>,
 		enricher?: ChangeEnricherReadonlyCheckout<TChange>,
+		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
 	) {
-		super(id, runtime, attributes, telemetryContextPrefix);
-
 		this.schemaAndPolicy = {
 			schema,
 			policy: schemaPolicy,
 		};
 
 		const rebaseLogger = createChildLogger({
-			logger: this.logger,
+			logger,
 			namespace: "Rebase",
 		});
 
-		assert(
-			runtime.idCompressor !== undefined,
-			0x886 /* IdCompressor must be enabled to use SharedTree */,
-		);
-		this.idCompressor = runtime.idCompressor;
 		this.mintRevisionTag = () => this.idCompressor.generateCompressedId();
 		/**
 		 * A random ID that uniquely identifies this client in the collab session.
 		 * This is sent alongside every op to identify which client the op originated from.
 		 * This is used rather than the Fluid client ID because the Fluid client ID is not stable across reconnections.
 		 */
-		const localSessionId = runtime.idCompressor.localSessionId;
+		const localSessionId = idCompressor.localSessionId;
 		this.editManager = new EditManager(
 			changeFamily,
 			localSessionId,
@@ -188,7 +165,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			}
 		});
 
-		const revisionTagCodec = new RevisionTagCodec(runtime.idCompressor);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const editManagerCodec = makeEditManagerCodec(
 			this.editManager.changeFamily.codecs,
 			revisionTagCodec,
@@ -211,7 +188,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 		this.messageCodec = makeMessageCodec(
 			changeFamily.codecs,
-			new RevisionTagCodec(runtime.idCompressor),
+			new RevisionTagCodec(idCompressor),
 			options,
 			formatOptions.message,
 		);
@@ -230,7 +207,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 	// TODO: SharedObject's merging of the two summary methods into summarizeCore is not what we want here:
 	// We might want to not subclass it, or override/reimplement most of its functionality.
 	@throwIfBroken
-	protected summarizeCore(
+	public summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
@@ -242,7 +219,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			summarizableBuilder.addWithStats(
 				s.key,
 				s.getAttachSummary(
-					(contents) => serializer.stringify(contents, this.handle),
+					(contents) => serializer.stringify(contents, this.sharedObject.handle),
 					undefined,
 					undefined,
 					telemetryContext,
@@ -255,7 +232,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return builder.getSummaryTree();
 	}
 
-	protected async loadCore(services: IChannelStorageService): Promise<void> {
+	public async loadCore(services: IChannelStorageService): Promise<void> {
 		assert(
 			this.editManager.localBranch.getHead() === this.editManager.getTrunkHead(),
 			0xaaa /* All local changes should be applied to the trunk before loading from summary */,
@@ -310,7 +287,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		isResubmit: boolean,
 	): void {
 		assert(
-			this.isAttached() === (this.detachedRevision === undefined),
+			this.sharedObject.isAttached() === (this.detachedRevision === undefined),
 			0x95a /* Detached revision should only be set when not attached */,
 		);
 
@@ -325,8 +302,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		if (this.detachedRevision !== undefined) {
 			const newRevision: SeqNumber = brand((this.detachedRevision as number) + 1);
 			this.detachedRevision = newRevision;
-			this.editManager.addSequencedChange(
-				{ ...enrichedCommit, sessionId: this.editManager.localSessionId },
+			this.editManager.addSequencedChanges(
+				[enrichedCommit],
+				this.editManager.localSessionId,
 				newRevision,
 				this.detachedRevision,
 			);
@@ -351,40 +329,79 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.resubmitMachine.onCommitSubmitted(enrichedCommit);
 	}
 
-	protected processCore(
+	/**
+	 * Process a message from the runtime.
+	 * @deprecated - Use processMessagesCore to process a bunch of messages together.
+	 */
+	public processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		// Empty context object is passed in, as our decode function is schema-agnostic.
-		const { commit, sessionId } = this.messageCodec.decode(message.contents, {
-			idCompressor: this.idCompressor,
+		this.processMessagesCore({
+			envelope: message,
+			local,
+			messagesContent: [
+				{
+					clientSequenceNumber: message.clientSequenceNumber,
+					contents: message.contents,
+					localOpMetadata,
+				},
+			],
 		});
-
-		this.editManager.addSequencedChange(
-			{ ...commit, sessionId },
-			brand(message.sequenceNumber),
-			brand(message.referenceSequenceNumber),
-		);
-		this.resubmitMachine.onSequencedCommitApplied(local);
-
-		this.editManager.advanceMinimumSequenceNumber(brand(message.minimumSequenceNumber));
 	}
 
-	protected getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
+	/**
+	 * Process a bunch of messages from the runtime. SharedObject will call this method with a bunch of messages.
+	 */
+	public processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		const commits: GraphCommit<TChange>[] = [];
+		let messagesSessionId: SessionId | undefined;
+
+		// Get a list of all the commits from the messages.
+		for (const messageContent of messagesContent) {
+			// Empty context object is passed in, as our decode function is schema-agnostic.
+			const { commit, sessionId } = this.messageCodec.decode(messageContent.contents, {
+				idCompressor: this.idCompressor,
+			});
+			commits.push(commit);
+
+			if (messagesSessionId !== undefined) {
+				assert(
+					messagesSessionId === sessionId,
+					"All messages in a bunch must have the same session ID",
+				);
+			}
+			messagesSessionId = sessionId;
+		}
+
+		assert(messagesSessionId !== undefined, "Messages must have a session ID");
+
+		this.editManager.addSequencedChanges(
+			commits,
+			messagesSessionId,
+			brand(envelope.sequenceNumber),
+			brand(envelope.referenceSequenceNumber),
+		);
+
+		// Update the resubmit machine for each commit applied.
+		for (const _ of messagesContent) {
+			this.resubmitMachine.onSequencedCommitApplied(local);
+		}
+
+		this.editManager.advanceMinimumSequenceNumber(brand(envelope.minimumSequenceNumber));
+	}
+
+	public getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
 		return this.editManager.localBranch;
 	}
 
-	protected onDisconnect(): void {}
-
-	protected override didAttach(): void {
+	public didAttach(): void {
 		this.detachedRevision = undefined;
 	}
 
-	protected override reSubmitCore(
-		content: JsonCompatibleReadOnly,
-		localOpMetadata: unknown,
-	): void {
+	public reSubmitCore(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision },
@@ -413,7 +430,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
 	}
 
-	protected applyStashedOp(content: JsonCompatibleReadOnly): void {
+	public applyStashedOp(content: JsonCompatibleReadOnly): void {
 		// Empty context object is passed in, as our decode function is schema-agnostic.
 		const {
 			commit: { revision, change },

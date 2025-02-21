@@ -358,7 +358,7 @@ export class TestClient extends Client {
 		return nextWord;
 	}
 
-	public debugDumpTree(tree: MergeTree): void {
+	public debugDumpTree(tree: MergeTree): string[] {
 		// want the segment's content and the state of insert/remove
 		const test: string[] = [];
 		walkAllChildSegments(tree.root, (segment: ISegmentPrivate) => {
@@ -377,6 +377,7 @@ export class TestClient extends Client {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			test.push(`${prefixes.join(",")}:${(segment as any).text}`);
 		});
+		return test;
 	}
 
 	/**
