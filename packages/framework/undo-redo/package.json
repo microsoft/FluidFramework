@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/undo-redo",
-	"version": "2.22.0",
+	"version": "2.23.0",
 	"description": "Undo Redo",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,8 +68,8 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
@@ -113,7 +113,7 @@
 		"@fluidframework/build-tools": "^0.51.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.21.0",
+		"@fluidframework/undo-redo-previous": "npm:@fluidframework/undo-redo@2.22.0",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/mocha": "^10.0.10",
