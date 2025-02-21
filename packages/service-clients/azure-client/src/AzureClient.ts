@@ -53,6 +53,7 @@ import type {
 	AzureRemoteConnectionConfig,
 } from "./interfaces.js";
 import { isAzureRemoteConnectionConfig } from "./utils.js";
+import { loadExistingContainerUninitialized } from "../../../loader/container-loader/lib/createAndLoadContainerUtils.js";
 
 /**
  * Strongly typed id for connecting to a local Azure Fluid Relay.
@@ -164,14 +165,15 @@ export class AzureClient {
 	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Existing container instance along with associated services.
 	 */
-	public async getContainer<TContainerSchema extends ContainerSchema>(
+	public async getContainerUninitialized<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
 		compatibilityMode: CompatibilityMode,
-	): Promise<{
-		container: IFluidContainer<TContainerSchema>;
-		services: AzureContainerServices;
-	}> {
+	): Promise<
+		IFluidContainer<TContainerSchema> & {
+			initializeServices: () => Promise<AzureContainerServices>;
+		}
+	> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
 		url.searchParams.append("storage", encodeURIComponent(this.connectionConfig.endpoint));
@@ -181,17 +183,21 @@ export class AzureClient {
 		);
 		url.searchParams.append("containerId", encodeURIComponent(id));
 
-		const container = await loadExistingContainer({
+		const container = await loadExistingContainerUninitialized({
 			...loaderProps,
 			request: { url: url.href },
 		});
-		const rootDataObject = await this.getContainerEntryPoint(container);
-		const fluidContainer = createFluidContainer<TContainerSchema>({
-			container,
-			rootDataObject,
-		});
-		const services = this.getContainerServices(container);
-		return { container: fluidContainer, services };
+
+		const initializeServices = async (): Promise<AzureContainerServices> => {
+			const rootDataObject = await this.getContainerEntryPoint(container);
+			const fluidContainer = createFluidContainer<TContainerSchema>({
+				container,
+				rootDataObject,
+			});
+			const services = this.getContainerServices(container);
+			return services;
+		};
+		return Object.assign(fluidContainer, { initializeServices });
 	}
 
 	/**
