@@ -5,6 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
@@ -33,6 +34,15 @@ export interface LatestValueManagerEvents<T> {
 	 * @eventProperty
 	 */
 	updated: (update: LatestValueClientData<T>) => void;
+
+	/**
+	 * Raised when local client's value is updated, which may be the same value.
+	 *
+	 * @eventProperty
+	 */
+	localUpdated: (update: {
+		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+	}) => void;
 }
 
 /**
@@ -69,7 +79,7 @@ export interface LatestValueManager<T> {
 	 */
 	clientValues(): IterableIterator<LatestValueClientData<T>>;
 	/**
-	 * Array of known clients.
+	 * Array of known remote clients.
 	 */
 	clients(): ISessionClient[];
 	/**
@@ -106,6 +116,8 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
+
+		this.events.emit("localUpdated", { value });
 	}
 
 	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
@@ -178,7 +190,7 @@ export function Latest<T extends object, Key extends string = string>(
 	const value: InternalTypes.ValueRequiredState<T> = {
 		rev: 0,
 		timestamp: Date.now(),
-		value: { ...initialValue },
+		value: shallowCloneObject(initialValue),
 	};
 	const factory = (
 		key: Key,

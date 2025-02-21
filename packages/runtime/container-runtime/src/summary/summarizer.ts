@@ -39,6 +39,7 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	ISummarizerRuntime,
 	ISummarizingWarning,
+	type IRetriableFailureError,
 } from "./summarizerTypes.js";
 import { SummaryCollection } from "./summaryCollection.js";
 import { SummarizeResultBuilder } from "./summaryGenerator.js";
@@ -171,6 +172,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 		// Wait for either external signal to cancel, or loss of connectivity.
 		const stopP = Promise.race([runCoordinator.waitCancelled, this.stopDeferred.promise]);
+		// eslint-disable-next-line no-void
 		void stopP.then((reason) => {
 			this.logger.sendTelemetryEvent({
 				eventName: "StoppingSummarizer",
@@ -369,11 +371,11 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 							runCoordinator.stop(stopReason);
 							this.close();
 						})
-						.catch((error) => {
+						.catch((error: IRetriableFailureError) => {
 							builder.fail("Failed to start summarizer", error);
 						});
 				})
-				.catch((error) => {
+				.catch((error: IRetriableFailureError) => {
 					builder.fail("Failed to create cancellation token", error);
 				});
 
@@ -402,11 +404,11 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 
 	private setupForwardedEvents(): void {
 		for (const event of ["summarize", "summarizeAllAttemptsFailed"]) {
-			const listener = (...args: any[]): void => {
+			const listener = (...args: unknown[]): void => {
 				this.emit(event, ...args);
 			};
 			// TODO: better typing here
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
 			this.runningSummarizer?.on(event as any, listener);
 			this.forwardedEvents.set(event, listener);
 		}

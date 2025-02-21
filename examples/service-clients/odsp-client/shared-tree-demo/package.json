@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/shared-tree-demo",
-	"version": "2.21.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "A shared tree demo using react and odsp client",
 	"homepage": "https://fluidframework.com",
@@ -45,10 +45,10 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/node": "^18.19.0",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",

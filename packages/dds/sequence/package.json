@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.21.0",
+	"version": "2.23.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -52,6 +52,18 @@
 				"types": "./dist/intervalCollection.d.ts",
 				"default": "./dist/intervalCollection.js"
 			}
+		},
+		"./internal/test": {
+			"allow-ff-test-exports": {
+				"import": {
+					"types": "./lib/test/index.d.ts",
+					"default": "./lib/test/index.js"
+				},
+				"require": {
+					"types": "./dist/test/index.d.ts",
+					"default": "./dist/test/index.js"
+				}
+			}
 		}
 	},
 	"main": "lib/index.js",
@@ -72,7 +84,7 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/intervalCollection",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test/intervalCollection ./internal/test",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -86,7 +98,7 @@
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -103,8 +115,8 @@
 		"test:memory": "mocha --config src/test/memory/.mocharc.cjs",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.cjs",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:cjs": "mocha --ignore \"dist/test/memory/**/*\" --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:newsnapfiles": "node lib/test/createSnapshotFiles.js",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=100 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.fuzz.spec.*js\" -r @fluid-internal/mocha-test-setup",
@@ -155,12 +167,12 @@
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/build-tools": "^0.53.0",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.20.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.22.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",

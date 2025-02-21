@@ -7,7 +7,7 @@
 
 import {
 	TypedEventEmitter,
-	performance,
+	performanceNow,
 	type ILayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import {
@@ -22,6 +22,7 @@ import {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
@@ -30,9 +31,9 @@ import {
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
-	IDeltaManager,
 	ReadOnlyInfo,
 	type ILoader,
+	type ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -129,7 +130,8 @@ import {
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import { IDetachedBlobStorage } from "./loader.js";
+import { RelativeLoader } from "./loader.js";
 import {
 	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
@@ -226,7 +228,6 @@ export interface IContainerCreateProps {
 	 * A property bag of options used by various layers
 	 * to control features
 	 */
-	// eslint-disable-next-line import/no-deprecated
 	readonly options: ILoaderOptions;
 
 	/**
@@ -488,7 +489,6 @@ export class Container
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
-	// eslint-disable-next-line import/no-deprecated
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
 	private readonly subLogger: ITelemetryLoggerExt;
@@ -622,7 +622,7 @@ export class Container
 	private readonly clientsWhoShouldHaveLeft = new Set<string>();
 	private _containerMetadata: Readonly<Record<string, string>> = {};
 
-	private setAutoReconnectTime = performance.now();
+	private setAutoReconnectTime = performanceNow();
 
 	private noopHeuristic: NoopHeuristic | undefined;
 
@@ -808,7 +808,7 @@ export class Container
 			protocolHandlerBuilder,
 		} = createProps;
 
-		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
+		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
@@ -896,7 +896,7 @@ export class Container
 							: this.deltaManager?.lastMessage?.clientId,
 					dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 					connectionStateDuration: () =>
-						performance.now() - this.connectionTransitionTimes[this.connectionState],
+						performanceNow() - this.connectionTransitionTimes[this.connectionState],
 				},
 			},
 		});
@@ -940,7 +940,7 @@ export class Container
 						mode,
 						category: this._lifecycleState === "loading" ? "generic" : category,
 						duration:
-							performance.now() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
+							performanceNow() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
 						...(details === undefined ? {} : { details: JSON.stringify(details) }),
 					});
 
@@ -994,10 +994,11 @@ export class Container
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
-		// Whether the combined summary tree has been forced on by either the supportedFeatures flag by the service or the the loader option or the monitoring context
-		const enableSummarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			options.summarizeProtocolTree;
+		// Feature gate to enable single-commit summaries. The expected enablement is through driver layer's policies,
+		// but here we also specify config setting to use for testing purposes.
+		const enableSummarizeProtocolTree = this.mc.config.getBoolean(
+			"Fluid.Container.summarizeProtocolTree2",
+		);
 
 		this.detachedBlobStorage =
 			detachedBlobStorage ??
@@ -1036,10 +1037,10 @@ export class Container
 			document.addEventListener !== null;
 		// keep track of last time page was visible for telemetry (on interactive clients only)
 		if (isDomAvailable && interactive) {
-			this.lastVisible = document.hidden ? performance.now() : undefined;
+			this.lastVisible = document.hidden ? performanceNow() : undefined;
 			this.visibilityEventHandler = (): void => {
 				if (document.hidden) {
-					this.lastVisible = performance.now();
+					this.lastVisible = performanceNow();
 				} else {
 					// settimeout so this will hopefully fire after disconnect event if being hidden caused it
 					setTimeout(() => {
@@ -1416,7 +1417,7 @@ export class Container
 			return;
 		}
 
-		const now = performance.now();
+		const now = performanceNow();
 		const duration = now - this.setAutoReconnectTime;
 		this.setAutoReconnectTime = now;
 
@@ -1634,7 +1635,7 @@ export class Container
 		dmLastProcessedSeqNumber: number;
 		dmLastKnownSeqNumber: number;
 	}> {
-		const timings: Record<string, number> = { phase1: performance.now() };
+		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(async () =>
 			this.serviceFactory.createDocumentService(
 				resolvedUrl,
@@ -1667,7 +1668,7 @@ export class Container
 			state: AttachState.Attached,
 		};
 
-		timings.phase2 = performance.now();
+		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
 		const { baseSnapshot, version } =
@@ -1727,7 +1728,7 @@ export class Container
 			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
 		}
 
-		timings.phase3 = performance.now();
+		timings.phase3 = performanceNow();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
@@ -1790,7 +1791,7 @@ export class Container
 			throw new Error("Container was closed while load()");
 		}
 
-		timings.end = performance.now();
+		timings.end = performanceNow();
 		this.subLogger.sendTelemetryEvent(
 			{
 				eventName: "LoadStagesTimings",
@@ -2157,7 +2158,7 @@ export class Container
 		reason?: IConnectionStateChangeReason,
 	): void {
 		// Log actual event
-		const time = performance.now();
+		const time = performanceNow();
 		this.connectionTransitionTimes[value] = time;
 		const duration = time - this.connectionTransitionTimes[oldState];
 
@@ -2196,7 +2197,7 @@ export class Container
 				opsBehind,
 				online: OnlineStatus[isOnline()],
 				lastVisible:
-					this.lastVisible === undefined ? undefined : performance.now() - this.lastVisible,
+					this.lastVisible === undefined ? undefined : performanceNow() - this.lastVisible,
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
 				audienceSize: this._protocolHandler?.audience.getMembers().size,

@@ -1,5 +1,19 @@
 # @fluidframework/tree
 
+## 2.22.0
+
+### Minor Changes
+
+-   Add `leaves` and statics to `SchemaFactory`. ([#23787](https://github.com/microsoft/FluidFramework/pull/23787)) [efa90f6274](https://github.com/microsoft/FluidFramework/commit/efa90f6274152cadb55329b7bbf6a6cd8e299847)
+
+    `SchemaFactory` now has a `leaves` member that is an array of all leaf schema.
+
+    `SchemaFactory` now has static members to access leaf schema and create field schema.
+
+## 2.21.0
+
+Dependency updates only.
+
 ## 2.20.0
 
 ### Minor Changes

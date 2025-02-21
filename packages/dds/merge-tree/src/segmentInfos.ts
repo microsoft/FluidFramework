@@ -310,6 +310,9 @@ export interface IMoveInfo {
 	 * If a segment is moved on insertion, its length is only ever visible to
 	 * the client that inserted the segment. This is relevant in partial length
 	 * calculations
+	 *
+	 * @privateRemarks
+	 * TODO:AB#29553: This property is not persisted in the summary, but it should be.
 	 */
 	wasMovedOnInsert: boolean;
 }
