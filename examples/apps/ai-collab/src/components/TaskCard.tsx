@@ -188,9 +188,10 @@ export function TaskCard(props: {
 						event.eventName === "APPLIED_EDIT_FAILURE"
 					) {
 						console.log(
-							`${event.eventName === "APPLIED_EDIT_SUCCESS"
-								? "Succesfully applied"
-								: "Failed to appply"
+							`${
+								event.eventName === "APPLIED_EDIT_SUCCESS"
+									? "Succesfully applied"
+									: "Failed to appply"
 							} tree edit: ${JSON.stringify(
 								(event as unknown as ApplyEditSuccess).edit,
 								undefined,
