@@ -73,6 +73,9 @@ jobs:
     inputs:
       - input: pipelineArtifact
         artifactName: MyDrop
+      - input: pipelineArtifact
+        artifactName: pack
+        buildType: current
   workspace:
     clean: all
   variables:
@@ -82,8 +85,13 @@ jobs:
     runOnce:
         deploy:
           steps:
-          - download: current
-            artifact: pack
+          # - task: DownloadPipelineArtifact@2
+          #   inputs:
+          #     buildType: 'current'
+          #     targetPath: '$(Pipeline.Workspace)'
+          #     artifactName: pack
+          # - download: current
+          #   artifact: pack
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
           - template: /tools/pipelines/templates/include-install-build-tools.yml@self
             parameters:
