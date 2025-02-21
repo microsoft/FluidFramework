@@ -228,7 +228,9 @@ describe("Presence", () => {
 			| typeof itemRemovedAndItemUpdatedMapUpdate
 			| typeof notificationsUpdate;
 
-		function setupSharedStatesWorkspace(notifications: boolean = false): void {
+		function setupSharedStatesWorkspace({
+			notifications = false,
+		}: { notifications?: boolean } = {}): void {
 			let states;
 			if (notifications) {
 				states = presence.getStates("name:testWorkspace", {
@@ -271,7 +273,7 @@ describe("Presence", () => {
 
 		function processUpdates(
 			valueManagerUpdates: Record<string, UpdateContent>,
-			systemWorkspaceUpdate: boolean = true,
+			{ systemWorkspaceUpdate = true }: { systemWorkspaceUpdate?: boolean } = {},
 		): void {
 			const updates = systemWorkspaceUpdate
 				? { "system:presence": attendeeUpdate, ...valueManagerUpdates }
@@ -448,7 +450,7 @@ describe("Presence", () => {
 							"s:name:testWorkspace": { ...latestUpdateRev2, ...itemRemovedMapUpdate },
 						};
 						// Act
-						processUpdates(itemRemovedUpdate, false /* systemWorkspaceUpdate */);
+						processUpdates(itemRemovedUpdate, { systemWorkspaceUpdate: false });
 						// Verify
 						assertSpies();
 					});
@@ -467,7 +469,7 @@ describe("Presence", () => {
 							"s:name:testWorkspace2": itemRemovedMapUpdate,
 						};
 						// Act
-						processUpdates(itemRemovedUpdate, false /* systemWorkspaceUpdate */);
+						processUpdates(itemRemovedUpdate, { systemWorkspaceUpdate: false });
 						// Verify
 						assertSpies();
 					});
@@ -520,7 +522,7 @@ describe("Presence", () => {
 							"s:name:testWorkspace": itemRemovedAndItemUpdatedMapUpdate,
 						};
 						// Act
-						processUpdates(itemRemovedAndItemUpdatedUpdate, false /* systemWorkspaceUpdate */);
+						processUpdates(itemRemovedAndItemUpdatedUpdate, { systemWorkspaceUpdate: false });
 						// Verify
 						assertSpies();
 					});
@@ -612,7 +614,7 @@ describe("Presence", () => {
 
 			it("within a states workspace", async () => {
 				// Setup
-				setupSharedStatesWorkspace(true /* notifications */);
+				setupSharedStatesWorkspace({ notifications: true });
 				setupListeners();
 				const workspace = {
 					"s:name:testWorkspace": {
