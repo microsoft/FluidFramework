@@ -43,7 +43,7 @@ parameters:
 
 jobs:
 
-- job: buildJob1
+- job: checkoutAndUploadThisRepoAsArtifact
   steps:
   # Checkout the repository
   - checkout: self
@@ -52,7 +52,7 @@ jobs:
   - task: CopyFiles@2
     inputs:
       SourceFolder: $(System.DefaultWorkingDirectory)
-      Contents: '**/*.json'
+      Contents: '**/*'
       TargetFolder: $(Build.ArtifactStagingDirectory)
   # Publish the artifact containing the required files from the repository
   # Alternatively, you can use an `output`
@@ -63,7 +63,7 @@ jobs:
 
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   # Depend on the build job
-  dependsOn: buildJob1
+  dependsOn: checkoutAndUploadThisRepoAsArtifact
   displayName: Publish ${{ parameters.environment }}
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
