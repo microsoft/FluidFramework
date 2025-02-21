@@ -73,12 +73,30 @@ const latestUpdateRev2 = {
 			"value": { x: 2, y: 2, z: 2 },
 		},
 	},
-};
+} as const;
 const itemRemovedMapUpdate = {
 	"latestMap": {
 		"sessionId-1": {
 			"rev": 2,
 			"items": {
+				"key2": {
+					"rev": 2,
+					"timestamp": 50,
+				},
+			},
+		},
+	},
+} as const;
+const itemRemovedAndItemUpdatedMapUpdate = {
+	"latestMap": {
+		"sessionId-1": {
+			"rev": 2,
+			"items": {
+				"key1": {
+					"rev": 2,
+					"timestamp": 50,
+					"value": { a: 2, b: 2 },
+				},
 				"key2": {
 					"rev": 2,
 					"timestamp": 50,
@@ -112,11 +130,11 @@ describe("Presence", () => {
 		let latestMap: LatestMapValueManager<{ a: number; b: number } | { c: number; d: number }>;
 		let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
 
-		interface LatestMapValue {
+		interface LatestMapValueExpected {
 			key1: { a: number; b: number } | undefined;
 			key2: { c: number; d: number } | undefined;
 		}
-		interface LatestValue {
+		interface LatestValueExpected {
 			x: number;
 			y: number;
 			z: number;
@@ -124,11 +142,11 @@ describe("Presence", () => {
 		type StateVerification =
 			| {
 					manager: "latest";
-					expectedValue: LatestValue;
+					expectedValue: LatestValueExpected;
 			  }
 			| {
 					manager: "latestMap";
-					expectedValue: LatestMapValue;
+					expectedValue: LatestMapValueExpected;
 			  };
 
 		function verifyFinalState(
@@ -207,13 +225,26 @@ describe("Presence", () => {
 			| (typeof latestUpdate & typeof latestMapUpdate)
 			| typeof latestUpdateRev2
 			| typeof itemRemovedMapUpdate
+			| typeof itemRemovedAndItemUpdatedMapUpdate
 			| typeof notificationsUpdate;
 
-		function setupSharedStatesWorkspace(): void {
-			const states = presence.getStates("name:testWorkspace", {
-				latest: Latest({ x: 0, y: 0, z: 0 }),
-				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
-			});
+		function setupSharedStatesWorkspace(notifications: boolean = false): void {
+			let states;
+			if (notifications) {
+				states = presence.getStates("name:testWorkspace", {
+					latest: Latest({ x: 0, y: 0, z: 0 }),
+					notifications: Notifications<{ newId: (id: number) => void }>({
+						newId: (_client: ISessionClient, _id: number) => {},
+					}),
+					latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+				});
+				notificationManager = states.props.notifications;
+			} else {
+				states = presence.getStates("name:testWorkspace", {
+					latest: Latest({ x: 0, y: 0, z: 0 }),
+					latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
+				});
+			}
 			latest = states.props.latest;
 			latestMap = states.props.latestMap;
 		}
@@ -267,8 +298,9 @@ describe("Presence", () => {
 		describe("states workspace", () => {
 			let latestUpdatedEventSpy: SinonSpy;
 			let latestMapUpdatedEventSpy: SinonSpy;
+			let itemUpdatedEventSpy: SinonSpy;
+
 			describe("value is updated where", () => {
-				let itemUpdatedEventSpy: SinonSpy;
 				let atteendeeEventSpy: SinonSpy;
 
 				function verify(): void {
@@ -305,120 +337,197 @@ describe("Presence", () => {
 				}
 
 				beforeEach(() => {
-					latestUpdatedEventSpy = spy(() => verify());
-					latestMapUpdatedEventSpy = spy(() => verify());
-					itemUpdatedEventSpy = spy(() => verify());
-					atteendeeEventSpy = spy(() => verify());
+					latestUpdatedEventSpy = spy(verify);
+					latestMapUpdatedEventSpy = spy(verify);
+					itemUpdatedEventSpy = spy(verify);
+					atteendeeEventSpy = spy(verify);
 				});
 
-				it("latest update comes before latestMap update in single workspace", async () => {
+				it("'latestVM' update comes before 'latestMapVM' update in single workspace", async () => {
+					// Setup
 					setupSharedStatesWorkspace();
 					setupListeners();
 					const workspace = {
 						"s:name:testWorkspace": { ...latestUpdate, ...latestMapUpdate },
 					};
+					// Act
 					processUpdates(workspace);
+					// Verify
 					assertSpies();
 				});
 
-				it("latestMap update comes before latest update in single workspace", async () => {
+				it("'latestMapVM' update comes before 'latestVM' update in single workspace", async () => {
+					// Setup
 					setupSharedStatesWorkspace();
 					setupListeners();
 					const workspace = {
 						"s:name:testWorkspace": { ...latestMapUpdate, ...latestUpdate },
 					};
+					// Act
 					processUpdates(workspace);
+					// Verify
 					assertSpies();
 				});
 
-				it("latest update comes before latestMap update in multiple workspaces", async () => {
+				it("workspace 1 update comes before workspace 2 update in multiple workspaces", async () => {
+					// Setup
 					setupMultipleStatesWorkspaces();
 					setupListeners();
 					const workspace = {
 						"s:name:testWorkspace1": latestUpdate,
 						"s:name:testWorkspace2": latestMapUpdate,
 					};
+					// Act
 					processUpdates(workspace);
+					// Verify
 					assertSpies();
 				});
-				it("latestMap update comes before latest update in multiple workspaces", async () => {
+
+				it("workspace 2 update comes before workspace 1 update in multiple workspaces", async () => {
+					// Setup
 					setupMultipleStatesWorkspaces();
 					setupListeners();
 					const workspace = {
 						"s:name:testWorkspace2": latestMapUpdate,
 						"s:name:testWorkspace1": latestUpdate,
 					};
+					// Act
 					processUpdates(workspace);
+					// Verify
 					assertSpies();
 				});
 			});
+
 			describe("map item is removed", () => {
-				let itemRemovedSpy: SinonSpy;
+				let itemRemovedEventSpy: SinonSpy;
 
-				function verify(): void {
-					verifyFinalState(getTestAttendee(), [
-						{ manager: "latest", expectedValue: { x: 2, y: 2, z: 2 } },
-						{ manager: "latestMap", expectedValue: { key1: { a: 1, b: 1 }, key2: undefined } },
-					]);
-				}
+				describe("and 'latestVM' value updated", () => {
+					function verify(): void {
+						verifyFinalState(getTestAttendee(), [
+							{ manager: "latest", expectedValue: { x: 2, y: 2, z: 2 } },
+							{
+								manager: "latestMap",
+								expectedValue: { key1: { a: 1, b: 1 }, key2: undefined },
+							},
+						]);
+					}
 
-				function setupSpiesAndListeners(): void {
-					itemRemovedSpy = spy(() => verify());
-					latestUpdatedEventSpy = spy(() => verify());
-					latestMapUpdatedEventSpy = spy(() => verify());
-					latest.events.on("updated", latestUpdatedEventSpy);
-					latestMap.events.on("updated", latestMapUpdatedEventSpy);
-					latestMap.events.on("itemRemoved", itemRemovedSpy);
-				}
+					function setupSpiesAndListeners(): void {
+						itemRemovedEventSpy = spy(verify);
+						latestUpdatedEventSpy = spy(verify);
+						latestMapUpdatedEventSpy = spy(verify);
+						latest.events.on("updated", latestUpdatedEventSpy);
+						latestMap.events.on("updated", latestMapUpdatedEventSpy);
+						latestMap.events.on("itemRemoved", itemRemovedEventSpy);
+					}
 
-				function assertSpies(): void {
-					assert.ok(
-						latestUpdatedEventSpy.calledOnce,
-						`latest update event not fired exactly once`,
-					);
-					assert.ok(
-						latestMapUpdatedEventSpy.calledOnce,
-						"latestMap update event not fired exactly once",
-					);
-					assert.ok(
-						itemRemovedSpy.calledOnce,
-						"latestMap item remove event not fired exactly once",
-					);
-				}
+					function assertSpies(): void {
+						assert.ok(
+							latestUpdatedEventSpy.calledOnce,
+							`latest update event not fired exactly once`,
+						);
+						assert.ok(
+							latestMapUpdatedEventSpy.calledOnce,
+							"latestMap update event not fired exactly once",
+						);
+						assert.ok(
+							itemRemovedEventSpy.calledOnce,
+							"latestMap item remove event not fired exactly once",
+						);
+					}
 
-				it("from latestMap and latest update in shared workspace", async () => {
-					setupSharedStatesWorkspace();
-					const workspace = {
-						"s:name:testWorkspace": { ...latestMapUpdate, ...latestUpdate },
-					};
-					processUpdates(workspace);
-					setupSpiesAndListeners();
+					it("in a single workspace", async () => {
+						// Setup
+						setupSharedStatesWorkspace();
+						const workspace = {
+							"s:name:testWorkspace": { ...latestMapUpdate, ...latestUpdate },
+						};
+						processUpdates(workspace);
+						setupSpiesAndListeners();
+						const itemRemovedUpdate = {
+							"s:name:testWorkspace": { ...latestUpdateRev2, ...itemRemovedMapUpdate },
+						};
+						// Act
+						processUpdates(itemRemovedUpdate, false /* systemWorkspaceUpdate */);
+						// Verify
+						assertSpies();
+					});
 
-					const itemRemovedUpdate = {
-						"s:name:testWorkspace": { ...latestUpdateRev2, ...itemRemovedMapUpdate },
-					};
-					processUpdates(itemRemovedUpdate, false /* systemWorkspaceUpdate */);
-					assertSpies();
+					it("in multiple workspaces", async () => {
+						// Setup
+						setupMultipleStatesWorkspaces();
+						const workspace = {
+							"s:name:testWorkspace2": latestMapUpdate,
+							"s:name:testWorkspace1": latestUpdate,
+						};
+						processUpdates(workspace);
+						setupSpiesAndListeners();
+						const itemRemovedUpdate = {
+							"s:name:testWorkspace1": latestUpdateRev2,
+							"s:name:testWorkspace2": itemRemovedMapUpdate,
+						};
+						// Act
+						processUpdates(itemRemovedUpdate, false /* systemWorkspaceUpdate */);
+						// Verify
+						assertSpies();
+					});
 				});
 
-				it("from latestMap and latest update in multiple workspaces", async () => {
-					setupMultipleStatesWorkspaces();
-					const workspace = {
-						"s:name:testWorkspace2": latestMapUpdate,
-						"s:name:testWorkspace1": latestUpdate,
-					};
-					processUpdates(workspace);
-					setupSpiesAndListeners();
+				describe("and map item is updated", () => {
+					function verify(): void {
+						verifyFinalState(getTestAttendee(), [
+							{
+								manager: "latestMap",
+								expectedValue: { key1: { a: 2, b: 2 }, key2: undefined },
+							},
+						]);
+					}
 
-					const itemRemovedUpdate = {
-						"s:name:testWorkspace1": latestUpdateRev2,
-						"s:name:testWorkspace2": itemRemovedMapUpdate,
-					};
-					processUpdates(itemRemovedUpdate, false /* systemWorkspaceUpdate */);
-					assertSpies();
+					function setupSpiesAndListeners(): void {
+						itemRemovedEventSpy = spy(verify);
+						latestMapUpdatedEventSpy = spy(verify);
+						itemUpdatedEventSpy = spy(verify);
+
+						latestMap.events.on("updated", latestMapUpdatedEventSpy);
+						latestMap.events.on("itemUpdated", itemUpdatedEventSpy);
+						latestMap.events.on("itemRemoved", itemRemovedEventSpy);
+					}
+
+					function assertSpies(): void {
+						assert.ok(
+							itemUpdatedEventSpy.calledOnce,
+							`latest update event not fired exactly once`,
+						);
+						assert.ok(
+							latestMapUpdatedEventSpy.calledOnce,
+							"latestMap update event not fired exactly once",
+						);
+						assert.ok(
+							itemRemovedEventSpy.calledOnce,
+							"latestMap item remove event not fired exactly once",
+						);
+					}
+
+					it("in a single workspace", () => {
+						// Setup
+						setupSharedStatesWorkspace();
+						const workspace = {
+							"s:name:testWorkspace": latestMapUpdate,
+						};
+						processUpdates(workspace);
+						setupSpiesAndListeners();
+						const itemRemovedAndItemUpdatedUpdate = {
+							"s:name:testWorkspace": itemRemovedAndItemUpdatedMapUpdate,
+						};
+						// Act
+						processUpdates(itemRemovedAndItemUpdatedUpdate, false /* systemWorkspaceUpdate */);
+						// Verify
+						assertSpies();
+					});
 				});
 			});
 		});
+
 		describe("Notifications update", () => {
 			let notificationSpy: SinonSpy;
 			let latestSpy: SinonSpy;
@@ -456,6 +565,7 @@ describe("Presence", () => {
 			});
 
 			it("comes before states workspace update", async () => {
+				// Setup
 				setupSharedStatesWorkspace();
 				setupNotificationsWorkspace();
 				setupListeners();
@@ -463,10 +573,14 @@ describe("Presence", () => {
 					"n:name:testWorkspace": notificationsUpdate,
 					"s:name:testWorkspace": { ...latestUpdate, ...latestMapUpdate },
 				};
+				// Act
 				processUpdates(workspace);
+				// Verify
 				assertSpies();
 			});
+
 			it("comes after states workspace update", async () => {
+				// Setup
 				setupSharedStatesWorkspace();
 				setupNotificationsWorkspace();
 				setupListeners();
@@ -474,10 +588,14 @@ describe("Presence", () => {
 					"s:name:testWorkspace": { ...latestUpdate, ...latestMapUpdate },
 					"n:name:testWorkspace": notificationsUpdate,
 				};
+				// Act
 				processUpdates(workspace);
+				// Verify
 				assertSpies();
 			});
-			it("comes in the middle of states workspaces", async () => {
+
+			it("comes in between states workspaces", async () => {
+				// Setup
 				setupMultipleStatesWorkspaces();
 				setupNotificationsWorkspace();
 				setupListeners();
@@ -486,7 +604,26 @@ describe("Presence", () => {
 					"n:name:testWorkspace": notificationsUpdate,
 					"s:name:testWorkspace2": latestMapUpdate,
 				};
+				// Act
 				processUpdates(workspace);
+				// Verify
+				assertSpies();
+			});
+
+			it("within a states workspace", async () => {
+				// Setup
+				setupSharedStatesWorkspace(true /* notifications */);
+				setupListeners();
+				const workspace = {
+					"s:name:testWorkspace": {
+						...latestUpdate,
+						...notificationsUpdate,
+						...latestMapUpdate,
+					},
+				};
+				// Act
+				processUpdates(workspace);
+				// Verify
 				assertSpies();
 			});
 		});
