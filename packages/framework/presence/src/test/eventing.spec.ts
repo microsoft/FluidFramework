@@ -343,7 +343,7 @@ describe("Presence", () => {
 					atteendeeEventSpy = spy(verify);
 				});
 
-				it("'latestVM' update comes before 'latestMapVM' update in single workspace", async () => {
+				it("'latest' update comes before 'latestMap' update in single workspace", async () => {
 					// Setup
 					setupSharedStatesWorkspace();
 					setupListeners();
@@ -356,7 +356,7 @@ describe("Presence", () => {
 					assertSpies();
 				});
 
-				it("'latestMapVM' update comes before 'latestVM' update in single workspace", async () => {
+				it("'latestMap' update comes before 'latest' update in single workspace", async () => {
 					// Setup
 					setupSharedStatesWorkspace();
 					setupListeners();
@@ -401,7 +401,7 @@ describe("Presence", () => {
 			describe("map item is removed", () => {
 				let itemRemovedEventSpy: SinonSpy;
 
-				describe("and 'latestVM' value updated", () => {
+				describe("and 'latest' value updated", () => {
 					function verify(): void {
 						verifyFinalState(getTestAttendee(), [
 							{ manager: "latest", expectedValue: { x: 2, y: 2, z: 2 } },
