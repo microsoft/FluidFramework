@@ -42,7 +42,28 @@ parameters:
   default: $(Pipeline.Workspace)/.pnpm-store
 
 jobs:
+
+- job: buildJob1
+  steps:
+  # Checkout the repository
+  - checkout: self
+    persistCredentials: true # Necessary for creation of git tags to work
+  # Copy required files to the artifact staging directory
+  - task: CopyFiles@2
+    inputs:
+      SourceFolder: $(System.DefaultWorkingDirectory)
+      Contents: '**/*.json'
+      TargetFolder: $(Build.ArtifactStagingDirectory)
+  # Publish the artifact containing the required files from the repository
+  # Alternatively, you can use an `output`
+  - task: 1ES.PublishPipelineArtifact@1
+    inputs:
+      targetPath: $(Build.ArtifactStagingDirectory)
+      artifactName: MyDrop
+
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
+  # Depend on the build job
+  dependsOn: buildJob1
   displayName: Publish ${{ parameters.environment }}
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
@@ -50,9 +71,8 @@ jobs:
     type: releaseJob
     isProduction: true
     inputs:
-    - input: checkout
-      repository: self
-      persistCredentials: true # Necessary for creation of git tags to work
+      - input: pipelineArtifact
+        artifactName: MyDrop
   workspace:
     clean: all
   variables:
