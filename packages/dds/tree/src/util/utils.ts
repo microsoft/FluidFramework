@@ -616,3 +616,35 @@ export function copyPropertyIfDefined<
 		}
 	}
 }
+
+/**
+ * Reduces an array of values into a single value.
+ * This is similar to `Array.prototype.reduce`,
+ * except that it recursively reduces the left and right halves of the input before reducing their respective reductions.
+ *
+ * When compared with an approach like reducing all the values left-to-right,
+ * this balanced approach is beneficial when the cost of invoking `callbackFn` is proportional to the number reduced values that its parameters collectively represent.
+ * For example, if `T` is an array, and `callbackFn` concatenates its inputs,
+ * then `balancedReduce` will have O(N*log(N)) time complexity instead of `Array.prototype.reduce`'s O(N²).
+ * However, if `callbackFn` is O(1) then both `balancedReduce` and `Array.prototype.reduce` will have O(N) complexity.
+ *
+ * @param array - The array to reduce.
+ * @param callbackFn - The function to execute for each pairwise reduction.
+ * @param emptyCase - A factory function that provides the value to return if the input array is empty.
+ */
+export function balancedReduce<T>(
+	array: readonly T[],
+	callbackFn: (left: T, right: T) => T,
+	emptyCase: () => T,
+): T {
+	if (hasSingle(array)) {
+		return array[0];
+	}
+	if (!hasSome(array)) {
+		return emptyCase();
+	}
+	const mid = Math.floor(array.length / 2);
+	const left = balancedReduce(array.slice(0, mid), callbackFn, emptyCase);
+	const right = balancedReduce(array.slice(mid), callbackFn, emptyCase);
+	return callbackFn(left, right);
+}
