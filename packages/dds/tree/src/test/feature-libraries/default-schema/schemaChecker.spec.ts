@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 // Reaching into internal module just to test it
 import {
@@ -15,8 +15,8 @@ import {
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
 import {
 	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
 	FieldKinds,
-	intoStoredSchema,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
 import {
@@ -55,6 +55,8 @@ function createSchemaAndPolicy(
 			// Note: the value of 'validateSchema' doesn't matter for the tests in this file because they're testing a
 			// layer where we already decided that we are doing validation and are validating that it works correctly.
 			validateSchema: true,
+			// TODO: unit test other options in this file
+			allowUnknownOptionalFields: () => false,
 		},
 	};
 }
@@ -504,11 +506,11 @@ describe("schema validation", () => {
 				const mapTrees = testTree
 					.treeFactory(testIdCompressor)
 					.map((j) => mapTreeFromCursor(cursorForJsonableTreeNode(j)));
-				const schema = intoStoredSchema(testTree.schemaData);
+				const schema = testTree.schemaData;
 				assert.equal(
 					isFieldInSchema(mapTrees, schema.rootFieldSchema, {
 						schema,
-						policy: testTree.schemaData.policy,
+						policy: defaultSchemaPolicy,
 					}),
 					SchemaValidationErrors.NoError,
 				);

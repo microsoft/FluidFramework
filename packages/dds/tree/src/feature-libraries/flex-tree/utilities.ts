@@ -83,7 +83,7 @@ export interface DetachedFieldCache {
 export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy {
 	return {
 		schema: nodeOrField.context.schema,
-		policy: nodeOrField.context.flexSchema.policy,
+		policy: nodeOrField.context.schemaPolicy,
 	};
 }
 
@@ -99,7 +99,7 @@ export function getSchemaAndPolicy(nodeOrField: FlexTreeEntity): SchemaAndPolicy
  */
 export function indexForAt(index: number, length: number): number | undefined {
 	let finalIndex = Math.trunc(+index);
-	if (isNaN(finalIndex)) {
+	if (Number.isNaN(finalIndex)) {
 		finalIndex = 0;
 	}
 	if (finalIndex < -length || finalIndex >= length) {

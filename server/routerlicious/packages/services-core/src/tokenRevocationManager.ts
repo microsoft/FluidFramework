@@ -80,6 +80,7 @@ export class TokenRevocationError extends NetworkError {
 
 /**
  * @internal
+ * @deprecated Please use NetworkError (server/routerlicious/packages/services-client/src/error.ts) with internalErrorCode set to "TokenRevoked"
  */
 export function isTokenRevokedError(error: unknown): error is TokenRevokedError {
 	return isNetworkError(error) && (error as TokenRevokedError).errorType === "TokenRevoked";
@@ -88,6 +89,7 @@ export function isTokenRevokedError(error: unknown): error is TokenRevokedError 
 /**
  * Indicate that a connect is rejected/dropped because the token has been revoked.
  * @internal
+ * @deprecated Please use NetworkError (server/routerlicious/packages/services-client/src/error.ts) with internalErrorCode set to "TokenRevoked"
  */
 export class TokenRevokedError extends NetworkError {
 	public readonly errorType: string = "TokenRevoked";

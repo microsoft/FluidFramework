@@ -5,6 +5,7 @@
 
 export {
 	areEqualChangeAtomIds,
+	areEqualChangeAtomIdOpts,
 	makeChangeAtomId,
 	asChangeAtomId,
 	mintCommit,
@@ -22,8 +23,11 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	subtractChangeAtomIds,
 	replaceAtomRevisions,
-	replaceChange,
+	type ChangeAtomIdRangeMap,
+	newChangeAtomIdRangeMap,
+	compareRevisions,
 } from "./types.js";
 export { RevisionTagCodec } from "./revisionTagCodec.js";
 export {
@@ -48,4 +52,6 @@ export {
 	revisionMetadataSourceFromInfo,
 	type RebaseStats,
 	type RebaseStatsWithDuration,
+	replaceChange,
+	isAncestor,
 } from "./utils.js";

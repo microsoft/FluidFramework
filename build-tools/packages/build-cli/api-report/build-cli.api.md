@@ -8,13 +8,16 @@ import { InterdependencyRange } from '@fluid-tools/version-tools';
 import { run } from '@oclif/core';
 import { VersionBumpType } from '@fluid-tools/version-tools';
 
-// @public (undocumented)
+// @public
 export interface AssertTaggingConfig {
-    // (undocumented)
+    enabledPaths?: RegExp[];
+}
+
+// @public
+export interface AssertTaggingPackageConfig {
     assertionFunctions: {
         [functionName: string]: number;
     };
-    enabledPaths?: RegExp[];
 }
 
 // @public
@@ -32,6 +35,7 @@ export interface FlubConfig {
     bump?: BumpConfig;
     policy?: PolicyConfig;
     releaseNotes?: ReleaseNotesConfig;
+    releaseReport?: ReleaseReportConfig;
     version?: 1;
 }
 
@@ -107,6 +111,11 @@ export type ReleaseNotesSectionName = string;
 
 // @internal
 export type ReleasePackage = string;
+
+// @public
+export interface ReleaseReportConfig {
+    legacyCompatInterval: Record<ReleaseGroup | string, number>;
+}
 
 export { run }
 

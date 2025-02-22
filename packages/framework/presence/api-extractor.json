@@ -1,4 +1,15 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
-	"extends": "../../../common/build/build-common/api-extractor-base.esm.no-legacy.json"
+	"extends": "../../../common/build/build-common/api-extractor-base.esm.no-legacy.json",
+	"messages": {
+		"extractorMessageReporting": {
+			// api-extractor does not appear able to resolve self references such as
+			// @fluidframework/presence/internal/core-interfaces without using
+			// the corresponding .ts file. Suppress until core-interfaces section is
+			// properly homed.
+			"ae-wrong-input-file-type": {
+				"logLevel": "none"
+			}
+		}
+	}
 }

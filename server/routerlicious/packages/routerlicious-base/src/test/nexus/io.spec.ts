@@ -23,7 +23,7 @@ import {
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
 import { LocalWebSocket, LocalWebSocketServer } from "@fluidframework/server-local-server";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
-import { PubSub } from "@fluidframework/server-memory-orderer";
+import { LocalOrderManager, PubSub } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import { generateToken } from "@fluidframework/server-services-utils";
 import {
@@ -37,6 +37,7 @@ import {
 	RawOperationType,
 	signalUsageStorageId,
 	type IClusterDrainingChecker,
+	clusterDrainingRetryTimeInMs,
 } from "@fluidframework/server-services-core";
 import { TestEngine1, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
@@ -53,11 +54,12 @@ import {
 import { OrdererManager } from "../../nexus";
 import { Throttler, ThrottlerHelper } from "@fluidframework/server-services";
 import Sinon from "sinon";
-import { isNetworkError, type NetworkError } from "@fluidframework/server-services-client";
 import {
-	isTokenRevokedError,
-	type IRevokedTokenChecker,
-} from "@fluidframework/server-services-core/dist/tokenRevocationManager";
+	isNetworkError,
+	type NetworkError,
+	InternalErrorCode,
+} from "@fluidframework/server-services-client";
+import { type IRevokedTokenChecker } from "@fluidframework/server-services-core/dist/tokenRevocationManager";
 
 const lumberjackEngine = new TestEngine1();
 if (!Lumberjack.isSetupCompleted()) {
@@ -152,7 +154,7 @@ describe("Routerlicious", () => {
 						false,
 						url,
 						testTenantManager,
-						null,
+						null as unknown as LocalOrderManager,
 						kafkaOrderer,
 					);
 
@@ -359,6 +361,16 @@ describe("Routerlicious", () => {
 							(err) => {
 								assert.strictEqual(isNetworkError(err), true);
 								assert.strictEqual((err as NetworkError).code, 503);
+								assert.strictEqual(
+									(err as NetworkError).internalErrorCode,
+									InternalErrorCode.ClusterDraining,
+									"Error should be a have internalErrorCode set to ClusterDraining",
+								);
+								assert.strictEqual(
+									(err as NetworkError).retryAfterMs,
+									clusterDrainingRetryTimeInMs,
+									"Error should have retryAfterMs set",
+								);
 								return true;
 							},
 						);
@@ -376,9 +388,9 @@ describe("Routerlicious", () => {
 									"Error should be a NetworkError",
 								);
 								assert.strictEqual(
-									isTokenRevokedError(err),
-									true,
-									"Error should be a TokenRevokedError",
+									(err as NetworkError).internalErrorCode,
+									InternalErrorCode.TokenRevoked,
+									"Error should be a have internalErrorCode set to TokenRevoked",
 								);
 								assert.strictEqual((err as NetworkError).code, 403);
 								return true;
@@ -998,7 +1010,7 @@ describe("Routerlicious", () => {
 						});
 						// generate a batch of messages
 						const generateMessageBatch = (size: number): IDocumentMessage[] => {
-							const batch = [];
+							const batch: IDocumentMessage[] = [];
 							for (let b = 0; b < size; b++) {
 								const message = messageFactory.createDocumentMessage();
 								batch.push(message);
@@ -1111,7 +1123,7 @@ Submitted Messages: ${JSON.stringify(messages, undefined, 2)}`,
 						false,
 						url,
 						testTenantManager,
-						null,
+						null as unknown as LocalOrderManager,
 						kafkaOrderer,
 					);
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.3.0",
+	"version": "2.23.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -68,7 +68,7 @@
 		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha \"dist/**/*.tests.js\" --exit",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=true mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluid-internal/mocha-test-setup",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=10 FUZZ_STRESS_RUN=normal mocha \"dist/**/*.fuzz.tests.js\" --exit -r @fluid-internal/mocha-test-setup",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
@@ -91,26 +91,26 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
+		"@fluidframework/build-tools": "^0.53.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/undo-redo": "workspace:~",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/chai": "^4.0.0",
 		"@types/lru-cache": "^5.1.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"chai": "^4.2.0",
@@ -122,7 +122,6 @@
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
@@ -131,6 +130,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

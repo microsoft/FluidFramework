@@ -45,6 +45,10 @@ export enum LumberEventName {
 	NexusSessionStart = "NexusSessionStart",
 	NexusSessionResult = "NexusSessionResult",
 
+	// Session Discovery
+	GetSession = "GetSession",
+	VerifyStorageToken = "VerifyStorageToken",
+
 	// Miscellaneous
 	ConnectDocument = "ConnectDocument",
 	ConnectDocumentAddClient = "ConnectDocumentAddClient",
@@ -58,10 +62,16 @@ export enum LumberEventName {
 	HttpRequest = "HttpRequest",
 	SocketConnection = "SocketConnection",
 	SocketConnectionCount = "SocketConnectionCount",
+	SocketConnectionLatency = "SocketConnectionLatency",
 	TotalConnectionCount = "TotalConnectionCount",
 	ConnectionCountPerNode = "ConnectionCountPerNode",
 	RestoreFromCheckpoint = "RestoreFromCheckpoint",
 	GlobalCheckpointError = "GlobalCheckpointError",
 	ReprocessOps = "ReprocessOps",
 	MongoMonitoring = "MongoMonitoring",
+	StartupProbe = "StartupProbe",
+	LivenessProbe = "LivenessProbe",
+	ReadinessProbe = "ReadinessProbe",
+	CircuitBreaker = "CircuitBreaker",
+	RestWrapper = "RestWrapper",
 }

@@ -21,6 +21,7 @@ import {
 	IWebSocketTracker,
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -30,11 +31,12 @@ import {
 	configureWebSocketServices,
 	ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
+import * as app from "./app";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 
 export class NexusRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server?: IWebServer;
+	private runningDeferred?: Deferred<void>;
 	private stopped: boolean = false;
 	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.NexusRunner);
 
@@ -51,6 +53,7 @@ export class NexusRunner implements IRunner {
 		private readonly storage: IDocumentStorage,
 		private readonly clientManager: IClientManager,
 		private readonly metricClientConfig: any,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly throttleAndUsageStorageManager?: IThrottleAndUsageStorageManager,
 		private readonly verifyMaxMessageSize?: boolean,
 		private readonly redisCache?: ICache,
@@ -60,14 +63,17 @@ export class NexusRunner implements IRunner {
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly collaborationSessionTracker?: ICollaborationSessionTracker,
+		private readonly readinessCheck?: IReadinessCheck,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	public start(): Promise<void> {
 		this.runningDeferred = new Deferred<void>();
 
-		// Create an HTTP server with a blank request listener
-		this.server = this.serverFactory.create();
+		// Create an HTTP server with a request listener for health endpoints.
+		const nexus = app.create(this.config, this.startupCheck, this.readinessCheck);
+		nexus.set("port", this.port);
+		this.server = this.serverFactory.create(nexus);
 
 		const usingClusterModule: boolean | undefined = this.config.get("nexus:useNodeCluster");
 		// Don't include application logic in primary thread when Node.js cluster module is enabled.
@@ -86,6 +92,10 @@ export class NexusRunner implements IRunner {
 			const isSignalUsageCountingEnabled = this.config.get(
 				"usage:signalUsageCountingEnabled",
 			);
+
+			if (!this.server.webSocketServer) {
+				throw new Error("WebSocket server is not initialized");
+			}
 
 			// Register all the socket.io stuff
 			configureWebSocketServices(
@@ -136,6 +146,9 @@ export class NexusRunner implements IRunner {
 
 		this.stopped = false;
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 
@@ -230,8 +243,8 @@ export class NexusRunner implements IRunner {
 	 * Event listener for HTTP server "listening" event.
 	 */
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}

@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { describeHydration, hydrate } from "./utils.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type FixRecursiveArraySchema,
+	type NodeFromSchema,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
 import type { Mutable } from "../../util/index.js";
@@ -841,47 +842,77 @@ describe("ArrayNode", () => {
 		},
 	);
 
-	it("explicit construction", () => {
-		class Schema extends schemaFactory.array(
-			"x",
-			schemaFactory.array([schemaFactory.number, schemaFactory.string]),
-		) {}
-		const data = [["x", 5]] as const;
-		const json = JSON.stringify(data);
-		const fromArray = new Schema(data);
-		assert.equal(JSON.stringify(fromArray), json);
-		const fromMap = new Schema(new Map(data));
-		assert.equal(JSON.stringify(fromMap), json);
-		const fromIterable = new Schema(new Map(data).entries());
-		assert.equal(JSON.stringify(fromIterable), json);
-	});
-
-	describe("implicit construction", () => {
-		it("fromArray", () => {
-			class Schema extends schemaFactory.array("x", schemaFactory.number) {}
-			class Root extends schemaFactory.object("root", { data: Schema }) {}
-			const fromArray = new Root({ data: [5] });
-			assert.deepEqual([...fromArray.data], [5]);
+	describe(" construction", () => {
+		it("constructor - empty", () => {
+			class Schema extends schemaFactory.array("x", schemaFactory.number) {
+				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
+				public foo(): void {}
+			}
+			const _fromIterable: Schema = new Schema([]);
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
 		});
-		it("fromMap", () => {
+
+		it("create - NonClass", () => {
+			const Schema = schemaFactory.array(schemaFactory.number);
+			type Schema = NodeFromSchema<typeof Schema>;
+			const _fromIterable: Schema = Schema.create([]);
+			const _fromUndefined: Schema = Schema.create(undefined);
+			const _fromNothing: Schema = Schema.create();
+		});
+
+		it("constructor - recursive empty", () => {
+			class Schema extends schemaFactory.arrayRecursive("x", [() => Schema]) {
+				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
+				public foo(): void {}
+			}
+			const _fromIterable: Schema = new Schema([]);
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
+		});
+
+		describe("implicit construction", () => {
+			it("fromArray", () => {
+				class Schema extends schemaFactory.array("x", schemaFactory.number) {}
+				class Root extends schemaFactory.object("root", { data: Schema }) {}
+				const fromArray = new Root({ data: [5] });
+				assert.deepEqual([...fromArray.data], [5]);
+			});
+			it("fromMap", () => {
+				class Schema extends schemaFactory.array(
+					"x",
+					schemaFactory.array([schemaFactory.number, schemaFactory.string]),
+				) {}
+				class Root extends schemaFactory.object("root", { data: Schema }) {}
+
+				const data = [["x", 5]] as const;
+				const json = JSON.stringify(data);
+
+				const fromMap = new Root({ data: new Map(data) });
+				assert.equal(JSON.stringify(fromMap.data), json);
+			});
+			it("fromIterable", () => {
+				class Schema extends schemaFactory.array("x", schemaFactory.number) {}
+				class Root extends schemaFactory.object("root", { data: Schema }) {}
+				const fromArray = new Root({ data: [5] });
+				const fromIterable = new Root({ data: new Set([5]) });
+				assert.deepEqual([...fromIterable.data], [5]);
+			});
+		});
+
+		it("nested", () => {
 			class Schema extends schemaFactory.array(
 				"x",
 				schemaFactory.array([schemaFactory.number, schemaFactory.string]),
 			) {}
-			class Root extends schemaFactory.object("root", { data: Schema }) {}
-
 			const data = [["x", 5]] as const;
 			const json = JSON.stringify(data);
-
-			const fromMap = new Root({ data: new Map(data) });
-			assert.equal(JSON.stringify(fromMap.data), json);
-		});
-		it("fromIterable", () => {
-			class Schema extends schemaFactory.array("x", schemaFactory.number) {}
-			class Root extends schemaFactory.object("root", { data: Schema }) {}
-			const fromArray = new Root({ data: [5] });
-			const fromIterable = new Root({ data: new Set([5]) });
-			assert.deepEqual([...fromIterable.data], [5]);
+			const fromArray = new Schema(data);
+			assert.equal(JSON.stringify(fromArray), json);
+			const fromMap = new Schema(new Map(data));
+			assert.equal(JSON.stringify(fromMap), json);
+			const fromIterable = new Schema(new Map(data).entries());
+			assert.equal(JSON.stringify(fromIterable), json);
 		});
 	});
 });

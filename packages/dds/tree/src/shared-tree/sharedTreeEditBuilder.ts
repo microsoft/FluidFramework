@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeFamilyEditor, TreeStoredSchema } from "../core/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type {
+	ChangeFamilyEditor,
+	RevisionTag,
+	TaggedChange,
+	TreeStoredSchema,
+} from "../core/index.js";
 import {
 	DefaultEditBuilder,
 	type IDefaultEditBuilder,
@@ -47,26 +53,36 @@ export class SharedTreeEditBuilder
 
 	public constructor(
 		modularChangeFamily: ModularChangeFamily,
-		private readonly changeReceiver: (change: SharedTreeChange) => void,
+		mintRevisionTag: () => RevisionTag,
+		private readonly changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
+		idCompressor?: IIdCompressor,
 	) {
-		super(modularChangeFamily, (change) =>
-			changeReceiver({
-				changes: [{ type: "data", innerChange: change }],
-			}),
+		super(
+			modularChangeFamily,
+			mintRevisionTag,
+			(taggedChange) =>
+				changeReceiver({
+					...taggedChange,
+					change: { changes: [{ type: "data", innerChange: taggedChange.change }] },
+				}),
+			idCompressor,
 		);
 
 		this.schema = {
 			setStoredSchema: (oldSchema, newSchema) => {
 				this.changeReceiver({
-					changes: [
-						{
-							type: "schema",
-							innerChange: {
-								schema: { new: newSchema, old: oldSchema },
-								isInverse: false,
+					revision: mintRevisionTag(),
+					change: {
+						changes: [
+							{
+								type: "schema",
+								innerChange: {
+									schema: { new: newSchema, old: oldSchema },
+									isInverse: false,
+								},
 							},
-						},
-					],
+						],
+					},
 				});
 			},
 		};

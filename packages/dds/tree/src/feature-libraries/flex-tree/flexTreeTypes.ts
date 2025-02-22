@@ -7,8 +7,9 @@ import {
 	type AnchorNode,
 	type ExclusiveMapTree,
 	type FieldKey,
+	type FieldKindIdentifier,
 	type FieldUpPath,
-	type TreeFieldStoredSchema,
+	type ITreeCursorSynchronous,
 	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	anchorSlot,
@@ -20,13 +21,6 @@ import type {
 	OptionalFieldEditBuilder,
 } from "../default-schema/index.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
-import type {
-	FlexFieldSchema,
-	FlexMapNodeSchema,
-	FlexObjectNodeSchema,
-	FlexTreeNodeSchema,
-	LeafNodeSchema,
-} from "../typed-schema/index.js";
 
 import type { FlexTreeContext } from "./context.js";
 
@@ -105,6 +99,20 @@ export enum TreeStatus {
 
 	/**
 	 * Is created but has not yet been inserted into the tree.
+	 * @remarks
+	 * See also {@link Unhydrated}.
+	 *
+	 * Nodes in the new state have some limitations:
+	 *
+	 * - Events are not currently triggered for changes. Fixes for this are planned.
+	 *
+	 * - Reading identifiers from nodes which were left unspecified (defaulted) when creating the tree will error.
+	 * This is because allocating unique identifiers in a compressible manner requires knowing which tree the nodes will be inserted into.
+	 *
+	 * - Transactions do not work: transactions apply to a single {@link TreeView}, and `New` nodes are not part of one.
+	 *
+	 * - `Tree.shortId` (when the identifier was explicitly specified and thus works at all) will just return the full identifier as a string,
+	 * but might return a compressed form as a number once hydrated.
 	 */
 	New = 3,
 }
@@ -118,11 +126,7 @@ export enum TreeStatus {
  * the same {@link FlexTreeNode} instance will be used in the new location.
  * Similarly, edits applied to a node's sub-tree concurrently with the move of the node will still be applied to its subtree in its new location.
  *
- *
  * @remarks
- * Down-casting (via {@link FlexTreeNode#is}) is required to access Schema-Aware APIs, including editing.
- * All content in the tree is accessible without down-casting, but if the schema is known,
- * the schema aware API may be more ergonomic.
  * All editing is actually done via {@link FlexTreeField}s: the nodes are immutable other than that they contain mutable fields.
  */
 export interface FlexTreeNode extends FlexTreeEntity {
@@ -154,11 +158,6 @@ export interface FlexTreeNode extends FlexTreeEntity {
 	 */
 	readonly parentField: { readonly parent: FlexTreeField; readonly index: number };
 
-	/**
-	 * Type guard for narrowing / down-casting to a specific schema.
-	 */
-	is(schema: FlexTreeNodeSchema): boolean;
-
 	boxedIterator(): IterableIterator<FlexTreeField>;
 
 	/**
@@ -188,10 +187,12 @@ export interface FlexTreeNode extends FlexTreeEntity {
 	readonly schema: TreeNodeSchemaIdentifier;
 
 	/**
-	 * Schema for this entity.
-	 * If well-formed, it must follow this schema.
+	 * Get a cursor for the underlying data.
+	 * @remarks
+	 * This cursor might be one the node uses in its implementation, and thus must be returned to its original location before using any other APIs to interact with the tree.
+	 * Must not be held onto across edits or any other tree API use.
 	 */
-	readonly flexSchema: FlexTreeNodeSchema;
+	borrowCursor(): ITreeCursorSynchronous;
 }
 
 /**
@@ -237,11 +238,6 @@ export interface FlexTreeField extends FlexTreeEntity {
 	 */
 	is<TKind extends FlexFieldKind>(kind: TKind): this is FlexTreeTypedField<TKind>;
 
-	/**
-	 * Type guard for narrowing / down-casting to a specific schema.
-	 */
-	isExactly(schema: FlexFieldSchema): boolean;
-
 	boxedIterator(): IterableIterator<FlexTreeNode>;
 
 	/**
@@ -265,71 +261,8 @@ export interface FlexTreeField extends FlexTreeEntity {
 	 * Schema for this entity.
 	 * If well-formed, it must follow this schema.
 	 */
-	readonly schema: TreeFieldStoredSchema;
-
-	/**
-	 * Schema for this entity.
-	 * If well-formed, it must follow this schema.
-	 */
-	readonly flexSchema: FlexFieldSchema;
+	readonly schema: FieldKindIdentifier;
 }
-
-// #region Node Kinds
-
-/**
- * A {@link FlexTreeNode} that behaves like a `Map<string, Field>` for a specific `Field` type.
- *
- * @remarks
- * Unlike TypeScript Map type, {@link FlexTreeMapNode.get} always provides a reference to any field looked up, even if it has never been set.
- *
- * This means that, for example, a `MapNode` of {@link FlexTreeSequenceField} fields will return an empty sequence when a previously unused key is looked up,
- * and that sequence can be used to insert new items into the field.
- * Additionally empty fields (those containing no nodes) are not distinguished from fields which do not exist.
- * This differs from JavaScript Maps which have a subtle distinction between storing undefined as a value in the map and deleting an entry from the map.
- */
-export interface FlexTreeMapNode extends FlexTreeNode {
-	readonly flexSchema: FlexMapNodeSchema;
-}
-
-/**
- * A {@link FlexTreeNode} that behaves like an "object" or "struct", providing properties to access its fields.
- *
- * ObjectNodes consist of a finite collection of fields, each with their own (distinct) key and {@link FlexFieldSchema}.
- *
- * @remarks
- * ObjectNodes require complex typing, and have been split into two parts for implementation purposes.
- *
- * These "Objects" resemble "Structs" from a wide variety of programming languages
- * (Including Algol 68, C, Go, Rust, C# etc.).
- * ObjectNodes also somewhat resemble JavaScript objects: this analogy is less precise (objects don't have a fixed schema for example),
- * but for consistency with other systems in the JavaScript ecosystem (like JSON) is "ObjectNodes" nodes are named "Objects".
- *
- * Another common name for this abstraction is [record](https://en.wikipedia.org/wiki/Record_(computer_science)).
- * The name "Record" is avoided (in favor of Object) here because it has less precise connotations for most TypeScript developers.
- * For example, TypeScript has a built in `Record` type, but it requires all of the fields to have the same type,
- * putting its semantics half way between this library's "Object" schema and {@link FlexTreeMapNode}.
- */
-export interface FlexTreeObjectNode extends FlexTreeNode {
-	readonly flexSchema: FlexObjectNodeSchema;
-}
-
-/**
- * Leaf holding a value.
- *
- * @remarks
- * Leaves are immutable and have no children.
- * Leaf unboxes its content, so in schema aware APIs which do unboxing, the Leaf itself will be skipped over and its value will be returned directly.
- */
-export interface FlexTreeLeafNode<in out TSchema extends LeafNodeSchema> extends FlexTreeNode {
-	readonly flexSchema: TSchema;
-
-	/**
-	 * Value stored on this node.
-	 */
-	readonly value: TreeValue;
-}
-
-// #endregion
 
 // #region Field Kinds
 

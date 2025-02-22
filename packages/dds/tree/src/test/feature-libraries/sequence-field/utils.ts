@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "assert";
+import { strict } from "node:assert";
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
@@ -11,14 +11,15 @@ import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor
 import {
 	type ChangeAtomId,
 	type ChangeAtomIdMap,
+	type ChangeAtomIdRangeMap,
 	type ChangesetLocalId,
-	type DeltaFieldChanges,
 	type RevisionInfo,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
 	makeAnonChange,
 	mapTaggedChange,
+	newChangeAtomIdRangeMap,
 	revisionMetadataSourceFromInfo,
 	tagChange,
 	tagRollbackInverse,
@@ -29,6 +30,7 @@ import {
 	type CrossFieldManager,
 	type CrossFieldQuerySet,
 	CrossFieldTarget,
+	type FieldChangeDelta,
 	type NodeId,
 	type RebaseRevisionMetadata,
 	setInCrossFieldMap,
@@ -63,11 +65,9 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
-	type RangeMap,
 	brand,
 	fail,
 	fakeIdAllocator,
-	getFromRangeMap,
 	getOrAddEmptyToMap,
 	idAllocatorFromMaxId,
 	setInNestedMap,
@@ -449,11 +449,18 @@ function resetCrossFieldTable(table: CrossFieldTable) {
 	table.dstQueries.clear();
 }
 
-export function invertDeep(change: TaggedChange<WrappedChange>): WrappedChange {
-	return ChangesetWrapper.invert(change, (c) => invert(c));
+export function invertDeep(
+	change: TaggedChange<WrappedChange>,
+	revision: RevisionTag | undefined,
+): WrappedChange {
+	return ChangesetWrapper.invert(change, (c) => invert(c, revision), revision);
 }
 
-export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): SF.Changeset {
+export function invert(
+	change: TaggedChange<SF.Changeset>,
+	revision: RevisionTag | undefined,
+	isRollback = true,
+): SF.Changeset {
 	deepFreeze(change.change);
 	const table = newCrossFieldTable();
 	let inverted = SF.invert(
@@ -461,6 +468,7 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 		isRollback,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
+		revision,
 		table,
 	);
 
@@ -473,6 +481,7 @@ export function invert(change: TaggedChange<SF.Changeset>, isRollback = true): S
 			isRollback,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,
+			revision,
 			table,
 		);
 	}
@@ -484,7 +493,7 @@ export function checkDeltaEquality(actual: SF.Changeset, expected: SF.Changeset)
 	assertFieldChangesEqual(toDelta(actual), toDelta(expected));
 }
 
-export function toDelta(change: SF.Changeset): DeltaFieldChanges {
+export function toDelta(change: SF.Changeset): FieldChangeDelta {
 	deepFreeze(change);
 	return SF.sequenceFieldToDelta(change, TestNodeId.deltaFromChild);
 }
@@ -818,18 +827,18 @@ interface CrossFieldTable<T = unknown> extends CrossFieldManager<T> {
 	srcQueries: CrossFieldQuerySet;
 	dstQueries: CrossFieldQuerySet;
 	isInvalidated: boolean;
-	mapSrc: Map<RevisionTag | undefined, RangeMap<T>>;
-	mapDst: Map<RevisionTag | undefined, RangeMap<T>>;
+	mapSrc: ChangeAtomIdRangeMap<T>;
+	mapDst: ChangeAtomIdRangeMap<T>;
 	reset: () => void;
 }
 
 function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
-	const srcQueries: CrossFieldQuerySet = new Map();
-	const dstQueries: CrossFieldQuerySet = new Map();
-	const mapSrc: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
-	const mapDst: Map<RevisionTag | undefined, RangeMap<T>> = new Map();
+	const srcQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
+	const dstQueries: CrossFieldQuerySet = newChangeAtomIdRangeMap();
+	const mapSrc = newChangeAtomIdRangeMap<T>();
+	const mapDst = newChangeAtomIdRangeMap<T>();
 
-	const getMap = (target: CrossFieldTarget): Map<RevisionTag | undefined, RangeMap<T>> =>
+	const getMap = (target: CrossFieldTarget): ChangeAtomIdRangeMap<T> =>
 		target === CrossFieldTarget.Source ? mapSrc : mapDst;
 
 	const getQueries = (target: CrossFieldTarget): CrossFieldQuerySet =>
@@ -852,7 +861,8 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			if (addDependency) {
 				addCrossFieldQuery(getQueries(target), revision, id, count);
 			}
-			return getFromRangeMap(getMap(target).get(revision) ?? [], id, count);
+			const rangeMap = getMap(target);
+			return rangeMap.getFirst({ revision, localId: id }, count);
 		},
 		set: (
 			target: CrossFieldTarget,
@@ -862,9 +872,10 @@ function newCrossFieldTable<T = unknown>(): CrossFieldTable<T> {
 			value: T,
 			invalidateDependents: boolean,
 		) => {
+			const queries = getQueries(target);
 			if (
 				invalidateDependents &&
-				getFromRangeMap(getQueries(target).get(revision) ?? [], id, count) !== undefined
+				queries.getFirst({ revision, localId: id }, count).value !== undefined
 			) {
 				table.isInvalidated = true;
 			}

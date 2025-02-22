@@ -28,7 +28,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -70,14 +70,16 @@
 		"json-stringify-safe": "^5.0.1",
 		"lodash": "^4.17.21",
 		"nconf": "^0.12.0",
+		"opossum": "^8.1.4",
 		"semver": "^7.5.3",
+		"serialize-error": "^8.1.0",
 		"sha.js": "^2.4.11",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-lambdas-previous": "npm:@fluidframework/server-lambdas@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
@@ -87,7 +89,7 @@
 		"@types/mocha": "^10.0.1",
 		"@types/nconf": "^0.10.2",
 		"@types/node": "^18.19.39",
-		"@types/sinon": "^9.0.9",
+		"@types/sinon": "^17.0.3",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
@@ -95,13 +97,18 @@
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^9.2.3",
+		"sinon": "^18.0.1",
 		"source-map-loader": "^5.0.0",
-		"ts-loader": "^9.3.0",
+		"ts-loader": "^9.5.1",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0"
+		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Class_ScriptoriumLambda": {
+				"forwardCompat": false
+			}
+		},
+		"entrypoint": "public"
 	}
 }

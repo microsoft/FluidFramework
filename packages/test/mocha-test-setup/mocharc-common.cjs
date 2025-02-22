@@ -50,11 +50,15 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		"recursive": true,
 		"require": requiredModulePaths,
 		"unhandled-rejections": "strict",
-		// Allow test-only indexes to be imported. Search the FF repo for package.json files with this condition to see example usage.
-		"node-option": "conditions=allow-ff-test-exports",
-		// Performance tests benefit from having access to GC, and memory tests require it.
-		// Exposing it here avoids all packages which do perf testing from having to expose it.
-		"v8-expose-gc": true,
+		"node-option": [
+			// Allow test-only indexes to be imported. Search the FF repo for package.json files with this condition to see example usage.
+			"conditions=allow-ff-test-exports",
+			// Performance tests benefit from having access to GC, and memory tests require it.
+			// Exposing it here avoids all packages which do perf testing from having to expose it.
+			// Note that since "node-option" is explicitly set,
+			// these must be provided here and not via mocha's --v8-expose-gc.
+			"expose-gc",
+		],
 	};
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
@@ -66,7 +70,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
 	const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
 	console.log(
-		`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml and nyc/${outputFilePrefix}junit-report.json`,
+		`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
 	);
 	const suiteName =
 		testReportPrefix !== undefined
@@ -76,7 +80,7 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		`configFile=${path.join(
 			__dirname,
 			"test-config.json",
-		)},cmrOutput=xunit+output+${outputFilePrefix}:mocha-json-output-reporter+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
+		)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
 	];
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {

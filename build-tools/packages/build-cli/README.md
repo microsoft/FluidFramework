@@ -47,8 +47,10 @@ USAGE
 * [`flub publish`](docs/publish.md) - Publish commands are used to publish packages to an npm registry.
 * [`flub release`](docs/release.md) - Release commands are used to manage the Fluid release process.
 * [`flub rename-types`](docs/rename-types.md) - Renames type declaration files from .d.ts to .d.mts.
-* [`flub run`](docs/run.md) - Generate a report from input bundle stats collected through the collect bundleStats command.
+* [`flub report`](docs/report.md) - Report analysis about the codebase, like code coverage and bundle size measurements.
+* [`flub transform`](docs/transform.md) - Transform commands are used to transform code, docs, etc. into alternative forms.
 * [`flub typetests`](docs/typetests.md) - Updates configuration for type tests in package.json files. If the previous version changes after running preparation, then npm install must be run before building.
+* [`flub vnext`](docs/vnext.md) - Vnext commands are new implementations of standard flub commands using new infrastructure.
 
 <!-- commandsstop -->
 <!-- prettier-ignore-stop -->

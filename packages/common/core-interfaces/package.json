@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.3.0",
+	"version": "2.23.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -79,7 +79,7 @@
 		"ci:build:docs": "api-extractor run",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -90,9 +90,9 @@
 		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "npm run test:mocha:esm && npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && npm run place:cjs:package-stub",
 		"tsc:watch": "npm run place:cjs:package-stub && fluid-tsc commonjs --project ./tsconfig.cjs.json --watch",
@@ -120,15 +120,15 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.2.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@microsoft/api-extractor": "^7.45.1",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.22.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@microsoft/api-extractor": "7.47.8",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
@@ -136,7 +136,6 @@
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
@@ -150,6 +149,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }

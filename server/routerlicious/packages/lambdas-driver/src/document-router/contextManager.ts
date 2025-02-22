@@ -38,6 +38,12 @@ export class DocumentContextManager extends EventEmitter {
 
 	private closed = false;
 
+	// Below flags are used to track whether head/tail has been updated after a pause/resume event.
+	// This is to allow moving out of order once during resume.
+	// Value = true means they are in a paused state and are waiting to be updated during resume.
+	private headPaused = false;
+	private tailPaused = false;
+
 	constructor(private readonly partitionContext: IContext) {
 		super();
 	}
@@ -47,8 +53,15 @@ export class DocumentContextManager extends EventEmitter {
 	 * This class is responsible for the lifetime of the context
 	 */
 	public createContext(routingKey: IRoutingKey, head: IQueuedMessage): DocumentContext {
-		// Contexts should only be created within the processing range of the manager
-		assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
+		if (!this.headPaused && this.tailPaused) {
+			// tail is resumed after head, so its possible to be in this state, but vice versa is not possible
+			// this means that tail is pending to be updated after resume, so it might be having an invalid value currently
+			assert(head.offset === this.head.offset);
+		} else {
+			// both head and tail are either paused or resumed
+			// Contexts should only be created within the processing range of the manager
+			assert(head.offset > this.tail.offset && head.offset <= this.head.offset);
+		}
 
 		// Create the new context and register for listeners on it
 		const context = new DocumentContext(
@@ -56,6 +69,10 @@ export class DocumentContextManager extends EventEmitter {
 			head,
 			this.partitionContext.log,
 			() => this.tail,
+			() => ({
+				headPaused: this.headPaused,
+				tailPaused: this.tailPaused,
+			}),
 		);
 		this.contexts.add(context);
 		context.addListener("checkpoint", (restartOnCheckpointFailure?: boolean) =>
@@ -64,6 +81,24 @@ export class DocumentContextManager extends EventEmitter {
 		context.addListener("error", (error, errorData: IContextErrorData) => {
 			Lumberjack.verbose("Emitting error from contextManager, context error event.");
 			this.emit("error", error, errorData);
+		});
+		context.addListener("pause", (offset?: number, reason?: any) => {
+			// Find the lowest offset of all doc contexts' lastSuccessfulOffset and emit pause at that offset to ensure we dont miss any messages during resume (reprocessing)
+			let lowestOffset = offset ?? Number.MAX_SAFE_INTEGER;
+			for (const docContext of this.contexts) {
+				if (docContext.lastSuccessfulOffset < lowestOffset) {
+					lowestOffset = docContext.lastSuccessfulOffset;
+				}
+			}
+			lowestOffset =
+				lowestOffset > -1 && lowestOffset < Number.MAX_SAFE_INTEGER ? lowestOffset : 0;
+			this.headPaused = true;
+			this.tailPaused = true;
+			Lumberjack.info("Emitting pause from contextManager", { lowestOffset, offset, reason });
+			this.emit("pause", lowestOffset, reason);
+		});
+		context.addListener("resume", () => {
+			this.emit("resume");
 		});
 		return context;
 	}
@@ -78,11 +113,47 @@ export class DocumentContextManager extends EventEmitter {
 	}
 
 	/**
-	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards.
+	 * Updates the head to the new offset. The head offset will not be updated if it stays the same or moves backwards, unless headPaused is true.
 	 * @returns True if the head was updated, false if it was not.
 	 */
 	public setHead(head: IQueuedMessage) {
-		if (head.offset > this.head.offset) {
+		if (head.offset > this.head.offset || this.headPaused) {
+			// If head is moving backwards
+			if (head.offset <= this.head.offset) {
+				if (head.offset <= this.lastCheckpoint.offset) {
+					Lumberjack.info(
+						"Not updating contextManager head since new head's offset is <= last checkpoint, returning early",
+						{
+							newHeadOffset: head.offset,
+							currentHeadOffset: this.head.offset,
+							lastCheckpointOffset: this.lastCheckpoint.offset,
+							currentTailOffset: this.tail.offset,
+						},
+					);
+					return false;
+				}
+
+				// allow moving backwards
+				Lumberjack.info(
+					"Allowing the contextManager head to move backwards to the specified offset",
+					{
+						newHeadOffset: head.offset,
+						currentHeadOffset: this.head.offset,
+						currentTailOffset: this.tail.offset,
+						headPaused: this.headPaused,
+					},
+				);
+			}
+
+			if (this.headPaused) {
+				Lumberjack.info("Setting headPaused to false", {
+					newHeadOffset: head.offset,
+					currentHeadOffset: this.head.offset,
+					currentTailOffset: this.tail.offset,
+				});
+				this.headPaused = false;
+			}
+
 			this.head = head;
 			return true;
 		}
@@ -92,9 +163,30 @@ export class DocumentContextManager extends EventEmitter {
 
 	public setTail(tail: IQueuedMessage) {
 		assert(
-			tail.offset > this.tail.offset && tail.offset <= this.head.offset,
-			`${tail.offset} > ${this.tail.offset} && ${tail.offset} <= ${this.head.offset}`,
+			(tail.offset > this.tail.offset || this.tailPaused) && tail.offset <= this.head.offset,
+			`Tail offset ${tail.offset} must be greater than the current tail offset ${this.tail.offset} or tailPaused should be true (${this.tailPaused}), and less than or equal to the head offset ${this.head.offset}.`,
 		);
+
+		if (tail.offset <= this.tail.offset) {
+			Lumberjack.info(
+				"Allowing the contextManager tail to move backwards to the specified offset",
+				{
+					newTailOffset: tail.offset,
+					currentTailOffset: this.tail.offset,
+					currentHeadOffset: this.head.offset,
+					tailPaused: this.tailPaused,
+				},
+			);
+		}
+
+		if (this.tailPaused) {
+			Lumberjack.info("Setting tailPaused to false", {
+				newTailOffset: tail.offset,
+				currentTailOffset: this.tail.offset,
+				currentHeadOffset: this.head.offset,
+			});
+			this.tailPaused = false;
+		}
 
 		this.tail = tail;
 		this.updateCheckpoint();

@@ -5,8 +5,8 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IDeltaManager,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	type IDeltaSender,
 	type ReadOnlyInfo,
@@ -30,11 +30,7 @@ import {
 	type IClientDetails,
 	type IClientConfiguration,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	MessageType2,
-	NonRetryableError,
-	isRuntimeMessage,
-} from "@fluidframework/driver-utils/internal";
+import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
@@ -116,7 +112,7 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 		case MessageType.Propose:
 		case MessageType.Reject:
 		case MessageType.NoOp:
-		case MessageType2.Accept:
+		case MessageType.Accept:
 		case MessageType.Summarize: {
 			return true;
 		}
@@ -155,9 +151,7 @@ function logIfFalse(
  */
 export class DeltaManager<TConnectionManager extends IConnectionManager>
 	extends EventEmitterWithErrorHandling<IDeltaManagerInternalEvents>
-	implements
-		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		IEventProvider<IDeltaManagerInternalEvents>
+	implements IDeltaManagerFull, IEventProvider<IDeltaManagerInternalEvents>
 {
 	public readonly connectionManager: TConnectionManager;
 
@@ -484,8 +478,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			if (this.handler === undefined) {
 				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
+
 			this.handler.processSignal({
-				clientId: message.clientId,
+				...message,
 				content: JSON.parse(message.content as string),
 			});
 		});
@@ -1032,15 +1027,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				...extractSafePropertiesFromMessage(message),
 				messageType: message.type,
 			});
-		}
-
-		// TODO Remove after SPO picks up the latest build.
-		if (
-			typeof message.contents === "string" &&
-			message.contents !== "" &&
-			message.type !== MessageType.ClientLeave
-		) {
-			message.contents = JSON.parse(message.contents);
 		}
 
 		// Validate client sequence number has no gap. Decrement the noOpCount by gap

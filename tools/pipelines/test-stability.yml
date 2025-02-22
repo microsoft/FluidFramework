@@ -11,7 +11,7 @@ pr: none
 parameters:
 - name: poolBuild
   type: object
-  default: Large
+  default: Large-eastus2
 
 - name: stageNames
   type: object
@@ -142,6 +142,9 @@ variables:
   value: 1
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
 
 stages:
   - ${{ each stageName in parameters.stageNames }}:
@@ -149,7 +152,7 @@ stages:
       displayName: ${{ stageName }}
       dependsOn: []
       jobs:
-      - template: templates/include-test-stability.yml
+      - template: /tools/pipelines/templates/include-test-stability.yml@self
         parameters:
           packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
           packageManager: pnpm

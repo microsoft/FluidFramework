@@ -2,13 +2,15 @@
 
 ## Table of contents
 
--   [Introduction](#introduction)
--   [Summary Format](#summary-format)
--   [Snapshot Format](#snapshot-format)
--   [Summary / Snapshot Tree Visualization](#summary--snapshot-tree-visualization)
-    -   [Protocol Tree](#protocol-tree)
-    -   [App Tree](#app-tree)
-    -   [Summary tree distinction - Incremental summaries](#summary-tree-distinction---incremental-summaries)
+- [Summary and snapshot formats](#summary-and-snapshot-formats)
+	- [Table of contents](#table-of-contents)
+	- [Introduction](#introduction)
+		- [Summary Format](#summary-format)
+		- [Snapshot Format](#snapshot-format)
+		- [Summary / Snapshot Tree Visualization](#summary--snapshot-tree-visualization)
+			- [Protocol tree](#protocol-tree)
+			- [App tree](#app-tree)
+			- [Summary tree distinction - Incremental summaries](#summary-tree-distinction---incremental-summaries)
 
 ## Introduction
 
@@ -211,9 +213,9 @@ flowchart TD
         C --> D["handle: '/data store 1'"]:::handle
         C --> E["data store 2"]:::tree
             E --> F[".channels"]:::tree
-                F --> G["handle: '/data store 2/DDS 1'"]:::handle
+                F --> G["handle: '/.channels/data store 2/.channels/DDS 1'"]:::handle
                 F --> H["DDS 2"]:::tree
-                    H --> I["handle: '/data store 2/DDS 2/sub node'"]:::handle
+                    H --> I["handle: '/.channels/data store 2/.channels/DDS 2/sub node'"]:::handle
                 F --> J["DDS N"]:::tree
             E --> K["other nodes"]:::others
         C --> L["data store N"]:::tree

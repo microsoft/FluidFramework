@@ -15,6 +15,8 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -49,15 +51,19 @@ export function create(
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
+	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
+	const enableEventLoopLagMetric = config.get("alfred:enableEventLoopLagMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 
 	// Express app configuration
@@ -142,6 +148,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {
@@ -165,10 +172,13 @@ export function create(
 		appTenants,
 		documentRepository,
 		documentDeleteService,
+		startupCheck,
 		tokenRevocationManager,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
 		clusterDrainingChecker,
+		readinessCheck,
+		fluidAccessTokenGenerator,
 	);
 
 	app.use(routes.api);

@@ -71,7 +71,8 @@ module.exports = {
 		aqueduct: "./src/aqueduct",
 		azureClient: "./src/azureClient",
 		connectionState: "./src/connectionState",
-		containerRuntime: "./src/containerRuntime",
+		containerRuntime: "./src/containerRuntimeBundle",
+		debugAssert: "./src/debugAssert",
 		fluidFramework: "./src/fluidFramework",
 		loader: "./src/loader",
 		map: "./src/map",
@@ -130,4 +131,7 @@ module.exports = {
 			file: path.resolve(process.cwd(), "bundleAnalysis/bundleStats.msp.gz"),
 		}),
 	],
+	// Enabling source maps allows using source-map-explorer to investigate bundle contents,
+	// which provides more fine grained details than BundleAnalyzerPlugin, so its nice for manual investigations.
+	devtool: "source-map",
 };

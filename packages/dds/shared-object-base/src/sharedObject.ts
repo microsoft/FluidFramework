@@ -19,6 +19,7 @@ import {
 	IChannelAttributes,
 	type IChannelFactory,
 	IFluidDataStoreRuntime,
+	type IDeltaHandler,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IDocumentMessage,
@@ -31,6 +32,8 @@ import {
 	IGarbageCollectionData,
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
+	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -46,6 +49,7 @@ import {
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
 	type ICustomData,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -75,7 +79,7 @@ export abstract class SharedObjectCore<
 	extends EventEmitterWithErrorHandling<TEvent>
 	implements ISharedObject<TEvent>
 {
-	public get IFluidLoadable() {
+	public get IFluidLoadable(): this {
 		return this;
 	}
 
@@ -134,7 +138,9 @@ export abstract class SharedObjectCore<
 		protected runtime: IFluidDataStoreRuntime,
 		public readonly attributes: IChannelAttributes,
 	) {
-		super((event: EventEmitterEventType, e: any) => this.eventListenerErrorHandler(event, e));
+		super((event: EventEmitterEventType, e: unknown) =>
+			this.eventListenerErrorHandler(event, e),
+		);
 
 		assert(!id.includes("/"), 0x304 /* Id cannot contain slashes */);
 
@@ -156,6 +162,20 @@ export abstract class SharedObjectCore<
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
+
+		const processMessagesCore = this.processMessagesCore?.bind(this);
+		this.processMessagesHelper =
+			processMessagesCore === undefined
+				? (messagesCollection: IRuntimeMessageCollection) =>
+						processHelper(messagesCollection, this.process.bind(this))
+				: (messagesCollection: IRuntimeMessageCollection) => {
+						processMessagesCoreHelper(
+							messagesCollection,
+							this.opProcessingHelper,
+							this.emitInternal.bind(this),
+							processMessagesCore,
+						);
+					};
 	}
 
 	/**
@@ -215,7 +235,7 @@ export abstract class SharedObjectCore<
 	 * would result in same error thrown. If called multiple times, only first error is remembered.
 	 * @param error - error object that is thrown whenever an attempt is made to modify this object
 	 */
-	private closeWithError(error: any) {
+	private closeWithError(error: IFluidErrorBase | undefined): void {
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}
@@ -224,7 +244,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * Verifies that this object is not closed via closeWithError(). If it is, throws an error used to close it.
 	 */
-	private verifyNotClosed() {
+	private verifyNotClosed(): void {
 		if (this.closeError !== undefined) {
 			throw this.closeError;
 		}
@@ -240,7 +260,7 @@ export abstract class SharedObjectCore<
 	 * DDS state does not match what user sees. Because of it DDS moves to "corrupted state" and does not
 	 * allow processing of ops or local changes, which very quickly results in container closure.
 	 */
-	private eventListenerErrorHandler(event: EventEmitterEventType, e: any) {
+	private eventListenerErrorHandler(event: EventEmitterEventType, e: unknown): void {
 		const error = DataProcessingError.wrapIfUnrecognized(
 			e,
 			"SharedObjectEventListenerException",
@@ -251,13 +271,14 @@ export abstract class SharedObjectCore<
 		throw error;
 	}
 
-	private setBoundAndHandleAttach() {
+	private setBoundAndHandleAttach(): void {
 		// Ensure didAttach is only called once, and we only register a single event
 		// but we still call setConnectionState as our existing mocks don't
 		// always propagate connection state
 		this.setBoundAndHandleAttach = () => this.setConnectionState(this.runtime.connected);
 		this._isBoundToContext = true;
-		const runDidAttach = () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		const runDidAttach: () => void = () => {
 			// Allows objects to do any custom processing if it is attached.
 			this.didAttach();
 			this.setConnectionState(this.runtime.connected);
@@ -310,7 +331,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).connect}
 	 */
-	public connect(services: IChannelServices) {
+	public connect(services: IChannelServices): void {
 		// handle the case where load is called
 		// before connect; loading detached data stores
 		if (this.services === undefined) {
@@ -347,7 +368,7 @@ export abstract class SharedObjectCore<
 	): Promise<ISummaryTreeWithStats>;
 
 	/**
-	 * {@inheritDoc (ISharedObject:interface).getGCData}
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
 	 */
 	public abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
 
@@ -360,7 +381,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * Allows the distributed data type to perform custom local loading.
 	 */
-	protected initializeLocalCore() {
+	protected initializeLocalCore(): void {
 		return;
 	}
 
@@ -368,7 +389,7 @@ export abstract class SharedObjectCore<
 	 * Allows the distributive data type the ability to perform custom processing once an attach has happened.
 	 * Also called after non-local data type get loaded.
 	 */
-	protected didAttach() {
+	protected didAttach(): void {
 		return;
 	}
 
@@ -378,17 +399,48 @@ export abstract class SharedObjectCore<
 	 * @param local - True if the shared object is local
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 *
+	 * @deprecated Replaced by {@link SharedObjectCore.processMessagesCore}.
 	 */
 	protected abstract processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	);
+	): void;
+
+	/* eslint-disable jsdoc/check-indentation */
+	/**
+	 * Process a 'bunch' of messages for this shared object.
+	 *
+	 * @remarks
+	 * A 'bunch' is a group of messages that have the following properties:
+	 * - They are all part of the same grouped batch, which entails:
+	 *   - They are contiguous in sequencing order.
+	 *   - They are all from the same client.
+	 *   - They are all based on the same reference sequence number.
+	 *   - They are not interleaved with messages from other clients.
+	 * - They are not interleaved with messages from other DDS in the container.
+	 * Derived classes should override this if they need to do custom processing on a 'bunch' of remote messages.
+	 * @param messageCollection - The collection of messages to process.
+	 *
+	 */
+	/* eslint-enable jsdoc/check-indentation */
+	protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
+
+	/**
+	 * Calls {@link SharedObjectCore.processCore} or {@link SharedObjectCore.processMessagesCore} depending on whether
+	 * processMessagesCore is defined. This helper is used to keep the code cleaner while we have to support both these
+	 * function.
+	 */
+	private readonly processMessagesHelper: (
+		messagesCollection: IRuntimeMessageCollection,
+	) => void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
-	protected abstract onDisconnect();
+
+	protected abstract onDisconnect(): void;
 
 	/**
 	 * The serializer to serialize / parse handles.
@@ -403,7 +455,7 @@ export abstract class SharedObjectCore<
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 */
-	protected submitLocalMessage(content: any, localOpMetadata: unknown = undefined): void {
+	protected submitLocalMessage(content: unknown, localOpMetadata: unknown = undefined): void {
 		this.verifyNotClosed();
 		if (this.isAttached()) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -431,7 +483,7 @@ export abstract class SharedObjectCore<
 	 * Called when the object has fully connected to the delta stream
 	 * Default implementation for DDS, override if different behavior is required.
 	 */
-	protected onConnect() {}
+	protected onConnect(): void {}
 
 	/**
 	 * Called when a message has to be resubmitted. This typically happens after a reconnection for unacked messages.
@@ -441,7 +493,7 @@ export abstract class SharedObjectCore<
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		this.submitLocalMessage(content, localOpMetadata);
 	}
 
@@ -454,7 +506,7 @@ export abstract class SharedObjectCore<
 	protected async newAckBasedPromise<T>(
 		executor: (
 			resolve: (value: T | PromiseLike<T>) => void,
-			reject: (reason?: any) => void,
+			reject: (reason?: unknown) => void,
 		) => void,
 	): Promise<T> {
 		let rejectBecauseDispose: () => void;
@@ -477,7 +529,7 @@ export abstract class SharedObjectCore<
 		});
 	}
 
-	private attachDeltaHandler() {
+	private attachDeltaHandler(): void {
 		// Services should already be there in case we are attaching delta handler.
 		assert(
 			this.services !== undefined,
@@ -496,26 +548,29 @@ export abstract class SharedObjectCore<
 					localOpMetadata,
 				);
 			},
+			processMessages: (messagesCollection: IRuntimeMessageCollection) => {
+				this.processMessages(messagesCollection);
+			},
 			setConnectionState: (connected: boolean) => {
 				this.setConnectionState(connected);
 			},
-			reSubmit: (content: any, localOpMetadata: unknown) => {
+			reSubmit: (content: unknown, localOpMetadata: unknown) => {
 				this.reSubmit(content, localOpMetadata);
 			},
-			applyStashedOp: (content: any): void => {
+			applyStashedOp: (content: unknown): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));
 			},
-			rollback: (content: any, localOpMetadata: unknown) => {
+			rollback: (content: unknown, localOpMetadata: unknown) => {
 				this.rollback(content, localOpMetadata);
 			},
-		});
+		} satisfies IDeltaHandler);
 	}
 
 	/**
 	 * Set the state of connection to services.
 	 * @param connected - true if connected, false otherwise.
 	 */
-	private setConnectionState(connected: boolean) {
+	private setConnectionState(connected: boolean): void {
 		// only an attached shared object can transition its
 		// connected state. This is defensive, as some
 		// of our test harnesses don't handle this correctly
@@ -527,17 +582,17 @@ export abstract class SharedObjectCore<
 		// Should I change the state at the end? So that we *can't* send new stuff before we send old?
 		this._connected = connected;
 
-		if (!connected) {
+		if (connected) {
+			// Call this for now so that DDSes like ConsensusOrderedCollection that maintain their own pending
+			// messages will work.
+			this.onConnect();
+		} else {
 			// Things that are true now...
 			// - if we had a connection we can no longer send messages over it
 			// - if we had outbound messages some may or may not be ACK'd. Won't know until next message
 			//
 			// - nack could get a new msn - but might as well do it in the join?
 			this.onDisconnect();
-		} else {
-			// Call this for now so that DDSes like ConsensusOrderedCollection that maintain their own pending
-			// messages will work.
-			this.onConnect();
 		}
 	}
 
@@ -547,12 +602,14 @@ export abstract class SharedObjectCore<
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 *
+	 * @deprecated Replaced by {@link SharedObjectCore.processMessages}.
 	 */
 	private process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
-	) {
+	): void {
 		this.verifyNotClosed(); // This will result in container closure.
 		this.emitInternal("pre-op", message, local, this);
 
@@ -572,20 +629,58 @@ export abstract class SharedObjectCore<
 		this.emitInternal("op", message, local, this);
 	}
 
+	/* eslint-disable jsdoc/check-indentation */
+	/**
+	 * Process a bunch of messages for this shared object. A bunch is group of messages that have the following properties:
+	 * - They are all part of the same grouped batch, which entails:
+	 *   - They are contiguous in sequencing order.
+	 *   - They are all from the same client.
+	 *   - They are all based on the same reference sequence number.
+	 *   - They are not interleaved with messages from other clients.
+	 * - They are not interleaved with messages from other DDS in the container.
+	 * @param messageCollection - The collection of messages to process.
+	 *
+	 */
+	/* eslint-enable jsdoc/check-indentation */
+	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
+		this.verifyNotClosed(); // This will result in container closure.
+
+		// Decode any handles in the contents before processing the messages.
+		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+		} of messagesCollection.messagesContent) {
+			const decodedMessageContent: IRuntimeMessagesContent = {
+				contents: parseHandles(contents, this.serializer),
+				localOpMetadata,
+				clientSequenceNumber,
+			};
+			decodedMessagesContent.push(decodedMessageContent);
+		}
+
+		const decodedMessagesCollection: IRuntimeMessageCollection = {
+			...messagesCollection,
+			messagesContent: decodedMessagesContent,
+		};
+		this.processMessagesHelper(decodedMessagesCollection);
+	}
+
 	/**
 	 * Called when a message has to be resubmitted. This typically happens for unacked messages after a
 	 * reconnection.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
-	private reSubmit(content: any, localOpMetadata: unknown) {
+	private reSubmit(content: unknown, localOpMetadata: unknown): void {
 		this.reSubmitCore(content, localOpMetadata);
 	}
 
 	/**
 	 * Revert an op
 	 */
-	protected rollback(content: any, localOpMetadata: unknown) {
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
 		throw new Error("rollback not supported");
 	}
 
@@ -606,7 +701,7 @@ export abstract class SharedObjectCore<
 	 *
 	 * @param content - Contents of a stashed op.
 	 */
-	protected abstract applyStashedOp(content: any): void;
+	protected abstract applyStashedOp(content: unknown): void;
 
 	/**
 	 * Emit an event. This function is only intended for use by DDS classes that extend SharedObject/SharedObjectCore,
@@ -620,6 +715,7 @@ export abstract class SharedObjectCore<
 	 */
 	public emit(event: EventEmitterEventType, ...args: any[]): boolean {
 		return this.callbacksHelper.measure(() => {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return super.emit(event, ...args);
 		});
 	}
@@ -631,7 +727,7 @@ export abstract class SharedObjectCore<
 	 * @param args - Arguments for the event
 	 * @returns Whatever `super.emit()` returns.
 	 */
-	private emitInternal(event: EventEmitterEventType, ...args: any[]): boolean {
+	private emitInternal(event: EventEmitterEventType, ...args: unknown[]): boolean {
 		return super.emit(event, ...args);
 	}
 }
@@ -736,7 +832,7 @@ export abstract class SharedObject<
 	}
 
 	/**
-	 * {@inheritDoc (ISharedObject:interface).getGCData}
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
 	 */
 	public getGCData(fullGC: boolean = false): IGarbageCollectionData {
 		// Set _isGCing to true. This flag is used to ensure that we only use SummarySerializer to serialize handles
@@ -769,7 +865,7 @@ export abstract class SharedObject<
 	 * Calls the serializer over all data in this object that reference other GC nodes.
 	 * Derived classes must override this to provide custom list of references to other GC nodes.
 	 */
-	protected processGCDataCore(serializer: IFluidSerializer) {
+	protected processGCDataCore(serializer: IFluidSerializer): void {
 		// We run the full summarize logic to get the list of outbound routes from this object. This is a little
 		// expensive but its okay for now. It will be updated to not use full summarize and make it more efficient.
 		// See: https://github.com/microsoft/FluidFramework/issues/4547
@@ -790,7 +886,7 @@ export abstract class SharedObject<
 		propertyName: string,
 		incrementBy: number,
 		telemetryContext?: ITelemetryContext,
-	) {
+	): void {
 		if (telemetryContext !== undefined) {
 			// TelemetryContext needs to implment a get function
 			assert(
@@ -912,4 +1008,76 @@ export function createSharedObjectKind<TSharedObject>(
 function isChannel(loadable: IFluidLoadable): loadable is IChannel {
 	// This assumes no other IFluidLoadable has an `attributes` field, and thus may not be fully robust.
 	return (loadable as IChannel).attributes !== undefined;
+}
+
+/**
+ * Utility that processes the given messages in the message collection together by calling `processMessagesCore`.
+ * This will be called when {@link SharedObjectCore.processMessagesCore} is defined.
+ */
+function processMessagesCoreHelper(
+	messagesCollection: IRuntimeMessageCollection,
+	opProcessingHelper: SampledTelemetryHelper<void, ProcessTelemetryProperties>,
+	emitInternal: (
+		event: "pre-op" | "op",
+		op: ISequencedDocumentMessage,
+		local: boolean,
+	) => void,
+	processMessagesCore: (messagesCollection: IRuntimeMessageCollection) => void,
+): void {
+	const { envelope, local, messagesContent } = messagesCollection;
+
+	const emitEvents = (
+		event: "pre-op" | "op",
+		messagesContentForEvent: readonly IRuntimeMessagesContent[],
+	): void => {
+		for (const { contents, clientSequenceNumber } of messagesContentForEvent) {
+			const message: ISequencedDocumentMessage = {
+				...envelope,
+				contents,
+				clientSequenceNumber,
+			};
+			emitInternal(event, message, local);
+		}
+	};
+
+	emitEvents("pre-op", messagesContent);
+	opProcessingHelper.measure(
+		(): ICustomData<ProcessTelemetryProperties> => {
+			processMessagesCore(messagesCollection);
+			const telemetryProperties: ProcessTelemetryProperties = {
+				sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+			};
+			return {
+				customData: telemetryProperties,
+			};
+		},
+		local ? "local" : "remote",
+	);
+	emitEvents("op", messagesContent);
+}
+
+/**
+ * Utility that processes the given messages in the message collection one by one by calling `process`. This will
+ * be called when {@link SharedObjectCore.processMessagesCore} is not defined.
+ */
+function processHelper(
+	messagesCollection: IRuntimeMessageCollection,
+	process: (
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) => void,
+): void {
+	const { envelope, local, messagesContent } = messagesCollection;
+	for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+		process(
+			{
+				...envelope,
+				contents,
+				clientSequenceNumber,
+			},
+			local,
+			localOpMetadata,
+		);
+	}
 }

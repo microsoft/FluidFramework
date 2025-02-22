@@ -73,9 +73,6 @@ export class ProtocolHandler extends ProtocolOpHandler implements IProtocolHandl
 			audience.addMember(clientId, details.client),
 		);
 		this.quorum.on("removeMember", (clientId) => audience.removeMember(clientId));
-		for (const [clientId, details] of this.quorum.getMembers()) {
-			this.audience.addMember(clientId, details.client);
-		}
 	}
 
 	public processMessage(

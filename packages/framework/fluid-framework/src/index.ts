@@ -11,7 +11,7 @@
  */
 
 // ===============================================================
-// #region Public exports
+// #region Public, Beta and Alpha (non-legacy) exports
 // #region Basic re-exports
 
 export type {
@@ -54,18 +54,26 @@ export type {
 	ReplaceIEventThisPlaceHolder,
 	FluidObject, // Linked in doc comment
 	FluidObjectProviderKeys, // Used by FluidObject
+	/* eslint-disable import/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
+	Listeners,
+	IsListener,
+	Listenable,
+	Off,
+	/* eslint-enable import/export */
 } from "@fluidframework/core-interfaces";
 
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
 
-// Let the tree package manage its own API surface, we will simply reflect it here.
-// Note: this only surfaces the `@public` API items from the tree package. If the `@beta` and `@alpha` items are
-// desired, they can be added by re-exporting from one of the package's aliased export paths instead (e.g. `tree
-// alpha` to surface everything `@alpha` and higher).
-// eslint-disable-next-line no-restricted-syntax, import/export
-export * from "@fluidframework/tree";
+// Let the tree package manage its own API surface.
+// Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
+/* eslint-disable-next-line
+	no-restricted-syntax,
+	import/no-internal-modules,
+	import/export -- This re-exports all non-conflicting APIs from `@fluidframework/tree`. In cases where * exports conflict with named exports, the named exports take precedence per https://tc39.es/ecma262/multipage/ecmascript-language-scripts-and-modules.html#sec-getexportednames. This does trigger the `import/export` lint warning (which is intentionally disabled here). This approach ensures that the non-deprecated versions of the event APIs from `@fluidframework/core-interfaces` (provided as named indirect exports) eclipse the deprecated ones from `@fluidframework/tree`. The preferred versions of the event APIs are those exported via `@fluidframework/core-interfaces`.
+	*/
+export * from "@fluidframework/tree/alpha";
 
-// End of basic public exports - nothing above this line should
+// End of basic public+beta+alpha exports - nothing above this line should
 // depend on an /internal path.
 // #endregion Basic re-exports
 // ---------------------------------------------------------------
@@ -73,7 +81,11 @@ export * from "@fluidframework/tree";
 
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ITree } from "@fluidframework/tree";
-import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal";
+import {
+	SharedTree as OriginalSharedTree,
+	configuredSharedTree as originalConfiguredSharedTree,
+	type SharedTreeOptions,
+} from "@fluidframework/tree/internal";
 
 /**
  * A hierarchical data structure for collaboratively editing strongly typed JSON-like trees
@@ -87,8 +99,32 @@ import { SharedTree as OriginalSharedTree } from "@fluidframework/tree/internal"
  */
 export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
 
+/**
+ * {@link SharedTree} but allowing a non-default configuration.
+ * @remarks
+ * This is useful for debugging and testing to opt into extra validation or see if opting out of some optimizations fixes an issue.
+ * @example
+ * ```typescript
+ * import {
+ * 	ForestType,
+ * 	TreeCompressionStrategy,
+ * 	configuredSharedTree,
+ * 	typeboxValidator,
+ * } from "@fluid-framework/alpha";
+ * const SharedTree = configuredSharedTree({
+ * 	forest: ForestType.Reference,
+ * 	jsonValidator: typeboxValidator,
+ * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
+ * });
+ * ```
+ * @alpha
+ */
+export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKind<ITree> {
+	return originalConfiguredSharedTree(options);
+}
+
 // #endregion Custom re-exports
-// #endregion Public exports
+// #endregion
 
 // ===============================================================
 // #region Legacy exports
@@ -126,14 +162,15 @@ export type {
 	ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
-export {
+export type {
 	IntervalType,
 	SequenceDeltaEvent,
 	SequenceEvent,
 	SequenceInterval,
 	SequenceMaintenanceEvent,
-	SharedString,
 } from "@fluidframework/sequence/internal";
+
+export { SharedString } from "@fluidframework/sequence/internal";
 
 export type {
 	ISharedObject,

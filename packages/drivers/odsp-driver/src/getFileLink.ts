@@ -6,12 +6,12 @@
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
-import { hasRedirectionLocation } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	IOdspUrlParts,
 	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
+	type IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
+import { mockify } from "./mockify.js";
 import {
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -42,67 +43,69 @@ const fileLinkCache = new Map<string, Promise<string>>();
  * @param logger - used to log results of operation, including any error
  * @returns Promise which resolves to file link url when successful; otherwise, undefined.
  */
-export async function getFileLink(
-	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLoggerExt,
-): Promise<string> {
-	const cacheKey = `${odspUrlParts.siteUrl}_${odspUrlParts.driveId}_${odspUrlParts.itemId}`;
-	const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
-	if (maybeFileLinkCacheEntry !== undefined) {
-		return maybeFileLinkCacheEntry;
-	}
-
-	const fileLinkGenerator = async function (): Promise<string> {
-		let fileLinkCore: string;
-		try {
-			let retryCount = 0;
-			fileLinkCore = await runWithRetry(
-				async () =>
-					runWithRetryForCoherencyAndServiceReadOnlyErrors(
-						async () =>
-							getFileLinkWithLocationRedirectionHandling(getToken, odspUrlParts, logger),
-						"getFileLinkCore",
-						logger,
-					),
-				"getShareLink",
-				logger,
-				{
-					// TODO: use a stronger type
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					onRetry(delayInMs: number, error: any) {
-						retryCount++;
-						if (retryCount === 5) {
-							if (error !== undefined && typeof error === "object") {
-								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-								error.canRetry = false;
-								throw error;
-							}
-							throw error;
-						}
-					},
-				},
-			);
-		} catch (error) {
-			// Delete from the cache to permit retrying later.
-			fileLinkCache.delete(cacheKey);
-			throw error;
+export const getFileLink = mockify(
+	async (
+		getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
+		resolvedUrl: IOdspResolvedUrl,
+		logger: ITelemetryLoggerExt,
+	): Promise<string> => {
+		const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}`;
+		const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
+		if (maybeFileLinkCacheEntry !== undefined) {
+			return maybeFileLinkCacheEntry;
 		}
 
-		// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
-		assert(
-			fileLinkCore !== undefined,
-			0x292 /* "Unexpected undefined result from getFileLinkCore" */,
-		);
-		return fileLinkCore;
-	};
-	const fileLink = fileLinkGenerator();
-	fileLinkCache.set(cacheKey, fileLink);
-	return fileLink;
-}
+		const fileLinkGenerator = async function (): Promise<string> {
+			let fileLinkCore: string;
+			try {
+				let retryCount = 0;
+				fileLinkCore = await runWithRetry(
+					async () =>
+						runWithRetryForCoherencyAndServiceReadOnlyErrors(
+							async () =>
+								getFileLinkWithLocationRedirectionHandling(getToken, resolvedUrl, logger),
+							"getFileLinkCore",
+							logger,
+						),
+					"getShareLink",
+					logger,
+					{
+						// TODO: use a stronger type
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
+						onRetry(delayInMs: number, error: any) {
+							retryCount++;
+							if (retryCount === 5) {
+								if (error !== undefined && typeof error === "object") {
+									// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+									error.canRetry = false;
+									throw error;
+								}
+								throw error;
+							}
+						},
+					},
+				);
+			} catch (error) {
+				// Delete from the cache to permit retrying later.
+				fileLinkCache.delete(cacheKey);
+				throw error;
+			}
+
+			// We are guaranteed to run the getFileLinkCore at least once with successful result (which must be a string)
+			assert(
+				fileLinkCore !== undefined,
+				0x292 /* "Unexpected undefined result from getFileLinkCore" */,
+			);
+			return fileLinkCore;
+		};
+		const fileLink = fileLinkGenerator();
+		fileLinkCache.set(cacheKey, fileLink);
+		return fileLink;
+	},
+);
 
 /**
- * Handles location redirection while fulfilling the getFilelink call. We don't want browser to handle
+ * Handles location redirection while fulfilling the getFileLink call. We don't want browser to handle
  * the redirection as the browser will retry with same auth token which will not work as we need app
  * to regenerate tokens for the new site domain. So when we will make the network calls below we will set
  * the redirect:manual header to manually handle these redirects.
@@ -116,32 +119,41 @@ export async function getFileLink(
  */
 async function getFileLinkWithLocationRedirectionHandling(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
-	odspUrlParts: IOdspUrlParts,
+	resolvedUrl: IOdspResolvedUrl,
 	logger: ITelemetryLoggerExt,
 ): Promise<string> {
 	// We can have chains of location redirection one after the other, so have a for loop
 	// so that we can keep handling the same type of error. Set max number of redirection to 5.
 	let lastError: unknown;
+	let locationRedirected = false;
 	for (let count = 1; count <= 5; count++) {
 		try {
-			return await getFileLinkCore(getToken, odspUrlParts, logger);
-		} catch (error: unknown) {
-			lastError = error;
-			if (
-				isFluidError(error) &&
-				error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError &&
-				hasRedirectionLocation(error) &&
-				error.redirectLocation !== undefined
-			) {
-				const redirectLocation = error.redirectLocation;
+			const fileItem = await getFileItemLite(getToken, resolvedUrl, logger);
+			// Sometimes the siteUrl in the actual file is different from the siteUrl in the resolvedUrl due to location
+			// redirection. This creates issues in the getSharingInformation call. So we need to update the siteUrl in the
+			// resolvedUrl to the siteUrl in the fileItem which is the updated siteUrl.
+			const oldSiteDomain = new URL(resolvedUrl.siteUrl).origin;
+			const newSiteDomain = new URL(fileItem.sharepointIds.siteUrl).origin;
+			if (oldSiteDomain !== newSiteDomain) {
+				locationRedirected = true;
 				logger.sendTelemetryEvent({
 					eventName: "LocationRedirectionErrorForGetOdspFileLink",
 					retryCount: count,
 				});
-				// Generate the new SiteUrl from the redirection location.
-				const newSiteDomain = new URL(redirectLocation).origin;
-				const newSiteUrl = `${newSiteDomain}${new URL(odspUrlParts.siteUrl).pathname}`;
-				odspUrlParts.siteUrl = newSiteUrl;
+				renameTenantInOdspResolvedUrl(resolvedUrl, newSiteDomain);
+			}
+			return await getFileLinkCore(getToken, resolvedUrl, logger, fileItem);
+		} catch (error: unknown) {
+			lastError = error;
+			// If the getSharingLink call fails with the 401/403/404 error, then it could be due to that the file has moved
+			// to another location. This could occur in case we have more than 1 tenant rename. In that case, we should retry
+			// the getFileItemLite call to get the updated fileItem.
+			if (
+				isFluidError(error) &&
+				locationRedirected &&
+				(error.errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError ||
+					error.errorType === OdspErrorTypes.authorizationError)
+			) {
 				continue;
 			}
 			throw error;
@@ -154,9 +166,8 @@ async function getFileLinkCore(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
 	logger: ITelemetryLoggerExt,
+	fileItem: FileItemLite,
 ): Promise<string> {
-	const fileItem = await getFileItemLite(getToken, odspUrlParts, logger, true);
-
 	// ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
 	return PerformanceEvent.timedExecAsync(
 		logger,
@@ -194,7 +205,6 @@ async function getFileLinkCore(
 					headers: {
 						"Content-Type": "application/json;odata=verbose",
 						"Accept": "application/json;odata=verbose",
-						"redirect": "manual",
 						...headers,
 					},
 				};
@@ -253,7 +263,6 @@ async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
 	logger: ITelemetryLoggerExt,
-	forceAccessTokenViaAuthorizationHeader: boolean,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(
 		logger,
@@ -281,7 +290,6 @@ async function getFileItemLite(
 				);
 
 				const headers = getHeadersWithAuth(authHeader);
-				headers.redirect = "manual";
 				const requestInit = { method, headers };
 				const response = await fetchHelper(url, requestInit);
 				additionalProps = response.propsToLog;
@@ -301,4 +309,30 @@ async function getFileItemLite(
 			return fileItem;
 		},
 	);
+}
+
+/**
+ * It takes a resolved url with old siteUrl and patches resolved url with updated site url domain.
+ * @param odspResolvedUrl - Previous odsp resolved url with older site url.
+ * @param newSiteDomain - New site domain after the tenant rename.
+ */
+function renameTenantInOdspResolvedUrl(
+	odspResolvedUrl: IOdspResolvedUrl,
+	newSiteDomain: string,
+): void {
+	const newSiteUrl = `${newSiteDomain}${new URL(odspResolvedUrl.siteUrl).pathname}`;
+	odspResolvedUrl.siteUrl = newSiteUrl;
+
+	if (odspResolvedUrl.endpoints.attachmentGETStorageUrl) {
+		odspResolvedUrl.endpoints.attachmentGETStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.attachmentGETStorageUrl).pathname}`;
+	}
+	if (odspResolvedUrl.endpoints.attachmentPOSTStorageUrl) {
+		odspResolvedUrl.endpoints.attachmentPOSTStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.attachmentPOSTStorageUrl).pathname}`;
+	}
+	if (odspResolvedUrl.endpoints.deltaStorageUrl) {
+		odspResolvedUrl.endpoints.deltaStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.deltaStorageUrl).pathname}`;
+	}
+	if (odspResolvedUrl.endpoints.snapshotStorageUrl) {
+		odspResolvedUrl.endpoints.snapshotStorageUrl = `${newSiteDomain}${new URL(odspResolvedUrl.endpoints.snapshotStorageUrl).pathname}`;
+	}
 }

@@ -16,6 +16,8 @@ steps:
     targetType: 'inline'
     workingDirectory: $(Build.SourcesDirectory)
     script: |
+      set -eu -o pipefail
+
       # Output installed node versions
       n ls
       # Use the specified node version

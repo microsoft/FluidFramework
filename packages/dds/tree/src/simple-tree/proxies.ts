@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -18,8 +16,6 @@ import {
 import {
 	FieldKinds,
 	type FlexTreeField,
-	type FlexTreeNode,
-	tryGetMapTreeNode,
 	isFlexTreeNode,
 	type FlexTreeRequiredField,
 	type FlexTreeOptionalField,
@@ -27,10 +23,10 @@ import {
 import { type Mutable, fail, isReadonlyArray } from "../util/index.js";
 import {
 	getKernel,
-	tryGetCachedTreeNode,
-	tryGetSimpleNodeSchema,
 	type TreeNode,
-	type Unhydrated,
+	getOrCreateNodeFromInnerNode,
+	tryUnhydratedFlexTreeNode,
+	unhydratedFlexTreeNodeToTreeNode,
 } from "./core/index.js";
 
 /**
@@ -42,10 +38,10 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 	): TreeNode | TreeValue | undefined {
 		const maybeContent = flexField.content;
 		return isFlexTreeNode(maybeContent)
-			? getOrCreateNodeFromFlexTreeNode(maybeContent)
+			? getOrCreateNodeFromInnerNode(maybeContent)
 			: maybeContent;
 	}
-	switch (field.schema.kind) {
+	switch (field.schema) {
 		case FieldKinds.required.identifier: {
 			const typedField = field as FlexTreeRequiredField;
 			return tryToUnboxLeaves(typedField);
@@ -61,23 +57,6 @@ export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue 
 
 		default:
 			fail("invalid field kind");
-	}
-}
-
-export function getOrCreateNodeFromFlexTreeNode(flexNode: FlexTreeNode): TreeNode | TreeValue {
-	const cachedProxy = tryGetCachedTreeNode(flexNode);
-	if (cachedProxy !== undefined) {
-		return cachedProxy;
-	}
-
-	const schema = flexNode.flexSchema;
-	const classSchema = tryGetSimpleNodeSchema(schema);
-	assert(classSchema !== undefined, 0x91b /* node without schema */);
-	if (typeof classSchema === "function") {
-		const simpleSchema = classSchema as unknown as new (dummy: FlexTreeNode) => TreeNode;
-		return new simpleSchema(flexNode);
-	} else {
-		return (classSchema as { create(data: FlexTreeNode): TreeNode }).create(flexNode);
 	}
 }
 
@@ -155,7 +134,7 @@ function walkMapTree(
 	path: UpPath,
 	onVisitTreeNode: (path: UpPath, treeNode: TreeNode) => void,
 ): void {
-	if (tryGetMapTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
+	if (tryUnhydratedFlexTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
 		throw new UsageError(
 			"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
 		);
@@ -165,9 +144,9 @@ function walkMapTree(
 	const nexts: Next[] = [];
 	for (let next: Next | undefined = [path, mapTree]; next !== undefined; next = nexts.pop()) {
 		const [p, m] = next;
-		const mapTreeNode = tryGetMapTreeNode(m);
+		const mapTreeNode = tryUnhydratedFlexTreeNode(m);
 		if (mapTreeNode !== undefined) {
-			const treeNode = tryGetCachedTreeNode(mapTreeNode);
+			const treeNode = unhydratedFlexTreeNodeToTreeNode.get(mapTreeNode);
 			if (treeNode !== undefined) {
 				onVisitTreeNode(p, treeNode);
 			}
@@ -193,7 +172,7 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 	if (proxies.length > 0) {
 		// Creating a new array emits one event per element in the array, so listen to the event once for each element
 		let i = 0;
-		const off = forest.on("afterRootFieldCreated", (fieldKey) => {
+		const off = forest.events.on("afterRootFieldCreated", (fieldKey) => {
 			// Non null asserting here because of the length check above
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			(proxies[i]!.rootPath as Mutable<UpPath>).parentField = fieldKey;
@@ -210,26 +189,3 @@ function bindProxies(proxies: RootedProxyPaths[], forest: IForestSubscription): 
 }
 
 // #endregion Content insertion and proxy binding
-
-/**
- * Content which can be used to build a node.
- * @remarks
- * Can contain unhydrated nodes, but can not be an unhydrated node at the root.
- */
-export type FactoryContent =
-	| IFluidHandle
-	| string
-	| number
-	| boolean
-	// eslint-disable-next-line @rushstack/no-new-null
-	| null
-	| Iterable<readonly [string, InsertableContent]>
-	| readonly InsertableContent[]
-	| {
-			readonly [P in string]?: InsertableContent;
-	  };
-
-/**
- * Content which can be inserted into a tree.
- */
-export type InsertableContent = Unhydrated<TreeNode> | FactoryContent;

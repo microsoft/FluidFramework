@@ -5,26 +5,24 @@
 
 /* eslint-disable prefer-object-has-own */
 
-import * as child_process from "node:child_process";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
-import { writeJson } from "fs-extra/esm";
-import replace from "replace-in-file";
-import sortPackageJson from "sort-package-json";
-
 import {
-	PackageJson,
-	getApiExtractorConfigFilePath,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
-} from "@fluidframework/build-tools";
+} from "@fluid-tools/build-infrastructure";
+import { findGitRootSync } from "@fluid-tools/build-infrastructure";
+import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
+import { writeJson } from "fs-extra/esm";
+import JSON5 from "json5";
+import replace from "replace-in-file";
+import sortPackageJson from "sort-package-json";
+import { PackageNamePolicyConfig, ScriptRequirement, getFlubConfig } from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
 import { Handler, readFile, writeFile } from "./common.js";
-
-import { PackageNamePolicyConfig, ScriptRequirement, getFlubConfig } from "../../config.js";
 
 const require = createRequire(import.meta.url);
 
@@ -359,10 +357,8 @@ async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
 	}
 
 	computedPrivatePackages = new Set();
-	const pathToGitRoot = child_process
-		.execSync("git rev-parse --show-cdup", { encoding: "utf8" })
-		.trim();
-	const repo = new Repository({ baseDir: pathToGitRoot });
+	const baseDir = findGitRootSync();
+	const repo = new Repository({ baseDir }, "microsoft/FluidFramework");
 	const packageJsons = await repo.getFiles("**/package.json");
 
 	for (const filePath of packageJsons) {
@@ -510,9 +506,9 @@ async function readConfigMainEntryPointFilePath(
 	return fs.promises
 		.readFile(configFileAbsPath, { encoding: "utf8" })
 		.then(async (configContent) => {
-			const { mainEntryPointFilePath } = JSON.parse(configContent) as {
+			const { mainEntryPointFilePath } = JSON5.parse<{
 				mainEntryPointFilePath?: string;
-			};
+			}>(configContent);
 			if (mainEntryPointFilePath === undefined) {
 				return undefined;
 			}

@@ -10,11 +10,25 @@ import {
 	AxiosInstance,
 	AxiosRequestConfig,
 	RawAxiosRequestHeaders,
+	type AxiosResponse,
 } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
+
+/**
+ * @internal
+ */
+export interface IBasicRestWrapperMetricProps {
+	axiosError: AxiosError<any>;
+	status: number | string;
+	method: string;
+	url: string;
+	correlationId: string;
+	durationInMs: number;
+	timoutInMs: number | string;
+}
 
 /**
  * @internal
@@ -125,7 +139,9 @@ export abstract class RestWrapper {
 
 	protected abstract request<T>(options: AxiosRequestConfig, statusCode: number): Promise<T>;
 
-	protected generateQueryString(queryStringValues: Record<string, string | number | boolean>) {
+	protected generateQueryString(
+		queryStringValues: Record<string, string | number | boolean> | undefined,
+	) {
 		if (this.defaultQueryString || queryStringValues) {
 			const queryStringRecord = { ...this.defaultQueryString, ...queryStringValues };
 
@@ -165,6 +181,10 @@ export class BasicRestWrapper extends RestWrapper {
 		private readonly getTelemetryContextProperties?: () =>
 			| Record<string, string | number | boolean>
 			| undefined,
+		private readonly refreshTokenIfNeeded?: (
+			authorizationHeader: RawAxiosRequestHeaders,
+		) => Promise<RawAxiosRequestHeaders | undefined>,
+		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -175,16 +195,36 @@ export class BasicRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<T> {
 		const options = { ...requestConfig };
+		const correlationId = this.getCorrelationId?.() ?? uuid();
 		options.headers = this.generateHeaders(
 			options.headers,
-			this.getCorrelationId?.() ?? uuid(),
+			correlationId,
 			this.getTelemetryContextProperties?.(),
 		);
 
+		// If the request has an Authorization header and a refresh token function is provided, try to refresh the token if needed
+		if (options.headers?.Authorization && this.refreshTokenIfNeeded) {
+			const refreshedToken = await this.refreshTokenIfNeeded(options.headers).catch(
+				(error) => {
+					debug(`request to ${options.url} failed ${error ? error.message : ""}`);
+					throw error;
+				},
+			);
+			if (refreshedToken) {
+				options.headers.Authorization = refreshedToken.Authorization;
+				// Update the default headers to use the refreshed token
+				this.defaultHeaders.Authorization = refreshedToken.Authorization;
+			}
+		}
+
 		return new Promise<T>((resolve, reject) => {
+			const startTime = performance.now();
+			let axiosError: AxiosError;
+			let axiosResponse: AxiosResponse;
 			this.axios
 				.request<T>(options)
 				.then((response) => {
+					axiosResponse = response;
 					resolve(response.data);
 				})
 				.catch((error: AxiosError<any>) => {
@@ -223,11 +263,12 @@ export class BasicRestWrapper extends RestWrapper {
 						const retryConfig = { ...requestConfig };
 						retryConfig.headers = this.generateHeaders(
 							retryConfig.headers,
-							options.headers[CorrelationIdHeaderName] as string,
+							options.headers?.[CorrelationIdHeaderName],
 						);
 
 						this.request<T>(retryConfig, statusCode, false).then(resolve).catch(reject);
 					} else {
+						axiosError = error;
 						const errorSourceMessage = `[${error?.config?.method ?? ""}] request to [${
 							error?.config?.baseURL ?? options.baseURL ?? ""
 						}] failed with [${error.response?.status}] status code`;
@@ -271,6 +312,23 @@ export class BasicRestWrapper extends RestWrapper {
 							};
 							reject(createFluidServiceNetworkError(500, details));
 						}
+					}
+				})
+				.finally(() => {
+					if (this.logHttpMetrics) {
+						const status: string | number = axiosError
+							? axiosError?.response?.status ?? "STATUS_UNAVAILABLE"
+							: axiosResponse?.status ?? "STATUS_UNAVAILABLE";
+						const requestProps: IBasicRestWrapperMetricProps = {
+							axiosError,
+							status,
+							method: options.method ?? "METHOD_UNAVAILABLE",
+							url: options.url ?? "URL_UNAVAILABLE",
+							correlationId,
+							durationInMs: performance.now() - startTime,
+							timoutInMs: options.timeout ?? "TIMEOUT_UNAVAILABLE",
+						};
+						this.logHttpMetrics(requestProps);
 					}
 				});
 		});

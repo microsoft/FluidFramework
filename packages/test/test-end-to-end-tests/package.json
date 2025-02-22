@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-end-to-end-tests",
-	"version": "2.3.0",
+	"version": "2.23.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -125,24 +125,24 @@
 		"cross-env": "^7.0.3",
 		"mocha": "^10.2.0",
 		"semver": "^7.5.3",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^5.0.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/protocol-definitions": "^3.2.0",
+		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"eslint": "~8.55.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"nock": "^13.3.3",
@@ -161,6 +161,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

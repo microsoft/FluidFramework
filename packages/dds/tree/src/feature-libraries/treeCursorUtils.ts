@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -20,6 +20,7 @@ import {
 	rootField,
 } from "../core/index.js";
 import { fail } from "../util/index.js";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * {@link ITreeCursorSynchronous} that can return the underlying node objects.
@@ -146,7 +147,9 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	}
 
 	public getFieldKey(): FieldKey {
-		// assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
+		debugAssert(() =>
+			this.mode === CursorLocationType.Fields ? true : "must be in fields mode",
+		);
 		return this.siblings[this.index] as FieldKey;
 	}
 
@@ -177,7 +180,11 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 	public enterNode(index: number): void {
 		// assert(this.mode === CursorLocationType.Fields, "must be in fields mode");
 		const siblings = this.getField();
-		assert(index in siblings, 0x405 /* child must exist at index */);
+		if (!(index in siblings)) {
+			throw new UsageError(
+				"A child does not exist at the specified index, check the status of a node using `Tree.status()`.",
+			);
+		}
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
 		this.index = index;
@@ -194,7 +201,7 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 		return {
 			field:
 				this.indexStack.length === 1
-					? prefix?.rootFieldOverride ?? this.getFieldKey()
+					? (prefix?.rootFieldOverride ?? this.getFieldKey())
 					: this.getFieldKey(),
 			parent: this.getOffsetPath(1, prefix),
 		};
@@ -427,7 +434,7 @@ export function prefixFieldPath(
 		return path;
 	}
 	return {
-		field: path.parent === undefined ? prefix.rootFieldOverride ?? path.field : path.field,
+		field: path.parent === undefined ? (prefix.rootFieldOverride ?? path.field) : path.field,
 		parent: prefixPath(prefix, path.parent),
 	};
 }

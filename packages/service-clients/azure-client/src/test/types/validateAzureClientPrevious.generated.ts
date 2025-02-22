@@ -83,24 +83,6 @@ declare type current_as_old_for_Interface_AzureConnectionConfig = requireAssigna
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_AzureConnectionConfigType": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_AzureConnectionConfigType = requireAssignableTo<TypeOnly<old.AzureConnectionConfigType>, TypeOnly<current.AzureConnectionConfigType>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_AzureConnectionConfigType": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_AzureConnectionConfigType = requireAssignableTo<TypeOnly<current.AzureConnectionConfigType>, TypeOnly<old.AzureConnectionConfigType>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_AzureContainerServices": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_AzureContainerServices = requireAssignableTo<TypeOnly<old.AzureContainerServices>, TypeOnly<current.AzureContainerServices>>
@@ -209,60 +191,6 @@ declare type current_as_old_for_Interface_AzureRemoteConnectionConfig = requireA
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_AzureUser": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_AzureUser = requireAssignableTo<TypeOnly<old.AzureUser>, TypeOnly<current.AzureUser>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_AzureUser": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_AzureUser = requireAssignableTo<TypeOnly<current.AzureUser>, TypeOnly<old.AzureUser>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_CompatibilityMode": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<old.CompatibilityMode>, TypeOnly<current.CompatibilityMode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_CompatibilityMode": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<current.CompatibilityMode>, TypeOnly<old.CompatibilityMode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IAzureAudience": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_IAzureAudience = requireAssignableTo<TypeOnly<old.IAzureAudience>, TypeOnly<current.IAzureAudience>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_IAzureAudience": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_IAzureAudience = requireAssignableTo<TypeOnly<current.IAzureAudience>, TypeOnly<old.IAzureAudience>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ITelemetryBaseEvent": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ITelemetryBaseEvent = requireAssignableTo<TypeOnly<old.ITelemetryBaseEvent>, TypeOnly<current.ITelemetryBaseEvent>>
@@ -293,24 +221,6 @@ declare type old_as_current_for_Interface_ITelemetryBaseLogger = requireAssignab
  * "Interface_ITelemetryBaseLogger": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ITelemetryBaseLogger = requireAssignableTo<TypeOnly<current.ITelemetryBaseLogger>, TypeOnly<old.ITelemetryBaseLogger>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ITokenClaims": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_ITokenClaims = requireAssignableTo<TypeOnly<old.ITokenClaims>, TypeOnly<current.ITokenClaims>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_ITokenClaims": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_ITokenClaims = requireAssignableTo<TypeOnly<current.ITokenClaims>, TypeOnly<old.ITokenClaims>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -371,15 +281,96 @@ declare type current_as_old_for_Interface_IUser = requireAssignableTo<TypeOnly<c
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_ScopeType": {"forwardCompat": false}
+ * "TypeAlias_AzureConnectionConfigType": {"forwardCompat": false}
  */
-declare type old_as_current_for_Enum_ScopeType = requireAssignableTo<TypeOnly<old.ScopeType>, TypeOnly<current.ScopeType>>
+declare type old_as_current_for_TypeAlias_AzureConnectionConfigType = requireAssignableTo<TypeOnly<old.AzureConnectionConfigType>, TypeOnly<current.AzureConnectionConfigType>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_ScopeType": {"backCompat": false}
+ * "TypeAlias_AzureConnectionConfigType": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_ScopeType = requireAssignableTo<TypeOnly<current.ScopeType>, TypeOnly<old.ScopeType>>
+declare type current_as_old_for_TypeAlias_AzureConnectionConfigType = requireAssignableTo<TypeOnly<current.AzureConnectionConfigType>, TypeOnly<old.AzureConnectionConfigType>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CompatibilityMode": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<old.CompatibilityMode>, TypeOnly<current.CompatibilityMode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_CompatibilityMode": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<current.CompatibilityMode>, TypeOnly<old.CompatibilityMode>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IAzureAudience": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_IAzureAudience = requireAssignableTo<TypeOnly<old.IAzureAudience>, TypeOnly<current.IAzureAudience>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_IAzureAudience": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_IAzureAudience = requireAssignableTo<TypeOnly<current.IAzureAudience>, TypeOnly<old.IAzureAudience>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ITokenClaims": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ITokenClaims = requireAssignableTo<TypeOnly<old.ITokenClaims>, TypeOnly<current.ITokenClaims>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ITokenClaims": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ITokenClaims = requireAssignableTo<TypeOnly<current.ITokenClaims>, TypeOnly<old.ITokenClaims>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ScopeType": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ScopeType = requireAssignableTo<TypeOnly<old.ScopeType>, TypeOnly<current.ScopeType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ScopeType": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ScopeType = requireAssignableTo<TypeOnly<current.ScopeType>, TypeOnly<old.ScopeType>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_ScopeType": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_ScopeType = requireAssignableTo<TypeOnly<typeof current.ScopeType>, TypeOnly<typeof old.ScopeType>>

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/multiview-coordinate-interface",
-	"version": "2.3.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Interface for multiview sample",
 	"homepage": "https://fluidframework.com",
@@ -42,12 +42,11 @@
 		"@fluid-example/example-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@types/react": "^17.0.44",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
@@ -65,6 +64,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

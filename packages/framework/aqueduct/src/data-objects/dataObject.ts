@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-deprecated
 import {
 	type ISharedDirectory,
 	MapFactory,
@@ -48,7 +47,7 @@ export abstract class DataObject<
 	 * Initializes internal objects and calls initialization overrides.
 	 * Caller is responsible for ensuring this is only invoked once.
 	 */
-	public async initializeInternal(existing: boolean): Promise<void> {
+	public override async initializeInternal(existing: boolean): Promise<void> {
 		if (existing) {
 			// data store has a root directory so we just need to set it before calling initializingFromExisting
 			this.internalRoot = (await this.runtime.getChannel(
@@ -68,7 +67,6 @@ export abstract class DataObject<
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
-			// eslint-disable-next-line import/no-deprecated
 			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
 			this.internalRoot.bindToContext();
 		}
@@ -87,6 +85,7 @@ export abstract class DataObject<
 
 /**
  * Utility for creating SharedObjectKind instances for data objects.
+ * @typeParam T - The kind of data object.
  * @internal
  */
 export function createDataObjectKind<T extends new (...any) => DataObject>(

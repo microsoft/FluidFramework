@@ -27,7 +27,7 @@ describe("MergeTree.Client", () => {
 				string,
 				{ client: TestClient; msgs: ISequencedDocumentMessage[] }
 			>();
-			const originalClient = new TestClient();
+			const originalClient = new TestClient({ mergeTreeEnableObliterate: true });
 			msgClients.set("A", { client: originalClient, msgs: [] });
 			originalClient.insertTextLocal(0, file[0].initialText);
 			originalClient.startOrUpdateCollaboration("A");

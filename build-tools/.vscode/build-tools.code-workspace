@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "build-tools",
+			"path": "../"
+		},
+		{
+			"name": "FluidFramework",
+			"path": "../.."
+		}
+	],
+	"settings": {
+		"search.followSymlinks": false,
+		"typescript.preferences.preferTypeOnlyAutoImports": true
+	}
+}

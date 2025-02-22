@@ -3,14 +3,7 @@
 	"compilerOptions": {
 		"outDir": "./lib",
 		"rootDir": "./src",
-		"types": [
-			"jest",
-			"puppeteer",
-			"jest-environment-puppeteer",
-			"expect-puppeteer",
-			"react",
-			"react-dom",
-		],
+		"types": ["jest", "puppeteer", "jest-environment-puppeteer", "expect-puppeteer", "react"],
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],

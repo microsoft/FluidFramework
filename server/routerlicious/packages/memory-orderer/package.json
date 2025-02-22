@@ -32,7 +32,7 @@
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"test:webpack": "webpack --config webpack.config.cjs",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -75,12 +75,12 @@
 		"lodash": "^4.17.21",
 		"sillyname": "^0.1.0",
 		"uuid": "^9.0.0",
-		"ws": "^7.4.6"
+		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@5.0.0",
 		"@types/mocha": "^10.0.1",
@@ -92,16 +92,26 @@
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.1.6",
-		"webpack": "^5.82.0"
+		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_LocalKafka": {
+			"Class_LocalContext": {
 				"forwardCompat": false
 			},
-			"ClassDeclaration_LocalOrderer": {
+			"Class_LocalKafka": {
+				"forwardCompat": false
+			},
+			"Class_LocalLambdaController": {
+				"forwardCompat": false
+			},
+			"Class_LocalOrderer": {
+				"forwardCompat": false
+			},
+			"Interface_IKafkaSubscriber": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

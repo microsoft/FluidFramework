@@ -13,6 +13,7 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
+import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
@@ -32,6 +33,9 @@ const stream = split().on("data", (message) => {
 export function alternativeMorganLoggerMiddleware(loggerFormat: string) {
 	return morgan(loggerFormat, { stream });
 }
+
+morgan.token("http-version", (req: express.Request, res: express.Response) => req.httpVersion);
+morgan.token("scheme", (req: express.Request, res: express.Response) => req.protocol);
 
 /**
  * @internal
@@ -56,6 +60,14 @@ interface IResponseLatency {
 	closeTime: number;
 }
 
+function getEventLoopMetrics(histogram: IntervalHistogram) {
+	return {
+		max: (histogram.max / 1e6).toFixed(3),
+		min: (histogram.min / 1e6).toFixed(3),
+		mean: (histogram.mean / 1e6).toFixed(3),
+	};
+}
+
 /**
  * @internal
  */
@@ -67,8 +79,29 @@ export function jsonMorganLoggerMiddleware(
 		res: express.Response,
 	) => Record<string, any>,
 	enableLatencyMetric: boolean = false,
+	enableEventLoopLagMetric: boolean = false, // This metric has performance overhead, so it should be enabled with caution.
 ): express.RequestHandler {
 	return (request, response, next): void => {
+		response.locals.clientDisconnected = false;
+		response.locals.serverTimeout = false;
+		// We observed 499 errors are sometime due to client side closed quickly before server can respond. Sometimes are due to
+		// server side timeout which got terminated by the idle timeout we set in createAndConfigureHttpServer call.
+		// We need to differentiate them
+		// 1. If client side closed quickly before server idle timeout, socket would only emit close event, and we mark clientDisconnected if server have not write headers.
+		// 2. If server side timeout, socket would emit timeout event, and we mark serverTimeout. Beside we manually close the socket suggested by node below, which further emit close event.
+		// Therefore, we can use the difference of close and timeout event to differentiate client side close and server side timeout using statusCode logics.
+		request.socket.on("close", () => {
+			if (!response.headersSent) {
+				response.locals.clientDisconnected = true;
+			}
+		});
+		request.socket.on("timeout", () => {
+			response.locals.serverTimeout = true;
+			// According to node doc: https://nodejs.org/api/net.html#socketsettimeouttimeout-callback
+			// When an idle timeout is triggered the socket will receive a 'timeout' event but the connection will not be severed.
+			// The user must manually call socket.end() or socket.destroy() to end the connection.
+			request.socket.destroy();
+		});
 		const responseLatencyP = enableLatencyMetric
 			? new Promise<IResponseLatency>((resolve, reject) => {
 					let complete = false;
@@ -99,12 +132,34 @@ export function jsonMorganLoggerMiddleware(
 					});
 			  })
 			: undefined;
+		// HTTP Metric durationInMs should only track internal server time, so manually set it before waiting for response close.
 		const startTime = performance.now();
+		let histogram: IntervalHistogram;
+		if (enableEventLoopLagMetric) {
+			histogram = monitorEventLoopDelay();
+			histogram.enable();
+		}
 		const httpMetric = Lumberjack.newLumberMetric(LumberEventName.HttpRequest);
 		morgan<express.Request, express.Response>((tokens, req, res) => {
 			let additionalProperties = {};
 			if (computeAdditionalProperties) {
 				additionalProperties = computeAdditionalProperties(tokens, req, res);
+			}
+			const durationInMs = performance.now() - startTime;
+			let statusCode = tokens.status(req, res);
+			if (!statusCode) {
+				// The effort of trying to distinguish client close vs server close can be tricky when it reaches proxy timeout.
+				// If proxy timeout happen a little before server timeout, it is actually more due to a server timeout issue.
+				// Therefore, we can assume it is server timeout (triggered by client) if duration is longer than 20s without
+				// a valid status code
+				if (res.locals.serverTimeout) {
+					statusCode = "Server Timeout";
+				} else if (res.locals.clientDisconnected) {
+					statusCode =
+						durationInMs > 20_000 ? "Server Timeout - Client Disconnect" : "499";
+				} else {
+					statusCode = "STATUS_UNAVAILABLE";
+				}
 			}
 			const properties = {
 				[HttpProperties.method]: tokens.method(req, res) ?? "METHOD_UNAVAILABLE",
@@ -112,10 +167,12 @@ export function jsonMorganLoggerMiddleware(
 					req.route?.path ?? "PATH_UNAVAILABLE"
 				}`,
 				[HttpProperties.url]: tokens.url(req, res),
-				[HttpProperties.status]: tokens.status(req, res) ?? "STATUS_UNAVAILABLE",
+				[HttpProperties.status]: statusCode,
 				[HttpProperties.requestContentLength]: tokens.req(req, res, "content-length"),
 				[HttpProperties.responseContentLength]: tokens.res(req, res, "content-length"),
 				[HttpProperties.responseTime]: tokens["response-time"](req, res),
+				[HttpProperties.httpVersion]: tokens["http-version"](req, res),
+				[HttpProperties.scheme]: tokens.scheme(req, res),
 				[BaseTelemetryProperties.correlationId]: getTelemetryContextPropertiesWithHttpInfo(
 					req,
 					res,
@@ -131,6 +188,10 @@ export function jsonMorganLoggerMiddleware(
 			};
 			httpMetric.setProperties(properties);
 			const resolveMetric = () => {
+				if (enableEventLoopLagMetric) {
+					histogram.disable();
+					httpMetric.setProperty("eventLoopLagMs", getEventLoopMetrics(histogram));
+				}
 				if (properties.status?.startsWith("2")) {
 					httpMetric.success("Request successful");
 				} else {
@@ -141,9 +202,7 @@ export function jsonMorganLoggerMiddleware(
 				// Morgan middleware logs using the [on-finished](https://www.npmjs.com/package/on-finished) package, meaning that it will log
 				// request duration immediately on response 'finish' event. However, the gap between 'finish' and 'close' can be helpful for
 				// understanding response latency.
-				const endTime = performance.now();
-				// HTTP Metric durationInMs should only track internal server time, so manually set it before waiting for response close.
-				httpMetric.setProperty("durationInMs", endTime - startTime);
+				httpMetric.setProperty("durationInMs", durationInMs);
 				// Wait for response 'close' event to signal that the response is completed.
 				responseLatencyP
 					?.then((responseLatency) => {

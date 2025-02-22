@@ -15,6 +15,7 @@ import { pkgVersion } from "../packageVersion.js";
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
@@ -59,6 +60,7 @@ export type IdCompressorMode = "on" | "delayed" | undefined;
  *
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IDocumentSchema {
 	// version that describes how data is stored in this structure.
@@ -80,6 +82,7 @@ export interface IDocumentSchema {
  * @see ContainerRuntimeDocumentSchemaMessage
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
@@ -91,6 +94,7 @@ export type IDocumentSchemaChangeMessage = IDocumentSchema;
  *
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export interface IDocumentSchemaFeatures {
 	// Tells if client uses legacy behavior of changing schema.
@@ -121,6 +125,7 @@ export interface IDocumentSchemaFeatures {
  * Ex: Changing the 'document schema acceptance' mechanism from convert-and-swap to one requiring consensus does require changing this version.
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 export const currentDocumentVersionSchema = 1;
 
@@ -128,6 +133,7 @@ export const currentDocumentVersionSchema = 1;
  * Current document schema.
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
  */
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 export type IDocumentSchemaCurrent = {
@@ -148,21 +154,21 @@ interface IProperty<T = unknown> {
 }
 
 class TrueOrUndefined implements IProperty<true | undefined> {
-	public and(currentDocSchema?: true, desiredDocSchema?: true) {
+	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return currentDocSchema === true && desiredDocSchema === true ? true : undefined;
 	}
 
-	public or(currentDocSchema?: true, desiredDocSchema?: true) {
+	public or(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return currentDocSchema === true || desiredDocSchema === true ? true : undefined;
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): t is true | undefined {
 		return t === undefined || t === true;
 	}
 }
 
 class TrueOrUndefinedMax extends TrueOrUndefined {
-	public and(currentDocSchema?: true, desiredDocSchema?: true) {
+	public and(currentDocSchema?: true, desiredDocSchema?: true): true | undefined {
 		return this.or(currentDocSchema, desiredDocSchema);
 	}
 }
@@ -170,7 +176,7 @@ class TrueOrUndefinedMax extends TrueOrUndefined {
 class MultiChoice implements IProperty<string | undefined> {
 	constructor(private readonly choices: string[]) {}
 
-	public and(currentDocSchema?: string, desiredDocSchema?: string) {
+	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		if (currentDocSchema === undefined || desiredDocSchema === undefined) {
 			return undefined;
 		}
@@ -179,7 +185,7 @@ class MultiChoice implements IProperty<string | undefined> {
 		];
 	}
 
-	public or(currentDocSchema?: string, desiredDocSchema?: string) {
+	public or(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		if (currentDocSchema === undefined) {
 			return desiredDocSchema;
 		}
@@ -191,30 +197,36 @@ class MultiChoice implements IProperty<string | undefined> {
 		];
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): boolean {
 		return t === undefined || (typeof t === "string" && this.choices.includes(t));
 	}
 }
 
 class IdCompressorProperty extends MultiChoice {
 	// document schema always wins!
-	public and(currentDocSchema?: string, desiredDocSchema?: string) {
+	public and(currentDocSchema?: string, desiredDocSchema?: string): string | undefined {
 		return currentDocSchema;
 	}
 }
 
 class CheckVersions implements IProperty<string[] | undefined> {
-	public or(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+	public or(
+		currentDocSchema: string[] = [],
+		desiredDocSchema: string[] = [],
+	): string[] | undefined {
 		const set = new Set<string>([...currentDocSchema, ...desiredDocSchema]);
 		return arrayToProp([...set.values()]);
 	}
 
 	// Once version is there, it stays there forever.
-	public and(currentDocSchema: string[] = [], desiredDocSchema: string[] = []) {
+	public and(
+		currentDocSchema: string[] = [],
+		desiredDocSchema: string[] = [],
+	): string[] | undefined {
 		return this.or(currentDocSchema, desiredDocSchema);
 	}
 
-	public validate(t: unknown) {
+	public validate(t: unknown): boolean {
 		return t === undefined || (Array.isArray(t) && !t.includes(pkgVersion));
 	}
 }
@@ -238,7 +250,7 @@ const documentSchemaSupportedConfigs = {
 function checkRuntimeCompatibility(
 	documentSchema: IDocumentSchema | undefined,
 	schemaName: string,
-) {
+): void {
 	// Back-compat - we can't do anything about legacy documents.
 	// There is no way to validate them, so we are taking a guess that safe deployment processes used by a given app
 	// do not run into compat problems.
@@ -278,6 +290,7 @@ function checkRuntimeCompatibility(
 	}
 
 	if (unknownProperty !== undefined) {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const value = documentSchema[unknownProperty];
 		throw DataProcessingError.create(
 			msg,
@@ -286,6 +299,7 @@ function checkRuntimeCompatibility(
 			{
 				codeVersion: currentDocumentVersionSchema,
 				property: unknownProperty,
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				value,
 				schemaName,
 			},
@@ -354,11 +368,11 @@ function same(
 	return true;
 }
 
-function boolToProp(b: boolean) {
+function boolToProp(b: boolean): true | undefined {
 	return b ? true : undefined;
 }
 
-function arrayToProp(arr: string[]) {
+function arrayToProp(arr: string[]): string[] | undefined {
 	return arr.length === 0 ? undefined : arr;
 }
 
@@ -429,6 +443,8 @@ function arrayToProp(arr: string[]) {
  *
  * @legacy
  * @alpha
+ * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @sealed
  */
 export class DocumentsSchemaController {
 	private explicitSchemaControl: boolean;
@@ -487,9 +503,8 @@ export class DocumentsSchemaController {
 		// Schema coming from document metadata (snapshot we loaded from), or if no document exists
 		// (this is a new document) then this is the same as desiredSchema (same as session schema in such case).
 		// Latter is importnat sure that's what will go into summary.
-		this.documentSchema = !existing
-			? this.desiredSchema
-			: (documentMetadataSchema as IDocumentSchemaCurrent) ??
+		this.documentSchema = existing
+			? ((documentMetadataSchema as IDocumentSchemaCurrent) ??
 				({
 					version: currentDocumentVersionSchema,
 					// see comment in summarizeDocumentSchema() on why it has to stay zero
@@ -499,7 +514,8 @@ export class DocumentsSchemaController {
 					runtime: {
 						explicitSchemaControl: boolToProp(!existing && features.explicitSchemaControl),
 					},
-				} satisfies IDocumentSchemaCurrent);
+				} satisfies IDocumentSchemaCurrent))
+			: this.desiredSchema;
 
 		checkRuntimeCompatibility(this.documentSchema, "document");
 		this.validateSeqNumber(this.documentSchema.refSeq, snapshotSequenceNumber, "summary");
@@ -579,7 +595,11 @@ export class DocumentsSchemaController {
 		}
 	}
 
-	private validateSeqNumber(schemaSeqNumber: number, lastKnowSeqNumber, message: string) {
+	private validateSeqNumber(
+		schemaSeqNumber: number,
+		lastKnowSeqNumber: number,
+		message: string,
+	): void {
 		if (!Number.isInteger(schemaSeqNumber) || !(schemaSeqNumber <= lastKnowSeqNumber)) {
 			throw DataProcessingError.create(
 				"DocSchema: Incorrect sequence number",
@@ -601,59 +621,77 @@ export class DocumentsSchemaController {
 	 * @param local - whether op is local
 	 * @param sequenceNumber - sequence number of the op
 	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 * @deprecated It has been replaced by processDocumentSchemaMessages instead.
 	 */
 	public processDocumentSchemaOp(
 		content: IDocumentSchemaChangeMessage,
 		local: boolean,
 		sequenceNumber: number,
-	) {
-		this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
-		this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
-		// validate is strickly less, not equal
-		assert(
-			this.documentSchema.refSeq < sequenceNumber,
-			0x950 /* time should move forward only! */,
-		);
+	): boolean {
+		return this.processDocumentSchemaMessages([content], local, sequenceNumber);
+	}
 
-		if (content.refSeq !== this.documentSchema.refSeq) {
-			// CAS failed
-			return false;
+	/**
+	 * Process document schema change messages
+	 * Called by ContainerRuntime whenever it sees document schema messages.
+	 * @param contents - contents of the messages
+	 * @param local - whether op is local
+	 * @param sequenceNumber - sequence number of the op
+	 * @returns - true if schema was accepted, otherwise false (rejected due to failed CAS)
+	 */
+	public processDocumentSchemaMessages(
+		contents: IDocumentSchemaChangeMessage[],
+		local: boolean,
+		sequenceNumber: number,
+	): boolean {
+		for (const content of contents) {
+			this.validateSeqNumber(content.refSeq, this.documentSchema.refSeq, "content.refSeq");
+			this.validateSeqNumber(this.documentSchema.refSeq, sequenceNumber, "refSeq");
+			// validate is strickly less, not equal
+			assert(
+				this.documentSchema.refSeq < sequenceNumber,
+				0x950 /* time should move forward only! */,
+			);
+
+			if (content.refSeq !== this.documentSchema.refSeq) {
+				// CAS failed
+				return false;
+			}
+
+			// This assert should be after checking for successful CAS above.
+			// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
+			assert(
+				!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
+				0x951 /* not sending ops */,
+			);
+
+			// Changes are in effect. Immediately check that this client understands these changes
+			checkRuntimeCompatibility(content, "change");
+
+			const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
+			this.documentSchema = schema as IDocumentSchemaCurrent;
+			this.sessionSchema = and(this.documentSchema, this.desiredSchema);
+			assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
+
+			// legacy behavior is automatically off for the document once someone sends a schema op -
+			// from now on it's fully controlled by ops.
+			// This is very important, as summarizeDocumentSchema() should use this new schema!
+			this.explicitSchemaControl = true;
+
+			// Stop attempting changing schema.
+			// If it was local op, then we succeeded and do not need to try again.
+			// If it was remote op, then some changes happened to schema.
+			// We would need to recalculate this.futureSchema by merging changes that we just received.
+			// Avoid this complexity for now - a new client session (loading from new summary with these changes)
+			// will automatically do this recalculation and will figure out
+			this.futureSchema = undefined;
+
+			this.onSchemaChange(this.sessionSchema);
 		}
-
-		// This assert should be after checking for successful CAS above.
-		// This will ensure we do not trip on our own messages that are no longer wanted as we processed someone else schema change message.
-		assert(
-			!local || (this.explicitSchemaControl && this.futureSchema !== undefined),
-			0x951 /* not sending ops */,
-		);
-
-		// Changes are in effect. Immediately check that this client understands these changes
-		checkRuntimeCompatibility(content, "change");
-
-		const schema: IDocumentSchema = { ...content, refSeq: sequenceNumber };
-		this.documentSchema = schema as IDocumentSchemaCurrent;
-		this.sessionSchema = and(this.documentSchema, this.desiredSchema);
-		assert(this.sessionSchema.refSeq === sequenceNumber, 0x97d /* seq# */);
-
-		// legacy behavior is automatically off for the document once someone sends a schema op -
-		// from now on it's fully controlled by ops.
-		// This is very important, as summarizeDocumentSchema() should use this new schema!
-		this.explicitSchemaControl = true;
-
-		// Stop attempting changing schema.
-		// If it was local op, then we succeeded and do not need to try again.
-		// If it was remote op, then some changes happened to schema.
-		// We would need to recalculate this.futureSchema by merging changes that we just received.
-		// Avoid this complexity for now - a new client session (loading from new summary with these changes)
-		// will automatically do this recalculation and will figure out
-		this.futureSchema = undefined;
-
-		this.onSchemaChange(this.sessionSchema);
-
 		return true;
 	}
 
-	public onDisconnect() {
+	public onDisconnect(): void {
 		this.sendOp = true;
 	}
 }

@@ -28,7 +28,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -59,9 +59,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@5.0.0",
 		"@types/mocha": "^10.0.1",
@@ -74,14 +74,27 @@
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^9.2.3",
+		"sinon": "^18.0.1",
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
 		"broken": {
-			"InterfaceDeclaration_ITelemetryContextProperties": {
+			"Class_Lumber": {
+				"backCompat": false
+			},
+			"Enum_BaseTelemetryProperties": {
+				"backCompat": false
+			},
+			"Enum_HttpProperties": {
+				"backCompat": false
+			},
+			"Enum_LumberEventName": {
+				"backCompat": false
+			},
+			"Interface_ITelemetryContextProperties": {
 				"forwardCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

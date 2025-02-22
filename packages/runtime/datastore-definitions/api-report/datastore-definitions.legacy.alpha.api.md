@@ -58,7 +58,9 @@ export interface IDeltaConnection {
 // @alpha
 export interface IDeltaHandler {
     applyStashedOp(message: any): void;
+    // @deprecated
     process: (message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown) => void;
+    processMessages?: (messageCollection: IRuntimeMessageCollection) => void;
     reSubmit(message: any, localOpMetadata: unknown): void;
     rollback?(message: any, localOpMetadata: unknown): void;
     setConnectionState(connected: boolean): void;
@@ -88,7 +90,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    readonly idCompressor?: IIdCompressor;
+    readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
     // (undocumented)
@@ -107,7 +109,13 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
 // @alpha
 export interface IFluidDataStoreRuntimeEvents extends IEvent {
     // (undocumented)
-    (event: "disconnected" | "dispose" | "attaching" | "attached", listener: () => void): any;
+    (event: "disconnected", listener: () => void): any;
+    // (undocumented)
+    (event: "dispose", listener: () => void): any;
+    // (undocumented)
+    (event: "attaching", listener: () => void): any;
+    // (undocumented)
+    (event: "attached", listener: () => void): any;
     // (undocumented)
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     // (undocumented)

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webflow",
-	"version": "2.3.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Collaborative markdown editor.",
 	"homepage": "https://fluidframework.com",
@@ -43,7 +43,7 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm",
-		"test:mocha:esm": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:esm": "cross-env \"NODE_OPTIONS=--experimental-loader esm-loader-css\" mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
@@ -84,50 +84,49 @@
 		"@fluidframework/sequence": "workspace:~",
 		"assert": "^2.0.0",
 		"debug": "^4.3.4",
-		"react": "^17.0.1",
-		"react-dom": "^17.0.1"
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/debug": "^4.1.5",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/react": "^17.0.44",
-		"@types/react-dom": "^17.0.18",
+		"@types/react": "^18.3.11",
+		"@types/react-dom": "^18.3.0",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
-		"css-loader": "^6.11.0",
+		"css-loader": "^7.1.2",
 		"eslint": "~8.55.0",
 		"esm-loader-css": "^1.0.4",
 		"file-loader": "^3.0.1",
-		"html-loader": "^3.1.0",
+		"html-loader": "^5.1.0",
 		"jsdom": "^16.7.0",
 		"jsdom-global": "^3.0.2",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"style-loader": "^1.0.0",
-		"ts-loader": "^9.3.0",
+		"style-loader": "^4.0.0",
+		"ts-loader": "^9.5.1",
 		"ts-node": "^10.9.1",
 		"typescript": "~5.4.5",
-		"url-loader": "^2.1.0",
-		"webpack": "^5.82.0",
+		"url-loader": "^4.1.1",
+		"webpack": "^5.94.0",
 		"webpack-bundle-analyzer": "^4.5.0",
-		"webpack-cli": "^4.9.2",
-		"webpack-dev-server": "~4.15.1",
-		"webpack-merge": "^5.8.0"
+		"webpack-cli": "^5.1.4",
+		"webpack-dev-server": "~4.15.2",
+		"webpack-merge": "^6.0.1"
 	},
 	"fluid": {
 		"browser": {
@@ -141,6 +140,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

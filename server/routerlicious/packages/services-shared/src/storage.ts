@@ -36,6 +36,7 @@ import { toUtf8 } from "@fluidframework/common-utils";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
+	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
@@ -49,14 +50,15 @@ export class DocumentStorage implements IDocumentStorage {
 		private readonly tenantManager: ITenantManager,
 		private readonly enableWholeSummaryUpload: boolean,
 		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
-		private readonly storageNameAssigner: IStorageNameAllocator,
+		private readonly storageNameAssigner: IStorageNameAllocator | undefined,
 		private readonly ephemeralDocumentTTLSec: number = 60 * 60 * 24, // 24 hours in seconds
 	) {}
 
 	/**
 	 * Retrieves database details for the given document
 	 */
-	public async getDocument(tenantId: string, documentId: string): Promise<IDocument> {
+	// eslint-disable-next-line @rushstack/no-new-null
+	public async getDocument(tenantId: string, documentId: string): Promise<IDocument | null> {
 		return this.documentRepository.readOne({ tenantId, documentId });
 	}
 
@@ -146,12 +148,11 @@ export class DocumentStorage implements IDocumentStorage {
 
 		const storageNameAssignerEnabled = !!this.storageNameAssigner;
 		const lumberjackProperties = {
-			[BaseTelemetryProperties.tenantId]: tenantId,
-			[BaseTelemetryProperties.documentId]: documentId,
+			...getLumberBaseProperties(documentId, tenantId),
 			storageName,
 			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
 			storageNameAssignerExists: storageNameAssignerEnabled,
-			isEphemeralContainer,
+			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
 		};
 		if (storageNameAssignerEnabled && !storageName) {
 			// Using a warning instead of an error just in case there are some outliers that we don't know about.
@@ -314,10 +315,10 @@ export class DocumentStorage implements IDocumentStorage {
 		}
 	}
 
-	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit> {
+	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null> {
 		const versions = await this.getVersions(tenantId, documentId, 1);
 		if (!versions.length) {
-			return null as unknown as ICommit;
+			return null;
 		}
 
 		const latest = versions[0];
@@ -359,7 +360,7 @@ export class DocumentStorage implements IDocumentStorage {
 				cache: {
 					blobs: [],
 					commits: [],
-					refs: { [documentId]: null as unknown as string },
+					refs: {},
 					trees: [],
 				},
 				code: null as unknown as string,

@@ -3,32 +3,42 @@
  * Licensed under the MIT License.
  */
 
-// Required in order to register the `raw` type with the `hast` ecosystem.
-// eslint-disable-next-line import/no-unassigned-import
-import "hast-util-raw";
-
-import type { Root as HastRoot, Nodes as HastNodes } from "hast";
+import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { h } from "hastscript";
+
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";
-import type { TransformationConfig } from "./configuration/index.js";
+
 import {
 	createTransformationContext,
 	type TransformationContext,
 } from "./TransformationContext.js";
+import type { TransformationConfiguration } from "./configuration/index.js";
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a `string`.
+ * Generates an HTML AST from the provided {@link DocumentNode}.
  *
- * @param document - The document to render.
- * @param config - HTML rendering configuration.
+ * @param document - The document to transform.
+ * @param config - HTML transformation configuration.
  *
- * @alpha
+ * @public
  */
-export function documentToHtml(document: DocumentNode, config: TransformationConfig): HastRoot {
+export function documentToHtml(
+	document: DocumentNode,
+	config: TransformationConfiguration,
+): HastRoot {
 	const transformationContext = createTransformationContext(config);
 
 	const transformedChildren = documentationNodesToHtml(document.children, transformationContext);
-	const rootBodyContents: HastNodes[] = [];
+	return treeFromBody(transformedChildren, config);
+}
+
+/**
+ * Creates a complete HTML AST from the provided body contents.
+ *
+ * @privateRemarks Exported for testing purposes. Not intended for external use.
+ */
+export function treeFromBody(body: HastTree[], config: TransformationConfiguration): HastRoot {
+	const rootBodyContents: HastTree[] = [];
 	rootBodyContents.push({
 		type: "doctype",
 	});
@@ -39,7 +49,7 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 				lang: config.language ?? "en",
 			},
 			// eslint-disable-next-line unicorn/text-encoding-identifier-case
-			[h("head", [h("meta", { charset: "utf-8" })]), h("body", transformedChildren)],
+			[h("head", [h("meta", { charset: "utf-8" })]), h("body", body)],
 		),
 	);
 
@@ -47,32 +57,80 @@ export function documentToHtml(document: DocumentNode, config: TransformationCon
 }
 
 /**
- * Renders the provided {@link DocumentationNode} per the configured
- * {@link HtmlRenderContext.customRenderers | renderers}.
+ * Generates an HTML AST from the provided {@link DocumentationNode}.
  *
- * @alpha
+ * @param node - The documentation node to transform.
+ * @param config - The HTML transformation configuration. Unspecified options will be filled with defaults.
+ *
+ * @public
+ */
+export function documentationNodeToHtml(
+	node: DocumentationNode,
+	config: TransformationConfiguration,
+): HastTree;
+/**
+ * Generates an HTML AST from the provided {@link DocumentationNode}.
+ *
+ * @param node - The documentation node to transform.
+ * @param context - The HTML transformation context.
+ *
+ * @public
  */
 export function documentationNodeToHtml(
 	node: DocumentationNode,
 	context: TransformationContext,
-): HastNodes {
+): HastTree;
+/**
+ * `documentationNodeToHtml` implementation.
+ */
+export function documentationNodeToHtml(
+	node: DocumentationNode,
+	configOrContext: TransformationConfiguration | TransformationContext,
+): HastTree {
+	const context = getContext(configOrContext);
+
 	if (context.transformations[node.type] === undefined) {
 		throw new Error(
 			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: "${node.type}". Please provide a transformation for this type.`,
 		);
 	}
+
 	return context.transformations[node.type](node, context);
 }
 
 /**
- * Renders a list of {@link DocumentationNode}s per the configured
- * {@link HtmlRenderContext.customRenderers | renderers}.
+ * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
  *
- * @alpha
+ * @public
  */
 export function documentationNodesToHtml(
 	nodes: DocumentationNode[],
-	context: TransformationContext,
-): HastNodes[] {
+	config: TransformationConfiguration,
+): HastTree[];
+/**
+ * Generates a series of HTML ASTs from the provided {@link DocumentationNode}s.
+ *
+ * @public
+ */
+export function documentationNodesToHtml(
+	nodes: DocumentationNode[],
+	transformationContext: TransformationContext,
+): HastTree[];
+/**
+ * `documentationNodesToHtml` implementation.
+ */
+export function documentationNodesToHtml(
+	nodes: DocumentationNode[],
+	configOrContext: TransformationConfiguration | TransformationContext,
+): HastTree[] {
+	const context = getContext(configOrContext);
 	return nodes.map((node) => documentationNodeToHtml(node, context));
+}
+
+function getContext(
+	configOrContext: TransformationConfiguration | TransformationContext,
+): TransformationContext {
+	return (configOrContext as Partial<TransformationContext>).transformations === undefined
+		? createTransformationContext(configOrContext)
+		: (configOrContext as TransformationContext);
 }

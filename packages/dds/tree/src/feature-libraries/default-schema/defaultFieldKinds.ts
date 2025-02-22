@@ -4,15 +4,15 @@
  */
 
 import {
-	type ChangesetLocalId,
+	type ChangeAtomId,
 	type DeltaDetachedNodeId,
-	type DeltaFieldChanges,
 	type FieldKindIdentifier,
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
 import { fail } from "../../util/index.js";
 import {
+	type FieldChangeDelta,
 	type FieldChangeHandler,
 	type FieldEditor,
 	type FieldKindConfiguration,
@@ -42,8 +42,8 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 		rebase: (change: 0, over: 0) => 0,
 	}),
 	codecsFactory: () => noChangeCodecFamily,
-	editor: { buildChildChange: (index, change) => fail("Child changes not supported") },
-	intoDelta: (change, deltaFromChild: ToDelta): DeltaFieldChanges => ({}),
+	editor: { buildChildChanges: () => fail("Child changes not supported") },
+	intoDelta: (change, deltaFromChild: ToDelta): FieldChangeDelta => ({}),
 	relevantRemovedRoots: (change): Iterable<DeltaDetachedNodeId> => [],
 	isEmpty: (change: 0) => true,
 	getNestedChanges: (change: 0) => [],
@@ -54,11 +54,9 @@ export const noChangeHandler: FieldChangeHandler<0> = {
 export interface ValueFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
 	 * Creates a change which replaces the current value of the field with `newValue`.
-	 * @param newContent - the new content for the field
-	 * @param changeId - the ID associated with the replacement of the current content.
-	 * @param buildId - the ID associated with the creation of the `newContent`.
+	 * @param ids - The ids for the fill and detach fields.
 	 */
-	set(ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset;
+	set(ids: { fill: ChangeAtomId; detach: ChangeAtomId }): OptionalChangeset;
 }
 
 const optionalIdentifier = "Optional";
@@ -77,8 +75,10 @@ export const optional = new FieldKindWithEditor(
 
 export const valueFieldEditor: ValueFieldEditor = {
 	...optionalFieldEditor,
-	set: (ids: { fill: ChangesetLocalId; detach: ChangesetLocalId }): OptionalChangeset =>
-		optionalFieldEditor.set(false, ids),
+	set: (ids: {
+		fill: ChangeAtomId;
+		detach: ChangeAtomId;
+	}): OptionalChangeset => optionalFieldEditor.set(false, ids),
 };
 
 export const valueChangeHandler: FieldChangeHandler<OptionalChangeset, ValueFieldEditor> = {

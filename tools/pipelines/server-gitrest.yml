@@ -56,7 +56,6 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
-    - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
@@ -106,7 +105,9 @@ extends:
     shouldPublishNpmPackages: ${{ variables.publish }}
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i --frozen-lockfile ; pnpm config set recursive-install true'
+    dockerBuildBumpsVersion: true
+    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i ; pnpm config set recursive-install true'
+    additionalBuildArguments: --build-context root=$(Build.SourcesDirectory)
     packageManager: pnpm
     buildDirectory: server/gitrest
     containerName: fluidframework/routerlicious/gitrest

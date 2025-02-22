@@ -15,7 +15,7 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegment, Marker } from "../mergeTreeNodes.js";
+import { MergeBlock, ISegmentPrivate, Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import {
 	PartialSequenceLengths,
@@ -23,6 +23,7 @@ import {
 	verifyPartialLengths,
 } from "../partialLengths.js";
 import { PropertySet } from "../properties.js";
+import * as info from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 import { loadText } from "./text.js";
@@ -110,7 +111,7 @@ export function insertText({
 interface InsertSegmentsArgs {
 	mergeTree: MergeTree;
 	pos: number;
-	segments: ISegment[];
+	segments: ISegmentPrivate[];
 	refSeq: number;
 	clientId: number;
 	seq: number;
@@ -147,10 +148,29 @@ export function markRangeRemoved({
 	refSeq,
 	clientId,
 	seq,
-	overwrite = false,
 	opArgs,
 }: MarkRangeRemovedArgs): void {
-	mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, overwrite, opArgs);
+	mergeTree.markRangeRemoved(start, end, refSeq, clientId, seq, opArgs);
+}
+
+export function obliterateRange({
+	mergeTree,
+	start,
+	end,
+	refSeq,
+	clientId,
+	seq,
+	opArgs,
+}: {
+	mergeTree: MergeTree;
+	start: number;
+	end: number;
+	refSeq: number;
+	clientId: number;
+	seq: number;
+	opArgs: IMergeTreeDeltaOpArgs;
+}): void {
+	mergeTree.obliterateRange(start, end, refSeq, clientId, seq, opArgs);
 }
 
 export function nodeOrdinalsHaveIntegrity(block: MergeBlock): boolean {
@@ -215,24 +235,24 @@ function getPartialLengths(
 
 	let actualLen = 0;
 
-	const isInserted = (segment: ISegment): boolean =>
-		segment.seq === undefined ||
-		(segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
-		(localSeq !== undefined &&
-			segment.seq === UnassignedSequenceNumber &&
-			segment.localSeq !== undefined &&
-			segment.localSeq <= localSeq);
+	const isInserted = (segment: ISegmentPrivate): boolean =>
+		info.isInserted(segment) &&
+		((segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
+			(localSeq !== undefined &&
+				segment.seq === UnassignedSequenceNumber &&
+				segment.localSeq !== undefined &&
+				segment.localSeq <= localSeq));
 
-	const isRemoved = (segment: ISegment): boolean =>
-		segment.removedSeq !== undefined &&
+	const isRemoved = (segment: ISegmentPrivate): boolean =>
+		info.isRemoved(segment) &&
 		((localSeq !== undefined &&
 			segment.removedSeq === UnassignedSequenceNumber &&
 			segment.localRemovedSeq !== undefined &&
 			segment.localRemovedSeq <= localSeq) ||
 			(segment.removedSeq !== UnassignedSequenceNumber && segment.removedSeq <= seq));
 
-	const isMoved = (segment: ISegment): boolean =>
-		segment.movedSeq !== undefined &&
+	const isMoved = (segment: ISegmentPrivate): boolean =>
+		info.isMoved(segment) &&
 		((localSeq !== undefined &&
 			segment.movedSeq === UnassignedSequenceNumber &&
 			segment.localMovedSeq !== undefined &&
@@ -316,12 +336,12 @@ export function validateRefCount(collection?: LocalReferenceCollection): void {
  * fuzz tests).
  */
 export function useStrictPartialLengthChecks(): void {
-	beforeEach(() => {
+	beforeEach("Enable strict partial lengths", () => {
 		PartialSequenceLengths.options.verifier = verifyPartialLengths;
 		PartialSequenceLengths.options.verifyExpected = verifyExpectedPartialLengths;
 	});
 
-	afterEach(() => {
+	afterEach("Disable strict partial lengths", () => {
 		PartialSequenceLengths.options.verifier = undefined;
 		PartialSequenceLengths.options.verifyExpected = undefined;
 	});

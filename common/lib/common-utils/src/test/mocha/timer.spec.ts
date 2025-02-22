@@ -5,7 +5,9 @@
 
 import { strict as assert } from "assert";
 import process from "process";
+
 import { SinonFakeTimers, SinonSandbox, SinonSpy, useFakeTimers, createSandbox } from "sinon";
+
 import { PromiseTimer, Timer, IPromiseTimerResult } from "../..";
 
 const flushPromises = async (): Promise<void> =>

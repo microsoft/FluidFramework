@@ -26,7 +26,6 @@ import {
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
-import io from "socket.io-client";
 
 import { ICache } from "./cache.js";
 import { INormalizedWholeSnapshot } from "./contracts.js";
@@ -34,7 +33,7 @@ import { ISnapshotTreeVersion } from "./definitions.js";
 import { DeltaStorageService, DocumentDeltaStorageService } from "./deltaStorageService.js";
 import { R11sDocumentDeltaConnection } from "./documentDeltaConnection.js";
 import { DocumentStorageService } from "./documentStorageService.js";
-import { RouterliciousErrorTypes } from "./errorUtils.js";
+import { RouterliciousErrorTypes, type IR11sError } from "./errorUtils.js";
 import { GitManager } from "./gitManager.js";
 import { Historian } from "./historian.js";
 import { NullBlobStorageService } from "./nullBlobStorageService.js";
@@ -47,6 +46,7 @@ import {
 } from "./restWrapper.js";
 import { RestWrapper } from "./restWrapperBase.js";
 import type { IGetSessionInfoResponse } from "./sessionInfoManager.js";
+import { SocketIOClientStatic } from "./socketModule.js";
 import { ITokenProvider } from "./tokens.js";
 
 /**
@@ -55,7 +55,6 @@ import { ITokenProvider } from "./tokens.js";
  */
 export class DocumentService
 	extends TypedEventEmitter<IDocumentServiceEvents>
-	// eslint-disable-next-line import/namespace
 	implements IDocumentService
 {
 	private storageManager: GitManager | undefined;
@@ -251,7 +250,7 @@ export class DocumentService
 						this.tenantId,
 						this.documentId,
 						ordererToken.jwt,
-						io,
+						SocketIOClientStatic,
 						client,
 						this.deltaStreamUrl,
 						this.logger,
@@ -279,9 +278,13 @@ export class DocumentService
 
 			return connection;
 		} catch (error: any) {
-			if (error?.statusCode === 401) {
+			if (
+				typeof error === "object" &&
+				error !== null &&
+				(error as Partial<IR11sError>).errorType === RouterliciousErrorTypes.authorizationError
+			) {
 				// Fetch new token and retry once,
-				// otherwise 401 will be bubbled up as non-retriable AuthorizationError.
+				// otherwise 401/403 will be bubbled up as non-retriable AuthorizationError.
 				return connect(true /* refreshToken */);
 			}
 			throw error;

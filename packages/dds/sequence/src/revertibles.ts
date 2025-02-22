@@ -14,7 +14,6 @@ import {
 	PropertySet,
 	ReferenceType,
 	SlidingPreference, // eslint-disable-next-line import/no-deprecated
-	SortedSet,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	getSlideToSegoff,
@@ -23,9 +22,13 @@ import {
 	revertMergeTreeDeltaRevertibles,
 	InteriorSequencePlace,
 	Side,
+	type ISegmentInternal,
+	segmentIsRemoved,
+	SortedSegmentSet,
+	type ISegment,
 } from "@fluidframework/merge-tree/internal";
 
-import { IntervalOpType, SequenceInterval } from "./intervals/index.js";
+import { IntervalOpType, SequenceInterval, SequenceIntervalClass } from "./intervals/index.js";
 import { ISequenceDeltaRange, SequenceDeltaEvent } from "./sequenceDeltaEvent.js";
 import { ISharedString, SharedStringSegment } from "./sharedString.js";
 
@@ -126,18 +129,16 @@ export function appendDeleteIntervalToRevertibles(
 	if (!startSeg) {
 		return revertibles;
 	}
-	const startType =
-		startSeg.removedSeq !== undefined
-			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
-			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
+	const startType = segmentIsRemoved(startSeg)
+		? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
+		: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
 	const endSeg = interval.end.getSegment() as SharedStringSegment | undefined;
 	if (!endSeg) {
 		return revertibles;
 	}
-	const endType =
-		endSeg.removedSeq !== undefined
-			? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd
-			: ReferenceType.StayOnRemove | ReferenceType.RangeEnd;
+	const endType = segmentIsRemoved(startSeg)
+		? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd
+		: ReferenceType.StayOnRemove | ReferenceType.RangeEnd;
 	const startRef = string.createLocalReferencePosition(
 		startSeg,
 		interval.start.getOffset(),
@@ -180,15 +181,13 @@ export function appendChangeIntervalToRevertibles(
 	// This logic is needed because the ReferenceType StayOnRemove cannot be used
 	// on removed segments. This works for revertibles because the old position of the
 	// interval within the removed segment is handled by the remove range revertible.
-	const startType =
-		startSeg.removedSeq !== undefined
-			? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
-			: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
+	const startType = segmentIsRemoved(startSeg)
+		? ReferenceType.SlideOnRemove | ReferenceType.RangeBegin
+		: ReferenceType.StayOnRemove | ReferenceType.RangeBegin;
 	const endSeg = previousInterval.end.getSegment() as SharedStringSegment;
-	const endType =
-		endSeg.removedSeq !== undefined
-			? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd
-			: ReferenceType.StayOnRemove | ReferenceType.RangeEnd;
+	const endType = segmentIsRemoved(startSeg)
+		? ReferenceType.SlideOnRemove | ReferenceType.RangeEnd
+		: ReferenceType.StayOnRemove | ReferenceType.RangeEnd;
 	const prevStartRef = string.createLocalReferencePosition(
 		startSeg,
 		previousInterval.start.getOffset(),
@@ -243,13 +242,13 @@ function addIfIntervalEndpoint(
 ) {
 	if (refTypeIncludesFlag(ref.refType, ReferenceType.RangeBegin)) {
 		const interval = ref.properties?.interval;
-		if (interval && interval instanceof SequenceInterval) {
+		if (interval && interval instanceof SequenceIntervalClass) {
 			startIntervals.push({ offset: segmentLengths + interval.start.getOffset(), interval });
 			return true;
 		}
 	} else if (refTypeIncludesFlag(ref.refType, ReferenceType.RangeEnd)) {
 		const interval = ref.properties?.interval;
-		if (interval && interval instanceof SequenceInterval) {
+		if (interval && interval instanceof SequenceIntervalClass) {
 			endIntervals.push({ offset: segmentLengths + interval.end.getOffset(), interval });
 			return true;
 		}
@@ -302,7 +301,8 @@ export function appendSharedStringDeltaToRevertibles(
 
 		// find interval endpoints in each segment
 		for (const deltaRange of delta.ranges) {
-			const refs = deltaRange.segment.localRefs;
+			const segment: ISegmentInternal = deltaRange.segment;
+			const refs = segment.localRefs;
 			if (refs !== undefined && deltaRange.position !== -1) {
 				for (const ref of refs) {
 					addIfIntervalEndpoint(ref, segmentLengths, startIntervals, endIntervals);
@@ -580,14 +580,11 @@ function newEndpointPosition(
 interface RangeInfo {
 	ranges: readonly Readonly<ISequenceDeltaRange<MergeTreeDeltaOperationType>>[];
 	length: number;
+	segment: ISegment;
 }
 
 // eslint-disable-next-line import/no-deprecated
-class SortedRangeSet extends SortedSet<RangeInfo, string> {
-	protected getKey(item: RangeInfo): string {
-		return item.ranges[0].segment.ordinal;
-	}
-}
+class SortedRangeSet extends SortedSegmentSet<RangeInfo> {}
 
 function revertLocalSequenceRemove(
 	sharedString: ISharedString,
@@ -600,7 +597,11 @@ function revertLocalSequenceRemove(
 			event.ranges.forEach((range) => {
 				length += range.segment.cachedLength;
 			});
-			restoredRanges.addOrUpdate({ ranges: event.ranges, length });
+			restoredRanges.addOrUpdate({
+				ranges: event.ranges,
+				length,
+				segment: event.ranges[0].segment,
+			});
 		}
 	};
 	sharedString.on("sequenceDelta", saveSegments);

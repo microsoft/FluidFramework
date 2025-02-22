@@ -33,6 +33,10 @@ describe("document-router", () => {
 				offset0,
 				DebugLogger.create("fluid-server:TestDocumentContext"),
 				() => contextTailOffset,
+				() => ({
+					headPaused: false,
+					tailPaused: false,
+				}),
 			);
 		});
 

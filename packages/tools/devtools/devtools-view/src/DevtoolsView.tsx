@@ -237,7 +237,9 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 	const { supportedFeatures } = props;
 
 	const [containers, setContainers] = React.useState<ContainerKey[] | undefined>();
-	const [menuSelection, setMenuSelection] = React.useState<MenuSelection | undefined>();
+	const [menuSelection, setMenuSelection] = React.useState<MenuSelection>({
+		type: "homeMenuSelection",
+	});
 	const messageRelay = useMessageRelay();
 
 	React.useEffect(() => {

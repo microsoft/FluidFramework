@@ -10,8 +10,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
-	IContainerRuntimeOptions,
-	UnknownContainerRuntimeMessage,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
@@ -115,6 +114,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	});
 
 	let container1: IContainer;
+	let container2: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 	let dataObject1map1: ISharedMap;
@@ -123,7 +123,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let dataObject2map2: ISharedMap;
 
 	async function setupContainers(
-		runtimeOptions?: IContainerRuntimeOptions,
+		runtimeOptions?: IContainerRuntimeOptionsInternal,
 		disableOfflineLoad = false,
 	) {
 		if (disableOfflineLoad) {
@@ -141,7 +141,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObject1map2 = await dataObject1.getSharedObject<ISharedMap>(map2Id);
 
 		// Load the Container that was created by the first client.
-		const container2 = await provider.loadTestContainer(configCopy);
+		container2 = await provider.loadTestContainer(configCopy);
 		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		dataObject2map1 = await dataObject2.getSharedObject<ISharedMap>(map1Id);
 		dataObject2map2 = await dataObject2.getSharedObject<ISharedMap>(map2Id);
@@ -157,49 +157,6 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	}
 
-	it("[DEPRECATED] can send and a batch containing a future/unknown op type", async () => {
-		await setupContainers({
-			flushMode: FlushMode.TurnBased,
-			compressionOptions: {
-				minimumBatchSizeInBytes: 10,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
-			enableGroupedBatching: true,
-			chunkSizeInBytes: 100,
-		});
-		const futureOpSubmitter2 = dataObject2.context.containerRuntime as unknown as {
-			submit: (containerRuntimeMessage: UnknownContainerRuntimeMessage) => void;
-		};
-		const dataObject1BatchMessages: ISequencedDocumentMessage[] = [];
-		const dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
-		setupBatchMessageListener(dataObject1, dataObject1BatchMessages);
-		setupBatchMessageListener(dataObject2, dataObject2BatchMessages);
-
-		// Submit two ops, one of which is unrecognized
-		dataObject2map1.set("key1", "value1");
-		futureOpSubmitter2.submit({
-			type: "FUTURE_TYPE" as any,
-			contents: "Hello",
-			compatDetails: { behavior: "Ignore" }, // This op should be ignored when processed
-		});
-
-		// Wait for the ops to get flushed and processed.
-		await provider.ensureSynchronized();
-
-		assert.equal(
-			dataObject1BatchMessages.filter((m) => m.type !== ContainerMessageType.ChunkedOp)[1]
-				.type,
-			"FUTURE_TYPE",
-			"Unknown op type not preserved (dataObject1)",
-		);
-		assert.equal(
-			dataObject2BatchMessages.filter((m) => m.type !== ContainerMessageType.ChunkedOp)[1]
-				.type,
-			"FUTURE_TYPE",
-			"Unknown op type not preserved (dataObject2)",
-		);
-	});
-
 	it("Can't set up a container with Immediate Mode and Offline Load", async () => {
 		await assert.rejects(
 			setupContainers({ flushMode: FlushMode.Immediate }),
@@ -212,7 +169,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		let dataObject2BatchMessages: ISequencedDocumentMessage[] = [];
 
 		function testFlushingUsingOrderSequentially(
-			options: IContainerRuntimeOptions,
+			options: IContainerRuntimeOptionsInternal,
 			disableOfflineLoad,
 		) {
 			beforeEach("setupBatchMessageListeners", async () => {
@@ -593,7 +550,7 @@ describeCompat("Flushing ops", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		function testAutomaticFlushingUsingOrderSequentially(
-			options: IContainerRuntimeOptions,
+			options: IContainerRuntimeOptionsInternal,
 			disableOfflineLoad,
 		) {
 			beforeEach("setupContainers", async () => {

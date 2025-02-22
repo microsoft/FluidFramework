@@ -26,6 +26,7 @@ import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	type ITestObjectProvider,
+	toIDeltaManagerFull,
 	createSummarizerFromFactory,
 	summarizeNow,
 	waitForContainerConnection,
@@ -330,7 +331,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate stashed ops
 		await provider.opProcessingController.pauseProcessing(container1);
-		await container1.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 		node1.quantity = 1;
 		node1.quantity = 2;
 		node1.quantity = 3;
@@ -392,7 +393,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate stashed ops
 		await provider.opProcessingController.pauseProcessing(container2);
-		await container2.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container2.deltaManager).outbound.pause();
 		node2.quantity = 1;
 		node2.quantity = 2;
 		node2.quantity = 3;
@@ -431,7 +432,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate stashed ops with a migration occurring
 		await provider.opProcessingController.pauseProcessing(container1);
-		await container1.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 
 		shim1.submitMigrateOp();
 		updateQuantity(legacyTree1, 1);
@@ -499,7 +500,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 		// generate stashed ops with a migration occurring
 		await provider.opProcessingController.pauseProcessing(container1);
-		await container1.deltaManager.outbound.pause();
+		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 
 		shim1.submitMigrateOp();
 		const pendingState = await container1.closeAndGetPendingLocalState?.();

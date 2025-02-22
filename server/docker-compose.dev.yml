@@ -1,4 +1,3 @@
-version: "3.4"
 services:
   proxy:
     platform: linux/arm64/v8
@@ -138,6 +137,8 @@ services:
     build:
       context: ./historian
       target: runner
+      additional_contexts:
+        root: ..
     expose:
       - "3000"
     environment:
@@ -152,6 +153,8 @@ services:
     build:
       context: ./gitrest
       target: runner
+      additional_contexts:
+        root: ..
     environment:
       - DEBUG=fluid:*
       - NODE_ENV=development

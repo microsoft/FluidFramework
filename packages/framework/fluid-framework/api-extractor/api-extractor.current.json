@@ -1,6 +1,9 @@
 {
 	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.current.json",
-	"mainEntryPointFilePath": "<projectFolder>/lib/public.d.ts",
+	"mainEntryPointFilePath": "<projectFolder>/lib/alpha.d.ts",
+	"apiReport": {
+		"reportVariants": ["public", "beta", "alpha"]
+	},
 	"bundledPackages": ["@fluidframework/*"]
 }

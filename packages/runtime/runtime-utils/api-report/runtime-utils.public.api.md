@@ -5,6 +5,9 @@
 ```ts
 
 // @public
+export function compareFluidHandles(a: IFluidHandle, b: IFluidHandle): boolean;
+
+// @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
 
 // (No @packageDocumentation comment for this package)

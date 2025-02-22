@@ -12,18 +12,28 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 export interface IRefreshSummaryResult {
-	/** Tells whether this summary is tracked by this client. */
+	/**
+	 * Tells whether this summary is tracked by this client.
+	 */
 	isSummaryTracked: boolean;
-	/** Tells whether this summary is newer than the latest one tracked by this client. */
+	/**
+	 * Tells whether this summary is newer than the latest one tracked by this client.
+	 */
 	isSummaryNewer: boolean;
 }
 
 export interface IStartSummaryResult {
-	/** The number of summarizerNodes at the start of the summary. */
+	/**
+	 * The number of summarizerNodes at the start of the summary.
+	 */
 	nodes: number;
-	/** The number of summarizerNodes in the wrong state. */
+	/**
+	 * The number of summarizerNodes in the wrong state.
+	 */
 	invalidNodes: number;
-	/** The invalid sequence numbers and their values. It should be in the format of validateSequenceNumber-nodeSequenceNumber */
+	/**
+	 * The invalid sequence numbers and their values. It should be in the format of validateSequenceNumber-nodeSequenceNumber
+	 */
 	mismatchNumbers: Set<string>;
 }
 
@@ -38,14 +48,20 @@ export type ValidateSummaryResult =
 	  }
 	| {
 			success: false;
-			/** The failure reason */
+			/**
+			 * The failure reason
+			 */
 			reason: string;
-			/** id of the node that failed during validation */
+			/**
+			 * id of the node that failed during validation
+			 */
 			id: {
 				tag: TelemetryDataTag.CodeArtifact;
 				value: string | undefined;
 			};
-			/** If the error can be retried, time to wait before retrying */
+			/**
+			 * If the error can be retried, time to wait before retrying
+			 */
 			retryAfterSeconds?: number;
 	  };
 
@@ -64,131 +80,67 @@ export interface ISummarizerNodeRootContract {
 	): Promise<IRefreshSummaryResult>;
 }
 
-/** Path for nodes in a tree with escaped special characters */
+/**
+ * Class to build paths for nodes in a tree with escaped special characters
+ */
 export class EscapedPath {
 	private constructor(public readonly path: string) {}
+
+	/**
+	 * Creates and returns a new instance of this class.
+	 * @param path - Id or path part of a node
+	 */
 	public static create(path: string): EscapedPath {
 		return new EscapedPath(encodeURIComponent(path));
-	}
-	public static createAndConcat(pathParts: string[]): EscapedPath {
-		let ret = EscapedPath.create(pathParts[0] ?? "");
-		for (let i = 1; i < pathParts.length; i++) {
-			ret = ret.concat(EscapedPath.create(pathParts[i]));
-		}
-		return ret;
 	}
 	public toString(): string {
 		return this.path;
 	}
-	public concat(path: EscapedPath): EscapedPath {
-		return new EscapedPath(`${this.path}/${path.path}`);
+	/**
+	 * Creates and returns a new instance of this class for child of the current node.
+	 */
+	public createChildPath(childNodePath: EscapedPath): EscapedPath {
+		return new EscapedPath(
+			`${this.path}/${encodeURIComponent(channelsTreeName)}/${childNodePath.path}`,
+		);
 	}
 }
-
-/** Information about a summary relevant to a specific node in the tree */
-export class SummaryNode {
-	/** Creates an instance that is valid for the root with specific basePath and localPath */
-	public static createForRoot(referenceSequenceNumber: number): SummaryNode {
-		return new SummaryNode({
-			referenceSequenceNumber,
-			basePath: undefined,
-			localPath: EscapedPath.create(""), // root hard-coded to ""
-		});
-	}
-
-	/** Summary reference sequence number, i.e. last sequence number seen when it was created */
-	public get referenceSequenceNumber(): number {
-		return this.summary.referenceSequenceNumber;
-	}
-	/** Full path to parent node, or undefined if this is the root */
-	public get basePath(): EscapedPath | undefined {
-		return this.summary.basePath;
-	}
-	/** Relative path to this node from its parent node */
-	public get localPath(): EscapedPath {
-		return this.summary.localPath;
-	}
-	/** Relative path from this node to its node innermost base summary */
-	public get additionalPath(): EscapedPath | undefined {
-		return this.summary.additionalPath;
-	}
-	public set additionalPath(additionalPath: EscapedPath | undefined) {
-		this.summary.additionalPath = additionalPath;
-	}
-	constructor(
-		private readonly summary: {
-			readonly referenceSequenceNumber: number;
-			readonly basePath: EscapedPath | undefined;
-			readonly localPath: EscapedPath;
-			additionalPath?: EscapedPath;
-		},
-	) {}
-
-	/** Gets the full path to this node, to be used when sending a handle */
-	public get fullPath(): EscapedPath {
-		return this.basePath?.concat(this.localPath) ?? this.localPath;
-	}
-
+export interface PendingSummaryInfo {
 	/**
-	 * Gets the full path to this node's innermost base summary.
-	 * The children nodes can use this as their basePath to determine their path.
+	 * The sequence number at which the summary was created.
 	 */
-	public get fullPathForChildren(): EscapedPath {
-		return this.additionalPath !== undefined
-			? this.fullPath.concat(this.additionalPath)
-			: this.fullPath;
-	}
-
-	/**
-	 * Creates a new node within the same summary for a child of this node.
-	 * @param id - id of the child node
-	 */
-	public createForChild(id: string): SummaryNode {
-		return new SummaryNode({
-			referenceSequenceNumber: this.referenceSequenceNumber,
-			basePath: this.fullPathForChildren,
-			localPath: EscapedPath.create(id),
-		});
-	}
+	referenceSequenceNumber: number;
 }
 
 /**
  * Represents the details needed to create a child summarizer node.
  */
 export interface ICreateChildDetails {
-	/** Latest summary from server node data */
-	latestSummary: SummaryNode | undefined;
-	/** Sequence number of latest known change to the node */
+	/**
+	 * Sequence number of latest known change to the node
+	 */
 	changeSequenceNumber: number;
-	/** A unique id of this child to be logged when sending telemetry. */
+	/**
+	 * A unique id of this child to be logged when sending telemetry.
+	 */
 	telemetryNodeId: string;
+	/**
+	 * Summary handle for child node
+	 */
+	summaryHandleId: EscapedPath;
+	/**
+	 * the reference sequence number of the last successful summary.
+	 */
+	lastSummaryReferenceSequenceNumber: number | undefined;
 }
 
 export interface ISubtreeInfo<T extends ISnapshotTree | SummaryObject> {
-	/** Tree to use to find children subtrees */
+	/**
+	 * Tree to use to find children subtrees
+	 */
 	childrenTree: T;
-	/** Additional path part where children are isolated */
+	/**
+	 * Additional path part where children are isolated
+	 */
 	childrenPathPart: string | undefined;
-}
-
-/**
- * Checks if the summary contains .channels subtree where the children subtrees
- * would be located if exists.
- * @param baseSummary - summary to check
- */
-export function parseSummaryForSubtrees(
-	baseSummary: ISnapshotTree,
-): ISubtreeInfo<ISnapshotTree> {
-	// New versions of snapshots have child nodes isolated in .channels subtree
-	const channelsSubtree = baseSummary.trees[channelsTreeName];
-	if (channelsSubtree !== undefined) {
-		return {
-			childrenTree: channelsSubtree,
-			childrenPathPart: channelsTreeName,
-		};
-	}
-	return {
-		childrenTree: baseSummary,
-		childrenPathPart: undefined,
-	};
 }

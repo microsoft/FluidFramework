@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
@@ -22,10 +22,17 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { AllowedUpdateType } from "../../core/index.js";
-import { SharedTreeFactory, type TreeContent } from "../../shared-tree/index.js";
-import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
-import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
+import { TestTreeProviderLite, testIdCompressor } from "../utils.js";
+import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
+import {
+	LinkedList,
+	makeJsDeepTree,
+	makeJsWideTreeWithEndValue,
+	WideRoot,
+} from "../scalableTestTrees.js";
+import { TreeFactory } from "../../treeFactory.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
@@ -74,7 +81,10 @@ describe("Summary benchmarks", () => {
 				type: BenchmarkType.Measurement,
 				title: `a wide tree with ${numberOfNodes} nodes.`,
 				run: async (reporter) => {
-					const summaryTree = getSummaryTree(makeWideContentWithEndValue(numberOfNodes, 1));
+					const summaryTree = getSummaryTree({
+						initialTree: makeJsWideTreeWithEndValue(numberOfNodes, 1),
+						schema: WideRoot,
+					});
 					processSummary(summaryTree, reporter, minLength, maxLength);
 				},
 			});
@@ -85,7 +95,12 @@ describe("Summary benchmarks", () => {
 				type: BenchmarkType.Measurement,
 				title: `a deep tree with ${numberOfNodes} nodes.`,
 				run: async (reporter) => {
-					const summaryTree = getSummaryTree(makeDeepContent(numberOfNodes));
+					const summaryTree = getSummaryTree({
+						// Types do not allow implicitly constructing recursive types, so cast is required.
+						// TODO: Find a better alternative.
+						initialTree: makeJsDeepTree(numberOfNodes, 1) as LinkedList,
+						schema: LinkedList,
+					});
 					processSummary(summaryTree, reporter, minLength, maxLength);
 				},
 			});
@@ -93,9 +108,13 @@ describe("Summary benchmarks", () => {
 	});
 
 	describe("load speed of", () => {
-		function runSummaryBenchmark(title: string, content: TreeContent, type: BenchmarkType) {
+		function runSummaryBenchmark<T extends ImplicitFieldSchema>(
+			title: string,
+			content: TreeSimpleContentTyped<T>,
+			type: BenchmarkType,
+		) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory();
+			const factory = new TreeFactory({});
 			benchmark({
 				title,
 				type,
@@ -125,7 +144,12 @@ describe("Summary benchmarks", () => {
 		]) {
 			runSummaryBenchmark(
 				`a deep tree with ${nodeCount} nodes}`,
-				makeDeepContent(nodeCount),
+				{
+					// Types do not allow implicitly constructing recursive types, so cast is required.
+					// TODO: Find a better alternative.
+					initialTree: makeJsDeepTree(nodeCount, 1) as LinkedList,
+					schema: LinkedList,
+				},
 				type,
 			);
 		}
@@ -136,7 +160,10 @@ describe("Summary benchmarks", () => {
 		]) {
 			runSummaryBenchmark(
 				`a wide tree with ${nodeCount} nodes}`,
-				makeWideContentWithEndValue(nodeCount, 1),
+				{
+					initialTree: makeJsWideTreeWithEndValue(nodeCount, 1),
+					schema: WideRoot,
+				},
 				type,
 			);
 		}
@@ -147,13 +174,13 @@ describe("Summary benchmarks", () => {
  * @param content - content to full the tree with
  * @returns the tree's summary
  */
-function getSummaryTree(content: TreeContent): ISummaryTree {
+function getSummaryTree<T extends ImplicitFieldSchema>(
+	content: TreeSimpleContentTyped<T>,
+): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	schematizeFlexTree(tree, {
-		...content,
-		allowedSchemaModifications: AllowedUpdateType.Initialize,
-	});
+	const view = tree.viewWith(new TreeViewConfiguration({ schema: content.schema }));
+	view.initialize(content.initialTree);
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;

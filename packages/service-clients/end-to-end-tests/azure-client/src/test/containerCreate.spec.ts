@@ -201,17 +201,25 @@ for (const testOpts of testMatrix) {
 		 *
 		 * Note: This test is currently skipped because it is failing when ran against tinylicious (azure-local-service).
 		 */
-		it.skip("cannot load improperly created container (cannot load a non-existent container)", async () => {
+		it("cannot load improperly created container (cannot load a non-existent container)", async () => {
 			const consoleErrorFn = console.error;
 			console.error = (): void => {};
 			const containerAndServicesP = client.getContainer("containerConfig", schema, "2");
 
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
-				assert.strict(
-					error.message.startsWith("R11s fetch error"),
-					`Unexpected error: ${error.message}`,
-				);
+				// AFR gives R11s fetch error, T9s gives 0x8e4
+				if (process.env.FLUID_CLIENT === "azure") {
+					assert.strict(
+						"errorType" in error &&
+							error.errorType === "fileNotFoundOrAccessDeniedError" &&
+							"statusCode" in error &&
+							error.statusCode === 404,
+						`Unexpected error: ${error.message}`,
+					);
+				} else {
+					assert.strict(error.message === "0x8e4", `Unexpected error: ${error.message}`);
+				}
 				return true;
 			};
 
@@ -639,7 +647,8 @@ for (const testOpts of testMatrix) {
 					const message = call.firstArg as ISequencedDocumentMessage;
 					if (
 						message.type === MessageType.Operation &&
-						(message.contents as { type: string }).type === "groupedBatch"
+						typeof message.contents === "string" &&
+						(JSON.parse(message.contents) as { type?: unknown }).type === "groupedBatch"
 					) {
 						groupedBatchCount++;
 					}

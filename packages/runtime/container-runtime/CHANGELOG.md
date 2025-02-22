@@ -1,5 +1,264 @@
 # @fluidframework/container-runtime
 
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+### Minor Changes
+
+-   Many unnecessary exports have been deprecated in the container-runtime package ([#23607](https://github.com/microsoft/FluidFramework/pull/23607)) [3da5b427ef](https://github.com/microsoft/FluidFramework/commit/3da5b427ef406799abade04196e43bb6d66d898d)
+
+    The following types in the `@fluidframework/container-runtime` package are now deprecated. These types are unnecessary for external users of this package.
+
+    -   currentDocumentVersionSchema
+    -   DeletedResponseHeaderKey
+    -   DocumentSchemaValueType
+    -   DocumentsSchemaController
+    -   GCFeatureMatrix
+    -   GCNodeType
+    -   GCVersion
+    -   IBlobManagerLoadInfo
+    -   ICancellableSummarizerController
+    -   ICancellationToken
+    -   IConnectableRuntime
+    -   IContainerRuntimeMetadata
+    -   ICreateContainerMetadata
+    -   IDocumentSchema
+    -   IDocumentSchemaChangeMessage
+    -   IDocumentSchemaCurrent
+    -   IDocumentSchemaFeatures
+    -   IGCMetadata
+    -   IGCStats
+    -   IMarkPhaseStats
+    -   IRefreshSummaryAckOptions
+    -   ISerializedElection
+    -   ISubmitSummaryOptions
+    -   ISummarizerInternalsProvider
+    -   ISummarizerRuntime
+    -   ISummaryCancellationToken
+    -   ISummaryMetadataMessage
+    -   ISweepPhaseStats
+    -   Summarizer
+
+## 2.20.0
+
+### Minor Changes
+
+-   The ContainerRuntime class has been removed ([#23341](https://github.com/microsoft/FluidFramework/pull/23341)) [61ba06aa98](https://github.com/microsoft/FluidFramework/commit/61ba06aa9881c30ffeeedcaaede9c5a1a0c81abd)
+
+    The `ContainerRuntime` class was [deprecated in version 2.12.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-the-containerruntime-class-is-now-deprecated-23331) and has been removed.
+    Use `IContainerRuntime` to replace type usages and use the free function `loadContainerRuntime` to replace usages of the static method `ContainerRuntime.loadRuntime`.
+
+    See the [deprecation
+    announcement](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-the-containerruntime-class-is-now-deprecated-23331)
+    for more details about how to update existing code.
+
+-   The IContainerRuntimeOptions.flushMode property has been removed ([#23337](https://github.com/microsoft/FluidFramework/pull/23337)) [fe8279c774](https://github.com/microsoft/FluidFramework/commit/fe8279c774fcc3c4805b49ce4f64d0e03a64c39b)
+
+    The `IContainerRuntimeOptions.flushMode` property was [deprecated in version 2.12.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-icontainerruntimeoptionsflushmode-is-now-deprecated-23288) and has been removed.
+
+    Only the default value, `FlushMode.TurnBased`, is supported when calling `ContainerRuntime.loadRuntime` directly,
+    so there's no need for consumers to pass this option in.
+
+-   The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed ([#22996](https://github.com/microsoft/FluidFramework/pull/22996)) [bd243fb292](https://github.com/microsoft/FluidFramework/commit/bd243fb2927915d87c42486e21ee0c990962a9a7)
+
+    `ContainerRuntime.createDataStoreWithProps` and `IContainerRuntimeBase.createDataStoreWithProps`
+    were [deprecated in version 0.25.0](https://github.com/microsoft/FluidFramework/blob/main/BREAKING.md#icontainerruntimebase_createdatastorewithprops-is-removed) and have been removed.
+
+    Replace uses of these APIs with `PureDataObjectFactory.createInstanceWithDataStore` and pass in props via the `initialState`
+    parameter.
+
+    These changes were originally announced in version 0.25.0. See the following issues for more details:
+
+    -   [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
+    -   [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
+
+-   Enabling Op Compression without Op Grouping is no longer supported ([#23608](https://github.com/microsoft/FluidFramework/pull/23608)) [92b695aa4b](https://github.com/microsoft/FluidFramework/commit/92b695aa4b36eee41a4d235a71c6408d2c70b54b)
+
+    `IContainerRuntimeOptions.enableGroupedBatching` was deprecated in 2.12 (see [release notes](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-icontainerruntimeoptionsenablegroupedbatching-is-now-deprecated-23260)).
+    While this option is not yet removed (and still defaults to `true`), disabling it (by setting to `false`) is not supported
+    if compression is enabled (by passing a finite value for `IContainerRuntimeOptions.compressionOptions.minimumBatchSizeInBytes`).
+
+-   Summarizer-related types have been moved to container-runtime-definitions ([#23483](https://github.com/microsoft/FluidFramework/pull/23483)) [6666d496e6](https://github.com/microsoft/FluidFramework/commit/6666d496e63031026cdedee98c24bb59fa79edcf)
+
+    `SummarizerStopReason`, `ISummarizeEventProps`, and `ISummarizerEvents` have all been moved from the
+    `"@fluidframework/container-runtime"` package to `@fluidframework/container-runtime-definitions`.
+
+    Users should now import them from `@fluidframework/container-runtime-definitions`.
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+### Minor Changes
+
+-   SummarizerStopReason, ISummarizeEventProps, and ISummarizerEvents are now deprecated ([#23217](https://github.com/microsoft/FluidFramework/pull/23217)) [cd88ee2320](https://github.com/microsoft/FluidFramework/commit/cd88ee2320c40ed9e0d43ec8ed73cb878f1c18a9)
+
+    `SummarizerStopReason`, `ISummarizeEventProps`, and `ISummarizerEvents` have all been deprecated from the `"@fluidframework/container-runtime"` package. Please migrate all uses of these APIs to their counterparts in the `"@fluidframework/container-runtime-definitions"` package.
+
+-   IContainerRuntimeOptions.flushMode is now deprecated ([#23288](https://github.com/microsoft/FluidFramework/pull/23288)) [af1cd7b370](https://github.com/microsoft/FluidFramework/commit/af1cd7b3707cce1306ae071aba1482734b039635)
+
+    The `IContainerRuntimeOptions.flushMode` property is deprecated and will be removed in version 2.20.0.
+
+    Only the default value `FlushMode.TurnBased` is supported when calling `ContainerRuntime.loadRuntime` directly, so there's no need for consumers to pass this option in.
+
+-   The ContainerRuntime class is now deprecated ([#23331](https://github.com/microsoft/FluidFramework/pull/23331)) [dc48446d7c](https://github.com/microsoft/FluidFramework/commit/dc48446d7c4914aca2a76095205975824aac1ba5)
+
+    The class `ContainerRuntime` is deprecated and will no longer be exported starting in version 2.20.0.
+
+    There are two possible migration paths to stop using `ContainerRuntime`:
+
+    -   When using it as a type, replace it with an interface like `IContainerRuntime`
+    -   When using the static function `ContainerRuntime.loadRuntime` replace it with the free function `loadContainerRuntime`.
+
+    `BaseContainerRuntimeFactory` has some changes as well, since it exposed `ContainerRuntime` in several function signatures:
+
+    -   `instantiateFirstTime` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
+    -   `instantiateFromExisting` - Takes the wider type `IContainerRuntime` instead of `ContainerRuntime`
+    -   `preInitialize` - deprecated as well, since it returns `ContainerRuntime`
+
+    These functions should never be called directly anyway - use `BaseContainerRuntimeFactory.instantiateRuntime` instead.
+
+-   IContainerRuntimeOptions.enableGroupedBatching is now deprecated ([#23260](https://github.com/microsoft/FluidFramework/pull/23260)) [49d8e75e5c](https://github.com/microsoft/FluidFramework/commit/49d8e75e5cad12205aed15850db72c1ad21513c3)
+
+    The `IContainerRuntimeOptions.enableGroupedBatching` property is deprecated and will be removed in version 2.20.0. This will mean that the grouped batching feature can no longer be disabled. In versions 2.20.0 and beyond, grouped batching is required for the proper functioning of the Fluid Framework.
+
+    The sole case where grouped batching will be disabled is for compatibility with older v1 clients, and this will be implemented without any need for the configurable `IContainerRuntimeOptions.enableGroupedBatching` option.
+
+## 2.11.0
+
+### Minor Changes
+
+-   Synchronous Child Datastore Creation ([#23143](https://github.com/microsoft/FluidFramework/pull/23143)) [3426b434df](https://github.com/microsoft/FluidFramework/commit/3426b434dfa06de3ee1a60a5f0d605cd312f2c58)
+
+    #### Overview
+
+    This feature introduces a new pattern for creating datastores synchronously within the Fluid Framework. It allows for the synchronous creation of a child datastore from an existing datastore, provided that the child datastore is available synchronously via the existing datastore's registry and that the child's factory supports synchronous creation. This method also ensures strong typing for the consumer.
+
+    In this context, "child" refers specifically to the organization of factories and registries, not to any hierarchical or hosting relationship between datastores. The parent datastore does not control the runtime behaviors of the child datastore beyond its creation.
+
+    The synchronous creation of child datastores enhances the flexibility of datastore management within the Fluid Framework. It ensures type safety and provides a different way to manage datastores within a container. However, it is important to consider the overhead associated with datastores, as they are stored, summarized, garbage collected, loaded, and referenced independently. This overhead should be justified by the scenario's requirements.
+
+    Datastores offer increased capabilities, such as the ability to reference them via handles, allowing multiple references to exist and enabling those references to be moved, swapped, or changed. Additionally, datastores are garbage collected after becoming unreferenced, which can simplify final cleanup across clients. This is in contrast to subdirectories in a shared directory, which do not have native capabilities for referencing or garbage collection but are very low overhead to create.
+
+    Synchronous creation relies on both the factory and the datastore to support it. This means that asynchronous operations, such as resolving handles, some browser API calls, consensus-based operations, or other asynchronous tasks, cannot be performed during the creation flow. Therefore, synchronous child datastore creation is best limited to scenarios where the existing asynchronous process cannot be used, such as when a new datastore must be created in direct response to synchronous user input.
+
+    #### Key Benefits
+
+    -   **Synchronous Creation**: Allows for the immediate creation of child datastores without waiting for asynchronous operations.
+    -   **Strong Typing**: Ensures type safety and better developer experience by leveraging TypeScript's type system.
+
+    #### Use Cases
+
+    ##### Example 1: Creating a Child Datastore
+
+    In this example, we demonstrate how to support creating a child datastore synchronously from a parent datastore.
+
+    ```typescript
+    /**
+     * This is the parent DataObject, which is also a datastore. It has a
+     * synchronous method to create child datastores, which could be called
+     * in response to synchronous user input, like a key press.
+     */
+    class ParentDataObject extends DataObject {
+    	createChild(name: string): ChildDataStore {
+    		assert(
+    			this.context.createChildDataStore !== undefined,
+    			"this.context.createChildDataStore",
+    		);
+
+    		const { entrypoint } = this.context.createChildDataStore(
+    			ChildDataStoreFactory.instance,
+    		);
+    		const dir = this.root.createSubDirectory("children");
+    		dir.set(name, entrypoint.handle);
+    		entrypoint.setProperty("childValue", name);
+
+    		return entrypoint;
+    	}
+
+    	getChild(name: string): IFluidHandle<ChildDataStore> | undefined {
+    		const dir = this.root.getSubDirectory("children");
+    		return dir?.get<IFluidHandle<ChildDataStore>>(name);
+    	}
+    }
+    ```
+
+    For a complete example see the following test:
+    https://github.com/microsoft/FluidFramework/blob/main/packages/test/local-server-tests/src/test/synchronousDataStoreCreation.spec.ts
+
+## 2.10.0
+
+### Minor Changes
+
+-   "Remove `IFluidParentContext.ensureNoDataModelChanges` and its implementations ([#22842](https://github.com/microsoft/FluidFramework/pull/22842)) [3aff19a462](https://github.com/microsoft/FluidFramework/commit/3aff19a4622a242e906286c14dfcfa6523175132)
+
+    -   `IFluidParentContext.ensureNoDataModelChanges` has been removed. [prior deprecation commit](https://github.com/microsoft/FluidFramework/commit/c9d156264bdfa211a3075bdf29cde442ecea234c)
+    -   `MockFluidDataStoreContext.ensureNoDataModelChanges` has also been removed.
+
+-   The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
+
+    The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
+
+    `IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    #### Alternatives
+
+    -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+    -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
+    -   Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
+
+## 2.5.0
+
+### Minor Changes
+
+-   Signal telemetry events details ([#22804](https://github.com/microsoft/FluidFramework/pull/22804)) [e6566f6358](https://github.com/microsoft/FluidFramework/commit/e6566f6358551b5e579637de6c111d42281f7716)
+
+    Properties of `eventName`s beginning "fluid:telemetry:ContainerRuntime:Signal" are updated to use `details` for all event specific information. Additional per-event changes:
+
+    -   SignalLatency: shorten names now that data is packed into details. Renames:
+        -   `signalsSent` -> `sent`
+        -   `signalsLost` -> `lost`
+        -   `outOfOrderSignals` -> `outOfOrder`
+    -   SignalLost/SignalOutOfOrder: rename `trackingSequenceNumber` to `expectedSequenceNumber`
+    -   SignalOutOfOrder: rename `type` to `contentsType` and only emit it some of the time
+
+    > [!IMPORTANT]
+    > Reminder: the naming and structure of telemetry events are not considered a part of the public API and may change at any time.
+
+## 2.4.0
+
+### Minor Changes
+
+-   The `op.contents` member on ContainerRuntime's `batchBegin`/`batchEnd` event args is deprecated ([#22750](https://github.com/microsoft/FluidFramework/pull/22750)) [de6928b528](https://github.com/microsoft/FluidFramework/commit/de6928b528ceb115b12cdf7a4183077cbaa80a71)
+
+    The `batchBegin`/`batchEnd` events on ContainerRuntime indicate when a batch is beginning/finishing being processed.
+    The events include an argument of type `ISequencedDocumentMessage` which is the first or last message of the batch.
+
+    The `contents` property of the `op` argument should not be used when reasoning over the begin/end of a batch.
+    If you want to look at the `contents` of an op, wait for the `op` event.
+
+## 2.3.0
+
+### Minor Changes
+
+-   Restored old op processing behavior around batched ops to avoid potential regression ([#22508](https://github.com/microsoft/FluidFramework/pull/22508)) [709f085c580](https://github.com/microsoft/FluidFramework/commit/709f085c5802bb4ad80145911ca3b05e457e9d6e)
+
+    There's a theoretical risk of indeterminate behavior due to a recent change to how batches of ops are processed.
+    This fix reverses that change.
+
+    Pull Request #21785 updated the ContainerRuntime to hold onto the messages in an incoming batch until they've all arrived, and only then process the set of messages.
+
+    While the batch is being processed, the DeltaManager and ContainerRuntime's view of the latest sequence numbers will be
+    out of sync. This may have unintended side effects, so out of an abundance of caution we're reversing this behavior until
+    we can add the proper protections to ensure the system stays properly in sync.
+
 ## 2.2.0
 
 ### Minor Changes

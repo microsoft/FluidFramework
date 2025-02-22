@@ -5,6 +5,7 @@ Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
 * [`flub check changeset`](#flub-check-changeset)
+* [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
 * [`flub check prApproval`](#flub-check-prapproval)
@@ -16,9 +17,9 @@ Checks that all packages have the same version set in package.json. The packages
 ```
 USAGE
   $ flub check buildVersion [-v | --quiet] [--version <value> | --path <value>] [--fix] [--concurrency <value>]
-    [--branch <value> [--changed |  |  |  | [--all | --dir <value> | --packages | -g
+    [--branch <value> [--changed | [--all | --dir <value>... | --packages | -g
     client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
     <value>...]
 
 FLAGS
@@ -31,22 +32,19 @@ FLAGS
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
                                       include release group root packages. To include those, use the --releaseGroupRoot
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --branch=<value>                [default: main] Select only packages that have been changed when compared to this
                                       base branch. Can only be used with --changed.
-      --changed                       Select only packages that have changed when compared to a base branch. Use the
-                                      --branch option to specify a different base branch. Cannot be used with other
-                                      options.
-      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
-                                      --releaseGroup, or --releaseGroupRoot.
-      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
-                                      --releaseGroup, or --releaseGroupRoot.
+      --changed                       Select packages that have changed when compared to a base branch. Use the --branch
+                                      option to specify a different base branch. Cannot be used with --all.
+      --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all.
       --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
                                       child packages within the release group. To include those, use the --releaseGroup
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
 
 LOGGING FLAGS
@@ -97,18 +95,44 @@ EXAMPLES
 
 _See code: [src/commands/check/changeset.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/changeset.ts)_
 
+## `flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`
+
+Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI pipeline only.
+
+```
+USAGE
+  $ flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
+
+ARGUMENTS
+  VERSION                   The version to check. When running in CI, this value corresponds to the pipeline trigger
+                            branch.
+  PACKAGE_OR_RELEASE_GROUP  The name of a package or a release group.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Determines if an input version matches a latest minor release version. Intended to be used in the Fluid Framework CI
+  pipeline only.
+
+  This command is used in CI to determine if a pipeline was triggered by a release branch with the latest minor version
+  of a major version.
+```
+
+_See code: [src/commands/check/latestVersions.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/latestVersions.ts)_
+
 ## `flub check layers`
 
 Checks that the dependencies between Fluid Framework packages are properly layered.
 
 ```
 USAGE
-  $ flub check layers --info <value> [-v | --quiet] [--md <value>] [--dot <value>] [--logtime]
+  $ flub check layers --info <value> [-v | --quiet] [--md <value>] [--dot <value>]
 
 FLAGS
   --dot=<value>   Generate *.dot for GraphViz
   --info=<value>  (required) Path to the layer graph json file
-  --logtime       Display the current time on every status message for logging
   --md=<value>    Generate PACKAGES.md file at this path relative to repo root
 
 LOGGING FLAGS

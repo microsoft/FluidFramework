@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 
@@ -40,7 +40,7 @@ import { CitmCatalog, generateCitmJson } from "./citm.js";
 import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
 // eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../../simple-tree/toFlexSchema.js";
+import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
@@ -111,7 +111,10 @@ function bench(
 					"BasicChunkCursor",
 					() => {
 						const input = cursorForJsonableTreeNode(encodedTree);
-						const chunk = basicChunkTree(input, defaultChunkPolicy);
+						const chunk = basicChunkTree(input, {
+							policy: defaultChunkPolicy,
+							idCompressor: undefined,
+						});
 						const cursor = chunk.cursor();
 						cursor.enterNode(0);
 						return cursor;

@@ -22,10 +22,11 @@ import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "../../epochTracker.js";
+import { mockify } from "../../mockify.js";
 import { LocalPersistentCache } from "../../odspCache.js";
 import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
 import { getHashedDocumentId } from "../../odspPublicUtils.js";
-import * as socketModule from "../../socketModule.js";
+import { SocketIOClientStatic } from "../../socketModule.js";
 
 import { ClientSocketMock } from "./socketMock.js";
 
@@ -115,7 +116,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 	});
 
 	async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
-		const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
+		const getSocketCreationStub = stub(SocketIOClientStatic, mockify.key);
 		getSocketCreationStub.returns(_response);
 		try {
 			return await callback();
@@ -489,5 +490,60 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			socket.listenerCount("get_ops_response") === 1,
 			"1 get_ops_response listener should exiist",
 		);
+	});
+
+	it("Multiple connection objects should handle server_disconnect event when the second client is still waiting for connection to complete", async () => {
+		socket = new ClientSocketMock();
+		const connection1 = await mockSocket(socket as unknown as Socket, async () =>
+			OdspDocumentDeltaConnection.create(
+				tenantId,
+				documentId,
+				token,
+				client,
+				webSocketUrl,
+				logger,
+				60000,
+				epochTracker,
+				socketReferenceKeyPrefix,
+			),
+		);
+
+		socket.setMockSocketConnectResponseForReuse({
+			connect_document: { eventToEmit: undefined },
+		});
+		let connection2Fails = false;
+		let errorReceived: IAnyDriverError | undefined;
+		const connection2 = mockSocket(socket as unknown as Socket, async () =>
+			OdspDocumentDeltaConnection.create(
+				tenantId,
+				documentId,
+				token,
+				client,
+				webSocketUrl,
+				logger,
+				60000,
+				epochTracker,
+				socketReferenceKeyPrefix,
+			),
+		).catch((error: IAnyDriverError) => {
+			connection2Fails = true;
+			errorReceived = error;
+		});
+		let disconnectedEvent1 = false;
+
+		const errorToThrow = { message: "OdspSocketError", code: 400 };
+		connection1.on("disconnect", (reason: IAnyDriverError) => {
+			disconnectedEvent1 = true;
+		});
+
+		socket.sendServerDisconnectEvent(errorToThrow);
+
+		assert(disconnectedEvent1, "disconnect event should happen on first object");
+
+		assert(socket !== undefined && !socket.connected, "socket should be disconnected");
+		checkListenerCount(socket);
+		await connection2;
+		assert(connection2Fails, "connection2 should fail");
+		assert(errorReceived?.message.includes("server_disconnect"), "message should be correct");
 	});
 });

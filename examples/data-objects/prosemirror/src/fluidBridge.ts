@@ -5,8 +5,12 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { IMergeTreeDeltaOp, createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
+import { assert } from "@fluidframework/core-utils/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26905: `merge-tree` internals used in examples
+import { createInsertSegmentOp } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeDeltaOp } from "@fluidframework/merge-tree/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	ISegment,
 	ISequenceDeltaRange,
@@ -16,8 +20,7 @@ import {
 	SequenceDeltaEvent,
 	SharedString,
 	TextSegment,
-	reservedRangeLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/sequence/legacy";
 import {
 	Fragment,
 	Schema,
@@ -44,6 +47,10 @@ export interface IProseMirrorSlice {
 export const proseMirrorTreeLabel = "prosemirror";
 
 export const nodeTypeKey = "nodeType";
+
+export const stackTypeKey = "stackType";
+export const stackTypeBegin = "begin";
+export const stackTypeEnd = "end";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class IProseMirrorTransaction {}
@@ -150,14 +157,14 @@ export class ProseMirrorTransactionBuilder {
 					);
 
 					if (this.things[i].length <= length) {
-						// Ether node is fully encompasing
+						// Ether node is fully encompassing
 						this.things[i].type = "delete";
 						this.things[i].event = range;
 						length -= this.things[i].length;
 						this.things[i].length = 0;
 						i++;
 					} else {
-						// Ether node is partially encompasing. Split it and loop around to then remove it
+						// Ether node is partially encompassing. Split it and loop around to then remove it
 						this.splitAt(length, i);
 					}
 				}
@@ -469,13 +476,14 @@ function sliceToGroupOpsInternal(
 			offset = adjustOffset(from, offset, 1, insert, gapDistance);
 		}
 	} else {
-		// Negative open start indicates we have past the depth from which the opening began
+		// Negative open start indicates we have passed the depth from which the opening began
 		if (openStart < 0) {
 			const beginProps = {
 				...props,
 				...{
 					[reservedRangeLabelsKey]: [proseMirrorTreeLabel],
 					[nodeTypeKey]: value.type,
+					[stackTypeKey]: stackTypeBegin,
 				},
 			};
 
@@ -506,6 +514,7 @@ function sliceToGroupOpsInternal(
 				...{
 					[reservedRangeLabelsKey]: [proseMirrorTreeLabel],
 					[nodeTypeKey]: value.type,
+					[stackTypeKey]: stackTypeEnd,
 				},
 			};
 
@@ -522,6 +531,8 @@ function sliceToGroupOpsInternal(
 function generateFragment(segments: ISegment[]) {
 	const nodeStack = new Array<IProseMirrorNode>();
 	nodeStack.push({ type: "doc", content: [] });
+
+	let openTop: IProseMirrorNode | undefined;
 
 	// TODO should I pre-seed the data structure based on the nodes to the left of the open?
 
@@ -546,27 +557,63 @@ function generateFragment(segments: ISegment[]) {
 
 			top.content!.push(nodeJson);
 		} else if (Marker.is(segment)) {
+			const nodeType = segment.properties![nodeTypeKey];
+			const stackType = segment.properties![stackTypeKey];
 			switch (segment.refType) {
 				case ReferenceType.Simple:
-					// TODO consolidate the text segment and simple references
-					const nodeJson: IProseMirrorNode = {
-						type: segment.properties!.type,
-						attrs: segment.properties!.attrs,
-					};
+					if (stackType === stackTypeBegin) {
+						// Special case the open top
+						if (openTop) {
+							top.content!.push(openTop);
+							openTop = undefined;
+						}
+						// Create the new node, add it to the top's content, and push it on the stack
+						const newNode = {
+							type: nodeType,
+							content: [] as IProseMirrorNode[],
+							_open: true,
+						};
+						top.content!.push(newNode);
+						nodeStack.push(newNode);
+					} else if (stackType === stackTypeEnd) {
+						if (top.type === nodeType) {
+							top._open = false;
+							// Matching open
+							nodeStack.pop();
+						} else {
+							// Unmatched open
+							const newNode2 = {
+								type: nodeType,
+								content: [] as IProseMirrorNode[],
+								_open: true,
+							};
+							if (openTop) {
+								newNode2.content.push(openTop);
+							}
 
-					if (segment.properties) {
-						nodeJson.marks = [];
-						for (const propertyKey of Object.keys(segment.properties)) {
-							if (propertyKey !== "type" && propertyKey !== "attrs") {
-								nodeJson.marks.push({
-									type: propertyKey,
-									value: segment.properties[propertyKey],
-								});
+							openTop = newNode2;
+						}
+					} else {
+						// TODO consolidate the text segment and simple references
+						const nodeJson: IProseMirrorNode = {
+							type: segment.properties!.type,
+							attrs: segment.properties!.attrs,
+						};
+
+						if (segment.properties) {
+							nodeJson.marks = [];
+							for (const propertyKey of Object.keys(segment.properties)) {
+								if (propertyKey !== "type" && propertyKey !== "attrs") {
+									nodeJson.marks.push({
+										type: propertyKey,
+										value: segment.properties[propertyKey],
+									});
+								}
 							}
 						}
-					}
 
-					top.content!.push(nodeJson);
+						top.content!.push(nodeJson);
+					}
 					break;
 
 				default:

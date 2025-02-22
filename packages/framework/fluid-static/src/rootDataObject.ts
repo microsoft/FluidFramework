@@ -19,14 +19,14 @@ import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js
 import type {
 	CompatibilityMode,
 	ContainerSchema,
-	DataObjectClass,
+	DataObjectKind,
 	IRootDataObject,
-	LoadableObjectClass,
-	LoadableObjectClassRecord,
+	LoadableObjectKind,
+	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
 import {
-	isDataObjectClass,
+	isDataObjectKind,
 	isSharedObjectKind,
 	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
@@ -40,7 +40,7 @@ export interface RootDataObjectProps {
 	 *
 	 * @see {@link RootDataObject.initializingFirstTime}
 	 */
-	readonly initialObjects: LoadableObjectClassRecord;
+	readonly initialObjects: LoadableObjectKindRecord;
 }
 
 /**
@@ -125,8 +125,8 @@ class RootDataObject
 	 * {@inheritDoc IRootDataObject.create}
 	 */
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
-		const internal = objectClass as unknown as LoadableObjectClass<T & IFluidLoadable>;
-		if (isDataObjectClass(internal)) {
+		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
+		if (isDataObjectKind(internal)) {
 			return this.createDataObject(internal);
 		} else if (isSharedObjectKind(internal)) {
 			return this.createSharedObject(internal);
@@ -135,7 +135,7 @@ class RootDataObject
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: DataObjectClass<T>,
+		dataObjectClass: DataObjectKind<T>,
 	): Promise<T> {
 		const factory = dataObjectClass.factory;
 		const packagePath = [...this.context.packagePath, factory.type];
@@ -186,7 +186,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 		}
 	>;
 
-	private readonly initialObjects: LoadableObjectClassRecord;
+	private readonly initialObjects: LoadableObjectKindRecord;
 
 	public constructor(schema: ContainerSchema, compatibilityMode: CompatibilityMode) {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);

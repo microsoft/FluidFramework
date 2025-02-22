@@ -1,0 +1,175 @@
+$default-font: "Segoe UI", "Helvetica Neue", "Helvetica", Arial, sans-serif;
+
+* {
+	font-family: $default-font;
+}
+
+code,
+kbd,
+pre,
+samp,
+code * {
+	font-family: Menlo, Monaco, Consolas, "Courier New", monospace !important;
+}
+
+html {
+	font-size: 14px;
+}
+
+//------------------------------------
+//              #FONTS
+//------------------------------------
+
+/**
+ * Segoe UI Font Family
+ */
+
+/**
+ * Segoe UI Light
+ */
+@font-face {
+	font-family: "Segoe UI";
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.eot"),
+		/* IE9 compat modes */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.eot?#iefix")
+			format("embedded-opentype"); /* IE6-IE8 */
+
+	src:
+		local("Segoe UI Light"),
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.woff2")
+			format("woff2"),
+		/* Super modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.woff")
+			format("woff"),
+		/* Pretty modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.ttf")
+			format("truetype"),
+		/* Safari, Android, iOS */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/light/latest.svg#web")
+			format("svg"); /* Legacy iOS */
+
+	font-weight: 200;
+}
+
+/**
+ * Segoe UI Semilight
+ */
+@font-face {
+	font-family: "Segoe UI";
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.eot"),
+		/* IE9 compat modes */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.eot?#iefix")
+			format("embedded-opentype"); /* IE6-IE8 */
+
+	src:
+		local("Segoe UI Semilight"),
+		/* Check local copy */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.woff2")
+			format("woff2"),
+		/* Super modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.woff")
+			format("woff"),
+		/* Pretty modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.ttf")
+			format("truetype"),
+		/* Safari, Android, iOS */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semilight/latest.svg#web")
+			format("svg"); /* Legacy iOS */
+
+	font-weight: 300;
+}
+
+/**
+ * Segoe UI Normal
+ */
+
+@font-face {
+	font-family: "Segoe UI";
+
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.eot"),
+		/* IE9 compat modes */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.eot?#iefix")
+			format("embedded-opentype"); /* IE6-IE8 */
+
+	src:
+		local("Segoe UI"),
+		/* Check local copy */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff2")
+			format("woff"),
+		/* Pretty modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.woff")
+			format("woff"),
+		/* Pretty modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.ttf")
+			format("truetype"),
+		/* Safari, Android, iOS */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/normal/latest.svg#web")
+			format("svg"); /* Legacy iOS */
+
+	font-weight: 400;
+}
+
+/**
+ * Segoe UI Semibold
+ */
+
+@font-face {
+	font-family: "Segoe UI";
+
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.eot"),
+		/* IE9 compat modes */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.eot?#iefix")
+			format("embedded-opentype"); /* IE6-IE8 */
+
+	src:
+		local("Segoe UI Semibold"),
+		/* Check local copy */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.woff2")
+			format("woff"),
+		/* Pretty modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.woff")
+			format("woff"),
+		/* Pretty modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.ttf")
+			format("truetype"),
+		/* Safari, Android, iOS */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/semibold/latest.svg#web")
+			format("svg"); /* Legacy iOS */
+
+	font-weight: 600;
+}
+
+/**
+ * Segoe UI Bold
+ */
+
+@font-face {
+	font-family: "Segoe UI";
+
+	src:
+		url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.eot"),
+		/* IE9 compat modes */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.eot?#iefix")
+			format("embedded-opentype"); /* IE6-IE8 */
+
+	src:
+		local("Segoe UI Bold"),
+		/* Check local copy */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.woff2")
+			format("woff"),
+		/* Pretty modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.woff")
+			format("woff"),
+		/* Pretty modern browsers */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.ttf")
+			format("truetype"),
+		/* Safari, Android, iOS */
+			url("https://c.s-microsoft.com/static/fonts/segoe-ui/west-european/bold/latest.svg#web")
+			format("svg"); /* Legacy iOS */
+
+	font-weight: 700;
+}

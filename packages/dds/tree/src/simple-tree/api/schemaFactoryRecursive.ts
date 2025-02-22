@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Unenforced } from "../../feature-libraries/index.js";
-import type { RestrictiveReadonlyRecord } from "../../util/index.js";
+import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
 
 import {
@@ -22,7 +21,7 @@ import type {
 	WithType,
 	TreeNode,
 } from "../core/index.js";
-import type { FieldSchemaUnsafe } from "../typesUnsafe.js";
+import type { FieldSchemaUnsafe, Unenforced } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
@@ -131,10 +130,7 @@ export type ValidateRecursiveSchema<
 		// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
 		// These match whats defined in the recursive methods on `SchemaFactory` except they do not use `Unenforced`.
 		{
-			[NodeKind.Object]: T["info"] extends RestrictiveReadonlyRecord<
-				string,
-				ImplicitFieldSchema
-			>
+			[NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema>
 				? InsertableObjectFromSchemaRecord<T["info"]>
 				: unknown;
 			[NodeKind.Array]: T["info"] extends ImplicitAllowedTypes
@@ -144,11 +140,11 @@ export type ValidateRecursiveSchema<
 				? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
 				: unknown;
 		}[T["kind"]],
-		// ImplicitlyConstructable: recursive types are not implicitly constructable.
+		// ImplicitlyConstructable: recursive types are currently not implicitly constructable.
 		false,
 		// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
 		{
-			[NodeKind.Object]: RestrictiveReadonlyRecord<string, ImplicitFieldSchema>;
+			[NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
 			[NodeKind.Array]: ImplicitAllowedTypes;
 			[NodeKind.Map]: ImplicitAllowedTypes;
 		}[T["kind"]]

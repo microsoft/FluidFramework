@@ -10,13 +10,14 @@ import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/in
 
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
+	getBranch,
 	type ISharedTree,
-	SharedTreeFactory,
 	type SharedTreeOptions,
 	Tree,
 } from "../../shared-tree/index.js";
-import { forkView, TestTreeProviderLite, treeTestFactory } from "../utils.js";
+import { TestTreeProviderLite, treeTestFactory } from "../utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
+import { TreeFactory } from "../../treeFactory.js";
 
 // Session ids used for the created trees' IdCompressors must be deterministic.
 // TestTreeProviderLite does this by default.
@@ -36,7 +37,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		jsonValidator: typeboxValidator,
 		...options,
 	};
-	const factory = new SharedTreeFactory(factoryOptions);
+	const factory = new TreeFactory(factoryOptions);
 	const testTrees: {
 		only?: boolean;
 		skip?: boolean;
@@ -206,8 +207,8 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("concurrent-inserts");
 				const provider = new TestTreeProviderLite(1, factory, true);
-				const baseTree = provider.trees[0];
-				const view1 = baseTree.viewWith(
+				const tree1 = provider.trees[0];
+				const view1 = tree1.viewWith(
 					new TreeViewConfiguration({
 						schema: [sf.array(sf.string)],
 						enableSchemaValidation,
@@ -216,32 +217,35 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				view1.initialize([]);
 				provider.processMessages();
 
-				const view2 = forkView(view1);
+				const branch1 = getBranch(tree1);
+				const tree2 = branch1.branch();
+				const view2 = tree2.viewWith(view1.config);
 				view1.root.insertAt(0, "y");
-				view2.checkout.rebaseOnto(view1.checkout);
+				tree2.rebaseOnto(branch1);
 
 				view1.root.insertAt(0, "x");
 				view2.root.insertAt(1, "a", "c");
 				view2.root.insertAt(2, "b");
 
-				view2.checkout.rebaseOnto(view1.checkout);
-				view1.checkout.merge(view2.checkout);
+				tree2.rebaseOnto(branch1);
+				branch1.merge(tree2, false);
 
 				provider.processMessages();
-				await takeSnapshot(baseTree, "tree2");
+				await takeSnapshot(tree1, "tree2");
 
 				assert.deepEqual(view1.root, ["x", "y", "a", "b", "c"]);
 				assert.deepEqual(view1.root, view2.root);
 
-				const view3 = forkView(view1);
+				const tree3 = branch1.branch();
+				const view3 = tree3.viewWith(view1.config);
 				view1.root.insertAt(0, "z");
 				view3.root.insertAt(1, "d", "e");
 				view3.root.insertAt(2, "f");
-				view3.checkout.rebaseOnto(view1.checkout);
-				view1.checkout.merge(view3.checkout);
+				tree3.rebaseOnto(branch1);
+				branch1.merge(tree3);
 
 				provider.processMessages();
-				await takeSnapshot(baseTree, "tree3");
+				await takeSnapshot(tree1, "tree3");
 			},
 		},
 		{
@@ -261,7 +265,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 						StringArray,
 					]) {}
 
-					const provider = new TestTreeProviderLite(1, new SharedTreeFactory(options), true);
+					const provider = new TestTreeProviderLite(1, new TreeFactory(options), true);
 					const tree = provider.trees[0];
 					const view = tree.viewWith(
 						new TreeViewConfiguration({
@@ -329,19 +333,20 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			name: "nested-sequence-change",
 			runScenario: async (takeSnapshot) => {
 				const sf = new SchemaFactory("test trees");
-				class SequenceMap extends sf.mapRecursive("Recursive Map", [
-					() => sf.array(SequenceMap),
+				class Array extends sf.arrayRecursive('Array<["test trees.Recursive Map"]>', [
+					() => SequenceMap,
 				]) {}
+				class SequenceMap extends sf.mapRecursive("Recursive Map", [() => Array]) {}
 
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const tree = provider.trees[0];
 				const view = tree.viewWith(
 					new TreeViewConfiguration({
-						schema: [sf.array(SequenceMap)],
+						schema: Array,
 						enableSchemaValidation,
 					}),
 				);
-				view.initialize([]);
+				view.initialize(new Array([]));
 				provider.processMessages();
 
 				// We must make this shallow change to the sequence field as part of the same transaction as the
@@ -350,7 +355,8 @@ export function generateTestTrees(options: SharedTreeOptions) {
 					view.root.insertAtStart(new SequenceMap([]));
 					const map = view.root[0];
 					const innerArray: SequenceMap[] = [];
-					map.set("foo", [new SequenceMap([["bar", innerArray]])]);
+					map.set("foo", new Array([new SequenceMap([["bar", new Array(innerArray)]])]));
+					// Since innerArray is an array, not an actual node, this does nothing (other than ensure innerArray was copied and thus the tree was not modified by this change)
 					innerArray.push(new SequenceMap([]));
 				});
 
@@ -378,8 +384,8 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		{
 			name: "attachment-tree",
 			runScenario: async (takeSnapshot) => {
-				// This test makes changes only while detached to test EditManager's optimization of omitting
-				// changes outside the collab window (which is all changes when detached).
+				// This test makes changes only while detached to test EditManager's optimization of evicting/trimming
+				// trunk commits outside of the collab window (which is all changes when detached).
 				const tree = treeTestFactory({
 					runtime: new MockFluidDataStoreRuntime({
 						clientId: "test-client",

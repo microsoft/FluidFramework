@@ -1,5 +1,52 @@
 # @fluidframework/azure-client
 
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+### Minor Changes
+
+-   ITokenClaims and ScopeType types are now deprecated ([#23703](https://github.com/microsoft/FluidFramework/pull/23703)) [f679945775](https://github.com/microsoft/FluidFramework/commit/f67994577597aae6dc8b42f3c6557c744adc0964)
+
+    The `ITokenClaims` and `ScopeType` types in `@fluidframework/azure-client` are now deprecated. These were isolated types
+    re-exported for convenience but they do not directly interact with typical azure-client APIs.
+
+    See [issue #23702](https://github.com/microsoft/FluidFramework/issues/23702) for details and alternatives.
+
+## 2.20.0
+
+Dependency updates only.
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+Dependency updates only.
+
+## 2.10.0
+
+Dependency updates only.
+
+## 2.5.0
+
+Dependency updates only.
+
+## 2.4.0
+
+Dependency updates only.
+
+## 2.3.0
+
+Dependency updates only.
+
 ## 2.2.0
 
 Dependency updates only.

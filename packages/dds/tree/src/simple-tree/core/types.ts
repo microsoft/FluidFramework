@@ -20,17 +20,17 @@ import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index
  *
  * Since un-hydrated nodes become hydrated when inserted, strong typing can't be used to distinguish them.
  * This no-op wrapper is used instead.
+ * @remarks
+ * Nodes which are Unhydrated report {@link TreeStatus}.new from `Tree.status(node)`.
+ * @privateRemarks
+ * TODO: Linking tree status is failing in intellisense and linking directly to its .new item is failing in API extractor as well.
+ * WOuld be nice to have a working link here.
  * @public
  */
 export type Unhydrated<T> = T;
 
 /**
  * A collection of events that can be emitted by a {@link TreeNode}.
- *
- * @remarks
- * Currently, events can be subscribed to for {@link Unhydrated} nodes, however no events will be triggered for the nodes until after they are hydrated.
- * This is considered a known issue, and should be fixed in future versions.
- * Do not rely on the fact that editing unhydrated nodes does not trigger their events.
  *
  * @privateRemarks
  * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).

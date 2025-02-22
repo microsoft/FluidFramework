@@ -165,12 +165,17 @@ export function resolveVersion(requested: string, installed: boolean) {
 		try {
 			result = execFileSync(
 				npmCmd,
-				["v", `@fluidframework/container-loader@${requested}`, "version", "--json"],
-				{ encoding: "utf8" },
+				["v", `"@fluidframework/container-loader@${requested}"`, "version", "--json"],
+				{
+					encoding: "utf8",
+					// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+					shell: true,
+				},
 			);
 		} catch (error: any) {
+			debugger;
 			throw new Error(
-				`Error while running: npm v @fluidframework/container-loader@"${requested}" version --json`,
+				`Error while running: ${npmCmd} v "@fluidframework/container-loader@${requested}" version --json`,
 			);
 		}
 		if (result === "" || result === undefined) {
@@ -248,6 +253,9 @@ export async function ensureInstalled(
 					// will otherwise propagate to these commands but fail to resolve.
 					NODE_OPTIONS: "",
 				},
+				// When using npm.cmd shell must be true: https://nodejs.org/en/blog/vulnerability/april-2024-security-releases-2
+				// @ts-expect-error ExecOptions does not acknowledge boolean for `shell` as a valid option (at least as of @types/node@18.19.1)
+				shell: true,
 			};
 			// Install the packages
 			await new Promise<void>((resolve, reject) =>
@@ -361,7 +369,7 @@ export const loadPackage = async (modulePath: string, pkg: string): Promise<any>
 		if (typeof pkgJson.exports === "string") {
 			primaryExport = pkgJson.exports;
 		} else {
-			const exp = pkgJson.exports["."];
+			const exp: any | undefined = pkgJson.exports["."];
 			primaryExport =
 				typeof exp === "string"
 					? exp
@@ -430,13 +438,39 @@ function calculateRequestedRange(
 	}
 
 	// If the base version is a public version and `adjustPublicMajor` is false, then we need to ensure that we
-	// calculate N-1 as he previous major release, regardless if it is public or internal.
-	// Currently, this case only applies to calculating N-X for 2.0.0.
+	// calculate N-1 as the previous major release, regardless if it is public or internal.
+	// Currently, this case only applies to calculating N-X for 2.x.y.
 	// TODO: This is a temporary solution and we need to entirely rewrite this function to handle the changes the version schemas. See ADO:8198.
 	if (adjustPublicMajor === false && version.major > 1) {
-		// In this case, we can pretend that 2.0 is RC6 and calculate the range as if it were an internal version.
-		const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
-		return internalSchemeRange;
+		if (version.minor < 10) {
+			// If 2.0 <= N < 2.10, then we can pretend that N is RC6 (*which doesn't exist*) and calculate the range as if it were an internal version.
+			const internalSchemeRange = internalSchema("2.0.0", "6.0.0", "rc", requested);
+			return internalSchemeRange;
+		} else {
+			// For each requested version to go back, we go back 10 minor versions. If requested is -2, then we need to go back 20 minor versions.
+			const legacyMinorsToSkip = Math.abs(requested * 10);
+			if (legacyMinorsToSkip > version.minor) {
+				// If the number of minors we need to go back is greater than the minor version, then that means we will be going back to RC releases.
+				// Here we calculate how many more releases we need to go back **after** we take into account going from the current minor version to 2.0.
+				// For example, if N is 2.20, then the range we need to return for N-1 starts at 2.10, for N-2 it starts at 2.0, N-3 is RC5, N-4 is RC4, etc.
+				// So if N is 2.20 and requested is 4, then we still need to go back 2 more releases from 2.0 (treated as RC6).
+				const remainingRequested =
+					(legacyMinorsToSkip - Math.floor(version.minor / 10) * 10) / 10;
+				const internalSchemeRange = internalSchema(
+					"2.0.0",
+					"6.0.0",
+					"rc",
+					remainingRequested * -1, // make sure the value is negative since we made it positive above
+				);
+				return internalSchemeRange;
+			}
+			// Here we know that the requested version will be >=2.0, so we can avoid all the RC releases.
+			// If N >= 2.10, then the range we need to return for N-1 starts at legacy breaking minor before the one N belongs to.
+			const lowerMinorRange = Math.floor((version.minor - legacyMinorsToSkip) / 10) * 10;
+			const upperMinorRange = lowerMinorRange + 10;
+			// Here we do a range that, when resolved, will result in the latest minor version that satisfies the request.
+			return `>=${version.major}.${lowerMinorRange}.0-0 <${version.major}.${upperMinorRange}.0-0`;
+		}
 	} else {
 		// calculate requested major version number
 		const requestedMajorVersion = version.major + requested;

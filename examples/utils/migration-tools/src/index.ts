@@ -3,28 +3,32 @@
  * Licensed under the MIT License.
  */
 
-export type {
-	DataTransformationCallback,
-	IAcceptedMigrationDetails,
-	IImportExportModel,
-	IMigratableModel,
-	IMigrationTool,
-	IMigrationToolEvents,
-	IMigrator,
-	IMigratorEvents,
-	IVersionedModel,
-	MigrationState,
-} from "./interfaces/index.js";
-export { MigrationToolFactory } from "./migrationTool.js";
-export { Migrator } from "./migrator.js";
+/**
+ * @packageDocumentation
+ * This package contains tools for migrating data from one version to another, used by Fluid examples.
+ * They are not currently intended for use in production scenarios.
+ */
+
 export {
-	CreateModelCallback,
-	IAttachedMigratableModel,
-	IDetachedMigratableModel,
-	IMigratableModelContainerRuntimeEntryPoint,
-	IMigratableModelLoader,
-	instantiateMigratableRuntime,
-	MigratableModelLoader,
-	MigratableSessionStorageModelLoader,
-	MigratableTinyliciousModelLoader,
-} from "./modelLoader/index.js";
+	CompositeEntryPoint,
+	IEntryPointPiece,
+	loadCompositeRuntime,
+} from "./compositeRuntime/index.js";
+export {
+	IAcceptedMigrationDetails,
+	MigrationState,
+} from "./migrationTool/index.js";
+export {
+	CreateDetachedContainerCallback,
+	ExportDataCallback,
+	IMigrator,
+	IMigratorEntryPoint,
+	IMigratorEvents,
+	ImportDataCallback,
+	LoadSourceContainerCallback,
+	makeCreateDetachedContainerCallback,
+	makeSeparateContainerMigrationCallback,
+	makeMigratorEntryPointPiece,
+	MigrationCallback,
+	SeparateContainerMigrationResult,
+} from "./migrator/index.js";

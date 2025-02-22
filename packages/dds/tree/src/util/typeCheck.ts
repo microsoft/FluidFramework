@@ -107,8 +107,6 @@ export interface Contravariant<in T> {
  * ```typescript
  * protected _typeCheck?: Covariant<T>;
  * ```
- *
- * @internal
  */
 export interface Covariant<out T> {
 	_removeContravariance?: T;
@@ -190,3 +188,21 @@ export type isAny<T> = boolean extends (T extends never ? true : false) ? true :
  * `type _check = requireAssignableTo<T, Expected>;`
  */
 export type requireAssignableTo<_A extends B, B> = true;
+
+/**
+ * Returns a type parameter that is true iff the `Keys` union includes all the keys of `T`.
+ *
+ * @remarks
+ * This does not handle when the T has an index signature permitting keys like `string` which
+ * TypeScript cannot omit members from.
+ *
+ * @example
+ * ```ts
+ * type _check = requireTrue<areOnlyKeys<{a: number, b: number}, 'a' | 'b'>> // true`
+ * type _check = requireTrue<areOnlyKeys<{a: number, b: number}, 'a'>> // false`
+ * ```
+ */
+export type areOnlyKeys<T, Keys extends keyof T> = isAssignableTo<
+	Record<string, never>,
+	Omit<Required<T>, Keys>
+>;

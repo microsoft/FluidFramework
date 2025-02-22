@@ -20,6 +20,7 @@ import type {
 	ISequencedProposal,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
+	IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -357,6 +358,13 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	getLoadedCodeDetails(): IFluidCodeDetails | undefined;
 
 	/**
+	 * Get the package info for the code details that were used to load the container.
+	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined if
+	 * the container package doesn't have a name.
+	 */
+	getContainerPackageInfo?(): IContainerPackageInfo | undefined;
+
+	/**
 	 * Returns true if the container has been closed and/or disposed, otherwise false.
 	 */
 	readonly closed: boolean;
@@ -620,6 +628,19 @@ export type ILoaderOptions = {
 };
 
 /**
+ * Policies to have various behaviors during container create and load.
+ * @legacy
+ * @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+export type IContainerPolicies = {
+	/**
+	 * Max time (in ms) container will wait for a leave message of a disconnected client.
+	 */
+	maxClientLeaveWaitTime?: number;
+};
+
+/**
  * Accepted header keys for requests coming to the Loader
  * @legacy
  * @alpha
@@ -705,10 +726,6 @@ export interface IContainerLoadMode {
  * @internal
  */
 export interface ILoaderHeader {
-	/**
-	 * @deprecated This header has been deprecated and will be removed in a future release
-	 */
-	[LoaderHeader.cache]: boolean;
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
 	[LoaderHeader.reconnect]: boolean;

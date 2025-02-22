@@ -6,19 +6,8 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
-import {
-	type LazyItem,
-	type TreeStatus,
-	isLazy,
-	isTreeValue,
-	FlexObjectNodeSchema,
-	isMapTreeNode,
-	FieldKinds,
-} from "../../feature-libraries/index.js";
+import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { fail, extractFromOpaque, isReadonlyArray } from "../../util/index.js";
-
-import { getOrCreateNodeFromFlexTreeNode } from "../proxies.js";
-import { getOrCreateInnerNode } from "../proxyBinding.js";
 import {
 	type TreeLeafValue,
 	type ImplicitFieldSchema,
@@ -35,7 +24,7 @@ import {
 } from "../leafNodeSchema.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { Off } from "../../events/index.js";
+import type { Off } from "@fluidframework/core-interfaces";
 import {
 	getKernel,
 	isTreeNode,
@@ -44,8 +33,13 @@ import {
 	type TreeNode,
 	type TreeChangeEvents,
 	tryGetTreeNodeSchema,
+	getOrCreateNodeFromInnerNode,
+	UnhydratedFlexTreeNode,
+	typeSchemaSymbol,
+	getOrCreateInnerNode,
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { isLazy, type LazyItem } from "../flexList.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -141,7 +135,7 @@ export const treeNodeApi: TreeNodeApi = {
 			return undefined;
 		}
 
-		const output = getOrCreateNodeFromFlexTreeNode(editNode);
+		const output = getOrCreateNodeFromInnerNode(editNode);
 		assert(
 			!isTreeValue(output),
 			0x87f /* Parent can't be a leaf, so it should be a node not a value */,
@@ -174,29 +168,29 @@ export const treeNodeApi: TreeNodeApi = {
 			case "nodeChanged": {
 				const nodeSchema = kernel.schema;
 				if (isObjectNodeSchema(nodeSchema)) {
-					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						const changedProperties = new Set(
 							Array.from(
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail(`Could not find stored key '${field}' in schema.`),
+									fail("Could not find stored key in schema."),
 							),
 						);
 						listener({ changedProperties });
 					});
 				} else if (nodeSchema.kind === NodeKind.Array) {
-					return kernel.on("childrenChangedAfterBatch", () => {
+					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
 				} else {
-					return kernel.on("childrenChangedAfterBatch", ({ changedFields }) => {
+					return kernel.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
 						listener({ changedProperties: changedFields });
 					});
 				}
 			}
 			case "treeChanged": {
-				return kernel.on("subtreeChangedAfterBatch", () => listener({}));
+				return kernel.events.on("subtreeChangedAfterBatch", () => listener({}));
 			}
 			default:
 				throw new UsageError(`No event named ${JSON.stringify(eventName)}.`);
@@ -231,17 +225,20 @@ export const treeNodeApi: TreeNodeApi = {
 		return tryGetSchema(node) ?? fail("Not a tree node");
 	},
 	shortId(node: TreeNode): number | string | undefined {
+		const schema = node[typeSchemaSymbol];
+		if (!isObjectNodeSchema(schema)) {
+			return undefined;
+		}
+
 		const flexNode = getOrCreateInnerNode(node);
-		const flexSchema = flexNode.flexSchema;
-		const identifierFieldKeys =
-			flexSchema instanceof FlexObjectNodeSchema ? flexSchema.identifierFieldKeys : [];
+		const identifierFieldKeys = schema.identifierFieldKeys;
 
 		switch (identifierFieldKeys.length) {
 			case 0:
 				return undefined;
 			case 1: {
 				const identifier = flexNode.tryGetField(identifierFieldKeys[0] ?? oob())?.boxedAt(0);
-				if (isMapTreeNode(flexNode)) {
+				if (flexNode instanceof UnhydratedFlexTreeNode) {
 					if (identifier === undefined) {
 						throw new UsageError(
 							"Tree.shortId cannot access default identifiers on unhydrated nodes",
@@ -249,7 +246,10 @@ export const treeNodeApi: TreeNodeApi = {
 					}
 					return identifier.value as string;
 				}
-				assert(identifier?.context.isHydrated() === true, "Expected hydrated identifier");
+				assert(
+					identifier?.context.isHydrated() === true,
+					0xa27 /* Expected hydrated identifier */,
+				);
 				const identifierValue = identifier.value as string;
 
 				const localNodeKey =
@@ -300,17 +300,17 @@ function getStoredKey(node: TreeNode): string | number {
 	// Note: the flex domain strictly works with "stored keys", and knows nothing about the developer-facing
 	// "property keys".
 	const parentField = getOrCreateInnerNode(node).parentField;
-	if (parentField.parent.schema.kind === FieldKinds.sequence.identifier) {
+	if (parentField.parent.schema === FieldKinds.sequence.identifier) {
 		// The parent of `node` is an array node
 		assert(
 			parentField.parent.key === EmptyKey,
-			"When using index as key, field should use EmptyKey",
+			0xa28 /* When using index as key, field should use EmptyKey */,
 		);
 		return parentField.index;
 	}
 
 	// The parent of `node` is an object, a map, or undefined. If undefined, then `node` is a root/detached node.
-	assert(parentField.index === 0, "When using field key as key, index should be 0");
+	assert(parentField.index === 0, 0xa29 /* When using field key as key, index should be 0 */);
 	return parentField.parent.key;
 }
 

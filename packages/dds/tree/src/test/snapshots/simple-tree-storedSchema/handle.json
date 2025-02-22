@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.handle": {
+      "leaf": 3
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "com.fluidframework.leaf.handle"
+    ]
+  }
+}

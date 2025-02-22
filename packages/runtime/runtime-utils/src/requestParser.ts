@@ -42,15 +42,16 @@ export class RequestParser implements IRequest {
 	protected constructor(private readonly request: Readonly<IRequest>) {
 		const queryStartIndex = this.request.url.indexOf("?");
 		this.query = queryStartIndex >= 0 ? this.request.url.substring(queryStartIndex) : "";
+		if (request.headers !== undefined) {
+			this.headers = request.headers;
+		}
 	}
 
 	public get url(): string {
 		return this.request.url;
 	}
 
-	public get headers(): IRequestHeader | undefined {
-		return this.request.headers;
-	}
+	public readonly headers?: IRequestHeader;
 
 	/**
 	 * Returns the decoded path parts of the request's url

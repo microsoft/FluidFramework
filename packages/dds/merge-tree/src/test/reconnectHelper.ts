@@ -7,38 +7,56 @@ import { strict as assert } from "node:assert";
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { SegmentGroup, endpointPosAndSide, type SequencePlace } from "../index.js";
+import {
+	endpointPosAndSide,
+	type IMergeTreeOptions,
+	type InteriorSequencePlace,
+	type SequencePlace,
+} from "../index.js";
+import type { SegmentGroup } from "../mergeTreeNodes.js";
 import {
 	IMergeTreeDeltaOp,
 	type IMergeTreeInsertMsg,
 	type IMergeTreeObliterateMsg,
+	type IMergeTreeObliterateSidedMsg,
 	type IMergeTreeRemoveMsg,
 } from "../ops.js";
 
+import type { TestClient } from "./testClient.js";
 import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
 
 const ClientIds = ["A", "B", "C", "D"] as const;
 type ClientName = (typeof ClientIds)[number];
 
 export class ReconnectTestHelper {
-	clients = createClientsAtInitialState(
-		{
-			initialState: "",
-			options: { mergeTreeEnableObliterate: true, mergeTreeEnableObliterateReconnect: true },
-		},
-		...ClientIds,
-	);
+	clients: Record<ClientName, TestClient> & { all: TestClient[] };
 
 	idxFromName(name: ClientName): number {
 		return (name.codePointAt(0) ?? 0) - ("A".codePointAt(0) ?? 0);
 	}
 
-	logger = new TestClientLogger(this.clients.all);
+	logger: TestClientLogger;
 
 	ops: ISequencedDocumentMessage[] = [];
-	perClientOps: ISequencedDocumentMessage[][] = this.clients.all.map(() => []);
+	perClientOps: ISequencedDocumentMessage[][];
 
 	seq: number = 0;
+
+	public constructor(options: IMergeTreeOptions = {}) {
+		this.clients = createClientsAtInitialState(
+			{
+				initialState: "",
+				options: {
+					mergeTreeEnableObliterate: true,
+					mergeTreeEnableObliterateReconnect: true,
+					...options,
+				},
+			},
+			...ClientIds,
+		);
+		this.logger = new TestClientLogger(this.clients.all);
+		this.perClientOps = this.clients.all.map(() => []);
+	}
 
 	public insertText(clientName: ClientName, pos: number, text: string): void {
 		const client = this.clients[clientName];
@@ -52,23 +70,16 @@ export class ReconnectTestHelper {
 
 	public obliterateRange(
 		clientName: ClientName,
-		start: SequencePlace,
-		end: SequencePlace,
+		start: number | InteriorSequencePlace,
+		end: number | InteriorSequencePlace,
 	): void {
 		const client = this.clients[clientName];
-		let { startPos, endPos } = endpointPosAndSide(start, end);
-		assert(
-			startPos !== undefined && endPos !== undefined,
-			"start and end positions must be defined",
-		);
-		startPos = startPos === "start" ? 0 : startPos;
-		endPos = endPos === "end" ? client.getLength() : endPos;
-		assert(
-			startPos !== "end" && endPos !== "start",
-			"start cannot be end and end cannot be start",
-		);
 		this.ops.push(
-			client.makeOpMessage(client.obliterateRangeLocal(startPos, endPos), ++this.seq),
+			client.makeOpMessage(
+				// TODO: remove type assertions when sidedness is enabled
+				client.obliterateRangeLocal(start as number, end as number),
+				++this.seq,
+			),
 		);
 	}
 
@@ -111,7 +122,7 @@ export class ReconnectTestHelper {
 		start: SequencePlace,
 		end: SequencePlace,
 	): {
-		op: IMergeTreeObliterateMsg;
+		op: IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 		seg: SegmentGroup;
 		refSeq: number;
 	} {
@@ -164,11 +175,9 @@ export class ReconnectTestHelper {
 
 	public submitDisconnectedOp(
 		clientName: ClientName,
-		op: { op: IMergeTreeDeltaOp; seg: SegmentGroup | SegmentGroup[]; refSeq: number },
+		op: { op: IMergeTreeDeltaOp; seg: SegmentGroup | SegmentGroup[] },
 	): void {
 		const client = this.clients[clientName];
-		this.ops.push(
-			client.makeOpMessage(client.regeneratePendingOp(op.op, op.seg), ++this.seq, op.refSeq),
-		);
+		this.ops.push(client.makeOpMessage(client.regeneratePendingOp(op.op, op.seg), ++this.seq));
 	}
 }

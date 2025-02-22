@@ -87,3 +87,19 @@ export function endpointPosAndSide(
 		endPos,
 	};
 }
+
+/**
+ * Returns the given place in InteriorSequencePlace form.
+ */
+export function normalizePlace(place: SequencePlace): InteriorSequencePlace {
+	if (typeof place === "number") {
+		return { pos: place, side: Side.Before };
+	}
+	if (place === "start") {
+		return { pos: -1, side: Side.After };
+	}
+	if (place === "end") {
+		return { pos: -1, side: Side.Before };
+	}
+	return place;
+}

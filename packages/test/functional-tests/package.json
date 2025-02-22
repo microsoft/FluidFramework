@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/functional-tests",
-	"version": "2.3.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Functional tests",
 	"homepage": "https://fluidframework.com",
@@ -31,8 +31,8 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit",
-		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
@@ -41,12 +41,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -57,20 +59,22 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-private/test-loader-utils": "workspace:~",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
+		"@fluidframework/build-tools": "^0.53.0",
 		"@fluidframework/cell": "workspace:~",
+		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/matrix": "workspace:~",
@@ -82,26 +86,28 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
 		"@types/events_pkg": "npm:@types/events@^3.0.0",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
+		"@types/sinon": "^17.0.3",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"events_pkg": "npm:events@^3.1.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"ts-loader": "^9.3.0",
+		"sinon": "^18.0.1",
+		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2"
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4"
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

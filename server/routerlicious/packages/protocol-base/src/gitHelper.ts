@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { unreachableCase } from "@fluidframework/common-utils";
 import * as git from "@fluidframework/gitresources";
 import {
 	FileMode,
@@ -10,7 +11,6 @@ import {
 	SummaryType,
 	SummaryObject,
 } from "@fluidframework/protocol-definitions";
-import { unreachableCase } from "@fluidframework/common-utils";
 
 /**
  * Take a summary object and returns its git mode.

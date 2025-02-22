@@ -39,7 +39,12 @@ export {
 	runMergeTreeOperationRunner,
 	TestOperation,
 } from "./mergeTreeOperationRunner.js";
-export { LRUSegment, MergeTree } from "../mergeTree.js";
+export {
+	LRUSegment,
+	MergeTree,
+	IMergeTreeOptions,
+	IMergeTreeOptionsInternal,
+} from "../mergeTree.js";
 export { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 export { SnapshotLegacy } from "../snapshotlegacy.js";
 export {
@@ -57,13 +62,11 @@ export {
 	createInsertSegmentOp,
 	createMap,
 	createRemoveRangeOp,
-	debugMarkerToString,
 	DetachedReferencePosition,
 	discardMergeTreeDeltaRevertible,
 	IJSONMarkerSegment,
 	IJSONSegment,
 	IMarkerDef,
-	IMergeNodeCommon,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeClientSequenceArgs,
 	IMergeTreeDelta,
@@ -80,7 +83,6 @@ export {
 	IRBAugmentation,
 	IRBMatcher,
 	IRelativePosition,
-	IRemovalInfo,
 	ISegment,
 	ISegmentAction,
 	KeyComparer,
@@ -90,7 +92,6 @@ export {
 	Marker,
 	matchProperties,
 	maxReferencePosition,
-	MergeNode,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
 	MergeTreeDeltaRevertible,
@@ -115,13 +116,10 @@ export {
 	reservedMarkerSimpleTypeKey,
 	reservedTileLabelsKey,
 	revertMergeTreeDeltaRevertibles,
-	SegmentGroup,
-	SegmentGroupCollection,
 	SortedSegmentSet,
 	SortedSegmentSetItem,
 	SortedSet,
 	TextSegment,
-	toRemovalInfo,
 	Trackable,
 	TrackingGroup,
 	TrackingGroupCollection,

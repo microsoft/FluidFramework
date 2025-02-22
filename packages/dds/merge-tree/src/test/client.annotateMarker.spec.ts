@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { UniversalSequenceNumber } from "../constants.js";
-import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes.js";
+import { Marker, reservedMarkerIdKey, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -37,7 +37,7 @@ describe("TestClient", () => {
 				[reservedMarkerIdKey]: "123",
 			});
 			assert(insertOp);
-			const markerInfo = client.getContainingSegment(0);
+			const markerInfo = client.getContainingSegment<ISegmentPrivate>(0);
 			const marker = markerInfo.segment as Marker;
 			const annotateOp = client.annotateMarker(marker, { foo: "bar" });
 			assert(annotateOp);

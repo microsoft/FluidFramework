@@ -21,163 +21,120 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: absolutePathToTelemetryGenerator
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
-  readonly: true
 - name: testPackage
   value: "@fluid-internal/test-service-load"
   readonly: true
+- name: pipelineIdentifierForTelemetry
+  value: 'RealStressService'
+  readonly: true
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
 
 lockBehavior: sequential
 stages:
   # stress tests odsp
-  - stage: stress_tests_odsp
-    displayName:  Stress tests - Odsp
-    dependsOn: []
-    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
-    variables:
-    - group: stress-odsp-lock
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Large
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
-        testCommand: start:odsp
-        skipTestResultPublishing: true
-        env:
-          login__microsoft__clientId: $(login-microsoft-clientId)
-          login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
-          FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_odsp
+      stageDisplayName: Stress tests - Odsp
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 120
+      testCommand: start:odsp
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-odsp-lock
+      env:
+        login__microsoft__clientId: $(login-microsoft-clientId)
+        login__odsp__test__tenants: $(automation-stress-login-odsp-test-tenants)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests odsp dogfood
-  - stage: stress_tests_odspdf
-    displayName:  Stress tests - Odspdf
-    dependsOn: []
-    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
-    variables:
-    - group: stress-odspdf-lock
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Large
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
-        testCommand: start:odspdf
-        skipTestResultPublishing: true
-        env:
-          login__microsoft__clientId: $(login-microsoft-clientId)
-          login__odspdf__test__tenants: $(automation-stress-login-odspdf-test-tenants)
-          FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_odspdf
+      stageDisplayName: Stress tests - Odspdf
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 120
+      testCommand: start:odspdf
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-odspdf-lock
+      env:
+        login__microsoft__clientId: $(login-microsoft-clientId)
+        login__odspdf__test__tenants: $(automation-stress-login-odspdf-test-tenants)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
   # stress tests tinylicious
-  - stage: stress_tests_tinylicious
-    displayName: Stress tests - tinylicious
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Large
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
-        testCommand: start:t9s
-        skipTestResultPublishing: true
-        env:
-          FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-          # Disable colorization for tinylicious logs (not useful when printing to a file)
-          logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
-          logger__morganFormat: tiny
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_tinylicious
+      stageDisplayName: Stress tests - tinylicious
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 120
+      testCommand: start:t9s
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        # Disable colorization for tinylicious logs (not useful when printing to a file)
+        logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+        logger__morganFormat: tiny
 
-  # stress tests frs
-  - stage: stress_tests_frs
-    displayName: Stress tests - frs
-    dependsOn: []
-    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
-    variables:
-    - group: stress-frs-lock
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Large
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
-        testCommand: start:frs
-        skipTestResultPublishing: true
-        env:
-          fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
-          FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+  # stress tests AFR
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_frs
+      stageDisplayName: Stress tests - AFR
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 120
+      testCommand: start:frs
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-frs-lock
+      env:
+        fluid__test__driver__frs: $(automation-fluid-test-driver-frs-stress-test)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
-  # stress tests frs canary
-  - stage: stress_tests_frs_canary
-    displayName: Stress tests - frs canary
-    dependsOn: []
-    # use a variable group with exclusive lock force only one run at a time and avoid overloading the server/throttling
-    variables:
-    - group: stress-frs-canary
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Large
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        artifactBuildId: $(resources.pipeline.client.runID)
-        timeoutInMinutes: 120
-        testCommand: start:frs:canary
-        skipTestResultPublishing: true
-        env:
-          fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
-          FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-
-  # Capture telemetry about pipeline stages
-  - stage: upload_run_telemetry
-    displayName: Upload pipeline run telemetry to Kusto
-    condition: succeededOrFailed()
-    dependsOn:
-      - stress_tests_odsp
-      - stress_tests_odspdf
-      - stress_tests_tinylicious
-      - stress_tests_frs
-      - stress_tests_frs_canary
-    jobs:
-    - job: upload_run_telemetry
-      displayName: Upload pipeline run telemetry to Kusto
-      pool: Small
-      variables:
-      - group: ado-feeds
-
-      steps:
-      - template: templates/include-telemetry-setup.yml
-        parameters:
-          devFeedUrl: $(ado-feeds-dev)
-          officeFeedUrl: $(ado-feeds-office)
-          isCheckoutNeeded: true
-      - task: Bash@3
-        displayName: Retrieve buildId results
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
-          script: |
-            echo "creating output folder"
-            mkdir -p ${{ variables.testWorkspace }}/timingOutput
-            echo "Retrieving pipeline run timeline data command ..."
-            echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-            curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
-            pwd;
-            ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-            cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
-        env:
-          BUILD_ID: $(Build.BuildId)
-          ADO_API_TOKEN: $(System.AccessToken)
-          PIPELINE: 'RealStressService'
+  # stress tests AFR canary
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: stress_tests_frs_canary
+      stageDisplayName: Stress tests - AFR canary
+      poolBuild: Large-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      artifactBuildId: $(resources.pipeline.client.runID)
+      timeoutInMinutes: 120
+      testCommand: start:frs:canary
+      skipTestResultPublishing: true
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-frs-canary
+      env:
+        fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
+        FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'

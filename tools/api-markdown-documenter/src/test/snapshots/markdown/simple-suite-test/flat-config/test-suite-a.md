@@ -1,6 +1,6 @@
 [Packages](docs/) &gt; [test-suite-a](docs/test-suite-a)
 
-<b>Test package</b>
+Test package
 
 # Remarks {#test-suite-a-remarks}
 
@@ -83,10 +83,11 @@ const foo = bar;
 
 # Namespaces
 
-| Namespace | Description |
-| --- | --- |
-| [TestModule](docs/test-suite-a#testmodule-namespace) |  |
-| [TestNamespace](docs/test-suite-a#testnamespace-namespace) | Test Namespace |
+| Namespace | Alerts | Description |
+| --- | --- | --- |
+| [TestBetaNamespace](docs/test-suite-a#testbetanamespace-namespace) | `Beta` | A namespace tagged as `@beta`. |
+| [TestModule](docs/test-suite-a#testmodule-namespace) |  |  |
+| [TestNamespace](docs/test-suite-a#testnamespace-namespace) |  | Test Namespace |
 
 # Interface Details
 
@@ -114,9 +115,9 @@ export interface TestInterface
 
 Here are some remarks about the interface
 
-### Construct Signatures
+### Constructors
 
-| ConstructSignature | Return Type | Description |
+| Constructor | Return Type | Description |
 | --- | --- | --- |
 | [new (): TestInterface](docs/test-suite-a#testinterface-_new_-constructsignature) | [TestInterface](docs/test-suite-a#testinterface-interface) | Test construct signature. |
 
@@ -149,19 +150,19 @@ Here are some remarks about the interface
 | [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](docs/test-suite-a#testinterface-_call_-callsignature) | Test interface event call signature |
 | [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | Another example call signature |
 
-### Construct Signature Details
+### Constructor Details
 
-#### new (): TestInterface {#testinterface-_new_-constructsignature}
+#### new (): TestInterface {#testinterface-\_new\_-constructsignature}
 
 Test construct signature.
 
-##### Signature {#_new_-signature}
+##### Signature {#\_new\_-signature}
 
 ```typescript
 new (): TestInterface;
 ```
 
-##### Returns {#_new_-returns}
+##### Returns {#\_new\_-returns}
 
 **Return type:** [TestInterface](docs/test-suite-a#testinterface-interface)
 
@@ -266,31 +267,31 @@ Here are some remarks about the method
 
 ### Call Signature Details
 
-#### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#testinterface-_call_-callsignature}
+#### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#testinterface-\_call\_-callsignature}
 
 Test interface event call signature
 
-##### Signature {#_call_-signature}
+##### Signature {#\_call\_-signature}
 
 ```typescript
 (event: 'testCallSignature', listener: (input: unknown) => void): any;
 ```
 
-##### Remarks {#_call_-remarks}
+##### Remarks {#\_call\_-remarks}
 
 Here are some remarks about the event call signature
 
-#### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#testinterface-_call__1-callsignature}
+#### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#testinterface-\_call\_\_1-callsignature}
 
 Another example call signature
 
-##### Signature {#_call__1-signature}
+##### Signature {#\_call\_\_1-signature}
 
 ```typescript
 (event: 'anotherTestCallSignature', listener: (input: number) => string): number;
 ```
 
-##### Remarks {#_call__1-remarks}
+##### Remarks {#\_call\_\_1-remarks}
 
 Here are some remarks about the event call signature
 
@@ -380,11 +381,11 @@ export interface TestInterfaceWithIndexSignature
 
 ### Index Signature Details
 
-#### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-_indexer_-indexsignature}
+#### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-\_indexer\_-indexsignature}
 
 Test index signature.
 
-##### Signature {#_indexer_-signature}
+##### Signature {#\_indexer\_-signature}
 
 ```typescript
 [foo: number]: {
@@ -471,17 +472,17 @@ export declare abstract class TestAbstractClass
 
 ### Constructor Details
 
-#### (constructor) {#testabstractclass-_constructor_-constructor}
+#### (constructor) {#testabstractclass-\_constructor\_-constructor}
 
 This is a _{@customTag constructor}_.
 
-##### Signature {#_constructor_-signature}
+##### Signature {#\_constructor\_-signature}
 
 ```typescript
 protected constructor(privateProperty: number, protectedProperty: TestEnum);
 ```
 
-##### Parameters {#_constructor_-parameters}
+##### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
 | --- | --- | --- |
@@ -625,26 +626,26 @@ Here are some remarks about the class
 
 ### Constructor Details
 
-#### (constructor) {#testclass-_constructor_-constructor}
+#### (constructor) {#testclass-\_constructor\_-constructor}
 
 Test class constructor
 
-##### Signature {#_constructor_-signature}
+##### Signature {#\_constructor\_-signature}
 
 ```typescript
 constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
 ```
 
-##### Remarks {#_constructor_-remarks}
+##### Remarks {#\_constructor\_-remarks}
 
 Here are some remarks about the constructor
 
-##### Parameters {#_constructor_-parameters}
+##### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | privateProperty | number | See [TestAbstractClass](docs/test-suite-a#testabstractclass-class)'s constructor. |
-| protectedProperty | [TestEnum](docs/test-suite-a#testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href='docs/test-suite-a#testabstractclass-protectedproperty-property'>protectedProperty</a>.</p> |
+| protectedProperty | [TestEnum](docs/test-suite-a#testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href="docs/test-suite-a#testabstractclass-protectedproperty-property">protectedProperty</a>.</p> |
 | testClassProperty | TTypeParameterB | See [testClassProperty](docs/test-suite-a#testclass-testclassproperty-property). |
 | testClassEventProperty | () =&gt; void | See [testClassEventProperty](docs/test-suite-a#testclass-testclasseventproperty-property). |
 
@@ -1017,6 +1018,51 @@ testConstWithEmptyDeprecatedBlock: string
 
 # Namespace Details
 
+## TestBetaNamespace {#testbetanamespace-namespace}
+
+A namespace tagged as `@beta`.
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
+
+### Signature {#testbetanamespace-signature}
+
+```typescript
+export declare namespace TestBetaNamespace
+```
+
+### Remarks {#testbetanamespace-remarks}
+
+Tests release level inheritance.
+
+### Variables
+
+| Variable | Alerts | Modifiers | Type | Description |
+| --- | --- | --- | --- | --- |
+| [betaMember](docs/test-suite-a#testbetanamespace-betamember-variable) | `Beta` | `readonly` |  |  |
+| [publicMember](docs/test-suite-a#testbetanamespace-publicmember-variable) | `Beta` | `readonly` |  |  |
+
+### Variable Details
+
+#### betaMember {#testbetanamespace-betamember-variable}
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
+
+##### Signature {#betamember-signature}
+
+```typescript
+betaMember = "beta"
+```
+
+#### publicMember {#testbetanamespace-publicmember-variable}
+
+**WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.**
+
+##### Signature {#publicmember-signature}
+
+```typescript
+publicMember = "public"
+```
+
 ## TestModule {#testmodule-namespace}
 
 ### Variables
@@ -1056,13 +1102,19 @@ Here are some remarks about the namespace
 #### Example: TypeScript Example {#testnamespace-example1}
 
 ```typescript
-const foo = bar;
+const foo: Foo = {
+	bar: "Hello world!";
+	baz = 42;
+};
 ```
 
 #### Example: JavaScript Example {#testnamespace-example2}
 
 ```javascript
-const bar = foo
+const foo = {
+	bar: "Hello world!";
+	baz = 42;
+};
 ```
 
 ### Classes
@@ -1133,18 +1185,18 @@ class TestClass
 
 ##### Constructor Details
 
-###### (constructor) {#testnamespace-testclass-_constructor_-constructor}
+###### (constructor) {#testnamespace-testclass-\_constructor\_-constructor}
 
 Test class constructor
 
-<a name="_constructor_-signature" />
+<a id="_constructor_-signature"></a>
 **Signature**
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-<a name="_constructor_-parameters" />
+<a id="_constructor_-parameters"></a>
 **Parameters**
 
 | Parameter | Type | Description |
@@ -1157,7 +1209,7 @@ constructor(testClassProperty: string);
 
 Test interface property
 
-<a name="testclassproperty-signature" />
+<a id="testclassproperty-signature"></a>
 **Signature**
 
 ```typescript
@@ -1172,28 +1224,28 @@ readonly testClassProperty: string;
 
 Test class method
 
-<a name="testclassmethod-signature" />
+<a id="testclassmethod-signature"></a>
 **Signature**
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-<a name="testclassmethod-parameters" />
+<a id="testclassmethod-parameters"></a>
 **Parameters**
 
 | Parameter | Type | Description |
 | --- | --- | --- |
 | testParameter | string | A string |
 
-<a name="testclassmethod-returns" />
+<a id="testclassmethod-returns"></a>
 **Returns**
 
 A Promise
 
 **Return type:** Promise&lt;string&gt;
 
-<a name="testclassmethod-throws" />
+<a id="testclassmethod-throws"></a>
 **Throws**
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
@@ -1225,7 +1277,7 @@ enum TestEnum
 
 Test enum value 1
 
-<a name="testenumvalue1-signature" />
+<a id="testenumvalue1-signature"></a>
 **Signature**
 
 ```typescript
@@ -1236,7 +1288,7 @@ TestEnumValue1 = 0
 
 Test enum value 2
 
-<a name="testenumvalue2-signature" />
+<a id="testenumvalue2-signature"></a>
 **Signature**
 
 ```typescript

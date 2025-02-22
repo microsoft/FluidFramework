@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import type { ICodecOptions } from "../../codec/index.js";
@@ -35,7 +35,7 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
-import { failCodecFamily, testRevisionTagCodec } from "../utils.js";
+import { failCodecFamily, mintRevisionTag, testRevisionTagCodec } from "../utils.js";
 import { singleJsonCursor } from "../json/index.js";
 
 const dataChanges: ModularChangeset[] = [];
@@ -46,8 +46,8 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
-	dataChanges.push(change),
+const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
+	dataChanges.push(taggedChange.change),
 );
 
 // Side effects results in `dataChanges` being populated
@@ -225,14 +225,23 @@ describe("SharedTreeChangeFamily", () => {
 
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
-				assert.deepEqual(sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback), {
+				const tag = mintRevisionTag();
+				const inverted = sharedTreeFamily.invert(
+					makeAnonChange(stDataChange1),
+					isRollback,
+					tag,
+				);
+
+				const expected = {
 					changes: [
 						{
 							type: "data",
-							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback),
+							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback, tag),
 						},
 					],
-				});
+				};
+
+				assert.deepEqual(inverted, expected);
 			});
 		}
 	});

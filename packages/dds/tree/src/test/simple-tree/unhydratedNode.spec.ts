@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
 import {
 	getOrCreateInnerNode,
 	SchemaFactory,
+	TreeBeta,
 	type FieldProps,
 	type TreeNode,
 } from "../../simple-tree/index.js";
@@ -21,8 +22,10 @@ import type {
 } from "../../simple-tree/schemaTypes.js";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { hydrate } from "./utils.js";
-import { isMapTreeNode, TreeStatus } from "../../feature-libraries/index.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -41,15 +44,15 @@ describe("Unhydrated nodes", () => {
 		const map = new TestMap([]);
 		const array = new TestArray([leaf]);
 		const object = new TestObject({ map, array });
-		assert.equal(isMapTreeNode(getOrCreateInnerNode(leaf)), true);
-		assert.equal(isMapTreeNode(getOrCreateInnerNode(map)), true);
-		assert.equal(isMapTreeNode(getOrCreateInnerNode(array)), true);
-		assert.equal(isMapTreeNode(getOrCreateInnerNode(object)), true);
+		assert.equal(getOrCreateInnerNode(leaf) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getOrCreateInnerNode(map) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getOrCreateInnerNode(array) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getOrCreateInnerNode(object) instanceof UnhydratedFlexTreeNode, true);
 		const hydratedObject = hydrate(TestObject, object);
-		assert.equal(isMapTreeNode(getOrCreateInnerNode(leaf)), false);
-		assert.equal(isMapTreeNode(getOrCreateInnerNode(map)), false);
-		assert.equal(isMapTreeNode(getOrCreateInnerNode(array)), false);
-		assert.equal(isMapTreeNode(getOrCreateInnerNode(object)), false);
+		assert.equal(getOrCreateInnerNode(leaf) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getOrCreateInnerNode(map) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getOrCreateInnerNode(array) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getOrCreateInnerNode(object) instanceof UnhydratedFlexTreeNode, false);
 		assert.equal(hydratedObject, object);
 		assert.equal(hydratedObject.array, array);
 		assert.equal(hydratedObject.map, map);
@@ -371,6 +374,72 @@ describe("Unhydrated nodes", () => {
 				"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
 			),
 		);
+	});
+
+	it("emit events when edited", () => {
+		const leaf = new TestLeaf({ value: "value" });
+		const map = new TestMap([]);
+		const array = new TestArray([leaf]);
+		const object = new TestObject({ map, array });
+
+		const log: string[] = [];
+		Tree.on(leaf, "nodeChanged", () => log.push("leaf nodeChanged"));
+		Tree.on(leaf, "treeChanged", () => log.push("leaf treeChanged"));
+		Tree.on(map, "nodeChanged", () => log.push("map nodeChanged"));
+		Tree.on(map, "treeChanged", () => log.push("map treeChanged"));
+		Tree.on(array, "nodeChanged", () => log.push("array nodeChanged"));
+		Tree.on(array, "treeChanged", () => log.push("array treeChanged"));
+		Tree.on(object, "nodeChanged", () => log.push("object nodeChanged"));
+		Tree.on(object, "treeChanged", () => log.push("object treeChanged"));
+
+		leaf.value = "value 2";
+		map.set("key", { value: "value 3" });
+		array.removeRange();
+		object.map = new TestMap({});
+
+		assert.deepEqual(log, [
+			"leaf nodeChanged",
+			"leaf treeChanged",
+			"array treeChanged",
+			"object treeChanged",
+			"map nodeChanged",
+			"map treeChanged",
+			"object treeChanged",
+			"array nodeChanged",
+			"array treeChanged",
+			"object treeChanged",
+			"object nodeChanged",
+			"object treeChanged",
+		]);
+	});
+
+	it("emit correct changed properties when edited", () => {
+		const leaf = new TestLeaf({ value: "value" });
+		const map = new TestMap([]);
+		const array = new TestArray([leaf]);
+		const object = new TestObject({ map, array });
+
+		const log: string[] = [];
+		TreeBeta.on(leaf, "nodeChanged", ({ changedProperties }) =>
+			log.push(...changedProperties),
+		);
+		TreeBeta.on(map, "nodeChanged", ({ changedProperties }) => log.push(...changedProperties));
+		TreeBeta.on(array, "nodeChanged", ({ changedProperties }) => {
+			assert.equal(changedProperties, undefined);
+			// Arrays do not supply a changedProperties, but we still want to validate that the event is emitted.
+			log.push("<arrayChanged>");
+		});
+		TreeBeta.on(object, "nodeChanged", ({ changedProperties }) =>
+			log.push(...changedProperties),
+		);
+
+		leaf.value = "value 2";
+		map.set("key", { value: "value 3" });
+		array.removeRange();
+		object.map = new TestMap({});
+		object.array = new TestArray([]);
+
+		assert.deepEqual(log, ["value", "key", "<arrayChanged>", "map", "array"]);
 	});
 });
 

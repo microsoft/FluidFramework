@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/markdown-magic",
-	"version": "2.3.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
 	"homepage": "https://fluidframework.com",
@@ -19,8 +19,8 @@
 		"build": "npm run build:docs",
 		"build:docs": "node src/index.cjs --files README.md",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"lint": "npm run prettier",
+		"lint:fix": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache",
 		"prettier:fix": "prettier --write . --cache",
 		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"
@@ -30,19 +30,18 @@
 		"@tylerbu/markdown-magic": "2.4.0-tylerbu-1",
 		"chalk": "^4.1.2",
 		"markdown-magic-package-scripts": "^1.2.2",
-		"markdown-magic-template": "^1.0.1",
 		"yargs": "17.7.2"
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
 		"prettier": "~3.0.3"
 	},
-	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
 	"dependencyComments": [
 		"chalk is left at version 4 (not 5) to keep CommonJS support."
 	],
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

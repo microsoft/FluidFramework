@@ -8,7 +8,12 @@
 import { strict as assert } from "node:assert";
 
 import { UniversalSequenceNumber } from "../constants.js";
-import { ISegmentLeaf, Marker, SegmentGroup, reservedMarkerIdKey } from "../mergeTreeNodes.js";
+import {
+	ISegmentPrivate,
+	Marker,
+	SegmentGroup,
+	reservedMarkerIdKey,
+} from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -80,7 +85,7 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "aefg");
 		client.insertTextLocal(1, "bcd");
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
-		const segment: ISegmentLeaf = segmentGroup.segments[0];
+		const segment = segmentGroup.segments[0];
 		client.rollback?.({ type: MergeTreeDeltaType.INSERT }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs
@@ -302,7 +307,7 @@ describe("client.rollback", () => {
 		);
 		client.annotateRangeLocal(2, 3, { foo: "bar" });
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
-		const segment: ISegmentLeaf = segmentGroup.segments[0];
+		const segment = segmentGroup.segments[0];
 		client.rollback?.({ type: MergeTreeDeltaType.ANNOTATE }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs
@@ -330,17 +335,56 @@ describe("client.rollback", () => {
 	it("Should rollback delete which causes split segments", () => {
 		client.insertTextLocal(0, "abcde");
 		client.removeRangeLocal(1, 4);
+		let deltaEvent = false;
+		client.on("delta", () => {
+			assert.equal(client.getText(), "abcde");
+			deltaEvent = true;
+		});
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcde");
+		assert.equal(deltaEvent, true);
 	});
 	it("Should rollback delete across split segments", () => {
 		client.insertTextLocal(0, "abcde");
 		client.annotateRangeLocal(2, 3, { foo: "bar" });
 		client.removeRangeLocal(1, 4);
+
+		let deltaCount = 0;
+		let bFound = false;
+		let cFound = false;
+		let dFound = false;
+		client.on("delta", (_opArgs, delta) => {
+			deltaCount++;
+			assert.equal(client.getText().length, 2 + deltaCount);
+			assert.equal(delta.deltaSegments.length, 1);
+			assert.equal(delta.deltaSegments[0].segment.type, TextSegment.type);
+			const text = (delta.deltaSegments[0].segment as TextSegment).toString();
+			switch (text) {
+				case "b": {
+					bFound = true;
+					break;
+				}
+				case "c": {
+					cFound = true;
+					break;
+				}
+				case "d": {
+					dFound = true;
+					break;
+				}
+				default: {
+					assert(false, `Unexpected text segment: ${text}`);
+				}
+			}
+		});
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcde");
+		assert.equal(deltaCount, 3);
+		assert(bFound);
+		assert(cFound);
+		assert(dFound);
 	});
 	it("Should rollback delete and update blocks", () => {
 		const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
@@ -361,8 +405,8 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "efg");
 		client.insertTextLocal(0, "d");
 		client.insertTextLocal(0, "abc");
-		const segInfo1 = client.getContainingSegment(2);
-		const segInfo3 = client.getContainingSegment(5);
+		const segInfo1 = client.getContainingSegment<ISegmentPrivate>(2);
+		const segInfo3 = client.getContainingSegment<ISegmentPrivate>(5);
 		const ref1 = client.createLocalReferencePosition(
 			segInfo1.segment!,
 			0,
@@ -392,12 +436,12 @@ describe("client.rollback", () => {
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, client.peekPendingSegmentGroups());
 
 		assert.equal(client.getText(), "abcdefg");
-		const segInfo1After = client.getContainingSegment(2);
+		const segInfo1After = client.getContainingSegment<ISegmentPrivate>(2);
 		assert.notEqual(segInfo1After, undefined);
 		assert.notEqual(segInfo1After.segment?.localRefs, undefined);
 		assert(segInfo1After.segment?.localRefs!.has(ref1));
 		assert(segInfo1After.segment?.localRefs!.has(refSlide));
-		const segInfo3After = client.getContainingSegment(5);
+		const segInfo3After = client.getContainingSegment<ISegmentPrivate>(5);
 		assert.notEqual(segInfo3After, undefined);
 		assert.notEqual(segInfo3After.segment?.localRefs, undefined);
 		assert(segInfo3After.segment?.localRefs!.has(ref2));
@@ -415,7 +459,7 @@ describe("client.rollback", () => {
 		);
 		client.removeRangeLocal(1, 4);
 		const segmentGroup = client.peekPendingSegmentGroups() as SegmentGroup;
-		const segment: ISegmentLeaf = segmentGroup.segments[0];
+		const segment = segmentGroup.segments[0];
 		client.rollback?.({ type: MergeTreeDeltaType.REMOVE }, segmentGroup);
 
 		// do some work and move the client's min seq forward, so zamboni runs

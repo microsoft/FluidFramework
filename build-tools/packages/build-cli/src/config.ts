@@ -40,6 +40,11 @@ export interface FlubConfig {
 
 	/**
 	 * Configuration for assert tagging.
+	 * @remarks
+	 * Some of this applies to the root where flub is being run,
+	 * and some of it applies to the specific package being processed.
+	 * @privateRemarks
+	 * It seems like having each package have its own configuration would be simpler.
 	 */
 	assertTagging?: AssertTaggingConfig;
 
@@ -63,6 +68,23 @@ export interface FlubConfig {
 	 * Configuration for the `generate:releaseNotes` command.
 	 */
 	releaseNotes?: ReleaseNotesConfig;
+
+	/**
+	 * Configuration for `release report` command
+	 */
+	releaseReport?: ReleaseReportConfig;
+}
+
+/**
+ * Configuration for the `release report` command. If this configuration is not present in the config, the
+ * `release report` command will report an error.
+ */
+export interface ReleaseReportConfig {
+	/**
+	 * Each key in the `legacyCompatInterval` object represents a specific release group or package name as string,
+	 * and the associated value is a number that defines the legacy compatibility interval for that group.
+	 */
+	legacyCompatInterval: Record<ReleaseGroup | string, number>;
 }
 
 /**
@@ -195,12 +217,16 @@ export interface PolicyConfig {
 	publicPackageRequirements?: PackageRequirements;
 }
 
+/**
+ * Used by `TagAssertsCommand`.
+ */
 export interface AssertTaggingConfig {
-	assertionFunctions: { [functionName: string]: number };
-
 	/**
 	 * An array of paths under which assert tagging applies to. If this setting is provided, only packages whose paths
 	 * match the regular expressions in this setting will be assert-tagged.
+	 *
+	 * This is used from the root where flub is run.
+	 * TODO: this should be replaced by package selection flags passed to the command.
 	 */
 	enabledPaths?: RegExp[];
 }
@@ -347,7 +373,7 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 	const config = configResult?.config as FlubConfig | undefined;
 
 	if (config === undefined) {
-		throw new Error("No flub configuration found.");
+		throw new Error(`No flub configuration found (configPath='${configPath}').`);
 	}
 
 	// Only version 1 of the config is supported. If any other value is provided, throw an error.
@@ -361,20 +387,34 @@ export function getFlubConfig(configPath: string, noCache = false): FlubConfig {
 }
 
 /**
- * Convenience function to extract the default interdependency range for a release group from the flub config.
+ * Convenience function to extract the default interdependency range for a release group from the flub config. For
+ * back-compat, it will also load the relevant setting from the fluid-build config.
  */
 export function getDefaultInterdependencyRange(
 	releaseGroup: ReleaseGroup | MonoRepo,
 	context: Context,
 ): InterdependencyRange {
 	const releaseGroupName = releaseGroup instanceof MonoRepo ? releaseGroup.name : releaseGroup;
-	const interdependencyRangeDefaults = context.flubConfig.bump?.defaultInterdependencyRange;
-	if (interdependencyRangeDefaults === undefined) {
-		return DEFAULT_INTERDEPENDENCY_RANGE;
+
+	// Prefer to use the configuration in the flub config if available.
+	const flubConfigRanges = context.flubConfig.bump?.defaultInterdependencyRange;
+	const interdependencyRangeFromFlubConfig: InterdependencyRange | undefined =
+		flubConfigRanges?.[releaseGroupName as ReleaseGroup];
+
+	// Return early if the flub config had a range configured - no need to check/load other configs.
+	if (interdependencyRangeFromFlubConfig !== undefined) {
+		return interdependencyRangeFromFlubConfig;
 	}
 
-	const interdependencyRange =
-		interdependencyRangeDefaults?.[releaseGroupName as ReleaseGroup];
+	// For back-compat with earlier configs, try to load the default interdependency range from the fluid-build config.
+	// This can be removed once we are no longer supporting release branches older than release/client/2.4
+	const fbConfig = context.fluidBuildConfig.repoPackages?.[releaseGroupName];
+	const interdependencyRangeFromFluidBuildConfig =
+		fbConfig !== undefined && typeof fbConfig === "object" && !Array.isArray(fbConfig)
+			? fbConfig.defaultInterdependencyRange
+			: undefined;
 
-	return interdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE;
+	// Once the back-compat code above is removed, this should change to
+	// return interdependencyRangeFromFlubConfig ?? DEFAULT_INTERDEPENDENCY_RANGE
+	return interdependencyRangeFromFluidBuildConfig ?? DEFAULT_INTERDEPENDENCY_RANGE;
 }

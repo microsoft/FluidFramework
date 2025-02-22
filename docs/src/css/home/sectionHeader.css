@@ -1,0 +1,63 @@
+.ffcom-section-header {
+	width: 100%;
+
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+
+	padding: 0px;
+	gap: 16px;
+}
+
+.ffcom-section-header-inner {
+	width: 100%;
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+
+	padding: 0px;
+}
+
+.ffcom-section-header-subtitle {
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 600;
+	font-size: 12px;
+	line-height: 16px;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: #61615e;
+
+	align-self: stretch;
+}
+
+.ffcom-section-header-title {
+	font-family: "Segoe UI";
+	font-style: normal;
+	font-weight: 600;
+	font-size: 40px;
+	line-height: 48px;
+	letter-spacing: -0.05em;
+	color: #0e1726;
+
+	align-self: stretch;
+}
+
+@media (max-width: 768px) {
+	.ffcom-section-header-title {
+		font-size: 28px;
+	}
+	.ffcom-section-header-subtitle {
+		font-size: 10px;
+	}
+}
+
+@media (max-width: 425px) {
+	.ffcom-section-header-title {
+		font-size: 24px;
+	}
+	.ffcom-section-header-subtitle {
+		font-size: 10px;
+	}
+}

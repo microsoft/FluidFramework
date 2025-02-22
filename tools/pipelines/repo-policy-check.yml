@@ -20,6 +20,7 @@ variables:
   value: true
 - name: pnpmStorePath
   value: $(Pipeline.Workspace)/.pnpm-store
+- group: ado-feeds
 
 # The `resources` specify the location and version of the 1ES PT.
 resources:
@@ -39,7 +40,7 @@ extends:
     template: v1/M365.Unofficial.PipelineTemplate.yml@m365Pipelines
   parameters:
     pool:
-      name: Small-1ES # This is one of the Fluid Orgs new 1ES hosted pools.
+      name: Small-eastus2
       os: linux
     sdl:
       ${{ if eq(variables['System.TeamProject'], 'internal') }}:
@@ -74,6 +75,7 @@ extends:
             targetType: 'inline'
             workingDirectory: .
             script: |
+              set -eu -o pipefail
               # We only need to install the root dependencies
               pnpm install --workspace-root --frozen-lockfile
 
@@ -94,4 +96,5 @@ extends:
           inputs:
             targetType: 'inline'
             script: |
+              set -eu -o pipefail
               pnpm store prune

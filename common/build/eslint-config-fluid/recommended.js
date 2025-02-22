@@ -44,10 +44,15 @@ module.exports = {
 			},
 		],
 
+		// #region `unicorn` rule overrides
+
+		// False positives on non-array `push` methods.
+		"unicorn/no-array-push-push": "off",
+
 		"unicorn/empty-brace-spaces": "off",
 
 		// Rationale: Destructuring of `Array.entries()` in order to get the index variable results in a
-		//            significant performance regression [node 14 x64].
+		// significant performance regression [node 14 x64].
 		"unicorn/no-for-loop": "off",
 
 		/**
@@ -108,6 +113,8 @@ module.exports = {
 		 */
 		"unicorn/expiring-todo-comments": "off",
 
+		// #endregion
+
 		/**
 		 * Disallows the `any` type.
 		 * Using the `any` type defeats the purpose of using TypeScript.
@@ -150,13 +157,13 @@ module.exports = {
 
 		/**
 		 * Disallows calling any variable that is typed as any. The arguments to, and return value of calling an
-		 * any typed variable are not checked at all by TypeScript.
+		 * `any`-typed variable are not checked at all by TypeScript.
 		 */
 		"@typescript-eslint/no-unsafe-call": "error",
 
 		/**
 		 * Disallows member access on any variable that is typed as any. The arguments to, and return value of
-		 * calling an any typed variable are not checked at all by TypeScript.
+		 * calling an `any`-typed variable are not checked at all by TypeScript.
 		 */
 		"@typescript-eslint/no-unsafe-member-access": "error",
 
@@ -196,10 +203,17 @@ module.exports = {
 		},
 		{
 			// Rules for test code
-			files: ["*.spec.ts", "*.test.ts", "**/test/**"],
+			files: [
+				"*.spec.ts",
+				"*.test.ts",
+				"**/test/**",
+				// TODO: consider unifying code across the repo to use "test" and not "tests", then we can remove this.
+				"**/tests/**",
+			],
 			rules: {
 				// Does not work well with describe/it block scoping
 				"unicorn/consistent-function-scoping": "off",
+
 				// We run most of our tests in a Node.js environment, so this rule is not important and makes
 				// file-system logic more cumbersome.
 				"unicorn/prefer-module": "off",

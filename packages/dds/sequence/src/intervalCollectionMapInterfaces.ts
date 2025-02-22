@@ -35,7 +35,6 @@ export interface IValueChanged {
 /**
  * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
  * @internal
- * @deprecated - will be remove from public api as there is no public used of this type
  */
 export interface IValueOpEmitter {
 	/**
@@ -67,7 +66,10 @@ export interface IMapMessageLocalMetadata {
 export interface SequenceOptions
 	extends Pick<
 		IMergeTreeOptions,
-		"mergeTreeReferencesCanSlideToEndpoint" | "mergeTreeEnableObliterate"
+		| "mergeTreeReferencesCanSlideToEndpoint"
+		| "mergeTreeEnableObliterate"
+		| "mergeTreeEnableSidedObliterate"
+		| "mergeTreeEnableAnnotateAdjust"
 	> {
 	/**
 	 * Enable the ability to use interval APIs that rely on positions before and

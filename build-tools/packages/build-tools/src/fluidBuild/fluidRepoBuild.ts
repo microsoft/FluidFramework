@@ -3,20 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import chalk from "chalk";
+import { existsSync } from "node:fs";
+import * as path from "node:path";
 import registerDebug from "debug";
+import chalk from "picocolors";
 
 import { defaultLogger } from "../common/logging";
 import { MonoRepo } from "../common/monoRepo";
 import { Package, Packages } from "../common/npmPackage";
-import { ExecAsyncResult, existsSync, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import { ExecAsyncResult, isSameFileOrDir, lookUpDirSync } from "../common/utils";
+import type { BuildContext } from "./buildContext";
 import { BuildGraph } from "./buildGraph";
-import type { IFluidBuildDirs } from "./fluidBuildConfig";
 import { FluidRepo } from "./fluidRepo";
 import { getFluidBuildConfig } from "./fluidUtils";
 import { NpmDepChecker } from "./npmDepChecker";
-import { ISymlinkOptions, symlinkPackage } from "./symlinkUtils";
 import { globFn } from "./tasks/taskUtils";
 
 const traceInit = registerDebug("fluid-build:init");
@@ -31,17 +31,8 @@ export interface IPackageMatchedOptions {
 }
 
 export class FluidRepoBuild extends FluidRepo {
-	public static create(resolvedRoot: string) {
-		// Default to just resolveRoot if no config is found
-		const packageManifest = getFluidBuildConfig(resolvedRoot) ?? {
-			repoPackages: {
-				root: "",
-			},
-		};
-		return new FluidRepoBuild(resolvedRoot, packageManifest.repoPackages);
-	}
-	private constructor(resolvedRoot: string, repoPackages?: IFluidBuildDirs) {
-		super(resolvedRoot, repoPackages);
+	public constructor(protected context: BuildContext) {
+		super(context.repoRoot, context.fluidBuildConfig.repoPackages);
 	}
 
 	public async clean() {
@@ -99,6 +90,9 @@ export class FluidRepoBuild extends FluidRepo {
 		return true;
 	}
 
+	/**
+	 * @deprecated depcheck-related functionality will be removed in an upcoming release.
+	 */
 	public async depcheck(fix: boolean) {
 		for (const pkg of this.packages.packages) {
 			// Fluid specific
@@ -122,27 +116,16 @@ export class FluidRepoBuild extends FluidRepo {
 		}
 	}
 
-	public async symlink(options: ISymlinkOptions) {
-		// Only do parallel if we are checking only
-		const result = await this.packages.forEachAsync(
-			(pkg) => symlinkPackage(this, pkg, this.createPackageMap(), options),
-			!options.symlink,
-		);
-		return Packages.clean(
-			result.filter((entry) => entry.count).map((entry) => entry.pkg),
-			true,
-		);
-	}
-
-	public createBuildGraph(options: ISymlinkOptions, buildTargetNames: string[]) {
+	public createBuildGraph(buildTargetNames: string[]) {
 		return new BuildGraph(
 			this.createPackageMap(),
 			this.getReleaseGroupPackages(),
+			this.context,
 			buildTargetNames,
 			getFluidBuildConfig(this.resolvedRoot)?.tasks,
 			(pkg: Package) => {
 				return (dep: Package) => {
-					return options.fullSymlink || MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
+					return MonoRepo.isSame(pkg.monoRepo, dep.monoRepo);
 				};
 			},
 		);

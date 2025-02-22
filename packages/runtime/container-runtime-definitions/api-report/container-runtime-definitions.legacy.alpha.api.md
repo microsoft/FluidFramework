@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha
+// @alpha @sealed
 export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents {
     readonly attachState: AttachState;
     // (undocumented)
@@ -18,7 +18,6 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     // (undocumented)
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: Record<string | number, any>;
@@ -28,11 +27,11 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly storage: IDocumentStorageService;
 }
 
-// @alpha (undocumented)
+// @alpha @sealed (undocumented)
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
-// @alpha
-export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
+// @alpha @sealed
+export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents, ISummarizerEvents {
     // (undocumented)
     (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
@@ -46,6 +45,84 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
 }
+
+// @alpha @sealed (undocumented)
+export interface ISummarizeEventProps {
+    // (undocumented)
+    currentAttempt: number;
+    // (undocumented)
+    error?: any;
+    failureMessage?: string;
+    isLastSummary?: boolean;
+    // (undocumented)
+    maxAttempts: number;
+    // (undocumented)
+    result: "success" | "failure" | "canceled";
+}
+
+// @alpha @sealed (undocumented)
+export interface ISummarizerEvents extends IEvent {
+    // (undocumented)
+    (event: "summarize", listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "summarizeAllAttemptsFailed", listener: (props: Omit<ISummarizeEventProps, "result"> & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "summarizerStop", listener: (props: {
+        stopReason: SummarizerStopReason;
+        error?: any;
+    } & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "summarizerStart", listener: (props: {
+        onBehalfOf: string;
+    } & ISummarizerObservabilityProps) => void): any;
+    // (undocumented)
+    (event: "summarizerStartupFailed", listener: (props: {
+        reason: SummarizerStopReason;
+    } & ISummarizerObservabilityProps) => void): any;
+}
+
+// @alpha @sealed (undocumented)
+export interface ISummarizerObservabilityProps {
+    // (undocumented)
+    numUnsummarizedNonRuntimeOps: number;
+    // (undocumented)
+    numUnsummarizedRuntimeOps: number;
+}
+
+// @alpha @sealed (undocumented)
+export type SummarizerStopReason =
+/**
+* Summarizer client failed to summarize in all attempts.
+*/
+"failToSummarize"
+/**
+* Parent client reported that it is no longer connected.
+*/
+| "parentNotConnected"
+/**
+* Parent client reported that it is no longer elected the summarizer.
+* This is the normal flow; a disconnect will always trigger the parent
+* client to no longer be elected as responsible for summaries. Then it
+* tries to stop its spawned summarizer client.
+*/
+| "notElectedParent"
+/**
+* We are not already running the summarizer and we are not the current elected client id.
+*/
+| "notElectedClient"
+/**
+* Summarizer client was disconnected
+*/
+| "summarizerClientDisconnected"
+/**
+* running summarizer threw an exception
+*/
+| "summarizerException"
+/**
+* The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
+* first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
+*/
+| "latestSummaryStateStale";
 
 // (No @packageDocumentation comment for this package)
 

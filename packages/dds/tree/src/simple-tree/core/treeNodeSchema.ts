@@ -3,10 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalTreeNode, Unhydrated } from "./types.js";
+import type { NodeSchemaMetadata, TreeLeafValue } from "../schemaTypes.js";
+import type { InternalTreeNode, TreeNode, Unhydrated } from "./types.js";
 
 /**
- * Schema for a tree node.
+ * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
+ *
  * @typeParam Name - The full (including scope) name/identifier for the schema.
  * @typeParam Kind - Which kind of node this schema is for.
  * @typeParam TNode - API for nodes that use this schema.
@@ -14,18 +16,41 @@ import type { InternalTreeNode, Unhydrated } from "./types.js";
  * @typeParam Info - Data used when defining this schema.
  * @remarks
  * Captures the schema both as runtime data and compile time type information.
+ * Use {@link SchemaFactory} to define schema.
+ * Use `Tree.schema(value)` to lookup the schema for a {@link TreeNode} or {@link TreeLeafValue}.
  * @sealed @public
  */
 export type TreeNodeSchema<
 	Name extends string = string,
 	Kind extends NodeKind = NodeKind,
-	TNode = unknown,
+	TNode extends TreeNode | TreeLeafValue = TreeNode | TreeLeafValue,
 	TBuild = never,
 	ImplicitlyConstructable extends boolean = boolean,
 	Info = unknown,
+	TCustomMetadata = unknown,
 > =
-	| TreeNodeSchemaClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
-	| TreeNodeSchemaNonClass<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>;
+	| (TNode extends TreeNode
+			? TreeNodeSchemaClass<
+					Name,
+					Kind,
+					TNode,
+					TBuild,
+					ImplicitlyConstructable,
+					Info,
+					never,
+					TCustomMetadata
+				>
+			: never)
+	| TreeNodeSchemaNonClass<
+			Name,
+			Kind,
+			TNode,
+			TBuild,
+			ImplicitlyConstructable,
+			Info,
+			never,
+			TCustomMetadata
+	  >;
 
 /**
  * Schema which is not a class.
@@ -33,18 +58,40 @@ export type TreeNodeSchema<
  * This is used for schema which cannot have their instances constructed using constructors, like leaf schema.
  * @privateRemarks
  * Non-class based schema can have issues with recursive types due to https://github.com/microsoft/TypeScript/issues/55832.
- * @sealed @public
+ * @system @sealed @public
  */
-export interface TreeNodeSchemaNonClass<
-	out Name extends string = string,
-	out Kind extends NodeKind = NodeKind,
-	out TNode = unknown,
-	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
-	out Info = unknown,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
-	create(data: TInsertable): TNode;
-}
+export type TreeNodeSchemaNonClass<
+	Name extends string = string,
+	Kind extends NodeKind = NodeKind,
+	TNode extends TreeNode | TreeLeafValue = TreeNode | TreeLeafValue,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+	TConstructorExtra = never,
+	TCustomMetadata = unknown,
+> = TreeNodeSchemaCore<
+	Name,
+	Kind,
+	ImplicitlyConstructable,
+	Info,
+	TInsertable,
+	TCustomMetadata
+> &
+	(undefined extends TConstructorExtra
+		? {
+				/**
+				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @sealed
+				 */
+				create(data?: TInsertable | TConstructorExtra): TNode;
+			}
+		: {
+				/**
+				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @sealed
+				 */
+				create(data: TInsertable | TConstructorExtra): TNode;
+			});
 
 /**
  * Tree node schema which is implemented using a class.
@@ -91,35 +138,95 @@ export interface TreeNodeSchemaNonClass<
  * ```
  * @sealed @public
  */
-export interface TreeNodeSchemaClass<
-	out Name extends string = string,
-	out Kind extends NodeKind = NodeKind,
-	out TNode = unknown,
-	in TInsertable = never,
-	out ImplicitlyConstructable extends boolean = boolean,
-	out Info = unknown,
-> extends TreeNodeSchemaCore<Name, Kind, ImplicitlyConstructable, Info> {
-	/**
-	 * Constructs an {@link Unhydrated} node with this schema.
-	 * @remarks
-	 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
-	 * Therefore, overriding this constructor with different argument types is not type-safe and is not supported.
-	 * @sealed
-	 */
-	new (data: TInsertable | InternalTreeNode): Unhydrated<TNode>;
-}
+export type TreeNodeSchemaClass<
+	Name extends string = string,
+	Kind extends NodeKind = NodeKind,
+	TNode extends TreeNode = TreeNode,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+	TConstructorExtra = never,
+	TCustomMetadata = unknown,
+> = TreeNodeSchemaCore<
+	Name,
+	Kind,
+	ImplicitlyConstructable,
+	Info,
+	TInsertable,
+	TCustomMetadata
+> &
+	(undefined extends TConstructorExtra
+		? {
+				/**
+				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @remarks
+				 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
+				 * Therefore, overriding this constructor with different argument types is not type-safe and is not supported.
+				 * @sealed
+				 */
+				// The approach suggested by the linter here is more concise, but ir break intellisense for the constructor.
+				// eslint-disable-next-line @typescript-eslint/prefer-function-type
+				new (data?: TInsertable | InternalTreeNode | TConstructorExtra): Unhydrated<TNode>;
+			}
+		: {
+				/**
+				 * Constructs an {@link Unhydrated} node with this schema.
+				 * @remarks
+				 * This constructor is also used internally to construct hydrated nodes with a different parameter type.
+				 * Therefore, overriding this constructor with different argument types is not type-safe and is not supported.
+				 * @sealed
+				 */
+				// The approach suggested by the linter here is more concise, but ir break intellisense for the constructor.
+				// eslint-disable-next-line @typescript-eslint/prefer-function-type
+				new (data: TInsertable | InternalTreeNode | TConstructorExtra): Unhydrated<TNode>;
+			});
+
+/**
+ * Internal helper for utilities that return schema which can be used in class and non class formats depending on the API exposing it.
+ */
+export type TreeNodeSchemaBoth<
+	Name extends string = string,
+	Kind extends NodeKind = NodeKind,
+	TNode extends TreeNode = TreeNode,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+	TConstructorExtra = never,
+	TCustomMetadata = unknown,
+> = TreeNodeSchemaClass<
+	Name,
+	Kind,
+	TNode,
+	TInsertable,
+	ImplicitlyConstructable,
+	Info,
+	TConstructorExtra,
+	TCustomMetadata
+> &
+	TreeNodeSchemaNonClass<
+		Name,
+		Kind,
+		TNode,
+		TInsertable,
+		ImplicitlyConstructable,
+		Info,
+		TConstructorExtra,
+		TCustomMetadata
+	>;
+
 /**
  * Data common to all tree node schema.
  * @remarks
  * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
  * @sealed @public
  */
-
 export interface TreeNodeSchemaCore<
 	out Name extends string,
 	out Kind extends NodeKind,
 	out ImplicitlyConstructable extends boolean,
 	out Info = unknown,
+	out TInsertable = never,
+	out TCustomMetadata = unknown,
 > {
 	/**
 	 * Unique (within a document's schema) identifier used to associate nodes with their schema.
@@ -154,6 +261,50 @@ export interface TreeNodeSchemaCore<
 	 * Setting this to false adjusts the insertable types to disallow cases which could be impacted by these inconsistencies.
 	 */
 	readonly implicitlyConstructable: ImplicitlyConstructable;
+
+	/**
+	 * All possible schema that a direct child of a node with this schema could have.
+	 *
+	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
+	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
+	 * This property is simply re-exposing that information in an easier to traverse format consistent across all node kinds.
+	 * @remarks
+	 * Some kinds of nodes may have additional restrictions on children:
+	 * this set simply enumerates all directly referenced schema, and can be use to walk over all referenced schema types.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this set.
+	 * @privateRemarks
+	 * Currently there isn't much use for this in the public API,
+	 * and it's possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
+	 * To keep options option, this is marked `@system` for now.
+	 * @system
+	 */
+	readonly childTypes: ReadonlySet<TreeNodeSchema>;
+
+	/**
+	 * User-provided {@link NodeSchemaMetadata} for this schema.
+	 */
+	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
+
+	/**
+	 * Constructs an instance of this node type.
+	 * @remarks
+	 * Due to TypeScript limitations, the return type of this method can not be very specific.
+	 * For {@link TreeNodeSchemaClass} prefer using the constructor directly for better typing.
+	 * For {@link TreeNodeSchemaNonClass} use `create`.
+	 *
+	 * @privateRemarks
+	 * This method signature provides a way to infer `TInsertable` without relying on the constructor, and to construct nodes from schema of unknown kind.
+	 * This makes customizations of the constructor not impact the typing of insertable content, allowing customization of the constructor,
+	 * as long as doing so only adds additional supported cases.
+	 *
+	 * This cannot be required to return `TNode`:
+	 * doing so breaks sub-classing of schema since they don't overload this method with a more specific return type.
+	 * @sealed @system
+	 */
+	createFromInsertable(data: TInsertable): Unhydrated<TreeNode | TreeLeafValue>;
 }
 
 /**

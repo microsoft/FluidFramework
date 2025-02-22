@@ -27,6 +27,7 @@
 @fluidframework/undo-redo
 @fluidframework/synthesize
 @fluidframework/request-handler
+@fluidframework/presence
 @fluid-experimental/oldest-client-observer
 @fluidframework/fluid-static
 fluid-framework
@@ -36,6 +37,7 @@ fluid-framework
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
+@fluidframework/ai-collab
 @fluidframework/agent-scheduler
 @fluidframework/tinylicious-driver
 @fluidframework/routerlicious-urlresolver
@@ -81,6 +83,5 @@ fluid-framework
 @fluid-experimental/property-common
 @fluid-experimental/property-changeset
 @fluid-example/table-document
-@fluid-experimental/azure-scenario-runner
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service

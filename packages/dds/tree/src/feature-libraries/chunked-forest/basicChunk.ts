@@ -15,11 +15,13 @@ import {
 	type TreeValue,
 	type UpPath,
 	type Value,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
 import { ReferenceCountedBase, fail } from "../../util/index.js";
 import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
-
-import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
 
 /**
  * General purpose one node chunk.
@@ -30,14 +32,22 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
-	 * @param fields - provides exclusive deep ownership of this map to this object (which might mutate it in the future).
-	 * The caller must have already accounted for this reference to the children in this map (via `referenceAdded`),
-	 * and any edits to this must update child reference counts.
-	 * @param value - the value on this node, if any.
+	 * Caller must have already accounted for references via `fields` to the children in the fields map (via `referenceAdded`).
 	 */
 	public constructor(
 		public type: TreeNodeSchemaIdentifier,
+		/**
+		 * Fields of this node.
+		 * @remarks
+		 * This object has exclusive deep ownership of this map (which might mutate it in the future).
+		 * Any code editing this map must update child reference counts.
+		 *
+		 * Like with {@link MapTree}, fields with no nodes must be removed from the map.
+		 */
 		public fields: Map<FieldKey, TreeChunk[]>,
+		/**
+		 * The value on this node, if any.
+		 */
 		public value?: TreeValue,
 	) {
 		super();
@@ -253,7 +263,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return {
 			field:
 				this.indexStack.length === 1
-					? prefix?.rootFieldOverride ?? this.getFieldKey()
+					? (prefix?.rootFieldOverride ?? this.getFieldKey())
 					: this.getFieldKey(),
 			parent: this.getOffsetPath(1, prefix),
 		};

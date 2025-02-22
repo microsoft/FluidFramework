@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "assert";
+import { strict } from "node:assert";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type ChangeAtomIdMap,
-	type DeltaFieldChanges,
 	type RevisionTag,
 	type TaggedChange,
 	makeAnonChange,
@@ -31,6 +30,8 @@ import {
 	tryGetFromNestedMap,
 } from "../util/index.js";
 import { TestChange } from "./testChange.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 
 export interface ChangesetWrapper<T> {
 	fieldChange: T;
@@ -146,16 +147,22 @@ function compose<T>(
 
 function invert<T>(
 	change: TaggedChange<ChangesetWrapper<T>>,
-	invertField: (field: TaggedChange<T>, isRollback: boolean) => T,
+	invertField: (
+		field: TaggedChange<T>,
+		revision: RevisionTag | undefined,
+		isRollback: boolean,
+	) => T,
+	revision: RevisionTag | undefined,
 	isRollback: boolean = false,
 ): ChangesetWrapper<T> {
 	const invertedField = invertField(
 		tagChange(change.change.fieldChange, change.revision),
+		revision,
 		isRollback,
 	);
 	const invertedNodes: ChangeAtomIdMap<TestChange> = new Map();
-	forEachInNestedMap(change.change.nodes, (testChange, revision, localId) => {
-		setInNestedMap(invertedNodes, revision, localId, TestChange.invert(testChange));
+	forEachInNestedMap(change.change.nodes, (testChange, revision2, localId) => {
+		setInNestedMap(invertedNodes, revision2, localId, TestChange.invert(testChange));
 	});
 
 	return { fieldChange: invertedField, nodes: invertedNodes };
@@ -199,8 +206,8 @@ function prune<T>(
 
 function toDelta<T>(
 	change: ChangesetWrapper<T>,
-	fieldToDelta: (change: T, deltaFromChild: ToDelta) => DeltaFieldChanges,
-): DeltaFieldChanges {
+	fieldToDelta: (change: T, deltaFromChild: ToDelta) => FieldChangeDelta,
+): FieldChangeDelta {
 	const deltaFromChild = (id: NodeId) => {
 		const node = tryGetFromNestedMap(change.nodes, id.revision, id.localId);
 		assert(node !== undefined, "Unknown node ID");

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { join as pathJoin } from "path";
+import { strict as assert } from "node:assert";
+import { join as pathJoin } from "node:path";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import type { FuzzSerializedIdCompressor } from "@fluid-private/test-dds-utils";
@@ -24,9 +24,14 @@ import {
 	forEachNodeInSubtree,
 	moveToDetachedField,
 } from "../../../core/index.js";
-import type { ITreeCheckout, SharedTree } from "../../../shared-tree/index.js";
+import type {
+	ITreeCheckout,
+	SchematizingSimpleTreeView,
+	SharedTree,
+	TreeCheckout,
+} from "../../../shared-tree/index.js";
 import { testSrcPath } from "../../testSrcPath.cjs";
-import { expectEqualPaths } from "../../utils.js";
+import { expectEqualPaths, SharedTreeTestFactory } from "../../utils.js";
 import type {
 	NodeBuilderData,
 	// eslint-disable-next-line import/no-internal-modules
@@ -36,8 +41,14 @@ import {
 	TreeViewConfiguration,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
+	type ViewableTree,
 } from "../../../simple-tree/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+
+// eslint-disable-next-line import/no-internal-modules
+import type { SharedTreeOptionsInternal } from "../../../shared-tree/sharedTree.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
+import type { FuzzView } from "./fuzzEditGenerators.js";
 
 const builder = new SchemaFactory("treeFuzz");
 export class GUIDNode extends builder.object("GuidNode" as string, {
@@ -144,7 +155,25 @@ export function nodeSchemaFromTreeSchema(treeSchema: typeof fuzzFieldSchema) {
 	return nodeSchema;
 }
 
-export const onCreate = (tree: SharedTree) => {
+export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
+	/**
+	 * @param onCreate - Called once for each created tree (not called for trees loaded from summaries).
+	 * @param onLoad - Called once for each tree that is loaded from a summary.
+	 */
+	public constructor(
+		protected override readonly onCreate: (tree: SharedTree) => void,
+		protected override readonly onLoad?: (tree: SharedTree) => void,
+		options: SharedTreeOptionsInternal = {},
+	) {
+		super(onCreate, onLoad, {
+			...options,
+			jsonValidator: typeboxValidator,
+			disposeForksAfterTransaction: false,
+		});
+	}
+}
+
+export const FuzzTestOnCreate = (tree: ViewableTree) => {
 	const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 	view.initialize(populatedInitialState);
 	view.dispose();
@@ -152,12 +181,21 @@ export const onCreate = (tree: SharedTree) => {
 
 export function createOnCreate(
 	initialState: NodeBuilderData<typeof FuzzNode> | undefined,
-): (tree: SharedTree) => void {
-	return (tree: SharedTree) => {
+): (tree: ViewableTree) => void {
+	return (tree: ViewableTree) => {
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: initialFuzzSchema }));
 		view.initialize(initialState);
 		view.dispose();
 	};
+}
+
+export function convertToFuzzView(
+	view: SchematizingSimpleTreeView<typeof fuzzFieldSchema>,
+	currentSchema: typeof FuzzNode,
+): asserts view is FuzzView {
+	type UnschematizedFuzzView = Omit<FuzzView, "currentSchema"> &
+		Partial<Pick<FuzzView, "currentSchema">>;
+	(view as UnschematizedFuzzView).currentSchema = currentSchema;
 }
 
 /**
@@ -200,7 +238,7 @@ export function createAnchors(tree: ITreeCheckout): Map<Anchor, [UpPath, Value]>
 	return anchors;
 }
 
-export type RevertibleSharedTreeView = ITreeCheckout & {
+export type RevertibleSharedTreeView = TreeCheckout & {
 	undoStack: Revertible[];
 	redoStack: Revertible[];
 	unsubscribe: () => void;

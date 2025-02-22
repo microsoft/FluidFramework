@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fromUtf8ToBase64, performance } from "@fluid-internal/client-utils";
+import { fromUtf8ToBase64, performanceNow } from "@fluid-internal/client-utils";
 import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -26,7 +26,11 @@ import fetch from "cross-fetch";
 import safeStringify from "json-stringify-safe";
 
 import type { AxiosRequestConfig, RawAxiosRequestHeaders } from "./axios.cjs";
-import { RouterliciousErrorTypes, throwR11sNetworkError } from "./errorUtils.js";
+import {
+	getUrlForTelemetry,
+	RouterliciousErrorTypes,
+	throwR11sNetworkError,
+} from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
 import { RestWrapper } from "./restWrapperBase.js";
@@ -38,7 +42,7 @@ export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 const buildRequestUrl = (requestConfig: AxiosRequestConfig) =>
 	requestConfig.baseURL !== undefined
 		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
-		: requestConfig.url ?? "";
+		: (requestConfig.url ?? "");
 
 const axiosBuildRequestInitConfig = (requestConfig: AxiosRequestConfig): RequestInit => {
 	const requestInit: RequestInit = {
@@ -168,11 +172,18 @@ class RouterliciousRestWrapper extends RestWrapper {
 		const fetchRequestConfig = axiosBuildRequestInitConfig(translatedConfig);
 
 		const res = await this.rateLimiter.schedule(async () => {
-			const perfStart = performance.now();
+			const perfStart = performanceNow();
 			const result = await fetch(completeRequestUrl, fetchRequestConfig).catch(
 				async (error) => {
 					// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
 					this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
+
+					const telemetryProps = {
+						driverVersion,
+						retryCount: requestRetryCount,
+						url: getUrlForTelemetry(completeRequestUrl.hostname, completeRequestUrl.pathname),
+						requestMethod: fetchRequestConfig.method,
+					};
 
 					// Browser Fetch throws a TypeError on network error, `node-fetch` throws a FetchError
 					const isNetworkError = ["TypeError", "FetchError"].includes(error?.name);
@@ -185,44 +196,46 @@ class RouterliciousRestWrapper extends RestWrapper {
 					// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 					// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
 					const err = errorMessage.includes("failed, reason: self signed certificate")
-						? new NonRetryableError(errorMessage, RouterliciousErrorTypes.sslCertError, {
-								driverVersion,
-								retryCount: requestRetryCount,
-							})
-						: new GenericNetworkError(errorMessage, errorMessage.startsWith("NetworkError"), {
-								driverVersion,
-								retryCount: requestRetryCount,
-							});
+						? new NonRetryableError(
+								errorMessage,
+								RouterliciousErrorTypes.sslCertError,
+								telemetryProps,
+							)
+						: new GenericNetworkError(
+								errorMessage,
+								errorMessage.startsWith("NetworkError"),
+								telemetryProps,
+							);
 					throw err;
 				},
 			);
 			return {
 				response: result,
-				duration: performance.now() - perfStart,
+				duration: performanceNow() - perfStart,
 			};
 		});
 
 		const response = res.response;
+		const headers = headersToMap(response.headers);
 
-		let start = performance.now();
+		let start = performanceNow();
 		const text = await response.text();
-		const receiveContentTime = performance.now() - start;
+		const receiveContentTime = performanceNow() - start;
 
 		const bodySize = text.length;
-		start = performance.now();
+		start = performanceNow();
 		const responseBody: any = response.headers
 			.get("content-type")
 			?.includes("application/json")
 			? JSON.parse(text)
 			: text;
-		const parseTime = performance.now() - start;
+		const parseTime = performanceNow() - start;
 
 		// Success
 		if (response.ok || response.status === statusCode) {
 			// on successful response, remove the entry from the retryCounter map
 			this.retryCounter.delete(requestKey);
 			const result = responseBody as T;
-			const headers = headersToMap(response.headers);
 			return {
 				content: result,
 				headers,
@@ -268,6 +281,12 @@ class RouterliciousRestWrapper extends RestWrapper {
 			`R11s fetch error: ${responseSummary}`,
 			response.status,
 			responseBody?.retryAfter,
+			{
+				...getPropsToLogFromResponse(headers),
+				driverVersion,
+				url: getUrlForTelemetry(completeRequestUrl.hostname, completeRequestUrl.pathname),
+				requestMethod: fetchRequestConfig.method,
+			},
 		);
 	}
 

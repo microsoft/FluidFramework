@@ -157,20 +157,6 @@ export interface IDeltaManager<T, U>
 	extends IEventProvider<IDeltaManagerEvents>,
 		IDeltaSender {
 	/**
-	 * The queue of inbound delta messages
-	 * @deprecated Do not use, for internal use only. There are a lot of complications in core pieces of the runtime
-	 * may break if this is used directly. For example summarization and op processing.
-	 */
-	readonly inbound: IDeltaQueue<T>;
-
-	/**
-	 * The queue of outbound delta messages
-	 * @deprecated Do not use, for internal use only. There are a lot of complications in core pieces of the runtime
-	 * may break if this is used directly. For example op submission
-	 */
-	readonly outbound: IDeltaQueue<U[]>;
-
-	/**
 	 * The queue of inbound delta signals
 	 */
 	readonly inboundSignal: IDeltaQueue<ISignalMessage>;
@@ -239,6 +225,33 @@ export interface IDeltaManager<T, U>
 	// TODO: use `unknown` instead (API breaking)
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	submitSignal(content: any, targetClientId?: string): void;
+}
+
+/**
+ * DeltaManager which is used internally by the Fluid layers and not exposed to the end users.
+ * @internal
+ */
+export interface IDeltaManagerFull<T = ISequencedDocumentMessage, U = IDocumentMessage>
+	extends IDeltaManager<T, U> {
+	/**
+	 * The queue of inbound delta messages
+	 */
+	readonly inbound: IDeltaQueue<T>;
+
+	/**
+	 * The queue of outbound delta messages
+	 */
+	readonly outbound: IDeltaQueue<U[]>;
+}
+
+/**
+ * Type guard to check if the given deltaManager is of type {@link @fluidframework/container-definitions#IDeltaManagerFull}.
+ * @internal
+ */
+export function isIDeltaManagerFull(
+	deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
+): deltaManager is IDeltaManagerFull {
+	return "inbound" in deltaManager && "outbound" in deltaManager;
 }
 
 /**

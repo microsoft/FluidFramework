@@ -5,15 +5,28 @@
 
 import process from "process";
 
+import { makeRandom } from "./random.js";
+
 function createSuite<TArgs extends StressSuiteArguments>(
 	tests: (this: Mocha.Suite, args: TArgs) => void,
 	args: TArgs,
 ) {
 	return function (this: Mocha.Suite) {
-		if (args.isStress) {
-			// Stress runs may have tests which are expected to take longer amounts of time.
-			// Don't override the timeout if it's already set to a higher value, though.
-			this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
+		// Stress runs may have tests which are expected to take longer amounts of time.
+		// Don't override the timeout if it's already set to a higher value, though.
+		switch (args.stressMode) {
+			case StressMode.Long: {
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(20_000, this.timeout()));
+
+				break;
+			}
+			case StressMode.Normal:
+			case StressMode.Short: {
+				this.timeout(this.timeout() === 0 ? 0 : Math.max(10_000, this.timeout()));
+
+				break;
+			}
+			// No default
 		}
 		tests.bind(this)(args);
 	};
@@ -24,12 +37,27 @@ function createSuite<TArgs extends StressSuiteArguments>(
  */
 export interface StressSuiteArguments {
 	/**
-	 * Whether the current run is a stress run, which generally runs longer or more programatically generated tests.
-	 *
-	 * Packages which use this should generally have a `test:stress` script in their package.json for conveniently running
-	 * the equivalent checks locally.
+	 * Indicates the "stress level" of the tests. The number of test seeds and the timeout threshold
+	 * will be adjusted according to the selected mode.
 	 */
-	isStress: boolean;
+	stressMode: StressMode;
+}
+
+/**
+ * @internal
+ */
+export enum StressMode {
+	/**
+	 * - Normal Mode: Runs when stress is turned on, also as part of the PR gate.
+	 *
+	 * Current configuration for each mode:
+	 * - Short/Normal Mode: Both run all test seeds with the configured test count, but apply different configurations.
+	 * Short mode uses "default" options, while Normal mode uses "stress" options.
+	 * - Long Mode: Runs test seeds randomly, with double the original test count and a doubled timeout threshold.
+	 */
+	Short = "short",
+	Normal = "normal",
+	Long = "long",
 }
 
 /**
@@ -95,11 +123,25 @@ export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFu
 			? Number.parseInt(process.env.FUZZ_TEST_COUNT, 10)
 			: undefined;
 	const testCount = testCountFromEnv ?? options.defaultTestCount;
-	const isStress =
-		process.env?.FUZZ_STRESS_RUN !== undefined && !!process.env?.FUZZ_STRESS_RUN;
-	const args = { testCount, isStress };
+
+	const stressMode = (() => {
+		switch (process.env?.FUZZ_STRESS_RUN) {
+			case "normal":
+				return StressMode.Normal;
+			case "long":
+				return StressMode.Long;
+			case "short":
+			default:
+				return StressMode.Short;
+		}
+	})();
+
+	const args = { testCount, stressMode };
 	const d: DescribeFuzz = (name, tests) =>
-		(isStress ? describe.only : describe)(name, createSuite(tests, args));
+		(stressMode !== StressMode.Short ? describe.only : describe)(
+			name,
+			createSuite(tests, args),
+		);
 	d.skip = (name, tests) => describe.skip(name, createSuite(tests, args));
 	d.only = (name, tests) => describe.only(name, createSuite(tests, args));
 	return d;
@@ -125,3 +167,31 @@ export const describeFuzz: DescribeFuzz = createFuzzDescribe();
  * @internal
  */
 export const describeStress: DescribeStress = createFuzzDescribe();
+
+/**
+ * @internal
+ */
+export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
+	switch (stressMode) {
+		case StressMode.Short:
+		case StressMode.Normal: {
+			// Deterministic, fixed seeds
+			return Array.from({ length: testCount }, (_, i) => i);
+		}
+
+		case StressMode.Long: {
+			// Non-deterministic, random seeds
+			const random = makeRandom();
+			const longModeFactor = 2;
+			const initialSeed = random.integer(
+				0,
+				Number.MAX_SAFE_INTEGER - longModeFactor * testCount,
+			);
+			return Array.from({ length: testCount * longModeFactor }, (_, i) => initialSeed + i);
+		}
+
+		default: {
+			throw new Error(`Unsupported stress mode: ${stressMode}`);
+		}
+	}
+}

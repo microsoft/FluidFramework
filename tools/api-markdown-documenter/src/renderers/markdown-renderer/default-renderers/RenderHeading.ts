@@ -5,10 +5,11 @@
 
 import type { HeadingNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
-import { renderAnchor } from "../../html-renderer/index.js";
 import { renderNodes } from "../Render.js";
 import type { RenderContext } from "../RenderContext.js";
 import { renderNodeWithHtmlSyntax } from "../Utilities.js";
+
+import { escapeTextForMarkdown } from "./RenderPlainText.js";
 
 /**
  * Maximum heading level supported by most systems.
@@ -60,15 +61,30 @@ function renderHeadingWithMarkdownSyntax(
 		const headingPreamble = "#".repeat(headingLevel);
 		writer.write(`${headingPreamble} `);
 		renderNodes(headingNode.children, writer, context);
+
 		if (headingNode.id !== undefined) {
-			writer.write(` {#${headingNode.id}}`);
+			const escapedId = escapeTextForMarkdown(headingNode.id);
+			writer.write(` {#${escapedId}}`);
 		}
 	} else {
 		if (headingNode.id !== undefined) {
-			renderAnchor(headingNode.id, writer, context);
+			renderAnchor(headingNode.id, writer);
 		}
 		renderNodes(headingNode.children, writer, { ...context, bold: true });
 	}
 
 	writer.ensureSkippedLine(); // Headings require trailing blank line
+}
+
+/**
+ * Renders an HTML anchor for the given ID.
+ *
+ * @param anchorId - The ID of the associated item.
+ * @param writer - Writer context object into which the document contents will be written.
+ * @param context - See {@link RenderContext}.
+ */
+function renderAnchor(anchorId: string, writer: DocumentWriter): void {
+	writer.ensureNewLine(); // Ensure line break before tag
+	writer.write(`<a id="${anchorId}"></a>`);
+	writer.ensureNewLine(); // Ensure line break after tag
 }

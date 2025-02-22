@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IContainerContext } from "@fluidframework/container-definitions/internal";
@@ -12,7 +12,11 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import {
+	MockLogger,
+	mixinMonitoringContext,
+	type IFluidErrorBase,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
 	MockDeltaManager,
@@ -23,7 +27,6 @@ import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import type { ChannelCollection } from "../channelCollection.js";
 import { ContainerRuntime } from "../containerRuntime.js";
-import { DeltaScheduler } from "../deltaScheduler.js";
 import { ContainerMessageType } from "../messageTypes.js";
 
 describe("Runtime batching", () => {
@@ -55,15 +58,15 @@ describe("Runtime batching", () => {
 	let sandbox: sinon.SinonSandbox;
 	let clock: SinonFakeTimers;
 
-	/** Overwrites channelCollection property to make process a no-op */
-	function patchContainerRuntime(
-		cr: ContainerRuntime,
-		process: () => void = () => {},
-	): sinon.SinonStub {
+	/**
+	 * Overwrites channelCollection property to make process a no-op
+	 */
+	function patchContainerRuntime(cr: ContainerRuntime): sinon.SinonStub {
+		const fakeProcess: () => void = () => {};
 		const patched = cr as unknown as Omit<ContainerRuntime, "channelCollection"> & {
 			channelCollection: Partial<ChannelCollection>;
 		};
-		return sandbox.stub(patched.channelCollection, "process").callsFake(process);
+		return sandbox.stub(patched.channelCollection, "processMessages").callsFake(fakeProcess);
 	}
 
 	before(() => {
@@ -134,14 +137,14 @@ describe("Runtime batching", () => {
 	 * processing the messages in the queue.
 	 */
 	function processBatch(batch: ISequencedDocumentMessage[], cr: ContainerRuntime) {
-		// Push the messages in the inbound queue. This is done because ScheduleManager listens to the "push" event
+		// Push the messages in the inbound queue. This is done because InboundBatchAggregator listens to the "push" event
 		// emitted by the inbound queue to do batch validations.
 		for (const batchMessage of batch) {
 			mockDeltaManager.inbound.push(batchMessage);
 		}
 
 		// Process the messages in the inbound queue.
-		// Process is called on the delta manager because ScheduleManager listens to the "op" event on delta manager
+		// Process is called on the delta manager because InboundBatchAggregator listens to the "op" event on delta manager
 		// as well to do validation.
 		// Process is called on the container runtime because it is the one that actually processes the messages and
 		// has its own set of validations.
@@ -222,7 +225,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => processBatch(batch, containerRuntime),
-				(e: any) => {
+				(e: IFluidErrorBase) => {
 					assert(e.errorType === FluidErrorTypes.dataCorruptionError);
 					assert(e.message === "OpBatchIncomplete");
 					return true;
@@ -239,7 +242,7 @@ describe("Runtime batching", () => {
 
 			assert.throws(
 				() => processBatch(batch, containerRuntime),
-				(e: any) => {
+				(e: IFluidErrorBase) => {
 					assert(e.errorType === FluidErrorTypes.dataProcessingError);
 					assert(e.message === "Received a system message during batch processing");
 					return true;
@@ -255,11 +258,12 @@ describe("Runtime batching", () => {
 			// Change the type of the second message to an unknown runtime op.
 			const unknownMessage = batch[1];
 			const unknownMessageType = "unknown";
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 			(unknownMessage.contents as any).type = unknownMessageType;
 
 			assert.throws(
 				() => processBatch(batch, containerRuntime),
-				(e: any) => {
+				(e: IFluidErrorBase) => {
 					assert(e.errorType === FluidErrorTypes.dataProcessingError);
 					assert(e.message === "Runtime message of unknown type");
 					return true;
@@ -271,30 +275,14 @@ describe("Runtime batching", () => {
 
 	/**
 	 * These tests validate that container runtime handles batch begin and end correctly. It should emit
-	 * batch begin and end events and delta scheduler's batch begin and end methods should be called.
+	 * batch begin and end events.
 	 */
 	describe("Batch begin and end", () => {
 		let batchBeginCount = 0;
 		let batchEndCount = 0;
 		let containerRuntimeStub: sinon.SinonStub;
-		let schedulerBatchBeginStub: sinon.SinonStub;
-		let schedulerBatchEndStub: sinon.SinonStub;
-
-		type ContainerRuntimeWithScheduler = Omit<ContainerRuntime, "scheduleManager"> & {
-			scheduleManager: { deltaScheduler: DeltaScheduler };
-		};
 
 		beforeEach(async () => {
-			const containerRuntimeWithDeltaScheduler =
-				containerRuntime as unknown as ContainerRuntimeWithScheduler;
-			schedulerBatchBeginStub = sandbox.stub(
-				containerRuntimeWithDeltaScheduler.scheduleManager.deltaScheduler,
-				"batchBegin",
-			);
-			schedulerBatchEndStub = sandbox.stub(
-				containerRuntimeWithDeltaScheduler.scheduleManager.deltaScheduler,
-				"batchEnd",
-			);
 			containerRuntimeStub = patchContainerRuntime(containerRuntime);
 			containerRuntime.on("batchBegin", () => {
 				batchBeginCount++;
@@ -316,20 +304,9 @@ describe("Runtime batching", () => {
 			});
 		}
 
-		function validateBatchBeginAndEnd(schedulerCalled: boolean = true) {
+		function validateBatchBeginAndEnd() {
 			assert.strictEqual(batchBeginCount, 1, "Batch begin should have been emitted once");
 			assert.strictEqual(batchEndCount, 1, "Batch end should have been emitted once");
-			if (!schedulerCalled) {
-				return;
-			}
-			assert(
-				schedulerBatchBeginStub.calledOnce,
-				"Delta scheduler batch begin should have been called once",
-			);
-			assert(
-				schedulerBatchEndStub.calledOnce,
-				"Delta scheduler batch end should have been called once",
-			);
 		}
 
 		it("handles batch begin and end for successfully processing modern runtime messages", async () => {
@@ -490,7 +467,7 @@ describe("Runtime batching", () => {
 				"Non batch messages should be processed successfully",
 			);
 
-			validateBatchBeginAndEnd(false /* schedulerCalled */);
+			validateBatchBeginAndEnd();
 		});
 	});
 });

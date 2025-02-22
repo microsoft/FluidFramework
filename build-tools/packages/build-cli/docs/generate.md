@@ -9,6 +9,7 @@ Generate commands are used to create/update code, docs, readmes, etc.
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
 * [`flub generate entrypoints`](#flub-generate-entrypoints)
+* [`flub generate node10Entrypoints`](#flub-generate-node10entrypoints)
 * [`flub generate packlist`](#flub-generate-packlist)
 * [`flub generate releaseNotes`](#flub-generate-releasenotes)
 * [`flub generate typetests`](#flub-generate-typetests)
@@ -20,9 +21,9 @@ Tags asserts by replacing their message with a unique numerical value.
 
 ```
 USAGE
-  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |  | 
-    |  | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
+  $ flub generate assertTags [-v | --quiet] [--disableConfig] [--concurrency <value>] [--branch <value> [--changed |
+    [--all | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
+    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... |
     --skipScope <value>...]
 
 FLAGS
@@ -31,22 +32,19 @@ FLAGS
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
                                       include release group root packages. To include those, use the --releaseGroupRoot
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --branch=<value>                [default: main] Select only packages that have been changed when compared to this
                                       base branch. Can only be used with --changed.
-      --changed                       Select only packages that have changed when compared to a base branch. Use the
-                                      --branch option to specify a different base branch. Cannot be used with other
-                                      options.
-      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
-                                      --releaseGroup, or --releaseGroupRoot.
-      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
-                                      --releaseGroup, or --releaseGroupRoot.
+      --changed                       Select packages that have changed when compared to a base branch. Use the --branch
+                                      option to specify a different base branch. Cannot be used with --all.
+      --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all.
       --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
                                       child packages within the release group. To include those, use the --releaseGroup
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
 
 LOGGING FLAGS
@@ -68,13 +66,18 @@ DESCRIPTION
 
   Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry
   purposes.
+  Which functions and which of their augments get tagging depends on the configuration which is specified in the package
+  being tagged.
+  Configuration is searched by walking from each package's directory up to its parents recursively looking for the first
+  file matching one of ["assertTagging.config.mjs"].
+  The format of the configuration is specified by the "AssertTaggingPackageConfig" type.
 ```
 
 _See code: [src/commands/generate/assertTags.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/assertTags.ts)_
 
 ## `flub generate buildVersion`
 
-This command is used to compute the version number of Fluid packages. The release version number is based on what's in the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build
+This command is used to compute the version number of Fluid packages. The release version number is based on what's in the release group root package.json. The CI pipeline will supply the build number and branch to determine the prerelease suffix if it is not a tagged build.
 
 ```
 USAGE
@@ -83,8 +86,7 @@ USAGE
 
 FLAGS
   -i, --includeInternalVersions=<value>  Include Fluid internal versions.
-      --base=<value>                     The base version. This will be read from lerna.json/package.json if not
-                                         provided.
+      --base=<value>                     The base version. This will be read from package.json if not provided.
       --build=<value>                    (required) The CI build number.
       --packageTypes=<option>            [default: none] If provided, the version generated will include extra strings
                                          based on the TypeScript types that are expected to be used. This flag should
@@ -103,8 +105,8 @@ LOGGING FLAGS
 
 DESCRIPTION
   This command is used to compute the version number of Fluid packages. The release version number is based on what's in
-  the lerna.json/package.json. The CI pipeline will supply the build number and branch to determine the prerelease
-  suffix if it is not a tagged build
+  the release group root package.json. The CI pipeline will supply the build number and branch to determine the
+  prerelease suffix if it is not a tagged build.
 
 EXAMPLES
   $ flub generate buildVersion
@@ -179,7 +181,7 @@ FLAGS
   -b, --branch=<value>         [default: main] The branch to compare the current changes against. The current changes
                                will be compared with this branch to populate the list of changed packages. You must have
                                a valid remote pointing to the microsoft/FluidFramework repo.
-  -g, --releaseGroup=<option>  Name of a release group.
+  -g, --releaseGroup=<option>  [default: client] Name of a release group.
                                <options: client|server|azure|build-tools|gitrest|historian>
       --all                    Include ALL packages, including examples and other unpublished packages.
       --empty                  Create an empty changeset file. If this flag is used, all other flags are ignored. A new,
@@ -258,16 +260,35 @@ DESCRIPTION
 
 _See code: [src/commands/generate/entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/entrypoints.ts)_
 
+## `flub generate node10Entrypoints`
+
+Generates node10 type declaration entrypoints for Fluid Framework API levels (/alpha, /beta, /internal etc.) as found in package.json "exports"
+
+```
+USAGE
+  $ flub generate node10Entrypoints [-v | --quiet]
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Generates node10 type declaration entrypoints for Fluid Framework API levels (/alpha, /beta, /internal etc.) as found
+  in package.json "exports"
+```
+
+_See code: [src/commands/generate/node10Entrypoints.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/node10Entrypoints.ts)_
+
 ## `flub generate packlist`
 
 Outputs a list of files that will be included in a package based on its 'files' property in package.json and any .npmignore files.
 
 ```
 USAGE
-  $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--branch <value> [--changed |  |  | 
-    | [--all | --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... |
-    --releaseGroupRoot client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... |
-    --skipScope <value>...]
+  $ flub generate packlist [-v | --quiet] [--out <value>] [--concurrency <value>] [--branch <value> [--changed | [--all
+    | --dir <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
+    <value>...]
 
 FLAGS
   --concurrency=<value>  [default: 25] The number of tasks to execute concurrently.
@@ -277,22 +298,19 @@ FLAGS
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
                                       include release group root packages. To include those, use the --releaseGroupRoot
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --branch=<value>                [default: main] Select only packages that have been changed when compared to this
                                       base branch. Can only be used with --changed.
-      --changed                       Select only packages that have changed when compared to a base branch. Use the
-                                      --branch option to specify a different base branch. Cannot be used with other
-                                      options.
-      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
-                                      --releaseGroup, or --releaseGroupRoot.
-      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
-                                      --releaseGroup, or --releaseGroupRoot.
+      --changed                       Select packages that have changed when compared to a base branch. Use the --branch
+                                      option to specify a different base branch. Cannot be used with --all.
+      --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all.
       --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
                                       child packages within the release group. To include those, use the --releaseGroup
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
 
 LOGGING FLAGS
@@ -362,9 +380,9 @@ Generates type tests for a package or group of packages.
 ```
 USAGE
   $ flub generate typetests [-v | --quiet] [--entrypoint public|alpha|beta|internal|legacy] [--outDir <value>]
-    [--outFile <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed |  |  |  | [--all |
-    --dir <value> | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
-    client|server|azure|build-tools|gitrest|historian|all...] | ]] [--private] [--scope <value>... | --skipScope
+    [--outFile <value>] [--publicFallback] [--concurrency <value>] [--branch <value> [--changed | [--all | --dir
+    <value>... | --packages | -g client|server|azure|build-tools|gitrest|historian|all... | --releaseGroupRoot
+    client|server|azure|build-tools|gitrest|historian|all...]]] [--private] [--scope <value>... | --skipScope
     <value>...]
 
 FLAGS
@@ -381,22 +399,19 @@ FLAGS
 PACKAGE SELECTION FLAGS
   -g, --releaseGroup=<option>...      Run on all child packages within the specified release groups. This does not
                                       include release group root packages. To include those, use the --releaseGroupRoot
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
       --all                           Run on all packages and release groups. Cannot be used with --dir, --packages,
                                       --releaseGroup, or --releaseGroupRoot.
       --branch=<value>                [default: main] Select only packages that have been changed when compared to this
                                       base branch. Can only be used with --changed.
-      --changed                       Select only packages that have changed when compared to a base branch. Use the
-                                      --branch option to specify a different base branch. Cannot be used with other
-                                      options.
-      --dir=<value>                   Run on the package in this directory. Cannot be used with --all, --packages,
-                                      --releaseGroup, or --releaseGroupRoot.
-      --packages                      Run on all independent packages in the repo. Cannot be used with --all, --dir,
-                                      --releaseGroup, or --releaseGroupRoot.
+      --changed                       Select packages that have changed when compared to a base branch. Use the --branch
+                                      option to specify a different base branch. Cannot be used with --all.
+      --dir=<value>...                Run on the package in this directory. Cannot be used with --all.
+      --packages                      Run on all independent packages in the repo. Cannot be used with --all.
       --releaseGroupRoot=<option>...  Run on the root package of the specified release groups. This does not include any
                                       child packages within the release group. To include those, use the --releaseGroup
-                                      argument. Cannot be used with --all, --dir, or --packages.
+                                      argument. Cannot be used with --all.
                                       <options: client|server|azure|build-tools|gitrest|historian|all>
 
 LOGGING FLAGS

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
-import { SchemaFactory } from "../../simple-tree/index.js";
+import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
 import { describeHydration } from "./utils.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -79,6 +79,41 @@ describeHydration(
 				const node = init(Schema, new Map());
 				assert.equal(Reflect.getPrototypeOf(node), Map.prototype);
 			});
+		});
+
+		it("constructor", () => {
+			class Schema extends schemaFactory.map("x", schemaFactory.number) {
+				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
+				public foo(): void {}
+			}
+			const _fromMap: Schema = new Schema(new Map());
+			const _fromIterable: Schema = new Schema([]);
+			const _fromObject: Schema = new Schema({});
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
+		});
+
+		it("create - NonClass", () => {
+			const Schema = schemaFactory.map(schemaFactory.number);
+			type Schema = NodeFromSchema<typeof Schema>;
+			const _fromMap: Schema = Schema.create(new Map());
+			const _fromIterable: Schema = Schema.create([]);
+			const _fromObject: Schema = Schema.create({});
+			const _fromUndefined: Schema = Schema.create(undefined);
+			const _fromNothing: Schema = Schema.create();
+		});
+
+		it("constructor - recursive", () => {
+			class Schema extends schemaFactory.mapRecursive("x", [() => Schema]) {
+				// Adds a member to the derived class which allows these tests to detect if the constructed value isn't typed with the derived class.
+				public foo(): void {}
+			}
+			const _fromMap: Schema = new Schema(new Map());
+			const _fromIterable: Schema = new Schema([]);
+			// Unsupported due to breaking recursive types.
+			// const _fromObject: Schema = new Schema({});
+			const _fromUndefined: Schema = new Schema(undefined);
+			const _fromNothing: Schema = new Schema();
 		});
 
 		it("entries", () => {

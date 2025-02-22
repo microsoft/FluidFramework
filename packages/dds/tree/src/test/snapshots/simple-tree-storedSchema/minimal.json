@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "nodes": {
+    "test.minimal": {
+      "object": {}
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "test.minimal"
+    ]
+  }
+}

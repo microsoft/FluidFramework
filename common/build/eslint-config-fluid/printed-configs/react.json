@@ -46,6 +46,9 @@
         "@fluid-internal/fluid/no-member-release-tags": [
             "error"
         ],
+        "@fluid-internal/fluid/no-unchecked-record-access": [
+            "error"
+        ],
         "@rushstack/no-new-null": [
             "error"
         ],
@@ -84,7 +87,7 @@
             "always-multiline"
         ],
         "@typescript-eslint/comma-spacing": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/consistent-generic-constructors": [
             "off"
@@ -128,7 +131,7 @@
             "error"
         ],
         "@typescript-eslint/func-call-spacing": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/indent": [
             "off"
@@ -137,24 +140,13 @@
             "off"
         ],
         "@typescript-eslint/keyword-spacing": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/lines-around-comment": [
             0
         ],
         "@typescript-eslint/member-delimiter-style": [
-            "error",
-            {
-                "multiline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "singleline": {
-                    "delimiter": "semi",
-                    "requireLast": true
-                },
-                "multilineDetection": "brackets"
-            }
+            "off"
         ],
         "@typescript-eslint/member-ordering": [
             "off"
@@ -318,8 +310,7 @@
             "off"
         ],
         "@typescript-eslint/object-curly-spacing": [
-            "error",
-            "always"
+            "off"
         ],
         "@typescript-eslint/prefer-as-const": [
             "error"
@@ -372,14 +363,14 @@
             "error"
         ],
         "@typescript-eslint/semi": [
-            "error",
+            "off",
             "always"
         ],
         "@typescript-eslint/space-before-blocks": [
             "off"
         ],
         "@typescript-eslint/space-before-function-paren": [
-            "error",
+            "off",
             {
                 "anonymous": "never",
                 "asyncArrow": "always",
@@ -387,7 +378,7 @@
             }
         ],
         "@typescript-eslint/space-infix-ops": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/strict-boolean-expressions": [
             "error"
@@ -396,7 +387,7 @@
             "error"
         ],
         "@typescript-eslint/type-annotation-spacing": [
-            "error"
+            "off"
         ],
         "@typescript-eslint/typedef": [
             "off"
@@ -414,7 +405,7 @@
             "off"
         ],
         "array-bracket-spacing": [
-            "error"
+            "off"
         ],
         "array-element-newline": [
             "off"
@@ -427,7 +418,7 @@
             "always"
         ],
         "arrow-spacing": [
-            "error"
+            "off"
         ],
         "babel/object-curly-spacing": [
             "off"
@@ -439,7 +430,7 @@
             "off"
         ],
         "block-spacing": [
-            "error"
+            "off"
         ],
         "brace-style": [
             "off"
@@ -475,8 +466,7 @@
             "error"
         ],
         "dot-location": [
-            "error",
-            "property"
+            "off"
         ],
         "dot-notation": [
             "off"
@@ -591,13 +581,7 @@
             1
         ],
         "import/no-extraneous-dependencies": [
-            "error",
-            {
-                "devDependencies": [
-                    "**/*.spec.ts",
-                    "src/test/**"
-                ]
-            }
+            "error"
         ],
         "import/no-internal-modules": [
             "error",
@@ -703,10 +687,10 @@
             "error"
         ],
         "jsx-quotes": [
-            "error"
+            "off"
         ],
         "key-spacing": [
-            "error"
+            "off"
         ],
         "keyword-spacing": [
             "off"
@@ -1291,7 +1275,7 @@
             "off"
         ],
         "space-unary-ops": [
-            "error"
+            "off"
         ],
         "space-unary-word-ops": [
             "off"
@@ -1318,7 +1302,7 @@
             "off"
         ],
         "switch-colon-spacing": [
-            "error"
+            "off"
         ],
         "template-curly-spacing": [
             "off"
@@ -1387,7 +1371,7 @@
             "error"
         ],
         "unicorn/no-array-push-push": [
-            "error"
+            "off"
         ],
         "unicorn/no-array-reduce": [
             "error"

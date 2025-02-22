@@ -4,6 +4,7 @@
  */
 
 import { strict } from "assert";
+
 import { assert } from "../../assert";
 
 describe("Assert", () => {

@@ -34,15 +34,6 @@ declare type old_as_current_for_Class_FileDeltaStorageService = requireAssignabl
 declare type current_as_old_for_Class_FileDeltaStorageService = requireAssignableTo<TypeOnly<current.FileDeltaStorageService>, TypeOnly<old.FileDeltaStorageService>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_FileDeltaStorageService": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_FileDeltaStorageService = requireAssignableTo<TypeOnly<typeof current.FileDeltaStorageService>, TypeOnly<typeof old.FileDeltaStorageService>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -59,33 +50,6 @@ declare type old_as_current_for_Class_FileDocumentServiceFactory = requireAssign
  * "Class_FileDocumentServiceFactory": {"backCompat": false}
  */
 declare type current_as_old_for_Class_FileDocumentServiceFactory = requireAssignableTo<TypeOnly<current.FileDocumentServiceFactory>, TypeOnly<old.FileDocumentServiceFactory>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_FileDocumentServiceFactory": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_FileDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.FileDocumentServiceFactory>, TypeOnly<typeof old.FileDocumentServiceFactory>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_FileSnapshotWriterClassFactory": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_FileSnapshotWriterClassFactory = requireAssignableTo<TypeOnly<typeof current.FileSnapshotWriterClassFactory>, TypeOnly<typeof old.FileSnapshotWriterClassFactory>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_FileStorageDocumentName": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_FileStorageDocumentName = requireAssignableTo<TypeOnly<typeof current.FileStorageDocumentName>, TypeOnly<typeof old.FileStorageDocumentName>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -106,6 +70,60 @@ declare type old_as_current_for_Class_FluidFetchReader = requireAssignableTo<Typ
 declare type current_as_old_for_Class_FluidFetchReader = requireAssignableTo<TypeOnly<current.FluidFetchReader>, TypeOnly<old.FluidFetchReader>>
 
 /*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_Replayer": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_Replayer = requireAssignableTo<TypeOnly<old.Replayer>, TypeOnly<current.Replayer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_Replayer": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_Replayer = requireAssignableTo<TypeOnly<current.Replayer>, TypeOnly<old.Replayer>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_ReplayFileDeltaConnection": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<old.ReplayFileDeltaConnection>, TypeOnly<current.ReplayFileDeltaConnection>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_ReplayFileDeltaConnection": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<current.ReplayFileDeltaConnection>, TypeOnly<old.ReplayFileDeltaConnection>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_FileDeltaStorageService": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FileDeltaStorageService = requireAssignableTo<TypeOnly<typeof current.FileDeltaStorageService>, TypeOnly<typeof old.FileDeltaStorageService>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_FileDocumentServiceFactory": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_FileDocumentServiceFactory = requireAssignableTo<TypeOnly<typeof current.FileDocumentServiceFactory>, TypeOnly<typeof old.FileDocumentServiceFactory>>
+
+/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -119,9 +137,18 @@ declare type current_as_old_for_ClassStatics_FluidFetchReader = requireAssignabl
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Variable_FluidFetchReaderFileSnapshotWriter": {"backCompat": false}
+ * "ClassStatics_Replayer": {"backCompat": false}
  */
-declare type current_as_old_for_Variable_FluidFetchReaderFileSnapshotWriter = requireAssignableTo<TypeOnly<typeof current.FluidFetchReaderFileSnapshotWriter>, TypeOnly<typeof old.FluidFetchReaderFileSnapshotWriter>>
+declare type current_as_old_for_ClassStatics_Replayer = requireAssignableTo<TypeOnly<typeof current.Replayer>, TypeOnly<typeof old.Replayer>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_ReplayFileDeltaConnection": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<typeof current.ReplayFileDeltaConnection>, TypeOnly<typeof old.ReplayFileDeltaConnection>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -160,55 +187,28 @@ declare type old_as_current_for_TypeAlias_ReaderConstructor = requireAssignableT
 declare type current_as_old_for_TypeAlias_ReaderConstructor = requireAssignableTo<TypeOnly<current.ReaderConstructor>, TypeOnly<old.ReaderConstructor>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_ReplayFileDeltaConnection": {"forwardCompat": false}
+ * "Variable_FileSnapshotWriterClassFactory": {"backCompat": false}
  */
-declare type old_as_current_for_Class_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<old.ReplayFileDeltaConnection>, TypeOnly<current.ReplayFileDeltaConnection>>
+declare type current_as_old_for_Variable_FileSnapshotWriterClassFactory = requireAssignableTo<TypeOnly<typeof current.FileSnapshotWriterClassFactory>, TypeOnly<typeof old.FileSnapshotWriterClassFactory>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Class_ReplayFileDeltaConnection": {"backCompat": false}
+ * "Variable_FileStorageDocumentName": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<current.ReplayFileDeltaConnection>, TypeOnly<old.ReplayFileDeltaConnection>>
+declare type current_as_old_for_Variable_FileStorageDocumentName = requireAssignableTo<TypeOnly<typeof current.FileStorageDocumentName>, TypeOnly<typeof old.FileStorageDocumentName>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "ClassStatics_ReplayFileDeltaConnection": {"backCompat": false}
+ * "Variable_FluidFetchReaderFileSnapshotWriter": {"backCompat": false}
  */
-declare type current_as_old_for_ClassStatics_ReplayFileDeltaConnection = requireAssignableTo<TypeOnly<typeof current.ReplayFileDeltaConnection>, TypeOnly<typeof old.ReplayFileDeltaConnection>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_Replayer": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_Replayer = requireAssignableTo<TypeOnly<old.Replayer>, TypeOnly<current.Replayer>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_Replayer": {"backCompat": false}
- */
-declare type current_as_old_for_Class_Replayer = requireAssignableTo<TypeOnly<current.Replayer>, TypeOnly<old.Replayer>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_Replayer": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_Replayer = requireAssignableTo<TypeOnly<typeof current.Replayer>, TypeOnly<typeof old.Replayer>>
+declare type current_as_old_for_Variable_FluidFetchReaderFileSnapshotWriter = requireAssignableTo<TypeOnly<typeof current.FluidFetchReaderFileSnapshotWriter>, TypeOnly<typeof old.FluidFetchReaderFileSnapshotWriter>>

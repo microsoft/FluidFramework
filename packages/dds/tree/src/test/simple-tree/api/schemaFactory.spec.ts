@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	MockFluidDataStoreRuntime,
@@ -15,6 +15,7 @@ import {
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
+	SchemaFactoryAlpha,
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeArrayNode,
@@ -31,9 +32,12 @@ import {
 	typeSchemaSymbol,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
+	schemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
@@ -361,6 +365,47 @@ describe("schemaFactory", () => {
 			);
 		});
 
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "An object called Foo",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.object(
+				"Foo",
+				{ bar: factory.number },
+				{ metadata: fooMetadata },
+			) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
+		});
+
+		it("Field schema metadata", () => {
+			const schemaFactory = new SchemaFactory("com.example");
+			const barMetadata = {
+				description: "Bar",
+				custom: { prop1: "Custom metadata property." },
+			};
+
+			class Foo extends schemaFactory.object("Foo", {
+				bar: schemaFactory.required(schemaFactory.number, { metadata: barMetadata }),
+			}) {}
+
+			const foo = hydrate(Foo, { bar: 37 });
+
+			const schema = Tree.schema(foo) as ObjectNodeSchema;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("bar")!.metadata, barMetadata);
+		});
+
 		describe("deep equality", () => {
 			const schema = new SchemaFactory("com.example");
 
@@ -440,7 +485,7 @@ describe("schemaFactory", () => {
 		);
 		const stuff = view.root.stuff;
 		assert(stuff instanceof NodeList);
-		const item = stuff[0];
+		const item = stuff[0] ?? oob();
 		const s: string = item.text;
 		assert.equal(s, "hi");
 	});
@@ -523,6 +568,25 @@ describe("schemaFactory", () => {
 			class NamedList extends factory.array("name", factory.number) {}
 			const namedInstance = new NamedList([5]);
 		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "An array of numbers",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.arrayAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
+		});
 	});
 
 	describe("Map", () => {
@@ -578,6 +642,25 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactory("test");
 			class NamedMap extends factory.map("name", factory.number) {}
 			const namedInstance = new NamedMap(new Map([["x", 5]]));
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "A map of numbers",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.mapAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
 		});
 	});
 
@@ -813,12 +896,19 @@ describe("schemaFactory", () => {
 	});
 
 	it("schemaFromValue", () => {
+		assert.equal(schemaFromValue(1), SchemaFactory.number);
+		assert.equal(schemaFromValue(""), SchemaFactory.string);
+		assert.equal(schemaFromValue(null), SchemaFactory.null);
+		assert.equal(schemaFromValue(new MockHandle("x")), SchemaFactory.handle);
+		assert.equal(schemaFromValue(false), SchemaFactory.boolean);
+	});
+
+	it("statics", () => {
 		const f = new SchemaFactory("");
-		assert.equal(schemaFromValue(1), f.number);
-		assert.equal(schemaFromValue(""), f.string);
-		assert.equal(schemaFromValue(null), f.null);
-		assert.equal(schemaFromValue(new MockHandle("x")), f.handle);
-		assert.equal(schemaFromValue(false), f.boolean);
+		for (const [key, value] of Object.entries(schemaStatics)) {
+			assert.equal((SchemaFactory as unknown as Record<string, unknown>)[key], value);
+			assert.equal((f as unknown as Record<string, unknown>)[key], value);
+		}
 	});
 
 	it("extra fields in object constructor", () => {
@@ -826,8 +916,7 @@ describe("schemaFactory", () => {
 
 		class Empty extends f.object("C", {}) {}
 
-		// TODO: should not build
-		// BUG: object schema with no fields permit construction with any object, not just empty object.
+		// @ts-expect-error Invalid extra field
 		// TODO: this should runtime error when constructed (not just when hydrated)
 		const c2 = new Empty({ x: {} });
 

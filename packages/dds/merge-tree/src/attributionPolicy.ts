@@ -8,7 +8,6 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { AttributionCollection } from "./attributionCollection.js";
-// eslint-disable-next-line import/no-deprecated
 import { Client } from "./client.js";
 import { AttributionPolicy } from "./mergeTree.js";
 import {
@@ -19,6 +18,7 @@ import {
 	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "./ops.js";
+import { isInserted } from "./segmentInfos.js";
 
 // Note: these thinly wrap MergeTreeDeltaCallback and MergeTreeMaintenanceCallback to provide the client.
 // This is because the base callbacks don't always have enough information to infer whether the op being
@@ -27,13 +27,13 @@ interface AttributionCallbacks {
 	delta: (
 		opArgs: IMergeTreeDeltaOpArgs,
 		deltaArgs: IMergeTreeDeltaCallbackArgs,
-		// eslint-disable-next-line import/no-deprecated
+
 		client: Client,
 	) => void;
 	maintenance: (
 		maintenanceArgs: IMergeTreeMaintenanceCallbackArgs,
 		opArgs: IMergeTreeDeltaOpArgs | undefined,
-		// eslint-disable-next-line import/no-deprecated
+
 		client: Client,
 	) => void;
 }
@@ -44,7 +44,6 @@ function createAttributionPolicyFromCallbacks({
 }: AttributionCallbacks): AttributionPolicy {
 	let unsubscribe: undefined | (() => void);
 	return {
-		// eslint-disable-next-line import/no-deprecated
 		attach: (client: Client): void => {
 			assert(unsubscribe === undefined, 0x557 /* cannot attach to multiple clients at once */);
 
@@ -84,7 +83,6 @@ const ensureAttributionCollectionCallbacks: AttributionCallbacks = {
 };
 
 const getAttributionKey = (
-	// eslint-disable-next-line import/no-deprecated
 	client: Client,
 	msg: ISequencedDocumentMessage | undefined,
 ): AttributionKey => {
@@ -100,7 +98,7 @@ const attributeInsertionOnSegments = (
 	key: AttributionKey,
 ): void => {
 	for (const { segment } of deltaSegments) {
-		if (segment.seq !== undefined) {
+		if (isInserted(segment)) {
 			segment.attribution?.update(
 				undefined,
 				new AttributionCollection(segment.cachedLength, key),
@@ -150,7 +148,7 @@ function createPropertyTrackingMergeTreeCallbacks(
 				const shouldAttributeAnnotate =
 					op.type === MergeTreeDeltaType.ANNOTATE &&
 					// Only attribute annotations which change the tracked property
-					op.props[propName] !== undefined &&
+					(op.props?.[propName] !== undefined || op.adjust?.[propName] !== undefined) &&
 					(isLocal || (propertyDeltas !== undefined && propName in propertyDeltas));
 
 				if (shouldAttributeInsert || shouldAttributeAnnotate) {
@@ -202,6 +200,7 @@ function combineMergeTreeCallbacks(callbacks: AttributionCallbacks[]): Attributi
  * Creates an {@link AttributionPolicy} which only tracks initial insertion of content.
  * @internal
  */
+
 export function createInsertOnlyAttributionPolicy(): AttributionPolicy {
 	return createAttributionPolicyFromCallbacks(
 		combineMergeTreeCallbacks([

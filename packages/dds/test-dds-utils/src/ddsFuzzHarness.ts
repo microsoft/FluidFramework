@@ -5,26 +5,32 @@
 
 import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
-import path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	AsyncGenerator,
 	AsyncReducer,
 	BaseFuzzTestState,
+	BaseOperation,
 	IRandom,
+	MinimizationTransform,
 	SaveDestination,
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	ExitBehavior,
+	FuzzTestMinimizer,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
 	createWeightedAsyncGenerator,
 	defaultOptions,
 	done,
+	generateTestSeeds,
+	getSaveDirectory,
+	getSaveInfo,
 	interleaveAsync,
+	isOperationType,
 	makeRandom,
 	performFuzzActionsAsync,
 	saveOpsToFile,
@@ -58,13 +64,6 @@ import {
 	hasStashData,
 } from "./clientLoading.js";
 import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
-import type { MinimizationTransform } from "./minification.js";
-import { FuzzTestMinimizer } from "./minification.js";
-
-const isOperationType = <O extends BaseOperation>(
-	type: O["type"],
-	op: BaseOperation,
-): op is O => op.type === type;
 
 /**
  * @internal
@@ -101,13 +100,6 @@ export interface DDSFuzzTestState<TChannelFactory extends IChannelFactory>
  */
 export interface ClientSpec {
 	clientId: string;
-}
-
-/**
- * @internal
- */
-export interface BaseOperation {
-	type: number | string;
 }
 
 /**
@@ -179,37 +171,6 @@ export interface AddClient {
 export interface Synchronize {
 	type: "synchronize";
 	clients?: string[];
-}
-
-/**
- * @internal
- */
-interface HasWorkloadName {
-	workloadName: string;
-}
-
-function getSaveDirectory(directory: string, model: HasWorkloadName): string {
-	const workloadFriendly = model.workloadName.replace(/[\s_]+/g, "-").toLowerCase();
-	return path.join(directory, workloadFriendly);
-}
-
-function getSavePath(directory: string, model: HasWorkloadName, seed: number): string {
-	return path.join(getSaveDirectory(directory, model), `${seed}.json`);
-}
-
-function getSaveInfo(
-	model: HasWorkloadName,
-	options: DDSFuzzSuiteOptions,
-	seed: number,
-): SaveInfo {
-	return {
-		saveOnFailure: options.saveFailures
-			? { path: getSavePath(options.saveFailures.directory, model, seed) }
-			: false,
-		saveOnSuccess: options.saveSuccesses
-			? { path: getSavePath(options.saveSuccesses.directory, model, seed) }
-			: false,
-	};
 }
 
 /**
@@ -296,7 +257,7 @@ export interface DDSFuzzModel<
 
 	/**
 	 * An array of transforms used during fuzz test minimization to reduce test
-	 * cases. See {@link MinimizationTransform} for additional context.
+	 * cases. See {@link @fluid-private/stochastic-test-utils#MinimizationTransform} for additional context.
 	 *
 	 * If no transforms are supplied, minimization will still occur, but the
 	 * contents of the operations will remain unchanged.
@@ -528,7 +489,7 @@ export interface DDSFuzzSuiteOptions {
 	 * useful if the model being tested defines {@link DDSFuzzModel.minimizationTransforms}.
 	 *
 	 * It can also add a couple seconds of overhead per failing
-	 * test case. See {@link MinimizationTransform} for additional context.
+	 * test case. See {@link @fluid-private/stochastic-test-utils#MinimizationTransform} for additional context.
 	 */
 	skipMinimization?: boolean;
 
@@ -1459,14 +1420,11 @@ export async function runTestForSeed<
 	let operationCount = 0;
 	const generator = model.generatorFactory();
 	const finalState = await performFuzzActionsAsync(
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		async (state) => serializer.encode(await generator(state), bind),
+		async (state) => serializer.encode(await generator(state), bind) as TOperation,
 		async (state, operation) => {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const decodedHandles = serializer.decode(operation);
+			const decodedHandles = serializer.decode(operation) as TOperation;
 			options.emitter.emit("operation", decodedHandles);
 			operationCount++;
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return model.reducer(state, decodedHandles);
 		},
 		initialState,
@@ -1528,7 +1486,13 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 				throw error;
 			}
 			const operations = JSON.parse(file.toString()) as TOperation[];
-			const minimizer = new FuzzTestMinimizer(model, options, operations, seed, saveInfo, 3);
+			const minimizer = new FuzzTestMinimizer(
+				model.minimizationTransforms,
+				operations,
+				saveInfo,
+				async (generator) => replayTest(model, seed, generator, saveInfo, options),
+				3,
+			);
 
 			const minimized = await minimizer.minimize();
 			await saveOpsToFile(savePath, minimized);
@@ -1568,7 +1532,7 @@ export async function replayTest<
 >(
 	ddsModel: DDSFuzzModel<TChannelFactory, TOperation>,
 	seed: number,
-	operations: TOperation[],
+	generator: AsyncGenerator<TOperation, unknown>,
 	saveInfo?: SaveInfo,
 	providedOptions?: Partial<DDSFuzzSuiteOptions>,
 ): Promise<void> {
@@ -1584,8 +1548,7 @@ export async function replayTest<
 	const model = {
 		..._model,
 		// We lose some type safety here because the options interface isn't generic
-		generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
-			asyncGeneratorFromArray(operations),
+		generatorFactory: (): AsyncGenerator<TOperation, unknown> => generator,
 	};
 
 	await runTestForSeed(model, options, seed, saveInfo);
@@ -1615,7 +1578,7 @@ export function createDDSFuzzSuite<
 	const model = getFullModel(ddsModel, options);
 
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
-	describeFuzz(model.workloadName, ({ testCount }) => {
+	describeFuzz(model.workloadName, ({ testCount, stressMode }) => {
 		before(() => {
 			if (options.saveFailures !== false) {
 				mkdirSync(getSaveDirectory(options.saveFailures.directory, model), {
@@ -1629,7 +1592,8 @@ export function createDDSFuzzSuite<
 			}
 		});
 
-		for (let seed = 0; seed < testCount; seed++) {
+		const seeds = generateTestSeeds(testCount, stressMode);
+		for (const seed of seeds) {
 			runTest(model, options, seed, getSaveInfo(model, options, seed));
 		}
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.3.0",
+	"version": "2.23.0",
 	"description": "End to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -48,7 +48,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout=10000",
+		"test:mocha": "mocha --recursive \"lib/test/**/*.spec.*js\" --timeout=10000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
@@ -77,7 +77,7 @@
 		"@fluid-experimental/sequence-deprecated": "workspace:~",
 		"@fluid-internal/test-driver-definitions": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
-		"@fluid-tools/version-tools": "^0.44.0",
+		"@fluid-tools/version-tools": "^0.53.0",
 		"@fluidframework/agent-scheduler": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/cell": "workspace:~",
@@ -106,15 +106,15 @@
 		"semver": "^7.5.3"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.44.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@microsoft/api-extractor": "^7.45.1",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@microsoft/api-extractor": "7.47.8",
+		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",
 		"@types/semver": "^7.5.0",
@@ -125,20 +125,20 @@
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"ts-loader": "^9.3.0",
+		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
 		"uuid": "^9.0.0",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2"
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4"
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

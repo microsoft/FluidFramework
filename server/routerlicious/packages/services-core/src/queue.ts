@@ -55,6 +55,16 @@ export interface IConsumer {
 	resume(): Promise<void>;
 
 	/**
+	 * Pauses retrieval of new messages without a rebalance, and seeks the offset to the specified value.
+	 */
+	pauseFetching?(partitionId: number, seekTimeout: number, offset?: number): Promise<void>;
+
+	/**
+	 * Resumes retrieval of messages without a rebalance.
+	 */
+	resumeFetching?(partitionId: number): Promise<void>;
+
+	/**
 	 * Commits consumer checkpoint offset.
 	 */
 	commitCheckpoint(partitionId: number, queuedMessage: IQueuedMessage): Promise<void>;

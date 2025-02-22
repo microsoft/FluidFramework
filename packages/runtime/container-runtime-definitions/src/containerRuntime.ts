@@ -7,8 +7,8 @@ import type { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
+	IEvent,
 	IEventProvider,
-	IFluidHandle,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
@@ -40,8 +40,11 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
  * Events emitted by {@link IContainerRuntime}.
  * @legacy
  * @alpha
+ * @sealed
  */
-export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
+export interface IContainerRuntimeEvents
+	extends IContainerRuntimeBaseEvents,
+		ISummarizerEvents {
 	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
 }
@@ -49,6 +52,112 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents {
 /**
  * @legacy
  * @alpha
+ * @sealed
+ */
+export type SummarizerStopReason =
+	/**
+	 * Summarizer client failed to summarize in all attempts.
+	 */
+	| "failToSummarize"
+	/**
+	 * Parent client reported that it is no longer connected.
+	 */
+	| "parentNotConnected"
+	/**
+	 * Parent client reported that it is no longer elected the summarizer.
+	 * This is the normal flow; a disconnect will always trigger the parent
+	 * client to no longer be elected as responsible for summaries. Then it
+	 * tries to stop its spawned summarizer client.
+	 */
+	| "notElectedParent"
+	/**
+	 * We are not already running the summarizer and we are not the current elected client id.
+	 */
+	| "notElectedClient"
+	/**
+	 * Summarizer client was disconnected
+	 */
+	| "summarizerClientDisconnected"
+	/**
+	 * running summarizer threw an exception
+	 */
+	| "summarizerException"
+	/**
+	 * The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
+	 * first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
+	 */
+	| "latestSummaryStateStale";
+
+/**
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface ISummarizeEventProps {
+	result: "success" | "failure" | "canceled";
+	currentAttempt: number;
+	maxAttempts: number;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	error?: any;
+	/**
+	 * Result message of a failed summarize attempt
+	 */
+	failureMessage?: string;
+	/**
+	 * Was this summarize attempt part of the lastSummary process?
+	 */
+	isLastSummary?: boolean;
+}
+
+/**
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface ISummarizerObservabilityProps {
+	numUnsummarizedRuntimeOps: number;
+	numUnsummarizedNonRuntimeOps: number;
+}
+
+/**
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface ISummarizerEvents extends IEvent {
+	(
+		event: "summarize",
+		listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void,
+	);
+	(
+		event: "summarizeAllAttemptsFailed",
+		listener: (
+			props: Omit<ISummarizeEventProps, "result"> & ISummarizerObservabilityProps,
+		) => void,
+	);
+	(
+		event: "summarizerStop",
+		listener: (
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			props: { stopReason: SummarizerStopReason; error?: any } & ISummarizerObservabilityProps,
+		) => void,
+	);
+	(
+		event: "summarizerStart",
+		listener: (props: { onBehalfOf: string } & ISummarizerObservabilityProps) => void,
+	);
+	(
+		event: "summarizerStartupFailed",
+		listener: (
+			props: { reason: SummarizerStopReason } & ISummarizerObservabilityProps,
+		) => void,
+	);
+}
+
+/**
+ * @legacy
+ * @alpha
+ * @sealed
  */
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
 	IEventProvider<IContainerRuntimeEvents>;
@@ -57,6 +166,7 @@ export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase &
  * Represents the runtime of the container. Contains helper functions/state of the container.
  * @legacy
  * @alpha
+ * @sealed
  */
 export interface IContainerRuntime
 	extends IProvideFluidDataStoreRegistry,
@@ -74,14 +184,6 @@ export interface IContainerRuntime
 	 * Indicates the attachment state of the container to a host service.
 	 */
 	readonly attachState: AttachState;
-
-	/**
-	 * Returns the aliased data store's entryPoint, given the alias.
-	 * @param alias - The alias for the data store.
-	 * @returns The data store's entry point ({@link @fluidframework/core-interfaces#IFluidHandle}) if it exists and is aliased.
-	 * Returns undefined if no data store has been assigned the given alias.
-	 */
-	getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
 
 	/**
 	 * Returns true if document is dirty, i.e. there are some pending local changes that

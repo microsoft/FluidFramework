@@ -34,6 +34,7 @@ import {
 	setMoveEffect,
 } from "./moveEffectTable.js";
 import {
+	type Attach,
 	type CellMark,
 	type Changeset,
 	type Detach,
@@ -277,13 +278,16 @@ function composeMarksIgnoreChild(
 			const baseAttachAndDetach = asAttachAndDetach(baseMark);
 			const newOutputId = getOutputCellId(newAttachAndDetach);
 
+			const originalAttach = { ...baseAttachAndDetach.attach };
+			const finalDetach = { ...newAttachAndDetach.detach };
+
+			handleMovePivot(baseMark.count, originalAttach, finalDetach, moveEffects);
+
 			if (areEqualCellIds(newOutputId, baseAttachAndDetach.cellId)) {
 				return { count: baseAttachAndDetach.count, cellId: baseAttachAndDetach.cellId };
 			}
 
 			// `newMark`'s attach portion cancels with `baseMark`'s detach portion.
-			const originalAttach = { ...baseAttachAndDetach.attach };
-			const finalDetach = { ...newAttachAndDetach.detach };
 			const detachRevision = finalDetach.revision;
 			if (detachRevision !== undefined) {
 				finalDetach.revision = detachRevision;
@@ -368,67 +372,7 @@ function composeMarksIgnoreChild(
 		const attach = extractMarkEffect(baseMark);
 		const detach = extractMarkEffect(newMark);
 
-		if (isMoveIn(attach) && isMoveOut(detach)) {
-			const finalSource = getEndpoint(attach);
-			const finalDest = getEndpoint(detach);
-
-			setEndpoint(
-				moveEffects,
-				CrossFieldTarget.Source,
-				finalSource,
-				baseMark.count,
-				finalDest,
-			);
-
-			const truncatedEndpoint1 = getTruncatedEndpointForInner(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				attach.revision,
-				attach.id,
-				baseMark.count,
-			);
-
-			if (truncatedEndpoint1 !== undefined) {
-				setTruncatedEndpoint(
-					moveEffects,
-					CrossFieldTarget.Destination,
-					finalDest,
-					baseMark.count,
-					truncatedEndpoint1,
-				);
-			}
-
-			setEndpoint(
-				moveEffects,
-				CrossFieldTarget.Destination,
-				finalDest,
-				baseMark.count,
-				finalSource,
-			);
-
-			const truncatedEndpoint2 = getTruncatedEndpointForInner(
-				moveEffects,
-				CrossFieldTarget.Source,
-				detach.revision,
-				detach.id,
-				baseMark.count,
-			);
-
-			if (truncatedEndpoint2 !== undefined) {
-				setTruncatedEndpoint(
-					moveEffects,
-					CrossFieldTarget.Source,
-					finalSource,
-					baseMark.count,
-					truncatedEndpoint2,
-				);
-			}
-
-			// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
-			// so we remove it as a normalization.
-			delete attach.finalEndpoint;
-			delete detach.finalEndpoint;
-		}
+		handleMovePivot(baseMark.count, attach, detach, moveEffects);
 
 		if (areEqualCellIds(getOutputCellId(newMark), baseMark.cellId)) {
 			// The output and input cell IDs are the same, so this mark has no effect.
@@ -438,6 +382,71 @@ function composeMarksIgnoreChild(
 	} else {
 		const length = baseMark.count;
 		return createNoopMark(length, undefined);
+	}
+}
+
+/**
+ * Checks if `baseAttach` and `newDetach` are both moves, and if so updates their move endpoints as appropriate,
+ * and removes their `finalEndpoint` endpoint fields. Note that can mutate `baseAttach` and `newDetach`.
+ * If the effects are not both moves this function does nothing.
+ * @param count - The number of cells targeted
+ * @param baseAttach - The base attach effect at this location
+ * @param newDetach - The new detach effect at this location
+ */
+function handleMovePivot(
+	count: number,
+	baseAttach: Attach,
+	newDetach: Detach,
+	moveEffects: MoveEffectTable,
+): void {
+	if (isMoveIn(baseAttach) && isMoveOut(newDetach)) {
+		const finalSource = getEndpoint(baseAttach);
+		const finalDest = getEndpoint(newDetach);
+
+		setEndpoint(moveEffects, CrossFieldTarget.Source, finalSource, count, finalDest);
+
+		const truncatedEndpoint1 = getTruncatedEndpointForInner(
+			moveEffects,
+			CrossFieldTarget.Destination,
+			baseAttach.revision,
+			baseAttach.id,
+			count,
+		);
+
+		if (truncatedEndpoint1 !== undefined) {
+			setTruncatedEndpoint(
+				moveEffects,
+				CrossFieldTarget.Destination,
+				finalDest,
+				count,
+				truncatedEndpoint1,
+			);
+		}
+
+		setEndpoint(moveEffects, CrossFieldTarget.Destination, finalDest, count, finalSource);
+
+		const truncatedEndpoint2 = getTruncatedEndpointForInner(
+			moveEffects,
+			CrossFieldTarget.Source,
+			newDetach.revision,
+			newDetach.id,
+			count,
+		);
+
+		if (truncatedEndpoint2 !== undefined) {
+			setTruncatedEndpoint(
+				moveEffects,
+				CrossFieldTarget.Source,
+				finalSource,
+				count,
+				truncatedEndpoint2,
+			);
+		}
+
+		// The `finalEndpoint` field of AttachAndDetach move effect pairs is not used,
+		// so we remove it as a normalization.
+		delete baseAttach.finalEndpoint;
+		delete newDetach.finalEndpoint;
 	}
 }
 
@@ -573,15 +582,18 @@ export class ComposeQueue {
 		}
 	}
 
-	private dequeueBase(length: number = Infinity): ComposeMarks {
+	private dequeueBase(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
+		if (movedChanges !== undefined) {
+			this.moveEffects.onMoveIn(movedChanges);
+		}
 
 		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };
 	}
 
-	private dequeueNew(length: number = Infinity): ComposeMarks {
+	private dequeueNew(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const newMark = this.newMarks.dequeueUpTo(length);
 		const baseMark = createNoopMark(newMark.count, undefined, getInputCellId(newMark));
 

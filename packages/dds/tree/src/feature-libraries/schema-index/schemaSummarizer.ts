@@ -5,14 +5,10 @@
 
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IFluidDataStoreRuntime,
-	IChannelStorageService,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -29,7 +25,6 @@ import type {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
-import type { JsonCompatible } from "../../util/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
 import { encodeRepo, makeSchemaCodec } from "./codec.js";
@@ -47,13 +42,12 @@ export class SchemaSummarizer implements Summarizable {
 	private schemaIndexLastChangedSeq: number | undefined;
 
 	public constructor(
-		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly schema: MutableTreeStoredSchema,
 		options: ICodecOptions,
 		collabWindow: CollabWindow,
 	) {
 		this.codec = makeSchemaCodec(options);
-		this.schema.on("afterSchemaChange", () => {
+		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
 			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.
 			this.schemaIndexLastChangedSeq = collabWindow.getCurrentSeq();
@@ -95,16 +89,6 @@ export class SchemaSummarizer implements Summarizable {
 		throw new Error("Method not implemented.");
 	}
 
-	public getGCData(fullGC?: boolean): IGarbageCollectionData {
-		// TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
-		// by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
-		// to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
-		// blob.
-		return {
-			gcNodes: {},
-		};
-	}
-
 	public async load(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
@@ -127,18 +111,11 @@ export class SchemaSummarizer implements Summarizable {
 }
 
 /**
- * Dumps schema into a deterministic JSON compatible semi-human readable but unspecified format.
+ * Dumps schema into a deterministic JSON compatible semi-human readable format.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
- *
- * This format may change across major versions of this package: such changes are considered breaking.
- * Beyond that, no compatibility guarantee is provided for this format: it should never be relied upon to load data, it should only be used for comparing outputs from this function.
- * @privateRemarks
- * This currently uses the schema summary format, but that could be changed to something more human readable (particularly if the encoded format becomes less human readable).
- * This intentionally does not leak the format types in the API.
- * @internal
  */
-export function encodeTreeSchema(schema: TreeStoredSchema): JsonCompatible {
+export function encodeTreeSchema(schema: TreeStoredSchema): Format {
 	return encodeRepo(schema);
 }

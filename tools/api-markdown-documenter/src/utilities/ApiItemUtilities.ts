@@ -5,12 +5,14 @@
 
 import {
 	type ApiCallSignature,
+	type ApiClass,
 	type ApiConstructSignature,
 	type ApiConstructor,
 	ApiDocumentedItem,
 	type ApiEntryPoint,
 	type ApiFunction,
 	type ApiIndexSignature,
+	type ApiInterface,
 	type ApiItem,
 	ApiItemKind,
 	type ApiMethod,
@@ -21,11 +23,12 @@ import {
 	type ApiPackage,
 	ApiParameterListMixin,
 	ApiReadonlyMixin,
-	ApiReleaseTagMixin,
+	type ApiReleaseTagMixin,
 	ApiStaticMixin,
+	type ApiTypeAlias,
 	type Excerpt,
 	type IResolveDeclarationReferenceResult,
-	type ReleaseTag,
+	ReleaseTag,
 } from "@microsoft/api-extractor-model";
 import {
 	type DocDeclarationReference,
@@ -34,11 +37,36 @@ import {
 	TSDocTagDefinition,
 } from "@microsoft/tsdoc";
 import { PackageName } from "@rushstack/node-core-library";
-import { type Logger } from "../Logging.js";
+
+import type { Logger } from "../Logging.js";
 
 /**
  * This module contains general `ApiItem`-related types and utilities.
+ * @remarks Note: the utilities here should not require any specific context or configuration.
  */
+
+/**
+ * Represents "valid" API item kinds. I.e., not `None`.
+ *
+ * @public
+ */
+export type ValidApiItemKind = Exclude<ApiItemKind, ApiItemKind.None>;
+
+/**
+ * Gets the {@link ValidApiItemKind} for the provided API item.
+ *
+ * @throws If the item's kind is "None".
+ */
+export function getApiItemKind(apiItem: ApiItem): ValidApiItemKind {
+	switch (apiItem.kind) {
+		case ApiItemKind.None: {
+			throw new Error(`Encountered an API item with kind "None": "${apiItem.displayName}".`);
+		}
+		default: {
+			return apiItem.kind;
+		}
+	}
+}
 
 /**
  * Represents "member" API item kinds.
@@ -56,9 +84,9 @@ import { type Logger } from "../Logging.js";
  *
  * @public
  */
-export type ApiMemberKind = Omit<
-	ApiItemKind,
-	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.None | ApiItemKind.Package
+export type ApiMemberKind = Exclude<
+	ValidApiItemKind,
+	ApiItemKind.EntryPoint | ApiItemKind.Model | ApiItemKind.Package
 >;
 
 /**
@@ -72,6 +100,11 @@ export type ApiFunctionLike =
 	| ApiFunction
 	| ApiMethod
 	| ApiMethodSignature;
+
+/**
+ * `ApiItem` union type representing type-like API kinds.
+ */
+export type ApiTypeLike = ApiInterface | ApiClass | ApiTypeAlias;
 
 /**
  * `ApiItem` union type representing call-signature-like API kinds.
@@ -122,21 +155,70 @@ export enum ApiModifier {
 }
 
 /**
- * Adjusts the name of the item as needed.
- * Accounts for method overloads by adding a suffix such as "myMethod_2".
+ * Gets the "filtered" parent of the provided API item.
  *
- * @param apiItem - The API item for which the qualified name is being queried.
+ * @remarks This logic specifically skips items of the following kinds:
  *
- * @public
+ * - EntryPoint: skipped because any given Package item will have exactly 1 EntryPoint child with current version of
+ * API-Extractor, making this redundant in the hierarchy. We may need to revisit this in the future if/when
+ * API-Extractor adds support for multiple entrypoints.
+ *
+ * @param apiItem - The API item whose filtered parent will be returned.
  */
-export function getQualifiedApiItemName(apiItem: ApiItem): string {
-	let qualifiedName: string = getSafeFilenameForName(apiItem.displayName);
+export function getFilteredParent(apiItem: ApiItem): ApiItem | undefined {
+	const parent = apiItem.parent;
+	if (parent?.kind === ApiItemKind.EntryPoint) {
+		return parent.parent;
+	}
+	return parent;
+}
+
+/**
+ * Gets a qualified representation of the API item's display name, accounting for function/method overloads
+ * by adding a suffix (such as "myMethod_2") as needed to guarantee uniqueness.
+ */
+function getQualifiedDisplayName(apiItem: ApiItem): string {
+	let qualifiedName: string = apiItem.displayName;
 	if (ApiParameterListMixin.isBaseClassOf(apiItem) && apiItem.overloadIndex > 1) {
 		// Subtract one for compatibility with earlier releases of API Documenter.
 		// (This will get revamped when we fix GitHub issue #1308)
 		qualifiedName += `_${apiItem.overloadIndex - 1}`;
 	}
 	return qualifiedName;
+}
+
+/**
+ * Gets a filename-safe representation of the provided API item name.
+ *
+ * @remarks
+ * - Handles invalid filename characters.
+ */
+export function getFileSafeNameForApiItemName(apiItemName: string): string {
+	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
+	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
+
+	// Note: This can introduce naming collisions.
+	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
+	// https://github.com/microsoft/rushstack/issues/1308
+	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
+}
+
+/**
+ * Gets a filename-safe representation of the API item's display name.
+ *
+ * @remarks
+ * - Handles invalid filename characters.
+ *
+ * - Qualifies the API item's name, accounting for function/method overloads by adding a suffix (such as "myMethod_2")
+ * as needed to guarantee uniqueness.
+ *
+ * @param apiItem - The API item for which the qualified name is being queried.
+ *
+ * @public
+ */
+export function getFileSafeNameForApiItem(apiItem: ApiItem): string {
+	const qualifiedDisplayName = getQualifiedDisplayName(apiItem);
+	return getFileSafeNameForApiItemName(qualifiedDisplayName);
 }
 
 /**
@@ -165,16 +247,58 @@ export function filterByKind(apiItems: readonly ApiItem[], kinds: ApiItemKind[])
 }
 
 /**
- * Gets the release tag associated with the provided API item, if one exists.
+ * Gets the release tag associated with the provided API item, if the item's documentation contained one.
  *
- * @param apiItem - The API item whose documentation is being queried.
+ * @remarks
+ * Note: getting the exact tag of an item is generally not useful.
+ * Use `getEffectiveReleaseTag` instead to get the effective release level, accounting for inheritance.
  *
- * @returns The associated release tag, if it exists. Otherwise, `undefined`.
+ * @param apiItem - The API item whose release tag is being queried.
+ *
+ * @returns The associated release tag, if it exists. Will return `None` if no tag is present.
+ */
+function getReleaseTag(apiItem: ApiItem): ReleaseTag {
+	return (apiItem as Partial<ApiReleaseTagMixin>).releaseTag ?? ReleaseTag.None;
+}
+
+/**
+ * Represents the release level of an API item.
+ *
+ * @remarks
+ * The release level of a given item is the most restrictive of all items in its ancestry.
+ * An item with no release tag is implicitly considered `Public`.
+ *
+ * @param apiItem - The API item whose release level is being queried.
+ *
+ * @example
+ *
+ * An interface tagged `@public` under a namespace tagged `@beta` would be considered `@beta`.
+ *
+ * By contrast, an interface tagged `@beta` under a namespace tagged `@public` would also be considered `@beta`.
  *
  * @public
  */
-export function getReleaseTag(apiItem: ApiItem): ReleaseTag | undefined {
-	return ApiReleaseTagMixin.isBaseClassOf(apiItem) ? apiItem.releaseTag : undefined;
+export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
+
+/**
+ * Gets the effective {@link ReleaseLevel | release level} for the provided API item.
+ *
+ * @public
+ */
+export function getEffectiveReleaseLevel(apiItem: ApiItem): ReleaseLevel {
+	let myReleaseTag = getReleaseTag(apiItem);
+	if (myReleaseTag === ReleaseTag.None) {
+		// The lack of a release tag is treated as public
+		myReleaseTag = ReleaseTag.Public;
+	}
+
+	const parent = getFilteredParent(apiItem);
+	if (parent === undefined) {
+		return myReleaseTag;
+	}
+
+	const parentEffectiveReleaseTag = getEffectiveReleaseLevel(parent);
+	return Math.min(myReleaseTag, parentEffectiveReleaseTag);
 }
 
 /**
@@ -223,10 +347,12 @@ export function hasModifierTag(apiItem: ApiItem, tagName: string): boolean {
  * @public
  */
 export function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean {
-	return (
-		hasModifierTag(apiItem, tagName) ||
-		(apiItem.parent !== undefined && ancestryHasModifierTag(apiItem.parent, tagName))
-	);
+	if (hasModifierTag(apiItem, tagName)) {
+		return true;
+	}
+
+	const parent = getFilteredParent(apiItem);
+	return parent !== undefined && ancestryHasModifierTag(parent, tagName);
 }
 
 /**
@@ -502,19 +628,6 @@ export function getConciseSignature(apiItem: ApiItem): string {
 		return `${apiItem.displayName}(${apiItem.parameters.map((x) => x.name).join(", ")})`;
 	}
 	return apiItem.displayName;
-}
-
-/**
- * Converts bad filename characters to underscores.
- */
-export function getSafeFilenameForName(apiItemName: string): string {
-	// eslint-disable-next-line unicorn/better-regex, no-useless-escape
-	const badFilenameCharsRegExp: RegExp = /[^a-z0-9_\-\.]/gi;
-
-	// Note: This can introduce naming collisions.
-	// TODO: once the following issue has been resolved in api-extractor, we may be able to clean this up:
-	// https://github.com/microsoft/rushstack/issues/1308
-	return apiItemName.replace(badFilenameCharsRegExp, "_").toLowerCase();
 }
 
 /**
