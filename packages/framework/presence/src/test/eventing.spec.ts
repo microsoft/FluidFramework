@@ -92,6 +92,24 @@ const itemRemovedAndItemUpdatedMapUpdate = {
 		"sessionId-1": {
 			"rev": 2,
 			"items": {
+				"key2": {
+					"rev": 2,
+					"timestamp": 50,
+				},
+				"key1": {
+					"rev": 2,
+					"timestamp": 50,
+					"value": { a: 2, b: 2 },
+				},
+			},
+		},
+	},
+};
+const itemUpdatedAndItemRemoveddMapUpdate = {
+	"latestMap": {
+		"sessionId-1": {
+			"rev": 2,
+			"items": {
 				"key1": {
 					"rev": 2,
 					"timestamp": 50,
@@ -226,11 +244,12 @@ describe("Presence", () => {
 			| typeof latestUpdateRev2
 			| typeof itemRemovedMapUpdate
 			| typeof itemRemovedAndItemUpdatedMapUpdate
+			| typeof itemUpdatedAndItemRemoveddMapUpdate
 			| typeof notificationsUpdate;
 
 		function setupSharedStatesWorkspace({
-			notifications = false,
-		}: { notifications?: boolean } = {}): void {
+			notifications,
+		}: { notifications?: true } = {}): void {
 			const states = presence.getStates("name:testWorkspace", {
 				latest: Latest({ x: 0, y: 0, z: 0 }),
 				latestMap: LatestMap({ key1: { a: 0, b: 0 }, key2: { c: 0, d: 0 } }),
@@ -508,7 +527,7 @@ describe("Presence", () => {
 						);
 					}
 
-					it("in a single workspace", () => {
+					it("with removal first", () => {
 						// Setup
 						setupSharedStatesWorkspace();
 						const workspace = {
@@ -521,6 +540,22 @@ describe("Presence", () => {
 						};
 						// Act
 						processUpdates(itemRemovedAndItemUpdatedUpdate, { systemWorkspaceUpdate: false });
+						// Verify
+						assertSpies();
+					});
+					it("with update first", () => {
+						// Setup
+						setupSharedStatesWorkspace();
+						const workspace = {
+							"s:name:testWorkspace": latestMapUpdate,
+						};
+						processUpdates(workspace);
+						setupSpiesAndListeners();
+						const itemUpdatedAndItemRemovedUpdate = {
+							"s:name:testWorkspace": itemUpdatedAndItemRemoveddMapUpdate,
+						};
+						// Act
+						processUpdates(itemUpdatedAndItemRemovedUpdate, { systemWorkspaceUpdate: false });
 						// Verify
 						assertSpies();
 					});
