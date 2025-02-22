@@ -474,7 +474,7 @@ export class AnchorSet implements AnchorLocator {
 			}
 		}
 
-		return path ?? fail("internalize path must be a path");
+		return path ?? fail(0xaea /* internalize path must be a path */);
 	}
 
 	/**
@@ -767,7 +767,9 @@ export class AnchorSet implements AnchorLocator {
 							.map(
 								(e) =>
 									e.changedField ??
-									fail("childrenChangedAfterBatch events should have a changedField"),
+									fail(
+										0xaeb /* childrenChangedAfterBatch events should have a changedField */,
+									),
 							);
 						node.events.emit(event, { changedFields: new Set(fieldKeys) });
 					} else {
@@ -1031,7 +1033,8 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	public getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
 		const anchor = this.anchorSet.track(this.child(key, index));
 		const node =
-			this.anchorSet.locate(anchor) ?? fail("cannot reference child that does not exist");
+			this.anchorSet.locate(anchor) ??
+			fail(0xaec /* cannot reference child that does not exist */);
 		return [anchor, node];
 	}
 
