@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
@@ -25,7 +26,6 @@ import {
 	postMessagesToWindow,
 } from "./messaging/index.js";
 import { pkgVersion as devtoolsVersion } from "./packageVersion.js";
-
 /**
  * Message logging options used by the root devtools.
  */
@@ -336,7 +336,7 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Gets the registered Container Devtools associated with the provided {@link ContainerKey}, if one exists.
 	 * Otherwise returns `undefined`.
 	 */
-	public getContainerDevtools(containerKey: ContainerKey): IContainerDevtools | undefined {
+	public getContainerDevtools(containerKey: ContainerKey): ContainerDevtools | undefined {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
@@ -360,6 +360,23 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
+	}
+
+	/**
+	 * TODO: Need Verification
+	 * Add new data to the devtools logger.
+	 */
+	public addContainerData(
+		containerKey: ContainerKey,
+		data: Record<string, IFluidLoadable>,
+	): void {
+		const containerDevtools = this.getContainerDevtools(containerKey);
+
+		if (containerDevtools === undefined) {
+			throw new Error(`No devtools associated with key "${containerKey}" was found.`);
+		}
+
+		containerDevtools.containerData = { ...data };
 	}
 
 	/**

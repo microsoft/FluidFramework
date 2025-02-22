@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { SharedCounter } from "@fluidframework/counter/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { expect } from "chai";
 
 import type { ContainerDevtoolsProps } from "../ContainerDevtools.js";
@@ -97,6 +99,34 @@ describe("FluidDevtools unit tests", () => {
 		expect(() => devtools.registerContainerDevtools(container2Props)).to.throw(
 			getContainerAlreadyRegisteredErrorText(containerKey),
 		);
+	});
+
+	it.only("Registering a new container data to an existing devtools", () => {
+		const devtools = FluidDevtools.initialize();
+
+		const containerKey = "test-container-key";
+
+		const container = createMockContainer();
+		const containerProps: ContainerDevtoolsProps = {
+			containerKey,
+			container,
+		};
+		devtools.registerContainerDevtools(containerProps);
+
+		const containerDataBefore = devtools.getContainerDevtools(containerKey)?.containerData;
+		expect(containerDataBefore).to.be.undefined;
+
+		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
+		const sharedCounter = SharedCounter.create(runtime, "test-counter");
+		sharedCounter.increment(37);
+
+		const newDataKey = "shared-counter";
+		const newData = { [newDataKey]: sharedCounter };
+		devtools.addContainerData(containerKey, newData);
+
+		const containerDataAfter = devtools.getContainerDevtools(containerKey)?.containerData;
+		expect(containerDataAfter).to.not.equal(undefined);
+		expect(containerDataAfter?.[newDataKey]).to.equal(sharedCounter);
 	});
 
 	it("tryGet", () => {
