@@ -5,13 +5,13 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces";
+import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { ValueManager } from "./internalTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
 
-import type { JsonTypeWith } from "@fluidframework/presence/internal/core-interfaces";
 import type { InternalTypes } from "@fluidframework/presence/internal/exposedInternalTypes";
 import type { InternalUtilityTypes } from "@fluidframework/presence/internal/exposedUtilityTypes";
 

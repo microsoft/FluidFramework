@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "../exposedUtilityTypes.js";
+import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
 
 /**
  * Use to compile-time assert types of two variables are identical.

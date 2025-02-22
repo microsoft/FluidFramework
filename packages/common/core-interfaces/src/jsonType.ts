@@ -15,7 +15,7 @@
  * Prefer using `JsonSerializable<unknown>` or `JsonDeserialized<unknown>` over this type that
  * is an implementation detail.
  *
- * @internal
+ * @beta
  */
 export type JsonTypeWith<T> =
 	// eslint-disable-next-line @rushstack/no-new-null
@@ -30,7 +30,7 @@ export type JsonTypeWith<T> =
 /**
  * Portion of {@link JsonTypeWith} that is an object (including array) and not null.
  *
- * @internal
+ * @beta
  */
 export type NonNullJsonObjectWith<T> =
 	| { [key: string | number]: JsonTypeWith<T> }

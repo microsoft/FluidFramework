@@ -35,13 +35,17 @@
 		},
 		"./internal": {
 			"import": {
-				"types": "./lib/index.d.ts",
+				"types": "./lib/internal.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/index.d.ts",
+				"types": "./dist/internal.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./internal/exposedUtilityTypes": {
+			"import": "./lib/exposedUtilityTypes.js",
+			"require": "./dist/exposedUtilityTypes.js"
 		}
 	},
 	"main": "lib/index.js",
@@ -79,7 +83,7 @@
 		"ci:build:docs": "api-extractor run",
 		"ci:test": "echo No test for this package",
 		"ci:test:coverage": "echo No test for this package",
-		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",

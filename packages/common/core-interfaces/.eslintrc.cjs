@@ -16,4 +16,18 @@ module.exports = {
 		// TODO: Enabling this may require breaking changes.
 		"@typescript-eslint/consistent-indexed-object-style": "off",
 	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				"import/no-internal-modules": [
+					"error",
+					{
+						"allow": ["@fluidframework/*/internal{,/**}"],
+					},
+				],
+			},
+		},
+	],
 };

@@ -35,14 +35,6 @@ export type {
 } from "./handles.js";
 export { IFluidHandleContext, IFluidHandle, fluidHandleSymbol } from "./handles.js";
 
-export type { JsonDeserialized, JsonDeserializedOptions } from "./jsonDeserialized.js";
-export type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
-export type {
-	SerializationErrorPerNonPublicProperties,
-	SerializationErrorPerUndefinedArrayElement,
-} from "./jsonSerializationErrors.js";
-export type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
-
 export type {
 	ILoggingError,
 	ITelemetryBaseEvent,
@@ -67,6 +59,3 @@ export type {
 	NoListenersCallback,
 	Off,
 } from "./events/index.js";
-
-// eslint-disable-next-line no-restricted-syntax
-export type * from "./exposedUtilityTypes.js";

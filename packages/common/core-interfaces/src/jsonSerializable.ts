@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 
 /**
  * Options for {@link JsonSerializable}.
  *
- * @internal
+ * @beta
  */
 export interface JsonSerializableOptions {
 	/**
@@ -116,7 +116,7 @@ export interface JsonSerializableOptions {
  * proper use, that will never be an issue as any filtering of types will happen
  * before T recursion.
  *
- * @internal
+ * @beta
  */
 export type JsonSerializable<
 	T,

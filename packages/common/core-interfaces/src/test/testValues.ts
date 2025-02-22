@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { fluidHandleSymbol, type IFluidHandle, type IFluidHandleErased } from "../handles.js";
-import type { JsonTypeWith } from "../jsonType.js";
-
 import { assertIdenticalTypes } from "./testUtils.js";
+
+import type { IFluidHandle, IFluidHandleErased } from "@fluidframework/core-interfaces";
+import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
+import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */

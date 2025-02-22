@@ -6,11 +6,7 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 	parserOptions: {
-		project: [
-			"./tsconfig.json",
-			"./src/test/tsconfig.json",
-			"./src/test/core-interfaces/tsconfig.no-exactOptionalPropertyTypes.json",
-		],
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
 		// The clarity of explicit index signatures is helpful in many places with this package.

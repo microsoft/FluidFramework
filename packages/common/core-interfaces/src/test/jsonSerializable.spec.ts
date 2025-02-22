@@ -7,15 +7,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IFluidHandle } from "../handles.js";
-import type { JsonDeserialized } from "../jsonDeserialized.js";
-import type { JsonSerializable, JsonSerializableOptions } from "../jsonSerializable.js";
-import type {
-	SerializationErrorPerNonPublicProperties,
-	SerializationErrorPerUndefinedArrayElement,
-} from "../jsonSerializationErrors.js";
-import type { JsonTypeWith, NonNullJsonObjectWith } from "../jsonType.js";
-
 import {
 	assertIdenticalTypes,
 	createInstanceOf,
@@ -126,6 +117,17 @@ import {
 	objectWithFluidHandle,
 	objectWithFluidHandleOrRecursion,
 } from "./testValues.js";
+
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	JsonDeserialized,
+	JsonSerializable,
+	JsonSerializableOptions,
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+	SerializationErrorPerNonPublicProperties,
+	SerializationErrorPerUndefinedArrayElement,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Defined using `JsonSerializable` type filter tests `JsonSerializable` at call site.
@@ -626,8 +628,8 @@ describe("JsonSerializable", () => {
 				 * support for both ESM and CommonJS, this helper allows calling
 				 * with undefined (for CommonJS) and simulates the error that
 				 * is expected on ESM.
-				 * Importantly `undefined` is not expected to be serializable
-				 * and thus is always a problem.
+				 * Importantly `undefined` is not expected to be serializable and
+				 * thus is always a problem.
 				 */
 				function doNothingPassThru<T>(v: T): never {
 					if (v === undefined) {
