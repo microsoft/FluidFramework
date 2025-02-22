@@ -88,7 +88,7 @@
 		"c8": "^8.0.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
