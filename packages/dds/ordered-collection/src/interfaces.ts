@@ -125,6 +125,11 @@ export interface IConsensusOrderedCollection<T = any>
 	acquire(callback: ConsensusCallback<T>): Promise<boolean>;
 
 	/**
+	 * Return the size of the collection
+	 */
+	size?(): number;
+
+	/**
 	 * Wait for a value to be available and remove it from the consensus collection
 	 * Calls callback with retrieved value.
 	 */

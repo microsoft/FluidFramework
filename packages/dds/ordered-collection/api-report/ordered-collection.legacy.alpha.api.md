@@ -29,6 +29,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
     protected release(acquireId: string): void;
     // (undocumented)
     protected releaseCore(acquireId: string): void;
+    size?(): number;
     // (undocumented)
     protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
@@ -57,6 +58,7 @@ export enum ConsensusResult {
 export interface IConsensusOrderedCollection<T = any> extends ISharedObject<IConsensusOrderedCollectionEvents<T>> {
     acquire(callback: ConsensusCallback<T>): Promise<boolean>;
     add(value: T): Promise<void>;
+    size?(): number;
     waitAndAcquire(callback: ConsensusCallback<T>): Promise<void>;
 }
 
