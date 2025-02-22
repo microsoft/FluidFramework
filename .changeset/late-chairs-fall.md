@@ -15,9 +15,9 @@ To access the package name that `getContainerPackageInfo()` currently provides, 
 Before deprecation:
 ``` typescript
 function getLoadedPackageName(container: IContainer): string | undefined {
-const pkg = container.getContainerPackageInfo();
-if (pkg === undefined) return undefined;
-return typeof pkg === "object" ? pkg.name : pkg;
+	const name = container.getContainerPackageInfo?.()?.name;
+	if (name === undefined) return undefined;
+	return name;
 }
 ```
 After deprecation:
