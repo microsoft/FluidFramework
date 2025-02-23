@@ -5,7 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces";
-import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 
 import type { ValueManager } from "./internalTypes.js";
 import type { ISessionClient } from "./presence.js";
