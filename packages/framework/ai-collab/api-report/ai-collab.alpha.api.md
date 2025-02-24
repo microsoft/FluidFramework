@@ -36,6 +36,7 @@ export interface AiCollabOptions {
 
 // @alpha
 export interface AiCollabSuccessResponse {
+    readonly diffs: Difference[];
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
 }
@@ -47,7 +48,7 @@ export function createMergableDiffSeries(diffs: Difference[]): Difference[];
 export function createMergableIdDiffSeries(oldObject: unknown, diffs: Difference[], idAttributeName: string | number): Difference[];
 
 // @alpha
-export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
+export type Difference = DifferenceInsert | DifferenceRemove | DifferenceChange | DifferenceMove;
 
 // @alpha
 export interface DifferenceChange {
@@ -64,11 +65,11 @@ export interface DifferenceChange {
 }
 
 // @alpha
-export interface DifferenceCreate {
+export interface DifferenceInsert {
     // (undocumented)
     path: ObjectPath;
     // (undocumented)
-    type: "CREATE";
+    type: "INSERT";
     // (undocumented)
     value: unknown;
 }

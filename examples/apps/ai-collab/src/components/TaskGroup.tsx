@@ -493,10 +493,10 @@ export function TaskGroup(props: {
 					const taskDiffs: Difference[] = [];
 					for (const diff of props.branchDifferences ?? []) {
 						if (diff.path[0] === "tasks") {
-							if (diff.type !== "CREATE" && diff.objectId === task.id) {
+							if (diff.type !== "INSERT" && diff.objectId === task.id) {
 								taskDiffs.push(diff);
 							} else {
-								if (diff.type === "CREATE") {
+								if (diff.type === "INSERT") {
 									const newTaskFromDiff = diff.value as SharedTreeTaskGroup;
 									if (newTaskFromDiff.id === task.id) {
 										taskDiffs.push(diff);

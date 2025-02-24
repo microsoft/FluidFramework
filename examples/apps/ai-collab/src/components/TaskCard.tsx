@@ -92,7 +92,7 @@ export function TaskCard(props: {
 			}
 			fieldDifferences.changes[path] = diff;
 		}
-		if (diff.type === "CREATE") {
+		if (diff.type === "INSERT") {
 			fieldDifferences.isNewCreation = true;
 		}
 		if (diff.type === "MOVE") {

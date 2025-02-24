@@ -5,7 +5,7 @@
 
 import { type TreeMapNode, type TreeArrayNode, NodeKind } from "@fluidframework/tree";
 
-import type { ObjectPath } from "./sharedTreeDiff.js";
+import type { ObjectPath } from "../aiCollabApi.js";
 
 /**
  * Checks if the given object is an {@link TreeMapNode}.
