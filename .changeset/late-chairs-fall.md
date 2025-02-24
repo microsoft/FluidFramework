@@ -8,23 +8,7 @@
 
 IContainer.getContainerPackageInfo() is now deprecated
 
-`IContainer.getContainerPackageInfo()` is now deprecated, and will be removed in a future release to clean up API surface. It is superfluous since package name and more is available from `IContainer.getLoadedCodeDetails()`.
+  This API will be removed in 2.40.0.
+  Use IFluidCodeDetails.package returned by IContainer.getLoadedCodeDetails() instead.
 
-To access the package name that `getContainerPackageInfo()` currently provides, use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()`. Example:
-
-Before deprecation:
-``` typescript
-function getLoadedPackageName(container: IContainer): string | undefined {
-	const name = container.getContainerPackageInfo?.()?.name;
-	if (name === undefined) return undefined;
-	return name;
-}
-```
-After deprecation:
-``` typescript
-function getLoadedPackageName(container: IContainer): string | undefined {
-const pkg = container.getLoadedCodeDetails()?.package;
-if (pkg === undefined) return undefined;
-return typeof pkg === "object" ? pkg.name : pkg;
-}
-```
+  See [issue] (https://github.com/microsoft/FluidFramework/issues/23898) for context.
