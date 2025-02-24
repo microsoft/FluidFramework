@@ -411,7 +411,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
 					if (!workspaceAddress.startsWith("system:")) {
-						// Seperate intenal type prefix from public workspace address
+						// Seperate internal type prefix from public workspace address
 						const [prefix, ...rest] = workspaceAddress.split(":");
 						const publicWorkspaceAddress = rest.join(":");
 
