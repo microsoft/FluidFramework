@@ -481,11 +481,11 @@ describe("SharedTree benchmarks", () => {
 							// Add commits to the receiver's local branch but prevent them from being sent in order to ensure they remain on the local branch
 							receiver.setConnected(false);
 							for (let iCommit = 0; iCommit < localBranchSize; iCommit++) {
-								insert(receiver.checkout, 0, `r${iCommit}`);
+								insert(receiver.kernel.checkout, 0, `r${iCommit}`);
 							}
 							// These are the commits that should be bunched together
 							for (let iCommit = 0; iCommit < bunchSize; iCommit++) {
-								insert(sender.checkout, 0, `s${iCommit}`);
+								insert(sender.kernel.checkout, 0, `s${iCommit}`);
 							}
 							// Ensure the sender has sent the ops
 							provider.processMessages();
