@@ -5,6 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
@@ -88,7 +89,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	updated: (updates: LatestMapValueClientData<T, K>) => void;
 
 	/**
-	 * Raised when specific item's value is updated.
+	 * Raised when specific item's value of remote client is updated.
 	 * @param updatedItem - Updated item value.
 	 *
 	 * @eventProperty
@@ -96,12 +97,33 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
 
 	/**
-	 * Raised when specific item is removed.
+	 * Raised when specific item of remote client is removed.
 	 * @param removedItem - Removed item.
 	 *
 	 * @eventProperty
 	 */
 	itemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
+
+	/**
+	 * Raised when specific local item's value is updated.
+	 * @param updatedItem - Updated item value.
+	 *
+	 * @eventProperty
+	 */
+	localItemUpdated: (updatedItem: {
+		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		key: K;
+	}) => void;
+
+	/**
+	 * Raised when specific local item is removed.
+	 * @param removedItem - Removed item.
+	 *
+	 * @eventProperty
+	 */
+	localItemRemoved: (removedItem: {
+		key: K;
+	}) => void;
 }
 
 /**
@@ -191,6 +213,9 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	private countDefined: number;
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
+		private readonly emitter: IEmitter<
+			Pick<LatestMapValueManagerEvents<T, K>, "localItemUpdated" | "localItemRemoved">
+		>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<
 				T,
@@ -232,6 +257,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		if (hasKey) {
 			this.countDefined -= 1;
 			this.updateItem(key, undefined);
+			this.emitter.emit("localItemRemoved", { key });
 		}
 		return hasKey;
 	}
@@ -261,6 +287,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 			this.value.items[key] = { rev: 0, timestamp: 0, value };
 		}
 		this.updateItem(key, value);
+		this.emitter.emit("localItemUpdated", { key, value });
 		return this;
 	}
 	public get size(): number {
@@ -308,7 +335,7 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	 */
 	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
 	/**
-	 * Array of known clients.
+	 * Array of known remote clients.
 	 */
 	clients(): ISessionClient[];
 	/**
@@ -341,6 +368,7 @@ class LatestMapValueManagerImpl<
 
 		this.local = new ValueMapImpl<T, Keys>(
 			value,
+			this.events,
 			(updates: InternalTypes.MapValueState<T, Keys>) => {
 				datastore.localUpdate(key, updates, {
 					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,

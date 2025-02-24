@@ -97,6 +97,24 @@ export const insertField: TestOperation = (
 	}
 };
 
+const obliterateHelper = (
+	client: TestClient,
+	startPos: number,
+	endPos: number,
+	random: IRandom,
+): IMergeTreeOp[] => {
+	const obliterateOp = client.obliterateRangeLocal(
+		{ pos: startPos, side: Side.After },
+		{ pos: endPos, side: Side.Before },
+	);
+	const insertOp = insertFieldText(client, startPos + 1, random);
+	assert(insertOp !== undefined, "Insert op should not be undefined");
+	// TODO: AB#31001: We should be able to sometimes use group ops here rather than submit two separate ops,
+	// but this causes failures which likely indicate there are bugs with the intersection of obliterate and grouped batching.
+	// const op = createGroupOp(obliterateOp, insertOp);
+	return [obliterateOp, insertOp];
+};
+
 export const obliterateField: TestOperation = (
 	client: TestClient,
 	opStart: number,
@@ -114,20 +132,43 @@ export const obliterateField: TestOperation = (
 	if (fieldEndpoints !== undefined) {
 		const { startPos, endPos } = fieldEndpoints;
 		// Obliterate text between the separators, but avoid the case where the obliterate range is zero length.
-		if (endPos - startPos > 1) {
-			const obliterateOp = client.obliterateRangeLocal(
-				{ pos: startPos, side: Side.After },
-				{ pos: endPos, side: Side.Before },
-			);
-			const insertOp = insertFieldText(client, startPos + 1, random);
-			assert(insertOp !== undefined, "Insert op should not be undefined");
-			// TODO: AB#31001: We should be able to sometimes use group ops here rather than submit two separate ops,
-			// but this causes failures which likely indicate there are bugs with the intersection of obliterate and grouped batching.
-			// const op = createGroupOp(obliterateOp, insertOp);
-			return [obliterateOp, insertOp];
-		} else {
-			return;
-		}
+		return endPos - startPos > 1
+			? obliterateHelper(client, startPos, endPos, random)
+			: undefined;
+	}
+	if (opEnd >= client.getLength()) {
+		endISP = { pos: client.getLength() - 1, side: Side.After };
+	}
+	if (!client.getText(opStart, opEnd).includes("{")) {
+		// Avoid issuing obliterates that might contain multiple fields.
+		// Otherwise we may end up with field characters that look like they're outside of the field,
+		// since one of these obliterates can wipe out the field including the `{}` delimiters, but
+		// a "field replace" obliterate + insert can win and insert the numerical characters.
+		return client.obliterateRangeLocal(
+			{ pos: opStart, side: Side.Before },
+			endISP ?? { pos: opEnd, side: Side.After },
+		);
+	}
+};
+
+export const obliterateFieldZeroLength: TestOperation = (
+	client: TestClient,
+	opStart: number,
+	opEnd: number,
+	random: IRandom,
+) => {
+	const fieldEndpoints = getFieldEndpoints(
+		client,
+		opStart,
+		// the operation runner generates endpoints with client length, but this model only supports up to client length - 1.
+		Math.min(opEnd, client.getLength() - 1),
+	);
+
+	let endISP: InteriorSequencePlace | undefined;
+	if (fieldEndpoints !== undefined) {
+		const { startPos, endPos } = fieldEndpoints;
+		// Obliterate text between the separators, including the case where the obliterate range is zero length.
+		return obliterateHelper(client, startPos, endPos, random);
 	}
 	if (opEnd >= client.getLength()) {
 		endISP = { pos: client.getLength() - 1, side: Side.After };
