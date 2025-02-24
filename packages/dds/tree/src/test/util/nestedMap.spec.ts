@@ -80,24 +80,14 @@ describe("NestedMap unit tests", () => {
 		});
 
 		it("Existing value", () => {
-			const nestedMap: NestedMap<string, string, number> = new Map<
-				string,
-				Map<string, number>
-			>();
-			const log: unknown[][] = [];
-			getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => {
-				log.push(args);
-				return 1;
-			});
-			getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => {
-				log.push(args);
-				return 2;
-			});
-			assert.equal(nestedMap.get("Foo")?.get("Bar"), 2);
-			assert.deepEqual(log, [
-				["Foo", "Bar"],
-				["Foo", "Bar"],
-			]);
+			const nestedMap: NestedMap<string, string, number> = new Map();
+			const got1 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => 1);
+			const got2 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) =>
+				assert.fail("Should not be called"),
+			);
+			assert.equal(got1, 1);
+			assert.equal(got2, 1);
+			assert.equal(nestedMap.get("Foo")?.get("Bar"), 1);
 		});
 	});
 
