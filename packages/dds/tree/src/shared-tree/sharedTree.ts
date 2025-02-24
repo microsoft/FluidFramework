@@ -29,6 +29,7 @@ import type {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
@@ -248,6 +249,10 @@ export class SharedTree extends SharedObject implements ISharedTree {
 		localOpMetadata: unknown,
 	): void {
 		this.kernel.processCore(message, local, localOpMetadata);
+	}
+
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		this.kernel.processMessagesCore(messagesCollection);
 	}
 
 	protected onDisconnect(): void {
