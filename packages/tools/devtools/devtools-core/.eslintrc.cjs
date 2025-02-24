@@ -14,7 +14,6 @@ module.exports = {
 
 		// Disabled because it is incompatible with API-Extractor.
 		"@typescript-eslint/no-namespace": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{
