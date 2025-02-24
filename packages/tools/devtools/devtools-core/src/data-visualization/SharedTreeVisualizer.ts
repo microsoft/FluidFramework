@@ -258,6 +258,7 @@ async function visualizeMapNode(
 	for (const key of Object.keys(tree.fields)) {
 		mapNodeSchemaProperties[key] = {
 			allowedTypes: schema.allowedTypes,
+			// Map values are always required. Don't display field requirement information, since that information is redundant.
 			isRequired: undefined,
 		};
 	}
