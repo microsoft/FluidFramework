@@ -209,35 +209,38 @@ aiCollab({
 
 All debug events implement the `DebugEvent` interface. Some also implement `EventFlowDebugEvent`, which lets them mark a progress point in a specific logic flow within a given execution of `aiCollab()`.
 
-### Event flows
-1. `CORE_EVENT_LOOP`: All events with this `eventFlowName` are used to mark the start and end of the life cycle of a single execution of the ai-collab function.
+### Event flow Overview
+To see detailed information about each event, please read their cooresponding [tsdoc](./src/explicit-strategy/debugEvents.ts#L46)
+
+1. **Core Event Loop** - The start and end of a single execution of aiCollab.
 	- Events:
-		1. `CoreEventLoopStarted`: Events with the `eventName` `CORE_EVENT_LOOP_STARTED`. This event marks the start of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
-		1. `CoreEventLoopCompleted`:Events with the `eventName` `CORE_EVENT_LOOP_COMPLETED`. This event marks the end of the ai-collab function execution life cycle. There will be exactly 1 of these events per ai-collab function execution.
-2. `GENERATE_PLANNING_PROMPT`: All events with this `eventFlowName` are used to mark the start, end and outcome of the LLM generating the planning prompt used to assist the LLM to plan how it will edit the SharedTree based on the user ask
+		1. **Core Event Loop Started**
+		1. **Core Event Loop Completed**
+2. **Generate Planning Prompt** - The event flow for producing an initial LLM generated plan to assist the LLM with creating edits to the users Shared Tree.
 	- Events
-		1. `PlanningPromptStarted`:Events with the `eventName` `GENERATE_PLANNING_PROMPT_STARTED`. This event marks the start of the logic flow for generating the planning prompt. There will be exactly 1 of these events per ai-collab function execution.
+		1. **Generate Planning Prompt Started**
 			- Child `DebugEvent`'s triggered:
-				1. `LlmApiCallDebugEvent`: In order to generate the planning prompt, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
-		1. `PlanningPromptCompleted`:Events with the `eventName` `GENERATE_PLANNING_PROMPT_COMPLETED`: This event marks the end and outcome of the LLM generating the planning prompt There will be exactly 1 of these events per ai-collab function execution.
-3. `GENERATE_TREE_EDIT`: All events with this `eventFlowName` are used to mark the start, end and outcome of the LLM generating a single TreeEdit that will be applied to the tree. It is expected that the LLM will generate multiple of these events when it must generate multiple tree edits to satisfy the user request
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		1. **Generate Planning Prompt Completed**
+3. **Generate Tree Edit** - The event flow for generating an edit to the users Shared Tree to further complete the users request.
 	- Events:
-		1. `GenerateTreeEditStarted`: Events with the `eventName` `GENERATE_TREE_EDIT_STARTED`: This event marks the start of the logic flow for generating a single tree edit
+		1. **Generate Tree Edit Started**
 			- Child `DebugEvent`'s triggered:
-				1. `LlmApiCallDebugEvent`: In order to generate a Tree Edit, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
-		1. `GenerateTreeEditCompleted`: Events with the `eventName` `GENERATE_TREE_EDIT_COMPLETED`. This event marks the end and outcome of the LLM generating a single tree edit. Note that if the LLM returns `null` as its edit at this step, it is signaling that it things no more edits are necessary.
-4. `FINAL_REVIEW`: All events with this `eventFlowName` are used to mark the start, end and outcome of the requesting the LLM to review its work and determine whether the users ask was accomplished or more edits are needed.
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		1. **Generate Tree Edit Completed**
+		1. **Apply Edit Success** OR **Apply Edit Failure** - The outcome of applying the LLM generated tree edit.
+4. **Final Review** - The event flow for asking the LLM to complete a final review of work it has completed and confirming if the users request has been completed. If the LLM is not satisfied, the **Generate Tree Edit** loop will start again.
 	- Events:
-		- `FinalReviewStarted`: Events with the `eventName` `FINAL_REVIEW_STARTED`: This event marks the start of the logic flow for requesting the LLM complete a final review of the edits it has created and whether it believes the users ask was accomplished or more edits are needed. If the LLM thinks more edits are needed, the `GENERATE_TREE_EDIT` will start again.
+		- **Final Review Started**
 			- Child `DebugEvent`'s triggered:
-				1. `LlmApiCallDebugEvent`: In order to conduct the final review, a call to the LLM is necessary. This `DebugEvent` captures the request and its raw result from said API call.
-		- `FinalReviewCompleted`: Events with the `eventName` `FINAL_REVIEW_COMPLETED`. This event marks the end and outcome of the logic flow for requesting the LLM complete a final review of the edits it has created.
+				1. **Llm Api Call** - An event detailing the raw api request to the LLM client.
+		- **Final Review Completed**
 
 
-### using Trace Id's
+### Using Trace Id's
 Debug Events in ai-collab have two different types of trace id's:
 - `traceId`: This field exists on all debug events and can be used to correlate all debug events that happened in a single execution of `aiCollab()`. Sorting the events by timestamp will show the proper chronological order of the events. Note that the events should already be emitted in chronological order.
-- `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all `LlmApiCallDebugEvent` events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
+- `eventFlowTraceId`: this field exists on all `EventFlowDebugEvents` and can be used to correlate all events from a particular event flow. Additionally all LLM api call events will contain the `eventFlowTraceId` field as well as a `triggeringEventFlowName` so you can link LLM API calls to a particular event flow.
 
 
 ## Known Issues & limitations

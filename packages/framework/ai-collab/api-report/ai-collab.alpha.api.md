@@ -45,7 +45,7 @@ export interface ApplyEditFailure extends EventFlowDebugEvent {
     edit: LlmTreeEdit;
     errorMessage: string;
     // (undocumented)
-    eventFlowName: "GENERATE_AND_APPLY_TREE_EDIT";
+    eventFlowName: typeof EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT;
     // (undocumented)
     eventFlowStatus: "IN_PROGRESS";
     eventFlowTraceId: string;
@@ -58,7 +58,7 @@ export interface ApplyEditFailure extends EventFlowDebugEvent {
 export interface ApplyEditSuccess extends EventFlowDebugEvent {
     edit: LlmTreeEdit;
     // (undocumented)
-    eventFlowName: "GENERATE_AND_APPLY_TREE_EDIT";
+    eventFlowName: typeof EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT;
     // (undocumented)
     eventFlowStatus: "IN_PROGRESS";
     eventFlowTraceId: string;
@@ -71,7 +71,7 @@ export interface CoreEventLoopCompleted extends EventFlowDebugEvent {
     // (undocumented)
     errorMessage?: string;
     // (undocumented)
-    eventFlowName: "CORE_EVENT_LOOP";
+    eventFlowName: typeof EventFlowDebugNames.CORE_EVENT_LOOP;
     // (undocumented)
     eventFlowStatus: "COMPLETED";
     // (undocumented)
@@ -85,7 +85,7 @@ export interface CoreEventLoopCompleted extends EventFlowDebugEvent {
 // @alpha
 export interface CoreEventLoopStarted extends EventFlowDebugEvent {
     // (undocumented)
-    eventFlowName: "CORE_EVENT_LOOP";
+    eventFlowName: typeof EventFlowDebugNames.CORE_EVENT_LOOP;
     // (undocumented)
     eventFlowStatus: "STARTED";
     // (undocumented)
@@ -184,7 +184,7 @@ export const EventFlowDebugNames: {
 export interface FinalReviewCompleted<TIsLlmResponseValid = boolean, TReviewResponse = TIsLlmResponseValid extends true ? "yes" | "no" : undefined> extends EventFlowDebugEvent {
     didLlmAccomplishGoal: TReviewResponse;
     // (undocumented)
-    eventFlowName: "FINAL_REVIEW";
+    eventFlowName: typeof EventFlowDebugNames.FINAL_REVIEW;
     // (undocumented)
     eventFlowStatus: "COMPLETED";
     // (undocumented)
@@ -195,7 +195,7 @@ export interface FinalReviewCompleted<TIsLlmResponseValid = boolean, TReviewResp
 // @alpha
 export interface FinalReviewStarted extends EventFlowDebugEvent {
     // (undocumented)
-    eventFlowName: "FINAL_REVIEW";
+    eventFlowName: typeof EventFlowDebugNames.FINAL_REVIEW;
     // (undocumented)
     eventFlowStatus: "STARTED";
     // (undocumented)
@@ -206,7 +206,7 @@ export interface FinalReviewStarted extends EventFlowDebugEvent {
 // @alpha
 export interface GenerateTreeEditCompleted<TIsLlmResponseValid = boolean, TEdit = TIsLlmResponseValid extends true ? LlmTreeEdit | null : undefined> extends EventFlowDebugEvent {
     // (undocumented)
-    eventFlowName: "GENERATE_AND_APPLY_TREE_EDIT";
+    eventFlowName: typeof EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT;
     // (undocumented)
     eventFlowStatus: "COMPLETED";
     // (undocumented)
@@ -218,7 +218,7 @@ export interface GenerateTreeEditCompleted<TIsLlmResponseValid = boolean, TEdit 
 // @alpha
 export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
     // (undocumented)
-    eventFlowName: "GENERATE_AND_APPLY_TREE_EDIT";
+    eventFlowName: typeof EventFlowDebugNames.GENERATE_AND_APPLY_TREE_EDIT;
     // (undocumented)
     eventFlowStatus: "STARTED";
     // (undocumented)
@@ -267,7 +267,7 @@ export interface Options {
 // @alpha
 export interface PlanningPromptCompleted<TIsLlmResponseValid = boolean, TPlan = TIsLlmResponseValid extends true ? string : undefined> extends EventFlowDebugEvent {
     // (undocumented)
-    eventFlowName: "GENERATE_PLANNING_PROMPT";
+    eventFlowName: typeof EventFlowDebugNames.GENERATE_PLANNING_PROMPT;
     // (undocumented)
     eventFlowStatus: "COMPLETED";
     // (undocumented)
@@ -279,7 +279,7 @@ export interface PlanningPromptCompleted<TIsLlmResponseValid = boolean, TPlan = 
 // @alpha
 export interface PlanningPromptStarted extends EventFlowDebugEvent {
     // (undocumented)
-    eventFlowName: "GENERATE_PLANNING_PROMPT";
+    eventFlowName: typeof EventFlowDebugNames.GENERATE_PLANNING_PROMPT;
     // (undocumented)
     eventFlowStatus: "STARTED";
     // (undocumented)
