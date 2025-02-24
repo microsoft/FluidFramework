@@ -74,6 +74,18 @@ describe("presence-tracker", () => {
 		session1id = "session1id needs reloaded";
 	});
 
+	async function throwWithPageAttendeeData(message: string, page: Page) {
+		const attendeeData = await page.evaluate(() => ({
+			/* eslint-disable @typescript-eslint/dot-notation */
+			attendeeCount: `${window["fluidSessionAttendeeCount"]}`,
+			attendees: window["fluidSessionAttendees"] ?? {},
+			attendeeJoinedCalled: `${window["fluidAttendeeJoinedCalled"]}`,
+			attendeeDisconnectedCalled: `${window["fluidAttendeeDisconnectedCalled"]}`,
+			/* eslint-enable @typescript-eslint/dot-notation */
+		}));
+		throw new Error(`${message} (${JSON.stringify(attendeeData)})`);
+	}
+
 	describe("Single client", () => {
 		it("Document is connected", async () => {
 			// Page's url should be updated to have document id
@@ -105,10 +117,19 @@ describe("presence-tracker", () => {
 		});
 
 		it("First client shows single client connected", async () => {
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			await page.waitForFunction(() => window["fluidSessionAttendeeCount"] === 1, {
-				timeout: 50,
-			});
+			await page
+				// eslint-disable-next-line @typescript-eslint/dot-notation
+				.waitForFunction(() => window["fluidSessionAttendeeCount"] === 1, {
+					// While the expected state should be immediately true, this timeout
+					// appears to apply to the entire evaluation period which may not return
+					// in 50ms 6-9% of the time (even if the evaluation is a simple `true`).
+					// All evaluations of state when this fails have show an attendee count
+					// of 1. So use 100ms which appears reliable.
+					timeout: 100,
+				})
+				.catch(async () => {
+					await throwWithPageAttendeeData("Attendee count is not 1", page);
+				});
 			const elementHandle = await page.waitForFunction(() =>
 				document.getElementById("focus-div"),
 			);
@@ -169,28 +190,23 @@ describe("presence-tracker", () => {
 			timeoutErrorMessage: string,
 		) {
 			/* Disabled for common window["foo"] access. */
-			/* eslint-disable @typescript-eslint/dot-notation */
 			await page
 				.waitForFunction(
+					// Note: this is a block disable instead of line suppression as Biome reformats comment away from line
+					/* eslint-disable @typescript-eslint/dot-notation */
 					(expectation) =>
 						(
 							window["fluidSessionAttendeeCheck"] as (
 								expected: Record<string, string>,
 							) => boolean
 						)(expectation),
+					/* eslint-enable @typescript-eslint/dot-notation */
 					{ timeout: 100 },
 					expected,
 				)
 				.catch(async () => {
-					const attendeeData = await page.evaluate(() => ({
-						attendeeCount: `${window["fluidSessionAttendeeCount"]}`,
-						attendees: window["fluidSessionAttendees"] ?? {},
-						attendeeJoinedCalled: `${window["fluidAttendeeJoinedCalled"]}`,
-						attendeeDisconnectedCalled: `${window["fluidAttendeeDisconnectedCalled"]}`,
-					}));
-					throw new Error(`${timeoutErrorMessage} (${JSON.stringify(attendeeData)})`);
+					await throwWithPageAttendeeData(timeoutErrorMessage, page);
 				});
-			/* eslint-enable @typescript-eslint/dot-notation */
 		}
 
 		it("Second client shows two clients connected", async () => {
@@ -232,33 +248,6 @@ describe("presence-tracker", () => {
 			);
 		});
 
-		it.skip("First client shows two clients connected in UI", async () => {
-			await waitForAttendeeState(
-				page,
-				{
-					[session1id]: "Connected",
-					[session2id]: "Connected",
-				},
-				"failed waiting for app to observe two connected attendees",
-			);
-
-			// Get the client list from the first browser instance; it should show two connected.
-			const elementHandle = await page.waitForFunction(() =>
-				document.getElementById("focus-div"),
-			);
-			const clientListHtml = await page.evaluate(
-				(element) => element?.innerHTML?.trim(),
-				elementHandle,
-			);
-			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
-			// connected.
-			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
-			// Expect that first page's session id is listed.
-			expect(clientListHtml).toMatch(session1id);
-			// Expect that page2's session id is listed.
-			expect(clientListHtml).toMatch(session2id);
-		});
-
 		it("First client shows one client connected when second client leaves", async () => {
 			// Setup
 			await waitForAttendeeState(
@@ -289,11 +278,70 @@ describe("presence-tracker", () => {
 				},
 				"failed waiting for app to observe second attendee as disconnected",
 			);
+		});
 
-			// Important: this portion of the test is a false positive.
-			// Until "First client shows two clients connected in UI" is enabled,
-			// the below verification is not fully valid. This test is enabled as the
-			// above verification is expected to pass and is important to have in place.
+		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
+		it.skip("First client shows two clients connected in UI", async () => {
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
+
+			// Get the client list from the first browser instance; it should show two connected.
+			const elementHandle = await page.waitForFunction(() =>
+				document.getElementById("focus-div"),
+			);
+			const clientListHtml = await page.evaluate(
+				(element) => element?.innerHTML?.trim(),
+				elementHandle,
+			);
+			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
+			// connected.
+			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
+			// Expect that first page's session id is listed.
+			expect(clientListHtml).toMatch(session1id);
+			// Expect that page2's session id is listed.
+			expect(clientListHtml).toMatch(session2id);
+		});
+
+		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
+		// This test should not be enabled without the prior test being enabled as it
+		// may have false positives. It has also been demonstrated to fail occasionally.
+		// Occasional failures are likely due to same issue impact the prior "in UI" test.
+		it.skip("First client shows one client connected in UI when second client leaves", async () => {
+			// Setup
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
+
+			// Act
+
+			// Navigate the second client away.
+			const response = await page2.goto("about:blank", { waitUntil: "load" });
+			// Loosely verify that a navigation happened. Puppeteer docs note:
+			//    "Navigation to about:blank or navigation to the same URL with a different hash will succeed and
+			//    return null."
+			expect(response).toBe(null);
+
+			// Verify
+
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Disconnected",
+				},
+				"failed waiting for app to observe second attendee as disconnected",
+			);
 
 			// Get the client list from the first browser; it should have a single element.
 			const elementHandle = await page.waitForFunction(() =>
