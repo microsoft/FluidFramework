@@ -57,6 +57,7 @@ import {
 	mergeTupleBTrees,
 	type TupleBTree,
 	RangeMap,
+	balancedReduce,
 } from "../../util/index.js";
 import {
 	type TreeChunk,
@@ -183,13 +184,15 @@ export class ModularChangeFamily
 		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
-		if (changes.length === 0) {
-			return makeModularChangeset();
-		}
+		const pairwiseDelegate = (
+			left: ModularChangeset,
+			right: ModularChangeset,
+		): ModularChangeset => {
+			return this.composePair(left, right, revInfos, idState);
+		};
 
-		return changes
-			.map((change) => change.change)
-			.reduce((change1, change2) => this.composePair(change1, change2, revInfos, idState));
+		const innerChanges = changes.map((change) => change.change);
+		return balancedReduce(innerChanges, pairwiseDelegate, makeModularChangeset);
 	}
 
 	private composePair(
