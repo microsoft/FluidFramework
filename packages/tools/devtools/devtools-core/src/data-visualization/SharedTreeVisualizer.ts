@@ -201,10 +201,7 @@ async function visualizeVerboseNodeFields(
 			treeDefinitions,
 			{
 				allowedTypes: fieldSchemaProperties[fieldKey]?.allowedTypes,
-				isRequired:
-					fieldSchemaProperties[fieldKey]?.isRequired === undefined
-						? undefined
-						: fieldSchemaProperties[fieldKey]?.isRequired,
+				isRequired: fieldSchemaProperties[fieldKey]?.isRequired,
 			},
 			visualizeChildData,
 		);
