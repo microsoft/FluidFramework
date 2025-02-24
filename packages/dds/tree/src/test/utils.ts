@@ -32,10 +32,8 @@ import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compres
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
@@ -160,6 +158,10 @@ import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 import { TreeFactory } from "../treeFactory.js";
+import {
+	MockContainerRuntimeFactoryWithOpBunching,
+	type MockContainerRuntimeWithOpBunching,
+} from "./mocksForOpBunching.js";
 
 // Testing utilities
 
@@ -364,10 +366,10 @@ export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory: MockContainerRuntimeFactoryForReconnection;
+	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
-	private readonly containerRuntimes: Set<MockContainerRuntime> = new Set();
+	private readonly containerRuntimes: Set<MockContainerRuntimeWithOpBunching> = new Set();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -391,7 +393,7 @@ export class TestTreeProviderLite {
 		useDeterministicSessionIds = true,
 		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
-		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection({
+		this.runtimeFactory = new MockContainerRuntimeFactoryWithOpBunching({
 			flushMode,
 		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
