@@ -93,7 +93,7 @@ export const _APIExtractorWorkaroundJsonArrayBase = sf.arrayRecursive("array", J
  * This can be worked around by using {@link TreeAlpha.importConcise}.
  * @example
  * ```typescript
- * // Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
+ * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.
  * const usingConstructor = new JsonArray(["a", 0, new JsonArray([1])]);
  * // Using `importConcise` can work better for JSON data:
  * const imported = TreeAlpha.importConcise(JsonArray, ["a", 0, [1]]);
