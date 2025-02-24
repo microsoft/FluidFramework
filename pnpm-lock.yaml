@@ -13750,8 +13750,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.51.0
-        version: 0.51.0(@types/node@18.19.67)
+        specifier: ^0.53.0
+        version: 0.53.0(@types/node@18.19.67)
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
