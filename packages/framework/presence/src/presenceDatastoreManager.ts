@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -11,7 +12,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
-import type { ClientSessionId, ISessionClient } from "./presence.js";
+import type { ClientSessionId, ISessionClient, PresenceEvents } from "./presence.js";
 import type {
 	ClientUpdateEntry,
 	RuntimeLocalUpdateOptions,
@@ -86,6 +87,12 @@ function isPresenceMessage(
 	return message.type.startsWith("Pres:");
 }
 
+function isPresenceWorkspaceAddress(
+	workspaceAddress: string,
+): workspaceAddress is PresenceWorkspaceAddress {
+	return workspaceAddress.includes(":");
+}
+
 /**
  * @internal
  */
@@ -153,6 +160,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly runtime: IEphemeralRuntime,
 		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
 		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly events: IEmitter<
+					Pick<PresenceEvents, "workspaceActivated">
+				>,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
 	) {
@@ -403,7 +413,13 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
 					if (!workspaceAddress.startsWith("system:")) {
-						// TODO: Emit workspaceActivated event for PresenceEvents
+						const workspaceType = workspaceAddress.startsWith("s:")
+							? "States"
+							: workspaceAddress.startsWith("n:")
+								? "Notifications"
+								: "Unknown";
+						assert(isPresenceWorkspaceAddress(workspaceAddress), "Invalid workspace address");
+						postUpdateActions.push(() => this.events.emit("workspaceActivated", workspaceAddress, workspaceType));
 					}
 				}
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {

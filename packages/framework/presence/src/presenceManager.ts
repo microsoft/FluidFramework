@@ -174,6 +174,7 @@ function setupSubComponents(
 		runtime,
 		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
 		logger,
+		events,
 		systemWorkspaceDatastore,
 		systemWorkspaceConfig.statesEntry,
 	);
