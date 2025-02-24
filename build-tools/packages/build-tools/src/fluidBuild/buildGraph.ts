@@ -540,8 +540,8 @@ export class BuildGraph {
 
 		const isUpToDate = await this.isUpToDate();
 
-		timer?.time(`Check up to date completed`);
 		spinner.succeed("Tasks loaded.");
+		timer?.time(`Check up to date completed`);
 
 		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${
