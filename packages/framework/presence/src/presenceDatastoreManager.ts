@@ -160,9 +160,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		private readonly runtime: IEphemeralRuntime,
 		private readonly lookupClient: (clientId: ClientSessionId) => ISessionClient,
 		private readonly logger: ITelemetryLoggerExt | undefined,
-		private readonly events: IEmitter<
-					Pick<PresenceEvents, "workspaceActivated">
-				>,
+		private readonly events: IEmitter<Pick<PresenceEvents, "workspaceActivated">>,
 		systemWorkspaceDatastore: SystemWorkspaceDatastore,
 		systemWorkspace: PresenceWorkspaceEntry<PresenceStatesSchema>,
 	) {
@@ -413,13 +411,36 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
 					if (!workspaceAddress.startsWith("system:")) {
-						const workspaceType = workspaceAddress.startsWith("s:")
-							? "States"
-							: workspaceAddress.startsWith("n:")
-								? "Notifications"
-								: "Unknown";
-						assert(isPresenceWorkspaceAddress(workspaceAddress), "Invalid workspace address");
-						postUpdateActions.push(() => this.events.emit("workspaceActivated", workspaceAddress, workspaceType));
+						// Seperate intenal type prefix from public workspace address
+						const [prefix, ...rest] = workspaceAddress.split(":");
+						const publicWorkspaceAddress = rest.join(":");
+
+						assert(
+							prefix !== undefined && publicWorkspaceAddress !== undefined,
+							"Invalid internal workspace address",
+						);
+						assert(
+							isPresenceWorkspaceAddress(publicWorkspaceAddress),
+							"Invalid public workspace address",
+						);
+
+						const internalWorkspaceTypes = {
+							s: "States",
+							n: "Notifications",
+						} as const;
+
+						// Convert prefix to internal workspace type
+						const internalWorkspaceType =
+							internalWorkspaceTypes[prefix as keyof typeof internalWorkspaceTypes] ??
+							"Unknown";
+
+						postUpdateActions.push(() =>
+							this.events.emit(
+								"workspaceActivated",
+								publicWorkspaceAddress,
+								internalWorkspaceType,
+							),
+						);
 					}
 				}
 				for (const [key, remoteAllKnownState] of Object.entries(remoteDatastore)) {

@@ -174,11 +174,7 @@ describe("Presence", () => {
 			});
 		});
 
-		/**
-		 * These tests are skipped as 'workspaceActivated' event is not yet implemented.
-		 * TODO: Re-enable tests once {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/29939} is completed
-		 */
-		describe.skip("receiving DatastoreUpdate", () => {
+		describe("receiving DatastoreUpdate", () => {
 			let presence: ReturnType<typeof createPresenceManager>;
 
 			const systemWorkspaceUpdate = {
@@ -234,7 +230,7 @@ describe("Presence", () => {
 							avgLatency: 20,
 							data: {
 								"system:presence": systemWorkspaceUpdate,
-								"n:name:testStateWorkspace": statesWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -309,10 +305,7 @@ describe("Presence", () => {
 
 				// Verify
 				assert.strictEqual(listener.calledOnce, true);
-				assert.strictEqual(
-					listener.calledWith("name:name:testUnknownWorkspace", "Unknown"),
-					true,
-				);
+				assert.strictEqual(listener.calledWith("name:testUnknownWorkspace", "Unknown"), true);
 			});
 			it("with registered workspace does NOT emit 'workspaceActivated'", () => {
 				// Setup
@@ -331,7 +324,7 @@ describe("Presence", () => {
 							avgLatency: 20,
 							data: {
 								"system:presence": systemWorkspaceUpdate,
-								"n:name:testStateWorkspace": statesWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
 								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
 							},
 						},
