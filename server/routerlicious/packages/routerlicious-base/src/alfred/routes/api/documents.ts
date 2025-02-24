@@ -226,7 +226,7 @@ export function create(
 					}
 					return document;
 				});
-			handleResponse(documentP, response);
+			return handleResponse(documentP, response);
 		},
 	);
 
@@ -270,7 +270,7 @@ export function create(
 					message: "Server is unavailable. Please retry create document later.",
 					internalErrorCode: InternalErrorCode.ClusterDraining,
 				});
-				handleResponse(Promise.reject(error), response);
+				return handleResponse(Promise.reject(error), response);
 			}
 			// Tenant and document
 			const tenantId = request.params.tenantId;
@@ -333,7 +333,7 @@ export function create(
 						messageBrokerId,
 					},
 				);
-				handleResponse(
+				return handleResponse(
 					Promise.all([createP, generateResponseBodyP]).then(
 						([, responseBody]) => responseBody,
 					),
@@ -343,7 +343,7 @@ export function create(
 					201,
 				);
 			} else {
-				handleResponse(
+				return handleResponse(
 					createP.then(() => id),
 					response,
 					undefined,
@@ -417,7 +417,7 @@ export function create(
 					message: "Server is unavailable. Please retry session discovery later.",
 					internalErrorCode: InternalErrorCode.ClusterDraining,
 				});
-				handleResponse(Promise.reject(error), response);
+				return handleResponse(Promise.reject(error), response);
 			}
 			connectionTrace?.stampStage("ClusterDrainingChecked");
 			const readDocumentRetryDelay: number = config.get("getSession:readDocumentRetryDelay");
@@ -449,7 +449,15 @@ export function create(
 				getSessionMetric.error("GetSession failed.", error);
 			};
 
-			handleResponse(session, response, false, undefined, undefined, onSuccess, onError);
+			return handleResponse(
+				session,
+				response,
+				false,
+				undefined,
+				undefined,
+				onSuccess,
+				onError,
+			);
 		},
 	);
 
@@ -469,7 +477,7 @@ export function create(
 			Lumberjack.info(`Received document delete request.`, lumberjackProperties);
 
 			const deleteP = documentDeleteService.deleteDocument(tenantId, documentId);
-			handleResponse(deleteP, response, undefined, undefined, 204);
+			return handleResponse(deleteP, response, undefined, undefined, 204);
 		},
 	);
 

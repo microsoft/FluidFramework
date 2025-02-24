@@ -11,6 +11,7 @@ import {
 	benchmark,
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { singleJsonCursor } from "../json/index.js";
@@ -20,7 +21,7 @@ import {
 	TreeCompressionStrategy,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import type { CheckoutFlexTreeView } from "../../shared-tree/index.js";
+import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -42,14 +43,16 @@ import {
 	readWideTreeAsJSObject,
 } from "../scalableTestTrees.js";
 import {
+	StringArray,
 	TestTreeProviderLite,
 	checkoutWithContent,
 	flexTreeViewWithContent,
 	toJsonableTree,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
-import { cursorFromInsertable } from "../../simple-tree/index.js";
+import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -428,6 +431,129 @@ describe("SharedTree benchmarks", () => {
 				if (!isInPerformanceTestingMode) {
 					test.timeout(5000);
 				}
+			}
+		}
+	});
+
+	// In this context "op bunch" refers to a group of ops for the same DDS that are sent by a peer in a single message.
+	describe("rebasing over op bunch", () => {
+		// The number of commits in a bunch for a given run of this test suite.
+		const bunchSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
+		// Number of local commits to rebase over the inbound bunch
+		const localBranchSizes = isInPerformanceTestingMode ? [10, 100] : [2];
+		// The time taken by each scenario can be broken down into 4 time costs:
+		// 1. Constant factor overhead (we ignore this).
+		// 2. The time taken to rebase inbound commits onto the tip of the trunk.
+		// 3. The time taken to compose all inbound commits from a bunch into a single commit.
+		// 4. The time taken to rebase the local branch over the composed commit from #3.
+		//
+		// For the following timings:
+		// +----------------------+-------------+--------------+
+		// |                      | bunchSize:1 | bunchSize:10 |
+		// +----------------------+-------------+--------------+
+		// | localBranchSize: 10  | t1          | t2           |
+		// | localBranchSize: 100 | t3          | t4           |
+		// +----------------------+-------------+--------------+
+		// If op bunching is used, the time taken for each scenario is as follows:
+		// t1 = rebase 1  inbound commit  onto trunk + compose 1  commit  + rebase the local branch of size 10  over one commit
+		// t2 = rebase 10 inbound commits onto trunk + compose 10 commits + rebase the local branch of size 10  over one commit
+		// t3 = rebase 1  inbound commit  onto trunk + compose 1  commit  + rebase the local branch of size 100 over one commit
+		// t4 = rebase 10 inbound commits onto trunk + compose 10 commits + rebase the local branch of size 100 over one commit
+		// Therefore, if op bunching is used, then t4 should be roughly equal to t3 + t2 - t1.
+		for (const bunchSize of bunchSizes) {
+			for (const localBranchSize of localBranchSizes) {
+				const test = benchmark({
+					type: BenchmarkType.Measurement,
+					title: `Rebase ${localBranchSize} local commits over ${bunchSize} inbound commits`,
+					benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+						let duration: number;
+						do {
+							// Since this setup one collects data from one iteration, assert that this is what is expected.
+							assert.equal(state.iterationsPerBatch, 1);
+							const provider = new TestTreeProviderLite(
+								2,
+								factory,
+								undefined /* useDeterministicSessionIds */,
+								FlushMode.TurnBased,
+							);
+							const sender = provider.trees[0];
+							const receiver = provider.trees[1];
+							// Add commits to the receiver's local branch but prevent them from being sent in order to ensure they remain on the local branch
+							receiver.setConnected(false);
+							for (let iCommit = 0; iCommit < localBranchSize; iCommit++) {
+								insert(receiver.checkout, 0, `r${iCommit}`);
+							}
+							// These are the commits that should be bunched together
+							for (let iCommit = 0; iCommit < bunchSize; iCommit++) {
+								insert(sender.checkout, 0, `s${iCommit}`);
+							}
+							// Ensure the sender has sent the ops
+							provider.processMessages();
+							// Prevent the sender from receiving anything else since we only want to measure the rebase on the receiver
+							sender.setConnected(false);
+							const before = state.timer.now();
+							// Allow the receiver to receive the bunched commits.
+							// This should force the local branch to be rebased over the bunch.
+							receiver.setConnected(true);
+							const after = state.timer.now();
+							duration = state.timer.toSeconds(before, after);
+						} while (state.recordBatch(duration));
+					},
+					// Force batch size of 1
+					minBatchDurationSeconds: 0,
+				});
+				if (!isInPerformanceTestingMode) {
+					test.timeout(5000);
+				}
+			}
+		}
+	});
+
+	describe("big transaction composition", () => {
+		const editCounts = isInPerformanceTestingMode ? [10, 100, 1000] : [5];
+		for (const editCount of editCounts) {
+			const test = benchmark({
+				type: BenchmarkType.Measurement,
+				title: `Compose ${editCount} sequence edits into a single transaction`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+						const provider = new TestTreeProviderLite(
+							1,
+							factory,
+							undefined /* useDeterministicSessionIds */,
+							FlushMode.TurnBased,
+						);
+						const tree = provider.trees[0];
+						tree.setConnected(false);
+						const view = provider.trees[0].viewWith(
+							new TreeViewConfiguration({
+								schema: StringArray,
+							}),
+						);
+						view.initialize([]);
+
+						const before = state.timer.now();
+						Tree.runTransaction(view, () => {
+							for (let iEdit = 0; iEdit < editCount; iEdit++) {
+								view.root.insertAtEnd(`${iEdit}`);
+							}
+						});
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+
+						const actual = [...view.root];
+						const expected = makeArray(editCount, (index) => `${index}`);
+						assert.deepEqual(actual, expected);
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+			if (!isInPerformanceTestingMode) {
+				test.timeout(5000);
 			}
 		}
 	});
