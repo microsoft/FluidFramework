@@ -81,7 +81,6 @@ jobs:
       #   targetPath: ${{ parameters.buildDirectory }}
 
       - input: pipelineArtifact
-        buildType: specific
         project: internal
         pipeline: 'Build - build-tools'
         buildVersionToDownload: latestFromBranch
@@ -111,6 +110,7 @@ jobs:
               script: |
                 echo "Listing files in directory: $(pwd)"
                 ls -la
+
           - task: Bash@3
             name: InstallBuildToolsFromTarball
             displayName: Install Fluid Build Tools from artifact tarball
