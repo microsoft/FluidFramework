@@ -261,12 +261,14 @@ export function testPerf() {
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;
-						manager.addSequencedChange(
-							{
-								change: TestChange.emptyChange,
-								revision: mintRevisionTag(),
-								sessionId: "peer" as SessionId,
-							},
+						manager.addSequencedChanges(
+							[
+								{
+									change: TestChange.emptyChange,
+									revision: mintRevisionTag(),
+								},
+							],
+							"peer" as SessionId,
 							brand(T + P + 1),
 							brand(T),
 						);
@@ -333,12 +335,14 @@ export function testPerf() {
 						rebaser.rebasedCount = 0;
 						rebaser.invertedCount = 0;
 						rebaser.composedCount = 0;
-						manager.addSequencedChange(
-							{
-								change: TestChange.emptyChange,
-								revision: mintRevisionTag(),
-								sessionId: "peer" as SessionId,
-							},
+						manager.addSequencedChanges(
+							[
+								{
+									change: TestChange.emptyChange,
+									revision: mintRevisionTag(),
+								},
+							],
+							"peer" as SessionId,
 							brand(T + P + 2),
 							brand(T),
 						);
