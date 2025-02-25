@@ -26,6 +26,7 @@ import {
 	OdspDriverUrlResolverForShareLink,
 	type ShareLinkFetcherProps,
 } from "../odspDriverUrlResolverForShareLink.js";
+import { getLocatorFromOdspUrl } from "../odspFluidFileLink.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
 import {
 	IExistingFileInfo,
@@ -526,16 +527,16 @@ describe("Create New Utils Tests", () => {
 			dataStorePath: string,
 		): Promise<string> => {
 			if (dataStorePath === "") {
-				return "context";
+				return "mockContext";
 			}
-			return url.dataStorePath ?? "context";
+			return url.dataStorePath ?? "mockContext";
 		};
 
 		it("Should set the appropriate nav param info when a request is made", async () => {
 			const shareLinkResolver = new OdspDriverUrlResolverForShareLink(
 				sharingLinkFetcherProps,
 				logger,
-				"dummyAppName",
+				"=mockAppName",
 				getContext,
 				{ name: "containerPackageName" } /* IContainerPackageInfo */,
 			);
@@ -551,17 +552,25 @@ describe("Create New Utils Tests", () => {
 
 			const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
 
-			// Extract the Base64 encoded value of `nav`
-			const base64Value = finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl.match(
-				/nav=([^&]*)/,
-			)?.[1] as string;
-			// Decode the Base64 value to UTF-8,
-			const decodedValue = fromBase64ToUtf8(base64Value);
+			// Extract the navigation parameter values from the resolved sharing link url
+			const navParamValues = getLocatorFromOdspUrl(
+				new URL(finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl ?? ""),
+			);
 
 			// Compare the values to make sure that the nav parameter was added correctly
-			assert.equal(
-				decodedValue,
-				"s=%2FsiteUrl&d=driveId&f=itemId&c=%2F&fluid=1&a=dummyAppName&p=containerPackageName&x=context",
+			assert.deepEqual(
+				navParamValues,
+				{
+					appName: "=mockAppName",
+					containerPackageName: "containerPackageName",
+					context: "mockContext",
+					dataStorePath: "/",
+					driveId: "driveId",
+					fileVersion: undefined,
+					itemId: "itemId",
+					siteUrl: "https://mock.url/siteUrl",
+				},
+				"Values should be equal",
 			);
 		});
 
@@ -585,17 +594,25 @@ describe("Create New Utils Tests", () => {
 
 			const finalResolverUrl = getOdspResolvedUrl(docService.resolvedUrl);
 
-			// Extract the Base64 encoded value of `nav`
-			const base64Value = finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl.match(
-				/nav=([^&]*)/,
-			)?.[1] as string;
-			// Decode the Base64 value to UTF-8, \r�� is being stored at the end of the string so we slice it off
-			const decodedValue = fromBase64ToUtf8(base64Value);
+			// Extract the navigation parameter values from the resolved sharing link url
+			const navParamValues = getLocatorFromOdspUrl(
+				new URL(finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl ?? ""),
+			);
 
 			// Compare the values to make sure that the nav parameter was added correctly
-			assert.equal(
-				decodedValue,
-				"s=%2FsiteUrl&d=driveId&f=itemId&c=%2F&fluid=1&p=containerPackageName&x=context",
+			assert.deepEqual(
+				navParamValues,
+				{
+					appName: undefined,
+					containerPackageName: "containerPackageName",
+					context: "mockContext",
+					dataStorePath: "/",
+					driveId: "driveId",
+					fileVersion: undefined,
+					itemId: "itemId",
+					siteUrl: "https://mock.url/siteUrl",
+				},
+				"Values should be equal",
 			);
 		});
 	});
