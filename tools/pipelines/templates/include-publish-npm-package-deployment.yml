@@ -81,8 +81,9 @@ jobs:
       #   targetPath: ${{ parameters.buildDirectory }}
 
       - input: pipelineArtifact
+        buildType: specific
         project: internal
-        pipeline: 'Build - build-tools'
+        pipeline: Build - build-tools
         buildVersionToDownload: latestFromBranch
         branchName: ${{ variables['Build.SourceBranch'] }}
         artifact: pack
