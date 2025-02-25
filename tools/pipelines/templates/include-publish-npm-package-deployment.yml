@@ -83,7 +83,7 @@ jobs:
       - input: pipelineArtifact
         buildType: specific
         project: internal
-        pipeline: Build - build-tools
+        definition: 14
         buildVersionToDownload: latestFromBranch
         branchName: ${{ variables['Build.SourceBranch'] }}
         artifact: pack
