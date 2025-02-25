@@ -86,7 +86,7 @@ jobs:
         definition: 14
         buildVersionToDownload: latestFromBranch
         branchName: ${{ variables['Build.SourceBranch'] }}
-        artifact: pack
+        artifactName: pack
         targetPath: ${{ parameters.buildDirectory }}
 
       - input: pipelineArtifact
