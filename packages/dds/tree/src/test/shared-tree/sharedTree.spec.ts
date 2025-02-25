@@ -93,8 +93,9 @@ import type { ISharedObjectKind } from "@fluidframework/shared-object-base/inter
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { JsonArray, singleJsonCursor } from "../json/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
+import { JsonArray } from "../../jsonDomainSchema.js";
 
 const enableSchemaValidation = true;
 
