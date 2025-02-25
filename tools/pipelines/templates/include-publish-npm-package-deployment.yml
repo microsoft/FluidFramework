@@ -82,9 +82,7 @@ jobs:
 
       - input: pipelineArtifact
         buildType: specific
-        project: internal
-        definition: 14
-        buildVersionToDownload: latestFromBranch
+        pipeline: 'Build - build-tools'
         branchName: main
         artifactName: pack
         targetPath: ${{ parameters.buildDirectory }}
