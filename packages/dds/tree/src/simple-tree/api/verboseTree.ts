@@ -172,7 +172,8 @@ export function applySchemaToParserOptions<TCustom>(
 			: {
 					encode: (type, key: FieldKey): string => {
 						// translate stored key into property key.
-						const simpleNodeSchema = context.schema.get(brand(type)) ?? fail("missing schema");
+						const simpleNodeSchema =
+							context.schema.get(brand(type)) ?? fail(0xb39 /* missing schema */);
 						if (isObjectNodeSchema(simpleNodeSchema)) {
 							const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
 							if (propertyKey !== undefined) {
@@ -193,10 +194,12 @@ export function applySchemaToParserOptions<TCustom>(
 						return key;
 					},
 					parse: (type, inputKey): FieldKey => {
-						const simpleNodeSchema = context.schema.get(brand(type)) ?? fail("missing schema");
+						const simpleNodeSchema =
+							context.schema.get(brand(type)) ?? fail(0xb3a /* missing schema */);
 						if (isObjectNodeSchema(simpleNodeSchema)) {
 							const info =
-								simpleNodeSchema.flexKeyMap.get(inputKey) ?? fail("missing field info");
+								simpleNodeSchema.flexKeyMap.get(inputKey) ??
+								fail(0xb3b /* missing field info */);
 							return info.storedKey;
 						}
 						return brand(inputKey);
@@ -345,7 +348,8 @@ function verboseFromCursorInner<TCustom>(
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): VerboseTree<TCustom> {
 	const fields = customFromCursor(reader, options, schema, verboseFromCursorInner);
-	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
+	const nodeSchema =
+		schema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);
 	if (nodeSchema.kind === NodeKind.Leaf) {
 		return fields as CustomTreeValue<TCustom>;
 	}
