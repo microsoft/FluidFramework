@@ -488,7 +488,7 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 				cursor.enterNode(0);
 				return verboseFromCursor(cursor, this.storedSchema.nodeSchema);
 			} else {
-				fail("Invalid document root length");
+				fail(0xac8 /* Invalid document root length */);
 			}
 		} finally {
 			cursor.free();
@@ -783,7 +783,8 @@ function verboseFromCursor(
 	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
 ): VerboseTree {
 	const fields = customFromCursorStored(reader, schema, verboseFromCursor);
-	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
+	const nodeSchema =
+		schema.get(reader.type) ?? fail(0xac9 /* missing schema for type in cursor */);
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
 		return fields as CustomTreeValue<IFluidHandle>;
 	}
@@ -811,7 +812,7 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 			assert(schema.types.size === 0, 0xa94 /* invalid forbidden field */);
 			break;
 		default:
-			fail("invalid field kind");
+			fail(0xaca /* invalid field kind */);
 	}
 	return { kind, allowedTypes: schema.types };
 }
@@ -838,5 +839,5 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 	if (schema instanceof LeafNodeStoredSchema) {
 		return { kind: NodeKind.Leaf, leafKind: schema.leafValue };
 	}
-	fail("invalid schema kind");
+	fail(0xacb /* invalid schema kind */);
 }
