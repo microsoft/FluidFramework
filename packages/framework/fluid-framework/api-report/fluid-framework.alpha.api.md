@@ -21,24 +21,6 @@ export type AllowedTypes = readonly LazyItem<TreeNodeSchema>[];
 // @public
 type AllowedTypesUnsafe = readonly LazyItem<TreeNodeSchemaUnsafe>[];
 
-// @alpha
-export const _APIExtractorWorkaroundJsonArrayBase: TreeNodeSchemaClass_2<"com.fluidframework.json.array", NodeKind_2.Array, TreeArrayNodeUnsafe_2<readonly [() => typeof JsonObject, () => typeof JsonArray, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>]> & WithType_2<"com.fluidframework.json.array", NodeKind_2.Array, unknown>, {
-[Symbol.iterator](): Iterator<string | number | JsonObject | JsonArray | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
-create(data: boolean): boolean;
-}> | null, any, undefined>;
-}, false, readonly [() => typeof JsonObject, () => typeof JsonArray, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>], undefined>;
-
-// @alpha
-export const _APIExtractorWorkaroundJsonObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.json.object", NodeKind_2.Map, TreeMapNodeUnsafe_2<readonly [() => typeof JsonObject, () => typeof JsonArray, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>]> & WithType_2<"com.fluidframework.json.object", NodeKind_2.Map, unknown>, {
-[Symbol.iterator](): Iterator<[string, string | number | JsonObject | JsonArray | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
-create(data: boolean): boolean;
-}> | null], any, undefined>;
-} | {
-readonly [x: string]: string | number | JsonObject | JsonArray | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
-create(data: boolean): boolean;
-}> | null;
-}, false, readonly [() => typeof JsonObject, () => typeof JsonArray, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>], undefined>;
-
 // @public
 type ApplyKind<T, Kind extends FieldKind> = {
     [FieldKind.Required]: T;
@@ -720,10 +702,6 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 }
 
 // @alpha @sealed
-export class JsonArray extends _APIExtractorWorkaroundJsonArrayBase {
-}
-
-// @alpha @sealed
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
     readonly items: JsonFieldSchema;
 }
@@ -769,21 +747,11 @@ export interface JsonNodeSchemaBase<TNodeKind extends NodeKind, TJsonSchemaType 
 }
 
 // @alpha @sealed
-export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {
-}
-
-// @alpha @sealed
 export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object, "object"> {
     readonly additionalProperties?: boolean;
     readonly properties: Record<string, JsonFieldSchema>;
     readonly required?: string[];
 }
-
-// @alpha
-export const JsonPrimitive: readonly [TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>];
-
-// @alpha (undocumented)
-export type JsonPrimitive = TreeNodeFromImplicitAllowedTypes<typeof JsonPrimitive>;
 
 // @alpha
 export type JsonRefPath = `#/$defs/${JsonSchemaId}`;
@@ -803,12 +771,6 @@ export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
 export type JsonTreeSchema = JsonFieldSchema & {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 };
-
-// @alpha
-export const JsonUnion: readonly [() => typeof JsonObject, () => typeof JsonArray, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>];
-
-// @alpha (undocumented)
-export type JsonUnion = TreeNodeFromImplicitAllowedTypes<typeof JsonUnion>;
 
 // @alpha
 export interface JsonValidator {
@@ -940,9 +902,6 @@ interface ReadonlyMapInlined<K, T extends Unenforced<ImplicitAllowedTypes>> {
 export type ReadSchema<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
 TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
-
-// @alpha
-export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof JsonArray>;
 
 // @public
 export type ReplaceIEventThisPlaceHolder<L extends any[], TThis> = L extends any[] ? {

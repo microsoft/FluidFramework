@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { JsonArray } from "@fluidframework/tree/alpha";
+// eslint-disable-next-line import/no-internal-modules
+import { JsonArray } from "@fluidframework/tree/internal";
 
 import { RecursiveMap } from "../testExports.js";
 

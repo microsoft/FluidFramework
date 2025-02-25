@@ -15,7 +15,7 @@ const sf = new SchemaFactory("com.fluidframework.json");
 
 /**
  * {@link AllowedTypes} for primitives types allowed in JSON.
- * @alpha
+ * @internal
  */
 export const JsonPrimitive = [
 	sf.null,
@@ -25,7 +25,7 @@ export const JsonPrimitive = [
 ] as const satisfies AllowedTypes;
 
 /**
- * @alpha
+ * @internal
  */
 export type JsonPrimitive = TreeNodeFromImplicitAllowedTypes<typeof JsonPrimitive>;
 
@@ -35,18 +35,18 @@ export type JsonPrimitive = TreeNodeFromImplicitAllowedTypes<typeof JsonPrimitiv
  * ```typescript
  * const tree = TreeAlpha.importConcise(JsonUnion, { example: { nested: true }, value: 5 });
  * ```
- * @alpha
+ * @internal
  */
 export const JsonUnion = [() => JsonObject, () => JsonArray, ...JsonPrimitive] as const;
 
 /**
- * @alpha
+ * @internal
  */
 export type JsonUnion = TreeNodeFromImplicitAllowedTypes<typeof JsonUnion>;
 
 /**
  * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
- * @system @alpha
+ * @system @internal
  */
 export const _APIExtractorWorkaroundJsonObjectBase = sf.mapRecursive("object", JsonUnion);
 
@@ -63,7 +63,7 @@ export const _APIExtractorWorkaroundJsonObjectBase = sf.mapRecursive("object", J
  * // Node API is like a Map:
  * const value = imported.get("a");
  * ```
- * @alpha @sealed
+ * @sealed @internal
  */
 export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {}
 {
@@ -75,7 +75,7 @@ export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {}
  * @privateRemarks
  * In the past this this had to reference the base type (_APIExtractorWorkaroundJsonArrayBase).
  * Testing for this in examples/utils/import-testing now shows it has to reference JsonArray instead.
- * @system @alpha
+ * @system @internal
  */
 export declare type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<
 	typeof JsonArray
@@ -83,7 +83,7 @@ export declare type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema
 
 /**
  * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
- * @system @alpha
+ * @system @internal
  */
 export const _APIExtractorWorkaroundJsonArrayBase = sf.arrayRecursive("array", JsonUnion);
 
@@ -102,7 +102,7 @@ export const _APIExtractorWorkaroundJsonArrayBase = sf.arrayRecursive("array", J
  * assert(Tree.is(outer, JsonArray));
  * const inner = outer[0];
  * ```
- * @alpha @sealed
+ * @sealed @internal
  */
 export class JsonArray extends _APIExtractorWorkaroundJsonArrayBase {}
 {
