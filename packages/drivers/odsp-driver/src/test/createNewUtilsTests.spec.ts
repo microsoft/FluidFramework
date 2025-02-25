@@ -535,7 +535,7 @@ describe("Create New Utils Tests", () => {
 			const shareLinkResolver = new OdspDriverUrlResolverForShareLink(
 				sharingLinkFetcherProps,
 				logger,
-				"appName",
+				"dummyAppName",
 				getContext,
 				{ name: "containerPackageName" } /* IContainerPackageInfo */,
 			);
@@ -555,13 +555,13 @@ describe("Create New Utils Tests", () => {
 			const base64Value = finalResolverUrl.shareLinkInfo?.createLink?.link?.webUrl.match(
 				/nav=([^&]*)/,
 			)?.[1] as string;
-			// Decode the Base64 value to UTF-8, \r�� is being stored at the end of the string so we slice it off
-			const decodedValue = fromBase64ToUtf8(base64Value).slice(0, -3);
+			// Decode the Base64 value to UTF-8,
+			const decodedValue = fromBase64ToUtf8(base64Value);
 
 			// Compare the values to make sure that the nav parameter was added correctly
 			assert.equal(
 				decodedValue,
-				"s=%2FsiteUrl&d=driveId&f=itemId&c=%2F&fluid=1&a=appName&p=containerPackageName&x=context",
+				"s=%2FsiteUrl&d=driveId&f=itemId&c=%2F&fluid=1&a=dummyAppName&p=containerPackageName&x=context",
 			);
 		});
 
