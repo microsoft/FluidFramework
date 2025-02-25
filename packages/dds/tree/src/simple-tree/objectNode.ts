@@ -262,7 +262,7 @@ function createProxyHandler(
 			// For some reason, the getOwnPropertyDescriptor is not passed in the receiver, so use a weak map.
 			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
 			// and the design would be more compatible with proxyless nodes.
-			const proxy = targetToProxy.get(target) ?? fail("missing proxy");
+			const proxy = targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
 			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
@@ -311,7 +311,7 @@ export function setField(
 		}
 
 		default:
-			fail("invalid FieldKind");
+			fail(0xade /* invalid FieldKind */);
 	}
 }
 
