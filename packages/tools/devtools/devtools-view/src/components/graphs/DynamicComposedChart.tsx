@@ -38,7 +38,7 @@ export interface GraphDataSet<XKey extends string = string, YKey extends string 
 		xAxisDataKey: XKey;
 		yAxisDataKey: YKey;
 	};
-	data: Record<XKey|YKey, number | string>[];
+	data: Record<XKey | YKey, number | string>[];
 }
 
 /**
@@ -64,7 +64,7 @@ const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 		for (const dataPoint of dataSet.data) {
 			const xAxisDataPoint = dataPoint[xAxisDataKey];
 			if (xAxisDataPoint === undefined) {
-				throw new Error("xAxisDataPoint should not be undefined")
+				throw new Error("xAxisDataPoint should not be undefined");
 			}
 			xAxisDataPointToYAxisDataPointMap[xAxisDataPoint] = {
 				...xAxisDataPointToYAxisDataPointMap[xAxisDataPoint],
@@ -383,7 +383,9 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 				renderChartData(
 					dataSet.graphType,
 					dataSet.schema.displayName,
-					// Non null guaranteed because of the way currColorPaletteIndex is computed
+					// The graphColorPalette.graphColors array is guaranteed to have values because:
+					// 1. createGraphColorPalette() always returns arrays with at least 4 colors
+					// 2. currColorPaletteIndex is reset to 0 if it ever exceeds the array length
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					graphColorPalette.graphColors[currColorPaletteIndex]!,
 					dataSet.schema.uuid,
