@@ -30,15 +30,15 @@ import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
 /**
  * Data To be rendered with Op Latency Graph
  */
-export interface GraphDataSet {
+export interface GraphDataSet<XKey extends string = string, YKey extends string = string> {
 	graphType: "line" | "area" | "bar";
 	schema: {
 		displayName: string;
 		uuid: string;
-		xAxisDataKey: string;
-		yAxisDataKey: string;
+		xAxisDataKey: XKey;
+		yAxisDataKey: YKey;
 	};
-	data: Record<string, number | string>[];
+	data: Record<XKey|YKey, number | string>[];
 }
 
 /**
@@ -64,7 +64,7 @@ const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 		for (const dataPoint of dataSet.data) {
 			const xAxisDataPoint = dataPoint[xAxisDataKey];
 			if (xAxisDataPoint === undefined) {
-				continue;
+				throw new Error("xAxisDataPoint should not be undefined")
 			}
 			xAxisDataPointToYAxisDataPointMap[xAxisDataPoint] = {
 				...xAxisDataPointToYAxisDataPointMap[xAxisDataPoint],
