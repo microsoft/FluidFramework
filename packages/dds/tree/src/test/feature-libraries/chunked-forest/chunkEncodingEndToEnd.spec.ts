@@ -77,7 +77,7 @@ import type { Format } from "../../../feature-libraries/forest-summary/format.js
 import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-forest/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { JsonObject } from "../../json/jsonDomainSchema.js";
+import { JsonObject } from "../../../jsonDomainSchema.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";

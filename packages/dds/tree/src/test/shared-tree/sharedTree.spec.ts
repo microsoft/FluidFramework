@@ -93,8 +93,9 @@ import type { ISharedObjectKind } from "@fluidframework/shared-object-base/inter
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { JsonArray, singleJsonCursor } from "../json/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
+import { JsonArray } from "../../jsonDomainSchema.js";
 
 const enableSchemaValidation = true;
 
@@ -124,6 +125,52 @@ describe("SharedTree", () => {
 			const view = tree.viewWith(config);
 			view.initialize(10);
 			assert.equal(view.root, 10);
+		});
+
+		it("initialize-dispose-view with primitive schema", () => {
+			const tree = treeTestFactory();
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+
+			const config = new TreeViewConfiguration({
+				schema: SchemaFactory.number,
+			});
+
+			const view1 = tree.viewWith(config);
+			view1.initialize(10);
+			assert.deepEqual(view1.root, 10);
+
+			view1.dispose();
+
+			const view2 = tree.viewWith(config);
+			assert.deepEqual(view2.root, 10);
+		});
+
+		// TODO (AB#31456): Enable this test once the bug is fixed.
+		it.skip("initialize-dispose-view with object schema", () => {
+			const tree = treeTestFactory();
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+
+			const factory = new SchemaFactory("my-factory");
+			class MySchema extends factory.object("my-root", {
+				number: factory.number,
+			}) {}
+
+			const config = new TreeViewConfiguration({
+				schema: MySchema,
+			});
+
+			const expectedContents = new MySchema({
+				number: 10,
+			});
+
+			const view1 = tree.viewWith(config);
+			view1.initialize(new MySchema({ number: 10 }));
+			assert.deepEqual(view1.root, expectedContents);
+
+			view1.dispose();
+
+			const view2 = tree.viewWith(config);
+			assert.deepEqual(view2.root, expectedContents); // <-- This throws with assert 0x778
 		});
 
 		it("concurrent initialize", () => {
