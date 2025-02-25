@@ -13,10 +13,10 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
-	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	SharedObject,
+	type IChannelView,
 	type IFluidSerializer,
 	type ISharedObject,
 } from "@fluidframework/shared-object-base/internal";
@@ -101,13 +101,7 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
-import {
-	Breakable,
-	breakingClass,
-	fail,
-	throwIfBroken,
-	type WithBreakable,
-} from "../util/index.js";
+import { Breakable, breakingClass, fail, throwIfBroken } from "../util/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -134,14 +128,6 @@ export interface SharedTreeContentSnapshot {
 }
 
 /**
- * Information about a Fluid channel.
- * @privateRemarks
- * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
- * @internal
- */
-export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;
-
-/**
  * {@link ITree} extended with some non-public APIs.
  * @internal
  */
@@ -162,6 +148,11 @@ export interface ITreePrivate extends ITreeInternal {
 	 * This does not include everything that is included in a tree summary, since information about how to merge future edits is omitted.
 	 */
 	contentSnapshot(): SharedTreeContentSnapshot;
+
+	/**
+	 * Access to internals for testing.
+	 */
+	readonly kernel: SharedTreeKernel;
 }
 
 /**
@@ -216,17 +207,10 @@ function getCodecVersions(formatVersion: number): ExplicitCodecVersions {
 /**
  * Shared object wrapping {@link SharedTreeKernel}.
  */
-export class SharedTree extends SharedObject implements ISharedTree, WithBreakable {
-	public readonly breaker: Breakable = new Breakable("Shared Tree");
+export class SharedTree extends SharedObject implements ISharedTree {
+	private readonly breaker: Breakable = new Breakable("Shared Tree");
 
-	public get checkout(): TreeCheckout {
-		return this.kernel.checkout;
-	}
-	public get storedSchema(): TreeStoredSchemaRepository {
-		return this.checkout.storedSchema;
-	}
-
-	private readonly kernel: SharedTreeKernel;
+	public readonly kernel: SharedTreeKernel;
 
 	public constructor(
 		id: string,
@@ -251,10 +235,6 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 		);
 	}
 
-	public get editor(): SharedTreeEditBuilder {
-		return this.kernel.getEditor();
-	}
-
 	public summarizeCore(
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
@@ -275,7 +255,9 @@ export class SharedTree extends SharedObject implements ISharedTree, WithBreakab
 		this.kernel.processMessagesCore(messagesCollection);
 	}
 
-	protected onDisconnect(): void {}
+	protected onDisconnect(): void {
+		this.kernel.onDisconnect();
+	}
 
 	public exportVerbose(): VerboseTree | undefined {
 		return this.kernel.exportVerbose();
@@ -586,6 +568,8 @@ class SharedTreeKernel extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeC
 			super.submitCommit(commit, schemaAndPolicy, isResubmit),
 		);
 	}
+
+	public onDisconnect(): void {}
 }
 
 /**
@@ -612,13 +596,13 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	treeOrView: ITree | TreeViewAlpha<T>,
 ): BranchableTree {
-	assert(
-		treeOrView instanceof SharedTree || treeOrView instanceof SchematizingSimpleTreeView,
-		0xa48 /* Unsupported implementation */,
-	);
-	const checkout: TreeCheckout = treeOrView.checkout;
+	if (treeOrView instanceof SchematizingSimpleTreeView) {
+		return treeOrView.checkout as unknown as BranchableTree;
+	}
+	const kernel = (treeOrView as ITree as ITreePrivate).kernel;
+	assert(kernel instanceof SharedTreeKernel, "Invalid ITree");
 	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return checkout as unknown as BranchableTree;
+	return kernel.checkout as unknown as BranchableTree;
 }
 
 /**
