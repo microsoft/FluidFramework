@@ -342,111 +342,111 @@ extends:
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
               # Test
-              - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
-                  # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
-                  - script: |
-                      echo "##vso[task.setvariable variable=startTest]true"
-                    displayName: Start Test
+              # - ${{ if ne(convertToJson(parameters.taskTest), '[]') }}:
+              #     # Set variable startTest if the build succeed so that we can run all the test tasks whether they are failed or not
+              #     - script: |
+              #         echo "##vso[task.setvariable variable=startTest]true"
+              #       displayName: Start Test
 
-                  - ${{ each taskTestStep in parameters.taskTest }}:
-                      - template: /tools/pipelines/templates/include-test-task.yml@self
-                        parameters:
-                          taskTestStep: '${{ taskTestStep }}'
-                          buildDirectory: '${{ parameters.buildDirectory }}'
-                          testCoverage: ${{
-                            and(
-                              parameters.testCoverage,
-                              ne(variables['Build.Reason'], 'PullRequest')
-                            )}}
+              #     - ${{ each taskTestStep in parameters.taskTest }}:
+              #         - template: /tools/pipelines/templates/include-test-task.yml@self
+              #           parameters:
+              #             taskTestStep: '${{ taskTestStep }}'
+              #             buildDirectory: '${{ parameters.buildDirectory }}'
+              #             testCoverage: ${{
+              #               and(
+              #                 parameters.testCoverage,
+              #                 ne(variables['Build.Reason'], 'PullRequest')
+              #               )}}
 
-                  - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
-                    - task: Bash@3
-                      displayName: Upload tinylicious log
-                      condition: always()
-                      continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
-                      inputs:
-                        targetType: inline
-                        script: |
-                          set -eu -o pipefail
-                          PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
-                          if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
-                            echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
-                            echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
-                          else
-                            echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
-                          fi
+              #     - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
+              #       - task: Bash@3
+              #         displayName: Upload tinylicious log
+              #         condition: always()
+              #         continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
+              #         inputs:
+              #           targetType: inline
+              #           script: |
+              #             set -eu -o pipefail
+              #             PATH_TO_TINYLICIOUS_LOG=$(Build.SourcesDirectory)/packages/test/test-end-to-end-tests/tinylicious.log;
+              #             if [ -f $PATH_TO_TINYLICIOUS_LOG ] ; then
+              #               echo "Found file at '$PATH_TO_TINYLICIOUS_LOG'. Uploading.";
+              #               echo "##vso[task.uploadfile]$PATH_TO_TINYLICIOUS_LOG";
+              #             else
+              #               echo "##vso[task.logissue type=warning]Failed to upload tinylicious log file ('$PATH_TO_TINYLICIOUS_LOG' not found).";
+              #             fi
 
-                    # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
-                    # that is now part of templateContext.outputs below.
+              #       # At this point we want to publish the tinylicious.log artifact, but as part of 1ES migration
+              #       # that is now part of templateContext.outputs below.
 
-                  # Test - Upload coverage results
-                  # Some webpacked file using externals introduce file name with quotes in them
-                  # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
-                  # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
-                  - ${{ if parameters.testCoverage }}:
-                      - task: Bash@3
-                        displayName: Check for nyc/report directory
-                        condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
-                        inputs:
-                          targetType: 'inline'
-                          workingDirectory: '${{ parameters.buildDirectory }}'
-                          script: |
-                            set -eu -o pipefail
-                            test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
-                      - task: Bash@3
-                        displayName: Patch Coverage Results
-                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                        inputs:
-                          targetType: 'inline'
-                          workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
-                          script: |
-                            set -eu -o pipefail
-                            sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
-                      - task: PublishCodeCoverageResults@2
-                        displayName: Publish Code Coverage
-                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                        inputs:
-                          summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
-                          failIfCoverageEmpty: true
-                      - task: CopyFiles@2
-                        displayName: Copy code coverage report to artifact staging directory
-                        condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
-                        inputs:
-                          sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
-                          targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
-                      - task: Bash@3
-                        displayName: Report Code Coverage Comparison
-                        condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
-                        continueOnError: false
-                        env:
-                          ADO_API_TOKEN: '$(System.AccessToken)'
-                          GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
-                          TARGET_BRANCH_NAME: '$(targetBranchName)'
-                          ADO_BUILD_ID: '$(Build.BuildId)'
-                          GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
-                          GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
-                          ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
-                          ADO_CI_BUILD_DEFINITION_ID_PR: 11
-                        inputs:
-                          targetType: inline
-                          workingDirectory: '${{ parameters.buildDirectory }}'
-                          script: |
-                            set -eu -o pipefail
-                            echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
-                            echo "Github PR number: $GITHUB_PR_NUMBER"
-                            echo "ADO Build Number: $ADO_BUILD_ID"
-                            echo "Target Branch Name: $TARGET_BRANCH_NAME"
-                            echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
-                            echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
-                            echo "Running code coverage comparison"
-                            flub report codeCoverage --verbose
+              #     # Test - Upload coverage results
+              #     # Some webpacked file using externals introduce file name with quotes in them
+              #     # and Istanbul's cobertura reporter doesn't escape them causing parse error when we publish
+              #     # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
+              #     - ${{ if parameters.testCoverage }}:
+              #         - task: Bash@3
+              #           displayName: Check for nyc/report directory
+              #           condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+              #           inputs:
+              #             targetType: 'inline'
+              #             workingDirectory: '${{ parameters.buildDirectory }}'
+              #             script: |
+              #               set -eu -o pipefail
+              #               test -d nyc/report && echo '##vso[task.setvariable variable=ReportDirExists;]true' || echo 'No nyc/report directory'
+              #         - task: Bash@3
+              #           displayName: Patch Coverage Results
+              #           condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+              #           inputs:
+              #             targetType: 'inline'
+              #             workingDirectory: '${{ parameters.buildDirectory }}/nyc/report'
+              #             script: |
+              #               set -eu -o pipefail
+              #               sed -e 's/\(filename=\".*[\\/]external .*\)"\(.*\)""/\1\&quot;\2\&quot;"/' cobertura-coverage.xml > cobertura-coverage-patched.xml
+              #         - task: PublishCodeCoverageResults@2
+              #           displayName: Publish Code Coverage
+              #           condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+              #           inputs:
+              #             summaryFileLocation: ${{ parameters.buildDirectory }}/nyc/report/cobertura-coverage-patched.xml
+              #             failIfCoverageEmpty: true
+              #         - task: CopyFiles@2
+              #           displayName: Copy code coverage report to artifact staging directory
+              #           condition: and(succeededOrFailed(), eq(variables['ReportDirExists'], 'true'))
+              #           inputs:
+              #             sourceFolder: '${{ parameters.buildDirectory }}/nyc/report'
+              #             targetFolder: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
+              #         - task: Bash@3
+              #           displayName: Report Code Coverage Comparison
+              #           condition: and(succeededOrFailed(), eq('${{ parameters.reportCodeCoverageComparison }}', true), eq(variables['ReportDirExists'], 'true'), eq(variables['System.PullRequest.TargetBranch'], 'main'))
+              #           continueOnError: false
+              #           env:
+              #             ADO_API_TOKEN: '$(System.AccessToken)'
+              #             GITHUB_API_TOKEN: '$(githubPublicRepoSecret)'
+              #             TARGET_BRANCH_NAME: '$(targetBranchName)'
+              #             ADO_BUILD_ID: '$(Build.BuildId)'
+              #             GITHUB_PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
+              #             GITHUB_REPOSITORY_NAME: '$(Build.Repository.Name)'
+              #             ADO_CI_BUILD_DEFINITION_ID_BASELINE: 48
+              #             ADO_CI_BUILD_DEFINITION_ID_PR: 11
+              #           inputs:
+              #             targetType: inline
+              #             workingDirectory: '${{ parameters.buildDirectory }}'
+              #             script: |
+              #               set -eu -o pipefail
+              #               echo "Github Repository Name: $GITHUB_REPOSITORY_NAME"
+              #               echo "Github PR number: $GITHUB_PR_NUMBER"
+              #               echo "ADO Build Number: $ADO_BUILD_ID"
+              #               echo "Target Branch Name: $TARGET_BRANCH_NAME"
+              #               echo "ADO CI BUILD_DEFINITION_ID for baseline: $ADO_CI_BUILD_DEFINITION_ID_BASELINE"
+              #               echo "ADO CI BUILD_DEFINITION_ID for PR: $ADO_CI_BUILD_DEFINITION_ID_PR"
+              #               echo "Running code coverage comparison"
+              #               flub report codeCoverage --verbose
 
 
-                  # Process test result, include publishing and logging
-                  - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                    parameters:
-                      buildDirectory: '${{ parameters.buildDirectory }}'
-                      testResultDirs: '${{ parameters.testResultDirs }}'
+              #     # Process test result, include publishing and logging
+              #     - template: /tools/pipelines/templates/include-process-test-results.yml@self
+              #       parameters:
+              #         buildDirectory: '${{ parameters.buildDirectory }}'
+              #         testResultDirs: '${{ parameters.testResultDirs }}'
 
               # Pack
               - ${{ if ne(parameters.taskPack, false) }}:

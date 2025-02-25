@@ -46,22 +46,22 @@ jobs:
   # This job is necessary to be compliant with 1ES.
   # 1ES does not allow checking out a code repo within a deployment job so instead we use this pattern
   # of checking out the repo in separate job and uploading it as a pipeline artifact.
-- job: checkoutAndUploadThisRepoAsArtifact
-  steps:
-  # Checkout the repository
-  - checkout: self
-    persistCredentials: true # Necessary for creation of git tags to work
-  # Copy required files to the artifact staging directory
-  - task: CopyFiles@2
-    inputs:
-      SourceFolder: $(System.DefaultWorkingDirectory)
-      Contents: '**/*'
-      TargetFolder: $(Build.ArtifactStagingDirectory)
-  # Publish the artifact containing the required files from the repository
-  - task: 1ES.PublishPipelineArtifact@1
-    inputs:
-      targetPath: $(Build.ArtifactStagingDirectory)
-      artifactName: fluidFrameworkRepo
+# - job: checkoutAndUploadThisRepoAsArtifact
+#   steps:
+#   # Checkout the repository
+#   - checkout: self
+#     persistCredentials: true # Necessary for creation of git tags to work
+#   # Copy required files to the artifact staging directory
+#   - task: CopyFiles@2
+#     inputs:
+#       SourceFolder: $(System.DefaultWorkingDirectory)
+#       Contents: '**/*'
+#       TargetFolder: $(Build.ArtifactStagingDirectory)
+#   # Publish the artifact containing the required files from the repository
+#   - task: 1ES.PublishPipelineArtifact@1
+#     inputs:
+#       targetPath: $(Build.ArtifactStagingDirectory)
+#       artifactName: fluidFrameworkRepo
 
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   # Depend on the build job
@@ -85,7 +85,7 @@ jobs:
         project: internal
         definition: 14
         buildVersionToDownload: latestFromBranch
-        branchName: ${{ variables['Build.SourceBranch'] }}
+        branchName: main
         artifactName: pack
         targetPath: ${{ parameters.buildDirectory }}
 
