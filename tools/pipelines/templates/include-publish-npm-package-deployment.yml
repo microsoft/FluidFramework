@@ -65,7 +65,7 @@ jobs:
 
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   # Depend on the build job
-  dependsOn: checkoutAndUploadThisRepoAsArtifact
+  # dependsOn: checkoutAndUploadThisRepoAsArtifact
   displayName: Publish ${{ parameters.environment }}
   pool: ${{ parameters.pool }}
   environment: ${{ parameters.environment }}
