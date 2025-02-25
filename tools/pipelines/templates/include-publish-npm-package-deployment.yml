@@ -81,7 +81,6 @@ jobs:
       #   targetPath: ${{ parameters.buildDirectory }}
 
       - input: pipelineArtifact
-        buildType: specific
         pipeline: 'Build - build-tools'
         branchName: main
         artifactName: pack
