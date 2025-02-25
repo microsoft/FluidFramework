@@ -158,7 +158,7 @@ import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
 import { TreeFactory } from "../treeFactory.js";
-import { JsonUnion } from "../jsonDomainSchema.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
@@ -802,7 +802,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
  */
 export function makeTreeFromJson(json: JsonCompatible): ITreeCheckout {
 	return checkoutWithContent({
-		schema: toStoredSchema(JsonUnion),
+		schema: toStoredSchema(JsonAsTree.Tree),
 		initialTree: singleJsonCursor(json),
 	});
 }

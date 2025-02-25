@@ -22,7 +22,7 @@ import {
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 import { singleJsonCursor } from "../../json/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
-import { JsonUnion } from "../../../jsonDomainSchema.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -30,7 +30,7 @@ describe("simple-tree customTree", () => {
 	const handle = new MockHandle(1);
 	describe("customFromCursor", () => {
 		it("leaf", () => {
-			const schema = getUnhydratedContext(JsonUnion).schema;
+			const schema = getUnhydratedContext(JsonAsTree.Tree).schema;
 			const leaf_options = { useStoredKeys: true, valueConverter: () => fail("unused") };
 			assert.equal(
 				customFromCursor(singleJsonCursor(null), leaf_options, schema, () => fail()),
@@ -112,7 +112,7 @@ describe("simple-tree customTree", () => {
 	});
 
 	it("customFromCursorStored", () => {
-		const schema = toStoredSchema(JsonUnion).nodeSchema;
+		const schema = toStoredSchema(JsonAsTree.Tree).nodeSchema;
 		assert.equal(
 			customFromCursorStored(singleJsonCursor(null), schema, () => fail()),
 			null,

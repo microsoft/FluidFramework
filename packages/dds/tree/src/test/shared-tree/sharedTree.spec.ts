@@ -95,7 +95,7 @@ import { TestAnchor } from "../testAnchor.js";
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
 import { singleJsonCursor } from "../json/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
-import { JsonArray } from "../../jsonDomainSchema.js";
+import { JsonAsTree } from "../../jsonDomainSchema.js";
 
 const enableSchemaValidation = true;
 
@@ -318,15 +318,18 @@ describe("SharedTree", () => {
 		const value = 42;
 		provider.trees[0]
 			.viewWith(
-				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation: false }),
+				new TreeViewConfiguration({
+					schema: JsonAsTree.Array,
+					enableSchemaValidation: false,
+				}),
 			)
-			.initialize(new JsonArray([value]));
+			.initialize(new JsonAsTree.Array([value]));
 
 		await provider.summarize();
 		await provider.ensureSynchronized();
 		const loadingTree = await provider.createTree();
 		validateTreeContent(loadingTree.checkout, {
-			schema: JsonArray,
+			schema: JsonAsTree.Array,
 			initialTree: singleJsonCursor([value]),
 		});
 	});
@@ -482,7 +485,7 @@ describe("SharedTree", () => {
 				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Handle);
 				view.dispose();
 				const view2 = tree.viewWith(
-					new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+					new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 				);
 				view2.upgradeSchema();
 				await provider.ensureSynchronized();
@@ -761,7 +764,7 @@ describe("SharedTree", () => {
 			);
 			view.initialize([]);
 			const viewUpgrade = tree.viewWith(
-				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+				new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 			);
 			viewUpgrade.upgradeSchema();
 			tree.checkout.transaction.start();
@@ -1838,7 +1841,7 @@ describe("SharedTree", () => {
 			view1.dispose();
 
 			const view1Json = tree1.viewWith(
-				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+				new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 			);
 			view1Json.upgradeSchema();
 			// TODO:#8915: This should be able to insert the _number_ 44, not the string, but currently cannot - see bug #8915
@@ -1866,9 +1869,11 @@ describe("SharedTree", () => {
 			expectSchemaEqual(tree.storedSchema, toStoredSchema(StringArray));
 
 			tree
-				.viewWith(new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }))
+				.viewWith(
+					new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
+				)
 				.upgradeSchema();
-			expectSchemaEqual(tree.storedSchema, toStoredSchema(JsonArray));
+			expectSchemaEqual(tree.storedSchema, toStoredSchema(JsonAsTree.Array));
 
 			const revertible = undoStack.pop();
 			revertible?.revert();
