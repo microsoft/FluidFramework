@@ -739,7 +739,7 @@ describe("SchematizingSimpleTreeView", () => {
 				const provider = new TestTreeProviderLite(2);
 				const [treeA, treeB] = provider.trees;
 				const viewA = treeA.viewWith(viewConfig);
-				const viewB = treeB.viewWith(viewConfig);
+				const viewB = treeB.kernel.viewWith(viewConfig);
 				viewA.initialize({
 					content: 42,
 					child: { content: 42 },

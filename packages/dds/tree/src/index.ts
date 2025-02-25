@@ -73,7 +73,6 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
-	type IChannelView,
 } from "./shared-tree/index.js";
 
 export {
