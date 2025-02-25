@@ -5,8 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
-import { JsonArray } from "@fluidframework/tree/internal";
+import { JsonAsTree } from "@fluidframework/tree/alpha";
 
 import { RecursiveMap } from "../testExports.js";
 
@@ -17,7 +16,7 @@ describe("import tests", () => {
 	});
 
 	it("JsonArray", () => {
-		const r = new JsonArray([1]);
+		const r = new JsonAsTree.Array([1]);
 		assert.equal(r[0], 1);
 	});
 });

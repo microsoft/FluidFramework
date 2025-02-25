@@ -23,7 +23,7 @@ const sf = new SchemaFactory("com.fluidframework.json");
  * 1. Only information that would be preserved by JSON.parse is preserved. This means (among other things) that numbers are limited to JavasScript's numeric precision.
  * 2. The order of fields on an object is not preserved. The resulting order is arbitrary.
  *
- * JSON data can be imported into this format using `JSON.parse` then {@link TreeAlpha.importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
+ * JSON data can be imported from JSON into this format using `JSON.parse` then {@link TreeAlpha.importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
  *
  * @alpha
  */
@@ -63,7 +63,7 @@ export namespace JsonAsTree {
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @alpha
 	 */
-	export const _APIExtractorWorkaroundJsonObjectBase = sf.mapRecursive("object", Tree);
+	export const _APIExtractorWorkaroundObjectBase = sf.mapRecursive("object", Tree);
 
 	/**
 	 * Arbitrary JSON object as a {@link TreeNode}.
@@ -82,7 +82,7 @@ export namespace JsonAsTree {
 	 * Due to https://github.com/microsoft/TypeScript/issues/61270 this can't be named `Object`.
 	 * @sealed @alpha
 	 */
-	export class JsonObject extends _APIExtractorWorkaroundJsonObjectBase {}
+	export class JsonObject extends _APIExtractorWorkaroundObjectBase {}
 	{
 		type _check = ValidateRecursiveSchema<typeof JsonObject>;
 	}
@@ -90,7 +90,7 @@ export namespace JsonAsTree {
 	/**
 	 * D.ts bug workaround, see {@link FixRecursiveArraySchema}.
 	 * @privateRemarks
-	 * In the past this this had to reference the base type (_APIExtractorWorkaroundJsonArrayBase).
+	 * In the past this this had to reference the base type (_APIExtractorWorkaroundArrayBase).
 	 * Testing for this in examples/utils/import-testing now shows it has to reference JsonAsTree.Array instead.
 	 * @system @alpha
 	 */
@@ -102,7 +102,7 @@ export namespace JsonAsTree {
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @alpha
 	 */
-	export const _APIExtractorWorkaroundJsonArrayBase = sf.arrayRecursive("array", Tree);
+	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive("array", Tree);
 
 	/**
 	 * Arbitrary JSON object as a {@link TreeNode}.
@@ -115,13 +115,13 @@ export namespace JsonAsTree {
 	 * // Using `importConcise` can work better for JSON data:
 	 * const imported = TreeAlpha.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
 	 * // Node API is like an Array:
-	 * const outer: JsonUnion = imported[0];
-	 * assert(Tree.is(outer, JsonAsTree.Array));
-	 * const inner = outer[0];
+	 * const inner: JsonUnion = imported[2];
+	 * assert(Tree.is(inner, JsonAsTree.Array));
+	 * const leaf = inner[0];
 	 * ```
 	 * @sealed @alpha
 	 */
-	export class Array extends _APIExtractorWorkaroundJsonArrayBase {}
+	export class Array extends _APIExtractorWorkaroundArrayBase {}
 	{
 		type _check = ValidateRecursiveSchema<typeof Array>;
 	}
