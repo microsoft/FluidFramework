@@ -242,6 +242,7 @@ describe("Presence", () => {
 				assert.strictEqual(listener.calledOnce, true);
 				assert.strictEqual(listener.calledWith("name:testStateWorkspace", "States"), true);
 			});
+
 			it("with unregistered Notifications workspace 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
@@ -272,6 +273,7 @@ describe("Presence", () => {
 					true,
 				);
 			});
+
 			it("with unregistered workspace of unknown type emits 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
@@ -307,6 +309,7 @@ describe("Presence", () => {
 				assert.strictEqual(listener.calledOnce, true);
 				assert.strictEqual(listener.calledWith("name:testUnknownWorkspace", "Unknown"), true);
 			});
+
 			it("with registered workspace does NOT emit 'workspaceActivated'", () => {
 				// Setup
 				const listener = spy();
@@ -326,6 +329,62 @@ describe("Presence", () => {
 								"system:presence": systemWorkspaceUpdate,
 								"s:name:testStateWorkspace": statesWorkspaceUpdate,
 								"n:name:testNotificationWorkspace": notificationsWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has an invalid internal address does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								// Invalid internal address
+								"sn:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+						},
+						clientId: "client1",
+					},
+					false,
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
+			});
+
+			it("with workspace that has an invalid public address does NOT emit 'workspaceActivated'", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act
+				presence.processSignal(
+					"",
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								// Invalid public address (must be `${string}:${string}`)
+								"s:testStateWorkspace": statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",

@@ -411,19 +411,21 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				if (workspaceDatastore === undefined) {
 					workspaceDatastore = this.datastore[workspaceAddress] = {};
 					if (!workspaceAddress.startsWith("system:")) {
-						// Seperate internal type prefix from public workspace address
-						const [prefix, ...rest] = workspaceAddress.split(":");
-						const publicWorkspaceAddress = rest.join(":");
-
-						assert(
-							prefix !== undefined && publicWorkspaceAddress !== undefined,
-							"Invalid internal workspace address",
-						);
-						assert(
-							isPresenceWorkspaceAddress(publicWorkspaceAddress),
-							"Invalid public workspace address",
-						);
-
+						// Separate internal type prefix from public workspace address
+						const match = workspaceAddress.match(/^([a-z]):(.*)/);
+						// Skip if no match
+						if (match === null) {
+							continue;
+						}
+						const prefix = match[1];
+						const publicWorkspaceAddress = match[2];
+						// Skip if public workspace address is invalid
+						if (
+							publicWorkspaceAddress === undefined ||
+							!isPresenceWorkspaceAddress(publicWorkspaceAddress)
+						) {
+							continue;
+						}
 						const internalWorkspaceTypes = {
 							s: "States",
 							n: "Notifications",
@@ -434,12 +436,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 							internalWorkspaceTypes[prefix as keyof typeof internalWorkspaceTypes] ??
 							"Unknown";
 
-						postUpdateActions.push(() =>
-							this.events.emit(
-								"workspaceActivated",
-								publicWorkspaceAddress,
-								internalWorkspaceType,
-							),
+						this.events.emit(
+							"workspaceActivated",
+							publicWorkspaceAddress,
+							internalWorkspaceType,
 						);
 					}
 				}
