@@ -126,6 +126,51 @@ describe("SharedTree", () => {
 			assert.equal(view.root, 10);
 		});
 
+		it.only("initialize-dispose-view with primitive schema", () => {
+			const tree = treeTestFactory();
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+
+			const config = new TreeViewConfiguration({
+				schema: SchemaFactory.number,
+			});
+
+			const view1 = tree.viewWith(config);
+			view1.initialize(10);
+			assert.deepEqual(view1.root, 10);
+
+			view1.dispose();
+
+			const view2 = tree.viewWith(config);
+			assert.deepEqual(view2.root, 10);
+		});
+
+		it.only("initialize-dispose-view with object schema", () => {
+			const tree = treeTestFactory();
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+
+			const factory = new SchemaFactory("my-factory");
+			class MySchema extends factory.object("my-root", {
+				number: factory.number,
+			}) {}
+
+			const config = new TreeViewConfiguration({
+				schema: MySchema,
+			});
+
+			const expectedContents = new MySchema({
+				number: 10,
+			});
+
+			const view1 = tree.viewWith(config);
+			view1.initialize(new MySchema({ number: 10 }));
+			assert.deepEqual(view1.root, expectedContents);
+
+			view1.dispose();
+
+			const view2 = tree.viewWith(config);
+			assert.deepEqual(view2.root, expectedContents); // <-- This throws with assert 0x778
+		});
+
 		it("concurrent initialize", () => {
 			const provider = new TestTreeProviderLite(2);
 			const config = new TreeViewConfiguration({
