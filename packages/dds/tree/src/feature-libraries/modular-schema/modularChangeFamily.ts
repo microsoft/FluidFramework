@@ -52,7 +52,7 @@ import {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	type RangeQueryResult,
-	getOrAddInMapLazy,
+	getOrCreate,
 	newTupleBTree,
 	mergeTupleBTrees,
 	type TupleBTree,
@@ -1924,7 +1924,7 @@ export function updateRefreshers(
 
 	if (change.builds !== undefined) {
 		for (const [[revision, id], chunk] of change.builds.entries()) {
-			const lengthTree = getOrAddInMapLazy(chunkLengths, revision, () => new BTree());
+			const lengthTree = getOrCreate(chunkLengths, revision, () => new BTree());
 			lengthTree.set(id, chunk.topLevelLength);
 		}
 	}
