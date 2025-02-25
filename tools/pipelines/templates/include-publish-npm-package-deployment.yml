@@ -76,9 +76,19 @@ jobs:
     isProduction: true
     # This section downloads initial required artifacts/data for this job.
     inputs:
+      # - input: pipelineArtifact
+      #   artifactName: fluidFrameworkRepo
+      #   targetPath: ${{ parameters.buildDirectory }}
+
       - input: pipelineArtifact
-        artifactName: fluidFrameworkRepo
+        buildType: specific
+        project: internal
+        pipeline: 'Build - build-tools'
+        buildVersionToDownload: latestFromBranch
+        branchName: ${{ variables['Build.SourceBranch'] }}
+        artifact: pack
         targetPath: ${{ parameters.buildDirectory }}
+
       - input: pipelineArtifact
         artifactName: pack
         buildType: current
@@ -93,11 +103,32 @@ jobs:
         deploy:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
-          - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-            parameters:
-              buildDirectory: ${{ parameters.buildDirectory }}
-              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-              pnpmStorePath: ${{ parameters.pnpmStorePath }}
+          - task: Bash@3
+            displayName: List Files in Directory
+            inputs:
+              targetType: inline
+              workingDirectory: '${{ parameters.buildDirectory }}'
+              script: |
+                echo "Listing files in directory: $(pwd)"
+                ls -la
+          - task: Bash@3
+            name: InstallBuildToolsFromTarball
+            displayName: Install Fluid Build Tools from artifact tarball
+            inputs:
+              targetType: 'inline'
+              workingDirectory: '${{ parameters.buildDirectory }}/tarballs'
+              script: |
+                echo "Listing files in directory: $(pwd)"
+                ls -la
+                echo "attempting tarball install"
+                npm i -g fluid-tools-build-cli-*.tgz
+
+          # - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+          #   parameters:
+          #     buildDirectory: ${{ parameters.buildDirectory }}
+          #     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+          #     pnpmStorePath: ${{ parameters.pnpmStorePath }}
+
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
               artifactPath: tarballs
