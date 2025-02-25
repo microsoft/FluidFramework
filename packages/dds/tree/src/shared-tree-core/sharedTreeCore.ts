@@ -372,13 +372,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			if (messagesSessionId !== undefined) {
 				assert(
 					messagesSessionId === sessionId,
-					"All messages in a bunch must have the same session ID",
+					0xad9 /* All messages in a bunch must have the same session ID */,
 				);
 			}
 			messagesSessionId = sessionId;
 		}
 
-		assert(messagesSessionId !== undefined, "Messages must have a session ID");
+		assert(messagesSessionId !== undefined, 0xada /* Messages must have a session ID */);
 
 		this.editManager.addSequencedChanges(
 			commits,
