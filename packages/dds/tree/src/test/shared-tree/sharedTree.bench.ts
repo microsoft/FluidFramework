@@ -21,7 +21,7 @@ import {
 	TreeCompressionStrategy,
 	jsonableTreeFromCursor,
 } from "../../feature-libraries/index.js";
-import type { CheckoutFlexTreeView } from "../../shared-tree/index.js";
+import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
 	type JSDeepTree,
 	type JSWideTree,
@@ -43,14 +43,16 @@ import {
 	readWideTreeAsJSObject,
 } from "../scalableTestTrees.js";
 import {
+	StringArray,
 	TestTreeProviderLite,
 	checkoutWithContent,
 	flexTreeViewWithContent,
 	toJsonableTree,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
-import { cursorFromInsertable } from "../../simple-tree/index.js";
+import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
 import { TreeFactory } from "../../treeFactory.js";
+import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
 const nodesCountWide = [
@@ -503,6 +505,55 @@ describe("SharedTree benchmarks", () => {
 				if (!isInPerformanceTestingMode) {
 					test.timeout(5000);
 				}
+			}
+		}
+	});
+
+	describe("big transaction composition", () => {
+		const editCounts = isInPerformanceTestingMode ? [10, 100, 1000] : [5];
+		for (const editCount of editCounts) {
+			const test = benchmark({
+				type: BenchmarkType.Measurement,
+				title: `Compose ${editCount} sequence edits into a single transaction`,
+				benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+					let duration: number;
+					do {
+						// Since this setup one collects data from one iteration, assert that this is what is expected.
+						assert.equal(state.iterationsPerBatch, 1);
+						const provider = new TestTreeProviderLite(
+							1,
+							factory,
+							undefined /* useDeterministicSessionIds */,
+							FlushMode.TurnBased,
+						);
+						const tree = provider.trees[0];
+						tree.setConnected(false);
+						const view = provider.trees[0].viewWith(
+							new TreeViewConfiguration({
+								schema: StringArray,
+							}),
+						);
+						view.initialize([]);
+
+						const before = state.timer.now();
+						Tree.runTransaction(view, () => {
+							for (let iEdit = 0; iEdit < editCount; iEdit++) {
+								view.root.insertAtEnd(`${iEdit}`);
+							}
+						});
+						const after = state.timer.now();
+						duration = state.timer.toSeconds(before, after);
+
+						const actual = [...view.root];
+						const expected = makeArray(editCount, (index) => `${index}`);
+						assert.deepEqual(actual, expected);
+					} while (state.recordBatch(duration));
+				},
+				// Force batch size of 1
+				minBatchDurationSeconds: 0,
+			});
+			if (!isInPerformanceTestingMode) {
+				test.timeout(5000);
 			}
 		}
 	});

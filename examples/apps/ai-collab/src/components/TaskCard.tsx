@@ -9,6 +9,7 @@ import {
 	aiCollab,
 	type AiCollabErrorResponse,
 	type AiCollabSuccessResponse,
+	type ApplyEditSuccess,
 	type Difference,
 	type DifferenceChange,
 	type DifferenceMove,
@@ -179,8 +180,26 @@ export function TaskCard(props: {
 				},
 				planningStep: true,
 				finalReviewStep: true,
-				dumpDebugLog: true,
 				validator: aiCollabLlmTreeNodeValidator,
+				debugEventLogHandler: (event) => {
+					console.log(`Received event: ${event.eventName}`);
+					if (
+						event.eventName === "APPLIED_EDIT_SUCCESS" ||
+						event.eventName === "APPLIED_EDIT_FAILURE"
+					) {
+						console.log(
+							`${
+								event.eventName === "APPLIED_EDIT_SUCCESS"
+									? "Succesfully applied"
+									: "Failed to appply"
+							} tree edit: ${JSON.stringify(
+								(event as unknown as ApplyEditSuccess).edit,
+								undefined,
+								2,
+							)}`,
+						);
+					}
+				},
 			});
 
 			if (response.status !== "success") {

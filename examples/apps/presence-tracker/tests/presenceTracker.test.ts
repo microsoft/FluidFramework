@@ -105,10 +105,10 @@ describe("presence-tracker", () => {
 		});
 
 		it("First client shows single client connected", async () => {
-			// eslint-disable-next-line @typescript-eslint/dot-notation
-			await page.waitForFunction(() => window["fluidSessionAttendeeCount"] === 1, {
-				timeout: 50,
-			});
+			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
+			const attendeeCount = await page.evaluate(() => window["fluidSessionAttendeeCount"]);
+			expect(attendeeCount).toBe(1);
+
 			const elementHandle = await page.waitForFunction(() =>
 				document.getElementById("focus-div"),
 			);
