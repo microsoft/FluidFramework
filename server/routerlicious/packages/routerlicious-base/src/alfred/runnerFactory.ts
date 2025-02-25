@@ -22,6 +22,9 @@ import {
 import { IAlfredResourcesCustomizations } from ".";
 import { IReadinessCheck } from "@fluidframework/server-services-core";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
+import type EventEmitter from "events";
+import { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 
 /**
  * @internal
@@ -50,6 +53,7 @@ export class AlfredResources implements core.IResources {
 		public tokenRevocationManager?: core.ITokenRevocationManager,
 		public revokedTokenChecker?: core.IRevokedTokenChecker,
 		public serviceMessageResourceManager?: core.IServiceMessageResourceManager,
+		public collaborationSessionEventEmitter?: EventEmitter,
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public enableClientIPLogging?: boolean,
 		public readinessCheck?: IReadinessCheck,
@@ -392,6 +396,8 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		}
 		const startupCheck = new StartupCheck();
 
+		const eventEmitter = customizations?.collaborationSessionEventEmitter ?? new TypedEventEmitter<ICollaborationSessionEvents>();
+
 		return new AlfredResources(
 			config,
 			producer,
@@ -413,6 +419,7 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 			tokenRevocationManager,
 			revokedTokenChecker,
 			serviceMessageResourceManager,
+			eventEmitter,
 			customizations?.clusterDrainingChecker,
 			enableClientIPLogging,
 			customizations?.readinessCheck,
@@ -443,7 +450,7 @@ export class AlfredRunnerFactory implements core.IRunnerFactory<AlfredResources>
 			resources.startupCheck,
 			resources.tokenRevocationManager,
 			resources.revokedTokenChecker,
-			undefined,
+			resources.collaborationSessionEventEmitter,
 			resources.clusterDrainingChecker,
 			resources.enableClientIPLogging,
 			resources.readinessCheck,

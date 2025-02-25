@@ -43,6 +43,7 @@ import {
 	IBlobData,
 	IMapSetOperation,
 } from "./restHelper";
+import type EventEmitter from "events";
 
 export function create(
 	config: Provider,
@@ -52,7 +53,7 @@ export function create(
 	tenantThrottlers: Map<string, core.IThrottler>,
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: EventEmitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();

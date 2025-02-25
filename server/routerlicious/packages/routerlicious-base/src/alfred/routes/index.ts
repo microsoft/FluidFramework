@@ -24,6 +24,7 @@ import { Provider } from "nconf";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { IDocumentDeleteService } from "../services";
 import * as api from "./api";
+import type EventEmitter from "events";
 
 export interface IRoutes {
 	agent: Router;
@@ -45,7 +46,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	collaborationSessionEventEmitter?: EventEmitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	readinessCheck?: IReadinessCheck,
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,

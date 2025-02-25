@@ -30,6 +30,7 @@ import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
+import type EventEmitter from "events";
 
 /**
  * @internal
@@ -57,7 +58,7 @@ export class AlfredRunner implements IRunner {
 		private readonly startupCheck: IReadinessCheck,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
-		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		private readonly collaborationSessionEventEmitter?: EventEmitter, // TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly enableClientIPLogging?: boolean,
 		private readonly readinessCheck?: IReadinessCheck,
