@@ -18,6 +18,8 @@ import {
 	brand,
 	brandedSlot,
 	fail,
+	getOrAddEmptyToMap,
+	getOrCreate,
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -711,15 +713,7 @@ export class AnchorSet implements AnchorLocator {
 			/**
 			 * Events collected during the visit which get sent as a batch during "free".
 			 */
-			bufferedEvents: [] as {
-				node: PathNode;
-				event: keyof AnchorEvents;
-				/**
-				 * The key for the impacted field, if the event is associated with a key.
-				 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
-				 */
-				changedField?: FieldKey;
-			}[],
+			bufferedEvents: [] as BufferedEvent[],
 
 			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
 			// subtreeChangedAfterBatch events.
@@ -751,27 +745,31 @@ export class AnchorSet implements AnchorLocator {
 					node.removeRef();
 				}
 				this.anchorSet.activeVisitor = undefined;
-				const alreadyEmitted = new Map<PathNode, string[]>();
-				for (const { node, event } of this.bufferedEvents) {
-					if (!alreadyEmitted.has(node)) {
-						alreadyEmitted.set(node, []);
+
+				// Aggregate changedFields by node.
+				const eventsByNode: Map<PathNode, Set<FieldKey>> = new Map();
+				for (const { node, event, changedField } of this.bufferedEvents) {
+					if (event === "childrenChangedAfterBatch") {
+						const keys = getOrCreate(eventsByNode, node, () => new Set());
+						keys.add(
+							changedField ??
+								fail("childrenChangedAfterBatch events should have a changedField"),
+						);
 					}
-					const emittedEvents = alreadyEmitted.get(node);
-					if (emittedEvents?.includes(event) ?? false) {
+				}
+
+				const alreadyEmitted = new Map<PathNode, (keyof AnchorEvents)[]>();
+				for (const { node, event } of this.bufferedEvents) {
+					const emittedEvents = getOrAddEmptyToMap(alreadyEmitted, node);
+					if (emittedEvents.includes(event)) {
 						continue;
 					}
-					emittedEvents?.push(event);
+					emittedEvents.push(event);
 					if (event === "childrenChangedAfterBatch") {
-						const fieldKeys: FieldKey[] = this.bufferedEvents
-							.filter((e) => e.node === node && e.event === event)
-							.map(
-								(e) =>
-									e.changedField ??
-									fail(
-										0xaeb /* childrenChangedAfterBatch events should have a changedField */,
-									),
-							);
-						node.events.emit(event, { changedFields: new Set(fieldKeys) });
+						const changedFields =
+							eventsByNode.get(node) ??
+							fail(0xaeb /* childrenChangedAfterBatch events should have changedFields */);
+						node.events.emit(event, { changedFields });
 					} else {
 						node.events.emit(event);
 					}
@@ -1196,4 +1194,14 @@ function binaryFind(sorted: readonly PathNode[], index: number): PathNode | unde
 		}
 	}
 	return undefined; // If we reach here, target is not in array (or array was not sorted)
+}
+
+interface BufferedEvent {
+	node: PathNode;
+	event: keyof AnchorEvents;
+	/**
+	 * The key for the impacted field, if the event is associated with a key.
+	 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
+	 */
+	changedField?: FieldKey;
 }

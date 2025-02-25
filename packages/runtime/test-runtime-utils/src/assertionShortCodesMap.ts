@@ -1713,7 +1713,7 @@ export const shortCodeMap = {
 	"0xae8": "missing PersistedValueSchema",
 	"0xae9": "missing ValueSchema",
 	"0xaea": "internalize path must be a path",
-	"0xaeb": "childrenChangedAfterBatch events should have a changedField",
+	"0xaeb": "childrenChangedAfterBatch events should have changedFields",
 	"0xaec": "cannot reference child that does not exist",
 	"0xaed": "This wont be undefined due to the check above",
 	"0xaee": "nested cursors should not be root",
