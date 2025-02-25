@@ -11,11 +11,7 @@ import {
 	Lumberjack,
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
-import {
-	IRedisClientConnectionManager,
-	InMemoryApiCounters,
-	type IApiCounters,
-} from "@fluidframework/server-services-utils";
+import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
 import { createAdapter as createRedisAdapter } from "@socket.io/redis-adapter";
 import type { Adapter } from "socket.io-adapter";
@@ -122,10 +118,11 @@ export interface ISocketIoServerConfig {
 	 */
 	pingPongLatencyTrackingEnabled: boolean;
 	/**
-	 * The time in milliseconds to wait between each aggregated ping-pong latency telemetry event.
-	 * Default is 1 minute.
+	 * The number of ping pong events to aggregate for each ping-pong latency telemetry event.
+	 * This is tracked on a per socket connection level.
+	 * Default is 3.
 	 */
-	pingPongLatencyTrackingIntervalMs: number;
+	pingPongLatencyTrackingAggregationThreshold: number;
 	/**
 	 * Whether to enable Socket.io [perMessageDeflate](https://socket.io/docs/v4/server-options/#permessagedeflate) option.
 	 * Default is `true`.
@@ -135,15 +132,13 @@ export interface ISocketIoServerConfig {
 
 class SocketIoServer implements core.IWebSocketServer {
 	private readonly events = new EventEmitter();
-	private readonly pingPongLatencyInterval: ReturnType<typeof setInterval> | undefined;
-	private readonly pingPongLatencyTrackingIntervalMs: number | undefined;
+	private readonly pingPongLatencyTrackingAggregationThreshold: number = 3;
 
 	constructor(
 		private readonly io: Server,
 		private readonly redisClientConnectionManagerForPub: IRedisClientConnectionManager,
 		private readonly redisClientConnectionManagerForSub: IRedisClientConnectionManager,
 		private readonly socketIoConfig?: Partial<ISocketIoServerConfig>,
-		private readonly apiCounters: IApiCounters = new InMemoryApiCounters(),
 	) {
 		this.io.on("connection", (socket: Socket) => {
 			/**
@@ -155,8 +150,8 @@ class SocketIoServer implements core.IWebSocketServer {
 			 * for real logic and access purposes without validating against the JWT access token.
 			 */
 			const telemetryProperties = {
-				[BaseTelemetryProperties.tenantId]: socket.handshake.query.tenantId,
-				[BaseTelemetryProperties.documentId]: socket.handshake.query.documentId,
+				[BaseTelemetryProperties.tenantId]: `${socket.handshake.query.tenantId}`,
+				[BaseTelemetryProperties.documentId]: `${socket.handshake.query.documentId}`,
 			};
 			const socketConnectionMetric = Lumberjack.newLumberMetric(
 				LumberEventName.SocketConnection,
@@ -165,7 +160,7 @@ class SocketIoServer implements core.IWebSocketServer {
 			const webSocket = new SocketIoSocket(socket);
 			this.events.emit("connection", webSocket);
 
-			this.initPingPongLatencyTracking(socket);
+			this.initPingPongLatencyTracking(socket, telemetryProperties);
 
 			webSocket.on("disconnect", (reason: DisconnectReason) => {
 				// The following should be considered as normal disconnects and not logged as errors.
@@ -231,13 +226,9 @@ class SocketIoServer implements core.IWebSocketServer {
 			}
 		});
 
-		if (this.socketIoConfig?.pingPongLatencyTrackingEnabled) {
-			this.pingPongLatencyTrackingIntervalMs =
-				this.socketIoConfig?.pingPongLatencyTrackingIntervalMs ?? 60000;
-			this.pingPongLatencyInterval = setInterval(
-				this.flushPingPongLatencyTracking.bind(this),
-				this.pingPongLatencyTrackingIntervalMs,
-			);
+		if (this.socketIoConfig?.pingPongLatencyTrackingAggregationThreshold !== undefined) {
+			this.pingPongLatencyTrackingAggregationThreshold =
+				this.socketIoConfig?.pingPongLatencyTrackingAggregationThreshold;
 		}
 	}
 
@@ -321,23 +312,43 @@ class SocketIoServer implements core.IWebSocketServer {
 			}
 		}
 
-		this.io.close();
-		await sleep(3000); // Give time for any  disconnect handlers to execute before closing Redis resources
+		await this.io.close();
+		// Give time for any disconnect handlers to execute before closing Redis resources
+		// Note: on 2024-10-18, with the update to socket.io@4.8.0, the close() call above became async.
+		// Maybe this sleep can be removed now? Not familiar enough with server to try to do it.
+		// See https://github.com/socketio/socket.io/pull/4971 for details on the change.
+		await sleep(3000);
 		await Promise.all([
 			this.redisClientConnectionManagerForPub.getRedisClient().quit(),
 			this.redisClientConnectionManagerForSub.getRedisClient().quit(),
 		]);
-		if (this.socketIoConfig?.pingPongLatencyTrackingEnabled) {
-			clearInterval(this.pingPongLatencyInterval);
-			this.flushPingPongLatencyTracking();
-		}
 	}
 
-	private initPingPongLatencyTracking(socket: Socket) {
+	private initPingPongLatencyTracking(
+		socket: Socket,
+		{ tenantId, documentId }: { tenantId: string; documentId: string },
+	) {
 		if (!this.socketIoConfig?.pingPongLatencyTrackingEnabled) {
 			return;
 		}
 
+		const pingPongDurationsMs: number[] = [];
+		const outputPingPongLatencyEvent = () => {
+			const aggregateAverageLatencyMs = Math.ceil(
+				pingPongDurationsMs.reduce((a, b) => a + b) / pingPongDurationsMs.length,
+			);
+			pingPongDurationsMs.length = 0;
+			const latencyMetric = Lumberjack.newLumberMetric(
+				LumberEventName.SocketConnectionLatency,
+				{
+					[BaseTelemetryProperties.tenantId]: tenantId,
+					[BaseTelemetryProperties.documentId]: documentId,
+					durationInMs: aggregateAverageLatencyMs,
+				},
+			);
+			// Always successful
+			latencyMetric.success("Socket.io Ping-Pong Latency");
+		};
 		let lastPingStartTime: number | undefined;
 		const packetCreateHandler = (packet: any) => {
 			if (packet.type === "ping") {
@@ -346,39 +357,26 @@ class SocketIoServer implements core.IWebSocketServer {
 		};
 		socket.conn.on("packetCreate", packetCreateHandler);
 		const packetReceivedHandler = (packet: any) => {
-			if (packet.type === "pong") {
-				if (lastPingStartTime !== undefined) {
-					this.apiCounters.incrementCounter("pingPongCount", 1);
-					this.apiCounters.incrementCounter(
-						"pingPongLatency",
-						performance.now() - lastPingStartTime,
-					);
-					lastPingStartTime = undefined;
+			if (packet.type === "pong" && lastPingStartTime !== undefined) {
+				const latency = performance.now() - lastPingStartTime;
+				lastPingStartTime = undefined;
+				pingPongDurationsMs.push(latency);
+				// Output telemetry when threshold is reached
+				if (
+					pingPongDurationsMs.length >= this.pingPongLatencyTrackingAggregationThreshold
+				) {
+					outputPingPongLatencyEvent();
 				}
 			}
 		};
 		socket.conn.on("packet", packetReceivedHandler);
 		socket.conn.on("close", () => {
+			if (pingPongDurationsMs.length > 0) {
+				outputPingPongLatencyEvent();
+			}
 			socket.conn.off("packetCreate", packetCreateHandler);
 			socket.conn.off("packet", packetReceivedHandler);
 		});
-	}
-
-	private flushPingPongLatencyTracking() {
-		if (!this.apiCounters.countersAreActive) {
-			return;
-		}
-		const pingPongCount = this.apiCounters.getCounter("pingPongCount") ?? 0;
-		const pingPongLatency = this.apiCounters.getCounter("pingPongLatency") ?? 0;
-		if (pingPongCount > 0) {
-			Lumberjack.info("Average Socket.io Ping-Pong Latency", {
-				durationInMs: Math.ceil(pingPongLatency / pingPongCount),
-				aggregateCount: pingPongCount,
-				aggregateLatencyMs: pingPongLatency,
-				aggregateLatencyIntervalMs: this.pingPongLatencyTrackingIntervalMs,
-			});
-		}
-		this.apiCounters.resetAllCounters();
 	}
 }
 

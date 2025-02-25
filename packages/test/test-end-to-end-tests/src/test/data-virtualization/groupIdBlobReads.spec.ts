@@ -18,7 +18,7 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { TestPersistedCache } from "../../testPersistedCache.js";
 
 describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 	// Allow us to control summaries
@@ -35,10 +35,10 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 	});
 
 	let provider: ITestObjectProvider;
-	const testSnapshotCache = new TestSnapshotCache();
+	const testPersistedCache = new TestPersistedCache();
 
 	beforeEach("setup", async function () {
-		provider = getTestObjectProvider({ persistedCache: testSnapshotCache });
+		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
 		if (provider.driver.type !== "odsp") {
 			this.skip();
 		}
@@ -78,7 +78,7 @@ describeCompat("Odsp Network calls", "NoCompat", (getTestObjectProvider) => {
 		await provider.ensureSynchronized();
 		await summarizeNow(summarizer);
 
-		testSnapshotCache.clearCache();
+		testPersistedCache.clearCache();
 		const logger = new MockLogger();
 		await provider.loadTestContainer({
 			loaderProps: { configProvider, logger },

@@ -10,7 +10,7 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
@@ -49,28 +49,30 @@ describeCompat("FluidObjectHandle", "FullCompat", (getTestObjectProvider, apis) 
 		await provider.ensureSynchronized();
 	});
 
-	it("should generate the absolute path for ContainerRuntime correctly", () => {
-		// The expected absolute path for the ContainerRuntime is empty string.
+	it("should generate the absolute path for IContainerRuntime correctly", () => {
+		// The expected absolute path for the IContainerRuntime is empty string.
 		const absolutePath = "";
 
-		// Verify that the local client's ContainerRuntime has the correct absolute path.
+		// Verify that the local client's IContainerRuntime has the correct absolute path.
 		const containerRuntime1 = (
-			firstContainerObject1._context.containerRuntime as ContainerRuntime
+			firstContainerObject1._context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated
 		).IFluidHandleContext;
 		assert.equal(
 			containerRuntime1.absolutePath,
 			absolutePath,
-			"The ContainerRuntime's path is incorrect",
+			"The IContainerRuntime's path is incorrect",
 		);
 
-		// Verify that the remote client's ContainerRuntime has the correct absolute path.
+		// Verify that the remote client's IContainerRuntime has the correct absolute path.
 		const containerRuntime2 = (
-			secondContainerObject1._context.containerRuntime as ContainerRuntime
+			secondContainerObject1._context
+				.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated
 		).IFluidHandleContext;
 		assert.equal(
 			containerRuntime2.absolutePath,
 			absolutePath,
-			"The remote ContainerRuntime's path is incorrect",
+			"The remote IContainerRuntime's path is incorrect",
 		);
 	});
 

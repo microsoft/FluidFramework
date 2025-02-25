@@ -5,16 +5,40 @@
 
 import { v4 as uuid } from "uuid";
 import type { RequestHandler, Request, Response } from "express";
-import { CorrelationIdHeaderName } from "@fluidframework/server-services-client";
+import {
+	CorrelationIdHeaderName,
+	TelemetryContextHeaderName,
+} from "@fluidframework/server-services-client";
 import {
 	BaseTelemetryProperties,
 	ITelemetryContextProperties,
+	isTelemetryContextProperties,
 	getGlobalTelemetryContext,
+	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 
 /**
+ * Safely parse telemetry context properties from a string.
+ */
+function parseTelemetryContextHeader(
+	telemetryContextHeader: string | undefined,
+): Partial<ITelemetryContextProperties> | undefined {
+	if (!telemetryContextHeader) {
+		return undefined;
+	}
+	try {
+		const telemetryContextProperties = JSON.parse(telemetryContextHeader);
+		if (isTelemetryContextProperties(telemetryContextProperties)) {
+			return telemetryContextProperties;
+		}
+	} catch (error) {
+		Lumberjack.warning("Received invalid telemetry context properties", undefined, error);
+	}
+}
+
+/**
  * Retrieve telemetry properties from an HTTP request.
- * For example, gets CorrelationId from x-correlation-id header.
+ * Specifically, gets CorrelationId from x-correlation-id header and TelemetryContext from x-telemetry-context header.
  */
 function getTelemetryContextPropertiesFromRequest(
 	req: Request,
@@ -22,9 +46,22 @@ function getTelemetryContextPropertiesFromRequest(
 ): Partial<ITelemetryContextProperties> {
 	const correlationIdHeader =
 		req.get(CorrelationIdHeaderName) ?? res.get(CorrelationIdHeaderName);
+	const telemetryContextHeader =
+		req.get(TelemetryContextHeaderName) ?? res.get(TelemetryContextHeaderName);
 	// Safely parse and return accepted telemetry properties.
+	const telemetryContextProperties = parseTelemetryContextHeader(telemetryContextHeader);
+	/**
+	 * Determines the source of the request based on the request headers.
+	 * If TelemetryContextHeaderName is present in the request headers,
+	 * the source is considered as "server". Otherwise, it is considered as "client".
+	 */
+	const requestSource = req.get(TelemetryContextHeaderName) !== undefined ? "server" : "client";
 	return {
-		[BaseTelemetryProperties.correlationId]: correlationIdHeader,
+		[BaseTelemetryProperties.correlationId]:
+			telemetryContextProperties?.correlationId ?? correlationIdHeader,
+		[BaseTelemetryProperties.tenantId]: telemetryContextProperties?.tenantId,
+		[BaseTelemetryProperties.documentId]: telemetryContextProperties?.documentId,
+		[BaseTelemetryProperties.requestSource]: requestSource,
 	};
 }
 

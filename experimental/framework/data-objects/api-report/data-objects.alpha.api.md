@@ -4,6 +4,21 @@
 
 ```ts
 
-// (No @packageDocumentation comment for this package)
+// @alpha
+export interface ISignaler extends IEventProvider<IErrorEvent> {
+    offSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
+    onSignal<T>(signalName: string, listener: SignalListener<T>): ISignaler;
+    submitSignal<T>(signalName: string, payload?: Jsonable<T>): any;
+}
+
+// @alpha
+export const Signaler: {
+    readonly factory: IFluidDataStoreFactory & {
+        readonly registryEntry: NamedFluidDataStoreRegistryEntry;
+    };
+} & SharedObjectKind<ISignaler>;
+
+// @alpha
+export type SignalListener<T> = (clientId: string, local: boolean, payload: Jsonable<T>) => void;
 
 ```

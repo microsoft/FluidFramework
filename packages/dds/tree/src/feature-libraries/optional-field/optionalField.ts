@@ -11,7 +11,6 @@ import {
 	type ChangesetLocalId,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionTag,
 	areEqualChangeAtomIds,
@@ -39,6 +38,8 @@ import {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
+	type NestedChangesIndices,
+	type FieldChangeDelta,
 } from "../modular-schema/index.js";
 
 import type {
@@ -266,6 +267,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
+		revision: RevisionTag | undefined,
 	): OptionalChangeset => {
 		const { moves, childChanges } = change;
 
@@ -298,11 +300,13 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					change.valueReplace.src === undefined
 						? {
 								isEmpty: true,
-								dst: makeChangeAtomId(genId.allocate()),
+								dst: makeChangeAtomId(genId.allocate(), revision),
 							}
 						: {
 								isEmpty: false,
-								dst: isRollback ? change.valueReplace.src : makeChangeAtomId(genId.allocate()),
+								dst: isRollback
+									? change.valueReplace.src
+									: makeChangeAtomId(genId.allocate(), revision),
 							};
 				if (change.valueReplace.isEmpty === false) {
 					replace.src = change.valueReplace.dst;
@@ -312,7 +316,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 				inverted.valueReplace = {
 					isEmpty: false,
 					src: "self",
-					dst: makeChangeAtomId(genId.allocate()),
+					dst: makeChangeAtomId(genId.allocate(), revision),
 				};
 			}
 		}
@@ -533,6 +537,16 @@ function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
 	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
 }
 
+function areEqualRegisterIdsOpt(
+	id1: RegisterId | undefined,
+	id2: RegisterId | undefined,
+): boolean {
+	if (id1 === undefined || id2 === undefined) {
+		return id1 === id2;
+	}
+	return areEqualRegisterIds(id1, id2);
+}
+
 function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
 	srcToDst: ChangeAtomIdMap<ChangeAtomId>;
 	dstToSrc: ChangeAtomIdMap<ChangeAtomId>;
@@ -581,60 +595,68 @@ export function taggedRegister(id: RegisterId, revision: RevisionTag | undefined
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 	/**
-	 * Creates a change which replaces the field with `newContent`
-	 * @param newContent - the new content for the field
+	 * Creates a change which will replace the content already in the field (if any at the time the change applies)
+	 * with new content.
+	 * The content in the field will be moved to the `ids.detach` register.
+	 * The content in the `ids.detach` register will be moved to into the field.
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param changeId - the ID associated with the replacement of the current content.
-	 * @param buildId - the ID associated with the creation of the `newContent`.
+	 * @param ids - the "fill" and "detach" ids associated with the change.
 	 */
 	set(
 		wasEmpty: boolean,
 		ids: {
-			fill: ChangesetLocalId;
-			detach: ChangesetLocalId;
+			fill: ChangeAtomId;
+			detach: ChangeAtomId;
 		},
 	): OptionalChangeset;
 
 	/**
 	 * Creates a change which clears the field's contents (if any).
 	 * @param wasEmpty - whether the field is empty when creating this change
-	 * @param changeId - the ID associated with the detach.
+	 * @param detachId - the ID of the register that existing field content (if any) will be moved to.
 	 */
-	clear(wasEmpty: boolean, id: ChangesetLocalId): OptionalChangeset;
+	clear(wasEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset;
 }
 
 export const optionalFieldEditor: OptionalFieldEditor = {
 	set: (
 		wasEmpty: boolean,
 		ids: {
-			fill: ChangesetLocalId;
+			fill: ChangeAtomId;
 			// Should be interpreted as a set of an empty field if undefined.
-			detach: ChangesetLocalId;
+			detach: ChangeAtomId;
 		},
 	): OptionalChangeset => ({
 		moves: [],
 		childChanges: [],
 		valueReplace: {
 			isEmpty: wasEmpty,
-			src: { localId: ids.fill },
-			dst: { localId: ids.detach },
+			src: ids.fill,
+			dst: ids.detach,
 		},
 	}),
 
-	clear: (wasEmpty: boolean, detachId: ChangesetLocalId): OptionalChangeset => ({
+	clear: (wasEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset => ({
 		moves: [],
 		childChanges: [],
 		valueReplace: {
 			isEmpty: wasEmpty,
-			dst: { localId: detachId },
+			dst: detachId,
 		},
 	}),
 
-	buildChildChange: (index: number, childChange: NodeId): OptionalChangeset => {
-		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
+	buildChildChanges: (changes: Iterable<[number, NodeId]>): OptionalChangeset => {
+		const childChanges: ChildChange[] = Array.from(changes, ([index, childChange]) => {
+			assert(index === 0, 0x404 /* Optional fields only support a single child node */);
+			return ["self", childChange];
+		});
+		assert(
+			childChanges.length <= 1,
+			0xabd /* Optional fields only support a single child node */,
+		);
 		return {
 			moves: [],
-			childChanges: [["self", childChange]],
+			childChanges,
 		};
 	},
 };
@@ -642,8 +664,8 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): DeltaFieldChanges {
-	const delta: Mutable<DeltaFieldChanges> = {};
+): FieldChangeDelta {
+	const delta: Mutable<FieldChangeDelta> = {};
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
@@ -716,11 +738,29 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getCrossFieldKeys: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): [NodeId, number | undefined][] {
-	return change.childChanges.map(([register, nodeId]) => [
-		nodeId,
-		register === "self" ? 0 : undefined,
-	]);
+function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
+	// True iff the content of the field changes in some way
+	const isFieldContentChanged =
+		change.valueReplace !== undefined && change.valueReplace.src !== "self";
+
+	// The node that is moved into the field (if any).
+	const nodeMovedIntoField = change.valueReplace?.src;
+
+	return change.childChanges.map(([register, nodeId]) => {
+		// The node is removed in the input context iif register is not self.
+		const inputIndex = register === "self" ? 0 : undefined;
+		const outputIndex =
+			register === "self"
+				? // If the node starts out as not-removed, it is removed in the output context iff the field content is changed
+					isFieldContentChanged
+					? undefined
+					: 0
+				: // If the node starts out as removed, then it remains removed in the output context iff it is not the node that is moved into the field
+					!areEqualRegisterIdsOpt(register, nodeMovedIntoField)
+					? undefined
+					: 0;
+		return [nodeId, inputIndex, outputIndex];
+	});
 }
 
 function* relevantRemovedRoots(

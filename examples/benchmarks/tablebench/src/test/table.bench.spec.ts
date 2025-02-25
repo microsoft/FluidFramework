@@ -3,11 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { BenchmarkType, benchmark, isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { SharedMatrix } from "@fluidframework/matrix/internal";
+import {
+	BenchmarkType,
+	benchmark,
+	benchmarkCustom,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
+import { IChannel } from "@fluidframework/datastore-definitions/legacy";
+import { SharedMatrix } from "@fluidframework/matrix/legacy";
 import { type ITree, NodeFromSchema, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/legacy";
 
 import { Table, generateTable } from "../index.js";
 
@@ -130,70 +135,75 @@ describe("Table", () => {
 			const colMajorJsonBytes = measureEncodedLength(JSON.stringify(transposeTable(data)));
 			let summaryBytes: number;
 
-			// After each test, print the summary size information to the console.
-			afterEach(() => {
-				// When using a logger, Mocha suppresses 'console.log()' by default.
-				// Writing directly to 'process.stdout' bypasses this suppression.
-				process.stdout.write(`          Summary: ${summaryBytes} bytes\n`);
-				process.stdout.write(
-					`              vs row-major: ${(summaryBytes / rowMajorJsonBytes).toLocaleString(
-						undefined,
-						{
-							maximumFractionDigits: 2,
-							minimumFractionDigits: 2,
-						},
-					)}x\n`,
-				);
-				process.stdout.write(
-					`              vs col-major: ${(summaryBytes / colMajorJsonBytes).toLocaleString(
-						undefined,
-						{
-							maximumFractionDigits: 2,
-							minimumFractionDigits: 2,
-						},
-					)}x\n`,
-				);
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `Row-major JSON (Typical Database Baseline)`,
+				run: async (reporter) => {
+					summaryBytes = rowMajorJsonBytes;
+					reporter.addMeasurement(`summaryBytes`, summaryBytes);
+					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
+					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
+				},
 			});
 
-			it("Row-major JSON (Typical Database Baseline)", () => {
-				// Row/col major sizes are precalculated before the test run.
-				// Copy the value to 'summaryBytes' for reporting by 'afterEach' above.
-				summaryBytes = rowMajorJsonBytes;
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `Column-major JSON (Compact REST Baseline)`,
+				run: async (reporter) => {
+					summaryBytes = colMajorJsonBytes;
+					reporter.addMeasurement(`summaryBytes`, summaryBytes);
+					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
+					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
+				},
 			});
 
-			it("Column-major JSON (Compact REST Baseline)", () => {
-				// Row/col major sizes are precalculated before the test run.
-				// Copy the value to 'summaryBytes' for reporting by 'afterEach' above.
-				summaryBytes = colMajorJsonBytes;
-			});
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `SharedMatrix`,
+				run: async (reporter) => {
+					const columnNames = Object.keys(data[0]);
 
-			it("SharedMatrix", () => {
-				const columnNames = Object.keys(data[0]);
+					const { channel, processAllMessages } = create(SharedMatrix.getFactory());
+					matrix = channel as SharedMatrix;
+					matrix.insertCols(0, columnNames.length);
+					matrix.insertRows(0, data.length);
 
-				const { channel, processAllMessages } = create(SharedMatrix.getFactory());
-				matrix = channel as SharedMatrix;
-				matrix.insertCols(0, columnNames.length);
-				matrix.insertRows(0, data.length);
-
-				for (let r = 0; r < data.length; r++) {
-					for (const [c, key] of columnNames.entries()) {
-						matrix.setCell(r, c, (data as any)[r][key]);
+					for (let r = 0; r < data.length; r++) {
+						for (const [c, key] of columnNames.entries()) {
+							matrix.setCell(r, c, (data as any)[r][key]);
+						}
 					}
-				}
 
-				processAllMessages();
-				summaryBytes = measureAttachmentSummary(channel);
+					processAllMessages();
+					summaryBytes = measureAttachmentSummary(channel);
+
+					reporter.addMeasurement(`summaryBytes`, summaryBytes);
+					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
+					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
+				},
 			});
 
-			it("SharedTree", () => {
-				const { channel, processAllMessages } = create(SharedTree.getFactory());
-				tree = channel;
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `SharedTree`,
+				run: async (reporter) => {
+					const { channel, processAllMessages } = create(SharedTree.getFactory());
+					tree = channel;
 
-				const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
-				view.initialize(data);
+					const view = tree.viewWith(new TreeViewConfiguration({ schema: Table }));
+					view.initialize(data);
 
-				processAllMessages();
-				summaryBytes = measureAttachmentSummary(channel);
+					processAllMessages();
+					summaryBytes = measureAttachmentSummary(channel);
+
+					reporter.addMeasurement(`summaryBytes`, summaryBytes);
+					reporter.addMeasurement(`vs row-major:`, summaryBytes / rowMajorJsonBytes);
+					reporter.addMeasurement(`vs col-major:`, summaryBytes / colMajorJsonBytes);
+				},
 			});
 		});
 	});

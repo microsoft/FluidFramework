@@ -106,8 +106,7 @@ export class OdspDeltaStorageService {
 					clearTimeout(timer);
 					const deltaStorageResponse = response.content;
 					const messages =
-						// Non null asserting here because of the length check
-						deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]!
+						deltaStorageResponse.value.length > 0 && "op" in deltaStorageResponse.value[0]
 							? (deltaStorageResponse.value as ISequencedDeltaOpMessage[]).map(
 									(operation) => operation.op,
 								)
@@ -188,8 +187,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 					(op) => op.sequenceNumber >= from && op.sequenceNumber < to,
 				);
 				validateMessages("cached", messages, from, this.logger);
-				// Non null asserting here because of the length check
-				if (messages.length > 0 && messages[0]!.sequenceNumber === from) {
+				if (messages.length > 0 && messages[0].sequenceNumber === from) {
 					this.snapshotOps = this.snapshotOps.filter((op) => op.sequenceNumber >= to);
 					opsFromSnapshot += messages.length;
 					return { messages, partialResult: true };

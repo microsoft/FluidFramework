@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
@@ -91,7 +91,7 @@ export class OdspDelayLoadedDeltaStream {
 			| undefined,
 		private readonly mc: MonitoringContext,
 		private readonly cache: IOdspCache,
-		_hostPolicy: HostStoragePolicy,
+		private readonly hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,
 		private readonly opsReceived: (ops: ISequencedDocumentMessage[]) => void,
 		private readonly metadataUpdateHandler: (metadata: Record<string, string>) => void,
@@ -156,6 +156,8 @@ export class OdspDelayLoadedDeltaStream {
 				requestWebsocketTokenFromJoinSession,
 				options,
 				false /* isRefreshingJoinSession */,
+				undefined /* clientId */,
+				this.hostPolicy.sessionOptions?.displayName,
 			);
 			const [websocketEndpoint, websocketToken] = await Promise.all([
 				joinSessionPromise.catch(annotateAndRethrowConnectionError("joinSession")),
@@ -273,6 +275,7 @@ export class OdspDelayLoadedDeltaStream {
 		delta: number,
 		requestSocketToken: boolean,
 		clientId: string | undefined,
+		displayName: string | undefined,
 	): Promise<void> {
 		if (this.joinSessionRefreshTimer !== undefined) {
 			this.clearJoinSessionTimer();
@@ -301,6 +304,7 @@ export class OdspDelayLoadedDeltaStream {
 						options,
 						true /* isRefreshingJoinSession */,
 						clientId,
+						displayName,
 					);
 					resolve();
 				}).catch((error) => {
@@ -314,7 +318,8 @@ export class OdspDelayLoadedDeltaStream {
 		requestSocketToken: boolean,
 		options: TokenFetchOptionsEx,
 		isRefreshingJoinSession: boolean,
-		clientId?: string,
+		clientId: string | undefined,
+		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> {
 		// If this call is to refresh the join session for the current connection but we are already disconnected in
 		// the meantime or disconnected and then reconnected then do not make the call. However, we should not have
@@ -342,6 +347,7 @@ export class OdspDelayLoadedDeltaStream {
 			requestSocketToken,
 			options,
 			isRefreshingJoinSession,
+			displayName,
 		).catch((error) => {
 			if (hasFacetCodes(error) && error.facetCodes !== undefined) {
 				for (const code of error.facetCodes) {
@@ -378,6 +384,7 @@ export class OdspDelayLoadedDeltaStream {
 		requestSocketToken: boolean,
 		options: TokenFetchOptionsEx,
 		isRefreshingJoinSession: boolean,
+		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> {
 		const disableJoinSessionRefresh = this.mc.config.getBoolean(
 			"Fluid.Driver.Odsp.disableJoinSessionRefresh",
@@ -397,6 +404,7 @@ export class OdspDelayLoadedDeltaStream {
 				options,
 				disableJoinSessionRefresh,
 				isRefreshingJoinSession,
+				displayName,
 			);
 			// Emit event only in case it is fetched from the network.
 			if (joinSessionResponse.sensitivityLabelsInfo !== undefined) {
@@ -450,6 +458,7 @@ export class OdspDelayLoadedDeltaStream {
 					response.refreshAfterDeltaMs,
 					requestSocketToken,
 					this.currentConnection?.clientId,
+					displayName,
 				).catch((error) => {
 					// Log the error and do nothing as the reconnection would fetch the join session.
 					this.mc.logger.sendTelemetryEvent(
@@ -472,8 +481,7 @@ export class OdspDelayLoadedDeltaStream {
 	}
 
 	private emitMetaDataUpdateEvent(metadata: Record<string, string>): void {
-		// TODO Why are we non null asserting here?
-		const label = JSON.parse(metadata.sensitivityLabelsInfo!) as {
+		const label = JSON.parse(metadata.sensitivityLabelsInfo) as {
 			labels: unknown;
 			timestamp: number;
 		};
@@ -482,8 +490,7 @@ export class OdspDelayLoadedDeltaStream {
 		if (time > this.labelUpdateTimestamp) {
 			this.labelUpdateTimestamp = time;
 			this.metadataUpdateHandler({
-				// TODO Why are we non null asserting here?
-				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo!,
+				sensitivityLabelsInfo: metadata.sensitivityLabelsInfo,
 			});
 		}
 	}
@@ -512,7 +519,7 @@ export class OdspDelayLoadedDeltaStream {
 		client: IClient,
 		webSocketUrl: string,
 	): Promise<OdspDocumentDeltaConnection> {
-		const startTime = performance.now();
+		const startTime = performanceNow();
 		const connection = await OdspDocumentDeltaConnection.create(
 			tenantId,
 			documentId,
@@ -524,7 +531,7 @@ export class OdspDelayLoadedDeltaStream {
 			this.epochTracker,
 			this.socketReferenceKeyPrefix,
 		);
-		const duration = performance.now() - startTime;
+		const duration = performanceNow() - startTime;
 		// This event happens rather often, so it adds up to cost of telemetry.
 		// Given that most reconnects result in reusing socket and happen very quickly,
 		// report event only if it took longer than threshold.

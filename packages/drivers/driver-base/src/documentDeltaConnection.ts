@@ -18,13 +18,18 @@ import {
 	IConnect,
 	IConnected,
 	IDocumentMessage,
+	type ISentSignalMessage,
 	ISignalClient,
 	ITokenClaims,
 	ScopeType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError, createGenericNetworkError } from "@fluidframework/driver-utils/internal";
+import {
+	UsageError,
+	createGenericNetworkError,
+	type DriverErrorTelemetryProps,
+} from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
@@ -38,6 +43,8 @@ import type { Socket } from "socket.io-client";
 
 // For now, this package is versioned and released in unison with the specific drivers
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+
+const feature_submit_signals_v2 = "submit_signals_v2";
 
 /**
  * Represents a connection to a stream of delta updates.
@@ -312,9 +319,24 @@ export class DocumentDeltaConnection
 		this.checkNotDisposed();
 		return this.details.initialClients;
 	}
-
+	/**
+	 * Emits 'submitOp' messages.
+	 * @param type - Must be 'submitOp'.
+	 * @param messages - An array of document messages to submit.
+	 */
 	protected emitMessages(type: "submitOp", messages: IDocumentMessage[][]): void;
-	protected emitMessages(type: "submitSignal", messages: string[][]): void;
+
+	/**
+	 * Emits 'submitSignal' messages.
+	 *
+	 * **Note:** When using `ISentSignalMessage[]`, the service must support the `submit_signals_v2` feature.
+	 * @param type - Must be 'submitSignal'.
+	 * @param messages - An array of signals to submit. Can be either `string[][]` or `ISentSignalMessage[]`.
+	 */
+	protected emitMessages(
+		type: "submitSignal",
+		messages: string[][] | ISentSignalMessage[],
+	): void;
 	protected emitMessages(type: string, messages: unknown): void {
 		// Although the implementation here disconnects the socket and does not reuse it, other subclasses
 		// (e.g. OdspDocumentDeltaConnection) may reuse the socket.  In these cases, we need to avoid emitting
@@ -343,11 +365,20 @@ export class DocumentDeltaConnection
 	public submitSignal(content: string, targetClientId?: string): void {
 		this.checkNotDisposed();
 
-		if (targetClientId && this.details.supportedFeatures?.submit_signals_v2 !== true) {
-			throw new UsageError("Sending signals to specific client ids is not supported.");
+		// Check for server-side support of v2 signals
+		if (this.details.supportedFeatures?.submit_signals_v2 === true) {
+			const signal: ISentSignalMessage = { content };
+			if (targetClientId !== undefined) {
+				signal.targetClientId = targetClientId;
+			}
+			this.emitMessages("submitSignal", [signal]);
+		} else if (targetClientId !== undefined) {
+			throw new UsageError(
+				"Sending signals to specific client ids is not supported with this service.",
+			);
+		} else {
+			this.emitMessages("submitSignal", [[content]]);
 		}
-
-		this.emitMessages("submitSignal", [[content]]);
 	}
 
 	/**
@@ -414,7 +445,7 @@ export class DocumentDeltaConnection
 		this.removeTrackedListeners();
 
 		// Clear the connection/socket before letting the deltaManager/connection manager know about the disconnect.
-		this.disconnectCore();
+		this.disconnectCore(err);
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
@@ -424,7 +455,7 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore() {
+	protected disconnectCore(err: IAnyDriverError) {
 		this.socket.disconnect();
 	}
 
@@ -432,6 +463,11 @@ export class DocumentDeltaConnection
 		this.socket.on("op", this.earlyOpHandler);
 		this.socket.on("signal", this.earlySignalHandler);
 		this.earlyOpHandlerAttached = true;
+
+		connectMessage.supportedFeatures = {
+			...connectMessage.supportedFeatures,
+			[feature_submit_signals_v2]: true,
+		};
 
 		// Socket.io's reconnect_attempt event is unreliable, so we track connect_error count instead.
 		let internalSocketConnectionFailureCount: number = 0;
@@ -757,13 +793,17 @@ export class DocumentDeltaConnection
 		return createGenericNetworkError(
 			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
 			{ canRetry },
-			{
-				driverVersion,
-				details: JSON.stringify({
-					...this.getConnectionDetailsProps(),
-				}),
-				scenarioName: handler,
-			},
+			this.getAdditionalErrorProps(handler),
 		);
+	}
+
+	protected getAdditionalErrorProps(handler: string): DriverErrorTelemetryProps {
+		return {
+			driverVersion,
+			details: JSON.stringify({
+				...this.getConnectionDetailsProps(),
+			}),
+			scenarioName: handler,
+		};
 	}
 }

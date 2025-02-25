@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	IClient,
 	IConnect,
 	IDocumentMessage,
 	INack,
@@ -45,6 +46,7 @@ import {
 import { addNexusMessageTrace } from "./trace";
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
+import { isValidConnectionMessage } from "./protocol";
 
 export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
 
@@ -112,6 +114,7 @@ export function configureWebSocketServices(
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: core.IClusterDrainingChecker,
+	collaborationSessionTracker?: core.ICollaborationSessionTracker,
 ): void {
 	const lambdaDependencies: INexusLambdaDependencies = {
 		ordererManager,
@@ -129,6 +132,7 @@ export function configureWebSocketServices(
 		revokedTokenChecker,
 		clusterDrainingChecker,
 		collaborationSessionEventEmitter,
+		collaborationSessionTracker,
 	};
 	const lambdaSettings: INexusLambdaSettings = {
 		maxTokenLifetimeSec,
@@ -155,6 +159,9 @@ export function configureWebSocketServices(
 		// Map from client Ids to scope
 		const scopeMap = new Map<string, string[]>();
 
+		// Map from client Ids to client details
+		const clientMap = new Map<string, IClient>();
+
 		// Map from client Ids to connection time.
 		const connectionTimeMap = new Map<string, number>();
 
@@ -171,6 +178,7 @@ export function configureWebSocketServices(
 			connectionsMap,
 			roomMap,
 			scopeMap,
+			clientMap,
 			connectionTimeMap,
 			expirationTimer,
 			disconnectedOrdererConnections,
@@ -186,7 +194,46 @@ export function configureWebSocketServices(
 
 		// Note connect is a reserved socket.io word so we use connect_document to represent the connect request
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		socket.on("connect_document", async (connectionMessage: IConnect) => {
+		socket.on("connect_document", async (connectionMessage: unknown) => {
+			if (!isValidConnectionMessage(connectionMessage)) {
+				// If the connection message is invalid, emit an error and return.
+				// This will prevent the connection from being established, but more importantly
+				// it will provent the service from crashing due to an unhandled exception such as a type error.
+				const error = new NetworkError(400, "Invalid connection message");
+				// Attempt to log the connection message properties if they are available.
+				// Be cautious to not log any sensitive information, such as message.token or message.user.
+				const safeTelemetryProperties: Record<string, any> =
+					typeof connectionMessage === "object" &&
+					connectionMessage !== null &&
+					typeof (connectionMessage as IConnect).id === "string" &&
+					typeof (connectionMessage as IConnect).tenantId === "string"
+						? getLumberBaseProperties(
+								(connectionMessage as IConnect).id,
+								(connectionMessage as IConnect).tenantId,
+						  )
+						: {};
+				if (
+					typeof (connectionMessage as IConnect | undefined)?.driverVersion === "string"
+				) {
+					safeTelemetryProperties.driverVersion = (
+						connectionMessage as IConnect
+					).driverVersion;
+				} else if (
+					typeof (connectionMessage as IConnect | undefined)?.relayUserAgent === "string"
+				) {
+					safeTelemetryProperties.driverVersion = parseRelayUserAgent(
+						(connectionMessage as IConnect).relayUserAgent,
+					).driverVersion;
+				}
+				Lumberjack.warning(
+					"Received invalid connection message",
+					safeTelemetryProperties,
+					error,
+				);
+				socket.emit("connect_document_error", error);
+				return;
+			}
+
 			const userAgentInfo = parseRelayUserAgent(connectionMessage.relayUserAgent);
 			const driverVersion: string | undefined = userAgentInfo.driverVersion;
 			const baseLumberjackProperties = getLumberBaseProperties(
@@ -371,6 +418,11 @@ export function configureWebSocketServices(
 									const maxMessageSize =
 										connection.serviceConfiguration.maxMessageSize;
 									if (messageSize > maxMessageSize) {
+										Lumberjack.error("Op size too large", {
+											...lumberjackProperties,
+											messageSize,
+											maxMessageSize,
+										});
 										// Exit early from processing message batch
 										throw new NetworkError(413, "Op size too large");
 									}

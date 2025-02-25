@@ -7,11 +7,8 @@ import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
-	ContainerRuntime,
-	ISummarizeResults,
-	ISummarizer,
-} from "@fluidframework/container-runtime/internal";
+import { ISummarizeResults, ISummarizer } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { ISummaryContext, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
@@ -111,7 +108,7 @@ describeCompat(
 
 			// Spy on the getSnapshotTree function to find out if it was called and if so, what is the
 			// reference sequence number of the snapshot returned.
-			const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+			const containerRuntime = (summarizer as any).runtime as IContainerRuntime;
 			const getSnapshotTreeSpy = sandbox.spy(containerRuntime.storage, "getSnapshotTree");
 
 			const summaryResult = await waitForSummary(summarizer);
@@ -133,7 +130,7 @@ describeCompat(
 		}
 
 		async function getSnapshotSequenceNumber(
-			containerRuntime: ContainerRuntime,
+			containerRuntime: IContainerRuntime,
 			snapshotTree: ISnapshotTree,
 		) {
 			const readAndParseBlob = async <T>(id: string) =>
@@ -167,7 +164,7 @@ describeCompat(
 			// This summarizer will be used later to generate a summary and validate that it fetches the latest summary.
 			const { summarizer: summarizer2, container: container2 } =
 				await createSummarizerWithConfig();
-			const containerRuntime2 = (summarizer2 as any).runtime as ContainerRuntime;
+			const containerRuntime2 = (summarizer2 as any).runtime as IContainerRuntime;
 
 			// Create a spy for "getSnapshotTree" function of the second summarizer. When it receives the ack for
 			// the summary submitted by the first summarizer, it should call this function to fetch the latest snapshot.
@@ -224,7 +221,7 @@ describeCompat(
 				const summarizer = (await createSummarizerWithConfig()).summarizer;
 
 				// Second summary should be discarded
-				const containerRuntime = (summarizer as any).runtime as ContainerRuntime;
+				const containerRuntime = (summarizer as any).runtime as IContainerRuntime;
 				let uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
 				let lastSummaryVersion: string | undefined;
 				const func = async (summary: ISummaryTree, context: ISummaryContext) => {

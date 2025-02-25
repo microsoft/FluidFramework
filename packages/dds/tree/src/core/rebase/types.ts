@@ -13,14 +13,11 @@ import { Type } from "@sinclair/typebox";
 import {
 	type Brand,
 	type NestedMap,
-	type RangeMap,
+	RangeMap,
 	brand,
 	brandedNumberType,
 	brandedStringType,
-	setInNestedMap,
-	tryGetFromNestedMap,
 } from "../../util/index.js";
-import type { TaggedChange } from "./changeRebaser.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -33,7 +30,6 @@ export const SessionIdSchema = brandedStringType<SessionId>();
  *
  * The constant 'root' is reserved for the trunk base: minting a SessionSpaceCompressedId is not
  * possible on readonly clients. These clients generally don't need ids, but  must be done at tree initialization time.
- * @internal
  */
 export type RevisionTag = SessionSpaceCompressedId | "root";
 export type EncodedRevisionTag = Brand<OpSpaceCompressedId, "EncodedRevisionTag"> | "root";
@@ -46,14 +42,12 @@ export const RevisionTagSchema = Type.Union([
  * An ID which is unique within a revision of a `ModularChangeset`.
  * A `ModularChangeset` which is a composition of multiple revisions may contain duplicate `ChangesetLocalId`s,
  * but they are unique when qualified by the revision of the change they are used in.
- * @internal
  */
 export type ChangesetLocalId = Brand<number, "ChangesetLocalId">;
 
 /**
  * A globally unique ID for an atom of change, or a node associated with the atom of change.
- * @internal
- *
+ * *
  * @privateRemarks
  * TODO: Rename this to be more general.
  */
@@ -72,35 +66,25 @@ export interface ChangeAtomId {
 export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
 
 /**
- * @internal
  */
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
-
-export function getFromChangeAtomIdMap<T>(
-	map: ChangeAtomIdMap<T>,
-	id: ChangeAtomId,
-): T | undefined {
-	return tryGetFromNestedMap(map, id.revision, id.localId);
-}
-
-export function setInChangeAtomIdMap<T>(
-	map: ChangeAtomIdMap<T>,
-	id: ChangeAtomId,
-	value: T,
-): void {
-	setInNestedMap(map, id.revision, id.localId, value);
-}
-
-/**
- * @internal
- */
-export type ChangeAtomIdRangeMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
 
 /**
  * @returns true iff `a` and `b` are the same.
  */
 export function areEqualChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): boolean {
 	return a.localId === b.localId && a.revision === b.revision;
+}
+
+export function areEqualChangeAtomIdOpts(
+	a: ChangeAtomId | undefined,
+	b: ChangeAtomId | undefined,
+): boolean {
+	if (a === undefined || b === undefined) {
+		return a === b;
+	}
+
+	return areEqualChangeAtomIds(a, b);
 }
 
 /**
@@ -165,8 +149,6 @@ export interface GraphCommit<TChange> {
 	readonly change: TChange;
 	/** The parent of this commit, on whose change this commit's change is based */
 	readonly parent?: GraphCommit<TChange>;
-	/** The rollback of this commit */
-	rollback?: TaggedChange<TChange, RevisionTag>;
 }
 
 /**
@@ -175,11 +157,11 @@ export interface GraphCommit<TChange> {
  * @public
  */
 export enum CommitKind {
-	/** A commit corresponding to a change that is not the result of an undo/redo. */
+	/** A commit corresponding to a change that is not the result of an undo/redo from this client. */
 	Default,
-	/** A commit that is the result of an undo. */
+	/** A commit that is the result of an undo from this client. */
 	Undo,
-	/** A commit that is the result of a redo. */
+	/** A commit that is the result of a redo from this client. */
 	Redo,
 }
 
@@ -219,11 +201,34 @@ export function mintCommit<TChange>(
 	};
 }
 
-export function replaceChange<TChange>(
-	commit: GraphCommit<TChange>,
-	change: TChange,
-): GraphCommit<TChange> {
-	const output = { ...commit, change };
-	delete output.rollback;
-	return output;
+export type ChangeAtomIdRangeMap<V> = RangeMap<ChangeAtomId, V>;
+
+export function newChangeAtomIdRangeMap<V>(): ChangeAtomIdRangeMap<V> {
+	return new RangeMap(offsetChangeAtomId, subtractChangeAtomIds);
+}
+
+export function subtractChangeAtomIds(a: ChangeAtomId, b: ChangeAtomId): number {
+	const cmp = compareRevisions(a.revision, b.revision);
+	if (cmp !== 0) {
+		return cmp * Number.POSITIVE_INFINITY;
+	}
+
+	return a.localId - b.localId;
+}
+
+export function compareRevisions(
+	a: RevisionTag | undefined,
+	b: RevisionTag | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	} else if (a < b) {
+		return -1;
+	} else if (a > b) {
+		return 1;
+	}
+
+	return 0;
 }

@@ -35,6 +35,7 @@ import {
 	ITestObjectProvider,
 	createSummarizer,
 	createSummarizerFromFactory,
+	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	timeoutPromise,
@@ -42,7 +43,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import { SinonSandbox, createSandbox } from "sinon";
 
-import { TestSnapshotCache } from "../../testSnapshotCache.js";
+import { TestPersistedCache } from "../../testPersistedCache.js";
 
 const flushPromises = async () => new Promise((resolve) => process.nextTick(resolve));
 const testContainerConfig: ITestContainerConfig = {
@@ -408,7 +409,8 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 	}
 
-	it("Can summarize after hitting nack on unsummarized ops", async function () {
+	// AB#29483: This test is flaky on local server.
+	it.skip("Can summarize after hitting nack on unsummarized ops", async function () {
 		if (provider.driver.type !== "local") {
 			this.skip();
 		}
@@ -594,10 +596,13 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 	let mainContainer: IContainer;
 	const configForSingleCommitSummary: ITestContainerConfig = {
 		loaderProps: {
-			options: { summarizeProtocolTree: true },
+			options: {},
+			configProvider: createTestConfigProvider({
+				"Fluid.Container.summarizeProtocolTree2": true,
+			}),
 		},
 	};
-	const testCache = new TestSnapshotCache();
+	const testCache = new TestPersistedCache();
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider({ persistedCache: testCache });
 		mainContainer = await provider.makeTestContainer(testContainerConfig);

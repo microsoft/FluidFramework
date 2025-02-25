@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "fs";
-import path from "path";
+import { strict as assert } from "node:assert";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import path from "node:path";
 
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { testSrcPath } from "../testSrcPath.cjs";
 
+// Use `pnpm run test:snapshots:regen` to set this flag.
 const regenerateSnapshots = process.argv.includes("--snapshot");
 
 export function takeJsonSnapshot(data: JsonCompatibleReadOnly, suffix: string = ""): void {

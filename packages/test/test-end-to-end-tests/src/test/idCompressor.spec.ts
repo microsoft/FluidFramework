@@ -20,10 +20,10 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
 import {
-	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IdCompressorMode,
 } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -194,7 +194,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		},
 	);
 
-	let containerRuntime: ContainerRuntime;
+	let containerRuntime: IContainerRuntime;
 	let container1: IContainer;
 	let container2: IContainer;
 	let mainDataStore: TestDataObject;
@@ -212,7 +212,7 @@ describeCompat("Runtime IdCompressor", "NoCompat", (getTestObjectProvider, apis)
 		provider = getTestObjectProvider();
 		container1 = await createContainer();
 		mainDataStore = (await container1.getEntryPoint()) as TestDataObject;
-		containerRuntime = mainDataStore._context.containerRuntime as ContainerRuntime;
+		containerRuntime = mainDataStore._context.containerRuntime as IContainerRuntime;
 		sharedMapContainer1 = mainDataStore.map;
 		sharedCellContainer1 = mainDataStore.sharedCell;
 
@@ -889,18 +889,20 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 
 		const { summaryTree } = await summarizeNow(summarizer);
 		const summaryStats = getCompressorSummaryStats(summaryTree);
-		assert(
-			summaryStats.sessionCount === 1,
+		assert.equal(
+			summaryStats.sessionCount,
+			1,
 			"Should have a local session as all ids are ack'd",
 		);
-		assert(
-			summaryStats.clusterCount === 1,
+		assert.equal(
+			summaryStats.clusterCount,
+			1,
 			"Should have a local cluster as all ids are ack'd",
 		);
 	});
 
 	it("Newly connected container synchronizes from summary", async function () {
-		// TODO: This test is consistently failing when ran against FRS. See ADO:7931
+		// TODO: This test is consistently failing when ran against AFR. See ADO:7931
 		if (provider.driver.type === "routerlicious" && provider.driver.endpointName === "frs") {
 			this.skip();
 		}
@@ -921,12 +923,14 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 
 		const { summaryTree } = await summarizeNow(summarizer1);
 		const summaryStats = getCompressorSummaryStats(summaryTree);
-		assert(
-			summaryStats.sessionCount === 1,
+		assert.equal(
+			summaryStats.sessionCount,
+			1,
 			"Should have a local session as all ids are ack'd",
 		);
-		assert(
-			summaryStats.clusterCount === 1,
+		assert.equal(
+			summaryStats.clusterCount,
+			1,
 			"Should have a local cluster as all ids are ack'd",
 		);
 
@@ -1011,8 +1015,9 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		);
 
 		// Test assumption
-		assert(
-			entryPoint2._runtime.attachState === AttachState.Detached,
+		assert.equal(
+			entryPoint2._runtime.attachState,
+			AttachState.Detached,
 			"data store is detached",
 		);
 
@@ -1028,12 +1033,9 @@ describeCompat("IdCompressor Summaries", "NoCompat", (getTestObjectProvider, com
 		// attached data store.
 		await ds2.trySetAlias("foo");
 
-		assert(
-			// For some reason TSC gets it wrong - it assumes that attachState is constant and that assert above
-			// established it's AttachState.Detached, so this comparison is useless.
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
-			entryPoint2._runtime.attachState === AttachState.Attached,
+		assert.equal(
+			entryPoint2._runtime.attachState,
+			AttachState.Attached,
 			"data store is detached",
 		);
 

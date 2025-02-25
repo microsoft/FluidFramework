@@ -18,8 +18,13 @@ export {
 	unitCodec,
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
+	FluidClientVersion,
 } from "./codec.js";
-export { DiscriminatedUnionDispatcher, unionOptions } from "./discriminatedUnions.js";
+export {
+	DiscriminatedUnionDispatcher,
+	type DiscriminatedUnionLibrary,
+	unionOptions,
+} from "./discriminatedUnions.js";
 export { noopValidator } from "./noopValidator.js";
 export {
 	Versioned,

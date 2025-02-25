@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -48,7 +47,7 @@ export function getW3CData(url: string, initiatorType: string) {
 	let w3cStartTime: number | undefined; // W3C Start time = fetchStart time
 
 	// getEntriesByType is only available in browser performance object
-	const resources1 = performance.getEntriesByType?.("resource") ?? [];
+	const resources1 = globalThis.performance.getEntriesByType?.("resource") ?? [];
 	// Usually the latest fetch call is to the end of resources, so we start from the end.
 	for (let i = resources1.length - 1; i > 0; i--) {
 		const indResTime = resources1[i] as PerformanceResourceTiming;
@@ -117,13 +116,9 @@ export function validateMessages(
 	strict: boolean = true,
 ) {
 	if (messages.length !== 0) {
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const start = messages[0]!.sequenceNumber;
+		const start = messages[0].sequenceNumber;
 		const length = messages.length;
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const last = messages[length - 1]!.sequenceNumber;
+		const last = messages[length - 1].sequenceNumber;
 		if (last + 1 !== from + length) {
 			// If not strict, then return the first consecutive sub-block. If strict or start
 			// seq number is not what we expected, then return no ops.
@@ -133,12 +128,8 @@ export function validateMessages(
 				let validOpsCount = 1;
 				while (
 					validOpsCount < messages.length &&
-					// TODO Why are we non null asserting here
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					messages[validOpsCount]!.sequenceNumber ===
-						// TODO Why are we non null asserting here
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						messages[validOpsCount - 1]!.sequenceNumber + 1
+					messages[validOpsCount].sequenceNumber ===
+						messages[validOpsCount - 1].sequenceNumber + 1
 				) {
 					validOpsCount++;
 				}
@@ -154,11 +145,7 @@ export function validateMessages(
 				details: JSON.stringify({
 					validLength: messages.length,
 					lastValidOpSeqNumber:
-						messages.length > 0
-							? // Non null asserting here because of the length check
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								messages[messages.length - 1]!.sequenceNumber
-							: undefined,
+						messages.length > 0 ? messages[messages.length - 1].sequenceNumber : undefined,
 					strict,
 				}),
 			});

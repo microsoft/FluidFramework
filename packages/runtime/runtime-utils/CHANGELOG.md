@@ -1,5 +1,75 @@
 # @fluidframework/runtime-utils
 
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+Dependency updates only.
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+Dependency updates only.
+
+## 2.11.0
+
+Dependency updates only.
+
+## 2.10.0
+
+### Minor Changes
+
+-   New compareFluidHandle function for comparing FluidHandles ([#22997](https://github.com/microsoft/FluidFramework/pull/22997)) [8d470085fb](https://github.com/microsoft/FluidFramework/commit/8d470085fb41a84212a993a1ebbbf903fd4f16b6)
+
+    The new `compareFluidHandle` function has been added to allow comparing handles without having to inspect their internals.
+
+-   The inbound and outbound properties have been removed from IDeltaManager ([#22282](https://github.com/microsoft/FluidFramework/pull/22282)) [45a57693f2](https://github.com/microsoft/FluidFramework/commit/45a57693f291e0dc5e91af7f29a9b9c8f82dfad5)
+
+    The inbound and outbound properties were [deprecated in version 2.0.0-rc.2.0.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.0.0-rc.2.0.0.md#container-definitions-deprecate-ideltamanagerinbound-and-ideltamanageroutbound) and have been removed from `IDeltaManager`.
+
+    `IDeltaManager.inbound` contained functionality that could break core runtime features such as summarization and processing batches if used improperly. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    Similarly, `IDeltaManager.outbound` contained functionality that could break core runtime features such as generation of batches and chunking. Data loss or corruption could occur when `IDeltaManger.inbound.pause()` or `IDeltaManager.inbound.resume()` were called.
+
+    #### Alternatives
+
+    -   Alternatives to `IDeltaManager.inbound.on("op", ...)` are `IDeltaManager.on("op", ...)`
+    -   Alternatives to calling `IDeltaManager.inbound.pause`, `IDeltaManager.outbound.pause` for `IContainer` disconnect use `IContainer.disconnect`.
+    -   Alternatives to calling `IDeltaManager.inbound.resume`, `IDeltaManager.outbound.resume` for `IContainer` reconnect use `IContainer.connect`.
+
+## 2.5.0
+
+Dependency updates only.
+
+## 2.4.0
+
+Dependency updates only.
+
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+### Minor Changes
+
+-   New `isFluidHandle` type guard to check if an object is an `IFluidHandle` ([#22029](https://github.com/microsoft/FluidFramework/pull/22029)) [7827d1040a](https://github.com/microsoft/FluidFramework/commit/7827d1040a9ebc0bd11388dc31f15370ea9f68d3)
+
+    The `isFluidHandle` type guard function is now exported and can be used to detect which objects are `IFluidHandle`s.
+    Since `IFluidHandle` often needs special handling (for example when serializing since it's not JSON compatible),
+    having a dedicated detection function for it is useful.
+    Doing this detection was possible previously using the `tree` package's schema system via `Tree.is(value, new SchemaFactory("").handle)`,
+    but can now be done with just `isFluidHandle(value)`.
+
 ## 2.1.0
 
 Dependency updates only.

@@ -3,18 +3,25 @@
  * Licensed under the MIT License.
  */
 
+import { NonCollabClient, UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
-import { ISegment, Marker } from "../mergeTreeNodes.js";
+import { Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
+import { overwriteInfo, type IInsertionInfo, type SegmentWithInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
+
+const defaultInsertionInfo: IInsertionInfo = {
+	clientId: NonCollabClient,
+	seq: UniversalSequenceNumber,
+};
 
 export function loadSegments(
 	content: string,
 	segLimit: number,
 	markers: boolean = false,
 	withProps: boolean = true,
-): ISegment[] {
+): SegmentWithInfo<IInsertionInfo>[] {
 	const BOMFreeContent = content.replace(/^\uFEFF/, "");
 
 	const paragraphs = BOMFreeContent.split(/\r?\n/);
@@ -28,7 +35,7 @@ export function loadSegments(
 		}
 	}
 
-	const segments = [] as ISegment[];
+	const segments: SegmentWithInfo<IInsertionInfo>[] = [];
 	for (const paragraph of paragraphs) {
 		let pgMarker: Marker | undefined;
 		if (markers) {
@@ -37,10 +44,15 @@ export function loadSegments(
 		if (withProps) {
 			if (paragraph.includes("Chapter") || paragraph.includes("PRIDE AND PREJ")) {
 				if (pgMarker) {
-					pgMarker.addProperties({ header: 2 });
-					segments.push(new TextSegment(paragraph));
+					pgMarker.properties = { header: 2 };
+					segments.push(overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo));
 				} else {
-					segments.push(TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }));
+					segments.push(
+						overwriteInfo(
+							TextSegment.make(paragraph, { fontSize: "140%", lineHeight: "150%" }),
+							defaultInsertionInfo,
+						),
+					);
 				}
 			} else {
 				const emphStrings = paragraph.split("_");
@@ -48,20 +60,27 @@ export function loadSegments(
 					// eslint-disable-next-line no-bitwise
 					if (i & 1) {
 						if (emphStrings[i].length > 0) {
-							segments.push(TextSegment.make(emphStrings[i], { fontStyle: "italic" }));
+							segments.push(
+								overwriteInfo(
+									TextSegment.make(emphStrings[i], { fontStyle: "italic" }),
+									defaultInsertionInfo,
+								),
+							);
 						}
 					} else {
 						if (emphStrings[i].length > 0) {
-							segments.push(new TextSegment(emphStrings[i]));
+							segments.push(
+								overwriteInfo(new TextSegment(emphStrings[i]), defaultInsertionInfo),
+							);
 						}
 					}
 				}
 			}
 		} else {
-			segments.push(new TextSegment(paragraph));
+			segments.push(overwriteInfo(new TextSegment(paragraph), defaultInsertionInfo));
 		}
 		if (pgMarker) {
-			segments.push(pgMarker);
+			segments.push(overwriteInfo(pgMarker, defaultInsertionInfo));
 		}
 	}
 

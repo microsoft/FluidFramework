@@ -32,6 +32,10 @@ module.exports = (env) => {
 						test: /\.tsx?$/,
 						loader: "ts-loader",
 					},
+					{
+						test: /\.m?js$/,
+						use: ["source-map-loader"],
+					},
 				],
 			},
 			output: {
@@ -48,7 +52,7 @@ module.exports = (env) => {
 					"process.env.FLUID_CLIENT": JSON.stringify(fluidClient),
 				}),
 				new webpack.ProvidePlugin({
-					process: "process/browser",
+					process: "process/browser.js",
 				}),
 				new HtmlWebpackPlugin({
 					template: "./src/index.html",

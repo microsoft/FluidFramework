@@ -68,6 +68,14 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 		await waitForContainerConnection(mainContainer);
 	});
 
+	beforeEach("skip-r11s", async function () {
+		// Skip these tests for standalone r11s.  Summaries can take upwards of 20 seconds which times out the test.
+		// These tests are covering client logic and the coverage from other drivers/endpoints is sufficient.
+		if (provider.driver.type === "r11s" && provider.driver.endpointName !== "frs") {
+			this.skip();
+		}
+	});
+
 	async function createNewDataStore() {
 		const newDataStore =
 			await dataStoreA._context.containerRuntime.createDataStore(TestDataObjectType);
@@ -260,12 +268,12 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 			await provider.ensureSynchronized();
 
 			// The next summary should fail - Override the "uploadSummaryWithContext" function so that that step fails.
-			const containerRuntime = (summarizer1 as any).runtime as ContainerRuntime;
-			const uploadSummaryWithContextFunc = containerRuntime.storage.uploadSummaryWithContext;
+			const containerRuntime1 = (summarizer1 as any).runtime as ContainerRuntime;
+			const uploadSummaryWithContextFunc = containerRuntime1.storage.uploadSummaryWithContext;
 			const uploadSummaryWithContextOverride = async () => {
 				throw new Error("Upload summary failed in test");
 			};
-			containerRuntime.storage.uploadSummaryWithContext = uploadSummaryWithContextOverride;
+			containerRuntime1.storage.uploadSummaryWithContext = uploadSummaryWithContextOverride;
 
 			// Summarize and validate that it fails.
 			const errorFn = (error: Error): boolean => {
@@ -281,7 +289,7 @@ describeCompat("GC incremental summaries", "NoCompat", (getTestObjectProvider) =
 			mockLogger.assertMatchNone([{ eventName: "IncrementalSummaryViolation" }]);
 
 			// Revert the "uploadSummaryWithContext" function so that summary will now succeed.
-			containerRuntime.storage.uploadSummaryWithContext = uploadSummaryWithContextFunc;
+			containerRuntime1.storage.uploadSummaryWithContext = uploadSummaryWithContextFunc;
 
 			// Summarize and validate that it succeeds.
 			await assert.doesNotReject(summarizeNow(summarizer1), "Summarize should have passed");

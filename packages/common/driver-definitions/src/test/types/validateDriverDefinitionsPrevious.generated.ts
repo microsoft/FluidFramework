@@ -20,24 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "TypeAlias_ConnectionMode": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<old.ConnectionMode>, TypeOnly<current.ConnectionMode>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ConnectionMode": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<current.ConnectionMode>, TypeOnly<old.ConnectionMode>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Interface_ICapabilities": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ICapabilities = requireAssignableTo<TypeOnly<old.ICapabilities>, TypeOnly<current.ICapabilities>>
@@ -212,6 +194,24 @@ declare type old_as_current_for_Interface_IUser = requireAssignableTo<TypeOnly<o
  * "Interface_IUser": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IUser = requireAssignableTo<TypeOnly<current.IUser>, TypeOnly<old.IUser>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ConnectionMode": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<old.ConnectionMode>, TypeOnly<current.ConnectionMode>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ConnectionMode": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ConnectionMode = requireAssignableTo<TypeOnly<current.ConnectionMode>, TypeOnly<old.ConnectionMode>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

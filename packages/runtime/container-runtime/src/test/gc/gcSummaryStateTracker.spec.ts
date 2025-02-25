@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -13,48 +13,13 @@ import {
 
 import {
 	GCSummaryStateTracker,
-	GCVersion,
 	IGCStats,
 	IGarbageCollectionState,
 	gcStateBlobKey,
 	nextGCVersion,
 } from "../../gc/index.js";
 
-type GCSummaryStateTrackerWithPrivates = Omit<
-	GCSummaryStateTracker,
-	"latestSummaryGCVersion"
-> & {
-	latestSummaryGCVersion: GCVersion;
-};
-
 describe("GCSummaryStateTracker tests", () => {
-	it("Autorecovery: requesting Full GC", async () => {
-		const tracker: GCSummaryStateTrackerWithPrivates = new GCSummaryStateTracker({
-			gcEnabled: true,
-			tombstoneMode: false,
-			gcVersionInBaseSnapshot: 1,
-			gcVersionInEffect: 1,
-		}) as any;
-		assert.equal(tracker.autoRecovery.fullGCRequested(), false, "Should be false by default");
-
-		tracker.autoRecovery.requestFullGCOnNextRun();
-
-		assert.equal(
-			tracker.autoRecovery.fullGCRequested(),
-			true,
-			"Should be true after requesting full GC",
-		);
-
-		// After the first summary succeeds (refreshLatestSummary called), the state should be reset.
-		await tracker.refreshLatestSummary({ isSummaryTracked: true, isSummaryNewer: true });
-
-		assert.equal(
-			tracker.autoRecovery.fullGCRequested(),
-			false,
-			"Should be false after Summary Ack",
-		);
-	});
-
 	/**
 	 * These tests validate that the GC data is written in summary incrementally. Basically, only parts of the GC
 	 * data that has changed since the last successful summary is re-written, rest is written as SummaryHandle.
@@ -75,8 +40,7 @@ describe("GCSummaryStateTracker tests", () => {
 		beforeEach(async () => {
 			// Creates a summary state tracker and initialize it.
 			summaryStateTracker = new GCSummaryStateTracker({
-				gcEnabled: true,
-				tombstoneMode: true,
+				gcAllowed: true,
 				gcVersionInBaseSnapshot: nextGCVersion,
 				gcVersionInEffect: nextGCVersion,
 			});
@@ -84,7 +48,7 @@ describe("GCSummaryStateTracker tests", () => {
 			summaryStateTracker.initializeBaseState({
 				gcState: initialGCState,
 				tombstones: initialTombstones,
-				deletedNodes: Array.from(initialDeletedNodes),
+				deletedNodes: [...initialDeletedNodes],
 			});
 		});
 
@@ -133,7 +97,7 @@ describe("GCSummaryStateTracker tests", () => {
 		it("does incremental summary when only tombstone state changes", async () => {
 			// Summarize with the same GC state and deleted nodes but different tombstone state as in the initial.
 			// state. The tombstone state should be summarized as a summary handle.
-			const newTombstones: string[] = Array.from([...initialTombstones, nodes[2]]);
+			const newTombstones: string[] = [...initialTombstones, nodes[2]];
 			const summary = summaryStateTracker.summarize(
 				true /* trackState */,
 				initialGCState,
@@ -202,8 +166,7 @@ describe("GCSummaryStateTracker tests", () => {
 		};
 
 		const summaryStateTracker = new GCSummaryStateTracker({
-			gcEnabled: true,
-			tombstoneMode: true,
+			gcAllowed: true,
 			gcVersionInBaseSnapshot: nextGCVersion,
 			gcVersionInEffect: nextGCVersion,
 		});

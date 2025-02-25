@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, compareArrays } from "@fluidframework/core-utils/internal";
+import { assert, compareArrays, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -14,11 +14,16 @@ import {
 	type TreeValue,
 	type UpPath,
 	type Value,
+	type ChunkedCursor,
+	type TreeChunk,
+	cursorChunk,
+	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, fail } from "../../util/index.js";
+import { ReferenceCountedBase, fail, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
-import { type ChunkedCursor, type TreeChunk, cursorChunk, dummyRoot } from "./chunk.js";
+import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Create a tree chunk with ref count 1.
@@ -37,6 +42,7 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  * allowing deduplication of shape information and storing of content as a flat sequence of values.
  */
 export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
+	public idCompressor: undefined | IIdCompressor;
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
@@ -46,8 +52,10 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	public constructor(
 		public shape: ChunkShape,
 		public values: TreeValue[],
+		idCompressor?: IIdCompressor,
 	) {
 		super();
+		this.idCompressor = idCompressor;
 		assert(
 			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
 			0x4c3 /* invalid number of values for shape */,
@@ -93,11 +101,30 @@ export class TreeShape {
 	// TODO: this is only needed at chunk roots. Optimize it base on that.
 	public readonly positions: readonly NodePositionInfo[];
 
+	/**
+	 *
+	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
+	 * @param hasValue - whether or not the TreeShape has a value.
+	 * @param fieldsArray - an array of {@link FieldShape} values, which contains a TreeShape for each FieldKey.
+	 *
+	 * @param maybeDecompressedStringAsNumber - used to check whether or not the value could have been compressed by the idCompressor.
+	 * This flag can only be set on string leaf nodes, and will throw a usage error otherwise.
+	 * If set to true, an additional check can be made (example: getting the value of {@link Cursor}) to return the original uncompressed value.
+	 */
 	public constructor(
 		public readonly type: TreeNodeSchemaIdentifier,
 		public readonly hasValue: boolean,
 		public readonly fieldsArray: readonly FieldShape[],
+		public readonly maybeDecompressedStringAsNumber: boolean = false,
 	) {
+		if (
+			maybeDecompressedStringAsNumber &&
+			!(hasValue && type === "com.fluidframework.leaf.string")
+		) {
+			throw new UsageError(
+				"maybeDecompressedStringAsNumber flag can only be set to true for string leaf node.",
+			);
+		}
 		const fields: Map<FieldKey, OffsetShape> = new Map();
 		let numberOfValues = hasValue ? 1 : 0;
 		const infos: NodePositionInfo[] = [
@@ -339,7 +366,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField++;
 		const fields = this.nodeInfo(CursorLocationType.Fields).shape.fieldsArray;
 		if (this.indexOfField < fields.length) {
-			this.fieldKey = fields[this.indexOfField][0];
+			const fieldArr = fields[this.indexOfField] ?? oob();
+			this.fieldKey = fieldArr[0];
 			return true;
 		}
 		this.exitField();
@@ -415,7 +443,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		if (this.indexOfField >= fields.length) {
 			return false; // Handle empty field (indexed by key into empty field)
 		}
-		const f = shape.fieldsOffsetArray[this.indexOfField];
+		const f = shape.fieldsOffsetArray[this.indexOfField] ?? oob();
 		if (childIndex >= f.topLevelLength) {
 			return false;
 		}
@@ -492,12 +520,13 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 
 	public firstField(): boolean {
 		const fieldsArray = this.nodeInfo(CursorLocationType.Nodes).shape.fieldsArray;
-		if (fieldsArray.length === 0) {
+		if (!hasSome(fieldsArray)) {
 			return false;
 		}
 		this.indexOfField = 0;
 		this.mode = CursorLocationType.Fields;
-		this.fieldKey = fieldsArray[0][0];
+		const fields = fieldsArray[0];
+		this.fieldKey = fields[0];
 		return true;
 	}
 
@@ -507,7 +536,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		this.indexOfField =
 			fieldInfo === undefined
 				? fieldMap.size
-				: fieldInfo.indexOfParentField ?? fail("children should have parents");
+				: (fieldInfo.indexOfParentField ?? fail("children should have parents"));
 		this.fieldKey = key;
 		this.mode = CursorLocationType.Fields;
 	}
@@ -517,7 +546,16 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	public get value(): Value {
+		const idCompressor = this.chunk.idCompressor;
 		const info = this.nodeInfo(CursorLocationType.Nodes);
+		// If the maybeDecompressedStringAsNumber flag is set to true, we check if the value is a number.
+		// This flag can only ever be set on string leaf nodes, so if the value is a number, we can assume it is a compressible, known stable id.
+		if (info.shape.hasValue && info.shape.maybeDecompressedStringAsNumber) {
+			const value = this.chunk.values[info.valueOffset];
+			if (typeof value === "number" && idCompressor !== undefined) {
+				return idCompressor.decompress(value as SessionSpaceCompressedId);
+			}
+		}
 		return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
 	}
 }

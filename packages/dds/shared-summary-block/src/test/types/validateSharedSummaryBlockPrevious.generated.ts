@@ -34,15 +34,6 @@ declare type old_as_current_for_Interface_ISharedSummaryBlock = requireAssignabl
 declare type current_as_old_for_Interface_ISharedSummaryBlock = requireAssignableTo<TypeOnly<current.ISharedSummaryBlock>, TypeOnly<old.ISharedSummaryBlock>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_SharedSummaryBlock": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_SharedSummaryBlock = requireAssignableTo<TypeOnly<typeof current.SharedSummaryBlock>, TypeOnly<typeof old.SharedSummaryBlock>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -59,3 +50,12 @@ declare type old_as_current_for_TypeAlias_SharedSummaryBlock = requireAssignable
  * "TypeAlias_SharedSummaryBlock": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_SharedSummaryBlock = requireAssignableTo<TypeOnly<current.SharedSummaryBlock>, TypeOnly<old.SharedSummaryBlock>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_SharedSummaryBlock": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_SharedSummaryBlock = requireAssignableTo<TypeOnly<typeof current.SharedSummaryBlock>, TypeOnly<typeof old.SharedSummaryBlock>>

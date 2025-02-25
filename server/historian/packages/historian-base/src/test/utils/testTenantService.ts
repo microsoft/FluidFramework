@@ -8,7 +8,12 @@ import { TestDb, TestTenant } from "@fluidframework/server-test-utils";
 import { ITenantService } from "../../services";
 
 export class TestTenantService implements ITenantService {
-	private readonly tenant = new TestTenant("http://test", "http://historian", new TestDb({}));
+	private readonly tenant = new TestTenant(
+		// Use localhost as the url for the test tenant so we don't hit internet
+		"http://localhost",
+		"http://localhost/historian",
+		new TestDb({}),
+	);
 
 	async getTenant(
 		tenantId: string,
@@ -20,6 +25,8 @@ export class TestTenantService implements ITenantService {
 			storage: this.tenant.storage,
 			orderer: this.tenant.orderer,
 			customData: {},
+			enablePrivateKeyAccess: false,
+			enableSharedKeyAccess: true,
 		});
 	}
 

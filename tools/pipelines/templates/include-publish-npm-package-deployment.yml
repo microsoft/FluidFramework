@@ -15,7 +15,7 @@ parameters:
 
 - name: pool
   type: object
-  default: Small-1ES
+  default: Small-eastus2
 
 - name: publishFlags
   type: string
@@ -28,6 +28,18 @@ parameters:
 - name: tagName
   type: string
   default:
+
+- name: buildDirectory
+  type: string
+
+- name: buildToolsVersionToInstall
+  type: string
+  default: repo
+
+# The path to the pnpm store.
+- name: pnpmStorePath
+  type: string
+  default: $(Pipeline.Workspace)/.pnpm-store
 
 jobs:
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
@@ -43,12 +55,20 @@ jobs:
     runOnce:
         deploy:
           steps:
+          - checkout: self
+            clean: true
+            persistCredentials: true # Necessary for creation of git tags to work
           - download: current
             artifact: pack
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
+          - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+            parameters:
+              buildDirectory: ${{ parameters.buildDirectory }}
+              buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+              pnpmStorePath: ${{ parameters.pnpmStorePath }}
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
-              artifactPath: scoped
+              artifactPath: tarballs
               feedUrl: ${{ parameters.feedUrl }}
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}

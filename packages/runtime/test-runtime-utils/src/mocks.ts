@@ -58,6 +58,7 @@ import {
 	IFluidDataStoreChannel,
 	VisibilityState,
 	type ITelemetryContext,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	getNormalizedObjectStoragePathParts,
@@ -108,12 +109,19 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.setConnectionState(connected);
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	) {
 		this.handler?.process(message, local, localOpMetadata);
+	}
+
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		this.handler?.processMessages?.(messageCollection);
 	}
 
 	public reSubmit(content: any, localOpMetadata: unknown) {
@@ -136,10 +144,6 @@ export interface IMockContainerRuntimePendingMessage {
 	clientSequenceNumber: number;
 	localOpMetadata: unknown;
 }
-
-type IMockContainerRuntimeSequencedIdAllocationMessage = ISequencedDocumentMessage & {
-	contents: IMockContainerRuntimeIdAllocationMessage;
-};
 
 export interface IMockContainerRuntimeIdAllocationMessage {
 	type: "idAllocation";
@@ -191,7 +195,7 @@ export interface IInternalMockRuntimeMessage {
 }
 
 /**
- * Mock implementation of ContainerRuntime for testing basic submitting and processing of messages.
+ * Mock implementation of IContainerRuntime for testing basic submitting and processing of messages.
  * If test specific logic is required, extend this class and add the logic there. For an example, take a look
  * at MockContainerRuntimeForReconnection.
  * @legacy
@@ -210,13 +214,13 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	/**
 	 * The runtime options this instance is using. See {@link IMockContainerRuntimeOptions}.
 	 */
-	private readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
+	protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
 
 	constructor(
 		protected readonly dataStoreRuntime: MockFluidDataStoreRuntime,
 		protected readonly factory: MockContainerRuntimeFactory,
 		mockContainerRuntimeOptions: IMockContainerRuntimeOptions = defaultMockContainerRuntimeOptions,
-		protected readonly overrides?: { minimumSequenceNumber?: number },
+		protected readonly overrides?: { minimumSequenceNumber?: number | undefined },
 	) {
 		super();
 		this.deltaManager = new MockDeltaManager(() => this.clientId);
@@ -299,10 +303,16 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return clientSequenceNumber;
 	}
 
-	private isSequencedAllocationMessage(
-		message: ISequencedDocumentMessage,
-	): message is IMockContainerRuntimeSequencedIdAllocationMessage {
-		return this.isAllocationMessage(message.contents);
+	/**
+	 * If the message is an idAllocation message, it will finalize the id range and return true.
+	 * Otherwise, it will return false.
+	 */
+	protected maybeProcessIdAllocationMessage(message: ISequencedDocumentMessage): boolean {
+		if (this.isAllocationMessage(message.contents)) {
+			this.finalizeIdRange(message.contents.contents);
+			return true;
+		}
+		return false;
 	}
 
 	private isAllocationMessage(
@@ -431,7 +441,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.deltaManager.process(message);
 		const [local, localOpMetadata] = this.processInternal(message);
 
-		if (this.isSequencedAllocationMessage(message)) {
+		if (this.isAllocationMessage(message.contents)) {
 			this.finalizeIdRange(message.contents.contents);
 		} else {
 			this.dataStoreRuntime.process(message, local, localOpMetadata);
@@ -452,7 +462,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.pendingMessages.push(pendingMessage);
 	}
 
-	private processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
+	protected processInternal(message: ISequencedDocumentMessage): [boolean, unknown] {
 		let localOpMetadata: unknown;
 		const local = this.clientId === message.clientId;
 		if (local) {
@@ -563,8 +573,8 @@ export class MockContainerRuntimeFactory {
 		this.messages.push(msg as ISequencedDocumentMessage);
 	}
 
-	private lastProcessedMessage?: ISequencedDocumentMessage;
-	private processFirstMessage() {
+	protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
+	protected getFirstMessageToProcess() {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
@@ -583,6 +593,11 @@ export class MockContainerRuntimeFactory {
 		message.sequenceNumber = this.sequenceNumber;
 		message.minimumSequenceNumber = this.getMinSeq();
 		this.lastProcessedMessage = message;
+		return message;
+	}
+
+	private processFirstMessage() {
+		const message = this.getFirstMessageToProcess();
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
 		}
@@ -758,12 +773,11 @@ export class MockAudience
 		return this.audienceMembers.get(clientId);
 	}
 
-	public getSelf() {
+	public getSelf(): ISelf | undefined {
 		return this._currentClientId === undefined
 			? undefined
 			: {
 					clientId: this._currentClientId,
-					client: undefined,
 				};
 	}
 
@@ -810,10 +824,14 @@ export class MockFluidDataStoreRuntime
 			overrides?.entryPoint ?? new MockHandle(null as unknown as FluidObject, "", ""),
 		);
 		this.id = overrides?.id ?? uuid();
-		this.logger = createChildLogger({
-			logger: overrides?.logger,
+		const childLoggerProps: Parameters<typeof createChildLogger>[0] = {
 			namespace: "fluid:MockFluidDataStoreRuntime",
-		});
+		};
+		const logger = overrides?.logger;
+		if (logger !== undefined) {
+			childLoggerProps.logger = logger;
+		}
+		this.logger = createChildLogger(childLoggerProps);
 		this.idCompressor = overrides?.idCompressor;
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
@@ -854,7 +872,7 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor?: IIdCompressor & IIdCompressorCore;
+	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 
@@ -990,6 +1008,9 @@ export class MockFluidDataStoreRuntime
 		return null;
 	}
 
+	/**
+	 * @deprecated - This has been replaced by processMessages
+	 */
 	public process(
 		message: ISequencedDocumentMessage,
 		local: boolean,
@@ -997,6 +1018,26 @@ export class MockFluidDataStoreRuntime
 	) {
 		this.deltaConnections.forEach((dc) => {
 			dc.process(message, local, localOpMetadata);
+		});
+	}
+
+	public processMessages(messageCollection: IRuntimeMessageCollection) {
+		this.deltaConnections.forEach((dc) => {
+			if (dc.processMessages !== undefined) {
+				dc.processMessages(messageCollection);
+			} else {
+				for (const {
+					contents,
+					localOpMetadata,
+					clientSequenceNumber,
+				} of messageCollection.messagesContent) {
+					dc.process(
+						{ ...messageCollection.envelope, contents, clientSequenceNumber },
+						messageCollection.local,
+						localOpMetadata,
+					);
+				}
+			}
 		});
 	}
 

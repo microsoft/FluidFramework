@@ -27,7 +27,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -63,7 +63,7 @@
 		"@socket.io/redis-emitter": "^4.1.1",
 		"@types/lodash": "^4.14.118",
 		"amqplib": "^0.10.2",
-		"axios": "^1.6.2",
+		"axios": "^1.7.7",
 		"debug": "^4.3.4",
 		"events": "^3.1.0",
 		"ioredis": "^5.2.3",
@@ -71,35 +71,33 @@
 		"lru-cache": "^6.0.0",
 		"mongodb": "4.17.1",
 		"nconf": "^0.12.0",
-		"socket.io": "^4.7.5",
+		"socket.io": "^4.8.0",
 		"telegrafjs": "^0.1.3",
 		"uuid": "^9.0.0",
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-previous": "npm:@fluidframework/server-services@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/amqplib": "^0.5.17",
 		"@types/debug": "^4.1.5",
-		"@types/ioredis-mock": "^8.2.1",
 		"@types/lru-cache": "^5.1.0",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.19.39",
-		"@types/sinon": "^9.0.9",
+		"@types/sinon": "^17.0.3",
 		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
-		"ioredis-mock": "^8.2.3",
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"redis-commands": "^1.7.0",
 		"rimraf": "^4.4.0",
-		"sinon": "^9.2.3",
+		"sinon": "^18.0.1",
 		"typescript": "~5.1.6"
 	},
 	"fluidBuild": {
@@ -111,6 +109,20 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Class_MongoDb": {
+				"forwardCompat": false
+			},
+			"Class_TenantManager": {
+				"forwardCompat": false
+			},
+			"Class_WebServer": {
+				"backCompat": false
+			},
+			"ClassStatics_WebServer": {
+				"backCompat": false
+			}
+		},
+		"entrypoint": "public"
 	}
 }

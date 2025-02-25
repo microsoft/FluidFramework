@@ -24,10 +24,6 @@ module.exports = (env) => {
 					test: /\.tsx?$/,
 					loader: "ts-loader",
 				},
-				{
-					test: /\.css$/i,
-					use: ["style-loader", "css-loader"],
-				},
 			],
 		},
 		output: {
@@ -46,7 +42,7 @@ module.exports = (env) => {
 		},
 		plugins: [
 			new webpack.ProvidePlugin({
-				process: "process/browser",
+				process: "process/browser.js",
 			}),
 			new HtmlWebpackPlugin({
 				template: "./tests/index.html",

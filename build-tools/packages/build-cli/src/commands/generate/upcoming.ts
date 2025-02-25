@@ -24,6 +24,15 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 	static readonly summary =
 		`Generates a summary of all changesets. This is used to generate an UPCOMING.md file that provides a single place where developers can see upcoming changes.`;
 
+	// This command is deprecated and will be removed in 0.53.0.
+	static readonly state = "deprecated";
+	static readonly deprecationOptions = {
+		// The version in which the deprecated command will be removed.
+		version: "0.53.0",
+		// The replacement command.
+		to: "generate releaseNotes",
+	};
+
 	// Enables the global JSON flag in oclif.
 	static readonly enableJsonFlag = true;
 
@@ -85,7 +94,7 @@ export default class GenerateUpcomingCommand extends BaseCommand<
 		let body: string = "";
 		for (const change of changes) {
 			if (change.changeTypes.includes("minor") || flags.releaseType === "major") {
-				body += `## ${change.summary}\n\n${change.content}\n\n`;
+				body += `## ${change.summary}\n\n${change.body}\n\n`;
 			} else {
 				this.info(
 					`Excluding changeset: ${path.basename(change.sourceFile)} because it has no ${

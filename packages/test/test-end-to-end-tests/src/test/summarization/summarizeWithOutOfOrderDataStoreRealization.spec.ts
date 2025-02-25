@@ -150,7 +150,13 @@ describeCompat(
 			await waitForContainerConnection(mainContainer);
 		});
 
-		it("No Summary Upload Error when DS gets realized between summarize and completeSummary", async () => {
+		it("No Summary Upload Error when DS gets realized between summarize and completeSummary", async function () {
+			// Skip this test for standard r11s as its summarization timing is flaky and non-reproducible.
+			// This test is covering client logic and the coverage from other drivers/endpoints is sufficient.
+			if (provider.driver.type === "r11s" && provider.driver.endpointName !== "frs") {
+				this.skip();
+			}
+
 			const summarizerClient = await createSummarizerWithVersion();
 			await provider.ensureSynchronized();
 			mainDataStore._root.set("1", "2");

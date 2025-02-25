@@ -24,7 +24,6 @@ import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
 import { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
-import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	backwardExcursion,
 	forwardExcursion,
@@ -32,10 +31,11 @@ import {
 } from "../mergeTreeNodeWalk.js";
 import {
 	MergeBlock,
-	ISegment,
-	ISegmentLeaf,
+	ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
+	type SegmentGroup,
+	assertSegmentLeaf,
 } from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
@@ -53,13 +53,20 @@ import {
 import { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
 import { MergeTreeRevertibleDriver } from "../revertibles.js";
+import {
+	assertInserted,
+	assertMergeNode,
+	isInserted,
+	isMoved,
+	isRemoved,
+} from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestSerializer } from "./testSerializer.js";
 import { nodeOrdinalsHaveIntegrity } from "./testUtils.js";
 
-export function specToSegment(spec: IJSONSegment): ISegment {
+export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 	const maybeText = TextSegment.fromJSONObject(spec);
 	if (maybeText) {
 		return maybeText;
@@ -112,7 +119,7 @@ export class TestClient extends Client {
 	public static async createFromSnapshot(
 		snapshotTree: ITree,
 		newLongClientId: string,
-		specToSeg: (spec: IJSONSegment) => ISegment,
+		specToSeg: (spec: IJSONSegment) => ISegmentPrivate,
 		options?: PropertySet,
 	): Promise<TestClient> {
 		return TestClient.createFromStorage(
@@ -126,7 +133,7 @@ export class TestClient extends Client {
 	public static async createFromSummary(
 		summaryTree: ISummaryTree,
 		newLongClientId: string,
-		specToSeg: (spec: IJSONSegment) => ISegment,
+		specToSeg: (spec: IJSONSegment) => ISegmentPrivate,
 		options?: PropertySet,
 	): Promise<TestClient> {
 		return TestClient.createFromStorage(
@@ -140,7 +147,7 @@ export class TestClient extends Client {
 	public static async createFromStorage(
 		storage: MockStorage,
 		newLongClientId: string,
-		specToSeg: (spec: IJSONSegment) => ISegment,
+		specToSeg: (spec: IJSONSegment) => ISegmentPrivate,
 		options?: PropertySet,
 	): Promise<TestClient> {
 		const client2 = new TestClient(options, specToSeg);
@@ -182,31 +189,10 @@ export class TestClient extends Client {
 			// assert.notEqual(d.deltaSegments.length, 0);
 			for (const s of d.deltaSegments) {
 				if (d.operation === MergeTreeDeltaType.INSERT) {
-					const seg: ISegmentLeaf = s.segment;
-					assert.notEqual(seg.parent, undefined);
+					assertMergeNode(s.segment);
 				}
 			}
 		});
-	}
-
-	public obliterateRange({
-		start,
-		end,
-		refSeq,
-		clientId,
-		seq,
-		overwrite = false,
-		opArgs,
-	}: {
-		start: number;
-		end: number;
-		refSeq: number;
-		clientId: number;
-		seq: number;
-		overwrite?: boolean;
-		opArgs: IMergeTreeDeltaOpArgs;
-	}): void {
-		this.mergeTree.obliterateRange(start, end, refSeq, clientId, seq, overwrite, opArgs);
 	}
 
 	public getText(start?: number, end?: number): string {
@@ -245,10 +231,7 @@ export class TestClient extends Client {
 		text: string,
 		props?: PropertySet,
 	): IMergeTreeInsertMsg | undefined {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = TextSegment.make(text, props);
 		return this.insertSegmentLocal(pos, segment);
 	}
 
@@ -260,10 +243,7 @@ export class TestClient extends Client {
 		refSeq: number,
 		longClientId: string,
 	): void {
-		const segment = new TextSegment(text);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = TextSegment.make(text, props);
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
 		);
@@ -299,10 +279,8 @@ export class TestClient extends Client {
 		behaviors: ReferenceType,
 		props?: PropertySet,
 	): IMergeTreeInsertMsg | undefined {
-		const segment = new Marker(behaviors);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = Marker.make(behaviors, props);
+
 		return this.insertSegmentLocal(pos, segment);
 	}
 
@@ -314,10 +292,8 @@ export class TestClient extends Client {
 		refSeq: number,
 		longClientId: string,
 	): void {
-		const segment = new Marker(markerDef.refType ?? ReferenceType.Tile);
-		if (props) {
-			segment.addProperties(props);
-		}
+		const segment = Marker.make(markerDef.refType ?? ReferenceType.Tile, props);
+
 		this.applyMsg(
 			this.makeOpMessage(createInsertSegmentOp(pos, segment), seq, refSeq, longClientId),
 		);
@@ -382,15 +358,16 @@ export class TestClient extends Client {
 		return nextWord;
 	}
 
-	public debugDumpTree(tree: MergeTree): void {
+	public debugDumpTree(tree: MergeTree): string[] {
 		// want the segment's content and the state of insert/remove
 		const test: string[] = [];
-		walkAllChildSegments(tree.root, (segment: ISegment) => {
+		walkAllChildSegments(tree.root, (segment: ISegmentPrivate) => {
 			const prefixes: (string | undefined | number)[] = [];
+			assertInserted(segment);
 			prefixes.push(
 				segment.seq === UnassignedSequenceNumber ? `L${segment.localSeq}` : segment.seq,
 			);
-			if (segment.removedSeq !== undefined) {
+			if (isRemoved(segment)) {
 				prefixes.push(
 					segment.removedSeq === UnassignedSequenceNumber
 						? `L${segment.localRemovedSeq}`
@@ -400,6 +377,7 @@ export class TestClient extends Client {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 			test.push(`${prefixes.join(",")}:${(segment as any).text}`);
 		});
+		return test;
 	}
 
 	/**
@@ -408,26 +386,21 @@ export class TestClient extends Client {
 	 * slow-path computations in this function without leveraging the merge-tree's structure
 	 */
 	public rebasePosition(pos: number, seqNumberFrom: number, localSeq: number): number {
-		let segment: ISegment | undefined;
+		let segment: ISegmentPrivate | undefined;
 		let posAccumulated = 0;
 		let offset = pos;
-		const isInsertedInView = (seg: ISegment): boolean =>
-			(seg.seq !== undefined &&
-				seg.seq !== UnassignedSequenceNumber &&
-				seg.seq <= seqNumberFrom) ||
-			(seg.localSeq !== undefined && seg.localSeq <= localSeq);
+		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
+			isInserted(seg) &&
+			((seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) ||
+				(seg.localSeq !== undefined && seg.localSeq <= localSeq));
 
-		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment): boolean =>
-			(removedSeq !== undefined &&
-				removedSeq !== UnassignedSequenceNumber &&
-				removedSeq <= seqNumberFrom) ||
-			(localRemovedSeq !== undefined && localRemovedSeq <= localSeq);
+		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
+			isRemoved(s) &&
+			((s.removedSeq !== UnassignedSequenceNumber && s.removedSeq <= seqNumberFrom) ||
+				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
 
 		walkAllChildSegments(this.mergeTree.root, (seg) => {
-			assert(
-				seg.seq !== undefined || seg.localSeq !== undefined,
-				"either seq or localSeq should be defined",
-			);
+			assertInserted(seg);
 			segment = seg;
 
 			if (isInsertedInView(seg) && !isRemovedFromView(seg)) {
@@ -450,20 +423,20 @@ export class TestClient extends Client {
 		return this.findReconnectionPosition(segoff.segment, localSeq) + segoff.offset;
 	}
 
-	public findReconnectionPosition(segment: ISegment, localSeq: number): number {
+	public findReconnectionPosition(segment: ISegmentPrivate, localSeq: number): number {
 		const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 
 		let segmentPosition = 0;
-		const isInsertedInView = (seg: ISegment): boolean =>
-			seg.localSeq === undefined || seg.localSeq <= localSeq;
-		const isRemovedFromView = ({ removedSeq, localRemovedSeq }: ISegment): boolean =>
-			removedSeq !== undefined &&
-			(removedSeq !== UnassignedSequenceNumber ||
-				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq));
-		const isMovedFromView = ({ movedSeq, localMovedSeq }: ISegment): boolean =>
-			movedSeq !== undefined &&
-			(movedSeq !== UnassignedSequenceNumber ||
-				(localMovedSeq !== undefined && localMovedSeq <= localSeq));
+		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
+			isInserted(seg) && (seg.localSeq === undefined || seg.localSeq <= localSeq);
+		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
+			isRemoved(s) &&
+			(s.removedSeq !== UnassignedSequenceNumber ||
+				(s.localRemovedSeq !== undefined && s.localRemovedSeq <= localSeq));
+		const isMovedFromView = (s: ISegmentPrivate): boolean =>
+			isMoved(s) &&
+			(s.movedSeq !== UnassignedSequenceNumber ||
+				(s.localMovedSeq !== undefined && s.localMovedSeq <= localSeq));
 		/*
             Walk the segments up to the current segment, and calculate its
             position taking into account local segments that were modified,
@@ -516,6 +489,14 @@ export class TestClient extends Client {
 		return seqs;
 	}
 
+	public peekPendingSegmentGroups(): SegmentGroup | undefined;
+	public peekPendingSegmentGroups(count: number): SegmentGroup | SegmentGroup[] | undefined;
+	public peekPendingSegmentGroups(
+		count: number = 1,
+	): SegmentGroup | SegmentGroup[] | undefined {
+		return super.peekPendingSegmentGroups(count) as SegmentGroup | SegmentGroup[] | undefined;
+	}
+
 	/**
 	 * Override and add some test only metrics
 	 */
@@ -560,24 +541,22 @@ export class TestClient extends Client {
 	): ReferencePosition | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment(startPos);
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const segWithParent: ISegmentLeaf = segment!;
-
-		if (Marker.is(segWithParent)) {
-			if (refHasTileLabel(segWithParent, markerLabel)) {
-				foundMarker = segWithParent;
+		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos);
+		assertSegmentLeaf(segment);
+		if (Marker.is(segment)) {
+			if (refHasTileLabel(segment, markerLabel)) {
+				foundMarker = segment;
 			}
 		} else {
 			if (forwards) {
-				forwardExcursion(segWithParent, (seg) => {
+				forwardExcursion(segment, (seg) => {
 					if (Marker.is(seg) && refHasTileLabel(seg, markerLabel)) {
 						foundMarker = seg;
 						return false;
 					}
 				});
 			} else {
-				backwardExcursion(segWithParent, (seg) => {
+				backwardExcursion(segment, (seg) => {
 					if (Marker.is(seg) && refHasTileLabel(seg, markerLabel)) {
 						foundMarker = seg;
 						return false;
@@ -647,7 +626,7 @@ export function getStats(tree: MergeTree): MergeTreeStats {
 			if (child.isLeaf()) {
 				stats.leafCount++;
 				const segment = child;
-				if (segment.removedSeq !== undefined) {
+				if (isRemoved(segment)) {
 					stats.removedLeafCount++;
 				}
 			} else {

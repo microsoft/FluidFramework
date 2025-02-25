@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/codemirror",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Simple markdown editor",
 	"homepage": "https://fluidframework.com",
@@ -64,29 +64,29 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"codemirror": "^5.48.4",
-		"react": "^17.0.1"
+		"react": "^18.3.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/codemirror": "5.60.7",
 		"@types/node": "^18.19.0",
-		"@types/react": "^17.0.44",
+		"@types/react": "^18.3.11",
 		"copyfiles": "^2.4.1",
-		"css-loader": "^6.11.0",
+		"css-loader": "^7.1.2",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"style-loader": "^1.0.0",
-		"ts-loader": "^9.3.0",
+		"style-loader": "^4.0.0",
+		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2",
-		"webpack-dev-server": "~4.15.1",
-		"webpack-merge": "^5.8.0"
+		"webpack": "^5.94.0",
+		"webpack-cli": "^5.1.4",
+		"webpack-dev-server": "~4.15.2",
+		"webpack-merge": "^6.0.1"
 	},
 	"fluid": {
 		"browser": {
@@ -100,6 +100,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

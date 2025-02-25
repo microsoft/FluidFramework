@@ -10,7 +10,7 @@ import {
 	ContainerErrorTypes,
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -37,27 +37,48 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 	beforeEach("getTestObjectProvider", () => {
 		provider = getTestObjectProvider();
 	});
+	let container1: IContainer;
+	let container2: IContainer;
+	let container3: IContainer;
 	let dataStore1: ITestFluidObject;
+	let dataStore2: ITestFluidObject;
+	let dataStore3: ITestFluidObject;
 	let sharedCounter1: ISharedCounter;
 	let sharedCounter2: ISharedCounter;
 	let sharedCounter3: ISharedCounter;
 
-	beforeEach("setup", async () => {
-		// Create a Container for the first client.
-		const container1 = await provider.makeTestContainer(testContainerConfig);
+	// To help narrow down test flakiness, the beforeEach is broken into tiny phases.  These phase names will
+	// show up in error logs to help identify where timeouts are occurring.
+	// Note that their execution order matters.  Mocha runs them in the order they are defined:
+	// https://mochajs.org/#hooks
+
+	// Create a container representing the first client
+	beforeEach("Create container", async () => {
+		container1 = await provider.makeTestContainer(testContainerConfig);
+	});
+
+	// Load the container that was created by the first client
+	beforeEach("Load containers", async () => {
+		container2 = await provider.loadTestContainer(testContainerConfig);
+		container3 = await provider.loadTestContainer(testContainerConfig);
+	});
+
+	// Get all three data stores
+	beforeEach("Get data stores", async () => {
 		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
+		dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+	});
+
+	// Get all three counters
+	beforeEach("Get counters", async () => {
 		sharedCounter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
-
-		// Load the Container that was created by the first client.
-		const container2 = await provider.loadTestContainer(testContainerConfig);
-		const dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedCounter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
-
-		// Load the Container that was created by the first client.
-		const container3 = await provider.loadTestContainer(testContainerConfig);
-		const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedCounter3 = await dataStore3.getSharedObject<SharedCounter>(counterId);
+	});
 
+	// Ensure the clients are synchronized
+	beforeEach("Ensure synchronized", async () => {
 		await provider.ensureSynchronized();
 	});
 
@@ -190,7 +211,7 @@ describeCompat(
 		let dataObject: ITestFluidObject;
 		let dataStore: ITestFluidObject;
 		let sharedCounter: SharedCounter;
-		let containerRuntime: ContainerRuntime;
+		let containerRuntime: IContainerRuntime;
 
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -210,7 +231,7 @@ describeCompat(
 			dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			dataStore = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 			sharedCounter = await dataStore.getSharedObject<SharedCounter>(counterId);
-			containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+			containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 		});
 
 		itExpects(

@@ -14,6 +14,7 @@ import {
 import { IDataStoreAliasMessage } from "./dataStore.js";
 import { GarbageCollectionMessage } from "./gc/index.js";
 import { IChunkedOp } from "./opLifecycle/index.js";
+// eslint-disable-next-line import/no-deprecated
 import { IDocumentSchemaChangeMessage } from "./summary/index.js";
 
 /**
@@ -59,29 +60,6 @@ export enum ContainerMessageType {
 }
 
 /**
- * How should an older client handle an unrecognized remote op type?
- *
- * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
- * @internal
- */
-export type CompatModeBehavior =
-	/** Ignore the op. It won't be persisted if this client summarizes */
-	| "Ignore"
-	/** Fail processing immediately. (The container will close) */
-	| "FailToProcess";
-
-/**
- * All the info an older client would need to know how to handle an unrecognized remote op type
- *
- * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
- * @internal
- */
-export interface IContainerRuntimeMessageCompatDetails {
-	/** How should an older client handle an unrecognized remote op type? */
-	behavior: CompatModeBehavior;
-}
-
-/**
  * The unpacked runtime message / details to be handled or dispatched by the ContainerRuntime.
  * Message type are differentiated via a `type` string and contain different contents depending on their type.
  *
@@ -89,20 +67,14 @@ export interface IContainerRuntimeMessageCompatDetails {
  * This way stringified values can be compared.
  */
 interface TypedContainerRuntimeMessage<TType extends ContainerMessageType, TContents> {
-	/** Type of the op, within the ContainerRuntime's domain */
+	/**
+	 * Type of the op, within the ContainerRuntime's domain
+	 */
 	type: TType;
-	/** Domain-specific contents, interpreted according to the type */
+	/**
+	 * Domain-specific contents, interpreted according to the type
+	 */
 	contents: TContents;
-}
-
-/**
- * Additional details expected for any recently added message.
- * @deprecated The utility of a mechanism to handle unknown messages is outweighed by the nuance required to get it right.
- * @internal
- */
-export interface RecentlyAddedContainerRuntimeMessageDetails {
-	/** Info describing how to handle this op in case the type is unrecognized (default: fail to process) */
-	compatDetails: IContainerRuntimeMessageCompatDetails;
 }
 
 export type ContainerRuntimeDataStoreOpMessage = TypedContainerRuntimeMessage<
@@ -140,11 +112,10 @@ export type ContainerRuntimeIdAllocationMessage = TypedContainerRuntimeMessage<
 export type ContainerRuntimeGCMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.GC,
 	GarbageCollectionMessage
-> &
-	// While deprecating: GC messages may still contain compat details for now
-	Partial<RecentlyAddedContainerRuntimeMessageDetails>;
+>;
 export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage<
 	ContainerMessageType.DocumentSchemaChange,
+	// eslint-disable-next-line import/no-deprecated
 	IDocumentSchemaChangeMessage
 >;
 
@@ -152,15 +123,17 @@ export type ContainerRuntimeDocumentSchemaMessage = TypedContainerRuntimeMessage
  * Represents an unrecognized TypedContainerRuntimeMessage, e.g. a message from a future version of the container runtime.
  * @internal
  */
-export interface UnknownContainerRuntimeMessage
-	extends Partial<RecentlyAddedContainerRuntimeMessageDetails> {
-	/** Invalid type of the op, within the ContainerRuntime's domain. This value should never exist at runtime.
+export interface UnknownContainerRuntimeMessage {
+	/**
+	 * Invalid type of the op, within the ContainerRuntime's domain. This value should never exist at runtime.
 	 * This is useful for type narrowing but should never be used as an actual message type at runtime.
 	 * Actual value will not be "__unknown...", but the type `Exclude<string, ContainerMessageType>` is not supported.
 	 */
 	type: "__unknown_container_message_type__never_use_as_value__";
 
-	/** Domain-specific contents, but not decipherable by an unknown op. */
+	/**
+	 * Domain-specific contents, but not decipherable by an unknown op.
+	 */
 	contents: unknown;
 }
 
@@ -196,7 +169,9 @@ export type LocalContainerRuntimeMessage =
 	| UnknownContainerRuntimeMessage
 	| ContainerRuntimeDocumentSchemaMessage;
 
-/** A {@link TypedContainerRuntimeMessage} that is being sent to the server from the container runtime. */
+/**
+ * A {@link TypedContainerRuntimeMessage} that is being sent to the server from the container runtime.
+ */
 export type OutboundContainerRuntimeMessage =
 	| ContainerRuntimeDataStoreOpMessage
 	| OutboundContainerRuntimeAttachMessage
@@ -217,23 +192,3 @@ export type InboundSequencedContainerRuntimeMessage = Omit<
 	"type" | "contents"
 > &
 	InboundContainerRuntimeMessage;
-
-/** Essentially ISequencedDocumentMessage except that `type` is not `string` to enable narrowing
- * as `Exclude<string, InboundContainerRuntimeMessage['type']>` is not supported.
- * There should never be a runtime value of "__not_a_...".
- * Currently additionally replaces `contents` type until protocol-definitions update is taken with `unknown` instead of `any`.
- */
-type InboundSequencedNonContainerRuntimeMessage = Omit<
-	ISequencedDocumentMessage,
-	"type" | "contents"
-> & { type: "__not_a_container_runtime_message_type__"; contents: unknown };
-
-export type InboundSequencedContainerRuntimeMessageOrSystemMessage =
-	| InboundSequencedContainerRuntimeMessage
-	| InboundSequencedNonContainerRuntimeMessage;
-
-/** A [loose] InboundSequencedContainerRuntimeMessage that is recent and may contain compat details.
- * It exists solely to to provide access to those details.
- */
-export type InboundSequencedRecentlyAddedContainerRuntimeMessage = ISequencedDocumentMessage &
-	Partial<RecentlyAddedContainerRuntimeMessageDetails>;

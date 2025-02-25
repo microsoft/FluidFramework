@@ -3,17 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangesetLocalId, RevisionTag } from "../../core/index.js";
-import {
-	type RangeMap,
-	type RangeQueryResult,
-	getFromRangeMap,
-	getOrAddInMap,
-	setInRangeMap,
-} from "../../util/index.js";
+import type {
+	ChangeAtomId,
+	ChangeAtomIdRangeMap,
+	ChangesetLocalId,
+	RevisionTag,
+} from "../../core/index.js";
+import type { RangeQueryResult } from "../../util/index.js";
 import type { NodeId } from "./modularChangeTypes.js";
 
-export type CrossFieldMap<T> = Map<RevisionTag | undefined, RangeMap<T>>;
+export type CrossFieldMap<T> = ChangeAtomIdRangeMap<T>;
 export type CrossFieldQuerySet = CrossFieldMap<boolean>;
 
 export function addCrossFieldQuery(
@@ -32,7 +31,7 @@ export function setInCrossFieldMap<T>(
 	count: number,
 	value: T,
 ): void {
-	setInRangeMap(getOrAddInMap(map, revision, []), id, count, value);
+	map.set({ revision, localId: id }, count, value);
 }
 
 export function getFirstFromCrossFieldMap<T>(
@@ -40,12 +39,11 @@ export function getFirstFromCrossFieldMap<T>(
 	revision: RevisionTag | undefined,
 	id: ChangesetLocalId,
 	count: number,
-): RangeQueryResult<T> {
-	return getFromRangeMap(map.get(revision) ?? [], id, count);
+): RangeQueryResult<ChangeAtomId, T> {
+	return map.getFirst({ revision, localId: id }, count);
 }
 
 /**
- * @internal
  */
 export enum CrossFieldTarget {
 	Source,
@@ -55,7 +53,6 @@ export enum CrossFieldTarget {
 /**
  * Used by {@link FieldChangeHandler} implementations for exchanging information across other fields
  * while rebasing, composing, or inverting a change.
- * @internal
  */
 export interface CrossFieldManager<T = unknown> {
 	/**
@@ -68,7 +65,7 @@ export interface CrossFieldManager<T = unknown> {
 		id: ChangesetLocalId,
 		count: number,
 		addDependency: boolean,
-	): RangeQueryResult<T>;
+	): RangeQueryResult<ChangeAtomId, T>;
 
 	/**
 	 * Sets the range of keys to `newValue`.

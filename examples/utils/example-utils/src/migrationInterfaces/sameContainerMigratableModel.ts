@@ -3,11 +3,47 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 
-import type { IImportExportModel, IVersionedModel } from "./migratableModel.js";
 import type { ISameContainerMigrationTool } from "./sameContainerMigrationTool.js";
+
+/**
+ * A model with a detectable version.
+ *
+ * @remarks
+ * It's appropriate to use this version to deduce the more specific type of model.
+ * @internal
+ */
+export interface IVersionedModel {
+	/**
+	 * The string version of the model, matching the version of the container code it's paired with.
+	 */
+	readonly version: string;
+}
+
+/**
+ * A model that can import data of ImportType when in detached state, and can also export its data to ExportType.
+ * @internal
+ */
+export interface IImportExportModel<ImportType, ExportType> {
+	/**
+	 * Permit format checking in a generic manner - without knowing the type of our data or the type of the model,
+	 * we can still check whether the model supports that data.
+	 */
+	supportsDataFormat: (initialData: unknown) => initialData is ImportType;
+
+	/**
+	 * importData must be called after initialization but before modifying or attaching the model (i.e. can only
+	 * be called on an unaltered, detached model).
+	 */
+	importData: (initialData: ImportType) => Promise<void>;
+
+	/**
+	 * Export the data from the model.  Can be passed into importData() for a new container to replicate the data.
+	 */
+	exportData: () => Promise<ExportType>;
+}
 
 /**
  * @internal

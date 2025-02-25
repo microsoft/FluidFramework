@@ -6,7 +6,10 @@
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	type ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { IBatch, type BatchMessage } from "./definitions.js";
 
@@ -24,8 +27,11 @@ interface IGroupedMessage {
 	compression?: string;
 }
 
-function isGroupContents(opContents: any): opContents is IGroupedBatchMessageContents {
-	return opContents?.type === OpGroupingManager.groupedBatchOp;
+function isGroupContents(opContents: unknown): opContents is IGroupedBatchMessageContents {
+	return (
+		(opContents as Partial<IGroupedBatchMessageContents>)?.type ===
+		OpGroupingManager.groupedBatchOp
+	);
 }
 
 export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
@@ -34,19 +40,51 @@ export function isGroupedBatch(op: ISequencedDocumentMessage): boolean {
 
 export interface OpGroupingManagerConfig {
 	readonly groupedBatchingEnabled: boolean;
-	readonly opCountThreshold: number;
-	readonly reentrantBatchGroupingEnabled: boolean;
 }
 
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
-	private readonly logger;
+	private readonly logger: ITelemetryLoggerExt;
 
 	constructor(
 		private readonly config: OpGroupingManagerConfig,
 		logger: ITelemetryBaseLogger,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "OpGroupingManager" });
+	}
+
+	/**
+	 * Creates a new batch with a single message of type "groupedBatch" and empty contents.
+	 * This is needed as a placeholder if a batch becomes empty on resubmit, but we are tracking batch IDs.
+	 * @param resubmittingBatchId - batch ID of the resubmitting batch
+	 * @param referenceSequenceNumber - reference sequence number
+	 * @returns - IBatch containing a single empty Grouped Batch op
+	 */
+	public createEmptyGroupedBatch(
+		resubmittingBatchId: string,
+		referenceSequenceNumber: number,
+	): IBatch<[BatchMessage]> {
+		assert(
+			this.config.groupedBatchingEnabled,
+			0xa00 /* cannot create empty grouped batch when grouped batching is disabled */,
+		);
+		const serializedContent = JSON.stringify({
+			type: OpGroupingManager.groupedBatchOp,
+			contents: [],
+		});
+
+		return {
+			contentSizeInBytes: 0,
+			messages: [
+				{
+					metadata: { batchId: resubmittingBatchId },
+					localOpMetadata: { emptyBatch: true },
+					referenceSequenceNumber,
+					contents: serializedContent,
+				},
+			],
+			referenceSequenceNumber,
+		};
 	}
 
 	/**
@@ -63,17 +101,18 @@ export class OpGroupingManager {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
 				length: batch.messages.length,
-				threshold: this.config.opCountThreshold,
 				reentrant: batch.hasReentrantOps,
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
+				referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
 			});
 		}
-
+		// We expect this will be on the first message, if present at all.
+		let groupedBatchId;
 		for (const message of batch.messages) {
 			if (message.metadata) {
 				const { batch: _batch, batchId, ...rest } = message.metadata;
+				if (batchId) {
+					groupedBatchId = batchId;
+				}
 				assert(Object.keys(rest).length === 0, 0x5dd /* cannot group ops with metadata */);
 			}
 		}
@@ -91,10 +130,8 @@ export class OpGroupingManager {
 			...batch,
 			messages: [
 				{
-					metadata: undefined,
-					// TODO why are we non null asserting here?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					referenceSequenceNumber: batch.messages[0]!.referenceSequenceNumber,
+					metadata: { batchId: groupedBatchId },
+					referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
 					contents: serializedContent,
 				},
 			],
@@ -120,10 +157,13 @@ export class OpGroupingManager {
 		return (
 			// Grouped batching must be enabled
 			this.config.groupedBatchingEnabled &&
-			// The number of ops in the batch must surpass the configured threshold
-			batch.messages.length >= this.config.opCountThreshold &&
-			// Support for reentrant batches must be explicitly enabled
-			(this.config.reentrantBatchGroupingEnabled || batch.hasReentrantOps !== true)
+			// The number of ops in the batch must be 2 or more
+			// or be empty (to allow for empty batches to be grouped)
+			batch.messages.length !== 1
+			// Support for reentrant batches will be on by default
 		);
+	}
+	public groupedBatchingEnabled(): boolean {
+		return this.config.groupedBatchingEnabled;
 	}
 }

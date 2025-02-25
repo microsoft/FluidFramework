@@ -4,7 +4,7 @@
  */
 
 import { SharedJson1 } from "@fluid-experimental/sharejs-json1";
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/internal";
+import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import { AppState } from "./state.js";
@@ -17,7 +17,7 @@ export class Bubblebench extends DataObject {
 	private maybeTree?: SharedJson1 = undefined;
 	private maybeAppState?: AppState = undefined;
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const tree = (this.maybeTree = SharedJson1.create(this.runtime));
 		const initialTree = { clients: [] };
 		// unknown used to workaround recursive Doc type that otherwise results in
@@ -26,12 +26,12 @@ export class Bubblebench extends DataObject {
 		this.root.set("tree", this.maybeTree.handle);
 	}
 
-	protected async initializingFromExisting() {
+	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.maybeTree = await this.root.get<IFluidHandle<SharedJson1>>("tree")!.get();
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this.maybeAppState = new AppState(
 			this.tree,
 			/* stageWidth: */ 640,
@@ -39,7 +39,8 @@ export class Bubblebench extends DataObject {
 			/* numBubbles: */ 1,
 		);
 
-		const onConnected = () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		const onConnected = (): void => {
 			// Out of paranoia, we periodically check to see if your client Id has changed and
 			// update the tree if it has.
 			setInterval(() => {
@@ -58,12 +59,11 @@ export class Bubblebench extends DataObject {
 		}
 	}
 
-	private get tree() {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.maybeTree!;
+	private get tree(): SharedJson1 {
+		return this.maybeTree ?? fail("tree not initialized");
 	}
 
-	public get appState() {
+	public get appState(): AppState {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.maybeAppState!;
 	}

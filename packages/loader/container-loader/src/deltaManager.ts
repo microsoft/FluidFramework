@@ -5,8 +5,8 @@
 
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import {
-	IDeltaManager,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	type IDeltaSender,
 	type ReadOnlyInfo,
@@ -30,11 +30,7 @@ import {
 	type IClientDetails,
 	type IClientConfiguration,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	MessageType2,
-	NonRetryableError,
-	isRuntimeMessage,
-} from "@fluidframework/driver-utils/internal";
+import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
@@ -116,7 +112,7 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
 		case MessageType.Propose:
 		case MessageType.Reject:
 		case MessageType.NoOp:
-		case MessageType2.Accept:
+		case MessageType.Accept:
 		case MessageType.Summarize: {
 			return true;
 		}
@@ -155,9 +151,7 @@ function logIfFalse(
  */
 export class DeltaManager<TConnectionManager extends IConnectionManager>
 	extends EventEmitterWithErrorHandling<IDeltaManagerInternalEvents>
-	implements
-		IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		IEventProvider<IDeltaManagerInternalEvents>
+	implements IDeltaManagerFull, IEventProvider<IDeltaManagerInternalEvents>
 {
 	public readonly connectionManager: TConnectionManager;
 
@@ -357,22 +351,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (batch.length === 1) {
 			assert(
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				(batch[0]!.metadata as IBatchMetadata)?.batch === undefined,
+				(batch[0].metadata as IBatchMetadata)?.batch === undefined,
 				0x3c9 /* no batch markup on single message */,
 			);
 		} else {
 			assert(
-				// TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				(batch[0]!.metadata as IBatchMetadata)?.batch === true,
+				(batch[0].metadata as IBatchMetadata)?.batch === true,
 				0x3ca /* no start batch markup */,
 			);
 			assert(
-				// TODO why are we non null asserting here?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				(batch[batch.length - 1]!.metadata as IBatchMetadata)?.batch === false,
+				(batch[batch.length - 1].metadata as IBatchMetadata)?.batch === false,
 				0x3cb /* no end batch markup */,
 			);
 		}
@@ -490,8 +478,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			if (this.handler === undefined) {
 				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
+
 			this.handler.processSignal({
-				clientId: message.clientId,
+				...message,
 				content: JSON.parse(message.content as string),
 			});
 		});
@@ -898,12 +887,8 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			return;
 		}
 
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const from = messages[0]!.sequenceNumber;
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const last = messages[messages.length - 1]!.sequenceNumber;
+		const from = messages[0].sequenceNumber;
+		const last = messages[messages.length - 1].sequenceNumber;
 
 		// Report stats about missing and duplicate ops
 		// This helps better understand why we fetch ops from storage, and thus may delay
@@ -970,9 +955,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			}
 		}
 
-		// Non null asserting here because of the length check above
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.updateLatestKnownOpSeqNumber(messages[messages.length - 1]!.sequenceNumber);
+		this.updateLatestKnownOpSeqNumber(messages[messages.length - 1].sequenceNumber);
 
 		const n = this.previouslyProcessedMessage?.sequenceNumber;
 		assert(
@@ -1046,15 +1029,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			});
 		}
 
-		// TODO Remove after SPO picks up the latest build.
-		if (
-			typeof message.contents === "string" &&
-			message.contents !== "" &&
-			message.type !== MessageType.ClientLeave
-		) {
-			message.contents = JSON.parse(message.contents);
-		}
-
 		// Validate client sequence number has no gap. Decrement the noOpCount by gap
 		// If the count ends up negative, that means we have a real gap and throw error
 		if (
@@ -1076,11 +1050,20 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		// Watch the minimum sequence number and be ready to update as needed
 		if (this.minSequenceNumber > message.minimumSequenceNumber) {
-			// pre-0.58 error message: msnMovesBackwards
-			throw new DataCorruptionError(
-				"Found a lower minimumSequenceNumber (msn) than previously recorded",
+			// This indicates that an invalid series of ops was received by this client.
+			// In the unlikely case where these ops have been truly sequenced and persisted to storage,
+			// this document is corrupted - It will fail here on boot every time.
+			// The more likely scenario, based on the realities of production service operation, is that
+			// something has changed out from under the file on the server, such that the service lost some ops
+			// which this client already processed - the very ops that made this _next_ op to appear invalid.
+			// In this case, only this client will fail (and lose this recent data), but others will be able to connect and continue.
+			throw DataProcessingError.create(
+				// error message through v0.57: msnMovesBackwards
+				// error message through v2.1: "Found a lower minimumSequenceNumber (msn) than previously recorded",
+				"Invalid MinimumSequenceNumber from service - document may have been restored to previous state",
+				"DeltaManager.processInboundMessage",
+				message,
 				{
-					...extractSafePropertiesFromMessage(message),
 					clientId: this.connectionManager.clientId,
 				},
 			);

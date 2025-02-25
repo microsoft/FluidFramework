@@ -7,8 +7,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable unicorn/consistent-function-scoping */
 /* eslint-disable unicorn/no-null */
 
 import { strict as assert } from "node:assert";
@@ -29,6 +27,7 @@ import {
 	normalizeError,
 	wrapError,
 	wrapErrorAndLog,
+	generateStack,
 } from "../errorLogging.js";
 import { type IFluidErrorBase, isFluidError } from "../fluidErrorBase.js";
 import { TaggedLoggerAdapter, TelemetryDataTag, TelemetryLogger } from "../logger.js";
@@ -915,11 +914,9 @@ describe("normalizeError", () => {
 				expected.withExpectedTelemetryProps({ stack: inputStack });
 			}
 		}
-		for (const annotationCase of Object.keys(annotationCases)) {
-			const annotations = annotationCases[annotationCase];
+		for (const [annotationCase, annotations] of Object.entries(annotationCases)) {
 			let doneOnceForThisAnnotationCase = false;
-			for (const caseName of Object.keys(testCases)) {
-				const getTestCase = testCases[caseName];
+			for (const [caseName, getTestCase] of Object.entries(testCases)) {
 				if (!doneOnceForThisAnnotationCase) {
 					doneOnceForThisAnnotationCase = true;
 					// Each test case only differs by what stack/error are.  Test the rest only once per annotation case.
@@ -1118,5 +1115,28 @@ describe("Error Discovery", () => {
 			"Valid Fluid Error with errorInstanceId removed is not a Fluid Error",
 		);
 		assert(isFluidError(createTestError("hello")), "Valid Fluid Error is a Fluid Error");
+	});
+});
+
+describe("generateStack Tests", () => {
+	function a(stackTraceLimit?: number): string | undefined {
+		return generateStack(stackTraceLimit);
+	}
+
+	function b(stackTraceLimit?: number): string | undefined {
+		return a(stackTraceLimit);
+	}
+
+	function c(stackTraceLimit?: number): string | undefined {
+		return b(stackTraceLimit);
+	}
+	it("Show stack trace with a given stackTraceLimit", () => {
+		const originalLimit = Error.stackTraceLimit;
+		const stack = c(1)?.split("\n");
+		assert(stack !== undefined);
+		assert(stack.length === 2);
+		assert(stack[0].includes("<<generated stack>>"));
+		assert(stack[1].includes("at generateErrorWithStack"));
+		assert(originalLimit === Error.stackTraceLimit);
 	});
 });

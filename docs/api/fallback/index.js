@@ -3,24 +3,37 @@
  * Licensed under the MIT License.
  */
 
-// Map of incoming URL paths to redirect URLs
-const routes = new Map([
-	["/docs/apis", "/docs/api/v2"],
-	["/docs/api/current", "/docs/api/v2"],
-	["/docs/api/lts", "/docs/api/v1"],
-]);
+const routes = require("./routes.js");
 
 /**
- * Handles incoming HTTP requests and redirects them to the appropriate URL based on the current and LTS versions.
- * It reads the versions from /docs/data/versions.json and matches the incoming URL to a set of predefined routes.
- * If a matching route is found, it constructs and returns the redirect URL. Otherwise, it returns a 404 response.
+ * Handles incoming HTTP requests and redirects them based on configured {@link routes}.
+ * If no route is configured, will redirect to `/404`.
+ *
+ * @remarks Azure will only call this for URLs without matching static files.
  */
-module.exports = async (context, { headers }) => {
-	const { pathname, search } = new URL(headers["x-ms-original-url"]);
-	const route = [...routes].find(([path, _]) => pathname.startsWith(path));
+async function fallback(context, request) {
+	const originalUrl = request.headers["x-ms-original-url"];
+	const { pathname, search } = new URL(originalUrl);
 
-	context.res = {
-		status: route ? 302 : 404,
-		headers: { location: route ? `${pathname.replace(...route)}${search}` : "/404" },
-	};
-};
+	// Find the redirect for the provided path, if any.
+	const route = routes.find(({ from }) => pathname.startsWith(from));
+
+	if (route) {
+		// A redirect was configured for the path.
+		// Forward to the new location.
+		const redirectLocation = `${pathname.replace(route.from, route.to)}${search}`;
+		return {
+			status: 302,
+			headers: { location: redirectLocation },
+		};
+	} else {
+		// No redirect was configured for the provided path.
+		// Return 404.
+		return {
+			status: 404,
+			headers: { location: "/404" },
+		};
+	}
+}
+
+module.exports = fallback;

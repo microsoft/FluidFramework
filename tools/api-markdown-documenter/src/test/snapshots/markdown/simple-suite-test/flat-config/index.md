@@ -2,4 +2,5 @@
 
 | Package | Description |
 | --- | --- |
-| [simple-suite-test](docs/simple-suite-test) | <b>Test package</b> |
+| [test-suite-a](docs/test-suite-a) | Test package |
+| [test-suite-b](docs/test-suite-b) |  |

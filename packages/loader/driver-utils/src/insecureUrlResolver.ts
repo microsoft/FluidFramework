@@ -54,14 +54,10 @@ export class InsecureUrlResolver implements IUrlResolver {
 		if (this.isForNodeTest) {
 			const [, documentId, tmpRelativePath] = parsedUrl.pathname.substr(1).split("/");
 			const relativePath = tmpRelativePath ?? "";
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			return this.resolveHelper(documentId!, relativePath, parsedUrl.search);
+			return this.resolveHelper(documentId, relativePath, parsedUrl.search);
 		} else if (parsedUrl.host === window.location.host) {
 			const fullPath = parsedUrl.pathname.substr(1);
-			// TODO why are we non null asserting here?
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const documentId = fullPath.split("/")[0]!;
+			const documentId = fullPath.split("/")[0];
 			const documentRelativePath = fullPath.slice(documentId.length);
 			return this.resolveHelper(documentId, documentRelativePath);
 		} else {
@@ -148,7 +144,7 @@ export class InsecureUrlResolver implements IUrlResolver {
 	): Promise<string> {
 		const parsedUrl = new URL(resolvedUrl.url);
 		const [, , documentId] = parsedUrl.pathname?.split("/") ?? [];
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+
 		assert(!!documentId, 0x273 /* "Invalid document id from parsed URL" */);
 
 		let url = relativeUrl;

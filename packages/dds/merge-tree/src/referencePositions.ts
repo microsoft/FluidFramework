@@ -7,6 +7,7 @@ import { SlidingPreference } from "./localReference.js";
 import { ISegment } from "./mergeTreeNodes.js";
 import { ReferenceType } from "./ops.js";
 import { PropertySet } from "./properties.js";
+import { isMergeNodeInfo } from "./segmentInfos.js";
 
 /**
  * @internal
@@ -97,12 +98,6 @@ export interface ReferencePosition {
 	 */
 	getOffset(): number;
 
-	/**
-	 * @param newProps - Properties to add to this reference.
-	 * @remarks Note that merge-tree does not broadcast changes to other clients. It is up to the consumer
-	 * to ensure broadcast happens if that is desired.
-	 */
-	addProperties(newProps: PropertySet): void;
 	isLeaf(): this is ISegment;
 }
 
@@ -137,6 +132,8 @@ export function compareReferencePositions(a: ReferencePosition, b: ReferencePosi
 	if (aSeg === bSeg) {
 		return a.getOffset() - b.getOffset();
 	} else {
-		return aSeg === undefined || (bSeg !== undefined && aSeg.ordinal < bSeg.ordinal) ? -1 : 1;
+		return !isMergeNodeInfo(aSeg) || (isMergeNodeInfo(bSeg) && aSeg.ordinal < bSeg.ordinal)
+			? -1
+			: 1;
 	}
 }

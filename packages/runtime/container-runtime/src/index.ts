@@ -10,7 +10,9 @@ export {
 	ISummaryConfigurationDisableSummarizer,
 	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
-	isRuntimeMessage,
+	IContainerRuntimeOptionsInternal,
+	loadContainerRuntime,
+	LoadContainerRuntimeParams,
 	agentSchedulerId,
 	ContainerRuntime,
 	DeletedResponseHeaderKey,
@@ -25,9 +27,6 @@ export {
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
-	IContainerRuntimeMessageCompatDetails,
-	CompatModeBehavior,
-	RecentlyAddedContainerRuntimeMessageDetails,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 export { IBlobManagerLoadInfo } from "./blobManager/index.js";
@@ -37,7 +36,6 @@ export {
 	RuntimeHeaders,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
-	AllowInactiveRequestHeaderKey,
 } from "./channelCollection.js";
 export {
 	GCNodeType,
@@ -57,7 +55,6 @@ export {
 	ISummaryCancellationToken,
 	neverCancelledSummaryToken,
 	Summarizer,
-	SummarizerStopReason,
 	SummaryCollection,
 	EnqueueSummarizeResult,
 	IAckSummaryResult,
@@ -77,7 +74,6 @@ export {
 	ISubmitSummaryOptions,
 	ISerializedElection,
 	ISummarizeOptions,
-	ISummarizerEvents,
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
@@ -97,7 +93,6 @@ export {
 	SubmitSummaryFailureData,
 	SummaryStage,
 	IRetriableFailureError,
-	ISummarizeEventProps,
 	IdCompressorMode,
 	IDocumentSchema,
 	DocumentSchemaValueType,

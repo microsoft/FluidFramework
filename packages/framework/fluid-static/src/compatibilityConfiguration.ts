@@ -5,7 +5,7 @@
 
 import {
 	CompressionAlgorithms,
-	type IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
@@ -17,7 +17,7 @@ import type { CompatibilityMode } from "./types.js";
  */
 export const compatibilityModeRuntimeOptions: Record<
 	CompatibilityMode,
-	IContainerRuntimeOptions
+	IContainerRuntimeOptionsInternal
 > = {
 	"1": {
 		// 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
@@ -33,9 +33,9 @@ export const compatibilityModeRuntimeOptions: Record<
 		enableGroupedBatching: false,
 		// TODO: Include explicit disables for things that are currently off-by-default?
 
-		// Explicitly disable running Sweep and enforcing Tombstone
-		// This ensures we don't send the new GC op which is not compatible with 1.x clients
-		gcOptions: { enableGCSweep: undefined, gcDisableThrowOnTombstoneLoad: true },
+		// Explicitly disable running Sweep in compat mode "1". Sweep is supported only in 2.x. So, when 1.x and 2.x
+		// clients are running in parallel, running sweep will fail 1.x clients.
+		gcOptions: { enableGCSweep: undefined },
 	},
 	"2": {
 		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
@@ -44,7 +44,8 @@ export const compatibilityModeRuntimeOptions: Record<
 		// The runtime ID compressor is a prerequisite to use SharedTree but is off by default and must be explicitly enabled.
 		// It introduces a new type of op which is not compatible with 1.x clients.
 		enableRuntimeIdCompressor: "on",
-		// GC is not yet enabled by default, although it could be enabled here from a compat standpoint
-		gcOptions: { enableGCSweep: undefined, gcDisableThrowOnTombstoneLoad: true },
+		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
+		// This setting explicitly disables it to be extra safe.
+		gcOptions: { enableGCSweep: undefined },
 	},
 };

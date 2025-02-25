@@ -7,7 +7,9 @@ import fs from "fs";
 import http from "http";
 import { AddressInfo } from "net";
 import path from "path";
+
 import rewire from "rewire";
+
 import * as HashNode from "../../hashFileNode";
 
 // Use rewire to access private functions
@@ -131,7 +133,9 @@ describe("Common-Utils", () => {
 
 	afterAll(async () => {
 		await new Promise((resolve) => {
-			server?.close(resolve);
+			server.close(resolve);
+			// Puppeteer may have lingering connections which prevents the server from closing otherwise.
+			server.closeAllConnections();
 		});
 	});
 

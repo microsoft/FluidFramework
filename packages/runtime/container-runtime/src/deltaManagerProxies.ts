@@ -6,8 +6,8 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	IConnectionDetails,
-	IDeltaManager,
 	IDeltaManagerEvents,
+	IDeltaManagerFull,
 	IDeltaQueue,
 	IDeltaSender,
 	ReadOnlyInfo,
@@ -33,7 +33,7 @@ import { summarizerClientType } from "./summary/index.js";
  */
 export abstract class BaseDeltaManagerProxy
 	extends TypedEventEmitter<IDeltaManagerEvents>
-	implements IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>
+	implements IDeltaManagerFull
 {
 	public get IDeltaSender(): IDeltaSender {
 		return this;
@@ -59,11 +59,11 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.lastSequenceNumber;
 	}
 
-	public get lastMessage() {
+	public get lastMessage(): ISequencedDocumentMessage | undefined {
 		return this.deltaManager.lastMessage;
 	}
 
-	public get lastKnownSeqNumber() {
+	public get lastKnownSeqNumber(): number {
 		return this.deltaManager.lastKnownSeqNumber;
 	}
 
@@ -71,7 +71,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.initialSequenceNumber;
 	}
 
-	public get hasCheckpointSequenceNumber() {
+	public get hasCheckpointSequenceNumber(): boolean {
 		return this.deltaManager.hasCheckpointSequenceNumber;
 	}
 
@@ -99,12 +99,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.readOnlyInfo;
 	}
 
-	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
-	) {
+	constructor(protected readonly deltaManager: IDeltaManagerFull) {
 		super();
 
 		// We are expecting this class to have many listeners, so we suppress noisy "MaxListenersExceededWarning" logging.
@@ -137,7 +132,7 @@ export abstract class BaseDeltaManagerProxy
 		return this.deltaManager.flush();
 	}
 
-	private readonly onPrepareSend = (messageBuffer: any[]): void => {
+	private readonly onPrepareSend = (messageBuffer: unknown[]): void => {
 		this.emit("prepareSend", messageBuffer);
 	};
 	private readonly onSubmitOp = (message: IDocumentMessage): void => {
@@ -194,12 +189,7 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 
 	private readonly isSummarizerClient: boolean;
 
-	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
-	) {
+	constructor(protected readonly deltaManager: IDeltaManagerFull) {
 		super(deltaManager);
 		this.isSummarizerClient = this.deltaManager.clientDetails.type === summarizerClientType;
 	}
@@ -208,10 +198,17 @@ export class DeltaManagerSummarizerProxy extends BaseDeltaManagerProxy {
 export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	public get minimumSequenceNumber(): number {
 		const minPendingSeqNum = this.pendingStateManager.minimumPendingMessageSequenceNumber;
-		// There is a chance that minPendingSeqNum is greater than minimum sequence number.
-		// minPendingSeqNum is based on the pending ops, so it's based on ref seq number.
-		// Imagine an op has just be sent while there's another client that has been lagging behind,
-		// it will likely have a ref seq number greater than the minimum seq number.
+		/**
+		 * The reason why the minimum pending sequence number can be less than the delta manager's minimum sequence
+		 * number (DM's msn) is that when we are processing messages in the container runtime/delta manager, the delta
+		 * manager's msn can be updated to continually increase. In the meantime, the pending state manager's op which
+		 * hasn't been sent can still have a lower sequence number than the DM's msn (think about a disconnected
+		 * scenario). To successfully resubmit that pending op it has to be rebased first by the DDS. The DDS still
+		 * needs to keep the local data for that op that has a reference sequence number lower than the DM's msn. To
+		 * achieve this, the msn passed to the DDS needs to be the minimum of the DM's msn and the minimum pending
+		 * sequence number, so that it can keep the relevant local data to generate the right data for the new op
+		 * during resubmission.
+		 */
 		if (
 			minPendingSeqNum !== undefined &&
 			minPendingSeqNum < this.deltaManager.minimumSequenceNumber
@@ -221,7 +218,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 		return this.deltaManager.minimumSequenceNumber;
 	}
 
-	public get lastMessage() {
+	public get lastMessage(): ISequencedDocumentMessage | undefined {
 		if (this.deltaManager.lastMessage === undefined) {
 			return this.deltaManager.lastMessage;
 		}
@@ -243,10 +240,7 @@ export class DeltaManagerPendingOpsProxy extends BaseDeltaManagerProxy {
 	};
 
 	constructor(
-		protected readonly deltaManager: IDeltaManager<
-			ISequencedDocumentMessage,
-			IDocumentMessage
-		>,
+		protected readonly deltaManager: IDeltaManagerFull,
 		private readonly pendingStateManager: Pick<
 			PendingStateManager,
 			"minimumPendingMessageSequenceNumber"

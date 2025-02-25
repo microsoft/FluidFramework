@@ -6,8 +6,6 @@
 		"types": ["mocha", "node"],
 		// Allows writing type checking expression without having to use the results.
 		"noUnusedLocals": false,
-		// Allow testing that declarations work properly
-		"declaration": true,
 	},
 	"include": ["./**/*"],
 	"references": [

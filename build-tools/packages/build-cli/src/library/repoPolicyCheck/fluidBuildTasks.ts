@@ -7,20 +7,23 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import {
+	updatePackageJsonFile,
+	updatePackageJsonFileAsync,
+} from "@fluid-tools/build-infrastructure";
+import {
 	FluidRepo,
 	Package,
 	PackageJson,
 	TscUtils,
 	getEsLintConfigFilePath,
+	getFluidBuildConfig,
 	getTaskDefinitions,
-	loadFluidBuildConfig,
 	normalizeGlobalTaskDefinitions,
-	updatePackageJsonFile,
-	updatePackageJsonFileAsync,
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
 import * as semver from "semver";
 import { TsConfigJson } from "type-fest";
+import { getFlubConfig } from "../../config.js";
 import { Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
@@ -35,8 +38,7 @@ const getFluidBuildTasksTscIgnore = (root: string): Set<string> => {
 	const rootDir = path.resolve(root);
 	let ignore = fluidBuildTasksTscIgnoreTasksCache.get(rootDir);
 	if (ignore === undefined) {
-		const ignoreArray =
-			loadFluidBuildConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
+		const ignoreArray = getFlubConfig(rootDir)?.policy?.fluidBuildTasks?.tsc?.ignoreTasks;
 		ignore = ignoreArray ? new Set(ignoreArray) : new Set();
 		fluidBuildTasksTscIgnoreTasksCache.set(rootDir, ignore);
 	}
@@ -51,7 +53,8 @@ function getFluidPackageMap(root: string): Map<string, Package> {
 	const rootDir = path.resolve(root);
 	let record = repoCache.get(rootDir);
 	if (record === undefined) {
-		const repo = FluidRepo.create(rootDir);
+		const fluidBuildConfig = getFluidBuildConfig(rootDir);
+		const repo = new FluidRepo(rootDir, fluidBuildConfig.repoPackages);
 		const packageMap = repo.createPackageMap();
 		record = { repo, packageMap };
 		repoCache.set(rootDir, record);
@@ -105,27 +108,6 @@ function findScript(json: Readonly<PackageJson>, command: string): string | unde
 }
 
 /**
- * Find the script name for the tsc-multi command in a npm package.json
- *
- * @param json - the package.json content to search script in
- * @param config - the tsc-multi config to check for
- * @returns first script name found to match the command
- *
- * @remarks
- */
-function findTscMultiScript(json: PackageJson, config: string): string | undefined {
-	for (const [script, scriptCommands] of Object.entries(json.scripts)) {
-		if (scriptCommands === undefined) {
-			continue;
-		}
-
-		if (scriptCommands.startsWith("tsc-multi") && scriptCommands.includes(config)) {
-			return script;
-		}
-	}
-}
-
-/**
  * Find the script name for the fluid-tsc command in a package.json
  *
  * @param json - the package.json content to search script in
@@ -170,12 +152,9 @@ function findTscScript(json: Readonly<PackageJson>, project: string): string | u
 	if (project === "./tsconfig.json") {
 		addIfDefined(findScript(json, "tsc"));
 		addIfDefined(findFluidTscScript(json, undefined));
-		addIfDefined(findTscMultiScript(json, "tsc-multi.cjs.json"));
-		addIfDefined(findTscMultiScript(json, "tsc-multi.node16.cjs.json"));
 	}
 	addIfDefined(findScript(json, `tsc --project ${project}`));
 	addIfDefined(findFluidTscScript(json, project));
-	addIfDefined(findTscMultiScript(json, project));
 	if (tscScripts.length === 1) {
 		return tscScripts[0];
 	}
@@ -321,6 +300,15 @@ function isFluidBuildEnabled(root: string, json: Readonly<PackageJson>): boolean
 	return getFluidPackageMap(root).get(json.name) !== undefined;
 }
 
+function getOrSet<T>(map: Map<string, T>, key: string, defaultValue: T): T {
+	const value = map.get(key);
+	if (value !== undefined) {
+		return value;
+	}
+	map.set(key, defaultValue);
+	return defaultValue;
+}
+
 /**
  * Check if a task has a specific dependency
  * @param root - directory of the Fluid repo root
@@ -335,14 +323,27 @@ function hasTaskDependency(
 	taskName: string,
 	searchDeps: readonly string[],
 ): boolean {
-	const rootConfig = loadFluidBuildConfig(root);
+	const rootConfig = getFluidBuildConfig(root);
 	const globalTaskDefinitions = normalizeGlobalTaskDefinitions(rootConfig?.tasks);
-	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, false);
+	const taskDefinitions = getTaskDefinitions(json, globalTaskDefinitions, {
+		isReleaseGroupRoot: false,
+	});
 	// Searched deps that are package specific (e.g. <packageName>#<taskName>)
 	// It is expected that all packageNames are other packages' names; using
 	// given package's name (json.name) will alway return false as package is
 	// not a dependency of itself. Skip "name# prefix for self dependencies.
 	const packageSpecificSearchDeps = searchDeps.filter((d) => d.includes("#"));
+	const secondaryPackagesTasksToConsider = new Map<
+		string,
+		{ searchDeps: string[]; tasks: Set<string> }
+	>();
+	for (const d of packageSpecificSearchDeps) {
+		const [pkg, task] = d.split("#");
+		getOrSet(secondaryPackagesTasksToConsider, pkg, {
+			searchDeps: [],
+			tasks: new Set<string>(),
+		}).searchDeps.push(task);
+	}
 	/**
 	 * Set of package dependencies
 	 */
@@ -373,10 +374,13 @@ function hasTaskDependency(
 		if (dep.startsWith("^")) {
 			// ^ means "depends on the task of the same name in all package dependencies".
 			// dep of exactly ^* means "_all_ tasks in all package dependencies".
-			const regexSearchMatches = new RegExp(dep === "^*" ? "." : `#${dep.slice(1)}$`);
+			const depPattern = dep.slice(1);
+			const regexSearchMatches = new RegExp(depPattern === "*" ? "." : `#${depPattern}$`);
+			// Check for task matches
 			const possibleSearchMatches = packageSpecificSearchDeps.filter((searchDep) =>
 				regexSearchMatches.test(searchDep),
 			);
+			// Check if there is matching dependency
 			if (
 				possibleSearchMatches.some((searchDep) =>
 					packageDependencies.has(searchDep.split("#")[0]),
@@ -384,20 +388,59 @@ function hasTaskDependency(
 			) {
 				return true;
 			}
+			if (depPattern === "*") {
+				// No possible match even through transitive dependencies since
+				// ^* would already consider all tasks in all dependencies.
+				continue;
+			}
+			for (const [packageName, secondaryData] of secondaryPackagesTasksToConsider) {
+				// If there is a matching dependency package, add this task to
+				// transitive dependency in secondary package search list.
+				if (packageDependencies.has(packageName)) {
+					secondaryData.tasks.add(depPattern);
+				}
+			}
 			continue;
 		}
-		if (dep.includes("#")) {
-			// Current "pending" dependency is from another package and could possibly
-			// be successor to given queried deps, but we are not doing such a deep or
-			// exhaustive search at this time.
-			continue;
-		}
-		// Do expand transitive dependencies from local tasks.
-		// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-		if (taskDefinitions[dep]) {
-			pending.push(...taskDefinitions[dep].dependsOn);
+		const packageDepMatch = dep.match(/^([^#]*)#(.*)$/);
+		if (packageDepMatch) {
+			// Consider one level deep of package's tasks to handle multi-task dependencies.
+			const secondaryPackageSet = secondaryPackagesTasksToConsider.get(packageDepMatch[1]);
+			if (secondaryPackageSet) {
+				secondaryPackageSet.tasks.add(packageDepMatch[2]);
+			}
+		} else {
+			// Do expand transitive dependencies and child tasks from local tasks.
+			const taskDef = taskDefinitions[dep];
+			if (taskDef !== undefined) {
+				pending.push(...taskDef.dependsOn, ...taskDef.children);
+			}
 		}
 	}
+
+	// Consider secondary package dependencies transitive dependencies
+	const packageMap = getFluidPackageMap(root);
+	for (const [packageName, secondaryData] of secondaryPackagesTasksToConsider.entries()) {
+		const pkgJson = packageMap.get(packageName)?.packageJson;
+		if (pkgJson === undefined) {
+			throw new Error(`Dependent package ${packageName} not found in repo`);
+		}
+		const secondaryTaskDefinitions = getTaskDefinitions(pkgJson, globalTaskDefinitions, {
+			isReleaseGroupRoot: false,
+		});
+		pending.push(...secondaryData.tasks);
+		let dep;
+		while ((dep = pending.pop()) !== undefined) {
+			if (secondaryData.searchDeps.includes(dep)) {
+				return true;
+			}
+			const taskDef = secondaryTaskDefinitions[dep];
+			if (taskDef !== undefined) {
+				pending.push(...taskDef.dependsOn, ...taskDef.children);
+			}
+		}
+	}
+
 	return false;
 }
 
@@ -430,6 +473,19 @@ function checkTaskDeps(
 }
 
 /**
+ * Recursive inverse of Readonly
+ * Makes all properties writeable through entire structure.
+ */
+type DeeplyMutable<T> = { -readonly [K in keyof T]: DeeplyMutable<T[K]> };
+
+/**
+ * Reinterprets a readonly object as a mutable object
+ */
+function asWriteable<T>(onlyReadable: T): DeeplyMutable<T> {
+	return onlyReadable as DeeplyMutable<T>;
+}
+
+/**
  * Fix up the actual dependencies of a task against an expected set of dependent tasks
  * @param root - directory of the Fluid repo root
  * @param json - package.json content for the package
@@ -449,23 +505,25 @@ function patchTaskDeps(
 	);
 
 	if (missingTaskDependencies.length > 0) {
-		const fileDep = json.fluidBuild?.tasks?.[taskName];
-		if (fileDep === undefined) {
-			let tasks: Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>;
+		const readonlyFileDep = json.fluidBuild?.tasks?.[taskName];
+		if (readonlyFileDep === undefined) {
+			let tasks: DeeplyMutable<
+				Exclude<Exclude<PackageJson["fluidBuild"], undefined>["tasks"], undefined>
+			>;
 			if (json.fluidBuild === undefined) {
 				tasks = {};
-				json.fluidBuild = { tasks };
+				json.fluidBuild = { tasks, version: 1 };
 			} else if (json.fluidBuild.tasks === undefined) {
 				tasks = {};
 				json.fluidBuild.tasks = tasks;
 			} else {
-				tasks = json.fluidBuild.tasks;
+				tasks = asWriteable(json.fluidBuild.tasks);
 			}
 
 			tasks[taskName] = taskDeps.map((dep) => {
 				if (Array.isArray(dep)) {
 					throw new TypeError(
-						`build-tools patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${dep.join(
+						`build-cli patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${dep.join(
 							" or ",
 						)}`,
 					);
@@ -473,6 +531,7 @@ function patchTaskDeps(
 				return dep;
 			});
 		} else {
+			const fileDep = asWriteable(readonlyFileDep);
 			let depArray: string[];
 			if (Array.isArray(fileDep)) {
 				depArray = fileDep;
@@ -485,12 +544,12 @@ function patchTaskDeps(
 			for (const missingDep of missingTaskDependencies) {
 				if (Array.isArray(missingDep)) {
 					throw new TypeError(
-						`build-tools patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${missingDep.join(
+						`build-cli patchTaskDeps for ${taskName} will not auto select single dependency from choice of ${missingDep.join(
 							" or ",
 						)}`,
 					);
 				}
-				// Check if already added in previous interation to avoid duplicates.
+				// Check if already added in previous iteration to avoid duplicates.
 				if (!depArray.includes(missingDep)) {
 					depArray.push(missingDep);
 				}
@@ -714,7 +773,6 @@ export const handlers: Handler[] = [
 		match,
 		handler: async (file: string, root: string): Promise<string | undefined> => {
 			const projectMap = new Map<string, string>();
-			// Note: this does not check tsc-multi commands which do very likely reuse project files
 			return buildDepsHandler(
 				file,
 				root,

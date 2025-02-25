@@ -79,9 +79,7 @@ export function buildGitTreeHierarchy(
 		const entryPathBase = entryPath.slice(lastIndex + 1);
 
 		// The flat output is breadth-first so we can assume we see tree nodes prior to their contents
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const node = lookup[entryPathDir]!;
+		const node = lookup[entryPathDir];
 
 		// Add in either the blob or tree
 		if (entry.type === "tree") {

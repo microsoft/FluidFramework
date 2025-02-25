@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -23,6 +23,16 @@
 				"default": "./dist/index.js"
 			}
 		},
+		"./alpha": {
+			"import": {
+				"types": "./lib/alpha.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/alpha.d.ts",
+				"default": "./dist/index.js"
+			}
+		},
 		"./beta": {
 			"import": {
 				"types": "./lib/beta.d.ts",
@@ -42,6 +52,16 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./legacy": {
+			"import": {
+				"types": "./lib/legacy.d.ts",
+				"default": "./lib/index.js"
+			},
+			"require": {
+				"types": "./dist/legacy.d.ts",
+				"default": "./dist/index.js"
+			}
 		}
 	},
 	"main": "lib/index.js",
@@ -53,10 +73,13 @@
 		"bench": "mocha --timeout 999999 --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js",
 		"bench:profile": "mocha --v8-prof --v8-logfile=profile.log --v8-no-logfile-per-isolate --timeout 999999 --perfMode --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in profile.txt",
 		"build": "fluid-build . --task build",
+		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
+		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor.current.json",
+		"build:api-reports:legacy": "api-extractor run --local --config api-extractor/api-extractor.legacy.json",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:esnext": "tsc --project ./tsconfig.json && copyfiles -f ../../../common/build/build-common/src/esm/package.json ./lib",
+		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
@@ -65,14 +88,21 @@
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
+		"check:exports:cjs:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.cjs.json",
 		"check:exports:cjs:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.cjs.json",
+		"check:exports:cjs:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.cjs.json",
 		"check:exports:cjs:public": "api-extractor run --config api-extractor/api-extractor-lint-public.cjs.json",
+		"check:exports:esm:alpha": "api-extractor run --config api-extractor/api-extractor-lint-alpha.esm.json",
 		"check:exports:esm:beta": "api-extractor run --config api-extractor/api-extractor-lint-beta.esm.json",
+		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
+		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
+		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
+		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"depcruise": "depcruise src/ --ignore-known",
 		"depcruise:regen-known-issues": "depcruise-baseline src",
 		"eslint": "eslint --format stylish src",
@@ -86,16 +116,18 @@
 		"test": "npm run test:mocha",
 		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
-		"test:memory": "mocha --config ./src/test/memory/.mocharc.cjs",
+		"test:customBenchmarks": "mocha --config ./.mocharc.customBenchmarks.cjs",
+		"test:customBenchmarks:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:customBenchmarks",
+		"test:memory": "mocha --perfMode --config ./src/test/memory/.mocharc.cjs",
 		"test:memory-profiling:report": "mocha --config ./src/test/memory/.mocharc.cjs",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:snapshots:regen": "pnpm test:mocha:esm --snapshot",
-		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=true mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",
+		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v --level public",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -103,11 +135,13 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
+			"dist/test/**/*.*js",
 			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
+			"dist/**/*.*js",
 			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
@@ -130,34 +164,34 @@
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
-		"@sinclair/typebox": "^0.32.29",
+		"@sinclair/typebox": "^0.34.13",
 		"@tylerbu/sorted-btree-es6": "^1.8.0",
+		"@types/ungap__structured-clone": "^1.2.0",
 		"@ungap/structured-clone": "^1.2.0",
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-private/test-drivers": "workspace:~",
-		"@fluid-tools/benchmark": "^0.48.0",
-		"@fluid-tools/build-cli": "^0.41.0",
+		"@fluid-tools/benchmark": "^0.50.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
+		"@fluidframework/build-tools": "^0.53.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.0.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.22.0",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/ungap__structured-clone": "^1.2.0",
 		"@types/uuid": "^9.0.2",
 		"ajv": "^8.12.0",
 		"ajv-formats": "^3.0.1",
@@ -171,7 +205,6 @@
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
@@ -194,6 +227,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "public"
 	}
 }

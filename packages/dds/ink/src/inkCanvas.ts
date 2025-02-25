@@ -35,34 +35,31 @@ class Vector {
 	) {}
 
 	public length(): number {
-		return Math.sqrt(this.x * this.x + this.y * this.y);
+		return Math.hypot(this.x, this.y);
 	}
 }
 
-function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]) {
-	const firstPoint = points[0];
-	if (firstPoint === undefined) {
+function drawPolygon(context: CanvasRenderingContext2D, points: IPoint[]): void {
+	if (points.length === 0) {
 		return;
 	}
 
 	context.beginPath();
 	// Move to the first point
-	context.moveTo(firstPoint.x, firstPoint.y);
+	context.moveTo(points[0].x, points[0].y);
 
 	// Draw the rest of the segments
 	for (let i = 1; i < points.length; i++) {
-		// Non null asserting, this must exist because the we are iterating through the length of points
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		context.lineTo(points[i]!.x, points[i]!.y);
+		context.lineTo(points[i].x, points[i].y);
 	}
 
 	// And then close the shape
-	context.lineTo(firstPoint.x, firstPoint.y);
+	context.lineTo(points[0].x, points[0].y);
 	context.closePath();
 	context.fill();
 }
 
-function drawCircle(context: CanvasRenderingContext2D, center: IPoint, radius: number) {
+function drawCircle(context: CanvasRenderingContext2D, center: IPoint, radius: number): void {
 	context.beginPath();
 	context.moveTo(center.x, center.y);
 	context.arc(center.x, center.y, radius, 0, Math.PI * 2);
@@ -145,31 +142,28 @@ export class InkCanvas {
 		this.sizeCanvasBackingStore();
 	}
 
-	public setPenColor(color: IColor) {
+	public setPenColor(color: IColor): void {
 		this.currentPen.color = color;
 	}
 
-	public replay() {
+	public replay(): void {
 		this.clearCanvas();
 
 		const strokes = this.model.getStrokes();
 
 		// Time of the first operation in stroke 0 is our starting time
-		const startTime = strokes[0]?.points[0]?.time;
-		if (startTime === undefined) {
-			throw new Error("Couldn't get start time");
-		}
+		const startTime = strokes[0].points[0].time;
 		for (const stroke of strokes) {
 			this.animateStroke(stroke, 0, startTime);
 		}
 	}
 
-	public clear() {
+	public clear(): void {
 		this.model.clear();
 		this.redraw();
 	}
 
-	public sizeCanvasBackingStore() {
+	public sizeCanvasBackingStore(): void {
 		const canvasBoundingClientRect = this.canvas.getBoundingClientRect();
 		// Scale the canvas size to match the physical pixel to avoid blurriness
 		const scale = window.devicePixelRatio;
@@ -182,7 +176,7 @@ export class InkCanvas {
 		this.redraw();
 	}
 
-	private handlePointerDown(evt: PointerEvent) {
+	private handlePointerDown(evt: PointerEvent): void {
 		// We will accept pen down or mouse left down as the start of a stroke.
 		if (evt.pointerType === "pen" || (evt.pointerType === "mouse" && evt.button === 0)) {
 			const strokeId = this.model.createStroke(this.currentPen).id;
@@ -194,23 +188,25 @@ export class InkCanvas {
 		}
 	}
 
-	private handlePointerMove(evt: PointerEvent) {
+	private handlePointerMove(evt: PointerEvent): void {
 		if (this.localActiveStrokeMap.has(evt.pointerId)) {
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 			const evts = (evt as any)?.getCoalescedEvents() ?? ([evt] as PointerEvent[]);
 			for (const e of evts) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 				this.appendPointerEventToStroke(e);
 			}
 		}
 	}
 
-	private handlePointerUp(evt: PointerEvent) {
+	private handlePointerUp(evt: PointerEvent): void {
 		if (this.localActiveStrokeMap.has(evt.pointerId)) {
 			this.appendPointerEventToStroke(evt);
 			this.localActiveStrokeMap.delete(evt.pointerId);
 		}
 	}
 
-	private appendPointerEventToStroke(evt: PointerEvent) {
+	private appendPointerEventToStroke(evt: PointerEvent): void {
 		const strokeId = this.localActiveStrokeMap.get(evt.pointerId);
 		if (strokeId === undefined) {
 			throw new Error("Unexpected pointer ID trying to append to stroke");
@@ -224,18 +220,14 @@ export class InkCanvas {
 		this.model.appendPointToStroke(inkPt, strokeId);
 	}
 
-	private animateStroke(stroke: IInkStroke, operationIndex: number, startTime: number) {
+	private animateStroke(stroke: IInkStroke, operationIndex: number, startTime: number): void {
 		if (operationIndex >= stroke.points.length) {
 			return;
 		}
 
 		// Draw the requested stroke
-		// Non null asserting, this must exist because the operationIndex must be less than the length of stroke.points
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const current = stroke.points[operationIndex]!;
-		// Non null asserting, this must exist because its either the first index or operationIndex minus one which is less than the length of stroke.points
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const previous = stroke.points[Math.max(0, operationIndex - 1)]!;
+		const current = stroke.points[operationIndex];
+		const previous = stroke.points[Math.max(0, operationIndex - 1)];
 		const time =
 			operationIndex === 0 ? current.time - startTime : current.time - previous.time;
 
@@ -248,18 +240,16 @@ export class InkCanvas {
 	/**
 	 * Clears the canvas
 	 */
-	private clearCanvas() {
+	private clearCanvas(): void {
 		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 	}
 
-	private redraw() {
+	private redraw(): void {
 		this.clearCanvas();
 
 		const strokes = this.model.getStrokes();
 		for (const stroke of strokes) {
-			// Non null asserting since previous would not be used if stroke.points is empty
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			let previous = stroke.points[0]!;
+			let previous = stroke.points[0];
 			for (const current of stroke.points) {
 				// For the down, current === previous === stroke.operations[0]
 				this.drawStrokeSegment(stroke.pen, current, previous);
@@ -268,22 +258,20 @@ export class InkCanvas {
 		}
 	}
 
-	private drawStrokeSegment(pen: IPen, current: IInkPoint, previous: IInkPoint) {
+	private drawStrokeSegment(pen: IPen, current: IInkPoint, previous: IInkPoint): void {
 		// TODO Consider save/restore context
 		// TODO Consider half-pixel offset
 		this.context.fillStyle = `rgb(${pen.color.r}, ${pen.color.g}, ${pen.color.b})`;
 		drawShapes(this.context, previous, current, pen);
 	}
 
-	private handleStylus(operation: IStylusOperation) {
+	private handleStylus(operation: IStylusOperation): void {
 		// Render the dirty stroke
 		const dirtyStrokeId = operation.id;
 		const stroke = this.model.getStroke(dirtyStrokeId);
 		// If this is the only point in the stroke, we'll use it for both the start and end of the segment
 		const prevPoint =
-			// Non null asserting, this must exist its within the length of stroke.points
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			stroke.points[stroke.points.length - (stroke.points.length >= 2 ? 2 : 1)]!;
+			stroke.points[stroke.points.length - (stroke.points.length >= 2 ? 2 : 1)];
 		this.drawStrokeSegment(stroke.pen, prevPoint, operation.point);
 	}
 }

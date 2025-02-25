@@ -55,6 +55,7 @@ data:
                 "name": "{{ .Values.gitrest.git.ephemeralfilesystem.name }}",
                 "maxFileSizeBytes": {{ .Values.gitrest.git.ephemeralfilesystem.maxFileSizeBytes }}
             },
+            "ephemeralDocumentTTLSec": {{ .Values.gitrest.git.ephemeralDocumentTTLSec }},
             "persistLatestFullSummary": {{ .Values.gitrest.git.persistLatestFullSummary }},
             "persistLatestFullEphemeralSummary": {{ .Values.gitrest.git.persistLatestFullEphemeralSummary }},
             "repoPerDocEnabled": {{ .Values.gitrest.git.repoPerDocEnabled }},
@@ -72,7 +73,8 @@ data:
             "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }},
             "enforceStrictPersistedFullSummaryReads": {{ .Values.gitrest.git.enforceStrictPersistedFullSummaryReads }},
             "enableRedisFsOptimizedStat": {{ .Values.gitrest.git.enableRedisFsOptimizedStat }},
-            "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }}
+            "redisApiMetricsSamplingPeriod": {{ .Values.gitrest.git.redisApiMetricsSamplingPeriod }},
+            "maxBlobSizeBytes": {{ .Values.gitrest.git.maxBlobSizeBytes }}
         },
         "redis": {
             "host": "{{ .Values.gitrest.redis.url }}",

@@ -146,7 +146,7 @@
                                   [
                                     1,
                                     [
-                                      "optional-field.TestNode",
+                                      "optional-field-scenarios.Map",
                                       false,
                                       [
                                         "root 2 child",
@@ -290,7 +290,7 @@
                                   [
                                     1,
                                     [
-                                      "optional-field.TestNode",
+                                      "optional-field-scenarios.Map",
                                       false,
                                       []
                                     ]
@@ -335,13 +335,13 @@
                                             "change": {
                                               "m": [
                                                 [
-                                                  1,
+                                                  3,
                                                   null,
                                                   true
                                                 ],
                                                 [
                                                   null,
-                                                  0,
+                                                  2,
                                                   false
                                                 ]
                                               ]
@@ -359,7 +359,7 @@
                                 [
                                   [
                                     [
-                                      1,
+                                      3,
                                       0
                                     ]
                                   ]
@@ -426,29 +426,17 @@
                 "content": {
                   "version": 1,
                   "nodes": {
-                    "com.fluidframework.leaf.boolean": {
-                      "leaf": 2
-                    },
-                    "com.fluidframework.leaf.handle": {
-                      "leaf": 3
-                    },
-                    "com.fluidframework.leaf.null": {
-                      "leaf": 4
-                    },
                     "com.fluidframework.leaf.number": {
                       "leaf": 0
                     },
                     "com.fluidframework.leaf.string": {
                       "leaf": 1
                     },
-                    "optional-field.TestNode": {
+                    "optional-field-scenarios.Map": {
                       "map": {
                         "kind": "Optional",
                         "types": [
-                          "com.fluidframework.leaf.handle",
-                          "com.fluidframework.leaf.null",
                           "com.fluidframework.leaf.number",
-                          "com.fluidframework.leaf.boolean",
                           "com.fluidframework.leaf.string"
                         ]
                       }
@@ -457,7 +445,7 @@
                   "root": {
                     "kind": "Optional",
                     "types": [
-                      "optional-field.TestNode"
+                      "optional-field-scenarios.Map"
                     ]
                   }
                 },
@@ -499,7 +487,7 @@
                       [
                         1,
                         [
-                          "optional-field.TestNode",
+                          "optional-field-scenarios.Map",
                           false,
                           [
                             "root 3 child",
@@ -533,7 +521,7 @@
                       [
                         1,
                         [
-                          "optional-field.TestNode",
+                          "optional-field-scenarios.Map",
                           false,
                           [
                             "root 1 child",
@@ -549,7 +537,7 @@
                       [
                         1,
                         [
-                          "optional-field.TestNode",
+                          "optional-field-scenarios.Map",
                           false,
                           [
                             "root 2 child",
@@ -597,7 +585,7 @@
                     ],
                     [
                       8,
-                      0,
+                      2,
                       6
                     ],
                     [

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-tests",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -30,7 +30,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
-		"test:mocha": "mocha \"dist/test/**/*.spec.*js\"  --exit",
+		"test:mocha": "mocha \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha"
 	},
 	"c8": {
@@ -38,12 +38,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -54,15 +56,13 @@
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-internal/client-utils": "workspace:~",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-experimental/tree": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-private/test-loader-utils": "workspace:~",
-		"@fluid-private/test-pairwise-generator": "workspace:~",
+		"@fluid-private/test-drivers": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/cell": "workspace:~",
+		"@fluidframework/build-tools": "^0.53.0",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
@@ -71,46 +71,29 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
-		"@fluidframework/driver-base": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
 		"@fluidframework/driver-utils": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
-		"@fluidframework/matrix": "workspace:~",
-		"@fluidframework/merge-tree": "workspace:~",
-		"@fluidframework/odsp-doclib-utils": "workspace:~",
-		"@fluidframework/ordered-collection": "workspace:~",
-		"@fluidframework/protocol-definitions": "^3.2.0",
-		"@fluidframework/register-collection": "workspace:~",
-		"@fluidframework/request-handler": "workspace:~",
-		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^5.0.0",
-		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@types/mocha": "^9.1.1",
-		"@types/nock": "^9.3.0",
+		"@fluidframework/tree": "workspace:~",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.21.0",
-		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"ts-loader": "^9.3.0",
-		"typescript": "~5.4.5",
-		"uuid": "^9.0.0",
-		"webpack": "^5.82.0",
-		"webpack-cli": "^4.9.2"
+		"ts-loader": "^9.5.1",
+		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -122,6 +105,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

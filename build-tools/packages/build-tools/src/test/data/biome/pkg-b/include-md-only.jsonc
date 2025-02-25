@@ -1,0 +1,7 @@
+{
+	"$schema": "../../../../node_modules/@biomejs/biome/configuration_schema.json",
+	"extends": ["../pkg-a/biome.jsonc"],
+	"files": {
+		"include": ["*.md"]
+	}
+}

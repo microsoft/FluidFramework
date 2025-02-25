@@ -71,21 +71,19 @@ version-tools provides a command-line interface (`fluv`) when installed directly
 also available in the Fluid build and release tool (`flub`). This is accomplished using
 [oclif's plugin system](https://oclif.io/docs/plugins).
 
-<!-- prettier-ignore-start -->
-<!-- usage -->
+<!-- This is hardcoded because `oclif readme` creates different output per
+platform, and we generate readmes during build -->
 ```sh-session
 $ npm install -g @fluid-tools/version-tools
 $ fluv COMMAND
 running command...
 $ fluv (--version|-V)
-@fluid-tools/version-tools/1.0.0
+@fluid-tools/version-tools/0.0.0
 $ fluv --help [COMMAND]
 USAGE
   $ fluv COMMAND
 ...
 ```
-<!-- usagestop -->
-<!-- prettier-ignore-stop -->
 
 # Commands
 
@@ -125,7 +123,7 @@ EXAMPLES
   $ fluv autocomplete --refresh-cache
 ```
 
-_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.0.16/src/commands/autocomplete/index.ts)_
+_See code: [@oclif/plugin-autocomplete](https://github.com/oclif/plugin-autocomplete/blob/v3.2.7/src/commands/autocomplete/index.ts)_
 
 ## `fluv help [COMMAND]`
 
@@ -145,7 +143,7 @@ DESCRIPTION
   Display help for fluv.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.0.21/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.16/src/commands/help.ts)_
 
 ## `fluv version VERSION`
 
@@ -199,7 +197,7 @@ Find the latest version from a list of version strings, accounting for the Fluid
 
 ```
 USAGE
-  $ fluv version latest -r <value> [--json] [--prerelease]
+  $ fluv version latest -r <value>... [--json] [--prerelease]
 
 FLAGS
   -r, --versions=<value>...  (required) The versions to evaluate. The argument can be passed multiple times to provide
@@ -238,7 +236,7 @@ PR here for an example: <https://github.com/microsoft/FluidFramework/pull/12155>
 Due to https://github.com/oclif/core/issues/630, the `build:manifest` node script uses an experimental flag. This can be
 removed once we have upgraded to Node 16 in the repo.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

@@ -28,8 +28,7 @@ export function benchmarkCustom(options: CustomBenchmarkOptions): Test;
 
 // @public
 export interface BenchmarkData {
-    customData: Record<string, unknown>;
-    customDataFormatters: Record<string, (value: unknown) => string>;
+    customData: CustomData;
     elapsedSeconds: number;
 }
 
@@ -56,7 +55,7 @@ export class BenchmarkReporter {
     constructor(outputDirectory?: string);
     recordResultsSummary(): void;
     recordSuiteResults(suiteName: string): void;
-    recordTestResult(suiteName: string, testName: string, result: Readonly<BenchmarkResult>): void;
+    recordTestResult(suiteName: string, testName: string, result: BenchmarkResult): void;
 }
 
 // @public
@@ -74,12 +73,13 @@ export interface BenchmarkSyncFunction extends BenchmarkOptions {
     benchmarkFn: () => void;
 }
 
-// @public (undocumented)
+// @public @sealed (undocumented)
 export interface BenchmarkTimer<T> {
     // (undocumented)
     readonly iterationsPerBatch: number;
     // (undocumented)
     recordBatch(duration: number): boolean;
+    timeBatch(callback: () => void): boolean;
     // (undocumented)
     readonly timer: Timer<T>;
 }
@@ -103,7 +103,6 @@ export enum BenchmarkType {
 
 // @public (undocumented)
 export interface CustomBenchmark extends BenchmarkTimingOptions {
-    // (undocumented)
     benchmarkFnCustom<T>(state: BenchmarkTimer<T>): Promise<void>;
 }
 
@@ -116,12 +115,18 @@ export interface CustomBenchmarkOptions extends Titled, BenchmarkDescription, Mo
 }
 
 // @public
+export type CustomData = Record<string, {
+    rawValue: unknown;
+    formattedValue: string;
+}>;
+
+// @public
 export function geometricMean(values: number[]): number;
 
 // @public
 export interface HookArguments {
-    after?: HookFunction;
-    before?: HookFunction;
+    after?: HookFunction | undefined;
+    before?: HookFunction | undefined;
 }
 
 // @public
@@ -148,15 +153,11 @@ export const isInPerformanceTestingMode: boolean;
 export function isResultError(result: BenchmarkResult): result is BenchmarkError;
 
 // @public (undocumented)
-export interface MemoryTestObjectProps extends MochaExclusiveOptions {
-    category?: string;
+export interface MemoryTestObjectProps extends MochaExclusiveOptions, Titled, BenchmarkDescription {
     maxBenchmarkDurationSeconds?: number;
     maxRelativeMarginOfError?: number;
     minSampleCount?: number;
-    only?: boolean;
     samplePercentageToUse?: number;
-    title: string;
-    type?: BenchmarkType;
 }
 
 // @public
@@ -183,7 +184,9 @@ export enum Phase {
 export function prettyNumber(num: number, numDecimals?: number): string;
 
 // @public
-export function qualifiedTitle(args: BenchmarkDescription & Titled): string;
+export function qualifiedTitle(args: BenchmarkDescription & Titled & {
+    testType?: TestType | undefined;
+}): string;
 
 // @public
 export function runBenchmark(args: BenchmarkRunningOptions): Promise<BenchmarkData>;
@@ -197,6 +200,12 @@ export interface Stats {
     readonly standardDeviation: number;
     readonly standardErrorOfMean: number;
     readonly variance: number;
+}
+
+// @public (undocumented)
+export enum TestType {
+    ExecutionTime = 0,
+    MemoryUsage = 1
 }
 
 // @public (undocumented)

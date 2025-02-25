@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { tsCompile } from "../../../common/tsCompile.js";
-import { fluidTscRegEx } from "../../../common/tscUtils.js";
+import { tsCompile } from "../../tsCompile.js";
+import { fluidTscRegEx } from "../../tscUtils.js";
 import type { WorkerExecResult, WorkerMessage } from "./worker.js";
 
 export async function compile(msg: WorkerMessage): Promise<WorkerExecResult> {

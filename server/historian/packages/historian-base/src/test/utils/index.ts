@@ -4,4 +4,6 @@
  */
 
 export { TestCache } from "./testCache";
+export { TestDocumentManager } from "./testDocumentManager";
+export { ConsoleDebugLumberjackEngine } from "./testLumberEngine";
 export { TestTenantService } from "./testTenantService";

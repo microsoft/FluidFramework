@@ -30,7 +30,6 @@ import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 } from "./compatUtils.js";
-import { pkgVersion } from "./packageVersion.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,
@@ -258,7 +257,7 @@ function createCompatDescribe(): DescribeCompat {
 		describe.only(name, createCompatSuiteWithDefault(tests, compatVersion));
 
 	d.noCompat = (name, _, tests) =>
-		describe(name, createCompatSuite(tests, undefined, pkgVersion));
+		describe(name, createCompatSuiteWithDefault(tests, "NoCompat"));
 
 	return d;
 }

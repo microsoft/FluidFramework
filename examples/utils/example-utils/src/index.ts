@@ -21,13 +21,7 @@ export {
 } from "./containerViewRuntimeFactory.js";
 export type {
 	DataTransformationCallback,
-	IAcceptedMigrationDetails,
 	IImportExportModel,
-	IMigratableModel,
-	IMigrationTool,
-	IMigrationToolEvents,
-	IMigrator,
-	IMigratorEvents,
 	ISameContainerMigratableModel,
 	ISameContainerMigratableModelEvents,
 	ISameContainerMigrationTool,
@@ -35,24 +29,22 @@ export type {
 	ISameContainerMigrator,
 	ISameContainerMigratorEvents,
 	IVersionedModel,
-	MigrationState,
 	SameContainerMigrationState,
 } from "./migrationInterfaces/index.js";
 export {
-	MigrationToolFactory,
 	SameContainerMigrationTool,
 	SameContainerMigrationToolInstantiationFactory,
 } from "./migrationTool/index.js";
-export { Migrator, SameContainerMigrator } from "./migrator/index.js";
+export { SameContainerMigrator } from "./migrator/index.js";
 export {
 	IDetachedModel,
+	IModelContainerRuntimeEntryPoint,
 	IModelLoader,
 	ModelContainerRuntimeFactory,
 	ModelLoader,
 	SessionStorageModelLoader,
 	StaticCodeLoader,
 	TinyliciousModelLoader,
-	IModelContainerRuntimeEntryPoint,
 } from "./modelLoader/index.js";
 export {
 	type IFluidMountableView,

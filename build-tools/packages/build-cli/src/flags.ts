@@ -29,6 +29,7 @@ import {
 	isVersionScheme,
 } from "@fluid-tools/version-tools";
 
+import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import type { DependencyUpdateType } from "./library/index.js";
 import { ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
 
@@ -47,6 +48,17 @@ export const releaseGroupFlag = Flags.custom<ReleaseGroup>({
 		}
 
 		return group;
+	},
+});
+
+/**
+ * A re-usable CLI flag to parse release group names.
+ */
+export const releaseGroupNameFlag = Flags.custom<ReleaseGroupName>({
+	required: true,
+	description: "The name of a release group.",
+	parse: async (input) => {
+		return input as ReleaseGroupName;
 	},
 });
 
@@ -76,6 +88,21 @@ export const packageSelectorFlag = Flags.custom({
 	description:
 		"Name of package. You can use scoped or unscoped package names. For example, both @fluid-tools/benchmark and benchmark are valid.",
 	multiple: false,
+});
+
+/**
+ * A re-usable CLI flag to parse semver version strings. Values are verified to be valid semvers during flag parsing.
+ */
+export const semverFlag = Flags.custom<semver.SemVer, { loose?: boolean }>({
+	description:
+		"A semantic versioning (semver) version string. Values are verified to be valid semvers during flag parsing.",
+	parse: async (input, _, opts) => {
+		const parsed = semver.parse(input, opts.loose);
+		if (parsed === null) {
+			throw new Error(`Invalid semver: ${input}`);
+		}
+		return parsed;
+	},
 });
 
 /**
@@ -241,29 +268,28 @@ export const selectionFlags = {
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	dir: Flags.directory({
-		description:
-			"Run on the package in this directory. Cannot be used with --all, --packages, --releaseGroup, or --releaseGroupRoot.",
-		exclusive: ["packages", "releaseGroup", "releaseGroupRoot", "all"],
+		description: "Run on the package in this directory. Cannot be used with --all.",
+		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
+		multiple: true,
 	}),
 	packages: Flags.boolean({
-		description:
-			"Run on all independent packages in the repo. Cannot be used with --all, --dir, --releaseGroup, or --releaseGroupRoot.",
+		description: "Run on all independent packages in the repo. Cannot be used with --all.",
 		default: false,
-		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all"],
+		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
 	}),
 	releaseGroup: releaseGroupWithAllFlag({
 		description:
-			"Run on all child packages within the specified release groups. This does not include release group root packages. To include those, use the --releaseGroupRoot argument. Cannot be used with --all, --dir, or --packages.",
-		exclusive: ["all", "dir", "packages"],
+			"Run on all child packages within the specified release groups. This does not include release group root packages. To include those, use the --releaseGroupRoot argument. Cannot be used with --all.",
+		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
 	}),
 	releaseGroupRoot: releaseGroupWithAllFlag({
 		description:
-			"Run on the root package of the specified release groups. This does not include any child packages within the release group. To include those, use the --releaseGroup argument. Cannot be used with --all, --dir, or --packages.",
-		exclusive: ["all", "dir", "packages"],
+			"Run on the root package of the specified release groups. This does not include any child packages within the release group. To include those, use the --releaseGroup argument. Cannot be used with --all.",
+		exclusive: ["all"],
 		helpGroup: "PACKAGE SELECTION",
 		multiple: true,
 		char: undefined,
@@ -271,8 +297,8 @@ export const selectionFlags = {
 	}),
 	changed: Flags.boolean({
 		description:
-			"Select only packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with other options.",
-		exclusive: ["dir", "releaseGroup", "releaseGroupRoot", "all", "packages"],
+			"Select packages that have changed when compared to a base branch. Use the --branch option to specify a different base branch. Cannot be used with --all.",
+		exclusive: ["all"],
 		required: false,
 		default: false,
 		helpGroup: "PACKAGE SELECTION",
@@ -311,7 +337,7 @@ export const selectionFlags = {
  */
 export interface selectionFlags {
 	readonly all: boolean;
-	readonly dir: string | undefined;
+	readonly dir: string[] | undefined;
 	readonly packages: boolean;
 	readonly releaseGroup: string[] | undefined;
 	readonly releaseGroupRoot: string[] | undefined;
@@ -366,3 +392,22 @@ export interface filterFlags {
 	readonly scope: string[] | undefined;
 	readonly skipScope: string[] | undefined;
 }
+
+/**
+ * A reusable flag for GitHub tokens.
+ */
+export const githubTokenFlag = Flags.custom({
+	description:
+		"GitHub access token. This parameter should be passed using the GITHUB_TOKEN environment variable for security purposes.",
+	env: "GITHUB_TOKEN",
+});
+
+/**
+ * A reusable flag to indicate the command is running in the GitHub Actions environment. This value is typically parsed
+ * from the GITHUB_ACTIONS environment variable but can be set manually for testing.
+ */
+export const githubActionsFlag = Flags.boolean({
+	description:
+		"Set to true to output logs in a GitHub Actions-compatible format. This value will be set to true automatically when running in GitHub Actions.",
+	env: "GITHUB_ACTIONS",
+});

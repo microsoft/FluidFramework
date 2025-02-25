@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/file-driver",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"description": "A driver that reads/write from/to local file storage.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -53,7 +53,7 @@
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -74,14 +74,14 @@
 		"@fluidframework/replay-driver": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.41.0",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
-		"@fluidframework/file-driver-previous": "npm:@fluidframework/file-driver@2.0.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/file-driver-previous": "npm:@fluidframework/file-driver@2.22.0",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -92,16 +92,18 @@
 	},
 	"fluidBuild": {
 		"tasks": {
+			"build:esnext": [
+				"...",
+				"typetests:gen"
+			],
 			"tsc": [
+				"...",
 				"typetests:gen"
 			]
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"Variable_FluidFetchReaderFileSnapshotWriter": {
-				"forwardCompat": false
-			}
-		}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

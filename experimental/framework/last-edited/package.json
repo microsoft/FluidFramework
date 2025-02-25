@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/last-edited",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"description": "Tracks the last edited information in the Container.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -61,13 +61,13 @@
 		"@fluidframework/shared-summary-block": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.41.0",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@microsoft/api-extractor": "7.47.8",
 		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -78,6 +78,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

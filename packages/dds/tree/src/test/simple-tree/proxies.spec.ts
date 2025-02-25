@@ -3,24 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
+// TODO: import and unit test other things from "proxies" file.
+
+import { MockNodeKeyManager } from "../../feature-libraries/index.js";
 import {
+	type booleanSchema,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type NodeFromSchema,
+	type NodeKind,
 	SchemaFactory,
 	TreeArrayNode,
+	type TreeNodeSchema,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-// TODO: test other things from "proxies" file.
-// eslint-disable-next-line import/no-internal-modules
-import { isTreeNode } from "../../simple-tree/proxies.js";
+import type { requireAssignableTo } from "../../util/index.js";
+import { getView } from "../utils.js";
 
 import { hydrate, pretty } from "./utils.js";
-import { getView } from "../utils.js";
-import { MockNodeKeyManager } from "../../feature-libraries/index.js";
-import type { requireAssignableTo } from "../../util/index.js";
 
 describe("simple-tree proxies", () => {
 	const sb = new SchemaFactory("test");
@@ -64,17 +67,6 @@ describe("simple-tree proxies", () => {
 		const mapProxy = root.map;
 		const mapProxyAgain = root.map;
 		assert.equal(mapProxyAgain, mapProxy);
-	});
-
-	it("isTreeNode", () => {
-		// Non object
-		assert(!isTreeNode(5));
-		// Non node object
-		assert(!isTreeNode({}));
-		// Unhydrated node:
-		assert(isTreeNode(new childSchema({ content: 5 })));
-		// Hydrated node:
-		assert(isTreeNode(hydrate(schema, initialTree)));
 	});
 });
 
@@ -399,6 +391,12 @@ describe("ArrayNode Proxy", () => {
 
 		it("booleans", () => {
 			const root = hydrate(schema, initialTree);
+			const a = root.booleans;
+			type T = InsertableTreeNodeFromImplicitAllowedTypes<
+				TreeNodeSchema<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean>
+			>;
+
+			type T2 = InsertableTreeNodeFromImplicitAllowedTypes<typeof booleanSchema>;
 			root.booleans.insertAtStart(true);
 			root.booleans.insertAt(1, false);
 			root.booleans.insertAtEnd(true);
@@ -665,131 +663,5 @@ describe("ArrayNode Proxy", () => {
 				);
 			});
 		});
-	});
-});
-
-describe("SharedTreeMap", () => {
-	const sb = new SchemaFactory("test");
-
-	const object = sb.object("object", { content: sb.number });
-
-	const schema = sb.object("parent", {
-		map: sb.map(sb.string),
-		objectMap: sb.map(object),
-	});
-
-	const initialTree = {
-		map: new Map([
-			["foo", "Hello"],
-			["bar", "World"],
-		]),
-		objectMap: new Map(),
-	};
-
-	it("entries", () => {
-		const root = hydrate(schema, initialTree);
-		assert.deepEqual(Array.from(root.map.entries()), [
-			["foo", "Hello"],
-			["bar", "World"],
-		]);
-	});
-
-	it("keys", () => {
-		const root = hydrate(schema, initialTree);
-		assert.deepEqual(Array.from(root.map.keys()), ["foo", "bar"]);
-	});
-
-	it("values", () => {
-		const root = hydrate(schema, initialTree);
-		assert.deepEqual(Array.from(root.map.values()), ["Hello", "World"]);
-	});
-
-	it("iteration", () => {
-		const root = hydrate(schema, initialTree);
-		const result = [];
-		for (const entry of root.map) {
-			result.push(entry);
-		}
-
-		assert.deepEqual(result, [
-			["foo", "Hello"],
-			["bar", "World"],
-		]);
-	});
-
-	it("forEach", () => {
-		const root = hydrate(schema, initialTree);
-		const result: [string, string][] = [];
-		root.map.forEach((v, k, m) => {
-			result.push([k, v]);
-			assert.equal(m, root.map);
-		});
-
-		assert.deepEqual(result, [
-			["foo", "Hello"],
-			["bar", "World"],
-		]);
-	});
-
-	it("forEach (bound)", () => {
-		const root = hydrate(schema, initialTree);
-		const result: [string, string][] = [];
-		root.map.forEach(function (this: typeof result, v, k, m) {
-			this.push([k, v]); // Accessing `result` via `this` to ensure that `thisArg` is respected
-			assert.equal(m, root.map);
-		}, result);
-
-		assert.deepEqual(result, [
-			["foo", "Hello"],
-			["bar", "World"],
-		]);
-	});
-
-	it("has", () => {
-		const root = hydrate(schema, initialTree);
-		assert.equal(root.map.has("foo"), true);
-		assert.equal(root.map.has("bar"), true);
-		assert.equal(root.map.has("baz"), false);
-	});
-
-	it("set", () => {
-		const root = hydrate(schema, initialTree);
-		// Insert new value
-		root.map.set("baz", "42");
-		assert.equal(root.map.size, 3);
-		assert(root.map.has("baz"));
-		assert.equal(root.map.get("baz"), "42");
-
-		// Override existing value
-		root.map.set("baz", "37");
-		root.map.set("baz", "37"); // Check that we can do a "no-op" change (a change which does not change the tree's content).
-		assert.equal(root.map.size, 3);
-		assert(root.map.has("baz"));
-		assert.equal(root.map.get("baz"), "37");
-
-		// "Un-set" existing value
-		root.map.set("baz", undefined);
-		assert.equal(root.map.size, 2);
-		assert(!root.map.has("baz"));
-	});
-
-	it("set object", () => {
-		const root = hydrate(schema, initialTree);
-		const o = new object({ content: 42 });
-		root.objectMap.set("foo", o);
-		assert.equal(root.objectMap.get("foo"), o); // Check that the inserted and read proxies are the same object
-		assert.equal(root.objectMap.get("foo")?.content, o.content);
-	});
-
-	it("delete", () => {
-		const root = hydrate(schema, initialTree);
-		// Delete existing value
-		root.map.delete("bar");
-		assert.equal(root.map.size, 1);
-		assert(!root.map.has("bar"));
-
-		// Delete non-present value
-		root.map.delete("baz");
-		assert.equal(root.map.size, 1);
 	});
 });

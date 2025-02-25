@@ -20,24 +20,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Interface_IRevertible": {"forwardCompat": false}
- */
-declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<TypeOnly<old.IRevertible>, TypeOnly<current.IRevertible>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Interface_IRevertible": {"backCompat": false}
- */
-declare type current_as_old_for_Interface_IRevertible = requireAssignableTo<TypeOnly<current.IRevertible>, TypeOnly<old.IRevertible>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
  * "Class_SharedMapRevertible": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_SharedMapRevertible = requireAssignableTo<TypeOnly<old.SharedMapRevertible>, TypeOnly<current.SharedMapRevertible>>
@@ -50,15 +32,6 @@ declare type old_as_current_for_Class_SharedMapRevertible = requireAssignableTo<
  * "Class_SharedMapRevertible": {"backCompat": false}
  */
 declare type current_as_old_for_Class_SharedMapRevertible = requireAssignableTo<TypeOnly<current.SharedMapRevertible>, TypeOnly<old.SharedMapRevertible>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_SharedMapRevertible": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_SharedMapRevertible = requireAssignableTo<TypeOnly<typeof current.SharedMapRevertible>, TypeOnly<typeof old.SharedMapRevertible>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -79,15 +52,6 @@ declare type old_as_current_for_Class_SharedMapUndoRedoHandler = requireAssignab
 declare type current_as_old_for_Class_SharedMapUndoRedoHandler = requireAssignableTo<TypeOnly<current.SharedMapUndoRedoHandler>, TypeOnly<old.SharedMapUndoRedoHandler>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_SharedMapUndoRedoHandler": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_SharedMapUndoRedoHandler = requireAssignableTo<TypeOnly<typeof current.SharedMapUndoRedoHandler>, TypeOnly<typeof old.SharedMapUndoRedoHandler>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -106,15 +70,6 @@ declare type old_as_current_for_Class_SharedSegmentSequenceRevertible = requireA
 declare type current_as_old_for_Class_SharedSegmentSequenceRevertible = requireAssignableTo<TypeOnly<current.SharedSegmentSequenceRevertible>, TypeOnly<old.SharedSegmentSequenceRevertible>>
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_SharedSegmentSequenceRevertible": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_SharedSegmentSequenceRevertible = requireAssignableTo<TypeOnly<typeof current.SharedSegmentSequenceRevertible>, TypeOnly<typeof old.SharedSegmentSequenceRevertible>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -131,15 +86,6 @@ declare type old_as_current_for_Class_SharedSegmentSequenceUndoRedoHandler = req
  * "Class_SharedSegmentSequenceUndoRedoHandler": {"backCompat": false}
  */
 declare type current_as_old_for_Class_SharedSegmentSequenceUndoRedoHandler = requireAssignableTo<TypeOnly<current.SharedSegmentSequenceUndoRedoHandler>, TypeOnly<old.SharedSegmentSequenceUndoRedoHandler>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_SharedSegmentSequenceUndoRedoHandler": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_SharedSegmentSequenceUndoRedoHandler = requireAssignableTo<TypeOnly<typeof current.SharedSegmentSequenceUndoRedoHandler>, TypeOnly<typeof old.SharedSegmentSequenceUndoRedoHandler>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -164,6 +110,60 @@ declare type current_as_old_for_Class_UndoRedoStackManager = requireAssignableTo
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "ClassStatics_SharedMapRevertible": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_SharedMapRevertible = requireAssignableTo<TypeOnly<typeof current.SharedMapRevertible>, TypeOnly<typeof old.SharedMapRevertible>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_SharedMapUndoRedoHandler": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_SharedMapUndoRedoHandler = requireAssignableTo<TypeOnly<typeof current.SharedMapUndoRedoHandler>, TypeOnly<typeof old.SharedMapUndoRedoHandler>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_SharedSegmentSequenceRevertible": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_SharedSegmentSequenceRevertible = requireAssignableTo<TypeOnly<typeof current.SharedSegmentSequenceRevertible>, TypeOnly<typeof old.SharedSegmentSequenceRevertible>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_SharedSegmentSequenceUndoRedoHandler": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_SharedSegmentSequenceUndoRedoHandler = requireAssignableTo<TypeOnly<typeof current.SharedSegmentSequenceUndoRedoHandler>, TypeOnly<typeof old.SharedSegmentSequenceUndoRedoHandler>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "ClassStatics_UndoRedoStackManager": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_UndoRedoStackManager = requireAssignableTo<TypeOnly<typeof current.UndoRedoStackManager>, TypeOnly<typeof old.UndoRedoStackManager>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRevertible": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IRevertible = requireAssignableTo<TypeOnly<old.IRevertible>, TypeOnly<current.IRevertible>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRevertible": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IRevertible = requireAssignableTo<TypeOnly<current.IRevertible>, TypeOnly<old.IRevertible>>

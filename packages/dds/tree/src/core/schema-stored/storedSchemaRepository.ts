@@ -5,7 +5,8 @@
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import { type Listenable, createEmitter } from "../../events/index.js";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import { createEmitter } from "@fluid-internal/client-utils";
 import { compareStrings } from "../../util/index.js";
 
 import type { TreeNodeSchemaIdentifier } from "./format.js";
@@ -21,7 +22,6 @@ import {
  * Events for {@link TreeStoredSchemaSubscription}.
  *
  * TODO: consider having before and after events per subtree instead while applying anchor (and this just shows what happens at the root).
- * @internal
  */
 export interface SchemaEvents {
 	/**
@@ -37,15 +37,16 @@ export interface SchemaEvents {
 
 /**
  * A collection of stored schema that fires events in response to changes.
- * @internal
  */
-export interface TreeStoredSchemaSubscription
-	extends Listenable<SchemaEvents>,
-		TreeStoredSchema {}
+export interface TreeStoredSchemaSubscription extends TreeStoredSchema {
+	/**
+	 * Events for this schema subscription.
+	 */
+	readonly events: Listenable<SchemaEvents>;
+}
 
 /**
  * Mutable collection of stored schema.
- * @internal
  */
 export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 	/**
@@ -62,7 +63,8 @@ export interface MutableTreeStoredSchema extends TreeStoredSchemaSubscription {
 export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	protected nodeSchemaData: BTree<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>;
 	protected rootFieldSchemaData: TreeFieldStoredSchema;
-	protected readonly events = createEmitter<SchemaEvents>();
+	protected readonly _events = createEmitter<SchemaEvents>();
+	public readonly events: Listenable<SchemaEvents> = this._events;
 
 	/**
 	 * Copies in the provided schema. If `data` is an TreeStoredSchemaRepository, it will be cheap-cloned.
@@ -95,13 +97,6 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 		}
 	}
 
-	public on<K extends keyof SchemaEvents>(
-		eventName: K,
-		listener: SchemaEvents[K],
-	): () => void {
-		return this.events.on(eventName, listener);
-	}
-
 	public get nodeSchema(): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> {
 		// Btree implements iterator, but not in a type-safe way
 		return this.nodeSchemaData as unknown as ReadonlyMap<
@@ -115,12 +110,12 @@ export class TreeStoredSchemaRepository implements MutableTreeStoredSchema {
 	}
 
 	public apply(newSchema: TreeStoredSchema): void {
-		this.events.emit("beforeSchemaChange", newSchema);
+		this._events.emit("beforeSchemaChange", newSchema);
 		const clone = new TreeStoredSchemaRepository(newSchema);
 		// In the future, we could use btree's delta functionality to do a more efficient update
 		this.rootFieldSchemaData = clone.rootFieldSchemaData;
 		this.nodeSchemaData = clone.nodeSchemaData;
-		this.events.emit("afterSchemaChange", newSchema);
+		this._events.emit("afterSchemaChange", newSchema);
 	}
 
 	public clone(): TreeStoredSchemaRepository {

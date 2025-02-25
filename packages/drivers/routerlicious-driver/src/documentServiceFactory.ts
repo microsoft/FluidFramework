@@ -5,7 +5,6 @@
 
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { getW3CData } from "@fluidframework/driver-base/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FiveDaysMs,
@@ -40,8 +39,9 @@ import {
 	toInstrumentedR11sStorageTokenFetcher,
 } from "./restWrapper.js";
 import { isRouterliciousResolvedUrl } from "./routerliciousResolvedUrl.js";
+import { SessionInfoManager } from "./sessionInfoManager.js";
 import { ITokenProvider } from "./tokens.js";
-import { getDiscoveredFluidResolvedUrl, replaceDocumentIdInPath } from "./urlUtils.js";
+import { replaceDocumentIdInPath } from "./urlUtils.js";
 
 const maximumSnapshotCacheDurationMs: FiveDaysMs = 432_000_000; // 5 days in ms
 
@@ -66,6 +66,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 	private readonly blobCache: ICache<ArrayBufferLike>;
 	private readonly wholeSnapshotTreeCache: ICache<INormalizedWholeSnapshot> = new NullCache();
 	private readonly shreddedSummaryTreeCache: ICache<ISnapshotTreeVersion> = new NullCache();
+	private readonly sessionInfoManager: SessionInfoManager;
 
 	constructor(
 		private readonly tokenProvider: ITokenProvider,
@@ -90,6 +91,7 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 				);
 			}
 		}
+		this.sessionInfoManager = new SessionInfoManager(this.driverPolicies.enableDiscovery);
 	}
 
 	/**
@@ -113,7 +115,6 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			throw new Error("Parsed url should contain tenant and doc Id!!");
 		}
 		const [, tenantId] = parsedUrl.pathname.split("/");
-		assert(tenantId !== undefined, 0x9ac /* "Missing tenant ID!" */);
 
 		if (!isCombinedAppAndProtocolSummary(createNewSummary)) {
 			throw new Error("Protocol and App Summary required in the full summary");
@@ -291,42 +292,21 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			ordererTokenP,
 		);
 
-		const discoverFluidResolvedUrl = async (): Promise<IResolvedUrl> => {
-			if (!this.driverPolicies.enableDiscovery) {
-				return resolvedUrl;
-			}
+		const fluidResolvedUrl: IResolvedUrl = await this.sessionInfoManager.initializeSessionInfo(
+			{
+				session,
+				resolvedUrl,
+				documentId,
+				tenantId,
+				ordererRestWrapper,
+				logger: logger2,
+			},
+		);
 
-			const discoveredSession = await PerformanceEvent.timedExecAsync(
-				logger2,
-				{
-					eventName: "DiscoverSession",
-					docId: documentId,
-				},
-				async (event) => {
-					// The service responds with the current document session associated with the container.
-					const response = await ordererRestWrapper.get<ISession>(
-						`${resolvedUrl.endpoints.ordererUrl}/documents/${tenantId}/session/${documentId}`,
-					);
-					event.end({
-						...response.propsToLog,
-						...getW3CData(response.requestUrl, "xmlhttprequest"),
-					});
-					return response.content;
-				},
-			);
-			return getDiscoveredFluidResolvedUrl(resolvedUrl, discoveredSession);
-		};
-		const fluidResolvedUrl: IResolvedUrl =
-			session !== undefined
-				? getDiscoveredFluidResolvedUrl(resolvedUrl, session)
-				: await discoverFluidResolvedUrl();
-
-		// TODO why are we non null asserting here?
-		const storageUrl = fluidResolvedUrl.endpoints.storageUrl!;
-		// TODO why are we non null asserting here?
-		const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl!;
+		const storageUrl = fluidResolvedUrl.endpoints.storageUrl;
+		const ordererUrl = fluidResolvedUrl.endpoints.ordererUrl;
 		const deltaStorageUrl = fluidResolvedUrl.endpoints.deltaStorageUrl;
-		const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl ?? ordererUrl; // backward compatibility
+		const deltaStreamUrl = fluidResolvedUrl.endpoints.deltaStreamUrl || ordererUrl; // backward compatibility
 		if (!ordererUrl || !deltaStorageUrl) {
 			throw new Error(
 				`All endpoints urls must be provided. [ordererUrl:${ordererUrl}][deltaStorageUrl:${deltaStorageUrl}]`,
@@ -366,7 +346,14 @@ export class RouterliciousDocumentServiceFactory implements IDocumentServiceFact
 			this.blobCache,
 			this.wholeSnapshotTreeCache,
 			this.shreddedSummaryTreeCache,
-			discoverFluidResolvedUrl,
+			async () =>
+				this.sessionInfoManager.getSessionInfo({
+					resolvedUrl,
+					documentId,
+					tenantId,
+					ordererRestWrapper,
+					logger: logger2,
+				}),
 			storageRestWrapper,
 			storageTokenFetcher,
 			ordererTokenFetcher,
@@ -401,4 +388,16 @@ export class DocumentPostCreateError extends Error {
 	public get stack() {
 		return this.innerError.stack;
 	}
+}
+
+/**
+ * Creates factory for creating the routerlicious document service.
+ *
+ * @legacy
+ * @alpha
+ */
+export function createRouterliciousDocumentServiceFactory(
+	tokenProvider: ITokenProvider,
+): IDocumentServiceFactory {
+	return new RouterliciousDocumentServiceFactory(tokenProvider);
 }

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -138,12 +138,6 @@ describe("Ordered Client Collection", () => {
 			);
 			election.on("election", () => electionEventCount++);
 			return election;
-		}
-		function incrementElectedClient(sequenceNumber = currentSequenceNumber) {
-			if (sequenceNumber > currentSequenceNumber) {
-				currentSequenceNumber = sequenceNumber;
-			}
-			election.incrementElectedClient(sequenceNumber);
 		}
 		function resetElectedClient(sequenceNumber = currentSequenceNumber) {
 			if (sequenceNumber > currentSequenceNumber) {
@@ -445,23 +439,6 @@ describe("Ordered Client Collection", () => {
 				assertOrderedEligibleClientIds("a", "b");
 			});
 
-			it("Should remove elected eligible client from end", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				incrementElectedClient(12); // elect b
-				incrementElectedClient(19); // elect c
-				assertElectionState(4, 3, "c", 19);
-				assertEvents(2);
-				removeClient("c", 5);
-				assertElectionState(3, 2, "a", 24);
-				assertEvents(3);
-				assertOrderedEligibleClientIds("a", "b");
-			});
-
 			it("Should remove other eligible client from middle", () => {
 				createOrderedClientElection([
 					["a", 1, true],
@@ -475,22 +452,6 @@ describe("Ordered Client Collection", () => {
 				assertOrderedEligibleClientIds("a", "c");
 			});
 
-			it("Should remove elected eligible client from middle", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				incrementElectedClient(12); // elect b
-				assertElectionState(4, 3, "b", 12);
-				assertEvents(1);
-				removeClient("b", 5);
-				assertElectionState(3, 2, "c", 17);
-				assertEvents(2);
-				assertOrderedEligibleClientIds("a", "c");
-			});
-
 			it("Should remove elected eligible client from front", () => {
 				createOrderedClientElection([
 					["a", 1, true],
@@ -500,22 +461,6 @@ describe("Ordered Client Collection", () => {
 				]);
 				removeClient("a", 5);
 				assertElectionState(3, 2, "b", 14);
-				assertEvents(1);
-				assertOrderedEligibleClientIds("b", "c");
-			});
-
-			it("Should remove other eligible client from front", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				incrementElectedClient(12); // elect b
-				assertElectionState(4, 3, "b", 12);
-				assertEvents(1);
-				removeClient("a", 5);
-				assertElectionState(3, 2, "b", 12);
 				assertEvents(1);
 				assertOrderedEligibleClientIds("b", "c");
 			});
@@ -538,110 +483,7 @@ describe("Ordered Client Collection", () => {
 			});
 		});
 
-		describe("Increment elected client", () => {
-			it("Should do nothing in empty quorum", () => {
-				createOrderedClientElection();
-				incrementElectedClient();
-				assertElectionState(0, 0, undefined, 0);
-				assertEvents(0);
-			});
-
-			it("Should go to next client from first", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				incrementElectedClient(12);
-				assertElectionState(4, 3, "b", 12);
-				assertEvents(1);
-			});
-
-			it("Should go to next client from middle", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				incrementElectedClient(12);
-				incrementElectedClient(16);
-				assertElectionState(4, 3, "c", 16);
-				assertEvents(2);
-			});
-
-			it("Should increment to new nodes", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				incrementElectedClient(16);
-				incrementElectedClient(27); // no-op
-				addClient("d", 100);
-				incrementElectedClient(100);
-				addClient("e", 101);
-				assertElectionState(6, 5, "d", 100);
-				incrementElectedClient(111);
-				assertElectionState(6, 5, "e", 111);
-				addClient("f", 200);
-				incrementElectedClient(205);
-				assertElectionState(7, 6, "f", 205);
-				incrementElectedClient(221);
-				assertElectionState(7, 6, "a", 221);
-				addClient("g", 229);
-				assertElectionState(8, 7, "a", 221);
-			});
-
-			it("Should increment when ineligible client is elected", () => {
-				createOrderedClientElection(
-					[
-						["a", 1, true],
-						["s", 2, false],
-						["b", 5, true],
-						["c", 9, true],
-					],
-					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
-				);
-				assertElectionState(4, 3, "b", 4321);
-				incrementElectedClient(7777);
-				assertElectionState(4, 3, "c", 7777);
-				assertEvents(1);
-			});
-		});
-
 		describe("Reset elected client", () => {
-			it("Should reset to first when not first", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				incrementElectedClient(12);
-				incrementElectedClient(15);
-				resetElectedClient(19);
-				assertElectionState(4, 3, "a", 19);
-				assertEvents(3);
-			});
-
-			it("Should reset to first when undefined at end", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				incrementElectedClient(12);
-				incrementElectedClient(15);
-				incrementElectedClient(19);
-				resetElectedClient(31); // no-op
-				assertElectionState(4, 3, "a", 19);
-				assertEvents(3);
-			});
-
 			it("Should reset to first when ineligible client is elected", () => {
 				createOrderedClientElection(
 					[

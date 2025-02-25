@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import { rootFieldKey } from "../../core/index.js";
 import { StringArray, TestTreeProviderLite, createTestUndoRedoStacks } from "../utils.js";
 import { TreeStatus } from "../../feature-libraries/index.js";
 import { TestAnchor } from "../testAnchor.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
 
 const enableSchemaValidation = true;
 
@@ -16,20 +18,24 @@ describe("Repair Data", () => {
 	describe("is destroyed when", () => {
 		it("the collab window progresses far enough", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
 			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view2 = provider.trees[1].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 
 			// get anchors on the peer to the nodes we're removing
 			const anchorAOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "A");
@@ -64,17 +70,21 @@ describe("Repair Data", () => {
 
 		it("the collab window progresses far enough after a rebase", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view2 = provider.trees[1].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 
 			view1.root.insertAt(1, "x");
 			assert.deepEqual([...view1.root], ["A", "x", "B", "C", "D"]);
@@ -107,10 +117,12 @@ describe("Repair Data", () => {
 
 		it("the corresponding revertible is disposed", () => {
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
@@ -145,12 +157,60 @@ describe("Repair Data", () => {
 			unsubscribe();
 		});
 
+		it("the corresponding revertible is disposed with grouped batching", () => {
+			const provider = new TestTreeProviderLite(
+				1,
+				undefined /* factory */,
+				undefined /* useDeterministicSessionIds */,
+				FlushMode.TurnBased,
+			);
+			const tree1 = provider.trees[0];
+			const view1 = tree1.viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
+			view1.initialize(["A", "B"]);
+
+			// make sure that revertibles are created
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
+
+			// get anchors to the nodes we're removing
+			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");
+
+			// remove in first tree
+			view1.root.removeRange(0, 1);
+
+			provider.processMessages();
+			const removeSequenceNumber = provider.sequenceNumber;
+
+			assert.deepEqual([...view1.root], ["B"]);
+
+			advanceCollabWindow(provider, removeSequenceNumber);
+
+			// The nodes should not have been deleted yet because the revertible is still active
+			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Removed);
+			assert.equal(view1.checkout.getRemovedRoots().length, 1);
+
+			// dispose the revertible
+			undoStack[0].dispose();
+
+			// check that the repair data on the first tree is destroyed
+			assert.equal(anchorAOnTree1.treeStatus, TreeStatus.Deleted);
+			assert.equal(view1.checkout.getRemovedRoots().length, 0);
+
+			unsubscribe();
+		});
+
 		it("created in a transaction with an aborted nested transaction", () => {
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 
 			// get an anchor on the peer to the node we're removing
@@ -189,20 +249,24 @@ describe("Repair Data", () => {
 	describe("is not destroyed when", () => {
 		it("still relevant due to branches", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view2 = provider.trees[1].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 
 			// create a fork before the creation of the repair data
-			const _ = view2.checkout.fork();
+			const _ = view2.checkout.branch();
 
 			// get an anchor on the peer to the node we're removing
 			const anchorAOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "A");
@@ -231,20 +295,24 @@ describe("Repair Data", () => {
 
 		it("still relevant due to revertibles", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view1 = provider.trees[0].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 			view1.initialize(["A", "B", "C", "D"]);
 
 			// make sure that revertibles are created
 			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
+			const view2 = provider.trees[1].viewWith(
+				new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				}),
+			);
 
 			// get an anchor to the node we're removing
 			const anchorAOnTree1 = TestAnchor.fromValue(view1.checkout.forest, "A");

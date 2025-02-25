@@ -16,6 +16,7 @@ import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/in
 
 import { IRefreshSummaryResult } from "../summary/index.js";
 
+// eslint-disable-next-line import/no-deprecated
 import { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
 import {
@@ -50,30 +51,20 @@ export class GCSummaryStateTracker {
 	// to unreferenced or vice-versa.
 	public updatedDSCountSinceLastSummary: number = 0;
 
-	/** API for ensuring the correct auto-recovery mitigations */
-	public autoRecovery = {
-		requestFullGCOnNextRun: () => {
-			this.fullGCModeForAutoRecovery = true;
-		},
-		fullGCRequested: () => {
-			return this.fullGCModeForAutoRecovery;
-		},
-	};
-	/** If true, the next GC run will do fullGC mode to regenerate the GC data for each node */
-	private fullGCModeForAutoRecovery: boolean = false;
-
 	constructor(
 		// Tells whether GC should run or not.
 		private readonly configs: Pick<
 			IGarbageCollectorConfigs,
-			"gcEnabled" | "tombstoneMode" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
+			"gcAllowed" | "gcVersionInBaseSnapshot" | "gcVersionInEffect"
 		>,
 	) {}
 
 	/**
 	 * Called during GC initialization. Initialize the latest summary data from the base snapshot data.
 	 */
-	public initializeBaseState(baseSnapshotData: IGarbageCollectionSnapshotData | undefined) {
+	public initializeBaseState(
+		baseSnapshotData: IGarbageCollectionSnapshotData | undefined,
+	): void {
 		if (baseSnapshotData === undefined) {
 			return;
 		}
@@ -100,7 +91,7 @@ export class GCSummaryStateTracker {
 		deletedNodes: Set<string>,
 		tombstones: string[],
 	): ISummarizeResult | undefined {
-		if (!this.configs.gcEnabled) {
+		if (!this.configs.gcAllowed) {
 			return;
 		}
 
@@ -108,13 +99,10 @@ export class GCSummaryStateTracker {
 		// Serialize and write deleted nodes, if any. This is done irrespective of whether sweep is enabled or not so
 		// to identify deleted nodes' usage.
 		const serializedDeletedNodes =
-			deletedNodes.size > 0 ? JSON.stringify(Array.from(deletedNodes).sort()) : undefined;
-		// If running in tombstone mode, serialize and write tombstones, if any.
-		const serializedTombstones = this.configs.tombstoneMode
-			? tombstones.length > 0
-				? JSON.stringify(tombstones.sort())
-				: undefined
-			: undefined;
+			deletedNodes.size > 0 ? JSON.stringify([...deletedNodes].sort()) : undefined;
+		// Serialize and write tombstones, if any.
+		const serializedTombstones =
+			tombstones.length > 0 ? JSON.stringify(tombstones.sort()) : undefined;
 
 		/**
 		 * Incremental summary of GC data - If none of GC state, deleted nodes or tombstones changed since last summary,
@@ -231,20 +219,20 @@ export class GCSummaryStateTracker {
 	 * Called to refresh the latest summary state. This happens when a pending summary is acked.
 	 */
 	public async refreshLatestSummary(result: IRefreshSummaryResult): Promise<void> {
-		if (!this.configs.gcEnabled || !result.isSummaryTracked) {
+		if (!this.configs.gcAllowed || !result.isSummaryTracked) {
 			return;
 		}
 
 		this.latestSummaryData = this.pendingSummaryData;
 		this.pendingSummaryData = undefined;
 		this.updatedDSCountSinceLastSummary = 0;
-		this.fullGCModeForAutoRecovery = false;
 	}
 
 	/**
 	 * Called to update the state from a GC run's stats. Used to update the count of data stores whose state updated.
 	 */
-	public updateStateFromGCRunStats(stats: IGCStats) {
+	// eslint-disable-next-line import/no-deprecated
+	public updateStateFromGCRunStats(stats: IGCStats): void {
 		this.updatedDSCountSinceLastSummary += stats.updatedDataStoreCount;
 	}
 }

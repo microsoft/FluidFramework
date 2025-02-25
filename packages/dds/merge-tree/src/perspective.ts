@@ -6,14 +6,23 @@
 import { UnassignedSequenceNumber } from "./constants.js";
 import { type MergeTree } from "./mergeTree.js";
 import { LeafAction, backwardExcursion, forwardExcursion } from "./mergeTreeNodeWalk.js";
-import { seqLTE, type ISegment } from "./mergeTreeNodes.js";
+import { seqLTE, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import {
+	isInserted,
+	isMoved,
+	isRemoved,
+	type IInsertionInfo,
+	type IMoveInfo,
+	type IRemovalInfo,
+	type SegmentWithInfo,
+} from "./segmentInfos.js";
 
 /**
  * Provides a view of a MergeTree from the perspective of a specific client at a specific sequence number.
  */
 export interface Perspective {
-	nextSegment(segment: ISegment, forward?: boolean): ISegment;
-	previousSegment(segment: ISegment): ISegment;
+	nextSegment(segment: ISegmentLeaf, forward?: boolean): ISegmentLeaf;
+	previousSegment(segment: ISegmentLeaf): ISegmentLeaf;
 }
 
 /**
@@ -26,7 +35,8 @@ export interface SeqTime {
 
 /**
  * Implementation of {@link Perspective}.
- * See {@link Client.createPerspective}.
+ * @privateRemarks
+ * TODO:AB#29765: This class does not support non-local-client perspectives, but should.
  */
 export class PerspectiveImpl implements Perspective {
 	/**
@@ -47,9 +57,9 @@ export class PerspectiveImpl implements Perspective {
 	 * @param forward - The direction to search.
 	 * @returns the next segment in the specified direction, or the start or end of the tree if there is no next segment.
 	 */
-	public nextSegment(segment: ISegment, forward: boolean = true): ISegment {
-		let next: ISegment | undefined;
-		const action = (seg: ISegment): boolean | undefined => {
+	public nextSegment(segment: ISegmentLeaf, forward: boolean = true): ISegmentLeaf {
+		let next: ISegmentLeaf | undefined;
+		const action = (seg: ISegmentLeaf): boolean | undefined => {
 			if (isSegmentPresent(seg, this._seqTime)) {
 				next = seg;
 				return LeafAction.Exit;
@@ -65,7 +75,7 @@ export class PerspectiveImpl implements Perspective {
 	 * @returns the previous segment, or the start of the tree if there is no previous segment.
 	 * @remarks This is a convenient equivalent to calling `nextSegment(segment, false)`.
 	 */
-	public previousSegment(segment: ISegment): ISegment {
+	public previousSegment(segment: ISegmentLeaf): ISegmentLeaf {
 		return this.nextSegment(segment, false);
 	}
 }
@@ -76,8 +86,13 @@ export class PerspectiveImpl implements Perspective {
  * @param seq - The latest sequence number to consider.
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was removed in the given perspective.
+ * @privateRemarks
+ * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
-export function wasRemovedBefore(seg: ISegment, { refSeq, localSeq }: SeqTime): boolean {
+export function wasRemovedBefore(
+	seg: SegmentWithInfo<IInsertionInfo & IRemovalInfo>,
+	{ refSeq, localSeq }: SeqTime,
+): boolean {
 	if (
 		seg.removedSeq === UnassignedSequenceNumber &&
 		localSeq !== undefined &&
@@ -94,8 +109,13 @@ export function wasRemovedBefore(seg: ISegment, { refSeq, localSeq }: SeqTime): 
  * @param refSeq - The latest sequence number to consider.
  * @param localSeq - The latest local sequence number to consider.
  * @returns true iff this segment was moved (aka obliterated) in the given perspective.
+ * @privateRemarks
+ * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
-export function wasMovedBefore(seg: ISegment, { refSeq, localSeq }: SeqTime): boolean {
+export function wasMovedBefore(
+	seg: SegmentWithInfo<IInsertionInfo & IMoveInfo>,
+	{ refSeq, localSeq }: SeqTime,
+): boolean {
 	if (
 		seg.movedSeq === UnassignedSequenceNumber &&
 		localSeq !== undefined &&
@@ -108,9 +128,15 @@ export function wasMovedBefore(seg: ISegment, { refSeq, localSeq }: SeqTime): bo
 
 /**
  * See {@link wasRemovedBefore} and {@link wasMovedBefore}.
+ * @privateRemarks
+ * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
-export function wasRemovedOrMovedBefore(seg: ISegment, seqTime: SeqTime): boolean {
-	return wasRemovedBefore(seg, seqTime) || wasMovedBefore(seg, seqTime);
+export function wasRemovedOrMovedBefore(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
+	return (
+		isInserted(seg) &&
+		((isRemoved(seg) && wasRemovedBefore(seg, seqTime)) ||
+			(isMoved(seg) && wasMovedBefore(seg, seqTime)))
+	);
 }
 
 /**
@@ -119,12 +145,14 @@ export function wasRemovedOrMovedBefore(seg: ISegment, seqTime: SeqTime): boolea
  * @param seqTime - The latest sequence number and local sequence number to consider.
  * @returns true iff this segment was inserted before the given perspective,
  * and it was not removed or moved in the given perspective.
+ * @privateRemarks
+ * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
-export function isSegmentPresent(seg: ISegment, seqTime: SeqTime): boolean {
+export function isSegmentPresent(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
 	const { refSeq, localSeq } = seqTime;
 	// If seg.seq is undefined, then this segment has existed since minSeq.
 	// It may have been moved or removed since.
-	if (seg.seq !== undefined) {
+	if (isInserted(seg)) {
 		if (seg.seq !== UnassignedSequenceNumber) {
 			if (!seqLTE(seg.seq, refSeq)) {
 				return false;

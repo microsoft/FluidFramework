@@ -3,44 +3,33 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 // Allow importing from this specific file which is being tested:
 
 import { makeCodecFamily } from "../../../codec/index.js";
 import type { FieldKindIdentifier, TreeStoredSchema } from "../../../core/index.js";
-import { SchemaBuilder, jsonRoot, jsonSchema, leaf } from "../../../domains/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import {
-	allowsRepoSuperset,
-	defaultSchemaPolicy,
-	intoStoredSchema,
-} from "../../../feature-libraries/index.js";
+import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 /* eslint-disable-next-line import/no-internal-modules */
 import { makeSchemaCodec } from "../../../feature-libraries/schema-index/codec.js";
 /* eslint-disable-next-line import/no-internal-modules */
 import { Format } from "../../../feature-libraries/schema-index/format.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { library } from "../../testTrees.js";
 import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
+import { SchemaFactory } from "../../../simple-tree/index.js";
+import { jsonPrimitiveSchema, JsonUnion } from "../../json/index.js";
 
 const codec = makeSchemaCodec({ jsonValidator: typeboxValidator });
 
-const schema1 = new SchemaBuilder({
-	scope: "json",
-	libraries: [jsonSchema],
-}).intoSchema(SchemaBuilder.optional(jsonRoot));
-
-const jsonPrimitives = [...leaf.primitives, leaf.null] as const;
-const schema2 = new SchemaBuilder({
-	scope: "testSchemas",
-	libraries: [library],
-}).intoSchema(SchemaBuilder.optional(jsonPrimitives));
+const schema2 = toStoredSchema(SchemaFactory.optional(jsonPrimitiveSchema));
 
 const testCases: EncodingTestData<TreeStoredSchema, Format> = {
 	successes: [
-		["json", intoStoredSchema(schema1)],
-		["testSchemas", intoStoredSchema(schema2)],
+		["json", toStoredSchema(JsonUnion)],
+		["testSchemas", schema2],
 	],
 };
 
@@ -58,7 +47,7 @@ describe("SchemaIndex", () => {
 			{
 				version: 1 as const,
 				nodes: {},
-				root: { kind: "x" as FieldKindIdentifier },
+				root: { kind: "x" as FieldKindIdentifier, types: [] },
 			} satisfies Format,
 		];
 		for (const data of cases) {

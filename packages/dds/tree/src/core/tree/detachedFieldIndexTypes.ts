@@ -18,7 +18,6 @@ export interface DetachedFieldSummaryData {
  * ID used to create a detached field key for a removed subtree.
  *
  * TODO: Move to Forest once forests can support multiple roots.
- * @internal
  */
 export type ForestRootId = Brand<number, "tree.ForestRootId">;
 
@@ -28,7 +27,7 @@ export type ForestRootId = Brand<number, "tree.ForestRootId">;
 export interface DetachedField {
 	/**
 	 * The atomic ID that the `DetachedFieldIndex` uses to uniquely identify the first (and only) root in the field.
-	 * This ID is scoped to the specific `DetachedFieldIndex` from witch this object was retrieved.
+	 * This ID is scoped to the specific `DetachedFieldIndex` from which this object was retrieved.
 	 *
 	 * The current implementation only supports a single root per field.
 	 * This will be changed in the future for performance reasons.

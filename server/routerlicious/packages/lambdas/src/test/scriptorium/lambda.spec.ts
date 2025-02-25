@@ -33,7 +33,7 @@ describe("Routerlicious", () => {
 				testCollection = new TestCollection([]);
 				testContext = new TestContext();
 
-				lambda = new ScriptoriumLambda(testCollection, testContext, undefined);
+				lambda = new ScriptoriumLambda(testCollection, testContext, undefined, undefined);
 			});
 
 			describe(".handler()", () => {

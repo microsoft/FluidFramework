@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-service-load",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"description": "Service load tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -25,26 +25,26 @@
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"debug": "node --inspect-brk ./dist/nodeStressTest.js --debug",
-		"debug:mini": "node --inspect-brk ./dist/nodeStressTest.js --debug --profile mini",
-		"debug:runner": "node ./dist/nodeStressTest.js --debug --profile debug",
+		"debug": "node --inspect-brk ./dist/main.js --debug",
+		"debug:mini": "node --inspect-brk ./dist/main.js --debug --profile mini",
+		"debug:runner": "node ./dist/main.js --debug --profile debug",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"full": "node ./dist/nodeStressTest.js --profile full",
+		"full": "node ./dist/main.js --profile full",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"start": "node ./dist/nodeStressTest.js",
-		"start:frs": "node ./dist/nodeStressTest.js --driver routerlicious --driverEndpoint frs --profile ci_frs",
-		"start:frs:canary": "node ./dist/nodeStressTest.js --driver routerlicious --driverEndpoint frsCanary --profile ci_frs",
-		"start:mini": "node ./dist/nodeStressTest.js  --profile mini",
-		"start:odsp": "node ./dist/nodeStressTest.js --driver odsp",
-		"start:odspdf": "node ./dist/nodeStressTest.js --driver odsp --driverEndpoint odsp-df",
-		"start:reauth": "node ./dist/nodeStressTest.js --profile mini --browserAuth",
+		"start": "node ./dist/main.js",
+		"start:frs": "node ./dist/main.js --driver routerlicious --driverEndpoint frs --profile ci_frs",
+		"start:frs:canary": "node ./dist/main.js --driver routerlicious --driverEndpoint frsCanary --profile ci_frs",
+		"start:mini": "node ./dist/main.js  --profile mini",
+		"start:odsp": "node ./dist/main.js --driver odsp",
+		"start:odspdf": "node ./dist/main.js --driver odsp --driverEndpoint odsp-df",
+		"start:reauth": "node ./dist/main.js --profile mini --browserAuth",
 		"start:t9s": "start-server-and-test start:tinylicious:test 7070 start:t9s:run",
-		"start:t9s:run": "node ./dist/nodeStressTest.js --driver tinylicious ",
+		"start:t9s:run": "node ./dist/main.js --driver tinylicious ",
 		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
 		"test": "npm run test:stress:run",
 		"test:stress": "npm run test:stress:tinylicious",
@@ -62,12 +62,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -106,13 +108,13 @@
 		"tinylicious": "^5.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.41.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"c8": "^8.0.1",
 		"copyfiles": "^2.4.1",
@@ -125,6 +127,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

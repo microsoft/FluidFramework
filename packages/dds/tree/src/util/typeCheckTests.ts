@@ -15,6 +15,7 @@ import type {
 	Covariant,
 	Invariant,
 	MakeNominal,
+	areOnlyKeys,
 	areSafelyAssignable,
 	eitherIsAny,
 	isAny,
@@ -33,19 +34,19 @@ declare class Empty1 {}
 declare class Empty2 {}
 
 declare class Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Nominal2 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Derived1 extends Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Derived2 extends Nominal1 {
-	protected _typeCheck?: MakeNominal;
+	protected _typeCheck: MakeNominal;
 }
 
 declare class Generic<_T> {}
@@ -221,10 +222,19 @@ export type EnforceTypeCheckTests =
 	| requireTrue<isStrictSubset<[1, true], [1 | 2, true | false]>>
 	| requireTrue<isStrictSubset<[1, true], [1, true | false]>>
 	| requireTrue<isStrictSubset<[1, true], [1, true] | [1 | false]>>
+	| requireTrue<isStrictSubset<1, number>>
 	| requireFalse<isStrictSubset<1, 1>>
 	| requireFalse<isStrictSubset<1, 2>>
 	| requireFalse<isStrictSubset<[1, true], [1, true]>>
-	| requireFalse<isStrictSubset<1 | 2, 1>>;
+	| requireFalse<isStrictSubset<1 | 2, 1>>
+
+	// areOnlyKeys
+	| requireTrue<areOnlyKeys<{ a: number; b: number }, "a" | "b">>
+	| requireTrue<areOnlyKeys<{ a?: number; b: number }, "a" | "b">>
+	| requireFalse<areOnlyKeys<{ a?: number; b: number }, "b">>
+	| requireFalse<areOnlyKeys<{ a: number; b: number }, "a">>;
+// This case is explicitly documented as unsupported.
+// | requireFalse<areOnlyKeys<Record<string, unknown>, "a">>;
 
 // negative tests (should not build)
 // @ts-expect-error negative test

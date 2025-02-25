@@ -1,0 +1,114 @@
+# release-notes-issue.yml
+# Updates an issue that tracks release notes with the generated release notes.
+# The issue to update is set in the RELEASE_NOTES_ISSUE secret.
+
+name: "Update release notes issue"
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".changeset/**"
+
+  # Allow manually triggering this workflow from the web UI
+  workflow_dispatch:
+
+# This makes the RELEASE_NOTES_ISSUE variable set in the GitHub UI available as an environment variable.
+# It's available to all jobs/steps in the workflow.
+env:
+  ISSUE: ${{ vars.RELEASE_NOTES_ISSUE }}
+
+permissions:
+  issues: write
+
+jobs:
+  update-issue:
+    name: Update release notes
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the repo and set up node and pnpm.
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # ratchet:actions/checkout@v4
+        with:
+          fetch-depth: "100"
+          persist-credentials: false
+      - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b # ratchet:actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      # Get the version of the client release group by reading the root package.json and set it as an output variable.
+      # This way we can use the version in subsequent steps.
+      - name: Set version output variable
+        id: setVersion
+        run: |
+          echo "VERSION=$(jq -r '.version' package.json)" >> "$GITHUB_OUTPUT"
+
+      # Install the in-repo build-tools.
+      - name: Install Fluid build tools
+        continue-on-error: true
+        run: |
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
+          # We want flub available to call, so we run npm link in the build-cli package, which creates shims that are avilable on the PATH
+          # Use npm link instead of pnpm link because it handles bins better
+          cd packages/build-cli
+          npm link
+
+      - name: Check build-tools installation
+        run: |
+          # Info for debugging
+          which flub
+          flub --help
+          flub commands
+
+      # Generates the release notes based on the changesets in the repo. Changes that don't map to known sections WILL
+      # be included.
+      - name: Generate release notes file
+        run: |
+          flub generate releaseNotes -g client -t minor --includeUnknown --headingLinks --outFile RELEASE_NOTES.md -v
+
+      # Read the release notes file that we just generated into an output variable.
+      - name: Read release notes file
+        id: relNotes
+        uses: juliangruber/read-file-action@b549046febe0fe86f8cb4f93c24e284433f9ab58 # ratchet:juliangruber/read-file-action@v1
+        with:
+          path: ./RELEASE_NOTES.md
+
+      # Read the issue intro from a data file and put it in an output variable.
+      - name: Read issue intro template
+        id: intro
+        # release notes: https://github.com/Lehoczky/render-nunjucks-template-action/releases/tag/v1.0.0
+        uses: Lehoczky/render-nunjucks-template-action@9e23a64f080194d15347e881438ee53201e25c25 # ratchet:Lehoczky/render-nunjucks-template-action@v1.0.0
+        with:
+          template-path: .github/workflows/data/release-notes-issue-intro.njk
+          vars: |
+            {
+              "version": "${{ steps.setVersion.outputs.VERSION }}"
+            }
+
+      # Replace the issue body with the intro; we'll append the new release notes in the next step.
+      - name: Replace issue body with intro
+        uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # ratchet:julien-deramond/update-issue-body@v1
+        with:
+          issue-number: ${{ env.ISSUE }}
+          body: ${{ steps.intro.outputs.result }}
+          edit-mode: replace
+
+      # Append the release notes we generated to the issue body.
+      - name: Append release notes to issue body
+        uses: julien-deramond/update-issue-body@a7fae45395cac5a23318d38f7b09a58650dfe84f # ratchet:julien-deramond/update-issue-body@v1
+        with:
+          issue-number: ${{ env.ISSUE }}
+          body: ${{ steps.relNotes.outputs.content }}
+          edit-mode: append
+
+      # Update the issue title with the (possibly new) version
+      - name: Update issue title
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          NEW_TITLE="Upcoming Release: FluidFramework v${{ steps.setVersion.outputs.VERSION }}"
+          gh issue edit ${{ env.ISSUE }} --title "$NEW_TITLE"

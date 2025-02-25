@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ConnectionMode, ISentSignalMessage } from "@fluidframework/protocol-definitions";
+import type {
+	ConnectionMode,
+	IClientDetails,
+	ISentSignalMessage,
+} from "@fluidframework/protocol-definitions";
 import { NetworkError, canSummarize, canWrite } from "@fluidframework/server-services-client";
 import type { ILogger } from "@fluidframework/server-services-core";
 import {
@@ -66,6 +70,9 @@ export const hasWriteAccess = (scopes: string[]): boolean =>
 	canWrite(scopes) || canSummarize(scopes);
 export const isWriter = (scopes: string[], mode: ConnectionMode): boolean =>
 	hasWriteAccess(scopes) && mode === "write";
+export const SummarizerClientType = "summarizer";
+export const isSummarizer = (clientDetails: IClientDetails): boolean =>
+	clientDetails.type === SummarizerClientType || clientDetails.capabilities.interactive === false;
 
 export const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;
 export const getClientSpecificRoomId = (clientId: string): string => `client#${clientId}`;

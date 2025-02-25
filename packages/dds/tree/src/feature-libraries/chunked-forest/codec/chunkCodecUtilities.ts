@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
-import type { TreeValue } from "../../../core/index.js";
+import type { TreeValue, TreeChunk } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
 import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
-import type { TreeChunk } from "../chunk.js";
 
 /**
  * Utilities related to chunk encoding and decoding that do not depend on specific chunk types or formats.
@@ -106,7 +105,7 @@ export function jsonMinimizingFilter(s: string, value: number, count: number): b
  */
 export function getChecked<T>(data: readonly T[], index: number): T {
 	assertValidIndex(index, data);
-	return data[index];
+	return data[index] ?? oob();
 }
 
 /**

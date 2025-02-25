@@ -21,6 +21,7 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
@@ -30,100 +31,63 @@ variables:
 - name: testOdspPackage
   value: "@fluid-experimental/odsp-end-to-end-tests"
   readonly: true
+- name: pipelineIdentifierForTelemetry
+  value: 'ServiceClientsEndToEndTests'
+  readonly: true
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
 
 stages:
-  # Run Azure Client FRS Tests
-  - stage: e2e_azure_client_frs
-    displayName: e2e - azure client with frs
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Small
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:realsvc:azure
-        artifactBuildId: $(resources.pipeline.client.runID)
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
-          azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
-          azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
+  # Run Azure Client AFR Tests
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: e2e_azure_client_frs
+      stageDisplayName: e2e - azure-client with AFR
+      poolBuild: Small-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      testCommand: test:realsvc:azure
+      artifactBuildId: $(resources.pipeline.client.runID)
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        azure__fluid__relay__service__tenantId: $(azure-fluid-relay-service-tenantId)
+        azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
+        azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
 
-  - stage: e2e_azure_client_local_server
-    displayName: e2e - azure client with azure local service
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Small
-        testPackage: ${{ variables.testPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:realsvc:tinylicious
-        artifactBuildId: $(resources.pipeline.client.runID)
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          # Disable colorization for tinylicious logs (not useful when printing to a file)
-          logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
-          logger__morganFormat: tiny
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: e2e_azure_client_local_server
+      stageDisplayName: e2e - azure-client with Azure local service
+      poolBuild: Small-eastus2
+      testPackage: ${{ variables.testPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      testCommand: test:realsvc:tinylicious
+      artifactBuildId: $(resources.pipeline.client.runID)
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        # Disable colorization for tinylicious logs (not useful when printing to a file)
+        logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
+        logger__morganFormat: tiny
 
-  - stage: e2e_odsp_client_odsp_server
-    displayName: e2e - odsp client with odsp service
-    dependsOn: []
-    jobs:
-    - template: templates/include-test-real-service.yml
-      parameters:
-        poolBuild: Small
-        testPackage: ${{ variables.testOdspPackage }}
-        testWorkspace: ${{ variables.testWorkspace }}
-        testCommand: test:realsvc:odsp:run
-        artifactBuildId: $(resources.pipeline.client.runID)
-        env:
-          FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
-          odsp__client__clientId: $(odsp-client-clientId)
-          odsp__client__siteUrl: $(odsp-client-siteUrl)
-          odsp__client__driveId: $(odsp-client-driveId)
-          login__odspclient__spe__test__tenants: $(login-odspclient-spe-test-tenants)
-
-  # Capture pipeline stage results
-  - stage: upload_run_telemetry
-    displayName: Upload pipeline run telemetry to Kusto
-    condition: succeededOrFailed()
-    dependsOn:
-      - e2e_azure_client_frs
-      - e2e_azure_client_local_server
-      - e2e_odsp_client_odsp_server
-    jobs:
-      - job: upload_run_telemetry
-        displayName: Upload pipeline run telemetry to Kusto
-        pool: Small
-        variables:
-        - group: ado-feeds
-        - name: absolutePathToTelemetryGenerator
-          value: $(Build.SourcesDirectory)/tools/telemetry-generator
-          readonly: true
-        steps:
-        - template: templates/include-telemetry-setup.yml
-          parameters:
-            devFeedUrl: $(ado-feeds-dev)
-            officeFeedUrl: $(ado-feeds-office)
-            isCheckoutNeeded: true
-        - task: Bash@3
-          displayName: Retrieve buildId results
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(absolutePathToTelemetryGenerator)
-            script: |
-              echo "creating output folder"
-              mkdir -p ${{ variables.testWorkspace }}/timingOutput
-              echo "Retrieving pipeline run timeline data command ..."
-              echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-              curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
-              pwd;
-              ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-              cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-              node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            ADO_API_TOKEN: $(System.AccessToken)
-            PIPELINE: ServiceClientsEndToEndTests
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
+    parameters:
+      stageId: e2e_odsp_client_odsp_server
+      stageDisplayName: e2e - odsp-client with ODSP service
+      poolBuild: Small-eastus2
+      testPackage: ${{ variables.testOdspPackage }}
+      testWorkspace: ${{ variables.testWorkspace }}
+      testCommand: test:realsvc:odsp:run
+      artifactBuildId: $(resources.pipeline.client.runID)
+      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      env:
+        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
+        odsp__client__clientId: $(odsp-client-clientId)
+        odsp__client__siteUrl: $(odsp-client-siteUrl)
+        odsp__client__driveId: $(odsp-client-driveId)
+        login__odspclient__spe__test__tenants: $(login-odspclient-spe-test-tenants)

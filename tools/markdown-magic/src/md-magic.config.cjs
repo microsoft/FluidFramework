@@ -16,20 +16,21 @@ const {
 	resolveRelativePackageJsonPath,
 } = require("./utilities.cjs");
 const {
-	apiDocsLinkSectionTransform,
-	exampleGettingStartedSectionTransform,
-	generateApiDocsLinkSection,
+	apiDocsTransform,
+	exampleGettingStartedTransform,
+	generateApiDocsSection,
 	generateExampleGettingStartedSection,
 	generateInstallationInstructionsSection,
-	generatePackageImportInstructionsSection,
+	generateImportInstructionsSection,
 	generatePackageScopeNotice,
 	generatePackageScriptsSection,
 	generateSectionFromTemplate,
 	includeTransform,
+	includeCodeTransform,
 	installationInstructionsTransform,
-	packageImportInstructionsSectionTransform,
+	importInstructionsTransform,
 	packageScopeNoticeTransform,
-	packageScriptsSectionTransform,
+	packageScriptsTransform,
 } = require("./transforms/index.cjs");
 
 /**
@@ -142,7 +143,7 @@ const generateTrademarkSection = (headingOptions) =>
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function libraryPackageReadmeFooterTransform(content, options, config) {
+function readmeFooterTransform(content, options, config) {
 	const { packageJsonPath: relativePackageJsonPath } = options;
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
@@ -165,7 +166,7 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
 	}
 
 	const includeClientRequirementsSection = parseBooleanOption(options.clientRequirements, () =>
-		isPublic(packageName),
+		isPublic(packageMetadata),
 	);
 	if (includeClientRequirementsSection) {
 		sections.push(generateClientRequirementsSection(sectionHeadingOptions));
@@ -206,13 +207,19 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
  * @param {object} options - Transform options.
  * @param {string | undefined} options.packageJsonPath - (optional) Relative path from the document to the package's package.json file.
  * Default: "./package.json".
- * @param {"EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | undefined} options.packageScopeNotice - (optional) Kind of package scope (namespace) notice to add.
+ * @param {"EXAMPLE" | "EXPERIMENTAL" | "INTERNAL" | "PRIVATE" | "TOOLS" | undefined} options.packageScopeNotice - (optional) Kind of package scope (namespace) notice to add.
+ * EXAMPLE: See templates/Example-Package-Notice-Template.md.
  * EXPERIMENTAL: See templates/Experimental-Package-Notice-Template.md.
  * INTERNAL: See templates/Internal-Package-Notice-Template.md.
  * PRIVATE: See templates/Private-Package-Notice-Template.md.
- * `undefined`: Inherit from package namespace (fluid-experimental, fluid-internal, fluid-private).
+ * TOOLS: See templates/Tools-Package-Notice-Template.md.
+ * `undefined`: Inherit from package namespace (`fluid-experimental`, `fluid-internal`, `fluid-private`, `fluid-tools`, etc.).
+ * @param {"TRUE" | "FALSE" | undefined} options.dependencyGuidelines - (optional) Whether or not to include the Fluid Framework dependency guidelines section.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.installation - (optional) Whether or not to include the package installation instructions section.
- * Default: `TRUE`.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {"TRUE" | "FALSE" | undefined} options.devDependency - (optional) Whether or not the package is intended to be installed as a devDependency.
  * Only used if `installation` is specified.
  * Default: `FALSE`.
@@ -220,12 +227,13 @@ function libraryPackageReadmeFooterTransform(content, options, config) {
  * Default: Checks at the `package.json` file for an `exports` property.
  * Will include the section if the property is found, and one of our special paths is found (`/alpha`, `/beta`, or `/legacy`).
  * Can be explicitly disabled by specifying `FALSE`.
-* @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
- * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework"). `FALSE` otherwise.
+ * @param {"TRUE" | "FALSE" | undefined} options.apiDocs - (optional) Whether or not to include a section pointing readers to the package's generated API documentation on <fluidframework.com>.
+ * Default: `TRUE` if the package is end-user facing (i.e., a member of the `@fluidframework` or `@fluid-experimental` namespaces, or "fluid-framework").
+ * `FALSE` otherwise.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function libraryPackageReadmeHeaderTransform(content, options, config) {
+function libraryReadmeHeaderTransform(content, options, config) {
 	const { packageJsonPath: relativePackageJsonPath } = options;
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
@@ -233,6 +241,7 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 	);
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
+	const isPackagePublic = isPublic(packageMetadata);
 
 	const sectionHeadingOptions = {
 		includeHeading: true,
@@ -248,9 +257,17 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 		sections.push(scopeNoticeSection);
 	}
 
-	if (options.installation !== "FALSE") {
+	const includeDependencyGuidelinesSection = parseBooleanOption(
+		options.dependencyGuidelines,
+		isPackagePublic,
+	);
+	if (includeDependencyGuidelinesSection) {
+		sections.push(generateDependencyGuidelines(sectionHeadingOptions));
+	}
+
+	const includeInstallationSection = parseBooleanOption(options.installation, isPackagePublic);
+	if (includeInstallationSection) {
 		sections.push(
-			generateDependencyGuidelines(sectionHeadingOptions),
 			generateInstallationInstructionsSection(
 				packageName,
 				options.devDependency,
@@ -259,17 +276,14 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
 		);
 	}
 
-	if (options.importInstructions !== "FALSE") {
-		sections.push(
-			generatePackageImportInstructionsSection(packageMetadata, sectionHeadingOptions),
-		);
+	const includeImportInstructionsSection = parseBooleanOption(options.importInstructions, true);
+	if (includeImportInstructionsSection) {
+		sections.push(generateImportInstructionsSection(packageMetadata, sectionHeadingOptions));
 	}
 
-	const includeApiDocsSection = parseBooleanOption(options.apiDocs, () =>
-		isPublic(packageName),
-	);
+	const includeApiDocsSection = parseBooleanOption(options.apiDocs, isPackagePublic);
 	if (includeApiDocsSection) {
-		sections.push(generateApiDocsLinkSection(packageName, sectionHeadingOptions));
+		sections.push(generateApiDocsSection(packageName, sectionHeadingOptions));
 	}
 
 	return formattedGeneratedContentBody(sections.join(""));
@@ -287,18 +301,10 @@ function libraryPackageReadmeHeaderTransform(content, options, config) {
  * @param {"TRUE" | "FALSE" | undefined} options.usesTinylicious - (optional) Whether or not the example app workflow uses {@link https://github.com/microsoft/FluidFramework/tree/main/server/routerlicious/packages/tinylicious | Tinylicious}.
  * Only used if `gettingStarted` is specified.
  * Default: `TRUE`.
- * @param {"TRUE" | "FALSE" | undefined} options.scripts - (optional) Whether or not to include a section enumerating the package.json file's dev scripts.
- * Default: `FALSE`.
- * @param {"TRUE" | "FALSE" | undefined} options.contributionGuidelines - (optional) Whether or not to include a section outlining fluid-framework's contribution guidelines.
- * Default: `TRUE`.
- * @param {"TRUE" | "FALSE" | undefined} options.help - (optional) Whether or not to include a developer help section.
- * Default: `TRUE`.
- * @param {"TRUE" | "FALSE" | undefined} options.trademark - (optional) Whether or not to include a section with Microsoft's trademark info.
- * Default: `TRUE`.
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function examplePackageReadmeTransform(content, options, config) {
+function exampleAppReadmeHeaderTransform(content, options, config) {
 	const { packageJsonPath: relativePackageJsonPath } = options;
 
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
@@ -320,31 +326,6 @@ function examplePackageReadmeTransform(content, options, config) {
 				/* headingOptions: */ sectionHeadingOptions,
 			),
 		);
-	}
-
-	if (options.scripts === "TRUE") {
-		options.pkg = relativePackageJsonPath;
-		const scriptsTable = scripts(content, options, config);
-		sections.push(
-			generatePackageScriptsSection(
-				scriptsTable,
-				/* headingOptions: */ sectionHeadingOptions,
-			),
-		);
-	}
-
-	if (options.contributionGuidelines !== "FALSE") {
-		sections.push(
-			generateContributionGuidelinesSection(/* headingOptions: */ sectionHeadingOptions),
-		);
-	}
-
-	if (options.help !== "FALSE") {
-		sections.push(generateHelpSection(/* headingOptions: */ sectionHeadingOptions));
-	}
-
-	if (options.trademark !== "FALSE") {
-		sections.push(generateTrademarkSection(/* headingOptions: */ sectionHeadingOptions));
 	}
 
 	return formattedGeneratedContentBody(sections.join(""));
@@ -383,50 +364,61 @@ module.exports = {
 		INCLUDE: includeTransform,
 
 		/**
-		 * See {@link libraryPackageReadmeHeaderTransform}.
+		 * See {@link includeCodeTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (INCLUDE_CODE:path=../file.js&start=1&end=-1&language=typescript) -->
 		 * ```
 		 */
-		LIBRARY_PACKAGE_README_HEADER: libraryPackageReadmeHeaderTransform,
+		INCLUDE_CODE: includeCodeTransform,
 
 		/**
-		 * See {@link libraryPackageReadmeFooterTransform}.
+		 * See {@link libraryReadmeHeaderTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER:packageJsonPath=./package.json&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:packageJsonPath=./package.json&installation=TRUE&devDependency=FALSE&apiDocs=TRUE) -->
 		 * ```
 		 */
-		LIBRARY_PACKAGE_README_FOOTER: libraryPackageReadmeFooterTransform,
+		LIBRARY_README_HEADER: libraryReadmeHeaderTransform,
 
 		/**
-		 * See {@link examplePackageReadmeTransform}.
+		 * See {@link exampleAppReadmeHeaderTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_PACKAGE:packageJsonPath=./package.json&gettingStarted=TRUE&usesTinylicious=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:packageJsonPath=./package.json&gettingStarted=TRUE&usesTinylicious=TRUE&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		EXAMPLE_PACKAGE_README: examplePackageReadmeTransform,
+		EXAMPLE_APP_README_HEADER: exampleAppReadmeHeaderTransform,
 
 		/**
-		 * See {@link exampleGettingStartedSectionTransform}.
+		 * See {@link readmeFooterTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_EXAMPLE_GETTING_STARTED_SECTION:packageJsonPath=./package.json&usesTinylicious=TRUE&includeHeading=TRUE&headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER:packageJsonPath=./package.json&scripts=FALSE&contributionGuidelines=TRUE&help=TRUE&trademark=TRUE) -->
+		 * ```
+		 */
+		README_FOOTER: readmeFooterTransform,
+
+		/**
+		 * See {@link exampleGettingStartedTransform}.
+		 *
+		 * @example
+		 *
+		 * ```markdown
+		 * <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_GETTING_STARTED_SECTION:packageJsonPath=./package.json&usesTinylicious=TRUE&includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_EXAMPLE_GETTING_STARTED_SECTION: exampleGettingStartedSectionTransform,
+		EXAMPLE_GETTING_STARTED: exampleGettingStartedTransform,
 
 		/**
 		 * See {@link packageScopeNoticeTransform}.
@@ -434,23 +426,23 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_PACKAGE_SCOPE_NOTICE:packageJsonPath=./package.json) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCOPE_NOTICE:packageJsonPath=./package.json) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_PACKAGE_SCOPE_NOTICE: packageScopeNoticeTransform,
+		PACKAGE_SCOPE_NOTICE: packageScopeNoticeTransform,
 
 		/**
-		 * See {@link readmeApiDocsSectionTransform}.
+		 * See {@link apiDocsTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_API_DOCS_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (API_DOCS:packageJsonPath=./package.json&includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		API_DOCS_LINK_SECTION: apiDocsLinkSectionTransform,
+		API_DOCS: apiDocsTransform,
 
 		/**
 		 * See {@link installationInstructionsTransform}.
@@ -458,23 +450,23 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_INSTALLATION_SECTION:packageJsonPath=./package.json&includeHeading=TRUE&headingLevel=2&devDependency=FALSE) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (INSTALLATION_INSTRUCTIONS:packageJsonPath=./package.json&includeHeading=TRUE&headingLevel=2&devDependency=FALSE) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_INSTALLATION_SECTION: installationInstructionsTransform,
+		INSTALLATION_INSTRUCTIONS: installationInstructionsTransform,
 
 		/**
-		 * See {@link packageImportInstructionsSectionTransform}.
+		 * See {@link importInstructionsTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_IMPORT_INSTRUCTIONS:packageJsonPath=./package.json&includeHeading=TRUE&headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (IMPORT_INSTRUCTIONS:packageJsonPath=./package.json&includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_IMPORT_INSTRUCTIONS: packageImportInstructionsSectionTransform,
+		IMPORT_INSTRUCTIONS: importInstructionsTransform,
 
 		/**
 		 * Generates a README section with Fluid Framework client requirements.
@@ -492,16 +484,15 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_CLIENT_REQUIREMENTS_SECTION:headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (CLIENT_REQUIREMENTS:headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_CLIENT_REQUIREMENTS_SECTION: (content, options, config) => {
-			return templateTransform(
+		CLIENT_REQUIREMENTS: (content, options, config) =>
+			templateTransform(
 				"Client-Requirements-Template.md",
 				parseHeadingOptions(options, "Client Requirements"),
-			);
-		},
+			),
 
 		/**
 		 * Generates a README section with Microsoft trademark info.
@@ -519,11 +510,11 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_TRADEMARK_SECTION:includeHeading=TRUE&includeHeading=TRUE&headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (TRADEMARK:includeHeading=TRUE&includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_TRADEMARK_SECTION: (content, options, config) =>
+		TRADEMARK: (content, options, config) =>
 			templateTransform("Trademark-Template.md", parseHeadingOptions(options, "Trademark")),
 
 		/**
@@ -542,11 +533,11 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=TRUE&includeHeading=TRUE&headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (CONTRIBUTION_GUIDELINES:includeHeading=TRUE&includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_CONTRIBUTION_GUIDELINES_SECTION: (content, options, config) =>
+		CONTRIBUTION_GUIDELINES: (content, options, config) =>
 			templateTransform(
 				"Contribution-Guidelines-Template.md",
 				parseHeadingOptions(options, "Contribution Guidelines"),
@@ -568,11 +559,11 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE&includeHeading=TRUE&headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (DEPENDENCY_GUIDELINES:includeHeading=TRUE&includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_DEPENDENCY_GUIDELINES_SECTION: (content, options, config) =>
+		DEPENDENCY_GUIDELINES: (content, options, config) =>
 			templateTransform(
 				"Dependency-Guidelines-Template.md",
 				parseHeadingOptions(options, "Using Fluid Framework libraries"),
@@ -594,24 +585,24 @@ module.exports = {
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (README_HELP_SECTION:includeHeading=TRUE&includeHeading=TRUE&headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (HELP:includeHeading=TRUE&includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_HELP_SECTION: (content, options, config) =>
+		HELP: (content, options, config) =>
 			templateTransform("Help-Template.md", parseHeadingOptions(options, "Help")),
 
 		/**
-		 * See {@link packageScriptsSectionTransform}.
+		 * See {@link packageScriptsTransform}.
 		 *
 		 * @example
 		 *
 		 * ```markdown
-		 * <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_JSON_SCRIPTS:includeHeading=TRUE&headingLevel=2) -->
+		 * <!-- AUTO-GENERATED-CONTENT:START (PACKAGE_SCRIPTS:includeHeading=TRUE&headingLevel=2) -->
 		 * <!-- AUTO-GENERATED-CONTENT:END -->
 		 * ```
 		 */
-		README_PACKAGE_SCRIPTS: packageScriptsSectionTransform,
+		PACKAGE_SCRIPTS: packageScriptsTransform,
 	},
 	globbyOptions: {
 		gitignore: true,

@@ -34,7 +34,7 @@
 		"scriptorium": "node dist/scriptorium/index.js",
 		"scriptorium:debug": "node --inspect=0.0.0.0:5858 dist/scriptorium/index.js",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"dependencies": {
@@ -53,15 +53,15 @@
 		"@fluidframework/server-services-telemetry": "workspace:~",
 		"@fluidframework/server-services-utils": "workspace:~",
 		"commander": "^2.17.1",
-		"express": "^4.19.2",
+		"express": "^4.21.2",
 		"ioredis": "^5.2.3",
 		"nconf": "^0.12.0",
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-routerlicious-previous": "npm:@fluidframework/server-routerlicious@5.0.0",
@@ -83,6 +83,8 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"disabled": true,
+		"entrypoint": "public"
 	}
 }

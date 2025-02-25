@@ -35,11 +35,10 @@ import { MergeTree } from "../mergeTree.js";
 import { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import {
 	IJSONMarkerSegment,
-	IMergeNode,
-	ISegment,
 	compareNumbers,
 	compareStrings,
 	reservedMarkerIdKey,
+	type ISegmentPrivate,
 } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
@@ -284,14 +283,10 @@ export function fileTest1(): void {
 	}
 }
 
-function printTextSegment(textSegment: ISegment, pos: number): boolean {
+function printTextSegment(textSegment: ISegmentPrivate, pos: number): boolean {
 	log(textSegment.toString());
 	log(`at [${pos}, ${pos + textSegment.cachedLength})`);
 	return true;
-}
-
-export function makeTextSegment(text: string): IMergeNode {
-	return new TextSegment(text);
 }
 
 function makeCollabTextSegment(text: string): TextSegment {
@@ -355,7 +350,6 @@ function checkMarkRemoveMergeTree(
 		UniversalSequenceNumber,
 		LocalClientId,
 		UniversalSequenceNumber,
-		false,
 		{ op: createRemoveRangeOp(start, end) },
 	);
 	accumTime += elapsedMicroseconds(clockStart);
@@ -464,7 +458,6 @@ export function mergeTreeLargeTest(): void {
 			UniversalSequenceNumber,
 			LocalClientId,
 			UniversalSequenceNumber,
-			false,
 			undefined as never,
 		);
 		accumTime += elapsedMicroseconds(clockStart);
@@ -1439,7 +1432,7 @@ export class DocumentTree {
 				});
 				this.pos++;
 			} else {
-				const trid = docNode.name + this.ids[docNode.name].toString();
+				const trid = docNode.name + this.ids[docNode.name]!.toString();
 				docNode.id = trid;
 				id = this.ids[docNode.name]++;
 				const props = {
@@ -1528,7 +1521,7 @@ function findReplacePerf(filename: string): void {
 	let cFetches = 0;
 	let cReplaces = 0;
 	for (let pos = 0; pos < client.getLength(); ) {
-		const curSegOff = client.getContainingSegment(pos);
+		const curSegOff = client.getContainingSegment<ISegmentPrivate>(pos);
 		cFetches++;
 
 		const curSeg = curSegOff.segment;
@@ -1543,7 +1536,6 @@ function findReplacePerf(filename: string): void {
 					UniversalSequenceNumber,
 					client.getClientId(),
 					1,
-					false,
 					undefined as never,
 				);
 				insertText({

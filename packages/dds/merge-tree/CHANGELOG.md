@@ -1,5 +1,262 @@
 # @fluidframework/merge-tree
 
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+### Minor Changes
+
+-   Previously deprecated Merge-Tree and SharedString ISegment members have been removed ([#23448](https://github.com/microsoft/FluidFramework/pull/23448)) [e98574fc62](https://github.com/microsoft/FluidFramework/commit/e98574fc625bea7ebce6d79284f32556aaec1c50)
+
+    The current `ISegment` interface over-exposes a number of properties which do not have an external use case, and any external usage could result in damage to the underlying merge-tree including data corruption.
+    [In Fluid Framework release 2.12.0 these properties and associated types were deprecated.](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-merge-tree-and-sharedstring-isegment-deprecations-23323)
+
+    The only use case that will continue to be supported is determining if a segment is removed. For this purpose we've added the free function `segmentIsRemoved(segment: ISegment): boolean`.
+
+    For example, checking if a segment is not removed would change as follows:
+
+    ```diff
+    - if(segment.removedSeq === undefined){
+    + if(!segmentIsRemoved(segment)){
+    ```
+
+    The following properties are removed from `ISegment` and its implementations:
+
+    -   clientId
+    -   index
+    -   localMovedSeq
+    -   localRefs
+    -   localRemovedSeq
+    -   localSeq
+    -   movedClientsIds
+    -   movedSeq
+    -   movedSeqs
+    -   ordinal
+    -   removedClientIds
+    -   removedSeq
+    -   seq
+    -   wasMovedOnInsert
+
+    Additionally, the following types are also removed:
+
+    -   IMergeNodeCommon
+    -   IMoveInfo
+    -   IRemovalInfo
+    -   LocalReferenceCollection
+
+## 2.13.0
+
+Dependency updates only.
+
+## 2.12.0
+
+### Minor Changes
+
+-   Merge-Tree and SharedString ISegment Deprecations ([#23323](https://github.com/microsoft/FluidFramework/pull/23323)) [e8762e37cd](https://github.com/microsoft/FluidFramework/commit/e8762e37cd5edbad36b78b5a40d62a730522e18f)
+
+    The current ISegment interface over-exposes a number of properties which do not have an external use case, and any external usage could result in damage to the underlying merge-tree including data corruption.
+
+    The only use case that will continue to be supported is determining if a segment is removed. For this purpose we've added the free function `segmentIsRemoved(segment: ISegment): boolean`.
+
+    For example, checking if a segment is not removed would change as follows:
+
+    ```diff
+    - if(segment.removedSeq === undefined){
+    + if(!segmentIsRemoved(segment)){
+    ```
+
+    The following properties are deprecated on ISegment and its implementations:
+
+    -   clientId
+    -   index
+    -   localMovedSeq
+    -   localRefs
+    -   localRemovedSeq
+    -   localSeq
+    -   movedClientsIds
+    -   movedSeq
+    -   movedSeqs
+    -   ordinal
+    -   removedClientIds
+    -   removedSeq
+    -   seq
+    -   wasMovedOnInsert
+
+    Additionally, the following types are also deprecated, and will become internal (i.e. users of the Fluid Framework will not have access to them):
+
+    -   IMergeNodeCommon
+    -   IMoveInfo
+    -   IRemovalInfo
+    -   LocalReferenceCollection
+
+## 2.11.0
+
+Dependency updates only.
+
+## 2.10.0
+
+### Minor Changes
+
+-   Unsupported merge-tree types and related exposed internals have been removed ([#22696](https://github.com/microsoft/FluidFramework/pull/22696)) [7a032533a6](https://github.com/microsoft/FluidFramework/commit/7a032533a6ee6a6f76fe154ef65dfa33f87e5a7b)
+
+    As part of ongoing improvements, several internal types and related APIs have been removed. These types are unnecessary for any supported scenarios and could lead to errors if used. Since directly using these types would likely result in errors, these changes are not likely to impact any Fluid Framework consumers.
+
+    Removed types:
+
+    -   IMergeTreeTextHelper
+    -   MergeNode
+    -   ObliterateInfo
+    -   PropertiesManager
+    -   PropertiesRollback
+    -   SegmentGroup
+    -   SegmentGroupCollection
+
+    In addition to removing the above types, they are no longer exposed through the following interfaces and their implementations: `ISegment`, `ReferencePosition`, and `ISerializableInterval`.
+
+    Removed functions:
+
+    -   addProperties
+    -   ack
+
+    Removed properties:
+
+    -   propertyManager
+    -   segmentGroups
+
+    The initial deprecations of the now changed or removed types were announced in Fluid Framework v2.2.0:
+    [Fluid Framework v2.2.0](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.2.0.md)
+
+-   SharedString DDS annotateAdjustRange ([#22751](https://github.com/microsoft/FluidFramework/pull/22751)) [d54b9dde14](https://github.com/microsoft/FluidFramework/commit/d54b9dde14e9e0e5eb7999db8ebf6da98fdfb526)
+
+    This update introduces a new feature to the `SharedString` DDS, allowing for the adjustment of properties over a specified range. The `annotateAdjustRange` method enables users to apply adjustments to properties within a given range, providing more flexibility and control over property modifications.
+
+    An adjustment is a modification applied to a property value within a specified range. Adjustments can be used to increment or decrement property values dynamically. They are particularly useful in scenarios where property values need to be updated based on user interactions or other events. For example, in a rich text editor, adjustments can be used for modifying indentation levels or font sizes, where multiple users could apply differing numerical adjustments.
+
+    ### Key Features and Use Cases:
+
+    -   **Adjustments with Constraints**: Adjustments can include optional minimum and maximum constraints to ensure the final value falls within specified bounds. This is particularly useful for maintaining consistent formatting in rich text editors.
+    -   **Consistent Property Changes**: The feature ensures that property changes are consistent, managing both local and remote changes effectively. This is essential for collaborative rich text editing where multiple users may be making adjustments simultaneously.
+    -   **Rich Text Formatting**: Adjustments can be used to modify text properties such as font size, indentation, or other formatting attributes dynamically based on user actions.
+
+    ### Configuration and Compatibility Requirements:
+
+    This feature is only available when the configuration `Fluid.Sequence.mergeTreeEnableAnnotateAdjust` is set to `true`. Additionally, all collaborating clients must have this feature enabled to use it. If any client does not have this feature enabled, it will lead to the client exiting collaboration. A future major version of Fluid will enable this feature by default.
+
+    ### Usage Example:
+
+    ```typescript
+    sharedString.annotateAdjustRange(start, end, {
+    	key: { value: 5, min: 0, max: 10 },
+    });
+    ```
+
+-   MergeTree `Client` Legacy API Removed ([#22697](https://github.com/microsoft/FluidFramework/pull/22697)) [2aa0b5e794](https://github.com/microsoft/FluidFramework/commit/2aa0b5e7941efe52386782595f96ff847c786fc3)
+
+    The `Client` class in the merge-tree package has been removed. Types that directly or indirectly expose the merge-tree `Client` class have also been removed.
+
+    The removed types were not meant to be used directly, and direct usage was not supported:
+
+    -   AttributionPolicy
+    -   IClientEvents
+    -   IMergeTreeAttributionOptions
+    -   SharedSegmentSequence
+    -   SharedStringClass
+
+    Some classes that referenced the `Client` class have been transitioned to interfaces. Direct instantiation of these classes was not supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
+
+    -   SequenceInterval
+    -   SequenceEvent
+    -   SequenceDeltaEvent
+    -   SequenceMaintenanceEvent
+
+    The initial deprecations of the now changed or removed types were announced in Fluid Framework v2.4.0:
+    [Several MergeTree Client Legacy APIs are now deprecated](https://github.com/microsoft/FluidFramework/blob/main/RELEASE_NOTES/2.4.0.md#several-mergetree-client-legacy-apis-are-now-deprecated-22629)
+
+## 2.5.0
+
+### Minor Changes
+
+-   Compilation no longer fails when building with TypeScript's libCheck option ([#22923](https://github.com/microsoft/FluidFramework/pull/22923)) [a1b4cdd45e](https://github.com/microsoft/FluidFramework/commit/a1b4cdd45ee9812e2598ab8d2854333d26a06eb4)
+
+    When compiling code using Fluid Framework with TypeScript's `libCheck` (meaning without [skipLibCheck](https://www.typescriptlang.org/tsconfig/#skipLibCheck)), two compile errors can be encountered:
+
+    ```
+    > tsc
+
+    node_modules/@fluidframework/merge-tree/lib/client.d.ts:124:18 - error TS2368: Type parameter name cannot be 'undefined'.
+
+    124     walkSegments<undefined>(handler: ISegmentAction<undefined>, start?: number, end?: number, accum?: undefined, splitRange?: boolean): void;
+                         ~~~~~~~~~
+
+    node_modules/@fluidframework/tree/lib/util/utils.d.ts:5:29 - error TS7016: Could not find a declaration file for module '@ungap/structured-clone'. 'node_modules/@ungap/structured-clone/esm/index.js' implicitly has an 'any' type.
+      Try `npm i --save-dev @types/ungap__structured-clone` if it exists or add a new declaration (.d.ts) file containing `declare module '@ungap/structured-clone';`
+
+    5 import structuredClone from "@ungap/structured-clone";
+                                  ~~~~~~~~~~~~~~~~~~~~~~~~~
+    ```
+
+    The first error impacts projects using TypeScript 5.5 or greater and either of the `fluid-framework` or `@fluidframework/merge-tree` packages.
+    The second error impacts projects using the `noImplicitAny` tsconfig setting and the `fluid-framework` or `@fluidframework/tree` packages.
+
+    Both errors have been fixed.
+
+    This should allow `libCheck` to be reenabled in any impacted projects.
+
+## 2.4.0
+
+### Minor Changes
+
+-   Several MergeTree `Client` Legacy APIs are now deprecated ([#22629](https://github.com/microsoft/FluidFramework/pull/22629)) [0b59ae89e0](https://github.com/microsoft/FluidFramework/commit/0b59ae89e0aefefad0ccef198adf99929bc4d783)
+
+    To reduce exposure of the `Client` class in the merge-tree package, several types have been deprecated. These types directly or indirectly expose the merge-tree `Client` class.
+
+    Most of these types are not meant to be used directly, and direct use is not supported:
+
+    -   AttributionPolicy
+    -   IClientEvents
+    -   IMergeTreeAttributionOptions
+    -   SharedSegmentSequence
+    -   SharedStringClass
+
+    Some of the deprecations are class constructors. In those cases, we plan to replace the class with an interface which has an equivalent API. Direct instantiation of these classes is not currently supported or necessary for any supported scenario, so the change to an interface should not impact usage. This applies to the following types:
+
+    -   SequenceInterval
+    -   SequenceEvent
+    -   SequenceDeltaEvent
+    -   SequenceMaintenanceEvent
+
+## 2.3.0
+
+Dependency updates only.
+
+## 2.2.0
+
+### Minor Changes
+
+-   The PropertyManager class and related functions and properties are deprecated ([#22183](https://github.com/microsoft/FluidFramework/pull/22183)) [cbba69554f](https://github.com/microsoft/FluidFramework/commit/cbba69554fc5026f562f44683a902474fabd6e81)
+
+    The `PropertyManager` class, along with the `propertyManager` properties and `addProperties` functions on segments and intervals, are not intended for external use.
+    These elements will be removed in a future release for the following reasons:
+
+    -   There are no scenarios where they need to be used directly.
+    -   Using them directly will cause eventual consistency problems.
+    -   Upcoming features will require modifications to these mechanisms.
+
+-   Deprecate segmentGroups and ack on ISegment ([#22212](https://github.com/microsoft/FluidFramework/pull/22212)) [2b0199dae3](https://github.com/microsoft/FluidFramework/commit/2b0199dae3d73cc7d4fab0f4848614b42e212220)
+
+    The `SegmentGroupCollection` class, along with the `segmentGroups` property and `ack` function on segments, are not intended for external use.
+    These elements will be removed in a future release for the following reasons:
+
+    -   There are no scenarios where they need to be used directly.
+    -   Using them directly will cause eventual consistency problems.
+    -   Upcoming features will require modifications to these mechanisms.
+
 ## 2.1.0
 
 ### Minor Changes

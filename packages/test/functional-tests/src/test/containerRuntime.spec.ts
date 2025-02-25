@@ -9,26 +9,37 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
+import {
+	AttachState,
+	IContainerContext,
+	ICriticalContainerError,
+	IRuntime,
+} from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ConnectionManager } from "@fluidframework/container-loader/internal/test/connectionManager";
 // eslint-disable-next-line import/no-internal-modules
 import { IConnectionManagerFactoryArgs } from "@fluidframework/container-loader/internal/test/contracts";
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaManager } from "@fluidframework/container-loader/internal/test/deltaManager";
+import {
+	ContainerMessageType,
+	loadContainerRuntime,
+} from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { DeltaScheduler } from "@fluidframework/container-runtime/internal/test/deltaScheduler";
-// ADO:1981
-// eslint-disable-next-line import/no-internal-modules
-import { ScheduleManager } from "@fluidframework/container-runtime/internal/test/scheduleManager";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	ISequencedDocumentSystemMessage,
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import events_pkg from "events_pkg";
-const { EventEmitter } = events_pkg;
+import {
+	createChildLogger,
+	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 describe("Container Runtime", () => {
 	/**
@@ -38,12 +49,33 @@ describe("Container Runtime", () => {
 	 */
 	describe("Async op processing", () => {
 		let deltaManager: DeltaManager<ConnectionManager>;
-		let scheduleManager: ScheduleManager;
 		let deltaConnection: MockDocumentDeltaConnection;
+		let containerRuntime: IContainerRuntime & IRuntime;
 		let seq: number;
 		const docId = "docId";
 		let batchBegin: number = 0;
 		let batchEnd: number = 0;
+		let clock: SinonFakeTimers;
+
+		// Create a mock container context to be used with container runtime.
+		const getMockContext = (
+			dm: DeltaManager<ConnectionManager>,
+		): Partial<IContainerContext> => {
+			const mockContext = {
+				attachState: AttachState.Attached,
+				deltaManager: dm,
+				audience: new MockAudience(),
+				quorum: new MockQuorumClients(),
+				taggedLogger: mixinMonitoringContext(createChildLogger({})).logger,
+				clientDetails: { capabilities: { interactive: true } },
+				closeFn: (_error?: ICriticalContainerError): void => {},
+				updateDirtyContainerState: (_dirty: boolean) => {},
+				getLoadedFromVersion: () => undefined,
+				clientId: "test-client-1",
+				connected: true,
+			};
+			return mockContext;
+		};
 
 		const startDeltaManager = async (): Promise<void> =>
 			new Promise((resolve) => {
@@ -72,6 +104,11 @@ describe("Container Runtime", () => {
 					minimumSequenceNumber: 0,
 					sequenceNumber: seq++,
 					type: MessageType.Operation,
+					// Use Rejoin message type to avoid processing the op. Rejoin is a no-op in container runtime.
+					contents: {
+						type: ContainerMessageType.Rejoin,
+						contents: "",
+					},
 				};
 				messages.push(message);
 			}
@@ -81,16 +118,19 @@ describe("Container Runtime", () => {
 
 		// Function to process an inbound op. It adds delay to simulate time taken in processing an op.
 		function processOp(message: ISequencedDocumentMessage): void {
-			scheduleManager.beforeOpProcessing(message);
-
-			// Add delay such that each op takes greater than the DeltaScheduler's processing time to process.
+			// Add delay to container runtime's op processing such that each op takes greater than the
+			// DeltaScheduler's processing time to process.
 			const processingDelay = DeltaScheduler.processingTime + 10;
-			const startTime = Date.now();
-			while (Date.now() - startTime < processingDelay) {}
-
-			scheduleManager.afterOpProcessing(undefined, message);
+			containerRuntime.once("op", () => {
+				clock.tick(processingDelay);
+			});
+			containerRuntime.process(message, false);
 			deltaManager.emit("op", message);
 		}
+
+		before(() => {
+			clock = useFakeTimers({ shouldAdvanceTime: true });
+		});
 
 		beforeEach(async () => {
 			seq = 1;
@@ -116,15 +156,19 @@ describe("Container Runtime", () => {
 					),
 			);
 
-			const emitter = new EventEmitter();
-			scheduleManager = new ScheduleManager(
-				deltaManager,
-				emitter,
-				() => "test-client", // clientId,
-				createChildLogger({ namespace: "fluid:testScheduleManager" }),
-			);
+			const mockProvideEntryPoint = async () => ({
+				myProp: "myValue",
+			});
+			containerRuntime = await loadContainerRuntime({
+				context: getMockContext(deltaManager) as IContainerContext,
+				registryEntries: [],
+				existing: true,
+				runtimeOptions: {},
+				provideEntryPoint: mockProvideEntryPoint,
+			});
+			assert(containerRuntime !== undefined, "Container runtime should be defined");
 
-			emitter.on("batchBegin", () => {
+			containerRuntime.on("batchBegin", () => {
 				// When we receive a "batchBegin" event, we should not have any outstanding
 				// events, i.e., batchBegin and batchEnd should be equal.
 				assert.strictEqual(
@@ -135,7 +179,7 @@ describe("Container Runtime", () => {
 				batchBegin++;
 			});
 
-			emitter.on("batchEnd", () => {
+			containerRuntime.on("batchEnd", () => {
 				batchEnd++;
 				// Every "batchEnd" event should correspond to a "batchBegin" event, i.e.,
 				// batchBegin and batchEnd should be equal.
@@ -156,8 +200,13 @@ describe("Container Runtime", () => {
 		});
 
 		afterEach(() => {
+			clock.reset();
 			batchBegin = 0;
 			batchEnd = 0;
+		});
+
+		after(() => {
+			clock.restore();
 		});
 
 		it("Batch messages that take longer than DeltaScheduler's processing time to process", async () => {
@@ -176,8 +225,8 @@ describe("Container Runtime", () => {
 
 			// Batch messages are processed in a single turn. So, we should have received the batch events.
 			assert.strictEqual(
-				1,
 				batchBegin,
+				1,
 				"Did not receive correct batchBegin event for the batch",
 			);
 			assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
@@ -211,13 +260,13 @@ describe("Container Runtime", () => {
 
 			// We should have received all the batch events.
 			assert.strictEqual(
-				count,
 				batchBegin,
+				count,
 				"Did not receive correct batchBegin event for the batch",
 			);
 			assert.strictEqual(
-				count,
 				batchEnd,
+				count,
 				"Did not receive correct batchEnd event for the batch",
 			);
 		});
@@ -239,11 +288,11 @@ describe("Container Runtime", () => {
 
 			// We should have received the batch events for the non-batch message in the first turn.
 			assert.strictEqual(
-				1,
 				batchBegin,
+				1,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
 
 			// Yield the event loop so that the batch messages can be processed.
 			await yieldEventLoop();
@@ -251,11 +300,11 @@ describe("Container Runtime", () => {
 			// We should have now received the batch events for the batch ops since they would have processed in
 			// a single turn.
 			assert.strictEqual(
-				2,
 				batchBegin,
+				2,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(batchEnd, 2, "Did not receive correct batchEnd event for the batch");
 		});
 
 		it(`Batch messages followed by a non-batch message that take longer than
@@ -275,11 +324,11 @@ describe("Container Runtime", () => {
 
 			// We should have received the batch events for the batch messages in the first turn.
 			assert.strictEqual(
-				1,
 				batchBegin,
+				1,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(1, batchEnd, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(batchEnd, 1, "Did not receive correct batchEnd event for the batch");
 
 			// Yield the event loop so that the single non-batch op can be processed.
 			await yieldEventLoop();
@@ -287,11 +336,11 @@ describe("Container Runtime", () => {
 			// We should have now received the batch events for the non-batch op since it would have processed in
 			// a single turn.
 			assert.strictEqual(
-				2,
 				batchBegin,
+				2,
 				"Did not receive correct batchBegin event for the batch",
 			);
-			assert.strictEqual(2, batchEnd, "Did not receive correct batchEnd event for the batch");
+			assert.strictEqual(batchEnd, 2, "Did not receive correct batchEnd event for the batch");
 		});
 
 		it("Reconnects after receiving a leave op", async () => {

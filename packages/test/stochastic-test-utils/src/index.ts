@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export { combineReducers, combineReducersAsync } from "./combineReducers.js";
+export {
+	combineReducers,
+	combineReducersAsync,
+	BaseOperation,
+	isOperationType,
+} from "./combineReducers.js";
 export {
 	createFuzzDescribe,
 	CreateMochaSuite,
@@ -14,8 +19,10 @@ export {
 	describeStress,
 	FuzzDescribeOptions,
 	FuzzSuiteArguments,
+	generateTestSeeds,
 	MochaSuiteWithArguments,
 	StressSuiteArguments,
+	StressMode,
 } from "./describeFuzz.js";
 export {
 	asyncGeneratorFromArray,
@@ -40,12 +47,19 @@ export {
 	SpaceEfficientWordMarkovChain,
 	WordSpacing,
 } from "./markovChain.js";
+export { FuzzTestMinimizer, MinimizationTransform } from "./minification.js";
 export {
 	performFuzzActions,
 	performFuzzActionsAsync,
 	saveOpsToFile,
 } from "./performActions.js";
 export { makeRandom } from "./random.js";
+export {
+	SaveOptions,
+	getSaveInfo,
+	getSaveDirectory,
+	HasWorkloadName,
+} from "./results.js";
 export {
 	AcceptanceCondition,
 	AsyncGenerator,

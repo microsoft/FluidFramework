@@ -12,6 +12,9 @@ module.exports = {
 		require.resolve("@fluidframework/eslint-config-fluid/recommended"),
 		"prettier",
 	],
+	parserOptions: {
+		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+	},
 	rules: {
 		// This rule is often triggered when using custom Flags, so disabling.
 		"object-shorthand": "off",
@@ -21,6 +24,9 @@ module.exports = {
 
 		// oclif uses default exports for commands
 		"import/no-default-export": "off",
+
+		// Set to warn because we're not ready to enforce this rule for much of build-cli yet. It is enabled for new code.
+		"import/no-deprecated": "warn",
 
 		"import/no-internal-modules": [
 			"error",
@@ -38,14 +44,18 @@ module.exports = {
 					// These are all excluded because they're "submodules" used for organization.
 					// AB#8118 tracks removing the barrel files and importing directly from the submodules.
 					"**/library/index.js",
+					"**/library/githubRest.js",
 					"**/handlers/index.js",
 					"**/machines/index.js",
 					"**/repoPolicyCheck/index.js",
+					"**/azureDevops/**",
+					"**/codeCoverage/**",
+					"azure-devops-node-api/**",
 				],
 			},
 		],
 
-		// Superseded by prettier and @trivago/prettier-plugin-sort-imports
+		// Superseded by Biome
 		"import/order": "off",
 
 		"jsdoc/multiline-blocks": [
@@ -86,4 +96,22 @@ module.exports = {
 		"perfectionist/sort-union-types": "off",
 		"perfectionist/sort-vue-attributes": "off",
 	},
+	overrides: [
+		{
+			// Rules only for test files
+			files: ["*.spec.ts", "src/test/**"],
+			rules: {
+				// Test files can import from anywhere
+				"import/no-internal-modules": "off",
+			},
+		},
+		{
+			// Rules only for files that are built on the build-infrastructure APIs.
+			files: ["src/**/vnext/**"],
+			rules: {
+				// Set to error since code using build-infrastructure APIs should not need to use any deprecated APIs.
+				"import/no-deprecated": "error",
+			},
+		},
+	],
 };

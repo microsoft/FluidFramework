@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import type {
 	DeltaDetachedNodeId,
@@ -34,15 +34,13 @@ describe("DeltaUtils", () => {
 			const nestedCursorInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
-					{
-						local: [
-							{ count: 42 },
-							{
-								count: 1,
-								attach: detachId,
-							},
-						],
-					},
+					[
+						{ count: 42 },
+						{
+							count: 1,
+							attach: detachId,
+						},
+					],
 				],
 			]);
 			const input: DeltaRoot = {
@@ -50,32 +48,28 @@ describe("DeltaUtils", () => {
 				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
-						{
-							local: [
-								{
-									count: 1,
-									fields: nestedCursorInsert,
-								},
-							],
-							global: [{ id: detachId, fields: nestedCursorInsert }],
-						},
+						[
+							{
+								count: 1,
+								fields: nestedCursorInsert,
+							},
+						],
 					],
 				]),
+				global: [{ id: detachId, fields: nestedCursorInsert }],
 			};
 			deepFreeze(input);
 			const actual = mapRootChanges(input, mapTreeFromCursor);
 			const nestedMapTreeInsert = new Map<FieldKey, DeltaFieldChanges>([
 				[
 					fooField,
-					{
-						local: [
-							{ count: 42 },
-							{
-								count: 1,
-								attach: detachId,
-							},
-						],
-					},
+					[
+						{ count: 42 },
+						{
+							count: 1,
+							attach: detachId,
+						},
+					],
 				],
 			]);
 			const expected: DeltaRoot<MapTree> = {
@@ -83,17 +77,15 @@ describe("DeltaUtils", () => {
 				fields: new Map<FieldKey, DeltaFieldChanges>([
 					[
 						fooField,
-						{
-							local: [
-								{
-									count: 1,
-									fields: nestedMapTreeInsert,
-								},
-							],
-							global: [{ id: detachId, fields: nestedMapTreeInsert }],
-						},
+						[
+							{
+								count: 1,
+								fields: nestedMapTreeInsert,
+							},
+						],
 					],
 				]),
+				global: [{ id: detachId, fields: nestedMapTreeInsert }],
 			};
 			deepFreeze(expected);
 			assert.deepEqual(actual, expected);

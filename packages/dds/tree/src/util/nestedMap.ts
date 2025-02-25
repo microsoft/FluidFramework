@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
+
 import type { MapGetSet } from "./utils.js";
 
 /**
@@ -11,22 +13,16 @@ import type { MapGetSet } from "./utils.js";
  * If you need constant-time access to the number of values, use SizedNestedMap instead.
  *
  * This code assumes values will not be undefined (keys can be undefined).
- *
- * @internal
  */
 export type NestedMap<Key1, Key2, Value> = Map<Key1, Map<Key2, Value>>;
 
 /**
  * A read-only version of {@link NestedMap}.
- *
- * @internal
  */
 export type ReadonlyNestedMap<Key1, Key2, Value> = ReadonlyMap<Key1, ReadonlyMap<Key2, Value>>;
 
 /**
  * If (key1, key2) already has a value in the map, it is returned, otherwise value is added under (key1, key2) and undefined is returned.
- *
- * @internal
  */
 export function tryAddToNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -55,7 +51,6 @@ export function tryAddToNestedMap<Key1, Key2, Value>(
  *
  * @remarks - This function performs deep copying when necessary.
  * This ensures that mutating `destination` after this call will not result in unexpected mutations to `source`.
- * @internal
  */
 export function populateNestedMap<Key1, Key2, Value>(
 	source: ReadonlyNestedMap<Key1, Key2, Value>,
@@ -80,8 +75,6 @@ export function populateNestedMap<Key1, Key2, Value>(
 /**
  * Sets the value at (key1, key2) in map to value.
  * If there already is a value for (key1, key2), it is replaced with the provided one.
- *
- * @internal
  */
 export function setInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -112,9 +105,26 @@ export function getOrAddInMap<Key, Value>(
 }
 
 /**
+ * Sets the value at `key` in `map` to `generateValue()` if not already present.
+ * Returns the value at `key` after setting it.
+ */
+export function getOrAddInMapLazy<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	generateValue: () => Value,
+): Value {
+	const currentValue = map.get(key);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+
+	const value = generateValue();
+	map.set(key, value);
+	return value;
+}
+
+/**
  * Returns the value at (key1, key2) in map, or undefined if not present.
- *
- * @internal
  */
 export function tryGetFromNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -131,8 +141,6 @@ export function tryGetFromNestedMap<Key1, Key2, Value>(
 /**
  * If (key1, key2) is not in the map, add value to the map.
  * Returns whatever is at (key1, key2) in map (which will be value if it was empty before).
- *
- * @internal
  */
 export function getOrAddInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -151,8 +159,6 @@ export function getOrAddInNestedMap<Key1, Key2, Value>(
  * Does not change map.
  * If (key1, key2) is not in map, returns value.
  * If (key1, key2) is in map, return its entry.
- *
- * @internal
  */
 export function getOrDefaultInNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -171,8 +177,6 @@ export function getOrDefaultInNestedMap<Key1, Key2, Value>(
  * Removes the value at (key1, key2) from the map.
  *
  * @returns true iff found.
- *
- * @internal
  */
 export function deleteFromNestedMap<Key1, Key2, Value>(
 	map: NestedMap<Key1, Key2, Value>,
@@ -255,8 +259,6 @@ export function mapNestedMap<Key1, Key2, ValueIn, ValueOut = ValueIn>(
 /**
  * Map with two keys; same semantics as NestedMap, but maintains a size count for the entire collection.
  * Note: undefined is not supported as a value, and will cause incorrect behavior.
- *
- * @internal
  */
 export class SizedNestedMap<Key1, Key2, Value> {
 	private readonly nestedMap: NestedMap<Key1, Key2, Value> = new Map();
@@ -336,7 +338,9 @@ export class SizedNestedMap<Key1, Key2, Value> {
 	}
 
 	public values(): IterableIterator<Value> {
-		return Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0];
+		return (
+			Array.from(this.nestedMap.values()).flatMap((innerMap) => innerMap.values())[0] ?? oob()
+		);
 	}
 
 	public [Symbol.iterator](): IterableIterator<[Key1, Map<Key2, Value>]> {

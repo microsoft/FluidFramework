@@ -70,6 +70,9 @@ export class OdspTestTokenProvider implements IOdspTokenProvider {
 			getFetchTokenUrl(server),
 			new URLSearchParams(body),
 		);
+		if (!response.ok) {
+			throw new Error(`Failed to obtain tokens: ${await response.text()}`);
+		}
 
 		const parsedResponse = await response.json();
 		const accessToken = parsedResponse.access_token;

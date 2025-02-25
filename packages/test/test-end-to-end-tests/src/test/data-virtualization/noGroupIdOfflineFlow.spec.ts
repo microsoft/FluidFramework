@@ -7,10 +7,8 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -29,7 +27,7 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 		}
 
 		public get containerRuntime() {
-			return this.context.containerRuntime as ContainerRuntime;
+			return this.context.containerRuntime as IContainerRuntime;
 		}
 
 		protected async initializingFirstTime(): Promise<void> {

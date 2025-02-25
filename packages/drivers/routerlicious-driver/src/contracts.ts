@@ -59,3 +59,10 @@ export interface INormalizedWholeSnapshot {
 	sequenceNumber: number | undefined;
 	id: string;
 }
+
+/**
+ * Error code for when the service drains a cluster to which the socket connection is connected to and it disconnects
+ * all the clients in that cluster.
+ * @internal
+ */
+export const R11sServiceClusterDrainingErrorCode = "ClusterDraining";

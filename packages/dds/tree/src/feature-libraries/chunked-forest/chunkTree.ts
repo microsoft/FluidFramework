@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -20,14 +20,18 @@ import {
 	type Value,
 	mapCursorFields,
 	Multiplicity,
+	ValueSchema,
+	type TreeChunk,
+	tryGetChunk,
 } from "../../core/index.js";
 import { fail, getOrCreate } from "../../util/index.js";
 import type { FullSchemaPolicy } from "../modular-schema/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
-import { type TreeChunk, tryGetChunk } from "./chunk.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
+import { isStableNodeKey } from "../node-key/index.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export interface Disposable {
 	/**
@@ -131,7 +135,7 @@ export class Chunker implements IChunker {
 		if (cached !== undefined) {
 			return cached;
 		}
-		this.unregisterSchemaCallback = this.schema.on("afterSchemaChange", () =>
+		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
 		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);
@@ -157,15 +161,18 @@ export class Chunker implements IChunker {
  *
  * @param cursor - cursor in nodes mode
  */
-export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk {
-	return chunkRange(cursor, policy, 1, true)[0];
+export function chunkTree(cursor: ITreeCursorSynchronous, policy: ChunkCompressor): TreeChunk {
+	return chunkRange(cursor, policy, 1, true)[0] ?? oob();
 }
 
 /**
  * Get a TreeChunk[] for the current field (and its children) of cursor.
  * This will copy if needed, but add refs to existing chunks which hold the data.
  */
-export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): TreeChunk[] {
+export function chunkField(
+	cursor: ITreeCursorSynchronous,
+	policy: ChunkCompressor,
+): TreeChunk[] {
 	const length = cursor.getFieldLength();
 	const started = cursor.firstNode();
 	assert(started, 0x57c /* field to chunk should have at least one node */);
@@ -178,11 +185,11 @@ export function chunkField(cursor: ITreeCursorSynchronous, policy: ChunkPolicy):
  */
 export function chunkFieldSingle(
 	cursor: ITreeCursorSynchronous,
-	policy: ChunkPolicy,
+	policy: ChunkCompressor,
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
 	if (chunks.length === 1) {
-		return chunks[0];
+		return chunks[0] ?? oob();
 	}
 	return new SequenceChunk(chunks);
 }
@@ -193,7 +200,7 @@ export function chunkFieldSingle(
  */
 export function basicChunkTree(
 	cursor: ITreeCursorSynchronous,
-	policy: ChunkPolicy,
+	policy: ChunkCompressor,
 ): BasicChunk {
 	// symbol based fast path to check for BasicChunk:
 	// return existing chunk with a increased ref count if possible.
@@ -242,7 +249,13 @@ export function tryShapeFromSchema(
 	return getOrCreate(shapes, type, () => {
 		const treeSchema = schema.nodeSchema.get(type) ?? fail("missing schema");
 		if (treeSchema instanceof LeafNodeStoredSchema) {
-			return new TreeShape(type, true, []);
+			// Allow all string values (but only string values) to be compressed by the id compressor.
+			// This allows compressing all compressible identifiers without requiring additional context to know which values could be identifiers.
+			// Attempting to compress other string shouldn't have significant overhead,
+			// and if any of them do end up compressing, that's a benefit not a bug.
+			return treeSchema.leafValue === ValueSchema.String
+				? new TreeShape(type, true, [], true)
+				: new TreeShape(type, true, [], false);
 		}
 		if (treeSchema instanceof ObjectNodeStoredSchema) {
 			const fieldsArray: FieldShape[] = [];
@@ -278,7 +291,7 @@ export function tryShapeFromFieldSchema(
 	if (type.types?.size !== 1) {
 		return undefined;
 	}
-	const childType = [...type.types][0];
+	const childType = [...type.types][0] ?? oob();
 	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
 	if (childShape instanceof Polymorphic) {
 		return undefined;
@@ -337,7 +350,21 @@ export interface ChunkPolicy {
 	shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo;
 }
 
-function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy): BasicChunk {
+export interface ChunkCompressor {
+	readonly policy: ChunkPolicy;
+	/**
+	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
+	 * @remarks
+	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.maybeDecompressedStringAsNumber} is set.
+	 * If the `policy` does not use UniformChunks or does not set `maybeDecompressedStringAsNumber`, then no compression will be applied even when providing `idCompressor`.
+	 */
+	readonly idCompressor: IIdCompressor | undefined;
+}
+
+function newBasicChunkTree(
+	cursor: ITreeCursorSynchronous,
+	policy: ChunkCompressor,
+): BasicChunk {
 	return new BasicChunk(
 		cursor.type,
 		new Map(mapCursorFields(cursor, () => [cursor.getFieldKey(), chunkField(cursor, policy)])),
@@ -353,7 +380,7 @@ function newBasicChunkTree(cursor: ITreeCursorSynchronous, policy: ChunkPolicy):
  */
 export function chunkRange(
 	cursor: ITreeCursorSynchronous,
-	policy: ChunkPolicy,
+	chunkCompressor: ChunkCompressor,
 	length: number,
 	skipLastNavigation: boolean,
 ): TreeChunk[] {
@@ -373,7 +400,7 @@ export function chunkRange(
 				if (chunk !== undefined) {
 					if (
 						chunk instanceof SequenceChunk &&
-						chunk.subChunks.length <= policy.sequenceChunkInlineThreshold
+						chunk.subChunks.length <= chunkCompressor.policy.sequenceChunkInlineThreshold
 					) {
 						// If sequence chunk, and its very short, inline it.
 						// Note that this is not recursive: there may be short sequences nested below this which are not inlined.
@@ -399,11 +426,11 @@ export function chunkRange(
 			assert(cursor.mode === CursorLocationType.Nodes, 0x580 /* should be in nodes */);
 			// TODO: if provided, use schema to consider using UniformChunks
 			const type = cursor.type;
-			const shape = policy.shapeFromSchema(type);
+			const shape = chunkCompressor.policy.shapeFromSchema(type);
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
 				const maxTopLevelLength = Math.ceil(
-					nodesPerTopLevelNode / policy.uniformChunkNodeCount,
+					nodesPerTopLevelNode / chunkCompressor.policy.uniformChunkNodeCount,
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(
@@ -411,12 +438,13 @@ export function chunkRange(
 					shape,
 					maxLength,
 					maxLength === remaining && skipLastNavigation,
+					chunkCompressor.idCompressor,
 				);
 				remaining -= newChunk.topLevelLength;
 				output.push(newChunk);
 			} else {
 				// Slow path: copy tree into new basic chunk
-				output.push(newBasicChunkTree(cursor, policy));
+				output.push(newBasicChunkTree(cursor, chunkCompressor));
 				remaining -= 1;
 				if (!skipLastNavigation || remaining !== 0) {
 					cursor.nextNode();
@@ -428,8 +456,10 @@ export function chunkRange(
 	// TODO: maybe make a pass over output to coalesce UniformChunks and/or convert other formats to UniformChunks where possible.
 
 	// If output is large, group it into a tree of sequence chunks.
-	while (output.length > policy.sequenceChunkSplitThreshold) {
-		const chunkCount = Math.ceil(output.length / policy.sequenceChunkSplitThreshold);
+	while (output.length > chunkCompressor.policy.sequenceChunkSplitThreshold) {
+		const chunkCount = Math.ceil(
+			output.length / chunkCompressor.policy.sequenceChunkSplitThreshold,
+		);
 		const newOutput: TreeChunk[] = [];
 		// Rounding down, and add an extra item to some of the chunks.
 		const chunkSize = Math.floor(output.length / chunkCount);
@@ -448,11 +478,15 @@ export function chunkRange(
 
 	return output;
 }
-
+/**
+ * @param idCompressor - compressor used to encoded string values that are compressible by the idCompressor for in-memory representation.
+ * If the idCompressor is not provided, the values will be the original uncompressed values.
+ */
 export function insertValues(
 	cursor: ITreeCursorSynchronous,
 	shape: TreeShape,
 	values: Value[],
+	idCompressor?: IIdCompressor,
 ): void {
 	assert(shape.type === cursor.type, 0x582 /* shape and type must match */);
 
@@ -461,13 +495,21 @@ export function insertValues(
 
 	// Slow path: walk shape and cursor together, inserting values.
 	if (shape.hasValue) {
-		values.push(cursor.value);
+		if (
+			typeof cursor.value === "string" &&
+			idCompressor !== undefined &&
+			isStableNodeKey(cursor.value)
+		) {
+			values.push(idCompressor.tryRecompress(cursor.value) ?? cursor.value);
+		} else {
+			values.push(cursor.value);
+		}
 	}
 	for (const [key, childShape, length] of shape.fieldsArray) {
 		cursor.enterField(key);
 		let count = 0;
 		for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
-			insertValues(cursor, childShape, values);
+			insertValues(cursor, childShape, values, idCompressor);
 			count++;
 		}
 		cursor.exitField();
@@ -484,12 +526,16 @@ export function insertValues(
  * If this stops early due to the type changing, `skipLastNavigation` is not involved:
  * `skipLastNavigation` only determines if the cursor will be left on the node after the last one (possibly exiting the field)
  * if the full length is used.
+ *
+ * @param idCompressor - compressor used to encoded string values that are compressible by the idCompressor for in-memory representation.
+ * If the idCompressor is not provided, the values will be the original uncompressed values.
  */
 export function uniformChunkFromCursor(
 	cursor: ITreeCursorSynchronous,
 	shape: TreeShape,
 	maxTopLevelLength: number,
 	skipLastNavigation: boolean,
+	idCompressor?: IIdCompressor,
 ): UniformChunk {
 	// TODO:
 	// This could have a fast path for consuming already uniformly chunked data with matching shape.
@@ -497,7 +543,7 @@ export function uniformChunkFromCursor(
 	const values: TreeValue[] = [];
 	let topLevelLength = 1;
 	while (topLevelLength <= maxTopLevelLength) {
-		insertValues(cursor, shape, values);
+		insertValues(cursor, shape, values, idCompressor);
 		if (topLevelLength === maxTopLevelLength) {
 			if (!skipLastNavigation) {
 				cursor.nextNode();
@@ -510,5 +556,5 @@ export function uniformChunkFromCursor(
 		}
 		topLevelLength += 1;
 	}
-	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values);
+	return new UniformChunk(shape.withTopLevelLength(topLevelLength), values, idCompressor);
 }

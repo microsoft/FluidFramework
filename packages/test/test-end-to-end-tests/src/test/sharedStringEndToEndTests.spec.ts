@@ -155,7 +155,11 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 		provider = getTestObjectProvider();
 	});
 
-	it("can load summarized grouped batch at min seqnum", async () => {
+	it("can load summarized grouped batch at min seqnum", async function () {
+		// We've seen flakiness in ODSP and r11s. This test is verifying SharedString logic regardless of what service handles the ops/summary.
+		if (!["local", "tinylicious", "t9s"].includes(provider.driver.type)) {
+			this.skip();
+		}
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
 		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
@@ -184,7 +188,11 @@ describeCompat("SharedString grouped batching", "NoCompat", (getTestObjectProvid
 		await provider.ensureSynchronized();
 	});
 
-	it("can load summarized grouped batch", async () => {
+	it("can load summarized grouped batch", async function () {
+		// We've seen flakiness in ODSP and r11s. This test is verifying SharedString logic regardless of what service handles the ops/summary.
+		if (!["local", "tinylicious", "t9s"].includes(provider.driver.type)) {
+			this.skip();
+		}
 		const container1 = await provider.makeTestContainer(groupedBatchingContainerConfig);
 		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);

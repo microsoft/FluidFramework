@@ -5,7 +5,11 @@
 
 /* eslint-disable unicorn/consistent-function-scoping */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	performanceNow,
+	type ILayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	IAudience,
@@ -18,17 +22,18 @@ import {
 	IContainer,
 	IContainerEvents,
 	IContainerLoadMode,
+	IDeltaManager,
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
 	IGetPendingLocalStateProps,
-	IHostLoader,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
 	isFluidCodeDetails,
-	IDeltaManager,
 	ReadOnlyInfo,
+	type ILoader,
+	type ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
@@ -67,10 +72,10 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ConnectionMode,
+	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
-	MessageType2,
 	OnlineStatus,
 	isCombinedAppAndProtocolSummary,
 	isInstanceOfISnapshot,
@@ -123,8 +128,10 @@ import {
 	getPackageName,
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { validateRuntimeCompatibility } from "./layerCompatState.js";
 // eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage, ILoaderOptions, RelativeLoader } from "./loader.js";
+import { IDetachedBlobStorage } from "./loader.js";
+import { RelativeLoader } from "./loader.js";
 import {
 	serializeMemoryDetachedBlobStorage,
 	createMemoryDetachedBlobStorage,
@@ -394,7 +401,7 @@ export class Container
 					// to return container, so ignore this value and use undefined for opsBeforeReturn
 					const mode: IContainerLoadMode = pendingLocalState
 						? { ...(loadMode ?? defaultMode), opsBeforeReturn: undefined }
-						: loadMode ?? defaultMode;
+						: (loadMode ?? defaultMode);
 
 					const onClosed = (err?: ICriticalContainerError): void => {
 						// pre-0.58 error message: containerClosedWithoutErrorDuringLoad
@@ -601,7 +608,7 @@ export class Container
 	 * During initialization we pause the inbound queues. We track this state to ensure we only call resume once
 	 */
 	private inboundQueuePausedFromInit = true;
-	private firstConnection = true;
+	private connectionCount = 0;
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
@@ -615,7 +622,7 @@ export class Container
 	private readonly clientsWhoShouldHaveLeft = new Set<string>();
 	private _containerMetadata: Readonly<Record<string, string>> = {};
 
-	private setAutoReconnectTime = performance.now();
+	private setAutoReconnectTime = performanceNow();
 
 	private noopHeuristic: NoopHeuristic | undefined;
 
@@ -717,6 +724,14 @@ export class Container
 		return this._loadedCodeDetails;
 	}
 
+	/**
+	 * Get the package info for the code details that were used to load the container.
+	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
+	 */
+	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
+		return getPackageName(this._loadedCodeDetails);
+	}
+
 	private _loadedModule: IFluidModuleWithDetails | undefined;
 
 	/**
@@ -793,7 +808,7 @@ export class Container
 			protocolHandlerBuilder,
 		} = createProps;
 
-		this.connectionTransitionTimes[ConnectionState.Disconnected] = performance.now();
+		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
@@ -881,9 +896,7 @@ export class Container
 							: this.deltaManager?.lastMessage?.clientId,
 					dmLastMsgClientSeq: () => this.deltaManager?.lastMessage?.clientSequenceNumber,
 					connectionStateDuration: () =>
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						performance.now() - this.connectionTransitionTimes[this.connectionState]!,
+						performanceNow() - this.connectionTransitionTimes[this.connectionState],
 				},
 			},
 		});
@@ -927,10 +940,7 @@ export class Container
 						mode,
 						category: this._lifecycleState === "loading" ? "generic" : category,
 						duration:
-							performance.now() -
-							// TODO why are we non null asserting here?
-							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							this.connectionTransitionTimes[ConnectionState.CatchingUp]!,
+							performanceNow() - this.connectionTransitionTimes[ConnectionState.CatchingUp],
 						...(details === undefined ? {} : { details: JSON.stringify(details) }),
 					});
 
@@ -984,10 +994,11 @@ export class Container
 				? summaryTree
 				: combineAppAndProtocolSummary(summaryTree, this.captureProtocolSummary());
 
-		// Whether the combined summary tree has been forced on by either the supportedFeatures flag by the service or the the loader option or the monitoring context
-		const enableSummarizeProtocolTree =
-			this.mc.config.getBoolean("Fluid.Container.summarizeProtocolTree2") ??
-			options.summarizeProtocolTree;
+		// Feature gate to enable single-commit summaries. The expected enablement is through driver layer's policies,
+		// but here we also specify config setting to use for testing purposes.
+		const enableSummarizeProtocolTree = this.mc.config.getBoolean(
+			"Fluid.Container.summarizeProtocolTree2",
+		);
 
 		this.detachedBlobStorage =
 			detachedBlobStorage ??
@@ -1026,10 +1037,10 @@ export class Container
 			document.addEventListener !== null;
 		// keep track of last time page was visible for telemetry (on interactive clients only)
 		if (isDomAvailable && interactive) {
-			this.lastVisible = document.hidden ? performance.now() : undefined;
+			this.lastVisible = document.hidden ? performanceNow() : undefined;
 			this.visibilityEventHandler = (): void => {
 				if (document.hidden) {
-					this.lastVisible = performance.now();
+					this.lastVisible = performanceNow();
 				} else {
 					// settimeout so this will hopefully fire after disconnect event if being hidden caused it
 					setTimeout(() => {
@@ -1049,8 +1060,7 @@ export class Container
 	}
 
 	public dispose(error?: ICriticalContainerError): void {
-		this._deltaManager.dispose(error);
-		this.verifyClosed();
+		this.verifyClosedAfter(() => this._deltaManager.dispose(error));
 	}
 
 	public close(error?: ICriticalContainerError): void {
@@ -1058,20 +1068,30 @@ export class Container
 		// 2. We need to ensure that we deliver disconnect event to runtime properly. See connectionStateChanged
 		//    handler. We only deliver events if container fully loaded. Transitioning from "loading" ->
 		//    "closing" will lose that info (can also solve by tracking extra state).
-		this._deltaManager.close(error);
-		this.verifyClosed();
+		this.verifyClosedAfter(() => this._deltaManager.close(error));
 	}
 
-	private verifyClosed(): void {
-		assert(
-			this.connectionState === ConnectionState.Disconnected,
-			0x0cf /* "disconnect event was not raised!" */,
-		);
+	private verifyClosedAfterCalls = 0;
+	private verifyClosedAfter(callback: () => void): void {
+		this.verifyClosedAfterCalls++;
+		try {
+			callback();
+		} finally {
+			this.verifyClosedAfterCalls--;
+		}
 
-		assert(
-			this._lifecycleState === "closed" || this._lifecycleState === "disposed",
-			0x314 /* Container properly closed */,
-		);
+		// We only want to verify connectionState and lifecycleState after close/dispose has fully finished
+		if (this.verifyClosedAfterCalls === 0) {
+			assert(
+				this.connectionState === ConnectionState.Disconnected,
+				0x0cf /* "disconnect event was not raised!" */,
+			);
+
+			assert(
+				this._lifecycleState === "closed" || this._lifecycleState === "disposed",
+				0x314 /* Container properly closed */,
+			);
+		}
 	}
 
 	private closeCore(error?: ICriticalContainerError): void {
@@ -1314,7 +1334,7 @@ export class Container
 					) => {
 						try {
 							assert(
-								this.deltaManager.inbound.length === 0,
+								this._deltaManager.inbound.length === 0,
 								0x0d6 /* "Inbound queue should be empty when attaching" */,
 							);
 							return combineAppAndProtocolSummary(
@@ -1397,7 +1417,7 @@ export class Container
 			return;
 		}
 
-		const now = performance.now();
+		const now = performanceNow();
 		const duration = now - this.setAutoReconnectTime;
 		this.setAutoReconnectTime = now;
 
@@ -1518,13 +1538,13 @@ export class Container
 		const codeDetails = this.getCodeDetailsFromQuorum();
 
 		await Promise.all([
-			this.deltaManager.inbound.pause(),
-			this.deltaManager.inboundSignal.pause(),
+			this._deltaManager.inbound.pause(),
+			this._deltaManager.inboundSignal.pause(),
 		]);
 
 		if ((await this.satisfies(codeDetails)) === true) {
-			this.deltaManager.inbound.resume();
-			this.deltaManager.inboundSignal.resume();
+			this._deltaManager.inbound.resume();
+			this._deltaManager.inboundSignal.resume();
 			return;
 		}
 
@@ -1615,7 +1635,7 @@ export class Container
 		dmLastProcessedSeqNumber: number;
 		dmLastKnownSeqNumber: number;
 	}> {
-		const timings: Record<string, number> = { phase1: performance.now() };
+		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(async () =>
 			this.serviceFactory.createDocumentService(
 				resolvedUrl,
@@ -1648,7 +1668,7 @@ export class Container
 			state: AttachState.Attached,
 		};
 
-		timings.phase2 = performance.now();
+		timings.phase2 = performanceNow();
 
 		// Fetch specified snapshot.
 		const { baseSnapshot, version } =
@@ -1708,13 +1728,13 @@ export class Container
 			this.protocolHandler.audience.setCurrentClientId(pendingLocalState?.clientId);
 		}
 
-		timings.phase3 = performance.now();
+		timings.phase3 = performanceNow();
 		const codeDetails = this.getCodeDetailsFromQuorum();
 		await this.instantiateRuntime(
 			codeDetails,
 			baseSnapshotTree,
 			// give runtime a dummy value so it knows we're loading from a stash blob
-			pendingLocalState ? pendingLocalState?.pendingRuntimeState ?? {} : undefined,
+			pendingLocalState ? (pendingLocalState?.pendingRuntimeState ?? {}) : undefined,
 			isInstanceOfISnapshot(baseSnapshot) ? baseSnapshot : undefined,
 		);
 
@@ -1771,7 +1791,7 @@ export class Container
 			throw new Error("Container was closed while load()");
 		}
 
-		timings.end = performance.now();
+		timings.end = performanceNow();
 		this.subLogger.sendTelemetryEvent(
 			{
 				eventName: "LoadStagesTimings",
@@ -1842,9 +1862,7 @@ export class Container
 		const baseTree = getProtocolSnapshotTree(snapshotTreeWithBlobContents);
 		const qValues = await readAndParse<[string, ICommittedProposal][]>(
 			this.storageAdapter,
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			baseTree.blobs.quorumValues!,
+			baseTree.blobs.quorumValues,
 		);
 		this.initializeProtocolState(
 			attributes,
@@ -1880,24 +1898,12 @@ export class Container
 			const baseTree = getProtocolSnapshotTree(snapshot);
 			[quorumSnapshot.members, quorumSnapshot.proposals, quorumSnapshot.values] =
 				await Promise.all([
-					readAndParse<[string, ISequencedClient][]>(
-						storage,
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						baseTree.blobs.quorumMembers!,
-					),
+					readAndParse<[string, ISequencedClient][]>(storage, baseTree.blobs.quorumMembers),
 					readAndParse<[number, ISequencedProposal, string[]][]>(
 						storage,
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						baseTree.blobs.quorumProposals!,
+						baseTree.blobs.quorumProposals,
 					),
-					readAndParse<[string, ICommittedProposal][]>(
-						storage,
-						// TODO why are we non null asserting here?
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						baseTree.blobs.quorumValues!,
-					),
+					readAndParse<[string, ICommittedProposal][]>(storage, baseTree.blobs.quorumValues),
 				]);
 		}
 
@@ -2133,14 +2139,14 @@ export class Container
 		lastProcessedSequenceNumber?: number,
 	): Promise<void> {
 		return this._deltaManager.attachOpHandler(
-			attributes.minimumSequenceNumber,
-			attributes.sequenceNumber,
+			attributes.minimumSequenceNumber /* minimumSequenceNumber */,
+			attributes.sequenceNumber /* snapshotSequenceNumber */,
 			{
 				process: (message) => this.processRemoteMessage(message),
 				processSignal: (message) => {
 					this.processSignal(message);
 				},
-			},
+			} /* handler to process incoming delta messages */,
 			prefetchType,
 			lastProcessedSequenceNumber,
 		);
@@ -2152,14 +2158,11 @@ export class Container
 		reason?: IConnectionStateChangeReason,
 	): void {
 		// Log actual event
-		const time = performance.now();
+		const time = performanceNow();
 		this.connectionTransitionTimes[value] = time;
-		// TODO why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const duration = time - this.connectionTransitionTimes[oldState]!;
+		const duration = time - this.connectionTransitionTimes[oldState];
 
 		let durationFromDisconnected: number | undefined;
-		let connectionInitiationReason: string | undefined;
 		let autoReconnect: ReconnectMode | undefined;
 		let checkpointSequenceNumber: number | undefined;
 		let opsBehind: number | undefined;
@@ -2168,9 +2171,7 @@ export class Container
 		} else {
 			if (value === ConnectionState.Connected) {
 				durationFromDisconnected =
-					// TODO why are we non null asserting here?
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					time - this.connectionTransitionTimes[ConnectionState.Disconnected]!;
+					time - this.connectionTransitionTimes[ConnectionState.Disconnected];
 				durationFromDisconnected = formatTick(durationFromDisconnected);
 			} else if (value === ConnectionState.CatchingUp) {
 				// This info is of most interesting while Catching Up.
@@ -2180,7 +2181,6 @@ export class Container
 					opsBehind = checkpointSequenceNumber - this.deltaManager.lastSequenceNumber;
 				}
 			}
-			connectionInitiationReason = this.firstConnection ? "InitialConnect" : "AutoReconnect";
 		}
 
 		this.mc.logger.sendPerformanceEvent(
@@ -2190,16 +2190,17 @@ export class Container
 				duration,
 				durationFromDisconnected,
 				reason: reason?.text,
-				connectionInitiationReason,
+				connectionCount: this.connectionCount,
 				pendingClientId: this.connectionStateHandler.pendingClientId,
 				clientId: this.connectionStateHandler.clientId,
 				autoReconnect,
 				opsBehind,
 				online: OnlineStatus[isOnline()],
 				lastVisible:
-					this.lastVisible === undefined ? undefined : performance.now() - this.lastVisible,
+					this.lastVisible === undefined ? undefined : performanceNow() - this.lastVisible,
 				checkpointSequenceNumber,
 				quorumSize: this._protocolHandler?.quorum.getMembers().size,
+				audienceSize: this._protocolHandler?.audience.getMembers().size,
 				isDirty: this.isDirty,
 				...this._deltaManager.connectionProps,
 			},
@@ -2207,7 +2208,7 @@ export class Container
 		);
 
 		if (value === ConnectionState.Connected) {
-			this.firstConnection = false;
+			this.connectionCount++;
 		}
 	}
 
@@ -2333,6 +2334,10 @@ export class Container
 		);
 	}
 
+	/**
+	 * Processes incoming delta messages
+	 * @param message - delta message received from the server
+	 */
 	private processRemoteMessage(message: ISequencedDocumentMessage): void {
 		const local = this.clientId === message.clientId;
 
@@ -2372,8 +2377,7 @@ export class Container
 			this.noopHeuristic.notifyMessageProcessed(message);
 			// The contract with the protocolHandler is that returning "immediateNoOp" is equivalent to "please immediately accept the proposal I just processed".
 			if (result.immediateNoOp === true) {
-				// ADO:1385: Remove cast and use MessageType once definition changes propagate
-				this.submitMessage(MessageType2.Accept as unknown as MessageType);
+				this.submitMessage(MessageType.Accept);
 			}
 		}
 
@@ -2405,7 +2409,7 @@ export class Container
 
 		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
 		// are set. Global requests will still go directly to the loader
-		const maybeLoader: FluidObject<IHostLoader> = this.scope;
+		const maybeLoader: FluidObject<ILoader> = this.scope;
 		const loader = new RelativeLoader(this, maybeLoader.ILoader);
 
 		const loadCodeResult = await PerformanceEvent.timedExecAsync(
@@ -2463,11 +2467,19 @@ export class Container
 			snapshot,
 		);
 
-		this._runtime = await PerformanceEvent.timedExecAsync(
+		const runtime = await PerformanceEvent.timedExecAsync(
 			this.subLogger,
 			{ eventName: "InstantiateRuntime" },
 			async () => runtimeFactory.instantiateRuntime(context, existing),
 		);
+
+		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
+		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
+			this.dispose(error),
+		);
+
+		this._runtime = runtime;
+
 		this._lifecycleEvents.emit("runtimeInstantiated");
 
 		this._loadedCodeDetails = codeDetails;

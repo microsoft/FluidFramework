@@ -5,6 +5,8 @@
 
 import { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
+import { PackageName } from "@rushstack/node-core-library";
+import * as semver from "semver";
 // eslint-disable-next-line import/no-deprecated
 import { Context, isMonoRepoKind } from "./library/index.js";
 
@@ -33,6 +35,23 @@ export const findPackageOrReleaseGroup = (
 
 	return (
 		context.fullPackageMap.get(name) ??
-		context.independentPackages.find((pkg) => pkg.nameUnscoped === name)
+		context.independentPackages.find((pkg) => PackageName.getUnscopedName(pkg.name) === name)
 	);
 };
+
+/**
+ * Creates a CLI argument for semver versions. It's a factory function so that commands can override the properties more
+ * easily when using the argument.
+ */
+export const semverArg = Args.custom<semver.SemVer, { loose?: boolean }>({
+	required: true,
+	description:
+		"A semantic versioning (semver) version string. Values are verified to be valid semvers during argument parsing.",
+	parse: async (input, _, opts) => {
+		const parsed = semver.parse(input, opts.loose);
+		if (parsed === null) {
+			throw new Error(`Invalid semver: ${input}`);
+		}
+		return parsed;
+	},
+});

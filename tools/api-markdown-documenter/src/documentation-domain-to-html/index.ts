@@ -4,9 +4,14 @@
  */
 
 export type {
-	TransformationConfig,
+	TransformationConfiguration,
 	Transformation,
 	Transformations,
 } from "./configuration/index.js";
-export { documentToHtml, documentationNodeToHtml, documentationNodesToHtml } from "./ToHtml.js";
+export {
+	documentToHtml,
+	documentationNodeToHtml,
+	documentationNodesToHtml,
+	treeFromBody,
+} from "./ToHtml.js";
 export type { TransformationContext } from "./TransformationContext.js";

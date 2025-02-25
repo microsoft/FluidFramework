@@ -191,19 +191,40 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 		const data: BenchmarkData = {
 			elapsedSeconds: this.timer.toSeconds(this.startTime, now),
 			customData: {
-				"batch count": this.samples.length,
-				"period (ns/op)": stats.arithmeticMean,
-				"relative margin of error": stats.marginOfErrorPercent,
-				"iterations per batch": this.iterationsPerBatch,
-			},
-			customDataFormatters: {
-				"batch count": (v: unknown): string => prettyNumber(v as number, 0),
-				"period (ns/op)": (v: unknown) => prettyNumber(1e9 * (v as number), 2),
-				"relative margin of error": (v: unknown) => `±${(v as number).toFixed(2)}%`,
-				"iterations per batch": (v: unknown) => `${prettyNumber(v as number, 0)}`,
+				"Batch Count": {
+					rawValue: this.samples.length,
+					formattedValue: prettyNumber(this.samples.length, 0),
+				},
+				"Iterations per Batch": {
+					rawValue: this.iterationsPerBatch,
+					formattedValue: prettyNumber(this.iterationsPerBatch, 0),
+				},
+				"Period (ns/op)": {
+					rawValue: 1e9 * stats.arithmeticMean,
+					formattedValue: prettyNumber(1e9 * stats.arithmeticMean, 2),
+				},
+				"Margin of Error": {
+					rawValue: stats.marginOfError,
+					formattedValue: `±${prettyNumber(stats.marginOfError, 2)}%`,
+				},
+				"Relative Margin of Error": {
+					rawValue: stats.marginOfErrorPercent,
+					formattedValue: `±${prettyNumber(stats.marginOfErrorPercent, 2)}%`,
+				},
 			},
 		};
 		return data;
+	}
+
+	public timeBatch(callback: () => void): boolean {
+		let counter = this.iterationsPerBatch;
+		const before = this.timer.now();
+		while (counter--) {
+			callback();
+		}
+		const after = this.timer.now();
+		const duration = this.timer.toSeconds(before, after);
+		return this.recordBatch(duration);
 	}
 }
 

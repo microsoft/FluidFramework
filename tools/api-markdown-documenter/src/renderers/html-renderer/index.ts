@@ -4,10 +4,12 @@
  */
 
 /**
- * Library for rendering {@link DocumentationNode} trees as `Markdown`.
+ * Library for rendering {@link DocumentationNode} trees as `HTML`.
  */
 
-export { type RenderConfiguration, type Renderers } from "./configuration/index.js";
-export { renderDocument, renderNode, renderNodes } from "./Render.js";
-export { type RenderContext } from "./RenderContext.js";
-export { renderAnchor } from "./Utilities.js";
+export {
+	renderDocument,
+	type RenderDocumentConfiguration,
+	renderHtml,
+	type RenderHtmlConfiguration,
+} from "./Render.js";

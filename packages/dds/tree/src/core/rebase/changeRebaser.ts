@@ -51,6 +51,7 @@ export interface ChangeRebaser<TChangeset> {
 	 * @param changes - The changes to invert.
 	 * @param isRollback - Whether the inverted change is meant to rollback a change on a branch as is the case when
 	 * performing a sandwich rebase.
+	 * @param revision - The revision for the invert changeset.
 	 * This flag is relevant to merge semantics that are dependent on edit sequencing order:
 	 * - In the context of an undo, this function inverts a change that is sequenced and applied before the produced inverse.
 	 * - In the context of a rollback, this function inverts a change that is sequenced after but applied before the produced inverse.
@@ -59,7 +60,11 @@ export interface ChangeRebaser<TChangeset> {
 	 * `compose([changes, inverse(changes)])` be equal to `compose([])`:
 	 * See {@link ChangeRebaser} for details.
 	 */
-	invert(changes: TaggedChange<TChangeset>, isRollback: boolean): TChangeset;
+	invert(
+		changes: TaggedChange<TChangeset>,
+		isRollback: boolean,
+		revision: RevisionTag,
+	): TChangeset;
 
 	/**
 	 * Rebase `change` over `over`.
@@ -92,7 +97,6 @@ export interface ChangeRebaser<TChangeset> {
 }
 
 /**
- * @internal
  */
 export interface TaggedChange<TChangeset, TTag = RevisionTag | undefined> {
 	readonly revision: TTag;
@@ -120,12 +124,10 @@ export function mapTaggedChange<TIn, TOut>(
  * being produced.
  *
  * During rebase, the indices of the base changes are all lower than the indices of the change being rebased.
- * @internal
  */
 export type RevisionIndexer = (tag: RevisionTag) => number | undefined;
 
 /**
- * @internal
  */
 export interface RevisionMetadataSource {
 	readonly getIndex: RevisionIndexer;
@@ -134,7 +136,6 @@ export interface RevisionMetadataSource {
 }
 
 /**
- * @internal
  */
 export interface RevisionInfo {
 	readonly revision: RevisionTag;

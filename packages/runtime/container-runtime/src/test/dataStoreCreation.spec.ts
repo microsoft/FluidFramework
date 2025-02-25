@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
@@ -14,14 +14,13 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
+	IFluidParentContext,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { wrapContextForInnerChannel } from "../channelCollection.js";
-import { ContainerRuntime } from "../containerRuntime.js";
 import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import { createRootSummarizerNodeWithGC } from "../summary/index.js";
 
@@ -45,7 +44,7 @@ describe("Data Store Creation Tests", () => {
 		let storage: IDocumentStorageService;
 		let scope: FluidObject;
 		const makeLocallyVisibleFn = () => {};
-		let containerRuntime: ContainerRuntime;
+		let parentContext: IFluidParentContext;
 		const defaultName = "default";
 		const dataStoreAName = "dataStoreA";
 		const dataStoreBName = "dataStoreB";
@@ -108,13 +107,11 @@ describe("Data Store Creation Tests", () => {
 				},
 				get: async (pkg) => globalRegistryEntries.get(pkg),
 			};
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-			containerRuntime = {
+			parentContext = {
 				IFluidDataStoreRegistry: globalRegistry,
-				on: (event, listener) => {},
-				baselogger: createChildLogger(),
-				clientDetails: {},
-			} as unknown as ContainerRuntime;
+				baseLogger: createChildLogger(),
+				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
+			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
 			const summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),
 				(() => {}) as unknown as SummarizeInternalFn,
@@ -132,7 +129,7 @@ describe("Data Store Creation Tests", () => {
 			const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -142,7 +139,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await context.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize was successful.
@@ -156,7 +153,7 @@ describe("Data Store Creation Tests", () => {
 			const context: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [dataStoreAName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -166,7 +163,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await context.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
@@ -180,7 +177,7 @@ describe("Data Store Creation Tests", () => {
 			const contextA: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -190,7 +187,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextA.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize was successful.
@@ -204,7 +201,7 @@ describe("Data Store Creation Tests", () => {
 			const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreBName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -214,7 +211,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextB.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
@@ -228,7 +225,7 @@ describe("Data Store Creation Tests", () => {
 			const contextB: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreBId,
 				pkg: [defaultName, dataStoreAName, dataStoreBName],
-				parentContext: wrapContextForInnerChannel(dataStoreBId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreBId),
@@ -238,7 +235,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextB.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize was successful.
@@ -249,7 +246,7 @@ describe("Data Store Creation Tests", () => {
 			const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreCId,
 				pkg: [defaultName, dataStoreAName, dataStoreCName],
-				parentContext: wrapContextForInnerChannel(dataStoreCId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreCId),
@@ -259,7 +256,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextC.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize was successful.
@@ -273,7 +270,7 @@ describe("Data Store Creation Tests", () => {
 			const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, "fake"],
-				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -283,7 +280,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextFake.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
@@ -297,7 +294,7 @@ describe("Data Store Creation Tests", () => {
 			const contextFake: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, "fake"],
-				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -307,7 +304,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextFake.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.
@@ -321,7 +318,7 @@ describe("Data Store Creation Tests", () => {
 			const contextC: LocalFluidDataStoreContext = new LocalFluidDataStoreContext({
 				id: dataStoreId,
 				pkg: [defaultName, dataStoreAName, dataStoreBName, dataStoreCName],
-				parentContext: wrapContextForInnerChannel(dataStoreId, containerRuntime),
+				parentContext,
 				storage,
 				scope,
 				createSummarizerNodeFn: getCreateSummarizerNodeFn(dataStoreId),
@@ -331,7 +328,7 @@ describe("Data Store Creation Tests", () => {
 
 			try {
 				await contextC.realize();
-			} catch (error) {
+			} catch {
 				success = false;
 			}
 			// Verify that realize throws an error.

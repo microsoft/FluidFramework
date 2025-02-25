@@ -22,7 +22,30 @@ functionality you need from this package.
 This package contains APIs and a CLI for working with semantic versioning version strings and ranges, especially those
 using [Fluid-specific version schemes.](./packages/version-tools/README.md#version-schemes)
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+## Testing build-tools changes in the client release group
+
+It is very useful to test changes in build-tools against the client release group because the test coverage of
+build-tools is limited, and manually testing locally with the client will expose obvious things like broken incremental
+builds, etc.
+
+The easiest way to test build-tools in client is to use pnpm overrides. You can use the following command from the root of the repo to update the
+root package.json and lockfile to link to the local version of build-tools:
+
+```
+npm pkg set pnpm.overrides.@fluidframework/build-tools=link:./build-tools/packages/build-tools pnpm.overrides.@fluid-tools/build-cli=link:./build-tools/packages/build-cli
+pnpm i --no-frozen-lockfile
+```
+
+Once done, when you run `pnpm build` from the root, it will invoke the local in-repo versions of flub and fluid-build.
+
+> [!TIP]
+> Note that if you make changes to build-tools, you'll need to rebuild build-tools for those changes to take effect in
+> the client release group.
+
+You cannot merge in this state, but it allows you to test changes locally, including applying the results of new repo
+policies, re-generating type tests with updated code, etc.
+
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

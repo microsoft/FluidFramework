@@ -22,6 +22,7 @@ import {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	IFluidDataStoreContext,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 
 class UnknownChannel implements IChannel {
@@ -36,6 +37,7 @@ class UnknownChannel implements IChannel {
 				local: boolean,
 				localOpMetadata: unknown,
 			) => {},
+			processMessages: (messageCollection: IRuntimeMessageCollection) => {},
 			setConnectionState: (connected: boolean) => {},
 			reSubmit: (content: any, localOpMetadata: unknown) => {},
 			applyStashedOp: (content: any) => {},

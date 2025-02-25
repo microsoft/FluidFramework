@@ -2,23 +2,25 @@
 
 ## Table of contents
 
--   [Introduction](#introduction)
--   [Summary Format](#summary-format)
--   [Snapshot Format](#snapshot-format)
--   [Summary / Snapshot Tree Visualization](#summary--snapshot-tree-visualization)
-    -   [Protocol Tree](#protocol-tree)
-    -   [App Tree](#app-tree)
-    -   [Summary Tree distinction](#summary-tree-distinction)
+- [Summary and snapshot formats](#summary-and-snapshot-formats)
+	- [Table of contents](#table-of-contents)
+	- [Introduction](#introduction)
+		- [Summary Format](#summary-format)
+		- [Snapshot Format](#snapshot-format)
+		- [Summary / Snapshot Tree Visualization](#summary--snapshot-tree-visualization)
+			- [Protocol tree](#protocol-tree)
+			- [App tree](#app-tree)
+			- [Summary tree distinction - Incremental summaries](#summary-tree-distinction---incremental-summaries)
 
 ## Introduction
 
 This document describes the format of summaries and snapshots. For learning the differences between summaries and snapshots, see the FAQ section [here](https://fluidframework.com/docs/faq/#whats-the-difference-between-a-summary-and-a-snapshot).
 
-The goal of this document is to describe the fundamental structure of a summary / snapshot tree as produced by the runtime, to explain the various node types within the tree along with their respective data, and to show the distinctions between a summary tree and a snapshot tree.
+The following sections describe the fundamental structure of a summary / snapshot tree as produced by the runtime, explains the various node types within the tree along with their respective data, and shows the distinctions between a summary tree and a snapshot tree.
 
-## Summary Format
+### Summary Format
 
-Summary is uploaded to storage and is the container's state at a point in time. A summary is represented by an `ISummaryTree` which is defined in [this file](../../../../../common/lib/protocol-definitions/src/summary.ts) and has the following basic structure (some optional properties are removed for simplicity):
+Summary is uploaded to storage and is the container's state at a point in time. A summary is represented by an `ISummaryTree` which is defined in [summary.ts in the protocol-definitions package][summary-protocol] and has the following basic structure (some optional properties are removed for simplicity):
 
 ```typescript
 export interface ISummaryTree {
@@ -62,21 +64,21 @@ Each tree node in a summary tree is represented by the `ISummaryTree` interface 
 
     -   `ISummaryHandle` - A summary handle is used for incremental summaries. If a node hasn't changed since the last successful summary, instead of sending it's entire contents, it can send a "handle" which is a path to its summary tree object in the last summary. For example, if a data store or DDS did not change since the last summary, the runtime will use a handle for the entire data store instead of re-sending the entire subtree. The same concept applies for a summary blob or a summary attachment and the "handleType" should be set according to the type of the node. An example of "handle" that a DDS sends would be something like: "/_dataStoreId_/_ddsId_".
 
-            ```typescript
-            export interface ISummaryHandle {
-            	type: SummaryType.Handle;
-            	handleType: SummaryTypeNoHandle;
-            	handle: string;
-            }
-            export type SummaryTypeNoHandle =
-            	| SummaryType.Tree
-            	| SummaryType.Blob
-            	| SummaryType.Attachment;
-            ```
+        ```typescript
+        export interface ISummaryHandle {
+            type: SummaryType.Handle;
+            handleType: SummaryTypeNoHandle;
+            handle: string;
+        }
+        export type SummaryTypeNoHandle =
+            | SummaryType.Tree
+            | SummaryType.Blob
+            | SummaryType.Attachment;
+        ```
 
-## Snapshot Format
+### Snapshot Format
 
-Snapshot is downloaded from the storage (typically on document load) and is the container's state at a point in time. A snapshot is represented by an `ISnapshotTree` which is defined in [this file](../../../../../common/lib/protocol-definitions/src/storage.ts) and has the following basic structure (some optional properties are removed for simplicity):
+Snapshot is downloaded from the storage (typically on document load) and is the container's state at a point in time. A snapshot is represented by an `ISnapshotTree` which is defined in [storage.ts in the protocol-definitions package][storage-protocol] and has the following basic structure (some optional properties are removed for simplicity):
 
 ```typescript
 export interface ISnapshotTree {
@@ -99,7 +101,7 @@ Each node in a snapshot tree is represented by the above interface and contains 
 
     `<tree name>`: `<snapshot tree>` where `tree name` is the name given to the subtree by the node and `snapshot tree` is its content in `ISnapshotTree` format.
 
-## Summary / Snapshot Tree Visualization
+### Summary / Snapshot Tree Visualization
 
 This section shows what a typical summary or snapshot tree in a container looks like. Some key things to note:
 
@@ -129,7 +131,7 @@ flowchart TD
 
 `App tree` - This is the tree named `.app` and contains the container's state and data. The subtree under .app is what is generated by the container runtime.
 
-### Protocol tree
+#### Protocol tree
 
 The contents of the protocol tree are:
 
@@ -139,7 +141,7 @@ The contents of the protocol tree are:
 -   `quorum values blob` - The quorum values at the time summary was taken.
 -   Other blobs and trees may be added at this level as needed.
 
-### App tree
+#### App tree
 
 This is what the ".app" tree looks like which is generated by the container runtime during summary upload. The same is passed to container runtime during snapshot download:
 
@@ -172,8 +174,8 @@ flowchart TD
     A --> T[.blobs]:::tree
         T --> U["attachment blob 1"]:::attachment
         T --> V["attachment blob N"]:::attachment
-
 ```
+
 -   `Container`: The root represents the container or container runtime node. Its contents are described below:
 
     -   `.metadata blob` - The container level metadata such as creation time, create version, etc.
@@ -195,7 +197,7 @@ flowchart TD
     -   `.header blob` - Added by some DDSs and may contains its data. Note that all DDSs may not add this.
     -   A DDS may add other blobs and / or trees to represent its data. Basically, a DDS can write its data in any form
 
-### Summary tree distinction - Incremental summaries
+#### Summary tree distinction - Incremental summaries
 
 In the visualization above, a summary tree differs from a snapshot tree in the following way:
 A summary tree supports incremental summaries via summary handles. Any node in the tree that has not changed since the previous successful summary can send a summary handle (`ISummaryHandle`) instead of sending its entire contents in a full summary. The following diagram shows this with an example where certain parts of the summary tree use a summary handle. It is a zoomed in version of the same app tree as above where nodes where summary handles are marked in red:
@@ -211,11 +213,14 @@ flowchart TD
         C --> D["handle: '/data store 1'"]:::handle
         C --> E["data store 2"]:::tree
             E --> F[".channels"]:::tree
-                F --> G["handle: '/data store 2/DDS 1'"]:::handle
+                F --> G["handle: '/.channels/data store 2/.channels/DDS 1'"]:::handle
                 F --> H["DDS 2"]:::tree
-                    H --> I["handle: '/data store 2/DDS 2/sub node'"]:::handle
+                    H --> I["handle: '/.channels/data store 2/.channels/DDS 2/sub node'"]:::handle
                 F --> J["DDS N"]:::tree
             E --> K["other nodes"]:::others
         C --> L["data store N"]:::tree
     A --> M["handle: '/gc'"]:::handle
 ```
+
+[summary-protocol]: /common/lib/protocol-definitions/src/summary.ts
+[storage-protocol]: /common/lib/protocol-definitions/src/storage.ts

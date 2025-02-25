@@ -43,7 +43,7 @@ const generatePackageScriptsSection = (scriptsTable, headingOptions) => {
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function packageScriptsSectionTransform(content, options, config) {
+function packageScriptsTransform(content, options, config) {
 	const headingOptions = parseHeadingOptions(options);
 	const scriptsTable = scripts(content, options, config);
 	return formattedGeneratedContentBody(
@@ -53,5 +53,5 @@ function packageScriptsSectionTransform(content, options, config) {
 
 module.exports = {
 	generatePackageScriptsSection,
-	packageScriptsSectionTransform,
+	packageScriptsTransform,
 };

@@ -5,7 +5,12 @@
 
 import { strict as assert } from "assert";
 
-import { Marker, ReferenceType, TextSegment } from "@fluidframework/merge-tree/internal";
+import {
+	Marker,
+	ReferenceType,
+	TextSegment,
+	addProperties,
+} from "@fluidframework/merge-tree/internal";
 
 import { SubSequence } from "../sharedSequence.js";
 
@@ -42,7 +47,10 @@ describe("Segment Marshalling", () => {
 				// Ensure that a segment w/'props' correctly round-trips
 				it("annotated", () => {
 					const expected = ctor();
-					expected.addProperties({ hasProperties: true, numProperties: 2 });
+					expected.properties = addProperties(expected.properties, {
+						hasProperties: true,
+						numProperties: 2,
+					});
 					const spec = expected.toJSONObject();
 					const actual = fromJSON(spec);
 					assert.deepStrictEqual(expected, actual);

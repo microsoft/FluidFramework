@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performance } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
 import { ICriticalContainerError } from "@fluidframework/container-definitions";
 import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
 import {
@@ -583,7 +583,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
-		const connectStartTime = performance.now();
+		const connectStartTime = performanceNow();
 		let lastError: unknown;
 
 		const abortController = new AbortController();
@@ -604,7 +604,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent({
 					eventName: "ConnectionAttemptCancelled",
 					attempts: connectRepeatCount,
-					duration: formatTick(performance.now() - connectStartTime),
+					duration: formatTick(performanceNow() - connectStartTime),
 					connectionEstablished: false,
 				});
 				return;
@@ -675,7 +675,7 @@ export class ConnectionManager implements IConnectionManager {
 						attempts: connectRepeatCount,
 						delay: delayMs, // milliseconds
 						eventName: "DeltaConnectionFailureToConnect",
-						duration: formatTick(performance.now() - connectStartTime),
+						duration: formatTick(performanceNow() - connectStartTime),
 					},
 					origError,
 				);
@@ -688,7 +688,7 @@ export class ConnectionManager implements IConnectionManager {
 					return;
 				}
 
-				const waitStartTime = performance.now();
+				const waitStartTime = performanceNow();
 				const retryDelayFromError = getRetryDelayFromError(origError);
 				// If the error told us to wait or browser signals us that we are offline, then calculate the time we
 				// want to wait for before retrying. then we wait for that time. If the error didn't tell us to wait,
@@ -714,7 +714,7 @@ export class ConnectionManager implements IConnectionManager {
 				await waitForOnline();
 				this.logger.sendPerformanceEvent({
 					eventName: "WaitBetweenConnectionAttempts",
-					duration: performance.now() - waitStartTime,
+					duration: performanceNow() - waitStartTime,
 					details: JSON.stringify({
 						retryDelayFromError,
 						delayMs,
@@ -730,7 +730,7 @@ export class ConnectionManager implements IConnectionManager {
 				{
 					eventName: "MultipleDeltaConnectionFailures",
 					attempts: connectRepeatCount,
-					duration: formatTick(performance.now() - connectStartTime),
+					duration: formatTick(performanceNow() - connectStartTime),
 				},
 				lastError,
 			);
@@ -742,7 +742,7 @@ export class ConnectionManager implements IConnectionManager {
 			this.logger.sendTelemetryEvent({
 				eventName: "ConnectionAttemptCancelled",
 				attempts: connectRepeatCount,
-				duration: formatTick(performance.now() - connectStartTime),
+				duration: formatTick(performanceNow() - connectStartTime),
 				connectionEstablished: true,
 			});
 			return;
@@ -933,12 +933,8 @@ export class ConnectionManager implements IConnectionManager {
 		let last = -1;
 		if (initialMessages.length > 0) {
 			this._connectionVerboseProps.connectionInitialOpsFrom =
-				// Non null asserting here because of the length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				initialMessages[0]!.sequenceNumber;
-			// Non null asserting here because of the length check above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			last = initialMessages[initialMessages.length - 1]!.sequenceNumber;
+				initialMessages[0].sequenceNumber;
+			last = initialMessages[initialMessages.length - 1].sequenceNumber;
 			this._connectionVerboseProps.connectionInitialOpsTo = last + 1;
 			// Update knowledge of how far we are behind, before raising "connect" event
 			// This is duplication of what incomingOpHandler() does, but we have to raise event before we get there,
@@ -1225,9 +1221,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	// Always connect in write mode after getting nacked.
 	private readonly nackHandler = (documentId: string, messages: INack[]): void => {
-		// TODO Why are we non null asserting here?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const message = messages[0]!;
+		const message = messages[0];
 		if (this._readonlyPermissions === true) {
 			this.props.closeHandler(
 				createWriteError("writeOnReadOnlyDocument", { driverVersion: undefined }),

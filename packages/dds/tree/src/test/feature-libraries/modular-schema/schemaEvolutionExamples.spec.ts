@@ -3,32 +3,35 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type Adapters,
-	Compatibility,
+	EmptyKey,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	storedEmptyFieldSchema,
 } from "../../../core/index.js";
-import { SchemaBuilder, leaf } from "../../../domains/index.js";
 import {
-	FieldKinds,
-	FlexFieldSchema,
-	type FlexTreeSchema,
 	type FullSchemaPolicy,
-	ViewSchema,
 	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
+	getAllowedContentDiscrepancies,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import {
+	getStoredSchema,
+	SchemaFactory,
+	toStoredSchema,
+	ViewSchema,
+	type TreeNodeSchema,
+} from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 
 class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(
@@ -45,7 +48,7 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
 		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
 			this.rootFieldSchemaData = schema;
-			this.events.emit("afterSchemaChange", this);
+			this._events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -54,14 +57,13 @@ class TestSchemaRepository extends TreeStoredSchemaRepository {
 	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
 	 * @returns true iff update was performed.
 	 */
-	public tryUpdateTreeSchema(
-		identifier: TreeNodeSchemaIdentifier,
-		schema: TreeNodeStoredSchema,
-	): boolean {
-		const original = this.nodeSchema.get(identifier);
-		if (allowsTreeSuperset(this.policy, this, original, schema)) {
-			this.nodeSchemaData.set(identifier, schema);
-			this.events.emit("afterSchemaChange", this);
+	public tryUpdateTreeSchema(schema: TreeNodeSchema): boolean {
+		const storedSchema = getStoredSchema(schema);
+		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		const original = this.nodeSchema.get(name);
+		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
+			this.nodeSchemaData.set(name, storedSchema);
+			this._events.emit("afterSchemaChange", this);
 			return true;
 		}
 		return false;
@@ -79,45 +81,30 @@ function assertEnumEqual<TEnum extends { [key: number]: string }>(
 }
 
 describe("Schema Evolution Examples", () => {
-	const contentTypesBuilder = new SchemaBuilder({
-		scope: "test",
-		name: "Schema Evolution Examples: default content types",
-	});
+	const builder = new SchemaFactory("test");
 
-	const codePoint = contentTypesBuilder.fieldNode("Primitive.CodePoint", leaf.number);
+	const codePoint = builder.object("Primitive.CodePoint", {
+		[EmptyKey]: builder.number,
+	});
 
 	// String made of unicode code points, allowing for sequence editing of a string.
-	const text = contentTypesBuilder.object("Text", {
-		children: FlexFieldSchema.create(FieldKinds.sequence, [codePoint]),
-	});
+	const text = builder.array("Text", codePoint);
 
-	const point = contentTypesBuilder.object("Point", {
-		x: leaf.number,
-		y: leaf.number,
-	});
-
-	const defaultContentLibrary = contentTypesBuilder.intoLibrary();
-
-	const containersBuilder = new SchemaBuilder({
-		scope: "test",
-		name: "Schema Evolution Examples: default containers",
-		libraries: [defaultContentLibrary],
+	const point = builder.object("Point", {
+		x: builder.number,
+		y: builder.number,
 	});
 
 	// A type that can be used to position items without an inherent position within the canvas.
-	const positionedCanvasItem = containersBuilder.object("PositionedCanvasItem", {
+	const positionedCanvasItem = builder.object("PositionedCanvasItem", {
 		position: point,
 		content: text,
 	});
-	const canvas = containersBuilder.object("Canvas", {
-		items: FlexFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem]),
-	});
+	const canvas = builder.array("Canvas", positionedCanvasItem);
 
-	const root: FlexFieldSchema = FlexFieldSchema.create(FieldKinds.required, [canvas]);
+	const root = builder.required(canvas);
 
-	const tolerantRoot = FlexFieldSchema.create(FieldKinds.optional, [canvas]);
-
-	const treeViewSchema = containersBuilder.intoLibrary();
+	const tolerantRoot = builder.optional(canvas);
 
 	/**
 	 * This shows basic usage of stored and view schema, including a schema change handled using the
@@ -128,18 +115,10 @@ describe("Schema Evolution Examples", () => {
 	 * (since adapters are not implemented yet, and they are the nice way to handle that).
 	 */
 	it("basic usage", () => {
-		// Collect our view schema.
-		// This will represent our view schema for a simple canvas application.
-		const viewCollection: FlexTreeSchema = new SchemaBuilder({
-			scope: "test",
-			name: "basic usage",
-			libraries: [treeViewSchema],
-		}).intoSchema(root);
-
 		// This is where legacy schema handling logic for schematize.
 		const adapters: Adapters = {};
 		// Compose all the view information together.
-		const view = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection);
+		const view = new ViewSchema(defaultSchemaPolicy, adapters, root);
 
 		// Now lets imagine using this application on a new empty document.
 		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
@@ -154,18 +133,8 @@ describe("Schema Evolution Examples", () => {
 			// Sadly for our application, we did not allow empty roots in our view schema,
 			// nor did we provide an adapter capable of handling empty roots.
 			// This means our application is unable to view this document.
-			assertEnumEqual(Compatibility, compat.read, Compatibility.Incompatible);
-
-			// And since the view schema currently excludes empty roots, its also incompatible for writing:
-			assertEnumEqual(Compatibility, compat.write, Compatibility.Incompatible);
-
-			// Additionally even updating the document schema can't save this app,
-			// since the new schema would be incompatible with the existing document content.
-			assertEnumEqual(
-				Compatibility,
-				compat.writeAllowingStoredSchemaUpdates,
-				Compatibility.Incompatible,
-			);
+			// And since the view schema currently excludes empty roots, its also incompatible for upgrading:
+			assert.deepEqual(compat, { canView: false, canUpgrade: false, isEquivalent: false });
 
 			// This is where the app would inform the user that the document
 			// is not compatible with their version of the application.
@@ -181,29 +150,16 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const viewCollection2 = new SchemaBuilder({
-				scope: "test",
-				name: "basic usage2",
-				libraries: [treeViewSchema],
-			}).intoSchema(tolerantRoot);
-			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection2);
+			const view2 = new ViewSchema(defaultSchemaPolicy, adapters, tolerantRoot);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
 
 			// The adjusted view schema can be used read this document, no adapters needed.
-			assertEnumEqual(Compatibility, compat.read, Compatibility.Compatible);
+			assert.equal(compat.canUpgrade, true);
 
 			// However the document just has its empty root schema,
 			// so the app could make changes that could not be written back.
-			assertEnumEqual(Compatibility, compat.write, Compatibility.Incompatible);
-
-			// However, it is possible to update the schema in the document to match our schema
-			// (since the existing data in compatible with our schema)
-			assertEnumEqual(
-				Compatibility,
-				compat.writeAllowingStoredSchemaUpdates,
-				Compatibility.Compatible,
-			);
+			assert.equal(compat.canView, false);
 
 			// The app can consider this compatible and proceed if it is ok with updating schema on write.
 			// There are a few approaches apps might want to take here, but we will assume one that seems reasonable:
@@ -221,78 +177,54 @@ describe("Schema Evolution Examples", () => {
 			// Lets assume its time to update the schema in the document
 			// (either eagerly or lazily when first needing to do so when writing into the document).
 			// Once again the order does not matter:
-			assert(stored.tryUpdateTreeSchema(canvas.name, canvas.stored));
-			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number.stored));
-			assert(stored.tryUpdateTreeSchema(point.name, point.stored));
-			assert(
-				stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem.stored),
-			);
-			assert(stored.tryUpdateTreeSchema(text.name, text.stored));
-			assert(stored.tryUpdateTreeSchema(codePoint.name, codePoint.stored));
-			assert(stored.tryUpdateRootFieldSchema(tolerantRoot.stored));
-			assert(stored.tryUpdateTreeSchema(leaf.number.name, leaf.number.stored));
-			assert(stored.tryUpdateTreeSchema(leaf.boolean.name, leaf.boolean.stored));
-			assert(stored.tryUpdateTreeSchema(leaf.string.name, leaf.string.stored));
-			assert(stored.tryUpdateTreeSchema(leaf.handle.name, leaf.handle.stored));
-			assert(stored.tryUpdateTreeSchema(leaf.null.name, leaf.null.stored));
-
+			assert(stored.tryUpdateTreeSchema(canvas));
+			assert(stored.tryUpdateTreeSchema(builder.number));
+			assert(stored.tryUpdateTreeSchema(point));
+			assert(stored.tryUpdateTreeSchema(positionedCanvasItem));
+			assert(stored.tryUpdateTreeSchema(text));
+			assert(stored.tryUpdateTreeSchema(codePoint));
+			assert(stored.tryUpdateRootFieldSchema(toStoredSchema(tolerantRoot).rootFieldSchema));
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			assertEnumEqual(Compatibility, compatNew.read, Compatibility.Compatible);
+			const report = Array.from(
+				getAllowedContentDiscrepancies(toStoredSchema(tolerantRoot), stored),
+			);
+			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
-			assertEnumEqual(Compatibility, compatNew.write, Compatibility.Compatible);
+			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });
 
 			// Now lets imagine some time passes, and the developers want to add a second content type:
-			const builderWithCounter = new SchemaBuilder({
-				scope: "test",
-				name: "builderWithCounter",
-				libraries: [defaultContentLibrary],
-			});
 
-			const counter = builderWithCounter.object("Counter", {
-				count: leaf.number,
+			const counter = builder.object("Counter", {
+				count: builder.number,
 			});
 			// Lets allow counters inside positionedCanvasItem, instead of just text:
-			const positionedCanvasItem2 = builderWithCounter.object("PositionedCanvasItem", {
+			const positionedCanvasItem2 = builder.object("PositionedCanvasItem", {
 				position: point,
 				content: [text, counter],
 			});
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
-			const canvas2 = builderWithCounter.object("Canvas", {
-				items: FlexFieldSchema.create(FieldKinds.sequence, [positionedCanvasItem2]),
-			});
+			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const viewCollection3: FlexTreeSchema = builderWithCounter.intoSchema(
-				FlexFieldSchema.create(FieldKinds.optional, [canvas2]),
-			);
-			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, viewCollection3);
+			const view3 = new ViewSchema(defaultSchemaPolicy, adapters, builder.optional(canvas2));
 
 			// With this new schema, we can load the document just like before:
 			const compat2 = view3.checkCompatibility(stored);
-			assertEnumEqual(Compatibility, compat2.read, Compatibility.Compatible);
-			assertEnumEqual(Compatibility, compat2.write, Compatibility.Incompatible);
-			assertEnumEqual(
-				Compatibility,
-				compat2.writeAllowingStoredSchemaUpdates,
-				Compatibility.Compatible,
-			);
+			assert.deepEqual(compat2, { canView: false, canUpgrade: true, isEquivalent: false });
 
 			// This is the same case as above where we can choose to do a schema update if we want:
-			assert(
-				stored.tryUpdateTreeSchema(positionedCanvasItem.name, positionedCanvasItem2.stored),
-			);
-			assert(stored.tryUpdateTreeSchema(counter.name, counter.stored));
+			assert(stored.tryUpdateTreeSchema(positionedCanvasItem2));
+			assert(stored.tryUpdateTreeSchema(counter));
 
 			// And recheck compat:
 			const compat3 = view3.checkCompatibility(stored);
-			assertEnumEqual(Compatibility, compat3.read, Compatibility.Compatible);
-			assertEnumEqual(Compatibility, compat3.write, Compatibility.Compatible);
+			assert.deepEqual(compat3, { canView: true, canUpgrade: true, isEquivalent: true });
 		}
 	});
 
-	// TODO: support adapters
+	// TODO: support adapters.
 
 	// function makeTolerantRootAdapter(view: TreeStoredSchema): FieldAdapter {
 	// 	return {

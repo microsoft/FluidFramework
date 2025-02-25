@@ -35,7 +35,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -63,7 +63,7 @@
 		"@fluidframework/gitresources": "workspace:~",
 		"@fluidframework/protocol-base": "workspace:~",
 		"@fluidframework/protocol-definitions": "^3.2.0",
-		"axios": "^1.6.2",
+		"axios": "^1.7.7",
 		"crc-32": "1.2.0",
 		"debug": "^4.3.4",
 		"json-stringify-safe": "^5.0.1",
@@ -73,9 +73,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@5.0.0",
 		"@microsoft/api-extractor": "^7.45.1",
@@ -95,6 +95,20 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {
+			"Class_NetworkError": {
+				"backCompat": false
+			},
+			"ClassStatics_NetworkError": {
+				"backCompat": false
+			},
+			"Enum_InternalErrorCode": {
+				"backCompat": false
+			},
+			"Interface_INetworkErrorDetails": {
+				"backCompat": false
+			}
+		},
+		"entrypoint": "public"
 	}
 }

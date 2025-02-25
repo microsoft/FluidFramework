@@ -33,6 +33,7 @@ historian:
       createSummary: disabled
   restGitService:
     disableGitCache: false
+    ephemeralDocumentTTLSec: 86400
   system:
     httpServer:
       connectionTimeoutMs: 0
@@ -63,6 +64,7 @@ gitrest:
     ephemeralfilesystem:
       name: redisFs
       maxFileSizeBytes: 0
+    ephemeralDocumentTTLSec: 86400
     persistLatestFullSummary: false
     persistLatestFullEphemeralSummary: false
     repoPerDocEnabled: false
@@ -76,6 +78,7 @@ gitrest:
     enableRedisFsOptimizedStat: false
     redisApiMetricsSamplingPeriod: 0
     enforceStrictPersistedFullSummaryReads: false
+    maxBlobSizeBytes: 0
   redis:
     url: redis_url
     port: 6379

@@ -45,6 +45,7 @@
 			"name": "redisFs",
 			"maxFileSizeBytes": 0
 		},
+		"ephemeralDocumentTTLSec": 86400,
 		"persistLatestFullSummary": false,
 		"persistLatestFullEphemeralSummary": false,
 		"repoPerDocEnabled": false,
@@ -57,7 +58,8 @@
 		"enableHashmapRedisFs": false,
 		"enableRedisFsOptimizedStat": false,
 		"redisApiMetricsSamplingPeriod": 0,
-		"enforceStrictPersistedFullSummaryReads": false
+		"enforceStrictPersistedFullSummaryReads": false,
+		"maxBlobSizeBytes": 0
 	},
 	"redis": {
 		"host": "redis",

@@ -69,7 +69,7 @@ export function isWorkspaceRange(r: unknown): r is WorkspaceRange {
 }
 
 /**
- * A type represeting the strings we consider valid for interdependencies - dependencies between packages within the
+ * A type representing the strings we consider valid for interdependencies - dependencies between packages within the
  * same release group.
  */
 export type InterdependencyRange =

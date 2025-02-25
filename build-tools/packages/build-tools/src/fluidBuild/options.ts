@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import * as os from "os";
-import * as path from "path";
+import { existsSync } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 
-import { commonOptionString, parseOption } from "../common/commonOptions";
-import { defaultBuildTaskName, defaultCleanTaskName } from "../common/fluidTaskDefinitions";
 import { defaultLogger } from "../common/logging";
-import { existsSync } from "../common/utils";
+import { commonOptionString, parseOption } from "./commonOptions";
 import { IPackageMatchedOptions } from "./fluidRepoBuild";
-import { ISymlinkOptions } from "./symlinkUtils";
+import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";
 
-const { log, warning, errorLog } = defaultLogger;
+const { log, errorLog } = defaultLogger;
 
-interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
+interface FastBuildOptions extends IPackageMatchedOptions {
 	nolint: boolean;
 	lintonly: boolean;
 	showExec: boolean;
@@ -24,15 +23,16 @@ interface FastBuildOptions extends IPackageMatchedOptions, ISymlinkOptions {
 	buildTaskNames: string[];
 	build?: boolean;
 	vscode: boolean;
-	symlink: boolean;
-	fullSymlink: boolean | undefined;
-	depcheck: boolean;
 	force: boolean;
 	install: boolean;
 	uninstall: boolean;
 	concurrency: number;
 	worker: boolean;
 	workerThreads: boolean;
+	/**
+	 * Per worker, in bytes.
+	 * When a worker is finished with a task, if this is exceeded, a new worker is spawned.
+	 */
 	workerMemoryLimit: number;
 }
 
@@ -48,9 +48,6 @@ export const options: FastBuildOptions = {
 	matchedOnly: true,
 	buildTaskNames: [],
 	vscode: false,
-	symlink: false,
-	fullSymlink: undefined,
-	depcheck: false,
 	force: false,
 	install: false,
 	uninstall: false,
@@ -58,7 +55,13 @@ export const options: FastBuildOptions = {
 	all: false,
 	worker: false,
 	workerThreads: false,
-	workerMemoryLimit: Number.POSITIVE_INFINITY,
+	// Setting this lower causes more worker restarts, but uses less memory.
+	// Since using too much memory can cause slow downs, and too many worker restarts can also cause slowdowns,
+	// it's a tradeoff.
+	// Around 2 GB seems to be ideal.
+	// Both larger and smaller values have shown to be slower (even with plenty of free ram), and too large of values (4 GiB) on low concurrency runs (4) has resulted in
+	// "build:esnext: Internal uncaught exception: Error: Worker disconnect" likely due to node processes exceeding 4 GiB of memory.
+	workerMemoryLimit: 2 * 1024 * 1024 * 1024,
 };
 
 // This string is duplicated in the readme: update readme if changing this.
@@ -69,23 +72,24 @@ function printUsage() {
 Usage: fluid-build <options> [(<package regexp>|<path>) ...]
     [<package regexp> ...] Regexp to match the package name (default: all packages)
 Options:
-     --all            Operate on all packages/monorepo (default: client monorepo). See also "-g" or "--releaseGroup".
-  -c --clean          Same as running build script 'clean' on matched packages (all if package regexp is not specified)
-  -d --dep            Apply actions (clean/force/rebuild) to matched packages and their dependent packages
-     --fix            Auto fix warning from package check if possible
-  -f --force          Force build and ignore dependency check on matched packages (all if package regexp is not specified)
-  -? --help           Print this message
-     --install        Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
-  -r --rebuild        Clean and build on matched packages (all if package regexp is not specified)
-     --reinstall      Same as --uninstall --install.
-  -g --releaseGroup   Release group to operate on
-     --root <path>    Root directory of the Fluid repo (default: env _FLUID_ROOT_)
-  -t --task <name>    target to execute (default:build)
-     --symlink        Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
-     --symlink:full   Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
-     --uninstall      Clean all node_modules. This errors if some node-nodules folders do not exists: if hitting this limitation you can do an install first to work around it.
-     --vscode         Output error message to work with default problem matcher in vscode
-     --worker         Reuse worker threads for some tasks, increasing memory use but lowering overhead.
+     --all                  Operate on all packages/monorepo (default: client monorepo). See also "-g" or "--releaseGroup".
+  -c --clean                Same as running build script 'clean' on matched packages (all if package regexp is not specified)
+  -d --dep                  Apply actions (clean/force/rebuild) to matched packages and their dependent packages
+     --fix                  Auto fix warning from package check if possible
+  -f --force                Force build and ignore dependency check on matched packages (all if package regexp is not specified)
+  -? --help                 Print this message
+     --install              Run npm install for all packages/monorepo. This skips a package if node_modules already exists: it can not be used to update in response to changes to the package.json.
+     --workerMemoryLimitMB  Memory limit for worker threads in MiB
+  -r --rebuild              Clean and build on matched packages (all if package regexp is not specified)
+     --reinstall            Same as --uninstall --install.
+  -g --releaseGroup         Release group to operate on
+     --root <path>          Root directory of the Fluid repo (default: env _FLUID_ROOT_)
+  -t --task <name>          target to execute (default:build)
+     --symlink              Deprecated. Fix symlink between packages within monorepo (isolate mode). This configures the symlinks to only connect within each lerna managed group of packages. This is the configuration tested by CI and should be kept working.
+     --symlink:full         Deprecated. Fix symlink between packages across monorepo (full mode). This symlinks everything in the repo together. CI does not ensure this configuration is functional, so it may or may not work.
+     --uninstall            Clean all node_modules. This errors if some node_modules folder do not exist. If hitting this limitation, you can do an install first to work around it.
+     --vscode               Output error message to work with default problem matcher in vscode
+     --worker               Reuse worker threads for some tasks, increasing memory use but lowering overhead.
 ${commonOptionString}
 `,
 	);
@@ -115,12 +119,6 @@ function setInstall() {
 
 function setUninstall() {
 	options.uninstall = true;
-	setBuild(false);
-}
-
-function setSymlink(fullSymlink: boolean) {
-	options.symlink = true;
-	options.fullSymlink = fullSymlink;
 	setBuild(false);
 }
 
@@ -211,22 +209,6 @@ export function parseOptions(argv: string[]) {
 			continue;
 		}
 
-		if (arg === "--symlink") {
-			setSymlink(false);
-			continue;
-		}
-
-		if (arg === "--symlink:full") {
-			setSymlink(true);
-			continue;
-		}
-
-		if (arg === "--depcheck") {
-			options.depcheck = true;
-			setBuild(false);
-			continue;
-		}
-
 		// These options are not public
 		if (arg === "--nolint") {
 			options.nolint = true;
@@ -282,25 +264,6 @@ export function parseOptions(argv: string[]) {
 			}
 			error = true;
 			break;
-		}
-
-		// Back compat switches
-		if (arg === "--azure") {
-			warning("'--azure' is deprecated.  Use '-g azure' instead");
-			options.releaseGroups.push("azure");
-			continue;
-		}
-
-		if (arg === "--buildTools") {
-			warning("'--buildTools' is deprecated.  Use '-g build-tools' instead");
-			options.releaseGroups.push("build-tools");
-			continue;
-		}
-
-		if (arg === "--server") {
-			warning("'--server' is deprecated.  Use '-g server' instead");
-			options.releaseGroups.push("server");
-			continue;
 		}
 
 		// Package regexp or paths

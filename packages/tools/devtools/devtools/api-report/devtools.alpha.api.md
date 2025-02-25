@@ -4,34 +4,39 @@
 
 ```ts
 
-// @beta
+// @beta @sealed
 export interface ContainerDevtoolsProps extends HasContainerKey {
-    container: IFluidContainer;
+    readonly container: IFluidContainer;
 }
 
-export { ContainerKey }
-
-export { createDevtoolsLogger }
+// @beta
+export type ContainerKey = string;
 
 // @beta
+export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
+
+// @beta @sealed
 export interface DevtoolsProps {
-    initialContainers?: ContainerDevtoolsProps[];
-    logger?: IDevtoolsLogger;
+    readonly initialContainers?: ContainerDevtoolsProps[];
+    readonly logger?: IDevtoolsLogger;
 }
 
-export { HasContainerKey }
+// @beta @sealed
+export interface HasContainerKey {
+    readonly containerKey: ContainerKey;
+}
 
-// @beta
+// @beta @sealed
 export interface IDevtools extends IDisposable {
     closeContainerDevtools(id: string): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
 }
 
-export { IDevtoolsLogger }
+// @beta @sealed
+export interface IDevtoolsLogger extends ITelemetryBaseLogger {
+}
 
 // @beta
 export function initializeDevtools(props: DevtoolsProps): IDevtools;
-
-// (No @packageDocumentation comment for this package)
 
 ```

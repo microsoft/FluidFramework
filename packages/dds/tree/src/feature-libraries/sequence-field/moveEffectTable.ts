@@ -14,7 +14,7 @@ import {
 } from "../modular-schema/index.js";
 
 import type { MoveMarkEffect } from "./helperTypes.js";
-import type { CellMark, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
+import type { CellMark, Detach, Mark, MarkEffect, MoveId, MoveIn, MoveOut } from "./types.js";
 import { isAttachAndDetachEffect, splitMark, splitMarkEffect } from "./utils.js";
 
 export type MoveEffectTable = CrossFieldManager<MoveEffect>;
@@ -33,7 +33,7 @@ export interface MoveEffect {
 	 * Only used during rebasing.
 	 * An effect from changeset being rebased which should be moved to the same position as this mark.
 	 */
-	movedEffect?: MarkEffect;
+	movedEffect?: Detach;
 
 	/**
 	 * Rebased changes for a node which has been moved to the position of this mark.
@@ -101,7 +101,7 @@ export function getMoveEffect(
 	id: MoveId,
 	count: number,
 	addDependency: boolean = true,
-): RangeQueryResult<MoveEffect> {
+): RangeQueryResult<ChangeAtomId, MoveEffect> {
 	const result = moveEffects.get(target, revision, id, count, addDependency);
 	return result.value !== undefined
 		? { ...result, value: adjustMoveEffectBasis(result.value as MoveEffectWithBasis, id) }

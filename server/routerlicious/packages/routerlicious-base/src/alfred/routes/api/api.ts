@@ -18,13 +18,17 @@ import {
 	throttle,
 	IThrottleMiddlewareOptions,
 	getParam,
-	getCorrelationId,
 	getBooleanFromConfig,
 	verifyToken,
 	verifyStorageToken,
+	logHttpMetrics,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+import {
+	Lumberjack,
+	getLumberBaseProperties,
+	getGlobalTelemetryContext,
+} from "@fluidframework/server-services-telemetry";
 import { Request, Router } from "express";
 import sillyname from "sillyname";
 import { Provider } from "nconf";
@@ -49,11 +53,12 @@ export function create(
 	jwtTokenCache?: core.ICache,
 	revokedTokenChecker?: core.IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	fluidAccessTokenGenerator?: core.IFluidAccessTokenGenerator,
 ): Router {
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
 	const generalTenantThrottler = tenantThrottlers.get(Constants.generalRestCallThrottleIdPrefix);
@@ -65,8 +70,8 @@ export function create(
 	);
 
 	function handlePatchRootSuccess(request: Request, opBuilder: (request: Request) => any[]) {
-		const tenantId = getParam(request.params, "tenantId");
-		const documentId = getParam(request.params, "id");
+		const tenantId = request.params.tenantId;
+		const documentId = request.params.id;
 		const clientId = (sillyname() as string).toLowerCase().split(" ").join("-");
 		sendJoin(tenantId, documentId, clientId, producer);
 		sendOp(request, tenantId, documentId, clientId, producer, opBuilder);
@@ -84,6 +89,29 @@ export function create(
 			response.sendStatus(200);
 		},
 	);
+
+	if (fluidAccessTokenGenerator) {
+		router.post(
+			"/tenants/:tenantId/accesstoken",
+			validateRequestParams("tenantId"),
+			throttle(generalTenantThrottler, winston, tenantThrottleOptions),
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			async (request, response) => {
+				const tenantId = request.params.tenantId;
+				const bearerAuthToken = request?.header("Authorization");
+				if (!bearerAuthToken) {
+					response.status(400).send(`Missing Authorization header in the request.`);
+					return;
+				}
+				const fluidAccessTokenRequest = fluidAccessTokenGenerator.generateFluidToken(
+					tenantId,
+					bearerAuthToken,
+					request?.body,
+				);
+				handleResponse(fluidAccessTokenRequest, response, undefined, undefined, 201);
+			},
+		);
+	}
 
 	router.patch(
 		"/:tenantId/:id/root",
@@ -120,7 +148,7 @@ export function create(
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			const tenantId = getParam(request.params, "tenantId");
+			const tenantId = request.params.tenantId;
 			const blobData = request.body as IBlobData;
 			// TODO: why is this contacting external blob storage?
 			const externalHistorianUrl = config.get("worker:blobStorageUrl") as string;
@@ -147,8 +175,8 @@ export function create(
 		verifyStorageToken(tenantManager, config),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {
-			const tenantId = getParam(request.params, "tenantId");
-			const documentId = getParam(request.params, "id");
+			const tenantId = request.params.tenantId;
+			const documentId = request.params.id;
 			const signalContent = request?.body?.signalContent;
 			if (!isValidSignalEnvelope(signalContent)) {
 				response
@@ -182,7 +210,7 @@ export function create(
 
 function mapSetBuilder(request: Request): any[] {
 	const reqOps = request.body as IMapSetOperation[];
-	const ops = [];
+	const ops: ReturnType<typeof craftMapSet>[] = [];
 	for (const reqOp of reqOps) {
 		ops.push(craftMapSet(reqOp));
 	}
@@ -353,7 +381,12 @@ const uploadBlob = async (
 		undefined,
 		undefined,
 		undefined,
-		() => getCorrelationId() || uuid(),
+		() =>
+			getGlobalTelemetryContext().getProperties().correlationId ??
+			uuid() /* getCorrelationId */,
+		() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+		undefined /* refreshTokenIfNeeded */,
+		logHttpMetrics /* logHttpMetrics */,
 	);
 	return restWrapper.post(uri, blobData, undefined, {
 		"Content-Type": "application/json",

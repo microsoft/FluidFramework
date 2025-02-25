@@ -13,12 +13,10 @@ import { getOrCreate } from "./utils.js";
  * @remarks
  * Due to the `TContent` type parameter being invariant (which it has to be since keys are used to both read and write data),
  * generic collections end up needing to constrain their key's `TContent` to `any`.
- * @internal
  */
 export type BrandedKey<TKey, TContent> = TKey & Invariant<TContent>;
 
 /**
- * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey extends BrandedKey<
@@ -41,8 +39,6 @@ export type BrandedKeyContent<TKey extends BrandedKey<unknown, any>> = TKey exte
  *
  * @remarks
  * These APIs are designed so that a Map can be used to implement this type.
- *
- * @internal
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export interface BrandedMapSubset<K extends BrandedKey<unknown, any>> {
@@ -74,7 +70,6 @@ let slotCounter = 0;
 
 /**
  * Define a strongly typed slot in which data can be stored in a {@link BrandedMapSubset}.
- * @internal
  */
 export function brandedSlot<
 	// See note on BrandedKey.

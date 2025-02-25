@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-properties",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"description": "definitions of properties",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -47,12 +47,14 @@
 		"cache-dir": "nyc/.cache",
 		"exclude": [
 			"src/test/**/*.*ts",
-			"dist/test/**/*.*js"
+			"dist/test/**/*.*js",
+			"lib/test/**/*.*js"
 		],
 		"exclude-after-remap": false,
 		"include": [
 			"src/**/*.*ts",
-			"dist/**/*.*js"
+			"dist/**/*.*js",
+			"lib/**/*.*js"
 		],
 		"report-dir": "nyc/report",
 		"reporter": [
@@ -73,11 +75,11 @@
 		"underscore": "^1.13.6"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^8.0.1",
@@ -85,17 +87,17 @@
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"nock": "^13.3.3",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
-		"sinon": "^17.0.1",
+		"sinon": "^18.0.1",
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

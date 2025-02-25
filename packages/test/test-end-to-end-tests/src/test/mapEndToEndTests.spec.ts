@@ -7,7 +7,7 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -390,7 +390,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 	let dataObject: ITestFluidObject;
 	let sharedMap: ISharedMap;
 
-	let containerRuntime: ContainerRuntime;
+	let containerRuntime: IContainerRuntime;
 	let clearEventCount: number;
 	let changedEventData: IValueChanged[];
 
@@ -412,7 +412,7 @@ describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider
 		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
-		containerRuntime = dataObject.context.containerRuntime as ContainerRuntime;
+		containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
 		clearEventCount = 0;
 		changedEventData = [];
 		sharedMap.on("valueChanged", (changed, local, target) => {
@@ -564,13 +564,13 @@ describeCompat(
 		let dataObject2: ITestFluidObject;
 		let sharedMap1: ISharedMap;
 		let sharedMap2: ISharedMap;
-		let containerRuntime: ContainerRuntime;
+		let containerRuntime: IContainerRuntime;
 
 		beforeEach("setup", async () => {
 			container1 = await provider.makeTestContainer(testContainerConfig);
 			dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 			sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
-			containerRuntime = dataObject1.context.containerRuntime as ContainerRuntime;
+			containerRuntime = dataObject1.context.containerRuntime as IContainerRuntime;
 
 			const container2 = await provider.loadTestContainer(testContainerConfig);
 			dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);

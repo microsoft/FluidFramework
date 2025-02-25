@@ -37,8 +37,8 @@ const change1 = inlineRevision(
 
 const change2: OptionalChangeset = inlineRevision(
 	optionalFieldEditor.set(false, {
-		fill: brand(42),
-		detach: brand(2),
+		fill: { localId: brand(42), revision: tag1 },
+		detach: { localId: brand(2), revision: tag1 },
 	}),
 	tag1,
 );
@@ -49,7 +49,7 @@ const change2Inverted = inlineRevision(
 );
 
 const changeWithChildChange = inlineRevision(
-	optionalFieldEditor.buildChildChange(0, nodeChange1),
+	optionalFieldEditor.buildChildChanges([[0, nodeChange1]]),
 	tag1,
 );
 

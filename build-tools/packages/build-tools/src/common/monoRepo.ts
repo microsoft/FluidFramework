@@ -3,19 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "path";
-import {
-	DEFAULT_INTERDEPENDENCY_RANGE,
-	InterdependencyRange,
-} from "@fluid-tools/version-tools";
+import { existsSync } from "node:fs";
+import * as path from "node:path";
 import { getPackagesSync } from "@manypkg/get-packages";
 import { readFileSync, readJsonSync } from "fs-extra";
 import YAML from "yaml";
 
-import { IFluidBuildConfig, IFluidRepoPackage } from "./fluidRepo";
+import { IFluidBuildDir } from "../fluidBuild/fluidBuildConfig";
 import { Logger, defaultLogger } from "./logging";
 import { Package } from "./npmPackage";
-import { execWithErrorAsync, existsSync, rimrafWithErrorAsync } from "./utils";
+import { execWithErrorAsync, rimrafWithErrorAsync } from "./utils";
 
 import registerDebug from "debug";
 const traceInit = registerDebug("fluid-build:init");
@@ -41,6 +38,8 @@ export type PackageManager = "npm" | "pnpm" | "yarn";
  * - If package.json contains a workspaces field, then packages will be loaded based on the globs in that field.
  *
  * - If the version was not defined in lerna.json, then the version value in package.json will be used.
+ *
+ * @deprecated Should not be used outside the build-tools package.
  */
 export class MonoRepo {
 	public readonly packages: Package[] = [];
@@ -63,8 +62,8 @@ export class MonoRepo {
 		return this.kind as "build-tools" | "client" | "server" | "gitrest" | "historian";
 	}
 
-	static load(group: string, repoPackage: IFluidRepoPackage) {
-		const { directory, ignoredDirs, defaultInterdependencyRange } = repoPackage;
+	static load(group: string, repoPackage: IFluidBuildDir) {
+		const { directory, ignoredDirs } = repoPackage;
 		let packageManager: PackageManager;
 		let packageDirs: string[];
 
@@ -93,24 +92,11 @@ export class MonoRepo {
 				return undefined;
 			}
 			packageDirs = packages.filter((pkg) => pkg.relativeDir !== ".").map((pkg) => pkg.dir);
-
-			if (defaultInterdependencyRange === undefined) {
-				traceInit(
-					`No defaultinterdependencyRange specified for ${group} release group. Defaulting to "${DEFAULT_INTERDEPENDENCY_RANGE}".`,
-				);
-			}
 		} catch {
 			return undefined;
 		}
 
-		return new MonoRepo(
-			group,
-			directory,
-			defaultInterdependencyRange ?? DEFAULT_INTERDEPENDENCY_RANGE,
-			packageManager,
-			packageDirs,
-			ignoredDirs,
-		);
+		return new MonoRepo(group, directory, packageManager, packageDirs, ignoredDirs);
 	}
 
 	/**
@@ -124,7 +110,6 @@ export class MonoRepo {
 	constructor(
 		public readonly kind: string,
 		public readonly repoPath: string,
-		public readonly interdependencyRange: InterdependencyRange,
 		private readonly packageManager: PackageManager,
 		packageDirs: string[],
 		ignoredDirs?: string[],
@@ -195,14 +180,10 @@ export class MonoRepo {
 
 	public get installCommand(): string {
 		return this.packageManager === "pnpm"
-			? "pnpm i"
+			? "pnpm i --no-frozen-lockfile"
 			: this.packageManager === "yarn"
 				? "npm run install-strict"
 				: "npm i --no-package-lock --no-shrinkwrap";
-	}
-
-	public get fluidBuildConfig(): IFluidBuildConfig | undefined {
-		return this.pkg.packageJson.fluidBuild;
 	}
 
 	public getNodeModulePath() {

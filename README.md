@@ -18,7 +18,7 @@ Core Examples repo can be found at <https://github.com/microsoft/FluidExamples>.
 
 Have questions? Engage with other Fluid Framework users and developers in the [Discussions](https://github.com/microsoft/FluidFramework/discussions) section of our GitHub repo.
 
-<!-- AUTO-GENERATED-CONTENT:START (README_DEPENDENCY_GUIDELINES_SECTION:includeHeading=TRUE) -->
+<!-- AUTO-GENERATED-CONTENT:START (DEPENDENCY_GUIDELINES:includeHeading=TRUE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -52,13 +52,13 @@ Here's the list of release group workspaces:
     -   [./experimental](./experimental) (Published in the `@fluid-experimental/` namespace)
     -   [./examples](./examples) (Not published, live in the `@fluid-example/` namespace)
     -   [./azure](./azure). (Published in the `@fluidframework/` namespace)
--   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/lerna.json](server/routerlicious/lerna.json))
+-   routerlicious (Reference Fluid Ordering Service) (Rooted in [./server/routerlicious](./server/routerlicious). Configured by [./server/routerlicious/pnpm-workspace.yaml](server/routerlicious/pnpm-workspace.yaml))
     -   [Packages](./server/routerlicious/packages) (Published in the `@fluidframework/` namespace)
--   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/lerna.json](./server/gitrest/lerna.json))
+-   gitrest (Rooted in [./server/gitrest](./server/gitrest). Configured by [./server/gitrest/pnpm-workspace.yaml](./server/gitrest/pnpm-workspace.yaml))
     -   [Packages](./server/gitrest/packages) (Published in the `@fluidframework/` namespace)
--   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/lerna.json](./server/historian/lerna.json))
+-   historian (Rooted in [./server/historian](./server/historian). Configured by [./server/historian/pnpm-workspace.yaml](./server/historian/pnpm-workspace.yaml))
     -   [Packages](./server/historian/packages) (Published in the `@fluidframework/` namespace)
--   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/lerna.json](./build-tools/lerna.json))
+-   build-tools (Rooted in [./build-tools](./build-tools). Configured by [./build-tools/pnpm-workspace.yaml](./build-tools/pnpm-workspace.yaml))
     -   [Packages](./build-tools/packages) (Published in a mix of `@fluidframework/` and `@fluid-tools/` namespaces)
 
 Here's a list of other sets of other packages (each package within these groups is versioned independently,
@@ -147,7 +147,7 @@ If you've _upgraded_ your Mac to Catalina or higher, you may need to follow [the
 
 -   Building [server/Routerlicious](./server/routerlicious/README.md)
     -   Refer to that package's README for additional requirements.
-    -   Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server` (e.g. `fluid-build --symlink:full`).
+    -   Note that these requirements do not affect all workflows (e.g. the one noted [above](#building)), but will affect workflows that include the packages under `server`.
 
 #### On Windows
 
@@ -340,7 +340,7 @@ to prevent phantom dependencies from being introduced but they're not foolproof.
 
 ## Contributing
 
-<!-- AUTO-GENERATED-CONTENT:START (README_CONTRIBUTION_GUIDELINES_SECTION:includeHeading=FALSE) -->
+<!-- AUTO-GENERATED-CONTENT:START (CONTRIBUTION_GUIDELINES:includeHeading=FALSE) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

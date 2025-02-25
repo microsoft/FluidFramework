@@ -87,9 +87,9 @@ function copyProps(
 	target: ITelemetryPropertiesExt | LoggingError,
 	source: ITelemetryPropertiesExt,
 ): void {
-	for (const key of Object.keys(source)) {
+	for (const [key, value] of Object.entries(source)) {
 		if (target[key] === undefined) {
-			target[key] = source[key];
+			target[key] = value;
 		}
 	}
 }
@@ -181,11 +181,17 @@ let stackPopulatedOnCreation: boolean | undefined;
  * stack property is not accessed.
  * For such cases it's better to not read stack property right away, but rather delay it until / if it's needed
  * Some browsers will populate stack right away, others require throwing Error, so we do auto-detection on the fly.
+ * @param stackTraceLimit - stack trace limit for an error
  * @returns Error object that has stack populated.
  *
  * @internal
  */
-export function generateErrorWithStack(): Error {
+export function generateErrorWithStack(stackTraceLimit?: number): Error {
+	const ErrorConfig = Error as unknown as { stackTraceLimit: number };
+	const originalStackTraceLimit = ErrorConfig.stackTraceLimit;
+	if (stackTraceLimit !== undefined) {
+		ErrorConfig.stackTraceLimit = stackTraceLimit;
+	}
 	const err = new Error("<<generated stack>>");
 
 	if (stackPopulatedOnCreation === undefined) {
@@ -193,24 +199,27 @@ export function generateErrorWithStack(): Error {
 	}
 
 	if (stackPopulatedOnCreation) {
+		ErrorConfig.stackTraceLimit = originalStackTraceLimit;
 		return err;
 	}
 
 	try {
 		throw err;
 	} catch (error) {
+		ErrorConfig.stackTraceLimit = originalStackTraceLimit;
 		return error as Error;
 	}
 }
 
 /**
  * Generate a stack at this callsite as if an error were thrown from here.
+ * @param stackTraceLimit - stack trace limit for an error
  * @returns the callstack (does not throw)
  *
  * @internal
  */
-export function generateStack(): string | undefined {
-	return generateErrorWithStack().stack;
+export function generateStack(stackTraceLimit?: number): string | undefined {
+	return generateErrorWithStack(stackTraceLimit).stack;
 }
 
 /**
@@ -328,7 +337,7 @@ export function isExternalError(error: unknown): boolean {
 			const props = error.getTelemetryProperties();
 			// NOTE: errorRunningExternalCode is not currently used - once this "read" code reaches LTS,
 			// we can switch to writing this more explicit property
-			return props.untrustedOrigin === 1 || !!props.errorRunningExternalCode;
+			return props.untrustedOrigin === 1 || Boolean(props.errorRunningExternalCode);
 		}
 		return false;
 	}

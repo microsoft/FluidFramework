@@ -3,23 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ApiItemKind,
-	type ApiItem,
-	type IResolveDeclarationReferenceResult,
-	type ApiPackage,
-} from "@microsoft/api-extractor-model";
-import { type DocDeclarationReference } from "@microsoft/tsdoc";
+import type { ApiItem } from "@microsoft/api-extractor-model";
+import type { DocDeclarationReference } from "@microsoft/tsdoc";
 
+import type { Link } from "../Link.js";
 import { DocumentNode, type SectionNode } from "../documentation-domain/index.js";
-import { type Link } from "../Link.js";
+import { resolveSymbolicReference } from "../utilities/index.js";
+
 import {
 	getDocumentPathForApiItem,
 	getLinkForApiItem,
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
-import { type TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
-import { type ApiItemTransformationConfiguration } from "./configuration/index.js";
+import type { TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
+import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { wrapInSection } from "./helpers/index.js";
 
 /**
@@ -34,17 +31,19 @@ import { wrapInSection } from "./helpers/index.js";
 export function createDocument(
 	documentItem: ApiItem,
 	sections: SectionNode[],
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): DocumentNode {
+	const title = config.getHeadingTextForItem(documentItem);
+
 	// Wrap sections in a root section if top-level heading is requested.
 	const contents = config.includeTopLevelDocumentHeading
-		? [wrapInSection(sections, { title: config.getHeadingTextForItem(documentItem) })]
+		? [wrapInSection(sections, { title })]
 		: sections;
 
 	return new DocumentNode({
 		apiItem: documentItem,
 		children: contents,
-		documentPath: getDocumentPathForApiItem(documentItem, config),
+		documentPath: getDocumentPathForApiItem(documentItem, config.hierarchy),
 	});
 }
 
@@ -58,7 +57,7 @@ export function createDocument(
  */
 export function getTsdocNodeTransformationOptions(
 	contextApiItem: ApiItem,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): TsdocNodeTransformOptions {
 	return {
 		contextApiItem,
@@ -78,44 +77,64 @@ export function getTsdocNodeTransformationOptions(
 function resolveSymbolicLink(
 	contextApiItem: ApiItem,
 	codeDestination: DocDeclarationReference,
-	config: Required<ApiItemTransformationConfiguration>,
+	config: ApiItemTransformationConfiguration,
 ): Link | undefined {
 	const { apiModel, logger } = config;
 
-	const resolvedReference: IResolveDeclarationReferenceResult =
-		apiModel.resolveDeclarationReference(codeDestination, contextApiItem);
-
-	if (resolvedReference.resolvedApiItem === undefined) {
-		logger.warning(
-			`Unable to resolve reference "${codeDestination.emitAsTsdoc()}" from "${getScopedMemberNameForDiagnostics(
-				contextApiItem,
-			)}":`,
-			resolvedReference.errorMessage,
-		);
-
+	let resolvedReference: ApiItem;
+	try {
+		resolvedReference = resolveSymbolicReference(contextApiItem, codeDestination, apiModel);
+	} catch (error: unknown) {
+		logger.warning((error as Error).message);
 		return undefined;
 	}
-	const resolvedApiItem = resolvedReference.resolvedApiItem;
 
 	// Return undefined if the resolved API item should be excluded based on release tags
-	if (!shouldItemBeIncluded(resolvedApiItem, config)) {
+	if (!shouldItemBeIncluded(resolvedReference, config)) {
 		logger.verbose("Excluding link to item based on release tags");
 		return undefined;
 	}
 
-	return getLinkForApiItem(resolvedReference.resolvedApiItem, config);
+	return getLinkForApiItem(resolvedReference, config);
 }
 
 /**
- * Creates a scoped member specifier for the provided API item, including the name of the package the item belongs to
- * if applicable.
- *
- * Intended for use in diagnostic messaging.
+ * Checks for duplicate {@link DocumentNode.documentPath}s among the provided set of documents.
+ * @throws If any duplicates are found.
  */
-export function getScopedMemberNameForDiagnostics(apiItem: ApiItem): string {
-	return apiItem.kind === ApiItemKind.Package
-		? (apiItem as ApiPackage).displayName
-		: `${
-				apiItem.getAssociatedPackage()?.displayName ?? "<NO-PACKAGE>"
-		  }#${apiItem.getScopedNameWithinPackage()}`;
+export function checkForDuplicateDocumentPaths(documents: readonly DocumentNode[]): void {
+	const documentPathMap = new Map<string, DocumentNode[]>();
+	for (const document of documents) {
+		let entries = documentPathMap.get(document.documentPath);
+		if (entries === undefined) {
+			entries = [];
+			documentPathMap.set(document.documentPath, entries);
+		}
+		entries.push(document);
+	}
+
+	const duplicates = [...documentPathMap.entries()].filter(
+		([, documentsUnderPath]) => documentsUnderPath.length > 1,
+	);
+
+	if (duplicates.length === 0) {
+		return;
+	}
+
+	const errorMessageLines = ["Duplicate output paths found among the generated documents:"];
+
+	for (const [documentPath, documentsUnderPath] of duplicates) {
+		errorMessageLines.push(`- ${documentPath}`);
+		for (const document of documentsUnderPath) {
+			const errorEntry = document.apiItem
+				? `${document.apiItem.displayName} (${document.apiItem.kind})`
+				: "(No corresponding API item)";
+			errorMessageLines.push(`  - ${errorEntry}`);
+		}
+	}
+	errorMessageLines.push(
+		"Check your configuration to ensure different API items do not result in the same output path.",
+	);
+
+	throw new Error(errorMessageLines.join("\n"));
 }

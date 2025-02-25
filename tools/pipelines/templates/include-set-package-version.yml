@@ -5,8 +5,8 @@ parameters:
 - name: buildDirectory
   type: string
 - name: buildNumberInPatch
-  type: string
-  default:
+  type: boolean
+  default: false
 - name: tagName
   type: string
 - name: includeInternalVersions
@@ -32,64 +32,28 @@ parameters:
   type: string
   default: none
 
-- name: STORAGE_ACCOUNT
-  type: string
-  default: none
-
-- name: STORAGE_KEY
-  type: string
-  default: none
+# Whether to actually perform the bump.
+# TODO: The awkwardness of this parameter implies some refactoring of pipelines would be good.
+# This is currently used as docker images decide what version to use outside of the docker build context, but bump
+# the package version from inside (else one can't install dependencies using a frozen lockfile, since the package versions/dependencies
+# are changed from what's source controlled).
+# Doing both from outside the container and copying dependencies in isn't great as the container context doesn't necessarily match the host context
+# (so dependencies with platform-specific binaries might not work, since they were installed on the host).
+# Doing both from inside the container would involve putting git context into the container's build step (version determination involves git tags),
+# which is inefficient.
+# Thus we settle on this middle ground.
+- name: performBump
+  type: boolean
+  default: true
 
 # Set version
 steps:
 
-# These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
-# with the next group of steps.
-- ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
-  - template: include-install-pnpm.yml
-    parameters:
-      buildDirectory: $(Build.SourcesDirectory)/build-tools
-      pnpmStorePath: ${{ parameters.pnpmStorePath }}
-      enableCache: false
-
-  - task: Bash@3
-    name: InstallBuildTools
-    displayName: Install Fluid Build Tools (from repo)
-    inputs:
-      targetType: 'inline'
-      workingDirectory: $(Build.SourcesDirectory)/build-tools
-      script: |
-        pnpm i --frozen-lockfile
-        pnpm build:compile
-        cd packages/build-cli
-        # Use npm link instead of pnpm link because it handles bins better
-        npm link
-        echo "which flub: $(which flub)"
-
-# These steps install a version of build-tools from the npm registry. As noted above, these steps are mutually exclusive
-# with the previous group of steps.
-- ${{ if ne(parameters.buildToolsVersionToInstall, 'repo') }}:
-  - task: Bash@3
-    name: InstallBuildTools
-    displayName: Install Fluid Build Tools (from npm)
-    inputs:
-      targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      script: |
-        echo "${{ parameters.buildToolsVersionToInstall }}"
-        npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
-
-- task: Bash@3
-  name: BuildToolsInstallCheck
-  displayName: Check Build Tools Installation
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      # Output the help and full command list for debugging purposes
-      echo "which flub: $(which flub)"
-      flub --help
-      flub commands
+- template: /tools/pipelines/templates/include-install-build-tools.yml@self
+  parameters:
+    buildDirectory: ${{ parameters.buildDirectory }}
+    buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
+    pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
 - task: Bash@3
   name: SetVersion
@@ -106,7 +70,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
-      # expect lerna.json and package.json be in the current working directory
+      set -eu -o pipefail
+      # expect release group root package.json be in the current working directory
 
       echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
       echo TEST_BUILD=$TEST_BUILD
@@ -128,29 +93,21 @@ steps:
       targetType: 'inline'
       workingDirectory: ${{ parameters.buildDirectory }}
       script: |
+        set -eu -o pipefail
         # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
         flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists
 
-- task: Bash@3
-  displayName: Update Package Version (flub)
-  env:
-    VERSION_RELEASE: $(release)
-    RELEASE_GROUP: ${{ parameters.tagName }}
-    INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
-  inputs:
-    targetType: 'filePath'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
-
-# Only generate manifest files for runs in the internal project (i.e. CI runs, not PR run), for the main and release branch, and
-# for the build of the client release group (we don't need manifests for anything else).
-# Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branch.
-- ${{ if and(eq(variables['System.TeamProject'], 'internal'), eq(parameters.tagName, 'client'), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))) }}:
-  - template: /tools/pipelines/templates/upload-dev-manifest.yml
-    parameters:
-      buildDirectory: '${{ parameters.buildDirectory }}'
-      STORAGE_ACCOUNT: '${{ parameters.STORAGE_ACCOUNT }}'
-      STORAGE_KEY: '${{ parameters.STORAGE_KEY }}'
+- ${{ if eq(parameters.performBump, true) }}:
+  - task: Bash@3
+    displayName: Update Package Version (flub)
+    env:
+      VERSION_RELEASE: $(release)
+      RELEASE_GROUP: ${{ parameters.tagName }}
+      INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
+    inputs:
+      targetType: 'filePath'
+      workingDirectory: ${{ parameters.buildDirectory }}
+      filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
@@ -160,6 +117,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+      # even in an error case
       grep -r -e "\^2.0.0-internal.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
       if [[ $? == 0 ]]; then
         echo "##vso[task.logissue type=error]Fluid internal versions shouldn't use caret dependencies"
@@ -174,6 +133,8 @@ steps:
     targetType: 'inline'
     workingDirectory: ${{ parameters.buildDirectory }}
     script: |
+      # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+      # even in an error case
       grep -r -e "\^2.0.0-dev.\d*.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
       if [[ $? == 0 ]]; then
         echo "##vso[task.logissue type=error]Fluid internal dev versions shouldn't use caret dependencies"

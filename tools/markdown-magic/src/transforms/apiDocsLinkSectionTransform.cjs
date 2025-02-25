@@ -22,7 +22,7 @@ const {
  * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
  * Must be a positive integer.
  */
-const generateApiDocsLinkSection = (packageName, headingOptions) => {
+const generateApiDocsSection = (packageName, headingOptions) => {
 	const shortName = PackageName.getUnscopedName(packageName);
 	const sectionBody = `API documentation for **${packageName}** is available at <https://fluidframework.com/docs/apis/${shortName}>.`;
 	return formattedSectionText(sectionBody, {
@@ -46,7 +46,7 @@ const generateApiDocsLinkSection = (packageName, headingOptions) => {
  * @param {object} config - Transform configuration.
  * @param {string} config.originalPath - Path to the document being modified.
  */
-function apiDocsLinkSectionTransform(content, options, config) {
+function apiDocsTransform(content, options, config) {
 	const headingOptions = parseHeadingOptions(options);
 	const resolvedPackageJsonPath = resolveRelativePackageJsonPath(
 		config.originalPath,
@@ -55,10 +55,10 @@ function apiDocsLinkSectionTransform(content, options, config) {
 	const packageMetadata = getPackageMetadata(resolvedPackageJsonPath);
 	const packageName = packageMetadata.name;
 
-	return formattedGeneratedContentBody(generateApiDocsLinkSection(packageName, headingOptions));
+	return formattedGeneratedContentBody(generateApiDocsSection(packageName, headingOptions));
 }
 
 module.exports = {
-	generateApiDocsLinkSection,
-	apiDocsLinkSectionTransform,
+	generateApiDocsSection,
+	apiDocsTransform,
 };

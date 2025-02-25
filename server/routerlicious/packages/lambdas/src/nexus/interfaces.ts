@@ -8,6 +8,7 @@ import type { IClient, IConnected } from "@fluidframework/protocol-definitions";
 import type {
 	IClientManager,
 	IClusterDrainingChecker,
+	ICollaborationSessionTracker,
 	ILogger,
 	IOrdererConnection,
 	IOrdererManager,
@@ -123,6 +124,7 @@ export interface INexusLambdaDependencies {
 	clusterDrainingChecker?: IClusterDrainingChecker;
 
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>;
+	collaborationSessionTracker?: ICollaborationSessionTracker;
 }
 
 export interface INexusLambdaConnectionStateTrackers {
@@ -130,6 +132,7 @@ export interface INexusLambdaConnectionStateTrackers {
 	connectionsMap: Map<string, IOrdererConnection>;
 	connectionTimeMap: Map<string, number>;
 	scopeMap: Map<string, string[]>;
+	clientMap: Map<string, IClient>;
 	roomMap: Map<string, IRoom>;
 	disconnectedOrdererConnections: Set<string>;
 	disconnectedClients: Set<string>;

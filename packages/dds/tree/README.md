@@ -2,12 +2,14 @@
 
 A [tree](<https://en.wikipedia.org/wiki/Tree_(data_structure)>) data structure for the [Fluid Framework](https://fluidframework.com/).
 
+To get started working with `SharedTree` in your application, read this [quick start guide](https://fluidframework.com/docs/start/tree-start/).
+
 The contents of this package are also reported as part of the [`fluid-framework` package](https://www.npmjs.com/package/fluid-framework) which provides an alternative way to consume the functionality from this package.
 
 [SharedTree Philosophy](./docs/SharedTree%20Philosophy.md) covers the goals of the SharedTree project,
 and some of the implications of those goals for developers working on this package.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -36,6 +38,10 @@ For more information on the related support guarantees, see [API Support Levels]
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/tree` like normal.
 
 To access the `beta` APIs, import via `@fluidframework/tree/beta`.
+
+To access the `alpha` APIs, import via `@fluidframework/tree/alpha`.
+
+To access the `legacy` APIs, import via `@fluidframework/tree/legacy`.
 
 ## API Documentation
 
@@ -128,6 +134,36 @@ This package can be developed using any of the [regular workflows for working on
 -   Run and debug tests using the "Testing" side panel in VS Code, or using the inline `Run | Debug` buttons which should show up above tests in the source:
     both of these are provided by the mocha testing extension thats recommended by the workspace.
     Note that this does not build the tests, so always be sure to build first.
+
+## Frequently asked questions
+
+### Why can't I assign insertable content to a field?
+
+``` typescript
+import { SchemaFactory } from "@fluidframework/tree";
+
+const factory = new SchemaFactory("com.fluidframework.faq");
+class Empty extends factory.object("Empty", {}) {}
+class Test extends factory.object("Test", { data: Empty }) {}
+function set(node: Test) {
+	node.data = {}; // Why does this not compile?
+}
+```
+
+This is due to [a limitation of the TypeScript language](https://github.com/microsoft/TypeScript/issues/43826) which makes it impossible for tree to allow that to type-check while keeping the strong typing on the getters for reading data.
+
+To workaround this, create an unhydrated node:
+
+``` typescript
+node.data = new Empty({}); // The unhydrated node's type matches the type returned by the getter, and thus is compatible with the setter
+```
+
+Insertable content can still be used in other places, like when nested in other insertable content, in ArrayNode editing methods, and when initializing views.
+
+``` typescript
+// The empty node can be implicitly constructed from `{}` here, since this context allows insertable content, not just nodes.
+const node = new Test({ data: {} });
+```
 
 ## Architecture
 
@@ -410,18 +446,18 @@ flowchart
     package-->runtime["Fluid runtime"]
 ```
 
-# Open Design Questions
+## Open Design Questions
 
 The design issues here all impact the architectural role of top-level modules in this package in a way that when fixed will likely require changes to the architectural details covered above.
 Smaller scoped issues which will not impact the overall architecture should be documented in more localized locations.
 
-## How should specialized sub-tree handling compose?
+### How should specialized sub-tree handling compose?
 
 Applications should have a domain model that can mix tree nodes with custom implementations as needed.
 Custom implementations should probably be able to be projections of flex trees, the forest content (via cursors), and updated via either regeneration from the input, or updated by a delta.
 This is important for performance/scalability and might be how we do virtualization (maybe subtrees that aren't downloaded are just one custom representation?).
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -439,6 +475,7 @@ When making such a request please include if the configuration already works (an
 ### Supported Runtimes
 
 -   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 
 ### Supported Tools

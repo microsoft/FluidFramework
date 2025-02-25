@@ -5,6 +5,7 @@
 
 import { expect } from "chai";
 import { h } from "hastscript";
+
 import {
 	DocumentNode,
 	HeadingNode,
@@ -15,7 +16,7 @@ import {
 } from "../../documentation-domain/index.js";
 import { documentToHtml } from "../ToHtml.js";
 
-describe("Document HTML rendering tests", () => {
+describe("documentToHtml tests", () => {
 	it("Renders a simple document", () => {
 		const document = new DocumentNode({
 			children: [

@@ -130,8 +130,7 @@ function writeSnapshotSection(
 function writeOpsSection(rootNode: NodeCore, ops: ISequencedDocumentMessage[]): void {
 	let firstSequenceNumber: number | undefined;
 	if (ops.length > 0) {
-		// Non null asserting here because of the length check above
-		firstSequenceNumber = ops[0]!.sequenceNumber;
+		firstSequenceNumber = ops[0].sequenceNumber;
 	}
 	if (firstSequenceNumber !== undefined) {
 		rootNode.addDictionaryString("deltas");
@@ -163,8 +162,7 @@ export function convertToCompactSnapshot(snapshotContents: ISnapshot): Uint8Arra
 	if (latestSequenceNumber === undefined) {
 		latestSequenceNumber =
 			snapshotContents.ops.length > 0
-				? // Non null asserting here because of the length check above
-					snapshotContents.ops[snapshotContents.ops.length - 1]!.sequenceNumber
+				? snapshotContents.ops[snapshotContents.ops.length - 1].sequenceNumber
 				: snapshotContents.sequenceNumber;
 	}
 

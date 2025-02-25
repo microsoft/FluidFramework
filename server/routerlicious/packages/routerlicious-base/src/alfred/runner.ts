@@ -19,6 +19,8 @@ import {
 	IDocumentRepository,
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
+	IFluidAccessTokenGenerator,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
@@ -33,8 +35,8 @@ import { IDocumentDeleteService } from "./services";
  * @internal
  */
 export class AlfredRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server?: IWebServer;
+	private runningDeferred?: Deferred<void>;
 	private stopped: boolean = false;
 	private readonly runnerMetric = Lumberjack.newLumberMetric(LumberEventName.AlfredRunner);
 
@@ -52,11 +54,14 @@ export class AlfredRunner implements IRunner {
 		private readonly producer: IProducer,
 		private readonly documentRepository: IDocumentRepository,
 		private readonly documentDeleteService: IDocumentDeleteService,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly enableClientIPLogging?: boolean,
+		private readonly readinessCheck?: IReadinessCheck,
+		private readonly fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -81,11 +86,14 @@ export class AlfredRunner implements IRunner {
 				this.producer,
 				this.documentRepository,
 				this.documentDeleteService,
+				this.startupCheck,
 				this.tokenRevocationManager,
 				this.revokedTokenChecker,
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.enableClientIPLogging,
+				this.readinessCheck,
+				this.fluidAccessTokenGenerator,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);
@@ -98,7 +106,7 @@ export class AlfredRunner implements IRunner {
 			}
 		} else {
 			// Create an HTTP server with a blank request listener
-			this.server = this.serverFactory.create(null);
+			this.server = this.serverFactory.create(undefined);
 		}
 
 		const httpServer = this.server.httpServer;
@@ -111,6 +119,9 @@ export class AlfredRunner implements IRunner {
 
 		this.stopped = false;
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 
@@ -171,8 +182,8 @@ export class AlfredRunner implements IRunner {
 	 * Event listener for HTTP server "listening" event.
 	 */
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}

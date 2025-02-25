@@ -4,34 +4,6 @@ _Note: This tool has dependencies on Microsoft-internal systems._
 
 NodeJs-based test to simulate many clients and a high rate of op generation.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
-
-<!-- prettier-ignore-start -->
-<!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
-
-**IMPORTANT: This package is intended strictly as an implementation detail of the Fluid Framework and is not intended for public consumption.**
-**We make no stability guarantees regarding its APIs.**
-
-## Using Fluid Framework libraries
-
-When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
-While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
-library consumers should always prefer `^`.
-
-If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), we recommend using a more constrained version range, such as `~`.
-
-## Installation
-
-To get started, install the package by running the following command:
-
-```bash
-npm i @fluid-internal/test-service-load
-```
-
-<!-- prettier-ignore-end -->
-
-<!-- AUTO-GENERATED-CONTENT:END -->
-
 ## Pre-requisites
 
 -   Run [getkeys](/tools/getkeys/README.md) at some point to enable your machine to retrieve required OAuth tokens and passwords.
@@ -54,7 +26,7 @@ This package runs in two different modes: Orchestrator Mode and Test Runner mode
 _This is the main entry point to the test - this Orchestrator process will spawn many Test Runner processes._
 
 ```bash
-node ./dist/nodeStressTest.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
+node ./dist/main.js [--url <url>] [--tenant <tenant>] [--profile <profile>] [--debug] [--log <filterTerm>]
 ```
 
 ### Test Runner Mode
@@ -81,7 +53,7 @@ Specifies which test driver to use: odsp, routerlicious, tinylicious. The config
 
 #### --driverEndpoint, -e
 
-Specifies which endpoint of test driver to use: odsp, odsp-df for odsp driver or frs, r11s, docker for routerlicious driver.
+Specifies which endpoint of test driver to use: `odsp`, `odsp-df` for `odsp-driver` or `frs` (for Azure Fluid Relay), `r11s`, `docker` for `routerlicious-driver`.
 
 #### --profile, -p
 
@@ -116,7 +88,7 @@ The value passed here should be a filter string for the logger namespace.
 > To print all messages, provide `--log '*'` or `--log 'fluid:*'`. For example, to filter to only Container logs,
 > provide something like: `-l 'fluid:telemetry:Container:*'`.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->

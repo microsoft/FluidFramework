@@ -100,11 +100,8 @@ export class AttributorSerializer implements IAttributorSerializer {
 		);
 		const entries: [number, AttributionInfo][] = Array.from({ length: seqs.length });
 		for (const [i, key] of seqs.entries()) {
-			// Non null asserting, we asserted seqs, timestamps and attributionRefs have the same length above
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const timestamp = timestamps[i]!;
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const ref = attributionRefs[i]!;
+			const timestamp = timestamps[i];
+			const ref = attributionRefs[i];
 			const user = JSON.parse(interner.getString(ref)) as IUser;
 			entries[i] = [key, { user, timestamp }];
 		}

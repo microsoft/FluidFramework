@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -30,7 +30,7 @@ import {
 	makeFieldBatchCodec,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
-import { emptySchema } from "../../cursorTestSuite.js";
+import { EmptyObject } from "../../cursorTestSuite.js";
 import { testIdCompressor } from "../../utils.js";
 
 const codecOptions: ICodecOptions = { jsonValidator: typeboxValidator };
@@ -44,8 +44,8 @@ const context = {
 const codec = makeForestSummarizerCodec(codecOptions, fieldBatchCodec);
 
 const testFieldChunks: TreeChunk[] = chunkField(
-	cursorForJsonableTreeField([{ type: emptySchema.name }]),
-	defaultChunkPolicy,
+	cursorForJsonableTreeField([{ type: brand(EmptyObject.identifier) }]),
+	{ policy: defaultChunkPolicy, idCompressor: testIdCompressor },
 );
 assert(testFieldChunks.length === 1);
 const testFieldChunk: TreeChunk = testFieldChunks[0];

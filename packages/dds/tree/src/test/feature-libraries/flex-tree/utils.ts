@@ -8,23 +8,33 @@ import { strict as assert } from "node:assert";
 import {
 	type FieldAnchor,
 	type IEditableForest,
+	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	TreeNavigationResult,
+	TreeStoredSchemaRepository,
 	rootFieldKey,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
-import {
-	type FlexAllowedTypes,
-	type FlexFieldKind,
-	type FlexTreeSchema,
-	MockNodeKeyManager,
-} from "../../../feature-libraries/index.js";
-import type { TreeContent } from "../../../shared-tree/index.js";
+import { defaultSchemaPolicy, MockNodeKeyManager } from "../../../feature-libraries/index.js";
 import { MockTreeCheckout, forestWithContent } from "../../utils.js";
+import {
+	toStoredSchema,
+	type ImplicitFieldSchema,
+	type InsertableField,
+} from "../../../simple-tree/index.js";
 
-export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSchema): Context {
-	return getTreeContext(schema, new MockTreeCheckout(forest), new MockNodeKeyManager());
+export function getReadonlyContext(
+	forest: IEditableForest,
+	schema: ImplicitFieldSchema,
+): Context {
+	return getTreeContext(
+		defaultSchemaPolicy,
+		new MockTreeCheckout(forest, {
+			schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
+		}),
+		new MockNodeKeyManager(),
+	);
 }
 
 /**
@@ -34,9 +44,33 @@ export function getReadonlyContext(forest: IEditableForest, schema: FlexTreeSche
  *
  * @returns The created context.
  */
-export function contextWithContentReadonly(content: TreeContent): Context {
-	const forest = forestWithContent(content);
+export function contextWithContentReadonly(content: TreeSimpleContent): Context {
+	const forest = forestWithContent({ ...content, schema: toStoredSchema(content.schema) });
 	return getReadonlyContext(forest, content.schema);
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ */
+export interface TreeSimpleContent {
+	readonly schema: ImplicitFieldSchema;
+	/**
+	 * Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 */
+	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
+}
+
+/**
+ * Content that can populate a `SharedTree`.
+ */
+export interface TreeSimpleContentTyped<T extends ImplicitFieldSchema> {
+	readonly schema: T;
+	/**
+	 * Default tree content to initialize the tree with iff the tree is uninitialized
+	 * (meaning it does not even have any schema set at all).
+	 */
+	readonly initialTree: InsertableField<T>;
 }
 
 /**
@@ -61,12 +95,7 @@ export const rootFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: rootF
  *
  * @returns The initialized context and cursor.
  */
-export function readonlyTreeWithContent<
-	Kind extends FlexFieldKind,
-	Types extends FlexAllowedTypes,
->(
-	treeContent: TreeContent,
-): {
+export function readonlyTreeWithContent(treeContent: TreeSimpleContent): {
 	context: Context;
 	cursor: ITreeSubscriptionCursor;
 } {

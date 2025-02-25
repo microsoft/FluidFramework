@@ -10,11 +10,18 @@ import {
 	IAnyDriverError,
 	IConnect,
 } from "@fluidframework/driver-definitions/internal";
+import type { DriverErrorTelemetryProps } from "@fluidframework/driver-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import type { io as SocketIOClientStatic } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
-import { IR11sSocketError, errorObjectFromSocketError } from "./errorUtils.js";
+import {
+	IR11sSocketError,
+	errorObjectFromSocketError,
+	getUrlForTelemetry,
+	socketIoPath,
+} from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
+import { SocketIOClientStatic } from "./socketModule.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -60,11 +67,22 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			socket,
 			id,
 			logger,
+			url,
 			enableLongPollingDowngrade,
 		);
 
 		await deltaConnection.initialize(connectMessage, timeoutMs);
 		return deltaConnection;
+	}
+
+	private constructor(
+		socket: Socket,
+		documentId: string,
+		logger: ITelemetryLoggerExt,
+		private readonly url: string,
+		enableLongPollingDowngrades?: boolean,
+	) {
+		super(socket, documentId, logger, enableLongPollingDowngrades);
 	}
 
 	/**
@@ -75,7 +93,18 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 		// - a socketError: add it to the R11sError object for driver to be able to parse it and reason over it.
 		// - anything else: let base class handle it
 		return canRetry && Number.isInteger(error?.code) && typeof error?.message === "string"
-			? errorObjectFromSocketError(error as IR11sSocketError, handler)
+			? errorObjectFromSocketError(
+					error as IR11sSocketError,
+					handler,
+					this.getAdditionalErrorProps(handler),
+				)
 			: super.createErrorObject(handler, error, canRetry);
+	}
+
+	protected getAdditionalErrorProps(handler: string): DriverErrorTelemetryProps {
+		return {
+			...super.getAdditionalErrorProps(handler),
+			url: getUrlForTelemetry(this.url, socketIoPath),
+		};
 	}
 }

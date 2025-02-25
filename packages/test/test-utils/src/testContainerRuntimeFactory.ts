@@ -7,9 +7,13 @@ import { IContainerContext, IRuntime } from "@fluidframework/container-definitio
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
-	IContainerRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import {
+	IContainerRuntime,
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
 import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -50,7 +54,7 @@ interface backCompat_ContainerRuntime {
 		context: IContainerContext,
 		registryEntries: NamedFluidDataStoreRegistryEntries,
 		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>,
-		runtimeOptions?: IContainerRuntimeOptions,
+		runtimeOptions?: IContainerRuntimeOptionsInternal,
 		containerScope?: FluidObject,
 		existing?: boolean,
 		containerRuntimeCtor?: typeof ContainerRuntime,
@@ -68,7 +72,7 @@ export const createTestContainerRuntimeFactory = (
 		constructor(
 			public type: string,
 			public dataStoreFactory: IFluidDataStoreFactory,
-			public runtimeOptions: IContainerRuntimeOptions = {
+			public runtimeOptions: IContainerRuntimeOptionsInternal = {
 				summaryOptions: {
 					summaryConfigOverrides: {
 						...DefaultSummaryConfiguration,
@@ -148,8 +152,9 @@ export const createTestContainerRuntimeFactory = (
 			const getDefaultObject = async (request: IRequest, runtime: IContainerRuntime) => {
 				const parser = RequestParser.create(request);
 				if (parser.pathParts.length === 0) {
-					// This cast is safe as ContainerRuntime.loadRuntime is called below
-					return (runtime as ContainerRuntime).resolveHandle({
+					// This cast is safe as loadContainerRuntime is called below
+					// eslint-disable-next-line import/no-deprecated
+					return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
 						url: `/default${parser.query}`,
 						headers: request.headers,
 					});

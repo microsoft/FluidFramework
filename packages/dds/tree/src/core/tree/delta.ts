@@ -69,7 +69,6 @@ import type { ITreeCursorSynchronous } from "./cursor.js";
 /**
  * Represents the change made to a document.
  * Immutable, therefore safe to retain for async processing.
- * @internal
  */
 export interface Root<TTree = ProtoNode> {
 	/**
@@ -99,6 +98,22 @@ export interface Root<TTree = ProtoNode> {
 	 * The ordering has no significance.
 	 */
 	readonly refreshers?: readonly DetachedNodeBuild<TTree>[];
+	/**
+	 * Changes to apply to detached nodes.
+	 * The ordering has no significance.
+	 *
+	 * Nested changes for a root that is undergoing a rename should be listed under the starting name.
+	 * For example, if one wishes to change a tree which is being renamed from ID A to ID B,
+	 * then the changes should be listed under ID A.
+	 */
+	readonly global?: readonly DetachedNodeChanges[];
+	/**
+	 * Detached roots whose associated ID needs to be updated.
+	 * The ordering has no significance.
+	 * Note that the renames may need to be performed in a specific order to avoid collisions.
+	 * This ordering problem is left to the consumer of this format.
+	 */
+	readonly rename?: readonly DetachedNodeRename[];
 }
 
 /**
@@ -108,7 +123,6 @@ export interface Root<TTree = ProtoNode> {
  * Ownership and lifetime of data referenced by this cursor is unclear,
  * so it is a poor abstraction for this use-case which needs to hold onto the data in a non-exclusive (readonly) way.
  * Cursors can be one supported way to input data, but aren't a good storage format.
- * @internal
  */
 export type ProtoNode = ITreeCursorSynchronous;
 
@@ -120,13 +134,11 @@ export type ProtoNode = ITreeCursorSynchronous;
  * Additionally, Cursors support sequences, so if using cursors, there are better ways to handle this than an array of cursors,
  * like using a cursor over all the content (starting in fields mode).
  * Long term something like TreeChunk should probably be used here.
- * @internal
  */
 export type ProtoNodes = readonly ProtoNode[];
 
 /**
  * Represents a change being made to a part of the document tree.
- * @internal
  */
 export interface Mark {
 	/**
@@ -156,7 +168,6 @@ export interface Mark {
 
 /**
  * A globally unique ID for a node in a detached field.
- * @internal
  */
 export interface DetachedNodeId {
 	readonly major?: RevisionTag;
@@ -164,13 +175,11 @@ export interface DetachedNodeId {
 }
 
 /**
- * @internal
  */
 export type FieldMap = ReadonlyMap<FieldKey, FieldChanges>;
 
 /**
  * Represents changes made to a detached node
- * @internal
  */
 export interface DetachedNodeChanges {
 	readonly id: DetachedNodeId;
@@ -182,7 +191,6 @@ export interface DetachedNodeChanges {
  *
  * Tree creation is idempotent: if a tree with the same ID already exists,
  * then this build is ignored in favor of the existing tree.
- * @internal
  */
 export interface DetachedNodeBuild<TTree = ProtoNode> {
 	readonly id: DetachedNodeId;
@@ -191,7 +199,6 @@ export interface DetachedNodeBuild<TTree = ProtoNode> {
 
 /**
  * Represents the destruction of detached nodes
- * @internal
  */
 export interface DetachedNodeDestruction {
 	readonly id: DetachedNodeId;
@@ -200,7 +207,6 @@ export interface DetachedNodeDestruction {
 
 /**
  * Represents a detached node being assigned a new `DetachedNodeId`.
- * @internal
  */
 export interface DetachedNodeRename {
 	readonly count: number;
@@ -209,31 +215,9 @@ export interface DetachedNodeRename {
 }
 
 /**
- * Represents the changes to perform on a given field.
- * @internal
+ * Represents a list of changes to the nodes in the field.
+ * The index of each mark within the range of nodes, before
+ * applying any of the changes, is not represented explicitly.
+ * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
  */
-export interface FieldChanges {
-	/**
-	 * Represents a list of changes to the nodes in the field.
-	 * The index of each mark within the range of nodes, before
-	 * applying any of the changes, is not represented explicitly.
-	 * It corresponds to the sum of `mark.count` values for all previous marks for which `isAttachMark(mark)` is false.
-	 */
-	readonly local?: readonly Mark[];
-	/**
-	 * Changes to apply to detached nodes.
-	 * The ordering has no significance.
-	 *
-	 * Nested changes for a root that is undergoing a rename should be listed under the starting name.
-	 * For example, if one wishes to change a tree which is being renamed from ID A to ID B,
-	 * then the changes should be listed under ID A.
-	 */
-	readonly global?: readonly DetachedNodeChanges[];
-	/**
-	 * Detached whose associated ID needs to be updated.
-	 * The ordering has no significance.
-	 * Note that the renames may need to be performed in a specific order to avoid collisions.
-	 * This ordering problem is left to the consumer of this format.
-	 */
-	readonly rename?: readonly DetachedNodeRename[];
-}
+export type FieldChanges = readonly Mark[];

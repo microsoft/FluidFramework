@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { IDetachedModel, IModelLoader } from "./interfaces.js";
+export {
+	IDetachedModel,
+	IModelLoader,
+} from "./interfaces.js";
 export {
 	ModelContainerRuntimeFactory,
 	IModelContainerRuntimeEntryPoint,

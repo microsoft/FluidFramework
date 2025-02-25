@@ -6,9 +6,11 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { ICompressionRuntimeOptions } from "../containerRuntime.js";
-import { type IBatchMetadata } from "../metadata.js";
+import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
+import type { IPendingMessage } from "../pendingStateManager.js";
 
 import { BatchMessage, IBatch, IBatchCheckpoint } from "./definitions.js";
+import type { BatchStartInfo } from "./remoteMessageProcessor.js";
 
 export interface IBatchManagerOptions {
 	readonly hardLimit: number;
@@ -18,6 +20,11 @@ export interface IBatchManagerOptions {
 	 * If true, the outbox is allowed to rebase the batch during flushing.
 	 */
 	readonly canRebase: boolean;
+
+	/**
+	 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
+	 */
+	readonly ignoreBatchId?: boolean;
 }
 
 export interface BatchSequenceNumbers {
@@ -25,12 +32,40 @@ export interface BatchSequenceNumbers {
 	clientSequenceNumber?: number;
 }
 
-/** Type alias for the batchId stored in batch metadata */
+/**
+ * Type alias for the batchId stored in batch metadata
+ */
 export type BatchId = string;
 
-/** Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect */
+/**
+ * Compose original client ID and client sequence number into BatchId to stamp on the message during reconnect
+ */
 export function generateBatchId(originalClientId: string, batchStartCsn: number): BatchId {
 	return `${originalClientId}_[${batchStartCsn}]`;
+}
+
+/**
+ * Get the effective batch ID for the input argument.
+ * Supports either an IPendingMessage or BatchStartInfo.
+ * If the batch ID is explicitly present, return it.
+ * Otherwise, generate a new batch ID using the client ID and batch start CSN.
+ */
+export function getEffectiveBatchId(
+	pendingMessageOrBatchStartInfo: IPendingMessage | BatchStartInfo,
+): string {
+	if ("localOpMetadata" in pendingMessageOrBatchStartInfo) {
+		const pendingMessage: IPendingMessage = pendingMessageOrBatchStartInfo;
+		return (
+			asBatchMetadata(pendingMessage.opMetadata)?.batchId ??
+			generateBatchId(
+				pendingMessage.batchInfo.clientId,
+				pendingMessage.batchInfo.batchStartCsn,
+			)
+		);
+	}
+
+	const batchStart: BatchStartInfo = pendingMessageOrBatchStartInfo;
+	return batchStart.batchId ?? generateBatchId(batchStart.clientId, batchStart.batchStartCsn);
 }
 
 /**
@@ -47,10 +82,10 @@ export class BatchManager {
 	private batchContentSize = 0;
 	private hasReentrantOps = false;
 
-	public get length() {
+	public get length(): number {
 		return this.pendingBatch.length;
 	}
-	public get contentSizeInBytes() {
+	public get contentSizeInBytes(): number {
 		return this.batchContentSize;
 	}
 
@@ -64,9 +99,7 @@ export class BatchManager {
 	private get referenceSequenceNumber(): number | undefined {
 		return this.pendingBatch.length === 0
 			? undefined
-			: // Non null asserting here since we are checking the length above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				this.pendingBatch[this.pendingBatch.length - 1]!.referenceSequenceNumber;
+			: this.pendingBatch[this.pendingBatch.length - 1].referenceSequenceNumber;
 	}
 
 	/**
@@ -106,7 +139,7 @@ export class BatchManager {
 		return true;
 	}
 
-	public get empty() {
+	public get empty(): boolean {
 		return this.pendingBatch.length === 0;
 	}
 
@@ -138,9 +171,7 @@ export class BatchManager {
 			rollback: (process: (message: BatchMessage) => void) => {
 				for (let i = this.pendingBatch.length; i > startPoint; ) {
 					i--;
-					// Non null asserting here since we are iterating though pendingBatch
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const message = this.pendingBatch[i]!;
+					const message = this.pendingBatch[i];
 					this.batchContentSize -= message.contents?.length ?? 0;
 					process(message);
 				}

@@ -37,8 +37,7 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 
 	public async resolve(request: IRequest): Promise<IResolvedUrl> {
 		const relativeUrl = request.url.replace(`${this.tinyliciousEndpoint}/`, "");
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- <string>.split() always returns an array with at least one item
-		const documentIdFromRequest = relativeUrl.split("/")[0]!;
+		const documentIdFromRequest = relativeUrl.split("/")[0];
 
 		let deltaStorageUrl: string;
 		let documentUrl: string;
@@ -93,7 +92,14 @@ export class InsecureTinyliciousUrlResolver implements IUrlResolver {
 }
 
 /**
- * Creates a Routerlicious {@link @fluidframework/core-interfaces#IRequest}.
+ * Creates an insecure Tinylicious URL resolver for testing purposes with localhost port 7070.
+ */
+export function createInsecureTinyliciousTestUrlResolver(): IUrlResolver {
+	return new InsecureTinyliciousUrlResolver();
+}
+
+/**
+ * Creates a Tinylicious {@link @fluidframework/core-interfaces#IRequest}.
  * @internal
  */
 export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest => ({
@@ -102,3 +108,8 @@ export const createTinyliciousCreateNewRequest = (documentId?: string): IRequest
 		[DriverHeader.createNew]: true,
 	},
 });
+
+/**
+ * Creates a Tinylicious {@link @fluidframework/core-interfaces#IRequest} for testing purposes.
+ */
+export const createTinyliciousTestCreateNewRequest = createTinyliciousCreateNewRequest;

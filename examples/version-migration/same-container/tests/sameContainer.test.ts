@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IMigrator } from "@fluid-example/example-utils";
+import type { ISameContainerMigrator } from "@fluid-example/example-utils";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+
 import { globals } from "../jest.config.cjs";
-import { IContainer } from "@fluidframework/container-definitions/internal";
 
 describe("same-container migration", () => {
 	beforeAll(async () => {
@@ -66,11 +67,13 @@ describe("same-container migration", () => {
 
 			// Get a promise that will resolve when both sides have finished migration
 			const migrationP = page.evaluate(() => {
-				const migrationPs = (window["migrators"] as IMigrator[]).map((migrator) => {
-					return new Promise<void>((resolve) => {
-						migrator.once("migrated", resolve);
-					});
-				});
+				const migrationPs = (window["migrators"] as ISameContainerMigrator[]).map(
+					(migrator) => {
+						return new Promise<void>((resolve) => {
+							migrator.once("migrated", resolve);
+						});
+					},
+				);
 				return Promise.all(migrationPs);
 			});
 
@@ -149,11 +152,13 @@ describe("same-container migration", () => {
 
 			// Get a promise that will resolve when both sides have finished migration
 			const migrationP = page.evaluate(() => {
-				const migrationPs = (window["migrators"] as IMigrator[]).map((migrator) => {
-					return new Promise<void>((resolve) => {
-						migrator.once("migrated", resolve);
-					});
-				});
+				const migrationPs = (window["migrators"] as ISameContainerMigrator[]).map(
+					(migrator) => {
+						return new Promise<void>((resolve) => {
+							migrator.once("migrated", resolve);
+						});
+					},
+				);
 				return Promise.all(migrationPs);
 			});
 

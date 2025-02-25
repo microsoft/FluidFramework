@@ -15,8 +15,11 @@ import {
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	GCFeatureMatrix,
+	// eslint-disable-next-line import/no-deprecated
 	GCVersion,
+	// eslint-disable-next-line import/no-deprecated
 	IGCMetadata,
 	gcVersionUpgradeToV4Key,
 	nextGCVersion,
@@ -28,6 +31,7 @@ import {
 	IGarbageCollectionState,
 } from "./gcSummaryDefinitions.js";
 
+// eslint-disable-next-line import/no-deprecated
 export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	if (!metadata) {
 		// Force to 0/disallowed in prior versions
@@ -36,7 +40,9 @@ export function getGCVersion(metadata?: IGCMetadata): GCVersion {
 	return metadata.gcFeature ?? 0;
 }
 
-/** Indicates what GC version is in effect for new GC data being written in this session */
+/**
+ * Indicates what GC version is in effect for new GC data being written in this session
+ */
 export function getGCVersionInEffect(configProvider: IConfigProvider): number {
 	// If version upgrade is not enabled, fall back to the stable GC version.
 	return configProvider.getBoolean(gcVersionUpgradeToV4Key) === true
@@ -61,6 +67,7 @@ export function getGCVersionInEffect(configProvider: IConfigProvider): number {
  * @returns true if GC Sweep should be allowed for this document
  */
 export function shouldAllowGcSweep(
+	// eslint-disable-next-line import/no-deprecated
 	featureMatrix: GCFeatureMatrix,
 	currentGeneration: number | undefined,
 ): boolean {
@@ -103,7 +110,7 @@ export function concatGarbageCollectionStates(
 	const combinedGCNodes: { [id: string]: IGarbageCollectionNodeData } = {};
 	for (const [nodeId, nodeData] of Object.entries(gcState1.gcNodes)) {
 		combinedGCNodes[nodeId] = {
-			outboundRoutes: Array.from(nodeData.outboundRoutes),
+			outboundRoutes: [...nodeData.outboundRoutes],
 			unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
 		};
 	}
@@ -112,7 +119,7 @@ export function concatGarbageCollectionStates(
 		let combineNodeData = combinedGCNodes[nodeId];
 		if (combineNodeData === undefined) {
 			combineNodeData = {
-				outboundRoutes: Array.from(nodeData.outboundRoutes),
+				outboundRoutes: [...nodeData.outboundRoutes],
 				unreferencedTimestampMs: nodeData.unreferencedTimestampMs,
 			};
 		} else {
@@ -147,7 +154,7 @@ export function concatGarbageCollectionStates(
 export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionData {
 	const clonedGCNodes: { [id: string]: string[] } = {};
 	for (const [id, outboundRoutes] of Object.entries(gcData.gcNodes)) {
-		clonedGCNodes[id] = Array.from(outboundRoutes);
+		clonedGCNodes[id] = [...outboundRoutes];
 	}
 	return {
 		gcNodes: clonedGCNodes,
@@ -160,15 +167,13 @@ export function cloneGCData(gcData: IGarbageCollectionData): IGarbageCollectionD
 export function concatGarbageCollectionData(
 	gcData1: IGarbageCollectionData,
 	gcData2: IGarbageCollectionData,
-) {
+): IGarbageCollectionData {
 	const combinedGCData: IGarbageCollectionData = cloneGCData(gcData1);
 	for (const [id, routes] of Object.entries(gcData2.gcNodes)) {
 		if (combinedGCData.gcNodes[id] === undefined) {
-			combinedGCData.gcNodes[id] = Array.from(routes);
+			combinedGCData.gcNodes[id] = [...routes];
 		} else {
-			// Non null asserting here since we are checking if combinedGCData.gcNodes[id] is not undefined above.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]!];
+			const combinedRoutes = [...routes, ...combinedGCData.gcNodes[id]];
 			combinedGCData.gcNodes[id] = [...new Set(combinedRoutes)];
 		}
 	}
@@ -189,17 +194,13 @@ export async function getGCDataFromSnapshot(
 	for (const key of Object.keys(gcSnapshotTree.blobs)) {
 		// Update deleted nodes blob.
 		if (key === gcDeletedBlobKey) {
-			// Non null asserting here, we can change this to Object.entries later
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			deletedNodes = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]!);
+			deletedNodes = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
 			continue;
 		}
 
 		// Update tombstone blob.
 		if (key === gcTombstoneBlobKey) {
-			// Non null asserting here, we can change this to Object.entries later
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]!);
+			tombstones = await readAndParseBlob<string[]>(gcSnapshotTree.blobs[key]);
 			continue;
 		}
 
@@ -225,7 +226,9 @@ export async function getGCDataFromSnapshot(
  * @param gcDetails - The GC details of a node.
  * @returns A map of GC details of each children of the the given node.
  */
-export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBase) {
+export function unpackChildNodesGCDetails(
+	gcDetails: IGarbageCollectionDetailsBase,
+): Map<string, IGarbageCollectionDetailsBase> {
 	const childGCDetailsMap: Map<string, IGarbageCollectionDetailsBase> = new Map();
 
 	// If GC data is not available, bail out.
@@ -240,10 +243,11 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 			continue;
 		}
 
-		assert(id.startsWith("/"), 0x5d9 /* node id should always be an absolute route */);
-		// TODO Why are we non null asserting here
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const childId = id.split("/")[1]!;
+		const childId = id.split("/")[1];
+		assert(
+			childId !== undefined,
+			0x9fe /* node id should be an absolute route with child id part */,
+		);
 		let childGCNodeId = id.slice(childId.length + 1);
 		// GC node id always begins with "/". Handle the special case where a child's id in the parent's GC nodes is
 		// of format `/root`. In this case, the childId is root and childGCNodeId is "". Make childGCNodeId = "/".
@@ -271,10 +275,11 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
 	// Remove the node's self used route, if any, and generate the children used routes.
 	const usedRoutes = gcDetails.usedRoutes.filter((route) => route !== "" && route !== "/");
 	for (const route of usedRoutes) {
-		assert(route.startsWith("/"), 0x5db /* Used route should always be an absolute route */);
-		// TODO Why are we non null asserting here
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const childId = route.split("/")[1]!;
+		const childId = route.split("/")[1];
+		assert(
+			childId !== undefined,
+			0x9ff /* used route should be an absolute route with child id part */,
+		);
 		const childUsedRoute = route.slice(childId.length + 1);
 
 		const childGCDetails = childGCDetailsMap.get(childId);
@@ -294,15 +299,15 @@ export function unpackChildNodesGCDetails(gcDetails: IGarbageCollectionDetailsBa
  * @param str - A string that may contain leading and / or trailing slashes.
  * @returns A new string without leading and trailing slashes.
  */
-function trimLeadingAndTrailingSlashes(str: string) {
+function trimLeadingAndTrailingSlashes(str: string): string {
 	return str.replace(/^\/+|\/+$/g, "");
 }
 
-/** Reformats a request URL to match expected format for a GC node path */
+/**
+ * Reformats a request URL to match expected format for a GC node path
+ */
 export function urlToGCNodePath(url: string): string {
-	// TODO Why are we non null asserting here
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0]!)}`;
+	return `/${trimLeadingAndTrailingSlashes(url.split("?")[0])}`;
 }
 
 /**

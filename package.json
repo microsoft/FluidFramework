@@ -1,6 +1,6 @@
 {
 	"name": "client-release-group-root",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -99,7 +99,7 @@
 		"test:fromroot": "mocha \"packages/**/dist/test/**/*.spec.*js\" --exit",
 		"test:jest": "assign-test-ports && pnpm puppeteer browsers install chrome-headless-shell && pnpm -r --no-sort --stream --no-bail test:jest --color",
 		"test:jest:bail": "assign-test-ports && pnpm puppeteer browsers install chrome-headless-shell && pnpm -r --no-sort --stream test:jest",
-		"test:jest:report": "assign-test-ports && pnpm puppeteer browsers install chrome-headless-shell && pnpm -r --no-sort --stream --no-bail --workspace-concurrency=4 test:jest --ci",
+		"test:jest:report": "assign-test-ports && pnpm puppeteer browsers install chrome-headless-shell && pnpm -r --no-sort --stream --no-bail --workspace-concurrency=4 test:jest",
 		"test:memory-profiling:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/memoryProfilingOutput/**\" memoryProfilingOutput",
 		"test:memory-profiling:report": "pnpm run -r --no-sort --stream --no-bail test:memory-profiling:report -- --reporterOptions reportDir=./memoryProfilingOutput",
 		"test:mocha": "pnpm run -r --no-sort --stream --no-bail test:mocha --color",
@@ -124,6 +124,7 @@
 			"**/*.d.*ts",
 			"**/src/test/**/*.*ts",
 			"**/dist/test/**/*.*js",
+			"**/lib/test/**/*.*js",
 			"experimental/examples/**",
 			"experimental/PropertyDDS/examples/**",
 			"**/*.bundle.js",
@@ -140,31 +141,33 @@
 		"include": [
 			"packages/**/src/**/*.*ts",
 			"packages/**/dist/**/*.*js",
+			"packages/**/lib/**/*.*js",
 			"experimental/**/src/**/*.*ts",
 			"experimental/**/dist/**/*.*js"
 		],
 		"merge-async": true,
 		"report-dir": "nyc/report",
 		"reporter": [
+			"clover",
 			"cobertura",
 			"html",
+			"json-summary",
 			"text"
 		],
 		"temp-directory": "nyc/.nyc_output"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
-		"@changesets/cli": "^2.26.1",
+		"@biomejs/biome": "~1.9.3",
+		"@changesets/cli": "^2.27.8",
 		"@fluid-private/changelog-generator-wrapper": "workspace:~",
-		"@fluid-tools/build-cli": "^0.41.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluid-tools/markdown-magic": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@microsoft/api-documenter": "^7.21.6",
-		"@microsoft/api-extractor": "^7.45.1",
-		"@octokit/core": "^4.0.5",
+		"@microsoft/api-extractor": "7.47.8",
 		"auto-changelog": "^2.4.0",
 		"c8": "^8.0.1",
 		"changesets-format-with-issue-links": "^0.3.0",
@@ -176,17 +179,17 @@
 		"mocha": "^10.2.0",
 		"prettier": "~3.0.3",
 		"pretty-quick": "^4.0.0",
-		"puppeteer": "^22.2.0",
+		"puppeteer": "^23.6.0",
 		"rimraf": "^4.4.0",
 		"run-script-os": "^1.1.6",
 		"syncpack": "^9.8.4",
 		"ts2esm": "^1.4.0",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@8.15.8+sha512.d1a029e1a447ad90bc96cd58b0fad486d2993d531856396f7babf2d83eb1823bb83c5a3d0fc18f675b2d10321d49eb161fece36fe8134aa5823ecd215feed392",
+	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
 	"engines": {
 		"node": ">=18.17.1",
-		"pnpm": "8"
+		"pnpm": "9"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -258,7 +261,6 @@
 			},
 			"checks": {
 				"dependsOn": [
-					"^checks",
 					"check:format",
 					"generate:packageList",
 					"policy-check",
@@ -271,7 +273,6 @@
 			},
 			"checks:fix": {
 				"dependsOn": [
-					"^checks:fix",
 					"format",
 					"generate:packageList",
 					"policy-check:fix",
@@ -364,7 +365,9 @@
 			"codemirror and marked overrides are because simplemde use * versions, and the fully up to date versions of its deps do not work. packageExtensions was tried to fix this, but did not work.",
 			"sharp <0.32.6 has a vulnerability that Component Governance flags (https://github.com/advisories/GHSA-54xq-cgqr-rpm3). It's a transitive dependency through jssm-viz-cli, which hasn't updated to a version with the fix",
 			"@fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation, so overriding it forces a version that meets peer dependency requirements is installed.",
-			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67"
+			"get-tsconfig has a bug below 4.7.3 which causes eslint to fail to resolve typescript configurations. See https://github.com/privatenumber/get-tsconfig/issues/67",
+			"oclif includes some AWS-related features, but we don't use them, so we override those dependencies with empty packages. This helps reduce lockfile churn since the deps release very frequently.",
+			"socket.io-client has an issue with 4.8.0 which breaks the build, so avoid it: https://github.com/socketio/socket.io/issues/5202"
 		],
 		"overrides": {
 			"@types/node@<18": "^18.19.0",
@@ -375,19 +378,23 @@
 			"simplemde>codemirror": "^5.65.11",
 			"simplemde>marked": "^4.3.0",
 			"sharp": "^0.33.2",
-			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4"
+			"@fluentui/react-positioning>@floating-ui/dom": "~1.5.4",
+			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
+			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
+			"socket.io-client": "~4.7.5"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
 			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency.",
 			"markdown-magic is provided by another dependency so is ignored here.",
-			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies."
+			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies.",
+			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876"
 		],
 		"peerDependencyRules": {
 			"allowedVersions": {
-				"react": "17.0.2",
-				"react-dom": "17.0.2",
-				"webpack": "^5.82.0"
+				"react": "18.3.1",
+				"react-dom": "18.3.1",
+				"webpack": "^5.94.0"
 			},
 			"ignoreMissing": [
 				"@types/node",
@@ -397,7 +404,7 @@
 			]
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.45.1": "patches/@microsoft__api-extractor@7.45.1.patch"
+			"@microsoft/api-extractor@7.47.8": "patches/@microsoft__api-extractor@7.47.8.patch"
 		}
 	}
 }

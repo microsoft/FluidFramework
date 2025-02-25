@@ -15,7 +15,6 @@ import {
 	DetachedReferencePosition,
 	ISegment,
 	LocalReferencePosition,
-	MergeTreeDeltaType,
 	PropertySet,
 	ReferenceType,
 	SlidingPreference,
@@ -26,6 +25,11 @@ import {
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
+	Side,
+	SequencePlace,
+	endpointPosAndSide,
+	PropertiesManager,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -57,65 +61,15 @@ import {
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
+	SequenceIntervalClass,
 	SerializedIntervalDelta,
 	createInterval,
 	createPositionReferenceFromSegoff,
 	endReferenceSlidingPreference,
 	sequenceIntervalHelpers,
 	startReferenceSlidingPreference,
+	type ISerializableIntervalPrivate,
 } from "./intervals/index.js";
-
-/**
- * Defines a position and side relative to a character in a sequence.
- *
- * For this purpose, sequences look like:
- *
- * `{start} - {character 0} - {character 1} - ... - {character N} - {end}`
- *
- * Each `{value}` in the diagram is a character within a sequence.
- * Each `-` in the above diagram is a position where text could be inserted.
- * Each position between a `{value}` and a `-` is a `SequencePlace`.
- *
- * The special endpoints `{start}` and `{end}` refer to positions outside the
- * contents of the string.
- *
- * This gives us 2N + 2 possible positions to refer to within a string, where N
- * is the number of characters.
- *
- * If the position is specified with a bare number, the side defaults to
- * `Side.Before`.
- *
- * If a SequencePlace is the endpoint of a range (e.g. start/end of an interval or search range),
- * the Side value means it is exclusive if it is nearer to the other position and inclusive if it is farther.
- * E.g. the start of a range with Side.After is exclusive of the character at the position.
- * @legacy
- * @alpha
- */
-export type SequencePlace = number | "start" | "end" | InteriorSequencePlace;
-
-/**
- * A sequence place that does not refer to the special endpoint segments.
- *
- * See {@link SequencePlace} for additional context.
- * @legacy
- * @alpha
- */
-export interface InteriorSequencePlace {
-	pos: number;
-	side: Side;
-}
-
-/**
- * Defines a side relative to a character in a sequence.
- *
- * @remarks See {@link SequencePlace} for additional context on usage.
- * @legacy
- * @alpha
- */
-export enum Side {
-	Before = 0,
-	After = 1,
-}
 
 export const reservedIntervalIdKey = "intervalId";
 
@@ -177,28 +131,6 @@ function compressInterval(interval: ISerializedInterval): CompressedSerializedIn
 	}
 
 	return base;
-}
-
-export function endpointPosAndSide(
-	start: SequencePlace | undefined,
-	end: SequencePlace | undefined,
-) {
-	const startIsPlainEndpoint =
-		typeof start === "number" || start === "start" || start === "end";
-	const endIsPlainEndpoint = typeof end === "number" || end === "start" || end === "end";
-
-	const startSide = startIsPlainEndpoint ? Side.Before : start?.side;
-	const endSide = endIsPlainEndpoint ? Side.Before : end?.side;
-
-	const startPos = startIsPlainEndpoint ? start : start?.pos;
-	const endPos = endIsPlainEndpoint ? end : end?.pos;
-
-	return {
-		startSide,
-		endSide,
-		startPos,
-		endPos,
-	};
 }
 
 export function toSequencePlace(
@@ -375,7 +307,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 						"Adding an interval that belongs to another interval collection is not permitted",
 					);
 				}
-				interval.addProperties(props);
+				interval.properties = addProperties(interval.properties, props);
 			}
 			interval.properties[reservedIntervalIdKey] ??= uuid();
 			this.add(interval);
@@ -384,7 +316,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	private linkEndpointsToInterval(interval: TInterval): void {
-		if (interval instanceof SequenceInterval) {
+		if (interval instanceof SequenceIntervalClass) {
 			interval.start.addProperties({ interval });
 			interval.end.addProperties({ interval });
 		}
@@ -453,15 +385,15 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 				ref.canSlideToEndpoint,
 			);
 		};
-		if (interval instanceof SequenceInterval) {
-			let previousInterval: (TInterval & SequenceInterval) | undefined;
+		if (interval instanceof SequenceIntervalClass) {
+			let previousInterval: (TInterval & SequenceIntervalClass) | undefined;
 			let pendingChanges = 0;
 			interval.addPositionChangeListeners(
 				() => {
 					pendingChanges++;
 					// Note: both start and end can change and invoke beforeSlide on each endpoint before afterSlide.
 					if (!previousInterval) {
-						previousInterval = interval.clone() as TInterval & SequenceInterval;
+						previousInterval = interval.clone() as TInterval & SequenceIntervalClass;
 						previousInterval.start = cloneRef(previousInterval.start);
 						previousInterval.end = cloneRef(previousInterval.end);
 						this.removeIntervalFromIndexes(interval);
@@ -484,7 +416,7 @@ export class LocalIntervalCollection<TInterval extends ISerializableInterval> {
 	}
 
 	private removeIntervalListeners(interval: TInterval) {
-		if (interval instanceof SequenceInterval) {
+		if (interval instanceof SequenceIntervalClass) {
 			interval.removePositionChangeListeners();
 		}
 	}
@@ -668,9 +600,7 @@ class IntervalCollectionIterator<TInterval extends ISerializableInterval>
 	public next(): IteratorResult<TInterval> {
 		if (this.index < this.results.length) {
 			return {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				value: this.results[this.index++]!,
+				value: this.results[this.index++],
 				done: false,
 			};
 		}
@@ -816,7 +746,7 @@ export interface IIntervalCollection<TInterval extends ISerializableInterval>
 	 * it is possible to control whether the interval expands to include content
 	 * inserted at its start or end.
 	 *
-	 *	See {@link SequencePlace} for more details on the model.
+	 *	See {@link @fluidframework/merge-tree#SequencePlace} for more details on the model.
 	 *
 	 *	@example
 	 *
@@ -1189,7 +1119,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					this.options.mergeTreeReferencesCanSlideToEndpoint,
 				);
 				if (properties) {
-					interval.addProperties(properties);
+					interval.properties = addProperties(interval.properties, properties);
 				}
 				this.localCollection.add(interval);
 			}
@@ -1220,7 +1150,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// is restored as single-endpoint changes re-use previous references.
 		let startRefType: ReferenceType;
 		let endRefType: ReferenceType;
-		if (previousInterval instanceof SequenceInterval) {
+		if (previousInterval instanceof SequenceIntervalClass) {
 			startRefType = previousInterval.start.refType;
 			endRefType = previousInterval.end.refType;
 			previousInterval.start.refType = ReferenceType.Transient;
@@ -1238,7 +1168,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 	/**
 	 * {@inheritdoc IIntervalCollection.getIntervalById}
 	 */
-	public getIntervalById(id: string): TInterval | undefined {
+	public getIntervalById(id: string): ISerializableIntervalPrivate<TInterval> | undefined {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called before accessing intervals");
 		}
@@ -1294,7 +1224,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		);
 
 		if (interval) {
-			if (!this.isCollaborating && interval instanceof SequenceInterval) {
+			if (!this.isCollaborating && interval instanceof SequenceIntervalClass) {
 				setSlideOnRemove(interval.start);
 				setSlideOnRemove(interval.end);
 			}
@@ -1397,15 +1327,18 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			let deltaProps: PropertySet | undefined;
 			let newInterval: TInterval | undefined;
 			if (props !== undefined) {
-				deltaProps = interval.addProperties(
-					props,
-					true,
+				interval.propertyManager ??= new PropertiesManager();
+				deltaProps = interval.propertyManager.handleProperties(
+					{ props },
+					interval,
 					this.isCollaborating ? UnassignedSequenceNumber : UniversalSequenceNumber,
+					UniversalSequenceNumber,
+					true,
 				);
 			}
 			if (start !== undefined && end !== undefined) {
 				newInterval = this.localCollection.changeInterval(interval, start, end);
-				if (!this.isCollaborating && newInterval instanceof SequenceInterval) {
+				if (!this.isCollaborating && newInterval instanceof SequenceIntervalClass) {
 					setSlideOnRemove(newInterval.start);
 					setSlideOnRemove(newInterval.end);
 				}
@@ -1443,7 +1376,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			if (newInterval) {
 				this.addPendingChange(id, serializedInterval);
 				this.emitChange(newInterval, interval, true, false);
-				if (interval instanceof SequenceInterval) {
+				if (interval instanceof SequenceIntervalClass) {
 					this.client?.removeLocalReferencePosition(interval.start);
 					this.client?.removeLocalReferencePosition(interval.end);
 				}
@@ -1549,17 +1482,18 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		// strip it out of the properties here.
 		const { [reservedIntervalIdKey]: id, ...newProps } = serializedInterval.properties ?? {};
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
-		const interval: TInterval | undefined = this.getIntervalById(id);
+		const interval: ISerializableIntervalPrivate<TInterval> | undefined =
+			this.getIntervalById(id);
 		if (!interval) {
 			// The interval has been removed locally; no-op.
 			return;
 		}
 
 		if (local) {
+			interval.propertyManager ??= new PropertiesManager();
 			// Let the propertyManager prune its pending change-properties set.
-			interval.propertyManager?.ackPendingProperties({
-				type: MergeTreeDeltaType.ANNOTATE,
-				props: serializedInterval.properties ?? {},
+			interval.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
+				props: newProps,
 			});
 
 			this.ackInterval(interval, op);
@@ -1588,7 +1522,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 						op,
 					) ?? interval;
 			}
-			const deltaProps = newInterval.addProperties(newProps, true, op.sequenceNumber);
+			newInterval.propertyManager ??= new PropertiesManager();
+			const deltaProps = newInterval.propertyManager.handleProperties(
+				{ props: newProps },
+				newInterval,
+				op.sequenceNumber,
+				op.minimumSequenceNumber,
+				true,
+			);
 			if (this.onDeserialize) {
 				this.onDeserialize(newInterval);
 			}
@@ -1684,7 +1625,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 		if (localInterval !== undefined) {
 			// we know we must be using `SequenceInterval` because `this.client` exists
 			assert(
-				localInterval instanceof SequenceInterval,
+				localInterval instanceof SequenceIntervalClass,
 				0x3a0 /* localInterval must be `SequenceInterval` when used with client */,
 			);
 			// The rebased op may place this interval's endpoints on different segments. Calling `changeInterval` here
@@ -1703,17 +1644,21 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	private getSlideToSegment(
 		lref: LocalReferencePosition,
+		slidingPreference: SlidingPreference,
 	): { segment: ISegment | undefined; offset: number | undefined } | undefined {
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
 		}
-		const segoff = { segment: lref.getSegment(), offset: lref.getOffset() };
+		const segoff: { segment: ISegmentInternal | undefined; offset: number | undefined } = {
+			segment: lref.getSegment(),
+			offset: lref.getOffset(),
+		};
 		if (segoff.segment?.localRefs?.has(lref) !== true) {
 			return undefined;
 		}
 		const newSegoff = getSlideToSegoff(
 			segoff,
-			undefined,
+			slidingPreference,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
 		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
@@ -1725,7 +1670,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 
 	private ackInterval(interval: TInterval, op: ISequencedDocumentMessage): void {
 		// Only SequenceIntervals need potential sliding
-		if (!(interval instanceof SequenceInterval)) {
+		if (!(interval instanceof SequenceIntervalClass)) {
 			return;
 		}
 
@@ -1736,8 +1681,14 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 			return;
 		}
 
-		const newStart = this.getSlideToSegment(interval.start);
-		const newEnd = this.getSlideToSegment(interval.end);
+		const newStart = this.getSlideToSegment(
+			interval.start,
+			startReferenceSlidingPreference(interval.stickiness),
+		);
+		const newEnd = this.getSlideToSegment(
+			interval.end,
+			endReferenceSlidingPreference(interval.stickiness),
+		);
 
 		const id = interval.properties[reservedIntervalIdKey];
 		const hasPendingStartChange = this.hasPendingChangeStart(id);
@@ -1785,7 +1736,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 				if (props) {
 					interval.start.addProperties(props);
 				}
-				const oldSeg = oldInterval.start.getSegment();
+				const oldSeg: ISegmentInternal | undefined = oldInterval.start.getSegment();
 				// remove and rebuild start interval as transient for event
 				this.client.removeLocalReferencePosition(oldInterval.start);
 				oldInterval.start.refType = ReferenceType.Transient;
@@ -1807,7 +1758,7 @@ export class IntervalCollection<TInterval extends ISerializableInterval>
 					interval.end.addProperties(props);
 				}
 				// remove and rebuild end interval as transient for event
-				const oldSeg = oldInterval.end.getSegment();
+				const oldSeg: ISegmentInternal | undefined = oldInterval.end.getSegment();
 				this.client.removeLocalReferencePosition(oldInterval.end);
 				oldInterval.end.refType = ReferenceType.Transient;
 				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());

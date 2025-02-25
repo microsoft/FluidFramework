@@ -12,8 +12,6 @@ import { rootFieldKey } from "./types.js";
 
 export const emptyDelta: Root<never> = {};
 
-export const emptyFieldChanges: FieldChanges = {};
-
 export function isAttachMark(mark: Mark): boolean {
 	return mark.attach !== undefined && mark.detach === undefined;
 }
@@ -26,14 +24,6 @@ export function isReplaceMark(mark: Mark): boolean {
 	return mark.detach !== undefined && mark.attach !== undefined;
 }
 
-export function isEmptyFieldChanges(fieldChanges: FieldChanges): boolean {
-	return (
-		fieldChanges.local === undefined &&
-		fieldChanges.global === undefined &&
-		fieldChanges.rename === undefined
-	);
-}
-
 export function deltaForRootInitialization(content: readonly ITreeCursorSynchronous[]): Root {
 	if (content.length === 0) {
 		return emptyDelta;
@@ -42,12 +32,7 @@ export function deltaForRootInitialization(content: readonly ITreeCursorSynchron
 	const delta: Root = {
 		build: [{ id: buildId, trees: content }],
 		fields: new Map<FieldKey, FieldChanges>([
-			[
-				rootFieldKey,
-				{
-					local: [{ count: content.length, attach: buildId }],
-				},
-			],
+			[rootFieldKey, [{ count: content.length, attach: buildId }]],
 		]),
 	};
 	return delta;

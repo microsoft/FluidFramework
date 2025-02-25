@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -202,22 +203,22 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		//    and result in non-incremental snapshot.
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
-		for (const [key, { value, type }] of Object.entries(data)) {
-			if (value && value.length >= MinValueSizeSeparateSnapshotBlob) {
+		for (const [key, value] of Object.entries(data)) {
+			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
 				const blobName = `blob${counter}`;
 				counter++;
 				blobs.push(blobName);
 				const content: IMapDataObjectSerializable = {
 					[key]: {
-						type,
-						value: JSON.parse(value) as unknown,
+						type: value.type,
+						value: JSON.parse(value.value) as unknown,
 					},
 				};
 				builder.addBlob(blobName, JSON.stringify(content));
 			} else {
-				currentSize += type.length + 21; // Approximation cost of property header
-				if (value) {
-					currentSize += value.length;
+				currentSize += value.type.length + 21; // Approximation cost of property header
+				if (value.value) {
+					currentSize += value.value.length;
 				}
 
 				if (currentSize > MaxSnapshotBlobSize) {
@@ -229,8 +230,8 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 					currentSize = 0;
 				}
 				headerBlob[key] = {
-					type,
-					value: value === undefined ? undefined : (JSON.parse(value) as unknown),
+					type: value.type,
+					value: value.value === undefined ? undefined : (JSON.parse(value.value) as unknown),
 				};
 			}
 		}
@@ -271,7 +272,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.trySubmitMessage(content as IMapOperation, localOpMetadata);
 	}
 
@@ -292,14 +293,21 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
-			this.kernel.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata);
+			assert(
+				this.kernel.tryProcessMessage(
+					message.contents as IMapOperation,
+					local,
+					localOpMetadata,
+				),
+				0xab2 /* Map received an unrecognized op, possibly from a newer version */,
+			);
 		}
 	}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
-	protected rollback(content: unknown, localOpMetadata: unknown): void {
+	protected override rollback(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.rollback(content, localOpMetadata);
 	}
 }

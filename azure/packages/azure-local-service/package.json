@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-local-service",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"description": "Local implementation of the Azure Fluid Relay service for testing/development use",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -36,13 +36,13 @@
 		"tinylicious": "^5.0.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
+		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"eslint": "~8.55.0",
 		"eslint-config-prettier": "~9.0.0",
-		"pm2": "^5.3.1",
+		"pm2": "^5.4.2",
 		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"ts-node": "^10.9.1",
@@ -50,6 +50,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

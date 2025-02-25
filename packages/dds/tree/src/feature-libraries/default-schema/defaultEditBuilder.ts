@@ -3,20 +3,22 @@
  * Licensed under the MIT License.
  */
 
+import { oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecFamily } from "../../codec/index.js";
 import {
+	type ChangeAtomId,
 	type ChangeEncodingContext,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
-	type ChangesetLocalId,
 	CursorLocationType,
 	type DeltaDetachedNodeId,
 	type DeltaRoot,
 	type FieldUpPath,
 	type ITreeCursorSynchronous,
+	type RevisionTag,
 	type TaggedChange,
 	type UpPath,
 	compareFieldUpPaths,
@@ -41,6 +43,8 @@ import {
 	sequence,
 	required as valueFieldKind,
 } from "./defaultFieldKinds.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { CellId } from "../sequence-field/index.js";
 
 export type DefaultChangeset = ModularChangeset;
 
@@ -66,8 +70,11 @@ export class DefaultChangeFamily
 		return this.modularFamily.codecs;
 	}
 
-	public buildEditor(changeReceiver: (change: DefaultChangeset) => void): DefaultEditBuilder {
-		return new DefaultEditBuilder(this, changeReceiver);
+	public buildEditor(
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+	): DefaultEditBuilder {
+		return new DefaultEditBuilder(this, mintRevisionTag, changeReceiver);
 	}
 }
 
@@ -112,8 +119,6 @@ export function relevantRemovedRoots(change: ModularChangeset): Iterable<DeltaDe
  * At some point it will likely be worth supporting at least some of these, possibly using a mechanism that could support all of them if desired.
  * If/when such a mechanism becomes available, an evaluation should be done to determine if any existing editing operations should be changed to leverage it
  * (Possibly by adding opt ins at the view schema layer).
- *
- * @internal
  */
 export interface IDefaultEditBuilder {
 	/**
@@ -122,7 +127,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	valueField(field: FieldUpPath): ValueFieldEditBuilder;
+	valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * @param field - the optional field which is being edited under the parent node
@@ -130,7 +135,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	optionalField(field: FieldUpPath): OptionalFieldEditBuilder;
+	optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * @param field - the sequence field which is being edited under the parent node
@@ -139,7 +144,7 @@ export interface IDefaultEditBuilder {
 	 * The returned object can be used (i.e., have its methods called) multiple times but its lifetime
 	 * is bounded by the lifetime of this edit builder.
 	 */
-	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder;
+	sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous>;
 
 	/**
 	 * Moves a subsequence from one sequence field to another sequence field.
@@ -155,8 +160,17 @@ export interface IDefaultEditBuilder {
 		destinationIndex: number,
 	): void;
 
-	// TODO: document
+	/**
+	 * Add a constraint that the node at the given path must exist.
+	 * @param path - The path to the node that must exist.
+	 */
 	addNodeExistsConstraint(path: UpPath): void;
+
+	/**
+	 * Add a constraint that the node at the given path must exist when reverting a change.
+	 * @param path - The path to the node that must exist when reverting a change.
+	 */
+	addNodeExistsConstraintOnRevert(path: UpPath): void;
 }
 
 /**
@@ -168,7 +182,9 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 
 	public constructor(
 		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
-		changeReceiver: (change: DefaultChangeset) => void,
+		private readonly mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
+		private readonly idCompressor?: IIdCompressor,
 	) {
 		this.modularBuilder = new ModularEditBuilder(family, fieldKinds, changeReceiver);
 	}
@@ -181,19 +197,29 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	}
 
 	public addNodeExistsConstraint(path: UpPath): void {
-		this.modularBuilder.addNodeExistsConstraint(path);
+		this.modularBuilder.addNodeExistsConstraint(path, this.mintRevisionTag());
 	}
 
-	public valueField(field: FieldUpPath): ValueFieldEditBuilder {
+	public addNodeExistsConstraintOnRevert(path: UpPath): void {
+		this.modularBuilder.addNodeExistsConstraintOnRevert(path, this.mintRevisionTag());
+	}
+
+	public valueField(field: FieldUpPath): ValueFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			set: (newContent: ITreeCursorSynchronous): void => {
-				const fillId = this.modularBuilder.generateId();
-
-				const build = this.modularBuilder.buildTrees(fillId, newContent);
+				const revision = this.mintRevisionTag();
+				const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
+				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
+				const build = this.modularBuilder.buildTrees(
+					fill.localId,
+					newContent,
+					revision,
+					this.idCompressor,
+				);
 				const change: FieldChangeset = brand(
 					valueFieldKind.changeHandler.editor.set({
-						fill: fillId,
-						detach: this.modularBuilder.generateId(),
+						fill,
+						detach,
 					}),
 				);
 
@@ -202,30 +228,36 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					fieldKind: valueFieldKind.identifier,
 					change,
+					revision,
 				};
-				this.modularBuilder.submitChanges([build, edit]);
+				this.modularBuilder.submitChanges([build, edit], revision);
 			},
 		};
 	}
 
-	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder {
+	public optionalField(field: FieldUpPath): OptionalFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			set: (newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void => {
-				const detachId = this.modularBuilder.generateId();
-				let fillId: ChangesetLocalId | undefined;
 				const edits: EditDescription[] = [];
 				let optionalChange: OptionalChangeset;
+				const revision = this.mintRevisionTag();
+				const detach: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
 				if (newContent !== undefined) {
-					fillId = this.modularBuilder.generateId();
-					const build = this.modularBuilder.buildTrees(fillId, newContent);
+					const fill: ChangeAtomId = { localId: this.modularBuilder.generateId(), revision };
+					const build = this.modularBuilder.buildTrees(
+						fill.localId,
+						newContent,
+						revision,
+						this.idCompressor,
+					);
 					edits.push(build);
 
 					optionalChange = optional.changeHandler.editor.set(wasEmpty, {
-						fill: fillId,
-						detach: detachId,
+						fill,
+						detach,
 					});
 				} else {
-					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detachId);
+					optionalChange = optional.changeHandler.editor.clear(wasEmpty, detach);
 				}
 
 				const change: FieldChangeset = brand(optionalChange);
@@ -234,10 +266,11 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					field,
 					fieldKind: optional.identifier,
 					change,
+					revision,
 				};
 				edits.push(edit);
 
-				this.modularBuilder.submitChanges(edits);
+				this.modularBuilder.submitChanges(edits, revision);
 			},
 		};
 	}
@@ -254,17 +287,24 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		} else if (count < 0 || !Number.isSafeInteger(count)) {
 			throw new UsageError(`Expected non-negative integer count, got ${count}.`);
 		}
-		const detachId = this.modularBuilder.generateId(count);
-		const attachId = this.modularBuilder.generateId(count);
+		const revision = this.mintRevisionTag();
+		const detachCellId = this.modularBuilder.generateId(count);
+		const attachCellId: CellId = { localId: this.modularBuilder.generateId(count), revision };
 		if (compareFieldUpPaths(sourceField, destinationField)) {
 			const change = sequence.changeHandler.editor.move(
 				sourceIndex,
 				count,
 				destIndex,
-				detachId,
-				attachId,
+				detachCellId,
+				attachCellId,
+				revision,
 			);
-			this.modularBuilder.submitChange(sourceField, sequence.identifier, brand(change));
+			this.modularBuilder.submitChange(
+				sourceField,
+				sequence.identifier,
+				brand(change),
+				revision,
+			);
 		} else {
 			const detachPath = topDownPath(sourceField.parent);
 			const attachPath = topDownPath(destinationField.parent);
@@ -286,14 +326,15 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// in the composition performed by `submitChanges`.
 						attachAncestorIndex -= count;
 						let parent: UpPath | undefined = attachPath[sharedDepth - 1];
+						const parentField = attachPath[sharedDepth] ?? oob();
 						parent = {
 							parent,
 							parentIndex: attachAncestorIndex,
-							parentField: attachPath[sharedDepth].parentField,
+							parentField: parentField.parentField,
 						};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
-								...attachPath[i],
+								...(attachPath[i] ?? oob()),
 								parent,
 							};
 						}
@@ -305,31 +346,42 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					}
 				}
 			}
-			const moveOut = sequence.changeHandler.editor.moveOut(sourceIndex, count, detachId);
+			const moveOut = sequence.changeHandler.editor.moveOut(
+				sourceIndex,
+				count,
+				detachCellId,
+				revision,
+			);
 			const moveIn = sequence.changeHandler.editor.moveIn(
 				destIndex,
 				count,
-				detachId,
-				attachId,
+				detachCellId,
+				attachCellId,
+				revision,
 			);
-			this.modularBuilder.submitChanges([
-				{
-					type: "field",
-					field: sourceField,
-					fieldKind: sequence.identifier,
-					change: brand(moveOut),
-				},
-				{
-					type: "field",
-					field: adjustedAttachField,
-					fieldKind: sequence.identifier,
-					change: brand(moveIn),
-				},
-			]);
+			this.modularBuilder.submitChanges(
+				[
+					{
+						type: "field",
+						field: sourceField,
+						fieldKind: sequence.identifier,
+						change: brand(moveOut),
+						revision,
+					},
+					{
+						type: "field",
+						field: adjustedAttachField,
+						fieldKind: sequence.identifier,
+						change: brand(moveIn),
+						revision,
+					},
+				],
+				revision,
+			);
 		}
 	}
 
-	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder {
+	public sequenceField(field: FieldUpPath): SequenceFieldEditBuilder<ITreeCursorSynchronous> {
 		return {
 			insert: (index: number, content: ITreeCursorSynchronous): void => {
 				const length =
@@ -338,87 +390,75 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 					return;
 				}
 
-				const firstId = this.modularBuilder.generateId(length);
-				const build = this.modularBuilder.buildTrees(firstId, content);
+				const revision = this.mintRevisionTag();
+				const firstId: CellId = { localId: this.modularBuilder.generateId(length), revision };
+				const build = this.modularBuilder.buildTrees(
+					firstId.localId,
+					content,
+					revision,
+					this.idCompressor,
+				);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.insert(index, length, firstId),
+					sequence.changeHandler.editor.insert(index, length, firstId, revision),
 				);
 				const attach: FieldEditDescription = {
 					type: "field",
 					field,
 					fieldKind: sequence.identifier,
 					change,
+					revision,
 				};
 				// The changes have to be submitted together, otherwise they will be assigned different revisions,
 				// which will prevent the build ID and the insert ID from matching.
-				this.modularBuilder.submitChanges([build, attach]);
+				this.modularBuilder.submitChanges([build, attach], revision);
 			},
 			remove: (index: number, count: number): void => {
 				if (count === 0) {
 					return;
 				}
+				const revision = this.mintRevisionTag();
 				const id = this.modularBuilder.generateId(count);
 				const change: FieldChangeset = brand(
-					sequence.changeHandler.editor.remove(index, count, id),
+					sequence.changeHandler.editor.remove(index, count, id, revision),
 				);
-				this.modularBuilder.submitChange(field, sequence.identifier, change);
-			},
-			move: (sourceIndex: number, count: number, destIndex: number): void => {
-				if (count === 0) {
-					return;
-				} else if (count < 0 || !Number.isSafeInteger(count)) {
-					throw new UsageError(`Expected non-negative integer count, got ${count}.`);
-				}
-				const detachId = this.modularBuilder.generateId(count);
-				const attachId = this.modularBuilder.generateId(count);
-				const change = sequence.changeHandler.editor.move(
-					sourceIndex,
-					count,
-					destIndex,
-					detachId,
-					attachId,
-				);
-				this.modularBuilder.submitChange(field, sequence.identifier, brand(change));
+				this.modularBuilder.submitChange(field, sequence.identifier, change, revision);
 			},
 		};
 	}
 }
 
 /**
- * @internal
  */
-export interface ValueFieldEditBuilder {
+export interface ValueFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
 	 * @param newContent - the new content for the field.
 	 * The cursor can be in either Field or Node mode and must represent exactly one node.
 	 */
-	set(newContent: ITreeCursorSynchronous): void;
+	set(newContent: TContent): void;
 }
 
 /**
- * @internal
  */
-export interface OptionalFieldEditBuilder {
+export interface OptionalFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`
 	 * @param newContent - the new content for the field.
 	 * If provided, the cursor can be in either Field or Node mode and must represent exactly one node.
 	 * @param wasEmpty - whether the field is empty when creating this change
 	 */
-	set(newContent: ITreeCursorSynchronous | undefined, wasEmpty: boolean): void;
+	set(newContent: TContent | undefined, wasEmpty: boolean): void;
 }
 
 /**
- * @internal
  */
-export interface SequenceFieldEditBuilder {
+export interface SequenceFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which inserts the `newContent` at the given `index`.
 	 * @param index - the index at which to insert the `newContent`.
 	 * @param newContent - the new content to be inserted in the field. Cursor can be in either Field or Node mode.
 	 */
-	insert(index: number, newContent: ITreeCursorSynchronous): void;
+	insert(index: number, newContent: TContent): void;
 
 	/**
 	 * Issues a change which removes `count` elements starting at the given `index`.
@@ -426,14 +466,6 @@ export interface SequenceFieldEditBuilder {
 	 * @param count - The number of elements to remove.
 	 */
 	remove(index: number, count: number): void;
-
-	/**
-	 * Issues a change which moves `count` elements starting at `sourceIndex` to `destIndex`.
-	 * @param sourceIndex - the index of the first moved element.
-	 * @param count - the number of elements to move.
-	 * @param destIndex - the index the elements are moved to, interpreted before detaching the moved elements.
-	 */
-	move(sourceIndex: number, count: number, destIndex: number): void;
 }
 
 /**
@@ -443,8 +475,8 @@ function getSharedPrefixLength(pathA: readonly UpPath[], pathB: readonly UpPath[
 	const minDepth = Math.min(pathA.length, pathB.length);
 	let sharedDepth = 0;
 	while (sharedDepth < minDepth) {
-		const detachStep = pathA[sharedDepth];
-		const attachStep = pathB[sharedDepth];
+		const detachStep = pathA[sharedDepth] ?? oob();
+		const attachStep = pathB[sharedDepth] ?? oob();
 		if (detachStep !== attachStep) {
 			if (
 				detachStep.parentField !== attachStep.parentField ||

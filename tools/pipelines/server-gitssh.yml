@@ -41,7 +41,6 @@ trigger:
     - tools/pipelines/templates/build-docker-service.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
-    - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml

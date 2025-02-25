@@ -61,9 +61,15 @@ nexus:
     perMessageDeflate: true
     gracefulShutdownEnabled: false
     pingPongLatencyTrackingEnabled: false
+    pingPongLatencyTrackingAggregationThreshold: 3
+  enableCollaborationSessionTracking: false
+  enableCollaborationSessionPruning: false
+  redisCollaborationSessionManagerOptions:
+    maxScanBatchSize: 800
 
 storage:
   enableWholeSummaryUpload: false
+  ephemeralDocumentTTLSec: 86400
   storageUrl: storage_url
 
 checkpoints:
@@ -93,6 +99,15 @@ scriptorium:
   restartOnCheckpointFailure: true
   logSavedOpsTimeIntervalMs: 60000
   opsCountTelemetryEnabled: false
+  circuitBreakerEnabled: false
+  circuitBreakerOptions:
+    errorThresholdPercentage: 0.001
+    resetTimeout: 30000
+    timeout: false
+    rollingCountTimeout: 1000
+    rollingCountBuckets: 1000
+    fallbackToRestartTimeoutMs: 180000
+    filterOnErrors: []
 
 scribe:
   name: scribe
@@ -177,6 +192,7 @@ kafka:
   url: kafka_url:port
   libname: rdkafka
   customRestartOnKafkaErrorCodes: [-195, -192, -187, -185, -181, 14]
+  seekTimeoutAfterPause: 1000
 
 ingress:
   class: nginx-prod

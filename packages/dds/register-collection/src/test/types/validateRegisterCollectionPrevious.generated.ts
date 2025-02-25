@@ -16,40 +16,13 @@ import type * as current from "../../index.js";
 declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | FullType<T> | typeof old | typeof current | requireAssignableTo<true, true>;
 
 /*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Variable_ConsensusRegisterCollection": {"backCompat": false}
- */
-declare type current_as_old_for_Variable_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<typeof current.ConsensusRegisterCollection>, TypeOnly<typeof old.ConsensusRegisterCollection>>
-
-/*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ConsensusRegisterCollection": {"forwardCompat": false}
- */
-declare type old_as_current_for_TypeAlias_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<old.ConsensusRegisterCollection<any>>, TypeOnly<current.ConsensusRegisterCollection<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "TypeAlias_ConsensusRegisterCollection": {"backCompat": false}
- */
-declare type current_as_old_for_TypeAlias_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollection<any>>, TypeOnly<old.ConsensusRegisterCollection<any>>>
-
-/*
  * Validate forward compatibility by using the old type in place of the current type.
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
  * "Class_ConsensusRegisterCollectionClass": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<old.ConsensusRegisterCollectionClass<any>>, TypeOnly<current.ConsensusRegisterCollectionClass<any>>>
+declare type old_as_current_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<old.ConsensusRegisterCollectionClass<never>>, TypeOnly<current.ConsensusRegisterCollectionClass<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -58,16 +31,7 @@ declare type old_as_current_for_Class_ConsensusRegisterCollectionClass = require
  * typeValidation.broken:
  * "Class_ConsensusRegisterCollectionClass": {"backCompat": false}
  */
-declare type current_as_old_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollectionClass<any>>, TypeOnly<old.ConsensusRegisterCollectionClass<any>>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_ConsensusRegisterCollectionClass": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<typeof current.ConsensusRegisterCollectionClass>, TypeOnly<typeof old.ConsensusRegisterCollectionClass>>
+declare type current_as_old_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollectionClass<never>>, TypeOnly<old.ConsensusRegisterCollectionClass<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -92,9 +56,36 @@ declare type current_as_old_for_Class_ConsensusRegisterCollectionFactory = requi
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "ClassStatics_ConsensusRegisterCollectionClass": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<typeof current.ConsensusRegisterCollectionClass>, TypeOnly<typeof old.ConsensusRegisterCollectionClass>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "ClassStatics_ConsensusRegisterCollectionFactory": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_ConsensusRegisterCollectionFactory = requireAssignableTo<TypeOnly<typeof current.ConsensusRegisterCollectionFactory>, TypeOnly<typeof old.ConsensusRegisterCollectionFactory>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_ReadPolicy": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Enum_ReadPolicy = requireAssignableTo<TypeOnly<old.ReadPolicy>, TypeOnly<current.ReadPolicy>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Enum_ReadPolicy": {"backCompat": false}
+ */
+declare type current_as_old_for_Enum_ReadPolicy = requireAssignableTo<TypeOnly<current.ReadPolicy>, TypeOnly<old.ReadPolicy>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -137,6 +128,24 @@ declare type current_as_old_for_Interface_IConsensusRegisterCollectionEvents = r
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "TypeAlias_ConsensusRegisterCollection": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<old.ConsensusRegisterCollection<never>>, TypeOnly<current.ConsensusRegisterCollection<never>>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_ConsensusRegisterCollection": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollection<never>>, TypeOnly<old.ConsensusRegisterCollection<never>>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_IConsensusRegisterCollectionFactory": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_IConsensusRegisterCollectionFactory = requireAssignableTo<TypeOnly<old.IConsensusRegisterCollectionFactory>, TypeOnly<current.IConsensusRegisterCollectionFactory>>
@@ -151,19 +160,10 @@ declare type old_as_current_for_TypeAlias_IConsensusRegisterCollectionFactory = 
 declare type current_as_old_for_TypeAlias_IConsensusRegisterCollectionFactory = requireAssignableTo<TypeOnly<current.IConsensusRegisterCollectionFactory>, TypeOnly<old.IConsensusRegisterCollectionFactory>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Enum_ReadPolicy": {"forwardCompat": false}
- */
-declare type old_as_current_for_Enum_ReadPolicy = requireAssignableTo<TypeOnly<old.ReadPolicy>, TypeOnly<current.ReadPolicy>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
- * "Enum_ReadPolicy": {"backCompat": false}
+ * "Variable_ConsensusRegisterCollection": {"backCompat": false}
  */
-declare type current_as_old_for_Enum_ReadPolicy = requireAssignableTo<TypeOnly<current.ReadPolicy>, TypeOnly<old.ReadPolicy>>
+declare type current_as_old_for_Variable_ConsensusRegisterCollection = requireAssignableTo<TypeOnly<typeof current.ConsensusRegisterCollection>, TypeOnly<typeof old.ConsensusRegisterCollection>>

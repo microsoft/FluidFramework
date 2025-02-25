@@ -8,7 +8,6 @@
 @fluidframework/test-utils
 @fluid-internal/test-service-load
 @fluid-internal/test-driver-definitions
-@fluid-internal/test-app-insights-logger
 @fluid-internal/mocha-test-setup
 @fluidframework/tinylicious-client
 @fluidframework/odsp-client
@@ -28,6 +27,7 @@
 @fluidframework/undo-redo
 @fluidframework/synthesize
 @fluidframework/request-handler
+@fluidframework/presence
 @fluid-experimental/oldest-client-observer
 @fluidframework/fluid-static
 fluid-framework
@@ -37,6 +37,7 @@ fluid-framework
 @fluidframework/app-insights-logger
 @fluid-experimental/attributor
 @fluidframework/aqueduct
+@fluidframework/ai-collab
 @fluidframework/agent-scheduler
 @fluidframework/tinylicious-driver
 @fluidframework/routerlicious-urlresolver
@@ -77,16 +78,10 @@ fluid-framework
 @fluid-experimental/sharejs-json1
 @fluid-experimental/ot
 @fluid-experimental/attributable-map
-@fluid-experimental/property-shared-tree-interop
-@fluid-experimental/property-query
-@fluid-experimental/property-proxy
 @fluid-experimental/property-properties
-@fluid-experimental/property-inspector-table
 @fluid-experimental/property-dds
 @fluid-experimental/property-common
 @fluid-experimental/property-changeset
-@fluid-experimental/property-binder
 @fluid-example/table-document
-@fluid-experimental/azure-scenario-runner
 @fluidframework/azure-service-utils
 @fluidframework/azure-local-service

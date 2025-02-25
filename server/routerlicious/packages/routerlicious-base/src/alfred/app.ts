@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { isIPv4, isIPv6 } from "net";
 import {
 	IDeltaService,
 	IDocumentStorage,
@@ -14,6 +15,8 @@ import {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
+	IFluidAccessTokenGenerator,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
@@ -26,7 +29,6 @@ import { Provider } from "nconf";
 import { DriverVersionHeaderName, IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
-	bindCorrelationId,
 	bindTelemetryContext,
 	bindTimeoutContext,
 	jsonMorganLoggerMiddleware,
@@ -49,15 +51,19 @@ export function create(
 	producer: IProducer,
 	documentRepository: IDocumentRepository,
 	documentDeleteService: IDocumentDeleteService,
+	startupCheck: IReadinessCheck,
 	tokenRevocationManager?: ITokenRevocationManager,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	enableClientIPLogging?: boolean,
+	readinessCheck?: IReadinessCheck,
+	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
 ) {
 	// Maximum REST request size
 	const requestSize = config.get("alfred:restJsonSize");
 	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
+	const enableEventLoopLagMetric = config.get("alfred:enableEventLoopLagMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
 
 	// Express app configuration
@@ -106,17 +112,9 @@ export function create(
 						additionalProperties.hashedClientIPAddress = hashedClientIP;
 
 						const clientIPAddress = req.ip ? req.ip : "";
-						const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
-						const ipv6Regex = /^([\da-f]{1,4}:){7}[\da-f]{1,4}$/i;
-						if (
-							ipv4Regex.test(clientIPAddress) &&
-							clientIPAddress.split(".").every((part) => Number(part) <= 255)
-						) {
+						if (isIPv4(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv4";
-						} else if (
-							ipv6Regex.test(clientIPAddress) &&
-							clientIPAddress.split(":").every((part) => part.length <= 4)
-						) {
+						} else if (isIPv6(clientIPAddress)) {
 							additionalProperties.clientIPType = "IPv6";
 						} else {
 							additionalProperties.clientIPType = "";
@@ -150,6 +148,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {
@@ -159,8 +158,6 @@ export function create(
 	app.use(cookieParser());
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
-
-	app.use(bindCorrelationId());
 
 	// Bind routes
 	const routes = alfredRoutes.create(
@@ -175,10 +172,13 @@ export function create(
 		appTenants,
 		documentRepository,
 		documentDeleteService,
+		startupCheck,
 		tokenRevocationManager,
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
 		clusterDrainingChecker,
+		readinessCheck,
+		fluidAccessTokenGenerator,
 	);
 
 	app.use(routes.api);

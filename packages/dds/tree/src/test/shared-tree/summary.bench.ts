@@ -3,10 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	benchmarkCustom,
+	benchmark,
+	type IMeasurementReporter,
+} from "@fluid-tools/benchmark";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import type { ITree } from "@fluidframework/driver-definitions/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -17,10 +22,17 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { AllowedUpdateType } from "../../core/index.js";
-import { SharedTreeFactory, type TreeContent } from "../../shared-tree/index.js";
-import { makeDeepContent, makeWideContentWithEndValue } from "../scalableTestTrees.js";
-import { TestTreeProviderLite, schematizeFlexTree, testIdCompressor } from "../utils.js";
+import { TestTreeProviderLite, testIdCompressor } from "../utils.js";
+import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeSimpleContentTyped } from "../feature-libraries/flex-tree/utils.js";
+import {
+	LinkedList,
+	makeJsDeepTree,
+	makeJsWideTreeWithEndValue,
+	WideRoot,
+} from "../scalableTestTrees.js";
+import { TreeFactory } from "../../treeFactory.js";
 
 // TODO: these tests currently only cover tree content.
 // It might make sense to extend them to cover complex collaboration windows.
@@ -49,30 +61,60 @@ describe("Summary benchmarks", () => {
 			const summarySize = IsoBuffer.from(summaryString).byteLength;
 			assert(summarySize < 700);
 		});
+
+		function processSummary(
+			summaryTree: ISummaryTree,
+			reporter: IMeasurementReporter,
+			minLength: number,
+			maxLength: number,
+		) {
+			const summaryString = JSON.stringify(summaryTree);
+			const summarySize = IsoBuffer.from(summaryString).byteLength;
+			reporter.addMeasurement("summarySize", summarySize);
+			assert(summarySize > minLength);
+			assert(summarySize < maxLength);
+		}
+
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountWide) {
-			it(`a wide tree with ${numberOfNodes} nodes.`, async () => {
-				const summaryTree = getSummaryTree(makeWideContentWithEndValue(numberOfNodes, 1));
-				const summaryString = JSON.stringify(summaryTree);
-				const summarySize = IsoBuffer.from(summaryString).byteLength;
-				assert(summarySize > minLength);
-				assert(summarySize < maxLength);
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `a wide tree with ${numberOfNodes} nodes.`,
+				run: async (reporter) => {
+					const summaryTree = getSummaryTree({
+						initialTree: makeJsWideTreeWithEndValue(numberOfNodes, 1),
+						schema: WideRoot,
+					});
+					processSummary(summaryTree, reporter, minLength, maxLength);
+				},
 			});
 		}
 		for (const [numberOfNodes, minLength, maxLength] of nodesCountDeep) {
-			it(`a deep tree with ${numberOfNodes} nodes.`, async () => {
-				const summaryTree = getSummaryTree(makeDeepContent(numberOfNodes));
-				const summaryString = JSON.stringify(summaryTree);
-				const summarySize = IsoBuffer.from(summaryString).byteLength;
-				assert(summarySize > minLength);
-				assert(summarySize < maxLength);
+			benchmarkCustom({
+				only: false,
+				type: BenchmarkType.Measurement,
+				title: `a deep tree with ${numberOfNodes} nodes.`,
+				run: async (reporter) => {
+					const summaryTree = getSummaryTree({
+						// Types do not allow implicitly constructing recursive types, so cast is required.
+						// TODO: Find a better alternative.
+						initialTree: makeJsDeepTree(numberOfNodes, 1) as LinkedList,
+						schema: LinkedList,
+					});
+					processSummary(summaryTree, reporter, minLength, maxLength);
+				},
 			});
 		}
 	});
 
 	describe("load speed of", () => {
-		function runSummaryBenchmark(title: string, content: TreeContent, type: BenchmarkType) {
+		function runSummaryBenchmark<T extends ImplicitFieldSchema>(
+			title: string,
+			content: TreeSimpleContentTyped<T>,
+			type: BenchmarkType,
+		) {
 			let summaryTree: ITree;
-			const factory = new SharedTreeFactory();
+			const factory = new TreeFactory({});
 			benchmark({
 				title,
 				type,
@@ -102,7 +144,12 @@ describe("Summary benchmarks", () => {
 		]) {
 			runSummaryBenchmark(
 				`a deep tree with ${nodeCount} nodes}`,
-				makeDeepContent(nodeCount),
+				{
+					// Types do not allow implicitly constructing recursive types, so cast is required.
+					// TODO: Find a better alternative.
+					initialTree: makeJsDeepTree(nodeCount, 1) as LinkedList,
+					schema: LinkedList,
+				},
 				type,
 			);
 		}
@@ -113,7 +160,10 @@ describe("Summary benchmarks", () => {
 		]) {
 			runSummaryBenchmark(
 				`a wide tree with ${nodeCount} nodes}`,
-				makeWideContentWithEndValue(nodeCount, 1),
+				{
+					initialTree: makeJsWideTreeWithEndValue(nodeCount, 1),
+					schema: WideRoot,
+				},
 				type,
 			);
 		}
@@ -124,13 +174,13 @@ describe("Summary benchmarks", () => {
  * @param content - content to full the tree with
  * @returns the tree's summary
  */
-function getSummaryTree(content: TreeContent): ISummaryTree {
+function getSummaryTree<T extends ImplicitFieldSchema>(
+	content: TreeSimpleContentTyped<T>,
+): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	schematizeFlexTree(tree, {
-		...content,
-		allowedSchemaModifications: AllowedUpdateType.Initialize,
-	});
+	const view = tree.viewWith(new TreeViewConfiguration({ schema: content.schema }));
+	view.initialize(content.initialTree);
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);
 	return summary;

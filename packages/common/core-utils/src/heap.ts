@@ -127,9 +127,7 @@ export class Heap<T> {
 
 		// Update the swapped node assuming we didn't remove the end of the list
 		if (position !== this.L.length) {
-			// Non null asserting here since its the removal node's previous position
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.update(this.L[position]!);
+			this.update(this.L[position]);
 		}
 	}
 
@@ -153,9 +151,8 @@ export class Heap<T> {
 	}
 
 	private isGreaterThanParent(k: number): boolean {
-		// TODO: Document why this non-null assert is safe
-		// eslint-disable-next-line no-bitwise, @typescript-eslint/no-non-null-assertion
-		return k > 1 && this.comp.compare(this.L[k >> 1]!.value, this.L[k]!.value) > 0;
+		// eslint-disable-next-line no-bitwise
+		return k > 1 && this.comp.compare(this.L[k >> 1].value, this.L[k].value) > 0;
 	}
 
 	private fixdown(pos: number): void {
@@ -164,14 +161,10 @@ export class Heap<T> {
 		while (k << 1 <= this.count()) {
 			// eslint-disable-next-line no-bitwise
 			let j = k << 1;
-			// TODO: Document why this non-null assert is safe
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (j < this.count() && this.comp.compare(this.L[j]!.value, this.L[j + 1]!.value) > 0) {
+			if (j < this.count() && this.comp.compare(this.L[j].value, this.L[j + 1].value) > 0) {
 				j++;
 			}
-			// TODO: Document why this non-null assert is safe
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			if (this.comp.compare(this.L[k]!.value, this.L[j]!.value) <= 0) {
+			if (this.comp.compare(this.L[k].value, this.L[j].value) <= 0) {
 				break;
 			}
 			this.swap(k, j);
@@ -180,14 +173,10 @@ export class Heap<T> {
 	}
 
 	private swap(k: number, j: number): void {
-		// Non null asserting here since array is always filled and indices are within range
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const resultNodeJ = this.L[k]!;
-		// Non null asserting here since this affects perf if we assert
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const resultNodeK = (this.L[k] = this.L[j]!);
-		resultNodeK.position = k;
-		this.L[j] = resultNodeJ;
-		resultNodeJ.position = j;
+		const tmp = this.L[k];
+		this.L[k] = this.L[j];
+		this.L[k].position = k;
+		this.L[j] = tmp;
+		this.L[j].position = j;
 	}
 }

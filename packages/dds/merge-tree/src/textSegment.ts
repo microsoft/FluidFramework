@@ -7,7 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { BaseSegment, ISegment } from "./mergeTreeNodes.js";
 import { IJSONSegment } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import type { PropertySet } from "./properties.js";
 
 // Maximum length of text segment to be considered to be merged with other segment.
 // Maximum segment length is at least 2x of it (not taking into account initial segment creation).
@@ -41,11 +41,7 @@ export class TextSegment extends BaseSegment {
 	}
 
 	public static make(text: string, props?: PropertySet): TextSegment {
-		const seg = new TextSegment(text);
-		if (props) {
-			seg.addProperties(props);
-		}
-		return seg;
+		return new TextSegment(text, props);
 	}
 
 	public static fromJSONObject(spec: string | IJSONSegment): TextSegment | undefined {
@@ -53,13 +49,16 @@ export class TextSegment extends BaseSegment {
 			return new TextSegment(spec);
 		} else if (spec && typeof spec === "object" && "text" in spec) {
 			const textSpec = spec as IJSONTextSegment;
-			return TextSegment.make(textSpec.text, textSpec.props as PropertySet);
+			return TextSegment.make(textSpec.text, textSpec.props);
 		}
 		return undefined;
 	}
 
-	constructor(public text: string) {
-		super();
+	constructor(
+		public text: string,
+		props?: PropertySet,
+	) {
+		super(props);
 		this.cachedLength = text.length;
 	}
 
@@ -107,9 +106,7 @@ export class TextSegment extends BaseSegment {
 }
 
 /**
- * @deprecated This functionality was not meant to be exported and will be removed in a future release
- * @legacy
- * @alpha
+ * @internal
  */
 export interface IMergeTreeTextHelper {
 	getText(

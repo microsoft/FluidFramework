@@ -7,20 +7,14 @@ import * as assert from "assert";
 import crypto from "crypto";
 import * as path from "path";
 import { AsyncPriorityQueue } from "async";
-import chalk from "chalk";
 import registerDebug from "debug";
+import chalk from "picocolors";
 
+import { existsSync } from "node:fs";
+import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { defaultLogger } from "../../../common/logging";
-import {
-	ExecAsyncResult,
-	execAsync,
-	existsSync,
-	getExecutableFromCommand,
-	readFileAsync,
-	statAsync,
-	unlinkAsync,
-	writeFileAsync,
-} from "../../../common/utils";
+import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
+import type { BuildContext } from "../../buildContext";
 import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
@@ -54,12 +48,13 @@ export abstract class LeafTask extends Task {
 	constructor(
 		node: BuildPackage,
 		command: string,
+		context: BuildContext,
 		taskName: string | undefined,
 		private readonly isTemp: boolean = false, // indicate if the task is for temporary and not for execution.
 	) {
-		super(node, command, taskName);
+		super(node, command, context, taskName);
 		if (!this.isDisabled) {
-			this.node.buildContext.taskStats.leafTotalCount++;
+			this.node.context.taskStats.leafTotalCount++;
 		}
 	}
 
@@ -158,7 +153,10 @@ export abstract class LeafTask extends Task {
 	}
 
 	public get executable() {
-		return getExecutableFromCommand(this.command);
+		return getExecutableFromCommand(
+			this.command,
+			this.context.fluidBuildConfig?.multiCommandExecutables ?? [],
+		);
 	}
 
 	protected get useWorker() {
@@ -169,11 +167,11 @@ export abstract class LeafTask extends Task {
 			return BuildResult.UpToDate;
 		}
 		if (options.showExec) {
-			this.node.buildContext.taskStats.leafBuiltCount++;
+			this.node.context.taskStats.leafBuiltCount++;
 			const totalTask =
-				this.node.buildContext.taskStats.leafTotalCount -
-				this.node.buildContext.taskStats.leafUpToDateCount;
-			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+				this.node.context.taskStats.leafTotalCount -
+				this.node.context.taskStats.leafUpToDateCount;
+			const taskNum = this.node.context.taskStats.leafBuiltCount
 				.toString()
 				.padStart(totalTask.toString().length, " ");
 			log(`[${taskNum}/${totalTask}] ${this.node.pkg.nameColored}: ${this.command}`);
@@ -192,12 +190,7 @@ export abstract class LeafTask extends Task {
 			console.error(this.getExecErrors(ret));
 			return this.execDone(startTime, BuildResult.Failed);
 		}
-		if (
-			ret.stderr &&
-			// tsc-multi writes to stderr even when there are no errors, so this condition excludes that case as a workaround.
-			// Otherwise fluid-build spams warnings for all tsc-multi tasks.
-			!ret.stderr.includes("Found 0 errors")
-		) {
+		if (ret.stderr) {
 			// no error code but still error messages, treat them is non fatal warnings
 			console.warn(`${this.node.pkg.nameColored}: warning during command '${this.command}'`);
 			console.warn(this.getExecErrors(ret));
@@ -208,7 +201,7 @@ export abstract class LeafTask extends Task {
 	}
 
 	private async execCore(): Promise<TaskExecResult> {
-		const workerPool = this.node.buildContext.workerPool;
+		const workerPool = this.node.context.workerPool;
 		if (workerPool && this.useWorker) {
 			const workerResult = await workerPool.runOnWorker(
 				this.executable,
@@ -295,11 +288,11 @@ export abstract class LeafTask extends Task {
 					break;
 			}
 
-			this.node.buildContext.taskStats.leafBuiltCount++;
+			this.node.context.taskStats.leafBuiltCount++;
 			const totalTask =
-				this.node.buildContext.taskStats.leafTotalCount -
-				this.node.buildContext.taskStats.leafUpToDateCount;
-			const taskNum = this.node.buildContext.taskStats.leafBuiltCount
+				this.node.context.taskStats.leafTotalCount -
+				this.node.context.taskStats.leafUpToDateCount;
+			const taskNum = this.node.context.taskStats.leafBuiltCount
 				.toString()
 				.padStart(totalTask.toString().length, " ");
 			const elapsedTime = (Date.now() - startTime) / 1000;
@@ -310,9 +303,9 @@ export abstract class LeafTask extends Task {
 			}: ${workerMsg}${this.command} - ${elapsedTime.toFixed(3)}s${suffix}`;
 			log(statusString);
 			if (status === BuildResult.Failed) {
-				this.node.buildContext.failedTaskLines.push(statusString);
+				this.node.context.failedTaskLines.push(statusString);
 			}
-			this.node.buildContext.taskStats.leafExecTimeTotal += elapsedTime;
+			this.node.context.taskStats.leafExecTimeTotal += elapsedTime;
 		}
 		return status;
 	}
@@ -351,7 +344,7 @@ export abstract class LeafTask extends Task {
 		const leafIsUpToDate = await this.checkLeafIsUpToDate();
 		traceTaskCheck(`${this.nameColored}: checkLeafIsUpToDate: ${Date.now() - start}ms`);
 		if (leafIsUpToDate) {
-			this.node.buildContext.taskStats.leafUpToDateCount++;
+			this.node.context.taskStats.leafUpToDateCount++;
 			this.traceExec(`Skipping Leaf Task`);
 		}
 
@@ -407,11 +400,13 @@ export abstract class LeafTask extends Task {
 	// check if this task is up to date
 	protected abstract checkLeafIsUpToDate(): Promise<boolean>;
 
-	// Return if the task support recheck when it time to execute.
-	// Default to false so that the task will execute if any of the dependent task is out of date at the
-	// beginning of the build.
-	// Override to true if the task know all the input dependencies (e.g. tsc) able to detect if
-	// the dependent task's output changes this tasks' input and really need rebuild or not.
+	/**
+	 * Return if the task supports recheck when it time to execute.
+	 * Default to false so that the task will execute if any of the dependent task is out of date at the
+	 * beginning of the build.
+	 * Override to true if the task knows all the input dependencies (e.g. tsc) and is able to detect if
+	 * the dependent task's output changes this tasks' input and really need rebuild or not.
+	 */
 	protected get recheckLeafIsUpToDate(): boolean {
 		return false;
 	}
@@ -438,6 +433,9 @@ export abstract class LeafTask extends Task {
 	}
 }
 
+/**
+ * A LeafTask with a "done file" which represents the work this task needs to do.
+ */
 export abstract class LeafWithDoneFileTask extends LeafTask {
 	private _isIncremental: boolean = true;
 
@@ -457,7 +455,7 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 			const doneFileFullPath = this.doneFileFullPath;
 			try {
 				if (existsSync(doneFileFullPath)) {
-					await unlinkAsync(doneFileFullPath);
+					await unlink(doneFileFullPath);
 				}
 			} catch {
 				console.warn(
@@ -471,9 +469,10 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	protected async markExecDone() {
 		const doneFileFullPath = this.doneFileFullPath;
 		try {
+			// TODO: checkLeafIsUpToDate already called this. Consider reusing its results to save recomputation of them.
 			const content = await this.getDoneFileContent();
 			if (content !== undefined) {
-				await writeFileAsync(doneFileFullPath, content);
+				await writeFile(doneFileFullPath, content);
 			} else {
 				this._isIncremental = false;
 				console.warn(
@@ -493,13 +492,16 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 		try {
 			const doneFileExpectedContent = await this.getDoneFileContent();
 			if (doneFileExpectedContent !== undefined) {
-				const doneFileContent = await readFileAsync(doneFileFullPath, "utf8");
+				const doneFileContent = await readFile(doneFileFullPath, "utf8");
 				if (doneFileContent === doneFileExpectedContent) {
 					return true;
 				}
 				this.traceTrigger(`mismatched compare file: ${doneFileFullPath}`);
-				traceTaskTrigger(doneFileExpectedContent);
-				traceTaskTrigger(doneFileContent);
+				// These log statements can be useful for debugging, but they're extremely long and completely
+				// obscure other logs.
+				// In the future we can consider logging just the diff between the input and output.
+				// this.traceTrigger(doneFileExpectedContent);
+				// this.traceTrigger(doneFileContent);
 			} else {
 				this.traceTrigger(
 					"unable to generate done file expected content (getDoneFileContent returned undefined)",
@@ -529,13 +531,25 @@ export abstract class LeafWithDoneFileTask extends LeafTask {
 	 * Subclass should override these to configure the leaf with done file task
 	 */
 
-	// The content to be written in the done file.
+	/**
+	 * The content to be written in the "done file".
+	 * @remarks
+	 * This file must have different content if the work needed to be done by this task changes.
+	 * This is typically done by listing and/or hashing the inputs and outputs to this task.
+	 * This is invoked before the task is run to check if an existing done file from a previous run matches: if so, the task can be skipped.
+	 * If not, the task is run, after which this is invoked a second time to produce the contents to write to disk.
+	 */
 	protected abstract getDoneFileContent(): Promise<string | undefined>;
 }
 
 export class UnknownLeafTask extends LeafTask {
-	constructor(node: BuildPackage, command: string, taskName: string | undefined) {
-		super(node, command, taskName);
+	constructor(
+		node: BuildPackage,
+		command: string,
+		context: BuildContext,
+		taskName: string | undefined,
+	) {
+		super(node, command, context, taskName);
 	}
 
 	protected get isIncremental() {
@@ -555,11 +569,12 @@ export class UnknownLeafTask extends LeafTask {
 
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
-	 * @returns the list of files that this task depends on. The files are relative to the package directory.
+	 * @returns the list of absolute paths to files that this task depends on.
 	 */
 	protected abstract getInputFiles(): Promise<string[]>;
+
 	/**
-	 * @returns the list of files that this task generates. The files are relative to the package directory.
+	 * @returns the list of absolute paths to files that this task generates.
 	 */
 	protected abstract getOutputFiles(): Promise<string[]>;
 
@@ -586,12 +601,12 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const srcTimesP = Promise.all(
 				srcFiles
 					.map((match) => this.getPackageFileFullPath(match))
-					.map((match) => statAsync(match)),
+					.map((match) => stat(match)),
 			);
 			const dstTimesP = Promise.all(
 				dstFiles
 					.map((match) => this.getPackageFileFullPath(match))
-					.map((match) => statAsync(match)),
+					.map((match) => stat(match)),
 			);
 			const [srcTimes, dstTimes] = await Promise.all([srcTimesP, dstTimesP]);
 
@@ -611,7 +626,7 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 
 	private async getHashDoneFileContent(): Promise<string | undefined> {
 		const mapHash = async (name: string) => {
-			const hash = await this.node.buildContext.fileHashCache.getFileHash(
+			const hash = await this.node.context.fileHashCache.getFileHash(
 				this.getPackageFileFullPath(name),
 			);
 			return { name, hash };
@@ -624,6 +639,11 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			const dstHashesP = Promise.all(dstFiles.map(mapHash));
 
 			const [srcHashes, dstHashes] = await Promise.all([srcHashesP, dstHashesP]);
+
+			// sort by name for determinism
+			srcHashes.sort(sortByName);
+			dstHashes.sort(sortByName);
+
 			const output = JSON.stringify({
 				srcHashes,
 				dstHashes,
@@ -635,4 +655,14 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			return undefined;
 		}
 	}
+}
+
+function sortByName(a: { name: string }, b: { name: string }): number {
+	if (a.name < b.name) {
+		return -1;
+	}
+	if (a.name > b.name) {
+		return 1;
+	}
+	return 0;
 }

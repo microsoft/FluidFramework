@@ -9,7 +9,7 @@ There are some packages there are not included as part of this `fluid-framework`
 -   Fluid Framework [developer tools](https://github.com/microsoft/FluidFramework/tree/main/packages/tools/devtools/devtools).
 -   `@fluidframework/app-insights-logger`: to route Fluid telemetry to Azure App Insights.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_HEADER) -->
+<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -36,6 +36,10 @@ This package leverages [package.json exports](https://nodejs.org/api/packages.ht
 For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
 
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `fluid-framework` like normal.
+
+To access the `beta` APIs, import via `fluid-framework/beta`.
+
+To access the `alpha` APIs, import via `fluid-framework/alpha`.
 
 To access the `legacy` APIs, import via `fluid-framework/legacy`.
 
@@ -69,7 +73,7 @@ The `fluid-framework` package offers the following data structures:
 
 Check out the [Hello World tutorial](https://fluidframework.com/docs/start/tutorial/) using `fluid-framework`.
 
-<!-- AUTO-GENERATED-CONTENT:START (LIBRARY_PACKAGE_README_FOOTER) -->
+<!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
 <!-- NOTE: This section is automatically generated using @fluid-tools/markdown-magic. Do not update these generated contents directly. -->
@@ -87,6 +91,7 @@ When making such a request please include if the configuration already works (an
 ### Supported Runtimes
 
 -   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+    -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 
 ### Supported Tools

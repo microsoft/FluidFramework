@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	type ICodecOptions,
@@ -40,8 +40,8 @@ export function makeForestSummarizerCodec(
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
 			const fields = inner.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
-			for (let index = 0; index < fields.length; index++) {
-				out.set(data.keys[index], fields[index]);
+			for (const [index, field] of fields.entries()) {
+				out.set(data.keys[index] ?? oob(), field);
 			}
 			return out;
 		},

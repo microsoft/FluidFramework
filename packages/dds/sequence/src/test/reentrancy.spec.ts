@@ -10,6 +10,7 @@ import {
 	LocalReferenceCollection,
 	MergeTreeDeltaType,
 	ReferenceType,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -133,7 +134,8 @@ describe("SharedString op-reentrancy", () => {
 
 			sharedString.on("sequenceDelta", ({ deltaOperation, isLocal }, target) => {
 				if (deltaOperation === MergeTreeDeltaType.INSERT && isLocal) {
-					const { segment: segment2 } = target.getContainingSegment(0);
+					const { segment: segment2 }: { segment: ISegmentInternal | undefined } =
+						target.getContainingSegment(0);
 					assert(segment2);
 					assert.equal(segment, segment2);
 					assert(segment2.localRefs);
@@ -144,7 +146,7 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(4, "e");
 			containerRuntimeFactory.processAllMessages();
 
-			sharedString.walkSegments((seg) => {
+			sharedString.walkSegments((seg: ISegmentInternal) => {
 				if (!seg.localRefs) {
 					return false;
 				}
@@ -177,7 +179,7 @@ describe("SharedString op-reentrancy", () => {
 			sharedString.insertText(4, "e");
 			containerRuntimeFactory.processAllMessages();
 
-			sharedString.walkSegments((seg) => {
+			sharedString.walkSegments((seg: ISegmentInternal) => {
 				if (!seg.localRefs) {
 					return false;
 				}

@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
-import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
+import {
+	BenchmarkType,
+	benchmarkCustom,
+	isInPerformanceTestingMode,
+} from "@fluid-tools/benchmark";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -13,59 +17,42 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import Table from "easy-table";
 
-import {
-	AllowedUpdateType,
-	type FieldKey,
-	type JsonableTree,
-	type Value,
-	forEachNode,
-	moveToDetachedField,
-	rootFieldKey,
-} from "../../core/index.js";
-import { SchemaBuilder, leaf } from "../../domains/index.js";
+import type { Value } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
+import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
+import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
+import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
+import { treeTestFactory } from "../utils.js";
 import {
-	TreeCompressionStrategy,
-	cursorForJsonableTreeNode,
-} from "../../feature-libraries/index.js";
-import type { ISharedTree, ITreeCheckout, SharedTree } from "../../shared-tree/index.js";
-import { type JsonCompatibleReadOnly, brand, getOrAddEmptyToMap } from "../../util/index.js";
-import { schematizeFlexTree, treeTestFactory } from "../utils.js";
+	SchemaFactory,
+	TreeViewConfiguration,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type ITree,
+	type TreeView,
+} from "../../simple-tree/index.js";
 
 // Notes:
 // 1. Within this file "percentile" is commonly used, and seems to refer to a portion (0 to 1) or some maximum size.
 // While it would be useful and interesting to have some distribution of op sizes and measure some percentile from that distribution,
 // that does not appear to be what these tests are doing.
-// 2. Data from these tests are just printed: no other data collection is done. If a comparison is desired, manually run the tests before and after.
-// 3. Major changes in these sizes (regressions, optimizations or the tests not collecting what they should) do not make these tests fail.
-// 4. These tests are currently implemented as integration tests, meaning they use lots of dependencies and high level APIs.
-// They could be reimplemented targeted the lower level APIs if desired.
-// 5. "large" node just get a long repeated string value, not a complex tree, so tree encoding is not really covered here.
+// 2. Major changes in these sizes (regressions, optimizations or the tests not collecting what they should) do not make these tests fail.
+// 3. These tests are currently implemented as integration tests, meaning they use lots of dependencies and high level APIs.
+// They could be reimplemented targeted the lower level APIs if desired (just call the op encoding functions)
+// 4. "large" node just get a long repeated string value, not a complex tree, so tree encoding is not really covered here.
 // TODO: fix above issues.
 
-const builder = new SchemaBuilder({ scope: "opSize" });
+const schemaFactory = new SchemaFactory("opSize");
 
-const childSchema = builder.object("Test:Opsize-Bench-Child", {
-	data: leaf.string,
-});
-const parentSchema = builder.object("Test:Opsize-Bench-Root", {
-	children: builder.sequence(childSchema),
-});
-
-const fullSchemaData = builder.intoSchema(parentSchema);
-
-const initialTestJsonTree = {
-	type: parentSchema.name,
-};
-
-const childrenFieldKey: FieldKey = brand("children");
+class Child extends schemaFactory.object("Test:Opsize-Bench-Child", {
+	data: schemaFactory.string,
+}) {}
+class Parent extends schemaFactory.array("Test:Opsize-Bench-Root", Child) {}
 
 /**
  * Create a default attached tree for op submission
  */
-function createConnectedTree(): SharedTree {
+function createConnectedTree(): ITreePrivate {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
@@ -85,19 +72,22 @@ function createConnectedTree(): SharedTree {
 	return tree;
 }
 
+const config = new TreeViewConfiguration({
+	schema: Parent,
+	preventAmbiguity: true,
+	enableSchemaValidation: true,
+});
+
 /*
  * Updates the given `tree` to the given `schema` and inserts `state` as its root.
  */
 function initializeTestTree(
-	tree: SharedTree,
-	state: JsonableTree = initialTestJsonTree,
-): ITreeCheckout {
-	const writeCursor = cursorForJsonableTreeNode(state);
-	return schematizeFlexTree(tree, {
-		allowedSchemaModifications: AllowedUpdateType.Initialize,
-		initialTree: [writeCursor],
-		schema: fullSchemaData,
-	}).checkout;
+	tree: ITree,
+	state: InsertableTreeNodeFromImplicitAllowedTypes<typeof Parent> = [],
+): TreeView<typeof Parent> {
+	const view = tree.viewWith(config);
+	view.initialize(state);
+	return view;
 }
 
 function utf8Length(data: JsonCompatibleReadOnly): number {
@@ -105,197 +95,99 @@ function utf8Length(data: JsonCompatibleReadOnly): number {
 }
 
 /**
- * Creates a {@link JsonableTree} that matches the `parentSchema` and when run through `JSON.stringify` has the requested length in bytes when encoded as utf8.
+ * Creates an insertable child with a string of the provided length
  */
-function createTreeWithSize(desiredByteSize: number): JsonableTree {
-	const node = {
-		type: childSchema.name,
-		fields: {
-			data: [{ value: "", type: leaf.string.name }],
-		},
+function createTreeWithSize(
+	desiredByteSize: number,
+): InsertableTreeNodeFromImplicitAllowedTypes<typeof Child> {
+	return {
+		data: createStringFromLength(desiredByteSize),
 	};
-
-	const initialNodeByteSize = utf8Length(node);
-	node.fields.data[0].value = createStringFromLength(desiredByteSize - initialNodeByteSize);
-	assert(utf8Length(node) === desiredByteSize);
-	return node;
 }
 
-function getChildrenLength(tree: ITreeCheckout): number {
-	const cursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, cursor);
-	cursor.enterNode(0);
-	cursor.enterField(childrenFieldKey);
-	const length = cursor.getFieldLength();
-	cursor.free();
-	return length;
-}
-
-function assertChildNodeCount(tree: ITreeCheckout, nodeCount: number): void {
-	const cursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, cursor);
-	cursor.enterNode(0);
-	cursor.enterField(childrenFieldKey);
-	assert.equal(cursor.getFieldLength(), nodeCount);
-	cursor.free();
+function assertChildNodeCount(tree: TreeView<typeof Parent>, nodeCount: number): void {
+	assert.equal(tree.root.length, nodeCount);
 }
 
 /**
  * Checks that the first `childCount` values under "children" have the provided value.
  */
-function expectChildrenValues(tree: ITreeCheckout, expected: Value, childCount: number): void {
-	const cursor = tree.forest.allocateCursor();
-	moveToDetachedField(tree.forest, cursor);
-	cursor.enterNode(0);
-	cursor.enterField(childrenFieldKey);
-	assert(cursor.getFieldLength() >= childCount);
-	forEachNode(cursor, () => {
-		if (cursor.fieldIndex < childCount) {
-			assert.equal(cursor.value, expected);
-		}
-	});
-	cursor.free();
+function expectChildrenValues(
+	tree: TreeView<typeof Parent>,
+	expected: Value,
+	childCount: number,
+): void {
+	for (let index = 0; index < childCount; index++) {
+		assert.equal(tree.root[index].data, expected);
+	}
 }
 
 /**
- * Creates a jsonable tree with the desired number of children and the size of each child in bytes.
+ * Creates a tree with the desired number of children and the size of each child's string in bytes.
  */
-function createInitialTree(childNodes: number, childNodeByteSize: number): JsonableTree {
+function createInitialTree(
+	childNodes: number,
+	childNodeByteSize: number,
+): InsertableTreeNodeFromImplicitAllowedTypes<typeof Parent> {
 	const childNode = createTreeWithSize(childNodeByteSize);
-	const jsonTree: JsonableTree = {
-		type: parentSchema.name,
-		fields: {
-			children: new Array(childNodes).fill(childNode),
-		},
-	};
-	return jsonTree;
+	const children: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>[] = new Array(
+		childNodes,
+	).fill(childNode);
+	return children;
 }
 
-function insertNodesWithIndividualTransactions(
-	tree: ITreeCheckout,
-	jsonNode: JsonableTree,
+function insertNodes(
+	tree: TreeView<typeof Parent>,
+	content: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>,
 	count: number,
 ): void {
 	for (let i = 0; i < count; i++) {
-		tree.transaction.start();
-		const path = {
-			parent: undefined,
-			parentField: rootFieldKey,
-			parentIndex: 0,
-		};
-		const writeCursor = cursorForJsonableTreeNode(jsonNode);
-		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
-		field.insert(0, writeCursor);
-		tree.transaction.commit();
+		tree.root.insertAt(0, content);
 	}
 }
 
 function insertNodesWithSingleTransaction(
-	tree: ITreeCheckout,
-	jsonNode: JsonableTree,
+	tree: TreeView<typeof Parent>,
+	content: InsertableTreeNodeFromImplicitAllowedTypes<typeof Child>,
 	count: number,
 ): void {
-	tree.transaction.start();
-	const path = {
-		parent: undefined,
-		parentField: rootFieldKey,
-		parentIndex: 0,
-	};
-	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
-	for (let i = 0; i < count; i++) {
-		field.insert(0, cursorForJsonableTreeNode(jsonNode));
-	}
-	tree.transaction.commit();
+	Tree.runTransaction(tree, () => {
+		insertNodes(tree, content, count);
+	});
 }
 
-function removeNodesWithIndividualTransactions(
-	tree: ITreeCheckout,
+function removeNodes(
+	tree: TreeView<typeof Parent>,
 	numRemovals: number,
-	removalsPerTransaction: number,
+	removalsPerOp: number,
 ): void {
 	for (let i = 0; i < numRemovals; i++) {
-		tree.transaction.start();
-		const path = {
-			parent: undefined,
-			parentField: rootFieldKey,
-			parentIndex: 0,
-		};
-		const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
-		field.remove(getChildrenLength(tree) - 1, removalsPerTransaction);
-		tree.transaction.commit();
+		tree.root.removeRange(tree.root.length - 1, tree.root.length - 1 + removalsPerOp);
 	}
 }
 
-function removeNodesWithSingleTransaction(tree: ITreeCheckout, numRemoved: number): void {
-	tree.transaction.start();
-	const path = {
-		parent: undefined,
-		parentField: rootFieldKey,
-		parentIndex: 0,
-	};
-	const field = tree.editor.sequenceField({ parent: path, field: childrenFieldKey });
-	field.remove(0, numRemoved);
-	tree.transaction.commit();
+function removeNodesWithSingleTransaction(
+	tree: TreeView<typeof Parent>,
+	numRemoved: number,
+): void {
+	tree.root.removeRange(0, numRemoved);
 }
 
 function createStringFromLength(numberOfBytes: number): string {
 	return "a".repeat(numberOfBytes);
 }
 
-function editNodesWithIndividualTransactions(
-	tree: ITreeCheckout,
+function editNodes(
+	tree: TreeView<typeof Parent>,
 	numChildrenToEdit: number,
-	editPayload: Value,
+	childData: string,
 ): void {
-	const rootPath = {
-		parent: undefined,
-		parentField: rootFieldKey,
-		parentIndex: 0,
-	};
-	const editor = tree.editor.sequenceField({ parent: rootPath, field: childrenFieldKey });
 	for (let i = 0; i < numChildrenToEdit; i++) {
-		tree.transaction.start();
-		editor.remove(i, 1);
-		editor.insert(
-			i,
-			cursorForJsonableTreeNode({
-				type: childSchema.name,
-				value: editPayload,
-				fields: {
-					data: [{ value: "", type: leaf.string.name }],
-				},
-			}),
-		);
-		tree.transaction.commit();
+		Tree.runTransaction(tree, () => {
+			tree.root.removeAt(i);
+			tree.root.insertAt(i, { data: childData });
+		});
 	}
-}
-
-function editNodesWithSingleTransaction(
-	tree: ITreeCheckout,
-	numChildrenToEdit: number,
-	editPayload: Value,
-): void {
-	const rootPath = {
-		parent: undefined,
-		parentField: rootFieldKey,
-		parentIndex: 0,
-	};
-	const editor = tree.editor.sequenceField({ parent: rootPath, field: childrenFieldKey });
-	tree.transaction.start();
-	for (let i = 0; i < numChildrenToEdit; i++) {
-		editor.remove(i, 1);
-		editor.insert(
-			i,
-			cursorForJsonableTreeNode({
-				type: childSchema.name,
-				value: editPayload,
-				fields: {
-					data: [{ value: "", type: leaf.string.name }],
-				},
-			}),
-		);
-	}
-	tree.transaction.commit();
 }
 
 enum Operation {
@@ -389,17 +281,29 @@ const styles = [
 	},
 ];
 
+// TODO: replace use of TransactionStyle with this.
+function withTransactionsOrNot(
+	fn: (run: <T>(view: TreeView<typeof Parent>, op: () => T) => T) => void,
+): void {
+	describe("Many Ops", () => {
+		fn((view, op) => op());
+	});
+	describe("Single Transaction", () => {
+		fn((view, op) => Tree.runTransaction(view, () => op()));
+	});
+}
+
 describe("Op Size", () => {
 	const opsByBenchmarkName: Map<string, ISequencedDocumentMessage[]> = new Map();
 	let currentBenchmarkName = "";
 	const currentTestOps: ISequencedDocumentMessage[] = [];
 
 	function registerOpListener(
-		tree: ISharedTree,
+		tree: ITreePrivate,
 		resultArray: ISequencedDocumentMessage[],
 	): void {
 		// TODO: better way to hook this up. Needs to detect local ops exactly once.
-		/* eslint-disable @typescript-eslint/no-explicit-any */
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		const oldSubmitLocalMessage = (tree as any).submitLocalMessage.bind(tree);
 		function submitLocalMessage(
 			content: ISequencedDocumentMessage,
@@ -408,11 +312,13 @@ describe("Op Size", () => {
 			resultArray.push(content);
 			oldSubmitLocalMessage(content, localOpMetadata);
 		}
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(tree as any).submitLocalMessage = submitLocalMessage;
-		/* eslint-enable @typescript-eslint/no-explicit-any */
 	}
 
-	const getOperationsStats = (operations: ISequencedDocumentMessage[]) => {
+	const getOperationsStats = (
+		operations: ISequencedDocumentMessage[],
+	): Record<string, number> => {
 		const lengths = operations.map((operation) =>
 			utf8Length(operation as unknown as JsonCompatibleReadOnly),
 		);
@@ -426,7 +332,7 @@ describe("Op Size", () => {
 		};
 	};
 
-	const initializeOpDataCollection = (tree: ISharedTree) => {
+	const initializeOpDataCollection = (tree: ITreePrivate) => {
 		currentTestOps.length = 0;
 		registerOpListener(tree, currentTestOps);
 	};
@@ -447,32 +353,15 @@ describe("Op Size", () => {
 		currentTestOps.length = 0;
 	});
 
-	afterEach(() => {
-		// Currently tests can pass when no data is collected, so throw here in that case to ensure tests don't break and start collecting no data.
-		assert(currentTestOps.length !== 0);
+	afterEach(function () {
+		if (this.currentTest?.isFailed() === false) {
+			// Currently tests can pass when no data is collected, so throw here in that case to ensure tests don't break and start collecting no data.
+			assert(currentTestOps.length !== 0);
+		}
 		currentTestOps.forEach((op) =>
 			getOrAddEmptyToMap(opsByBenchmarkName, currentBenchmarkName).push(op),
 		);
 		currentTestOps.length = 0;
-	});
-
-	after(() => {
-		const allBenchmarkOpStats: Record<string, unknown>[] = [];
-		for (const [benchmarkName, ops] of opsByBenchmarkName) {
-			allBenchmarkOpStats.push({
-				"Test name": benchmarkName,
-				...getOperationsStats(ops),
-			});
-		}
-		const table = new Table();
-		allBenchmarkOpStats.forEach((data) => {
-			Object.keys(data).forEach((key) => table.cell(key, data[key]));
-			table.newRow();
-		});
-		table.sort(["Avg. Op Size (Bytes)|des"]);
-
-		console.log("-- Op Size Benchmark Statistics -- ");
-		console.log(table.toString());
 	});
 
 	describe("Insert Nodes", () => {
@@ -481,23 +370,35 @@ describe("Op Size", () => {
 			initializeOpDataCollection(tree);
 			const view = initializeTestTree(tree);
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
-			const jsonNode = createTreeWithSize(
-				getSuccessfulOpByteSize(Operation.Insert, transactionStyle, percentile),
-			);
 			const apply =
 				transactionStyle === TransactionStyle.Individual
-					? insertNodesWithIndividualTransactions
+					? insertNodes
 					: insertNodesWithSingleTransaction;
 
-			apply(view, jsonNode, BENCHMARK_NODE_COUNT);
+			apply(
+				view,
+				createTreeWithSize(
+					getSuccessfulOpByteSize(Operation.Insert, transactionStyle, percentile),
+				),
+				BENCHMARK_NODE_COUNT,
+			);
 			assertChildNodeCount(view, BENCHMARK_NODE_COUNT);
 		}
 
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					it(`${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`, () => {
-						benchmarkOps(style, percentile);
+					benchmarkCustom({
+						only: false,
+						type: BenchmarkType.Measurement,
+						title: `${BENCHMARK_NODE_COUNT} ${word} nodes in ${extraDescription}`,
+						run: async (reporter) => {
+							benchmarkOps(style, percentile);
+							const opStats = getOperationsStats(currentTestOps);
+							for (const key of Object.keys(opStats)) {
+								reporter.addMeasurement(key, opStats[key]);
+							}
+						},
 					});
 				}
 			});
@@ -516,7 +417,7 @@ describe("Op Size", () => {
 			const view = initializeTestTree(tree, createInitialTree(100, childByteSize));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
 			if (transactionStyle === TransactionStyle.Individual) {
-				removeNodesWithIndividualTransactions(view, 100, 1);
+				removeNodes(view, 100, 1);
 			} else {
 				removeNodesWithSingleTransaction(view, 100);
 			}
@@ -526,12 +427,22 @@ describe("Op Size", () => {
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					it(`${BENCHMARK_NODE_COUNT} ${word} nodes in ${
+					const title = `${BENCHMARK_NODE_COUNT} ${word} nodes in ${
 						style === TransactionStyle.Individual
 							? extraDescription
 							: `1 transactions containing 1 removal of ${BENCHMARK_NODE_COUNT} nodes`
-					}`, () => {
-						benchmarkOps(style, percentile);
+					}`;
+					benchmarkCustom({
+						only: false,
+						type: BenchmarkType.Measurement,
+						title,
+						run: async (reporter) => {
+							benchmarkOps(style, percentile);
+							const opStats = getOperationsStats(currentTestOps);
+							for (const key of Object.keys(opStats)) {
+								reporter.addMeasurement(key, opStats[key]);
+							}
+						},
 					});
 				}
 			});
@@ -545,24 +456,37 @@ describe("Op Size", () => {
 			// Note that the child node byte size for the initial tree here should be arbitrary.
 			const view = initializeTestTree(tree, createInitialTree(BENCHMARK_NODE_COUNT, 1000));
 			deleteCurrentOps(); // We don't want to record any ops from initializing the tree.
-			const editPayload = createStringFromLength(
+			const childData = createStringFromLength(
 				getSuccessfulOpByteSize(Operation.Edit, transactionStyle, percentile),
 			);
+			const action = () => {
+				editNodes(view, BENCHMARK_NODE_COUNT, childData);
+			};
 			if (transactionStyle === TransactionStyle.Individual) {
-				editNodesWithIndividualTransactions(view, BENCHMARK_NODE_COUNT, editPayload);
+				action();
 			} else {
-				editNodesWithSingleTransaction(view, BENCHMARK_NODE_COUNT, editPayload);
+				Tree.runTransaction(view, action);
 			}
-			expectChildrenValues(view, editPayload, BENCHMARK_NODE_COUNT);
+			expectChildrenValues(view, childData, BENCHMARK_NODE_COUNT);
 		}
 
 		for (const { description, style, extraDescription } of styles) {
 			describe(description, () => {
 				for (const { percentile, word } of sizes) {
-					it(`${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
+					const title = `${BENCHMARK_NODE_COUNT} ${word} changes in ${extraDescription} containing ${
 						style === TransactionStyle.Individual ? "1 edit" : `${BENCHMARK_NODE_COUNT} edits`
-					}`, () => {
-						benchmarkOps(style, percentile);
+					}`;
+					benchmarkCustom({
+						only: false,
+						type: BenchmarkType.Measurement,
+						title,
+						run: async (reporter) => {
+							benchmarkOps(style, percentile);
+							const opStats = getOperationsStats(currentTestOps);
+							for (const key of Object.keys(opStats)) {
+								reporter.addMeasurement(key, opStats[key]);
+							}
+						},
 					});
 				}
 			});
@@ -601,8 +525,8 @@ describe("Op Size", () => {
 			},
 		];
 
-		describe("Individual Transactions", () => {
-			const benchmarkInsertRemoveEditNodesWithInvidiualTxs = (
+		withTransactionsOrNot((run) => {
+			const benchmarkInsertRemoveEditNodesWithIndividualTxs = (
 				percentile: number,
 				distribution: OpKindDistribution,
 			) => {
@@ -626,106 +550,33 @@ describe("Op Size", () => {
 					createInitialTree(removeNodeCount, childByteSize),
 				);
 				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-				removeNodesWithIndividualTransactions(view, removeNodeCount, 1);
-				assertChildNodeCount(view, 0);
 
-				// insert
-				const insertChildNode = createTreeWithSize(
-					getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Individual, percentile),
-				);
-				insertNodesWithIndividualTransactions(view, insertChildNode, insertNodeCount);
-				assertChildNodeCount(view, insertNodeCount);
-
-				// edit
-				// The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
-				if (insertNodeCount < editNodeCount) {
-					const remainder = editNodeCount - insertNodeCount;
-					saveAndResetCurrentOps();
-					insertNodesWithIndividualTransactions(
-						view,
-						createTreeWithSize(childByteSize),
-						remainder,
-					);
-					deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
-				}
-				const editPayload = createStringFromLength(
+				const childData = createStringFromLength(
 					getSuccessfulOpByteSize(Operation.Edit, TransactionStyle.Individual, percentile),
 				);
-				editNodesWithIndividualTransactions(view, editNodeCount, editPayload);
-				expectChildrenValues(view, editPayload, editNodeCount);
-			};
 
-			for (const distribution of distributions) {
-				const suiteDescription = `Distribution: ${distribution.Insert}% insert, ${distribution.Edit}% edit, ${distribution.Remove}% remove`;
-				describe(suiteDescription, () => {
-					for (const { percentile } of sizes) {
-						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertRemoveEditNodesWithInvidiualTxs(percentile, distribution);
-						});
-					}
-				});
-			}
-		});
+				run(view, () => {
+					removeNodes(view, removeNodeCount, 1);
+					assertChildNodeCount(view, 0);
 
-		// TODO:
-		// These tests don't actually do a single transaction (they do one per edit type).
-		// Therefor they are failing to test the size of transactions mixing inserts, removals and edits.
-		// These tests also fail to clarify if the nodes being removed are ones which were inserted or edited earlier,
-		// so it can't be used to test compaction of transient data within a transaction even if it was a single transaction.
-		// Instead correctness tests should cover that, and maybe this suite should simply be removed?
-		describe("Single Transactions", () => {
-			const benchmarkInsertRemoveEditNodesWithSingleTxs = (
-				percentile: number,
-				distribution: OpKindDistribution,
-			) => {
-				const {
-					Remove: removedNodeCount,
-					Insert: insertNodeCount,
-					Edit: editNodeCount,
-				} = distribution;
-
-				const tree = createConnectedTree();
-				initializeOpDataCollection(tree);
-
-				// remove
-				const childByteSize = getSuccessfulOpByteSize(
-					Operation.Remove,
-					TransactionStyle.Single,
-					percentile,
-				);
-				const view = initializeTestTree(
-					tree,
-					createInitialTree(removedNodeCount, childByteSize),
-				);
-				deleteCurrentOps(); // We don't want to record the ops from initializing the tree.
-				removeNodesWithSingleTransaction(view, removedNodeCount);
-				assertChildNodeCount(view, 0);
-
-				// insert
-				const insertChildNode = createTreeWithSize(
-					getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Single, percentile),
-				);
-				insertNodesWithSingleTransaction(view, insertChildNode, insertNodeCount);
-				assertChildNodeCount(view, insertNodeCount);
-
-				// edit
-				// The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
-				// TODO: if actually making this do a single transaction like its supposed to, this would be an issue as it would get included in that transaction.
-				if (insertNodeCount < editNodeCount) {
-					const remainder = editNodeCount - insertNodeCount;
-					saveAndResetCurrentOps();
-					insertNodesWithIndividualTransactions(
-						view,
-						createTreeWithSize(childByteSize),
-						remainder,
+					// insert
+					const insertChildNode = createTreeWithSize(
+						getSuccessfulOpByteSize(Operation.Insert, TransactionStyle.Individual, percentile),
 					);
-					deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
-				}
-				const editPayload = createStringFromLength(
-					getSuccessfulOpByteSize(Operation.Edit, TransactionStyle.Single, percentile),
-				);
-				editNodesWithSingleTransaction(view, editNodeCount, editPayload);
-				expectChildrenValues(view, editPayload, editNodeCount);
+					insertNodes(view, insertChildNode, insertNodeCount);
+					assertChildNodeCount(view, insertNodeCount);
+
+					// edit
+					// The editing function iterates over each child node and performs an edit so we have to make sure we have enough children to avoid going out of bounds.
+					if (insertNodeCount < editNodeCount) {
+						const remainder = editNodeCount - insertNodeCount;
+						saveAndResetCurrentOps();
+						insertNodes(view, createTreeWithSize(childByteSize), remainder);
+						deleteCurrentOps(); // We don't want to record the ops from re-initializing the tree.
+					}
+					editNodes(view, editNodeCount, childData);
+				});
+				expectChildrenValues(view, childData, editNodeCount);
 			};
 
 			for (const distribution of distributions) {
@@ -733,7 +584,7 @@ describe("Op Size", () => {
 				describe(suiteDescription, () => {
 					for (const { percentile } of sizes) {
 						it(`Percentile: ${percentile}`, () => {
-							benchmarkInsertRemoveEditNodesWithSingleTxs(percentile, distribution);
+							benchmarkInsertRemoveEditNodesWithIndividualTxs(percentile, distribution);
 						});
 					}
 				});

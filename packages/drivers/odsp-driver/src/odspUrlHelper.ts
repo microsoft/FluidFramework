@@ -110,10 +110,8 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 			}
 		}
 
-		// TODO Why are we non null asserting here?
-		const driveId = joinSessionMatch[3] ?? joinSessionMatch[5]!;
-		// TODO Why are we non null asserting here?
-		const itemId = joinSessionMatch[4]!;
+		const driveId = joinSessionMatch[3] || joinSessionMatch[5];
+		const itemId = joinSessionMatch[4];
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	} else {
@@ -122,11 +120,27 @@ export async function getOdspUrlParts(url: URL): Promise<IOdspUrlParts | undefin
 		if (joinSessionMatch === null) {
 			return undefined;
 		}
-		// TODO Why are we non null asserting here?
-		const driveId = joinSessionMatch[2]!;
-		// TODO Why are we non null asserting here?
-		const itemId = joinSessionMatch[3]!;
+		const driveId = joinSessionMatch[2];
+		const itemId = joinSessionMatch[3];
 
 		return { siteUrl: `${url.origin}${url.pathname}`, driveId, itemId };
 	}
+}
+
+/**
+ * Inspect the ODSP siteUrl to guess if this document is in SPDF or MSIT, to aid livesite investigations
+ * @param urlOnSite - The URL of the site or a resource on the site
+ * @returns undefined if the URL doesn't match known SPDF/MSIT patterns, "SPDF" if it's SPDF, "MSIT" if it's MSIT
+ */
+export function checkForKnownServerFarmType(urlOnSite: string): "SPDF" | "MSIT" | undefined {
+	const domain = new URL(urlOnSite).hostname.toLowerCase();
+	if (domain.endsWith(".sharepoint-df.com")) {
+		return "SPDF";
+	} else if (
+		domain === "microsoft.sharepoint.com" ||
+		domain === "microsoft-my.sharepoint.com"
+	) {
+		return "MSIT";
+	}
+	return undefined;
 }

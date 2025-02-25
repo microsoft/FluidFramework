@@ -11,6 +11,8 @@ import {
 	ReferenceType,
 	SlidingPreference,
 	reservedRangeLabelsKey,
+	Side,
+	type SequencePlace,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -22,7 +24,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection, Side, type SequencePlace } from "../intervalCollection.js";
+import { IIntervalCollection } from "../intervalCollection.js";
 import { IntervalIndex } from "../intervalIndex/index.js";
 import {
 	ISerializableInterval,
@@ -558,7 +560,38 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString, collection1, [{ start: 1, end: 2 }]);
 		});
 
-		it("can slide intervals on create ack", () => {
+		describe("respects interval slide preference on create", () => {
+			for (const { testName, side, expectedPos } of [
+				{ testName: "Side.Before -> prefer forward", side: Side.Before, expectedPos: 1 },
+				{ testName: "Side.After -> prefer backward", side: Side.After, expectedPos: 0 },
+			]) {
+				it(testName, () => {
+					const collection1 = sharedString.getIntervalCollection("test");
+					sharedString.insertText(0, "ABCD");
+					containerRuntimeFactory.processAllMessages();
+					const collection2 = sharedString2.getIntervalCollection("test");
+					sharedString.removeRange(1, 3);
+
+					collection2.add({
+						start: { pos: 1, side },
+						end: { pos: 2, side },
+					});
+
+					containerRuntimeFactory.processAllMessages();
+					assert.strictEqual(sharedString.getText(), "AD");
+					assert.strictEqual(sharedString2.getText(), "AD");
+
+					assertSequenceIntervals(sharedString, collection1, [
+						{ start: expectedPos, end: expectedPos },
+					]);
+					assertSequenceIntervals(sharedString2, collection2, [
+						{ start: expectedPos, end: expectedPos },
+					]);
+				});
+			}
+		});
+
+		it("can slide intervals backward on create ack", () => {
 			// Create and connect a third SharedString.
 			const dataStoreRuntime3 = new MockFluidDataStoreRuntime({ clientId: "3" });
 			const containerRuntime3 =

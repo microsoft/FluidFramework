@@ -23,28 +23,7 @@ import type {
  * Records events sent to it, and then can walk back over those events, searching for a set of expected events to
  * match against the logged events.
  *
- * @deprecated
- *
- * This class is not intended for use outside of the `fluid-framework` repo, and will be removed from
- * package exports in the near future.
- *
- * Please migrate usages by either creating your own mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
- * implementation, or by copying this code as-is into your own repo.
- *
- * @privateRemarks TODO: When we are ready, this type should be made `internal`, and the deprecation notice should be removed.
- *
- * @deprecated
- *
- * This class is not intended for use outside of the `fluid-framework` repo, and will be removed from
- * package exports in the near future.
- *
- * Please migrate usages by either creating your own mock {@link @fluidframework/core-interfaces#ITelemetryBaseLogger}
- * implementation, or by copying this code as-is into your own repo.
- *
- * @privateRemarks TODO: When we are ready, this type should be made `internal`, and the deprecation notice should be removed.
- *
- * @legacy
- * @alpha
+ * @internal
  */
 export class MockLogger implements ITelemetryBaseLogger {
 	/**
@@ -80,7 +59,7 @@ export class MockLogger implements ITelemetryBaseLogger {
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
 	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
-		if (logLevel ?? LogLevel.default >= this.minLogLevel) {
+		if ((logLevel ?? LogLevel.default) >= this.minLogLevel) {
 			this._events.push(event);
 		}
 	}
@@ -285,9 +264,11 @@ ${JSON.stringify(actualEvents)}`);
 	): number {
 		let iExpectedEvent = 0;
 		for (const event of this._events) {
+			const expectedEvent = expectedEvents[iExpectedEvent];
 			if (
 				iExpectedEvent < expectedEvents.length &&
-				MockLogger.eventsMatch(event, expectedEvents[iExpectedEvent], inlineDetailsProp)
+				expectedEvent !== undefined &&
+				MockLogger.eventsMatch(event, expectedEvent, inlineDetailsProp)
 			) {
 				// We found the next expected event; increment
 				++iExpectedEvent;
@@ -326,6 +307,23 @@ ${JSON.stringify(actualEvents)}`);
 			return matchObjects({ ...actualForMatching, ...detailsExpanded }, expected);
 		}
 		return matchObjects(actual, expected);
+	}
+
+	/**
+	 * Throws if any errors were logged
+	 */
+	public assertNoErrors(message?: string, clearEventsAfterCheck: boolean = true): void {
+		const actualEvents = this.events;
+		const errors = actualEvents.filter((event) => event.category === "error");
+		if (clearEventsAfterCheck) {
+			this.clear();
+		}
+		if (errors.length > 0) {
+			throw new Error(`${message ?? "Errors found in logs"}
+
+error logs:
+${JSON.stringify(errors)}`);
+		}
 	}
 }
 
@@ -385,29 +383,4 @@ export function createMockLoggerExt(minLogLevel?: LogLevel): IMockLoggerExt {
 			mockLogger.events.map((e) => e as ITelemetryEventExt),
 	});
 	return childLogger as IMockLoggerExt;
-}
-
-/**
- * Temporary extension to add new functionality during breaking change freeze,
- * since MockLogger wasn't able to be made internal yet.
- *
- * @internal
- */
-export class MockLogger2 extends MockLogger {
-	/**
-	 * Throws if any errors were logged
-	 */
-	public assertNoErrors(message?: string, clearEventsAfterCheck: boolean = true): void {
-		const actualEvents = this.events;
-		const errors = actualEvents.filter((event) => event.category === "error");
-		if (clearEventsAfterCheck) {
-			this.clear();
-		}
-		if (errors.length > 0) {
-			throw new Error(`${message ?? "Errors found in logs"}
-
-error logs:
-${JSON.stringify(errors)}`);
-		}
-	}
 }

@@ -5,6 +5,7 @@
 ```ts
 
 import * as api from '@fluidframework/protocol-definitions';
+import { AxiosError } from 'axios';
 import { AxiosInstance } from 'axios';
 import { AxiosRequestConfig } from 'axios';
 import { ICreateTreeEntry } from '@fluidframework/gitresources';
@@ -25,7 +26,7 @@ import { SummaryObject } from '@fluidframework/protocol-definitions';
 
 // @internal (undocumented)
 export class BasicRestWrapper extends RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: () => Record<string, string | number | boolean>, refreshDefaultHeaders?: () => RawAxiosRequestHeaders, getCorrelationId?: () => string | undefined);
+    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number, defaultHeaders?: RawAxiosRequestHeaders, axios?: AxiosInstance, refreshDefaultQueryString?: (() => Record<string, string | number | boolean>) | undefined, refreshDefaultHeaders?: (() => RawAxiosRequestHeaders) | undefined, getCorrelationId?: (() => string | undefined) | undefined, getTelemetryContextProperties?: (() => Record<string, string | number | boolean> | undefined) | undefined, refreshTokenIfNeeded?: ((authorizationHeader: RawAxiosRequestHeaders) => Promise<RawAxiosRequestHeaders | undefined>) | undefined, logHttpMetrics?: ((requestProps: IBasicRestWrapperMetricProps) => void) | undefined);
     // (undocumented)
     protected request<T>(requestConfig: AxiosRequestConfig, statusCode: number, canRetry?: boolean): Promise<T>;
 }
@@ -51,6 +52,9 @@ export const canWrite: (scopes: string[]) => boolean;
 // @internal (undocumented)
 export const choose: () => string;
 
+// @internal (undocumented)
+export function convertAxiosErrorToNetorkError(error: AxiosError): NetworkError;
+
 // @internal
 export function convertFirstSummaryWholeSummaryTreeToSummaryTree(wholeSummaryTree: IWholeSummaryTree, unreferenced?: true | undefined): ISummaryTree;
 
@@ -63,7 +67,7 @@ export function convertSummaryTreeToWholeSummaryTree(parentHandle: string | unde
 // @internal
 export function convertWholeFlatSummaryToSnapshotTreeAndBlobs(flatSummary: IWholeFlatSummary, treePrefixToRemove?: string): INormalizedWholeSummary;
 
-// @internal (undocumented)
+// @internal
 export const CorrelationIdHeaderName = "x-correlation-id";
 
 // @internal
@@ -78,7 +82,7 @@ export const defaultHash = "00000000";
 // @internal
 export const DocDeleteScopeType = "doc:delete";
 
-// @internal (undocumented)
+// @internal
 export const DriverVersionHeaderName = "x-driver-version";
 
 // @internal (undocumented)
@@ -152,7 +156,7 @@ export class GitManager implements IGitManager {
     // (undocumented)
     getRawUrl(sha: string): string;
     // (undocumented)
-    getRef(ref: string): Promise<resources.IRef>;
+    getRef(ref: string): Promise<resources.IRef | null>;
     // (undocumented)
     getSummary(sha: string): Promise<IWholeFlatSummary>;
     getTree(root: string, recursive?: boolean): Promise<resources.ITree>;
@@ -227,6 +231,24 @@ export interface IAlfredTenant {
     id: string;
     // (undocumented)
     key: string;
+}
+
+// @internal (undocumented)
+export interface IBasicRestWrapperMetricProps {
+    // (undocumented)
+    axiosError: AxiosError<any>;
+    // (undocumented)
+    correlationId: string;
+    // (undocumented)
+    durationInMs: number;
+    // (undocumented)
+    method: string;
+    // (undocumented)
+    status: number | string;
+    // (undocumented)
+    timoutInMs: number | string;
+    // (undocumented)
+    url: string;
 }
 
 // @internal
@@ -306,7 +328,7 @@ export interface IGitManager {
     // (undocumented)
     getRawUrl(sha: string): string;
     // (undocumented)
-    getRef(ref: string): Promise<resources.IRef>;
+    getRef(ref: string): Promise<resources.IRef | null>;
     // (undocumented)
     getSummary(sha: string): Promise<IWholeFlatSummary>;
     // (undocumented)
@@ -344,7 +366,7 @@ export interface IGitService {
     // (undocumented)
     getContent(path: string, ref: string): Promise<any>;
     // (undocumented)
-    getRef(ref: string): Promise<resources.IRef>;
+    getRef(ref: string): Promise<resources.IRef | null>;
     // (undocumented)
     getRefs(): Promise<resources.IRef[]>;
     // (undocumented)
@@ -395,7 +417,8 @@ export interface INormalizedWholeSummary {
 
 // @internal
 export enum InternalErrorCode {
-    ClusterDraining = "ClusterDraining"
+    ClusterDraining = "ClusterDraining",
+    TokenRevoked = "TokenRevoked"
 }
 
 // @internal
@@ -571,28 +594,31 @@ export class NetworkError extends Error {
     constructor(
     code: number,
     message: string,
-    canRetry?: boolean,
-    isFatal?: boolean,
-    retryAfterMs?: number,
-    source?: string,
-    internalErrorCode?: InternalErrorCode);
+    canRetry?: boolean | undefined,
+    isFatal?: boolean | undefined,
+    retryAfterMs?: number | undefined,
+    source?: string | undefined,
+    internalErrorCode?: InternalErrorCode | undefined);
     // @public
-    readonly canRetry?: boolean;
+    readonly canRetry?: boolean | undefined;
     // @public
     readonly code: number;
     get details(): INetworkErrorDetails | string;
-    readonly internalErrorCode?: InternalErrorCode;
+    readonly internalErrorCode?: InternalErrorCode | undefined;
     // @public
-    readonly isFatal?: boolean;
-    readonly retryAfter: number;
+    readonly isFatal?: boolean | undefined;
+    readonly retryAfter?: number;
     // @public
-    readonly retryAfterMs?: number;
+    readonly retryAfterMs?: number | undefined;
     // @public
-    readonly source?: string;
+    readonly source?: string | undefined;
     toJSON(): INetworkErrorDetails & {
         code: number;
     };
 }
+
+// @internal (undocumented)
+export function parseToken(tenantId: string, authorization: string | undefined): string | undefined;
 
 // @internal (undocumented)
 export function promiseTimeout(mSec: number, promise: Promise<any>): Promise<any>;
@@ -614,15 +640,15 @@ export enum RestLessFieldNames {
 
 // @internal (undocumented)
 export abstract class RestWrapper {
-    constructor(baseurl?: string, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number);
+    constructor(baseurl?: string | undefined, defaultQueryString?: Record<string, string | number | boolean>, maxBodyLength?: number, maxContentLength?: number);
     // (undocumented)
-    protected readonly baseurl?: string;
+    protected readonly baseurl?: string | undefined;
     // (undocumented)
     protected defaultQueryString: Record<string, string | number | boolean>;
     // (undocumented)
     delete<T>(url: string, queryString?: Record<string, string | number | boolean>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
-    protected generateQueryString(queryStringValues: Record<string, string | number | boolean>): string;
+    protected generateQueryString(queryStringValues: Record<string, string | number | boolean> | undefined): string;
     // (undocumented)
     get<T>(url: string, queryString?: Record<string, string | number | boolean>, headers?: RawAxiosRequestHeaders, additionalOptions?: Partial<Omit<AxiosRequestConfig, "baseURL" | "headers" | "maxBodyLength" | "maxContentLength" | "method" | "url">>): Promise<T>;
     // (undocumented)
@@ -646,6 +672,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
     // (undocumented)
     writeSummaryTree(summaryTree: ISummaryTree_2, parentHandle: string, summaryType: IWholeSummaryPayloadType, sequenceNumber?: number, initial?: boolean): Promise<string>;
 }
+
+// @internal
+export const TelemetryContextHeaderName = "x-telemetry-context";
 
 // @internal
 export function throwFluidServiceNetworkError(statusCode: number, errorData?: INetworkErrorDetails | string): never;

@@ -3,28 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { Context, TreeStatus } from "../feature-libraries/index.js";
+import { TreeStatus } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
 	type TreeNodeApi,
 	type TreeView,
-	getFlexNode,
+	getOrCreateInnerNode,
 	treeNodeApi,
+	rollback,
+	type TransactionConstraint,
 } from "../simple-tree/index.js";
-import { fail } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
-import { contextToTreeView } from "./treeView.js";
-
-/**
- * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
- * @public
- */
-export const rollback = Symbol("SharedTree Transaction Rollback");
+import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * A function which runs a transaction in a SharedTree.
@@ -78,7 +74,10 @@ export interface RunTransaction {
 	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
-	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
+	// TODO: TreeView is invariant over the schema, so to accept any view, `any` is the only real option unless a non generic (or covariant) base type for view is introduced (which is planned).
+	// This use of any is actually type safe as it is only used as a constraint, and the actual strongly typed view (TView) is passed to the callback.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	<TView extends TreeView<any>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult,
 	): TResult;
@@ -123,7 +122,9 @@ export interface RunTransaction {
 	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
 	 * If the transaction is rolled back (whether by an error or by returning the {@link RunTransaction.rollback} | rollback value), a corresponding change event will also be emitted for the rollback.
 	 */
-	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
+	// See comment on previous overload about use of any here.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	<TView extends TreeView<any>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult | typeof rollback,
 	): TResult | typeof rollback;
@@ -161,10 +162,9 @@ export interface RunTransaction {
 	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
-	<TView extends TreeView<ImplicitFieldSchema>>(
-		tree: TView,
-		transaction: (root: TView["root"]) => void,
-	): void;
+	// See comment on previous overload about use of any here.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	<TView extends TreeView<any>>(tree: TView, transaction: (root: TView["root"]) => void): void;
 	/**
 	 * Apply one or more edits to the tree as a single atomic unit.
 	 * @param node - The node that will be passed to `transaction`.
@@ -211,7 +211,9 @@ export interface RunTransaction {
 	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
-	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
+	// See comment on previous overload about use of any here.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	<TView extends TreeView<any>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult,
 		preconditions?: readonly TransactionConstraint[],
@@ -264,7 +266,9 @@ export interface RunTransaction {
 	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
 	 * If the transaction is rolled back (whether by an error or by returning the {@link RunTransaction.rollback} | rollback value), a corresponding change event will also be emitted for the rollback.
 	 */
-	<TView extends TreeView<ImplicitFieldSchema>, TResult>(
+	// See comment on previous overload about use of any here.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	<TView extends TreeView<any>, TResult>(
 		tree: TView,
 		transaction: (root: TView["root"]) => TResult | typeof rollback,
 		preconditions?: readonly TransactionConstraint[],
@@ -313,7 +317,9 @@ export interface RunTransaction {
 	 * If the transaction function throws an error then the transaction will be automatically rolled back (discarding any changes made to the tree so far) before the error is propagated up from this function.
 	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
 	 */
-	<TView extends TreeView<ImplicitFieldSchema>>(
+	// See comment on previous overload about use of any here.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	<TView extends TreeView<any>>(
 		tree: TView,
 		transaction: (root: TView["root"]) => void,
 		preconditions?: readonly TransactionConstraint[],
@@ -324,9 +330,7 @@ export interface RunTransaction {
  * Provides various functions for interacting with {@link TreeNode}s.
  * @remarks
  * This type should only be used via the public `Tree` export.
- * @privateRemarks
- * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
- * @sealed @public
+ * @system @sealed @public
  */
 export interface TreeApi extends TreeNodeApi {
 	/**
@@ -372,28 +376,6 @@ export const treeApi: TreeApi = {
 	},
 };
 
-/**
- * A requirement for a SharedTree transaction to succeed.
- * @remarks Transaction constraints are useful for validating that the state of the tree meets some requirement when a transaction runs.
- * In general, when running a transaction a client can validate their tree state in whatever way they wish and decide to either proceed with the transaction or not.
- * However, they cannot know what the tree state will be when the transaction is _sequenced_.
- * There may have been any number of edits from other clients that get sequenced before the transaction is eventually sequenced.
- * Constraints provide a way to validate the tree state after the transaction has been sequenced and abort the transaction if the constraints are not met.
- * All clients will validate the constraints of a transaction when it is sequenced, so all clients will agree on whether the transaction succeeds or not.
- * @public
- */
-export type TransactionConstraint = NodeInDocumentConstraint; // TODO: Add more constraint types here
-
-/**
- * A transaction {@link TransactionConstraint | constraint} which requires that the given node exists in the tree.
- * @remarks The node must be in the document (its {@link TreeStatus | status} must be {@link TreeStatus.InDocument | InDocument}) to qualify as "existing".
- * @public
- */
-export interface NodeInDocumentConstraint {
-	readonly type: "nodeInDocument";
-	readonly node: TreeNode;
-}
-
 // TODO: Add more constraint types here
 
 /** Creates a copy of `runTransaction` with the `rollback` property added so as to satisfy the `RunTransaction` interface. */
@@ -413,6 +395,7 @@ function createRunTransaction(): RunTransaction {
  * Run the given transaction.
  * @remarks
  * This API is not publicly exported but is exported outside of this module so that test code may unit test the `Tree.runTransaction` function directly without being restricted to its public API overloads.
+ * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link TreeViewAlpha.runTransaction} instead which does not try to edit content in the error case.
  */
 export function runTransaction<
 	TNode extends TreeNode,
@@ -435,15 +418,21 @@ export function runTransaction<
 	} else {
 		const node = treeOrNode as TNode;
 		const t = transaction as (node: TNode) => TResult | typeof rollback;
-		const context = getFlexNode(node).context;
-		assert(context instanceof Context, 0x901 /* Unsupported context */);
-		const treeView =
-			contextToTreeView.get(context) ?? fail("Expected view to be registered for context");
-
+		const context = getOrCreateInnerNode(node).context;
+		if (context.isHydrated() === false) {
+			throw new UsageError(
+				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
+			);
+		}
+		const treeView = getCheckoutFlexTreeView(context);
 		return runTransactionInCheckout(treeView.checkout, () => t(node), preconditions);
 	}
 }
 
+/**
+ * Run the given transaction.
+ * @deprecated This API catches exceptions then tries to modify the tree before rethrowing: this is not robust. Use {@link TreeViewAlpha.runTransaction} instead which does not try to editing content in the error case.
+ */
 function runTransactionInCheckout<TResult>(
 	checkout: ITreeCheckout,
 	transaction: () => TResult | typeof rollback,
@@ -453,11 +442,13 @@ function runTransactionInCheckout<TResult>(
 	for (const constraint of preconditions) {
 		switch (constraint.type) {
 			case "nodeInDocument": {
-				const node = getFlexNode(constraint.node);
-				assert(
-					treeApi.status(constraint.node) === TreeStatus.InDocument,
-					0x90f /* Attempted to apply "nodeExists" constraint when building a transaction, but the node is not in the document. */,
-				);
+				const node = getOrCreateInnerNode(constraint.node);
+				const nodeStatus = treeApi.status(constraint.node);
+				if (nodeStatus !== TreeStatus.InDocument) {
+					throw new UsageError(
+						`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document. Node status: ${nodeStatus}`,
+					);
+				}
 				checkout.editor.addNodeExistsConstraint(node.anchorNode);
 				break;
 			}
@@ -465,13 +456,16 @@ function runTransactionInCheckout<TResult>(
 				unreachableCase(constraint.type);
 		}
 	}
+
 	let result: ReturnType<typeof transaction>;
 	try {
 		result = transaction();
-	} catch (e) {
+	} catch (error) {
 		// If the transaction has an unhandled error, abort and rollback the transaction but continue to propagate the error.
+		// This might try and modify the tree or trigger events while things are in an inconsistent state.
+		// It is up to the user of runTransaction to ensure that does not cause problems (and they have no robust way to do that, which is why its deprecated).
 		checkout.transaction.abort();
-		throw e;
+		throw error;
 	}
 
 	if (result === rollback) {

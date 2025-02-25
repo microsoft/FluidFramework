@@ -11,7 +11,6 @@ export { InsecureUrlResolver } from "./insecureUrlResolver.js";
 export {
 	canBeCoalescedByService,
 	isRuntimeMessage,
-	MessageType2,
 } from "./messageRecognition.js";
 export {
 	AuthorizationError,

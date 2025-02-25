@@ -8,10 +8,8 @@ import { strict as assert } from "assert";
 import { type SharedTreeShim, SharedTreeShimFactory } from "@fluid-experimental/tree";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import {
-	type ContainerRuntime,
-	type IContainerRuntimeOptions,
-} from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
@@ -42,8 +40,8 @@ describeCompat("Storing handles detached", "NoCompat", (getTestObjectProvider, a
 			return this.root;
 		}
 
-		public get containerRuntime(): ContainerRuntime {
-			return this.context.containerRuntime as ContainerRuntime;
+		public get containerRuntime(): IContainerRuntime {
+			return this.context.containerRuntime as IContainerRuntime;
 		}
 
 		public async createBlob(content: string): Promise<IFluidHandle<ArrayBufferLike>> {

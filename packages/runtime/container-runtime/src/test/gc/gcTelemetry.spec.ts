@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
@@ -72,20 +72,16 @@ describe("GC Telemetry Tracker", () => {
 			return GCNodeType.Other;
 		};
 		const configs: IGarbageCollectorConfigs = {
-			gcEnabled: true,
+			gcAllowed: true,
+			sweepAllowed: false,
 			sweepEnabled: false,
-			shouldRunSweep: "NO",
-			tombstoneAutorecoveryEnabled: false,
 			runFullGC: false,
 			testMode: false,
-			tombstoneMode: false,
 			inactiveTimeoutMs,
 			sessionExpiryTimeoutMs: defaultSessionExpiryDurationMs,
 			tombstoneTimeoutMs: enableSweep ? tombstoneTimeoutMs : undefined,
 			sweepGracePeriodMs,
 			throwOnTombstoneLoad: false,
-			throwOnTombstoneUsage: false,
-			throwOnInactiveLoad: false,
 			persistedGcFeatureMatrix: undefined,
 			gcVersionInBaseSnapshot: stableGCVersion,
 			gcVersionInEffect: stableGCVersion,
@@ -107,7 +103,7 @@ describe("GC Telemetry Tracker", () => {
 	 * just unreferenced.
 	 */
 	function markNodesUnreferenced(nodeIds: string[]) {
-		nodeIds.forEach((nodeId) => {
+		for (const nodeId of nodeIds) {
 			unreferencedNodesState.set(
 				nodeId,
 				new UnreferencedStateTracker(
@@ -118,12 +114,12 @@ describe("GC Telemetry Tracker", () => {
 					sweepGracePeriodMs,
 				),
 			);
-		});
+		}
 	}
 
 	// Mock node loaded and changed activity for the given nodes.
 	function mockNodeChanges(nodeIds: string[]) {
-		nodeIds.forEach((id) => {
+		for (const id of nodeIds) {
 			telemetryTracker.nodeUsed(id, {
 				id,
 				usageType: "Loaded",
@@ -140,7 +136,7 @@ describe("GC Telemetry Tracker", () => {
 				completedGCRuns: 0,
 				isTombstoned: false,
 			});
-		});
+		}
 	}
 
 	// Mock node revived activity for the given nodes.
@@ -338,7 +334,9 @@ describe("GC Telemetry Tracker", () => {
 			);
 		});
 
-		/** Tests that validate either the relevant events are logged as expected. */
+		/**
+		 * Tests that validate either the relevant events are logged as expected.
+		 */
 		const unreferencedPhasesEventTests = (
 			timeout: number,
 			mode: "inactive" | "tombstone" | "sweep",

@@ -12,6 +12,9 @@ export enum ConnectionState {
     EstablishingConnection = 3
 }
 
+// @alpha
+export function createDetachedContainer(createDetachedContainerProps: ICreateDetachedContainerProps): Promise<IContainer>;
+
 // @alpha (undocumented)
 export interface IBaseProtocolHandler {
     // (undocumented)
@@ -35,6 +38,25 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
+// @alpha
+export interface ICreateAndLoadContainerProps {
+    readonly allowReconnect?: boolean | undefined;
+    readonly clientDetailsOverride?: IClientDetails | undefined;
+    readonly codeLoader: ICodeDetailsLoader_2;
+    readonly configProvider?: IConfigProviderBase | undefined;
+    readonly documentServiceFactory: IDocumentServiceFactory;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly options?: IContainerPolicies | undefined;
+    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined;
+    readonly scope?: FluidObject | undefined;
+    readonly urlResolver: IUrlResolver;
+}
+
+// @alpha
+export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
+    readonly codeDetails: IFluidCodeDetails;
+}
+
 // @alpha @deprecated
 export type IDetachedBlobStorage = Pick<IDocumentStorageService, "createBlob" | "readBlob"> & {
     size: number;
@@ -48,9 +70,9 @@ export interface IFluidModuleWithDetails {
     module: IFluidModule;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ILoaderOptions extends ILoaderOptions_2 {
-    // (undocumented)
+    // @deprecated (undocumented)
     summarizeProtocolTree?: boolean;
 }
 
@@ -81,6 +103,12 @@ export interface ILoaderServices {
 }
 
 // @alpha
+export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
+    readonly pendingLocalState?: string | undefined;
+    readonly request: IRequest;
+}
+
+// @alpha
 export interface IParsedUrl {
     id: string;
     path: string;
@@ -104,6 +132,11 @@ export interface IQuorumSnapshot {
     proposals: QuorumProposalsSnapshot["proposals"];
     // (undocumented)
     values: QuorumProposalsSnapshot["values"];
+}
+
+// @alpha
+export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
+    readonly serializedState: string;
 }
 
 // @alpha (undocumented)
@@ -140,6 +173,9 @@ export class Loader implements IHostLoader {
 }
 
 // @alpha
+export function loadExistingContainer(loadExistingContainerProps: ILoadExistingContainerProps): Promise<IContainer>;
+
+// @alpha
 export type ProtocolHandlerBuilder = (attributes: IDocumentAttributes, snapshot: IQuorumSnapshot, sendProposal: (key: string, value: any) => number) => IProtocolHandler;
 
 // @alpha
@@ -150,6 +186,9 @@ export type QuorumProposalsSnapshot = {
     proposals: [number, ISequencedProposal, string[]][];
     values: [string, ICommittedProposal][];
 };
+
+// @alpha
+export function rehydrateDetachedContainer(rehydrateDetachedContainerProps: IRehydrateDetachedContainerProps): Promise<IContainer>;
 
 // @alpha
 export function resolveWithLocationRedirectionHandling<T>(api: (request: IRequest) => Promise<T>, request: IRequest, urlResolver: IUrlResolver, logger?: ITelemetryBaseLogger): Promise<T>;

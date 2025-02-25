@@ -4,9 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { confirm } from "@inquirer/prompts";
 import { Flags } from "@oclif/core";
-import chalk from "chalk";
-import inquirer from "inquirer";
+import chalk from "picocolors";
 import * as semver from "semver";
 
 import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
@@ -24,6 +25,7 @@ import {
 } from "@fluid-tools/version-tools";
 
 import { findPackageOrReleaseGroup, packageOrReleaseGroupArg } from "../args.js";
+import { getDefaultInterdependencyRange } from "../config.js";
 import { bumpTypeFlag, checkFlags, skipCheckFlag, versionSchemeFlag } from "../flags.js";
 import {
 	BaseCommand,
@@ -75,6 +77,12 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			description:
 				'Controls the type of dependency that is used between packages within the release group. Use "" (the empty string) to indicate exact dependencies. Use the workspace:-prefixed values to set interdependencies using the workspace protocol. The interdependency range will be set to the workspace string specified.',
 			options: [...RangeOperators, ...WorkspaceRanges],
+		}),
+		updateAllDeps: Flags.boolean({
+			description:
+				'Controls the behavior for updating dependencies in a package. If "false" (the default), matching dependencies are only updated if they use the "workspace:" protocol. If "true", they are updated regardless of what their version specifier says. This flag only exists to allow use of the old behavior (by passing `--updateAllDeps).',
+			default: false,
+			env: "FLUB_BUMP_UPDATE_ALL_DEPS",
 		}),
 		commit: checkFlags.commit,
 		install: checkFlags.install,
@@ -171,7 +179,8 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			repoVersion = releaseRepo.version;
 			scheme = flags.scheme ?? detectVersionScheme(repoVersion);
 			// Update the interdependency range to the configured default if the one provided isn't valid
-			interdependencyRange = interdependencyRange ?? releaseRepo.interdependencyRange;
+			interdependencyRange =
+				interdependencyRange ?? getDefaultInterdependencyRange(releaseRepo, context);
 			updatedPackages.push(...releaseRepo.packages);
 			packageOrReleaseGroup = releaseRepo;
 		} else {
@@ -228,14 +237,10 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 
 		// If a bump type was provided, ask the user to confirm. This is skipped when --exact is used.
 		if (bumpType !== undefined) {
-			const confirmIntegratedQuestion: inquirer.ConfirmQuestion = {
-				type: "confirm",
-				name: "proceed",
+			const proceed = await confirm({
 				message: `Proceed with the bump?`,
-			};
-
-			const answers = await inquirer.prompt(confirmIntegratedQuestion);
-			if (answers.proceed !== true) {
+			});
+			if (proceed !== true) {
 				this.info(`Cancelled.`);
 				this.exit(0);
 			}
@@ -248,6 +253,7 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 			newVersion,
 			interdependencyRange,
 			this.logger,
+			!flags.updateAllDeps,
 		);
 
 		if (shouldInstall) {
@@ -273,10 +279,11 @@ export default class BumpCommand extends BaseCommand<typeof BumpCommand> {
 				scheme,
 			);
 			this.log(`Creating branch ${bumpBranch}`);
-			await context.createBranch(bumpBranch);
-			await context.gitRepo.commit(commitMessage, "Error committing");
+			const gitRepo = await context.getGitRepository();
+			await gitRepo.createBranch(bumpBranch);
+			await gitRepo.gitClient.commit(commitMessage);
 			this.finalMessages.push(
-				`You can now create a PR for branch ${bumpBranch} targeting ${context.originalBranchName}`,
+				`You can now create a PR for branch ${bumpBranch} targeting ${gitRepo.originalBranchName}`,
 			);
 		} else {
 			this.warning(`Skipping commit. You'll need to manually commit changes.`);

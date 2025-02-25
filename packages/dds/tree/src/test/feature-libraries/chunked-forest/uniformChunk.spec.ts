@@ -3,16 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
-import {
-	EmptyKey,
-	type ITreeCursorSynchronous,
-	type TreeNodeSchemaIdentifier,
-} from "../../../core/index.js";
-import { cursorToJsonObject, singleJsonCursor } from "../../../domains/index.js";
+import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
+import { cursorToJsonObject, singleJsonCursor, JsonObject } from "../../json/index.js";
 import {
 	type ChunkShape,
 	TreeShape,
@@ -26,11 +22,15 @@ import {
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
-import { mapSchema, testSpecializedFieldCursor } from "../../cursorTestSuite.js";
+import { testSpecializedFieldCursor } from "../../cursorTestSuite.js";
 // eslint-disable-next-line import/no-internal-modules
 import { sum } from "../../domains/json/benchmarks.js";
 
 import { emptyShape, polygonTree, testData, xField, yField } from "./uniformChunkTestData.js";
+import { brand } from "../../../util/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { numberSchema, stringSchema } from "../../../simple-tree/leafNodeSchema.js";
+import { validateUsageError } from "../../utils.js";
 
 // Validate a few aspects of shapes that are easier to verify here than via checking the cursor.
 function validateShape(shape: ChunkShape): void {
@@ -65,15 +65,24 @@ describe("uniformChunk", () => {
 				validateShape(tree.dataFactory().shape);
 			});
 		}
+		it("shape with maybeCompressedStringAsNumber flag set to true fails if it is not a string leaf node.", () => {
+			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			// Test that a non string leaf node shape with maybeCompressedStringAsNumber set to true fails.
+			assert.throws(
+				() => new TreeShape(brand(numberSchema.identifier), true, [], true),
+				validateUsageError(
+					/maybeDecompressedStringAsNumber flag can only be set to true for string leaf node./,
+				),
+			);
+		});
 	});
 
 	testSpecializedFieldCursor<TreeChunk, ITreeCursorSynchronous>({
 		cursorName: "uniformChunk",
 		builders: {
 			withKeys: (keys) => {
-				const schema: TreeNodeSchemaIdentifier = mapSchema.name;
 				const withKeysShape = new TreeShape(
-					schema,
+					brand(JsonObject.identifier),
 					false,
 					keys.map((key) => [key, emptyShape, 1] as const),
 				);

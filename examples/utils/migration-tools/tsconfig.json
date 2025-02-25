@@ -1,0 +1,9 @@
+{
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["src/**/*"],
+	"compilerOptions": {
+		"rootDir": "./src",
+		"outDir": "./lib",
+		"exactOptionalPropertyTypes": false,
+	},
+}

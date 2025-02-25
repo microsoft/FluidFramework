@@ -22,9 +22,13 @@ export const MINIMUM_PUBLIC_VERSION = "2.0.0";
 const MINIMUM_PUBLIC_MAJOR = semver.major(MINIMUM_PUBLIC_VERSION);
 
 /**
- * The minimum number of prerelease sections a version should have to be considered a Fluid internal version.
+ * The expected number of prerelease sections a version should have to be considered a Fluid internal version. Any
+ * version string with fewer than this number of prerelease sections is not a Fluid internal version.
+ *
+ * If a version has more than this number of prerelease sections, it may be considered a prerelease Fluid internal
+ * version.
  */
-const MINIMUM_SEMVER_PRERELEASE_SECTIONS = 4;
+const EXPECTED_PRERELEASE_SECTIONS = 4;
 
 /**
  * The first part of the semver prerelease value is called the "prerelease identifier". For Fluid internal versions,
@@ -229,12 +233,15 @@ export function validateVersionScheme(
 		);
 	}
 
-	if (parsedVersion.prerelease.length > MINIMUM_SEMVER_PRERELEASE_SECTIONS) {
-		if (allowPrereleases) {
-			return true;
-		}
+	if (
+		// All versions with fewer than the min prerelease sections should not be considered internal
+		parsedVersion.prerelease.length < EXPECTED_PRERELEASE_SECTIONS ||
+		// If the version has more than the minimum prerelease sections, then it's not considered an internal version unless
+		// allowPrereleases === true
+		(parsedVersion.prerelease.length > EXPECTED_PRERELEASE_SECTIONS && !allowPrereleases)
+	) {
 		throw new Error(
-			`Prerelease value contains ${parsedVersion.prerelease.length} components; expected ${MINIMUM_SEMVER_PRERELEASE_SECTIONS}.`,
+			`Prerelease value contains ${parsedVersion.prerelease.length} components; expected ${EXPECTED_PRERELEASE_SECTIONS}.`,
 		);
 	}
 
@@ -489,4 +496,45 @@ export function detectInternalVersionConstraintType(
 
 	const maxSatisfying = semver.maxSatisfying([patch, minor], range);
 	return maxSatisfying === patch ? "patch" : maxSatisfying === minor ? "minor" : "exact";
+}
+
+/**
+ * Checks if the provided version is a test version.
+ *
+ * Test versions are generated from test/ branches and are published to the test feed.
+ *
+ * @param version - The version to check
+ * @returns - True if the version string is a test version, otherwise false
+ *
+ * @example
+ * returns true
+ * isInternalTestVersion("0.0.0-260312-test");
+ *
+ * @example
+ * returns false
+ * isInternalTestVersion("2.1.0-260312");
+ *
+ * @throws error - If the version string cannot be parsed as a valid semantic version.
+ */
+export function isInternalTestVersion(version: semver.SemVer | string): boolean {
+	const parsedVersion = semver.parse(version);
+
+	if (parsedVersion === null) {
+		throw new Error(`Couldn't parse ${version} as a semver.`);
+	}
+
+	if (
+		parsedVersion.prerelease.length === 0 ||
+		typeof parsedVersion.prerelease[0] !== "string"
+	) {
+		return false;
+	}
+
+	const isTestVersion =
+		parsedVersion.minor === 0 &&
+		parsedVersion.major === 0 &&
+		parsedVersion.patch === 0 &&
+		parsedVersion.prerelease[0].endsWith("-test");
+
+	return isTestVersion;
 }

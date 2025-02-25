@@ -55,10 +55,16 @@ export function getSimpleVersion(fileVersion: string, argBuildNum: string, argRe
 export function getVersionRange(version: semver.SemVer | string, maxAutomaticBump: "minor" | "patch" | "~" | "^"): string;
 
 // @public
+export function getVersionsFromStrings(prefix: TagPrefix, tags: string[]): string[];
+
+// @public
 export type InterdependencyRange = WorkspaceRange | RangeOperator | RangeOperatorWithVersion | semver.SemVer;
 
 // @public
 export function isInterdependencyRange(r: unknown): r is InterdependencyRange;
+
+// @public
+export function isInternalTestVersion(version: semver.SemVer | string): boolean;
 
 // @public
 export function isInternalVersionRange(range: string, allowAnyPrereleaseId?: boolean): boolean;

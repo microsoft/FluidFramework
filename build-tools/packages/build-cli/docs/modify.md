@@ -4,7 +4,7 @@
 Modify commands are used to modify projects to add or remove dependencies, update Fluid imports, etc.
 
 * [`flub modify fluid-imports`](#flub-modify-fluid-imports)
-* [`flub modify lockfile`](#flub-modify-lockfile)
+* [`flub modify lockfile PACKAGE_OR_RELEASE_GROUP`](#flub-modify-lockfile-package_or_release_group)
 
 ## `flub modify fluid-imports`
 
@@ -12,7 +12,7 @@ Rewrite imports for Fluid Framework APIs to use the correct subpath import (/bet
 
 ```
 USAGE
-  $ flub modify fluid-imports [-v | --quiet] [--tsconfigs <value>] [--packageRegex <value>] [--data <value>]
+  $ flub modify fluid-imports [-v | --quiet] [--tsconfigs <value>...] [--packageRegex <value>] [--data <value>]
     [--onlyInternal]
 
 FLAGS
@@ -34,20 +34,22 @@ DESCRIPTION
 
 _See code: [src/commands/modify/fluid-imports.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/modify/fluid-imports.ts)_
 
-## `flub modify lockfile`
+## `flub modify lockfile PACKAGE_OR_RELEASE_GROUP`
 
 Updates a dependency in the pnpm lockfile to the latest version of a specified semver range.
 
 ```
 USAGE
-  $ flub modify lockfile -g client|server|azure|build-tools|gitrest|historian --dependencyName <value> --version
-    <value> [--json] [-v | --quiet]
+  $ flub modify lockfile PACKAGE_OR_RELEASE_GROUP --dependencyName <value> --version <value> [--json] [-v | --quiet]
+
+ARGUMENTS
+  PACKAGE_OR_RELEASE_GROUP  [default: client] The name of a package or a release group. Defaults to the client release
+                            group if not specified.
 
 FLAGS
-  -g, --releaseGroup=<option>   (required) Name of a release group.
-                                <options: client|server|azure|build-tools|gitrest|historian>
-      --dependencyName=<value>  (required) Name of the dependency (npm package) to update.
-      --version=<value>         (required) Semver range specifier to use when updating the dependency.
+  --dependencyName=<value>  (required) Name of the dependency (npm package) to update.
+  --version=<value>         (required) A semver version or range specifier (e.g. ^1.2.3) to use when updating the
+                            dependency.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

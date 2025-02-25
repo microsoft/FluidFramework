@@ -79,44 +79,46 @@ export const AppView: React.FC<IAppProps> = ({ app }: IAppProps) => {
 	const [, setFrame] = useState<number>(0);
 
 	useEffect(() => {
-		const localBubbles = app.localClient.bubbles;
+		app.runTransaction(() => {
+			const localBubbles = app.localClient.bubbles;
 
-		// Move each bubble
-		for (const bubble of localBubbles) {
-			move(bubble, app.width, app.height);
-		}
-
-		// Handle collisions between each pair of local bubbles
-		for (let i = 0; i < localBubbles.length; i++) {
-			const left = localBubbles[i];
-			for (let j = i + 1; j < localBubbles.length; j++) {
-				const right = localBubbles[j];
-				collide(left, right);
+			// Move each bubble
+			for (const bubble of localBubbles) {
+				move(bubble, app.width, app.height);
 			}
-		}
 
-		// Handle collisions between local bubbles and remote bubbles (but not between pairs
-		// of remote bubbles.)
-		for (const client of app.clients) {
-			if (client.clientId === app.localClient.clientId) {
-				continue;
-			}
-			for (const right of client.bubbles) {
-				for (const left of localBubbles) {
+			// Handle collisions between each pair of local bubbles
+			for (let i = 0; i < localBubbles.length; i++) {
+				const left = localBubbles[i];
+				for (let j = i + 1; j < localBubbles.length; j++) {
+					const right = localBubbles[j];
 					collide(left, right);
 				}
 			}
-		}
 
-		// Scale the number of local bubbles to target 22-23 fps.  We choose 22-23 fps because it
-		// is below 23.98, the lowest display refresh rate typically encountered on modern displays.
-		if (!(stats.smoothFps > 22)) {
-			app.decreaseBubbles();
-		} else if (stats.smoothFps > 23) {
-			app.increaseBubbles();
-		}
+			// Handle collisions between local bubbles and remote bubbles (but not between pairs
+			// of remote bubbles.)
+			for (const client of app.clients) {
+				if (client.clientId === app.localClient.clientId) {
+					continue;
+				}
+				for (const right of client.bubbles) {
+					for (const left of localBubbles) {
+						collide(left, right);
+					}
+				}
+			}
 
-		app.applyEdits();
+			// Scale the number of local bubbles to target 22-23 fps.  We choose 22-23 fps because it
+			// is below 23.98, the lowest display refresh rate typically encountered on modern displays.
+			if (!(stats.smoothFps > 22)) {
+				app.decreaseBubbles();
+			} else if (stats.smoothFps > 23) {
+				app.increaseBubbles();
+			}
+
+			app.applyEdits();
+		});
 	});
 
 	// Force a render each frame.

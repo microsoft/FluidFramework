@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { Uint8ArrayToString, performance, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	Uint8ArrayToString,
+	performanceNow,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
@@ -161,14 +165,13 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	// eslint-disable-next-line @rushstack/no-new-null
 	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		let requestVersion = version;
-		if (requestVersion === undefined) {
+		if (!requestVersion) {
 			const versions = await this.getVersions(this.id, 1);
-			const firstVersion = versions[0];
-			if (firstVersion === undefined) {
+			if (versions.length === 0) {
 				return null;
 			}
 
-			requestVersion = firstVersion;
+			requestVersion = versions[0];
 		}
 
 		let normalizedWholeSnapshot = await this.snapshotTreeCache.get(
@@ -307,10 +310,10 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 				const manager = await this.getStorageManager(disableCache);
 				const response: IR11sResponse<IWholeFlatSnapshot> =
 					await manager.getSnapshot(versionId);
-				const start = performance.now();
+				const start = performanceNow();
 				const snapshot: INormalizedWholeSnapshot =
 					convertWholeFlatSnapshotToSnapshotTreeAndBlobs(response.content);
-				const snapshotConversionTime = performance.now() - start;
+				const snapshotConversionTime = performanceNow() - start;
 				validateBlobsAndTrees(snapshot.snapshotTree);
 				const { trees, numBlobs, encodedBlobsSize } = evalBlobsAndTrees(snapshot);
 

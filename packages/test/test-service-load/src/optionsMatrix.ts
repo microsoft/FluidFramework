@@ -10,17 +10,18 @@ import {
 	generatePairwiseOptions,
 	numberCases,
 } from "@fluid-private/test-pairwise-generator";
-import { ILoaderOptions } from "@fluidframework/container-loader/internal";
+import { ILoaderOptions } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	IContainerRuntimeOptions,
+	disabledCompressionConfig,
 	IGCRuntimeOptions,
 	ISummaryRuntimeOptions,
+	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes } from "@fluidframework/core-interfaces";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { ILoadTestConfig, OptionOverride } from "./testConfigFile.js";
+import type { OptionOverride, TestConfiguration } from "./testConfigFile.js";
 
 interface ILoaderOptionsExperimental extends ILoaderOptions {
 	enableOfflineSnapshotRefresh?: boolean;
@@ -32,7 +33,6 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 	client: [undefined],
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
-	summarizeProtocolTree: [undefined],
 	enableOfflineLoad: booleanCases,
 	enableOfflineSnapshotRefresh: booleanCases,
 	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
@@ -86,7 +86,7 @@ const summaryOptionsMatrix: OptionsMatrix<ISummaryRuntimeOptions> = {
 
 export function generateRuntimeOptions(
 	seed: number,
-	overrides: Partial<OptionsMatrix<IContainerRuntimeOptions>> | undefined,
+	overrides: Partial<OptionsMatrix<IContainerRuntimeOptionsInternal>> | undefined,
 ) {
 	const gcOptions = generatePairwiseOptions(
 		applyOverrides(gcOptionsMatrix, overrides?.gcOptions as any),
@@ -98,7 +98,7 @@ export function generateRuntimeOptions(
 		seed,
 	);
 
-	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptions> = {
+	const runtimeOptionsMatrix: OptionsMatrix<IContainerRuntimeOptionsInternal> = {
 		gcOptions: [undefined, ...gcOptions],
 		summaryOptions: [undefined, ...summaryOptions],
 		loadSequenceNumberVerification: [undefined],
@@ -114,7 +114,7 @@ export function generateRuntimeOptions(
 		explicitSchemaControl: [true, false],
 	};
 
-	return generatePairwiseOptions<IContainerRuntimeOptions>(
+	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(
 		applyOverrides(runtimeOptionsMatrix, {
 			...overrides,
 			gcOptions: undefined,
@@ -122,6 +122,20 @@ export function generateRuntimeOptions(
 		}),
 		seed,
 	);
+
+	// Override compressionOptions to disable it if Grouped Batching is disabled
+	pairwiseOptions.map((options) => {
+		if (options.enableGroupedBatching === false) {
+			(
+				options as {
+					// Remove readonly modifier to allow overriding
+					-readonly [P in keyof IContainerRuntimeOptionsInternal]: IContainerRuntimeOptionsInternal[P];
+				}
+			).compressionOptions = disabledCompressionConfig;
+		}
+	});
+
+	return pairwiseOptions;
 }
 
 export function generateConfigurations(
@@ -142,7 +156,7 @@ export function generateConfigurations(
  * @returns an option override
  */
 export function getOptionOverride(
-	testConfig: ILoadTestConfig | undefined,
+	testConfig: TestConfiguration | undefined,
 	driverType: TestDriverTypes,
 	endpoint: string | undefined,
 ): OptionOverride | undefined {

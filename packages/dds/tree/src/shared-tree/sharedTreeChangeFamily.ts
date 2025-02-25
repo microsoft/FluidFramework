@@ -32,12 +32,14 @@ import {
 	type NestedSet,
 	addToNestedSet,
 	fail,
+	hasSingle,
 	nestedSetContains,
 } from "../util/index.js";
 
 import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
@@ -61,6 +63,7 @@ export class SharedTreeChangeFamily
 		fieldBatchCodec: FieldBatchCodec,
 		codecOptions: ICodecOptions,
 		chunkCompressionStrategy?: TreeCompressionStrategy,
+		private readonly idCompressor?: IIdCompressor,
 	) {
 		const modularChangeCodec = makeModularChangeCodecFamily(
 			fieldKindConfigurations,
@@ -77,9 +80,15 @@ export class SharedTreeChangeFamily
 	}
 
 	public buildEditor(
-		changeReceiver: (change: SharedTreeChange) => void,
+		mintRevisionTag: () => RevisionTag,
+		changeReceiver: (change: TaggedChange<SharedTreeChange>) => void,
 	): SharedTreeEditBuilder {
-		return new SharedTreeEditBuilder(this.modularChangeFamily, changeReceiver);
+		return new SharedTreeEditBuilder(
+			this.modularChangeFamily,
+			mintRevisionTag,
+			changeReceiver,
+			this.idCompressor,
+		);
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
@@ -114,6 +123,7 @@ export class SharedTreeChangeFamily
 	public invert(
 		change: TaggedChange<SharedTreeChange>,
 		isRollback: boolean,
+		revision: RevisionTag,
 	): SharedTreeChange {
 		const invertInnerChange: (
 			innerChange: SharedTreeChange["changes"][number],
@@ -125,6 +135,7 @@ export class SharedTreeChangeFamily
 						innerChange: this.modularChangeFamily.invert(
 							mapTaggedChange(change, innerChange.innerChange),
 							isRollback,
+							revision,
 						),
 					};
 				case "schema": {
@@ -169,7 +180,7 @@ export class SharedTreeChangeFamily
 			return SharedTreeChangeFamily.emptyChange;
 		}
 		assert(
-			change.change.changes.length === 1 && over.change.changes.length === 1,
+			hasSingle(change.change.changes) && hasSingle(over.change.changes),
 			0x884 /* SharedTreeChange should have exactly one inner change if no schema change is present. */,
 		);
 

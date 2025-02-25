@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IThrottler,
@@ -13,30 +12,34 @@ import {
 	IRevokedTokenChecker,
 	IStorageNameRetriever,
 	IDocumentManager,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, IDenyList, ITenantService } from "./services";
+import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import * as app from "./app";
 
 export class HistorianRunner implements IRunner {
-	private server: IWebServer;
-	private runningDeferred: Deferred<void>;
+	private server: IWebServer | undefined;
+	private runningDeferred: Deferred<void> | undefined;
 
 	constructor(
 		private readonly serverFactory: IWebServerFactory,
 		private readonly config: Provider,
 		private readonly port: string | number,
 		private readonly riddler: ITenantService,
-		private readonly storageNameRetriever: IStorageNameRetriever,
+		private readonly storageNameRetriever: IStorageNameRetriever | undefined,
 		public readonly restTenantThrottlers: Map<string, IThrottler>,
 		public readonly restClusterThrottlers: Map<string, IThrottler>,
 		private readonly documentManager: IDocumentManager,
+		private readonly startupCheck: IReadinessCheck,
 		private readonly cache?: ICache,
-		private readonly asyncLocalStorage?: AsyncLocalStorage<string>,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
 		private readonly denyList?: IDenyList,
+		private readonly ephemeralDocumentTTLSec?: number,
+		private readonly readinessCheck?: IReadinessCheck,
+		private readonly simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -50,10 +53,13 @@ export class HistorianRunner implements IRunner {
 			this.restTenantThrottlers,
 			this.restClusterThrottlers,
 			this.documentManager,
+			this.startupCheck,
 			this.cache,
-			this.asyncLocalStorage,
 			this.revokedTokenChecker,
 			this.denyList,
+			this.ephemeralDocumentTTLSec,
+			this.readinessCheck,
+			this.simplifiedCustomDataRetriever,
 		);
 		historian.set("port", this.port);
 
@@ -65,6 +71,9 @@ export class HistorianRunner implements IRunner {
 		httpServer.on("error", (error) => this.onError(error));
 		httpServer.on("listening", () => this.onListening());
 
+		if (this.startupCheck.setReady) {
+			this.startupCheck.setReady();
+		}
 		return this.runningDeferred.promise;
 	}
 
@@ -72,15 +81,15 @@ export class HistorianRunner implements IRunner {
 	public stop(): Promise<void> {
 		// Close the underlying server and then resolve the runner once closed
 		this.server
-			.close()
+			?.close()
 			.then(() => {
-				this.runningDeferred.resolve();
+				this.runningDeferred?.resolve();
 			})
 			.catch((error) => {
-				this.runningDeferred.reject(error);
+				this.runningDeferred?.reject(error);
 			});
 
-		return this.runningDeferred.promise;
+		return this.runningDeferred?.promise ?? Promise.resolve();
 	}
 
 	/**
@@ -116,8 +125,8 @@ export class HistorianRunner implements IRunner {
 	 */
 
 	private onListening() {
-		const addr = this.server.httpServer.address();
-		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr.port}`;
+		const addr = this.server?.httpServer?.address();
+		const bind = typeof addr === "string" ? `pipe ${addr}` : `port ${addr?.port}`;
 		winston.info(`Listening on ${bind}`);
 		Lumberjack.info(`Listening on ${bind}`);
 	}

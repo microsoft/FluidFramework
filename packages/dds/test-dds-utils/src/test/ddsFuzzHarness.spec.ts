@@ -8,7 +8,7 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type { AsyncGenerator } from "@fluid-private/stochastic-test-utils";
+import type { AsyncGenerator, BaseOperation } from "@fluid-private/stochastic-test-utils";
 import { chainAsync, done, takeAsync } from "@fluid-private/stochastic-test-utils";
 // eslint-disable-next-line import/no-internal-modules
 import { Counter } from "@fluid-private/stochastic-test-utils/internal/test/utils";
@@ -21,7 +21,6 @@ import execa from "execa";
 
 import { type Client, hasStashData } from "../clientLoading.js";
 import type {
-	BaseOperation,
 	ChangeConnectionState,
 	ClientSpec,
 	DDSFuzzHarnessEvents,
@@ -604,8 +603,12 @@ describe("DDS Fuzz Harness", () => {
 			assert.strictEqual(clientCreates[1].channel.processCoreCalls, 3);
 
 			// client loaded from stash
-			assert.strictEqual(clientCreates[2].channel.applyStashedOpCalls, 5);
-			assert.strictEqual(clientCreates[2].channel.noopCalls, 10);
+			assert.strictEqual(
+				clientCreates[2].channel.applyStashedOpCalls,
+				2,
+				"3 should be saved, and 2 should be stashed",
+			);
+			assert.strictEqual(clientCreates[2].channel.noopCalls, 7);
 			assert.strictEqual(clientCreates[2].channel.processCoreCalls, 9);
 		});
 	});

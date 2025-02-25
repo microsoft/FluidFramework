@@ -60,13 +60,15 @@
 			"rdkafkaConsumeTimeout": 5,
 			"rdkafkaMaxConsumerCommitRetries": 10
 		},
-		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14]
+		"customRestartOnKafkaErrorCodes": [-195, -192, -187, -185, -181, 14],
+		"seekTimeoutAfterPause": 1000
 	},
 	"zookeeper": {
 		"endpoint": "zookeeper:2181"
 	},
 	"storage": {
 		"enableWholeSummaryUpload": false,
+		"ephemeralDocumentTTLSec": 86400,
 		"storageUrl": "http://gitrest:3000"
 	},
 	"checkpoints": {
@@ -121,7 +123,8 @@
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
 		"useNodeCluster": false,
-		"enableLatencyMetric": false
+		"enableLatencyMetric": false,
+		"enableEventLoopLagMetric": false
 	},
 	"riddler": {
 		"useNodeCluster": false
@@ -163,10 +166,16 @@
 		"socketIo": {
 			"perMessageDeflate": false,
 			"gracefulShutdownEnabled": false,
-			"pingPongLatencyTrackingEnabled": false
+			"pingPongLatencyTrackingEnabled": false,
+			"pingPongLatencyTrackingAggregationThreshold": 3
 		},
 		"jwtTokenCache": {
 			"enable": true
+		},
+		"enableCollaborationSessionTracking": false,
+		"enableCollaborationSessionPruning": false,
+		"redisCollaborationSessionManagerOptions": {
+			"maxScanBatchSize": 800
 		}
 	},
 	"client": {
@@ -265,7 +274,17 @@
 		"maxDbBatchSize": 1000,
 		"restartOnCheckpointFailure": true,
 		"logSavedOpsTimeIntervalMs": 60000,
-		"opsCountTelemetryEnabled": true
+		"opsCountTelemetryEnabled": true,
+		"circuitBreakerEnabled": false,
+		"circuitBreakerOptions": {
+			"errorThresholdPercentage": 0.001,
+			"resetTimeout": 30000,
+			"timeout": false,
+			"rollingCountTimeout": 1000,
+			"rollingCountBuckets": 1000,
+			"fallbackToRestartTimeoutMs": 180000,
+			"filterOnErrors": []
+		}
 	},
 	"copier": {
 		"topic": "rawdeltas",
@@ -412,5 +431,9 @@
 	},
 	"clusterDraining": {
 		"enable": false
+	},
+	"getSession": {
+		"readDocumentRetryDelay": 150,
+		"readDocumentMaxRetries": 2
 	}
 }

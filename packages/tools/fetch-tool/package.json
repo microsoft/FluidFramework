@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/fetch-tool",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"description": "Console tool to fetch Fluid data from relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -32,7 +32,7 @@
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"dependencies": {
-		"@azure/identity": "^4.2.0",
+		"@azure/identity": "^4.4.1",
 		"@azure/identity-cache-persistence": "^1.1.0",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
@@ -50,12 +50,12 @@
 		"@fluidframework/tool-utils": "workspace:~"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.8.3",
-		"@fluid-tools/build-cli": "^0.41.0",
-		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.0.0",
+		"@biomejs/biome": "~1.9.3",
+		"@fluid-tools/build-cli": "^0.53.0",
+		"@fluid-tools/fetch-tool-previous": "npm:@fluid-tools/fetch-tool@2.22.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/node": "^18.19.0",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
@@ -64,6 +64,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

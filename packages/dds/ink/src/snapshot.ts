@@ -55,9 +55,7 @@ export class InkData {
 	 * {@inheritDoc IInk.getStroke}
 	 */
 	public getStroke(key: string): IInkStroke {
-		// Non null asserting, it should be okay that a bad key results in an error being thrown
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.strokes[this.strokeIndex[key]!]!;
+		return this.strokes[this.strokeIndex[key]];
 	}
 
 	/**

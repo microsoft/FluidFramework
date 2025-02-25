@@ -56,7 +56,6 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-publish-npm-package-deployment.yml
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
-    - tools/pipelines/templates/include-publish-docker-service.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
@@ -80,7 +79,6 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/upload-dev-manifest.yml
 
 variables:
   - template: /tools/pipelines/templates/include-vars.yml@self
@@ -108,9 +106,11 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/historian
     containerName: fluidframework/routerlicious/historian
+    dockerBuildBumpsVersion: true
     # We need to install only the root dependencies; historian has native deps that don't install in CI since we use
     # Docker to do the actual build in CI. We need the root dependencies so setting package versions works.
-    packageManagerInstallCommand: 'pnpm install --workspace-root --frozen-lockfile'
+    packageManagerInstallCommand: 'pnpm install --workspace-root'
+    additionalBuildArguments: --build-context root=$(Build.SourcesDirectory)
     packageManager: pnpm
     test: test
     tagName: historian

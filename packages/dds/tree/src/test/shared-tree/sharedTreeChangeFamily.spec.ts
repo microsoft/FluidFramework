@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import type { ICodecOptions } from "../../codec/index.js";
@@ -14,7 +14,6 @@ import {
 	revisionMetadataSourceFromInfo,
 	rootFieldKey,
 } from "../../core/index.js";
-import { leaf } from "../../domains/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
 import {
@@ -22,7 +21,6 @@ import {
 	ModularChangeFamily,
 	type ModularChangeset,
 	type TreeChunk,
-	cursorForJsonableTreeNode,
 	fieldKinds,
 	type SchemaChange,
 } from "../../feature-libraries/index.js";
@@ -37,7 +35,8 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/sharedTreeChangeTypes.js";
 import { ajvValidator } from "../codec/index.js";
-import { failCodecFamily, testRevisionTagCodec } from "../utils.js";
+import { failCodecFamily, mintRevisionTag, testRevisionTagCodec } from "../utils.js";
+import { singleJsonCursor } from "../json/index.js";
 
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: ICodecOptions = { jsonValidator: ajvValidator };
@@ -47,20 +46,17 @@ const fieldBatchCodec = {
 };
 
 const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily);
-const defaultEditor = new DefaultEditBuilder(modularFamily, (change) =>
-	dataChanges.push(change),
+const defaultEditor = new DefaultEditBuilder(modularFamily, mintRevisionTag, (taggedChange) =>
+	dataChanges.push(taggedChange.change),
 );
-
-const nodeX = { type: leaf.string.name, value: "X" };
-const nodeY = { type: leaf.string.name, value: "Y" };
 
 // Side effects results in `dataChanges` being populated
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(cursorForJsonableTreeNode(nodeX));
+	.set(singleJsonCursor("X"));
 defaultEditor
 	.valueField({ parent: undefined, field: rootFieldKey })
-	.set(cursorForJsonableTreeNode(nodeY));
+	.set(singleJsonCursor("Y"));
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];
@@ -74,6 +70,7 @@ const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
 	rootFieldSchema: {
 		kind: forbidden.identifier,
+		types: new Set(),
 	},
 };
 const stSchemaChange: SharedTreeChange = {
@@ -228,14 +225,23 @@ describe("SharedTreeChangeFamily", () => {
 
 		for (const isRollback of [true, false]) {
 			it(`when inverting (isRollback = ${isRollback})`, () => {
-				assert.deepEqual(sharedTreeFamily.invert(makeAnonChange(stDataChange1), isRollback), {
+				const tag = mintRevisionTag();
+				const inverted = sharedTreeFamily.invert(
+					makeAnonChange(stDataChange1),
+					isRollback,
+					tag,
+				);
+
+				const expected = {
 					changes: [
 						{
 							type: "data",
-							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback),
+							innerChange: modularFamily.invert(makeAnonChange(dataChange1), isRollback, tag),
 						},
 					],
-				});
+				};
+
+				assert.deepEqual(inverted, expected);
 			});
 		}
 	});

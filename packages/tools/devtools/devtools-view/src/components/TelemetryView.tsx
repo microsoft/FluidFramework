@@ -252,13 +252,14 @@ function ListLengthSelection(props: ListLengthSelectionProps): React.ReactElemen
 
 	return (
 		<div>
-			Show &nbsp;
+			Max events to display &nbsp;
 			<Dropdown
 				aria-label="Max Events to Display"
 				placeholder="Select an option"
 				size="small"
 				style={{ minWidth: "30px", zIndex: "1" }}
 				defaultValue={currentLimit.toString()}
+				selectedOptions={[currentLimit.toString()]}
 				// change the number of logs displayed on the page
 				onOptionSelect={handleMaxEventChange}
 			>
@@ -520,6 +521,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 	return (
 		<>
 			<div style={{ display: "flex", gap: "10px" }}>
+				Category
 				<Dropdown
 					aria-label="Category Filter"
 					aria-expanded="false"
@@ -535,6 +537,7 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 						</Option>
 					))}
 				</Dropdown>
+				Event Name
 				<Combobox
 					aria-label="Event Name Filter"
 					freeform
@@ -557,6 +560,15 @@ function FilteredTelemetryView(props: FilteredTelemetryViewProps): React.ReactEl
 				</Combobox>
 			</div>
 
+			{/*
+				SplitPane fom the react-split-pane package is incompatible with _the types_ for React 18.
+				To fix it, the SplitPaneProps type in it should be updated to have a new property `children: React.ReactNode;`.
+				At runtime there are no issues, so just ignoring the TS error for now.
+				Note that ts-ignore does take "arguments" and only has an effect on the line right below it.
+				The error we want to ignore is TS2322 specifically but there is no way to only ignore specific TS errors.
+
+				TODO: we should look for an alternative to replace this library. AB#18876
+				// @ts-ignore */}
 			<SplitPane
 				split="vertical"
 				minSize={540}

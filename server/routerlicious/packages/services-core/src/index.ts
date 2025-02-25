@@ -56,6 +56,7 @@ export {
 } from "./http";
 export {
 	extractBoxcar,
+	isCompleteBoxcarMessage,
 	IContext,
 	IContextErrorData,
 	ILogger,
@@ -120,6 +121,12 @@ export {
 	shouldRetryNetworkError,
 } from "./runWithRetry";
 export { ISecretManager } from "./secretManager";
+export {
+	ICollaborationSession,
+	ICollaborationSessionClient,
+	ICollaborationSessionManager,
+	ICollaborationSessionTracker,
+} from "./collabSession";
 export { IStorageNameAllocator } from "./storageNameAllocator";
 export { IStorageNameRetriever } from "./storageNameRetriever";
 export {
@@ -131,7 +138,9 @@ export {
 } from "./taskMessages";
 export {
 	EncryptionKeyVersion,
+	IEncryptedPrivateTenantKeys,
 	IEncryptedTenantKeys,
+	IPlainTextAndEncryptedTenantKeys,
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,
@@ -140,6 +149,7 @@ export {
 	ITenantManager,
 	ITenantOrderer,
 	ITenantStorage,
+	ITenantPrivateKeys,
 	KeyName,
 } from "./tenant";
 export {
@@ -168,5 +178,7 @@ export {
 	createCompositeTokenId,
 } from "./tokenRevocationManager";
 export { IServiceMessageResourceManager } from "./serviceMessage";
-export { IClusterDrainingChecker } from "./clusterDraining";
+export { IClusterDrainingChecker, clusterDrainingRetryTimeInMs } from "./clusterDraining";
 export { IWebSocketTracker } from "./webSocketTracker";
+export { IReadinessCheck, IReadinessStatus, ICheck } from "./readinessCheck";
+export { IFluidAccessToken, IFluidAccessTokenGenerator } from "./fluidAccessTokenGenerator";

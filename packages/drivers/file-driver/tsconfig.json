@@ -8,5 +8,6 @@
 		"types": ["node"],
 		"noUnusedLocals": false,
 		"exactOptionalPropertyTypes": false,
+		"noUncheckedIndexedAccess": false,
 	},
 }

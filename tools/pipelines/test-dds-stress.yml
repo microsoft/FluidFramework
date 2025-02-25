@@ -20,11 +20,12 @@ resources:
       - next
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
-- name: absolutePathToTelemetryGenerator
-  value: $(Build.SourcesDirectory)/tools/telemetry-generator
-  readonly: true
+# This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
+- name: DisableCodeQL
+  value: true
 
 parameters:
 - name: packages
@@ -58,52 +59,18 @@ parameters:
     - packages/dds/merge-tree
     testFileTarName: matrix
     testCommand: test:stress
+- name: stressMode
+  values:
+    - short
+    - normal
+    - long
+  default: normal
 
 
 stages:
-  - template: templates/include-conditionally-run-stress-tests.yml
+  - template: /tools/pipelines/templates/include-conditionally-run-stress-tests.yml@self
     parameters:
       artifactBuildId: $(resources.pipeline.client.runID)
       packages: ${{ parameters.packages }}
       testWorkspace: ${{ variables.testWorkspace }}
-
-  # Capture telemetry about pipeline stages
-  - stage: upload_run_telemetry
-    displayName: Upload pipeline run telemetry to Kusto
-    condition: succeededOrFailed()
-    dependsOn:
-    - ${{ each package in parameters.packages }}:
-      # This list of stages should be kept in sync with the way we generate their ids in tools/pipelines/templates/include-conditionally-run-stress-tests.yml
-      - ${{ replace(replace(package.name, '@fluidframework/', ''), '@fluid-experimental/', 'experimental_') }}_stress_tests
-    jobs:
-    - job: upload_run_telemetry
-      displayName: Upload pipeline run telemetry to Kusto
-      pool: Small
-      variables:
-      - group: ado-feeds
-
-      steps:
-      - template: templates/include-telemetry-setup.yml
-        parameters:
-          devFeedUrl: $(ado-feeds-dev)
-          officeFeedUrl: $(ado-feeds-office)
-          isCheckoutNeeded: true
-      - task: Bash@3
-        displayName: Retrieve buildId results
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(absolutePathToTelemetryGenerator)
-          script: |
-            echo "creating output folder"
-            mkdir -p ${{ variables.testWorkspace }}/timingOutput
-            echo "Retrieving pipeline run timeline data command ..."
-            echo 'curl -u ":<REDACTED>" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline"'
-            curl -u ":$ADO_API_TOKEN" "https://dev.azure.com/fluidframework/internal/_apis/build/builds/$BUILD_ID/timeline\?api-version\=6.0-preview.1" > ${{ variables.testWorkspace }}/timingOutput/output.json
-            pwd;
-            ls -laR ${{ variables.testWorkspace }}/timingOutput/output.json;
-            cat ${{ variables.testWorkspace }}/timingOutput/output.json;
-            node --require @ff-internal/aria-logger bin/run --handlerModule $(absolutePathToTelemetryGenerator)/dist/handlers/stageTimingRetriever.js --dir '${{ variables.testWorkspace }}/timingOutput/';
-        env:
-          BUILD_ID: $(Build.BuildId)
-          ADO_API_TOKEN: $(System.AccessToken)
-          PIPELINE: 'DdsStressService'
+      stressMode: ${{ parameters.stressMode }}

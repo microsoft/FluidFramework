@@ -19,7 +19,6 @@ import type {
 } from "../schema-stored/index.js";
 
 /**
- * @internal
  */
 export type TreeType = TreeNodeSchemaIdentifier;
 
@@ -34,7 +33,6 @@ export type TreeType = TreeNodeSchemaIdentifier;
  * This has to be a FieldKey since different nodes will have different TreeFieldStoredSchema for it.
  * This makes it prone to collisions and suggests
  * that this intention may be better conveyed by metadata on the ITreeSchema.
- * @internal
  */
 export const EmptyKey: FieldKey = brand("");
 
@@ -42,19 +40,15 @@ export const EmptyKey: FieldKey = brand("");
  * FieldKey to use for the root of documents in places that need to refer to detached sequences or the root.
  * TODO: if we do want to standardize on a single value for this,
  * it likely should be namespaced or a UUID to avoid risk of collisions.
- * @internal
  */
 export const rootFieldKey: FieldKey = brand("rootFieldKey");
 
 /**
- * @internal
  */
 export const rootField = keyAsDetachedField(rootFieldKey);
 
 /**
  * Location of a tree relative to is parent container (which can be a tree or forest).
- *
- * @internal
  */
 export interface ChildLocation {
 	readonly container: ChildCollection;
@@ -63,7 +57,6 @@ export interface ChildLocation {
 
 /**
  * Wrapper around DetachedField that can be detected at runtime.
- * @internal
  */
 export interface RootField {
 	readonly key: DetachedField;
@@ -71,7 +64,6 @@ export interface RootField {
 
 /**
  * Identifier for a child collection, either on a node/tree or at the root of a forest.
- * @internal
  */
 export type ChildCollection = FieldKey | RootField;
 
@@ -87,7 +79,6 @@ export type ChildCollection = FieldKey | RootField;
  *
  * In some APIs DetachedFields are used as FieldKeys on a special implicit root node
  * to simplify the APIs and implementation.
- * @internal
  */
 export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField">> {}
 
@@ -96,7 +87,6 @@ export interface DetachedField extends Opaque<Brand<string, "tree.DetachedField"
  * This maps detached field to field keys for thus use.
  *
  * @returns `field` as a {@link FieldKey} usable on a special root node serving as a parent of detached fields.
- * @internal
  */
 export function detachedFieldAsKey(field: DetachedField): FieldKey {
 	return brand(extractFromOpaque(field));
@@ -106,7 +96,6 @@ export function detachedFieldAsKey(field: DetachedField): FieldKey {
  * The inverse of {@link detachedFieldAsKey}.
  * Thus must only be used on {@link FieldKey}s which were produced via {@link detachedFieldAsKey},
  * and with the same scope (ex: forest) as the detachedFieldAsKey was originally from.
- * @internal
  */
 export function keyAsDetachedField(key: FieldKey): DetachedField {
 	return brand(key);
@@ -116,7 +105,6 @@ export function keyAsDetachedField(key: FieldKey): DetachedField {
  * TODO: integrate this into Schema. Decide how to persist them (need stable Id?). Maybe allow updating field kinds?.
  * TODO: make families of changes per field kind. Build editing APIs from that.
  * TODO: factor ChangeRebaser implementations to support adding new field kinds.
- * @internal
  */
 export interface FieldKind {
 	readonly name: string;
@@ -127,7 +115,6 @@ export interface FieldKind {
 
 /**
  * Value that may be stored on a leaf node.
- * @internal
  */
 export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 	{
@@ -142,7 +129,6 @@ export type TreeValue<TSchema extends ValueSchema = ValueSchema> = [
 
 /**
  * Value stored on a node.
- * @internal
  */
 export type Value = undefined | TreeValue;
 
@@ -152,8 +138,6 @@ export type Value = undefined | TreeValue;
  * @privateRemarks A forked version of this type is used in `persistedTreeTextFormat.ts`.
  * Changes to this type might necessitate changes to `EncodedNodeData` or codecs.
  * See persistedTreeTextFormat's module documentation for more details.
- *
- * @internal
  */
 export interface NodeData {
 	/**

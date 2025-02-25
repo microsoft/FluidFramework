@@ -9,8 +9,6 @@ import * as path from "node:path";
 import { Flags } from "@oclif/core";
 import { readJson } from "fs-extra/esm";
 
-import { loadFluidBuildConfig } from "@fluidframework/build-tools";
-
 import {
 	BaseCommand,
 	Context,
@@ -166,17 +164,17 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 			this.info("Resolving errors if possible.");
 		}
 
-		const manifest = loadFluidBuildConfig(this.flags.root ?? process.cwd());
+		const context = await this.getContext();
+		const { policy } = context.flubConfig;
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const rawExclusions: string[] =
 			this.flags.exclusions === undefined
-				? manifest.policy?.exclusions
+				? policy?.exclusions
 				: await readJson(this.flags.exclusions);
 
 		const exclusions: RegExp[] = rawExclusions.map((e) => new RegExp(e, "i"));
-
-		const rawHandlerExclusions = manifest?.policy?.handlerExclusions;
+		const rawHandlerExclusions = policy?.handlerExclusions;
 
 		const handlerExclusions: HandlerExclusions = {};
 		if (rawHandlerExclusions) {
@@ -186,7 +184,6 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		}
 
 		const filePathsToCheck: string[] = [];
-		const context = await this.getContext();
 		const gitRoot = context.repo.resolvedRoot;
 
 		if (this.flags.stdin) {
@@ -196,15 +193,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 				filePathsToCheck.push(...stdInput.split("\n"));
 			}
 		} else {
-			const repo = new Repository({ baseDir: gitRoot });
-			const gitFiles = await repo.gitClient.raw(
-				"ls-files",
-				"-co",
-				"--exclude-standard",
-				"--full-name",
-			);
-
-			filePathsToCheck.push(...gitFiles.split("\n"));
+			const repo = new Repository({ baseDir: gitRoot }, "microsoft/FluidFramework");
+			const gitFiles = await repo.getFiles(".");
+			filePathsToCheck.push(...gitFiles);
 		}
 
 		const commandContext: CheckPolicyCommandContext = {
@@ -344,7 +335,9 @@ export class CheckPolicy extends BaseCommand<typeof CheckPolicy> {
 		try {
 			await this.routeToHandlers(filePath, commandContext);
 		} catch (error: unknown) {
-			throw new Error(`Error routing ${filePath} to handler: ${error}`);
+			throw new Error(
+				`Error routing ${filePath} to handler: ${error}\nStack: ${(error as Error).stack}`,
+			);
 		}
 
 		this.processed++;

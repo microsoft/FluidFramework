@@ -5,48 +5,63 @@ parameters:
 - name: buildDirectory
   type: string
 
-- name: STORAGE_ACCOUNT
-  type: string
+jobs:
+  - job:
+    displayName: Upload Release Reports
+    variables:
+    - group: storage-vars
+    - name: version
+      value: $[stageDependencies.build.build.outputs['SetVersion.version']]
+    steps:
+    - template: /tools/pipelines/templates/include-use-node-version.yml@self
+    - template: /tools/pipelines/templates/include-install-build-tools.yml@self
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
 
-- name: STORAGE_KEY
-  type: string
+    - task: Bash@3
+      displayName: Generate release reports
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          set -eu -o pipefail
+          mkdir generate_release_reports
+          flub release report -g client -o generate_release_reports --baseFileName manifest
 
-steps:
-- task: Bash@3
-  displayName: Generate release reports
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      mkdir generate_release_reports
-      flub release report -g client -o generate_release_reports --baseFileName manifest
+    - task: Bash@3
+      displayName: Update release report version
+      inputs:
+        targetType: 'inline'
+        workingDirectory: ${{ parameters.buildDirectory }}
+        script: |
+          set -eu -o pipefail
+          mkdir upload_release_reports
+          flub release report-unreleased --version $(version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
 
-- task: Bash@3
-  displayName: Update release report version
-  inputs:
-    targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
-    script: |
-      mkdir upload_release_reports
-      flub release report-unreleased --version $(SetVersion.version) --fullReportFilePath generate_release_reports/manifest.full.json --outDir upload_release_reports --branchName '$(Build.SourceBranch)'
+    - task: CopyFiles@2
+      displayName: Copy release reports
+      inputs:
+        SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
+        TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
 
-- task: CopyFiles@2
-  displayName: Copy release reports
-  inputs:
-    SourceFolder: ${{ parameters.buildDirectory }}/upload_release_reports
-    TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
+    - task: AzureCLI@2
+      displayName: Upload release reports
+      continueOnError: true
+      inputs:
+        azureSubscription: 'fluid-docs'
+        scriptType: bash
+        workingDirectory: ${{ parameters.buildDirectory }}
+        scriptLocation: inlineScript
+        inlineScript: |
+          for file in upload_release_reports/*; do
+              az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite true --verbose
+          done
+          # Delete generate_release_reports and upload_release_reports folder
+          rm -r generate_release_reports upload_release_reports
 
-- task: AzureCLI@2
-  displayName: Upload release reports
-  continueOnError: true
-  inputs:
-    azureSubscription: 'fluid-docs'
-    scriptType: bash
-    workingDirectory: ${{ parameters.buildDirectory }}
-    scriptLocation: inlineScript
-    inlineScript: |
-      for file in upload_release_reports/*; do
-          az storage blob upload -f "$file" -c 'manifest-files' -n "$(basename "$file")" --account-name ${{ parameters.STORAGE_ACCOUNT }} --account-key ${{ parameters.STORAGE_KEY }} --overwrite true --verbose
-      done
-      # Delete generate_release_reports and upload_release_reports folder
-      rm -r generate_release_reports upload_release_reports
+    - task: 1ES.PublishPipelineArtifact@1
+      displayName: Publish Artifact - release_reports
+      inputs:
+        targetPath: $(Build.ArtifactStagingDirectory)/release_reports
+        artifactName: release_reports
+        publishLocation: pipeline

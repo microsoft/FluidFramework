@@ -22,8 +22,7 @@ import type {
  *
  * These policies include the data encoding, change encoding, change rebase and change application.
  *
- * @sealed @internal
- * @privateRemarks
+ * @sealed * @privateRemarks
  * This being @sealed is for users of this package.
  * This package itself may provide implementations.
  * This pattern was picked instead of an interface since we do not have a convention for how to mark interfaces as only allowed to be implemented by the package declaring them,
@@ -48,7 +47,6 @@ export abstract class FlexFieldKind<
 /**
  * Policy from the app for interpreting the stored schema.
  * The app must ensure consistency for all users of the document.
- * @internal
  */
 export interface FullSchemaPolicy extends SchemaPolicy {
 	/**

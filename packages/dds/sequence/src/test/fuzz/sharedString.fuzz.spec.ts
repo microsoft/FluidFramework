@@ -3,65 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AsyncGenerator as Generator,
-	createWeightedAsyncGenerator as createWeightedGenerator,
-	takeAsync as take,
-} from "@fluid-private/stochastic-test-utils";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
 import {
-	FuzzTestState,
-	Operation,
-	SharedStringOperationGenerationConfig,
-	baseModel,
-	createSharedStringGeneratorOperations,
+	baseSharedStringModel,
 	defaultFuzzOptions,
-	defaultIntervalOperationGenerationConfig,
+	makeIntervalOperationGenerator,
 } from "./fuzzUtils.js";
-
-type ClientOpState = FuzzTestState;
-export function makeSharedStringOperationGenerator(
-	optionsParam?: SharedStringOperationGenerationConfig,
-	alwaysLeaveChar: boolean = false,
-): Generator<Operation, ClientOpState> {
-	const {
-		addText,
-		removeRange,
-		annotateRange,
-		removeRangeLeaveChar,
-		lengthSatisfies,
-		hasNonzeroLength,
-		isShorterThanMaxLength,
-	} = createSharedStringGeneratorOperations(optionsParam);
-
-	const usableWeights =
-		optionsParam?.weights ?? defaultIntervalOperationGenerationConfig.weights;
-	return createWeightedGenerator<Operation, ClientOpState>([
-		[addText, usableWeights.addText, isShorterThanMaxLength],
-		[
-			alwaysLeaveChar ? removeRangeLeaveChar : removeRange,
-			usableWeights.removeRange,
-			alwaysLeaveChar
-				? lengthSatisfies((length) => {
-						return length > 1;
-					})
-				: hasNonzeroLength,
-		],
-		[annotateRange, usableWeights.annotateRange, hasNonzeroLength],
-	]);
-}
-
-const baseSharedStringModel = {
-	...baseModel,
-	generatorFactory: () =>
-		take(100, makeSharedStringOperationGenerator(defaultIntervalOperationGenerationConfig)),
-};
 
 describe("SharedString fuzz testing", () => {
 	createDDSFuzzSuite(
-		{ ...baseSharedStringModel, workloadName: "default" },
+		{ ...baseSharedStringModel, workloadName: "SharedString default" },
 		{
 			...defaultFuzzOptions,
 			// Uncomment this line to replay a specific seed from its failure file:
@@ -72,7 +26,7 @@ describe("SharedString fuzz testing", () => {
 
 describe("SharedString fuzz with stashing", () => {
 	createDDSFuzzSuite(
-		{ ...baseSharedStringModel, workloadName: "default" },
+		{ ...baseSharedStringModel, workloadName: "SharedString with stashing" },
 		{
 			...defaultFuzzOptions,
 			clientJoinOptions: {
@@ -82,6 +36,40 @@ describe("SharedString fuzz with stashing", () => {
 			},
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
+		},
+	);
+});
+
+describe("SharedString fuzz with obliterate", () => {
+	const model: typeof baseSharedStringModel = {
+		...baseSharedStringModel,
+		generatorFactory: () =>
+			takeAsync(
+				100,
+				makeIntervalOperationGenerator({
+					weights: {
+						addText: 3,
+						removeRange: 2,
+						annotateRange: 1,
+						obliterateRange: 3,
+						addInterval: 1,
+						deleteInterval: 1,
+						changeInterval: 1,
+						revertWeight: 0,
+					},
+				}),
+			),
+	};
+	createDDSFuzzSuite(
+		{ ...model, workloadName: "SharedString with obliterate" },
+		{
+			...defaultFuzzOptions,
+			// Sided obliterate doesn't support reconnect yet.
+			reconnectProbability: 0,
+			// Uncomment this line to replay a specific seed from its failure file:
+			// replay: 0,
+			// TODO:AB#7220: This seed should be enabled. The failure here is unrelated to obliterate.
+			skip: [51],
 		},
 	);
 });

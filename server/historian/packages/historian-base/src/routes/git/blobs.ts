@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncLocalStorage } from "async_hooks";
 import * as git from "@fluidframework/gitresources";
 import {
 	IStorageNameRetriever,
@@ -11,34 +10,32 @@ import {
 	IRevokedTokenChecker,
 	IDocumentManager,
 } from "@fluidframework/server-services-core";
-import {
-	IThrottleMiddlewareOptions,
-	throttle,
-	getParam,
-} from "@fluidframework/server-services-utils";
+import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService } from "../../services";
+import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
 export function create(
 	config: nconf.Provider,
 	tenantService: ITenantService,
-	storageNameRetriever: IStorageNameRetriever,
+	storageNameRetriever: IStorageNameRetriever | undefined,
 	restTenantThrottlers: Map<string, IThrottler>,
+	restClusterThrottlers: Map<string, IThrottler>,
 	documentManager: IDocumentManager,
 	cache?: ICache,
-	asyncLocalStorage?: AsyncLocalStorage<string>,
 	revokedTokenChecker?: IRevokedTokenChecker,
 	denyList?: IDenyList,
+	ephemeralDocumentTTLSec?: number,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => getParam(req.params, "tenantId"),
+		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
 	};
 	const restTenantGeneralThrottler = restTenantThrottlers.get(
@@ -47,7 +44,7 @@ export function create(
 
 	async function createBlob(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		body: git.ICreateBlobParams,
 	): Promise<git.ICreateBlobResponse> {
 		const service = await utils.createGitService({
@@ -58,15 +55,16 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
+			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
 		});
 		return service.createBlob(body);
 	}
 
 	async function getBlob(
 		tenantId: string,
-		authorization: string,
+		authorization: string | undefined,
 		sha: string,
 		useCache: boolean,
 	): Promise<git.IBlob> {
@@ -78,8 +76,8 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			asyncLocalStorage,
 			denyList,
+			ephemeralDocumentTTLSec,
 		});
 		return service.getBlob(sha, useCache);
 	}

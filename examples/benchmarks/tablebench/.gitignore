@@ -53,3 +53,6 @@ temp_modules/
 
 # Fuzz test operation files
 **/fuzz/failures/**
+
+# Output folder for custom benchmark tests
+.customBenchmarksOutput

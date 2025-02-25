@@ -12,6 +12,7 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
 	ContainerMessageType,
+	disabledCompressionConfig,
 } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
@@ -21,8 +22,8 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { GenericError } from "@fluidframework/telemetry-utils/internal";
 import {
+	toIDeltaManagerFull,
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -39,6 +40,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		registry,
 	};
+	const bytesPerKB = 1024;
 
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", () => {
@@ -112,13 +114,10 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			}),
 		);
 
-	const disableCompressionConfig = {
+	const configWithCompressionDisabled = {
 		...testContainerConfig,
 		runtimeOptions: {
-			compressionOptions: {
-				minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-				compressionAlgorithm: CompressionAlgorithms.lz4,
-			},
+			compressionOptions: disabledCompressionConfig,
 		},
 	}; // Compression is enabled by default
 
@@ -127,7 +126,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async () => {
 			const maxMessageSizeInBytes = 1024 * 1024; // 1Mb
-			await setupContainers(disableCompressionConfig);
+			await setupContainers(configWithCompressionDisabled);
 
 			const errorEvent = containerError(localContainer);
 
@@ -167,7 +166,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		}
 
 		const maxMessageSizeInBytes = 600 * 1024;
-		await setupContainers(disableCompressionConfig);
+		await setupContainers(configWithCompressionDisabled);
 		const largeString = generateStringOfSize(maxMessageSizeInBytes / 10);
 		const messageCount = 10;
 		localContainer.disconnect();
@@ -244,7 +243,7 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
 		async function () {
 			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers(disableCompressionConfig);
+			await setupContainers(configWithCompressionDisabled);
 
 			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
 			const messageCount = 3; // Will result in a 15 MB payload
@@ -253,99 +252,67 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 		},
 	);
 
-	itExpects.skip(
-		"Large ops fail when compression enabled and compressed content is over max op size",
-		[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
-		async function () {
-			const maxMessageSizeInBytes = 5 * 1024 * 1024; // 5MB
-			await setupContainers({
-				...testContainerConfig,
-				runtimeOptions: {
-					chunkSizeInBytes: Number.POSITIVE_INFINITY,
-				},
-			});
-
-			const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-			const messageCount = 3; // Will result in a 15 MB payload
-			setMapKeys(localMap, messageCount, largeString);
-			await provider.ensureSynchronized();
-		},
-	);
-
 	const chunkingBatchesTimeoutMs = 200000;
 
-	[false, true].forEach((enableGroupedBatching) => {
-		const compressionSizeThreshold = 1024 * 1024;
-		const containerConfig: ITestContainerConfig = {
-			...testContainerConfig,
-			runtimeOptions: {
-				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
-				enableGroupedBatching,
-			},
-		};
+	const containerConfigGroupedBatching: ITestContainerConfig = {
+		...testContainerConfig,
+		runtimeOptions: {
+			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
+			enableGroupedBatching: true,
+		},
+	};
 
-		itExpects(
-			`Batch with 4000 ops - ${enableGroupedBatching ? "grouped" : "regular"} batches`,
-			enableGroupedBatching
-				? [] // With grouped batching enabled, this scenario is unblocked
-				: [
-						{
-							eventName: "fluid:telemetry:Container:ContainerClose",
-							error:
-								"Runtime detected too many reconnects with no progress syncing local ops.",
-						},
-					], // Without grouped batching, it is expected for the container to never make progress
-			async function () {
-				await setupContainers(containerConfig);
-				// This is not supported by the local server. See ADO:2690
-				// This test is flaky on tinylicious. See ADO:2964
-				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
-					if (!enableGroupedBatching) {
-						// Workaround for the `itExpects` construct
-						localContainer.close(
-							new GenericError(
-								"Runtime detected too many reconnects with no progress syncing local ops.",
-							),
-						);
-					}
+	itExpects(
+		`Batch with 4000 ops - grouped batches`,
+		[], // With grouped batching enabled, this scenario is unblocked
+		async function () {
+			await setupContainers(containerConfigGroupedBatching);
+			// This is currently not supported by the local server. Nacks will occur because too many messages without summary (see localServerTestDriver.ts).
+			// This is not supported by tinylicious. For some reason, the socket is accepting more than 1 MB.
+			if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+				this.skip();
+			}
 
-					this.skip();
-				}
+			const content = generateRandomStringOfSize(10);
+			for (let i = 0; i < 4000; i++) {
+				localMap.set(`key${i}`, content);
+			}
 
-				const content = generateRandomStringOfSize(10);
-				for (let i = 0; i < 4000; i++) {
-					localMap.set(`key${i}`, content);
-				}
+			await provider.ensureSynchronized();
+		},
+	).timeout(chunkingBatchesTimeoutMs);
 
-				await provider.ensureSynchronized();
-			},
-		).timeout(chunkingBatchesTimeoutMs);
-
-		describe(`Large payloads (exceeding the 1MB limit) - ${
-			enableGroupedBatching ? "grouped" : "regular"
-		} batches`, () => {
-			describe("Chunking compressed batches", () =>
-				[
-					{ messagesInBatch: 1, messageSize: 2 * 1024 * 1024 }, // One large message
-					{ messagesInBatch: 3, messageSize: 2 * 1024 * 1024 }, // Three large messages
-					{ messagesInBatch: 1500, messageSize: 4 * 1024 }, // Many small messages
-				].forEach((testConfig) => {
-					it(
+	describe(`Large payloads - "grouped" batches`, () => {
+		describe("Chunking compressed batches", () =>
+			[
+				{ messagesInBatch: 1, messageSize: 51 * bytesPerKB }, // One large message (51 KB each)
+				{ messagesInBatch: 3, messageSize: 51 * bytesPerKB }, // Three large messages (51 KB each)
+				{ messagesInBatch: 1500, messageSize: bytesPerKB }, // Many small messages (1 KB each)
+			].forEach((testConfig) => {
+				// biome-ignore format: https://github.com/biomejs/biome/issues/4202
+				it(
 						"Large payloads pass when compression enabled, " +
 							"compressed content is over max op size and chunking enabled. " +
 							`${testConfig.messagesInBatch.toLocaleString()} messages of ${testConfig.messageSize.toLocaleString()} bytes == ` +
-							`${(
-								(testConfig.messagesInBatch * testConfig.messageSize) /
-								(1024 * 1024)
-							).toFixed(2)} MB`,
+							`${((testConfig.messagesInBatch * testConfig.messageSize) / bytesPerKB).toFixed(
+								2,
+							)} KB`,
 						async function () {
-							// This is not supported by the local server. See ADO:2690
-							// This test is flaky on tinylicious. See ADO:2964
-							if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+							// This test is flaky on tinylicious (1500 messages being sent sometimes slows the system down)
+							if (provider.driver.type === "tinylicious") {
 								this.skip();
 							}
-
-							await setupContainers(containerConfig);
+							await setupContainers({
+								...containerConfigGroupedBatching,
+								runtimeOptions: {
+									...containerConfigGroupedBatching.runtimeOptions,
+									compressionOptions: {
+										minimumBatchSizeInBytes: 50 * bytesPerKB, // 50 KB
+										compressionAlgorithm: CompressionAlgorithms.lz4,
+									},
+									chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
+								},
+							});
 
 							const generated: string[] = [];
 							for (let i = 0; i < testConfig.messagesInBatch; i++) {
@@ -371,122 +338,146 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 								);
 							}
 						},
-					).timeout(chunkingBatchesTimeoutMs);
-				}));
+					);
+			}));
 
-			itExpects(
-				"Large ops fail when compression chunking is disabled",
-				[
-					{
-						eventName: "fluid:telemetry:Container:ContainerClose",
-						error: "BatchTooLarge",
-					},
-				],
-				async function () {
-					const maxMessageSizeInBytes = 50 * 1024; // 50 KB
-					await setupContainers({
-						...containerConfig,
-						runtimeOptions: {
-							...containerConfig.runtimeOptions,
-							maxBatchSizeInBytes: 51 * 1024, // 51 KB
-							chunkSizeInBytes: Infinity,
-						},
-					});
-
-					const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
-					const messageCount = 3; // Will result in a 150 KB payload
-					setMapKeys(localMap, messageCount, largeString);
-					await provider.ensureSynchronized();
+		itExpects(
+			"Large ops fail when chunking is disabled and compressed content is over max op size",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					error: "BatchTooLarge",
 				},
-			);
-		});
-
-		describe(`Payload size on the wire - ${
-			enableGroupedBatching ? "grouped" : "regular"
-		} batches`, () => {
-			let totalPayloadSizeInBytes = 0;
-			let totalOps = 0;
-
-			const assertPayloadSize = (totalMessageSizeInBytes: number): void => {
-				// Expecting the message size on the wire should have
-				// at most 35% extra from stringification and envelope overhead.
-				// If any of the tests fail, this value can be increased only if
-				// the payload size increase is intentional.
-				const overheadRatio = 1.35;
-				assert.ok(
-					totalPayloadSizeInBytes < overheadRatio * totalMessageSizeInBytes,
-					`Message size on the wire, ${totalPayloadSizeInBytes} is larger than expected ${
-						overheadRatio * totalMessageSizeInBytes
-					}, after sending ${totalMessageSizeInBytes} bytes`,
-				);
-			};
-
-			const setup = async () => {
-				await setupContainers(containerConfig);
-				totalPayloadSizeInBytes = 0;
-				totalOps = 0;
-				localContainer.deltaManager.outbound.on("push", (messages) => {
-					totalPayloadSizeInBytes += JSON.stringify(messages).length;
-					totalOps += messages.length;
+			],
+			async function () {
+				const maxMessageSizeInBytes = 50 * bytesPerKB; // 50 KB
+				await setupContainers({
+					...containerConfigGroupedBatching,
+					runtimeOptions: {
+						...containerConfigGroupedBatching.runtimeOptions,
+						maxBatchSizeInBytes: 51 * bytesPerKB, // 51 KB
+						chunkSizeInBytes: Number.POSITIVE_INFINITY,
+					},
 				});
-			};
 
-			const compressionRatio = 0.1;
-			const badCompressionRatio = 1;
-			describe("Check batch size on the wire", () =>
-				[
-					{
-						messagesInBatch: 1,
-						messageSize: 1024,
-						expectedSize: 1 * 1024,
-						payloadGenerator: generateStringOfSize,
-					}, // One small uncompressed message
-					{
-						messagesInBatch: 3,
-						messageSize: 1024,
-						expectedSize: 3 * 1024,
-						payloadGenerator: generateStringOfSize,
-					}, // Three small uncompressed messages
-					{
-						messagesInBatch: 1,
-						messageSize: compressionSizeThreshold + 1,
-						expectedSize: compressionRatio * compressionSizeThreshold,
-						payloadGenerator: generateStringOfSize,
-					}, // One large message with compression
-					{
-						messagesInBatch: 20,
-						messageSize: compressionSizeThreshold + 1,
-						expectedSize: compressionRatio * (compressionSizeThreshold + 1),
-						payloadGenerator: generateStringOfSize,
-					}, // Twenty large messages with compression
-					{
-						messagesInBatch: 10,
-						messageSize: compressionSizeThreshold + 1,
-						expectedSize: badCompressionRatio * 10 * (compressionSizeThreshold + 1),
-						// In order for chunking to kick in, we need to force compression to output
-						// a payload larger than the payload size limit, which is done by compressing
-						// random data.
-						payloadGenerator: generateRandomStringOfSize,
-					}, // Ten large messages with compression and chunking
-				].forEach((config) => {
-					it(
+				const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+				const messageCount = 3; // Will result in a 150 KB payload
+				setMapKeys(localMap, messageCount, largeString);
+				await provider.ensureSynchronized();
+			},
+		);
+
+		itExpects(
+			"Large ops fail when compression enabled and compressed content is over max op size",
+			[{ eventName: "fluid:telemetry:Container:ContainerClose", error: "BatchTooLarge" }],
+			async function () {
+				const maxMessageSizeInBytes = 50 * bytesPerKB; // 50 KB
+				await setupContainers({
+					...testContainerConfig,
+					runtimeOptions: {
+						...containerConfigGroupedBatching.runtimeOptions,
+						maxBatchSizeInBytes: 51 * bytesPerKB, // 51 KB
+						chunkSizeInBytes: Number.POSITIVE_INFINITY,
+					},
+				});
+
+				const largeString = generateRandomStringOfSize(maxMessageSizeInBytes);
+				const messageCount = 3; // Will result in a 150 KB payload
+				setMapKeys(localMap, messageCount, largeString);
+				await provider.ensureSynchronized();
+			},
+		);
+	});
+
+	describe(`Payload size on the wire - grouped batches`, () => {
+		let totalPayloadSizeInBytes = 0;
+		let totalOps = 0;
+
+		const assertPayloadSize = (totalMessageSizeInBytes: number): void => {
+			// Expecting the message size on the wire should have
+			// at most 35% extra from stringification and envelope overhead.
+			// If any of the tests fail, this value can be increased only if
+			// the payload size increase is intentional.
+			const overheadRatio = 1.35;
+			assert.ok(
+				totalPayloadSizeInBytes < overheadRatio * totalMessageSizeInBytes,
+				`Message size on the wire, ${totalPayloadSizeInBytes} is larger than expected ${
+					overheadRatio * totalMessageSizeInBytes
+				}, after sending ${totalMessageSizeInBytes} bytes`,
+			);
+		};
+
+		const compressionSizeThreshold = 50 * bytesPerKB; // 50 KB;
+
+		const setup = async () => {
+			await setupContainers({
+				...containerConfigGroupedBatching,
+				runtimeOptions: {
+					...containerConfigGroupedBatching.runtimeOptions,
+					compressionOptions: {
+						minimumBatchSizeInBytes: compressionSizeThreshold,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
+				},
+			});
+			totalPayloadSizeInBytes = 0;
+			totalOps = 0;
+			toIDeltaManagerFull(localContainer.deltaManager).outbound.on("push", (messages) => {
+				totalPayloadSizeInBytes += JSON.stringify(messages).length;
+				totalOps += messages.length;
+			});
+		};
+
+		const compressionRatio = 0.1;
+		const badCompressionRatio = 1;
+		describe("Check batch size on the wire", () =>
+			[
+				{
+					messagesInBatch: 1,
+					messageSize: 10 * bytesPerKB, // 10 KB
+					expectedSize: 10 * bytesPerKB, // 10 KB
+					payloadGenerator: generateStringOfSize,
+				}, // One small uncompressed message
+				{
+					messagesInBatch: 3,
+					messageSize: 10 * bytesPerKB, // 10 KB
+					expectedSize: 30 * bytesPerKB, // 30 KB
+					payloadGenerator: generateStringOfSize,
+				}, // Three small uncompressed messages
+				{
+					messagesInBatch: 1,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: compressionRatio * compressionSizeThreshold,
+					payloadGenerator: generateStringOfSize,
+				}, // One large message with compression
+				{
+					messagesInBatch: 10,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: compressionRatio * (compressionSizeThreshold + 1),
+					payloadGenerator: generateStringOfSize,
+				}, // Ten large messages with compression
+				{
+					messagesInBatch: 10,
+					messageSize: compressionSizeThreshold + 1,
+					expectedSize: badCompressionRatio * 10 * (compressionSizeThreshold + 1),
+					// In order for chunking to kick in, we need to force compression to output
+					// a payload larger than the payload size limit, which is done by compressing
+					// random data.
+					payloadGenerator: generateRandomStringOfSize,
+				}, // Ten large messages with compression and chunking
+			].forEach((config) => {
+				// biome-ignore format: https://github.com/biomejs/biome/issues/4202
+				it(
 						"Payload size check, " +
 							"Sending " +
 							`${config.messagesInBatch.toLocaleString()} messages of ${config.messageSize.toLocaleString()} bytes == ` +
-							`${((config.messagesInBatch * config.messageSize) / (1024 * 1024)).toFixed(
+							`${((config.messagesInBatch * config.messageSize) / bytesPerKB).toFixed(
 								4,
-							)} MB, expecting ${(config.expectedSize / (1024 * 1024)).toFixed(
-								4,
-							)} MB on the wire`,
+							)} KB, expecting ${(config.expectedSize / bytesPerKB).toFixed(4)} KB on the wire`,
 						async function () {
 							// This is not supported by the local server due to chunking. See ADO:2690
-							// This test is flaky on tinylicious. See ADO:2964
-							if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
-								this.skip();
-							}
-
-							// TODO: This test is consistently failing on routerlicious. See ADO:7883 and ADO:7924
-							if (provider.driver.type === "routerlicious") {
+							if (provider.driver.type === "local") {
 								this.skip();
 							}
 
@@ -499,29 +490,27 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							await provider.ensureSynchronized();
 							assertPayloadSize(config.expectedSize);
 							assert.ok(
-								!enableGroupedBatching ||
 									// In case of chunking, we will have more independent messages (chunks) on the wire than in the original batch
 									config.payloadGenerator === generateRandomStringOfSize ||
 									totalOps === 1,
 							);
 						},
-					).timeout(chunkingBatchesTimeoutMs);
-				}));
-		});
+					);
+			}));
 	});
 
 	describe("Resiliency", () => {
-		const messageSize = 50 * 1024; // 50 KB
+		const messageSize = 50 * bytesPerKB; // 50 KB
 		const messagesInBatch = 3;
 		const config: ITestContainerConfig = {
 			...testContainerConfig,
 			runtimeOptions: {
 				summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 				compressionOptions: {
-					minimumBatchSizeInBytes: 51 * 1024, // 51 KB
+					minimumBatchSizeInBytes: 51 * bytesPerKB, // 51 KB
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
-				chunkSizeInBytes: 20 * 1024, // 20 KB
+				chunkSizeInBytes: 20 * bytesPerKB, // 20 KB
 			},
 		};
 
@@ -561,19 +550,14 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			};
 
 			it("Reconnects while processing chunks", async function () {
-				// This is not supported by the local server. See ADO:2690
-				// This test is flaky on tinylicious. See ADO:2964
-				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
-					this.skip();
-				}
-
 				await setupContainers(config);
 				// Force the container to reconnect after processing 2 chunked ops
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
 					(op) =>
-						(op.contents as { type?: unknown } | undefined)?.type ===
-						ContainerMessageType.ChunkedOp,
+						typeof op.contents === "string" &&
+						(JSON.parse(op.contents) as { type?: unknown })?.type ===
+							ContainerMessageType.ChunkedOp,
 					2,
 				);
 
@@ -581,18 +565,13 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 
 			it("Reconnects while processing compressed batch", async function () {
-				// This is not supported by the local server. See ADO:2690
-				// This test is flaky on tinylicious. See ADO:2964
-				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
-					this.skip();
-				}
-
 				await setupContainers(config);
 				// Force the container to reconnect after processing all the chunks
 				const secondConnection = reconnectAfterOpProcessing(
 					remoteContainer,
 					(op) => {
-						const contents = op.contents as any | undefined;
+						const contents =
+							typeof op.contents === "string" ? JSON.parse(op.contents) : undefined;
 						return (
 							contents?.type === ContainerMessageType.ChunkedOp &&
 							contents?.contents?.chunkId === contents?.contents?.totalChunks
@@ -618,20 +597,19 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 							container.disconnect();
 							container.once("connected", () => {
 								resolve();
-								container.deltaManager.outbound.off("op", handler);
+								toIDeltaManagerFull(container.deltaManager).outbound.off("op", handler);
 							});
 							container.connect();
 						}
 					};
 
-					container.deltaManager.outbound.on("op", handler);
+					toIDeltaManagerFull(container.deltaManager).outbound.on("op", handler);
 				});
 			};
 
 			it("Reconnects while sending chunks", async function () {
 				// This is not supported by the local server. See ADO:2690
-				// This test is flaky on tinylicious. See ADO:7669
-				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
+				if (provider.driver.type === "local") {
 					this.skip();
 				}
 
@@ -650,12 +628,6 @@ describeCompat("Message size", "NoCompat", (getTestObjectProvider, apis) => {
 			});
 
 			it("Reconnects while sending compressed batch", async function () {
-				// This is not supported by the local server. See ADO:2690
-				// This test is flaky on tinylicious. See ADO:2964
-				if (provider.driver.type === "local" || provider.driver.type === "tinylicious") {
-					this.skip();
-				}
-
 				await setupContainers(config);
 				// Force the container to reconnect after sending the compressed batch (i.e. send all chunks)
 				const secondConnection = reconnectAfterBatchSending(

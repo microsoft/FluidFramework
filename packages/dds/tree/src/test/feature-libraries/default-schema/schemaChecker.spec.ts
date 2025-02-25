@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 // Reaching into internal module just to test it
 import {
@@ -13,7 +13,12 @@ import {
 	isNodeInSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/default-schema/schemaChecker.js";
-import { FieldKinds } from "../../../feature-libraries/index.js";
+import {
+	cursorForJsonableTreeNode,
+	defaultSchemaPolicy,
+	FieldKinds,
+	mapTreeFromCursor,
+} from "../../../feature-libraries/index.js";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
@@ -31,6 +36,8 @@ import {
 	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
+import { testTrees } from "../../testTrees.js";
+import { testIdCompressor } from "../../utils.js";
 
 /**
  * Creates a schema and policy. Indicates stored schema validation should be performed.
@@ -48,6 +55,8 @@ function createSchemaAndPolicy(
 			// Note: the value of 'validateSchema' doesn't matter for the tests in this file because they're testing a
 			// layer where we already decided that we are doing validation and are validating that it works correctly.
 			validateSchema: true,
+			// TODO: unit test other options in this file
+			allowUnknownOptionalFields: () => false,
 		},
 	};
 }
@@ -61,7 +70,7 @@ function getFieldSchema(
 ): TreeFieldStoredSchema {
 	return {
 		kind: kind.identifier,
-		types: allowedTypes === undefined ? undefined : new Set(allowedTypes),
+		types: new Set(allowedTypes),
 	};
 }
 
@@ -489,5 +498,23 @@ describe("schema validation", () => {
 				SchemaValidationErrors.Field_IncorrectMultiplicity,
 			);
 		});
+	});
+
+	describe("testTrees", () => {
+		for (const testTree of testTrees) {
+			it(testTree.name, () => {
+				const mapTrees = testTree
+					.treeFactory(testIdCompressor)
+					.map((j) => mapTreeFromCursor(cursorForJsonableTreeNode(j)));
+				const schema = testTree.schemaData;
+				assert.equal(
+					isFieldInSchema(mapTrees, schema.rootFieldSchema, {
+						schema,
+						policy: defaultSchemaPolicy,
+					}),
+					SchemaValidationErrors.NoError,
+				);
+			});
+		}
 	});
 });

@@ -1,0 +1,20 @@
+{
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"include": ["./**/*"],
+	"exclude": ["./core-interfaces/jsonSerializable.exactOptionalPropertyTypes.false.spec.ts"],
+	"compilerOptions": {
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": ["mocha", "node"],
+		"noImplicitAny": true,
+		"noUnusedLocals": true,
+		"noImplicitOverride": true,
+		"exactOptionalPropertyTypes": true,
+		"noUncheckedIndexedAccess": false,
+	},
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}

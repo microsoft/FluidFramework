@@ -22,6 +22,10 @@ import type { FullSchemaPolicy } from "./fieldKind.js";
 import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
 
+// TODO:
+// The comparisons in this file seem redundant with those in discrepancies.ts.
+// Rather than both existing, one of which just returns boolean and the other which returns additional details, a simple comparison which returns everything needed should be used.
+
 /**
  * @returns true iff `superset` is a superset of `original`.
  *
@@ -47,6 +51,10 @@ export function allowsTreeSuperset(
 		if (superset instanceof LeafNodeStoredSchema) {
 			return allowsValueSuperset(original.leafValue, superset.leafValue);
 		}
+		return false;
+	}
+
+	if (superset instanceof LeafNodeStoredSchema) {
 		return false;
 	}
 
@@ -153,12 +161,6 @@ export function allowsTreeSchemaIdentifierSuperset(
 	original: TreeTypeSet,
 	superset: TreeTypeSet,
 ): boolean {
-	if (superset === undefined) {
-		return true;
-	}
-	if (original === undefined) {
-		return false;
-	}
 	for (const originalType of original) {
 		if (!superset.has(originalType)) {
 			return false;

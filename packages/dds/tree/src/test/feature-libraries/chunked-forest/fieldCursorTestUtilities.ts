@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	type FieldUpPath,
@@ -12,9 +12,10 @@ import {
 	mapCursorField,
 	rootFieldKey,
 } from "../../../core/index.js";
-import { leaf } from "../../../domains/index.js";
 import { type TreeChunk, jsonableTreeFromCursor } from "../../../feature-libraries/index.js";
 import { checkFieldTraversal } from "../../cursorTestSuite.js";
+import { numberSchema } from "../../../simple-tree/index.js";
+import { brand } from "../../../util/index.js";
 
 export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): JsonableTree[] {
 	return mapCursorField(cursor, jsonableTreeFromCursor);
@@ -23,7 +24,7 @@ export function jsonableTreesFromFieldCursor(cursor: ITreeCursorSynchronous): Js
 export function numberSequenceField(length: number): JsonableTree[] {
 	const field: JsonableTree[] = [];
 	for (let index = 0; index < length; index++) {
-		field.push({ type: leaf.number.name, value: index });
+		field.push({ type: brand(numberSchema.identifier), value: index });
 	}
 	return field;
 }

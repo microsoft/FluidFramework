@@ -122,8 +122,8 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 		/** Previous snapshot, subtree relative to this path part */
 		previousSnapshot: ISnapshotTreeEx,
 	): string {
+		assert(path.length > 0, 0x0b3 /* "Expected at least 1 path part" */);
 		const key = path[0];
-		assert(path.length > 0 && key !== undefined, 0x0b3 /* "Expected at least 1 path part" */);
 		if (path.length === 1) {
 			switch (handleType) {
 				case SummaryType.Blob: {
@@ -146,7 +146,6 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					throw Error(`Unexpected handle summary object type: "${handleType}".`);
 			}
 		}
-		// TODO why are we non null asserting here?
-		return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]!);
+		return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]);
 	}
 }

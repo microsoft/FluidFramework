@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	CursorLocationType,
@@ -13,83 +13,88 @@ import {
 	type ITreeCursor,
 	type JsonableTree,
 	type PathRootPrefix,
+	type TreeNodeSchemaIdentifier,
 	type UpPath,
 	compareFieldUpPaths,
 	rootFieldKey,
 	setGenericTreeField,
 } from "../core/index.js";
-import { leaf } from "../domains/index.js";
 import {
-	Any,
-	FieldKinds,
-	FlexFieldSchema,
-	SchemaBuilderBase,
 	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
 	prefixFieldPath,
 	prefixPath,
 } from "../feature-libraries/index.js";
 import { brand } from "../util/index.js";
+import { expectEqualFieldPaths, expectEqualPaths, IdentifierSchema } from "./utils.js";
+import {
+	booleanSchema,
+	numberSchema,
+	SchemaFactory,
+	stringSchema,
+} from "../simple-tree/index.js";
+import { JsonArray, JsonObject } from "./json/index.js";
 
-import { expectEqualFieldPaths, expectEqualPaths } from "./utils.js";
+const sf = new SchemaFactory("Cursor Test Suite");
 
-const schemaBuilder = new SchemaBuilderBase(FieldKinds.required, {
-	scope: "Cursor Test Suite",
-	libraries: [leaf.library],
-});
+export class EmptyObject extends sf.object("Empty object", {}) {}
+class EmptyObject2 extends sf.object("Empty object 2", {}) {}
+class EmptyObject3 extends sf.object("Empty object 3", {}) {}
 
-export const emptySchema = schemaBuilder.object("Empty object", {});
-const emptySchema2 = schemaBuilder.object("Empty object 2", {});
-const emptySchema3 = schemaBuilder.object("Empty object 3", {});
-export const mapSchema = schemaBuilder.map(
-	"Map",
-	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
-);
-// object with fixed shape
-export const objectSchema = schemaBuilder.object("object", {
-	child: leaf.number,
-});
-export const identifierSchema = schemaBuilder.object("identifier-object", {
-	identifier: FlexFieldSchema.create(FieldKinds.identifier, [leaf.string]),
-});
-export const testTreeSchema = schemaBuilder.intoSchema(
-	FlexFieldSchema.create(FieldKinds.sequence, [Any]),
-);
+const emptyObjectIdentifier: TreeNodeSchemaIdentifier = brand(EmptyObject.identifier);
+const emptyObjectIdentifier2: TreeNodeSchemaIdentifier = brand(EmptyObject2.identifier);
+const emptyObjectIdentifier3: TreeNodeSchemaIdentifier = brand(EmptyObject3.identifier);
+
+export const testTreeSchema = [
+	EmptyObject,
+	EmptyObject2,
+	EmptyObject3,
+	IdentifierSchema,
+	JsonArray,
+];
 
 export const testTrees: readonly (readonly [string, JsonableTree])[] = [
-	["minimal", { type: emptySchema.name }],
-	["true boolean", { type: leaf.boolean.name, value: true }],
-	["false boolean", { type: leaf.boolean.name, value: false }],
-	["integer", { type: leaf.number.name, value: Number.MIN_SAFE_INTEGER - 1 }],
-	["string", { type: leaf.string.name, value: "test" }],
-	["string with escaped characters", { type: leaf.string.name, value: '\\"\b\f\n\r\t' }],
-	["string with emoticon", { type: leaf.string.name, value: "😀" }],
+	["minimal", { type: emptyObjectIdentifier }],
+	["true boolean", { type: brand(booleanSchema.identifier), value: true }],
+	["false boolean", { type: brand(booleanSchema.identifier), value: false }],
+	["integer", { type: brand(numberSchema.identifier), value: Number.MIN_SAFE_INTEGER - 1 }],
+	["string", { type: brand(stringSchema.identifier), value: "test" }],
+	[
+		"string with escaped characters",
+		{ type: brand(stringSchema.identifier), value: '\\"\b\f\n\r\t' },
+	],
+	["string with emoticon", { type: brand(stringSchema.identifier), value: "😀" }],
 	[
 		"field",
 		{
-			type: mapSchema.name,
-			fields: { x: [{ type: emptySchema.name }, { type: leaf.number.name, value: 6 }] },
+			type: brand(JsonObject.identifier),
+			fields: {
+				x: [
+					{ type: emptyObjectIdentifier },
+					{ type: brand(numberSchema.identifier), value: 6 },
+				],
+			},
 		},
 	],
 	[
 		"multiple fields",
 		{
-			type: mapSchema.name,
+			type: brand(JsonObject.identifier),
 			fields: {
-				a: [{ type: emptySchema.name }],
-				b: [{ type: emptySchema2.name }],
+				a: [{ type: emptyObjectIdentifier }],
+				b: [{ type: emptyObjectIdentifier2 }],
 			},
 		},
 	],
 	[
 		"double nested",
 		{
-			type: mapSchema.name,
+			type: brand(JsonObject.identifier),
 			fields: {
 				a: [
 					{
-						type: mapSchema.name,
-						fields: { b: [{ type: emptySchema.name }] },
+						type: brand(JsonObject.identifier),
+						fields: { b: [{ type: emptyObjectIdentifier }] },
 					},
 				],
 			},
@@ -98,14 +103,14 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"complex",
 		{
-			type: mapSchema.name,
+			type: brand(JsonObject.identifier),
 			fields: {
-				a: [{ type: mapSchema.name }],
+				a: [{ type: brand(JsonObject.identifier) }],
 				b: [
 					{
-						type: mapSchema.name,
+						type: brand(JsonObject.identifier),
 						fields: {
-							c: [{ type: leaf.number.name, value: 6 }],
+							c: [{ type: brand(numberSchema.identifier), value: 6 }],
 						},
 					},
 				],
@@ -115,16 +120,16 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"siblings restored on up",
 		{
-			type: mapSchema.name,
+			type: brand(JsonObject.identifier),
 			fields: {
 				X: [
 					{
-						type: mapSchema.name,
+						type: brand(JsonObject.identifier),
 						// Inner node so that when navigating up from it,
 						// The cursor's siblings value needs to be restored.
-						fields: { q: [{ type: emptySchema2.name }] },
+						fields: { q: [{ type: emptyObjectIdentifier2 }] },
 					},
-					{ type: emptySchema3.name },
+					{ type: emptyObjectIdentifier3 },
 				],
 			},
 		},
@@ -132,11 +137,11 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"fixed shape object",
 		{
-			type: objectSchema.name,
+			type: brand(JsonObject.identifier),
 			fields: {
 				child: [
 					{
-						type: leaf.number.name,
+						type: brand(numberSchema.identifier),
 						value: 1,
 					},
 				],
@@ -146,22 +151,22 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"nested object",
 		{
-			type: mapSchema.name,
+			type: brand(JsonObject.identifier),
 			fields: {
 				X: [
-					{ type: emptySchema2.name },
+					{ type: emptyObjectIdentifier2 },
 					{
-						type: objectSchema.name,
+						type: brand(JsonObject.identifier),
 						fields: {
 							child: [
 								{
-									type: leaf.number.name,
+									type: brand(numberSchema.identifier),
 									value: 1,
 								},
 							],
 						},
 					},
-					{ type: emptySchema3.name },
+					{ type: emptyObjectIdentifier3 },
 				],
 			},
 		},
@@ -169,17 +174,17 @@ export const testTrees: readonly (readonly [string, JsonableTree])[] = [
 	[
 		"longer sequence",
 		{
-			type: mapSchema.name,
+			type: brand(JsonObject.identifier),
 			fields: {
 				X: [
-					{ type: emptySchema3.name },
-					{ type: emptySchema3.name },
-					{ type: emptySchema2.name },
-					{ type: emptySchema3.name },
-					{ type: emptySchema3.name },
-					{ type: emptySchema3.name },
-					{ type: leaf.number.name, value: 1 },
-					{ type: emptySchema3.name },
+					{ type: emptyObjectIdentifier3 },
+					{ type: emptyObjectIdentifier3 },
+					{ type: emptyObjectIdentifier2 },
+					{ type: emptyObjectIdentifier3 },
+					{ type: emptyObjectIdentifier3 },
+					{ type: emptyObjectIdentifier3 },
+					{ type: brand(numberSchema.identifier), value: 1 },
+					{ type: emptyObjectIdentifier3 },
 				],
 			},
 		},
@@ -413,11 +418,11 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 				: builder.withKeys.bind(builder.withKeys)
 			: (keys: FieldKey[]) => {
 					const root: JsonableTree = {
-						type: mapSchema.name,
+						type: brand(JsonObject.identifier),
 					};
 					for (const key of keys) {
 						const child: JsonableTree = {
-							type: emptySchema.name,
+							type: emptyObjectIdentifier,
 						};
 						setGenericTreeField(root, key, [child]);
 					}
@@ -496,7 +501,7 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 			// TODO: revisit spec for forest cursors and root and clarify what should be tested for them regarding Up from root.
 			if (!extraRoot) {
 				it("up from root", () => {
-					const cursor = factory({ type: emptySchema.name });
+					const cursor = factory({ type: emptyObjectIdentifier });
 					assert.throws(() => {
 						cursor.exitNode();
 					});
@@ -505,14 +510,14 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 			describe("getPath() and getFieldPath()", () => {
 				it("at root", () => {
 					const cursor = factory({
-						type: emptySchema.name,
+						type: emptyObjectIdentifier,
 					});
 					expectEqualPaths(cursor.getPath(), parent);
 				});
 
 				it("getFieldPath in root field", () => {
 					const cursor = factory({
-						type: emptySchema.name,
+						type: emptyObjectIdentifier,
 					});
 					cursor.enterField(brand("key"));
 					expectEqualFieldPaths(cursor.getFieldPath(), {
@@ -523,8 +528,8 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("first node in a root field", () => {
 					const cursor = factory({
-						type: mapSchema.name,
-						fields: { key: [{ type: leaf.number.name, value: 0 }] },
+						type: brand(JsonObject.identifier),
+						fields: { key: [{ type: brand(numberSchema.identifier), value: 0 }] },
 					});
 					cursor.enterField(brand("key"));
 					cursor.firstNode();
@@ -537,11 +542,11 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("node in a root field", () => {
 					const cursor = factory({
-						type: mapSchema.name,
+						type: brand(JsonObject.identifier),
 						fields: {
 							key: [
-								{ type: leaf.number.name, value: 0 },
-								{ type: leaf.number.name, value: 1 },
+								{ type: brand(numberSchema.identifier), value: 0 },
+								{ type: brand(numberSchema.identifier), value: 1 },
 							],
 						},
 					});
@@ -556,16 +561,16 @@ function testTreeCursor<TData, TCursor extends ITreeCursor>(config: {
 
 				it("in a nested field", () => {
 					const cursor = factory({
-						type: mapSchema.name,
+						type: brand(JsonObject.identifier),
 						fields: {
 							a: [
 								{
-									type: mapSchema.name,
-									fields: { [EmptyKey]: [{ type: emptySchema.name }] },
+									type: brand(JsonObject.identifier),
+									fields: { [EmptyKey]: [{ type: emptyObjectIdentifier }] },
 								},
 								{
-									type: mapSchema.name,
-									fields: { [EmptyKey]: [{ type: emptySchema.name }] },
+									type: brand(JsonObject.identifier),
+									fields: { [EmptyKey]: [{ type: emptyObjectIdentifier }] },
 								},
 							],
 						},

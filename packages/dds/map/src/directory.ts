@@ -687,7 +687,7 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const message = content as IDirectoryOperation;
 		const handler = this.messageHandlers.get(message.type);
 		assert(handler !== undefined, 0x00d /* Missing message handler for message type */);
@@ -784,8 +784,8 @@ export class SharedDirectory
 					const localValue = this.makeLocal(
 						key,
 						currentSubDir.absolutePath,
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-						parseHandles(serializable, this.serializer),
+						// eslint-disable-next-line import/no-deprecated
+						parseHandles(serializable, this.serializer) as ISerializableValue,
 					);
 					currentSubDir.populateStorage(key, localValue);
 				}
@@ -805,7 +805,10 @@ export class SharedDirectory
 		if (message.type === MessageType.Operation) {
 			const op: IDirectoryOperation = message.contents as IDirectoryOperation;
 			const handler = this.messageHandlers.get(op.type);
-			assert(handler !== undefined, 0x00e /* Missing message handler for message type */);
+			assert(
+				handler !== undefined,
+				0x00e /* "Missing message handler for message type: op may be from a newer version */,
+			);
 			handler.process(message, op, local, localOpMetadata);
 		}
 	}
@@ -813,7 +816,7 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
-	protected rollback(content: unknown, localOpMetadata: unknown): void {
+	protected override rollback(content: unknown, localOpMetadata: unknown): void {
 		const op: IDirectoryOperation = content as IDirectoryOperation;
 		const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 		if (subdir) {
@@ -864,20 +867,15 @@ export class SharedDirectory
 			return false;
 		}
 		let currentParent = this.root;
-		const nodeList = absolutePath.split(posix.sep);
-		let start = 1;
-		while (start < nodeList.length) {
-			// Non null asserting, this loop only runs while start in in the bounds of the array
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const subDirName = nodeList[start]!;
-			if (currentParent.isSubDirectoryDeletePending(subDirName)) {
+		const pathParts = absolutePath.split(posix.sep).slice(1);
+		for (const dirName of pathParts) {
+			if (currentParent.isSubDirectoryDeletePending(dirName)) {
 				return true;
 			}
-			currentParent = currentParent.getSubDirectory(subDirName) as SubDirectory;
+			currentParent = currentParent.getSubDirectory(dirName) as SubDirectory;
 			if (currentParent === undefined) {
 				return true;
 			}
-			start += 1;
 		}
 		return false;
 	}
@@ -1494,10 +1492,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			dirs: this._subdirectories,
 			next(): IteratorResult<[string, IDirectory]> {
 				if (this.index < subdirNames.length) {
-					// Non null asserting, we've checked that the index is inside the bounds of the array.
+					// Bounds check above guarantees non-null (at least at compile time, assuming all types are respected)
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					const subdirName = subdirNames[this.index]!;
-					this.index++;
+					const subdirName = subdirNames[this.index++]!;
 					const subdir = this.dirs.get(subdirName);
 					assert(subdir !== undefined, 0x8ac /* Could not find expected sub-directory. */);
 					return { value: [subdirName, subdir], done: false };
@@ -2186,25 +2183,27 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		local: boolean,
 		localOpMetadata: unknown,
 	): boolean {
-		if (this.pendingClearMessageIds.length > 0) {
+		const firstPendingClearMessageId = this.pendingClearMessageIds[0];
+		if (firstPendingClearMessageId !== undefined) {
 			if (local) {
-				// Remove all pendingMessageIds lower than first pendingClearMessageId.
-				// Non null asserting, because of pendingClearMessageIds length check above
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const firstPendingClearMessageId = this.pendingClearMessageIds[0]!;
 				assert(
 					localOpMetadata !== undefined &&
 						isKeyEditLocalOpMetadata(localOpMetadata) &&
 						localOpMetadata.pendingMessageId < firstPendingClearMessageId,
 					0x010 /* "Received out of order storage op when there is an unackd clear message" */,
 				);
+				// Remove all pendingMessageIds lower than first pendingClearMessageId.
+				const lowestPendingClearMessageId = firstPendingClearMessageId;
 				const pendingKeyMessageIdArray = this.pendingKeys.get(op.key);
 				if (pendingKeyMessageIdArray !== undefined) {
 					let index = 0;
-					// Non-null asserting because we maintain that the pendingKeyMessageIdArray will only exist if it is non-empty.
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					while (pendingKeyMessageIdArray[index]! < firstPendingClearMessageId) {
+					let pendingKeyMessageId = pendingKeyMessageIdArray[index];
+					while (
+						pendingKeyMessageId !== undefined &&
+						pendingKeyMessageId < lowestPendingClearMessageId
+					) {
 						index += 1;
+						pendingKeyMessageId = pendingKeyMessageIdArray[index];
 					}
 					const newPendingKeyMessageId = pendingKeyMessageIdArray.splice(index);
 					if (newPendingKeyMessageId.length === 0) {

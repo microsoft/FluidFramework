@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
-	LoaderCachingPolicy,
+import type {
+	IDocumentStorageServicePolicies,
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
+import { LoaderCachingPolicy } from "@fluidframework/driver-definitions/internal";
 
 import { DocumentStorageServiceProxy } from "./documentStorageServiceProxy.js";
 import { canRetryOnError } from "./network.js";
@@ -20,7 +21,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	private readonly prefetchCache = new Map<string, Promise<ArrayBufferLike>>();
 	private prefetchEnabled = true;
 
-	public get policies() {
+	public get policies(): IDocumentStorageServicePolicies | undefined {
 		const policies = this.internalStorageService.policies;
 		if (policies) {
 			return { ...policies, caching: LoaderCachingPolicy.NoCaching };
@@ -81,22 +82,21 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	}
 
 	private prefetchTreeCore(tree: ISnapshotTree, secondary: string[]) {
-		for (const blobKey of Object.keys(tree.blobs)) {
-			const blob = tree.blobs[blobKey];
+		for (const [blobKey, blob] of Object.entries(tree.blobs)) {
 			if (blobKey.startsWith(".") || blobKey === "header" || blobKey.startsWith("quorum")) {
-				if (blob !== null && blob !== undefined) {
+				if (blob !== null) {
 					// We don't care if the prefetch succeeds
 					void this.cachedRead(blob);
 				}
 			} else if (!blobKey.startsWith("deltas")) {
-				if (blob !== null && blob !== undefined) {
+				if (blob !== null) {
 					secondary.push(blob);
 				}
 			}
 		}
 
-		for (const [_, snapshot] of Object.entries(tree.trees)) {
-			this.prefetchTreeCore(snapshot, secondary);
+		for (const subTree of Object.values(tree.trees)) {
+			this.prefetchTreeCore(subTree, secondary);
 		}
 	}
 }

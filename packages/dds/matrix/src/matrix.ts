@@ -17,15 +17,14 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
 	Client,
 	IJSONSegment,
 	IMergeTreeOp,
+	type ISegmentInternal,
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
-	// eslint-disable-next-line import/no-deprecated
-	SegmentGroup,
+	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
 import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -621,9 +620,7 @@ export class SharedMatrix<T = any>
 		const rowCount = inserted.cachedLength;
 		for (let row = rowStart; row < rowStart + rowCount; row++, rowHandle++) {
 			for (let col = 0; col < this.colCount; col++) {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const colHandle = this.colHandles.getHandle(col)!;
+				const colHandle = this.colHandles.getHandle(col);
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
 					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
@@ -647,9 +644,7 @@ export class SharedMatrix<T = any>
 		const colCount = inserted.cachedLength;
 		for (let col = colStart; col < colStart + colCount; col++, colHandle++) {
 			for (let row = 0; row < this.rowCount; row++) {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				const rowHandle = this.rowHandles.getHandle(row)!;
+				const rowHandle = this.rowHandles.getHandle(row);
 				const value = this.cells.getCell(rowHandle, colHandle);
 				if (this.isAttached() && value !== undefined && value !== null) {
 					this.sendSetCellOp(row, col, value, rowHandle, colHandle);
@@ -757,23 +752,16 @@ export class SharedMatrix<T = any>
 	}
 
 	private rebasePosition(
-		// eslint-disable-next-line import/no-deprecated
 		client: Client,
 		ref: LocalReferencePosition,
 		localSeq: number,
 	): number | undefined {
-		const segment = ref.getSegment();
+		const segment: ISegmentInternal | undefined = ref.getSegment();
 		const offset = ref.getOffset();
 		// If the segment that contains the position is removed, then this setCell op should do nothing.
-		if (segment === undefined || offset === undefined || segment.removedSeq !== undefined) {
+		if (segment === undefined || offset === undefined || segmentIsRemoved(segment)) {
 			return;
 		}
-
-		assert(
-			segment.localRemovedSeq === undefined ||
-				(segment.localRemovedSeq !== undefined && segment.localRemovedSeq > localSeq),
-			0x8b8 /* Attempted to set a cell which was removed locally before the original op applied. */,
-		);
 
 		return client.findReconnectionPosition(segment, localSeq) + offset;
 	}
@@ -821,23 +809,11 @@ export class SharedMatrix<T = any>
 		} else {
 			switch (content.target) {
 				case SnapshotPath.cols: {
-					this.submitColMessage(
-						this.cols.regeneratePendingOp(
-							content,
-							// eslint-disable-next-line import/no-deprecated
-							localOpMetadata as SegmentGroup | SegmentGroup[],
-						),
-					);
+					this.submitColMessage(this.cols.regeneratePendingOp(content, localOpMetadata));
 					break;
 				}
 				case SnapshotPath.rows: {
-					this.submitRowMessage(
-						this.rows.regeneratePendingOp(
-							content,
-							// eslint-disable-next-line import/no-deprecated
-							localOpMetadata as SegmentGroup | SegmentGroup[],
-						),
-					);
+					this.submitRowMessage(this.rows.regeneratePendingOp(content, localOpMetadata));
 					break;
 				}
 				default: {

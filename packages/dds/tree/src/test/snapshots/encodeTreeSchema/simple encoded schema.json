@@ -6,12 +6,12 @@
         "": {
           "kind": "Sequence",
           "types": [
-            "com.fluidframework.json.object",
             "com.fluidframework.json.array",
-            "com.fluidframework.leaf.number",
+            "com.fluidframework.json.object",
             "com.fluidframework.leaf.boolean",
-            "com.fluidframework.leaf.string",
-            "com.fluidframework.leaf.null"
+            "com.fluidframework.leaf.null",
+            "com.fluidframework.leaf.number",
+            "com.fluidframework.leaf.string"
           ]
         }
       }
@@ -20,20 +20,17 @@
       "map": {
         "kind": "Optional",
         "types": [
-          "com.fluidframework.json.object",
           "com.fluidframework.json.array",
-          "com.fluidframework.leaf.number",
+          "com.fluidframework.json.object",
           "com.fluidframework.leaf.boolean",
-          "com.fluidframework.leaf.string",
-          "com.fluidframework.leaf.null"
+          "com.fluidframework.leaf.null",
+          "com.fluidframework.leaf.number",
+          "com.fluidframework.leaf.string"
         ]
       }
     },
     "com.fluidframework.leaf.boolean": {
       "leaf": 2
-    },
-    "com.fluidframework.leaf.handle": {
-      "leaf": 3
     },
     "com.fluidframework.leaf.null": {
       "leaf": 4
@@ -46,14 +43,14 @@
     }
   },
   "root": {
-    "kind": "Sequence",
+    "kind": "Value",
     "types": [
-      "com.fluidframework.json.object",
       "com.fluidframework.json.array",
-      "com.fluidframework.leaf.number",
+      "com.fluidframework.json.object",
       "com.fluidframework.leaf.boolean",
-      "com.fluidframework.leaf.string",
-      "com.fluidframework.leaf.null"
+      "com.fluidframework.leaf.null",
+      "com.fluidframework.leaf.number",
+      "com.fluidframework.leaf.string"
     ]
   }
 }

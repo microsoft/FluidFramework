@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getEsLintConfigFilePath,
-	getInstalledPackageVersion,
-} from "../../../common/taskUtils";
+import { getEsLintConfigFilePath, getInstalledPackageVersion } from "../taskUtils";
 import { TscDependentTask } from "./tscTask";
 
 export class TsLintTask extends TscDependentTask {
@@ -34,7 +31,7 @@ export class EsLintTask extends TscDependentTask {
 	protected get useWorker() {
 		if (this.command === "eslint --format stylish src") {
 			// eslint can't use worker thread as it needs to change the current working directory
-			return this.node.buildContext.workerPool?.useWorkerThreads === false;
+			return this.node.context.workerPool?.useWorkerThreads === false;
 		}
 		return false;
 	}

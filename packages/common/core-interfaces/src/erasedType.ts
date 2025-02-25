@@ -79,7 +79,7 @@ export abstract class ErasedType<out Name = unknown> {
 	 */
 	public static [Symbol.hasInstance](value: never): value is never {
 		throw new Error(
-			"ErasedType is a compile time type brand not a real class that can be used with `instancof` at runtime.",
+			"ErasedType is a compile time type brand not a real class that can be used with `instanceof` at runtime.",
 		);
 	}
 }

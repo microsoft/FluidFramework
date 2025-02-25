@@ -69,17 +69,14 @@ export function matchProperties(
  */
 export function extend<T>(base: MapLike<T>, extension: MapLike<T> | undefined): MapLike<T> {
 	if (extension !== undefined) {
-		// eslint-disable-next-line guard-for-in, no-restricted-syntax
-		for (const key in extension) {
-			const v = extension[key];
-			// TODO Non null asserting, why is this not null?
-			if (v === null) {
+		for (const [key, v] of Object.entries(extension)) {
+			if (v === undefined) {
+				continue;
+			} else if (v === null) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete base[key];
 			} else {
-				// Non null aseerting here since we are checking if v is not null
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				base[key] = v!;
+				base[key] = v;
 			}
 		}
 	}
@@ -96,16 +93,7 @@ export function clone<T>(extension: MapLike<T> | undefined): MapLike<T> | undefi
 		return undefined;
 	}
 	const cloneMap = createMap<T>();
-	// eslint-disable-next-line guard-for-in, no-restricted-syntax
-	for (const key in extension) {
-		const v = extension[key];
-		if (v !== null) {
-			// If `v` is undefined, undefined must have been assignable to `T`.
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			cloneMap[key] = v!;
-		}
-	}
-	return cloneMap;
+	return extend(cloneMap, extension);
 }
 
 /**
@@ -118,10 +106,7 @@ export function addProperties(
 	oldProps: PropertySet | undefined,
 	newProps: PropertySet,
 ): PropertySet {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	const _oldProps = oldProps ?? createMap<any>();
-	extend(_oldProps, newProps);
-	return { ..._oldProps };
+	return extend(oldProps ?? createMap<unknown>(), newProps);
 }
 
 /**
@@ -134,12 +119,9 @@ export function extendIfUndefined<T>(
 	extension: MapLike<T> | undefined,
 ): MapLike<T> {
 	if (extension !== undefined) {
-		// eslint-disable-next-line no-restricted-syntax
-		for (const key in extension) {
+		for (const [key, value] of Object.entries(extension)) {
 			if (base[key] === undefined) {
-				// TODO Non null asserting, why is this not null?
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				base[key] = extension[key]!;
+				base[key] = value;
 			}
 		}
 	}

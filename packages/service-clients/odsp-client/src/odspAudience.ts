@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { type IClient } from "@fluidframework/driver-definitions";
+import type { IClient } from "@fluidframework/driver-definitions";
 
-import { type OdspMember } from "./interfaces.js";
+import type { OdspMember } from "./interfaces.js";
 
 /**
  * Since ODSP provides user names, email and oids for all of its members, we extend the

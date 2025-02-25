@@ -9,9 +9,9 @@ import { fieldKinds } from "./defaultFieldKinds.js";
 
 /**
  * FullSchemaPolicy with the default field kinds.
- * @internal
  */
 export const defaultSchemaPolicy: FullSchemaPolicy = {
 	fieldKinds,
 	validateSchema: false,
+	allowUnknownOptionalFields: () => false,
 };

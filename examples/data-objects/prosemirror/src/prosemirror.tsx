@@ -16,42 +16,41 @@ import {
 	FluidDataStoreRuntime,
 	FluidObjectHandle,
 	mixinRequestHandler,
-} from "@fluidframework/datastore/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+} from "@fluidframework/datastore/legacy";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/legacy";
+import { ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-} from "@fluidframework/runtime-definitions/internal";
-import { create404Response } from "@fluidframework/runtime-utils/internal";
-import {
-	ReferenceType,
-	SharedString,
-	reservedRangeLabelsKey,
-} from "@fluidframework/sequence/internal";
+} from "@fluidframework/runtime-definitions/legacy";
+import { create404Response } from "@fluidframework/runtime-utils/legacy";
+// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+import { reservedRangeLabelsKey } from "@fluidframework/sequence/internal";
+import { ReferenceType, SharedString } from "@fluidframework/sequence/legacy";
 import { EditorView } from "prosemirror-view";
 import React, { useEffect, useRef } from "react";
 
-import { nodeTypeKey } from "./fluidBridge.js";
+import { nodeTypeKey, stackTypeBegin, stackTypeEnd, stackTypeKey } from "./fluidBridge.js";
 import { FluidCollabManager, IProvideRichTextEditor } from "./fluidCollabManager.js";
 
 function insertMarkers(
 	text: SharedString,
 	treeRangeLabel: string,
-	beginMarkerPos: number,
-	endMarkerPos: number,
+	position: number,
 	nodeType: string,
 ) {
 	const endMarkerProps = {};
 	endMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	endMarkerProps[nodeTypeKey] = nodeType;
+	endMarkerProps[stackTypeKey] = stackTypeEnd;
 
 	const beginMarkerProps = {};
 	beginMarkerProps[reservedRangeLabelsKey] = [treeRangeLabel];
 	beginMarkerProps[nodeTypeKey] = nodeType;
+	beginMarkerProps[stackTypeKey] = stackTypeBegin;
 
-	text.insertMarker(endMarkerPos, ReferenceType.Simple, endMarkerProps);
-	text.insertMarker(beginMarkerPos, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position, ReferenceType.Simple, beginMarkerProps);
+	text.insertMarker(position + 1, ReferenceType.Simple, endMarkerProps);
 }
 
 /**
@@ -105,7 +104,7 @@ export class ProseMirror
 			this.root = SharedMap.create(this.runtime, "root");
 			const text = SharedString.create(this.runtime);
 
-			insertMarkers(text, "prosemirror", 0, 1, "paragraph");
+			insertMarkers(text, "prosemirror", 0, "paragraph");
 			text.insertText(1, "Hello, world!");
 
 			this.root.set("text", text.handle);

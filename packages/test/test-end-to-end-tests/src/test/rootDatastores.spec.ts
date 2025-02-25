@@ -8,36 +8,28 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { Loader } from "@fluidframework/container-loader/internal";
-import {
-	DefaultSummaryConfiguration,
-	IAckedSummary,
-	SummaryCollection,
-} from "@fluidframework/container-runtime/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { IDataStore } from "@fluidframework/runtime-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	createSummarizer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
+	summarizeNow,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
-describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-	beforeEach("getTestObjectProvider", () => {
-		provider = getTestObjectProvider();
-	});
+import { TestPersistedCache } from "../testPersistedCache.js";
 
+describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) => {
 	let container1: IContainer;
 	let container2: IContainer;
 	let dataObject1: ITestFluidObject;
 	let dataObject2: ITestFluidObject;
 
 	const packageName = "default";
-	const IdleDetectionTime = 100;
 	const testContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		runtimeOptions: {
@@ -49,37 +41,25 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		},
 	};
 
-	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => {
-		return {
-			getRawConfig: (name: string): ConfigTypes => settings[name],
-		};
-	};
-
-	const setupContainers = async (
-		containerConfig: ITestContainerConfig = testContainerConfig,
-		featureGates: Record<string, ConfigTypes> = {},
-	) => {
-		provider.reset();
-		const configWithFeatureGates = {
-			...containerConfig,
-			loaderProps: { configProvider: configProvider(featureGates) },
-		};
-		container1 = await provider.makeTestContainer(configWithFeatureGates);
+	let provider: ITestObjectProvider;
+	const testPersistedCache = new TestPersistedCache();
+	beforeEach("getTestObjectProvider", async () => {
+		provider = getTestObjectProvider({ persistedCache: testPersistedCache });
+		container1 = await provider.makeTestContainer(testContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
-
-		container2 = await provider.loadTestContainer(configWithFeatureGates);
-		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+		await waitForContainerConnection(container1);
 
 		await provider.ensureSynchronized();
-	};
 
-	const reset = async () => provider.reset();
+		container2 = await provider.loadTestContainer(testContainerConfig);
+		dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
+	});
+	afterEach("clearTestPersistedCache", async () => {
+		testPersistedCache.reset();
+	});
 
 	const runtimeOf = (dataObject: ITestFluidObject): IContainerRuntime =>
 		dataObject.context.containerRuntime as IContainerRuntime;
-
-	const createDataStoreWithProps = async (dataObject: ITestFluidObject, id: string) =>
-		runtimeOf(dataObject)._createDataStoreWithProps(packageName, {}, id);
 
 	/**
 	 * Gets an aliased data store with the given id. Throws an error if the data store cannot be retrieved.
@@ -95,21 +75,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 		return dataStore;
 	}
 
-	describe("Legacy APIs", () => {
-		beforeEach("setupContainers", async () => setupContainers(testContainerConfig));
-		afterEach(async () => reset());
-
-		it("Datastore creation with legacy API returns datastore which can be aliased", async () => {
-			const ds = await createDataStoreWithProps(dataObject1, "1");
-			const aliasResult = await ds.trySetAlias("2");
-			assert.equal(aliasResult, "Success");
-		});
-	});
-
 	describe("Aliasing", () => {
-		beforeEach("setupContainers", async () => setupContainers());
-		afterEach(async () => reset());
-
 		const alias = "alias";
 
 		it("Assign multiple data stores to the same alias, first write wins, same container - detached", async function () {
@@ -210,6 +176,7 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.equal(aliasResult6, "AlreadyAliased");
 		});
 
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 		it(
 			"Trying to create multiple datastores aliased to the same value on the same client " +
 				"will always return the same datastore",
@@ -311,74 +278,6 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 			assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
 		});
 
-		it(
-			"Assign multiple data stores to the same alias, first write wins, " +
-				"different containers from snapshot",
-			async function () {
-				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
-				if (provider.type === "TestObjectProviderWithVersionedLoad") {
-					this.skip();
-				}
-
-				await setupContainers({
-					...testContainerConfig,
-					runtimeOptions: {
-						summaryOptions: {
-							summaryConfigOverrides: {
-								...DefaultSummaryConfiguration,
-								...{
-									minIdleTime: IdleDetectionTime,
-									maxIdleTime: IdleDetectionTime,
-									maxTime: IdleDetectionTime * 12,
-									initialSummarizerDelayMs: 10,
-								},
-							},
-						},
-					},
-				});
-
-				// andre4i: Move this into test utils or something. Same as for other
-				// flavors of this function across the end to end tests
-				const waitForSummary = async (
-					testObjectProvider: ITestObjectProvider,
-					container: IContainer,
-					summaryCollection: SummaryCollection,
-				): Promise<string> => {
-					await testObjectProvider.ensureSynchronized();
-					const ackedSummary: IAckedSummary = await summaryCollection.waitSummaryAck(
-						container.deltaManager.lastSequenceNumber,
-					);
-					return ackedSummary.summaryAck.contents.handle;
-				};
-
-				const sc = new SummaryCollection(container1.deltaManager, createChildLogger());
-				const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
-				const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
-
-				const aliasResult1 = await ds1.trySetAlias(alias);
-				const aliasResult2 = await ds2.trySetAlias(alias);
-				assert.equal(aliasResult1, "Success");
-				assert.equal(aliasResult2, "Conflict");
-
-				await provider.ensureSynchronized();
-				const version = await waitForSummary(provider, container1, sc);
-
-				const container3 = await provider.loadTestContainer(
-					testContainerConfig,
-					{
-						[LoaderHeader.version]: version,
-					}, // requestHeader
-				);
-				const dataObject3 =
-					await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
-				const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
-				const aliasResult3 = await ds3.trySetAlias(alias);
-
-				assert.equal(aliasResult3, "Conflict");
-				assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
-			},
-		);
-
 		it("getAliasedDataStoreEntryPoint only returns aliased data stores", async function () {
 			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
@@ -413,5 +312,51 @@ describeCompat("Named root data stores", "FullCompat", (getTestObjectProvider) =
 				"A local aliased datastore should be a root datastore",
 			);
 		});
+	});
+
+	describe("Aliasing with summary", () => {
+		const alias = "alias";
+		// biome-ignore format: https://github.com/biomejs/biome/issues/4202
+		it(
+			"Assign multiple data stores to the same alias, first write wins, " +
+				"different containers from snapshot",
+			async function () {
+				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6978
+				if (provider.type === "TestObjectProviderWithVersionedLoad") {
+					this.skip();
+				}
+
+				const ds1 = await runtimeOf(dataObject1).createDataStore(packageName);
+				const ds2 = await runtimeOf(dataObject2).createDataStore(packageName);
+
+				const aliasResult1 = await ds1.trySetAlias(alias);
+				const aliasResult2 = await ds2.trySetAlias(alias);
+				assert.equal(aliasResult1, "Success");
+				assert.equal(aliasResult2, "Conflict");
+
+				await provider.ensureSynchronized();
+
+				const { summarizer } = await createSummarizer(provider, container1, {
+					fluidDataObjectType: DataObjectFactoryType.Test,
+				});
+				const { summaryVersion } = await summarizeNow(summarizer);
+
+				// For the ODSP driver, we need to clear the cache to ensure we get the latest snapshot
+				testPersistedCache.clearCache();
+				const container3 = await provider.loadTestContainer(
+					testContainerConfig,
+					{
+						[LoaderHeader.version]: summaryVersion,
+					}, // requestHeader
+				);
+				const dataObject3 =
+					await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
+				const ds3 = await runtimeOf(dataObject3).createDataStore(packageName);
+				const aliasResult3 = await ds3.trySetAlias(alias);
+
+				assert.equal(aliasResult3, "Conflict");
+				assert.ok(await getAliasedDataStoreEntryPoint(dataObject3, alias));
+			},
+		);
 	});
 });

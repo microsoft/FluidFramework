@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-urlresolver",
-	"version": "2.1.0",
+	"version": "2.23.0",
 	"description": "Url Resolver for odsp urls.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -57,7 +57,7 @@
 		"check:format": "npm run check:biome",
 		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:docs": "api-extractor run",
-		"clean": "rimraf --glob dist lib \"*.d.ts\" \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
+		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
@@ -67,8 +67,8 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
-		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
-		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit -r node_modules/@fluid-internal/mocha-test-setup",
+		"test:mocha:cjs": "mocha --recursive \"dist/test/**/*.spec.*js\"",
+		"test:mocha:esm": "mocha --recursive \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v",
@@ -83,23 +83,22 @@
 		"@fluidframework/odsp-driver-definitions": "workspace:~"
 	},
 	"devDependencies": {
-		"@arethetypeswrong/cli": "^0.15.2",
-		"@biomejs/biome": "~1.8.3",
+		"@arethetypeswrong/cli": "^0.17.1",
+		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.41.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.41.0",
-		"@fluidframework/eslint-config-fluid": "^5.3.0",
-		"@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@2.0.0",
-		"@microsoft/api-extractor": "^7.45.1",
-		"@types/mocha": "^9.1.1",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@2.22.0",
+		"@microsoft/api-extractor": "7.47.8",
+		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
 		"mocha": "^10.2.0",
-		"mocha-json-output-reporter": "^2.0.1",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
@@ -107,6 +106,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {}
+		"broken": {},
+		"entrypoint": "internal"
 	}
 }

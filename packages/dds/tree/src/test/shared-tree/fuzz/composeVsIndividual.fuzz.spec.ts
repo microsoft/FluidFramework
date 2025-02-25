@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "assert";
+import { strict as assert, fail } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
@@ -29,21 +29,18 @@ import {
 	viewFromState,
 } from "./fuzzEditGenerators.js";
 import {
+	applyForkMergeOperation,
 	applyConstraint,
 	applyFieldEdit,
 	applySynchronizationOp,
 	applyUndoRedoEdit,
-	generateLeafNodeSchemas,
 } from "./fuzzEditReducers.js";
 import {
-	createTreeViewSchema,
+	createOnCreate,
 	deterministicIdCompressorFactory,
 	isRevertibleSharedTreeView,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { brand } from "../../../util/index.js";
-import { intoStoredSchema } from "../../../feature-libraries/index.js";
-import type { TreeNodeSchemaIdentifier } from "../../../index.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -86,23 +83,13 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 		return state;
 	},
 	schemaChange: async (state, operation) => {
-		const branch = state.branch;
-		assert(branch !== undefined);
-		const nodeSchema = branch.currentSchema;
-
-		const nodeTypes: TreeNodeSchemaIdentifier[] = [];
-		for (const leafNodeSchema of nodeSchema.info.optionalChild.allowedTypeSet) {
-			if (typeof leafNodeSchema !== "string") {
-				nodeTypes.push(leafNodeSchema.name);
-			}
-		}
-		nodeTypes.push(brand(operation.operation.type));
-		const { leafNodeSchemas, library } = generateLeafNodeSchemas(nodeTypes);
-		const newSchema = createTreeViewSchema(leafNodeSchemas, library);
-		branch.checkout.updateSchema(intoStoredSchema(newSchema));
+		return state;
 	},
 	constraint: async (state, operation) => {
 		applyConstraint(state, operation);
+	},
+	forkMergeOperation: async (state, operation) => {
+		return applyForkMergeOperation(state, operation);
 	},
 });
 
@@ -118,8 +105,7 @@ describe("Fuzz - composed vs individual changes", () => {
 	const runsPerBatch = 50;
 
 	// "start" and "commit" opWeights set to 0 in case there are changes to the default weights.
-	// AB#7593: schema weight is currently set to 0, as most tests are failing with various branch related asserts,
-	// assert 0x675, "Expected branch to be tracked"
+	// schema ops are set to 0, as creating a new fork/view during schemaOps would not allow us to continue with the transaction.
 	const composeVsIndividualWeights: Partial<EditGeneratorOpWeights> = {
 		set: 2,
 		clear: 1,
@@ -135,7 +121,7 @@ describe("Fuzz - composed vs individual changes", () => {
 		},
 		start: 0,
 		commit: 0,
-		schema: 1,
+		schema: 0,
 	};
 
 	describe("converges to the same tree", () => {
@@ -148,7 +134,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "SharedTree",
-			factory: new SharedTreeTestFactory(() => {}),
+			factory: new SharedTreeTestFactory(createOnCreate(undefined)),
 			generatorFactory,
 			reducer: fuzzComposedVsIndividualReducer,
 			validateConsistency: () => {},
@@ -156,9 +142,19 @@ describe("Fuzz - composed vs individual changes", () => {
 		const emitter = new TypedEventEmitter<DDSFuzzHarnessEvents>();
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
-			initialState.branch = initialState.main.fork() as FuzzTransactionView;
-			initialState.branch.currentSchema = initialState.main.currentSchema;
+
+			const forkedView = initialState.main.fork() as unknown as FuzzTransactionView;
+			const treeSchema = initialState.main.currentSchema;
+
+			forkedView.currentSchema =
+				treeSchema ?? assert.fail("nodeSchema should not be undefined");
+			initialState.branch = forkedView;
 			initialState.branch.checkout.transaction.start();
+			initialState.transactionViews?.delete(initialState.clients[0].channel);
+			const transactionViews = new Map();
+
+			transactionViews.set(initialState.clients[0].channel, initialState.branch);
+			initialState.transactionViews = transactionViews;
 		});
 		emitter.on("testEnd", (finalState: BranchedTreeFuzzTestState) => {
 			assert(finalState.branch !== undefined);

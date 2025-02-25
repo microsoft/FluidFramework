@@ -11,11 +11,11 @@ import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
+// eslint-disable-next-line import/no-internal-modules
+import { SharedMap } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";
@@ -292,18 +292,17 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				compatibilityMode,
 			);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const { shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad } =
+			const { sweepEnabled, throwOnTombstoneLoad } =
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
 				(container_defaultConfig as any).container._runtime.garbageCollector.configs;
 
 			const expectedConfigs = {
-				shouldRunSweep: "NO",
-				tombstoneAutorecoveryEnabled: false,
+				sweepEnabled: false,
 				throwOnTombstoneLoad: false,
 			};
 			assert.deepStrictEqual(
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				{ shouldRunSweep, tombstoneAutorecoveryEnabled, throwOnTombstoneLoad },
+				{ sweepEnabled, throwOnTombstoneLoad },
 				expectedConfigs,
 				"Expected GC to be disabled per compatibilityModeRuntimeOptions",
 			);

@@ -19,21 +19,34 @@
                       "change": [
                         {
                           "data": {
-                            "maxId": 1,
+                            "maxId": 2,
                             "changes": [
                               {
                                 "fieldKey": "rootFieldKey",
-                                "fieldKind": "Optional",
-                                "change": {
-                                  "m": [
-                                    [
-                                      1,
-                                      null,
-                                      true
-                                    ]
-                                  ],
-                                  "d": 0
-                                }
+                                "fieldKind": "ModularEditBuilder.Generic",
+                                "change": [
+                                  [
+                                    0,
+                                    {
+                                      "fieldChanges": [
+                                        {
+                                          "fieldKey": "handleField",
+                                          "fieldKind": "Optional",
+                                          "change": {
+                                            "m": [
+                                              [
+                                                1,
+                                                null,
+                                                true
+                                              ]
+                                            ],
+                                            "d": 0
+                                          }
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                ]
                               }
                             ],
                             "builds": {
@@ -79,7 +92,7 @@
                           }
                         }
                       ],
-                      "revision": 3,
+                      "revision": 4,
                       "sequenceNumber": 4,
                       "sessionId": "8f95be09-8376-4ff7-8755-ccd7e8124b06"
                     }
@@ -103,26 +116,24 @@
                 "content": {
                   "version": 1,
                   "nodes": {
-                    "com.fluidframework.leaf.boolean": {
-                      "leaf": 2
-                    },
                     "com.fluidframework.leaf.handle": {
                       "leaf": 3
                     },
-                    "com.fluidframework.leaf.null": {
-                      "leaf": 4
-                    },
-                    "com.fluidframework.leaf.number": {
-                      "leaf": 0
-                    },
-                    "com.fluidframework.leaf.string": {
-                      "leaf": 1
+                    "has-handle.HandleObject": {
+                      "object": {
+                        "handleField": {
+                          "kind": "Optional",
+                          "types": [
+                            "com.fluidframework.leaf.handle"
+                          ]
+                        }
+                      }
                     }
                   },
                   "root": {
-                    "kind": "Optional",
+                    "kind": "Value",
                     "types": [
-                      "com.fluidframework.leaf.handle"
+                      "has-handle.HandleObject"
                     ]
                   }
                 },
@@ -160,13 +171,20 @@
                       [
                         1,
                         [
-                          "com.fluidframework.leaf.handle",
-                          true,
-                          {
-                            "type": "__fluid_handle__",
-                            "url": "/test/TestSharedTree"
-                          },
-                          []
+                          "has-handle.HandleObject",
+                          false,
+                          [
+                            "handleField",
+                            [
+                              "com.fluidframework.leaf.handle",
+                              true,
+                              {
+                                "type": "__fluid_handle__",
+                                "url": "/test/TestSharedTree"
+                              },
+                              []
+                            ]
+                          ]
                         ]
                       ]
                     ]
@@ -189,7 +207,7 @@
                 "content": {
                   "version": 1,
                   "data": [],
-                  "maxId": 0
+                  "maxId": 1
                 },
                 "encoding": "utf-8"
               }

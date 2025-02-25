@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import { Package, loadFluidBuildConfig } from "@fluidframework/build-tools";
+import { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import { PackageKind } from "../../filter.js";
+import { PackageKind, type PackageWithKind } from "../../filter.js";
 
+import assert from "node:assert";
 import { Flags } from "@oclif/core";
+import { cosmiconfig } from "cosmiconfig";
 import {
 	NoSubstitutionTemplateLiteral,
 	Node,
@@ -21,19 +22,61 @@ import {
 	SyntaxKind,
 } from "ts-morph";
 
-const shortCodes = new Map<number, Node>();
-const newAssetFiles = new Set<SourceFile>();
-const codeToMsgMap = new Map<string, string>();
-let maxShortCode = -1;
+/**
+ * Used by `TagAssertsCommand`.
+ */
+export interface AssertTaggingPackageConfig {
+	/**
+	 * Property key is the name of the assert function.
+	 * Property value is the index of the augment to tag.
+	 * @remarks
+	 * The function names are not handled in a scoped/qualified way, so any function imported or declared with that name will have tagging applied.
+	 * This applies to the package it is in.
+	 * @privateRemarks
+	 * See also {@link AssertTaggingConfig.assertionFunctions}.
+	 */
+	assertionFunctions: { [functionName: string]: number };
+}
+/**
+ * Key is the name of the assert function.
+ * Value is the index of the augment to tag.
+ * @remarks
+ * The function names are not handled in a scoped/qualified way, so any function imported or declared with that name will have tagging applied.
+ * See also {@link AssertTaggingPackageConfig.assertionFunctions}.
+ */
+type AssertionFunctions = ReadonlyMap<string, number>;
 
-const defaultAssertionFunctions: ReadonlyMap<string, number> = new Map([["assert", 1]]);
+const defaultAssertionFunctions: AssertionFunctions = new Map([["assert", 1]]);
+
+/**
+ * Data aggregated about a collection of packages.
+ */
+interface CollectedData {
+	readonly shortCodes: Map<number, Node>;
+	readonly codeToMsgMap: Map<string, string>;
+	maxShortCode: number;
+}
+
+/**
+ * Data about a specific package.
+ */
+interface PackageData {
+	readonly newAssertFiles: ReadonlySet<SourceFile>;
+	readonly assertionFunctions: AssertionFunctions;
+}
+
+const configName = "assertTagging";
+const searchPlaces = [`${configName}.config.mjs`];
 
 export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> {
 	static readonly summary =
 		"Tags asserts by replacing their message with a unique numerical value.";
 
 	static readonly description =
-		"Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry purposes.";
+		`Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry purposes.
+Which functions and which of their augments get tagging depends on the configuration which is specified in the package being tagged.
+Configuration is searched by walking from each package's directory up to its parents recursively looking for the first file matching one of ${JSON.stringify(searchPlaces)}.
+The format of the configuration is specified by the "AssertTaggingPackageConfig" type.`;
 
 	static readonly flags = {
 		disableConfig: Flags.boolean({
@@ -47,22 +90,47 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 
 	protected defaultSelection = undefined;
 
-	private assertionFunctions: ReadonlyMap<string, number> | undefined;
-	private readonly errors: string[] = [];
-
-	protected async selectAndFilterPackages(): Promise<void> {
+	// TODO:
+	// Refactor regex based filtering logic.
+	// Consider doing one the below instead of applying this filtering here:
+	// a. Add regex filter CLI option to PackageCommand.
+	// b. Have packages which want to opt out do so in their own configuration.
+	// c. Refactor TagAssertsCommand so it doesn't have to rely on this override and undocumented implementation details to do this filtering
+	// (Ex: move the logic into an early continue in processPackages)
+	// d. Refactor PackageCommand so having subclasses customize filtering is well supported
+	// (ex: allow the subclass to provide a filtering predicate, perhaps via the constructor or an a method explicitly documented to be used for overriding which normally just returns true).
+	//
+	// The current approach isn't ideal from a readability or maintainability perspective for a few reasons:
+	//
+	// 1. selectAndFilterPackages is undocumented had relied on side effects.
+	// To override it correctly the the subclass must know and depend on many undocumented details of the base class (like that this method sets filteredPackages, that its ok for it to modify filteredPackages).
+	// This makes the base class fragile: refactoring it to work slightly differently
+	// (like printing the filtered packages info inside of this function instead of after it or cache data derived from the set of filteredPackages after they are computed)
+	// could break things.
+	//
+	// 2. Data flow is hard to follow. This method does not have inputs or outputs declared in its signature, and the values it reads from the class aren't readonly so it's hard to know what is initialized when
+	// and which values are functions of which other values.
+	//
+	// 3. The division of responsibility here is odd. Generally the user of a PackageCommand selects which packages to apply it to on the command line.
+	// Currently this is done by passing --all (as specified in the script that invokes this command),
+	// and a separate regex in a config.
+	// This extra config even more confusing since typically this kind of configuration is per package,
+	// but in this case the config from one package is applying to multiple release groups based on the working directory the command is run in.
+	// Normally configuration in a package applies to the package, and sometimes configuration for a release group lives at its root.
+	// In this case configuration spanning multiple release groups lives in the root of one of them but uses the same file we would use for per package configuration which makes it hard to understand.
+	// It seems like it would be more consistent with the design, and more useful generally, that if additional package filtering functionality is needed (ex: regex based filtering) that it
+	// be added to PackageCommand's package filtering CLI options so all PackageCommands could use it.
+	// This would remove the need to expose so many internals (like this method, filteredPackages, etc) of PackageCommand as "protected"
+	// improved testability (since this logic could reside in the more testable selectAndFilterPackages free function) and keep the per package configuration files actually per package
+	// while putting the cross release group configuration (--all and the regex) in the same place.
+	protected override async selectAndFilterPackages(): Promise<void> {
 		await super.selectAndFilterPackages();
 
 		const context = await this.getContext();
-		const { assertTagging } = loadFluidBuildConfig(context.gitRepo.resolvedRoot);
+		const { assertTagging } = context.flubConfig;
 		const assertTaggingEnabledPaths = this.flags.disableConfig
 			? undefined
 			: assertTagging?.enabledPaths;
-
-		this.assertionFunctions =
-			assertTagging?.assertionFunctions === undefined
-				? defaultAssertionFunctions
-				: new Map<string, number>(Object.entries(assertTagging.assertionFunctions));
 
 		// Further filter packages based on the path regex
 		const before = this.filteredPackages?.length ?? 0;
@@ -97,71 +165,120 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		}
 	}
 
-	protected async processPackage<TPkg extends Package>(
+	// This should not be called due to processPackages being overridden instead.
+	protected override async processPackage<TPkg extends Package>(
 		pkg: TPkg,
 		kind: PackageKind,
 	): Promise<void> {
-		const tsconfigPath = await this.getTsConfigPath(pkg);
-		this.collectAssertData(tsconfigPath);
+		throw new Error("Method not implemented.");
 	}
 
-	public async run(): Promise<void> {
-		// Calls processPackage on all packages to collect assert data.
-		await super.run();
+	protected override async processPackages(packages: PackageWithKind[]): Promise<string[]> {
+		const errors: string[] = [];
 
-		// Tag asserts based on earlier collected data.
-		this.tagAsserts(true);
-	}
+		const collected: CollectedData = {
+			shortCodes: new Map<number, Node>(),
+			codeToMsgMap: new Map<string, string>(),
+			maxShortCode: -1,
+		};
 
-	private collectAssertData(tsconfigPath: string): void {
-		// TODO: this can probably be removed now
-		if (tsconfigPath.includes("test")) {
-			return;
+		const dataMap = new Map<PackageWithKind, PackageData>();
+		const config = cosmiconfig(configName, { searchPlaces });
+
+		for (const pkg of packages) {
+			// Package configuration:
+			// eslint-disable-next-line no-await-in-loop
+			const tsconfigPath = await this.getTsConfigPath(pkg);
+			// eslint-disable-next-line no-await-in-loop
+			const packageConfig = await config.search(pkg.directory);
+			let assertionFunctions: AssertionFunctions;
+			if (packageConfig === null) {
+				assertionFunctions = defaultAssertionFunctions;
+			} else {
+				const innerConfig = packageConfig.config as AssertTaggingPackageConfig;
+				// Do some really minimal validation of the configuration.
+				// TODO: replace this with robust validation, like a strongly typed utility wrapping cosmiconfig and typebox.
+				assert(
+					typeof innerConfig.assertionFunctions === "object",
+					`Assert tagging config in ${packageConfig.filepath} is not valid.`,
+				);
+				assertionFunctions = new Map<string, number>(
+					Object.entries(innerConfig.assertionFunctions),
+				);
+			}
+
+			// load the project based on the tsconfig
+			const project = new Project({
+				skipFileDependencyResolution: true,
+				tsConfigFilePath: tsconfigPath,
+			});
+
+			const newAssertFiles = this.collectAssertData(
+				project,
+				assertionFunctions,
+				collected,
+				errors,
+			);
+			dataMap.set(pkg, { assertionFunctions, newAssertFiles: newAssertFiles });
 		}
 
-		// load the project based on the tsconfig
-		const project = new Project({
-			skipFileDependencyResolution: true,
-			tsConfigFilePath: tsconfigPath,
-		});
+		// If there are errors, avoid making code changes and just report the errors.
+		if (errors.length > 0) {
+			return errors;
+		}
 
+		for (const [pkg, data] of dataMap) {
+			errors.push(...this.tagAsserts(collected, data));
+		}
+
+		writeShortCodeMappingFile(collected.codeToMsgMap);
+
+		return errors;
+	}
+
+	private collectAssertData(
+		project: Project,
+		assertionFunctions: AssertionFunctions,
+		collected: CollectedData,
+		errors: string[],
+	): Set<SourceFile> {
 		const templateErrors: Node[] = [];
 		const otherErrors: Node[] = [];
+		const newAssertFiles = new Set<SourceFile>();
 
 		// walk all the files in the project
 		for (const sourceFile of project.getSourceFiles()) {
 			// walk the assert message params in the file
-			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
-			for (const msg of getAssertMessageParams(sourceFile, this.assertionFunctions)) {
+			for (const msg of getAssertMessageParams(sourceFile, assertionFunctions)) {
 				const nodeKind = msg.getKind();
 				switch (nodeKind) {
 					// If it's a number, validate it's a shortcode
 					case SyntaxKind.NumericLiteral: {
 						const numLit = msg as NumericLiteral;
 						if (!numLit.getText().startsWith("0x")) {
-							this.errors.push(
+							errors.push(
 								`Shortcodes must be provided by automation and be in hex format: ${numLit.getText()}\n\t${getCallsiteString(
 									numLit,
 								)}`,
 							);
-							return;
+							return newAssertFiles;
 						}
 						const numLitValue = numLit.getLiteralValue();
-						if (shortCodes.has(numLitValue)) {
+						if (collected.shortCodes.has(numLitValue)) {
 							// if we find two usages of the same short code then fail
-							this.errors.push(
+							errors.push(
 								`Duplicate shortcode 0x${numLitValue.toString(
 									16,
 								)} detected\n\t${getCallsiteString(
 									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									shortCodes.get(numLitValue)!,
+									collected.shortCodes.get(numLitValue)!,
 								)}\n\t${getCallsiteString(numLit)}`,
 							);
-							return;
+							return newAssertFiles;
 						}
-						shortCodes.set(numLitValue, numLit);
+						collected.shortCodes.set(numLitValue, numLit);
 						// calculate the maximun short code to ensure we don't duplicate
-						maxShortCode = Math.max(numLitValue, maxShortCode);
+						collected.maxShortCode = Math.max(numLitValue, collected.maxShortCode);
 
 						// If comment already exists, extract it for the mapping file
 						const comments = msg.getTrailingCommentRanges();
@@ -191,14 +308,14 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 									originalErrorText.length - 1,
 								);
 							}
-							codeToMsgMap.set(numLit.getText(), originalErrorText);
+							collected.codeToMsgMap.set(numLit.getText(), originalErrorText);
 						}
 						break;
 					}
 					// If it's a simple string literal, track the file for replacements later
 					case SyntaxKind.StringLiteral:
 					case SyntaxKind.NoSubstitutionTemplateLiteral: {
-						newAssetFiles.add(sourceFile);
+						newAssertFiles.add(sourceFile);
 						break;
 					}
 					// Anything else isn't supported
@@ -237,12 +354,18 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 			);
 		}
 		if (errorMessages.length > 0) {
-			this.error(errorMessages.join("\n\n"), { exit: 1 });
+			errors.push(errorMessages.join("\n\n"));
 		}
+
+		return newAssertFiles;
 	}
 
-	// TODO: the resolve = true may be safe to remove since we always want to resolve when running this command
-	private tagAsserts(resolve: true): void {
+	/**
+	 * Updates source files, adding new asserts to `collected`.
+	 *
+	 * @returns array of error strings.
+	 */
+	private tagAsserts(collected: CollectedData, packageData: PackageData): string[] {
 		const errors: string[] = [];
 
 		// eslint-disable-next-line unicorn/consistent-function-scoping
@@ -256,44 +379,28 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 		}
 
 		// go through all the newly collected asserts and add short codes
-		for (const s of newAssetFiles) {
+		for (const s of packageData.newAssertFiles) {
 			// another policy may have changed the file, so reload it
 			s.refreshFromFileSystemSync();
-			assert(this.assertionFunctions !== undefined, "No assert functions are defined!");
-			for (const msg of getAssertMessageParams(s, this.assertionFunctions)) {
+			for (const msg of getAssertMessageParams(s, packageData.assertionFunctions)) {
 				// here we only want to look at those messages that are strings,
 				// as we validated existing short codes above
 				if (isStringLiteral(msg)) {
-					// resolve === fix
-					if (resolve) {
-						// for now we don't care about filling gaps, but possible
-						const shortCode = ++maxShortCode;
-						shortCodes.set(shortCode, msg);
-						const text = msg.getLiteralText();
-						const shortCodeStr = `0x${shortCode.toString(16).padStart(3, "0")}`;
-						// replace the message with shortcode, and put the message in a comment
-						msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
-						codeToMsgMap.set(shortCodeStr, text);
-					} else {
-						// TODO: if we are not in resolve mode we
-						// allow  messages that are not short code. this seems like the right
-						// behavior for main. we may want to enforce shortcodes in release branches in the future
-						// errors.push(`no assert shortcode: ${getCallsiteString(msg)}`);
-						break;
-					}
+					// for now we don't care about filling gaps, but possible
+					const shortCode = ++collected.maxShortCode;
+					collected.shortCodes.set(shortCode, msg);
+					const text = msg.getLiteralText();
+					const shortCodeStr = `0x${shortCode.toString(16).padStart(3, "0")}`;
+					// replace the message with shortcode, and put the message in a comment
+					msg.replaceWithText(`${shortCodeStr} /* ${text} */`);
+					collected.codeToMsgMap.set(shortCodeStr, text);
 				}
 			}
-			if (resolve) {
-				s.saveSync();
-			}
+
+			s.saveSync();
 		}
 
-		if (resolve) {
-			writeShortCodeMappingFile();
-		}
-		if (errors.length > 0) {
-			this.error(errors.join("\n"), { exit: 1 });
-		}
+		return errors;
 	}
 
 	private async getTsConfigPath(pkg: Package): Promise<string> {
@@ -309,13 +416,6 @@ function getCallsiteString(msg: Node): string {
 	// Use filepath:line number so that the error message can be navigated to by clicking on it in vscode.
 	return `${msg.getSourceFile().getFilePath()}:${msg.getStartLineNumber()}`;
 }
-
-/**
- * Map from assertion function name to the index of its message argument.
- *
- * TODO:
- * This should be moved into a configuration file.
- */
 
 /**
  * Given a source file, this function will look for all assert functions contained in it and return the message parameters.
@@ -343,7 +443,7 @@ function getAssertMessageParams(
 	return messageArgs;
 }
 
-function writeShortCodeMappingFile(): void {
+function writeShortCodeMappingFile(codeToMsgMap: Map<string, string>): void {
 	// eslint-disable-next-line unicorn/prefer-spread, @typescript-eslint/no-unsafe-assignment
 	const mapContents = Array.from(codeToMsgMap.entries())
 		.sort()
@@ -355,6 +455,7 @@ function writeShortCodeMappingFile(): void {
 			return accum;
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		}, {} as any);
+	// TODO: this should probably come from configuration (if each package can have their own) or a CLI argument.
 	const targetFolder = "packages/runtime/test-runtime-utils/src";
 
 	if (!fs.existsSync(targetFolder)) {

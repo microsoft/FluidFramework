@@ -25,7 +25,6 @@ export interface HasMoveId {
 }
 
 /**
- * @internal
  */
 export interface CellId extends ChangeAtomId {}
 
@@ -104,6 +103,10 @@ export interface MoveIn extends HasMoveFields {
 export interface DetachFields {
 	/**
 	 * When set, the detach should use the `CellId` specified in this object to characterize the cell being emptied.
+	 *
+	 * This is used in two situations:
+	 * - to restore the prior ID of a cell in a rollback changeset
+	 * - to represent the impact of a detach composed with a rename
 	 */
 	readonly idOverride?: CellId;
 }
@@ -142,9 +145,12 @@ export type Detach = Remove | MoveOut;
  *
  * Only ever targets empty cells.
  *
- * As a matter of normalization, only use an AttachAndDetach mark when the attach is a new insert or a move
- * destination. In all other cases (the attach would be a revive), we rely on the implicit reviving semantics of the
- * detach and represent that detach on its own (i.e., not wrapped in an AttachAndDetach).
+ * As a matter of normalization, we only use an AttachAndDetach to represent MoveIn ○ Remove.
+ *
+ * We do NOT use AttachAndDetach to represent the following compositions:
+ * - Insert/Revive ○ Remove (represented by a Remove)
+ * - Insert/Revive ○ MoveOut (represented by a MoveOut)
+ * - MoveIn ○ MoveOut (represented by a Rename)
  */
 export interface AttachAndDetach {
 	type: "AttachAndDetach";
@@ -152,7 +158,20 @@ export interface AttachAndDetach {
 	detach: Detach;
 }
 
-export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach;
+/**
+ * Represents the renaming of an empty cell.
+ *
+ * Only ever targets empty cells.
+ *
+ * Occurs when a MoveIn is composed with a MoveOut.
+ * TODO: Use Rename when an Insert/Revive is composed with a Remove.
+ */
+export interface Rename {
+	type: "Rename";
+	readonly idOverride: CellId;
+}
+
+export type MarkEffect = NoopMark | Attach | Detach | AttachAndDetach | Rename;
 
 export type CellMark<TMark> = TMark & HasMarkFields;
 

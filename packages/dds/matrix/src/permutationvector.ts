@@ -11,15 +11,17 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	BaseSegment, // eslint-disable-next-line import/no-deprecated
+	BaseSegment,
 	Client,
 	IJSONSegment,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 	ISegment,
+	ISegmentInternal,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
+	segmentIsRemoved,
 	type IMergeTreeInsertMsg,
 	type IMergeTreeRemoveMsg,
 } from "@fluidframework/merge-tree/internal";
@@ -170,9 +172,7 @@ export class PermutationVector extends Client {
 			0x027 /* "Trying to get handle of out-of-bounds position!" */,
 		);
 
-		// TODO Non null asserting, why is this not null?
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		return this.handleCache.getHandle(pos)!;
+		return this.handleCache.getHandle(pos);
 	}
 
 	public getAllocatedHandle(pos: number): Handle {
@@ -202,7 +202,7 @@ export class PermutationVector extends Client {
 		pos: number,
 		op: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
 	): number | undefined {
-		const { segment, offset } = this.getContainingSegment(pos, {
+		const { segment, offset } = this.getContainingSegment<ISegmentInternal>(pos, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
@@ -210,7 +210,7 @@ export class PermutationVector extends Client {
 		// Note that until the MergeTree GCs, the segment is still reachable via `getContainingSegment()` with
 		// a `refSeq` in the past.  Prevent remote ops from accidentally allocating or using recycled handles
 		// by checking for the presence of 'removedSeq'.
-		if (segment === undefined || segment.removedSeq !== undefined) {
+		if (segment === undefined || segmentIsRemoved(segment)) {
 			return undefined;
 		}
 
