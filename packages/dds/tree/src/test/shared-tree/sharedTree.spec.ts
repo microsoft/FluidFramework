@@ -126,7 +126,7 @@ describe("SharedTree", () => {
 			assert.equal(view.root, 10);
 		});
 
-		it.only("initialize-dispose-view with primitive schema", () => {
+		it("initialize-dispose-view with primitive schema", () => {
 			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
@@ -144,7 +144,8 @@ describe("SharedTree", () => {
 			assert.deepEqual(view2.root, 10);
 		});
 
-		it.only("initialize-dispose-view with object schema", () => {
+		// TODO (AB#31456): Enable this test once the bug is fixed.
+		it.skip("initialize-dispose-view with object schema", () => {
 			const tree = treeTestFactory();
 			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
 
