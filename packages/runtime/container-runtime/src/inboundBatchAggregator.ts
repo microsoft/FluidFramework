@@ -4,10 +4,12 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManagerFull,
+	isRuntimeMessage,
+} from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	DataCorruptionError,
