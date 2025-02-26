@@ -39,7 +39,7 @@ import {
 } from "../../cursorTestSuite.js";
 import { numberSequenceField, validateChunkCursor } from "./fieldCursorTestUtilities.js";
 import { emptyShape, testData } from "./uniformChunkTestData.js";
-import { JsonObject } from "../../json/index.js";
+import { JsonObject } from "../../../jsonDomainSchema.js";
 import { numberSchema } from "../../../simple-tree/index.js";
 
 const basicOnlyChunkCompressor: ChunkCompressor = {

@@ -52,7 +52,8 @@ import {
 	stringSchema,
 } from "../../../simple-tree/index.js";
 import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
-import { JsonObject, JsonUnion, singleJsonCursor } from "../../json/index.js";
+import { singleJsonCursor } from "../../json/index.js";
+import { JsonObject, JsonUnion } from "../../../jsonDomainSchema.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
