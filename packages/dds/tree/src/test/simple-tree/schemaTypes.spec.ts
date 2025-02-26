@@ -19,6 +19,7 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	type AllowedTypes,
+	type FieldKind,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
@@ -45,6 +46,7 @@ import type {
 // eslint-disable-next-line import/no-internal-modules
 import { objectSchema } from "../../simple-tree/objectNode.js";
 import { validateUsageError } from "../utils.js";
+import { TreeAlpha } from "../../shared-tree/index.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -102,6 +104,15 @@ describe("schemaTypes", () => {
 			type _check6 = requireTrue<areSafelyAssignable<I8, never>>;
 			type _check7 = requireTrue<areSafelyAssignable<I9, never>>;
 			type _check8 = requireTrue<areSafelyAssignable<I10, never>>;
+
+			// eslint-disable-next-line no-inner-declarations
+			function _generic<T extends ImplicitAllowedTypes>() {
+				type I14 = InsertableTreeFieldFromImplicitField<T>;
+				type IOptional = InsertableTreeFieldFromImplicitField<
+					FieldSchema<FieldKind.Optional, T>
+				>;
+				type _check9 = requireAssignableTo<undefined, IOptional>;
+			}
 		}
 
 		// InsertableTreeNodeFromImplicitAllowedTypes
@@ -217,6 +228,17 @@ describe("schemaTypes", () => {
 			// boolean is sometimes a union of true and false, so it can break in its owns special ways
 			type I13 = InsertableField<typeof booleanSchema>;
 			type _check13 = requireTrue<areSafelyAssignable<I13, boolean>>;
+
+			// eslint-disable-next-line no-inner-declarations
+			function _generic<T extends ImplicitAllowedTypes>() {
+				type I14 = InsertableField<T>;
+				type IOptional = InsertableField<FieldSchema<FieldKind.Optional, T>>;
+
+				// Most likely due to the TypeScript conditional type limitation described in https://github.com/microsoft/TypeScript/issues/52144#issuecomment-2686250788
+				// This does not compile. Ideally this would compile:
+				// @ts-expect-error Compiler limitation.
+				type _check9 = requireAssignableTo<undefined, IOptional>;
+			}
 		}
 
 		// NodeFromSchema
@@ -523,5 +545,112 @@ describe("schemaTypes", () => {
 			false,
 		); // Different custom metadata
 		check(sf.identifier, sf.optional(sf.string), false); // Identifier vs. optional string
+	});
+
+	describe("Generic Schema", () => {
+		// Many of these cases should compile, but don't.
+		// This is likely due to `[FieldSchema<Kind, T>] extends [ImplicitFieldSchema] ? TrueCase : FalseCase` not getting reduced to `TrueCase`.
+		// This could be due to the compiler limitation noted in https://github.com/microsoft/TypeScript/issues/52144#issuecomment-2686250788
+
+		it("Generic construct", () => {
+			const sf = new SchemaFactory("test");
+
+			function makeInstanceImplicit<T extends ImplicitAllowedTypes>(
+				schemaTypes: T,
+				content: InsertableTreeFieldFromImplicitField<T>,
+			) {
+				class GenericContainer extends sf.object("GenericContainer", {
+					content: schemaTypes,
+				}) {}
+
+				const _created = TreeAlpha.create(GenericContainer, { content });
+				return new GenericContainer({ content });
+			}
+
+			function makeInstanceOptional<T extends ImplicitAllowedTypes>(
+				schemaTypes: T,
+				content: InsertableTreeFieldFromImplicitField<T> | undefined,
+			) {
+				class GenericContainer extends sf.object("GenericContainer", {
+					content: sf.optional(schemaTypes),
+				}) {}
+
+				// @ts-expect-error Compiler limitation, see comment above.
+				const _createdEmpty = TreeAlpha.create(GenericContainer, { content: undefined });
+				// @ts-expect-error Compiler limitation, see comment above.
+				const _created = TreeAlpha.create(GenericContainer, { content });
+				// @ts-expect-error Compiler limitation, see comment above.
+				const _constructedEmpty = new GenericContainer({ content: undefined });
+				// @ts-expect-error Compiler limitation, see comment above.
+				return new GenericContainer({ content });
+			}
+
+			function makeInstanceRequired<T extends ImplicitAllowedTypes>(
+				schemaTypes: T,
+				content: InsertableTreeFieldFromImplicitField<T>,
+			) {
+				class GenericContainer extends sf.object("GenericContainer", {
+					content: sf.required(schemaTypes),
+				}) {}
+
+				// @ts-expect-error Compiler limitation, see comment above.
+				const _created = TreeAlpha.create(GenericContainer, { content });
+				// @ts-expect-error Compiler limitation, see comment above.
+				return new GenericContainer({ content });
+			}
+
+			function makeInstanceOptionalRecursive<T extends ImplicitAllowedTypes>(
+				schemaTypes: T,
+				content: InsertableTreeFieldFromImplicitField<T> | undefined,
+			) {
+				class GenericContainer extends sf.objectRecursive("GenericContainer", {
+					content: sf.optional(schemaTypes),
+				}) {}
+
+				// @ts-expect-error Compiler limitation, see comment above.
+				const _createdEmpty = TreeAlpha.create(GenericContainer, { content: undefined });
+				// @ts-expect-error Compiler limitation, see comment above.
+				const _created = TreeAlpha.create(GenericContainer, { content });
+				const _constructedEmpty = new GenericContainer({ content: undefined }); // This one works.
+				// @ts-expect-error Compiler limitation, see comment above.
+				return new GenericContainer({ content });
+			}
+		});
+
+		it("Generic InsertableTreeFieldFromImplicitField", <T extends ImplicitAllowedTypes>() => {
+			type Required = FieldSchema<FieldKind.Required, T>;
+
+			type ArgFieldImplicit2 = InsertableTreeFieldFromImplicitField<T>;
+			type ArgFieldRequired2 = InsertableTreeFieldFromImplicitField<Required>;
+
+			// @ts-expect-error Compiler limitation, see comment above.
+			type _check5 = requireAssignableTo<ArgFieldRequired2, ArgFieldImplicit2>;
+			// @ts-expect-error Compiler limitation, see comment above.
+			type _check6 = requireAssignableTo<ArgFieldImplicit2, ArgFieldRequired2>;
+		});
+
+		it("Generic TreeFieldFromImplicitField", <T extends ImplicitAllowedTypes>() => {
+			type Required = FieldSchema<FieldKind.Required, T>;
+
+			type ArgFieldImplicit2 = TreeFieldFromImplicitField<T>;
+			type ArgFieldRequired2 = TreeFieldFromImplicitField<Required>;
+
+			// @ts-expect-error Compiler limitation, see comment above.
+			type _check5 = requireAssignableTo<ArgFieldRequired2, ArgFieldImplicit2>;
+			// @ts-expect-error Compiler limitation, see comment above.
+			type _check6 = requireAssignableTo<ArgFieldImplicit2, ArgFieldRequired2>;
+		});
+
+		it("Generic optional field", <T extends ImplicitAllowedTypes>() => {
+			type Optional = FieldSchema<FieldKind.Optional, T>;
+
+			type ArgFieldImplicit = InsertableTreeFieldFromImplicitField<T>;
+			type ArgFieldOptional = InsertableTreeFieldFromImplicitField<Optional>;
+
+			// @ts-expect-error Compiler limitation, see comment above.
+			type _check5 = requireAssignableTo<ArgFieldOptional, ArgFieldImplicit | undefined>;
+			// @ts-expect-error Compiler limitation, see comment above.
+			type _check6 = requireAssignableTo<ArgFieldImplicit | undefined, ArgFieldOptional>;
+		});
 	});
 });
