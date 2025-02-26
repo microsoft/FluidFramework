@@ -159,7 +159,16 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 		if (otherConnectedClients.length === 0) {
 			// Start a timer to end the session after a period of inactivity
 			const timer = setTimeout(() => {
-				this.handleClientSessionTimeout(existingSession).catch((error) => {});
+				this.handleClientSessionTimeout(existingSession).catch((error) => {
+					Lumberjack.error(
+						"Failed to cleanup session on timeout",
+						{
+							...getLumberBaseProperties(existingSession.documentId, existingSession.tenantId),
+							...existingSession.telemetryProperties,
+						},
+						error,
+					);
+				});
 			}, this.sessionActivityTimeoutMs);
 			this.sessionEndTimers.set(sessionTimerKey, timer);
 			// Update the session to have a lastClientLeaveTime
@@ -204,7 +213,16 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 				// However, we can ignore that because it is technically correct that the session
 				// was tracked as "active" for that duration. We log lastClientLeaveTime in the
 				// telemetry so that the actual end time is known.
-				this.handleClientSessionTimeout(session, "pruning"),
+				this.handleClientSessionTimeout(session, "pruning").catch((error) => {
+					Lumberjack.error(
+						"Failed to cleanup session on timeout detected by pruning",
+						{
+							...getLumberBaseProperties(session.documentId, session.tenantId),
+							...session.telemetryProperties,
+						},
+						error,
+					);
+				}),
 		);
 		await Promise.all(clientSessionTimeoutPs);
 	}
@@ -250,16 +268,7 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 
 		// For now, always a "success" result
 		metric.success(`Session ended due to ${reason}`);
-		return this.cleanupSessionOnEnd(session).catch((error) => {
-			Lumberjack.error(
-				"Failed to cleanup session on end",
-				{
-					...getLumberBaseProperties(session.documentId, session.tenantId),
-					...session.telemetryProperties,
-				},
-				error,
-			);
-		});
+		return this.cleanupSessionOnEnd(session);
 	}
 
 	private async cleanupSessionOnEnd(session: ICollaborationSession): Promise<void> {
