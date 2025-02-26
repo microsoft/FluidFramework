@@ -222,14 +222,14 @@ extends:
                   value: $(System.PullRequest.TargetBranch)
             steps:
               # test step just to see if we can download the artifact as expected
-              - task: DownloadPipelineArtifact@2
+              - task: Bash@3
+                displayName: List Files in Directory
                 inputs:
-                  buildType: specific
-                  project: internal
-                  pipeline: 'Build - build-tools'
-                  buildVersionToDownload: latestFromBranch
-                  branchName: main
-                  artifact: pack
+                  targetType: inline
+                  workingDirectory: '${{ parameters.buildDirectory }}'
+                  script: |
+                    echo "Listing files in directory: $(PIPELINE.WORKSPACE)/buildTools-resource/pack"
+                    ls -la "$(PIPELINE.WORKSPACE)/buildTools-resource/pack"
 
               # Setup
               - checkout: self
