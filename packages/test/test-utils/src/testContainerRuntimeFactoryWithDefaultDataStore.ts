@@ -29,7 +29,7 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
  * @internal
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
-	defaultFactory: IFluidDataStoreFactory;
+	readonly defaultFactory: IFluidDataStoreFactory;
 	/**
 	 * The data store registry for containers produced.
 	 */
