@@ -59,7 +59,8 @@ import {
 	toStoredSchema,
 } from "../simple-tree/index.js";
 import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
-import { cursorToJsonObject, JsonArray, singleJsonCursor } from "./json/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "./json/index.js";
+import { JsonArray } from "../jsonDomainSchema.js";
 
 /**
  * Configuration for the forest test suite.

@@ -376,7 +376,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 		// For each field of schema, remove schema from possiblyAmbiguous that do not have that field
 		for (const [key, field] of schema.fields) {
 			if (field.kind === FieldKind.Required) {
-				const withKey = allObjectKeys.get(key) ?? fail("missing schema");
+				const withKey = allObjectKeys.get(key) ?? fail(0xb35 /* missing schema */);
 				for (const candidate of possiblyAmbiguous) {
 					if (!withKey.has(candidate)) {
 						possiblyAmbiguous.delete(candidate);

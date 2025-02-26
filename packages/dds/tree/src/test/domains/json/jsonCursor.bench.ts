@@ -41,7 +41,8 @@ import { clone } from "./jsObjectUtil.js";
 import { generateTwitterJsonByByteSize } from "./twitter.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
-import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
+import { JsonUnion } from "../../../jsonDomainSchema.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
