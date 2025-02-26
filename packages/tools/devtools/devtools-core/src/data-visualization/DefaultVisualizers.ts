@@ -252,6 +252,8 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 
 /**
  * {@link VisualizeSharedObject} for {@link ITree}.
+ *
+ * TODO: [ADO 31468] Refactor the SharedTreeVisualizer to conform to SharedTree API
  */
 export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,

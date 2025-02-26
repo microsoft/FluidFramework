@@ -298,6 +298,7 @@ async function visualizeArrayNode(
 	for (const [i] of children.entries()) {
 		arrayNodeSchemaProperties[i] = {
 			allowedTypes: schema.allowedTypes,
+			// Array values are always required. Don't display field requirement information, since that information is redundant.
 			isRequired: undefined,
 		};
 	}
