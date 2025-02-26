@@ -56,8 +56,9 @@ import {
 	stringSchema,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
-import { fieldJsonCursor, JsonObject, singleJsonCursor } from "../../json/index.js";
+import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
+import { JsonObject } from "../../../jsonDomainSchema.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});
