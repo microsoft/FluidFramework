@@ -340,6 +340,10 @@ export class ModularChangeFamily
 			revisionMetadata,
 		);
 
+		for (const entry of crossFieldTable.renamesToDelete.entries()) {
+			deleteNodeRename(crossFieldTable.composedRootNodes, entry.start, entry.length);
+		}
+
 		// Currently no field kinds require making changes to cross-field keys during composition, so we can just merge the two tables.
 		const composedCrossFieldKeys = RangeMap.union(
 			change1.crossFieldKeys,
@@ -2264,6 +2268,7 @@ function newComposeTable(
 		composedNodes: new Set(),
 		composedNodeToParent,
 		composedRootNodes,
+		renamesToDelete: newChangeAtomIdRangeMap(),
 		pendingCompositions,
 	};
 }
@@ -2283,6 +2288,7 @@ interface ComposeTable extends CrossFieldTable<FieldChange> {
 	readonly composedNodes: Set<NodeChangeset>;
 	readonly composedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	readonly composedRootNodes: RootNodeTable;
+	readonly renamesToDelete: ChangeAtomIdRangeMap<boolean>;
 	readonly pendingCompositions: PendingCompositions;
 }
 
@@ -2371,6 +2377,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
 		// XXX: This should return the deleted node
+		// XXX: The delete should also be postponed in case this function is rerun due to inval.
 		this.table.rebasedRootNodes.nodeChanges.delete([
 			baseAttachId.revision,
 			baseAttachId.localId,
@@ -2515,16 +2522,16 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		assert(length === count, "XXX");
 
-		if (newChanges !== undefined) {
-			const detachFields = getFieldsForCrossFieldKey(
-				this.table.baseChange,
-				{
-					...baseDetachId,
-					target: CrossFieldTarget.Source,
-				},
-				count,
-			);
+		const detachFields = getFieldsForCrossFieldKey(
+			this.table.baseChange,
+			{
+				...baseDetachId,
+				target: CrossFieldTarget.Source,
+			},
+			count,
+		);
 
+		if (newChanges !== undefined) {
 			if (detachFields.length > 0) {
 				// XXX: Handle the case where some of the IDs in the range have a detach and some do not.
 				// The base attach is part of a move in the base changeset.
@@ -2547,13 +2554,35 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 					);
 				}
 			}
-
-			this.invalidateBaseFields(detachFields);
 		}
+
+		// We invalidate the detach location even if there are no new changes because adding the rename entry
+		// may affect the result of `composeDetachAttach` at that location.
+		this.invalidateBaseFields(detachFields);
 	}
 
-	public composeDetachAttach(baseDetachId: ChangeAtomId, count: number): void {
-		deleteNodeRename(this.table.composedRootNodes, baseDetachId, count);
+	// XXX: Consider merging this with `getNewChangesForBaseDetach`
+	public composeDetachAttach(
+		baseDetachId: ChangeAtomId,
+		newAttachId: ChangeAtomId,
+		count: number,
+	): boolean {
+		const renamedDetachEntry = firstAttachIdFromDetachId(
+			this.table.composedRootNodes,
+			baseDetachId,
+			count,
+		);
+
+		assert(renamedDetachEntry.length === count, "XXX: Handle splitting");
+		const isReattachOfSameNodes = areEqualChangeAtomIds(renamedDetachEntry.value, newAttachId);
+		if (isReattachOfSameNodes) {
+			// These nodes have been moved back to their original location, so the composed changeset should not have any renames for them.
+			// Note that deleting the rename from `this.table.composedRootNodes` would change the result of this method
+			// if it were rerun due to the field being invalidated, so we instead record that the rename should be deleted later.
+			this.table.renamesToDelete.set(baseDetachId, count, true);
+		}
+
+		return isReattachOfSameNodes;
 	}
 
 	private invalidateBaseFields(fields: FieldId[]): void {

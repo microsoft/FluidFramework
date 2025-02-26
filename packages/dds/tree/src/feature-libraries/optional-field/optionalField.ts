@@ -148,7 +148,14 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 					dst: change1.valueReplace.dst,
 				};
 
-				if (areEqualRegisterIdsOpt(change1.valueReplace.dst, change2.valueReplace.src)) {
+				if (
+					change2.valueReplace.src !== undefined &&
+					nodeManager.composeDetachAttach(
+						change1.valueReplace.dst,
+						change2.valueReplace.src,
+						1,
+					)
+				) {
 					composedReplace.src = "self";
 				} else {
 					const composedSrc = change2.valueReplace.src;
@@ -172,30 +179,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		const baseAttachId = change1.valueReplace?.src;
 		if (baseAttachId !== undefined && baseAttachId !== "self") {
 			const newDetachId = getEffectfulDst(change2.valueReplace);
-
-			// XXX
-			// Consider the composition of the following sandwich rebase:
-			// e1 replaces node A with node B
-			// e2 replaces node A with node C
-			// e2' replaces node B with node C
-			// e2 detaches node A with id2d, and e2' detaches node B with id2d.
-			// e2^ * e1 will rename A from id2d to id1d
-			// (e2^ * e1) * e2' renames B from id1a to id2d
-			// The node manager will notice that id2d has been renamed to id1d and incorrectly
-			// simplify to a rename from id1a to id1d.
-			// The composed change should have a rename from id1a to id2d as well as a rename from id2d to id1d
-			// Maybe rename composition should look at the input renames instead of the composed renames so that
-			// A -> B * C -> A
-			// does not reduce?
 			nodeManager.composeBaseAttach(baseAttachId, newDetachId, 1, change2.childChange);
-		}
-
-		if (
-			isReplaceEffectful(change1.valueReplace) &&
-			!change1.valueReplace.isEmpty &&
-			areEqualRegisterIdsOpt(change2.valueReplace?.src, change1.valueReplace.dst)
-		) {
-			nodeManager.composeDetachAttach(change1.valueReplace.dst, 1);
 		}
 
 		let newChild: NodeId | undefined;
@@ -361,6 +345,7 @@ function rebaseReplaceSource(
 	if (source === "self" && baseReplace !== undefined) {
 		return baseReplace.dst;
 	} else if (areEqualRegisterIdsOpt(baseReplace?.src, source)) {
+		// XXX: Consider renames when comparing register IDs
 		return "self";
 	} else {
 		return source;

@@ -210,7 +210,13 @@ function composeMarksIgnoreChild(
 		return normalizeCellRename(baseMark.cellId, baseMark.count, attach, detach);
 	} else {
 		assert(baseMark.type === "Remove", "Unexpected mark type");
-		moveEffects.composeDetachAttach(getDetachedNodeId(baseMark), baseMark.count);
+		assert(newMark.type === "Insert", "Unexpected mark type");
+		const detachId = getDetachedNodeId(baseMark);
+		const attachId = getAttachedNodeId(newMark);
+
+		// Note that we cannot assert that this returns true,
+		// as MCF may not be able to tell that this is a reattach of the same node on the first pass.
+		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count);
 		return createNoopMark(baseMark.count, undefined);
 	}
 }

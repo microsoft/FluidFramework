@@ -46,7 +46,16 @@ export interface ComposeNodeManager {
 		newChanges: NodeId | undefined,
 	): void;
 
-	composeDetachAttach(baseDetachId: ChangeAtomId, count: number): void;
+	/**
+	 * This should be called whenever the detach of a range of nodes is being composed with an attach potentially corresponding to the same nodes.
+	 * Returns whether the node being attached is the same node being detached.
+	 */
+	// XXX: This should return a range result, since only some of the nodes might be the same?
+	composeDetachAttach(
+		baseDetachId: ChangeAtomId,
+		newAttachId: ChangeAtomId,
+		count: number,
+	): boolean;
 }
 
 export interface RebaseNodeManager<T = unknown> {
