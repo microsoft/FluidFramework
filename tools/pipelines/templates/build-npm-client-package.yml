@@ -223,13 +223,13 @@ extends:
             steps:
               # test step just to see if we can download the artifact as expected
               - task: Bash@3
-                displayName: List Files in Directory
+                displayName: List Files in PIPELINE.WORKSPACE
                 inputs:
                   targetType: inline
                   workingDirectory: '${{ parameters.buildDirectory }}'
                   script: |
-                    echo "Listing files in directory: $(PIPELINE.WORKSPACE)/buildTools-resource/pack"
-                    ls -la "$(PIPELINE.WORKSPACE)/buildTools-resource/pack"
+                    echo "Listing files in directory: $(Pipeline.Workspace)"
+                    ls -la "$(Pipeline.Workspace)/"
 
               # Setup
               - checkout: self
