@@ -8,7 +8,7 @@
 
 Performance enhancements in Shared Tree
 
-- Op bunching - A new feature called "Op bunching" is added to Shared Tree where contiguous ops in a grouped batch are
+Op bunching - A new feature called "Op bunching" is added to Shared Tree where contiguous ops in a grouped batch are
 bunched and processed together. This improves the performance of processing ops asymptotically - with the increase in
 the number of local ops and incoming ops, the processing time will reduce. For example, with 10 local ops + 10 incoming
 ops, the performance increases by 70%; with 100 local ops + 100 incoming ops, the performance increases by 94%.
