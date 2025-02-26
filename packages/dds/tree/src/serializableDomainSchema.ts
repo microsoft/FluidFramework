@@ -108,7 +108,7 @@ export namespace FluidSerializableAsTree {
 	 * // Using `importConcise` can work better for Fluid Serializable data:
 	 * const imported = TreeAlpha.importConcise(FluidSerializableAsTree.Array, ["a", 0, [1]]);
 	 * // Node API is like an Array:
-	 * const inner: JsonUnion = imported[2];
+	 * const inner: FluidSerializableAsTree.Tree = imported[2];
 	 * assert(Tree.is(inner, FluidSerializableAsTree.Array));
 	 * const leaf = inner[0];
 	 * ```

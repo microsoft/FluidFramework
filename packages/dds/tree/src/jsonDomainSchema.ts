@@ -16,7 +16,7 @@ const sf = new SchemaFactory("com.fluidframework.json");
 /**
  * Utilities for storing JSON data in {@link TreeNode}s.
  * @remarks
- * Schema which replicates the JSON data model with {@link TreeNode}s.
+ * Schema which replicate the JSON data model with {@link TreeNode}s.
  *
  * This allows JSON to be losslessly round-tripped through a tree with the following limitations:
  *
@@ -116,7 +116,7 @@ export namespace JsonAsTree {
 	 * // Using `importConcise` can work better for JSON data:
 	 * const imported = TreeAlpha.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
 	 * // Node API is like an Array:
-	 * const inner: JsonUnion = imported[2];
+	 * const inner: JsonAsTree.Tree = imported[2];
 	 * assert(Tree.is(inner, JsonAsTree.Array));
 	 * const leaf = inner[0];
 	 * ```
