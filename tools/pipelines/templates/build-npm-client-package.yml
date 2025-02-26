@@ -216,6 +216,17 @@ extends:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
             steps:
+              # test step just to see if we can download the artifact as expected
+              - task: DownloadPipelineArtifact@2
+                inputs:
+                  buildType: specific
+                  project: internal
+                  pipeline: 'Build - build-tools'
+                  buildVersionToDownload: latestFromBranch
+                  branchName: main
+                  artifact: pack
+                  allowPartiallySucceededBuilds: true
+
               # Setup
               - checkout: self
                 clean: true
