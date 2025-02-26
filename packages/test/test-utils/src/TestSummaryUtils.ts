@@ -30,7 +30,7 @@ import {
 
 import { createTestConfigProvider } from "./TestConfigs.js";
 // eslint-disable-next-line import/no-deprecated
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 import { waitForContainerConnection } from "./containerUtils.js";
 import {
 	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,

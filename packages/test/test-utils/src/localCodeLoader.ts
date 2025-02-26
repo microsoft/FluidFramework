@@ -21,7 +21,7 @@ import {
 import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 
 // eslint-disable-next-line import/no-deprecated
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 
 /**
  * @internal

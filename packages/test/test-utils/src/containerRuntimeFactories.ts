@@ -12,8 +12,12 @@ import {
 	loadContainerRuntime,
 	type IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
-import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject } from "@fluidframework/core-interfaces";
+import type {
+	IContainerRuntime,
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
+import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	type RuntimeRequestHandler,
@@ -21,18 +25,17 @@ import {
 	buildRuntimeRequestHandler,
 } from "@fluidframework/request-handler/internal";
 import type {
+	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
+import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
- *
- * @deprecated See notice on {@link BaseContainerRuntimeFactory}.
  */
-export interface BaseContainerRuntimeFactoryProps {
+interface BaseContainerRuntimeFactoryProps {
 	/**
 	 * The data store registry for containers produced.
 	 */
@@ -61,12 +64,8 @@ export interface BaseContainerRuntimeFactoryProps {
  * Produces container runtimes with the specified data store and service registries,
  * request handlers, runtimeOptions, and entryPoint initialization function.
  * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
- *
- * @deprecated
- * Do not reference this type directly. It will be removed in the future.
- * E.g. use {@link IRuntimeFactory} instead.
  */
-export class BaseContainerRuntimeFactory
+class BaseContainerRuntimeFactory
 	extends RuntimeFactoryHelper
 	implements IProvideFluidDataStoreRegistry
 {
@@ -149,4 +148,89 @@ export class BaseContainerRuntimeFactory
 	 * @virtual
 	 */
 	protected async containerHasInitialized(runtime: IContainerRuntime): Promise<void> {}
+}
+
+const defaultDataStoreId = "default";
+
+async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidObject> {
+	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+	if (entryPoint === undefined) {
+		throw new Error("default dataStore must exist");
+	}
+	return entryPoint.get();
+}
+
+/**
+ * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
+ *
+ * @deprecated See notice on {@link ContainerRuntimeFactoryWithDefaultDataStore}.
+ */
+export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
+	readonly defaultFactory: IFluidDataStoreFactory;
+
+	/**
+	 * The data store registry for containers produced.
+	 */
+	readonly registryEntries: NamedFluidDataStoreRegistryEntries;
+
+	/**
+	 * The runtime options passed to the IContainerRuntime when instantiating it
+	 */
+	readonly runtimeOptions?: IContainerRuntimeOptions;
+
+	/**
+	 * Function that will initialize the entryPoint of the IContainerRuntime instances
+	 * created with this factory
+	 */
+	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+}
+
+/**
+ * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
+ * the container with an empty URL.
+ *
+ * @deprecated
+ * Do not reference this type directly. It will be removed in the future.
+ * E.g. use {@link IRuntimeFactory} instead.
+ */
+export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
+	public static readonly defaultDataStoreId = defaultDataStoreId;
+
+	protected readonly defaultFactory: IFluidDataStoreFactory;
+
+	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
+		const provideEntryPoint = props.provideEntryPoint ?? getDefaultFluidObject;
+
+		const getDefaultObject = async (
+			request: IRequest,
+			runtime: IContainerRuntime,
+		): Promise<IResponse | undefined> => {
+			const parser = RequestParser.create(request);
+			if (parser.pathParts.length === 0) {
+				// This cast is safe as loadContainerRuntime is called in the base class
+				// eslint-disable-next-line import/no-deprecated
+				return (runtime as IContainerRuntimeWithResolveHandle_Deprecated).resolveHandle({
+					url: `/${defaultDataStoreId}${parser.query}`,
+					headers: request.headers,
+				});
+			}
+			return undefined; // continue search
+		};
+
+		super({
+			...props,
+			requestHandlers: [getDefaultObject],
+			provideEntryPoint,
+		});
+
+		this.defaultFactory = props.defaultFactory;
+	}
+
+	/**
+	 * {@inheritDoc BaseContainerRuntimeFactory.containerInitializingFirstTime}
+	 */
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
+		const dataStore = await runtime.createDataStore(this.defaultFactory.type);
+		await dataStore.trySetAlias(defaultDataStoreId);
+	}
 }
