@@ -1911,6 +1911,44 @@ for (const incremental of [true, false]) {
 
 				helper.logger.validate({ baseText: "8m" });
 			});
+
+			// Idea: Client with local changes needs to recognize that other clients will have thought inserted segment was allowed, even
+			// though local client knows it will go away once its changes are applied.
+			it("TODO name", () => {
+				const helper = new PartialSyncTestHelper();
+
+				helper.insertText("A", 0, "Hx15J");
+				helper.processAllOps();
+				helper.insertText("A", 0, "9T");
+				helper.insertText("B", 0, "c8v");
+				helper.advanceClients("A", "C");
+				helper.removeRange("A", 2, 5);
+				helper.removeRange("A", 0, 1);
+				helper.obliterateRange("A", 0, 3);
+				helper.obliterateRange(
+					"C",
+					{ pos: 1, side: Side.After },
+					{ pos: 4, side: Side.Before },
+				);
+				helper.insertText("B", 0, "4qpo");
+				helper.insertText("C", 2, "fP");
+				helper.insertText("A", 0, "hn");
+				helper.advanceClients("A", "C");
+				helper.obliterateRange(
+					"A",
+					{ pos: 5, side: Side.After },
+					{ pos: 9, side: Side.After },
+				);
+				helper.obliterateRange(
+					"B",
+					{ pos: 3, side: Side.Before },
+					{ pos: 9, side: Side.After },
+				);
+				// At the time of the original bug, this would hit 0xa3f.
+				helper.processAllOps();
+
+				helper.logger.validate({ baseText: "hn4qpJ" });
+			});
 		});
 	});
 }

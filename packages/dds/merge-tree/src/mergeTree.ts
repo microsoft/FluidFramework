@@ -1611,6 +1611,9 @@ export class MergeTree {
 			let normalizedNewestSeq: number = 0;
 			const movedClientIds: number[] = [];
 			const movedSeqs: number[] = [];
+			let newestAcked: ObliterateInfo | undefined;
+			let newestAckedSeq: number = 0;
+			let oldestUnacked: ObliterateInfo | undefined;
 			for (const ob of this.obliterates.findOverlapping(newSegment)) {
 				// compute a normalized seq that takes into account local seqs
 				// but is still comparable to remote seqs to keep the checks below easy
@@ -1641,6 +1644,22 @@ export class MergeTree {
 						normalizedNewestSeq = normalizedObSeq;
 						newest = ob;
 					}
+
+					if (
+						ob.seq !== UnassignedSequenceNumber &&
+						(newestAcked === undefined || newestAckedSeq < ob.seq)
+					) {
+						newestAckedSeq = ob.seq;
+						newestAcked = ob;
+					}
+
+					if (ob.seq === UnassignedSequenceNumber) {
+						// There can be more than one if a client repeatedly obliterates. In this case, the first one
+						// that's applied will be the one that actually removes the segment.
+						if (oldestUnacked === undefined || oldestUnacked.localSeq! > ob.localSeq!) {
+							oldestUnacked = ob;
+						}
+					}
 				}
 			}
 
@@ -1649,23 +1668,41 @@ export class MergeTree {
 			// by the same client that's inserting this segment, we let them insert into this range and therefore don't
 			// mark it obliterated.
 			if (oldest && newest?.clientId !== clientId) {
-				const moveInfo: IMoveInfo = {
-					movedClientIds,
-					movedSeq: oldest.seq,
-					movedSeqs,
-					localMovedSeq: oldest.localSeq,
-					wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
-				};
+				let moveInfo: IMoveInfo;
+				if (newestAcked === newest || newestAcked?.clientId !== clientId) {
+					moveInfo = {
+						movedClientIds,
+						movedSeq: oldest.seq,
+						movedSeqs,
+						localMovedSeq: oldestUnacked?.localSeq,
+						wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
+					};
+				} else {
+					assert(
+						oldestUnacked !== undefined,
+						"Expected local obliterate to be defined if newestAcked is not equal to newest",
+					);
+					// There's a pending local obliterate for this range, so it will be marked as obliterated by us. However,
+					// all other clients are under the impression that the most recent acked obliterate won the right to insert
+					// in this range.
+					moveInfo = {
+						movedClientIds: [oldestUnacked.clientId],
+						movedSeq: oldestUnacked.seq,
+						movedSeqs: [oldestUnacked.seq],
+						localMovedSeq: oldestUnacked.localSeq,
+						wasMovedOnInsert: false,
+					};
+				}
 
 				overwriteInfo(newSegment, moveInfo);
 
 				if (moveInfo.localMovedSeq !== undefined) {
 					assert(
-						oldest.segmentGroup !== undefined,
+						oldestUnacked?.segmentGroup !== undefined,
 						0x86c /* expected segment group to exist */,
 					);
 
-					this.addToPendingList(newSegment, oldest.segmentGroup);
+					this.addToPendingList(newSegment, oldestUnacked?.segmentGroup);
 				}
 
 				if (newSegment.parent) {
@@ -2028,10 +2065,14 @@ export class MergeTree {
 
 		const { segment: startSeg } = this.getContainingSegment(start.pos, refSeq, clientId);
 		const { segment: endSeg } = this.getContainingSegment(end.pos, refSeq, clientId);
-		assert(
-			isSegmentLeaf(startSeg) && isSegmentLeaf(endSeg),
-			0xa3f /* segments cannot be undefined */,
-		);
+		if (!isSegmentLeaf(startSeg) || !isSegmentLeaf(endSeg)) {
+			this.getContainingSegment(start.pos, refSeq, clientId);
+			this.getContainingSegment(end.pos, refSeq, clientId);
+			assert(
+				isSegmentLeaf(startSeg) && isSegmentLeaf(endSeg),
+				0xa3f /* segments cannot be undefined */,
+			);
+		}
 
 		obliterate.start = this.createLocalReferencePosition(
 			startSeg,
