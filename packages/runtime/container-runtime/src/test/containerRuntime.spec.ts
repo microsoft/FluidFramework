@@ -59,9 +59,11 @@ import {
 	IFluidErrorBase,
 	MockLogger,
 	createChildLogger,
+	createMockLoggerExt,
 	isFluidError,
 	isILoggingError,
 	mixinMonitoringContext,
+	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockAudience,
@@ -72,6 +74,7 @@ import {
 import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
+import type { IPerfSignalReport } from "../connectionTelemetry.js";
 import {
 	CompressionAlgorithms,
 	ContainerRuntime,
@@ -79,6 +82,7 @@ import {
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
+	processSignalForTelemetry,
 	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
@@ -3532,6 +3536,416 @@ describe("Runtime", () => {
 							);
 						},
 						"Container should throw when op compression is on and op grouping is off",
+					);
+				});
+			});
+			describe("processSignalForTelemetry", () => {
+				let signalTracking: IPerfSignalReport;
+				let mockLogger: IMockLoggerExt;
+				let consecutiveReconnects: number;
+
+				type EventDetailsHelperType = Record<
+					string,
+					string | number | boolean | undefined | (string | number | boolean)[]
+				>;
+
+				beforeEach(() => {
+					signalTracking = {
+						totalSignalsSentInLatencyWindow: 10,
+						signalsLost: 0,
+						signalsOutOfOrder: 0,
+						signalsSentSinceLastLatencyMeasurement: 5,
+						broadcastSignalSequenceNumber: 100,
+						signalTimestamp: Date.now() - 500, // 500ms ago
+						roundTripSignalSequenceNumber: undefined,
+						trackingSignalSequenceNumber: undefined,
+						minimumTrackingSignalSequenceNumber: undefined,
+					};
+					mockLogger = createMockLoggerExt();
+					consecutiveReconnects = 3;
+				});
+
+				it("should do nothing when clientBroadcastSignalSequenceNumber is undefined", () => {
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 0, "Logger should not be called");
+					assert.strictEqual(
+						signalTracking.signalsLost,
+						0,
+						"signalsLost should remain unchanged",
+					);
+				});
+
+				it("should do nothing when trackingSignalSequenceNumber is undefined", () => {
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+						clientBroadcastSignalSequenceNumber: 101,
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 0, "Logger should not be called");
+					assert.strictEqual(
+						signalTracking.signalsLost,
+						0,
+						"signalsLost should remain unchanged",
+					);
+				});
+
+				it("should do nothing when minimumTrackingSignalSequenceNumber is undefined", () => {
+					signalTracking.trackingSignalSequenceNumber = 100;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+						clientBroadcastSignalSequenceNumber: 101,
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 0, "Logger should not be called");
+					assert.strictEqual(
+						signalTracking.signalsLost,
+						0,
+						"signalsLost should remain unchanged",
+					);
+				});
+
+				it("should update tracking signal number when receiving expected signal", () => {
+					signalTracking.trackingSignalSequenceNumber = 101;
+					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+						clientBroadcastSignalSequenceNumber: 101,
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(
+						mockLogger.events.length,
+						0,
+						"Logger should not be called for expected signal",
+					);
+					assert.strictEqual(
+						signalTracking.trackingSignalSequenceNumber,
+						102,
+						"trackingSignalSequenceNumber should be incremented",
+					);
+					assert.strictEqual(
+						signalTracking.signalsLost,
+						0,
+						"signalsLost should remain unchanged",
+					);
+				});
+
+				it("should detect and report lost signals", () => {
+					signalTracking.trackingSignalSequenceNumber = 101;
+					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+						clientBroadcastSignalSequenceNumber: 105, // Skipped signals 101-104
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 1, "Logger should be called once");
+					assert.strictEqual(
+						mockLogger.events()[0].eventName,
+						"SignalLost",
+						"Should log signal lost event",
+					);
+					assert.strictEqual(
+						(mockLogger.events()[0].details as EventDetailsHelperType).signalsLost,
+						4,
+						"Should report 4 lost signals",
+					);
+					assert.strictEqual(signalTracking.signalsLost, 4, "signalsLost should be updated");
+					assert.strictEqual(
+						signalTracking.trackingSignalSequenceNumber,
+						106,
+						"trackingSignalSequenceNumber should be updated",
+					);
+				});
+
+				it("should detect and report out-of-order signals with container address", () => {
+					signalTracking.trackingSignalSequenceNumber = 105;
+					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined, // Container address
+						clientBroadcastSignalSequenceNumber: 102, // Out of order signal
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 1, "Logger should be called once");
+					assert.strictEqual(
+						mockLogger.events()[0].eventName,
+						"SignalOutOfOrder",
+						"Should log out of order event",
+					);
+					assert.strictEqual(
+						signalTracking.signalsOutOfOrder,
+						1,
+						"signalsOutOfOrder should be incremented",
+					);
+					assert.strictEqual(
+						(mockLogger.events()[0].details as EventDetailsHelperType).contentsType,
+						"test",
+						"Should include contents type for container signals",
+					);
+				});
+
+				it("should detect and report out-of-order signals with non-container address", () => {
+					signalTracking.trackingSignalSequenceNumber = 105;
+					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: "dataStore1", // Non-container address
+						clientBroadcastSignalSequenceNumber: 102, // Out of order signal
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 1, "Logger should be called once");
+					assert.strictEqual(
+						mockLogger.events()[0].eventName,
+						"SignalOutOfOrder",
+						"Should log out of order event",
+					);
+					assert.strictEqual(
+						signalTracking.signalsOutOfOrder,
+						1,
+						"signalsOutOfOrder should be incremented",
+					);
+					assert.strictEqual(
+						(mockLogger.events()[0].details as EventDetailsHelperType).contentsType,
+						undefined,
+						"Should not include contents type for non-container signals",
+					);
+				});
+
+				it("should ignore out-of-order signals before minimumTrackingSignalSequenceNumber", () => {
+					signalTracking.trackingSignalSequenceNumber = 105;
+					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+						clientBroadcastSignalSequenceNumber: 99, // Before minimum tracking number
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 0, "Logger should not be called");
+					assert.strictEqual(
+						signalTracking.signalsOutOfOrder,
+						0,
+						"signalsOutOfOrder should not be incremented",
+					);
+				});
+
+				it("should report signal latency when roundtrip signal is received", () => {
+					const timestamp = Date.now() - 500; // 500ms ago
+					signalTracking.trackingSignalSequenceNumber = 105;
+					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					signalTracking.roundTripSignalSequenceNumber = 102;
+					signalTracking.signalTimestamp = timestamp;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+						clientBroadcastSignalSequenceNumber: 102, // Matches roundTrip sequence number
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 1, "Logger should be called once");
+					assert.strictEqual(
+						mockLogger.events()[0].eventName,
+						"SignalLatency",
+						"Should log latency event",
+					);
+
+					// Duration should be approximately 500ms
+					assert.ok(
+						((mockLogger.events()[0].details as EventDetailsHelperType).duration as number) >=
+							490 &&
+							((mockLogger.events()[0].details as EventDetailsHelperType)
+								.duration as number) <= 510,
+						`Duration should be ~500ms but was ${(mockLogger.events()[0].details as EventDetailsHelperType).duration}`,
+					);
+
+					assert.strictEqual(
+						(mockLogger.events()[0].details as EventDetailsHelperType).sent,
+						10,
+						"Should report sent signals",
+					);
+					assert.strictEqual(
+						(mockLogger.events()[0].details as EventDetailsHelperType).lost,
+						0,
+						"Should report lost signals",
+					);
+					assert.strictEqual(
+						(mockLogger.events()[0].details as EventDetailsHelperType).outOfOrder,
+						0,
+						"Should report out of order signals",
+					);
+					assert.strictEqual(
+						(mockLogger.events()[0].details as EventDetailsHelperType).reconnectCount,
+						3,
+						"Should report reconnect count",
+					);
+
+					// Counters should be reset
+					assert.strictEqual(signalTracking.signalsLost, 0, "signalsLost should be reset");
+					assert.strictEqual(
+						signalTracking.signalsOutOfOrder,
+						0,
+						"signalsOutOfOrder should be reset",
+					);
+					assert.strictEqual(
+						signalTracking.totalSignalsSentInLatencyWindow,
+						0,
+						"totalSignalsSentInLatencyWindow should be reset",
+					);
+					assert.strictEqual(
+						signalTracking.signalTimestamp,
+						0,
+						"signalTimestamp should be reset",
+					);
+					assert.strictEqual(
+						signalTracking.roundTripSignalSequenceNumber,
+						undefined,
+						"roundTripSignalSequenceNumber should be reset",
+					);
+				});
+
+				it("should clear roundTripSignalSequenceNumber when receiving signal with higher sequence number", () => {
+					signalTracking.trackingSignalSequenceNumber = 105;
+					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					signalTracking.roundTripSignalSequenceNumber = 102;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+						clientBroadcastSignalSequenceNumber: 103, // Higher than roundTripSignalSequenceNumber
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(
+						mockLogger.events().length,
+						0,
+						"Logger should not be called for higher sequence",
+					);
+					assert.strictEqual(
+						signalTracking.roundTripSignalSequenceNumber,
+						undefined,
+						"roundTripSignalSequenceNumber should be cleared",
+					);
+				});
+
+				it("should handle multiple conditions in one processing", () => {
+					signalTracking.trackingSignalSequenceNumber = 105;
+					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					signalTracking.roundTripSignalSequenceNumber = 108;
+					const envelope: ISignalEnvelope = {
+						contents: { type: "test", content: {} },
+						address: undefined,
+						clientBroadcastSignalSequenceNumber: 108, // Matches roundTrip and is higher than expected
+					};
+
+					processSignalForTelemetry(
+						envelope,
+						signalTracking,
+						mockLogger,
+						consecutiveReconnects,
+					);
+
+					assert.strictEqual(mockLogger.events().length, 2, "Logger should be called twice");
+
+					// First event for lost signals
+					assert.strictEqual(
+						mockLogger.events()[0].eventName,
+						"SignalLost",
+						"Should log signal lost event",
+					);
+					assert.strictEqual(
+						(mockLogger.events()[0]?.details as EventDetailsHelperType).signalsLost,
+						3,
+						"Should report 3 lost signals",
+					);
+
+					// Second event for latency
+					assert.strictEqual(
+						mockLogger.events()[1].eventName,
+						"SignalLatency",
+						"Should log latency event",
+					);
+					assert.strictEqual(
+						signalTracking.trackingSignalSequenceNumber,
+						109,
+						"trackingSignalSequenceNumber should be updated",
+					);
+					assert.strictEqual(
+						signalTracking.roundTripSignalSequenceNumber,
+						undefined,
+						"roundTripSignalSequenceNumber should be reset",
 					);
 				});
 			});
