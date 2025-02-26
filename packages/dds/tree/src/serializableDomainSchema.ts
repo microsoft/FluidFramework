@@ -19,7 +19,7 @@ const sf = new SchemaFactory("com.fluidframework.serializable");
  *
  * Same as {@link JsonAsTree} except allows {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}s.
  * @remarks
- * Schema which replicates the Fluid Serializable data model with {@link TreeNode}s.
+ * Schema which replicate the Fluid Serializable data model with {@link TreeNode}s.
  *
  * Fluid Serializable data can be imported from the {@link FluidSerializableAsTree.Data|Fluid Serializable format} into this format using {@link TreeAlpha.importConcise} with the {@link FluidSerializableAsTree.(Tree:variable)} schema.
  * @internal
