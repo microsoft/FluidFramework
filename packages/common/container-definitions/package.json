@@ -104,7 +104,7 @@
 		"@fluidframework/build-tools": "^0.53.0",
 		"@fluidframework/container-definitions-previous": "npm:@fluidframework/container-definitions@2.22.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
-		"@microsoft/api-extractor": "7.47.8",
+		"@microsoft/api-extractor": "7.50.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",

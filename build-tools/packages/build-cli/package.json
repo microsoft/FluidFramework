@@ -85,7 +85,7 @@
 		"@fluidframework/build-tools": "workspace:~",
 		"@fluidframework/bundle-size-tools": "workspace:~",
 		"@inquirer/prompts": "^7.0.1",
-		"@microsoft/api-extractor": "^7.47.11",
+		"@microsoft/api-extractor": "^7.50.1",
 		"@oclif/core": "^4.0.30",
 		"@oclif/plugin-autocomplete": "^3.2.7",
 		"@oclif/plugin-commands": "^4.1.5",

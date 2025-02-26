@@ -52,7 +52,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.49.0",
 		"@fluidframework/eslint-config-fluid": "^5.4.0",
-		"@microsoft/api-extractor": "^7.47.11",
+		"@microsoft/api-extractor": "^7.50.1",
 		"@types/msgpack-lite": "^0.1.11",
 		"@types/node": "^18.19.59",
 		"@types/pako": "^2.0.3",

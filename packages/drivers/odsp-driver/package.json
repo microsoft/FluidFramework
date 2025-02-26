@@ -138,7 +138,7 @@
 		"@fluidframework/build-tools": "^0.53.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/odsp-driver-previous": "npm:@fluidframework/odsp-driver@2.22.0",
-		"@microsoft/api-extractor": "7.47.8",
+		"@microsoft/api-extractor": "7.50.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
 		"@types/sinon": "^17.0.3",
