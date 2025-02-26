@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type {
 	AsyncGenerator,
 	AsyncReducer,
@@ -78,7 +77,7 @@ export interface Client {
 export interface LocalServerStressState extends BaseFuzzTestState {
 	localDeltaConnectionServer: ILocalDeltaConnectionServer;
 	codeLoader: ICodeDetailsLoader;
-	containerUrl: string | undefined;
+	validationClient: Client;
 	random: IRandom;
 	clients: Client[];
 	client: Client;
@@ -227,7 +226,7 @@ export interface LocalServerStressOptions {
 	 * operations with whatever strategy is appropriate.
 	 * This is useful for nudging test cases towards a particular pattern of clients joining.
 	 */
-	clientJoinOptions?: {
+	clientJoinOptions: {
 		/**
 		 * The maximum number of clients that will ever be added to the test.
 		 * @remarks Due to current mock limitations, clients will only ever be added to the collaboration session,
@@ -258,37 +257,7 @@ export interface LocalServerStressOptions {
 	 */
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
-		rehydrateDisabled?: true;
-		attachingBeforeRehydrateDisable?: true;
 	};
-
-	/**
-	 * Defines whether or not ops can be submitted with handles.
-	 */
-	handleGenerationDisabled: boolean;
-
-	/**
-	 * Event emitter which allows hooking into interesting points of DDS harness execution.
-	 * Test authors that want to subscribe to any of these events should create a `TypedEventEmitter`,
-	 * do so, and pass it in when creating the suite.
-	 *
-	 * @example
-	 *
-	 * ```typescript
-	 * const emitter = new TypedEventEmitter<LocalServerStressHarnessEvents>();
-	 * emitter.on("clientCreate", (client) => {
-	 *     // Casting is necessary as the event typing isn't parameterized with each DDS type.
-	 *     const myDDS = client.channel as MyDDSType;
-	 *     // Do what you want with `myDDS`, e.g. subscribe to change events, add logging, etc.
-	 * });
-	 * const options = {
-	 *     ...defaultLocalServerStressSuiteOptions,
-	 *     emitter,
-	 * };
-	 * createLocalServerStressSuite(model, options);
-	 * ```
-	 */
-	emitter: TypedEventEmitter<LocalServerStressHarnessEvents>;
 
 	/**
 	 * Strategy for validating eventual consistency of DDSes.
@@ -311,11 +280,6 @@ export interface LocalServerStressOptions {
 	 * TODO: Expose options for how to inject reconnection in a more flexible way.
 	 */
 	reconnectProbability: number;
-
-	/**
-	 * Each non-synchronization option has this probability of rebasing the current batch before sending it.
-	 */
-	rebaseProbability: number;
 
 	/**
 	 * Seed which should be replayed from disk.
@@ -396,14 +360,15 @@ const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	detachedStartOptions: {
 		numOpsBeforeAttach: 5,
 	},
-	handleGenerationDisabled: true,
-	emitter: new TypedEventEmitter(),
 	numberOfClients: 3,
+	clientJoinOptions: {
+		clientAddProbability: 0.01,
+		maxNumberOfClients: 6,
+	},
 	only: [],
 	skip: [],
 	parseOperations: (serialized: string) => JSON.parse(serialized) as BaseOperation[],
-	reconnectProbability: 0,
-	rebaseProbability: 0,
+	reconnectProbability: 0.01,
 	saveFailures: undefined,
 	saveSuccesses: undefined,
 	validationStrategy: { type: "random", probability: 0.05 },
@@ -427,9 +392,8 @@ function mixinAddRemoveClient<
 			return async (
 				state: TState,
 			): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
-				const { clients, random, isDetached, containerUrl } = state;
+				const { clients, random, isDetached, validationClient } = state;
 				if (
-					containerUrl !== undefined &&
 					options.clientJoinOptions !== undefined &&
 					!isDetached &&
 					random.bool(options.clientJoinOptions.clientAddProbability)
@@ -442,9 +406,11 @@ function mixinAddRemoveClient<
 					}
 
 					if (clients.length < options.clientJoinOptions.maxNumberOfClients) {
+						const url = await validationClient.container.getAbsoluteUrl("");
+						assert(url !== undefined, "url for client must exist");
 						return {
 							type: "addClient",
-							url: containerUrl,
+							url,
 							clientTag: state.tag("client"),
 						} satisfies AddClient;
 					}
@@ -503,10 +469,6 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation | Attach, TState> {
 	const { numOpsBeforeAttach } = options.detachedStartOptions;
-	if (numOpsBeforeAttach === 0) {
-		// not wrapping the reducer/generator in this case makes stepping through the harness slightly less painful.
-		return model as LocalServerStressModel<TOperation | Attach, TState>;
-	}
 	const attachOp = async (): Promise<TOperation | Attach> => {
 		return { type: "attach" };
 	};
@@ -544,20 +506,17 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
 				),
 			);
 
-			// While detached, the initial state was set up so that the 'summarizer client' was the same as the detached client.
-			// This is actually a pretty reasonable representation of what really happens.
-			// However, now that we're transitioning to an attached state, the summarizer client should never have any edits.
-			// Thus we use one of the clients we just loaded as the summarizer client, and keep the client around that we generated the
-			// attach summary from.
-			const summarizerClient: Client = clients[0];
+			// After attaching, we use a newly loaded client as a read-only client for consistency comparison validation.
+			// This makes debugging easier as the state of a client is easier to interpret if it has no local changes.
+			const validationClient: Client = clients[0];
 			clients[0] = state.clients[0];
 
 			return {
 				...state,
 				isDetached: false,
 				clients,
-				summarizerClient,
-			};
+				validationClient,
+			} satisfies LocalServerStressState;
 		}
 		return model.reducer(state, operation);
 	};
@@ -653,12 +612,15 @@ function mixinSynchronization<
 	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
 		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
-			const connectedClients = state.clients.filter((client) => {
+			const { clients, validationClient } = state;
+
+			const connectedClients = clients.filter((client) => {
 				if (client.container.closed || client.container.disposed === true) {
 					throw new Error(`Client ${client.tag} is closed`);
 				}
 				return client.container.connectionState !== ConnectionState.Disconnected;
 			});
+			connectedClients.push(validationClient);
 
 			const rejects = new Map<Client, ((reason?: any) => void)[]>(
 				connectedClients.map((c) => [c, []]),
@@ -731,13 +693,12 @@ function mixinSynchronization<
 			}
 
 			if (connectedClients.length > 0) {
-				const readonlyChannel = connectedClients[0];
 				for (const client of connectedClients) {
 					try {
-						await model.validateConsistency(readonlyChannel, client);
+						await model.validateConsistency(validationClient, client);
 					} catch (error: unknown) {
 						if (error instanceof Error) {
-							error.message = `Comparing client ${readonlyChannel.tag} vs client ${client.tag}\n${error.message}`;
+							error.message = `Comparing client ${validationClient.tag} vs client ${client.tag}\n${error.message}`;
 						}
 						throw error;
 					}
@@ -918,7 +879,6 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 ): Promise<void> {
 	const random = makeRandom(seed);
 
-	const startDetached = options.detachedStartOptions.numOpsBeforeAttach !== 0;
 	const localDeltaConnectionServer = LocalDeltaConnectionServer.create();
 	const codeDetails: IFluidCodeDetails = {
 		package: "local-server-stress-tests",
@@ -927,47 +887,32 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	const tagCount: Partial<Record<string, number>> = {};
 	const tag: LocalServerStressState["tag"] = (prefix) =>
 		`${prefix}-${(tagCount[prefix] = (tagCount[prefix] ??= 0) + 1)}`;
-	const initialClient = await createDetachedClient(
+
+	const detachedClient = await createDetachedClient(
 		localDeltaConnectionServer,
 		codeLoader,
 		codeDetails,
 		tag("client"),
 	);
-	const clients: Client[] = [initialClient];
-	let containerUrl: string | undefined;
-	if (!startDetached) {
-		await initialClient.container.attach(createLocalResolverCreateNewRequest("stress"));
-		const url = (containerUrl = await initialClient.container.getAbsoluteUrl(""));
-		assert(url !== undefined, "attached container must have url");
-		clients.push(
-			...(await Promise.all(
-				Array.from({ length: options.numberOfClients - 1 }, async (_, i) =>
-					loadClient(localDeltaConnectionServer, codeLoader, tag("client"), url),
-				),
-			)),
-		);
-	}
+
 	const initialState: LocalServerStressState = {
-		clients,
+		clients: [detachedClient],
 		localDeltaConnectionServer,
 		codeLoader,
 		random,
+		validationClient: detachedClient,
 		client: makeUnreachableCodePathProxy("client"),
 		datastore: makeUnreachableCodePathProxy("datastore"),
 		channel: makeUnreachableCodePathProxy("channel"),
-		isDetached: startDetached,
-		containerUrl,
+		isDetached: true,
 		tag,
 	};
-
-	options.emitter.emit("testStart", initialState);
 
 	let operationCount = 0;
 	const generator = model.generatorFactory();
 	const finalState = await performFuzzActionsAsync(
 		generator,
 		async (state, operation) => {
-			options.emitter.emit("operationStart", operation);
 			operationCount++;
 			return model.reducer(state, operation);
 		},
@@ -979,9 +924,8 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	// this usually indicates an error on the part of the test author.
 	assert(operationCount > 0, "Generator should have produced at least one operation.");
 
-	options.emitter.emit("testEnd", finalState);
-
 	finalState.clients.forEach((c) => c.container.dispose());
+	finalState.validationClient.container.dispose();
 }
 
 function runTest<TOperation extends BaseOperation>(

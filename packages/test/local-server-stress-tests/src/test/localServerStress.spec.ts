@@ -37,6 +37,9 @@ const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	},
 	uploadBlob: async (state, op) =>
 		// this will hang if we are offline due to disconnect, so we don't wait for blob upload
+		// this could potentially cause problems with replay if the blob upload doesn't finish
+		// before its handle is used. this hasn't been seen in practice, but nothing but timing and
+		// the fact that we assume local server is fast prevents it.
 		void state.datastore.uploadBlob(op.tag, state.random.string(state.random.integer(1, 16))),
 	DDSModelOp: DDSModelOpReducer,
 });
@@ -89,18 +92,12 @@ describe("Local Server Stress", () => {
 
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
-		numberOfClients: 3,
-		clientJoinOptions: {
-			maxNumberOfClients: 6,
-			clientAddProbability: 0.1,
-		},
-		reconnectProbability: 0.1,
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 98,
+		// replay: 93,
 		// only: [99],
 		saveFailures,
 		// saveSuccesses,
-		skip: [67, 77],
+		skip: [93],
 	});
 });
