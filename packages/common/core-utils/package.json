@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-utils",
-	"version": "2.22.0",
+	"version": "2.23.0",
 	"description": "Not intended for use outside the Fluid client repo.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -121,10 +121,10 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
-		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluid-tools/build-cli": "^0.53.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/core-utils-previous": "npm:@fluidframework/core-utils@2.21.0",
+		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/core-utils-previous": "npm:@fluidframework/core-utils@2.22.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/mocha": "^10.0.10",

@@ -9,6 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { PostUpdateAction } from "./internalTypes.js";
 import type {
 	ClientSessionId,
 	IPresence,
@@ -135,9 +136,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			};
 		},
 		senderConnectionId: ClientConnectionId,
-	): void {
+	): PostUpdateAction[] {
 		const audienceMembers = this.audience.getMembers();
-		const joiningAttendees = new Set<SessionClient>();
+		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
 			remoteDatastore.clientToSessionId,
 		)) {
@@ -153,7 +154,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			);
 			// If the attendee is joining the session, add them to the list of joining attendees to be announced later.
 			if (isJoining) {
-				joiningAttendees.add(attendee);
+				postUpdateActions.push(() => this.events.emit("attendeeJoined", attendee));
 			}
 
 			const knownSessionId: InternalTypes.ValueRequiredState<ClientSessionId> | undefined =
@@ -165,10 +166,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			}
 		}
 
-		// TODO: reorganize processUpdate and caller to process actions after all updates are processed.
-		for (const announcedAttendee of joiningAttendees) {
-			this.events.emit("attendeeJoined", announcedAttendee);
-		}
+		return postUpdateActions;
 	}
 
 	public onConnectionAdded(clientConnectionId: ClientConnectionId): void {

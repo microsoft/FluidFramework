@@ -14,11 +14,13 @@ export type TreeOperation =
 	| TransactionBoundary
 	| UndoRedo
 	| SchemaChange
-	| Constraint;
+	| Constraint
+	| ForkMergeOperation;
 
 export interface TreeEdit {
 	type: "treeEdit";
 	edit: FieldEdit;
+	forkedViewIndex: undefined | number;
 }
 
 // Currently only node constraints are supported, but more constraint types may be added in the future.
@@ -44,6 +46,26 @@ export interface UndoRedo {
 export interface SchemaChange {
 	type: "schemaChange";
 	contents: SchemaOp;
+}
+
+export interface ForkMergeOperation {
+	type: "forkMergeOperation";
+	contents: ForkBranch | MergeBranch;
+}
+
+export interface ForkBranch {
+	type: "fork";
+	/**
+	 * If a branchNumber is provided, fork from the corresponding client and branchNumber's view from state.forkedViews.
+	 * If undefined, fork from the client view.
+	 */
+	branchNumber: number | undefined;
+}
+
+export interface MergeBranch {
+	type: "merge";
+	baseBranch: number | undefined;
+	forkBranch: number | undefined;
 }
 
 export interface FieldEdit {

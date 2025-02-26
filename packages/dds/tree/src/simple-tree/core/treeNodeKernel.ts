@@ -184,7 +184,7 @@ export class TreeNodeKernel {
 			// This can't be cached on this.#hydrated during hydration since initial tree is hydrated before the context is cached on the anchorSet.
 			return (
 				this.#hydrationState?.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
-				fail("missing simple-tree context")
+				fail(0xb40 /* missing simple-tree context */)
 			);
 		}
 		return this.initialContext;
@@ -303,7 +303,8 @@ export class TreeNodeKernel {
 			this.#hydrationState.innerNode = flexNode;
 		} else {
 			// ...otherwise, the flex node must be created
-			const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+			const context =
+				anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
 			const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 			context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 			this.#hydrationState.innerNode = makeTree(context, cursor);
@@ -332,7 +333,8 @@ export class TreeNodeKernel {
 	public anchorProxy(anchors: AnchorSet, path: UpPath): AnchorNode {
 		assert(!anchorForgetters.has(this.node), 0x91c /* Proxy anchor should not be set twice */);
 		const anchor = anchors.track(path);
-		const anchorNode = anchors.locate(anchor) ?? fail("Expected anchor node to be present");
+		const anchorNode =
+			anchors.locate(anchor) ?? fail(0xb42 /* Expected anchor node to be present */);
 		this.hydrate(anchorNode);
 		const forget = (): void => {
 			if (anchors.locate(anchor)) {
@@ -434,9 +436,9 @@ export function getTreeNodeSchemaFromHydratedFlexNode(flexNode: FlexTreeNode): T
 
 	const context =
 		flexNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
-		fail("Missing SimpleContextSlot");
+		fail(0xb43 /* Missing SimpleContextSlot */);
 
-	return context.schema.get(flexNode.schema) ?? fail("Missing schema");
+	return context.schema.get(flexNode.schema) ?? fail(0xb44 /* Missing schema */);
 }
 
 /**
@@ -461,7 +463,8 @@ function flexNodeFromAnchor(anchorNode: AnchorNode): FlexTreeNode {
 	if (flexNode !== undefined) {
 		return flexNode; // If it does have a flex node, return it...
 	} // ...otherwise, the flex node must be created
-	const context = anchorNode.anchorSet.slots.get(ContextSlot) ?? fail("missing context");
+	const context =
+		anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb45 /* missing context */);
 	const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
 	const newFlexNode = makeTree(context, cursor);

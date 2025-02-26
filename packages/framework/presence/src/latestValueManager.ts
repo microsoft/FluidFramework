@@ -9,7 +9,7 @@ import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
-import type { ValueManager } from "./internalTypes.js";
+import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { LatestValueClientData, LatestValueData } from "./latestValueTypes.js";
 import type { ISessionClient } from "./presence.js";
@@ -34,6 +34,15 @@ export interface LatestValueManagerEvents<T> {
 	 * @eventProperty
 	 */
 	updated: (update: LatestValueClientData<T>) => void;
+
+	/**
+	 * Raised when local client's value is updated, which may be the same value.
+	 *
+	 * @eventProperty
+	 */
+	localUpdated: (update: {
+		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+	}) => void;
 }
 
 /**
@@ -70,7 +79,7 @@ export interface LatestValueManager<T> {
 	 */
 	clientValues(): IterableIterator<LatestValueClientData<T>>;
 	/**
-	 * Array of known clients.
+	 * Array of known remote clients.
 	 */
 	clients(): ISessionClient[];
 	/**
@@ -107,6 +116,8 @@ class LatestValueManagerImpl<T, Key extends string>
 		this.datastore.localUpdate(this.key, this.value, {
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
+
+		this.events.emit("localUpdated", { value });
 	}
 
 	public *clientValues(): IterableIterator<LatestValueClientData<T>> {
@@ -145,19 +156,22 @@ class LatestValueManagerImpl<T, Key extends string>
 		client: ISessionClient,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<T>,
-	): void {
+	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
 		const currentState = allKnownStates.states[clientSessionId];
 		if (currentState !== undefined && currentState.rev >= value.rev) {
-			return;
+			return [];
 		}
 		this.datastore.update(this.key, clientSessionId, value);
-		this.events.emit("updated", {
-			client,
-			value: value.value,
-			metadata: { revision: value.rev, timestamp: value.timestamp },
-		});
+		return [
+			() =>
+				this.events.emit("updated", {
+					client,
+					value: value.value,
+					metadata: { revision: value.rev, timestamp: value.timestamp },
+				}),
+		];
 	}
 }
 

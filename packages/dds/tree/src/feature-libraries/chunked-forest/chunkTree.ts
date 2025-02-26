@@ -247,7 +247,7 @@ export function tryShapeFromSchema(
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): ShapeInfo {
 	return getOrCreate(shapes, type, () => {
-		const treeSchema = schema.nodeSchema.get(type) ?? fail("missing schema");
+		const treeSchema = schema.nodeSchema.get(type) ?? fail(0xaf9 /* missing schema */);
 		if (treeSchema instanceof LeafNodeStoredSchema) {
 			// Allow all string values (but only string values) to be compressed by the id compressor.
 			// This allows compressing all compressible identifiers without requiring additional context to know which values could be identifiers.
@@ -284,7 +284,7 @@ export function tryShapeFromFieldSchema(
 	key: FieldKey,
 	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 ): FieldShape | undefined {
-	const kind = policy.fieldKinds.get(type.kind) ?? fail("missing FieldKind");
+	const kind = policy.fieldKinds.get(type.kind) ?? fail(0xafa /* missing FieldKind */);
 	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}

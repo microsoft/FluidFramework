@@ -6,7 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listeners, Listenable, Off } from "@fluidframework/core-interfaces";
 
-import type { ValueManager } from "./internalTypes.js";
+import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import type { ISessionClient } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -231,7 +231,8 @@ class NotificationsManagerImpl<
 		client: ISessionClient,
 		_received: number,
 		value: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
-	): void {
+	): PostUpdateAction[] {
+		const postUpdateActions: PostUpdateAction[] = [];
 		const eventName = value.value.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.
@@ -239,15 +240,18 @@ class NotificationsManagerImpl<
 			const args = [client, ...value.value.args] as Parameters<
 				NotificationSubscriptions<T>[typeof eventName]
 			>;
-			this.notificationsInternal.emit(eventName, ...args);
+			postUpdateActions.push(() => this.notificationsInternal.emit(eventName, ...args));
 		} else {
-			this.events.emit(
-				"unattendedNotification",
-				value.value.name,
-				client,
-				...value.value.args,
+			postUpdateActions.push(() =>
+				this.events.emit(
+					"unattendedNotification",
+					value.value.name,
+					client,
+					...value.value.args,
+				),
 			);
 		}
+		return postUpdateActions;
 	}
 }
 

@@ -273,7 +273,7 @@ export class InlineArrayShape
 			shapes: EncoderCache,
 			outputBuffer: BufferFormat,
 		): void {
-			fail("Empty array should not encode any nodes");
+			fail(0xb4d /* Empty array should not encode any nodes */);
 		},
 	});
 
@@ -324,7 +324,7 @@ export class InlineArrayShape
 		return {
 			b: {
 				length: this.length,
-				shape: shapes.valueToIndex.get(this.inner.shape) ?? fail("missing shape"),
+				shape: shapes.valueToIndex.get(this.inner.shape) ?? fail(0xb4e /* missing shape */),
 			},
 		};
 	}
@@ -380,7 +380,8 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		const shape: EncodedNestedArray =
-			shapes.valueToIndex.get(this.inner.shape) ?? fail("index for shape not found in table");
+			shapes.valueToIndex.get(this.inner.shape) ??
+			fail(0xb4f /* index for shape not found in table */);
 		return {
 			a: shape,
 		};

@@ -2124,11 +2124,11 @@ export class MergeTree {
 					// Should not need explicit set here, but this should be implied:
 					assert(
 						!existingMoveInfo.wasMovedOnInsert,
-						"Local obliterate cannot have removed a segment as soon as it was inserted",
+						0xab4 /* Local obliterate cannot have removed a segment as soon as it was inserted */,
 					);
 					assert(
 						seq !== UnassignedSequenceNumber,
-						"Cannot obliterate the same segment locally twice",
+						0xab5 /* Cannot obliterate the same segment locally twice */,
 					);
 					existingMoveInfo.wasMovedOnInsert = segment.seq === UnassignedSequenceNumber;
 					// we moved this locally, but someone else moved it first

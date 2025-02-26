@@ -310,7 +310,11 @@ export const TreeAlpha: {
 		};
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
-		return conciseFromCursor(cursor, tryGetSchema(node) ?? fail("invalid input"), config);
+		return conciseFromCursor(
+			cursor,
+			tryGetSchema(node) ?? fail(0xacd /* invalid input */),
+			config,
+		);
 	},
 
 	exportVerbose<T>(
@@ -325,7 +329,11 @@ export const TreeAlpha: {
 		};
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
-		return verboseFromCursor(cursor, tryGetSchema(node) ?? fail("invalid input"), config);
+		return verboseFromCursor(
+			cursor,
+			tryGetSchema(node) ?? fail(0xace /* invalid input */),
+			config,
+		);
 	},
 
 	exportCompressed(
@@ -335,7 +343,7 @@ export const TreeAlpha: {
 			idCompressor?: IIdCompressor;
 		},
 	): JsonCompatible<IFluidHandle> {
-		const schema = tryGetSchema(node) ?? fail("invalid input");
+		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
 		const format = versionToFormat[options.oldestCompatibleClient];
 		const codec = makeFieldBatchCodec({ jsonValidator: noopValidator }, format);
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
@@ -375,7 +383,7 @@ function borrowCursorFromTreeNodeOrValue(
 ): ITreeCursorSynchronous {
 	if (isTreeValue(node)) {
 		return cursorFromInsertable<UnsafeUnknownSchema>(
-			tryGetSchema(node) ?? fail("missing schema"),
+			tryGetSchema(node) ?? fail(0xad0 /* missing schema */),
 			node,
 		);
 	}

@@ -31,7 +31,8 @@ export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | Tr
 		return cached;
 	}
 
-	const classSchema = getSimpleNodeSchemaFromInnerNode(flexNode) ?? fail("Missing schema");
+	const classSchema =
+		getSimpleNodeSchemaFromInnerNode(flexNode) ?? fail(0xb3e /* Missing schema */);
 	const node = flexNode as unknown as InternalTreeNode;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (typeof classSchema === "function") {

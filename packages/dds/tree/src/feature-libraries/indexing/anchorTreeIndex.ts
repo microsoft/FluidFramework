@@ -359,7 +359,8 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 				throw new Error("key finder should be pure and functional");
 			}
 			const anchor = nodeCursor.buildAnchor();
-			const anchorNode = this.forest.anchors.locate(anchor) ?? fail("expected anchor node");
+			const anchorNode =
+				this.forest.anchors.locate(anchor) ?? fail(0xb16 /* expected anchor node */);
 
 			// check if this anchor node already exists in the index
 			const existingKey = this.nodeToKey.get(anchorNode);

@@ -291,9 +291,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static findMetadataHolderSummary(summary: ISummaryTree): ISummaryTree | undefined {
 		assert(typeof summary === "object", 0x6f7 /* summary must be a non-null object */);
-		for (const key of Object.keys(summary.tree)) {
-			const value = summary.tree[key];
-
+		for (const [key, value] of Object.entries(summary.tree)) {
 			if (Boolean(value) && value.type === SummaryType.Tree) {
 				const found = this.findMetadataHolderSummary(value);
 				if (found) {

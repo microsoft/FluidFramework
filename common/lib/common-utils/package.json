@@ -29,7 +29,7 @@
 		"build:test:jest": "tsc --project ./src/test/jest/tsconfig.json",
 		"build:test:mocha": "tsc --project ./src/test/mocha/tsconfig.json",
 		"build:test:types": "tsc --project ./src/test/types/tsconfig.json",
-		"bump-version": "npm version minor --no-push --no-git-tag-version && npm run build:gen:bump",
+		"bump-version": "npm version minor --no-push --no-git-tag-version",
 		"check:release-tags": "api-extractor run --local --config ./api-extractor-lint.json",
 		"ci:build": "npm run build:compile",
 		"ci:build:docs": "api-extractor run --typescript-compiler-folder ./node_modules/typescript && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../../_api-extractor-temp/",

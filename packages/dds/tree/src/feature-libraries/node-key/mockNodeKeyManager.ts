@@ -27,7 +27,7 @@ export class MockNodeKeyManager implements NodeKeyManager {
 	}
 
 	public localizeNodeKey(key: StableNodeKey): LocalNodeKey {
-		return this.tryLocalizeNodeKey(key) ?? fail("Key is not compressible");
+		return this.tryLocalizeNodeKey(key) ?? fail(0xb26 /* Key is not compressible */);
 	}
 
 	public stabilizeNodeKey(key: LocalNodeKey): StableNodeKey {

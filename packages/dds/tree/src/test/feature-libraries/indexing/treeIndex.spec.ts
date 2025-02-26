@@ -483,7 +483,7 @@ describe("tree indexes", () => {
 	it("completely removes nodes when they are garbage collected", () => {
 		const provider = new TestTreeProviderLite(1);
 		const tree = provider.trees[0];
-		const view = tree.viewWith(
+		const view = tree.kernel.viewWith(
 			new TreeViewConfiguration({ schema: IndexableParent, enableSchemaValidation: true }),
 		);
 		view.initialize(

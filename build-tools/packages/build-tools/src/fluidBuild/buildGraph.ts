@@ -100,11 +100,9 @@ export class BuildPackage {
 		public readonly pkg: Package,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
-		this._taskDefinitions = getTaskDefinitions(
-			this.pkg.packageJson,
-			globalTaskDefinitions,
-			this.pkg.isReleaseGroupRoot,
-		);
+		this._taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions, {
+			isReleaseGroupRoot: this.pkg.isReleaseGroupRoot,
+		});
 		traceTaskDef(
 			`${pkg.nameColored}: Task def: ${JSON.stringify(this._taskDefinitions, undefined, 2)}`,
 		);
@@ -159,6 +157,7 @@ export class BuildPackage {
 				dependsOn: [`^${taskName}`],
 				script: false,
 				before: [],
+				children: [],
 				after: [],
 			};
 		}
@@ -275,7 +274,7 @@ export class BuildPackage {
 	}
 
 	// Create or get the task with names in the `deps` array
-	private getMatchedTasks(deps: string[], pendingInitDep?: Task[]) {
+	private getMatchedTasks(deps: readonly string[], pendingInitDep?: Task[]) {
 		const matchedTasks: Task[] = [];
 		for (const dep of deps) {
 			// If pendingInitDep is undefined, that mean we don't expect the task to be found, so pretend that we already found it.
@@ -354,7 +353,7 @@ export class BuildPackage {
 		};
 
 		// Expand the star entry to all scheduled tasks
-		const expandStar = (deps: string[], getTaskNames: () => string[]) => {
+		const expandStar = (deps: readonly string[], getTaskNames: () => string[]) => {
 			const newDeps = deps.filter((dep) => dep !== "*");
 			if (newDeps.length === deps.length) {
 				return newDeps;
@@ -539,10 +538,12 @@ export class BuildGraph {
 		const spinner = new Spinner("Checking incremental build task status...");
 		spinner.start();
 
+		// Note: any console logging done here (e.g. in leafTask.ts' checkIsUpToDate()) runs the risk of getting truncated due to how picospinner works.
+		// Ideally we shouldn't do console logging between starting and stopping a spinner.
 		const isUpToDate = await this.isUpToDate();
 
-		timer?.time(`Check up to date completed`);
 		spinner.succeed("Tasks loaded.");
+		timer?.time(`Check up to date completed`);
 
 		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${

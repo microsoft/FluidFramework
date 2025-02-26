@@ -33,7 +33,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 } from "../simple-tree/index.js";
-import { JsonArray, JsonObject } from "./json/index.js";
+import { JsonArray, JsonObject } from "../jsonDomainSchema.js";
 
 const sf = new SchemaFactory("Cursor Test Suite");
 

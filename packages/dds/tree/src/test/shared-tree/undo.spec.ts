@@ -689,7 +689,7 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 	const tree = sharedTreeFactory.create(runtime, "tree");
 	const runtimeFactory = new MockContainerRuntimeFactory();
 	runtimeFactory.createContainerRuntime(runtime);
-	initialize(tree.checkout, {
+	initialize(tree.kernel.checkout, {
 		schema: jsonSequenceRootSchema,
 		initialTree: json.map(singleJsonCursor),
 	});
@@ -702,7 +702,7 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 	}
 
 	temp = tree;
-	return tree.checkout;
+	return tree.kernel.checkout;
 }
 
 let temp: unknown;

@@ -35,8 +35,8 @@ export function isNeverFieldRecursive(
 	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
 	if (
-		(policy.fieldKinds.get(field.kind) ?? fail("missing field kind")).multiplicity ===
-			Multiplicity.Single &&
+		(policy.fieldKinds.get(field.kind) ?? fail(0xb1c /* missing field kind */))
+			.multiplicity === Multiplicity.Single &&
 		field.types !== undefined
 	) {
 		for (const type of field.types) {
@@ -94,8 +94,10 @@ export function isNeverTreeRecursive(
 		parentTypeStack.add(treeNode);
 		if (treeNode instanceof MapNodeStoredSchema) {
 			return (
-				(policy.fieldKinds.get(treeNode.mapFields.kind) ?? fail("missing field kind"))
-					.multiplicity === Multiplicity.Single
+				(
+					policy.fieldKinds.get(treeNode.mapFields.kind) ??
+					fail(0xb1d /* missing field kind */)
+				).multiplicity === Multiplicity.Single
 			);
 		} else if (treeNode instanceof ObjectNodeStoredSchema) {
 			for (const field of treeNode.objectNodeFields.values()) {

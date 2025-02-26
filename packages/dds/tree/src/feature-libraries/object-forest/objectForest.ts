@@ -439,7 +439,7 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 	}
 	public getPath(prefix?: PathRootPrefix): UpPath {
 		assert(this.innerCursor !== undefined, 0x436 /* Cursor must be current to be used */);
-		return this.innerCursor.getPath(prefix) ?? fail("no path when at root");
+		return this.innerCursor.getPath(prefix) ?? fail(0xb27 /* no path when at root */);
 	}
 	public get fieldIndex(): number {
 		assert(this.innerCursor !== undefined, 0x437 /* Cursor must be current to be used */);

@@ -178,6 +178,24 @@ export function compareSets<T>({
 }
 
 /**
+ * Sets the value at `key` in map to value if not already present.
+ * Returns the value at `key` after setting it.
+ * This is equivalent to a get or default that adds the default to the map.
+ */
+export function getOrAddInMap<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	value: Value,
+): Value {
+	const currentValue = map.get(key);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+	map.set(key, value);
+	return value;
+}
+
+/**
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
  * @param map - The map to query/update
  * @param key - The key to lookup in the map
@@ -615,4 +633,36 @@ export function copyPropertyIfDefined<
 			(destination as { [P in K]: unknown })[property] = value;
 		}
 	}
+}
+
+/**
+ * Reduces an array of values into a single value.
+ * This is similar to `Array.prototype.reduce`,
+ * except that it recursively reduces the left and right halves of the input before reducing their respective reductions.
+ *
+ * When compared with an approach like reducing all the values left-to-right,
+ * this balanced approach is beneficial when the cost of invoking `callbackFn` is proportional to the number reduced values that its parameters collectively represent.
+ * For example, if `T` is an array, and `callbackFn` concatenates its inputs,
+ * then `balancedReduce` will have O(N*log(N)) time complexity instead of `Array.prototype.reduce`'s O(N²).
+ * However, if `callbackFn` is O(1) then both `balancedReduce` and `Array.prototype.reduce` will have O(N) complexity.
+ *
+ * @param array - The array to reduce.
+ * @param callbackFn - The function to execute for each pairwise reduction.
+ * @param emptyCase - A factory function that provides the value to return if the input array is empty.
+ */
+export function balancedReduce<T>(
+	array: readonly T[],
+	callbackFn: (left: T, right: T) => T,
+	emptyCase: () => T,
+): T {
+	if (hasSingle(array)) {
+		return array[0];
+	}
+	if (!hasSome(array)) {
+		return emptyCase();
+	}
+	const mid = Math.floor(array.length / 2);
+	const left = balancedReduce(array.slice(0, mid), callbackFn, emptyCase);
+	const right = balancedReduce(array.slice(mid), callbackFn, emptyCase);
+	return callbackFn(left, right);
 }

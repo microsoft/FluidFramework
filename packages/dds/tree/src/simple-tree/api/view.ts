@@ -250,7 +250,7 @@ export class ViewSchema {
 					this.viewSchemaAsStored.nodeSchema.get(adapter.output),
 				)
 			) {
-				fail("tree adapter for stored adapter.output should not be never");
+				fail(0xb3d /* tree adapter for stored adapter.output should not be never */);
 			}
 		}
 

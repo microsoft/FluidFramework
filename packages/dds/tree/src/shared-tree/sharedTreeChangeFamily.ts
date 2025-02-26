@@ -151,7 +151,7 @@ export class SharedTreeChangeFamily
 					};
 				}
 				default:
-					fail("Unknown SharedTree change type.");
+					fail(0xacc /* Unknown SharedTree change type. */);
 			}
 		};
 		return {

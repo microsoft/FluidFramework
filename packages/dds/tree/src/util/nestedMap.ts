@@ -5,7 +5,7 @@
 
 import { oob } from "@fluidframework/core-utils/internal";
 
-import type { MapGetSet } from "./utils.js";
+import { getOrAddInMap, getOrCreate } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
@@ -87,40 +87,16 @@ export function setInNestedMap<Key1, Key2, Value>(
 }
 
 /**
- * Sets the value at `key` in map to value if not already present.
- * Returns the value at `key` after setting it.
- * This is equivalent to a get or default that adds the default to the map.
+ * {@link getOrCreate} for {@link NestedMap}.
  */
-export function getOrAddInMap<Key, Value>(
-	map: MapGetSet<Key, Value>,
-	key: Key,
-	value: Value,
+export function getOrCreateInNestedMap<Key1, Key2, Value>(
+	map: NestedMap<Key1, Key2, Value>,
+	key1: Key1,
+	key2: Key2,
+	defaultValue: (key1: Key1, key2: Key2) => Value,
 ): Value {
-	const currentValue = map.get(key);
-	if (currentValue !== undefined) {
-		return currentValue;
-	}
-	map.set(key, value);
-	return value;
-}
-
-/**
- * Sets the value at `key` in `map` to `generateValue()` if not already present.
- * Returns the value at `key` after setting it.
- */
-export function getOrAddInMapLazy<Key, Value>(
-	map: MapGetSet<Key, Value>,
-	key: Key,
-	generateValue: () => Value,
-): Value {
-	const currentValue = map.get(key);
-	if (currentValue !== undefined) {
-		return currentValue;
-	}
-
-	const value = generateValue();
-	map.set(key, value);
-	return value;
+	const innerMap = getOrAddInMap(map, key1, new Map<Key2, Value>());
+	return getOrCreate(innerMap, key2, (): Value => defaultValue(key1, key2));
 }
 
 /**

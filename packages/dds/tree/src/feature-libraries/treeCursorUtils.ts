@@ -345,14 +345,16 @@ class StackCursor<TNode> extends SynchronousCursor implements CursorWithNode<TNo
 
 	public exitField(): void {
 		// assert(this.mode === CursorLocationType.Fields, "can only navigate up from field when in field");
-		this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-		this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+		this.siblings =
+			this.siblingStack.pop() ?? fail(0xac3 /* Unexpected siblingStack.length */);
+		this.index = this.indexStack.pop() ?? fail(0xac4 /* Unexpected indexStack.length */);
 	}
 
 	public exitNode(): void {
 		// assert(this.mode === CursorLocationType.Nodes, "can only navigate up from node when in node");
-		this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-		this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+		this.siblings =
+			this.siblingStack.pop() ?? fail(0xac5 /* Unexpected siblingStack.length */);
+		this.index = this.indexStack.pop() ?? fail(0xac6 /* Unexpected indexStack.length */);
 	}
 
 	public getNode(): TNode {

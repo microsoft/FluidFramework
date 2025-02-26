@@ -19,6 +19,7 @@ import {
 	insertAvoidField,
 	insertField,
 	obliterateField,
+	obliterateFieldZeroLength,
 	// removeWithField,
 } from "./obliterateOperations.js";
 import { TestClient } from "./testClient.js";
@@ -64,6 +65,18 @@ function runObliterateFarmTests(opts: IObliterateFarmConfig, extraSeed?: number)
 					...opts,
 					// TODO: ensure that obliterate and inserts are not separated before enabling this
 					// applyOpDuringGeneration: true,
+				},
+			},
+			{
+				name: "obliterate exact range allowing zero length",
+				config: {
+					...opts,
+					operations: [
+						annotateWithField,
+						insertAvoidField,
+						insertField,
+						obliterateFieldZeroLength,
+					],
 				},
 			},
 		])

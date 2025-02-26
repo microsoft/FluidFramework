@@ -227,7 +227,7 @@ export class ChunkedForest implements IEditableForest {
 				assert(this.mutableChunk === undefined, 0x535 /* should be in field */);
 				const parent = this.getParent();
 				const chunks =
-					parent.mutableChunk.fields.get(parent.key) ?? fail("missing edited field");
+					parent.mutableChunk.fields.get(parent.key) ?? fail(0xaf6 /* missing edited field */);
 				let indexWithinChunk = index;
 				let indexOfChunk = 0;
 				let chunk = chunks[indexOfChunk] ?? oob();
@@ -236,7 +236,7 @@ export class ChunkedForest implements IEditableForest {
 					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
-						fail("missing edited node");
+						fail(0xaf7 /* missing edited node */);
 					}
 				}
 				let found = chunks[indexOfChunk] ?? oob();
@@ -277,7 +277,7 @@ export class ChunkedForest implements IEditableForest {
 				this.mutableChunk = undefined;
 			},
 			exitField(key: FieldKey): void {
-				const top = this.mutableChunkStack.pop() ?? fail("should not be at root");
+				const top = this.mutableChunkStack.pop() ?? fail(0xaf8 /* should not be at root */);
 				assert(this.mutableChunk === undefined, 0x539 /* should be in field */);
 				this.mutableChunk = top.mutableChunk;
 			},

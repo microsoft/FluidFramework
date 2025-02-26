@@ -22,9 +22,10 @@ import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/ind
 
 import { readonlyTreeWithContent } from "./utils.js";
 import { cursorFromInsertable, SchemaFactory } from "../../../simple-tree/index.js";
-import { JsonObject, singleJsonCursor } from "../../json/index.js";
+import { singleJsonCursor } from "../../json/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { brand } from "../../../util/index.js";
+import { JsonObject } from "../../../jsonDomainSchema.js";
 
 /**
  * Test {@link LazyTreeNode} implementation.

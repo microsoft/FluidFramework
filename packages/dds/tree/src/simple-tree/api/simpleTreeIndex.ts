@@ -164,7 +164,7 @@ export function createSimpleTreeIndex<
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}
 					} else {
-						fail("node is out of schema");
+						fail(0xb32 /* node is out of schema */);
 					}
 				}
 			: (schemaIdentifier: TreeNodeSchemaIdentifier) => {
@@ -221,11 +221,11 @@ function makeGenericKeyFinder<TKey extends TreeIndexKey>(
 		cursor.exitField();
 
 		if (value === undefined) {
-			fail("a value for the key does not exist");
+			fail(0xb33 /* a value for the key does not exist */);
 		}
 
 		if (!isKeyValid(value)) {
-			fail("the key is an unexpected type");
+			fail(0xb34 /* the key is an unexpected type */);
 		}
 
 		return value;

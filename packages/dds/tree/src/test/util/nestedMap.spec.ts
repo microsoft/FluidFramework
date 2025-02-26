@@ -16,6 +16,7 @@ import {
 	tryAddToNestedMap,
 	tryGetFromNestedMap,
 	mapNestedMap,
+	getOrCreateInNestedMap,
 } from "../../util/index.js";
 
 describe("NestedMap unit tests", () => {
@@ -60,6 +61,33 @@ describe("NestedMap unit tests", () => {
 			setInNestedMap(nestedMap, "Foo", "Bar", 1);
 			setInNestedMap(nestedMap, "Foo", "Bar", 2);
 			assert.equal(nestedMap.get("Foo")?.get("Bar"), 2);
+		});
+	});
+
+	describe("getOrCreateInNestedMap", () => {
+		it("New value", () => {
+			const nestedMap: NestedMap<string, string, number> = new Map<
+				string,
+				Map<string, number>
+			>();
+			const log: unknown[][] = [];
+			getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => {
+				log.push(args);
+				return 1;
+			});
+			assert.equal(nestedMap.get("Foo")?.get("Bar"), 1);
+			assert.deepEqual(log, [["Foo", "Bar"]]);
+		});
+
+		it("Existing value", () => {
+			const nestedMap: NestedMap<string, string, number> = new Map();
+			const got1 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) => 1);
+			const got2 = getOrCreateInNestedMap(nestedMap, "Foo", "Bar", (...args: unknown[]) =>
+				assert.fail("Should not be called"),
+			);
+			assert.equal(got1, 1);
+			assert.equal(got2, 1);
+			assert.equal(nestedMap.get("Foo")?.get("Bar"), 1);
 		});
 	});
 

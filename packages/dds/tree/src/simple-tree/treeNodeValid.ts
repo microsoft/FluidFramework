@@ -58,7 +58,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		instance: TreeNodeValid<T>,
 		input: T,
 	): UnhydratedFlexTreeNode {
-		return fail("Schema must override buildRawNode");
+		return fail(0xae4 /* Schema must override buildRawNode */);
 	}
 
 	/**
@@ -66,7 +66,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
 	 */
 	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): Context {
-		fail("Missing oneTimeSetup");
+		fail(0xae5 /* Missing oneTimeSetup */);
 	}
 
 	/**

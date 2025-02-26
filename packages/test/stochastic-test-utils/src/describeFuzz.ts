@@ -5,6 +5,8 @@
 
 import process from "process";
 
+import { makeRandom } from "./random.js";
+
 function createSuite<TArgs extends StressSuiteArguments>(
 	tests: (this: Mocha.Suite, args: TArgs) => void,
 	args: TArgs,
@@ -165,3 +167,31 @@ export const describeFuzz: DescribeFuzz = createFuzzDescribe();
  * @internal
  */
 export const describeStress: DescribeStress = createFuzzDescribe();
+
+/**
+ * @internal
+ */
+export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {
+	switch (stressMode) {
+		case StressMode.Short:
+		case StressMode.Normal: {
+			// Deterministic, fixed seeds
+			return Array.from({ length: testCount }, (_, i) => i);
+		}
+
+		case StressMode.Long: {
+			// Non-deterministic, random seeds
+			const random = makeRandom();
+			const longModeFactor = 2;
+			const initialSeed = random.integer(
+				0,
+				Number.MAX_SAFE_INTEGER - longModeFactor * testCount,
+			);
+			return Array.from({ length: testCount * longModeFactor }, (_, i) => initialSeed + i);
+		}
+
+		default: {
+			throw new Error(`Unsupported stress mode: ${stressMode}`);
+		}
+	}
+}

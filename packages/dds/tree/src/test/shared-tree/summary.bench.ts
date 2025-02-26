@@ -179,7 +179,7 @@ function getSummaryTree<T extends ImplicitFieldSchema>(
 ): ISummaryTree {
 	const provider = new TestTreeProviderLite();
 	const tree = provider.trees[0];
-	const view = tree.viewWith(new TreeViewConfiguration({ schema: content.schema }));
+	const view = tree.kernel.viewWith(new TreeViewConfiguration({ schema: content.schema }));
 	view.initialize(content.initialTree);
 	provider.processMessages();
 	const { summary } = tree.getAttachSummary(true);

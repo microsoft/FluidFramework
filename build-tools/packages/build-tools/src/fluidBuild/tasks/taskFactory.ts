@@ -6,13 +6,14 @@
 import { getExecutableFromCommand } from "../../common/utils";
 import type { BuildContext } from "../buildContext";
 import { BuildPackage } from "../buildGraph";
+import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
 import { createDeclarativeTaskHandler } from "./leaf/declarativeTask";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
-import { UnknownLeafTask } from "./leaf/leafTask";
+import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
@@ -27,7 +28,7 @@ import { PrettierTask } from "./leaf/prettierTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
-import { Task } from "./task";
+import { type Task } from "./task";
 import { type TaskHandler, isConstructorFunction } from "./taskHandlers";
 
 // Map of executable name to LeafTasks
@@ -94,15 +95,6 @@ function getTaskForExecutable(executable: string, context: BuildContext): TaskHa
 	return builtInHandler ?? UnknownLeafTask;
 }
 
-/**
- * Regular expression to parse `concurrently` arguments that specify package scripts.
- * The format is `npm:<script>` or `"npm:<script>*"`; in the latter case script
- * is a prefix that is used to match one or more package scripts.
- * Quotes are optional but expected to escape the `*` character.
- */
-const regexNpmConcurrentlySpec =
-	/^(?<quote>"?)npm:(?<script>[^*]+?)(?<wildcard>\*?)\k<quote>$/;
-
 export class TaskFactory {
 	public static Create(
 		node: BuildPackage,
@@ -110,7 +102,7 @@ export class TaskFactory {
 		context: BuildContext,
 		pendingInitDep: Task[],
 		taskName?: string,
-	) {
+	): GroupTask | LeafTask {
 		// Split the "&&" first
 		const subTasks = new Array<Task>();
 		const steps = command.split("&&");
@@ -123,43 +115,32 @@ export class TaskFactory {
 		}
 
 		// Parse concurrently
-		const concurrently = command.startsWith("concurrently ");
-		if (concurrently) {
+		if (isConcurrentlyCommand(command)) {
 			const subTasks = new Array<Task>();
-			const steps = command.substring("concurrently ".length).split(/ +/);
-			for (const step of steps) {
-				const npmMatch = regexNpmConcurrentlySpec.exec(step);
-				if (npmMatch?.groups !== undefined) {
-					const scriptSpec = npmMatch.groups.script;
-					let scriptNames: string[];
-					// When npm:... ends with *, it is a wildcard match of all scripts that start with the prefix.
-					if (npmMatch.groups.wildcard === "*") {
-						// Note: result of no matches is allowed, so long as another concurrently step has a match.
-						// This avoids general tool being overly prescriptive about script patterns. If always
-						// having a match is desired, then such a policy should be enforced.
-						scriptNames = Object.keys(node.pkg.packageJson.scripts).filter((s) =>
-							s.startsWith(scriptSpec),
+			// Note: result of no matches is allowed from concurrenly wildcard, so long as another
+			// concurrently step has a match.
+			// This avoids general tool being overly prescriptive about script patterns. If always
+			// having a match is desired, then such a policy should be enforced.
+			parseConcurrentlyCommand(
+				command,
+				Object.keys(node.pkg.packageJson.scripts),
+				(scriptName) => {
+					const task = node.getScriptTask(scriptName, pendingInitDep);
+					if (task === undefined) {
+						throw new Error(
+							`${
+								node.pkg.nameColored
+							}: Unable to find script '${scriptName}' listed in 'concurrently' command${
+								taskName ? ` '${taskName}'` : ""
+							}`,
 						);
-					} else {
-						scriptNames = [scriptSpec];
 					}
-					for (const scriptName of scriptNames) {
-						const task = node.getScriptTask(scriptName, pendingInitDep);
-						if (task === undefined) {
-							throw new Error(
-								`${
-									node.pkg.nameColored
-								}: Unable to find script '${scriptName}' listed in 'concurrently' command${
-									taskName ? ` '${taskName}'` : ""
-								}`,
-							);
-						}
-						subTasks.push(task);
-					}
-				} else {
+					subTasks.push(task);
+				},
+				(step) => {
 					subTasks.push(TaskFactory.Create(node, step, context, pendingInitDep));
-				}
-			}
+				},
+			);
 			if (subTasks.length === 0) {
 				throw new Error(
 					`${node.pkg.nameColored}: Unable to find any tasks listed in 'concurrently' command${
