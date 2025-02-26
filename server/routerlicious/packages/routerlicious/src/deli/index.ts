@@ -161,6 +161,8 @@ export async function deliCreate(
 			undefined,
 			redisConfig.enableClustering,
 			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
 		);
 	// The socketioredispublisher handles redis connection graceful shutdown
 	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);

@@ -73,7 +73,6 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
-	type IChannelView,
 } from "./shared-tree/index.js";
 
 export {
@@ -259,3 +258,5 @@ export {
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+
+export { JsonAsTree } from "./jsonDomainSchema.js";

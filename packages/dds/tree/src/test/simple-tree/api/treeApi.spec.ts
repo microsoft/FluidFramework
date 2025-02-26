@@ -1328,7 +1328,7 @@ describe("treeNodeApi", () => {
 					// TODO:AB#26720 The error here should be more clear.
 					assert.throws(
 						() => TreeAlpha.importVerbose(Point2D, exported),
-						/missing field info/,
+						(error: Error) => validateAssertionError(error, /missing field info/),
 					);
 				});
 			});
