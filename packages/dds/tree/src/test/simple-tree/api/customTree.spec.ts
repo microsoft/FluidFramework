@@ -20,8 +20,9 @@ import {
 } from "../../../simple-tree/api/customTree.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
-import { JsonUnion, singleJsonCursor } from "../../json/index.js";
+import { singleJsonCursor } from "../../json/index.js";
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+import { JsonUnion } from "../../../jsonDomainSchema.js";
 
 const schemaFactory = new SchemaFactory("Test");
 

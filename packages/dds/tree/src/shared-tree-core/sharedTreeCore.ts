@@ -14,7 +14,10 @@ import type {
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type {
+	IChannelView,
+	IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -51,7 +54,6 @@ import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { BranchCommitEnricher } from "./branchCommitEnricher.js";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IChannelView } from "../shared-tree/index.js";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -370,13 +372,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			if (messagesSessionId !== undefined) {
 				assert(
 					messagesSessionId === sessionId,
-					"All messages in a bunch must have the same session ID",
+					0xad9 /* All messages in a bunch must have the same session ID */,
 				);
 			}
 			messagesSessionId = sessionId;
 		}
 
-		assert(messagesSessionId !== undefined, "Messages must have a session ID");
+		assert(messagesSessionId !== undefined, 0xada /* Messages must have a session ID */);
 
 		this.editManager.addSequencedChanges(
 			commits,

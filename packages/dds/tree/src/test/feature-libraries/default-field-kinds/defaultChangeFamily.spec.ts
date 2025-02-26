@@ -36,7 +36,7 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { JsonObject } from "../../json/index.js";
+import { JsonObject } from "../../../jsonDomainSchema.js";
 import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);

@@ -10,7 +10,7 @@ import {
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
 import { toStoredSchema } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { JsonUnion } from "../../json/index.js";
+import { JsonUnion } from "../../../jsonDomainSchema.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
