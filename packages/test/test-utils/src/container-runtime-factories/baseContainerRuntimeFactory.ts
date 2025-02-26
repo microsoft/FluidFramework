@@ -29,6 +29,8 @@ import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
+ *
+ * @deprecated See notice on {@link BaseContainerRuntimeFactory}.
  */
 export interface BaseContainerRuntimeFactoryProps {
 	/**
@@ -56,9 +58,13 @@ export interface BaseContainerRuntimeFactoryProps {
 }
 
 /**
- * BaseContainerRuntimeFactory produces container runtimes with the specified data store and service registries,
+ * Produces container runtimes with the specified data store and service registries,
  * request handlers, runtimeOptions, and entryPoint initialization function.
  * It can be subclassed to implement a first-time initialization procedure for the containers it creates.
+ *
+ * @deprecated
+ * Do not reference this type directly. It will be removed in the future.
+ * E.g. use {@link IRuntimeFactory} instead.
  */
 export class BaseContainerRuntimeFactory
 	extends RuntimeFactoryHelper

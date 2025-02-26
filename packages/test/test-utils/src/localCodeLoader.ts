@@ -20,6 +20,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { createDataStoreFactory } from "@fluidframework/runtime-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
 
 /**
@@ -74,6 +75,7 @@ export class LocalCodeLoader implements ICodeDetailsLoader {
 					fluidModule = {
 						fluidExport: {
 							...maybeExport,
+							// eslint-disable-next-line import/no-deprecated
 							IRuntimeFactory: new ContainerRuntimeFactoryWithDefaultDataStore({
 								defaultFactory,
 								registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],

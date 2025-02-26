@@ -29,6 +29,7 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { createTestConfigProvider } from "./TestConfigs.js";
+// eslint-disable-next-line import/no-deprecated
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
 import { waitForContainerConnection } from "./containerUtils.js";
 import {
@@ -127,6 +128,7 @@ export async function createSummarizerFromFactory(
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
+		// eslint-disable-next-line import/no-deprecated
 		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataStoreFactory,

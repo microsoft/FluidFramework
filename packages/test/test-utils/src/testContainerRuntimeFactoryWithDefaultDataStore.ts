@@ -13,6 +13,7 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
@@ -29,12 +30,30 @@ const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	defaultFactory: IFluidDataStoreFactory;
-	registryEntries: NamedFluidDataStoreRegistryEntries;
-	dependencyContainer?: any;
+	/**
+	 * The data store registry for containers produced.
+	 */
+	readonly registryEntries: NamedFluidDataStoreRegistryEntries;
+
+	readonly dependencyContainer?: IFluidDependencySynthesizer;
+
+	/**
+	 * Request handlers for containers produced.
+	 * @deprecated Will be removed once Loader LTS version is "2.0.0-internal.7.0.0". Migrate all usage of IFluidRouter to the "entryPoint" pattern. Refer to Removing-IFluidRouter.md
+	 */
 	// eslint-disable-next-line import/no-deprecated
-	requestHandlers?: RuntimeRequestHandler[];
-	runtimeOptions?: IContainerRuntimeOptions;
-	provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
+	readonly requestHandlers?: RuntimeRequestHandler[];
+
+	/**
+	 * The runtime options passed to the IContainerRuntime when instantiating it
+	 */
+	readonly runtimeOptions?: IContainerRuntimeOptions;
+
+	/**
+	 * Function that will initialize the entryPoint of the IContainerRuntime instances
+	 * created with this factory
+	 */
+	readonly provideEntryPoint?: (runtime: IContainerRuntime) => Promise<FluidObject>;
 }
 
 /**

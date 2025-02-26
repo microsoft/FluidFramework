@@ -16,6 +16,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser } from "@fluidframework/runtime-utils/internal";
 
+// eslint-disable-next-line import/no-deprecated
 import { BaseContainerRuntimeFactory } from "./baseContainerRuntimeFactory.js";
 
 const defaultDataStoreId = "default";
@@ -30,6 +31,8 @@ async function getDefaultFluidObject(runtime: IContainerRuntime): Promise<FluidO
 
 /**
  * {@link ContainerRuntimeFactoryWithDefaultDataStore} construction properties.
+ *
+ * @deprecated See notice on {@link ContainerRuntimeFactoryWithDefaultDataStore}.
  */
 export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	defaultFactory: IFluidDataStoreFactory;
@@ -53,7 +56,12 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 /**
  * A ContainerRuntimeFactory that initializes Containers with a single default data store, which can be requested from
  * the container with an empty URL.
+ *
+ * @deprecated
+ * Do not reference this type directly. It will be removed in the future.
+ * E.g. use {@link IRuntimeFactory} instead.
  */
+// eslint-disable-next-line import/no-deprecated
 export class ContainerRuntimeFactoryWithDefaultDataStore extends BaseContainerRuntimeFactory {
 	public static readonly defaultDataStoreId = defaultDataStoreId;
 
