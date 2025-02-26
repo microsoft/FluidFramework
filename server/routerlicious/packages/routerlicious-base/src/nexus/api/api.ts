@@ -126,6 +126,7 @@ async function handleBroadcastSignal(
 
 	const signalRoom: IRoom = { tenantId, documentId };
 	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
+	Lumberjack.info("Broadcasting signal to event emitter", { tenantId, documentId });
 	collaborationSessionEventEmitter.emit("broadcastSignal", payload);
 }
 
