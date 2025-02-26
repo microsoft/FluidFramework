@@ -19,8 +19,6 @@ export {
 } from "./opaque.js";
 export {
 	deleteFromNestedMap,
-	getOrAddInMap,
-	getOrAddInMapLazy,
 	getOrAddInNestedMap,
 	getOrDefaultInNestedMap,
 	forEachInNestedMap,
@@ -34,6 +32,7 @@ export {
 	mapNestedMap,
 	nestedMapToFlatList,
 	nestedMapFromFlatList,
+	getOrCreateInNestedMap,
 } from "./nestedMap.js";
 export { addToNestedSet, type NestedSet, nestedSetContains } from "./nestedSet.js";
 export { type OffsetList, OffsetListFactory } from "./offsetList.js";
@@ -96,6 +95,7 @@ export {
 	hasSingle,
 	defineLazyCachedProperty,
 	copyPropertyIfDefined as copyProperty,
+	getOrAddInMap,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
 

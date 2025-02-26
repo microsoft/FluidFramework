@@ -5,9 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { JsonUnion, singleJsonCursor } from "../../json/index.js";
+import { singleJsonCursor } from "../../json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { conciseFromCursor } from "../../../simple-tree/api/conciseTree.js";
+import { JsonUnion } from "../../../jsonDomainSchema.js";
 
 describe("simple-tree conciseTree", () => {
 	it("conciseFromCursor", () => {
