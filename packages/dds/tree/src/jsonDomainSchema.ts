@@ -14,13 +14,14 @@ import {
 const sf = new SchemaFactory("com.fluidframework.json");
 
 /**
- * Utilities for using storing JSON data in {@link TreeNode}s.
+ * Utilities for storing JSON data in {@link TreeNode}s.
  * @remarks
- * Schema which replicate the JSON data model with {@link TreeNode}s.
+ * Schema which replicates the JSON data model with {@link TreeNode}s.
  *
  * This allows JSON to be losslessly round-tripped through a tree with the following limitations:
  *
  * 1. Only information that would be preserved by JSON.parse is preserved. This means (among other things) that numbers are limited to JavasScript's numeric precision.
+ *
  * 2. The order of fields on an object is not preserved. The resulting order is arbitrary.
  *
  * JSON data can be imported from JSON into this format using `JSON.parse` then {@link TreeAlpha.importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
