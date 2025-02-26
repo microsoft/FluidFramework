@@ -260,3 +260,4 @@ export type { MapNodeInsertableData } from "./simple-tree/index.js";
 export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
 
 export { JsonAsTree } from "./jsonDomainSchema.js";
+export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
