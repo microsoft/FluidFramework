@@ -106,7 +106,9 @@
 		"tasks": {
 			"build:test": [
 				"^tsc",
-				"^api-extractor:commonjs"
+				"^api-extractor:commonjs",
+				"@fluidframework/sequence#build:test",
+				"@fluidframework/map#build:test"
 			]
 		}
 	},
