@@ -106,9 +106,9 @@ export namespace JsonAsTree {
 	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive("array", Tree);
 
 	/**
-	 * Arbitrary JSON object as a {@link TreeNode}.
+	 * Arbitrary JSON array as a {@link TreeNode}.
 	 * @remarks
-	 * This can be worked around by using {@link TreeAlpha.importConcise}.
+	 * This can be imported using {@link TreeAlpha.importConcise}.
 	 * @example
 	 * ```typescript
 	 * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.
