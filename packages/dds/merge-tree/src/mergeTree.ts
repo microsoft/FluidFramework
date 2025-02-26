@@ -2065,14 +2065,10 @@ export class MergeTree {
 
 		const { segment: startSeg } = this.getContainingSegment(start.pos, refSeq, clientId);
 		const { segment: endSeg } = this.getContainingSegment(end.pos, refSeq, clientId);
-		if (!isSegmentLeaf(startSeg) || !isSegmentLeaf(endSeg)) {
-			this.getContainingSegment(start.pos, refSeq, clientId);
-			this.getContainingSegment(end.pos, refSeq, clientId);
-			assert(
-				isSegmentLeaf(startSeg) && isSegmentLeaf(endSeg),
-				0xa3f /* segments cannot be undefined */,
-			);
-		}
+		assert(
+			isSegmentLeaf(startSeg) && isSegmentLeaf(endSeg),
+			0xa3f /* segments cannot be undefined */,
+		);
 
 		obliterate.start = this.createLocalReferencePosition(
 			startSeg,
