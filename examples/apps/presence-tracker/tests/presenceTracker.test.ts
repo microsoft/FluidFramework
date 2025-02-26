@@ -21,17 +21,45 @@ const initializeBrowser = async () => {
 	return browser;
 };
 
+/* Disabled for common window["foo"] access. */
+/* eslint-disable @typescript-eslint/dot-notation */
+
 /**
- * @param page The page to load the presence tracker app on.
+ * @param page - The page to load the presence tracker app on.
+ * @param url - The URL to load the presence tracker app from.
+ * @returns The session id of the loaded app.
  */
-const loadPresenceTrackerApp = async (page: Page, url: string) => {
-	await page.goto(url, { waitUntil: "load" });
-	// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
-	await page.waitForFunction(() => window["fluidStarted"]);
+const loadPresenceTrackerApp = async (page: Page, url: string): Promise<string> => {
+	const loadResponse = await page.goto(url, { waitUntil: "load" });
+	// A null response indicates a navigation to the same URL with a different hash
+	// and is not an actual page load (or resetting of state). In this case, we
+	// need to force reload the page. https://pptr.dev/api/puppeteer.page.goto#remarks
+	if (loadResponse === null) {
+		await page.reload({ waitUntil: "load" });
+	}
+
+	// Be extra careful using check for hash expectation
+	const targetUrl = new URL(url);
+	const idMatch = targetUrl.hash.slice(1);
+	const waitFunction = idMatch
+		? (hash: string) => window["fluidContainerId"] === hash
+		: () => (window["fluidContainerId"] ?? "") !== "";
+	await page.waitForFunction(waitFunction, { timeout: 1500 }, idMatch).catch(async () => {
+		const after = await page.evaluate(() => `${window["fluidContainerId"]}`);
+		throw new Error(
+			`failed waiting for app load to id ${idMatch ? idMatch : '!== ""'} (after timeout=${after})`,
+		);
+	});
+
+	return page.evaluate(() => `${window["fluidSessionId"]}`);
 };
+
+/* eslint-enable @typescript-eslint/dot-notation */
 
 // Most tests are passing when tinylicious is running. Those that aren't are individually skipped.
 describe("presence-tracker", () => {
+	let session1id: string;
+
 	beforeAll(async () => {
 		// Wait for the page to load first before running any tests giving a more generous timeout
 		// so this time isn't attributed to the first test.
@@ -39,11 +67,17 @@ describe("presence-tracker", () => {
 	}, 45000);
 
 	beforeEach(async () => {
-		await loadPresenceTrackerApp(page, globals.PATH);
+		session1id = await loadPresenceTrackerApp(page, globals.PATH);
+	});
+
+	afterEach(() => {
+		session1id = "session1id needs reloaded";
 	});
 
 	describe("Single client", () => {
 		it("Document is connected", async () => {
+			// Page's url should be updated to have document id
+			expect(page.url()).not.toEqual(globals.PATH);
 			await page.waitForFunction(() => document.isConnected);
 		});
 
@@ -71,6 +105,10 @@ describe("presence-tracker", () => {
 		});
 
 		it("First client shows single client connected", async () => {
+			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-return
+			const attendeeCount = await page.evaluate(() => window["fluidSessionAttendeeCount"]);
+			expect(attendeeCount).toBe(1);
+
 			const elementHandle = await page.waitForFunction(() =>
 				document.getElementById("focus-div"),
 			);
@@ -83,41 +121,88 @@ describe("presence-tracker", () => {
 			// There should only be a single client connected; verify by asserting there's no <br> tag in the innerHtml, which
 			// means a single client.
 			expect(clientListHtml).toMatch(/^[^<]+$/);
+			// Expect that page's session id is listed.
+			expect(clientListHtml).toMatch(session1id);
 		});
 	});
 
 	describe("Multiple clients", () => {
 		let browser2: Browser;
 		let page2: Page;
+		let session2id: string;
 
 		beforeAll(async () => {
 			// Create a second browser instance.
 			browser2 = await initializeBrowser();
 			page2 = await browser2.newPage();
-			// Like the 1-client tests, we confirm at least one successful page load with a longer timeout before running the suite.
-			// TODO:AB#28502: It's unclear this longer timeout is necessary, but the test suite failed at least once on timeout
-			// during the subsequent beforeEach hook, and loading the page once could help ensure browser cache is populated.
+			// Prime the second browser instance under long timeout.
+			// Use the "default" path to ensure an instance of app. At this
+			// point `page.url()` is effectively random, unlike in beforeEach.
 			await loadPresenceTrackerApp(page2, globals.PATH);
 		}, 45000);
 
 		beforeEach(async () => {
-			await loadPresenceTrackerApp(page2, page.url());
+			// Page's url should be updated to have document id
+			expect(page.url()).not.toEqual(globals.PATH);
+			session2id = await loadPresenceTrackerApp(page2, page.url());
+			// Both browser instances should be pointing to the same URL now.
+			expect(page2.url()).toEqual(page.url());
+		});
+
+		afterEach(() => {
+			session2id = "session2id needs reloaded";
 		});
 
 		afterAll(async () => {
 			await browser2.close();
 		});
 
-		// TODO:AB#28502: This test case passes all the time, but considering the remainder of this suite has issues where browser2 doesn't
-		// actually connect to the same session as browser1, it should be audited so that it's not a false positive.
-		it.skip("Second user can join", async () => {
+		it("Second user can join", async () => {
 			// Both browser instances should be pointing to the same URL now.
 			expect(page2.url()).toEqual(page.url());
+			await page2.waitForFunction(() => document.isConnected);
 		});
 
-		// TODO:AB#28502: There is a false positive with this test when `loadPresenceTrackerApp` in `beforeAll` is removed or sent to `page.url()`.
-		// In those cases, the second session observed on page2 is not from the first session.
-		it.skip("Second client shows two clients connected", async () => {
+		async function waitForAttendeeState(
+			page: Page,
+			expected: Record<string, string>,
+			timeoutErrorMessage: string,
+		) {
+			/* Disabled for common window["foo"] access. */
+			/* eslint-disable @typescript-eslint/dot-notation */
+			await page
+				.waitForFunction(
+					(expectation) =>
+						(
+							window["fluidSessionAttendeeCheck"] as (
+								expected: Record<string, string>,
+							) => boolean
+						)(expectation),
+					{ timeout: 100 },
+					expected,
+				)
+				.catch(async () => {
+					const attendeeData = await page.evaluate(() => ({
+						attendeeCount: `${window["fluidSessionAttendeeCount"]}`,
+						attendees: window["fluidSessionAttendees"] ?? {},
+						attendeeJoinedCalled: `${window["fluidAttendeeJoinedCalled"]}`,
+						attendeeDisconnectedCalled: `${window["fluidAttendeeDisconnectedCalled"]}`,
+					}));
+					throw new Error(`${timeoutErrorMessage} (${JSON.stringify(attendeeData)})`);
+				});
+			/* eslint-enable @typescript-eslint/dot-notation */
+		}
+
+		it("Second client shows two clients connected", async () => {
+			await waitForAttendeeState(
+				page2,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
+
 			// Get the client list from the second browser instance; it should show two connected.
 			const elementHandle = await page2.waitForFunction(() =>
 				document.getElementById("focus-div"),
@@ -130,9 +215,66 @@ describe("presence-tracker", () => {
 			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
 			// connected.
 			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
+			// Expect that page2's session id is listed.
+			expect(clientListHtml).toMatch(session2id);
+			// Expect that first page's session id is listed.
+			expect(clientListHtml).toMatch(session1id);
 		});
 
-		it.skip("First client shows two clients connected", async () => {
+		it("First client shows two clients connected", async () => {
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
+		});
+
+		it("First client shows one client connected when second client leaves", async () => {
+			// Setup
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
+
+			// Act
+
+			// Navigate the second client away.
+			const response = await page2.goto("about:blank", { waitUntil: "load" });
+			// Loosely verify that a navigation happened. Puppeteer docs note:
+			//    "Navigation to about:blank or navigation to the same URL with a different hash will succeed and
+			//    return null."
+			expect(response).toBe(null);
+
+			// Verify
+
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Disconnected",
+				},
+				"failed waiting for app to observe second attendee as disconnected",
+			);
+		});
+
+		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
+		it.skip("First client shows two clients connected in UI", async () => {
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
+
 			// Get the client list from the first browser instance; it should show two connected.
 			const elementHandle = await page.waitForFunction(() =>
 				document.getElementById("focus-div"),
@@ -144,19 +286,46 @@ describe("presence-tracker", () => {
 			// Assert that there is a single <br> tag and no other HTML tags in the text, which indicates that two clients are
 			// connected.
 			expect(clientListHtml).toMatch(/^[^<]+<br>[^<]+$/);
+			// Expect that first page's session id is listed.
+			expect(clientListHtml).toMatch(session1id);
+			// Expect that page2's session id is listed.
+			expect(clientListHtml).toMatch(session2id);
 		});
 
-		// While this test passes, it's a false pass because the first client is always failing to see more than one
-		// client. See previous test.
-		it.skip("First client shows one client connected when second client leaves", async () => {
-			// Navigate the second client away.
-			const response = await page2.goto(globals.PATH, { waitUntil: "load" });
+		// TODO: AB#28502: presence-tracker example multi-client test should not be skipped
+		// This test should not be enabled without the prior test being enabled as it
+		// may have false positives. It has also been demonstrated to fail occasionally.
+		// Occasional failures are likely due to same issue impact the prior "in UI" test.
+		it.skip("First client shows one client connected in UI when second client leaves", async () => {
+			// Setup
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Connected",
+				},
+				"failed waiting for app to observe two connected attendees",
+			);
 
-			// Verify that a navigation happened. Protecting against this behavior from the puppeteer docs:
+			// Act
+
+			// Navigate the second client away.
+			const response = await page2.goto("about:blank", { waitUntil: "load" });
+			// Loosely verify that a navigation happened. Puppeteer docs note:
 			//    "Navigation to about:blank or navigation to the same URL with a different hash will succeed and
 			//    return null."
-			// We want to make sure a real navigation happened.
-			expect(response).not.toBe(null);
+			expect(response).toBe(null);
+
+			// Verify
+
+			await waitForAttendeeState(
+				page,
+				{
+					[session1id]: "Connected",
+					[session2id]: "Disconnected",
+				},
+				"failed waiting for app to observe second attendee as disconnected",
+			);
 
 			// Get the client list from the first browser; it should have a single element.
 			const elementHandle = await page.waitForFunction(() =>
@@ -167,6 +336,8 @@ describe("presence-tracker", () => {
 				elementHandle,
 			);
 			expect(clientListHtml).toMatch(/^[^<]+$/);
+			// Expect that first page's session id is listed.
+			expect(clientListHtml).toMatch(session1id);
 		});
 	});
 });

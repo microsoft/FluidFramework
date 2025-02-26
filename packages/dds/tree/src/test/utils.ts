@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import type {
 	HasListeners,
 	IEmitter,
@@ -16,6 +15,7 @@ import {
 	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
@@ -26,12 +26,13 @@ import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
+	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -50,7 +51,6 @@ import {
 
 import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
 import {
-	type AnnouncedVisitor,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	CommitKind,
@@ -75,7 +75,6 @@ import {
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
 	type UpPath,
-	announceDelta,
 	applyDelta,
 	clonePath,
 	compareUpPaths,
@@ -114,7 +113,7 @@ import { makeSchemaCodec } from "../feature-libraries/schema-index/codec.js";
 import {
 	type CheckoutEvents,
 	CheckoutFlexTreeView,
-	type ISharedTree,
+	type ITreePrivate,
 	type ITreeCheckout,
 	SharedTree,
 	type SharedTreeContentSnapshot,
@@ -130,6 +129,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 import type {
+	ISharedTree,
 	SharedTreeOptions,
 	SharedTreeOptionsInternal,
 	// eslint-disable-next-line import/no-internal-modules
@@ -141,8 +141,10 @@ import {
 	toStoredSchema,
 	type TreeView,
 	type TreeBranchEvents,
+	type ITree,
 } from "../simple-tree/index.js";
 import {
+	Breakable,
 	type JsonCompatible,
 	type Mutable,
 	nestedMapFromFlatList,
@@ -152,13 +154,19 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
-import { TreeFactory } from "../treeFactory.js";
+import { TreeFactory, configuredSharedTree } from "../treeFactory.js";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import { JsonUnion } from "../jsonDomainSchema.js";
+import {
+	MockContainerRuntimeFactoryWithOpBunching,
+	type MockContainerRuntimeWithOpBunching,
+} from "./mocksForOpBunching.js";
 
 // Testing utilities
 
@@ -202,11 +210,11 @@ export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
 
 	private readonly provider: ITestObjectProvider;
-	private readonly _trees: SharedTree[] = [];
+	private readonly _trees: (SharedTree & ISharedObject)[] = [];
 	private readonly _containers: IContainer[] = [];
 	private readonly summarizer?: ISummarizer;
 
-	public get trees(): readonly SharedTree[] {
+	public get trees(): readonly (SharedTree & ISharedObject)[] {
 		return this._trees;
 	}
 
@@ -233,7 +241,9 @@ export class TestTreeProvider {
 	public static async create(
 		trees = 0,
 		summarizeType: SummarizeType = SummarizeType.disabled,
-		factory: TreeFactory = new TreeFactory({ jsonValidator: typeboxValidator }),
+		factory: IChannelFactory<ITree> = configuredSharedTree({
+			jsonValidator: typeboxValidator,
+		}).getFactory(),
 	): Promise<ITestTreeProvider> {
 		// The on-demand summarizer shares a container with the first tree, so at least one tree and container must be created right away.
 		assert(
@@ -241,7 +251,7 @@ export class TestTreeProvider {
 			"trees must be >= 1 to allow summarization on demand",
 		);
 
-		const registry = [[TestTreeProvider.treeId, factory]] as ChannelFactoryRegistry;
+		const registry: ChannelFactoryRegistry = [[TestTreeProvider.treeId, factory]];
 		const driver = new LocalServerTestDriver();
 		const containerRuntimeFactory = () =>
 			new TestContainerRuntimeFactory(
@@ -261,7 +271,9 @@ export class TestTreeProvider {
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
 			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			const firstTree = await dataObject.getSharedObject<SharedTree>(TestTreeProvider.treeId);
+			const firstTree = await dataObject.getSharedObject<SharedTree & ISharedObject>(
+				TestTreeProvider.treeId,
+			);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
@@ -282,11 +294,11 @@ export class TestTreeProvider {
 	}
 
 	/**
-	 * Create and initialize a new {@link ISharedTree} that is connected to all other trees from this provider.
+	 * Create and initialize a new {@link ITreePrivate} that is connected to all other trees from this provider.
 	 * @returns the tree that was created. For convenience, the tree can also be accessed via `this[i]` where
 	 * _i_ is the index of the tree in order of creation.
 	 */
-	public async createTree(): Promise<SharedTree> {
+	public async createTree(): Promise<SharedTree & ISharedObject> {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
@@ -304,9 +316,9 @@ export class TestTreeProvider {
 
 		this._containers.push(container);
 		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		return (this._trees[this.trees.length] = await dataObject.getSharedObject<SharedTree>(
-			TestTreeProvider.treeId,
-		));
+		return (this._trees[this.trees.length] = await dataObject.getSharedObject<
+			SharedTree & ISharedObject
+		>(TestTreeProvider.treeId));
 	}
 
 	/**
@@ -323,13 +335,13 @@ export class TestTreeProvider {
 		return summarizeNow(this.summarizer, "TestTreeProvider");
 	}
 
-	public [Symbol.iterator](): IterableIterator<ISharedTree> {
+	public [Symbol.iterator](): IterableIterator<ITreePrivate> {
 		return this.trees[Symbol.iterator]();
 	}
 
 	private constructor(
 		provider: ITestObjectProvider,
-		firstTreeParams?: [IContainer, SharedTree, ISummarizer],
+		firstTreeParams?: [IContainer, SharedTree & ISharedObject, ISummarizer],
 	) {
 		this.provider = provider;
 		if (firstTreeParams !== undefined) {
@@ -356,22 +368,25 @@ export interface ConnectionSetter {
 	readonly setConnected: (connectionState: boolean) => void;
 }
 
-export type SharedTreeWithConnectionStateSetter = SharedTree & ConnectionSetter;
+export type SharedTreeWithConnectionStateSetter = ISharedTree & ConnectionSetter;
 
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory = new MockContainerRuntimeFactoryForReconnection();
+	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
+	private readonly containerRuntimes: Set<MockContainerRuntimeWithOpBunching> = new Set();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
 	 * @param trees - the number of trees created by this provider.
 	 * @param factory - an optional factory to use for creating and loading trees. See {@link SharedTreeTestFactory}.
 	 * @param useDeterministicSessionIds - Whether or not to deterministically generate session ids
+	 * @param flushMode - The flush mode to use for the container runtime. This is FlushMode.Immediate by default. Tests
+	 * that need ops to be processed in a batch or bunch should use FlushMode.TurnBased.
 	 * @example
 	 *
 	 * ```typescript
@@ -383,9 +398,15 @@ export class TestTreeProviderLite {
 	 */
 	public constructor(
 		trees = 1,
-		private readonly factory = new TreeFactory({ jsonValidator: typeboxValidator }),
+		private readonly factory = configuredSharedTree({
+			jsonValidator: typeboxValidator,
+		}).getFactory(),
 		useDeterministicSessionIds = true,
+		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
+		this.runtimeFactory = new MockContainerRuntimeFactoryWithOpBunching({
+			flushMode,
+		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
 		const t: SharedTreeWithConnectionStateSetter[] = [];
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
@@ -402,6 +423,7 @@ export class TestTreeProviderLite {
 				TestTreeProviderLite.treeId,
 			) as SharedTreeWithConnectionStateSetter;
 			const containerRuntime = this.runtimeFactory.createContainerRuntime(runtime);
+			this.containerRuntimes.add(containerRuntime);
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -417,6 +439,14 @@ export class TestTreeProviderLite {
 	}
 
 	public processMessages(count?: number): void {
+		// In TurnBased mode, flush the messages from all the runtimes before processing the messages.
+		// Note that this does not preserve the order in which the messages were sent. To do so, tests should
+		// flush messages from individual runtimes in the order they were created.
+		if (this.flushMode === FlushMode.TurnBased) {
+			this.containerRuntimes.forEach((containerRuntime) => {
+				containerRuntime.flush();
+			});
+		}
 		this.runtimeFactory.processSomeMessages(
 			count ?? this.runtimeFactory.outstandingMessageCount,
 		);
@@ -564,7 +594,7 @@ export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]
  * This does NOT check that the trees have the same edits, same edit manager state or anything like that.
  * This ONLY checks if the content of the forest of the main branch of the trees match.
  */
-export function validateTreeConsistency(treeA: ISharedTree, treeB: ISharedTree): void {
+export function validateTreeConsistency(treeA: ITreePrivate, treeB: ITreePrivate): void {
 	// TODO: validate other aspects of these trees are consistent, for example their collaboration window information.
 	validateSnapshotConsistency(
 		treeA.contentSnapshot(),
@@ -1032,22 +1062,6 @@ export function applyTestDelta(
 	);
 }
 
-export function announceTestDelta(
-	delta: DeltaFieldMap,
-	deltaProcessor: { acquireVisitor: () => DeltaVisitor & AnnouncedVisitor },
-	params?: DeltaParams,
-): void {
-	const { detachedFieldIndex, revision, global, rename, build, destroy } = params ?? {};
-	const rootDelta = rootFromDeltaFieldMap(delta, global, rename, build, destroy);
-	announceDelta(
-		rootDelta,
-		revision,
-		deltaProcessor,
-		detachedFieldIndex ??
-			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
-	);
-}
-
 export function rootFromDeltaFieldMap(
 	delta: DeltaFieldMap,
 	global?: readonly DeltaDetachedNodeChanges[],
@@ -1214,6 +1228,7 @@ export function viewCheckout<const TSchema extends ImplicitFieldSchema>(
  * A mock implementation of `ITreeCheckout` that provides read access to the forest, and nothing else.
  */
 export class MockTreeCheckout implements ITreeCheckout {
+	public readonly breaker: Breakable = new Breakable("MockTreeCheckout");
 	public constructor(
 		public readonly forest: IForestSubscription,
 		private readonly options?: {

@@ -8,15 +8,8 @@ import { strict as assert } from "node:assert";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
-	type AnchorNode,
-	type DetachedPlaceUpPath,
-	type DetachedRangeUpPath,
 	EmptyKey,
 	type FieldUpPath,
-	type PathVisitor,
-	type PlaceUpPath,
-	type ProtoNodes,
-	type RangeUpPath,
 	TreeNavigationResult,
 	type UpPath,
 	moveToDetachedField,
@@ -36,7 +29,8 @@ import {
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 import { SchemaFactory, stringSchema, toStoredSchema } from "../../simple-tree/index.js";
-import { JsonUnion, singleJsonCursor } from "../json/index.js";
+import { singleJsonCursor } from "../json/index.js";
+import { JsonUnion } from "../../jsonDomainSchema.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -56,7 +50,7 @@ const rootNode2: UpPath = {
 };
 
 const emptyJsonContent: TreeStoredContent = {
-	schema: toStoredSchema(new SchemaFactory("").optional(JsonUnion)),
+	schema: toStoredSchema(SchemaFactory.optional(JsonUnion)),
 	initialTree: undefined,
 };
 
@@ -1752,61 +1746,6 @@ describe("Editing", () => {
 			expectJsonTree([tree, tree1, tree2], [{ foo: [{}, { baz: "b" }] }]);
 		});
 
-		it("can be registered a path visitor that can read new content being inserted into the tree when afterAttach is invoked", () => {
-			const tree = makeTreeFromJson({ foo: [{ bar: "A" }, { baz: "B" }] });
-			const cursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(0);
-			const anchor = cursor.buildAnchor();
-			const node = tree.locate(anchor) ?? assert.fail();
-			cursor.free();
-
-			let valueAfterInsert: string | undefined;
-			const pathVisitor: PathVisitor = {
-				onRemove(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: ProtoNodes): void {},
-				afterCreate(content: DetachedRangeUpPath): void {},
-				beforeReplace(
-					newContent: DetachedRangeUpPath,
-					oldContent: RangeUpPath,
-					oldContentDestination: DetachedPlaceUpPath,
-				): void {},
-
-				afterReplace(
-					newContentSource: DetachedPlaceUpPath,
-					newContent: RangeUpPath,
-					oldContent: DetachedRangeUpPath,
-				): void {},
-				beforeDestroy(content: DetachedRangeUpPath): void {},
-				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},
-				afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
-					const cursor2 = tree.forest.allocateCursor();
-					moveToDetachedField(tree.forest, cursor2);
-					cursor2.enterNode(0);
-					cursor2.enterField(brand("foo"));
-					cursor2.enterNode(1);
-					valueAfterInsert = cursor2.value as string;
-					cursor2.free();
-				},
-				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
-				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
-			};
-			const unsubscribePathVisitor = node.events.on(
-				"subtreeChanging",
-				(n: AnchorNode) => pathVisitor,
-			);
-			const field = tree.editor.sequenceField({
-				parent: rootNode,
-				field: brand("foo"),
-			});
-			field.insert(
-				1,
-				cursorForJsonableTreeNode({ type: brand(stringSchema.identifier), value: "C" }),
-			);
-			assert.equal(valueAfterInsert, "C");
-			unsubscribePathVisitor();
-		});
-
 		it("throws when moved under child node", () => {
 			const tree = makeTreeFromJson({ foo: { bar: "A" } });
 			const fooPath: UpPath = {
@@ -2594,56 +2533,6 @@ describe("Editing", () => {
 				tree.merge(tree2, false);
 				expectJsonTree([tree, tree2], []);
 			});
-		});
-
-		it("can be registered a path visitor that can read new content being inserted into the tree when afterAttach is invoked", () => {
-			const tree = makeTreeFromJson({ foo: "A" });
-			const cursor = tree.forest.allocateCursor();
-			moveToDetachedField(tree.forest, cursor);
-			cursor.enterNode(0);
-			const anchor = cursor.buildAnchor();
-			const node = tree.locate(anchor) ?? assert.fail();
-			cursor.free();
-
-			let valueAfterInsert: string | undefined;
-			const pathVisitor: PathVisitor = {
-				onRemove(path: UpPath, count: number): void {},
-				onInsert(path: UpPath, content: ProtoNodes): void {},
-				afterCreate(content: DetachedRangeUpPath): void {},
-				beforeReplace(
-					newContent: DetachedRangeUpPath,
-					oldContent: RangeUpPath,
-					oldContentDestination: DetachedPlaceUpPath,
-				): void {},
-
-				afterReplace(
-					newContentSource: DetachedPlaceUpPath,
-					newContent: RangeUpPath,
-					oldContent: DetachedRangeUpPath,
-				): void {},
-				beforeDestroy(content: DetachedRangeUpPath): void {},
-				beforeAttach(source: DetachedRangeUpPath, destination: PlaceUpPath): void {},
-				afterAttach(source: DetachedPlaceUpPath, destination: RangeUpPath): void {
-					const cursor2 = tree.forest.allocateCursor();
-					moveToDetachedField(tree.forest, cursor2);
-					cursor2.enterNode(0);
-					cursor2.enterField(brand("foo"));
-					cursor2.enterNode(0);
-					valueAfterInsert = cursor2.value as string;
-					cursor2.free();
-				},
-				beforeDetach(source: RangeUpPath, destination: DetachedPlaceUpPath): void {},
-				afterDetach(source: PlaceUpPath, destination: DetachedRangeUpPath): void {},
-			};
-			const unsubscribePathVisitor = node.events.on(
-				"subtreeChanging",
-				(n: AnchorNode) => pathVisitor,
-			);
-			tree.editor
-				.optionalField({ parent: rootNode, field: brand("foo") })
-				.set(singleJsonCursor("43"), true);
-			assert.equal(valueAfterInsert, "43");
-			unsubscribePathVisitor();
 		});
 
 		it("simplified repro for 0x7cf from anchors-undo-redo fuzz seed 0", () => {

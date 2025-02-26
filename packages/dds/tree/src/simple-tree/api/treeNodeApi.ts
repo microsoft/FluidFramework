@@ -174,7 +174,7 @@ export const treeNodeApi: TreeNodeApi = {
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail("Could not find stored key in schema."),
+									fail(0xb36 /* Could not find stored key in schema. */),
 							),
 						);
 						listener({ changedProperties });
@@ -222,7 +222,7 @@ export const treeNodeApi: TreeNodeApi = {
 		}
 	},
 	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
-		return tryGetSchema(node) ?? fail("Not a tree node");
+		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const schema = node[typeSchemaSymbol];
@@ -341,7 +341,7 @@ function getPropertyKeyFromStoredKey(
 	}
 
 	if (fields[storedKey] === undefined) {
-		fail("Existing stored key should always map to a property key");
+		fail(0xb38 /* Existing stored key should always map to a property key */);
 	}
 
 	return storedKey;

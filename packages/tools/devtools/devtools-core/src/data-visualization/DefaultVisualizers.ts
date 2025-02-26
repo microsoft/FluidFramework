@@ -15,12 +15,11 @@ import {
 	type ISharedMap,
 	SharedMap,
 	type ISharedDirectory,
-	// eslint-disable-next-line import/no-deprecated
 	SharedDirectory,
 } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObject, IChannelView } from "@fluidframework/shared-object-base/internal";
 import type { ITreeInternal } from "@fluidframework/tree/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
 
@@ -250,13 +249,13 @@ export const visualizeSharedString: VisualizeSharedObject = async (
 };
 
 /**
- * {@link VisualizeSharedObject} for {@link ISharedTree}.
+ * {@link VisualizeSharedObject} for {@link ITree}.
  */
 export const visualizeSharedTree: VisualizeSharedObject = async (
 	sharedObject: ISharedObject,
 	visualizeChildData: VisualizeChildData,
 ): Promise<FluidObjectNode> => {
-	const sharedTree = sharedObject as ITreeInternal;
+	const sharedTree = sharedObject as IChannelView as ITreeInternal;
 
 	// Root node of the SharedTree's content.
 	const treeView = sharedTree.exportVerbose();

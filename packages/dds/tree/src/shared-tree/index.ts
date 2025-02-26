@@ -5,6 +5,7 @@
 
 export {
 	type ISharedTree,
+	type ITreePrivate,
 	type SharedTreeOptionsInternal,
 	type SharedTreeOptions,
 	SharedTree,
@@ -21,11 +22,6 @@ export {
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 } from "./sharedTree.js";
-
-export {
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
-} from "./publicContracts.js";
 
 export {
 	createTreeCheckout,
@@ -50,19 +46,6 @@ export {
 	type TreeApi,
 	type RunTransaction,
 } from "./treeApi.js";
-
-export {
-	type TransactionConstraint,
-	type NodeInDocumentConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
-	type TransactionResultFailed,
-	rollback,
-} from "./transactionTypes.js";
 
 export { TreeAlpha } from "./treeApiAlpha.js";
 
