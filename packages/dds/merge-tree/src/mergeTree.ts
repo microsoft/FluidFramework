@@ -1612,7 +1612,6 @@ export class MergeTree {
 			const movedClientIds: number[] = [];
 			const movedSeqs: number[] = [];
 			let newestAcked: ObliterateInfo | undefined;
-			let newestAckedSeq: number = 0;
 			let oldestUnacked: ObliterateInfo | undefined;
 			for (const ob of this.obliterates.findOverlapping(newSegment)) {
 				// compute a normalized seq that takes into account local seqs
@@ -1647,18 +1646,19 @@ export class MergeTree {
 
 					if (
 						ob.seq !== UnassignedSequenceNumber &&
-						(newestAcked === undefined || newestAckedSeq < ob.seq)
+						(newestAcked === undefined || newestAcked.seq < ob.seq)
 					) {
-						newestAckedSeq = ob.seq;
 						newestAcked = ob;
 					}
 
-					if (ob.seq === UnassignedSequenceNumber) {
-						// There can be more than one if a client repeatedly obliterates. In this case, the first one
-						// that's applied will be the one that actually removes the segment.
-						if (oldestUnacked === undefined || oldestUnacked.localSeq! > ob.localSeq!) {
-							oldestUnacked = ob;
-						}
+					if (
+						ob.seq === UnassignedSequenceNumber &&
+						(oldestUnacked === undefined || oldestUnacked.localSeq! > ob.localSeq!)
+					) {
+						// There can be one local obliterate surrounding a segment if a client repeatedly obliterates
+						// a region (ex: in the text ABCDEFG, obliterate D, then obliterate CE, then BF). In this case,
+						// the first one that's applied will be the one that actually removes the segment.
+						oldestUnacked = ob;
 					}
 				}
 			}
