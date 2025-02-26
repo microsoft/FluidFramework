@@ -53,19 +53,21 @@ interface DataPoint {
  * Merges multiple {@link GraphDataSet}'s into singular objects by their x-axis (timestamp) value.
  * This method is necessary for showing composed graphs because Recharts expects data to be in a merged object format
  */
-const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
-	const xAxisDataPointToYAxisDataPointMap: Record<
-		string,
-		Record<string, number | string | undefined>
-	> = {};
+function mergeDataSets<XKey extends string = string, YKey extends string = string>(
+	dataSets: GraphDataSet<XKey, YKey>[],
+): DataPoint[] {
+	// The keys in this record are the *values* of the data points that go in the X-axis.
+	// The values in the record are themselves records where each key represents a different series for the chart,
+	// and the value is the Y-axis value for that series, at the given data point on the X-axis.
+	const xAxisDataPointToYAxisDataPointMap = {} as unknown as Record<
+		GraphDataSet["data"][0][XKey],
+		Record<YKey, GraphDataSet["data"][0][YKey]>
+	>;
 
 	for (const dataSet of dataSets) {
 		const { yAxisDataKey, xAxisDataKey, uuid } = dataSet.schema;
 		for (const dataPoint of dataSet.data) {
 			const xAxisDataPoint = dataPoint[xAxisDataKey];
-			if (xAxisDataPoint === undefined) {
-				throw new Error("xAxisDataPoint should not be undefined");
-			}
 			xAxisDataPointToYAxisDataPointMap[xAxisDataPoint] = {
 				...xAxisDataPointToYAxisDataPointMap[xAxisDataPoint],
 				[uuid]: dataPoint[yAxisDataKey],
@@ -79,7 +81,7 @@ const mergeDataSets = (dataSets: GraphDataSet[]): DataPoint[] => {
 			...xAxisDataPointToYAxisDataPointMap[xAxisKey],
 		};
 	});
-};
+}
 
 /**
  * Props that can be passed to configure the DynamicComposedChart
