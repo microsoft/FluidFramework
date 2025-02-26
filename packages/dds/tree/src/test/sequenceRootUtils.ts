@@ -17,17 +17,17 @@ import { checkoutWithContent } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
 import { singleJsonCursor } from "./json/index.js";
-import { JsonUnion } from "../jsonDomainSchema.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 
 // This file provides utilities for testing sequence fields using documents where the root is the sequence being tested.
 // This pattern is not expressible using the public simple-tree API, and is only for testing internal details.
 
 export const jsonSequenceRootSchema: TreeStoredSchema = {
-	nodeSchema: toStoredSchema(JsonUnion).nodeSchema,
+	nodeSchema: toStoredSchema(JsonAsTree.Tree).nodeSchema,
 	rootFieldSchema: {
 		kind: FieldKinds.sequence.identifier,
 		types: new Set(
-			[...normalizeAllowedTypes(JsonUnion)].map((s) =>
+			[...normalizeAllowedTypes(JsonAsTree.Tree)].map((s) =>
 				brand<TreeNodeSchemaIdentifier>(s.identifier),
 			),
 		),
