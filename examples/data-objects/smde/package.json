@@ -44,7 +44,7 @@
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.53.0",
+		"@fluidframework/build-tools": "catalog:",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
