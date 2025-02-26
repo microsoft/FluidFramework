@@ -37,7 +37,7 @@ export namespace FluidSerializableAsTree {
 	 * {@link AllowedTypes} for any content allowed in the {@link FluidSerializableAsTree} domain.
 	 * @example
 	 * ```typescript
-	 * const tree = TreeAlpha.importConcise(FluidSerializableAsTree.Union, { example: { nested: true }, value: 5 });
+	 * const tree = TreeAlpha.importConcise(FluidSerializableAsTree.Tree, { example: { nested: true }, value: 5 });
 	 * ```
 	 * @internal
 	 */
