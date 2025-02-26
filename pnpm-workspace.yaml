@@ -20,9 +20,10 @@ packages:
   - "!**/lib/**"
   - "!**/src/**"
 
-catalog:
+catalogs:
   # Build-tools packages
-  "@fluid-tools/build-cli": ^0.53.0
-  "@fluid-tools/version-tools": ^0.53.0
-  "@fluidframework/build-tools": ^0.53.0
-  "@fluidframework/bundle-size-tools": ^0.53.0
+  buildTools:
+    "@fluid-tools/build-cli": ^0.53.0
+    "@fluid-tools/version-tools": ^0.53.0
+    "@fluidframework/build-tools": ^0.53.0
+    "@fluidframework/bundle-size-tools": ^0.53.0

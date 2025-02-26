@@ -57,9 +57,9 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "catalog:",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "catalog:",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@types/jest": "29.5.3",
