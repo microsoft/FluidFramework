@@ -14,7 +14,12 @@ import {
 	seqLTE,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
-import { toRemovalInfo, toMoveInfo, assertInserted } from "./segmentInfos.js";
+import {
+	toRemovalInfo,
+	toMoveInfo,
+	assertInserted,
+	wasMovedOnInsert,
+} from "./segmentInfos.js";
 import { SortedSet } from "./sortedSet.js";
 
 class PartialSequenceLengthsSet extends SortedSet<PartialSequenceLength> {
@@ -472,8 +477,7 @@ export class PartialSequenceLengths {
 			if (child.isLeaf()) {
 				// Leaf segment
 				const segment = child;
-				const moveInfo = toMoveInfo(segment);
-				if (moveInfo?.wasMovedOnInsert) {
+				if (wasMovedOnInsert(segment)) {
 					PartialSequenceLengths.accountForMoveOnInsert(
 						combinedPartialLengths,
 						segment,
@@ -511,7 +515,10 @@ export class PartialSequenceLengths {
 	): void {
 		assertInserted(segment);
 		const moveInfo = toMoveInfo(segment);
-		assert(moveInfo?.wasMovedOnInsert === true, 0xab7 /* Segment was not moved on insert */);
+		assert(
+			moveInfo !== undefined && wasMovedOnInsert(segment),
+			0xab7 /* Segment was not moved on insert */,
+		);
 		if (moveInfo.movedSeq <= collabWindow.minSeq) {
 			// This segment was obliterated as soon as it was inserted, and everyone was aware of the obliterate.
 			// Thus every single client treats this segment as length 0 from every perspective, and no adjustments
@@ -843,7 +850,7 @@ export class PartialSequenceLengths {
 						segment.seq !== undefined &&
 						moveInfo &&
 						moveInfo.movedSeq < segment.seq &&
-						moveInfo.wasMovedOnInsert
+						wasMovedOnInsert(segment)
 					) {
 						this.addClientAdjustment(clientId, moveInfo.movedSeq, segment.cachedLength);
 						failIncrementalPropagation = true;
