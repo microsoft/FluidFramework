@@ -64,7 +64,11 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 		...defaultTimingOptions,
 		...args,
 	};
-	const { isAsync, benchmarkFn: argsBenchmarkFn } = validateBenchmarkArguments(args);
+	const {
+		isAsync,
+		benchmarkFn: argsBenchmarkFn,
+		beforeEachBatch: argsBeforeEachBatch,
+	} = validateBenchmarkArguments(args);
 
 	await options.before?.();
 
@@ -74,9 +78,16 @@ export async function runBenchmark(args: BenchmarkRunningOptions): Promise<Bench
 		data = await runBenchmarkAsync({
 			...options,
 			benchmarkFnAsync: argsBenchmarkFn,
+			beforeEachBatchAsync: argsBeforeEachBatch,
+			beforeEachBatch: undefined, // The original callback (if present) will be invoked in the async version thanks to validateBenchmarkArguments
 		});
 	} else {
-		data = runBenchmarkSync({ ...options, benchmarkFn: argsBenchmarkFn });
+		data = runBenchmarkSync({
+			...options,
+			benchmarkFn: argsBenchmarkFn,
+			beforeEachBatch: argsBeforeEachBatch,
+			beforeEachBatchAsync: undefined,
+		});
 	}
 	await options.after?.();
 	return data;
@@ -235,7 +246,14 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkData {
 	const state = new BenchmarkState(timer, args);
 	while (
-		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
+		state.recordBatch(
+			doBatch(
+				// Synchronous
+				state.iterationsPerBatch,
+				args.benchmarkFn,
+				args.beforeEachBatch,
+			),
+		)
 	) {
 		// No-op
 	}
@@ -247,7 +265,7 @@ export function runBenchmarkSync(args: BenchmarkRunningOptionsSync): BenchmarkDa
  * @public
  */
 export async function runBenchmarkAsync(
-	args: BenchmarkRunningOptionsAsync,
+	args: BenchmarkRunningOptionsAsync & { beforeEachBatch?: never },
 ): Promise<BenchmarkData> {
 	const state = new BenchmarkState(timer, args);
 	while (
@@ -255,7 +273,7 @@ export async function runBenchmarkAsync(
 			await doBatchAsync(
 				state.iterationsPerBatch,
 				args.benchmarkFnAsync,
-				args.beforeEachBatch,
+				args.beforeEachBatchAsync,
 			),
 		)
 	) {
@@ -288,9 +306,9 @@ function doBatch(
 async function doBatchAsync(
 	iterationCount: number,
 	f: () => Promise<unknown>,
-	beforeEachBatch: undefined | (() => void),
+	beforeEachBatchAsync: undefined | (() => Promise<void>),
 ): Promise<number> {
-	beforeEachBatch?.();
+	await beforeEachBatchAsync?.();
 	let i = iterationCount;
 	const before = timer.now();
 	while (i--) {

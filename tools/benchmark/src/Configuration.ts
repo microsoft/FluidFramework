@@ -98,8 +98,7 @@ for (const type of Object.values(TestType)) {
  * Arguments to `benchmark`
  * @public
  */
-export type BenchmarkArguments = Titled &
-	(BenchmarkSyncArguments | BenchmarkAsyncArguments | CustomBenchmarkArguments);
+export type BenchmarkArguments = Titled & BenchmarkRunningOptions;
 
 /**
  * @public
@@ -116,11 +115,9 @@ export type BenchmarkRunningOptions =
 	| BenchmarkAsyncArguments
 	| CustomBenchmarkArguments;
 
-export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments & BenchmarkTimingOptions & OnBatch;
+export type BenchmarkRunningOptionsSync = BenchmarkSyncArguments;
 
-export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments &
-	BenchmarkTimingOptions &
-	OnBatch;
+export type BenchmarkRunningOptionsAsync = BenchmarkAsyncArguments;
 
 /**
  * Object with a "title".
@@ -137,13 +134,13 @@ export interface Titled {
  * Arguments to benchmark a synchronous function
  * @public
  */
-export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions {}
+export interface BenchmarkSyncArguments extends BenchmarkSyncFunction, BenchmarkOptions, OnBatch {}
 
 /**
  * Arguments to benchmark a synchronous function
  * @public
  */
-export interface BenchmarkSyncFunction extends BenchmarkOptions {
+export interface BenchmarkSyncFunction {
 	/**
 	 * The (synchronous) function to benchmark.
 	 */
@@ -154,13 +151,16 @@ export interface BenchmarkSyncFunction extends BenchmarkOptions {
  * Configuration for benchmarking an asynchronous function.
  * @public
  */
-export interface BenchmarkAsyncArguments extends BenchmarkAsyncFunction, BenchmarkOptions {}
+export interface BenchmarkAsyncArguments
+	extends BenchmarkAsyncFunction,
+		BenchmarkOptions,
+		OnBatchAsync {}
 
 /**
  * An asynchronous function to benchmark.
  * @public
  */
-export interface BenchmarkAsyncFunction extends BenchmarkOptions {
+export interface BenchmarkAsyncFunction {
 	/**
 	 * The asynchronous function to benchmark. The time measured includes all time spent until the returned promise is
 	 * resolved. This includes the event loop or processing other events. For example, a test which calls `setTimeout`
@@ -249,13 +249,17 @@ export interface BenchmarkTimingOptions {
 }
 
 /**
- * Set of options that can be provided to a benchmark. These options generally align with the BenchmarkJS options type;
- * you can see more documentation {@link https://benchmarkjs.com/docs#options | here}.
+ * Synchronous operations that can be performed on a per-batch basis.
+ *
+ * @remarks
+ * If you need to perform asynchronous operations, use {@link BenchmarkAsyncFunction} and {@link OnBatchAsync}.
+ *
  * @public
  */
 export interface OnBatch {
 	/**
-	 * Executes before the start of each batch. This has the same semantics as benchmarkjs's `onCycle`:
+	 * Executes synchronously before the start of each batch.
+	 * This has the same semantics as benchmarkjs's `onCycle`:
 	 * https://benchmarkjs.com/docs/#options_onCycle
 	 *
 	 * @remarks
@@ -263,6 +267,39 @@ export interface OnBatch {
 	 * iterations per batch.
 	 */
 	beforeEachBatch?: () => void;
+
+	/**
+	 * Use {@link BenchmarkAsyncFunction} and {@link OnBatchAsync} if you need an async hook.
+	 */
+	beforeEachBatchAsync?: never;
+}
+
+/**
+ * Operations (synchronous or asynchronous) that can be performed on a per-batch basis.
+ *
+ * @remarks
+ * Not compatible with synchronous {@link BenchmarkSyncFunction}.
+ *
+ * @public
+ */
+export interface OnBatchAsync {
+	/**
+	 * Executes synchronously before the start of each batch.
+	 *
+	 * @deprecated use {@link OnBatchAsync.beforeEachBatchAsync} instead
+	 */
+	beforeEachBatch?: () => void;
+
+	/**
+	 * Executes before the start of each batch.
+	 * This has similar semantics to benchmarkjs's `onCycle`, but is asynchronous:
+	 * https://benchmarkjs.com/docs/#options_onCycle
+	 *
+	 * @remarks
+	 * Beware that batches run `benchmarkFn` more than once: a typical micro-benchmark might involve 10k
+	 * iterations per batch.
+	 */
+	beforeEachBatchAsync?: () => Promise<void>;
 }
 
 /**
@@ -274,7 +311,6 @@ export interface BenchmarkOptions
 	extends MochaExclusiveOptions,
 		HookArguments,
 		BenchmarkTimingOptions,
-		OnBatch,
 		BenchmarkDescription {}
 
 /**
@@ -426,14 +462,13 @@ export interface HookArguments {
 }
 
 /**
- * Validates arguments to `benchmark`.
- * @public
+ * Type guard to distinguish between synchronous and asynchronous benchmark arguments.
+ * @param args - Either {@link BenchmarkSyncArguments} or {@link BenchmarkAsyncArguments}
+ * @returns true if the arguments are for an asynchronous benchmark, false if they are for a synchronous benchmark.
  */
-export function validateBenchmarkArguments(
+function isAsync(
 	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
-):
-	| { isAsync: true; benchmarkFn: () => Promise<unknown> }
-	| { isAsync: false; benchmarkFn: () => void } {
+): args is BenchmarkAsyncArguments {
 	const intersection = args as BenchmarkSyncArguments & BenchmarkAsyncArguments;
 	const isSync = intersection.benchmarkFn !== undefined;
 	const isAsync = intersection.benchmarkFnAsync !== undefined;
@@ -441,15 +476,31 @@ export function validateBenchmarkArguments(
 		isSync !== isAsync,
 		"Exactly one of `benchmarkFn` and `benchmarkFnAsync` should be defined.",
 	);
-	if (isSync) {
-		return { isAsync: false, benchmarkFn: intersection.benchmarkFn };
-	}
-
-	return { isAsync: true, benchmarkFn: intersection.benchmarkFnAsync };
+	return isAsync;
 }
 
 /**
  * Validates arguments to `benchmark`.
+ * @public
+ */
+export function validateBenchmarkArguments(
+	args: BenchmarkSyncArguments | BenchmarkAsyncArguments,
+):
+	| { isAsync: true; benchmarkFn: () => Promise<unknown>; beforeEachBatch?: () => Promise<void> }
+	| { isAsync: false; benchmarkFn: () => void; beforeEachBatch?: () => void } {
+	if (isAsync(args)) {
+		const beforeEachBatch = async (): Promise<void> => {
+			args.beforeEachBatch?.();
+			await args.beforeEachBatchAsync?.();
+		};
+		return { isAsync: true, benchmarkFn: args.benchmarkFnAsync, beforeEachBatch };
+	}
+
+	return { isAsync: false, benchmarkFn: args.benchmarkFn, beforeEachBatch: args.beforeEachBatch };
+}
+
+/**
+ * type guard for {@link BenchmarkRunningOptions} to determine if the provided arguments are for a custom benchmark.
  * @public
  */
 export function benchmarkArgumentsIsCustom(
