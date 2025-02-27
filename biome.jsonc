@@ -190,7 +190,7 @@
 				"**/fence.json",
 
 				// These files contain comments, but are not JSONC files
-				"tools/api-markdown-documenter/src/**/test/test-data/**",
+				"tools/api-markdown-documenter/src/**/test/test-data/**"
 			],
 			"json": {
 				"parser": {
