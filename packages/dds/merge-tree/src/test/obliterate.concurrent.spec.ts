@@ -8,7 +8,9 @@ import { strict as assert } from "node:assert";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTree } from "../mergeTree.js";
+import { Side } from "../sequencePlace.js";
 
+import { PartialSyncTestHelper } from "./partialSyncHelper.js";
 import { ReconnectTestHelper } from "./reconnectHelper.js";
 import { useStrictPartialLengthChecks } from "./testUtils.js";
 
@@ -1514,7 +1516,6 @@ for (const incremental of [true, false]) {
 			helper.logger.validate();
 		});
 
-		// fails only for incremental
 		it("combines remote obliterated length ", () => {
 			const helper = new ReconnectTestHelper();
 
@@ -1843,6 +1844,152 @@ for (const incremental of [true, false]) {
 				assert.equal(helper.clients.A.getText(), "jihagSCdfeD");
 
 				helper.logger.validate();
+			});
+
+			it("Fuzz regression for negative partial lengths", () => {
+				// This is a regression test for AB#15630.
+				// Strict partial lengths checks reported an inconsistency when B applies A's
+				// obliterateRange op for the length of the string at refSeq 4.
+				// With strict partial lengths disabled, this manifested in 0x4bc on the subsequent op application.
+				const helper = new PartialSyncTestHelper();
+
+				helper.insertText("D", 0, "ABCDEFGH");
+				helper.processAllOps();
+				helper.insertText("B", 0, "123456xxxxx7890");
+				helper.advanceClients("C");
+				helper.obliterateRange("B", 15, 20);
+				helper.advanceClients("A", "B");
+				helper.insertText("A", 4, "a");
+				helper.advanceClients("A");
+				helper.insertText("C", 0, "c");
+				helper.obliterateRange(
+					"C",
+					{ pos: 4, side: Side.After },
+					{ pos: 10, side: Side.After },
+				);
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.Before },
+					{ pos: 7, side: Side.After },
+				);
+				helper.removeRange("A", 0, 1);
+				helper.processAllOps();
+
+				helper.logger.validate({ baseText: "cx7890FGH" });
+			});
+
+			it("Avoids adding entries for insert with subsequent removal", () => {
+				const helper = new PartialSyncTestHelper();
+				helper.insertText("D", 0, "bZL4aQd");
+				helper.processAllOps();
+				helper.insertText("A", 0, "8mvaLcEa4nwhELu");
+				helper.processAllOps();
+
+				// These 3 ops are the crux of the test: A's inserted segment is both obliterated by C as soon as it is inserted
+				// as well as removed by A before the insertion is acked.
+				// This is an interesting case for partial lengths of observing clients, as:
+				// - obliteration by C on insertion means the segment would normally only be visible to the inserting client
+				// - ... but after some client receives the notice of A's removal, it shouldn't be visible there either!
+				helper.obliterateRange(
+					"C",
+					{ pos: 2, side: Side.After },
+					{ pos: 21, side: Side.After },
+				);
+				helper.insertText("A", 3, "Y");
+				helper.removeRange("A", 2, 4);
+
+				// The subsequent operations forced failure at the time the code was defective, since clients with incorrect
+				// partial lengths adjustments for A would misinterpret where these ops should go.
+				helper.obliterateRange(
+					"A",
+					{ pos: 2, side: Side.After },
+					{ pos: 6, side: Side.After },
+				);
+				helper.obliterateRange("A", 2, 3);
+				helper.insertText("A", 3, "X");
+				helper.processAllOps();
+
+				helper.logger.validate({ baseText: "8m" });
+			});
+
+			// See 'Local obliterate wins post-insertion of segment previously thought to have won' (below) for a simpler
+			// to understand version of this test. This test is the original partial synchronization fuzz variant which
+			// demonstrated that issue, and has been preserved for now in case it catches additional related problems.
+			// Once fuzz testing more meaninfully leverages ops being sent to different clients at different types (partial
+			// synchronization), it's probably fine to remove this.
+			it("fuzz regression: Local obliterate wins post-insertion of segment previously thought to have won", () => {
+				const helper = new PartialSyncTestHelper();
+
+				helper.insertText("A", 0, "Hx15J");
+				helper.processAllOps();
+				helper.insertText("A", 0, "9T");
+				helper.insertText("B", 0, "c8v");
+				helper.advanceClients("A", "C");
+				helper.removeRange("A", 2, 5);
+				helper.removeRange("A", 0, 1);
+				helper.obliterateRange("A", 0, 3);
+				helper.obliterateRange(
+					"C",
+					{ pos: 1, side: Side.After },
+					{ pos: 4, side: Side.Before },
+				);
+				helper.insertText("B", 0, "4qpo");
+				helper.insertText("C", 2, "fP");
+				helper.insertText("A", 0, "hn");
+				helper.advanceClients("A", "C");
+				helper.obliterateRange(
+					"A",
+					{ pos: 5, side: Side.After },
+					{ pos: 9, side: Side.After },
+				);
+				helper.obliterateRange(
+					"B",
+					{ pos: 3, side: Side.Before },
+					{ pos: 9, side: Side.After },
+				);
+				// At the time of the original bug, this would hit 0xa3f.
+				helper.processAllOps();
+
+				helper.logger.validate({ baseText: "hn4qpJ" });
+			});
+
+			// Simpler version of the above test which has the same root cause but reproduces a slightly different failure mode.
+			it("Local obliterate wins post-insertion of segment previously thought to have won", () => {
+				const helper = new PartialSyncTestHelper();
+				helper.insertText("A", 0, "1xx2");
+				helper.processAllOps();
+				// A and B both obliterate the 'xx' segment with an expanding obliterate, then try to insert
+				// into the gap that it leaves.
+				helper.obliterateRange(
+					"A",
+					{ pos: 0, side: Side.After },
+					{ pos: 3, side: Side.Before },
+				);
+				helper.insertText("A", 1, "aaaa");
+				helper.obliterateRange(
+					"B",
+					{ pos: 0, side: Side.After },
+					{ pos: 3, side: Side.Before },
+				);
+				helper.insertText("B", 1, "bbb");
+				helper.advanceClients("A", "B");
+				// Meanwhile, C attempts the same thing without seeing A or B's obliterate & insertions
+				helper.obliterateRange(
+					"C",
+					{ pos: 0, side: Side.After },
+					{ pos: 3, side: Side.Before },
+				);
+				helper.insertText("C", 1, "ccc");
+				// Before seeing C's ops, B attempts to insert more content. Since B hasn't yet seen C's obliterate,
+				// A and B are under the impression that B's obliterate has won and the string contents are '1bbb2'.
+				helper.insertText("B", 5, "B");
+				helper.insertText("A", 5, "A");
+				helper.processAllOps();
+				// By now, all clients realize C actually won the obliterate and should have additionally applied B's
+				// op correctly as it was outside of the obliterated range.
+				// At the time this test was written, client C had trouble recognizing that A and B think that B has won
+				// and merged incorrectly, hitting 'MergeTree insert failed'.
+				helper.logger.validate({ baseText: "1ccc2AB" });
 			});
 		});
 	});

@@ -20,5 +20,6 @@ export {
 	parseHandles,
 	serializeHandles,
 	bindHandles,
+	type IChannelView,
 } from "./utils.js";
 export { ValueType } from "./valueType.js";

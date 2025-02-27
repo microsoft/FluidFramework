@@ -18,12 +18,7 @@ import {
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
-import {
-	SharedTreeTestFactory,
-	toJsonableTree,
-	validateTree,
-	viewCheckout,
-} from "../../utils.js";
+import { SharedTreeTestFactory, toJsonableTree, validateTree } from "../../utils.js";
 
 import {
 	type EditGeneratorOpWeights,
@@ -32,9 +27,9 @@ import {
 	type FuzzView,
 	makeOpGenerator,
 	viewFromState,
-	simpleSchemaFromStoredSchema,
 } from "./fuzzEditGenerators.js";
 import {
+	applyForkMergeOperation,
 	applyConstraint,
 	applyFieldEdit,
 	applySynchronizationOp,
@@ -44,10 +39,8 @@ import {
 	createOnCreate,
 	deterministicIdCompressorFactory,
 	isRevertibleSharedTreeView,
-	nodeSchemaFromTreeSchema,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
-import { TreeViewConfiguration } from "../../../simple-tree/index.js";
 
 /**
  * This interface is meant to be used for tests that require you to store a branch of a tree
@@ -94,6 +87,9 @@ const fuzzComposedVsIndividualReducer = combineReducersAsync<
 	},
 	constraint: async (state, operation) => {
 		applyConstraint(state, operation);
+	},
+	forkMergeOperation: async (state, operation) => {
+		return applyForkMergeOperation(state, operation);
 	},
 });
 
@@ -147,18 +143,12 @@ describe("Fuzz - composed vs individual changes", () => {
 		emitter.on("testStart", (initialState: BranchedTreeFuzzTestState) => {
 			initialState.main = viewFromState(initialState, initialState.clients[0]);
 
-			const branchCheckout = initialState.main.checkout.branch();
-			const treeSchema = simpleSchemaFromStoredSchema(initialState.main.checkout.storedSchema);
-			const branchView = viewCheckout(
-				branchCheckout,
-				new TreeViewConfiguration({ schema: treeSchema }),
-			) as FuzzTransactionView;
+			const forkedView = initialState.main.fork() as unknown as FuzzTransactionView;
+			const treeSchema = initialState.main.currentSchema;
 
-			const nodeSchema = nodeSchemaFromTreeSchema(treeSchema);
-
-			branchView.currentSchema =
-				nodeSchema ?? assert.fail("nodeSchema should not be undefined");
-			initialState.branch = branchView;
+			forkedView.currentSchema =
+				treeSchema ?? assert.fail("nodeSchema should not be undefined");
+			initialState.branch = forkedView;
 			initialState.branch.checkout.transaction.start();
 			initialState.transactionViews?.delete(initialState.clients[0].channel);
 			const transactionViews = new Map();

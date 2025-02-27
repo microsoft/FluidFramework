@@ -524,7 +524,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					// original (reinstated) schema.
 					this.storedSchema.apply(change.innerChange.schema.new);
 				} else {
-					fail("Unknown Shared Tree change type.");
+					fail(0xad1 /* Unknown Shared Tree change type. */);
 				}
 			}
 		}
@@ -555,10 +555,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
 		const anchorVisitor = this.forest.anchors.acquireVisitor();
-		const combinedVisitor = combineVisitors(
-			[this.forest.acquireVisitor(), anchorVisitor],
-			[anchorVisitor],
-		);
+		const combinedVisitor = combineVisitors([this.forest.acquireVisitor(), anchorVisitor]);
 		fn(combinedVisitor);
 		combinedVisitor.free();
 	}
