@@ -218,10 +218,15 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 			},
 		);
 
-		const runtime = new runtimeClass(context, dataTypes, existing, async () => {
-			await instance.initialize(true);
-			return instance;
-		});
+		const runtime: FluidDataStoreRuntime = new runtimeClass(
+			context,
+			dataTypes,
+			existing,
+			async () => {
+				await instance.initialize(true);
+				return instance;
+			},
+		);
 
 		const instance = new this.dataObjectKind(
 			runtime, // runtime
