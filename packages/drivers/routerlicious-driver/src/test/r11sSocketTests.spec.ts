@@ -232,7 +232,7 @@ describe("R11s Socket Tests", () => {
 		});
 
 		// Call disconnect directly with the error
-		connection.dispose(clientError);
+		(connection as any).disconnect(clientError);
 
 		// Wait for and verify the disconnect_document event
 		const disconnectResult = await disconnectEventP;
@@ -283,7 +283,7 @@ describe("R11s Socket Tests", () => {
 		});
 
 		// Call disconnect directly with the error
-		connection.dispose(clientError);
+		(connection as any).disconnect(clientError);
 
 		// Wait for and verify the disconnect_document event
 		const disconnectResult = await disconnectEventP;
