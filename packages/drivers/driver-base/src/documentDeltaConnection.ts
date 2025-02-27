@@ -24,6 +24,7 @@ import {
 	ScopeType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
+	isDriverErrorType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	UsageError,
@@ -401,7 +402,7 @@ export class DocumentDeltaConnection
 	 * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
 	 * multiplexing here, so we need to close the socket here.
 	 */
-	public dispose() {
+	public dispose(error?: Error) {
 		this.logger.sendTelemetryEvent({
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
@@ -409,11 +410,12 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
+
+		const isDriverError = isDriverErrorType(error?.message);
 		this.disconnect(
 			createGenericNetworkError(
-				// pre-0.58 error message: clientClosingConnection
-				"Client closing delta connection",
-				{ canRetry: true },
+				isDriverError ? error.message : "Client closing delta connection",
+				{ canRetry: !isDriverError },
 				{ driverVersion },
 			),
 		);

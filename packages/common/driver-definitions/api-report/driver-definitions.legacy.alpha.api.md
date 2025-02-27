@@ -427,6 +427,9 @@ export interface IResolvedUrl {
     url: string;
 }
 
+// @alpha
+export function isDriverErrorType(message?: string): message is DriverErrorTypes;
+
 // @public
 export interface ISequencedClient {
     client: IClient;

@@ -114,6 +114,21 @@ export const DriverErrorTypes = {
 export type DriverErrorTypes = (typeof DriverErrorTypes)[keyof typeof DriverErrorTypes];
 
 /**
+ * Checks if the provided message is one of the defined driver error types
+ *
+ * @param message - The error message to check
+ * @returns A boolean indicating if the message is a valid DriverErrorType
+ * @legacy
+ * @alpha
+ */
+export function isDriverErrorType(message?: string): message is DriverErrorTypes {
+	if (message === undefined) return false;
+
+	// Check if the message matches any value in the DriverErrorTypes object
+	return Object.values(DriverErrorTypes).includes(message as DriverErrorTypes);
+}
+
+/**
  * Interface describing errors and warnings raised by any driver code.
  *
  * @remarks

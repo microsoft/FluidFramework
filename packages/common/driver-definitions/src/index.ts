@@ -13,7 +13,7 @@ export type {
 	ILocationRedirectionError,
 	IThrottlingWarning,
 } from "./driverError.js";
-export { DriverErrorTypes } from "./driverError.js";
+export { DriverErrorTypes, isDriverErrorType } from "./driverError.js";
 export type {
 	FiveDaysMs,
 	IDeltasFetchResult,
