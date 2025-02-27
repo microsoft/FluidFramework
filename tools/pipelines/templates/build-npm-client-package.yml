@@ -200,7 +200,7 @@ extends:
         jobs:
           - deployment: testDeploymentJob
             displayName: 'test deployment job'
-            environment: 'fluid-docs-env'
+            environment: 'test-package-build-feed'
             pool: Large-eastus2
             strategy:
               runOnce:
