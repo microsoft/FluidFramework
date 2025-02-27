@@ -218,16 +218,14 @@ describe("R11s Socket Tests", () => {
 		const disconnectEventP = new Promise<{
 			clientId: string;
 			errorType: string;
-			isCorruption: boolean;
 		}>((resolve) => {
 			assert(socket !== undefined, "Socket should be defined");
 			socket.on(
 				"disconnect_document",
-				(clientId: string, documentId: string, errorType: string, isCorruption: boolean) => {
+				(clientId: string, documentId: string, errorType: string) => {
 					resolve({
 						clientId,
 						errorType,
-						isCorruption,
 					});
 				},
 			);
@@ -248,7 +246,6 @@ describe("R11s Socket Tests", () => {
 			FluidErrorTypes.dataCorruptionError,
 			"Error type should be dataCorruptionError",
 		);
-		assert(disconnectResult.isCorruption, "isCorruption flag should be true");
 	});
 
 	it("Socket error with Data Processing error", async () => {
@@ -272,16 +269,14 @@ describe("R11s Socket Tests", () => {
 		const disconnectEventP = new Promise<{
 			clientId: string;
 			errorType: string;
-			isCorruption: boolean;
 		}>((resolve) => {
 			assert(socket !== undefined, "Socket should be defined");
 			socket.on(
 				"disconnect_document",
-				(clientId: string, documentId: string, errorType: string, isCorruption: boolean) => {
+				(clientId: string, documentId: string, errorType: string) => {
 					resolve({
 						clientId,
 						errorType,
-						isCorruption,
 					});
 				},
 			);
@@ -301,10 +296,6 @@ describe("R11s Socket Tests", () => {
 			disconnectResult.errorType,
 			FluidErrorTypes.dataProcessingError,
 			"Error type should be dataProcessingError",
-		);
-		assert(
-			disconnectResult.isCorruption,
-			"isCorruption flag should be true for data processing error",
 		);
 	});
 });
