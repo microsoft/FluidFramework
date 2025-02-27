@@ -129,10 +129,7 @@ interface Synchronize {
 	clients?: Client[];
 }
 
-export interface LocalServerStressModel<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState = LocalServerStressState,
-> {
+export interface LocalServerStressModel<TOperation extends BaseOperation> {
 	/**
 	 * Name for this model. This is used for test case naming, and should generally reflect properties
 	 * about the kinds of operations that are generated.
@@ -148,12 +145,12 @@ export interface LocalServerStressModel<
 	 * @remarks DDS model generators can decide to use the "channel" or "client" field to decide which
 	 * client to perform the operation on.
 	 */
-	generatorFactory: () => AsyncGenerator<TOperation, TState>;
+	generatorFactory: () => AsyncGenerator<TOperation, LocalServerStressState>;
 
 	/**
 	 * Reducer capable of updating the test state according to the operations generated.
 	 */
-	reducer: AsyncReducer<TOperation, TState>;
+	reducer: AsyncReducer<TOperation, LocalServerStressState>;
 
 	/**
 	 * Equivalence validation function, which should verify that the provided channels contain the same data.
@@ -380,44 +377,43 @@ const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinAddRemoveClient<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
-	model: LocalServerStressModel<TOperation, TState>,
+function mixinAddRemoveClient<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | AddClient | RemoveClient, TState> {
-	const generatorFactory: () => AsyncGenerator<TOperation | AddClient | RemoveClient, TState> =
-		() => {
-			const baseGenerator = model.generatorFactory();
-			return async (
-				state: TState,
-			): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
-				const { clients, random, isDetached, validationClient } = state;
-				if (
-					options.clientJoinOptions !== undefined &&
-					!isDetached &&
-					random.bool(options.clientJoinOptions.clientAddProbability)
-				) {
-					if (clients.length > options.numberOfClients && random.bool()) {
-						return {
-							type: "removeClient",
-							clientTag: random.pick(clients).tag,
-						} satisfies RemoveClient;
-					}
-
-					if (clients.length < options.clientJoinOptions.maxNumberOfClients) {
-						const url = await validationClient.container.getAbsoluteUrl("");
-						assert(url !== undefined, "url for client must exist");
-						return {
-							type: "addClient",
-							clientTag: state.tag("client"),
-						} satisfies AddClient;
-					}
+): LocalServerStressModel<TOperation | AddClient | RemoveClient> {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | AddClient | RemoveClient,
+		LocalServerStressState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (
+			state: LocalServerStressState,
+		): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
+			const { clients, random, isDetached, validationClient } = state;
+			if (
+				options.clientJoinOptions !== undefined &&
+				!isDetached &&
+				random.bool(options.clientJoinOptions.clientAddProbability)
+			) {
+				if (clients.length > options.numberOfClients && random.bool()) {
+					return {
+						type: "removeClient",
+						clientTag: random.pick(clients).tag,
+					} satisfies RemoveClient;
 				}
-				return baseGenerator(state);
-			};
+
+				if (clients.length < options.clientJoinOptions.maxNumberOfClients) {
+					const url = await validationClient.container.getAbsoluteUrl("");
+					assert(url !== undefined, "url for client must exist");
+					return {
+						type: "addClient",
+						clientTag: state.tag("client"),
+					} satisfies AddClient;
+				}
+			}
+			return baseGenerator(state);
 		};
+	};
 
 	const minimizationTransforms: MinimizationTransform<
 		TOperation | AddClient | RemoveClient
@@ -426,10 +422,10 @@ function mixinAddRemoveClient<
 			| MinimizationTransform<TOperation | AddClient | RemoveClient>[]
 			| undefined) ?? [];
 
-	const reducer: AsyncReducer<TOperation | AddClient | RemoveClient, TState> = async (
-		state,
-		op,
-	) => {
+	const reducer: AsyncReducer<
+		TOperation | AddClient | RemoveClient,
+		LocalServerStressState
+	> = async (state, op) => {
 		if (isOperationType<AddClient>("addClient", op)) {
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
@@ -467,42 +463,44 @@ function mixinAddRemoveClient<
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinAttach<TOperation extends BaseOperation, TState extends LocalServerStressState>(
-	model: LocalServerStressModel<TOperation, TState>,
+function mixinAttach<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation | AddClient>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | Attach | AddClient, TState> {
+): LocalServerStressModel<TOperation | Attach | AddClient> {
 	const { numOpsBeforeAttach } = options.detachedStartOptions;
 	const attachOp = async (): Promise<TOperation | Attach | AddClient> => {
 		return { type: "attach" };
 	};
 
-	const generatorFactory: () => AsyncGenerator<TOperation | Attach | AddClient, TState> =
-		() => {
-			const baseGenerator = model.generatorFactory();
-			return chainAsync(
-				takeAsync(numOpsBeforeAttach, baseGenerator),
-				takeAsync(1, attachOp),
-				// use addClient ops to create initial clients
-				// this allows additional clients to minimized out
-				// and keeps repro's simpler
-				takeAsync(options.numberOfClients, async (state) => {
-					return {
-						type: "addClient",
-						clientTag: state.tag("client"),
-					} satisfies AddClient;
-				}),
-				baseGenerator,
-			);
-		};
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | Attach | AddClient,
+		LocalServerStressState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return chainAsync(
+			takeAsync(numOpsBeforeAttach, baseGenerator),
+			takeAsync(1, attachOp),
+			// use addClient ops to create initial clients
+			// this allows additional clients to minimized out
+			// and keeps repro's simpler
+			takeAsync(options.numberOfClients, async (state) => {
+				return {
+					type: "addClient",
+					clientTag: state.tag("client"),
+				} satisfies AddClient;
+			}),
+			baseGenerator,
+		);
+	};
 
 	const minimizationTransforms = model.minimizationTransforms as
 		| MinimizationTransform<TOperation | Attach | AddClient>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | Attach | AddClient, TState> = async (
-		state,
-		operation,
-	) => {
+	const reducer: AsyncReducer<
+		TOperation | Attach | AddClient,
+		LocalServerStressState
+	> = async (state, operation) => {
 		if (isOperationType<Attach>("attach", operation)) {
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
@@ -528,8 +526,7 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
 				validationClient,
 			} satisfies LocalServerStressState;
 		}
-		// typing is tough here with all the generics, so we cast to any
-		return model.reducer(state, operation as any);
+		return model.reducer(state, operation);
 	};
 	return {
 		...model,
@@ -544,15 +541,12 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinSynchronization<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
-	model: LocalServerStressModel<TOperation, TState>,
+function mixinSynchronization<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | Synchronize, TState> {
+): LocalServerStressModel<TOperation | Synchronize> {
 	const { validationStrategy } = options;
-	let generatorFactory: () => AsyncGenerator<TOperation | Synchronize, TState>;
+	let generatorFactory: () => AsyncGenerator<TOperation | Synchronize, LocalServerStressState>;
 
 	switch (validationStrategy.type) {
 		case "random": {
@@ -560,9 +554,14 @@ function mixinSynchronization<
 			// as synchronization + eventual consistency validation should be idempotent.
 			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
 			assert(validationStrategy.probability < 0.5, "Use a lower synchronization probability.");
-			generatorFactory = (): AsyncGenerator<TOperation | Synchronize, TState> => {
+			generatorFactory = (): AsyncGenerator<
+				TOperation | Synchronize,
+				LocalServerStressState
+			> => {
 				const baseGenerator = model.generatorFactory();
-				return async (state: TState): Promise<TOperation | Synchronize | typeof done> =>
+				return async (
+					state: LocalServerStressState,
+				): Promise<TOperation | Synchronize | typeof done> =>
 					!state.isDetached && state.random.bool(validationStrategy.probability)
 						? { type: "synchronize" }
 						: baseGenerator(state);
@@ -571,9 +570,12 @@ function mixinSynchronization<
 		}
 
 		case "fixedInterval": {
-			generatorFactory = (): AsyncGenerator<TOperation | Synchronize, TState> => {
+			generatorFactory = (): AsyncGenerator<
+				TOperation | Synchronize,
+				LocalServerStressState
+			> => {
 				const baseGenerator = model.generatorFactory();
-				return interleaveAsync<TOperation | Synchronize, TState>(
+				return interleaveAsync<TOperation | Synchronize, LocalServerStressState>(
 					baseGenerator,
 					async (state) =>
 						state.isDetached ? baseGenerator(state) : ({ type: "synchronize" } as const),
@@ -590,9 +592,14 @@ function mixinSynchronization<
 			// as synchronization + eventual consistency validation should be idempotent.
 			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
 			assert(validationStrategy.probability < 0.5, "Use a lower synchronization probability.");
-			generatorFactory = (): AsyncGenerator<TOperation | Synchronize, TState> => {
+			generatorFactory = (): AsyncGenerator<
+				TOperation | Synchronize,
+				LocalServerStressState
+			> => {
 				const baseGenerator = model.generatorFactory();
-				return async (state: TState): Promise<TOperation | Synchronize | typeof done> => {
+				return async (
+					state: LocalServerStressState,
+				): Promise<TOperation | Synchronize | typeof done> => {
 					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
 						const selectedClients = new Set(
 							state.clients
@@ -620,7 +627,10 @@ function mixinSynchronization<
 		| undefined;
 
 	const isSynchronizeOp = (op: BaseOperation): op is Synchronize => op.type === "synchronize";
-	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | Synchronize, LocalServerStressState> = async (
+		state,
+		operation,
+	) => {
 		// TODO: Only synchronize listed clients if specified
 		if (isSynchronizeOp(operation)) {
 			const { clients, validationClient } = state;
@@ -670,14 +680,11 @@ const hasSelectedClientSpec = (op: unknown): op is SelectedClientSpec =>
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-function mixinClientSelection<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
-	model: LocalServerStressModel<TOperation, TState>,
+function mixinClientSelection<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
 	_: LocalServerStressOptions,
-): LocalServerStressModel<TOperation, TState> {
-	const generatorFactory: () => AsyncGenerator<TOperation, TState> = () => {
+): LocalServerStressModel<TOperation> {
+	const generatorFactory: () => AsyncGenerator<TOperation, LocalServerStressState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | typeof done> => {
 			// Pick a channel, and:
@@ -709,7 +716,10 @@ function mixinClientSelection<
 		};
 	};
 
-	const reducer: AsyncReducer<TOperation | Synchronize, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | Synchronize, LocalServerStressState> = async (
+		state,
+		operation,
+	) => {
 		assert(hasSelectedClientSpec(operation), "operation should have been given a client");
 		const client = state.clients.find((c) => c.tag === operation.clientTag);
 		assert(client !== undefined);
@@ -737,12 +747,12 @@ function mixinClientSelection<
  *
  * Since the callback is async, this modification to the state could be an issue if multiple runs of this function are done concurrently.
  */
-async function runInStateWithClient<TState extends LocalServerStressState, Result>(
-	state: TState,
-	client: TState["client"],
-	datastore: TState["datastore"],
-	channel: TState["channel"],
-	callback: (state: TState) => Promise<Result>,
+async function runInStateWithClient<Result>(
+	state: LocalServerStressState,
+	client: LocalServerStressState["client"],
+	datastore: LocalServerStressState["datastore"],
+	channel: LocalServerStressState["channel"],
+	callback: (state: LocalServerStressState) => Promise<Result>,
 ): Promise<Result> {
 	const old = { ...state };
 	state.client = client;
@@ -1062,38 +1072,37 @@ export interface ChangeConnectionState {
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
  * expose at the package level if we want to expose some of the harness's building blocks.
  */
-export function mixinReconnect<
-	TOperation extends BaseOperation,
-	TState extends LocalServerStressState,
->(
-	model: LocalServerStressModel<TOperation, TState>,
+export function mixinReconnect<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | ChangeConnectionState, TState> {
-	const generatorFactory: () => AsyncGenerator<TOperation | ChangeConnectionState, TState> =
-		() => {
-			const baseGenerator = model.generatorFactory();
-			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
-				if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
-					const client = state.clients.find((c) => c.tag === state.client.tag);
-					assert(client !== undefined);
-					return {
-						type: "changeConnectionState",
-						connected: client.container.connectionState === ConnectionState.Connected,
-					};
-				}
+): LocalServerStressModel<TOperation | ChangeConnectionState> {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | ChangeConnectionState,
+		LocalServerStressState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
+			if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
+				const client = state.clients.find((c) => c.tag === state.client.tag);
+				assert(client !== undefined);
+				return {
+					type: "changeConnectionState",
+					connected: client.container.connectionState === ConnectionState.Connected,
+				};
+			}
 
-				return baseGenerator(state);
-			};
+			return baseGenerator(state);
 		};
+	};
 
 	const minimizationTransforms = model.minimizationTransforms as
 		| MinimizationTransform<TOperation | ChangeConnectionState>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | ChangeConnectionState, TState> = async (
-		state,
-		operation,
-	) => {
+	const reducer: AsyncReducer<
+		TOperation | ChangeConnectionState,
+		LocalServerStressState
+	> = async (state, operation) => {
 		if (isOperationType<ChangeConnectionState>("changeConnectionState", operation)) {
 			if (operation.connected) {
 				state.client.container.disconnect();
