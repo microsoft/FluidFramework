@@ -53,6 +53,7 @@ import {
 	ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
 import {
@@ -61,7 +62,6 @@ import {
 	type DefaultStressDataObject,
 } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 export interface Client {
 	container: IContainer;
@@ -766,13 +766,12 @@ async function loadClient(
  */
 async function runTestForSeed<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
-	options: Omit<LocalServerStressOptions, "only" | "skip">,
 	seed: number,
 	saveInfo?: SaveInfo,
 ): Promise<void> {
 	const random = makeRandom(seed);
 
-	const localDeltaConnectionServer = LocalDeltaConnectionServer.create();
+	const server = LocalDeltaConnectionServer.create();
 	const codeDetails: IFluidCodeDetails = {
 		package: "local-server-stress-tests",
 	};
@@ -783,7 +782,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		`${prefix}-${(tagCount[prefix] = (tagCount[prefix] ??= 0) + 1)}`;
 
 	const detachedClient = await createDetachedClient(
-		localDeltaConnectionServer,
+		server,
 		codeLoader,
 		codeDetails,
 		// we use tagging here, and not zero, as we will create client 0 after attach.
@@ -793,7 +792,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 
 	const initialState: LocalServerStressState = {
 		clients: [detachedClient],
-		localDeltaConnectionServer,
+		localDeltaConnectionServer: server,
 		codeLoader,
 		random,
 		validationClient: detachedClient,
@@ -805,7 +804,9 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	};
 
 	let operationCount = 0;
-	const finalSynchronization = { type: "FinalSynchronization" };
+	const finalSynchronization = {
+		type: "FinalSynchronization",
+	} as const;
 	const generator: AsyncGenerator<
 		TOperation | typeof finalSynchronization,
 		LocalServerStressState
@@ -816,7 +817,10 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			async () => finalSynchronization,
 		),
 	);
-	const reducer = async (state, operation) => {
+	const reducer: AsyncReducer<
+		TOperation | typeof finalSynchronization,
+		LocalServerStressState
+	> = async (state, operation) => {
 		if (operation.type === finalSynchronization.type) {
 			const { clients, validationClient, localDeltaConnectionServer } = state;
 			for (const client of clients) {
@@ -837,7 +841,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 				channel: makeUnreachableCodePathProxy("channel"),
 			};
 		}
-		return model.reducer(state, operation);
+		return model.reducer(state, operation as TOperation);
 	};
 	await performFuzzActionsAsync(
 		generator,
@@ -880,7 +884,7 @@ function runTest<TOperation extends BaseOperation>(
 
 		try {
 			// don't write to files in CI
-			await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
+			await runTestForSeed(model, seed, inCi ? undefined : saveInfo);
 		} catch (error) {
 			if (!shouldMinimize || saveInfo === undefined) {
 				throw error;
@@ -948,7 +952,7 @@ export async function replayTest<TOperation extends BaseOperation>(
 		generatorFactory: () => generator,
 	};
 
-	await runTestForSeed(model, options, seed, saveInfo);
+	await runTestForSeed(model, seed, saveInfo);
 }
 
 /**

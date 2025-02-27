@@ -11,6 +11,7 @@ import {
 	createWeightedAsyncGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
+import { AttachState } from "@fluidframework/container-definitions";
 
 import { ddsModelMap } from "../ddsModels.js";
 import {
@@ -27,7 +28,6 @@ import {
 import type { StressDataObjectOperations } from "../stressDataObject.js";
 
 import { _dirname } from "./dirname.cjs";
-import { AttachState } from "@fluidframework/container-definitions";
 
 type StressOperations = StressDataObjectOperations | DDSModelOp;
 
