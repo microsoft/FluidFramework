@@ -8492,7 +8492,7 @@ importers:
         version: 0.50.0
       '@fluid-tools/build-cli':
         specifier: ^0.51.0
-        version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -18006,6 +18006,11 @@ packages:
   '@fluid-tools/benchmark@0.50.0':
     resolution: {integrity: sha512-UGvRHYYGp0aRI90oDA8CFT2d8SdJMZMrDqQAJ9Qbw6VSGR3L9ii9xc43NWU33+qGrt3p1NpAzBppX1sVT55rag==}
 
+  '@fluid-tools/build-cli@0.51.0':
+    resolution: {integrity: sha512-ewPTknow38C7noDsAICr6ve4hl2/9vpauhMVQ2Dd/1YWN8q1KIAfPY/NaQI4Dh5ExW6PcFc1RsOzjH86vKxDXg==}
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+
   '@fluid-tools/build-cli@0.54.0':
     resolution: {integrity: sha512-BB6foF3Ps7R3QXkShpLJw1BRmYVq3vCI/1yVAhQ6WoYZZLj7GDiy1tVE+4pc5mepqyggZZw4OZTTYq9Tq2R5Cg==}
     engines: {node: '>=18.17.1'}
@@ -18017,6 +18022,11 @@ packages:
 
   '@fluid-tools/fetch-tool@2.22.0':
     resolution: {integrity: sha512-24rzpQNm97//P7b1O2sUJwNbx2MZuv++LsroQL4cp8zQtNNTRlEBUAXQQZpUyDc6R5qlVN5GpJrcj0Ed7DkkCg==}
+    hasBin: true
+
+  '@fluid-tools/version-tools@0.51.0':
+    resolution: {integrity: sha512-fB2LDQDxxZxWwJtaRqL96Vbc791rhu/Qp2Gvj/sGC6lrApO80CytLE8YC/oVnK6KfdjBsEUsYL8PUf8KRrZAnQ==}
+    engines: {node: '>=18.17.1'}
     hasBin: true
 
   '@fluid-tools/version-tools@0.54.0':
@@ -18049,10 +18059,18 @@ packages:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
+  '@fluidframework/build-tools@0.51.0':
+    resolution: {integrity: sha512-4PnEMhPxKb/Za5qEwtX+q/PPUIUz4L73XZoTL2HqCBii+cLUDppOlC95D39dV/pxjbTkyg2CB+u7T7zCHG2MaA==}
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+
   '@fluidframework/build-tools@0.54.0':
     resolution: {integrity: sha512-A/Ze8bfmvzqgZsh2ZmfVqYeRnl3Eo3EeQnJI7tG2cTnXBvjNA/GobuoM9tZtFyD/vsuy1xp7vz7aYh4gANJz/w==}
     engines: {node: '>=18.17.1'}
     hasBin: true
+
+  '@fluidframework/bundle-size-tools@0.51.0':
+    resolution: {integrity: sha512-ZvlP9lfIG1fHP0aagHca4m75RlzTxYs0Av8qQAUI9yOLq6jsta8td6a8rWHaIIgyjpatCrdI98PaGDF160QCBQ==}
 
   '@fluidframework/bundle-size-tools@0.54.0':
     resolution: {integrity: sha512-4QwwcyzwAvZELfR16A0dnxX+BERtsOQlrs2pd7GZONjeNOXGXngnpv1e9i3w9nBbFlMehArxdHlxVS2ecYG3ow==}
@@ -30261,6 +30279,83 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluid-tools/build-cli@0.51.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)':
+    dependencies:
+      '@andrewbranch/untar.js': 1.0.3
+      '@fluid-tools/version-tools': 0.51.0(@types/node@18.19.67)
+      '@fluidframework/build-tools': 0.51.0(@types/node@18.19.67)
+      '@fluidframework/bundle-size-tools': 0.51.0
+      '@inquirer/prompts': 7.2.0(@types/node@18.19.67)
+      '@microsoft/api-extractor': 7.48.0(@types/node@18.19.67)
+      '@oclif/core': 4.0.36
+      '@oclif/plugin-autocomplete': 3.2.13
+      '@oclif/plugin-commands': 4.1.13
+      '@oclif/plugin-help': 6.2.19
+      '@oclif/plugin-not-found': 3.2.30(@types/node@18.19.67)
+      '@octokit/core': 5.2.0
+      '@octokit/rest': 21.0.2
+      '@rushstack/node-core-library': 5.10.0(@types/node@18.19.67)
+      async: 3.2.6
+      azure-devops-node-api: 11.2.0
+      change-case: 3.1.0
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      danger: 12.3.3(encoding@0.1.13)
+      date-fns: 2.30.0
+      debug: 4.4.0(supports-color@8.1.1)
+      execa: 5.1.1
+      fflate: 0.8.2
+      fs-extra: 11.2.0
+      github-slugger: 2.0.0
+      globby: 11.1.0
+      gray-matter: 4.0.3
+      human-id: 4.1.1
+      issue-parser: 7.0.1
+      json5: 2.2.3
+      jssm: 5.104.1
+      jszip: 3.10.1
+      latest-version: 9.0.0
+      mdast: 3.0.0
+      mdast-util-heading-range: 4.0.0
+      mdast-util-to-string: 4.0.0
+      minimatch: 7.4.6
+      npm-check-updates: 16.14.20
+      oclif: 4.16.2(@types/node@18.19.67)
+      picocolors: 1.1.1
+      prettier: 3.2.5
+      prompts: 2.4.2
+      read-pkg-up: 7.0.1
+      remark: 15.0.1
+      remark-gfm: 4.0.0
+      remark-github: 12.0.0
+      remark-github-beta-blockquote-admonitions: 3.1.1
+      remark-toc: 9.0.0
+      replace-in-file: 7.2.0
+      resolve.exports: 2.0.3
+      semver: 7.6.3
+      semver-utils: 1.1.4
+      simple-git: 3.27.0
+      sort-json: 2.0.1
+      sort-package-json: 1.57.0
+      strip-ansi: 6.0.1
+      table: 6.9.0
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+      unist-util-visit: 5.0.0
+      xml2js: 0.5.0
+    transitivePeerDependencies:
+      - '@swc/core'
+      - '@types/node'
+      - bluebird
+      - bufferutil
+      - encoding
+      - esbuild
+      - react-devtools-core
+      - supports-color
+      - typescript
+      - uglify-js
+      - utf-8-validate
+      - webpack-cli
+
   '@fluid-tools/build-cli@0.54.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
@@ -30494,6 +30589,22 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluid-tools/version-tools@0.51.0(@types/node@18.19.67)':
+    dependencies:
+      '@oclif/core': 4.0.36
+      '@oclif/plugin-autocomplete': 3.2.13
+      '@oclif/plugin-commands': 4.1.13
+      '@oclif/plugin-help': 6.2.19
+      '@oclif/plugin-not-found': 3.2.30(@types/node@18.19.67)
+      semver: 7.6.3
+      table: 6.9.0
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - react-devtools-core
+      - supports-color
+      - utf-8-validate
+
   '@fluid-tools/version-tools@0.54.0(@types/node@18.19.67)':
     dependencies:
       '@oclif/core': 4.0.36
@@ -30644,6 +30755,41 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
+  '@fluidframework/build-tools@0.51.0(@types/node@18.19.67)':
+    dependencies:
+      '@fluid-tools/version-tools': 0.51.0(@types/node@18.19.67)
+      '@manypkg/get-packages': 2.2.2
+      async: 3.2.6
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      date-fns: 2.30.0
+      debug: 4.4.0(supports-color@8.1.1)
+      detect-indent: 6.1.0
+      find-up: 7.0.0
+      fs-extra: 11.2.0
+      glob: 7.2.3
+      globby: 11.1.0
+      ignore: 5.3.2
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      multimatch: 5.0.0
+      picocolors: 1.1.1
+      picomatch: 2.3.1
+      rimraf: 4.4.1
+      semver: 7.6.3
+      sort-package-json: 1.57.0
+      ts-deepmerge: 7.0.2
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+      typescript: 5.4.5
+      yaml: 2.6.1
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - react-devtools-core
+      - supports-color
+      - utf-8-validate
+
   '@fluidframework/build-tools@0.54.0(@types/node@18.19.67)':
     dependencies:
       '@fluid-tools/version-tools': 0.54.0(@types/node@18.19.67)
@@ -30715,6 +30861,20 @@ snapshots:
       - react-devtools-core
       - supports-color
       - utf-8-validate
+
+  '@fluidframework/bundle-size-tools@0.51.0':
+    dependencies:
+      azure-devops-node-api: 11.2.0
+      jszip: 3.10.1
+      msgpack-lite: 0.1.26
+      pako: 2.1.0
+      typescript: 5.4.5
+      webpack: 5.97.1(webpack-cli@5.1.4)
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+      - webpack-cli
 
   '@fluidframework/bundle-size-tools@0.54.0(webpack-cli@5.1.4)':
     dependencies:

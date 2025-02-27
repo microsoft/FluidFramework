@@ -31,6 +31,7 @@ import {
 	type SharedObjectKind,
 } from "./sharedObject.js";
 import { ISharedObjectEvents, type ISharedObject } from "./types.js";
+import type { IChannelView } from "./utils.js";
 
 /**
  * Functionality specific a particular kind of shared object.
@@ -218,14 +219,6 @@ export interface SharedKernelFactory<T extends object> {
 	 */
 	loadCore(args: KernelArgs, storage: IChannelStorageService): Promise<FactoryOut<T>>;
 }
-
-/**
- * Information about a Fluid channel.
- * @privateRemarks
- * This is distinct from {@link IChannel} as it omits the APIs used by the runtime to manage the channel and instead only has things which are useful (and safe) to expose to users of the channel.
- * @internal
- */
-export type IChannelView = Pick<IChannel, "id" | "attributes" | "isAttached">;
 
 /**
  * @internal
