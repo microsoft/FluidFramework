@@ -6,6 +6,7 @@
 import {
 	BaseContainerRuntimeFactory,
 	DataObject,
+	type DataObjectKind,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";

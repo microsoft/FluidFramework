@@ -25,6 +25,7 @@ export {
 } from "./data-object-factories/index.js";
 export {
 	DataObject,
+	type DataObjectKind,
 	type DataObjectTypes,
 	type IDataObjectProps,
 	PureDataObject,

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";

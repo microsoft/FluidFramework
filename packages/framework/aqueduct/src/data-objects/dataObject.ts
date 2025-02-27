@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/map/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectTypes } from "./types.js";
+import type { DataObjectKind, DataObjectTypes } from "./types.js";
 
 /**
  * DataObject is a base data store that is primed with a root directory. It
@@ -80,4 +80,15 @@ export abstract class DataObject<
 	protected getUninitializedErrorString(item: string): string {
 		return `${item} must be initialized before being accessed.`;
 	}
+}
+
+/**
+ * Utility for creating SharedObjectKind instances for data objects.
+ * @typeParam T - The kind of data object.
+ * @internal
+ */
+export function createDataObjectKind<T extends DataObjectKind>(
+	factory: T,
+): T & SharedObjectKind<T extends DataObjectKind<infer I> ? I : unknown> {
+	return factory as T & SharedObjectKind<T extends DataObjectKind<infer I> ? I : unknown>;
 }

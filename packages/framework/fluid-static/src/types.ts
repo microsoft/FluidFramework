@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type {
-	DataObjectKind,
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Valid compatibility modes that may be specified when creating a DOProviderContainerRuntimeFactory.
