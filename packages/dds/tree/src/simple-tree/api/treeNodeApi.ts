@@ -206,7 +206,7 @@ export const treeNodeApi: TreeNodeApi = {
 	): value is TreeNodeFromImplicitAllowedTypes<TSchema> {
 		// This "is" utility would return false if the provided schema is a base type of the actual schema.
 		// This could be confusing, and that case can only be hit when violating the rule that there is a single most derived schema that gets used (See documentation on TreeNodeSchemaClass).
-		// Therefor this uses markSchemaMostDerived to ensure an informative usage error is thrown in the case where a base type is used.
+		// Therefore this uses markSchemaMostDerived to ensure an informative usage error is thrown in the case where a base type is used.
 
 		const actualSchema = tryGetSchema(value);
 		if (actualSchema === undefined) {
