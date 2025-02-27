@@ -646,6 +646,9 @@ export function configureWebSocketServices(
 		socket.on(
 			"disconnect_document",
 			(clientId: string, documentId: string, errorType?: string) => {
+				if (errorType === undefined) {
+					return;
+				}
 				Lumberjack.error(
 					`Error for client ${clientId}, document ${documentId}: ${errorType}`,
 				);
