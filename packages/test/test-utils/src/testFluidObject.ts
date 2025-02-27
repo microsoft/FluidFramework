@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	IFluidHandle,
+	IRequest,
+	IResponse,
+	type IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	FluidDataStoreRuntime,
@@ -21,6 +26,7 @@ import {
 	IFluidDataStoreFactory,
 } from "@fluidframework/runtime-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { ITestFluidObject } from "./interfaces.js";
 
@@ -28,6 +34,10 @@ import { ITestFluidObject } from "./interfaces.js";
  * A test Fluid object that will create a shared object for each key-value pair in the factoryEntries passed to load.
  * The shared objects can be retrieved by passing the key of the entry to getSharedObject.
  * It exposes the IFluidDataStoreContext and IFluidDataStoreRuntime.
+ * @privateRemarks
+ * TODO:
+ * Usage of this outside this repo (via ITestFluidObject) should probably be phased out.
+ * Once thats done, ITestFluidObject can be made internal and this class can be replaced with the simplified TestFluidObjectInternal.
  * @internal
  */
 export class TestFluidObject implements ITestFluidObject {
@@ -39,12 +49,9 @@ export class TestFluidObject implements ITestFluidObject {
 		return this;
 	}
 
-	public get handle(): IFluidHandle<this> {
-		return this.innerHandle;
-	}
+	public readonly handle: IFluidHandle<this>;
 
 	public root!: ISharedMap;
-	private readonly innerHandle: IFluidHandle<this>;
 	private initializationPromise: Promise<void> | undefined;
 
 	/**
@@ -58,9 +65,9 @@ export class TestFluidObject implements ITestFluidObject {
 		public readonly runtime: IFluidDataStoreRuntime,
 		public readonly channel: IFluidDataStoreChannel,
 		public readonly context: IFluidDataStoreContext,
-		private readonly factoryEntriesMap: Map<string, IChannelFactory>,
+		private readonly factoryEntriesMap: Map<string, IChannelFactory<ISharedObject>>,
 	) {
-		this.innerHandle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
+		this.handle = new FluidObjectHandle(this, "", runtime.objectsRoutingContext);
 	}
 
 	/**
@@ -163,6 +170,15 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 	constructor(
 		private readonly factoryEntries: ChannelFactoryRegistry,
 		public readonly type = "TestFluidObjectFactory",
+		private readonly dataObjectKind: new (
+			runtime: IFluidDataStoreRuntime,
+			channel: IFluidDataStoreChannel,
+			context: IFluidDataStoreContext,
+			factoryEntriesMap: Map<string, IChannelFactory<ISharedObject>>,
+		) => IFluidLoadable & {
+			request(request: IRequest): Promise<IResponse>;
+			initialize(existing: boolean): Promise<void>;
+		} = TestFluidObject,
 	) {}
 
 	public async instantiateDataStore(
@@ -182,10 +198,11 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 
 		// Create a map from the factory entries with entries that don't have the id as undefined. This will be
 		// passed to the Fluid object.
-		const factoryEntriesMapForObject = new Map<string, IChannelFactory>();
+		const factoryEntriesMapForObject = new Map<string, IChannelFactory<ISharedObject>>();
 		for (const [id, factory] of this.factoryEntries) {
 			if (id !== undefined) {
-				factoryEntriesMapForObject.set(id, factory);
+				// Here we assume the factory produces an ISharedObject.
+				factoryEntriesMapForObject.set(id, factory as IChannelFactory<ISharedObject>);
 			}
 		}
 
@@ -194,7 +211,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 				// The provideEntryPoint callback below always returns TestFluidObject.
 				const dataObject = await rt.entryPoint.get();
 				assert(
-					dataObject instanceof TestFluidObject,
+					dataObject instanceof this.dataObjectKind,
 					"entryPoint should have been initialized by now",
 				);
 				return dataObject.request(request);
@@ -206,7 +223,7 @@ export class TestFluidObjectFactory implements IFluidDataStoreFactory {
 			return instance;
 		});
 
-		const instance: TestFluidObject = new TestFluidObject(
+		const instance = new this.dataObjectKind(
 			runtime, // runtime
 			runtime, // channel
 			context,

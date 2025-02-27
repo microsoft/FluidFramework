@@ -39,11 +39,11 @@ import {
 import {
 	type ChannelFactoryRegistry,
 	type ITestContainerConfig,
-	type ITestFluidObject,
 	type ITestObjectProvider,
 	type SummaryInfo,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
+	TestFluidObjectInternal,
 	TestObjectProvider,
 	createSummarizer,
 	summarizeNow,
@@ -256,7 +256,11 @@ export class TestTreeProvider {
 		const containerRuntimeFactory = () =>
 			new TestContainerRuntimeFactory(
 				"@fluid-example/test-dataStore",
-				new TestFluidObjectFactory(registry),
+				new TestFluidObjectFactory(
+					registry,
+					"TestFluidObjectFactory",
+					TestFluidObjectInternal,
+				),
 				{
 					summaryOptions: {
 						summaryConfigOverrides:
@@ -270,10 +274,7 @@ export class TestTreeProvider {
 
 		if (summarizeType === SummarizeType.onDemand) {
 			const container = await objProvider.makeTestContainer();
-			const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-			const firstTree = await dataObject.getSharedObject<SharedTree & ISharedObject>(
-				TestTreeProvider.treeId,
-			);
+			const firstTree = await this.getTree(container);
 			const { summarizer } = await createSummarizer(objProvider, container);
 			const provider = new TestTreeProvider(objProvider, [
 				container,
@@ -291,6 +292,13 @@ export class TestTreeProvider {
 			}
 			return provider;
 		}
+	}
+
+	private static async getTree(container: IContainer): Promise<SharedTree> {
+		const dataObject = await container.getEntryPoint();
+		assert(dataObject instanceof TestFluidObjectInternal);
+		const tree = await dataObject.getSharedObject(TestTreeProvider.treeId);
+		return tree as SharedTree;
 	}
 
 	/**
@@ -315,10 +323,9 @@ export class TestTreeProvider {
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
-		const dataObject = (await container.getEntryPoint()) as ITestFluidObject;
-		return (this._trees[this.trees.length] = await dataObject.getSharedObject<
-			SharedTree & ISharedObject
-		>(TestTreeProvider.treeId));
+		const tree = await TestTreeProvider.getTree(container);
+		this._trees[this.trees.length] = tree;
+		return tree;
 	}
 
 	/**
