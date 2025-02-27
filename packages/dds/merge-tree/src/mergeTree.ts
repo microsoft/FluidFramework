@@ -1676,7 +1676,6 @@ export class MergeTree {
 						movedSeq: oldest.seq,
 						movedSeqs,
 						localMovedSeq: oldestUnacked?.localSeq,
-						wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
 					};
 				} else {
 					assert(
@@ -1691,7 +1690,6 @@ export class MergeTree {
 						movedSeq: oldestUnacked.seq,
 						movedSeqs: [oldestUnacked.seq],
 						localMovedSeq: oldestUnacked.localSeq,
-						wasMovedOnInsert: false,
 					};
 				}
 
@@ -2142,8 +2140,6 @@ export class MergeTree {
 					movedSeq: seq,
 					localMovedSeq: localSeq,
 					movedSeqs: [seq],
-					wasMovedOnInsert:
-						segment.seq === UnassignedSequenceNumber && seq !== UnassignedSequenceNumber,
 				});
 
 				const existingRemoval = toRemovalInfo(movedSeg);
@@ -2159,7 +2155,6 @@ export class MergeTree {
 				}
 			} else {
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
-					// Should not need explicit set here, but this should be implied:
 					assert(
 						!wasMovedOnInsert(segment),
 						0xab4 /* Local obliterate cannot have removed a segment as soon as it was inserted */,
@@ -2168,7 +2163,7 @@ export class MergeTree {
 						seq !== UnassignedSequenceNumber,
 						0xab5 /* Cannot obliterate the same segment locally twice */,
 					);
-					existingMoveInfo.wasMovedOnInsert = segment.seq === UnassignedSequenceNumber;
+
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
