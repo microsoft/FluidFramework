@@ -119,6 +119,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 			return this.constructorCached;
 		}
 
+		// If users trying to diagnose the cause of this error becomes a common issue, more information could be captured.
+		// The call stack to when a schema is first marked most derived could be captured in debug builds and stored in the `MostDerivedData` object:
+		// THis could then be included in there error to aid in debugging this error.
 		throw new UsageError(
 			`Two schema classes were used (${this.name} and ${
 				this.constructorCached.constructor.name
