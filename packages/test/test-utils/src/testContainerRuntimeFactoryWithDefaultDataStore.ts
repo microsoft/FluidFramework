@@ -14,8 +14,6 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "./container-runtime-factories/index.js";
-
 const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
 	if (entryPoint === undefined) {

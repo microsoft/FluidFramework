@@ -14,7 +14,6 @@ import type { IContainerRuntime } from "@fluidframework/container-runtime-defini
 import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IDirectory } from "@fluidframework/map/internal";
 import type {
-	DataObjectKind,
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";

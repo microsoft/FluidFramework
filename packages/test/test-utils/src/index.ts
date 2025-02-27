@@ -55,12 +55,6 @@ export {
 	type TimeoutWithValue,
 } from "./timeoutUtils.js";
 export {
-	BaseContainerRuntimeFactory,
-	type BaseContainerRuntimeFactoryProps,
-	ContainerRuntimeFactoryWithDefaultDataStore,
-	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
-} from "./container-runtime-factories/index.js";
-export {
 	toIDeltaManagerFull,
 	waitForContainerConnection,
 	getContainerEntryPointBackCompat,

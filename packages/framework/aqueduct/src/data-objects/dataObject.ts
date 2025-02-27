@@ -8,6 +8,7 @@ import {
 	MapFactory,
 	SharedDirectory,
 } from "@fluidframework/map/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 
 import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectKind, DataObjectTypes } from "./types.js";

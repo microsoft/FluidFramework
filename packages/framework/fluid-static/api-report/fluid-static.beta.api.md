@@ -28,7 +28,7 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
     readonly attachState: AttachState;
     connect(): void;
     readonly connectionState: ConnectionState;
-    create<T extends IFluidLoadable>(objectClass: SharedObjectKind_2<T>): Promise<T>;
+    create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T>;
     disconnect(): void;
     dispose(): void;
     readonly disposed: boolean;
@@ -53,7 +53,7 @@ export interface IMember {
 
 // @public
 export type InitialObjects<T extends ContainerSchema> = {
-    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectKind_2<infer TChannel> ? TChannel : never;
+    [K in keyof T["initialObjects"]]: T["initialObjects"][K] extends SharedObjectKind<infer TChannel> ? TChannel : never;
 };
 
 // @public

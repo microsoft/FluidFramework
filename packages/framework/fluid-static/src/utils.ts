@@ -7,10 +7,7 @@ import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
-import type {
-	DataObjectKind,
-	ISharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ContainerSchema, LoadableObjectKind } from "./types.js";
