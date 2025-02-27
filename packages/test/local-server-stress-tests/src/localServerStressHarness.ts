@@ -64,6 +64,7 @@ import {
 	type DefaultStressDataObject,
 } from "./stressDataObject.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 export interface Client {
 	container: IContainer;
@@ -84,6 +85,7 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	datastore: StressDataObject;
 	channel: IChannel;
 	isDetached: boolean;
+	seed: number;
 	tag<T extends string>(prefix: T): `${T}-${number}`;
 }
 
@@ -109,7 +111,6 @@ interface Attach {
 interface AddClient {
 	type: "addClient";
 	clientTag: `client-${number}`;
-	url: string;
 }
 
 /**
@@ -410,7 +411,6 @@ function mixinAddRemoveClient<
 						assert(url !== undefined, "url for client must exist");
 						return {
 							type: "addClient",
-							url,
 							clientTag: state.tag("client"),
 						} satisfies AddClient;
 					}
@@ -431,11 +431,14 @@ function mixinAddRemoveClient<
 		op,
 	) => {
 		if (isOperationType<AddClient>("addClient", op)) {
+			const url = await state.validationClient.container.getAbsoluteUrl("");
+			assert(url !== undefined, "url of container must be available");
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,
 				op.clientTag,
-				op.url,
+				url,
+				state.seed,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -467,26 +470,39 @@ function mixinAddRemoveClient<
 function mixinAttach<TOperation extends BaseOperation, TState extends LocalServerStressState>(
 	model: LocalServerStressModel<TOperation, TState>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | Attach, TState> {
+): LocalServerStressModel<TOperation | Attach | AddClient, TState> {
 	const { numOpsBeforeAttach } = options.detachedStartOptions;
-	const attachOp = async (): Promise<TOperation | Attach> => {
+	const attachOp = async (): Promise<TOperation | Attach | AddClient> => {
 		return { type: "attach" };
 	};
 
-	const generatorFactory: () => AsyncGenerator<TOperation | Attach, TState> = () => {
-		const baseGenerator = model.generatorFactory();
-		return chainAsync(
-			takeAsync(numOpsBeforeAttach, baseGenerator),
-			takeAsync(1, attachOp),
-			baseGenerator,
-		);
-	};
+	const generatorFactory: () => AsyncGenerator<TOperation | Attach | AddClient, TState> =
+		() => {
+			const baseGenerator = model.generatorFactory();
+			return chainAsync(
+				takeAsync(numOpsBeforeAttach, baseGenerator),
+				takeAsync(1, attachOp),
+				// use addClient ops to create initial clients
+				// this allows additional clients to minimized out
+				// and keeps repro's simpler
+				takeAsync(options.numberOfClients, async (state) => {
+					return {
+						type: "addClient",
+						clientTag: state.tag("client"),
+					} satisfies AddClient;
+				}),
+				baseGenerator,
+			);
+		};
 
 	const minimizationTransforms = model.minimizationTransforms as
-		| MinimizationTransform<TOperation | Attach>[]
+		| MinimizationTransform<TOperation | Attach | AddClient>[]
 		| undefined;
 
-	const reducer: AsyncReducer<TOperation | Attach, TState> = async (state, operation) => {
+	const reducer: AsyncReducer<TOperation | Attach | AddClient, TState> = async (
+		state,
+		operation,
+	) => {
 		if (isOperationType<Attach>("attach", operation)) {
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
@@ -495,30 +511,25 @@ function mixinAttach<TOperation extends BaseOperation, TState extends LocalServe
 			await clientA.container.attach(createLocalResolverCreateNewRequest("stress test"));
 			const url = await clientA.container.getAbsoluteUrl("");
 			assert(url !== undefined, "container must have a url");
-			const clients: Client[] = await Promise.all(
-				Array.from({ length: options.numberOfClients }, async (_, index) =>
-					loadClient(
-						state.localDeltaConnectionServer,
-						state.codeLoader,
-						state.tag("client"),
-						url,
-					),
-				),
-			);
-
 			// After attaching, we use a newly loaded client as a read-only client for consistency comparison validation.
 			// This makes debugging easier as the state of a client is easier to interpret if it has no local changes.
-			const validationClient: Client = clients[0];
-			clients[0] = state.clients[0];
+			// we use the reserved client-0 tag for client, which makes the tags in the test sequential starting at 1
+			const validationClient = await loadClient(
+				state.localDeltaConnectionServer,
+				state.codeLoader,
+				"client-0",
+				url,
+				state.seed,
+			);
 
 			return {
 				...state,
 				isDetached: false,
-				clients,
 				validationClient,
 			} satisfies LocalServerStressState;
 		}
-		return model.reducer(state, operation);
+		// typing is tough here with all the generics, so we cast to any
+		return model.reducer(state, operation as any);
 	};
 	return {
 		...model,
@@ -621,76 +632,6 @@ function mixinSynchronization<
 				return client.container.connectionState !== ConnectionState.Disconnected;
 			});
 			connectedClients.push(validationClient);
-
-			const rejects = new Map<Client, ((reason?: any) => void)[]>(
-				connectedClients.map((c) => [c, []]),
-			);
-
-			const cleanUps: (() => void)[] = [];
-			for (const c of connectedClients) {
-				const rejector = (err) => rejects.get(c)?.forEach((r) => r(err));
-				c.container.once("closed", rejector);
-				c.container.once("disposed", rejector);
-				cleanUps.push(() => {
-					c.container.off("closed", rejector);
-					c.container.off("disposed", rejector);
-				});
-			}
-			try {
-				await Promise.all(
-					connectedClients.map(
-						async (c) =>
-							new Promise<void>((resolve, reject) => {
-								if (c.container.connectionState !== ConnectionState.Connected) {
-									c.container.once("connected", () => resolve());
-									rejects.get(c)?.push(reject);
-								} else {
-									resolve();
-								}
-							}),
-					),
-				);
-
-				await Promise.all(
-					connectedClients.map(
-						async (c) =>
-							new Promise<void>((resolve, reject) => {
-								if (c.container.isDirty) {
-									c.container.once("saved", () => resolve());
-									rejects.get(c)?.push(reject);
-								} else {
-									resolve();
-								}
-							}),
-					),
-				);
-				const maxSeq = Math.max(
-					...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
-				);
-
-				const makeOpHandler = (c: Client, resolve: () => void, reject: () => void) => {
-					if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
-						const handler = (msg) => {
-							if (msg.sequenceNumber >= maxSeq) {
-								c.container.off("op", handler);
-								resolve();
-							}
-						};
-						c.container.on("op", handler);
-						rejects.get(c)?.push(reject);
-					} else {
-						resolve();
-					}
-				};
-				await Promise.all(
-					connectedClients.map(
-						async (c) =>
-							new Promise<void>((resolve, reject) => makeOpHandler(c, resolve, reject)),
-					),
-				);
-			} finally {
-				cleanUps.forEach((f) => f());
-			}
 
 			if (connectedClients.length > 0) {
 				for (const client of connectedClients) {
@@ -818,17 +759,24 @@ async function runInStateWithClient<TState extends LocalServerStressState, Resul
 	}
 }
 
+function createStressLogger(seed: number) {
+	const logger = getTestLogger?.();
+	return createChildLogger({ logger, properties: { all: { seed } } });
+}
+
 async function createDetachedClient(
 	localDeltaConnectionServer: ILocalDeltaConnectionServer,
 	codeLoader: ICodeDetailsLoader,
 	codeDetails: IFluidCodeDetails,
 	tag: `client-${number}`,
+	seed: number,
 ): Promise<Client> {
 	const container = await createDetachedContainer({
 		codeLoader,
 		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
 		urlResolver: new LocalResolver(),
 		codeDetails,
+		logger: createStressLogger(seed),
 	});
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined =
@@ -848,12 +796,14 @@ async function loadClient(
 	codeLoader: ICodeDetailsLoader,
 	tag: `client-${number}`,
 	url: string,
+	seed: number,
 ): Promise<Client> {
 	const container = await loadExistingContainer({
 		documentServiceFactory: new LocalDocumentServiceFactory(localDeltaConnectionServer),
 		request: { url },
 		urlResolver: new LocalResolver(),
 		codeLoader,
+		logger: createStressLogger(seed),
 	});
 
 	const maybe: FluidObject<DefaultStressDataObject> | undefined =
@@ -885,6 +835,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	};
 	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
 	const tagCount: Partial<Record<string, number>> = {};
+	// we reserve prefix-0 for initialization objects
 	const tag: LocalServerStressState["tag"] = (prefix) =>
 		`${prefix}-${(tagCount[prefix] = (tagCount[prefix] ??= 0) + 1)}`;
 
@@ -892,7 +843,9 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		localDeltaConnectionServer,
 		codeLoader,
 		codeDetails,
+		// we use tagging here, and not zero, as we will create client 0 after attach.
 		tag("client"),
+		seed,
 	);
 
 	const initialState: LocalServerStressState = {
@@ -905,6 +858,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		datastore: makeUnreachableCodePathProxy("datastore"),
 		channel: makeUnreachableCodePathProxy("channel"),
 		isDetached: true,
+		seed,
 		tag,
 	};
 
@@ -924,8 +878,14 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	// this usually indicates an error on the part of the test author.
 	assert(operationCount > 0, "Generator should have produced at least one operation.");
 
-	finalState.clients.forEach((c) => c.container.dispose());
-	finalState.validationClient.container.dispose();
+	const { clients, validationClient } = finalState;
+	for (const client of clients) {
+		client.container.connect();
+		await model.validateConsistency(client, validationClient);
+		client.container.dispose();
+	}
+
+	validationClient.container.dispose();
 }
 
 function runTest<TOperation extends BaseOperation>(
