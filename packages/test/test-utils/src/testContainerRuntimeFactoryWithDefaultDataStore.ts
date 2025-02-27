@@ -13,7 +13,6 @@ import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import type { IFluidDependencySynthesizer } from "@fluidframework/synthesize/internal";
 
 const getDefaultFluidObject = async (runtime: IContainerRuntime) => {
 	const entryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
@@ -35,7 +34,10 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 	 */
 	readonly registryEntries: NamedFluidDataStoreRegistryEntries;
 
-	readonly dependencyContainer?: IFluidDependencySynthesizer;
+	/**
+	 * @deprecated Do not use. This strictly exists for backwards compatibility.
+	 */
+	readonly dependencyContainer?: never;
 
 	/**
 	 * Request handlers for containers produced.
