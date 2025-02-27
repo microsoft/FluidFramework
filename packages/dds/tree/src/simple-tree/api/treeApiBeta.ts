@@ -113,16 +113,31 @@ export const TreeBeta: {
 	 * @param node - The node to clone.
 	 * @returns A new unhydrated node with the same persisted data as the original node.
 	 * @remarks
-	 * Some key things to note:
+	 * Value node types (i.e. numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 *
-	 * - Local state, such as properties added to customized schema classes, will not be cloned. However, they will be
-	 * initialized to their default state just as if the node had been created via its constructor.
-	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
-	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
+	 * Any {@link SchemaFactory.identifier | identifiers } in the node's subtree will be preserved (i.e. they are not replaced with new values).
+	 *
+	 * Unpersisted local state, such as properties added to customized schema classes, will **not** be cloned.
+	 * Instead, it will be initialized to its default state just as if the node had been created via the constructor.
+	 *
+	 * The output of this function will be have the same type as the input.
+	 * In very rare cases - in conditional blocks when the input type is both a union and intersection of node types - TypeScript may incorrectly narrow the value of some unpersisted local state.
+	 * For example:
+	 * ```ts
+	 * class A extends schemaFactory.object("A", {}) { x?: number; }
+	 * const node: (A | B) & TreeNode = new A({});
+	 * if (a.x !== undefined) {
+	 *   const clone = TreeBeta.clone(node);
+	 *   if (clone.x === undefined) {
+	 *     const x = clone.x; // `x` may be typed as `never` here, but it is actually `undefined`
+	 *   }
+	 * }
+	 * ```
+	 * If desired, provide the generic parameter to the `clone` function explicitly: `TreeBeta.clone<A | B>(node)`.
 	 */
-	clone<const TSchema extends ImplicitFieldSchema>(
-		node: TreeFieldFromImplicitField<TSchema>,
-	): TreeFieldFromImplicitField<TSchema>;
+	clone<const TNode extends TreeFieldFromImplicitField<ImplicitFieldSchema>>(
+		node: TNode,
+	): Unhydrated<TNode>;
 
 	// TODO: support more clone options
 	// /**
@@ -150,9 +165,9 @@ export const TreeBeta: {
 	): () => void {
 		return treeNodeApi.on(node, eventName, listener);
 	},
-	clone<const TSchema extends ImplicitFieldSchema>(
-		node: TreeFieldFromImplicitField<TSchema>,
-	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
+	clone<const TNode extends TreeFieldFromImplicitField<ImplicitFieldSchema>>(
+		node: TNode,
+	): Unhydrated<TNode> {
 		/** The only non-TreeNode cases are {@link TreeLeafValue} and `undefined` (for an empty optional field) which can be returned as is. */
 		if (!isTreeNode(node)) {
 			return node;
@@ -160,8 +175,6 @@ export const TreeBeta: {
 
 		const kernel = getKernel(node);
 		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-		return createFromCursor(kernel.schema, cursor) as Unhydrated<
-			TreeFieldFromImplicitField<TSchema>
-		>;
+		return createFromCursor(kernel.schema, cursor) as TNode;
 	},
 };
