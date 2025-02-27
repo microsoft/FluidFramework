@@ -115,7 +115,6 @@
 	},
 	"dependencies": {
 		"@fluid-internal/test-driver-definitions": "workspace:~",
-		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
