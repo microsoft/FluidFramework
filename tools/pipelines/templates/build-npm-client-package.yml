@@ -206,9 +206,6 @@ extends:
               runOnce:
                 deploy:
                   steps:
-                    - checkout: none
-                      clean: true
-
                     # test step just to see if we can download the artifact as expected
                     - task: Bash@3
                       displayName: List Files in PIPELINE.WORKSPACE
@@ -218,6 +215,9 @@ extends:
                         script: |
                           echo "Listing files in directory: $(Pipeline.Workspace)"
                           ls -la "$(Pipeline.Workspace)/"
+                          cd ./buildTools-resource
+                          echo "Listing files in directory: $(Pipeline.Workspace)/buildTools-resource"
+                          ls -la
 
                     - task: Bash@3
                       name: InstallBuildToolsFromTarball
