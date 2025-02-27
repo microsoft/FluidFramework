@@ -32,22 +32,22 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
-// @alpha
+// @alpha @deprecated
 export const currentDocumentVersionSchema = 1;
 
 // @alpha (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
-// @alpha
+// @alpha @deprecated
 export const DeletedResponseHeaderKey = "wasDeleted";
 
 // @alpha (undocumented)
 export const disabledCompressionConfig: ICompressionRuntimeOptions;
 
-// @alpha
+// @alpha @deprecated
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
 
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export class DocumentsSchemaController {
     constructor(existing: boolean, snapshotSequenceNumber: number, documentMetadataSchema: IDocumentSchema | undefined, features: IDocumentSchemaFeatures, onSchemaChange: (schema: IDocumentSchemaCurrent) => void);
     maybeSendSchemaMessage(): IDocumentSchemaChangeMessage | undefined;
@@ -73,7 +73,7 @@ export type EnqueueSummarizeResult = (ISummarizeResults & {
     readonly overridden?: undefined;
 };
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type GCFeatureMatrix = {
     gcGeneration?: number;
     tombstoneGeneration?: undefined;
@@ -81,7 +81,7 @@ export type GCFeatureMatrix = {
     tombstoneGeneration: number;
 };
 
-// @alpha
+// @alpha @deprecated
 export const GCNodeType: {
     readonly DataStore: "DataStore";
     readonly SubDataStore: "SubDataStore";
@@ -89,10 +89,10 @@ export const GCNodeType: {
     readonly Other: "Other";
 };
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type GCNodeType = (typeof GCNodeType)[keyof typeof GCNodeType];
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export type GCVersion = number;
 
 // @alpha
@@ -121,7 +121,7 @@ export interface IBaseSummarizeResult {
     readonly stage: "base";
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IBlobManagerLoadInfo {
     // (undocumented)
     ids?: string[];
@@ -137,13 +137,13 @@ export interface IBroadcastSummaryResult {
     readonly summarizeOp: ISummaryOpMessage;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ICancellableSummarizerController extends ISummaryCancellationToken {
     // (undocumented)
-    stop(reason: SummarizerStopReason_2): void;
+    stop(reason: SummarizerStopReason): void;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ICancellationToken<T> {
     readonly cancelled: boolean;
     readonly waitCancelled: Promise<T>;
@@ -163,7 +163,7 @@ export interface ICompressionRuntimeOptions {
     readonly minimumBatchSizeInBytes: number;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IConnectableRuntime {
     // (undocumented)
     readonly clientId: string | undefined;
@@ -175,7 +175,7 @@ export interface IConnectableRuntime {
     once(event: "connected" | "disconnected" | "dispose", listener: () => void): this;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
     readonly disableIsolatedChannels?: true;
     // (undocumented)
@@ -193,6 +193,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
     readonly compressionOptions?: ICompressionRuntimeOptions;
+    // @deprecated
+    readonly enableGroupedBatching?: boolean;
     readonly enableRuntimeIdCompressor?: IdCompressorMode;
     readonly explicitSchemaControl?: boolean;
     // (undocumented)
@@ -203,7 +205,7 @@ export interface IContainerRuntimeOptions {
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ICreateContainerMetadata {
     createContainerRuntimeVersion?: string;
     createContainerTimestamp?: number;
@@ -212,7 +214,7 @@ export interface ICreateContainerMetadata {
 // @alpha
 export type IdCompressorMode = "on" | "delayed" | undefined;
 
-// @alpha
+// @alpha @deprecated
 export interface IDocumentSchema {
     // (undocumented)
     refSeq: number;
@@ -222,10 +224,10 @@ export interface IDocumentSchema {
     version: number;
 }
 
-// @alpha
+// @alpha @deprecated
 export type IDocumentSchemaChangeMessage = IDocumentSchema;
 
-// @alpha
+// @alpha @deprecated
 export type IDocumentSchemaCurrent = {
     version: 1;
     refSeq: number;
@@ -234,7 +236,7 @@ export type IDocumentSchemaCurrent = {
     };
 };
 
-// @alpha
+// @alpha @deprecated
 export interface IDocumentSchemaFeatures {
     // (undocumented)
     compressionLz4: boolean;
@@ -280,7 +282,7 @@ export interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFlui
     readonly summaryFormatVersion: 2;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IGCMetadata {
     readonly gcFeature?: GCVersion;
     readonly gcFeatureMatrix?: GCFeatureMatrix;
@@ -299,7 +301,7 @@ export interface IGCRuntimeOptions {
     sweepGracePeriodMs?: number;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IGCStats extends IMarkPhaseStats, ISweepPhaseStats {
 }
 
@@ -322,7 +324,7 @@ export interface IGenerateSummaryTreeResult extends Omit<IBaseSummarizeResult, "
     readonly summaryTree: ISummaryTree;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IMarkPhaseStats {
     attachmentBlobCount: number;
     dataStoreCount: number;
@@ -352,7 +354,7 @@ export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly retryOnFailure?: boolean;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface IRefreshSummaryAckOptions {
     readonly ackHandle: string;
     readonly proposalHandle: string | undefined;
@@ -366,7 +368,7 @@ export interface IRetriableFailureError extends Error {
     readonly retryAfterSeconds?: number;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ISerializedElection {
     readonly electedClientId: string | undefined;
     readonly electedParentId: string | undefined;
@@ -381,24 +383,12 @@ export interface ISubmitSummaryOpResult extends Omit<IUploadSummaryResult, "stag
     readonly submitOpDuration: number;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISubmitSummaryOptions extends ISummarizeOptions {
     readonly cancellationToken: ISummaryCancellationToken;
     readonly finalAttempt?: boolean;
     readonly latestSummaryRefSeqNum: number;
     readonly summaryLogger: ITelemetryLoggerExt;
-}
-
-// @alpha @deprecated (undocumented)
-export interface ISummarizeEventProps {
-    // (undocumented)
-    currentAttempt: number;
-    // (undocumented)
-    error?: any;
-    // (undocumented)
-    maxAttempts: number;
-    // (undocumented)
-    result: "success" | "failure" | "canceled";
 }
 
 // @alpha
@@ -407,15 +397,15 @@ export interface ISummarizeOptions {
 }
 
 // @alpha (undocumented)
-export interface ISummarizer extends IEventProvider<ISummarizerEvents_2> {
+export interface ISummarizer extends IEventProvider<ISummarizerEvents> {
     // (undocumented)
     close(): void;
     enqueueSummarize(options: IEnqueueSummarizeOptions): EnqueueSummarizeResult;
     readonly ISummarizer?: ISummarizer;
     // (undocumented)
-    run(onBehalfOf: string): Promise<SummarizerStopReason_2>;
+    run(onBehalfOf: string): Promise<SummarizerStopReason>;
     // (undocumented)
-    stop(reason: SummarizerStopReason_2): void;
+    stop(reason: SummarizerStopReason): void;
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
 }
 
@@ -427,18 +417,12 @@ export interface ISummarizeResults {
 }
 
 // @alpha @deprecated (undocumented)
-export interface ISummarizerEvents extends IEvent {
-    // (undocumented)
-    (event: "summarize", listener: (props: ISummarizeEventProps) => void): any;
-}
-
-// @alpha (undocumented)
 export interface ISummarizerInternalsProvider {
     refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void>;
     submitSummary(options: ISubmitSummaryOptions): Promise<SubmitSummaryResult>;
 }
 
-// @alpha (undocumented)
+// @alpha @deprecated (undocumented)
 export interface ISummarizerRuntime extends IConnectableRuntime {
     // (undocumented)
     readonly baseLogger: ITelemetryBaseLogger;
@@ -482,8 +466,8 @@ export interface ISummaryBaseConfiguration {
     maxOpsSinceLastSummary: number;
 }
 
-// @alpha
-export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason_2>;
+// @alpha @deprecated
+export type ISummaryCancellationToken = ICancellationToken<SummarizerStopReason>;
 
 // @alpha (undocumented)
 export interface ISummaryCollectionOpEvents extends IEvent {
@@ -520,7 +504,7 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     state: "enabled";
 }
 
-// @alpha
+// @alpha @deprecated
 export type ISummaryMetadataMessage = Pick<ISequencedDocumentMessage, "clientId" | "clientSequenceNumber" | "minimumSequenceNumber" | "referenceSequenceNumber" | "sequenceNumber" | "timestamp" | "type">;
 
 // @alpha
@@ -546,7 +530,7 @@ export interface ISummaryRuntimeOptions {
     summaryConfigOverrides?: ISummaryConfiguration;
 }
 
-// @alpha
+// @alpha @deprecated
 export interface ISweepPhaseStats {
     deletedAttachmentBlobCount: number;
     deletedDataStoreCount: number;
@@ -600,8 +584,8 @@ export interface SubmitSummaryFailureData {
 // @alpha
 export type SubmitSummaryResult = IBaseSummarizeResult | IGenerateSummaryTreeResult | IUploadSummaryResult | ISubmitSummaryOpResult;
 
-// @alpha
-export class Summarizer extends TypedEventEmitter<ISummarizerEvents_2> implements ISummarizer {
+// @alpha @deprecated
+export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements ISummarizer {
     constructor(
     runtime: ISummarizerRuntime, configurationGetter: () => ISummaryConfiguration,
     internalsProvider: ISummarizerInternalsProvider, handleContext: IFluidHandleContext, summaryCollection: SummaryCollection, runCoordinatorCreateFn: (runtime: IConnectableRuntime) => Promise<ICancellableSummarizerController>);
@@ -615,9 +599,9 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents_2> implement
     // (undocumented)
     recordSummaryAttempt?(summaryRefSeqNum?: number): void;
     // (undocumented)
-    run(onBehalfOf: string): Promise<SummarizerStopReason_2>;
-    stop(reason: SummarizerStopReason_2): void;
-    static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason_2): boolean;
+    run(onBehalfOf: string): Promise<SummarizerStopReason>;
+    stop(reason: SummarizerStopReason): void;
+    static stopReasonCanRunLastSummary(stopReason: SummarizerStopReason): boolean;
     // (undocumented)
     summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults;
     // (undocumented)
@@ -635,36 +619,9 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> = {
     error: IRetriableFailureError;
 };
 
-// @alpha @deprecated (undocumented)
-export type SummarizerStopReason =
-/** Summarizer client failed to summarize in all attempts. */
-"failToSummarize"
-/** Parent client reported that it is no longer connected. */
-| "parentNotConnected"
-/**
-* Parent client reported that it is no longer elected the summarizer.
-* This is the normal flow; a disconnect will always trigger the parent
-* client to no longer be elected as responsible for summaries. Then it
-* tries to stop its spawned summarizer client.
-*/
-| "notElectedParent"
-/**
-* We are not already running the summarizer and we are not the current elected client id.
-*/
-| "notElectedClient"
-/** Summarizer client was disconnected */
-| "summarizerClientDisconnected"
-/** running summarizer threw an exception */
-| "summarizerException"
-/**
-* The previous summary state on the summarizer is not the most recently acked summary. this also happens when the
-* first submitSummary attempt fails for any reason and there's a 2nd summary attempt without an ack
-*/
-| "latestSummaryStateStale";
-
 // @alpha
 export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEvents> {
-    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryLoggerExt);
+    constructor(deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>, logger: ITelemetryBaseLogger);
     // (undocumented)
     addOpListener(listener: () => void): void;
     createWatcher(clientId: string): IClientSummaryWatcher;

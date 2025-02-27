@@ -35,7 +35,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "fluid-type-test-generator",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
 	},
 	"c8": {
@@ -74,9 +74,9 @@
 		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.38.0",
+		"@fluid-tools/build-cli": "0.52.0-315632",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.38.0",
+		"@fluidframework/build-tools": "0.52.0-315632",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-services-client-previous": "npm:@fluidframework/server-services-client@5.0.0",
 		"@microsoft/api-extractor": "^7.45.1",
@@ -97,9 +97,19 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"ClassDeclaration_NetworkError": {
+			"Class_NetworkError": {
+				"backCompat": false
+			},
+			"ClassStatics_NetworkError": {
+				"backCompat": false
+			},
+			"Enum_InternalErrorCode": {
+				"backCompat": false
+			},
+			"Interface_INetworkErrorDetails": {
 				"backCompat": false
 			}
-		}
+		},
+		"entrypoint": "public"
 	}
 }

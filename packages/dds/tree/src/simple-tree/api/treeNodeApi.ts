@@ -40,6 +40,7 @@ import {
 } from "../core/index.js";
 import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import { isLazy, type LazyItem } from "../flexList.js";
+import { markSchemaMostDerived } from "./schemaFactory.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -174,7 +175,7 @@ export const treeNodeApi: TreeNodeApi = {
 								changedFields,
 								(field) =>
 									nodeSchema.storedKeyToPropertyKey.get(field) ??
-									fail(`Could not find stored key '${field}' in schema.`),
+									fail(0xb36 /* Could not find stored key in schema. */),
 							),
 						);
 						listener({ changedProperties });
@@ -203,6 +204,10 @@ export const treeNodeApi: TreeNodeApi = {
 		value: unknown,
 		schema: TSchema,
 	): value is TreeNodeFromImplicitAllowedTypes<TSchema> {
+		// This "is" utility would return false if the provided schema is a base type of the actual schema.
+		// This could be confusing, and that case can only be hit when violating the rule that there is a single most derived schema that gets used (See documentation on TreeNodeSchemaClass).
+		// Therefore this uses markSchemaMostDerived to ensure an informative usage error is thrown in the case where a base type is used.
+
 		const actualSchema = tryGetSchema(value);
 		if (actualSchema === undefined) {
 			return false;
@@ -210,19 +215,19 @@ export const treeNodeApi: TreeNodeApi = {
 		if (isReadonlyArray<LazyItem<TreeNodeSchema>>(schema)) {
 			for (const singleSchema of schema) {
 				const testSchema = isLazy(singleSchema) ? singleSchema() : singleSchema;
+				markSchemaMostDerived(testSchema);
 				if (testSchema === actualSchema) {
 					return true;
 				}
 			}
 			return false;
 		} else {
-			// Linter is incorrect about this bering unnecessary: it does not compile without the type assertion.
-			// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-			return (schema as TreeNodeSchema) === actualSchema;
+			markSchemaMostDerived(schema);
+			return schema === actualSchema;
 		}
 	},
 	schema(node: TreeNode | TreeLeafValue): TreeNodeSchema {
-		return tryGetSchema(node) ?? fail("Not a tree node");
+		return tryGetSchema(node) ?? fail(0xb37 /* Not a tree node */);
 	},
 	shortId(node: TreeNode): number | string | undefined {
 		const schema = node[typeSchemaSymbol];
@@ -341,7 +346,7 @@ function getPropertyKeyFromStoredKey(
 	}
 
 	if (fields[storedKey] === undefined) {
-		fail("Existing stored key should always map to a property key");
+		fail(0xb38 /* Existing stored key should always map to a property key */);
 	}
 
 	return storedKey;

@@ -56,17 +56,17 @@ import {
 	type EncodedNodeChangeset,
 	type EncodedRevisionInfo,
 } from "./modularChangeFormat.js";
-import type {
-	ChangeAtomIdBTree,
-	FieldChangeMap,
-	FieldChangeset,
-	FieldId,
-	ModularChangeset,
-	NodeChangeset,
-	NodeId,
+import {
+	newCrossFieldKeyTable,
+	type ChangeAtomIdBTree,
+	type FieldChangeMap,
+	type FieldChangeset,
+	type FieldId,
+	type ModularChangeset,
+	type NodeChangeset,
+	type NodeId,
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import { newCrossFieldKeyTable } from "./modularChangeFamily.js";
 
 export function makeModularChangeCodecFamily(
 	fieldKindConfigurations: ReadonlyMap<number, FieldKindConfiguration>,
@@ -177,7 +177,7 @@ function makeModularChangeCodec(
 				return encodeNodeChangesForJson(node, fieldContext);
 			},
 
-			decodeNode: () => fail("Should not decode nodes during field encoding"),
+			decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 		};
 
 		return encodeFieldChangesForJsonI(change, fieldContext);
@@ -193,7 +193,7 @@ function makeModularChangeCodec(
 			const { codec, compiledSchema } = getFieldChangesetCodec(fieldChange.fieldKind);
 			const encodedChange = codec.json.encode(fieldChange.change, context);
 			if (compiledSchema !== undefined && !compiledSchema.check(encodedChange)) {
-				fail("Encoded change didn't pass schema validation.");
+				fail(0xb1f /* Encoded change didn't pass schema validation. */);
 			}
 
 			const fieldKey: FieldKey = field;
@@ -238,7 +238,7 @@ function makeModularChangeCodec(
 		for (const field of encodedChange) {
 			const { codec, compiledSchema } = getFieldChangesetCodec(field.fieldKind);
 			if (compiledSchema !== undefined && !compiledSchema.check(field.change)) {
-				fail("Encoded change didn't pass schema validation.");
+				fail(0xb20 /* Encoded change didn't pass schema validation. */);
 			}
 
 			const fieldId: FieldId = {
@@ -249,7 +249,7 @@ function makeModularChangeCodec(
 			const fieldContext: FieldChangeEncodingContext = {
 				baseContext: context,
 
-				encodeNode: () => fail("Should not encode nodes during field decoding"),
+				encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 
 				decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 					const nodeId: NodeId = {
@@ -277,8 +277,8 @@ function makeModularChangeCodec(
 				fieldChangeset,
 			);
 
-			for (const crossFieldKey of crossFieldKeys) {
-				decoded.crossFieldKeys.set(crossFieldKey, fieldId);
+			for (const { key, count } of crossFieldKeys) {
+				decoded.crossFieldKeys.set(key, count, fieldId);
 			}
 
 			const fieldKey: FieldKey = brand<FieldKey>(field.fieldKey);

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
@@ -36,7 +36,7 @@ describe("createChildDataStore", () => {
 		public setAttachState = throwNYI;
 		public getAttachSummary = throwNYI;
 		public getAttachGCData = throwNYI;
-		protected channel = new Proxy({} as any as IFluidDataStoreChannel, { get: throwNYI });
+		protected channel = new Proxy({} as unknown as IFluidDataStoreChannel, { get: throwNYI });
 		protected channelP = new LazyPromise(async () => this.channel);
 	};
 
@@ -58,8 +58,8 @@ describe("createChildDataStore", () => {
 	const createContext = (namedEntries?: NamedFluidDataStoreRegistryEntries) => {
 		const registry = createRegistry(namedEntries);
 		const createSummarizerNodeFn = () =>
-			new Proxy({} as any as ISummarizerNodeWithGC, { get: throwNYI });
-		const storage = new Proxy({} as any as IDocumentStorageService, { get: throwNYI });
+			new Proxy({} as unknown as ISummarizerNodeWithGC, { get: throwNYI });
+		const storage = new Proxy({} as unknown as IDocumentStorageService, { get: throwNYI });
 
 		const parentContext = {
 			clientDetails: {
@@ -119,10 +119,10 @@ describe("createChildDataStore", () => {
 		try {
 			context.createChildDataStore(factory);
 			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e));
-			assert(e.errorType === FluidErrorTypes.usageError);
-			assert(e.getTelemetryProperties().noCreateDataStore === true);
+		} catch (error) {
+			assert(isFluidError(error));
+			assert(error.errorType === FluidErrorTypes.usageError);
+			assert(error.getTelemetryProperties().noCreateDataStore === true);
 		}
 	});
 
@@ -132,10 +132,10 @@ describe("createChildDataStore", () => {
 		try {
 			context.createChildDataStore(factory);
 			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e));
-			assert(e.errorType === FluidErrorTypes.usageError);
-			assert(e.getTelemetryProperties().isUndefined === true);
+		} catch (error) {
+			assert(isFluidError(error));
+			assert(error.errorType === FluidErrorTypes.usageError);
+			assert(error.getTelemetryProperties().isUndefined === true);
 		}
 	});
 
@@ -146,10 +146,10 @@ describe("createChildDataStore", () => {
 		try {
 			context.createChildDataStore(factory);
 			assert.fail("should fail");
-		} catch (e) {
-			assert(isFluidError(e));
-			assert(e.errorType === FluidErrorTypes.usageError);
-			assert(e.getTelemetryProperties().diffInstance === true);
+		} catch (error) {
+			assert(isFluidError(error));
+			assert(error.errorType === FluidErrorTypes.usageError);
+			assert(error.getTelemetryProperties().diffInstance === true);
 		}
 	});
 

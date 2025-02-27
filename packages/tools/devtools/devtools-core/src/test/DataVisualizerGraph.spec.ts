@@ -17,7 +17,6 @@ import {
 	type FluidObjectValueNode,
 	VisualNodeKind,
 	createHandleNode,
-	defaultEditors,
 	defaultVisualizers,
 } from "../data-visualization/index.js";
 
@@ -31,7 +30,6 @@ describe("DataVisualizerGraph unit tests", () => {
 				counter: sharedCounter,
 			},
 			defaultVisualizers,
-			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -76,7 +74,6 @@ describe("DataVisualizerGraph unit tests", () => {
 				map: sharedMap,
 			},
 			defaultVisualizers,
-			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -163,7 +160,6 @@ describe("DataVisualizerGraph unit tests", () => {
 				cell: sharedCell,
 			},
 			defaultVisualizers,
-			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -205,7 +201,6 @@ describe("DataVisualizerGraph unit tests", () => {
 				unknownObject: unknownObject as IFluidLoadable,
 			},
 			defaultVisualizers,
-			defaultEditors,
 		);
 
 		const rootTrees = await visualizer.renderRootHandles();
@@ -222,11 +217,7 @@ describe("DataVisualizerGraph unit tests", () => {
 		// Pass in the empty containerData to the visualizer.
 		const emptyRecord: Record<string, IFluidLoadable> = {};
 
-		const visualizer = new DataVisualizerGraph(
-			emptyRecord,
-			defaultVisualizers,
-			defaultEditors,
-		);
+		const visualizer = new DataVisualizerGraph(emptyRecord, defaultVisualizers);
 
 		const childEmptyRecord = await visualizer.renderRootHandles();
 		const expectedChildEmptyRecord = {};

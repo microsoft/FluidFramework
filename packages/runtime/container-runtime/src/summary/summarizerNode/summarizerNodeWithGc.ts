@@ -51,7 +51,7 @@ interface PendingSummaryInfoWithGC extends PendingSummaryInfo {
  * - Manages the used routes of this node. These are used to identify if this node is referenced in the document
  * and to determine if the node's used state changed since last summary.
  *
- * - Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
+ *- Adds trackState param to summarize. If trackState is false, it bypasses the SummarizerNode and calls
  * directly into summarizeInternal method.
  */
 export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummarizerNodeWithGC {
@@ -95,12 +95,16 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		config: ISummarizerNodeConfigWithGC,
 		_summaryHandleId: EscapedPath,
 		changeSequenceNumber: number,
-		/** Summary reference sequence number, i.e. last sequence number seen when it was created */
+		/**
+		 * Summary reference sequence number, i.e. last sequence number seen when it was created
+		 */
 		lastSummaryReferenceSequenceNumber?: number,
 		wipSummaryLogger?: ITelemetryBaseLogger,
 		private readonly getGCDataFn?: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 		getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>,
-		/** A unique id of this node to be logged when sending telemetry. */
+		/**
+		 * A unique id of this node to be logged when sending telemetry.
+		 */
 		telemetryId?: string,
 	) {
 		super(
@@ -132,7 +136,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * - usedRoutes: This is used to figure out if the used state of this node changed since last summary.
 	 * - gcData: The garbage collection data of this node that is required for running GC.
 	 */
-	private async loadBaseGCDetails() {
+	private async loadBaseGCDetails(): Promise<void> {
 		if (this.baseGCDetailsLoaded) {
 			return;
 		}
@@ -152,8 +156,8 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			this.gcData = cloneGCData(baseGCDetails.gcData);
 		}
 		if (baseGCDetails.usedRoutes !== undefined) {
-			this.usedRoutes = Array.from(baseGCDetails.usedRoutes).sort();
-			this.referenceUsedRoutes = Array.from(baseGCDetails.usedRoutes).sort();
+			this.usedRoutes = [...baseGCDetails.usedRoutes].sort();
+			this.referenceUsedRoutes = [...baseGCDetails.usedRoutes].sort();
 		}
 	}
 
@@ -263,7 +267,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param parentSkipRecursion - true if the parent of this node skipped recursing the child nodes when summarizing.
 	 * In that case, the children will not have work-in-progress state.
 	 */
-	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean) {
+	protected completeSummaryCore(proposalHandle: string, parentSkipRecursion: boolean): void {
 		let wipSerializedUsedRoutes: string | undefined;
 		// If GC is disabled, don't set wip used routes.
 		if (!this.gcDisabled) {
@@ -288,7 +292,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	/**
 	 * Clears the work-in-progress state.
 	 */
-	public clearSummary() {
+	public clearSummary(): void {
 		this.wipSerializedUsedRoutes = undefined;
 		this.wipChildNodesUsedRoutes = undefined;
 		super.clearSummary();
@@ -324,7 +328,9 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 					);
 					throw error;
 				}
-				this.referenceUsedRoutes = JSON.parse(summaryNodeWithGC.serializedUsedRoutes);
+				this.referenceUsedRoutes = JSON.parse(
+					summaryNodeWithGC.serializedUsedRoutes,
+				) as string[];
 			}
 		}
 
@@ -335,9 +341,13 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * Override the createChild method to return an instance of SummarizerNodeWithGC.
 	 */
 	public createChild(
-		/** Summarize function */
+		/**
+		 * Summarize function
+		 */
 		summarizeInternalFn: SummarizeInternalFn,
-		/** Initial id or path part of this node */
+		/**
+		 * Initial id or path part of this node
+		 */
 		id: string,
 		/**
 		 * Information needed to create the node.
@@ -355,7 +365,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		 * snapshot and the child node wasn't created then. If a child is created after that, its GC details should be
 		 * the one from the downloaded snapshot and not the base GC details.
 		 */
-		const getChildBaseGCDetailsFn = async () => {
+		const getChildBaseGCDetailsFn = async (): Promise<IGarbageCollectionDetailsBase> => {
 			const childNodesBaseGCDetails = await this.childNodesBaseGCDetailsP;
 			return childNodesBaseGCDetails.get(id) ?? {};
 		};
@@ -395,7 +405,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 	 * @param child - The child node whose state is to be updated.
 	 * @param id - Initial id or path part of this node
 	 */
-	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string) {
+	protected maybeUpdateChildState(child: SummarizerNodeWithGC, id: string): void {
 		super.maybeUpdateChildState(child, id);
 
 		// If GC has run on this node and summarization isn't complete, this.wipSerializedUsedRoutes will be defined.
@@ -417,7 +427,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 			const pendingSummaryWithGC = pendingSummary as PendingSummaryInfoWithGC;
 			if (pendingSummaryWithGC.serializedUsedRoutes !== undefined) {
 				const childNodeUsedRoutes = unpackChildNodesUsedRoutes(
-					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes),
+					JSON.parse(pendingSummaryWithGC.serializedUsedRoutes) as string[],
 				);
 				const newSerializedRoutes = childNodeUsedRoutes.get(id) ?? [""];
 				const childPendingSummaryInfo = {
@@ -447,7 +457,7 @@ export class SummarizerNodeWithGC extends SummarizerNode implements IRootSummari
 		return this.usedRoutes.includes("") || this.usedRoutes.includes("/");
 	}
 
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: string[]): void {
 		// Sort the given routes before updating. This will ensure that the routes compared in hasUsedStateChanged()
 		// are in the same order.
 		this.usedRoutes = usedRoutes.sort();

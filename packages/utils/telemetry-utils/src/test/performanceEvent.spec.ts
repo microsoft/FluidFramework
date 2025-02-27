@@ -65,6 +65,36 @@ describe("PerformanceEvent", () => {
 		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
 	});
 
+	it("Cancel then throw (double cancel)", async () => {
+		assert.throws(
+			() =>
+				PerformanceEvent.timedExec(
+					logger,
+					{ eventName: "Testing" },
+					(event) => {
+						callbackCalls++;
+
+						// This is how you can use custom logic to override the "error" category for cancel (specified in the markers below)
+						event.cancel({ category: "generic" });
+						throw new Error("Cancelled already");
+					},
+					{
+						start: true,
+						end: true,
+						cancel: "error",
+					},
+				),
+			(e: Error) => e.message === "Cancelled already",
+			"Should have thrown the error",
+		);
+		assert.equal(logger.errorsLogged, 0, "Shouldn't have logged any errors");
+		assert.equal(
+			logger.eventsLogged,
+			2,
+			"Should have logged a start and cancel event (not with error category)",
+		);
+	});
+
 	describe("Event sampling", () => {
 		it("Events are logged at least once", async () => {
 			await PerformanceEvent.timedExecAsync(

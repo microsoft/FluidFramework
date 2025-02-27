@@ -11,7 +11,6 @@ import {
 	type ChangesetLocalId,
 	type DeltaDetachedNodeChanges,
 	type DeltaDetachedNodeId,
-	type DeltaFieldChanges,
 	type DeltaMark,
 	type RevisionTag,
 	areEqualChangeAtomIds,
@@ -40,6 +39,7 @@ import {
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	type NestedChangesIndices,
+	type FieldChangeDelta,
 } from "../modular-schema/index.js";
 
 import type {
@@ -645,11 +645,18 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 		},
 	}),
 
-	buildChildChange: (index: number, childChange: NodeId): OptionalChangeset => {
-		assert(index === 0, 0x404 /* Optional fields only support a single child node */);
+	buildChildChanges: (changes: Iterable<[number, NodeId]>): OptionalChangeset => {
+		const childChanges: ChildChange[] = Array.from(changes, ([index, childChange]) => {
+			assert(index === 0, 0x404 /* Optional fields only support a single child node */);
+			return ["self", childChange];
+		});
+		assert(
+			childChanges.length <= 1,
+			0xabd /* Optional fields only support a single child node */,
+		);
 		return {
 			moves: [],
-			childChanges: [["self", childChange]],
+			childChanges,
 		};
 	},
 };
@@ -657,8 +664,8 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 export function optionalFieldIntoDelta(
 	change: OptionalChangeset,
 	deltaFromChild: ToDelta,
-): DeltaFieldChanges {
-	const delta: Mutable<DeltaFieldChanges> = {};
+): FieldChangeDelta {
+	const delta: Mutable<FieldChangeDelta> = {};
 
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };

@@ -124,7 +124,8 @@
 		},
 		"getDeltasRequestMaxOpsRange": 2000,
 		"useNodeCluster": false,
-		"enableLatencyMetric": false
+		"enableLatencyMetric": false,
+		"enableEventLoopLagMetric": false
 	},
 	"riddler": {
 		"useNodeCluster": false
@@ -167,7 +168,8 @@
 		"socketIo": {
 			"perMessageDeflate": false,
 			"gracefulShutdownEnabled": false,
-			"pingPongLatencyTrackingEnabled": false
+			"pingPongLatencyTrackingEnabled": false,
+			"pingPongLatencyTrackingAggregationThreshold": 3
 		},
 		"jwtTokenCache": {
 			"enable": true

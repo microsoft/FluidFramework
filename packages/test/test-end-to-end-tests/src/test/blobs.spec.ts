@@ -248,7 +248,7 @@ describeCompat("blobs", "FullCompat", (getTestObjectProvider, apis) => {
 			const runtimeOptions: IContainerRuntimeOptionsInternal = {
 				...testContainerConfig.runtimeOptions,
 				compressionOptions: {
-					minimumBatchSizeInBytes: 1,
+					minimumBatchSizeInBytes: enableGroupedBatching ? 1 : Number.POSITIVE_INFINITY,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
 				},
 				enableGroupedBatching,
@@ -468,9 +468,9 @@ function serializationTests({
 							...testContainerConfig,
 							loaderProps: {
 								detachedBlobStorage,
-								options: { summarizeProtocolTree },
 								configProvider: createTestConfigProvider({
 									"Fluid.Container.MemoryBlobStorageEnabled": true,
+									"Fluid.Container.summarizeProtocolTree2": summarizeProtocolTree,
 								}),
 							},
 						});

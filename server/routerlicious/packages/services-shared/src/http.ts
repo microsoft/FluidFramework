@@ -134,7 +134,7 @@ export const IsEphemeralContainer = "Is-Ephemeral-Container";
  * @param resultP - Promise whose resolved value or rejected error will send with appropriate status codes.
  * @param response - Express Response used for writing response body, headers, and status.
  * @param allowClientCache - sends Cache-Control header with maximum age set to 1 yr if true or no store if false.
- * @param errorStatus - Overrides any error status code; leave undefined for pass-through error codes or 400 default.
+ * @param errorStatus - Default status if status code not in NetworkError. Default: 400.
  * @param successStatus - Status to send when result is successful. Default: 200
  * @param onSuccess - Additional callback fired when response is successful before sending response.
  * @internal
@@ -173,7 +173,7 @@ export function handleResponse<T>(
 			if (error instanceof Error && error?.name === "NetworkError") {
 				const networkError = error as NetworkError;
 				response
-					.status(errorStatus ?? networkError.code ?? 400)
+					.status(networkError.code ?? errorStatus ?? 400)
 					.json(networkError.details ?? error);
 			} else {
 				// Mask unexpected internal errors in outgoing response.

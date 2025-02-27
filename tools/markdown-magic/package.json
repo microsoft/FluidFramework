@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-tools/markdown-magic",
-	"version": "2.20.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Contains shared utilities for Markdown content generation and embedding using markdown-magic.",
 	"homepage": "https://fluidframework.com",
@@ -19,8 +19,8 @@
 		"build": "npm run build:docs",
 		"build:docs": "node src/index.cjs --files README.md",
 		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"lint": "npm run prettier",
+		"lint:fix": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache",
 		"prettier:fix": "prettier --write . --cache",
 		"test": "node src/index.cjs --files \"test/**/*.md\" !test/README.md"

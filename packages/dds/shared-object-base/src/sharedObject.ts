@@ -33,6 +33,7 @@ import {
 	blobCountPropertyName,
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
+	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -161,6 +162,20 @@ export abstract class SharedObjectCore<
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
 		this.callbacksHelper = callbacksHelper;
+
+		const processMessagesCore = this.processMessagesCore?.bind(this);
+		this.processMessagesHelper =
+			processMessagesCore === undefined
+				? (messagesCollection: IRuntimeMessageCollection) =>
+						processHelper(messagesCollection, this.process.bind(this))
+				: (messagesCollection: IRuntimeMessageCollection) => {
+						processMessagesCoreHelper(
+							messagesCollection,
+							this.opProcessingHelper,
+							this.emitInternal.bind(this),
+							processMessagesCore,
+						);
+					};
 	}
 
 	/**
@@ -353,7 +368,7 @@ export abstract class SharedObjectCore<
 	): Promise<ISummaryTreeWithStats>;
 
 	/**
-	 * {@inheritDoc (ISharedObject:interface).getGCData}
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
 	 */
 	public abstract getGCData(fullGC?: boolean): IGarbageCollectionData;
 
@@ -384,12 +399,42 @@ export abstract class SharedObjectCore<
 	 * @param local - True if the shared object is local
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 *
+	 * @deprecated Replaced by {@link SharedObjectCore.processMessagesCore}.
 	 */
 	protected abstract processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void;
+
+	/* eslint-disable jsdoc/check-indentation */
+	/**
+	 * Process a 'bunch' of messages for this shared object.
+	 *
+	 * @remarks
+	 * A 'bunch' is a group of messages that have the following properties:
+	 * - They are all part of the same grouped batch, which entails:
+	 *   - They are contiguous in sequencing order.
+	 *   - They are all from the same client.
+	 *   - They are all based on the same reference sequence number.
+	 *   - They are not interleaved with messages from other clients.
+	 * - They are not interleaved with messages from other DDS in the container.
+	 * Derived classes should override this if they need to do custom processing on a 'bunch' of remote messages.
+	 * @param messageCollection - The collection of messages to process.
+	 *
+	 */
+	/* eslint-enable jsdoc/check-indentation */
+	protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
+
+	/**
+	 * Calls {@link SharedObjectCore.processCore} or {@link SharedObjectCore.processMessagesCore} depending on whether
+	 * processMessagesCore is defined. This helper is used to keep the code cleaner while we have to support both these
+	 * function.
+	 */
+	private readonly processMessagesHelper: (
+		messagesCollection: IRuntimeMessageCollection,
+	) => void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
@@ -557,6 +602,8 @@ export abstract class SharedObjectCore<
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 *
+	 * @deprecated Replaced by {@link SharedObjectCore.processMessages}.
 	 */
 	private process(
 		message: ISequencedDocumentMessage,
@@ -582,23 +629,42 @@ export abstract class SharedObjectCore<
 		this.emitInternal("op", message, local, this);
 	}
 
+	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Process messages for this shared object. The messages here are contiguous messages for this object in a batch.
+	 * Process a bunch of messages for this shared object. A bunch is group of messages that have the following properties:
+	 * - They are all part of the same grouped batch, which entails:
+	 *   - They are contiguous in sequencing order.
+	 *   - They are all from the same client.
+	 *   - They are all based on the same reference sequence number.
+	 *   - They are not interleaved with messages from other clients.
+	 * - They are not interleaved with messages from other DDS in the container.
 	 * @param messageCollection - The collection of messages to process.
+	 *
 	 */
+	/* eslint-enable jsdoc/check-indentation */
 	private processMessages(messagesCollection: IRuntimeMessageCollection): void {
-		const { envelope, messagesContent, local } = messagesCollection;
-		for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-			this.process(
-				{
-					...envelope,
-					clientSequenceNumber,
-					contents: parseHandles(contents, this.serializer),
-				},
-				local,
+		this.verifyNotClosed(); // This will result in container closure.
+
+		// Decode any handles in the contents before processing the messages.
+		const decodedMessagesContent: IRuntimeMessagesContent[] = [];
+		for (const {
+			contents,
+			localOpMetadata,
+			clientSequenceNumber,
+		} of messagesCollection.messagesContent) {
+			const decodedMessageContent: IRuntimeMessagesContent = {
+				contents: parseHandles(contents, this.serializer),
 				localOpMetadata,
-			);
+				clientSequenceNumber,
+			};
+			decodedMessagesContent.push(decodedMessageContent);
 		}
+
+		const decodedMessagesCollection: IRuntimeMessageCollection = {
+			...messagesCollection,
+			messagesContent: decodedMessagesContent,
+		};
+		this.processMessagesHelper(decodedMessagesCollection);
 	}
 
 	/**
@@ -766,7 +832,7 @@ export abstract class SharedObject<
 	}
 
 	/**
-	 * {@inheritDoc (ISharedObject:interface).getGCData}
+	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getGCData}
 	 */
 	public getGCData(fullGC: boolean = false): IGarbageCollectionData {
 		// Set _isGCing to true. This flag is used to ensure that we only use SummarySerializer to serialize handles
@@ -913,7 +979,7 @@ export interface SharedObjectKind<out TSharedObject = unknown>
  * Utility for creating ISharedObjectKind instances.
  * @remarks
  * This takes in a class which implements IChannelFactory,
- * and uses it to return a a single value which is intended to be used as the APi entry point for the corresponding shared object type.
+ * and uses it to return a a single value which is intended to be used as the API entry point for the corresponding shared object type.
  * The returned value implements {@link ISharedObjectKind} for use in the encapsulated API, as well as the type erased {@link SharedObjectKind} used by the declarative API.
  * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
  * @internal
@@ -942,4 +1008,76 @@ export function createSharedObjectKind<TSharedObject>(
 function isChannel(loadable: IFluidLoadable): loadable is IChannel {
 	// This assumes no other IFluidLoadable has an `attributes` field, and thus may not be fully robust.
 	return (loadable as IChannel).attributes !== undefined;
+}
+
+/**
+ * Utility that processes the given messages in the message collection together by calling `processMessagesCore`.
+ * This will be called when {@link SharedObjectCore.processMessagesCore} is defined.
+ */
+function processMessagesCoreHelper(
+	messagesCollection: IRuntimeMessageCollection,
+	opProcessingHelper: SampledTelemetryHelper<void, ProcessTelemetryProperties>,
+	emitInternal: (
+		event: "pre-op" | "op",
+		op: ISequencedDocumentMessage,
+		local: boolean,
+	) => void,
+	processMessagesCore: (messagesCollection: IRuntimeMessageCollection) => void,
+): void {
+	const { envelope, local, messagesContent } = messagesCollection;
+
+	const emitEvents = (
+		event: "pre-op" | "op",
+		messagesContentForEvent: readonly IRuntimeMessagesContent[],
+	): void => {
+		for (const { contents, clientSequenceNumber } of messagesContentForEvent) {
+			const message: ISequencedDocumentMessage = {
+				...envelope,
+				contents,
+				clientSequenceNumber,
+			};
+			emitInternal(event, message, local);
+		}
+	};
+
+	emitEvents("pre-op", messagesContent);
+	opProcessingHelper.measure(
+		(): ICustomData<ProcessTelemetryProperties> => {
+			processMessagesCore(messagesCollection);
+			const telemetryProperties: ProcessTelemetryProperties = {
+				sequenceDifference: envelope.sequenceNumber - envelope.referenceSequenceNumber,
+			};
+			return {
+				customData: telemetryProperties,
+			};
+		},
+		local ? "local" : "remote",
+	);
+	emitEvents("op", messagesContent);
+}
+
+/**
+ * Utility that processes the given messages in the message collection one by one by calling `process`. This will
+ * be called when {@link SharedObjectCore.processMessagesCore} is not defined.
+ */
+function processHelper(
+	messagesCollection: IRuntimeMessageCollection,
+	process: (
+		message: ISequencedDocumentMessage,
+		local: boolean,
+		localOpMetadata: unknown,
+	) => void,
+): void {
+	const { envelope, local, messagesContent } = messagesCollection;
+	for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
+		process(
+			{
+				...envelope,
+				contents,
+				clientSequenceNumber,
+			},
+			local,
+			localOpMetadata,
+		);
+	}
 }

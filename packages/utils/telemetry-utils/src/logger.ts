@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import {
 	type ITelemetryBaseEvent,
 	type ITelemetryBaseLogger,
@@ -722,11 +722,11 @@ export class PerformanceEvent {
 	}
 
 	public get duration(): number {
-		return performance.now() - this.startTime;
+		return performanceNow() - this.startTime;
 	}
 
 	private event?: ITelemetryGenericEventExt;
-	private readonly startTime = performance.now();
+	private readonly startTime = performanceNow();
 	private startMark?: string;
 
 	protected constructor(
@@ -763,12 +763,16 @@ export class PerformanceEvent {
 			this.reportEvent("end");
 		}
 		this.performanceEndMark();
+
+		// To prevent the event from being reported again later
 		this.event = undefined;
 	}
 
 	public end(props?: ITelemetryPropertiesExt): void {
 		this.reportEvent("end", props);
 		this.performanceEndMark();
+
+		// To prevent the event from being reported again later
 		this.event = undefined;
 	}
 
@@ -785,6 +789,8 @@ export class PerformanceEvent {
 		if (this.markers.cancel !== undefined) {
 			this.reportEvent("cancel", { category: this.markers.cancel, ...props }, error);
 		}
+
+		// To prevent the event from being reported again later
 		this.event = undefined;
 	}
 
@@ -796,9 +802,8 @@ export class PerformanceEvent {
 		props?: ITelemetryPropertiesExt,
 		error?: unknown,
 	): void {
-		// There are strange sequences involving multiple Promise chains
-		// where the event can be cancelled and then later a callback is invoked
-		// and the caller attempts to end directly, e.g. issue #3936. Just return.
+		// If the caller invokes cancel or end directly inside the callback for timedExec[Async],
+		// then it's possible to come back through reportEvent twice.  Only the first time counts.
 		if (!this.event) {
 			return;
 		}

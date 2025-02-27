@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import {
 	IContainer,
 	IHostLoader,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
+	// eslint-disable-next-line import/no-deprecated
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	ISummaryRuntimeOptions,
@@ -29,8 +29,13 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { createTestConfigProvider } from "./TestConfigs.js";
+// eslint-disable-next-line import/no-deprecated
+import { ContainerRuntimeFactoryWithDefaultDataStore } from "./containerRuntimeFactories.js";
 import { waitForContainerConnection } from "./containerUtils.js";
-import { createContainerRuntimeFactoryWithDefaultDataStore } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+import {
+	type ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
+	createContainerRuntimeFactoryWithDefaultDataStore,
+} from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
 import { ITestContainerConfig, ITestObjectProvider } from "./testObjectProvider.js";
 import { timeoutAwait } from "./timeoutUtils.js";
 
@@ -117,13 +122,14 @@ export async function createSummarizerFromFactory(
 	container: IContainer,
 	dataStoreFactory: IFluidDataStoreFactory,
 	summaryVersion?: string,
-	containerRuntimeFactoryType = ContainerRuntimeFactoryWithDefaultDataStore,
+	containerRuntimeFactoryType?: ContainerRuntimeFactoryWithDefaultDataStoreConstructor,
 	registryEntries?: NamedFluidDataStoreRegistryEntries,
 	logger?: ITelemetryBaseLogger,
 	configProvider: IConfigProviderBase = createTestConfigProvider(),
 ): Promise<{ container: IContainer; summarizer: ISummarizer }> {
 	const runtimeFactory = createContainerRuntimeFactoryWithDefaultDataStore(
-		containerRuntimeFactoryType,
+		// eslint-disable-next-line import/no-deprecated
+		containerRuntimeFactoryType ?? ContainerRuntimeFactoryWithDefaultDataStore,
 		{
 			defaultFactory: dataStoreFactory,
 			registryEntries: registryEntries ?? [

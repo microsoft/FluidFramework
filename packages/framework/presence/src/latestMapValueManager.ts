@@ -5,10 +5,11 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import type { IEmitter } from "@fluidframework/core-interfaces/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
-import type { ValueManager } from "./internalTypes.js";
+import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import { objectEntries, objectKeys } from "./internalUtils.js";
 import type {
 	LatestValueClientData,
@@ -88,7 +89,7 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	updated: (updates: LatestMapValueClientData<T, K>) => void;
 
 	/**
-	 * Raised when specific item's value is updated.
+	 * Raised when specific item's value of remote client is updated.
 	 * @param updatedItem - Updated item value.
 	 *
 	 * @eventProperty
@@ -96,12 +97,33 @@ export interface LatestMapValueManagerEvents<T, K extends string | number> {
 	itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
 
 	/**
-	 * Raised when specific item is removed.
+	 * Raised when specific item of remote client is removed.
 	 * @param removedItem - Removed item.
 	 *
 	 * @eventProperty
 	 */
 	itemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
+
+	/**
+	 * Raised when specific local item's value is updated.
+	 * @param updatedItem - Updated item value.
+	 *
+	 * @eventProperty
+	 */
+	localItemUpdated: (updatedItem: {
+		value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+		key: K;
+	}) => void;
+
+	/**
+	 * Raised when specific local item is removed.
+	 * @param removedItem - Removed item.
+	 *
+	 * @eventProperty
+	 */
+	localItemRemoved: (removedItem: {
+		key: K;
+	}) => void;
 }
 
 /**
@@ -191,6 +213,9 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 	private countDefined: number;
 	public constructor(
 		private readonly value: InternalTypes.MapValueState<T, K>,
+		private readonly emitter: IEmitter<
+			Pick<LatestMapValueManagerEvents<T, K>, "localItemUpdated" | "localItemRemoved">
+		>,
 		private readonly localUpdate: (
 			updates: InternalTypes.MapValueState<
 				T,
@@ -232,6 +257,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 		if (hasKey) {
 			this.countDefined -= 1;
 			this.updateItem(key, undefined);
+			this.emitter.emit("localItemRemoved", { key });
 		}
 		return hasKey;
 	}
@@ -261,6 +287,7 @@ class ValueMapImpl<T, K extends string | number> implements ValueMap<K, T> {
 			this.value.items[key] = { rev: 0, timestamp: 0, value };
 		}
 		this.updateItem(key, value);
+		this.emitter.emit("localItemUpdated", { key, value });
 		return this;
 	}
 	public get size(): number {
@@ -308,7 +335,7 @@ export interface LatestMapValueManager<T, Keys extends string | number = string 
 	 */
 	clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
 	/**
-	 * Array of known clients.
+	 * Array of known remote clients.
 	 */
 	clients(): ISessionClient[];
 	/**
@@ -341,6 +368,7 @@ class LatestMapValueManagerImpl<
 
 		this.local = new ValueMapImpl<T, Keys>(
 			value,
+			this.events,
 			(updates: InternalTypes.MapValueState<T, Keys>) => {
 				datastore.localUpdate(key, updates, {
 					allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
@@ -372,10 +400,10 @@ class LatestMapValueManagerImpl<
 	public clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId = client.sessionId;
-		if (!(clientSessionId in allKnownStates.states)) {
+		const clientStateMap = allKnownStates.states[clientSessionId];
+		if (clientStateMap === undefined) {
 			throw new Error("No entry for client");
 		}
-		const clientStateMap = allKnownStates.states[clientSessionId];
 		const items = new Map<Keys, LatestValueData<T>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
 			const value = item.value;
@@ -393,17 +421,15 @@ class LatestMapValueManagerImpl<
 		client: SpecificSessionClient<SpecificSessionClientId>,
 		_received: number,
 		value: InternalTypes.MapValueState<T, string | number>,
-	): void {
+	): PostUpdateAction[] {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientSessionId: SpecificSessionClientId = client.sessionId;
-		if (!(clientSessionId in allKnownStates.states)) {
+		const currentState = (allKnownStates.states[clientSessionId] ??=
 			// New client - prepare new client state directory
-			allKnownStates.states[clientSessionId] = {
+			{
 				rev: value.rev,
 				items: {} as unknown as InternalTypes.MapValueState<T, Keys>["items"],
-			};
-		}
-		const currentState = allKnownStates.states[clientSessionId];
+			});
 		// Accumulate individual update keys
 		const updatedItemKeys: Keys[] = [];
 		for (const [key, item] of objectEntries(value.items)) {
@@ -415,7 +441,7 @@ class LatestMapValueManagerImpl<
 		}
 
 		if (updatedItemKeys.length === 0) {
-			return;
+			return [];
 		}
 
 		// Store updates
@@ -426,6 +452,7 @@ class LatestMapValueManagerImpl<
 			client,
 			items: new Map<Keys, LatestValueData<T>>(),
 		};
+		const postUpdateActions: PostUpdateAction[] = [];
 		for (const key of updatedItemKeys) {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			const item = value.items[key]!;
@@ -433,23 +460,28 @@ class LatestMapValueManagerImpl<
 			currentState.items[key] = item;
 			const metadata = { revision: item.rev, timestamp: item.timestamp };
 			if (item.value !== undefined) {
-				this.events.emit("itemUpdated", {
+				const itemValue = item.value;
+				const updatedItem = {
 					client,
 					key,
-					value: item.value,
+					value: itemValue,
 					metadata,
-				});
-				allUpdates.items.set(key, { value: item.value, metadata });
+				};
+				postUpdateActions.push(() => this.events.emit("itemUpdated", updatedItem));
+				allUpdates.items.set(key, { value: itemValue, metadata });
 			} else if (hadPriorValue !== undefined) {
-				this.events.emit("itemRemoved", {
-					client,
-					key,
-					metadata,
-				});
+				postUpdateActions.push(() =>
+					this.events.emit("itemRemoved", {
+						client,
+						key,
+						metadata,
+					}),
+				);
 			}
 		}
 		this.datastore.update(this.key, clientSessionId, currentState);
-		this.events.emit("updated", allUpdates);
+		postUpdateActions.push(() => this.events.emit("updated", allUpdates));
+		return postUpdateActions;
 	}
 }
 

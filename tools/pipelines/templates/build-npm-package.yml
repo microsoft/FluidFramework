@@ -278,7 +278,7 @@ extends:
                         exit -1;
                       fi
 
-                      if [ -f "lerna.json" ]; then
+                      if [ -f ".releaseGroup" ]; then
                         grep -e fluid.*[0-9]-[0-9] `find packages -name 'package.json'`
                       else
                         grep -e fluid.*[0-9]-[0-9] `find . -name 'package.json'`
@@ -353,17 +353,10 @@ extends:
                         parameters:
                           taskTestStep: '${{ taskTestStep }}'
                           buildDirectory: '${{ parameters.buildDirectory }}'
-                          # Don't run with coverage if the task is a PR and the task is a tinylicious service and stress test. We don't include coverage for these tests in our baseline coverage stats, so we don't need to run them with coverage here too.
                           testCoverage: ${{
                             and(
                               parameters.testCoverage,
-                              or(
-                                ne(variables['Build.Reason'], 'PullRequest'),
-                                and(
-                                  not(contains(taskTestStep, 'realsvc:tinylicious')),
-                                  not(contains(taskTestStep, 'stress:tinylicious'))
-                                )
-                              )
+                              ne(variables['Build.Reason'], 'PullRequest')
                             )}}
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
@@ -483,7 +476,7 @@ extends:
                   # Copy files so all artifacts we publish end up under the same parent folder.
                   # The sourceFolder should be wherever the 'npm run bundle-analysis:collect' task places its output.
                   - task: CopyFiles@2
-                    displayName: Copy _api-extractor-temp files to artifact staging directory
+                    displayName: Copy bundleAnalysis files to artifact staging directory
                     inputs:
                       sourceFolder: '${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
@@ -520,8 +513,6 @@ extends:
 
                       - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                         parameters:
-                          devFeedUrl: $(ado-feeds-dev)
-                          officeFeedUrl: $(ado-feeds-office)
                           pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
 
                       - task: Bash@3
@@ -681,8 +672,6 @@ extends:
               steps:
               - template: /tools/pipelines/templates/include-telemetry-setup.yml@self
                 parameters:
-                  devFeedUrl: $(ado-feeds-dev)
-                  officeFeedUrl: $(ado-feeds-office)
                   pathForTelemetryGeneratorInstall: $(pathToTelemetryGenerator)
               - task: Bash@3
                 displayName: Get stage timing and result data from ADO

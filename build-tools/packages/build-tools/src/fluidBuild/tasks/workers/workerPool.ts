@@ -112,17 +112,24 @@ export class WorkerPool {
 				// Since recreating workers fixes this, but takes time,
 				// recreate them only when the memory use becomes too high.
 
+				const freeMemory = freemem();
 				// As a heuristic to avoid memory pressure, lower threshold if running out of memory.
-				const currentMemoryLimit = Math.min(this.memoryUsageLimit, freemem());
+				const currentMemoryLimit = Math.min(this.memoryUsageLimit, freeMemory / 2);
+				const bytesPerGiB = 1024 * 1024 * 1024;
 
 				if (
 					// Don't keep worker if using more than currentMemoryLimit bytes of memory.
 					(res.memoryUsage?.rss ?? 0) > currentMemoryLimit ||
 					// In case memoryUsage is not available,
-					// or as a last result when something other than this worker is using up all the memory
-					// kill the worker if there is less than 2 GB of memory free.
-					freemem() < 2 * 1024 * 1024 * 1024
+					// or as a last resort when something other than this worker is using up all the memory
+					// kill the worker if there is less than 4 GB of memory free.
+					freeMemory < 4 * bytesPerGiB
 				) {
+					// This typically happens around 21 times in a full clean build of client, and much less if any in an incremental build,
+					// so it should not be too verbose to log.
+					console.info(
+						`Freeing worker ${worker.pid} due to memory pressure. Free memory: ${freeMemory / bytesPerGiB} GiB, rss: ${res.memoryUsage?.rss ? res.memoryUsage?.rss / bytesPerGiB : undefined} GiB, memoryUsageLimit: ${this.memoryUsageLimit / bytesPerGiB} GiB, currentMemoryLimit: ${currentMemoryLimit / bytesPerGiB} GiB`,
+					);
 					worker.kill();
 				} else {
 					this.processWorkerPool.push(worker);

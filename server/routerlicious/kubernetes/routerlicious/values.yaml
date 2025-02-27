@@ -63,6 +63,7 @@ nexus:
     perMessageDeflate: true
     gracefulShutdownEnabled: false
     pingPongLatencyTrackingEnabled: false
+    pingPongLatencyTrackingAggregationThreshold: 3
   enableCollaborationSessionTracking: false
   enableCollaborationSessionPruning: false
   redisCollaborationSessionManagerOptions:

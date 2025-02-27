@@ -1,5 +1,37 @@
 # @fluidframework/tree
 
+## 2.22.0
+
+### Minor Changes
+
+-   Add `leaves` and statics to `SchemaFactory`. ([#23787](https://github.com/microsoft/FluidFramework/pull/23787)) [efa90f6274](https://github.com/microsoft/FluidFramework/commit/efa90f6274152cadb55329b7bbf6a6cd8e299847)
+
+    `SchemaFactory` now has a `leaves` member that is an array of all leaf schema.
+
+    `SchemaFactory` now has static members to access leaf schema and create field schema.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+### Minor Changes
+
+-   Events-related interfaces have been moved to core-interfaces ([#23313](https://github.com/microsoft/FluidFramework/pull/23313)) [69a755ebd7](https://github.com/microsoft/FluidFramework/commit/69a755ebd76db36ffd4638d331062f96ec4c0648)
+
+    The following interfaces and types have been moved from the `@fluidframework/tree` package into the
+    `@fluidframework/core-interfaces` package. As such, they are now deprecated in the `@fluidframework/tree` package.
+
+    -   Listeners
+    -   IsListener
+    -   Listenable
+    -   Off
+
+    Users should now import them from either `@fluidframework/core-interfaces` or `fluid-framework`.
+
+    These deprecated interfaces will be removed from the `@fluidframework/tree` package in Fluid Framework v3.0.
+
 ## 2.13.0
 
 ### Minor Changes
