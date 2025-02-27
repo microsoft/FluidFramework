@@ -18,12 +18,14 @@ import type { ContainerSchema, LoadableObjectKind } from "./types.js";
 export function isDataObjectKind<T extends IFluidLoadable>(
 	obj: LoadableObjectKind<T>,
 ): obj is DataObjectKind<T>;
+
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
 export function isDataObjectKind(
 	obj: LoadableObjectKind,
 ): obj is DataObjectKind<IFluidLoadable>;
+
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
  */
