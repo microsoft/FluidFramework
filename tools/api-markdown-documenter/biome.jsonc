@@ -1,7 +1,27 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
 	"extends": ["../../biome.jsonc"],
-	"files": {
-		"ignore": ["**/test/test-data/**"]
-	}
+	"overrides": [
+		{
+			// JSONC WITHOUT TRAILING COMMAS
+			// JSONC is not a standard, and support for trailing commas is not universal. For
+			// simplicity and safety, we parse most JSONC files in a liberal way -- allowing comments and trailing commas, but
+			// format them conservatively without trailing commas.
+			//
+			// See also: https://github.com/microsoft/vscode/issues/102061
+			"include": [
+				// These files contain comments, but are not JSONC files
+				"**/test/test-data/**"
+			],
+			"json": {
+				"parser": {
+					"allowComments": true,
+					"allowTrailingCommas": true
+				},
+				"formatter": {
+					"trailingCommas": "none"
+				}
+			}
+		}
+	]
 }
