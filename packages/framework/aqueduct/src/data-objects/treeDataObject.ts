@@ -84,8 +84,8 @@ export abstract class TreeDataObject<
 	}
 
 	protected override async initializingFirstTime(): Promise<void> {
-		const tree = SharedTree.create(this.runtime);
-		this.#tree = tree.viewWith(this.config);
+		this.#tree = this.root.viewWith(this.config);
+
 		// Initialize the tree content and schema.
 		this.#tree.initialize(this.createInitialTree());
 	}
