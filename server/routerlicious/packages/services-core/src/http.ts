@@ -66,6 +66,10 @@ export interface IWebSocketServer {
 	on(event: string, listener: (...args: any[]) => void);
 
 	close(): Promise<void>;
+
+	// Optional emit function to be implemented by whoever needs it
+	// and avoid breaking changes in the interface
+	emit?: (room: string, event: string, payload: any) => void;
 }
 
 /**

@@ -74,15 +74,7 @@ export class NexusRunner implements IRunner {
 		// Create an HTTP server with a request listener for health endpoints.
 		const throttler = new Map<string, IThrottler>();
 		throttler.set(Constants.generalRestCallThrottleIdPrefix, this.socketSubmitSignalThrottler);
-		const nexus = app.create(
-			this.config,
-			this.startupCheck,
-			this.tenantManager,
-			throttler,
-			this.storage,
-			this.readinessCheck,
-			this.collaborationSessionEventEmitter,
-		);
+		const nexus = app.create(this.config, this.startupCheck, this.readinessCheck);
 		nexus.set("port", this.port);
 		this.server = this.serverFactory.create(nexus);
 
@@ -107,6 +99,16 @@ export class NexusRunner implements IRunner {
 			if (!this.server.webSocketServer) {
 				throw new Error("WebSocket server is not initialized");
 			}
+
+			// Bind routes
+			app.bindNexusRoutes(
+				nexus,
+				this.config,
+				this.tenantManager,
+				throttler,
+				this.storage,
+				this.server.webSocketServer,
+			);
 
 			// Register all the socket.io stuff
 			configureWebSocketServices(

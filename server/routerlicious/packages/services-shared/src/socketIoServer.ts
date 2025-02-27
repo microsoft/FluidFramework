@@ -236,6 +236,10 @@ class SocketIoServer implements core.IWebSocketServer {
 		this.events.on(event, listener);
 	}
 
+	public emit(room: string, event: string, payload: any) {
+		this.io.in(room).emit(event, payload);
+	}
+
 	public async close(): Promise<void> {
 		const sleep = async (timeMs: number) =>
 			new Promise((resolve) => setTimeout(resolve, timeMs));

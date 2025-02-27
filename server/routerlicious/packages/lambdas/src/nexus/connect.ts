@@ -614,7 +614,10 @@ function setUpSignalListenerForRoomBroadcasting(
 				const runtimeMessage = createRuntimeMessage(signalContent);
 
 				try {
-					Lumberjack.info(`Broadcasting signal from external API to socket`, getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId));
+					Lumberjack.info(
+						`Broadcasting signal from external API to socket`,
+						getLumberBaseProperties(signalRoom.documentId, signalRoom.tenantId),
+					);
 					socket.emitToRoom(getClientSpecificRoomId(clientId), "signal", runtimeMessage);
 				} catch (error) {
 					const errorMsg = `Failed to broadcast signal from external API.`;

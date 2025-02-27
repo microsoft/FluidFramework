@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import * as core from "@fluidframework/server-services-core";
 import cors from "cors";
 import { Router } from "express";
@@ -16,17 +14,11 @@ export function create(
 	tenantManager: core.ITenantManager,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	storage: core.IDocumentStorage,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	webSocketServer: core.IWebSocketServer,
 ): Router {
 	const router = Router();
 
-	const apiRoute = api.create(
-		config,
-		tenantManager,
-		tenantThrottlers,
-		storage,
-		collaborationSessionEventEmitter,
-	);
+	const apiRoute = api.create(config, tenantManager, tenantThrottlers, storage, webSocketServer);
 
 	router.use(cors());
 	router.use("/api/v1", apiRoute);

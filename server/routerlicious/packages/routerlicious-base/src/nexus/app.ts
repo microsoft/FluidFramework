@@ -20,18 +20,13 @@ import {
 	IThrottler,
 	IDocumentStorage,
 	ITenantManager,
+	type IWebSocketServer,
 } from "@fluidframework/server-services-core";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 
 export function create(
 	config: Provider,
 	startupCheck: IReadinessCheck,
-	tenantManager: ITenantManager,
-	restThrottler: Map<string, IThrottler>,
-	storage: IDocumentStorage,
 	readinessCheck?: IReadinessCheck,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -59,24 +54,27 @@ export function create(
 
 	app.use("/healthz", healthEndpoints);
 
-	// Bind routes
+	return app;
+}
+
+export function bindNexusRoutes(
+	app: express.Express,
+	config: Provider,
+	tenantManager: ITenantManager,
+	restThrottler: Map<string, IThrottler>,
+	storage: IDocumentStorage,
+	webSocketServer: IWebSocketServer,
+) {
 	if (config.get("nexus:notificationsApi:enabled")) {
-		const routes = api.create(
-			config,
-			tenantManager,
-			restThrottler,
-			storage,
-			collaborationSessionEventEmitter,
-		);
+		const routes = api.create(config, tenantManager, restThrottler, storage, webSocketServer);
 		app.use(routes);
 	}
+
+	// Need to set up these after binding routes
 
 	// Catch 404 and forward to error handler
 	app.use(catch404());
 
 	// Error handlers
-
 	app.use(handleError(app.get("env") === "development"));
-
-	return app;
 }

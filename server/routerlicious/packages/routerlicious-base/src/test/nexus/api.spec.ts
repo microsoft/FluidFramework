@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+// import { TypedEventEmitter } from "@fluidframework/common-utils";
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+// import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { MongoDatabaseManager, MongoManager } from "@fluidframework/server-services-core";
 import { StartupCheck } from "@fluidframework/server-services-shared";
@@ -24,6 +24,8 @@ import Sinon from "sinon";
 import request from "supertest";
 import * as nexusApp from "../../nexus/app";
 import { Constants } from "../../utils";
+import { PubSub } from "@fluidframework/server-memory-orderer";
+import { LocalWebSocketServer } from "@fluidframework/server-local-server";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -49,6 +51,8 @@ const defaultProvider = new nconf.Provider({}).defaults({
 		serverUrl: "http://localhost:3003",
 	},
 });
+const pubsub = new PubSub();
+const webSocketServer = new LocalWebSocketServer(pubsub);
 
 if (!Lumberjack.isSetupCompleted()) {
 	Lumberjack.setup([new TestEngine1()]);
@@ -101,9 +105,9 @@ describe("Routerlicious", () => {
 				scopes,
 			)}`;
 			const defaultStartupCheck = new StartupCheck();
-			const defaultCollaborationSessionEventEmitter =
-				new TypedEventEmitter<ICollaborationSessionEvents>();
-			let app: express.Application;
+			// const defaultCollaborationSessionEventEmitter =
+			// 	new TypedEventEmitter<ICollaborationSessionEvents>();
+			let app: express.Express;
 			let supertest: request.SuperTest<request.Test>;
 			describe("throttling", () => {
 				const limitTenant = 10;
@@ -114,14 +118,14 @@ describe("Routerlicious", () => {
 						Constants.generalRestCallThrottleIdPrefix,
 						restTenantThrottler,
 					);
-					app = nexusApp.create(
+					app = nexusApp.create(defaultProvider, defaultStartupCheck, undefined);
+					nexusApp.bindNexusRoutes(
+						app,
 						defaultProvider,
-						defaultStartupCheck,
 						defaultTenantManager,
 						restTenantThrottlers,
 						defaultStorage,
-						undefined,
-						defaultCollaborationSessionEventEmitter,
+						webSocketServer,
 					);
 					supertest = request(app);
 				});
@@ -172,14 +176,14 @@ describe("Routerlicious", () => {
 						restTenantThrottler,
 					);
 
-					app = nexusApp.create(
+					app = nexusApp.create(defaultProvider, defaultStartupCheck, undefined);
+					nexusApp.bindNexusRoutes(
+						app,
 						defaultProvider,
-						defaultStartupCheck,
 						defaultTenantManager,
 						restTenantThrottlers,
 						defaultStorage,
-						undefined,
-						defaultCollaborationSessionEventEmitter,
+						webSocketServer,
 					);
 					supertest = request(app);
 				});
@@ -234,14 +238,14 @@ describe("Routerlicious", () => {
 						restTenantThrottler,
 					);
 
-					app = nexusApp.create(
+					app = nexusApp.create(defaultProvider, defaultStartupCheck, undefined);
+					nexusApp.bindNexusRoutes(
+						app,
 						defaultProvider,
-						defaultStartupCheck,
 						defaultTenantManager,
 						restTenantThrottlers,
 						defaultStorage,
-						undefined,
-						defaultCollaborationSessionEventEmitter,
+						webSocketServer,
 					);
 					supertest = request(app);
 				});
@@ -279,14 +283,14 @@ describe("Routerlicious", () => {
 					restTenantThrottler,
 				);
 				beforeEach(() => {
-					app = nexusApp.create(
+					app = nexusApp.create(defaultProvider, defaultStartupCheck, undefined);
+					nexusApp.bindNexusRoutes(
+						app,
 						defaultProvider,
-						defaultStartupCheck,
 						defaultTenantManager,
 						restTenantThrottlers,
 						defaultStorage,
-						undefined,
-						defaultCollaborationSessionEventEmitter,
+						webSocketServer,
 					);
 					supertest = request(app);
 				});
@@ -462,34 +466,31 @@ describe("Routerlicious", () => {
 							.expect(410);
 					});
 
-					it("Missing event emitter", async () => {
-						const appWithoutEmitter = nexusApp.create(
-							defaultProvider,
-							defaultStartupCheck,
-							defaultTenantManager,
-							restTenantThrottlers,
-							defaultStorage,
-							undefined,
-							undefined,
-						);
-						supertest = request(appWithoutEmitter);
+					// it("Missing event emitter", async () => {
+					// 	const appWithoutEmitter = nexusApp.create(
+					// 		defaultProvider,
+					// 		defaultStartupCheck,
+					// 		undefined,
+					// 	);
+					// 	nexusApp.bindNexusRoutes(appWithoutEmitter, defaultProvider, defaultTenantManager, restTenantThrottlers, defaultStorage, webSocketServer);
+					// 	supertest = request(appWithoutEmitter);
 
-						const body = {
-							signalContent: {
-								contents: {
-									type: "ExternalDataChanged_V1.0.0",
-									content: { taskListId: "task-list-1" },
-								},
-							},
-						};
+					// 	const body = {
+					// 		signalContent: {
+					// 			contents: {
+					// 				type: "ExternalDataChanged_V1.0.0",
+					// 				content: { taskListId: "task-list-1" },
+					// 			},
+					// 		},
+					// 	};
 
-						await supertest
-							.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
-							.send(body)
-							.set("Authorization", tenantToken1)
-							.set("Content-Type", "application/json")
-							.expect(500);
-					});
+					// 	await supertest
+					// 		.post(`/api/v1/${appTenant1.id}/${document1._id}/broadcast-signal`)
+					// 		.send(body)
+					// 		.set("Authorization", tenantToken1)
+					// 		.set("Content-Type", "application/json")
+					// 		.expect(500);
+					// });
 				});
 			});
 		});

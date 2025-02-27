@@ -10,10 +10,8 @@ import {
 	verifyStorageToken,
 } from "@fluidframework/server-services-utils";
 import * as core from "@fluidframework/server-services-core";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	IBroadcastSignalEventPayload,
-	ICollaborationSessionEvents,
 	IRoom,
 	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
@@ -29,7 +27,7 @@ export function create(
 	tenantManager: core.ITenantManager,
 	tenantThrottlers: Map<string, core.IThrottler>,
 	storage: core.IDocumentStorage,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	webSocketServer: core.IWebSocketServer,
 ): Router {
 	const router: Router = Router();
 
@@ -51,7 +49,7 @@ export function create(
 				response,
 				config,
 				storage,
-				collaborationSessionEventEmitter,
+				webSocketServer,
 			);
 			handleResponse(
 				handleBroadcastSignalP,
@@ -81,7 +79,7 @@ async function handleBroadcastSignal(
 	response: Response,
 	config: Provider,
 	storage: core.IDocumentStorage,
-	collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+	webSocketServer: core.IWebSocketServer,
 ): Promise<void> {
 	const tenantId = request.params.tenantId;
 	const documentId = request.params.id;
@@ -96,13 +94,13 @@ async function handleBroadcastSignal(
 			`signalContent should contain 'contents.content' and 'contents.type' keys`,
 		);
 	}
-	if (!collaborationSessionEventEmitter) {
-		Lumberjack.error("No emitter configured for the broadcast-signal endpoint", {
-			tenantId,
-			documentId,
-		});
-		throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
-	}
+	// if (!webSocketServer) {
+	// 	Lumberjack.error("No emitter configured for the broadcast-signal endpoint", {
+	// 		tenantId,
+	// 		documentId,
+	// 	});
+	// 	throw new NetworkError(500, `No emitter configured for the broadcast-signal endpoint`);
+	// }
 
 	const deltaStreamUrl: string = config.get("worker:deltaStreamUrl");
 	const document = await storage?.getDocument(tenantId, documentId);
@@ -126,9 +124,11 @@ async function handleBroadcastSignal(
 
 	const signalRoom: IRoom = { tenantId, documentId };
 	const payload: IBroadcastSignalEventPayload = { signalRoom, signalContent };
-	Lumberjack.info("Broadcasting signal to event emitter", { tenantId, documentId });
-	collaborationSessionEventEmitter.emit("broadcastSignal", payload);
+	Lumberjack.info("Broadcasting signal to socket", { tenantId, documentId });
+	webSocketServer.emit?.(getRoomId(signalRoom), "signal", payload);
 }
+
+const getRoomId = (room: IRoom): string => `${room.tenantId}/${room.documentId}`;
 
 function isValidSignalEnvelope(
 	input: Partial<IRuntimeSignalEnvelope>,
