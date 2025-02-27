@@ -5,6 +5,7 @@
 
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 
+import { UnassignedSequenceNumber } from "./constants.js";
 import { ISegmentInternal, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
@@ -333,6 +334,24 @@ export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
  */
 export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
 	toMoveInfo(segmentLike) !== undefined;
+
+export function wasMovedOnInsert(segment: IInsertionInfo & ISegmentPrivate): boolean {
+	const result1 = toMoveInfo(segment)?.wasMovedOnInsert ?? false;
+	const result2 = wasMovedOnInsert2(segment);
+	assert(result1 === result2, 0xaa4 /* must be equal */);
+	return result1;
+}
+
+function wasMovedOnInsert2(segment: IInsertionInfo & ISegmentPrivate): boolean {
+	const moveInfo = toMoveInfo(segment);
+	const movedSeq = moveInfo?.movedSeq;
+	if (movedSeq === undefined || movedSeq === UnassignedSequenceNumber) {
+		return false;
+	}
+
+	const insertSeq = segment.seq;
+	return insertSeq === UnassignedSequenceNumber || insertSeq > movedSeq;
+}
 
 /**
  * Asserts that the segment has move info. Usage of this function should not produce a user facing error.

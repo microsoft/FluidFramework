@@ -95,6 +95,7 @@ import {
 	removeRemovalInfo,
 	toMoveInfo,
 	toRemovalInfo,
+	wasMovedOnInsert,
 	type IInsertionInfo,
 	type IMoveInfo,
 	type IRemovalInfo,
@@ -2160,7 +2161,7 @@ export class MergeTree {
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
 					// Should not need explicit set here, but this should be implied:
 					assert(
-						!existingMoveInfo.wasMovedOnInsert,
+						!wasMovedOnInsert(segment),
 						0xab4 /* Local obliterate cannot have removed a segment as soon as it was inserted */,
 					);
 					assert(
