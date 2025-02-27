@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
@@ -113,17 +112,8 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Disconnect from the websocket
 	 */
 	protected disconnectCore(err?: IAnyDriverError): void {
-		const errorMsg = err?.errorType ?? "Clean disconnect";
-		const isCorruption =
-			err !== undefined && err.errorType === FluidErrorTypes.dataCorruptionError;
 		// tell the server we are disconnecting this client from the document
-		this.socket.emit(
-			"disconnect_document",
-			this.clientId,
-			this.documentId,
-			errorMsg,
-			isCorruption,
-		);
+		this.socket.emit("disconnect_document", this.clientId, this.documentId, err?.errorType);
 		super.disconnectCore(err);
 	}
 }
