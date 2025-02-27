@@ -198,7 +198,7 @@ export function initialize(checkout: ITreeCheckout, treeContent: TreeStoredConte
 					break;
 				}
 				default: {
-					fail("unexpected root field kind during initialize");
+					fail(0xac7 /* unexpected root field kind during initialize */);
 				}
 			}
 		});

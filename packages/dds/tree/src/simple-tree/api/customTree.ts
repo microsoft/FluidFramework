@@ -79,7 +79,7 @@ export function customFromCursor<TChild, THandle>(
 	) => TChild,
 ): CustomTree<TChild, THandle> {
 	const type = reader.type;
-	const nodeSchema = schema.get(type) ?? fail("missing schema for type in cursor");
+	const nodeSchema = schema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
 
 	switch (type) {
 		case numberSchema.identifier:
@@ -109,7 +109,7 @@ export function customFromCursor<TChild, THandle>(
 						const key =
 							isObjectNodeSchema(nodeSchema) && !options.useStoredKeys
 								? (nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
-									fail("missing property key"))
+									fail(0xb2f /* missing property key */))
 								: storedKey;
 						// Length is checked above.
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -138,7 +138,7 @@ export function customFromCursorStored<TChild>(
 	) => TChild,
 ): CustomTree<TChild, IFluidHandle> {
 	const type = reader.type;
-	const nodeSchema = schema.get(type) ?? fail("missing schema for type in cursor");
+	const nodeSchema = schema.get(type) ?? fail(0xb30 /* missing schema for type in cursor */);
 
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
 		assert(valueSchemaAllows(nodeSchema.leafValue, reader.value), 0xa9c /* invalid value */);

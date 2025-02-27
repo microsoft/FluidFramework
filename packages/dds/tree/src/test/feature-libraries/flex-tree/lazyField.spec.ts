@@ -52,7 +52,8 @@ import {
 	stringSchema,
 } from "../../../simple-tree/index.js";
 import { getStoredSchema, toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
-import { JsonObject, JsonUnion, singleJsonCursor } from "../../json/index.js";
+import { singleJsonCursor } from "../../json/index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const detachedField: FieldKey = brand("detached");
 const detachedFieldAnchor: FieldAnchor = { parent: undefined, fieldKey: detachedField };
@@ -64,12 +65,12 @@ class TestLazyField extends LazyField {}
 
 describe("LazyField", () => {
 	it("LazyField implementations do not allow edits to detached trees", () => {
-		const schema = toStoredSchema(JsonObject);
+		const schema = toStoredSchema(JsonAsTree.JsonObject);
 		const forest = forestWithContent({
 			schema,
 			initialTree: singleJsonCursor({}),
 		});
-		const context = getReadonlyContext(forest, JsonObject);
+		const context = getReadonlyContext(forest, JsonAsTree.JsonObject);
 		const cursor = initializeCursor(context, detachedFieldAnchor);
 
 		const optionalField = new LazyOptionalField(
@@ -263,7 +264,7 @@ describe("LazyField", () => {
 
 		it("Non-Leaf", () => {
 			const { context, cursor } = readonlyTreeWithContent({
-				schema: JsonUnion,
+				schema: JsonAsTree.Tree,
 				initialTree: singleJsonCursor({}),
 			});
 			cursor.enterNode(0); // Root node field has 1 node; move into it
@@ -277,7 +278,7 @@ describe("LazyField", () => {
 
 		it("Non-Leaf - cached", () => {
 			const { context, cursor } = readonlyTreeWithContent({
-				schema: JsonUnion,
+				schema: JsonAsTree.Tree,
 				initialTree: singleJsonCursor({}),
 			});
 
