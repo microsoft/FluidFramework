@@ -16,6 +16,11 @@ import {
 import { PureDataObject } from "./pureDataObject.js";
 
 /**
+ * Channel ID of {@link TreeDataObject}'s root {@link @fluidframework/tree#SharedTree}.
+ */
+const treeChannelId = "root";
+
+/**
  * {@link @fluidframework/tree#SharedTree}-backed {@link PureDataObject | data object}.
  *
  * @internal
@@ -23,15 +28,13 @@ import { PureDataObject } from "./pureDataObject.js";
 export abstract class TreeDataObject<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends PureDataObject {
-	private readonly rootTreeId = "root";
-
 	#internalRoot: ITree | undefined;
 	#tree: TreeView<TSchema> | undefined;
 
 	/**
 	 * Gets the root of the underlying tree
 	 *
-	 * @throws If the root has not yet been initialized, this will throw an error.
+	 * @throws If the SharedTree has not yet been initialized, this will throw an error.
 	 */
 	protected get root(): ITree {
 		if (!this.#internalRoot) {
@@ -50,7 +53,7 @@ export abstract class TreeDataObject<
 	public async initializeInternal(existing: boolean): Promise<void> {
 		if (existing) {
 			// data store has a root tree so we just need to set it before calling initializingFromExisting
-			const channel = await this.runtime.getChannel(this.rootTreeId);
+			const channel = await this.runtime.getChannel(treeChannelId);
 			if (SharedTree.is(channel)) {
 				this.#internalRoot = channel;
 			} else {
@@ -59,7 +62,7 @@ export abstract class TreeDataObject<
 				);
 			}
 		} else {
-			this.#internalRoot = SharedTree.create(this.runtime, this.rootTreeId);
+			this.#internalRoot = SharedTree.create(this.runtime, treeChannelId);
 			(this.#internalRoot as unknown as ISharedObject).bindToContext();
 		}
 
