@@ -52,7 +52,7 @@ import {
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
 	type RangeQueryResult,
-	getOrAddInMapLazy,
+	getOrCreate,
 	newTupleBTree,
 	mergeTupleBTrees,
 	type TupleBTree,
@@ -321,7 +321,7 @@ export class ModularChangeFamily
 				crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
 			}
 
-			return child1 ?? child2 ?? fail("Should not compose two undefined nodes");
+			return child1 ?? child2 ?? fail(0xb22 /* Should not compose two undefined nodes */);
 		};
 
 		const amendedChange = rebaser.compose(
@@ -566,7 +566,7 @@ export class ModularChangeFamily
 					setInChangeAtomIdMap(crossFieldTable.newToBaseNodeId, child2, child1);
 					crossFieldTable.pendingCompositions.nodeIdsToCompose.push([child1, child2]);
 				}
-				return child1 ?? child2 ?? fail("Should not compose two undefined nodes");
+				return child1 ?? child2 ?? fail(0xb23 /* Should not compose two undefined nodes */);
 			},
 			idAllocator,
 			manager,
@@ -1426,7 +1426,8 @@ export class ModularChangeFamily
 		constraintState: ConstraintState,
 		revertConstraintState: ConstraintState,
 	): void {
-		const node = nodes.get([nodeId.revision, nodeId.localId]) ?? fail("Unknown node ID");
+		const node =
+			nodes.get([nodeId.revision, nodeId.localId]) ?? fail(0xb24 /* Unknown node ID */);
 		if (node.nodeExistsConstraint !== undefined) {
 			const isNowViolated = inputAttachState === NodeAttachState.Detached;
 			if (node.nodeExistsConstraint.violated !== isNowViolated) {
@@ -1924,7 +1925,7 @@ export function updateRefreshers(
 
 	if (change.builds !== undefined) {
 		for (const [[revision, id], chunk] of change.builds.entries()) {
-			const lengthTree = getOrAddInMapLazy(chunkLengths, revision, () => new BTree());
+			const lengthTree = getOrCreate(chunkLengths, revision, () => new BTree());
 			lengthTree.set(id, chunk.topLevelLength);
 		}
 	}
@@ -3002,7 +3003,7 @@ function fieldChangeFromId(
 	id: FieldId,
 ): FieldChange {
 	const fieldMap = fieldMapFromNodeId(fields, nodes, id.nodeId);
-	return fieldMap.get(id.field) ?? fail("No field exists for the given ID");
+	return fieldMap.get(id.field) ?? fail(0xb25 /* No field exists for the given ID */);
 }
 
 function fieldMapFromNodeId(

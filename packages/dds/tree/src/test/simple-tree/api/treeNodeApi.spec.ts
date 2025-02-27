@@ -123,6 +123,20 @@ describe("treeNodeApi", () => {
 			assert(!Tree.is(5, [schema.string]));
 			assert(Tree.is(5, [schema.string, schema.number]));
 		});
+
+		it("errors on base type", () => {
+			const Base = schema.object("Test", {});
+			class Derived extends Base {}
+			const node = new Derived({});
+			// Check instancof alternative works:
+			assert(node instanceof Base);
+			assert.throws(
+				() => Tree.is(node, Base),
+				validateUsageError(
+					/Two schema classes were used \(CustomObjectNode and Derived\) which derived from the same SchemaFactory generated class \("com.example.Test"\)/,
+				),
+			);
+		});
 	});
 
 	describe("schema", () => {
@@ -1328,7 +1342,7 @@ describe("treeNodeApi", () => {
 					// TODO:AB#26720 The error here should be more clear.
 					assert.throws(
 						() => TreeAlpha.importVerbose(Point2D, exported),
-						/missing field info/,
+						(error: Error) => validateAssertionError(error, /missing field info/),
 					);
 				});
 			});

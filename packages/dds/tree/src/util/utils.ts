@@ -178,6 +178,24 @@ export function compareSets<T>({
 }
 
 /**
+ * Sets the value at `key` in map to value if not already present.
+ * Returns the value at `key` after setting it.
+ * This is equivalent to a get or default that adds the default to the map.
+ */
+export function getOrAddInMap<Key, Value>(
+	map: MapGetSet<Key, Value>,
+	key: Key,
+	value: Value,
+): Value {
+	const currentValue = map.get(key);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+	map.set(key, value);
+	return value;
+}
+
+/**
  * Retrieve a value from a map with the given key, or create a new entry if the key is not in the map.
  * @param map - The map to query/update
  * @param key - The key to lookup in the map
