@@ -805,19 +805,19 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	};
 
 	let operationCount = 0;
-	const finialSynchronization = { type: "FinalSynchronization" };
+	const finalSynchronization = { type: "FinalSynchronization" };
 	const generator: AsyncGenerator<
-		TOperation | typeof finialSynchronization,
+		TOperation | typeof finalSynchronization,
 		LocalServerStressState
 	> = chainAsync(
 		model.generatorFactory(),
-		takeAsync<TOperation | typeof finialSynchronization, LocalServerStressState>(
+		takeAsync<TOperation | typeof finalSynchronization, LocalServerStressState>(
 			1,
-			async () => finialSynchronization,
+			async () => finalSynchronization,
 		),
 	);
 	const reducer = async (state, operation) => {
-		if (operation.type === finialSynchronization.type) {
+		if (operation.type === finalSynchronization.type) {
 			const { clients, validationClient, localDeltaConnectionServer } = state;
 			for (const client of clients) {
 				client.container.connect();
