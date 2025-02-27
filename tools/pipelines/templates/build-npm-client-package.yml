@@ -198,7 +198,7 @@ extends:
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
-          - deployment: test deployment job
+          - deployment: testDeploymentJob
             displayName: 'test deployment job'
             environment: 'fluid-docs-env'
             pool: Large-eastus2
