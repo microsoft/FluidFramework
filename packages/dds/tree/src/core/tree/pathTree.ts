@@ -71,14 +71,14 @@ export interface DetachedUpPath extends UpPath {
 }
 
 /**
- * TODO
+ * Given an {@link UpPath}, checks if it is detached.
  */
 export function isDetachedUpPath(path: UpPath): path is DetachedUpPath {
 	return (path as DetachedUpPath).detachedNodeId !== undefined;
 }
 
 /**
- * TODO
+ * Given an {@link UpPath}, checks if it is detached and if so, returns it as a {@link DetachedUpPath}.
  */
 export function getDetachedUpPath(path: UpPath): DetachedUpPath | undefined {
 	return isDetachedUpPath(path) ? path : undefined;
