@@ -52,10 +52,10 @@ export const emptyCursor: ChunkedCursor = {
 	mode: CursorLocationType.Fields,
 	[cursorChunk]: emptyChunk,
 	nextField(): boolean {
-		fail("cannot navigate above root");
+		fail(0xafb /* cannot navigate above root */);
 	},
 	exitField(): void {
-		fail("cannot navigate above root");
+		fail(0xafc /* cannot navigate above root */);
 	},
 	skipPendingFields(): boolean {
 		return true;
@@ -70,43 +70,43 @@ export const emptyCursor: ChunkedCursor = {
 		return false;
 	},
 	enterNode(childIndex: number): void {
-		fail("empty cursor has no nodes");
+		fail(0xafd /* empty cursor has no nodes */);
 	},
 	getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
 		return prefixFieldPath(prefix, emptyPath);
 	},
 	getPath(): UpPath | undefined {
-		fail("empty cursor has no nodes");
+		fail(0xafe /* empty cursor has no nodes */);
 	},
 	get fieldIndex(): never {
-		return fail("empty cursor has no nodes");
+		return fail(0xaff /* empty cursor has no nodes */);
 	},
 	get chunkStart(): never {
-		return fail("empty cursor has no nodes");
+		return fail(0xb00 /* empty cursor has no nodes */);
 	},
 	get chunkLength(): never {
-		return fail("empty cursor has no nodes");
+		return fail(0xb01 /* empty cursor has no nodes */);
 	},
 	seekNodes(offset: number): boolean {
-		fail("empty cursor has no nodes");
+		fail(0xb02 /* empty cursor has no nodes */);
 	},
 	nextNode(): boolean {
-		fail("empty cursor has no nodes");
+		fail(0xb03 /* empty cursor has no nodes */);
 	},
 	exitNode(): void {
-		fail("empty cursor has no nodes");
+		fail(0xb04 /* empty cursor has no nodes */);
 	},
 	firstField(): boolean {
-		fail("empty cursor has no nodes");
+		fail(0xb05 /* empty cursor has no nodes */);
 	},
 	enterField(key: FieldKey): void {
-		fail("empty cursor has no nodes");
+		fail(0xb06 /* empty cursor has no nodes */);
 	},
 	get type(): never {
-		return fail("empty cursor has no nodes");
+		return fail(0xb07 /* empty cursor has no nodes */);
 	},
 	get value(): never {
-		return fail("empty cursor has no nodes");
+		return fail(0xb08 /* empty cursor has no nodes */);
 	},
 	atChunkRoot(): boolean {
 		return true;
