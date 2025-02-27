@@ -27,13 +27,21 @@ export interface SharedTreeSchemaNode {
 	/**
 	 * Name of the SharedTree schema.
 	 */
-	schemaName: string;
+	readonly schemaName: string;
 
 	/**
 	 * Types allowed (e.g., string, number, boolean, handle & etc.) inside the node.
 	 * - InternalNode: `Record<string, string>`.
 	 */
-	allowedTypes?: string | Record<string, string>;
+	readonly allowedTypes: string | Record<string, string>;
+
+	/**
+	 * If the field is required or optional.
+	 * - When {@link FieldKind.Required}: The field must be present
+	 * - When {@link FieldKind.Optional}: The field may be omitted
+	 * - When undefined: Treated the same as {@link FieldKind.Optional}
+	 */
+	readonly isRequired?: string;
 }
 
 /**
