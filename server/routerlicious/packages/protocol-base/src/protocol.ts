@@ -7,6 +7,7 @@ import {
 	IDocumentAttributes,
 	IClientJoin,
 	ICommittedProposal,
+    IDocumentMessage,
 	IProcessMessageResult,
 	IProposal,
 	IQuorum,
@@ -177,4 +178,15 @@ export class ProtocolOpHandler implements IProtocolHandler {
 			...snapshot,
 		};
 	}
+}
+
+/**
+ * @internal
+ */
+export function canBeCoalescedByService(
+	message: ISequencedDocumentMessage | IDocumentMessage,
+): boolean {
+	// This assumes that in the future relay service may implement coalescing of accept messages,
+	// same way it was doing coalescing of immediate noops in the past.
+	return message.type === MessageType.NoOp || message.type === MessageType.Accept;
 }

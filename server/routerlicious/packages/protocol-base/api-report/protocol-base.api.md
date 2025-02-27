@@ -7,6 +7,7 @@
 import * as git from '@fluidframework/gitresources';
 import { ICommittedProposal } from '@fluidframework/protocol-definitions';
 import { IDocumentAttributes } from '@fluidframework/protocol-definitions';
+import { IDocumentMessage } from '@fluidframework/protocol-definitions';
 import { IProcessMessageResult } from '@fluidframework/protocol-definitions';
 import { IQuorum } from '@fluidframework/protocol-definitions';
 import { IQuorumClients } from '@fluidframework/protocol-definitions';
@@ -20,6 +21,9 @@ import { TypedEventEmitter } from '@fluidframework/common-utils';
 
 // @internal
 export function buildGitTreeHierarchy(flatTree: git.ITree, blobsShaToPathCache?: Map<string, string>, removeAppTreePrefix?: boolean): ISnapshotTreeEx;
+
+// @internal (undocumented)
+export function canBeCoalescedByService(message: ISequencedDocumentMessage | IDocumentMessage): boolean;
 
 // @internal
 export function getGitMode(value: SummaryObject): string;
