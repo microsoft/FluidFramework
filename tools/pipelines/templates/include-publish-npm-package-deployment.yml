@@ -108,6 +108,8 @@ jobs:
               script: |
                 echo "Listing files in directory: $(pwd)"
                 ls -la
+                cd ./buildTools-resource
+                ls -la
 
           - task: Bash@3
             name: InstallBuildToolsFromTarball
