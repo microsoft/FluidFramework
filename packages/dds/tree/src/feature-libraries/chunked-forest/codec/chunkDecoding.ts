@@ -115,6 +115,8 @@ export function readValue(
 				0x997 /* identifier must be string or number. */,
 			);
 			const idCompressor = idDecodingContext.idCompressor;
+			// We cannot persist the type OpSpaceCompressedId, as the user could pass in an invalid string as their id.
+			// However, if it is a number with the SpecialField.Identifier shape, it is guaranteed to be a OpSpaceCompressedId that was casted to type number.
 			return typeof streamValue === "number"
 				? idCompressor.decompress(
 						idCompressor.normalizeToSessionSpace(
