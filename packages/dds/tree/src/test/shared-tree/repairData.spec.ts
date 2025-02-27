@@ -18,7 +18,7 @@ describe("Repair Data", () => {
 	describe("is destroyed when", () => {
 		it("the collab window progresses far enough", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -30,7 +30,7 @@ describe("Repair Data", () => {
 			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith(
+			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -70,7 +70,7 @@ describe("Repair Data", () => {
 
 		it("the collab window progresses far enough after a rebase", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -79,7 +79,7 @@ describe("Repair Data", () => {
 			view1.initialize(["A", "B", "C", "D"]);
 
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith(
+			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -117,7 +117,7 @@ describe("Repair Data", () => {
 
 		it("the corresponding revertible is disposed", () => {
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -165,7 +165,7 @@ describe("Repair Data", () => {
 				FlushMode.TurnBased,
 			);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith(
+			const view1 = tree1.kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -205,7 +205,7 @@ describe("Repair Data", () => {
 
 		it("created in a transaction with an aborted nested transaction", () => {
 			const provider = new TestTreeProviderLite(1);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -249,7 +249,7 @@ describe("Repair Data", () => {
 	describe("is not destroyed when", () => {
 		it("still relevant due to branches", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -258,7 +258,7 @@ describe("Repair Data", () => {
 			view1.initialize(["A", "B", "C", "D"]);
 
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith(
+			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -295,7 +295,7 @@ describe("Repair Data", () => {
 
 		it("still relevant due to revertibles", () => {
 			const provider = new TestTreeProviderLite(2);
-			const view1 = provider.trees[0].viewWith(
+			const view1 = provider.trees[0].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,
@@ -307,7 +307,7 @@ describe("Repair Data", () => {
 			const { unsubscribe } = createTestUndoRedoStacks(view1.checkout.events);
 
 			provider.processMessages();
-			const view2 = provider.trees[1].viewWith(
+			const view2 = provider.trees[1].kernel.viewWith(
 				new TreeViewConfiguration({
 					schema: StringArray,
 					enableSchemaValidation,

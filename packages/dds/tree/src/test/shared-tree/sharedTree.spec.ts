@@ -93,8 +93,9 @@ import type { ISharedObjectKind } from "@fluidframework/shared-object-base/inter
 import { TestAnchor } from "../testAnchor.js";
 // eslint-disable-next-line import/no-internal-modules
 import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
-import { JsonArray, singleJsonCursor } from "../json/index.js";
+import { singleJsonCursor } from "../json/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
+import { JsonAsTree } from "../../jsonDomainSchema.js";
 
 const enableSchemaValidation = true;
 
@@ -124,6 +125,52 @@ describe("SharedTree", () => {
 			const view = tree.viewWith(config);
 			view.initialize(10);
 			assert.equal(view.root, 10);
+		});
+
+		it("initialize-dispose-view with primitive schema", () => {
+			const tree = treeTestFactory();
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+
+			const config = new TreeViewConfiguration({
+				schema: SchemaFactory.number,
+			});
+
+			const view1 = tree.viewWith(config);
+			view1.initialize(10);
+			assert.deepEqual(view1.root, 10);
+
+			view1.dispose();
+
+			const view2 = tree.viewWith(config);
+			assert.deepEqual(view2.root, 10);
+		});
+
+		// TODO (AB#31456): Enable this test once the bug is fixed.
+		it.skip("initialize-dispose-view with object schema", () => {
+			const tree = treeTestFactory();
+			assert.deepEqual(tree.contentSnapshot().schema.rootFieldSchema, storedEmptyFieldSchema);
+
+			const factory = new SchemaFactory("my-factory");
+			class MySchema extends factory.object("my-root", {
+				number: factory.number,
+			}) {}
+
+			const config = new TreeViewConfiguration({
+				schema: MySchema,
+			});
+
+			const expectedContents = new MySchema({
+				number: 10,
+			});
+
+			const view1 = tree.viewWith(config);
+			view1.initialize(new MySchema({ number: 10 }));
+			assert.deepEqual(view1.root, expectedContents);
+
+			view1.dispose();
+
+			const view2 = tree.viewWith(config);
+			assert.deepEqual(view2.root, expectedContents); // <-- This throws with assert 0x778
 		});
 
 		it("concurrent initialize", () => {
@@ -271,15 +318,18 @@ describe("SharedTree", () => {
 		const value = 42;
 		provider.trees[0]
 			.viewWith(
-				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation: false }),
+				new TreeViewConfiguration({
+					schema: JsonAsTree.Array,
+					enableSchemaValidation: false,
+				}),
 			)
-			.initialize(new JsonArray([value]));
+			.initialize(new JsonAsTree.Array([value]));
 
 		await provider.summarize();
 		await provider.ensureSynchronized();
 		const loadingTree = await provider.createTree();
 		validateTreeContent(loadingTree.kernel.checkout, {
-			schema: JsonArray,
+			schema: JsonAsTree.Array,
 			initialTree: singleJsonCursor([value]),
 		});
 	});
@@ -435,7 +485,7 @@ describe("SharedTree", () => {
 				await validateSchemaStringType(provider, provider.trees[0].id, SummaryType.Handle);
 				view.dispose();
 				const view2 = tree.viewWith(
-					new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+					new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 				);
 				view2.upgradeSchema();
 				await provider.ensureSynchronized();
@@ -714,7 +764,7 @@ describe("SharedTree", () => {
 			);
 			view.initialize([]);
 			const viewUpgrade = tree.viewWith(
-				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+				new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 			);
 			viewUpgrade.upgradeSchema();
 			tree.kernel.checkout.transaction.start();
@@ -1269,7 +1319,7 @@ describe("SharedTree", () => {
 			}
 
 			function peerFromSharedTree(tree: SharedTreeWithConnectionStateSetter): Peer {
-				const view = tree.viewWith(
+				const view = tree.kernel.viewWith(
 					new TreeViewConfiguration({ schema, enableSchemaValidation }),
 				);
 				if (view.compatibility.canInitialize) {
@@ -1493,7 +1543,7 @@ describe("SharedTree", () => {
 			const value = "42";
 			const provider = new TestTreeProviderLite(2);
 			const tree1 = provider.trees[0];
-			const view1 = tree1.viewWith(
+			const view1 = tree1.kernel.viewWith(
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
 			view1.initialize([]);
@@ -1792,7 +1842,7 @@ describe("SharedTree", () => {
 			view1.dispose();
 
 			const view1Json = tree1.viewWith(
-				new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }),
+				new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 			);
 			view1Json.upgradeSchema();
 			// TODO:#8915: This should be able to insert the _number_ 44, not the string, but currently cannot - see bug #8915
@@ -1820,9 +1870,11 @@ describe("SharedTree", () => {
 			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(StringArray));
 
 			tree
-				.viewWith(new TreeViewConfiguration({ schema: JsonArray, enableSchemaValidation }))
+				.viewWith(
+					new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
+				)
 				.upgradeSchema();
-			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(JsonArray));
+			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(JsonAsTree.Array));
 
 			const revertible = undoStack.pop();
 			revertible?.revert();

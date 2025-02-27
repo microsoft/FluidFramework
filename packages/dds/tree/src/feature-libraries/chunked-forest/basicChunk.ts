@@ -234,7 +234,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		if (this.nestedCursor !== undefined) {
 			return (
 				this.nestedCursor.getPath(this.nestedPathPrefix(prefix)) ??
-				fail("nested cursors should not be root")
+				fail(0xaee /* nested cursors should not be root */)
 			);
 		}
 		assert(this.mode === CursorLocationType.Nodes, 0x524 /* must be in nodes mode */);
@@ -247,7 +247,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		// This uses index offset for actual node, when it should use offset for start of chunk.
 		// To compensate, subtract this.indexWithinChunk below.
 		const rootPath: UpPath =
-			this.getOffsetPath(0, prefix) ?? fail("nested cursors should not be root");
+			this.getOffsetPath(0, prefix) ?? fail(0xaef /* nested cursors should not be root */);
 		return {
 			indexOffset: rootPath.parentIndex - this.indexWithinChunk,
 			rootFieldOverride: rootPath.parentField,
@@ -483,8 +483,9 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Fields,
 			0x52d /* can only navigate up from field when in field */,
 		);
-		this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-		this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+		this.siblings =
+			this.siblingStack.pop() ?? fail(0xaf0 /* Unexpected siblingStack.length */);
+		this.index = this.indexStack.pop() ?? fail(0xaf1 /* Unexpected indexStack.length */);
 	}
 
 	public exitNode(): void {
@@ -498,12 +499,14 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Nodes,
 			0x52e /* can only navigate up from node when in node */,
 		);
-		this.siblings = this.siblingStack.pop() ?? fail("Unexpected siblingStack.length");
-		this.index = this.indexStack.pop() ?? fail("Unexpected indexStack.length");
+		this.siblings =
+			this.siblingStack.pop() ?? fail(0xaf2 /* Unexpected siblingStack.length */);
+		this.index = this.indexStack.pop() ?? fail(0xaf3 /* Unexpected indexStack.length */);
 		this.indexOfChunk =
-			this.indexOfChunkStack.pop() ?? fail("Unexpected indexOfChunkStack.length");
+			this.indexOfChunkStack.pop() ?? fail(0xaf4 /* Unexpected indexOfChunkStack.length */);
 		this.indexWithinChunk =
-			this.indexWithinChunkStack.pop() ?? fail("Unexpected indexWithinChunkStack.length");
+			this.indexWithinChunkStack.pop() ??
+			fail(0xaf5 /* Unexpected indexWithinChunkStack.length */);
 	}
 
 	private getNode(): BasicChunk {

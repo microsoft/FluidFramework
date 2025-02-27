@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/property-changeset",
-	"version": "2.22.0",
+	"version": "2.23.0",
 	"description": "property changeset definitions and related functionalities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -95,7 +95,7 @@
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",

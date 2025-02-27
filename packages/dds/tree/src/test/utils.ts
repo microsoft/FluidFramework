@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-
 import type {
 	HasListeners,
 	IEmitter,
@@ -16,6 +15,7 @@ import {
 	type ITelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
+
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { LocalServerTestDriver } from "@fluid-private/test-drivers";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
@@ -33,10 +33,8 @@ import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compres
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
-	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
@@ -131,6 +129,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../shared-tree/schematizingTreeView.js";
 import type {
+	ISharedTree,
 	SharedTreeOptions,
 	SharedTreeOptionsInternal,
 	// eslint-disable-next-line import/no-internal-modules
@@ -155,14 +154,19 @@ import {
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
-import { JsonUnion, cursorToJsonObject, singleJsonCursor } from "./json/index.js";
+import { cursorToJsonObject, singleJsonCursor } from "./json/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
-import { TreeFactory, configuredSharedTree } from "../treeFactory.js";
+import { TreeFactory, configuredSharedTree, configuredSharedTree } from "../treeFactory.js";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import { JsonAsTree } from "../jsonDomainSchema.js";
+import {
+	MockContainerRuntimeFactoryWithOpBunching,
+	type MockContainerRuntimeWithOpBunching,
+} from "./mocksForOpBunching.js";
 
 // Testing utilities
 
@@ -364,20 +368,17 @@ export interface ConnectionSetter {
 	readonly setConnected: (connectionState: boolean) => void;
 }
 
-// TODO: use ITreePrivate
-export type SharedTreeWithConnectionStateSetter = SharedTree &
-	ConnectionSetter &
-	ISharedObject;
+export type SharedTreeWithConnectionStateSetter = ISharedTree & ConnectionSetter;
 
 /**
  * A test helper class that creates one or more SharedTrees connected to mock services.
  */
 export class TestTreeProviderLite {
 	private static readonly treeId = "TestSharedTree";
-	private readonly runtimeFactory: MockContainerRuntimeFactoryForReconnection;
+	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
 	public readonly trees: readonly SharedTreeWithConnectionStateSetter[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
-	private readonly containerRuntimes: Set<MockContainerRuntime> = new Set();
+	private readonly containerRuntimes: Set<MockContainerRuntimeWithOpBunching> = new Set();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -403,7 +404,7 @@ export class TestTreeProviderLite {
 		useDeterministicSessionIds = true,
 		private readonly flushMode: FlushMode = FlushMode.Immediate,
 	) {
-		this.runtimeFactory = new MockContainerRuntimeFactoryForReconnection({
+		this.runtimeFactory = new MockContainerRuntimeFactoryWithOpBunching({
 			flushMode,
 		});
 		assert(trees >= 1, "Must initialize provider with at least one tree");
@@ -811,7 +812,7 @@ export const IdentifierSchema = sf.object("identifier-object", {
  */
 export function makeTreeFromJson(json: JsonCompatible): ITreeCheckout {
 	return checkoutWithContent({
-		schema: toStoredSchema(JsonUnion),
+		schema: toStoredSchema(JsonAsTree.Tree),
 		initialTree: singleJsonCursor(json),
 	});
 }

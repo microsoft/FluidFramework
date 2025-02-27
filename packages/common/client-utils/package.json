@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.22.0",
+	"version": "2.23.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -135,11 +135,11 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.21.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.22.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/base64-js": "^1.3.0",
