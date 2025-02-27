@@ -23,9 +23,9 @@ import { PureDataObject } from "./pureDataObject.js";
 export abstract class TreeDataObject<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends PureDataObject {
-	private internalRoot: ITree | undefined;
 	private readonly rootTreeId = "root";
 
+	#internalRoot: ITree | undefined;
 	#tree: TreeView<TSchema> | undefined;
 
 	/**
@@ -34,13 +34,13 @@ export abstract class TreeDataObject<
 	 * @throws If the root has not yet been initialized, this will throw an error.
 	 */
 	protected get root(): ITree {
-		if (!this.internalRoot) {
+		if (!this.#internalRoot) {
 			// Note: Can't use `UsageError` because adding dependency on `telemetry-utils` would create a cycle.
 			// TODO: would probably be useful to move our shared error types in a more accessible location.
 			throw new Error(this.getUninitializedErrorString(`root`));
 		}
 
-		return this.internalRoot;
+		return this.#internalRoot;
 	}
 
 	/**
@@ -52,15 +52,15 @@ export abstract class TreeDataObject<
 			// data store has a root tree so we just need to set it before calling initializingFromExisting
 			const channel = await this.runtime.getChannel(this.rootTreeId);
 			if (SharedTree.is(channel)) {
-				this.internalRoot = channel;
+				this.#internalRoot = channel;
 			} else {
 				throw new Error(
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
 			}
 		} else {
-			this.internalRoot = SharedTree.create(this.runtime, this.rootTreeId);
-			(this.internalRoot as unknown as ISharedObject).bindToContext();
+			this.#internalRoot = SharedTree.create(this.runtime, this.rootTreeId);
+			(this.#internalRoot as unknown as ISharedObject).bindToContext();
 		}
 
 		await super.initializeInternal(existing);
