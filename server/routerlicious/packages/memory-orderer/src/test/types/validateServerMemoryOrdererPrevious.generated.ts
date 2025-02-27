@@ -188,6 +188,7 @@ declare type current_as_old_for_Class_ReservationManager = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_WebSocketSubscriber": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_WebSocketSubscriber = requireAssignableTo<TypeOnly<old.WebSocketSubscriber>, TypeOnly<current.WebSocketSubscriber>>
 
 /*
@@ -495,6 +496,7 @@ declare type current_as_old_for_Interface_IReservationManager = requireAssignabl
  * typeValidation.broken:
  * "Interface_ISubscriber": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ISubscriber = requireAssignableTo<TypeOnly<old.ISubscriber>, TypeOnly<current.ISubscriber>>
 
 /*
