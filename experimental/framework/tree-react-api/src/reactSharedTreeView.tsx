@@ -4,9 +4,9 @@
  */
 
 import {
-	createDataObjectKind,
 	TreeDataObject,
 	TreeDataObjectFactory,
+	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
