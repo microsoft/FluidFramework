@@ -27,6 +27,7 @@ import {
 import type { StressDataObjectOperations } from "../stressDataObject.js";
 
 import { _dirname } from "./dirname.cjs";
+import { AttachState } from "@fluidframework/container-definitions";
 
 type StressOperations = StressDataObjectOperations | DDSModelOp;
 
@@ -64,7 +65,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 			}),
 			10,
 			// local server doesn't support detached blobs
-			(state) => !state.isDetached,
+			(state) => state.client.container.attachState !== AttachState.Detached,
 		],
 		[
 			async (state) => ({
@@ -95,9 +96,9 @@ describe("Local Server Stress", () => {
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// replay: 93,
-		// only: [99],
+		// only: [28],
 		saveFailures,
 		// saveSuccesses,
-		// skip: [93],
+		skip: [28],
 	});
 });

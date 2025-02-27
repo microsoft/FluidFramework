@@ -17,17 +17,14 @@ import type {
 	SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import {
-	ExitBehavior,
 	FuzzTestMinimizer,
 	asyncGeneratorFromArray,
 	chainAsync,
 	createFuzzDescribe,
-	defaultOptions,
 	done,
 	generateTestSeeds,
 	getSaveDirectory,
 	getSaveInfo,
-	interleaveAsync,
 	isOperationType,
 	makeRandom,
 	performFuzzActionsAsync,
@@ -35,6 +32,7 @@ import {
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import {
+	AttachState,
 	type ICodeDetailsLoader,
 	type IContainer,
 	type IFluidCodeDetails,
@@ -45,7 +43,6 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import {
 	createLocalResolverCreateNewRequest,
@@ -84,7 +81,6 @@ export interface LocalServerStressState extends BaseFuzzTestState {
 	client: Client;
 	datastore: StressDataObject;
 	channel: IChannel;
-	isDetached: boolean;
 	seed: number;
 	tag<T extends string>(prefix: T): `${T}-${number}`;
 }
@@ -264,11 +260,7 @@ export interface LocalServerStressOptions {
 	 * In fixed interval mode, this synchronization happens on a predictable cadence: every `interval` operations
 	 * generated.
 	 */
-	validationStrategy:
-		| { type: "random"; probability: number }
-		| { type: "fixedInterval"; interval: number }
-		// WIP: This validation strategy still currently synchronizes all clients.
-		| { type: "partialSynchronization"; probability: number; clientProbability: number };
+	validationProbability: number;
 	parseOperations: (serialized: string) => BaseOperation[];
 
 	/**
@@ -354,9 +346,9 @@ export interface LocalServerStressOptions {
  * @internal
  */
 const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
-	defaultTestCount: defaultOptions.defaultTestCount,
+	defaultTestCount: 100,
 	detachedStartOptions: {
-		numOpsBeforeAttach: 5,
+		numOpsBeforeAttach: 20,
 	},
 	numberOfClients: 3,
 	clientJoinOptions: {
@@ -369,7 +361,7 @@ const defaultLocalServerStressSuiteOptions: LocalServerStressOptions = {
 	reconnectProbability: 0.01,
 	saveFailures: undefined,
 	saveSuccesses: undefined,
-	validationStrategy: { type: "random", probability: 0.05 },
+	validationProbability: 0.05,
 };
 
 /**
@@ -389,10 +381,10 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 		return async (
 			state: LocalServerStressState,
 		): Promise<TOperation | AddClient | RemoveClient | typeof done> => {
-			const { clients, random, isDetached, validationClient } = state;
+			const { clients, random, validationClient } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
-				!isDetached &&
+				validationClient.container.attachState !== AttachState.Detached &&
 				random.bool(options.clientJoinOptions.clientAddProbability)
 			) {
 				if (clients.length > options.numberOfClients && random.bool()) {
@@ -502,7 +494,6 @@ function mixinAttach<TOperation extends BaseOperation>(
 		LocalServerStressState
 	> = async (state, operation) => {
 		if (isOperationType<Attach>("attach", operation)) {
-			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA: Client = state.clients[0];
 
@@ -522,7 +513,6 @@ function mixinAttach<TOperation extends BaseOperation>(
 
 			return {
 				...state,
-				isDetached: false,
 				validationClient,
 			} satisfies LocalServerStressState;
 		}
@@ -545,82 +535,25 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation | Synchronize> {
-	const { validationStrategy } = options;
-	let generatorFactory: () => AsyncGenerator<TOperation | Synchronize, LocalServerStressState>;
+	const { validationProbability } = options;
 
-	switch (validationStrategy.type) {
-		case "random": {
-			// passing 1 here causes infinite loops. passing close to 1 is wasteful
-			// as synchronization + eventual consistency validation should be idempotent.
-			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
-			assert(validationStrategy.probability < 0.5, "Use a lower synchronization probability.");
-			generatorFactory = (): AsyncGenerator<
-				TOperation | Synchronize,
-				LocalServerStressState
-			> => {
-				const baseGenerator = model.generatorFactory();
-				return async (
-					state: LocalServerStressState,
-				): Promise<TOperation | Synchronize | typeof done> =>
-					!state.isDetached && state.random.bool(validationStrategy.probability)
-						? { type: "synchronize" }
-						: baseGenerator(state);
-			};
-			break;
-		}
-
-		case "fixedInterval": {
-			generatorFactory = (): AsyncGenerator<
-				TOperation | Synchronize,
-				LocalServerStressState
-			> => {
-				const baseGenerator = model.generatorFactory();
-				return interleaveAsync<TOperation | Synchronize, LocalServerStressState>(
-					baseGenerator,
-					async (state) =>
-						state.isDetached ? baseGenerator(state) : ({ type: "synchronize" } as const),
-					validationStrategy.interval,
-					1,
-					ExitBehavior.OnEitherExhausted,
-				);
-			};
-			break;
-		}
-
-		case "partialSynchronization": {
-			// passing 1 here causes infinite loops. passing close to 1 is wasteful
-			// as synchronization + eventual consistency validation should be idempotent.
-			// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
-			assert(validationStrategy.probability < 0.5, "Use a lower synchronization probability.");
-			generatorFactory = (): AsyncGenerator<
-				TOperation | Synchronize,
-				LocalServerStressState
-			> => {
-				const baseGenerator = model.generatorFactory();
-				return async (
-					state: LocalServerStressState,
-				): Promise<TOperation | Synchronize | typeof done> => {
-					if (!state.isDetached && state.random.bool(validationStrategy.probability)) {
-						const selectedClients = new Set(
-							state.clients
-								.filter(
-									(client) => client.container.connectionState === ConnectionState.Connected,
-								)
-								.filter(() => state.random.bool(validationStrategy.clientProbability)),
-						);
-
-						return { type: "synchronize", clients: [...selectedClients] };
-					} else {
-						return baseGenerator(state);
-					}
-				};
-			};
-			break;
-		}
-		default: {
-			unreachableCase(validationStrategy);
-		}
-	}
+	// passing 1 here causes infinite loops. passing close to 1 is wasteful
+	// as synchronization + eventual consistency validation should be idempotent.
+	// 0.5 is arbitrary but there's no reason anyone should want a probability near this.
+	assert(validationProbability < 0.5, "Use a lower synchronization probability.");
+	const generatorFactory = (): AsyncGenerator<
+		TOperation | Synchronize,
+		LocalServerStressState
+	> => {
+		const baseGenerator = model.generatorFactory();
+		return async (
+			state: LocalServerStressState,
+		): Promise<TOperation | Synchronize | typeof done> =>
+			state.validationClient.container.attachState !== AttachState.Detached &&
+			state.random.bool(validationProbability)
+				? { type: "synchronize" }
+				: baseGenerator(state);
+	};
 
 	const minimizationTransforms = model.minimizationTransforms as
 		| MinimizationTransform<TOperation | Synchronize>[]
@@ -867,18 +800,41 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		client: makeUnreachableCodePathProxy("client"),
 		datastore: makeUnreachableCodePathProxy("datastore"),
 		channel: makeUnreachableCodePathProxy("channel"),
-		isDetached: true,
 		seed,
 		tag,
 	};
 
 	let operationCount = 0;
-	const generator = model.generatorFactory();
-	const finalState = await performFuzzActionsAsync(
+	const finialSynchronization = { type: "FinalSynchronization" };
+	const generator: AsyncGenerator<
+		TOperation | typeof finialSynchronization,
+		LocalServerStressState
+	> = chainAsync(
+		model.generatorFactory(),
+		takeAsync<TOperation | typeof finialSynchronization, LocalServerStressState>(
+			1,
+			async () => finialSynchronization,
+		),
+	);
+	const reducer = async (state, operation) => {
+		if (operation.type === finialSynchronization.type) {
+			const { clients, validationClient } = state;
+			for (const client of clients) {
+				client.container.connect();
+				await model.validateConsistency(client, validationClient);
+				client.container.dispose();
+			}
+
+			validationClient.container.dispose();
+			return;
+		}
+		return model.reducer(state, operation);
+	};
+	await performFuzzActionsAsync(
 		generator,
 		async (state, operation) => {
 			operationCount++;
-			return model.reducer(state, operation);
+			return reducer(state, operation);
 		},
 		initialState,
 		saveInfo,
@@ -887,15 +843,6 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
 	// this usually indicates an error on the part of the test author.
 	assert(operationCount > 0, "Generator should have produced at least one operation.");
-
-	const { clients, validationClient } = finalState;
-	for (const client of clients) {
-		client.container.connect();
-		await model.validateConsistency(client, validationClient);
-		client.container.dispose();
-	}
-
-	validationClient.container.dispose();
 }
 
 function runTest<TOperation extends BaseOperation>(
@@ -1082,7 +1029,10 @@ export function mixinReconnect<TOperation extends BaseOperation>(
 	> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
-			if (!state.isDetached && state.random.bool(options.reconnectProbability)) {
+			if (
+				state.validationClient.container.attachState !== AttachState.Detached &&
+				state.random.bool(options.reconnectProbability)
+			) {
 				const client = state.clients.find((c) => c.tag === state.client.tag);
 				assert(client !== undefined);
 				return {
