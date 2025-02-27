@@ -53,7 +53,9 @@ class Parent extends schemaFactory.array("Test:Opsize-Bench-Root", Child) {}
  * Create a default attached tree for op submission
  */
 function createConnectedTree(): ITreePrivate {
-	const containerRuntimeFactory = new MockContainerRuntimeFactory();
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({
+		useProcessMessages: true,
+	});
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		idCompressor: createIdCompressor(),
 	});

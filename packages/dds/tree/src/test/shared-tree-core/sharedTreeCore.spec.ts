@@ -133,8 +133,7 @@ describe("SharedTreeCore", () => {
 	it("evicts trunk commits behind the minimum sequence number", () => {
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const sharedObject = new TestSharedTreeCore(runtime);
-		const factory = new MockContainerRuntimeFactory();
-		factory.createContainerRuntime(runtime);
+		const factory = new MockContainerRuntimeFactory({ useProcessMessages: true });
 		sharedObject.connect({
 			deltaConnection: runtime.createDeltaConnection(),
 			objectStorage: new MockStorage(),
@@ -160,7 +159,7 @@ describe("SharedTreeCore", () => {
 	it("evicts trunk commits only when no branches have them in their ancestry", () => {
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const sharedObject = new TestSharedTreeCore(runtime);
-		const factory = new MockContainerRuntimeFactory();
+		const factory = new MockContainerRuntimeFactory({ useProcessMessages: true });
 		factory.createContainerRuntime(runtime);
 		sharedObject.connect({
 			deltaConnection: runtime.createDeltaConnection(),
@@ -219,7 +218,9 @@ describe("SharedTreeCore", () => {
 	 * but for now is kept here for slightly higher e2e coverage for this sort of thing.
 	 */
 	it("Can rebase and process edits to detached portions of the tree", async () => {
-		const containerRuntimeFactory = new MockContainerRuntimeFactory();
+		const containerRuntimeFactory = new MockContainerRuntimeFactory({
+			useProcessMessages: true,
+		});
 		const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 			idCompressor: createIdCompressor(),
 		});
@@ -438,7 +439,9 @@ describe("SharedTreeCore", () => {
 		it("notifies the ResubmitMachine of submitted and sequenced commits", () => {
 			const machine = new MockResubmitMachine();
 			const tree = createTreeSharedObject([], machine);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const containerRuntimeFactory = new MockContainerRuntimeFactory({
+				useProcessMessages: true,
+			});
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
 			});
@@ -462,7 +465,9 @@ describe("SharedTreeCore", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
 			const tree = createTreeSharedObject([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const containerRuntimeFactory = new MockContainerRuntimeFactory({
+				useProcessMessages: true,
+			});
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
 			});
@@ -483,7 +488,9 @@ describe("SharedTreeCore", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
 			const tree = createTreeSharedObject([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const containerRuntimeFactory = new MockContainerRuntimeFactory({
+				useProcessMessages: true,
+			});
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
 			});
@@ -519,7 +526,9 @@ describe("SharedTreeCore", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
 			const tree = createTreeSharedObject([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const containerRuntimeFactory = new MockContainerRuntimeFactory({
+				useProcessMessages: true,
+			});
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
 			});
@@ -545,7 +554,9 @@ describe("SharedTreeCore", () => {
 			const enricher = new MockChangeEnricher<ModularChangeset>();
 			const machine = new MockResubmitMachine();
 			const tree = createTreeSharedObject([], machine, enricher);
-			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+			const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection({
+				useProcessMessages: true,
+			});
 			const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 				idCompressor: createIdCompressor(),
 			});

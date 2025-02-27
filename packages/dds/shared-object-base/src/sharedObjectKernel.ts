@@ -19,6 +19,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -74,13 +75,9 @@ export interface SharedKernel {
 	applyStashedOp(content: unknown): void;
 
 	/**
-	 * {@inheritDoc SharedObjectCore.processCore}
+	 * {@inheritDoc SharedObjectCore.processMessagesCore}
 	 */
-	processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void;
+	processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * {@inheritDoc SharedObjectCore.rollback}
@@ -176,7 +173,11 @@ class SharedObjectFromKernel<
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.kernel.processCore(message, local, localOpMetadata);
+		assert(false, "processCore should not be called");
+	}
+
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		this.kernel.processMessagesCore(messagesCollection);
 	}
 
 	protected override rollback(content: unknown, localOpMetadata: unknown): void {

@@ -687,7 +687,7 @@ export function createCheckout(json: JsonCompatible[], attachTree: boolean): ITr
 	const sharedTreeFactory = new TreeFactory({});
 	const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 	const tree = sharedTreeFactory.create(runtime, "tree");
-	const runtimeFactory = new MockContainerRuntimeFactory();
+	const runtimeFactory = new MockContainerRuntimeFactory({ useProcessMessages: true });
 	runtimeFactory.createContainerRuntime(runtime);
 	initialize(tree.kernel.checkout, {
 		schema: jsonSequenceRootSchema,

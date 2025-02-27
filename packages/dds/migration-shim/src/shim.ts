@@ -5,10 +5,12 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
@@ -194,7 +196,7 @@ export function makeSharedObjectAdapter<TFrom extends object, Common extends obj
 /**
  * If op is a migration op, return the migration identifier.
  */
-function opMigrationId(op: ISequencedDocumentMessage): string | undefined {
+function opMigrationId(op: IRuntimeMessagesContent): string | undefined {
 	return opMigrationIdFromContents(op.contents);
 }
 
@@ -381,52 +383,74 @@ class MigrationShim<TFrom extends object, TOut extends object> implements Shared
 		this.data.kernel.applyStashedOp(content);
 	}
 
-	public processCore(
-		message: ISequencedDocumentMessage,
+	/**
+	 * Forward messages to the kernel.
+	 */
+	private delegatedMessagesCore(
+		envelope: ISequencedMessageEnvelope,
+		messages: readonly IRuntimeMessagesContent[],
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
-		const meta = localOpMetadata as LocalOpMetadata | undefined;
-		const migration = opMigrationId(message);
-		if (migration === this.migrationOptions.migrationIdentifier) {
-			if (this.migrationSequenced === undefined) {
-				if (!local) {
-					this.upgrade(false);
-				}
-				assert(message.clientId !== null, "server should not migrate");
-				this.migrationSequenced = {
-					sequenceNumber: message.sequenceNumber,
-					clientId: message.clientId,
-				};
-			} else {
-				// Concurrent migrations. Drop this one.
-				// Will also drop local ops that client made before observing the first migration ensuring loading up new DDS doesn't happen twice.
-				// Maybe telemetry here?
-				return;
-			}
-		} else {
-			// If migration !== undefined here, there could be a nested adapter (Which could be supported in the future) or mismatched adapters.
-			// For now, error in this case.
-			assert(migration === undefined, "Mismatched migration");
+		this.data.kernel.processMessagesCore({
+			envelope,
+			local,
+			messagesContent: messages.map((message) => ({
+				clientSequenceNumber: message.clientSequenceNumber,
+				contents: message.contents,
+				localOpMetadata: (message.localOpMetadata as LocalOpMetadata | undefined)?.inner,
+			})),
+		});
+	}
 
-			if (this.migrationSequenced === undefined) {
-				// Before migration
-				this.data.kernel.processCore(message, local, meta?.inner);
-			} else {
-				// Already migrated
-				if (
-					message.referenceSequenceNumber < this.migrationSequenced.sequenceNumber &&
-					message.clientId !== this.migrationSequenced.clientId
-				) {
-					// A migration happened that the client producing this op didn't know about (when it made this op).
-					// Drop the op: migrations are first write wins.
-					// Maybe telemetry here?
-					// TODO: In the future could allow an adapter to optionally handle this case by rebasing the op into the new format.
-					return;
+	public processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const local = messagesCollection.local;
+		const envelope = messagesCollection.envelope;
+
+		// TODO: forward more cases without splitting the messagesCollection.
+		// The messagesCollection should only be split when the migration happens or rebasing over the migration is needed.
+
+		for (const message of messagesCollection.messagesContent) {
+			const migration = opMigrationId(message);
+			if (migration === this.migrationOptions.migrationIdentifier) {
+				if (this.migrationSequenced === undefined) {
+					if (!local) {
+						this.upgrade(false);
+					}
+					assert(envelope.clientId !== null, "server should not migrate");
+					this.migrationSequenced = {
+						sequenceNumber: message.clientSequenceNumber,
+						clientId: envelope.clientId,
+					};
 				} else {
-					// This op is after the migration from a client that observed the migration.
-					// Must be in new format, send to new kernel:
-					this.data.kernel.processCore(message, local, meta?.inner);
+					// Concurrent migrations. Drop this one.
+					// Will also drop local ops that client made before observing the first migration ensuring loading up new DDS doesn't happen twice.
+					// Maybe telemetry here?
+					return;
+				}
+			} else {
+				// If migration !== undefined here, there could be a nested adapter (Which could be supported in the future) or mismatched adapters.
+				// For now, error in this case.
+				assert(migration === undefined, "Mismatched migration");
+
+				if (this.migrationSequenced === undefined) {
+					// Before migration
+					this.delegatedMessagesCore(envelope, [message], local);
+				} else {
+					// Already migrated
+					if (
+						envelope.referenceSequenceNumber < this.migrationSequenced.sequenceNumber &&
+						envelope.clientId !== this.migrationSequenced.clientId
+					) {
+						// A migration happened that the client producing this op didn't know about (when it made this op).
+						// Drop the op: migrations are first write wins.
+						// Maybe telemetry here?
+						// TODO: In the future could allow an adapter to optionally handle this case by rebasing the op into the new format.
+						return;
+					} else {
+						// This op is after the migration from a client that observed the migration.
+						// Must be in new format, send to new kernel:
+						this.delegatedMessagesCore(envelope, [message], local);
+					}
 				}
 			}
 		}

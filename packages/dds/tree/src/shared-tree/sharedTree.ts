@@ -250,7 +250,7 @@ export class SharedTree extends SharedObject implements ISharedTree {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.kernel.processCore(message, local, localOpMetadata);
+		fail("processCore should not be called on SharedTree");
 	}
 
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {

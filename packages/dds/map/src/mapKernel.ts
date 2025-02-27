@@ -7,12 +7,12 @@ import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ITelemetryContext,
 	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -938,20 +938,19 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-	 */
-	public processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
+	public processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
-			assert(
-				this.tryProcessMessage(message.contents as IMapOperation, local, localOpMetadata),
-				0xab2 /* Map received an unrecognized op, possibly from a newer version */,
-			);
+		if (messagesCollection.envelope.type === MessageType.Operation) {
+			for (const message of messagesCollection.messagesContent) {
+				assert(
+					this.tryProcessMessage(
+						message.contents as IMapOperation,
+						messagesCollection.local,
+						message.localOpMetadata,
+					),
+					0xab2 /* Map received an unrecognized op, possibly from a newer version */,
+				);
+			}
 		}
 	}
 

@@ -44,11 +44,10 @@ export class MockContainerRuntimeFactoryWithOpBunching extends MockContainerRunt
 	public override createContainerRuntime(
 		dataStoreRuntime: MockFluidDataStoreRuntime,
 	): MockContainerRuntimeWithOpBunching {
-		const containerRuntime = new MockContainerRuntimeWithOpBunching(
-			dataStoreRuntime,
-			this,
-			this.runtimeOptions,
-		);
+		const containerRuntime = new MockContainerRuntimeWithOpBunching(dataStoreRuntime, this, {
+			...this.runtimeOptions,
+			useProcessMessages: true,
+		});
 		this.runtimes.add(containerRuntime);
 		return containerRuntime;
 	}
