@@ -8,7 +8,6 @@ import { treeDataObjectInternal } from "@fluid-experimental/tree-react-api/inter
 import { Inventory, treeConfiguration } from "./schema.js";
 
 export const InventoryListFactory = treeDataObjectInternal(
-	"tree",
 	treeConfiguration,
 	() =>
 		new Inventory({

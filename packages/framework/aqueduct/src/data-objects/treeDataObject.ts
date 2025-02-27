@@ -103,8 +103,6 @@ export abstract class TreeDataObject<
 		}
 	}
 
-	public abstract readonly key: string;
-
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
 
 	protected abstract createInitialTree(): InsertableTreeFieldFromImplicitField<TSchema>;
