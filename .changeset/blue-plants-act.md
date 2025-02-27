@@ -6,7 +6,7 @@
 "section": tree
 ---
 
-Faster creation of large transactions and faster processing of inbound changes.
+Creating large transactions and processing inbound changes is now faster
 
 SharedTree sometimes composes several sequential changes into a single change.
 It does so whenever a transaction is created and when processing inbound changes.
