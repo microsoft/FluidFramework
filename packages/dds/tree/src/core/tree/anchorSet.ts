@@ -32,6 +32,7 @@ import {
 } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
+import { offsetDetachId } from "./deltaUtil.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -570,15 +571,18 @@ export class AnchorSet implements AnchorLocator {
 		const destinationPath = this.trackInner(destination.parent ?? this.root);
 
 		// Update nodes for new parent.
-		for (const node of coupleInfo.nodes) {
+		for (const [i, node] of coupleInfo.nodes.entries()) {
 			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = destinationPath;
 			node.parentField = destination.parentField;
 			// If the destination is a DetachedUpPath, propagate its detachedNodeId
-			// TODO does the id need to be incremented? it doesn't seem like it so are there ever multiple nodes that get passed here and if so, how do we handle this?
 			if (isDetachedUpPath(destination)) {
-				(node as unknown as Mutable<DetachedUpPath>).detachedNodeId =
-					destination.detachedNodeId;
+				(node as unknown as Mutable<DetachedUpPath>).detachedNodeId = offsetDetachId(
+					destination.detachedNodeId,
+					i,
+				);
+			} else {
+				(node as unknown as Partial<Mutable<DetachedUpPath>>).detachedNodeId = undefined;
 			}
 		}
 

@@ -320,7 +320,6 @@ describe("AnchorSet", () => {
 			// This moves anchor4 (the only anchor under anchor1) out from under anchor1.
 			// If the visitor did not increase the ref count of anchor1 on its way down,
 			// anchor1 will be disposed as part of this operation.
-			// TODO check id
 			v.detach({ start: 4, end: 5 }, detachedField, detachId);
 			v.exitField(fieldBar);
 			// If anchor1 is be disposed. This will throw.
@@ -329,6 +328,54 @@ describe("AnchorSet", () => {
 		});
 
 		checkRemoved(anchors.locate(anchor1), detachId, detachedField);
+	});
+
+	it("can detach multiple nodes", () => {
+		const anchors = new AnchorSet();
+
+		// This tests that detaching nodes [a, b, c, d, e] while there are anchors to b and e works
+		const bPath = makePath([fieldFoo, 1]);
+		const ePath = makePath([fieldFoo, 4]);
+		const bAnchor = anchors.track(bPath);
+		const eAnchor = anchors.track(ePath);
+
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.detach({ start: 0, end: 5 }, detachedField, detachId);
+			v.exitField(fieldFoo);
+		});
+
+		checkRemoved(anchors.locate(bAnchor), { minor: 42 }, detachedField);
+		checkRemoved(anchors.locate(eAnchor), { minor: 43 }, detachedField);
+	});
+
+	it("does not retain detachedNodeIds when detached nodes are reattached", () => {
+		const anchors = new AnchorSet();
+
+		// This tests that detaching nodes [a, b, c, d, e] while there are anchors to b and e works
+		// and that reattaching [a, b, c] while there is an anchor to b removes the detachedNodeId from b
+		const bPath = makePath([fieldFoo, 1]);
+		const ePath = makePath([fieldFoo, 4]);
+		const bAnchor = anchors.track(bPath);
+		const eAnchor = anchors.track(ePath);
+
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.detach({ start: 0, end: 5 }, detachedField, detachId);
+			v.exitField(fieldFoo);
+		});
+
+		checkRemoved(anchors.locate(bAnchor), { minor: 42 }, detachedField);
+		checkRemoved(anchors.locate(eAnchor), { minor: 43 }, detachedField);
+
+		withVisitor(anchors, (v) => {
+			v.enterField(fieldFoo);
+			v.attach(detachedField, detachId, 3, 0);
+			v.exitField(fieldFoo);
+		});
+
+		assert(isDetachedUpPath(anchors.locate(bAnchor) as UpPath) === false);
+		assert(isDetachedUpPath(anchors.locate(eAnchor) as UpPath) === true);
 	});
 
 	describe("internalize path", () => {
