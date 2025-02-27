@@ -7,7 +7,7 @@ import {
 	IDocumentAttributes,
 	IClientJoin,
 	ICommittedProposal,
-    IDocumentMessage,
+	IDocumentMessage,
 	IProcessMessageResult,
 	IProposal,
 	IQuorum,
