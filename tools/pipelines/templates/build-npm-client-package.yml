@@ -229,7 +229,7 @@ extends:
                           echo "Listing files in directory: $(pwd)"
                           ls -la
                           echo "attempting tarball install"
-                          npm i -g fluid-tools-build-cli-*.tgz
+                          npm i -g ./*.tgz
 
           # Job - Build
           - job: build
