@@ -45,6 +45,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 			assert(typeof cursor.value === "string", 0x9aa /* identifier must be type string */);
 			if (isStableId(cursor.value)) {
 				// We ensure here that if the value is a compressible id, the compressed OpSpaceCompressedId is returned.
+				// This will be casted to a number when json serialized, but will be safe to cast back to OpSpaceCompressedId during decoding.
 				const sessionSpaceCompressedId = cache.idCompressor.tryRecompress(cursor.value);
 				if (sessionSpaceCompressedId !== undefined) {
 					return cache.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
