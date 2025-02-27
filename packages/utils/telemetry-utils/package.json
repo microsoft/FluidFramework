@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/telemetry-utils",
-	"version": "2.22.1",
+	"version": "2.22.2",
 	"description": "Collection of telemetry relates utilities for Fluid",
 	"homepage": "https://fluidframework.com",
 	"repository": {

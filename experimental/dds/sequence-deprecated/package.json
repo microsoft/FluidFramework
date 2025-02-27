@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/sequence-deprecated",
-	"version": "2.22.1",
+	"version": "2.22.2",
 	"description": "Deprecated distributed sequences",
 	"homepage": "https://fluidframework.com",
 	"repository": {

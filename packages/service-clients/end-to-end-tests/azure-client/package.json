@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-end-to-end-tests",
-	"version": "2.22.1",
+	"version": "2.22.2",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {

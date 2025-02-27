@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-driver",
-	"version": "2.22.1",
+	"version": "2.22.2",
 	"description": "Socket storage implementation for SPO and ODC",
 	"homepage": "https://fluidframework.com",
 	"repository": {
