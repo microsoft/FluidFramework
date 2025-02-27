@@ -818,7 +818,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	);
 	const reducer = async (state, operation) => {
 		if (operation.type === finialSynchronization.type) {
-			const { clients, validationClient } = state;
+			const { clients, validationClient, localDeltaConnectionServer } = state;
 			for (const client of clients) {
 				client.container.connect();
 				await model.validateConsistency(client, validationClient);
@@ -826,13 +826,22 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			}
 
 			validationClient.container.dispose();
-			return;
+			await localDeltaConnectionServer.close();
+			return {
+				...state,
+				clients: [],
+				localDeltaConnectionServer: makeUnreachableCodePathProxy("localDeltaConnectionServer"),
+				validationClient: makeUnreachableCodePathProxy("validationClient"),
+				client: makeUnreachableCodePathProxy("client"),
+				datastore: makeUnreachableCodePathProxy("datastore"),
+				channel: makeUnreachableCodePathProxy("channel"),
+			};
 		}
 		return model.reducer(state, operation);
 	};
 	await performFuzzActionsAsync(
 		generator,
-		async (state, operation) => {
+		async (state: LocalServerStressState, operation) => {
 			operationCount++;
 			return reducer(state, operation);
 		},
