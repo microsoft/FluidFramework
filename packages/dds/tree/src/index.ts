@@ -61,10 +61,7 @@ export {
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
-	type TransactionConstraint,
-	type NodeInDocumentConstraint,
 	type RunTransaction,
-	rollback,
 	type ForestOptions,
 	getBranch,
 	type BranchableTree,
@@ -73,18 +70,9 @@ export {
 	type ViewContent,
 	TreeAlpha,
 	independentView,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
-	type TransactionResultFailed,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
-	SharedTreeAttributes,
-	SharedTreeFactoryType,
 } from "./shared-tree/index.js";
 
 export {
@@ -216,10 +204,24 @@ export {
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaMetadata,
+	type schemaStatics,
+	type ITreeAlpha,
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	SharedTreeAttributes,
+	SharedTreeFactoryType,
 } from "./treeFactory.js";
 
 export {
@@ -256,3 +258,6 @@ export {
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+
+export { JsonAsTree } from "./jsonDomainSchema.js";
+export { FluidSerializableAsTree } from "./serializableDomainSchema.js";

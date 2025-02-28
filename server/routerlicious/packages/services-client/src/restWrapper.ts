@@ -10,11 +10,26 @@ import {
 	AxiosInstance,
 	AxiosRequestConfig,
 	RawAxiosRequestHeaders,
+	type AxiosResponse,
 } from "axios";
 import { v4 as uuid } from "uuid";
 import { debug } from "./debug";
 import { createFluidServiceNetworkError, INetworkErrorDetails } from "./error";
 import { CorrelationIdHeaderName, TelemetryContextHeaderName } from "./constants";
+
+/**
+ * @internal
+ */
+export interface IBasicRestWrapperMetricProps {
+	axiosError: AxiosError<any>;
+	status: number | string;
+	method: string;
+	baseUrl: string;
+	url: string;
+	correlationId: string;
+	durationInMs: number;
+	timoutInMs: number | string;
+}
 
 /**
  * @internal
@@ -170,6 +185,7 @@ export class BasicRestWrapper extends RestWrapper {
 		private readonly refreshTokenIfNeeded?: (
 			authorizationHeader: RawAxiosRequestHeaders,
 		) => Promise<RawAxiosRequestHeaders | undefined>,
+		private readonly logHttpMetrics?: (requestProps: IBasicRestWrapperMetricProps) => void,
 	) {
 		super(baseurl, defaultQueryString, maxBodyLength, maxContentLength);
 	}
@@ -180,9 +196,10 @@ export class BasicRestWrapper extends RestWrapper {
 		canRetry = true,
 	): Promise<T> {
 		const options = { ...requestConfig };
+		const correlationId = this.getCorrelationId?.() ?? uuid();
 		options.headers = this.generateHeaders(
 			options.headers,
-			this.getCorrelationId?.() ?? uuid(),
+			correlationId,
 			this.getTelemetryContextProperties?.(),
 		);
 
@@ -202,9 +219,13 @@ export class BasicRestWrapper extends RestWrapper {
 		}
 
 		return new Promise<T>((resolve, reject) => {
+			const startTime = performance.now();
+			let axiosError: AxiosError;
+			let axiosResponse: AxiosResponse;
 			this.axios
 				.request<T>(options)
 				.then((response) => {
+					axiosResponse = response;
 					resolve(response.data);
 				})
 				.catch((error: AxiosError<any>) => {
@@ -248,6 +269,7 @@ export class BasicRestWrapper extends RestWrapper {
 
 						this.request<T>(retryConfig, statusCode, false).then(resolve).catch(reject);
 					} else {
+						axiosError = error;
 						const errorSourceMessage = `[${error?.config?.method ?? ""}] request to [${
 							error?.config?.baseURL ?? options.baseURL ?? ""
 						}] failed with [${error.response?.status}] status code`;
@@ -291,6 +313,27 @@ export class BasicRestWrapper extends RestWrapper {
 							};
 							reject(createFluidServiceNetworkError(500, details));
 						}
+					}
+				})
+				.finally(() => {
+					if (this.logHttpMetrics) {
+						const status: string | number = axiosError
+							? axiosError?.response?.status ?? "STATUS_UNAVAILABLE"
+							: axiosResponse?.status ?? "STATUS_UNAVAILABLE";
+						const requestProps: IBasicRestWrapperMetricProps = {
+							axiosError,
+							status,
+							baseUrl:
+								options.baseURL ??
+								axiosError?.config?.baseURL ??
+								"BASE_URL_UNAVAILABLE",
+							method: options.method ?? "METHOD_UNAVAILABLE",
+							url: options.url ?? "URL_UNAVAILABLE",
+							correlationId,
+							durationInMs: performance.now() - startTime,
+							timoutInMs: options.timeout ?? "TIMEOUT_UNAVAILABLE",
+						};
+						this.logHttpMetrics(requestProps);
 					}
 				});
 		});

@@ -175,43 +175,75 @@ export class AppData extends DataObject {
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {
-		// Set up SharedTree for visualization
-		const builder = new SchemaFactory("DefaultVisualizer_SharedTree_Test");
+		const builder = new SchemaFactory("TodoList_Schema");
 
-		// TODO: Maybe include example handle
-
-		class LeafSchema extends builder.object("leaf-item", {
-			leafField: [builder.boolean, builder.handle, builder.string],
+		class WorkItem extends builder.object("work-item", {
+			title: builder.string,
+			completed: builder.boolean,
+			dueDate: builder.string,
+			assignee: builder.string,
+			collaborators: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		class ChildSchema extends builder.object("child-item", {
-			childField: [builder.string, builder.boolean],
-			childData: builder.optional(LeafSchema),
+		class PersonalItem extends builder.object("personal-item", {
+			title: builder.string,
+			completed: builder.boolean,
+			dueDate: builder.string,
+			location: builder.optional(builder.string),
+			with: builder.optional(builder.array(builder.string)),
 		}) {}
 
-		class RootNodeSchema extends builder.object("root-item", {
-			childrenOne: builder.array(ChildSchema),
-			childrenTwo: builder.number,
+		class TodoWorkspace extends builder.object("todo-workspace", {
+			categories: builder.object("todo-categories", {
+				work: [builder.map([WorkItem]), builder.array(WorkItem)],
+				personal: [builder.map([PersonalItem]), builder.array(PersonalItem)],
+			}),
 		}) {}
 
-		const config = new TreeViewConfiguration({ schema: RootNodeSchema });
-		const view = sharedTree.viewWith(config);
-		view.initialize({
-			childrenOne: [
-				{
-					childField: "Hello world!",
-					childData: {
-						leafField: "Hello world again!",
-					},
-				},
-				{
-					childField: true,
-					childData: {
-						leafField: false,
-					},
-				},
-			],
-			childrenTwo: 32,
+		const config = new TreeViewConfiguration({
+			schema: [TodoWorkspace],
 		});
+
+		const view = sharedTree.viewWith(config);
+		view.initialize(
+			new TodoWorkspace({
+				categories: {
+					work: [
+						{
+							title: "Submit a PR",
+							completed: false,
+							dueDate: "2026-01-01",
+							assignee: "Alice",
+							collaborators: ["Bob", "Charlie"],
+						},
+						{
+							title: "Review a PR",
+							completed: true,
+							dueDate: "2025-01-01",
+							assignee: "David",
+						},
+					],
+					personal: new Map([
+						[
+							"Health",
+							{
+								title: "Go to the gym",
+								completed: true,
+								dueDate: "2025-01-01",
+								with: ["Wayne", "Tyler"],
+							},
+						],
+						[
+							"Education",
+							{
+								title: "Finish reading the book",
+								completed: false,
+								dueDate: "2026-01-01",
+							},
+						],
+					]),
+				},
+			}),
+		);
 	}
 }

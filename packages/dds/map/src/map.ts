@@ -203,8 +203,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 		//    and result in non-incremental snapshot.
 		//    This can be improved in the future, without being format breaking change, as loading sequence
 		//    loads all blobs at once and partitioning schema has no impact on that process.
-		for (const key of Object.keys(data)) {
-			const value = data[key];
+		for (const [key, value] of Object.entries(data)) {
 			if (value.value && value.value.length >= MinValueSizeSeparateSnapshotBlob) {
 				const blobName = `blob${counter}`;
 				counter++;
@@ -273,7 +272,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.trySubmitMessage(content as IMapOperation, localOpMetadata);
 	}
 
@@ -308,7 +307,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
-	protected rollback(content: unknown, localOpMetadata: unknown): void {
+	protected override rollback(content: unknown, localOpMetadata: unknown): void {
 		this.kernel.rollback(content, localOpMetadata);
 	}
 }

@@ -30,7 +30,6 @@ import React from "react";
  * @returns The main documentation page for this version
  */
 function getVersionMainDoc(version: GlobalVersion): GlobalDoc {
-	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	return version.docs.find((doc) => doc.id === version.mainDocId);
 }
 
@@ -135,7 +134,7 @@ export default function DocsVersionDropdownNavbarItem({
 				to={dropdownTo}
 				items={items}
 				aria-label="Select documentation version"
-				role="combobox"
+				role="menu"
 				aria-haspopup="listbox"
 			/>
 		</div>

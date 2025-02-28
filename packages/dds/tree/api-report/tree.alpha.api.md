@@ -367,6 +367,37 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, 
 }
 
 // @alpha
+export namespace JsonAsTree {
+    const Primitive: readonly [TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>];
+    // @sealed
+    export class Array extends _APIExtractorWorkaroundArrayBase {
+    }
+    const Tree: readonly [() => typeof JsonObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>];
+    // @sealed
+    export class JsonObject extends _APIExtractorWorkaroundObjectBase {
+    }
+    const _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.json.object", NodeKind_2.Map, TreeMapNodeUnsafe_2<readonly [() => typeof JsonObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>]> & WithType_2<"com.fluidframework.json.object", NodeKind_2.Map, unknown>, {
+    [Symbol.iterator](): Iterator<[string, string | number | JsonObject | Array | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
+    create(data: boolean): boolean;
+    }> | null], any, undefined>;
+    } | {
+    readonly [x: string]: string | number | JsonObject | Array | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
+    create(data: boolean): boolean;
+    }> | null;
+    }, false, readonly [() => typeof JsonObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>], undefined>;
+    // (undocumented)
+    export type Primitive = TreeNodeFromImplicitAllowedTypes<typeof Primitive>;
+    export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof Array>;
+    const _APIExtractorWorkaroundArrayBase: TreeNodeSchemaClass_2<"com.fluidframework.json.array", NodeKind_2.Array, TreeArrayNodeUnsafe_2<readonly [() => typeof JsonObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>]> & WithType_2<"com.fluidframework.json.array", NodeKind_2.Array, unknown>, {
+    [Symbol.iterator](): Iterator<string | number | JsonObject | Array | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
+    create(data: boolean): boolean;
+    }> | null, any, undefined>;
+    }, false, readonly [() => typeof JsonObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>], undefined>;
+    // (undocumented)
+    export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
+}
+
+// @alpha
 export type JsonCompatible<TExtra = never> = string | number | boolean | null | JsonCompatible<TExtra>[] | JsonCompatibleObject<TExtra> | TExtra;
 
 // @alpha
@@ -630,8 +661,12 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         [Symbol.iterator](): Iterator<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>;
     }, false, T, undefined>;
     readonly boolean: TreeNodeSchemaNonClass<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean, true, unknown, never, unknown>;
+    static readonly boolean: TreeNodeSchemaNonClass<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean, true, unknown, never, unknown>;
     readonly handle: TreeNodeSchemaNonClass<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>;
+    static readonly handle: TreeNodeSchemaNonClass<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>;
     get identifier(): FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
+    readonly leaves: readonly [TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>];
+    static readonly leaves: readonly [TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>];
     map<const T extends TreeNodeSchema | readonly TreeNodeSchema[]>(allowedTypes: T): TreeNodeSchemaNonClass<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, `Map<${string}>`>, NodeKind.Map>, MapNodeInsertableData<T>, true, T, undefined>;
     map<Name extends TName, const T extends ImplicitAllowedTypes>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNode<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map>, MapNodeInsertableData<T>, true, T, undefined>;
     mapRecursive<Name extends TName, const T extends Unenforced<ImplicitAllowedTypes>>(name: Name, allowedTypes: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Map, TreeMapNodeUnsafe<T> & WithType<ScopedSchemaName<TScope, Name>, NodeKind.Map, unknown>, {
@@ -643,15 +678,22 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
         readonly [x: string]: InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
     }, false, T, undefined>;
     readonly null: TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never, unknown>;
+    static readonly null: TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never, unknown>;
     readonly number: TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never, unknown>;
+    static readonly number: TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never, unknown>;
     object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>>(name: Name, fields: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T>;
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>>(name: Name, t: T): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T>;
-    optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">): FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
-    optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Optional, T>;
-    required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">): FieldSchema<FieldKind.Required, T, TCustomMetadata>;
-    requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(t: T, props?: Omit<FieldProps, "defaultProvider">): FieldSchemaUnsafe<FieldKind.Required, T>;
+    readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
+    static readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
+    readonly optionalRecursive: <const T extends unknown>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Optional, T>;
+    static readonly optionalRecursive: <const T extends unknown>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Optional, T>;
+    readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
+    static readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
+    readonly requiredRecursive: <const T extends unknown>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T>;
+    static readonly requiredRecursive: <const T extends unknown>(t: T, props?: Omit<FieldProps<unknown>, "defaultProvider"> | undefined) => FieldSchemaUnsafe<FieldKind.Required, T>;
     readonly scope: TScope;
     readonly string: TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>;
+    static readonly string: TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>;
 }
 
 // @alpha
@@ -677,6 +719,20 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown> extends NodeSchemaOptions<TCustomMetadata> {
     allowUnknownOptionalFields?: boolean;
 }
+
+// @public @sealed
+export const schemaStatics: {
+    readonly string: TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>;
+    readonly number: TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never, unknown>;
+    readonly boolean: TreeNodeSchemaNonClass<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean, true, unknown, never, unknown>;
+    readonly null: TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never, unknown>;
+    readonly handle: TreeNodeSchemaNonClass<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>;
+    readonly leaves: readonly [TreeNodeSchemaNonClass<"com.fluidframework.leaf.string", NodeKind.Leaf, string, string, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.number", NodeKind.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.boolean", NodeKind.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.null", NodeKind.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass<"com.fluidframework.leaf.handle", NodeKind.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>];
+    readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
+    readonly required: <const T_1 extends ImplicitAllowedTypes, const TCustomMetadata_1 = unknown>(t: T_1, props?: Omit<FieldProps<TCustomMetadata_1>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Required, T_1, TCustomMetadata_1>;
+    readonly optionalRecursive: <const T_2 extends unknown>(t: T_2, props?: Omit<FieldProps, "defaultProvider">) => FieldSchemaUnsafe<FieldKind.Optional, T_2>;
+    readonly requiredRecursive: <const T_3 extends unknown>(t: T_3, props?: Omit<FieldProps, "defaultProvider">) => FieldSchemaUnsafe<FieldKind.Required, T_3>;
+};
 
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {

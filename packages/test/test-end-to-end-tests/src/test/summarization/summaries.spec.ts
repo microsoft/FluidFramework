@@ -35,6 +35,7 @@ import {
 	ITestObjectProvider,
 	createSummarizer,
 	createSummarizerFromFactory,
+	createTestConfigProvider,
 	getContainerEntryPointBackCompat,
 	summarizeNow,
 	timeoutPromise,
@@ -595,7 +596,10 @@ describeCompat("SingleCommit Summaries Tests", "NoCompat", (getTestObjectProvide
 	let mainContainer: IContainer;
 	const configForSingleCommitSummary: ITestContainerConfig = {
 		loaderProps: {
-			options: { summarizeProtocolTree: true },
+			options: {},
+			configProvider: createTestConfigProvider({
+				"Fluid.Container.summarizeProtocolTree2": true,
+			}),
 		},
 	};
 	const testCache = new TestPersistedCache();
