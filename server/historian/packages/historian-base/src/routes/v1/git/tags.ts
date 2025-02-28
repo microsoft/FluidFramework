@@ -15,9 +15,14 @@ import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
-import { Constants } from "../../utils";
+import {
+	ICache,
+	IDenyList,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+} from "../../../services";
+import * as utils from "../../utils";
+import { Constants } from "../../../utils";
 
 export function create(
 	config: nconf.Provider,
@@ -42,11 +47,11 @@ export function create(
 		Constants.generalRestCallThrottleIdPrefix,
 	);
 
-	async function createBlob(
+	async function createTag(
 		tenantId: string,
 		authorization: string | undefined,
-		body: git.ICreateBlobParams,
-	): Promise<git.ICreateBlobResponse> {
+		params: git.ICreateTagParams,
+	): Promise<git.ITag> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -59,15 +64,14 @@ export function create(
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
 		});
-		return service.createBlob(body);
+		return service.createTag(params);
 	}
 
-	async function getBlob(
+	async function getTag(
 		tenantId: string,
 		authorization: string | undefined,
-		sha: string,
-		useCache: boolean,
-	): Promise<git.IBlob> {
+		tag: string,
+	): Promise<git.ITag> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -79,96 +83,36 @@ export function create(
 			denyList,
 			ephemeralDocumentTTLSec,
 		});
-		return service.getBlob(sha, useCache);
+		return service.getTag(tag);
 	}
 
-	/**
-	 * Historian https ping endpoint for availability monitoring system
-	 */
-	router.get(
-		"/repos/ping",
-		throttle(restTenantGeneralThrottler, winston, {
-			...tenantThrottleOptions,
-			throttleIdPrefix: "ping",
-		}),
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async (request, response) => {
-			response.sendStatus(200);
-		},
-	);
-
 	router.post(
-		"/repos/:ignored?/:tenantId/git/blobs",
+		"/repos/:ignored?/:tenantId/git/tags",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
-			const blobP = createBlob(
+			const tagP = createTag(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.body,
 			);
-			utils.handleResponse(blobP, response, false, 201);
+			utils.handleResponse(tagP, response, false, undefined, 201);
 		},
 	);
 
-	/**
-	 * Retrieves the given blob from the repository
-	 */
 	router.get(
-		"/repos/:ignored?/:tenantId/git/blobs/:sha",
-		validateRequestParams("tenantId", "sha"),
+		"/repos/:ignored?/:tenantId/git/tags/*",
+		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
-			const useCache = !("disableCache" in request.query);
-			const blobP = getBlob(
+			const tagP = getTag(
 				request.params.tenantId,
 				request.get("Authorization"),
-				request.params.sha,
-				useCache,
+				request.params[0],
 			);
-			utils.handleResponse(blobP, response, useCache);
-		},
-	);
-
-	/**
-	 * Retrieves the given blob as an image
-	 */
-	router.get(
-		"/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
-		validateRequestParams("tenantId", "sha"),
-		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
-		(request, response, next) => {
-			const useCache = !("disableCache" in request.query);
-
-			const blobP = getBlob(
-				request.params.tenantId,
-				request.get("Authorization"),
-				request.params.sha,
-				useCache,
-			);
-
-			blobP
-				.then((blob) => {
-					if (useCache) {
-						response.setHeader("Cache-Control", "public, max-age=31536000");
-					}
-					// Make sure the browser will expose specific headers for performance analysis.
-					response.setHeader(
-						"Access-Control-Expose-Headers",
-						"Content-Encoding, Content-Length, Content-Type",
-					);
-					// In order to report W3C timings, Time-Allow-Origin needs to be set.
-					response.setHeader("Timing-Allow-Origin", "*");
-					response
-						.status(200)
-						.write(Buffer.from(blob.content, "base64"), () => response.end());
-				})
-				.catch((error) => {
-					response.status(error?.code ?? 400).json(error?.message ?? error);
-				});
+			utils.handleResponse(tagP, response, false);
 		},
 	);
 

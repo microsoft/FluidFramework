@@ -219,7 +219,10 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		// This.nodeTracker.on("invalidate", (id) => this.emit("invalidate", id));
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
-		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+		const historianApiVersion: string = config.get("storage:historianApiVersion") ?? "1.0";
+		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl, {
+			historianApiVersion,
+		});
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@fluidframework/gitresources";
+import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import {
 	IStorageNameRetriever,
 	IThrottler,
@@ -11,17 +11,18 @@ import {
 	IDocumentManager,
 } from "@fluidframework/server-services-core";
 import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
-import {
-	containsPathTraversal,
-	validateRequestParams,
-} from "@fluidframework/server-services-shared";
+import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
-import { Constants } from "../../utils";
-import { NetworkError } from "@fluidframework/server-services-client";
+import {
+	ICache,
+	IDenyList,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+} from "../../../services";
+import * as utils from "../../utils";
+import { Constants } from "../../../utils";
 
 export function create(
 	config: nconf.Provider,
@@ -46,15 +47,32 @@ export function create(
 		Constants.generalRestCallThrottleIdPrefix,
 	);
 
-	async function getCommits(
+	async function createCommit(
+		tenantId: string,
+		authorization: string | undefined,
+		params: ICreateCommitParams,
+	): Promise<ICommit> {
+		const service = await utils.createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			documentManager,
+			cache,
+			denyList,
+			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
+		});
+		return service.createCommit(params);
+	}
+
+	async function getCommit(
 		tenantId: string,
 		authorization: string | undefined,
 		sha: string,
-		count: number = 1,
-	): Promise<git.ICommitDetails[]> {
-		if (sha === undefined) {
-			throw new NetworkError(400, "Missing required parameter 'sha'");
-		}
+		useCache: boolean,
+	): Promise<ICommit> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -66,40 +84,40 @@ export function create(
 			denyList,
 			ephemeralDocumentTTLSec,
 		});
-		return service.getCommits(sha, count);
+		return service.getCommit(sha, useCache);
 	}
 
-	router.get(
-		"/repos/:ignored?/:tenantId/commits",
+	router.post(
+		"/repos/:ignored?/:tenantId/git/commits",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
-			const sha = utils.queryParamToString(request.query.sha);
-			if (sha === undefined) {
-				utils.handleResponse(
-					Promise.reject(new NetworkError(400, "Missing required parameter 'sha'")),
-					response,
-					false,
-				);
-				return;
-			}
-			if (containsPathTraversal(sha)) {
-				utils.handleResponse(
-					Promise.reject(new NetworkError(400, "Invalid sha")),
-					response,
-					false,
-				);
-				return;
-			}
-			const commitsP = getCommits(
+			const commitP = createCommit(
 				request.params.tenantId,
 				request.get("Authorization"),
-				sha,
-				utils.queryParamToNumber(request.query.count),
+				request.body,
 			);
 
-			utils.handleResponse(commitsP, response, false);
+			utils.handleResponse(commitP, response, false, undefined, 201);
+		},
+	);
+
+	router.get(
+		"/repos/:ignored?/:tenantId/git/commits/:sha",
+		validateRequestParams("tenantId", "sha"),
+		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
+		utils.verifyToken(revokedTokenChecker),
+		(request, response, next) => {
+			const useCache = !("disableCache" in request.query);
+			const commitP = getCommit(
+				request.params.tenantId,
+				request.get("Authorization"),
+				request.params.sha,
+				useCache,
+			);
+
+			utils.handleResponse(commitP, response, useCache);
 		},
 	);
 
