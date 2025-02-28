@@ -42,8 +42,8 @@ parameters:
   default: $(Pipeline.Workspace)/.pnpm-store
 
 resources:
-  # pipeline listed as a resource have their artifacts automatically downloeded in a deployment job.
   pipelines:
+    # Listing this pipeline as a resource makes its artifacts automatically downloaded within a deployment job.
     - pipeline: buildTools-resource
       project: internal
       source: Build - build-tools
