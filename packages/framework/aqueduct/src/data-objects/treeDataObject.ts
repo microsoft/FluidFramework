@@ -29,17 +29,17 @@ export abstract class TreeDataObject<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends PureDataObject {
 	/**
-	 * SharedTree view configuration.
+	 * The configuration used to initialize new documents, as well as to interpret (schematize) existing ones.
 	 */
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
 
 	/**
-	 * Underlying SharedTree.
+	 * The underlying tree.
 	 */
 	#tree: ITree | undefined;
 
 	/**
-	 * View of the underlying SharedTree.
+	 * View of the underlying tree.
 	 */
 	#treeView: TreeView<TSchema> | undefined;
 
