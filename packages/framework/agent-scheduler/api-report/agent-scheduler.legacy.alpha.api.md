@@ -9,7 +9,7 @@ export class AgentSchedulerFactory implements IFluidDataStoreFactory {
     // (undocumented)
     static createChildInstance(parentContext: IFluidDataStoreContext): Promise<IAgentScheduler>;
     // (undocumented)
-    get IFluidDataStoreFactory(): AgentSchedulerFactory;
+    get IFluidDataStoreFactory(): IFluidDataStoreFactory;
     // (undocumented)
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<FluidDataStoreRuntime>;
     // (undocumented)
