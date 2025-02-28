@@ -30,6 +30,16 @@ export abstract class TreeDataObject<
 > extends PureDataObject {
 	/**
 	 * The configuration used to initialize new documents, as well as to interpret (schematize) existing ones.
+	 *
+	 * @remarks
+	 * The fact that a single view schema is provided here (on the data object) makes it impossible to try and apply multiple different schema.
+	 * Since the view schema currently does not provide any adapters for handling differences between view and stored schema,
+	 * it's also impossible for this single view schema to handle multiple different stored schema.
+	 * Therefore, with this current API, two different applications (or different versions of the same application)
+	 * with differing stored schema requirements (as implied by their view schema) can not collaborate on the same tree.
+	 * The only schema evolution that's currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
+	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
+	 * Future work on tree as well as these utilities should address this limitation.
 	 */
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
 
