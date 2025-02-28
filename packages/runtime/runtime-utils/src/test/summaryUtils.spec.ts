@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IsoBuffer, Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
@@ -380,7 +380,7 @@ describe("Summary Utils", () => {
 
 			const serialized = telemetryContext.serialize();
 
-			const obj = JSON.parse(serialized);
+			const obj = JSON.parse(serialized) as Record<string, unknown>;
 
 			assert.strictEqual(obj.pre1_prop1, 10);
 			assert.strictEqual(obj.pre1_prop2, undefined);

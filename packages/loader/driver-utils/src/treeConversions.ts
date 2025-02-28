@@ -31,7 +31,7 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 		switch (value.type) {
 			case SummaryType.Blob: {
 				let parsedContent: string;
-				let encoding: "utf-8" | "base64" = "utf-8";
+				let encoding: "utf8" | "base64" = "utf8";
 				if (typeof value.content === "string") {
 					parsedContent = value.content;
 				} else {

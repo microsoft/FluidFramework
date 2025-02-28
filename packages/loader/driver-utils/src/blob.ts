@@ -29,7 +29,7 @@ export class BlobTreeEntry {
 	constructor(
 		public readonly path: string,
 		contents: string,
-		encoding: "utf-8" | "base64" = "utf-8",
+		encoding: "utf8" | "base64" = "utf8",
 	) {
 		this.value = { contents, encoding };
 	}
