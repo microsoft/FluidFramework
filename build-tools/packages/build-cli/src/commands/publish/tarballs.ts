@@ -238,7 +238,7 @@ function handlePublishError(
 	message: string,
 	stack?: string,
 ): "Error" {
-	log.warning(`Failed to publish ${name}`);
+	log.warning(`Failed to publish '${name}'`);
 	log.verbose(message);
 	if (stack !== undefined) {
 		log.verbose(stack);
