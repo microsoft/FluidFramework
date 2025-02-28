@@ -58,7 +58,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
-import { JsonObject } from "../../../jsonDomainSchema.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 
 const builder = new SchemaFactory("chunkTree");
 const empty = builder.object("empty", {});
@@ -145,7 +145,7 @@ describe("chunkTree", () => {
 		it("encodes identifiers for in-memory representation", () => {
 			const identifierField: FieldKey = brand("identifierField");
 			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
-			const identifierShape = new TreeShape(brand(JsonObject.identifier), false, [
+			const identifierShape = new TreeShape(brand(JsonAsTree.JsonObject.identifier), false, [
 				[identifierField, stringShape, 1],
 			]);
 

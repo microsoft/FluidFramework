@@ -123,6 +123,20 @@ describe("treeNodeApi", () => {
 			assert(!Tree.is(5, [schema.string]));
 			assert(Tree.is(5, [schema.string, schema.number]));
 		});
+
+		it("errors on base type", () => {
+			const Base = schema.object("Test", {});
+			class Derived extends Base {}
+			const node = new Derived({});
+			// Check instancof alternative works:
+			assert(node instanceof Base);
+			assert.throws(
+				() => Tree.is(node, Base),
+				validateUsageError(
+					/Two schema classes were used \(CustomObjectNode and Derived\) which derived from the same SchemaFactory generated class \("com.example.Test"\)/,
+				),
+			);
+		});
 	});
 
 	describe("schema", () => {
