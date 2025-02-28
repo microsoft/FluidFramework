@@ -571,7 +571,7 @@ export class AnchorSet implements AnchorLocator {
 		const destinationPath = this.trackInner(destination.parent ?? this.root);
 
 		// Update nodes for new parent.
-		for (const [i, node] of coupleInfo.nodes.entries()) {
+		for (const node of coupleInfo.nodes) {
 			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = destinationPath;
 			node.parentField = destination.parentField;
@@ -579,7 +579,7 @@ export class AnchorSet implements AnchorLocator {
 			if (isDetachedUpPath(destination)) {
 				(node as unknown as Mutable<DetachedUpPath>).detachedNodeId = offsetDetachId(
 					destination.detachedNodeId,
-					i,
+					node.parentIndex - destination.parentIndex,
 				);
 			} else {
 				(node as unknown as Partial<Mutable<DetachedUpPath>>).detachedNodeId = undefined;

@@ -345,8 +345,8 @@ describe("AnchorSet", () => {
 			v.exitField(fieldFoo);
 		});
 
-		checkRemoved(anchors.locate(bAnchor), { minor: 42 }, detachedField);
-		checkRemoved(anchors.locate(eAnchor), { minor: 43 }, detachedField);
+		checkRemoved(anchors.locate(bAnchor), { minor: 43 }, detachedField);
+		checkRemoved(anchors.locate(eAnchor), { minor: 46 }, detachedField);
 	});
 
 	it("does not retain detachedNodeIds when detached nodes are reattached", () => {
@@ -362,14 +362,6 @@ describe("AnchorSet", () => {
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
 			v.detach({ start: 0, end: 5 }, detachedField, detachId);
-			v.exitField(fieldFoo);
-		});
-
-		checkRemoved(anchors.locate(bAnchor), { minor: 42 }, detachedField);
-		checkRemoved(anchors.locate(eAnchor), { minor: 43 }, detachedField);
-
-		withVisitor(anchors, (v) => {
-			v.enterField(fieldFoo);
 			v.attach(detachedField, 3, 0);
 			v.exitField(fieldFoo);
 		});
