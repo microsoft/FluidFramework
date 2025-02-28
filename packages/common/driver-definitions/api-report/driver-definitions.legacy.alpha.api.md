@@ -103,7 +103,7 @@ export interface IAuthorizationError extends IDriverErrorBase {
 // @alpha
 export interface IBlob {
     contents: string;
-    encoding: "utf-8" | "base64";
+    encoding: "utf8" | "base64";
 }
 
 // @alpha

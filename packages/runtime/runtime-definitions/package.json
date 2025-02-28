@@ -110,7 +110,16 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_InboundAttachMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_IAttachMessage": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
