@@ -28,15 +28,26 @@ const treeChannelId = "root";
 export abstract class TreeDataObject<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 > extends PureDataObject {
+	/**
+	 * SharedTree view configuration.
+	 */
+	public abstract readonly config: TreeViewConfiguration<TSchema>;
+
+	/**
+	 * Underlying SharedTree.
+	 */
 	#tree: ITree | undefined;
+
+	/**
+	 * View of the underlying SharedTree.
+	 */
 	#treeView: TreeView<TSchema> | undefined;
 
 	/**
-	 * Gets the root of the underlying tree
-	 *
-	 * @throws If the SharedTree has not yet been initialized, this will throw an error.
+	 * Gets the underlying {@link @fluidframework/tree#ITree}.
+	 * @throws If the tree has not yet been initialized, this will throw an error.
 	 */
-	protected get root(): ITree {
+	private get initializedTree(): ITree {
 		if (!this.#tree) {
 			// Note: Can't use `UsageError` because adding dependency on `telemetry-utils` would create a cycle.
 			// TODO: would probably be useful to move our shared error types in a more accessible location.
@@ -47,10 +58,17 @@ export abstract class TreeDataObject<
 	}
 
 	/**
-	 * Initializes internal objects and calls initialization overrides.
-	 * @remarks The caller is responsible for ensuring this is only invoked once.
+	 * Gets the view of the underlying {@link @fluidframework/tree#ITree}.
+	 * @throws If the tree has not yet been initialized, this will throw an error.
 	 */
-	public async initializeInternal(existing: boolean): Promise<void> {
+	public get tree(): TreeView<TSchema> {
+		if (this.#treeView === undefined) {
+			throw new Error(this.getUninitializedErrorString("tree"));
+		}
+		return this.#treeView;
+	}
+
+	public override async initializeInternal(existing: boolean): Promise<void> {
 		if (existing) {
 			// data store has a root tree so we just need to set it before calling initializingFromExisting
 			const channel = await this.runtime.getChannel(treeChannelId);
@@ -69,31 +87,15 @@ export abstract class TreeDataObject<
 		await super.initializeInternal(existing);
 	}
 
-	/**
-	 * Generates an error string indicating an item is uninitialized.
-	 * @param item - The name of the item that was uninitialized.
-	 * @virtual
-	 */
-	protected getUninitializedErrorString(item: string): string {
-		return `${item} must be initialized before being accessed.`;
-	}
-
-	public get tree(): TreeView<TSchema> {
-		if (this.#treeView === undefined) {
-			throw new Error(this.getUninitializedErrorString("tree"));
-		}
-		return this.#treeView;
-	}
-
 	protected override async initializingFirstTime(): Promise<void> {
-		this.#treeView = this.root.viewWith(this.config);
+		this.#treeView = this.initializedTree.viewWith(this.config);
 
 		// Initialize the tree content and schema.
 		this.#treeView.initialize(this.createInitialTree());
 	}
 
 	protected override async initializingFromExisting(): Promise<void> {
-		this.#treeView = this.root.viewWith(this.config);
+		this.#treeView = this.initializedTree.viewWith(this.config);
 	}
 
 	protected override async hasInitialized(): Promise<void> {
@@ -102,7 +104,14 @@ export abstract class TreeDataObject<
 		}
 	}
 
-	public abstract readonly config: TreeViewConfiguration<TSchema>;
+	/**
+	 * Generates an error string indicating an item is uninitialized.
+	 * @param item - The name of the item that was uninitialized.
+	 * @virtual
+	 */
+	protected getUninitializedErrorString(item: string): string {
+		return `${item} must be initialized before being accessed.`;
+	}
 
 	/**
 	 * Create initial tree content for the data object when it initializes for the first time.
