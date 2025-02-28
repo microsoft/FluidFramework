@@ -231,7 +231,7 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 				const contents = bufferToString(buffer, "utf8");
 				const blob: IBlob = {
 					contents,
-					encoding: "utf-8",
+					encoding: "utf8",
 				};
 				tree.entries.push({
 					mode: FileMode.File,
