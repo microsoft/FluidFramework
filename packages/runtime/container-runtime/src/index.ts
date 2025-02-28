@@ -24,6 +24,7 @@ export {
 	CompressionAlgorithms,
 	RuntimeHeaderData,
 	disabledCompressionConfig,
+	IProtocolOptions,
 } from "./containerRuntime.js";
 export {
 	ContainerMessageType,
@@ -121,3 +122,7 @@ export {
 	IFluidDataStoreContextEvents,
 } from "./dataStoreContext.js";
 export { DataStoreContexts } from "./dataStoreContexts.js";
+export {
+	CompatibilityMode,
+	compatibilityModeRuntimeOptions,
+} from "./compatibilityConfiguration.js";
