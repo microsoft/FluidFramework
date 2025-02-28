@@ -32,7 +32,7 @@ const SharedTree = configuredSharedTree({
 
 /**
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeViewConfiguration}.
- * @param treeConfiguration - See {@link ITreeDataObject.config}.
+ * @param treeConfiguration - See {@link IReactTreeDataObject.config}.
  * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
  * @public
@@ -46,7 +46,7 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 
 /**
  * Defines a DataObject for a {@link @fluidframework/tree#SharedTree} with a built in {@link @fluidframework/tree#TreeViewConfiguration}.
- * @param treeConfiguration - See {@link ITreeDataObject.config}.
+ * @param treeConfiguration - See {@link IReactTreeDataObject.config}.
  * @param createInitialTree - Function which populates the tree with initial data on document create.
  * @returns A {@link @fluidframework/fluid-static#DataObjectClass} to allow easy use of a SharedTree in a ContainerSchema.
  * @internal
@@ -72,12 +72,11 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * A schema-aware Tree DataObject.
- * @remarks
- * Allows for the Tree's schema to be baked into the container schema.
+ * A schema-aware tree-backed DataObject, extended with a React Component to view the tree.
+ * @remarks Allows for the Tree's schema to be baked into the container schema.
  * @public
  */
-export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
+export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	/**
 	 * {@inheritDoc @fluidframework/aqueduct#TreeDataObject.config}
 	 */
@@ -87,14 +86,7 @@ export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * {@inheritDoc @fluidframework/aqueduct#TreeDataObject.tree}
 	 */
 	readonly tree: TreeView<TSchema>;
-}
 
-/**
- * {@link ITreeDataObject} extended with a React Component to view the tree.
- * @public
- */
-export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema>
-	extends ITreeDataObject<TSchema> {
 	/**
 	 * React component which handles schematizing trees.
 	 * This includes displaying errors when the document can not be viewed using the view schema.

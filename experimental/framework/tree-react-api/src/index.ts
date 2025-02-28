@@ -10,7 +10,6 @@
 
 export type {
 	IReactTreeDataObject,
-	ITreeDataObject,
 	TreeViewProps,
 	SchemaIncompatibleProps,
 } from "./reactSharedTreeView.js";
