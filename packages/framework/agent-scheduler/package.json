@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/agent-scheduler",
-	"version": "2.22.1",
+	"version": "2.22.2",
 	"description": "Built in runtime object for distributing agents across instances of a container",
 	"homepage": "https://fluidframework.com",
 	"repository": {

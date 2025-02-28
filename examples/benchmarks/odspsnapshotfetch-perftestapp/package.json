@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/odspsnapshotfetch-perftestapp",
-	"version": "2.22.1",
+	"version": "2.22.2",
 	"private": true,
 	"description": "Benchmark binary vs. json download",
 	"homepage": "https://fluidframework.com",
