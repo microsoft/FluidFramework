@@ -5,6 +5,7 @@
 
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 
+import { UnassignedSequenceNumber } from "./constants.js";
 import { ISegmentInternal, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
@@ -296,31 +297,12 @@ export interface IMoveInfo {
 	 * list have all issued concurrent ops to move the segment.
 	 */
 	movedClientIds: number[];
-
-	/**
-	 * If this segment was inserted into a concurrently moved range and
-	 * the move op was sequenced before the insertion op. In this case,
-	 * the segment is visible only to the inserting client
-	 *
-	 * `wasMovedOnInsert` only applies for acked obliterates. That is, if
-	 * a segment inserted by a remote client is moved on insertion by a local
-	 * and unacked obliterate, we do not consider it as having been moved
-	 * on insert
-	 *
-	 * If a segment is moved on insertion, its length is only ever visible to
-	 * the client that inserted the segment. This is relevant in partial length
-	 * calculations
-	 *
-	 * @privateRemarks
-	 * TODO:AB#29553: This property is not persisted in the summary, but it should be.
-	 */
-	wasMovedOnInsert: boolean;
 }
+
 export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
 	hasProp(segmentLike, "movedClientIds", "array") &&
 	hasProp(segmentLike, "movedSeq", "number") &&
-	hasProp(segmentLike, "movedSeqs", "array") &&
-	hasProp(segmentLike, "wasMovedOnInsert", "boolean")
+	hasProp(segmentLike, "movedSeqs", "array")
 		? segmentLike
 		: undefined;
 
@@ -333,6 +315,26 @@ export const toMoveInfo = (segmentLike: unknown): IMoveInfo | undefined =>
  */
 export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
 	toMoveInfo(segmentLike) !== undefined;
+
+/**
+ * Returns whether this segment was marked moved as soon as its insertion was acked.
+ *
+ * This can happen when an an insert occurs concurrent to an obliterate over the range the segment was inserted into,
+ * and the obliterate was sequenced first.
+ *
+ * When this happens, the segment is only ever visible to the client that inserted the segment
+ * (and only until that client has seen the obliterate which removed their segment).
+ */
+export function wasMovedOnInsert(segment: IInsertionInfo & ISegmentPrivate): boolean {
+	const moveInfo = toMoveInfo(segment);
+	const movedSeq = moveInfo?.movedSeq;
+	if (movedSeq === undefined || movedSeq === UnassignedSequenceNumber) {
+		return false;
+	}
+
+	const insertSeq = segment.seq;
+	return insertSeq === UnassignedSequenceNumber || insertSeq > movedSeq;
+}
 
 /**
  * Asserts that the segment has move info. Usage of this function should not produce a user facing error.
