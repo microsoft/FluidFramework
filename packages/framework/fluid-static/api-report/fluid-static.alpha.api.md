@@ -4,8 +4,9 @@
 
 ```ts
 
-// @public
-export type CompatibilityMode = "1" | "2";
+export { CompatibilityMode }
+
+export { compatibilityModeRuntimeOptions }
 
 // @public
 export type ContainerAttachProps<T = unknown> = T;

@@ -20,7 +20,6 @@ export {
 export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
 export type {
-	CompatibilityMode,
 	ContainerSchema,
 	ContainerAttachProps,
 	IConnection,
@@ -33,3 +32,8 @@ export type {
 	MemberChangedListener,
 	Myself,
 } from "./types.js";
+
+// Re-export so other packages don't need to pull in container-runtime
+// TODO: Should we re-export?
+export type { CompatibilityMode } from "@fluidframework/container-runtime";
+export { compatibilityModeRuntimeOptions } from "@fluidframework/container-runtime/internal";

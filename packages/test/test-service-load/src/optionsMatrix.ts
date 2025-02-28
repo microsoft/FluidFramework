@@ -112,6 +112,8 @@ export function generateRuntimeOptions(
 		enableRuntimeIdCompressor: ["on", undefined, "delayed"],
 		enableGroupedBatching: [true, false],
 		explicitSchemaControl: [true, false],
+		protocolOptions: [undefined, {}], // TODO: This will change in the future
+		compatibilityMode: ["1", "2"],
 	};
 
 	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(

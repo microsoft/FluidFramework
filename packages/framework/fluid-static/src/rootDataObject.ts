@@ -10,15 +10,15 @@ import {
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import type { CompatibilityMode } from "@fluidframework/container-runtime";
+import { compatibilityModeRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IDirectory } from "@fluidframework/map/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
-	CompatibilityMode,
 	ContainerSchema,
 	IRootDataObject,
 	LoadableObjectKind,

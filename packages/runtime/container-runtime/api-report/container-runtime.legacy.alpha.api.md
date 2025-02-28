@@ -7,6 +7,9 @@
 // @alpha
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
+// @public
+export type CompatibilityMode = "1" | "2";
+
 // @alpha
 export enum CompressionAlgorithms {
     // (undocumented)
@@ -192,6 +195,8 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 // @alpha
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
+    // (undocumented)
+    readonly compatibilityMode?: CompatibilityMode;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     // @deprecated
     readonly enableGroupedBatching?: boolean;
@@ -201,6 +206,8 @@ export interface IContainerRuntimeOptions {
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     readonly maxBatchSizeInBytes?: number;
+    // (undocumented)
+    readonly protocolOptions?: IProtocolOptions;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
 }
@@ -352,6 +359,16 @@ export const InactiveResponseHeaderKey = "isInactive";
 export interface IOnDemandSummarizeOptions extends ISummarizeOptions {
     readonly reason: string;
     readonly retryOnFailure?: boolean;
+}
+
+// @alpha
+export interface IProtocolOptions {
+    readonly compressionOptions?: ICompressionRuntimeOptions;
+    readonly enableGCSweep?: true | undefined;
+    // @deprecated
+    readonly enableGroupedBatching?: boolean;
+    readonly enableRuntimeIdCompressor?: IdCompressorMode;
+    readonly explicitSchemaControl?: boolean;
 }
 
 // @alpha @deprecated
