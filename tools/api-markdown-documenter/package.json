@@ -90,11 +90,11 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.44.0",
 		"@fluidframework/eslint-config-fluid": "^5.5.1",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "^7.50.1",
 		"@types/chai": "^4.3.4",
 		"@types/hast": "^3.0.4",
 		"@types/mocha": "^10.0.1",
-		"@types/node": "^18.15.11",
+		"@types/node": "^18.19.0",
 		"@types/unist": "^2.0.6",
 		"c8": "^8.0.1",
 		"chai": "^4.5.0",
@@ -111,7 +111,7 @@
 		"moment": "^2.29.4",
 		"prettier": "~3.0.3",
 		"rimraf": "^5.0.0",
-		"typescript": "~5.1.6"
+		"typescript": "~5.7.3"
 	},
 	"packageManager": "pnpm@9.15.3+sha512.1f79bc245a66eb0b07c5d4d83131240774642caaa86ef7d0434ab47c0d16f66b04e21e0c086eb61e62c77efc4d7f7ec071afad3796af64892fae66509173893a",
 	"fluidBuild": {

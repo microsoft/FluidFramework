@@ -152,7 +152,7 @@
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@fluidframework/matrix-previous": "npm:@fluidframework/matrix@2.22.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
-		"@microsoft/api-extractor": "7.47.8",
+		"@microsoft/api-extractor": "7.50.1",
 		"@tiny-calc/micro": "0.0.0-alpha.5",
 		"@types/double-ended-queue": "^2.1.0",
 		"@types/mocha": "^10.0.10",
