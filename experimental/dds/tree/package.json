@@ -88,7 +88,7 @@
 		"@fluid-private/test-drivers": "workspace:~",
 		"@fluid-tools/benchmark": "^0.50.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.54.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
