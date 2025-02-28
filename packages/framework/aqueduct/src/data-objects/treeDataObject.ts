@@ -72,7 +72,6 @@ export abstract class TreeDataObject<
 	/**
 	 * Generates an error string indicating an item is uninitialized.
 	 * @param item - The name of the item that was uninitialized.
-	 *
 	 * @virtual
 	 */
 	protected getUninitializedErrorString(item: string): string {
@@ -105,5 +104,9 @@ export abstract class TreeDataObject<
 
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
 
+	/**
+	 * Create initial tree content for the data object when it initializes for the first time.
+	 * @virtual
+	 */
 	protected abstract createInitialTree(): InsertableTreeFieldFromImplicitField<TSchema>;
 }
