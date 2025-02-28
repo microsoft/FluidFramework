@@ -73,9 +73,8 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 
 /**
  * A schema-aware Tree DataObject.
- *
- * @remarks Allows for the Tree's schema to be baked into the container schema.
- *
+ * @remarks
+ * Allows for the Tree's schema to be baked into the container schema.
  * @public
  */
 export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
