@@ -27,14 +27,14 @@ importers:
         specifier: file:../../packages/tools/changelog-generator-wrapper
         version: file:../../packages/tools/changelog-generator-wrapper
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@22.10.7)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@22.10.7)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@22.10.7)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@22.10.7)
       '@microsoft/api-documenter':
         specifier: ^7.21.6
         version: 7.22.21(@types/node@22.10.7)
@@ -72,14 +72,14 @@ importers:
   packages/gitresources:
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@22.10.7)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@22.10.7)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@22.10.7)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@22.10.7)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -118,14 +118,14 @@ importers:
         version: link:../services-core
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -224,14 +224,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -333,14 +333,14 @@ importers:
         version: 8.1.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -424,14 +424,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -563,14 +563,14 @@ importers:
         version: 7.5.10
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -624,14 +624,14 @@ importers:
         version: events@3.3.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -736,14 +736,14 @@ importers:
         version: 3.9.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -881,14 +881,14 @@ importers:
         version: 7.5.10
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1059,14 +1059,14 @@ importers:
         version: 3.9.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1165,14 +1165,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1259,14 +1259,14 @@ importers:
         version: 0.12.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1332,14 +1332,14 @@ importers:
         version: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1408,14 +1408,14 @@ importers:
         version: 0.1.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1469,14 +1469,14 @@ importers:
         version: 5.6.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1596,14 +1596,14 @@ importers:
         version: 3.9.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1684,14 +1684,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1790,14 +1790,14 @@ importers:
         version: 4.5.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -1917,14 +1917,14 @@ importers:
         version: 9.0.0
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.39)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.2.0
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
@@ -2437,17 +2437,17 @@ packages:
   '@fluid-private/changelog-generator-wrapper@file:../../packages/tools/changelog-generator-wrapper':
     resolution: {directory: ../../packages/tools/changelog-generator-wrapper, type: directory}
 
-  '@fluid-tools/build-cli@0.52.0':
-    resolution: {integrity: sha512-LDR9EIEARbM1dLhoWn3DU9fZ24yXwrDa6IlkN2jaNRPb8E3gvIpukYY17n9ejhS801sx/6g1Uiu16FvyO2l3kQ==}
+  '@fluid-tools/build-cli@0.54.0':
+    resolution: {integrity: sha512-BB6foF3Ps7R3QXkShpLJw1BRmYVq3vCI/1yVAhQ6WoYZZLj7GDiy1tVE+4pc5mepqyggZZw4OZTTYq9Tq2R5Cg==}
     engines: {node: '>=18.17.1'}
     hasBin: true
 
-  '@fluid-tools/build-infrastructure@0.52.0':
-    resolution: {integrity: sha512-pItNDnPtKiKQmh4lZ7YJC6Vvkt7RetZKOfUNTaudHTRNsrkI9FtVxrHgZe58JlAHIkdEr1wltEUG8nAlJrS8CA==}
+  '@fluid-tools/build-infrastructure@0.54.0':
+    resolution: {integrity: sha512-b4Qdh1euIdP4zobVL2iF/rkURJpKo7btNhjElo3wEugO/AH+BWHbXo8hoYPK3xlOjprSCH4Yy6mVLam6OADrGQ==}
     hasBin: true
 
-  '@fluid-tools/version-tools@0.52.0':
-    resolution: {integrity: sha512-U8bxX3P7E5l1XGpcWEkONUCXVgBKXpZxjN4tqVy5Z9x1i3VKmjhd5zSH5Q5ndSs10iCM/25ukZb9xfXMXJwsYQ==}
+  '@fluid-tools/version-tools@0.54.0':
+    resolution: {integrity: sha512-Ahqn/EQ6m1q1sjBNphm1hLdkyo9/owmA36RF9EQzq6g8W0nzrKjot4n61JkBQ9v8JkVXRbpUB8kkvZxOXB4JRw==}
     engines: {node: '>=18.17.1'}
     hasBin: true
 
@@ -2455,13 +2455,13 @@ packages:
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.52.0':
-    resolution: {integrity: sha512-+TlVmwe88PdFkKt9ilLHf0b0h2LlzoyLIW3GuTL0chKTYCM9r1b0QgLwmLH/RFPb5e8vK4N1vb7os9JZCHAMyw==}
+  '@fluidframework/build-tools@0.54.0':
+    resolution: {integrity: sha512-A/Ze8bfmvzqgZsh2ZmfVqYeRnl3Eo3EeQnJI7tG2cTnXBvjNA/GobuoM9tZtFyD/vsuy1xp7vz7aYh4gANJz/w==}
     engines: {node: '>=18.17.1'}
     hasBin: true
 
-  '@fluidframework/bundle-size-tools@0.52.0':
-    resolution: {integrity: sha512-P5m6P3pBUhVXVJvilaZdv1CEavRwFmsLAEMB04L306o6D7bWCozo0DE7onItoc+Ch5Bbh0kNBquvSfAvpvTbFA==}
+  '@fluidframework/bundle-size-tools@0.54.0':
+    resolution: {integrity: sha512-4QwwcyzwAvZELfR16A0dnxX+BERtsOQlrs2pd7GZONjeNOXGXngnpv1e9i3w9nBbFlMehArxdHlxVS2ecYG3ow==}
 
   '@fluidframework/common-definitions@1.1.0':
     resolution: {integrity: sha512-WQYtG9tkx2j7i1JSXPvwLnQsqCOZAghMj0aGciqjZVNppUly/XBpAjb4V6FEUCEjxCScPKhyE+1rhV1ep52NgA==}
@@ -9524,13 +9524,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluid-tools/build-cli@0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)':
+  '@fluid-tools/build-cli@0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.52.0(@types/node@18.19.39)
-      '@fluid-tools/version-tools': 0.52.0(@types/node@18.19.39)
-      '@fluidframework/build-tools': 0.52.0(@types/node@18.19.39)
-      '@fluidframework/bundle-size-tools': 0.52.0
+      '@fluid-tools/build-infrastructure': 0.54.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@18.19.39)
+      '@fluidframework/build-tools': 0.54.0(@types/node@18.19.39)
+      '@fluidframework/bundle-size-tools': 0.54.0
       '@inquirer/prompts': 7.2.3(@types/node@18.19.39)
       '@microsoft/api-extractor': 7.49.1(@types/node@18.19.39)
       '@oclif/core': 4.2.4
@@ -9602,13 +9602,13 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-cli@0.52.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)':
+  '@fluid-tools/build-cli@0.54.0(@types/node@18.19.39)(encoding@0.1.13)(typescript@5.1.6)(webpack-cli@5.1.4)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.52.0(@types/node@18.19.39)
-      '@fluid-tools/version-tools': 0.52.0(@types/node@18.19.39)
-      '@fluidframework/build-tools': 0.52.0(@types/node@18.19.39)
-      '@fluidframework/bundle-size-tools': 0.52.0(webpack-cli@5.1.4)
+      '@fluid-tools/build-infrastructure': 0.54.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@18.19.39)
+      '@fluidframework/build-tools': 0.54.0(@types/node@18.19.39)
+      '@fluidframework/bundle-size-tools': 0.54.0(webpack-cli@5.1.4)
       '@inquirer/prompts': 7.2.3(@types/node@18.19.39)
       '@microsoft/api-extractor': 7.49.1(@types/node@18.19.39)
       '@oclif/core': 4.2.4
@@ -9680,13 +9680,13 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-cli@0.52.0(@types/node@22.10.7)(encoding@0.1.13)(typescript@5.1.6)':
+  '@fluid-tools/build-cli@0.54.0(@types/node@22.10.7)(encoding@0.1.13)(typescript@5.1.6)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.52.0(@types/node@22.10.7)
-      '@fluid-tools/version-tools': 0.52.0(@types/node@22.10.7)
-      '@fluidframework/build-tools': 0.52.0(@types/node@22.10.7)
-      '@fluidframework/bundle-size-tools': 0.52.0
+      '@fluid-tools/build-infrastructure': 0.54.0(@types/node@22.10.7)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@22.10.7)
+      '@fluidframework/build-tools': 0.54.0(@types/node@22.10.7)
+      '@fluidframework/bundle-size-tools': 0.54.0
       '@inquirer/prompts': 7.2.3(@types/node@22.10.7)
       '@microsoft/api-extractor': 7.49.1(@types/node@22.10.7)
       '@oclif/core': 4.2.4
@@ -9758,9 +9758,9 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-infrastructure@0.52.0(@types/node@18.19.39)':
+  '@fluid-tools/build-infrastructure@0.54.0(@types/node@18.19.39)':
     dependencies:
-      '@fluid-tools/version-tools': 0.52.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@18.19.39)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.2.4
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -9784,9 +9784,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/build-infrastructure@0.52.0(@types/node@22.10.7)':
+  '@fluid-tools/build-infrastructure@0.54.0(@types/node@22.10.7)':
     dependencies:
-      '@fluid-tools/version-tools': 0.52.0(@types/node@22.10.7)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@22.10.7)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.2.4
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -9810,7 +9810,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.52.0(@types/node@18.19.39)':
+  '@fluid-tools/version-tools@0.54.0(@types/node@18.19.39)':
     dependencies:
       '@oclif/core': 4.2.4
       '@oclif/plugin-autocomplete': 3.2.18
@@ -9826,7 +9826,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.52.0(@types/node@22.10.7)':
+  '@fluid-tools/version-tools@0.54.0(@types/node@22.10.7)':
     dependencies:
       '@oclif/core': 4.2.4
       '@oclif/plugin-autocomplete': 3.2.18
@@ -9844,9 +9844,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.52.0(@types/node@18.19.39)':
+  '@fluidframework/build-tools@0.54.0(@types/node@18.19.39)':
     dependencies:
-      '@fluid-tools/version-tools': 0.52.0(@types/node@18.19.39)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@18.19.39)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -9880,9 +9880,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/build-tools@0.52.0(@types/node@22.10.7)':
+  '@fluidframework/build-tools@0.54.0(@types/node@22.10.7)':
     dependencies:
-      '@fluid-tools/version-tools': 0.52.0(@types/node@22.10.7)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@22.10.7)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -9916,7 +9916,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/bundle-size-tools@0.52.0':
+  '@fluidframework/bundle-size-tools@0.54.0':
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -9930,7 +9930,7 @@ snapshots:
       - uglify-js
       - webpack-cli
 
-  '@fluidframework/bundle-size-tools@0.52.0(webpack-cli@5.1.4)':
+  '@fluidframework/bundle-size-tools@0.54.0(webpack-cli@5.1.4)':
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
@@ -9972,9 +9972,9 @@ snapshots:
       '@typescript-eslint/eslint-plugin': 6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -13663,13 +13663,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.7.2
       is-core-module: 2.13.1
@@ -13680,14 +13680,14 @@ snapshots:
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -13697,13 +13697,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.0
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
       get-tsconfig: 4.7.2
       is-glob: 4.0.3
       minimatch: 3.1.2

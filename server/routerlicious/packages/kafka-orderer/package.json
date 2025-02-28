@@ -32,9 +32,9 @@
 		"@fluidframework/server-services-core": "workspace:~"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.52.0",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.52.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.2.0",
 		"@fluidframework/server-kafka-orderer-previous": "npm:@fluidframework/server-kafka-orderer@5.0.0",
 		"@types/node": "^18.19.39",

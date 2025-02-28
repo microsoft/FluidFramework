@@ -17,8 +17,8 @@ importers:
   .:
     devDependencies:
       '@fluid-tools/build-cli':
-        specifier: ^0.52.0
-        version: 0.52.0(@types/node@18.19.3)(encoding@0.1.13)(typescript@5.1.6)
+        specifier: ^0.54.0
+        version: 0.54.0(@types/node@18.19.3)(encoding@0.1.13)(typescript@5.1.6)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -534,18 +534,13 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.1.2':
     resolution: {integrity: sha512-E7LF4ukpCoyZcxpDUQz0edXsKllbh4m8NAdiug6sSI1KIIQFwtq5vvW3kQ0Op5xA9w10T6crfcvmuAzdP84UGg==}
 
-  '@fluid-tools/build-cli@0.52.0':
-    resolution: {integrity: sha512-LDR9EIEARbM1dLhoWn3DU9fZ24yXwrDa6IlkN2jaNRPb8E3gvIpukYY17n9ejhS801sx/6g1Uiu16FvyO2l3kQ==}
+  '@fluid-tools/build-cli@0.54.0':
+    resolution: {integrity: sha512-BB6foF3Ps7R3QXkShpLJw1BRmYVq3vCI/1yVAhQ6WoYZZLj7GDiy1tVE+4pc5mepqyggZZw4OZTTYq9Tq2R5Cg==}
     engines: {node: '>=18.17.1'}
     hasBin: true
 
-  '@fluid-tools/build-infrastructure@0.52.0':
-    resolution: {integrity: sha512-pItNDnPtKiKQmh4lZ7YJC6Vvkt7RetZKOfUNTaudHTRNsrkI9FtVxrHgZe58JlAHIkdEr1wltEUG8nAlJrS8CA==}
-    hasBin: true
-
-  '@fluid-tools/version-tools@0.52.0':
-    resolution: {integrity: sha512-U8bxX3P7E5l1XGpcWEkONUCXVgBKXpZxjN4tqVy5Z9x1i3VKmjhd5zSH5Q5ndSs10iCM/25ukZb9xfXMXJwsYQ==}
-    engines: {node: '>=18.17.1'}
+  '@fluid-tools/build-infrastructure@0.54.0':
+    resolution: {integrity: sha512-b4Qdh1euIdP4zobVL2iF/rkURJpKo7btNhjElo3wEugO/AH+BWHbXo8hoYPK3xlOjprSCH4Yy6mVLam6OADrGQ==}
     hasBin: true
 
   '@fluid-tools/version-tools@0.52.0-315632':
@@ -553,13 +548,13 @@ packages:
     engines: {node: '>=18.17.1'}
     hasBin: true
 
-  '@fluidframework/build-common@2.0.3':
-    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
+  '@fluid-tools/version-tools@0.54.0':
+    resolution: {integrity: sha512-Ahqn/EQ6m1q1sjBNphm1hLdkyo9/owmA36RF9EQzq6g8W0nzrKjot4n61JkBQ9v8JkVXRbpUB8kkvZxOXB4JRw==}
+    engines: {node: '>=18.17.1'}
     hasBin: true
 
-  '@fluidframework/build-tools@0.52.0':
-    resolution: {integrity: sha512-+TlVmwe88PdFkKt9ilLHf0b0h2LlzoyLIW3GuTL0chKTYCM9r1b0QgLwmLH/RFPb5e8vK4N1vb7os9JZCHAMyw==}
-    engines: {node: '>=18.17.1'}
+  '@fluidframework/build-common@2.0.3':
+    resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
   '@fluidframework/build-tools@0.52.0-315632':
@@ -567,8 +562,13 @@ packages:
     engines: {node: '>=18.17.1'}
     hasBin: true
 
-  '@fluidframework/bundle-size-tools@0.52.0':
-    resolution: {integrity: sha512-P5m6P3pBUhVXVJvilaZdv1CEavRwFmsLAEMB04L306o6D7bWCozo0DE7onItoc+Ch5Bbh0kNBquvSfAvpvTbFA==}
+  '@fluidframework/build-tools@0.54.0':
+    resolution: {integrity: sha512-A/Ze8bfmvzqgZsh2ZmfVqYeRnl3Eo3EeQnJI7tG2cTnXBvjNA/GobuoM9tZtFyD/vsuy1xp7vz7aYh4gANJz/w==}
+    engines: {node: '>=18.17.1'}
+    hasBin: true
+
+  '@fluidframework/bundle-size-tools@0.54.0':
+    resolution: {integrity: sha512-4QwwcyzwAvZELfR16A0dnxX+BERtsOQlrs2pd7GZONjeNOXGXngnpv1e9i3w9nBbFlMehArxdHlxVS2ecYG3ow==}
 
   '@fluidframework/common-definitions@0.20.1':
     resolution: {integrity: sha512-KaoQ7w2MDH5OeRKVatL5yVOCFg+9wD6bLSLFh1/TV1EZM46l49iBqO7UVjUtPE6BIm0jvvOzJXULGVSpzokX3g==}
@@ -6640,13 +6640,13 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/build-cli@0.52.0(@types/node@18.19.3)(encoding@0.1.13)(typescript@5.1.6)':
+  '@fluid-tools/build-cli@0.54.0(@types/node@18.19.3)(encoding@0.1.13)(typescript@5.1.6)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.52.0(@types/node@18.19.3)
-      '@fluid-tools/version-tools': 0.52.0(@types/node@18.19.3)
-      '@fluidframework/build-tools': 0.52.0(@types/node@18.19.3)
-      '@fluidframework/bundle-size-tools': 0.52.0
+      '@fluid-tools/build-infrastructure': 0.54.0(@types/node@18.19.3)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@18.19.3)
+      '@fluidframework/build-tools': 0.54.0(@types/node@18.19.3)
+      '@fluidframework/bundle-size-tools': 0.54.0
       '@inquirer/prompts': 7.2.3(@types/node@18.19.3)
       '@microsoft/api-extractor': 7.49.1(@types/node@18.19.3)
       '@oclif/core': 4.2.4
@@ -6718,9 +6718,9 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@fluid-tools/build-infrastructure@0.52.0(@types/node@18.19.3)':
+  '@fluid-tools/build-infrastructure@0.54.0(@types/node@18.19.3)':
     dependencies:
-      '@fluid-tools/version-tools': 0.52.0(@types/node@18.19.3)
+      '@fluid-tools/version-tools': 0.54.0(@types/node@18.19.3)
       '@manypkg/get-packages': 2.2.2
       '@oclif/core': 4.2.4
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -6744,22 +6744,6 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluid-tools/version-tools@0.52.0(@types/node@18.19.3)':
-    dependencies:
-      '@oclif/core': 4.2.4
-      '@oclif/plugin-autocomplete': 3.2.18
-      '@oclif/plugin-commands': 4.1.17
-      '@oclif/plugin-help': 6.2.22
-      '@oclif/plugin-not-found': 3.2.37(@types/node@18.19.3)
-      semver: 7.6.3
-      table: 6.9.0
-    transitivePeerDependencies:
-      - '@types/node'
-      - bufferutil
-      - react-devtools-core
-      - supports-color
-      - utf-8-validate
-
   '@fluid-tools/version-tools@0.52.0-315632(@types/node@18.19.3)':
     dependencies:
       '@oclif/core': 4.2.4
@@ -6776,43 +6760,23 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/build-common@2.0.3': {}
-
-  '@fluidframework/build-tools@0.52.0(@types/node@18.19.3)':
+  '@fluid-tools/version-tools@0.54.0(@types/node@18.19.3)':
     dependencies:
-      '@fluid-tools/version-tools': 0.52.0(@types/node@18.19.3)
-      '@manypkg/get-packages': 2.2.2
-      async: 3.2.6
-      cosmiconfig: 8.3.6(typescript@5.4.5)
-      date-fns: 2.30.0
-      debug: 4.4.0(supports-color@8.1.1)
-      detect-indent: 6.1.0
-      find-up: 7.0.0
-      fs-extra: 11.2.0
-      glob: 7.2.3
-      globby: 11.1.0
-      ignore: 5.3.2
-      json5: 2.2.3
-      lodash: 4.17.21
-      lodash.isequal: 4.5.0
-      multimatch: 5.0.0
-      picocolors: 1.1.1
-      picomatch: 2.3.1
-      picospinner: 2.0.0
-      rimraf: 4.4.1
+      '@oclif/core': 4.2.4
+      '@oclif/plugin-autocomplete': 3.2.18
+      '@oclif/plugin-commands': 4.1.17
+      '@oclif/plugin-help': 6.2.22
+      '@oclif/plugin-not-found': 3.2.37(@types/node@18.19.3)
       semver: 7.6.3
-      sort-package-json: 1.57.0
-      ts-deepmerge: 7.0.1
-      ts-morph: 22.0.0
-      type-fest: 2.19.0
-      typescript: 5.4.5
-      yaml: 2.7.0
+      table: 6.9.0
     transitivePeerDependencies:
       - '@types/node'
       - bufferutil
       - react-devtools-core
       - supports-color
       - utf-8-validate
+
+  '@fluidframework/build-common@2.0.3': {}
 
   '@fluidframework/build-tools@0.52.0-315632(@types/node@18.19.3)':
     dependencies:
@@ -6849,7 +6813,43 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/bundle-size-tools@0.52.0':
+  '@fluidframework/build-tools@0.54.0(@types/node@18.19.3)':
+    dependencies:
+      '@fluid-tools/version-tools': 0.54.0(@types/node@18.19.3)
+      '@manypkg/get-packages': 2.2.2
+      async: 3.2.6
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      date-fns: 2.30.0
+      debug: 4.4.0(supports-color@8.1.1)
+      detect-indent: 6.1.0
+      find-up: 7.0.0
+      fs-extra: 11.2.0
+      glob: 7.2.3
+      globby: 11.1.0
+      ignore: 5.3.2
+      json5: 2.2.3
+      lodash: 4.17.21
+      lodash.isequal: 4.5.0
+      multimatch: 5.0.0
+      picocolors: 1.1.1
+      picomatch: 2.3.1
+      picospinner: 2.0.0
+      rimraf: 4.4.1
+      semver: 7.6.3
+      sort-package-json: 1.57.0
+      ts-deepmerge: 7.0.1
+      ts-morph: 22.0.0
+      type-fest: 2.19.0
+      typescript: 5.4.5
+      yaml: 2.7.0
+    transitivePeerDependencies:
+      - '@types/node'
+      - bufferutil
+      - react-devtools-core
+      - supports-color
+      - utf-8-validate
+
+  '@fluidframework/bundle-size-tools@0.54.0':
     dependencies:
       azure-devops-node-api: 11.2.0
       jszip: 3.10.1
