@@ -642,5 +642,19 @@ export function configureWebSocketServices(
 			}
 			disposers.splice(0, disposers.length);
 		});
+
+		socket.on(
+			"disconnect_document",
+			(clientId: string, documentId: string, errorType?: string) => {
+				if (errorType === undefined) {
+					return;
+				}
+				Lumberjack.error(
+					"Client disconnected due to error",
+					{ clientId, documentId, errorType },
+					new Error(errorType),
+				);
+			},
+		);
 	});
 }
