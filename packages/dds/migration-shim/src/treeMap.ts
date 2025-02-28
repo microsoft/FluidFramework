@@ -5,14 +5,12 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	mapKernelFactory,
 	SharedMap,
 	type ISharedMap,
 	type ISharedMapCore,
 } from "@fluidframework/map/internal";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
 import type {
 	ISharedObjectKind,
 	SharedKernelFactory,
@@ -20,11 +18,13 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree";
 import {
+	FluidSerializableAsTree,
 	SchemaFactory,
+	TreeAlpha,
 	treeKernelFactory,
 	TreeViewConfiguration,
 	typeboxValidator,
-	type JsonCompatible,
+	type ConciseTree,
 	type TreeView,
 	// SharedTree,
 } from "@fluidframework/tree/internal";
@@ -59,131 +59,24 @@ const schemaFactory = new SchemaFactory("com.fluidframework/adapters/map");
  * @system
  * @sealed
  */
-export const Handles_base = schemaFactory.map("Handles", schemaFactory.handle);
-
-/**
- * @alpha
- * @sealed
- */
-export class Handles extends Handles_base {}
-
-function tryGetHandleKey(value: unknown): undefined | string {
-	if (typeof value === "object" && value !== null && "handle" in value) {
-		const key = value.handle;
-		if (typeof key === "string") {
-			return key;
-		}
-	}
-	return undefined;
-}
-
-/**
- * @alpha
- * @system
- * @sealed
- */
-export const MapAdapterItem_base = schemaFactory.object("Item", {
-	json: schemaFactory.string,
-	handles: Handles,
-});
-
-/**
- * TODO: this approach leads to extra escaping. Consider replacing it with a the JSON (+handles) domain.
- * Concise import and export APIs should handle data conversion into tree format in that case.
- * @alpha
- */
-export class MapAdapterItem extends MapAdapterItem_base {
-	public static encode(value: JsonCompatible<IFluidHandle>): MapAdapterItem {
-		const handles = new Handles();
-		const handleKeys = new Set<string>();
-
-		// Find existing objects with a "handle" property that is a string, and add those strings to handleKeys to avoid collisions when including Fluid handles.
-		{
-			const queue = [value];
-			while (queue.length > 0) {
-				const item = queue.pop();
-
-				if (typeof item === "object" && item !== null) {
-					if (Array.isArray(item)) {
-						queue.push(...item);
-					}
-					if (isFluidHandle(item)) {
-						// Skip
-					} else {
-						const existingKey = tryGetHandleKey(item);
-						if (existingKey !== undefined) {
-							handleKeys.add(existingKey);
-						}
-						queue.push(...(Object.values(item) as JsonCompatible<IFluidHandle>[]));
-					}
-				}
-			}
-		}
-
-		let nextKey = 0;
-		const json = JSON.stringify(
-			value,
-			(propertyKey, propertyValue: JsonCompatible<IFluidHandle>) => {
-				if (isFluidHandle(propertyValue)) {
-					let handleKey: string;
-					// Generate a unique string thats not in handleKeys
-					// eslint-disable-next-line no-constant-condition
-					while (true) {
-						handleKey = nextKey.toString(36);
-						nextKey++;
-						if (!handleKeys.has(handleKey)) {
-							// No need to add to handleKey set here since keys generated from nextKey will not repeat.
-							break;
-						}
-					}
-					handles.set(handleKey, propertyValue);
-					return { handle: handleKey };
-				}
-				return value;
-			},
-		);
-
-		return new MapAdapterItem({ json, handles });
-	}
-
-	public static decode(value: MapAdapterItem): JsonCompatible<IFluidHandle> {
-		const result = JSON.parse(
-			value.json,
-			(propertyKey, propertyValue: JsonCompatible<IFluidHandle>) => {
-				const existingKey = tryGetHandleKey(propertyValue);
-				if (existingKey !== undefined) {
-					const handle = value.handles.get(existingKey);
-					if (handle !== undefined) {
-						return handle;
-					}
-				}
-				return propertyValue;
-			},
-		) as JsonCompatible<IFluidHandle>;
-		return result;
-	}
-}
-
-/**
- * @alpha
- * @system
- * @sealed
- */
-export const MapAdapterRoot_base = schemaFactory.map("Root", [MapAdapterItem]);
+export const MapAdapterRoot_base = schemaFactory.map("Root", FluidSerializableAsTree.Tree);
 
 /**
  * @alpha
  */
 export class MapAdapterRoot extends MapAdapterRoot_base {
-	public setRaw(key: string, value: JsonCompatible<IFluidHandle>): void {
-		this.set(key, MapAdapterItem.encode(value));
+	public setRaw(key: string, value: ConciseTree | undefined): void {
+		this.set(
+			key,
+			TreeAlpha.importConcise(SchemaFactory.optional(FluidSerializableAsTree.Tree), value),
+		);
 	}
-	public getRaw(key: string): JsonCompatible<IFluidHandle> | undefined {
+	public getRaw(key: string): ConciseTree | undefined {
 		const item = this.get(key);
 		if (item === undefined) {
 			return undefined;
 		}
-		return MapAdapterItem.decode(item);
+		return TreeAlpha.exportConcise(item);
 	}
 }
 
@@ -241,7 +134,7 @@ class TreeMapAdapter implements ISharedMapCore {
 		return this.data.root.getRaw(key) as T | undefined;
 	}
 	public set<T = unknown>(key: string, value: T): this {
-		this.data.root.setRaw(key, value as JsonCompatible<IFluidHandle>);
+		this.data.root.setRaw(key, value as ConciseTree);
 		return this;
 	}
 
@@ -337,7 +230,7 @@ const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITree, ITree> = {
 		const view = to.viewWith(config);
 		const root = new MapAdapterRoot();
 		for (const [key, value] of from.entries()) {
-			root.set(key, MapAdapterItem.encode(value as JsonCompatible<IFluidHandle>));
+			root.setRaw(key, value as ConciseTree);
 		}
 		view.initialize(root);
 		view.dispose();
