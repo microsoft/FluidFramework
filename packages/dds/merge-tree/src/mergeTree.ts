@@ -95,6 +95,7 @@ import {
 	removeRemovalInfo,
 	toMoveInfo,
 	toRemovalInfo,
+	wasMovedOnInsert,
 	type IInsertionInfo,
 	type IMoveInfo,
 	type IRemovalInfo,
@@ -1083,7 +1084,14 @@ export class MergeTree {
 		if (!this.collabWindow.collaborating || this.collabWindow.clientId === clientId) {
 			if (node.isLeaf()) {
 				return this.localNetLength(node, refSeq, localSeq);
-			} else if (localSeq === undefined) {
+			} else if (
+				localSeq === undefined ||
+				// All changes are visible. Small note on why we allow refSeq >= this.collabWindow.currentSeq rather than just equality:
+				// merge-tree eventing occurs before the collab window is updated to account for whatever op it is processing, and we want
+				// to support resolving positions from within the event handler which account for that op. e.g. undo-redo relies on this
+				// behavior with local references.
+				(localSeq === this.collabWindow.localSeq && refSeq >= this.collabWindow.currentSeq)
+			) {
 				// Local client sees all segments, even when collaborating
 				return node.cachedLength;
 			} else {
@@ -1178,6 +1186,8 @@ export class MergeTree {
 	 */
 	public referencePositionToLocalPosition(
 		refPos: ReferencePosition,
+		// Note: this is not `this.collabWindow.currentSeq` because we want to support resolving local reference positions to positions
+		// from within event handlers, and the collab window's sequence numbers are not updated in time in all of those cases.
 		refSeq = Number.MAX_SAFE_INTEGER,
 		clientId = this.collabWindow.clientId,
 		localSeq: number | undefined = this.collabWindow.localSeq,
@@ -1675,7 +1685,6 @@ export class MergeTree {
 						movedSeq: oldest.seq,
 						movedSeqs,
 						localMovedSeq: oldestUnacked?.localSeq,
-						wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
 					};
 				} else {
 					assert(
@@ -1690,7 +1699,6 @@ export class MergeTree {
 						movedSeq: oldestUnacked.seq,
 						movedSeqs: [oldestUnacked.seq],
 						localMovedSeq: oldestUnacked.localSeq,
-						wasMovedOnInsert: false,
 					};
 				}
 
@@ -2141,8 +2149,6 @@ export class MergeTree {
 					movedSeq: seq,
 					localMovedSeq: localSeq,
 					movedSeqs: [seq],
-					wasMovedOnInsert:
-						segment.seq === UnassignedSequenceNumber && seq !== UnassignedSequenceNumber,
 				});
 
 				const existingRemoval = toRemovalInfo(movedSeg);
@@ -2158,16 +2164,15 @@ export class MergeTree {
 				}
 			} else {
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
-					// Should not need explicit set here, but this should be implied:
 					assert(
-						!existingMoveInfo.wasMovedOnInsert,
+						!wasMovedOnInsert(segment),
 						0xab4 /* Local obliterate cannot have removed a segment as soon as it was inserted */,
 					);
 					assert(
 						seq !== UnassignedSequenceNumber,
 						0xab5 /* Cannot obliterate the same segment locally twice */,
 					);
-					existingMoveInfo.wasMovedOnInsert = segment.seq === UnassignedSequenceNumber;
+
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
