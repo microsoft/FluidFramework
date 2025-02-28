@@ -894,39 +894,40 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		LocalServerStressState
 	> = async (state, operation) => {
 		if (operation.type === finalSynchronization.type) {
-			const { clients, validationClient, localDeltaConnectionServer } = state;
+			const { clients, validationClient } = state;
 			for (const client of clients) {
 				client.container.connect();
 			}
 			await synchronizeClients([validationClient, ...clients]);
 			for (const client of clients) {
 				await model.validateConsistency(client, validationClient);
-				client.container.dispose();
 			}
-
-			validationClient.container.dispose();
-			await localDeltaConnectionServer.close();
-			return {
-				...state,
-				clients: [],
-				localDeltaConnectionServer: makeUnreachableCodePathProxy("localDeltaConnectionServer"),
-				validationClient: makeUnreachableCodePathProxy("validationClient"),
-				client: makeUnreachableCodePathProxy("client"),
-				datastore: makeUnreachableCodePathProxy("datastore"),
-				channel: makeUnreachableCodePathProxy("channel"),
-			};
+			return;
 		}
 		return model.reducer(state, operation as TOperation);
 	};
-	await performFuzzActionsAsync(
-		generator,
-		async (state: LocalServerStressState, operation) => {
-			operationCount++;
-			return reducer(state, operation);
-		},
-		initialState,
-		saveInfo,
-	);
+
+	let finalState: LocalServerStressState = initialState;
+	try {
+		await performFuzzActionsAsync(
+			generator,
+			async (state: LocalServerStressState, operation) => {
+				operationCount++;
+				return (finalState = (await reducer(state, operation)) ?? finalState);
+			},
+			initialState,
+			saveInfo,
+		);
+	} finally {
+		if (finalState !== undefined) {
+			for (const client of finalState.clients) {
+				client.container.dispose();
+			}
+
+			finalState.validationClient.container.dispose();
+			await finalState.localDeltaConnectionServer.close();
+		}
+	}
 
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
 	// this usually indicates an error on the part of the test author.
