@@ -68,7 +68,8 @@ export class MapAdapterRoot extends MapAdapterRoot_base {
 	}
 }
 
-const config = new TreeViewConfiguration({ schema: MapAdapterRoot, preventAmbiguity: true });
+// TODO: enable preventAmbiguity: true : needs less strict ambiguity check option, or way to avoid map vs array ambiguity (opt map out of iterable/array?)
+const config = new TreeViewConfiguration({ schema: MapAdapterRoot });
 
 interface TreeData {
 	readonly mode: "tree";

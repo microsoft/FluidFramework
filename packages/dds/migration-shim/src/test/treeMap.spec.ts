@@ -104,7 +104,7 @@ describe("treeMap", () => {
 
 		const view = mapC.viewWith(config);
 
-		assert.equal(view.root.get("K")?.json, "V");
+		assert.equal(view.root.get("K"), "V");
 	});
 
 	it("collab minimal", async () => {
@@ -186,7 +186,7 @@ describe("treeMap", () => {
 	const config = new TreeViewConfiguration({
 		schema: MapAdapterRoot,
 		enableSchemaValidation: true,
-		preventAmbiguity: true,
+		// preventAmbiguity: true,
 	});
 
 	it("collab2", async () => {
@@ -270,7 +270,7 @@ describe("treeMap", () => {
 		// c.sharedObject[shimInfo].cast();
 		const tree = c.sharedObject as ITree;
 		const view = tree.viewWith(config);
-		assert.equal(view.root.get("K")?.json, "V");
+		assert.equal(view.root.get("K"), "V");
 
 		assert.deepEqual(containerErrors, []);
 	});
@@ -366,6 +366,6 @@ describe("treeMap", () => {
 		assert.deepEqual(containerErrors, []);
 
 		const view = tree.viewWith(config);
-		assert.equal(view.root.get("K")?.json, "V2");
+		assert.equal(view.root.get("K"), "V2");
 	});
 });

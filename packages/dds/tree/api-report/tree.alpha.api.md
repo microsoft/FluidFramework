@@ -182,6 +182,35 @@ export enum FluidClientVersion {
 }
 
 // @alpha
+export namespace FluidSerializableAsTree {
+    // @sealed
+    export class Array extends _APIExtractorWorkaroundArrayBase {
+    }
+    const Tree: readonly [() => typeof FluidSerializableObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.handle", NodeKind_2.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>];
+    export type Data = JsonCompatible<IFluidHandle>;
+    const _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.object", NodeKind_2.Map, TreeMapNodeUnsafe_2<readonly [() => typeof FluidSerializableObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.handle", NodeKind_2.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>]> & WithType_2<"com.fluidframework.serializable.object", NodeKind_2.Map, unknown>, {
+    [Symbol.iterator](): Iterator<[string, string | number | IFluidHandle<unknown> | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
+    create(data: boolean): boolean;
+    }> | FluidSerializableObject | Array | null], any, undefined>;
+    } | {
+    readonly [x: string]: string | number | IFluidHandle<unknown> | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
+    create(data: boolean): boolean;
+    }> | FluidSerializableObject | Array | null;
+    }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.handle", NodeKind_2.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>], undefined>;
+    // @sealed
+    export class FluidSerializableObject extends _APIExtractorWorkaroundObjectBase {
+    }
+    export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof Array>;
+    const _APIExtractorWorkaroundArrayBase: TreeNodeSchemaClass_2<"com.fluidframework.serializable.array", NodeKind_2.Array, TreeArrayNodeUnsafe_2<readonly [() => typeof FluidSerializableObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.handle", NodeKind_2.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>]> & WithType_2<"com.fluidframework.serializable.array", NodeKind_2.Array, unknown>, {
+    [Symbol.iterator](): Iterator<string | number | IFluidHandle<unknown> | InsertableTypedNodeUnsafe_2<TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaCore_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, true, unknown, boolean, unknown> & {
+    create(data: boolean): boolean;
+    }> | FluidSerializableObject | Array | null, any, undefined>;
+    }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.string", NodeKind_2.Leaf, string, string, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.number", NodeKind_2.Leaf, number, number, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.boolean", NodeKind_2.Leaf, boolean, boolean, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.null", NodeKind_2.Leaf, null, null, true, unknown, never, unknown>, TreeNodeSchemaNonClass_2<"com.fluidframework.leaf.handle", NodeKind_2.Leaf, IFluidHandle<unknown>, IFluidHandle<unknown>, true, unknown, never, unknown>], undefined>;
+    // (undocumented)
+    export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
+}
+
+// @alpha
 export interface ForestOptions {
     readonly forest?: ForestType;
 }
