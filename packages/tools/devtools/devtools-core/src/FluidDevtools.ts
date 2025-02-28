@@ -376,7 +376,10 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new Error(`No devtools associated with key "${containerKey}" was found.`);
 		}
 
-		containerDevtools.containerData = { ...data };
+		containerDevtools.containerData = {
+			...containerDevtools.containerData,
+			...data,
+		};
 	}
 
 	/**

@@ -4,6 +4,7 @@
  */
 
 import { SharedCounter } from "@fluidframework/counter/internal";
+import { SharedString } from "@fluidframework/sequence/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { expect } from "chai";
 
@@ -101,7 +102,7 @@ describe("FluidDevtools unit tests", () => {
 		);
 	});
 
-	it.only("Registering a new container data to an existing devtools", () => {
+	it("Registering a new container data to an existing devtools and disposing the devtools", () => {
 		const devtools = FluidDevtools.initialize();
 
 		const containerKey = "test-container-key";
@@ -116,17 +117,41 @@ describe("FluidDevtools unit tests", () => {
 		const containerDataBefore = devtools.getContainerDevtools(containerKey)?.containerData;
 		expect(containerDataBefore).to.be.undefined;
 
-		const runtime = new MockFluidDataStoreRuntime({ registry: [SharedCounter.getFactory()] });
+		const runtime = new MockFluidDataStoreRuntime({
+			registry: [SharedCounter.getFactory(), SharedString.getFactory()],
+		});
 		const sharedCounter = SharedCounter.create(runtime, "test-counter");
 		sharedCounter.increment(37);
 
-		const newDataKey = "shared-counter";
-		const newData = { [newDataKey]: sharedCounter };
-		devtools.addContainerData(containerKey, newData);
+		const sharedCounterKey = "shared-counter";
+		const newSharedCounterData = { [sharedCounterKey]: sharedCounter };
+		devtools.addContainerData(containerKey, newSharedCounterData);
 
-		const containerDataAfter = devtools.getContainerDevtools(containerKey)?.containerData;
-		expect(containerDataAfter).to.not.equal(undefined);
-		expect(containerDataAfter?.[newDataKey]).to.equal(sharedCounter);
+		const containerDataAfter1 = devtools.getContainerDevtools(containerKey)?.containerData;
+		expect(Object.keys(containerDataAfter1 ?? {}).length).to.equal(1);
+		expect(containerDataAfter1?.[sharedCounterKey]).to.equal(sharedCounter);
+
+		const sharedString = SharedString.create(runtime, "test-string-1");
+		sharedString.insertText(0, "Hello World!");
+
+		const sharedStringKey = "shared-string";
+		const newSharedStringData = { [sharedStringKey]: sharedString };
+		devtools.addContainerData(containerKey, newSharedStringData);
+
+		const containerDataAfter2 = devtools.getContainerDevtools(containerKey)?.containerData;
+		expect(Object.keys(containerDataAfter2 ?? {}).length).to.equal(2);
+		expect(containerDataAfter2?.[sharedStringKey]).to.equal(sharedString);
+
+		devtools.dispose();
+
+		const sharedString2 = SharedString.create(runtime, "test-string-2");
+		sharedString2.insertText(0, "Hello World!");
+
+		const sharedStringKey2 = "shared-string-2";
+		const newSharedStringData2 = { [sharedStringKey2]: sharedString2 };
+		expect(() => devtools.addContainerData(containerKey, newSharedStringData2)).to.throw(
+			useAfterDisposeErrorText,
+		);
 	});
 
 	it("tryGet", () => {
