@@ -60,9 +60,7 @@ export abstract class TreeDataObject<
 	 */
 	private get initializedTree(): ITree {
 		if (!this.#tree) {
-			// Note: Can't use `UsageError` because adding dependency on `telemetry-utils` would create a cycle.
-			// TODO: would probably be useful to move our shared error types in a more accessible location.
-			throw new Error(this.getUninitializedErrorString("root"));
+			throw new UsageError(this.getUninitializedErrorString("root"));
 		}
 
 		return this.#tree;
