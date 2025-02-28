@@ -156,6 +156,7 @@ import {
 	wrapContext,
 } from "./channelCollection.js";
 import {
+	compatibilityModeRuntimeOptions,
 	defaultCompatibilityMode,
 	type CompatibilityMode,
 } from "./compatibilityConfiguration.js";
@@ -646,6 +647,11 @@ export interface IContainerRuntimeOptionsInternal extends IContainerRuntimeOptio
 	 * In that case, batched messages will be sent individually (but still all at the same time).
 	 */
 	readonly enableGroupedBatching?: boolean;
+
+	/**
+	 * TODO: TSDoc
+	 */
+	disallowedVersions?: string[];
 }
 
 /**
@@ -1053,38 +1059,50 @@ export class ContainerRuntime
 
 		const mc = loggerToMonitoringContext(logger);
 
-		// Options without overlap with IProtocolOptions
+		// While we transition towards using IProtocolOptions/CompatibilityMode, we will have to handle the different sources of container runtime options.
+		// Please note that the following logic will be much simpler after the overlapping properties are removed from IContainerRuntimeOptions.
+		const protocolOptions: IProtocolOptions = runtimeOptions.protocolOptions ?? {};
+		const compatibilityMode = runtimeOptions.compatibilityMode ?? defaultCompatibilityMode;
+		const defaultCompatibilityModeOptions: IContainerRuntimeOptionsInternal =
+			compatibilityModeRuntimeOptions[compatibilityMode];
+
+		// This loop does two things:
+		// 1. We check if any of the properties in protocolOptions are also defined in runtimeOptions. If they are not the same, we throw an error.
+		// 2. We set any undefined properties in runtimeOptions to the value in protocolOptions.
+		for (const key of Object.keys(protocolOptions)) {
+			if (key in runtimeOptions && protocolOptions[key] !== undefined) {
+				if (runtimeOptions[key] === undefined) {
+					runtimeOptions[key] = protocolOptions[key] as IContainerRuntimeOptions;
+				} else if (runtimeOptions[key] !== protocolOptions[key]) {
+					throw new Error(
+						`The ${key} property is defined differently in protocolOptions and runtimeOptions. Please remove one of them.`,
+					);
+				}
+			}
+		}
+
 		const {
 			summaryOptions = {},
 			gcOptions = {},
 			loadSequenceNumberVerification = "close",
-			flushMode = defaultFlushMode,
-			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
-			chunkSizeInBytes = defaultChunkSizeInBytes,
-			protocolOptions = {},
-			compatibilityMode = defaultCompatibilityMode,
-		}: IContainerRuntimeOptionsInternal = runtimeOptions;
-		// Options with overlap with IProtocolOptions
-		let {
+			flushMode = defaultCompatibilityModeOptions.flushMode ?? defaultFlushMode,
 			compressionOptions = runtimeOptions.enableGroupedBatching === false
 				? disabledCompressionConfig // Compression must be disabled if Grouping is disabled
 				: defaultCompressionConfig,
-			enableRuntimeIdCompressor,
-			enableGroupedBatching = true,
-			explicitSchemaControl = false,
+			maxBatchSizeInBytes = defaultMaxBatchSizeInBytes,
+			enableRuntimeIdCompressor = defaultCompatibilityModeOptions.enableRuntimeIdCompressor,
+			chunkSizeInBytes = defaultChunkSizeInBytes,
+			enableGroupedBatching = defaultCompatibilityModeOptions.enableGroupedBatching ?? true,
+			explicitSchemaControl = defaultCompatibilityModeOptions.explicitSchemaControl ?? false,
+			// We currently dont' accept input for disallowedVersions, it is dictated by the compatibilityMode.
+			disallowedVersions = defaultCompatibilityModeOptions.disallowedVersions ?? [],
 		}: IContainerRuntimeOptionsInternal = runtimeOptions;
 
-		// While we transition to using IProtocolOptions, we will need to handle duplicate properties.
-		// For now, any properties defined in protocolOptions will overwrite duplicate properties in runtimeOptions.
-		enableGroupedBatching = protocolOptions.enableGroupedBatching ?? enableGroupedBatching;
-		explicitSchemaControl = protocolOptions.explicitSchemaControl ?? explicitSchemaControl;
-		compressionOptions =
-			enableGroupedBatching === false
-				? disabledCompressionConfig // Compression must be disabled if Grouping is disabled
-				: defaultCompressionConfig;
-		gcOptions.enableGCSweep = protocolOptions.enableGCSweep ?? gcOptions.enableGCSweep;
-		enableRuntimeIdCompressor =
-			protocolOptions.enableRuntimeIdCompressor ?? enableRuntimeIdCompressor;
+		if (protocolOptions.enableGCSweep !== undefined) {
+			// gcSweep is a special case, since it is can only be true or undefined.
+			// Therefore, if it's defined we can assign the value in runtimeOptions.gcOptions.
+			gcOptions.enableGCSweep = protocolOptions.enableGCSweep;
+		}
 
 		const registry = new FluidDataStoreRegistry(registryEntries);
 
@@ -1261,7 +1279,7 @@ export class ContainerRuntime
 				compressionLz4,
 				idCompressorMode,
 				opGroupingEnabled: enableGroupedBatching,
-				disallowedVersions: [],
+				disallowedVersions,
 			},
 			(schema) => {
 				runtime.onSchemaChange(schema);
@@ -1289,6 +1307,7 @@ export class ContainerRuntime
 			explicitSchemaControl,
 			protocolOptions,
 			compatibilityMode,
+			disallowedVersions,
 		};
 
 		const runtime = new containerRuntimeCtor(

@@ -114,6 +114,7 @@ export function generateRuntimeOptions(
 		explicitSchemaControl: [true, false],
 		protocolOptions: [undefined, {}], // TODO: This will change in the future
 		compatibilityMode: ["1", "2"],
+		disallowedVersions: [],
 	};
 
 	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(

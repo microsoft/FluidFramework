@@ -51,6 +51,8 @@ export const compatibilityModeRuntimeOptions: Record<
 		// Explicitly disable running Sweep in compat mode "1". Sweep is supported only in 2.x. So, when 1.x and 2.x
 		// clients are running in parallel, running sweep will fail 1.x clients.
 		gcOptions: { enableGCSweep: undefined },
+
+		disallowedVersions: [],
 	},
 	"2": {
 		// Explicit schema control explicitly makes the container incompatible with 1.x clients, to force their
@@ -62,5 +64,7 @@ export const compatibilityModeRuntimeOptions: Record<
 		// Explicitly disable running Sweep in compat mode "2". Although sweep is supported in 2.x, it is disabled by default.
 		// This setting explicitly disables it to be extra safe.
 		gcOptions: { enableGCSweep: undefined },
+
+		disallowedVersions: ["<2.0"],
 	},
 };
