@@ -4,6 +4,7 @@
  */
 
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ImplicitFieldSchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -73,7 +74,7 @@ export abstract class TreeDataObject<
 	 */
 	public get tree(): TreeView<TSchema> {
 		if (this.#treeView === undefined) {
-			throw new Error(this.getUninitializedErrorString("tree"));
+			throw new UsageError(this.getUninitializedErrorString("tree"));
 		}
 		return this.#treeView;
 	}
