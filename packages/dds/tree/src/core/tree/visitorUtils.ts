@@ -74,22 +74,17 @@ export function combineVisitors(
 	}
 	return {
 		free: () => visitors.forEach((v) => v.free()),
-		create: (content: ProtoNodes, destination: FieldKey, detachedNodeId: DetachedNodeId) => {
-			visitors.forEach((v) => v.create(content, destination, detachedNodeId));
-			announcedVisitors.forEach((v) => v.afterCreate(content, destination));
+		create: (...args) => {
+			visitors.forEach((v) => v.create(...args));
+			announcedVisitors.forEach((v) => v.afterCreate(...args));
 		},
 		destroy: (...args) => {
 			announcedVisitors.forEach((v) => v.beforeDestroy(...args));
 			visitors.forEach((v) => v.destroy(...args));
 		},
-		attach: (
-			source: FieldKey,
-			sourceDetachedNodeId: DetachedNodeId,
-			count: number,
-			destination: PlaceIndex,
-		) => {
+		attach: (source: FieldKey, count: number, destination: PlaceIndex) => {
 			announcedVisitors.forEach((v) => v.beforeAttach(source, count, destination));
-			visitors.forEach((v) => v.attach(source, sourceDetachedNodeId, count, destination));
+			visitors.forEach((v) => v.attach(source, count, destination));
 			announcedVisitors.forEach((v) =>
 				v.afterAttach(source, {
 					start: destination,
@@ -110,7 +105,6 @@ export function combineVisitors(
 		},
 		replace: (
 			newContent: FieldKey,
-			sourceDetachedNodeId: DetachedNodeId,
 			oldContent: Range,
 			oldContentDestination: FieldKey,
 			destinationDetachedNodeId: DetachedNodeId,
@@ -119,13 +113,7 @@ export function combineVisitors(
 				v.beforeReplace(newContent, oldContent, oldContentDestination),
 			);
 			visitors.forEach((v) =>
-				v.replace(
-					newContent,
-					sourceDetachedNodeId,
-					oldContent,
-					oldContentDestination,
-					destinationDetachedNodeId,
-				),
+				v.replace(newContent, oldContent, oldContentDestination, destinationDetachedNodeId),
 			);
 			announcedVisitors.forEach((v) =>
 				v.afterReplace(newContent, oldContent, oldContentDestination),
@@ -171,12 +159,7 @@ export function createAnnouncedVisitor(visitorFunctions: {
 	beforeDestroy?: (field: FieldKey, count: number) => void;
 	destroy?: (detachedField: FieldKey, count: number) => void;
 	beforeAttach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;
-	attach?: (
-		source: FieldKey,
-		sourceDetachedNodeId: DetachedNodeId,
-		count: number,
-		destination: PlaceIndex,
-	) => void;
+	attach?: (source: FieldKey, count: number, destination: PlaceIndex) => void;
 	afterAttach?: (source: FieldKey, destination: Range) => void;
 	beforeDetach?: (source: Range, destination: FieldKey) => void;
 	afterDetach?: (source: PlaceIndex, count: number, destination: FieldKey) => void;
@@ -188,7 +171,6 @@ export function createAnnouncedVisitor(visitorFunctions: {
 	) => void;
 	replace?: (
 		newContentSource: FieldKey,
-		sourceDetachedNodeId: DetachedNodeId,
 		range: Range,
 		oldContentDestination: FieldKey,
 		destinationDetachedNodeId: DetachedNodeId,

@@ -370,7 +370,7 @@ describe("AnchorSet", () => {
 
 		withVisitor(anchors, (v) => {
 			v.enterField(fieldFoo);
-			v.attach(detachedField, detachId, 3, 0);
+			v.attach(detachedField, 3, 0);
 			v.exitField(fieldFoo);
 		});
 
@@ -532,12 +532,11 @@ describe("AnchorSet", () => {
 			v.detach({ start: 0, end: 1 }, brand("fakeDetachDestination"), detachId);
 			v.exitField(fieldOne);
 			v.enterField(fieldTwo);
-			v.attach(brand("fakeAttachSource"), detachId, 1, 0);
+			v.attach(brand("fakeAttachSource"), 1, 0);
 			v.exitField(fieldTwo);
 			v.enterField(fieldThree);
 			v.replace(
 				brand("fakeReplaceSource"),
-				detachId,
 				{ start: 0, end: 1 },
 				brand("fakeReplaceDestination"),
 				detachId,

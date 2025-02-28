@@ -815,31 +815,20 @@ export class AnchorSet implements AnchorLocator {
 					() => {},
 				);
 			},
-			attach(
-				source: FieldKey,
-				sourceDetachedNodeId: Delta.DetachedNodeId,
-				count: number,
-				destination: PlaceIndex,
-			): void {
+			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.notifyChildrenChanging();
-				this.attachEdit(source, sourceDetachedNodeId, count, destination);
+				this.attachEdit(source, count, destination);
 				this.notifyChildrenChanged();
 			},
-			attachEdit(
-				source: FieldKey,
-				sourceDetachedNodeId: Delta.DetachedNodeId,
-				count: number,
-				destination: PlaceIndex,
-			): void {
+			attachEdit(source: FieldKey, count: number, destination: PlaceIndex): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a2 /* Must be in a field in order to attach */,
 				);
-				const sourcePath: DetachedUpPath = {
+				const sourcePath = {
 					parent: this.anchorSet.root,
 					parentField: source,
 					parentIndex: 0,
-					detachedNodeId: sourceDetachedNodeId,
 				};
 				const destinationPath = {
 					parent: this.parent,
@@ -883,19 +872,13 @@ export class AnchorSet implements AnchorLocator {
 			},
 			replace(
 				newContentSource: FieldKey,
-				sourceDetachedNodeId: Delta.DetachedNodeId,
 				range: Range,
 				oldContentDestination: FieldKey,
 				destinationDetachedNodeId: Delta.DetachedNodeId,
 			): void {
 				this.notifyChildrenChanging();
 				this.detachEdit(range, oldContentDestination, destinationDetachedNodeId);
-				this.attachEdit(
-					newContentSource,
-					sourceDetachedNodeId,
-					range.end - range.start,
-					range.start,
-				);
+				this.attachEdit(newContentSource, range.end - range.start, range.start);
 				this.notifyChildrenChanged();
 			},
 			destroy(detachedField: FieldKey, count: number): void {

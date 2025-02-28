@@ -137,11 +137,7 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				this.forest.roots.fields.delete(detachedField);
 			},
-			create(
-				content: ProtoNodes,
-				destination: FieldKey,
-				detachedNodeId: DeltaDetachedNodeId,
-			): void {
+			create(content: ProtoNodes, destination: FieldKey): void {
 				this.forest.#events.emit("beforeChange");
 				const chunks: TreeChunk[] = content.map((c) =>
 					chunkTree(c, {
@@ -152,12 +148,7 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.roots.fields.set(destination, chunks);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
 			},
-			attach(
-				source: FieldKey,
-				sourceDetachedNodeId: DeltaDetachedNodeId,
-				count: number,
-				destination: PlaceIndex,
-			): void {
+			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				this.attachEdit(source, count, destination);
 			},
 			detach(
@@ -222,7 +213,6 @@ export class ChunkedForest implements IEditableForest {
 			},
 			replace(
 				newContentSource: FieldKey,
-				sourceDetachedNodeId: DeltaDetachedNodeId,
 				range: Range,
 				oldContentDestination: FieldKey,
 				destinationDetachedNodeId: DeltaDetachedNodeId,

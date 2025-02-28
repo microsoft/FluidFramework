@@ -266,11 +266,7 @@ export interface DeltaVisitor {
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
 	 */
-	create(
-		content: ProtoNodes,
-		destination: FieldKey,
-		detachedNodeId: Delta.DetachedNodeId,
-	): void;
+	create(content: ProtoNodes, destination: FieldKey): void;
 	/**
 	 * Recursively destroys the given detached field and all of the nodes within it.
 	 * @param detachedField - The key for the detached field to destroy.
@@ -285,17 +281,13 @@ export interface DeltaVisitor {
 	 * Expected to match the number of nodes in the source detached field.
 	 * @param destination - The index at which to attach the nodes.
 	 */
-	attach(
-		source: FieldKey,
-		sourceDetachedNodeId: Delta.DetachedNodeId,
-		count: number,
-		destination: PlaceIndex,
-	): void;
+	attach(source: FieldKey, count: number, destination: PlaceIndex): void;
 	/**
 	 * Transfers a range of nodes from the current field to a new detached field.
 	 * @param source - The bounds of the range of nodes to detach.
 	 * @param destination - The key for a new detached field.
 	 * A field with this key must not already exist.
+	 * @param destinationDetachedNodeId - The first detached node id for the detached nodes.
 	 */
 	detach(
 		source: Range,
@@ -309,10 +301,10 @@ export interface DeltaVisitor {
 	 * @param newContentSource - The detached field to transfer the new nodes from.
 	 * @param range - The bounds of the range of nodes to replace.
 	 * @param oldContentDestination - The key for a new detached field to transfer the old nodes to.
+	 * @param destinationDetachedNodeId - The first detached node id for the replaced nodes.
 	 */
 	replace(
 		newContentSource: FieldKey,
-		sourceDetachedNodeId: Delta.DetachedNodeId,
 		range: Range,
 		oldContentDestination: FieldKey,
 		destinationDetachedNodeId: Delta.DetachedNodeId,
@@ -484,7 +476,7 @@ function buildTrees(
 		assert(root === undefined, 0x929 /* Unable to build tree that already exists */);
 		root = detachedFieldIndex.createEntry(offsettedId, latestRevision);
 		const field = detachedFieldIndex.toFieldKey(root);
-		visitor.create([tree], field, offsettedId);
+		visitor.create([tree], field);
 	}
 }
 
@@ -586,7 +578,6 @@ function attachPass(
 					const destinationField = config.detachedFieldIndex.toFieldKey(rootDestination);
 					visitor.replace(
 						sourceField,
-						offsetAttachId,
 						{ start: offsetIndex, end: offsetIndex + 1 },
 						destinationField,
 						destinationId,
@@ -597,7 +588,7 @@ function attachPass(
 					}
 				} else {
 					// This a simple attach
-					visitor.attach(sourceField, offsetAttachId, 1, offsetIndex);
+					visitor.attach(sourceField, 1, offsetIndex);
 				}
 				config.detachedFieldIndex.deleteEntry(offsetAttachId);
 				const fields = config.attachPassRoots.get(sourceRoot);

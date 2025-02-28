@@ -48,7 +48,7 @@ describe("object-forest", () => {
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() => visitor.attach(rootFieldKey, dummyDetachedNodeId, 1, 0),
+				() => visitor.attach(rootFieldKey, 1, 0),
 				(e: Error) =>
 					validateAssertionError(
 						e,
@@ -94,7 +94,6 @@ describe("object-forest", () => {
 				() =>
 					visitor.replace(
 						detachedFieldKey,
-						dummyDetachedNodeId,
 						{ start: 0, end: 1 },
 						detachedFieldKey,
 						dummyDetachedNodeId,

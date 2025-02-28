@@ -164,21 +164,12 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.forest.delete(detachedField);
 			}
-			public create(
-				content: ProtoNodes,
-				destination: FieldKey,
-				detachedNodeId: DeltaDetachedNodeId,
-			): void {
+			public create(content: ProtoNodes, destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
 			}
-			public attach(
-				source: FieldKey,
-				sourceDetachedNodeId: DeltaDetachedNodeId,
-				count: number,
-				destination: PlaceIndex,
-			): void {
+			public attach(source: FieldKey, count: number, destination: PlaceIndex): void {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
@@ -247,7 +238,6 @@ export class ObjectForest implements IEditableForest {
 			}
 			public replace(
 				newContentSource: FieldKey,
-				sourceDetachedNodeId: DeltaDetachedNodeId,
 				range: Range,
 				oldContentDestination: FieldKey,
 				destinationDetachedNodeId: DeltaDetachedNodeId,
