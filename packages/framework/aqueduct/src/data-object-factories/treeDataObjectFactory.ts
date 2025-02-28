@@ -22,7 +22,7 @@ import type {
 import { PureDataObjectFactory } from "./pureDataObjectFactory.js";
 
 /**
- * {@link PureDataObjectFactory} for use with {@link TreeDataObject}s.
+ * {@link PureDataObjectFactory} for creating {@link TreeDataObject}s.
  *
  * @remarks
  * Facilitates {@link TreeDataObject}'s features (such as its {@link @fluidframework/tree#SharedTree}) by
