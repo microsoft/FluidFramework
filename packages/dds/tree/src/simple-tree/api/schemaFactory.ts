@@ -40,6 +40,7 @@ import {
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
+	type NodeSchemaOptions,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -106,7 +107,8 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
  *
  * @alpha
  */
-export interface SchemaFactoryObjectOptions {
+export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -152,7 +154,9 @@ export interface SchemaFactoryObjectOptions {
 	allowUnknownOptionalFields?: boolean;
 }
 
-export const defaultSchemaFactoryObjectOptions: Required<SchemaFactoryObjectOptions> = {
+export const defaultSchemaFactoryObjectOptions: Required<
+	Omit<SchemaFactoryObjectOptions, "metadata">
+> = {
 	allowUnknownOptionalFields: false,
 };
 
@@ -166,6 +170,141 @@ export type ScopedSchemaName<
 	TName extends number | string,
 > = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 // > = `${TScope extends undefined ? "" : `${TScope}.`}${TName}`;
+
+/**
+ * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
+ * @privateRemarks
+ * We have no way to make linkable members which exist both as statics and instance properties since API-Extractor does not support this.
+ * As a workaround, we have this type as a third place which can be linked.
+ * @system @sealed @public
+ */
+export const schemaStatics = {
+	/**
+	 * {@link TreeNodeSchema} for holding a JavaScript `string`.
+	 *
+	 * @remarks
+	 * Strings containing unpaired UTF-16 surrogate pair code units may not be handled correctly.
+	 *
+	 * These limitations come from the use of UTF-8 encoding of the strings, which requires them to be valid unicode.
+	 * JavaScript does not make this requirement for its strings so not all possible JavaScript strings are supported.
+	 * @privateRemarks
+	 * TODO:
+	 * We should be much more clear about what happens if you use problematic values.
+	 * We should validate and/or normalize them when inserting content.
+	 */
+	string: stringSchema,
+
+	/**
+	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
+	 *
+	 * @remarks
+	 * The number is a {@link https://en.wikipedia.org/wiki/Double-precision_floating-point_format | double-precision 64-bit binary format IEEE 754} value, however there are some exceptions:
+	 * - `NaN`, and the infinities are converted to `null` (and may therefore only be used where `null` is allowed by the schema).
+	 * - `-0` may be converted to `0` in some cases.
+	 *
+	 * These limitations match the limitations of JSON.
+	 * @privateRemarks
+	 * TODO:
+	 * We should be much more clear about what happens if you use problematic values.
+	 * We should validate and/or normalize them when inserting content.
+	 */
+	number: numberSchema,
+
+	/**
+	 * {@link TreeNodeSchema} for holding a boolean.
+	 */
+	boolean: booleanSchema,
+
+	/**
+	 * {@link TreeNodeSchema} for JavaScript `null`.
+	 *
+	 * @remarks
+	 * There are good {@link https://www.npmjs.com/package/%40rushstack/eslint-plugin#rushstackno-new-null | reasons to avoid using null} in JavaScript, however sometimes it is desired.
+	 * This {@link TreeNodeSchema} node provides the option to include nulls in trees when desired.
+	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
+	 */
+	null: nullSchema,
+
+	/**
+	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}.
+	 */
+	handle: handleSchema,
+
+	/**
+	 * {@link AllowedTypes} for holding any of the leaf types.
+	 */
+	leaves: [stringSchema, numberSchema, booleanSchema, nullSchema, handleSchema],
+
+	/**
+	 * Make a field optional instead of the default, which is required.
+	 *
+	 * @param t - The types allowed under the field.
+	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
+	 */
+	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		t: T,
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> => {
+		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
+			return undefined;
+		});
+		return createFieldSchema(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
+	},
+
+	/**
+	 * Make a field explicitly required.
+	 *
+	 * @param t - The types allowed under the field.
+	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @remarks
+	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
+	 * and allows associating custom {@link FieldProps | properties} with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
+	 */
+	required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		t: T,
+		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Required, T, TCustomMetadata> => {
+		return createFieldSchema(FieldKind.Required, t, props);
+	},
+
+	/**
+	 * {@link schemaStatics.optional} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link schemaStatics.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	optionalRecursive: <const T extends Unenforced<ImplicitAllowedTypes>>(
+		t: T,
+		props?: Omit<FieldProps, "defaultProvider">,
+	): FieldSchemaUnsafe<FieldKind.Optional, T> => {
+		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
+	},
+
+	/**
+	 * {@link schemaStatics.required} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of {@link schemaStatics.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	requiredRecursive: <const T extends Unenforced<ImplicitAllowedTypes>>(
+		t: T,
+		props?: Omit<FieldProps, "defaultProvider">,
+	): FieldSchemaUnsafe<FieldKind.Required, T> => {
+		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
+	},
+} as const;
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
@@ -259,6 +398,8 @@ export type ScopedSchemaName<
  *
  * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
  *
+ * @see {@link SchemaFactoryAlpha}
+ *
  * @sealed @public
  */
 export class SchemaFactory<
@@ -322,55 +463,64 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * {@link TreeNodeSchema} for holding a JavaScript `string`.
-	 *
-	 * @remarks
-	 * Strings containing unpaired UTF-16 surrogate pair code units may not be handled correctly.
-	 *
-	 * These limitations come from the use of UTF-8 encoding of the strings, which requires them to be valid unicode.
-	 * JavaScript does not make this requirement for its strings so not all possible JavaScript strings are supported.
-	 * @privateRemarks
-	 * TODO:
-	 * We should be much more clear about what happens if you use problematic values.
-	 * We should validate and/or normalize them when inserting content.
+	 * {@inheritDoc schemaStatics.string}
 	 */
 	public readonly string = stringSchema;
 
 	/**
-	 * {@link TreeNodeSchema} for holding a JavaScript `number`.
-	 *
-	 * @remarks
-	 * The number is a [double-precision 64-bit binary format IEEE 754](https://en.wikipedia.org/wiki/Double-precision_floating-point_format) value, however there are some exceptions:
-	 * - `NaN`, and the infinities are converted to `null` (and may therefore only be used where `null` is allowed by the schema).
-	 * - `-0` may be converted to `0` in some cases.
-	 *
-	 * These limitations match the limitations of JSON.
-	 * @privateRemarks
-	 * TODO:
-	 * We should be much more clear about what happens if you use problematic values.
-	 * We should validate and/or normalize them when inserting content.
+	 * {@inheritDoc schemaStatics.number}
 	 */
 	public readonly number = numberSchema;
 
 	/**
-	 * {@link TreeNodeSchema} for holding a boolean.
+	 * {@inheritDoc schemaStatics.boolean}
 	 */
 	public readonly boolean = booleanSchema;
 
 	/**
-	 * {@link TreeNodeSchema} for JavaScript `null`.
-	 *
-	 * @remarks
-	 * There are good [reasons to avoid using null](https://www.npmjs.com/package/%40rushstack/eslint-plugin#rushstackno-new-null) in JavaScript, however sometimes it is desired.
-	 * This {@link TreeNodeSchema} node provides the option to include nulls in trees when desired.
-	 * Unless directly inter-operating with existing data using null, consider other approaches, like wrapping the value in an optional field, or using a more specifically named empty object node.
+	 * {@inheritDoc schemaStatics.null}
 	 */
 	public readonly null = nullSchema;
 
 	/**
-	 * {@link TreeNodeSchema} for holding an {@link @fluidframework/core-interfaces#(IFluidHandle:interface)}.
+	 * {@inheritDoc schemaStatics.handle}
 	 */
 	public readonly handle = handleSchema;
+
+	/**
+	 * {@inheritDoc schemaStatics.leaves}
+	 */
+	public readonly leaves = schemaStatics.leaves;
+
+	/**
+	 * {@inheritDoc schemaStatics.string}
+	 */
+	public static readonly string = stringSchema;
+
+	/**
+	 * {@inheritDoc schemaStatics.number}
+	 */
+	public static readonly number = numberSchema;
+
+	/**
+	 * {@inheritDoc schemaStatics.boolean}
+	 */
+	public static readonly boolean = booleanSchema;
+
+	/**
+	 * {@inheritDoc schemaStatics.null}
+	 */
+	public static readonly null = nullSchema;
+
+	/**
+	 * {@inheritDoc schemaStatics.handle}
+	 */
+	public static readonly handle = handleSchema;
+
+	/**
+	 * {@inheritDoc schemaStatics.leaves}
+	 */
+	public static readonly leaves = schemaStatics.leaves;
 
 	/**
 	 * Define a {@link TreeNodeSchemaClass} for a {@link TreeObjectNode}.
@@ -402,6 +552,8 @@ export class SchemaFactory<
 
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link TreeMapNode}.
+	 *
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 *
 	 * @remarks
 	 * The unique identifier for this Map is defined as a function of the provided types.
@@ -439,6 +591,7 @@ export class SchemaFactory<
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear as values in the map.
 	 *
 	 * @example
 	 * ```typescript
@@ -459,6 +612,8 @@ export class SchemaFactory<
 	>;
 
 	/**
+	 * {@link SchemaFactory.map} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return `TreeNodeSchemaBoth`, however TypeScript gives an error if one of the overloads implicitly up-casts the return type of the implementation.
 	 * This seems like a TypeScript bug getting variance backwards for overload return types since it's erroring when the relation between the overload
@@ -533,11 +688,14 @@ export class SchemaFactory<
 			implicitlyConstructable,
 			// The current policy is customizable nodes don't get fake prototypes.
 			!customizable,
+			undefined,
 		);
 	}
 
 	/**
 	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
+	 *
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @remarks
 	 * The identifier for this Array is defined as a function of the provided types.
@@ -585,6 +743,7 @@ export class SchemaFactory<
 	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeArrayNode:interface)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
+	 * @param allowedTypes - The types that may appear in the array.
 	 *
 	 * @example
 	 * ```typescript
@@ -607,6 +766,8 @@ export class SchemaFactory<
 	>;
 
 	/**
+	 * {@link SchemaFactory.array} implementation.
+	 *
 	 * @privateRemarks
 	 * This should return TreeNodeSchemaBoth: see note on "map" implementation for details.
 	 */
@@ -679,74 +840,44 @@ export class SchemaFactory<
 	}
 
 	/**
-	 * Make a field optional instead of the default, which is required.
-	 *
-	 * @param t - The types allowed under the field.
-	 * @param props - Optional properties to associate with the field.
-	 *
-	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
-	 * See {@link FieldSchemaMetadata.custom}.
+	 * {@inheritDoc schemaStatics.optional}
 	 */
-	public optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
-		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> {
-		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
-			return undefined;
-		});
-		return createFieldSchema(FieldKind.Optional, t, {
-			defaultProvider: defaultOptionalProvider,
-			...props,
-		});
-	}
+	public readonly optional = schemaStatics.optional;
 
 	/**
-	 * Make a field explicitly required.
-	 *
-	 * @param t - The types allowed under the field.
-	 * @param props - Optional properties to associate with the field.
-	 *
-	 * @remarks
-	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
-	 * and allows associating custom {@link FieldProps | properties} with the field.
-	 *
-	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
-	 * See {@link FieldSchemaMetadata.custom}.
+	 * {@inheritDoc schemaStatics.required}
 	 */
-	public required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
-		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
-	): FieldSchema<FieldKind.Required, T, TCustomMetadata> {
-		return createFieldSchema(FieldKind.Required, t, props);
-	}
+	public readonly required = schemaStatics.required;
 
 	/**
-	 * {@link SchemaFactory.optional} except tweaked to work better for recursive types.
-	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
-	 * @remarks
-	 * This version of {@link SchemaFactory.optional} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
-	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 * {@inheritDoc schemaStatics.optionalRecursive}
 	 */
-	public optionalRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
-		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchemaUnsafe<FieldKind.Optional, T> {
-		return createFieldSchemaUnsafe(FieldKind.Optional, t, props);
-	}
+	public readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
-	 * {@link SchemaFactory.required} except tweaked to work better for recursive types.
-	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
-	 * @remarks
-	 * This version of {@link SchemaFactory.required} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
-	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 * {@inheritDoc schemaStatics.requiredRecursive}
 	 */
-	public requiredRecursive<const T extends Unenforced<ImplicitAllowedTypes>>(
-		t: T,
-		props?: Omit<FieldProps, "defaultProvider">,
-	): FieldSchemaUnsafe<FieldKind.Required, T> {
-		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
-	}
+	public readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
+	 * {@inheritDoc schemaStatics.optional}
+	 */
+	public static readonly optional = schemaStatics.optional;
+
+	/**
+	 * {@inheritDoc schemaStatics.required}
+	 */
+	public static readonly required = schemaStatics.required;
+
+	/**
+	 * {@inheritDoc schemaStatics.optionalRecursive}
+	 */
+	public static readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	/**
+	 * {@inheritDoc schemaStatics.requiredRecursive}
+	 */
+	public static readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
 	 * A special field which holds a unique identifier for an object node.

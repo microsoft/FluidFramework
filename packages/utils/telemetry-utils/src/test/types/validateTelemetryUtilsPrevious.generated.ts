@@ -34,24 +34,6 @@ declare type old_as_current_for_Class_EventEmitterWithErrorHandling = requireAss
 declare type current_as_old_for_Class_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<current.EventEmitterWithErrorHandling>, TypeOnly<old.EventEmitterWithErrorHandling>>
 
 /*
- * Validate forward compatibility by using the old type in place of the current type.
- * If this test starts failing, it indicates a change that is not forward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_MockLogger": {"forwardCompat": false}
- */
-declare type old_as_current_for_Class_MockLogger = requireAssignableTo<TypeOnly<old.MockLogger>, TypeOnly<current.MockLogger>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "Class_MockLogger": {"backCompat": false}
- */
-declare type current_as_old_for_Class_MockLogger = requireAssignableTo<TypeOnly<current.MockLogger>, TypeOnly<old.MockLogger>>
-
-/*
  * Validate backward compatibility by using the current type in place of the old type.
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
@@ -59,15 +41,6 @@ declare type current_as_old_for_Class_MockLogger = requireAssignableTo<TypeOnly<
  * "ClassStatics_EventEmitterWithErrorHandling": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_EventEmitterWithErrorHandling = requireAssignableTo<TypeOnly<typeof current.EventEmitterWithErrorHandling>, TypeOnly<typeof old.EventEmitterWithErrorHandling>>
-
-/*
- * Validate backward compatibility by using the current type in place of the old type.
- * If this test starts failing, it indicates a change that is not backward compatible.
- * To acknowledge the breaking change, add the following to package.json under
- * typeValidation.broken:
- * "ClassStatics_MockLogger": {"backCompat": false}
- */
-declare type current_as_old_for_ClassStatics_MockLogger = requireAssignableTo<TypeOnly<typeof current.MockLogger>, TypeOnly<typeof old.MockLogger>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

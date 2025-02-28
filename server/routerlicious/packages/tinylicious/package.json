@@ -83,7 +83,7 @@
 		"@types/express-serve-static-core": "^4.17.32",
 		"@types/json-stringify-safe": "^5.0.0",
 		"@types/lodash": "^4.14.149",
-		"@types/mocha": "^9.1.1",
+		"@types/mocha": "^10.0.10",
 		"@types/morgan": "^1.7.35",
 		"@types/nconf": "^0.10.0",
 		"@types/node": "^18.19.39",
@@ -107,6 +107,7 @@
 	},
 	"typeValidation": {
 		"disabled": true,
-		"broken": {}
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }

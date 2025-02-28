@@ -26,6 +26,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitAllowedTypes,
 	FieldKind,
+	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 import {
 	type TreeNodeSchema,
@@ -261,7 +262,7 @@ function createProxyHandler(
 			// For some reason, the getOwnPropertyDescriptor is not passed in the receiver, so use a weak map.
 			// If a refactoring is done to associated flex tree data with the target not the proxy, this extra map could be removed,
 			// and the design would be more compatible with proxyless nodes.
-			const proxy = targetToProxy.get(target) ?? fail("missing proxy");
+			const proxy = targetToProxy.get(target) ?? fail(0xadd /* missing proxy */);
 			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
@@ -310,7 +311,7 @@ export function setField(
 		}
 
 		default:
-			fail("invalid FieldKind");
+			fail(0xade /* invalid FieldKind */);
 	}
 }
 
@@ -330,12 +331,15 @@ export function objectSchema<
 	TName extends string,
 	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 	const ImplicitlyConstructable extends boolean,
+	const TCustomMetadata = unknown,
 >(
 	identifier: TName,
 	info: T,
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
-): ObjectNodeSchema<TName, T, ImplicitlyConstructable> & ObjectNodeSchemaInternalData {
+	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+	ObjectNodeSchemaInternalData {
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
 	assertUniqueKeys(identifier, info);
@@ -460,6 +464,8 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> | undefined =
+			metadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

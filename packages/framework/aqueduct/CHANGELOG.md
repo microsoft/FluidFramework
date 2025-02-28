@@ -1,5 +1,43 @@
 # @fluidframework/aqueduct
 
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+Dependency updates only.
+
+## 2.20.0
+
+### Minor Changes
+
+-   The ContainerRuntime class has been removed ([#23341](https://github.com/microsoft/FluidFramework/pull/23341)) [61ba06aa98](https://github.com/microsoft/FluidFramework/commit/61ba06aa9881c30ffeeedcaaede9c5a1a0c81abd)
+
+    The `ContainerRuntime` class was [deprecated in version 2.12.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-the-containerruntime-class-is-now-deprecated-23331) and has been removed.
+    Use `IContainerRuntime` to replace type usages and use the free function `loadContainerRuntime` to replace usages of the static method `ContainerRuntime.loadRuntime`.
+
+    See the [deprecation
+    announcement](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.12.0#user-content-the-containerruntime-class-is-now-deprecated-23331)
+    for more details about how to update existing code.
+
+-   The createDataStoreWithProps APIs on ContainerRuntime and IContainerRuntimeBase have been removed ([#22996](https://github.com/microsoft/FluidFramework/pull/22996)) [bd243fb292](https://github.com/microsoft/FluidFramework/commit/bd243fb2927915d87c42486e21ee0c990962a9a7)
+
+    `ContainerRuntime.createDataStoreWithProps` and `IContainerRuntimeBase.createDataStoreWithProps`
+    were [deprecated in version 0.25.0](https://github.com/microsoft/FluidFramework/blob/main/BREAKING.md#icontainerruntimebase_createdatastorewithprops-is-removed) and have been removed.
+
+    Replace uses of these APIs with `PureDataObjectFactory.createInstanceWithDataStore` and pass in props via the `initialState`
+    parameter.
+
+    These changes were originally announced in version 0.25.0. See the following issues for more details:
+
+    -   [#1537](https://github.com/microsoft/FluidFramework/issues/1537)
+    -   [#2931](https://github.com/microsoft/FluidFramework/pull/2931)
+
+## 2.13.0
+
+Dependency updates only.
+
 ## 2.12.0
 
 ### Minor Changes

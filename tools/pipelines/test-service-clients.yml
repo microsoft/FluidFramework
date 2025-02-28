@@ -21,6 +21,7 @@ resources:
       - lts
 
 variables:
+- template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
 - name: testWorkspace
   value: $(Pipeline.Workspace)/test
@@ -39,7 +40,7 @@ variables:
 
 stages:
   # Run Azure Client AFR Tests
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_azure_client_frs
       stageDisplayName: e2e - azure-client with AFR
@@ -56,7 +57,7 @@ stages:
         azure__fluid__relay__service__endpoint: $(azure-fluid-relay-service-endpoint)
         azure__fluid__relay__service__key: $(azure-fluid-relay-service-key)
 
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_azure_client_local_server
       stageDisplayName: e2e - azure-client with Azure local service
@@ -73,7 +74,7 @@ stages:
         logger__colorize: "false" # Need to pass it as string so ADO doesn't convert it into False (capital F) which doesn't work
         logger__morganFormat: tiny
 
-  - template: templates/include-test-real-service.yml
+  - template: /tools/pipelines/templates/include-test-real-service.yml@self
     parameters:
       stageId: e2e_odsp_client_odsp_server
       stageDisplayName: e2e - odsp-client with ODSP service

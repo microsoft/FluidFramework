@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/example-utils",
-	"version": "2.13.0",
+	"version": "2.23.0",
 	"private": true,
 	"description": "Shared utilities used by examples.",
 	"homepage": "https://fluidframework.com",
@@ -80,10 +80,10 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "^0.51.0",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/build-tools": "^0.54.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@microsoft/api-extractor": "7.47.8",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",

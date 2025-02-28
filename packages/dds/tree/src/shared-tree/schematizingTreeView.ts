@@ -9,7 +9,7 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { AllowedUpdateType, anchorSlot, type SchemaPolicy } from "../core/index.js";
@@ -19,6 +19,7 @@ import {
 	ContextSlot,
 	cursorForMapTreeNode,
 	type FullSchemaPolicy,
+	TreeStatus,
 } from "../feature-libraries/index.js";
 import {
 	type FieldSchema,
@@ -43,18 +44,29 @@ import {
 	type UnsafeUnknownSchema,
 	type TreeBranch,
 	type TreeBranchEvents,
-} from "../simple-tree/index.js";
-import { Breakable, breakingClass, disposeSymbol, type WithBreakable } from "../util/index.js";
-
-import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
-import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import {
+	getOrCreateInnerNode,
+	getKernel,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type RunTransactionParams,
+	type TransactionConstraint,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 } from "../simple-tree/index.js";
+import {
+	type Breakable,
+	breakingClass,
+	disposeSymbol,
+	type WithBreakable,
+} from "../util/index.js";
+
+import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
+import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -100,14 +112,15 @@ export class SchematizingSimpleTreeView<
 	private midUpgrade = false;
 
 	private readonly rootFieldSchema: FieldSchema;
+	public readonly breaker: Breakable;
 
 	public constructor(
 		public readonly checkout: TreeCheckout,
 		public readonly config: TreeViewConfiguration<ReadSchema<TRootSchema>>,
 		public readonly nodeKeyManager: NodeKeyManager,
-		public readonly breaker: Breakable = new Breakable("SchematizingSimpleTreeView"),
 		private readonly onDispose?: () => void,
 	) {
+		this.breaker = checkout.breaker;
 		if (checkout.forest.anchors.slots.has(ViewSlot)) {
 			throw new UsageError("Cannot create a second tree view from the same checkout");
 		}
@@ -211,6 +224,84 @@ export class SchematizingSimpleTreeView<
 		this.ensureUndisposed();
 		assert(this.view !== undefined, 0x8c0 /* unexpected getViewOrError */);
 		return this.view;
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
+	 */
+	public runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue>;
+	/**
+	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
+	 */
+	public runTransaction(
+		transaction: () => VoidTransactionCallbackStatus | void,
+		params?: RunTransactionParams,
+	): TransactionResult;
+	public runTransaction<TSuccessValue, TFailureValue>(
+		transaction: () =>
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void,
+		params?: RunTransactionParams,
+	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		const addConstraints = (
+			constraintsOnRevert: boolean,
+			constraints: readonly TransactionConstraint[] = [],
+		): void => {
+			for (const constraint of constraints) {
+				switch (constraint.type) {
+					case "nodeInDocument": {
+						const node = getOrCreateInnerNode(constraint.node);
+						const nodeStatus = getKernel(constraint.node).getStatus();
+						if (nodeStatus !== TreeStatus.InDocument) {
+							const revertText = constraintsOnRevert ? " on revert" : "";
+							throw new UsageError(
+								`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+							);
+						}
+						if (constraintsOnRevert) {
+							this.checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
+						} else {
+							this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
+						}
+						break;
+					}
+					default:
+						unreachableCase(constraint.type);
+				}
+			}
+		};
+
+		this.checkout.transaction.start();
+
+		// Validate preconditions before running the transaction callback.
+		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
+		const transactionCallbackStatus = transaction();
+		const rollback = transactionCallbackStatus?.rollback;
+		const value = (
+			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+		)?.value;
+
+		if (rollback === true) {
+			this.checkout.transaction.abort();
+			return value !== undefined
+				? { success: false, value: value as TFailureValue }
+				: { success: false };
+		}
+
+		// Validate preconditions on revert after running the transaction callback and was successful.
+		addConstraints(
+			true /* constraintsOnRevert */,
+			transactionCallbackStatus?.preconditionsOnRevert,
+		);
+
+		this.checkout.transaction.commit();
+		return value !== undefined
+			? { success: true, value: value as TSuccessValue }
+			: { success: true };
 	}
 
 	private ensureUndisposed(): void {

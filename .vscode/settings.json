@@ -25,7 +25,11 @@
 		"fence.json": "jsonc",
 		".git-blame-ignore-revs": "ignore",
 	},
-	"[azure-pipelines].customSchemaFile": "",
+
+	// Leverage the 1ES Pipeline templates schema for syntax check in YAML files if possible.
+	// Only works if signed in to the Azure Pipelines extension with a @microsoft.com account.
+	"azure-pipelines.1ESPipelineTemplatesSchemaFile": true,
+
 	"deno.enable": false,
 	"deno.lint": false,
 	"deno.unstable": false,
@@ -43,6 +47,7 @@
 		"handletable",
 		"incrementality",
 		"injective",
+		"insertable",
 		"losslessly",
 		"mitigations",
 		"mocharc",

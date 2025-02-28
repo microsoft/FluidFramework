@@ -41,6 +41,7 @@ import {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 	type GraphCommit,
+	isAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -59,7 +60,13 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import { Breakable, disposeSymbol, fail, getOrCreate } from "../util/index.js";
+import {
+	Breakable,
+	disposeSymbol,
+	fail,
+	getOrCreate,
+	type WithBreakable,
+} from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -181,7 +188,7 @@ export interface TreeBranchFork extends BranchableTree, IDisposable {
  * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
  */
-export interface ITreeCheckout extends AnchorLocator, ViewableTree {
+export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakable {
 	/**
 	 * Read and Write access for schema stored in the document.
 	 *
@@ -272,6 +279,7 @@ export function createTreeCheckout(
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: ITelemetryLoggerExt;
 		breaker?: Breakable;
+		disposeForksAfterTransaction?: boolean;
 	},
 ): TreeCheckout {
 	const forest = args?.forest ?? buildForest();
@@ -311,6 +319,7 @@ export function createTreeCheckout(
 		args?.removedRoots,
 		args?.logger,
 		args?.breaker,
+		args?.disposeForksAfterTransaction,
 	);
 }
 
@@ -388,7 +397,8 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		),
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
-		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		private readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = new SquashingTransactionStack(
 			branch,
@@ -403,14 +413,9 @@ export class TreeCheckout implements ITreeCheckoutFork {
 				return tagChange(change, revision);
 			},
 			() => {
-				// Keep track of all the forks created during the transaction so that we can dispose them when the transaction ends.
-				// This is a policy decision that we think is useful for the user, but it is not necessary for correctness.
-				const forks = new Set<TreeCheckout>();
-				const onDisposeUnSubscribes: (() => void)[] = [];
-				const onForkUnSubscribe = onForkTransitive(this, (fork) => {
-					forks.add(fork);
-					onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-				});
+				const disposeForks = this.disposeForksAfterTransaction
+					? trackForksForDisposal(this)
+					: undefined;
 				// When each transaction is started, take a snapshot of the current state of removed roots
 				const removedRootsSnapshot = this.removedRoots.clone();
 				return (result) => {
@@ -427,10 +432,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 						default:
 							unreachableCase(result);
 					}
-
-					forks.forEach((fork) => fork.dispose());
-					onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
-					onForkUnSubscribe();
+					disposeForks?.();
 				};
 			},
 		);
@@ -522,7 +524,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					// original (reinstated) schema.
 					this.storedSchema.apply(change.innerChange.schema.new);
 				} else {
-					fail("Unknown Shared Tree change type.");
+					fail(0xad1 /* Unknown Shared Tree change type. */);
 				}
 			}
 		}
@@ -553,15 +555,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
 		const anchorVisitor = this.forest.anchors.acquireVisitor();
-		const combinedVisitor = combineVisitors(
-			[this.forest.acquireVisitor(), anchorVisitor],
-			[anchorVisitor],
-		);
+		const combinedVisitor = combineVisitors([this.forest.acquireVisitor(), anchorVisitor]);
 		fn(combinedVisitor);
 		combinedVisitor.free();
 	}
 
 	private checkNotDisposed(usageError?: string): void {
+		this.breaker.use();
 		if (this.disposed) {
 			if (usageError !== undefined) {
 				throw new UsageError(usageError);
@@ -610,21 +610,27 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					revertible.dispose();
 				}
 			},
-			clone: (forkedBranch: TreeBranch) => {
-				if (forkedBranch === undefined) {
-					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
+			clone: (targetBranch: TreeBranch) => {
+				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
+				const targetCheckout = getCheckout(targetBranch);
+
+				const revertibleBranch = this.revertibleCommitBranches.get(revision);
+				if (revertibleBranch === undefined) {
+					throw new UsageError("Unable to clone a revertible that has been disposed.");
 				}
 
-				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
-				const forkedCheckout = getCheckout(forkedBranch);
-				const revertibleBranch = this.revertibleCommitBranches.get(revision);
-				assert(
-					revertibleBranch !== undefined,
-					0xa82 /* change to revert does not exist on the given forked branch */,
-				);
-				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+				const commitToRevert = revertibleBranch.getHead();
+				const activeBranchHead = targetCheckout.#transaction.activeBranch.getHead();
 
-				return this.createRevertible(revision, kind, forkedCheckout, onRevertibleDisposed);
+				if (isAncestor(commitToRevert, activeBranchHead, true) === false) {
+					throw new UsageError(
+						"Cannot clone revertible for a commit that is not present on the given branch.",
+					);
+				}
+
+				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+
+				return this.createRevertible(revision, kind, targetCheckout, onRevertibleDisposed);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -657,7 +663,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this,
 			config,
 			createNodeKeyManager(this.idCompressor),
-			this.breaker,
 			() => {
 				this.views.delete(view);
 			},
@@ -716,6 +721,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this.removedRoots.clone(),
 			this.logger,
 			this.breaker,
+			this.disposeForksAfterTransaction,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;
@@ -1026,6 +1032,9 @@ class EditLock {
 			addNodeExistsConstraint(path) {
 				editor.addNodeExistsConstraint(path);
 			},
+			addNodeExistsConstraintOnRevert(path) {
+				editor.addNodeExistsConstraintOnRevert(path);
+			},
 		};
 	}
 
@@ -1037,7 +1046,7 @@ class EditLock {
 		if (this.locked) {
 			debugger;
 		}
-		assert(!this.locked, "Checkout has already been locked");
+		assert(!this.locked, 0xaa7 /* Checkout has already been locked */);
 		this.locked = true;
 	}
 
@@ -1062,7 +1071,31 @@ class EditLock {
 	 * @remarks May only be called when the lock is currently locked.
 	 */
 	public unlock(): void {
-		assert(this.locked, "Checkout has not been locked");
+		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
 		this.locked = false;
 	}
+}
+
+/**
+ * Keeps track of all new forks created until the returned function is invoked, which will dispose all of those for.
+ * The returned function may only be called once.
+ *
+ * @param checkout - The tree checkout for which you want to monitor forks for disposal.
+ * @returns a function which can be called to dispose all of the tracked forks.
+ */
+function trackForksForDisposal(checkout: TreeCheckout): () => void {
+	const forks = new Set<TreeCheckout>();
+	const onDisposeUnSubscribes: (() => void)[] = [];
+	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
+		forks.add(fork);
+		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
+	});
+	let disposed = false;
+	return () => {
+		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
+		forks.forEach((fork) => fork.dispose());
+		onDisposeUnSubscribes.forEach((unsubscribe) => unsubscribe());
+		onForkUnSubscribe();
+		disposed = true;
+	};
 }

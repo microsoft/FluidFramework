@@ -315,9 +315,6 @@ module.exports = {
 		],
 		// Exclusion per handler
 		handlerExclusions: {
-			"extraneous-lockfiles": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
-			],
 			"fluid-build-tasks-eslint": [
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
@@ -373,9 +370,6 @@ module.exports = {
 			"npm-package-metadata-and-sorting": [
 				// The root package.json is not checked temporarily due to AB#8640
 				"^package.json",
-			],
-			"package-lockfiles-npm-version": [
-				"tools/telemetry-generator/package-lock.json", // Workaround to allow version 2 while we move it to pnpm
 			],
 			"npm-package-json-prettier": [
 				// This rule is temporarily disabled for all projects while we update the repo to use different formatting
@@ -434,6 +428,7 @@ module.exports = {
 				// packages. This is temporary and can be fixed once the build-tools/build-cli pigration is complete.
 				"^azure/",
 				"^build-tools/packages/build-tools/package.json",
+				"^build-tools/packages/build-infrastructure/package.json",
 				"^common/",
 				"^examples/",
 				"^experimental/",
@@ -555,7 +550,6 @@ module.exports = {
 			"@fluid-tools/api-markdown-documenter",
 			"@fluid-tools/benchmark",
 			"@fluid-tools/markdown-magic",
-			"@fluid-tools/telemetry-generator",
 			"@fluidframework/build-common",
 			"@fluidframework/common-utils",
 			"@fluidframework/eslint-config-fluid",
@@ -589,15 +583,7 @@ module.exports = {
 	},
 
 	assertTagging: {
-		enabledPaths: [
-			/^common\/lib\/common-utils/i,
-			/^experimental/i,
-			/^packages/i,
-			/^server\/routerlicious\/packages\/protocol-base/i,
-		],
-		assertionFunctions: {
-			assert: 1,
-		},
+		enabledPaths: [/^common\/lib\/common-utils/i, /^experimental/i, /^packages/i],
 	},
 
 	// `flub bump` config. These settings influence `flub bump` behavior for a release group. These settings can be

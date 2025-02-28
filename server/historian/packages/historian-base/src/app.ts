@@ -24,7 +24,7 @@ import {
 import { BaseTelemetryProperties, HttpProperties } from "@fluidframework/server-services-telemetry";
 import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, IDenyList, ITenantService } from "./services";
+import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
@@ -40,6 +40,7 @@ export function create(
 	denyList?: IDenyList,
 	ephemeralDocumentTTLSec?: number,
 	readinessCheck?: IReadinessCheck,
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -62,6 +63,7 @@ export function create(
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =
 			config.get("enableResponseCloseLatencyMetric") ?? false;
+		const enableEventLoopLagMetric = config.get("enableEventLoopLagMetric") ?? false;
 		app.use(
 			jsonMorganLoggerMiddleware(
 				"historian",
@@ -88,6 +90,7 @@ export function create(
 					return additionalProperties;
 				},
 				enableResponseCloseLatencyMetric,
+				enableEventLoopLagMetric,
 			),
 		);
 	} else {
@@ -111,6 +114,7 @@ export function create(
 		revokedTokenChecker,
 		denyList,
 		ephemeralDocumentTTLSec,
+		simplifiedCustomDataRetriever,
 	);
 	app.use(apiRoutes.git.blobs);
 	app.use(apiRoutes.git.refs);

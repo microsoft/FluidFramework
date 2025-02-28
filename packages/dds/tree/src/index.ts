@@ -14,12 +14,37 @@ export {
 	type RevertibleAlpha,
 } from "./core/index.js";
 
-export type {
-	Listeners,
-	IsListener,
-	Listenable,
-	Off,
+import type {
+	Listeners as EventListeners,
+	IsListener as EventIsListener,
+	Listenable as EventListenable,
+	Off as EventOff,
 } from "@fluidframework/core-interfaces";
+
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Listeners}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Listeners<T extends object> = EventListeners<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#IsListener}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type IsListener<T> = EventIsListener<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Listenable}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Listenable<T extends object> = EventListenable<T>;
+/**
+ * {@inheritdoc @fluidframework/core-interfaces#Off}
+ * @public
+ * @deprecated Deprecated in `@fluidframework/tree`. Consider importing from `fluid-framework` or `@fluidframework/core-interfaces` instead.
+ */
+export type Off = EventOff;
 
 export {
 	TreeStatus,
@@ -32,14 +57,11 @@ export {
 export {
 	type ITreeInternal,
 	type SharedTreeOptions,
-	ForestType,
+	type ForestType,
 	type SharedTreeFormatOptions,
 	SharedTreeFormatVersion,
 	Tree,
-	type TransactionConstraint,
-	type NodeInDocumentConstraint,
 	type RunTransaction,
-	rollback,
 	type ForestOptions,
 	getBranch,
 	type BranchableTree,
@@ -48,6 +70,9 @@ export {
 	type ViewContent,
 	TreeAlpha,
 	independentView,
+	ForestTypeOptimized,
+	ForestTypeExpensiveDebug,
+	ForestTypeReference,
 } from "./shared-tree/index.js";
 
 export {
@@ -177,10 +202,26 @@ export {
 	type TreeBranch,
 	type TreeBranchEvents,
 	asTreeViewAlpha,
+	type NodeSchemaOptions,
+	type NodeSchemaMetadata,
+	type schemaStatics,
+	type ITreeAlpha,
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
 	configuredSharedTree,
+	SharedTreeAttributes,
+	SharedTreeFactoryType,
 } from "./treeFactory.js";
 
 export {
@@ -217,3 +258,6 @@ export {
 export type { MapNodeInsertableData } from "./simple-tree/index.js";
 
 export type { JsonCompatible, JsonCompatibleObject } from "./util/index.js";
+
+export { JsonAsTree } from "./jsonDomainSchema.js";
+export { FluidSerializableAsTree } from "./serializableDomainSchema.js";

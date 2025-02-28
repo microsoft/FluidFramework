@@ -4,16 +4,12 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid/recommended"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
 	rules: {
 		"@typescript-eslint/strict-boolean-expressions": "off",
-		"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 	},
 	overrides: [
 		{

@@ -3,37 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import assert from "assert";
-import express from "express";
-import request from "supertest";
-import nconf from "nconf";
 import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import {
-	TestTenantManager,
-	TestThrottler,
-	TestDocumentStorage,
-	TestDbFactory,
-	TestProducer,
-	TestKafka,
-	TestNotImplementedDocumentRepository,
-} from "@fluidframework/server-test-utils";
+import { IAlfredTenant, NetworkError } from "@fluidframework/server-services-client";
 import {
 	IDocument,
 	MongoDatabaseManager,
 	MongoManager,
 } from "@fluidframework/server-services-core";
-import * as alfredApp from "../../alfred/app";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { ScopeType } from "@fluidframework/protocol-definitions";
-import { generateToken } from "@fluidframework/server-services-utils";
-import { TestCache, TestFluidAccessTokenGenerator } from "@fluidframework/server-test-utils";
-import { DeltaService, DocumentDeleteService } from "../../alfred/services";
-import * as SessionHelper from "../../utils/sessionHelper";
-import Sinon from "sinon";
-import { Constants } from "../../utils";
 import { StartupCheck } from "@fluidframework/server-services-shared";
+import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
+import { generateToken } from "@fluidframework/server-services-utils";
+import {
+	TestCache,
+	TestClusterDrainingStatusChecker,
+	TestDbFactory,
+	TestDocumentStorage,
+	TestFluidAccessTokenGenerator,
+	TestKafka,
+	TestNotImplementedDocumentRepository,
+	TestProducer,
+	TestTenantManager,
+	TestThrottler,
+} from "@fluidframework/server-test-utils";
+import assert from "assert";
+import express from "express";
+import nconf from "nconf";
+import Sinon from "sinon";
+import request from "supertest";
+import * as alfredApp from "../../alfred/app";
+import { DeltaService, DocumentDeleteService } from "../../alfred/services";
+import { Constants } from "../../utils";
+import * as SessionHelper from "../../utils/sessionHelper";
 
 const nodeCollectionName = "testNodes";
 const documentsCollectionName = "testDocuments";
@@ -119,6 +121,18 @@ describe("Routerlicious", () => {
 				appTenant2.key,
 				scopes,
 			)}`;
+			const tenantToken3 = `Basic ${generateToken(
+				appTenant1.id,
+				document1._id,
+				appTenant1.key,
+				scopes,
+			)}`;
+			const tenantToken4 = `Basic ${generateToken(
+				appTenant1.id,
+				document1._id,
+				appTenant1.key,
+				scopes,
+			)}`;
 			const defaultProducer = new TestProducer(new TestKafka());
 			const deltasCollection = await defaultDbManager.getDeltaCollection(
 				undefined,
@@ -132,6 +146,7 @@ describe("Routerlicious", () => {
 			let app: express.Application;
 			let supertest: request.SuperTest<request.Test>;
 			let testFluidAccessTokenGenerator: TestFluidAccessTokenGenerator;
+			let testClusterDrainingStatusChecker: TestClusterDrainingStatusChecker;
 			describe("throttling", () => {
 				const limitTenant = 10;
 				const limitCreateDoc = 5;
@@ -832,6 +847,7 @@ describe("Routerlicious", () => {
 
 					const startupCheck = new StartupCheck();
 					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
+					testClusterDrainingStatusChecker = new TestClusterDrainingStatusChecker();
 					app = alfredApp.create(
 						defaultProvider,
 						defaultTenantManager,
@@ -848,7 +864,7 @@ describe("Routerlicious", () => {
 						undefined,
 						undefined,
 						undefined,
-						undefined,
+						testClusterDrainingStatusChecker,
 						undefined,
 						undefined,
 						testFluidAccessTokenGenerator,
@@ -911,7 +927,67 @@ describe("Routerlicious", () => {
 									isSessionActive: true,
 								});
 							});
+
+						// Error our when the cluster is draining
+						testClusterDrainingStatusChecker.setClusterDrainingStatus(true);
+						await supertest
+							.get(`/documents/${appTenant1.id}/session/${document1._id}`)
+							.set("Authorization", tenantToken1)
+							.expect((res) => {
+								assert.strictEqual(res.status, 503);
+							});
 					});
+				});
+			});
+
+			describe("/deltas-errorHandling", () => {
+				let getDeltasStub;
+
+				afterEach(() => {
+					// Restore the original method after each test
+					if (getDeltasStub) getDeltasStub.restore();
+				});
+
+				it("should return 404 when document is not found", async () => {
+					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas").rejects(
+						new NetworkError(404, "Document not found"),
+					);
+
+					const response = await supertest
+						.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
+						.set("Authorization", tenantToken1)
+						.expect(404);
+
+					assert.strictEqual(response.status, 404);
+					assert.strictEqual(response.body, "Document not found");
+				});
+
+				it("should return 500 when an internal Non-network error occurs", async () => {
+					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas").rejects(
+						new Error("Internal Error 499"),
+					); // Not a NetworkError, simulating an internal issue
+
+					const response = await supertest
+						.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
+						.set("Authorization", tenantToken1)
+						.expect(500);
+
+					assert.strictEqual(response.status, 500);
+					assert.strictEqual(response.body, "Internal Server Error"); // Modify based on actual error handling
+				});
+
+				it("should return 500 when an internal 500 error occurs", async () => {
+					getDeltasStub = Sinon.stub(DeltaService.prototype, "getDeltas").rejects(
+						new NetworkError(500, "Internal Server Error"),
+					);
+
+					const response = await supertest
+						.get(`/deltas/raw/${appTenant1.id}/${document1._id}`)
+						.set("Authorization", tenantToken1)
+						.expect(500);
+
+					assert.strictEqual(response.status, 500);
+					assert.strictEqual(response.body, "Internal Server Error");
 				});
 			});
 
@@ -958,6 +1034,7 @@ describe("Routerlicious", () => {
 					);
 
 					const startupCheck = new StartupCheck();
+					testClusterDrainingStatusChecker = new TestClusterDrainingStatusChecker();
 					testFluidAccessTokenGenerator = new TestFluidAccessTokenGenerator();
 					app = alfredApp.create(
 						defaultProvider,
@@ -975,7 +1052,7 @@ describe("Routerlicious", () => {
 						undefined,
 						undefined,
 						defaultCollaborationSessionEventEmitter,
-						undefined,
+						testClusterDrainingStatusChecker,
 						undefined,
 						undefined,
 						testFluidAccessTokenGenerator,
@@ -1051,6 +1128,32 @@ describe("Routerlicious", () => {
 							.set("Authorization", tenantToken1)
 							.set("Content-Type", "application/json")
 							.expect(400);
+					});
+				});
+
+				describe("/documents", () => {
+					it("/:tenantId cluster in draining status", async () => {
+						testClusterDrainingStatusChecker.setClusterDrainingStatus(true);
+
+						await supertest
+							.post(`/documents/${appTenant1.id}`)
+							.set("Authorization", tenantToken3)
+							.send({ id: document1._id })
+							.expect((res) => {
+								assert.strictEqual(res.status, 503);
+								return true;
+							});
+					});
+
+					it("/:tenantId cluster not in draining status", async () => {
+						await supertest
+							.post(`/documents/${appTenant1.id}`)
+							.set("Authorization", tenantToken4)
+							.send({ id: document1._id })
+							.expect((res) => {
+								assert.notStrictEqual(res.status, 503);
+								return true;
+							});
 					});
 				});
 			});

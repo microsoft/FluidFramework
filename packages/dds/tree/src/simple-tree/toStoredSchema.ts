@@ -71,7 +71,8 @@ export function convertField(schema: ImplicitFieldSchema): TreeFieldStoredSchema
 	let kind: FieldKindIdentifier;
 	let allowedTypes: ImplicitAllowedTypes;
 	if (schema instanceof FieldSchema) {
-		kind = convertFieldKind.get(schema.kind)?.identifier ?? fail("Invalid field kind");
+		kind =
+			convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
 		allowedTypes = schema.allowedTypes;
 	} else {
 		kind = FieldKinds.required.identifier;

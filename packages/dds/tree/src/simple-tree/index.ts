@@ -124,6 +124,18 @@ export {
 	type CustomTreeNode,
 	type CustomTreeValue,
 	tryStoredSchemaAsArray,
+	type schemaStatics,
+	type ITreeAlpha,
+	type TransactionConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type VoidTransactionCallbackStatus,
+	type TransactionCallbackStatus,
+	type TransactionResult,
+	type TransactionResultExt,
+	type TransactionResultSuccess,
+	type TransactionResultFailed,
+	rollback,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
@@ -156,6 +168,8 @@ export {
 	type Input,
 	type ReadableField,
 	type ReadSchema,
+	type NodeSchemaOptions,
+	type NodeSchemaMetadata,
 } from "./schemaTypes.js";
 export {
 	getTreeNodeForField,

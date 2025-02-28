@@ -16,6 +16,7 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
+import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
@@ -209,7 +210,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const container2 = await provider.loadContainer(runtimeFactory2);
 		await waitForContainerConnection(container2);
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
-		await provider.ensureSynchronized();
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
 

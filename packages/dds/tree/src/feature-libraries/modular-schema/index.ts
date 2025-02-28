@@ -29,6 +29,7 @@ export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 export {
 	type FieldChangeHandler,
+	type FieldChangeDelta,
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type NodeChangeComposer,
@@ -41,8 +42,10 @@ export {
 	type ToDelta,
 	NodeAttachState,
 	type FieldChangeEncodingContext,
+	type NestedChangesIndices,
 } from "./fieldChangeHandler.js";
 export type {
+	CrossFieldKey,
 	CrossFieldKeyRange,
 	FieldChange,
 	FieldChangeMap,
