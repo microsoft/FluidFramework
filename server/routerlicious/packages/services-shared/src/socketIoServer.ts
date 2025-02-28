@@ -237,7 +237,13 @@ class SocketIoServer implements core.IWebSocketServer {
 	}
 
 	public emit(room: string, event: string, payload: any) {
-		this.io.in(room).emit(event, payload);
+		const roomClients = Array.from(this.io.sockets.adapter.rooms.get(room) || []);
+		Lumberjack.info("Emitting to room", { room, event, roomClients });
+		try {
+			this.io.in(room).emit(event, payload);
+		} catch (error) {
+			Lumberjack.error("Error emitting to room", { room, event }, error);
+		}
 	}
 
 	public async close(): Promise<void> {
