@@ -375,7 +375,6 @@ export abstract class BaseSegment implements ISegment {
 			overwriteInfo<IMoveInfo>(seg, {
 				movedSeq: this.movedSeq,
 				movedSeqs: [...this.movedSeqs],
-				wasMovedOnInsert: this.wasMovedOnInsert,
 				movedClientIds: [...this.movedClientIds],
 			});
 		}
@@ -441,7 +440,6 @@ export abstract class BaseSegment implements ISegment {
 				movedSeq: this.movedSeq,
 				movedSeqs: [...this.movedSeqs],
 				localMovedSeq: this.localMovedSeq,
-				wasMovedOnInsert: this.wasMovedOnInsert,
 			});
 		}
 
