@@ -19,6 +19,7 @@ data:
             "timestamp": false,
             "label": "winston"
         },
+        "clusterHost": "dev17-westus2-1.frs.azure.com",
         "config": {
             "configDumpEnabled": {{ .Values.config.configDumpEnabled }},
             "secretNamesToRedactInConfigDump": [
@@ -98,6 +99,7 @@ data:
             "kafkaClientId": "{{ template "alfred.fullname" . }}",
             "maxMessageSize": "16KB",
             "numberOfMessagesPerTrace": {{ .Values.alfred.numberOfMessagesPerTrace }},
+            "enableNetworkCheck": {{ .Values.alfred.enableNetworkCheck }},
             "sessionStickinessDurationMs": {{ .Values.alfred.sessionStickinessDurationMs }},
             "ignoreEphemeralFlag": {{ .Values.alfred.ignoreEphemeralFlag }},
             "throttling": {
@@ -131,6 +133,7 @@ data:
             "maxMessageSize": "16KB",
             "maxNumberOfClientsPerDocument": {{ .Values.nexus.maxNumberOfClientsPerDocument }},
             "numberOfMessagesPerTrace": {{ .Values.nexus.numberOfMessagesPerTrace }},
+            "enableNetworkCheck": {{ .Values.nexus.enableNetworkCheck }},
             "throttling": {
                 "socketConnectionsPerTenant": {{ toJson .Values.nexus.throttling.socketConnectionsPerTenant }},
                 "socketConnectionsPerCluster": {{ toJson .Values.nexus.throttling.socketConnectionsPerCluster }},

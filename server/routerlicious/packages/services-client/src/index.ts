@@ -103,5 +103,6 @@ export {
 	getGlobalTimeoutContext,
 	setGlobalTimeoutContext,
 } from "./timeoutContext";
+export { getNetworkInformationFromIP, NetworkInformation } from "./ipUtils";
 export { getOrCreateRepository, getRandomInt } from "./utils";
 export { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";

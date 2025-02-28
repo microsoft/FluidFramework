@@ -81,6 +81,17 @@ export class TestTenantManager implements ITenantManager {
 		};
 	}
 
+	public async getTenantfromRiddler(id?: string): Promise<ITenantConfig> {
+		return {
+			id: "test-tenant",
+			storage: this.tenant.storage,
+			orderer: this.tenant.orderer,
+			customData: {},
+			enableSharedKeyAccess: false,
+			enablePrivateKeyAccess: false,
+		};
+	}
+
 	public async verifyToken(token: string): Promise<void> {}
 
 	public async getTenant(id: string): Promise<ITenant> {

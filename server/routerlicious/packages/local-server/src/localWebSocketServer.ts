@@ -29,6 +29,10 @@ export class LocalWebSocket implements IWebSocket {
 		this.subscriber = new WebSocketSubscriber(this);
 	}
 
+	public get handshake(): any {
+		return undefined;
+	}
+
 	public on(event: string, listener: (...args: any[]) => void) {
 		this.events.on(event, listener);
 	}
@@ -79,6 +83,10 @@ export class LocalWebSocketServer implements IWebSocketServer {
 	private readonly events = new EventEmitter();
 
 	constructor(public readonly pubsub: IPubSub) {}
+
+	public get handshake(): any {
+		return undefined;
+	}
 
 	public on(event: string, listener: (...args: any[]) => void) {
 		this.events.on(event, listener);

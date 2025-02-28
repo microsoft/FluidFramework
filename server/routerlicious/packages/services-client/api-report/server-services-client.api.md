@@ -103,6 +103,9 @@ export const getAuthorizationTokenFromCredentials: (credentials: ICredentials) =
 // @internal
 export const getGlobalTimeoutContext: () => ITimeoutContext;
 
+// @internal
+export function getNetworkInformationFromIP(clientIp?: string): NetworkInformation;
+
 // @internal (undocumented)
 export function getNextHash(message: ISequencedDocumentMessage, lastHash: string): string;
 
@@ -615,6 +618,16 @@ export class NetworkError extends Error {
     toJSON(): INetworkErrorDetails & {
         code: number;
     };
+}
+
+// @internal
+export class NetworkInformation {
+    // (undocumented)
+    isPrivateLink: boolean;
+    // (undocumented)
+    privateIpAddress?: string;
+    // (undocumented)
+    privateLinkId?: string;
 }
 
 // @internal (undocumented)

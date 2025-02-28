@@ -25,8 +25,20 @@ export function isDocumentSessionValid(
 		// No session location to validate.
 		return true;
 	}
-	const isSessionInThisCluster =
+
+	let isSessionInThisCluster =
 		document.session.ordererUrl === serviceConfiguration.externalOrdererUrl;
+	// Check if externalOrdererUrl's domain is a substring of ordererUrl's domain.
+	if (
+		!isSessionInThisCluster &&
+		document.session.ordererUrl.includes("https://") &&
+		serviceConfiguration.externalOrdererUrl.includes("https://")
+	) {
+		const ordererUrl = document.session.ordererUrl.replace("https://", "");
+		const externalOrdererUrl = serviceConfiguration.externalOrdererUrl.replace("https://", "");
+		isSessionInThisCluster = ordererUrl.includes(externalOrdererUrl);
+	}
+
 	if (document.session.isSessionActive && isSessionInThisCluster) {
 		return true;
 	}

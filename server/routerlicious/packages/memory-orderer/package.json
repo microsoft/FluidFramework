@@ -110,6 +110,12 @@
 			},
 			"Interface_IKafkaSubscriber": {
 				"forwardCompat": false
+			},
+			"Class_WebSocketSubscriber": {
+				"forwardCompat": false
+			},
+			"Interface_ISubscriber": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"
