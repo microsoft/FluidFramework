@@ -60,7 +60,7 @@ export abstract class TreeDataObject<
 	 */
 	private get initializedTree(): ITree {
 		if (!this.#tree) {
-			throw new UsageError(this.getUninitializedErrorString("root"));
+			throw new UsageError(getUninitializedErrorString("root"));
 		}
 
 		return this.#tree;
@@ -72,7 +72,7 @@ export abstract class TreeDataObject<
 	 */
 	public get tree(): TreeView<TSchema> {
 		if (this.#treeView === undefined) {
-			throw new UsageError(this.getUninitializedErrorString("tree"));
+			throw new UsageError(getUninitializedErrorString("tree"));
 		}
 		return this.#treeView;
 	}
@@ -109,17 +109,8 @@ export abstract class TreeDataObject<
 
 	protected override async hasInitialized(): Promise<void> {
 		if (this.#treeView === undefined) {
-			throw new Error(this.getUninitializedErrorString("tree"));
+			throw new Error(getUninitializedErrorString("tree"));
 		}
-	}
-
-	/**
-	 * Generates an error string indicating an item is uninitialized.
-	 * @param item - The name of the item that was uninitialized.
-	 * @virtual
-	 */
-	protected getUninitializedErrorString(item: string): string {
-		return `${item} must be initialized before being accessed.`;
 	}
 
 	/**
@@ -127,4 +118,12 @@ export abstract class TreeDataObject<
 	 * @virtual
 	 */
 	protected abstract createInitialTree(): InsertableTreeFieldFromImplicitField<TSchema>;
+}
+
+/**
+ * Generates an error string indicating an item is uninitialized.
+ * @param item - The name of the item that was uninitialized.
+ */
+function getUninitializedErrorString(item: string): string {
+	return `${item} must be initialized before being accessed.`;
 }
