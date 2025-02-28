@@ -195,7 +195,6 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 // @alpha
 export interface IContainerRuntimeOptions {
     readonly chunkSizeInBytes?: number;
-    // (undocumented)
     readonly compatibilityMode?: CompatibilityMode;
     readonly compressionOptions?: ICompressionRuntimeOptions;
     // @deprecated
@@ -206,7 +205,6 @@ export interface IContainerRuntimeOptions {
     readonly gcOptions?: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification?: "close" | "log" | "bypass";
     readonly maxBatchSizeInBytes?: number;
-    // (undocumented)
     readonly protocolOptions?: IProtocolOptions;
     // (undocumented)
     readonly summaryOptions?: ISummaryRuntimeOptions;
