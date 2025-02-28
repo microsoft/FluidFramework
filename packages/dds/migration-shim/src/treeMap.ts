@@ -38,18 +38,6 @@ import {
 } from "./shim.js";
 
 /**
- * TODO:
- * Factor out SharedKernel subset of Tree and Map (adjust MapKernel).
- *
- * Implement adapter like TreeMap that takes two SharedKernel factories and and adapter functions for each kernel type, then uses a proxy
- * to forward the calls to the correct adapter.
- *
- * Write a generic a SharedObject subclass which a kernel, and provide an way to have ops to migrate to a different kernel.
- * Implement desired APIs on this SHaredObject by wrapping with proxy that uses adapters.
- *
- */
-
-/**
  *
  */
 const schemaFactory = new SchemaFactory("com.fluidframework/adapters/map");
@@ -87,7 +75,6 @@ interface TreeData {
 	// TODO: possible implement this with something that doesn't use an actual SharedObject instance? Determine if thats an issue.
 	readonly tree: ITree;
 	readonly view: TreeView<typeof MapAdapterRoot>;
-	readonly root: MapAdapterRoot;
 }
 
 interface ErrorData {
@@ -103,7 +90,7 @@ function dataFromTree(tree: ITree): TreeData | ErrorData {
 	}
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (view.compatibility.isEquivalent) {
-		return { tree, view, root: view.root, mode: "tree" };
+		return { tree, view, mode: "tree" };
 	} else {
 		return { mode: "error", message: "Incompatible tree", tree };
 	}
@@ -114,11 +101,7 @@ const treeFactory: SharedKernelFactory<ITree> = treeKernelFactory({
 });
 
 /**
- * Map which can be based on a SharedMap or a SharedTree.
- *
- * Once this has been accessed as a SharedTree, the SharedMap APIs are no longer accessible.
- *
- * TODO: factor into generic adapter class, use Proxy to graft interfaces from adapters onto this.
+ * ISharedMapCore wrapping a SharedTree.
  */
 class TreeMapAdapter implements ISharedMapCore {
 	public data: TreeData;
@@ -130,28 +113,32 @@ class TreeMapAdapter implements ISharedMapCore {
 		this.data = data;
 	}
 
+	private get root(): MapAdapterRoot {
+		return this.data.view.root;
+	}
+
 	public get<T = any>(key: string): T | undefined {
-		return this.data.root.getRaw(key) as T | undefined;
+		return this.root.getRaw(key) as T | undefined;
 	}
 	public set<T = unknown>(key: string, value: T): this {
-		this.data.root.setRaw(key, value as ConciseTree);
+		this.root.setRaw(key, value as ConciseTree);
 		return this;
 	}
 
 	public readonly [Symbol.toStringTag]: string = "TreeMap";
 
 	public keys(): IterableIterator<string> {
-		return this.data.root.keys();
+		return this.root.keys();
 	}
 
 	public entries(): IterableIterator<[string, any]> {
-		return [...this.data.root.keys()]
+		return [...this.root.keys()]
 			.map((key): [string, any] => [key, this.get(key)])
 			[Symbol.iterator]();
 	}
 
 	public values(): IterableIterator<any> {
-		return [...this.data.root.keys()].map((key): any => this.get(key))[Symbol.iterator]();
+		return [...this.root.keys()].map((key): any => this.get(key))[Symbol.iterator]();
 	}
 
 	public [Symbol.iterator](): IterableIterator<[string, any]> {
@@ -159,7 +146,7 @@ class TreeMapAdapter implements ISharedMapCore {
 	}
 
 	public get size(): number {
-		return this.data.root.size;
+		return this.root.size;
 	}
 
 	public forEach(callbackFn: (value: any, key: string, map: Map<string, any>) => void): void {
@@ -168,19 +155,27 @@ class TreeMapAdapter implements ISharedMapCore {
 	}
 
 	public has(key: string): boolean {
-		return this.data.root.has(key);
+		return this.root.has(key);
 	}
 
 	public delete(key: string): boolean {
 		const had = this.has(key);
-		this.data.root.set(key, undefined);
+		this.root.set(key, undefined);
 		return had;
 	}
 
 	public clear(): void {
-		for (const key of this.keys()) {
-			this.delete(key);
-		}
+		// The merge semantics of this likely differ from the original SharedMap, since concurrent clear and set will end up overwriting the set,
+		// regardless of sequence order.
+
+		// Looping over all the keys here and deleting them is also an option.
+		// That would produce merge semantics where concurrent addition of a new key would survive a concurrent clear (regardless of sequence order),
+		// but setting of other keys would depend on sequence order.
+
+		// As neither of these exactly match the original SharedMap, the simpler, more consistent and more performant option was picked.
+		// TODO: document this in the API and determine if it is a problem.
+
+		this.data.view.root = new MapAdapterRoot();
 	}
 }
 
@@ -194,9 +189,7 @@ const mapToTreeOptions: MigrationOptions<ISharedMapCore, ITree, ISharedMapCore> 
 		return new TreeMapAdapter(from);
 	},
 	migrate(from: SharedMap, to: ITree, adaptedTo: ISharedMapCore) {
-		for (const [key, value] of from.entries()) {
-			adaptedTo.set(key, value);
-		}
+		(adaptedTo as TreeMapAdapter).data.view.root = convert(from);
 	},
 	defaultMigrated: false,
 };
@@ -219,6 +212,14 @@ const mapToTree: MigrationSet<ISharedMap, ISharedMap, ITree> = {
  */
 export const MapToTree = makeSharedObjectAdapter<SharedMap, ISharedMap>(mapToTree);
 
+function convert(from: ISharedMapCore): MapAdapterRoot {
+	const root = new MapAdapterRoot();
+	for (const [key, value] of from.entries()) {
+		root.setRaw(key, value as ConciseTree);
+	}
+	return root;
+}
+
 const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITree, ITree> = {
 	migrationIdentifier: "defaultMapToTree",
 	to: treeFactory,
@@ -228,10 +229,7 @@ const mapToTreeOptionsPhase2: MigrationOptions<ISharedMapCore, ITree, ITree> = {
 	},
 	migrate(from: SharedMap, to: ITree, adaptedTo: ITree) {
 		const view = to.viewWith(config);
-		const root = new MapAdapterRoot();
-		for (const [key, value] of from.entries()) {
-			root.setRaw(key, value as ConciseTree);
-		}
+		const root = convert(from);
 		view.initialize(root);
 		view.dispose();
 	},
