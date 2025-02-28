@@ -574,9 +574,9 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 				}
 				return client.container.connectionState !== ConnectionState.Disconnected;
 			});
-			connectedClients.push(validationClient);
 
 			if (connectedClients.length > 0) {
+				await synchronizeClients([validationClient, ...connectedClients]);
 				for (const client of connectedClients) {
 					try {
 						await model.validateConsistency(validationClient, client);
@@ -759,6 +759,78 @@ async function loadClient(
 		entryPoint: maybe.DefaultStressDataObject,
 	};
 }
+
+async function synchronizeClients(connectedClients: Client[]) {
+	const rejects = new Map<Client, ((reason?: any) => void)[]>(
+		connectedClients.map((c) => [c, []]),
+	);
+
+	const cleanUps: (() => void)[] = [];
+	for (const c of connectedClients) {
+		const rejector = (err) => rejects.get(c)?.forEach((r) => r(err));
+		c.container.once("closed", rejector);
+		c.container.once("disposed", rejector);
+		cleanUps.push(() => {
+			c.container.off("closed", rejector);
+			c.container.off("disposed", rejector);
+		});
+	}
+	try {
+		await Promise.all(
+			connectedClients.map(
+				async (c) =>
+					new Promise<void>((resolve, reject) => {
+						if (c.container.connectionState !== ConnectionState.Connected) {
+							c.container.once("connected", () => resolve());
+							rejects.get(c)?.push(reject);
+						} else {
+							resolve();
+						}
+					}),
+			),
+		);
+
+		await Promise.all(
+			connectedClients.map(
+				async (c) =>
+					new Promise<void>((resolve, reject) => {
+						if (c.container.isDirty) {
+							c.container.once("saved", () => resolve());
+							rejects.get(c)?.push(reject);
+						} else {
+							resolve();
+						}
+					}),
+			),
+		);
+		const maxSeq = Math.max(
+			...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
+		);
+
+		const makeOpHandler = (c: Client, resolve: () => void, reject: () => void) => {
+			if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
+				const handler = (msg) => {
+					if (msg.sequenceNumber >= maxSeq) {
+						c.container.off("op", handler);
+						resolve();
+					}
+				};
+				c.container.on("op", handler);
+				rejects.get(c)?.push(reject);
+			} else {
+				resolve();
+			}
+		};
+		await Promise.all(
+			connectedClients.map(
+				async (c) => new Promise<void>((resolve, reject) => makeOpHandler(c, resolve, reject)),
+			),
+		);
+	} finally {
+		cleanUps.forEach((f) => f());
+	}
+}
+
 /**
  * Runs the provided DDS fuzz model. All functionality is already assumed to be mixed in.
  * @privateRemarks This is currently file-exported for testing purposes, but it could be reasonable to
@@ -825,6 +897,9 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			const { clients, validationClient, localDeltaConnectionServer } = state;
 			for (const client of clients) {
 				client.container.connect();
+			}
+			await synchronizeClients([validationClient, ...clients]);
+			for (const client of clients) {
 				await model.validateConsistency(client, validationClient);
 				client.container.dispose();
 			}

@@ -6,7 +6,6 @@
 import { type AsyncGenerator, type AsyncReducer } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzTestState, Client as DDSClient } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions/internal";
-import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 import type {
@@ -120,76 +119,6 @@ export const DDSModelOpReducer: AsyncReducer<DDSModelOp, LocalServerStressState>
 };
 
 export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Client) => {
-	const connectedClients = [clientA, clientB];
-	const rejects = new Map<Client, ((reason?: any) => void)[]>(
-		connectedClients.map((c) => [c, []]),
-	);
-
-	const cleanUps: (() => void)[] = [];
-	for (const c of connectedClients) {
-		const rejector = (err) => rejects.get(c)?.forEach((r) => r(err));
-		c.container.once("closed", rejector);
-		c.container.once("disposed", rejector);
-		cleanUps.push(() => {
-			c.container.off("closed", rejector);
-			c.container.off("disposed", rejector);
-		});
-	}
-	try {
-		await Promise.all(
-			connectedClients.map(
-				async (c) =>
-					new Promise<void>((resolve, reject) => {
-						if (c.container.connectionState !== ConnectionState.Connected) {
-							c.container.once("connected", () => resolve());
-							rejects.get(c)?.push(reject);
-						} else {
-							resolve();
-						}
-					}),
-			),
-		);
-
-		await Promise.all(
-			connectedClients.map(
-				async (c) =>
-					new Promise<void>((resolve, reject) => {
-						if (c.container.isDirty) {
-							c.container.once("saved", () => resolve());
-							rejects.get(c)?.push(reject);
-						} else {
-							resolve();
-						}
-					}),
-			),
-		);
-		const maxSeq = Math.max(
-			...connectedClients.map((c) => c.container.deltaManager.lastKnownSeqNumber),
-		);
-
-		const makeOpHandler = (c: Client, resolve: () => void, reject: () => void) => {
-			if (c.container.deltaManager.lastKnownSeqNumber < maxSeq) {
-				const handler = (msg) => {
-					if (msg.sequenceNumber >= maxSeq) {
-						c.container.off("op", handler);
-						resolve();
-					}
-				};
-				c.container.on("op", handler);
-				rejects.get(c)?.push(reject);
-			} else {
-				resolve();
-			}
-		};
-		await Promise.all(
-			connectedClients.map(
-				async (c) => new Promise<void>((resolve, reject) => makeOpHandler(c, resolve, reject)),
-			),
-		);
-	} finally {
-		cleanUps.forEach((f) => f());
-	}
-
 	const buildChannelMap = async (client: Client) => {
 		/**
 		 * here we build a map of all the channels in the container based on their absolute path,
