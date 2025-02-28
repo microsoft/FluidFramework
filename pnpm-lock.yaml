@@ -87,7 +87,7 @@ importers:
         specifier: ^29.6.2
         version: 29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5))
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.2
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -1327,7 +1327,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -2181,7 +2181,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -3761,7 +3761,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -4021,7 +4021,7 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(jsdom@16.7.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -4789,7 +4789,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -5034,7 +5034,7 @@ importers:
         specifier: ^9.1.0
         version: 9.1.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6182,7 +6182,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6288,7 +6288,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6450,7 +6450,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6529,7 +6529,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6653,7 +6653,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6750,7 +6750,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6847,7 +6847,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -6944,7 +6944,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7101,7 +7101,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7341,7 +7341,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7465,7 +7465,7 @@ importers:
         specifier: ^10.1.3
         version: 10.1.4(puppeteer@23.10.3(typescript@5.4.5))(typescript@5.4.5)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7658,7 +7658,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7810,7 +7810,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -7910,7 +7910,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8010,7 +8010,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8137,7 +8137,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8279,7 +8279,7 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8403,7 +8403,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8515,7 +8515,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8615,7 +8615,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8718,7 +8718,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8854,7 +8854,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -8981,7 +8981,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9087,7 +9087,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9199,7 +9199,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9256,7 +9256,7 @@ importers:
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       uuid:
         specifier: ^9.0.0
@@ -9480,7 +9480,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9632,7 +9632,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -9896,7 +9896,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10008,7 +10008,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10148,7 +10148,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10339,7 +10339,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10430,7 +10430,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10521,7 +10521,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -10706,7 +10706,7 @@ importers:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10815,7 +10815,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -10933,7 +10933,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11024,7 +11024,7 @@ importers:
         specifier: ~4.6.0
         version: 4.6.2(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -11115,7 +11115,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -11294,7 +11294,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11488,7 +11488,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11673,7 +11673,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11764,7 +11764,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11846,7 +11846,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -11940,7 +11940,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12067,7 +12067,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12170,7 +12170,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12370,7 +12370,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12546,7 +12546,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12704,7 +12704,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12868,7 +12868,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -12992,7 +12992,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13101,7 +13101,7 @@ importers:
         specifier: workspace:~
         version: link:../../framework/fluid-framework
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -13197,7 +13197,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13321,7 +13321,7 @@ importers:
         specifier: ^17.0.3
         version: 17.0.3
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13473,7 +13473,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -13576,7 +13576,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -13702,7 +13702,7 @@ importers:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13964,7 +13964,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -13991,7 +13991,7 @@ importers:
         specifier: workspace:~
         version: link:../../common/core-interfaces
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       source-map-support:
         specifier: ^0.5.21
@@ -14109,7 +14109,7 @@ importers:
         specifier: workspace:~
         version: link:../test-utils
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
     devDependencies:
       '@biomejs/biome':
@@ -14228,7 +14228,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -14545,7 +14545,7 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       semver:
         specifier: ^7.5.3
@@ -14670,7 +14670,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -14800,7 +14800,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -14878,7 +14878,7 @@ importers:
         specifier: ^4.3.4
         version: 4.4.0(supports-color@8.1.1)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       uuid:
         specifier: ^9.0.0
@@ -15111,7 +15111,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -15269,7 +15269,7 @@ importers:
         specifier: ~3.0.0
         version: 3.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -15462,7 +15462,7 @@ importers:
         specifier: ^3.0.2
         version: 3.0.2(jsdom@16.7.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       prettier:
         specifier: ~3.0.3
@@ -15604,7 +15604,7 @@ importers:
         specifier: ~3.0.0
         version: 3.0.0(eslint@8.55.0)
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -15987,7 +15987,7 @@ importers:
         specifier: ^16.0.0
         version: 16.0.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16193,7 +16193,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16411,7 +16411,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16508,7 +16508,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16611,7 +16611,7 @@ importers:
         specifier: ~8.55.0
         version: 8.55.0
       mocha:
-        specifier: ^10.2.0
+        specifier: ^10.8.0
         version: 10.8.2
       mocha-multi-reporters:
         specifier: ^1.5.1
@@ -16898,6 +16898,10 @@ packages:
 
   '@babel/runtime@7.26.0':
     resolution: {integrity: sha512-FDSOghenHTiToteC/QRlv2q3DhPZ/oOXTBoirfWNx1Cx3TMVcGWQtMMmQcSvb/JjpNeGzx8Pq/b4fKEJuWm1sw==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/runtime@7.26.9':
+    resolution: {integrity: sha512-aA63XwOkcl4xxQa3HjPMqOP6LiK0ZDv3mUPYEFXkpHbaFjtGggE1A61FjFzJnB+p7/oy2gA8E+rcBNl/zC1tMg==}
     engines: {node: '>=6.9.0'}
 
   '@babel/template@7.25.9':
@@ -22702,6 +22706,9 @@ packages:
     resolution: {integrity: sha512-g0QYk1dZBxGwk+Ngc+ltRH2IBp2f7zBkBMBJZCDerh6EhlhSR6+9irMCuT/09zD6qkarHUSn529sK/yL4S27mg==}
     engines: {node: '>= 0.4'}
 
+  get-tsconfig@4.10.0:
+    resolution: {integrity: sha512-kGzZ3LWWQcGIAmg6iWvXn0ei6WDtV26wzHRMwDSzmAbcXrTEXxHy6IehI6/4eT6VRKyMP1eF1VqwrVUmE/LR7A==}
+
   get-tsconfig@4.8.1:
     resolution: {integrity: sha512-k9PN+cFBmaLWtVz29SkUoqU5O0slLuHJXt/2P+tMVFT+phsSGXGkp9t3rQIqdz0e+06EHNGs3oM6ZX1s2zHxRg==}
 
@@ -23159,6 +23166,10 @@ packages:
     resolution: {integrity: sha512-veYYhQa+D1QBKznvhUHxb8faxlrwUnxseDAbAp457E0wLNio2bOSKnjYDhMj+YiAq61xrMGhQk9iXVk5FzgQMw==}
     engines: {node: '>=6'}
 
+  import-fresh@3.3.1:
+    resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
+    engines: {node: '>=6'}
+
   import-from@3.0.0:
     resolution: {integrity: sha512-CiuXOFFSzkU5x/CR0+z7T91Iht4CXgfCxVOFRhh2Zyhg5wOpWvvDLQUsWl+gcN+QscYBjez8hDCt85O7RLDttQ==}
     engines: {node: '>=8'}
@@ -23320,6 +23331,10 @@ packages:
 
   is-core-module@2.15.1:
     resolution: {integrity: sha512-z0vtXSwucUJtANQWldhbtbt7BnL0vxiFjIdDLAatwhDYty2bad6s+rijD6Ri4YuYJubLzIJLUidCh09e1djEVQ==}
+    engines: {node: '>= 0.4'}
+
+  is-core-module@2.16.1:
+    resolution: {integrity: sha512-UfoeMA6fIJ8wTYFEUjelnaGI67v6+N7qXJEvQuIGa99l4xsCruSYOVSQ0uPANn4dAzm8lkYPaKLrrijLq7x23w==}
     engines: {node: '>= 0.4'}
 
   is-data-view@1.0.1:
@@ -26154,6 +26169,11 @@ packages:
   resolve@1.19.0:
     resolution: {integrity: sha512-rArEXAgsBG4UgRGcynxWIWKFvh/XZCcS8UJdHhwy91zwAvCZIbcs+vAbflgBnNjYMs/i/i+/Ux6IZhML1yPvxg==}
 
+  resolve@1.22.10:
+    resolution: {integrity: sha512-NPRy+/ncIMeDlTAsuqwKIiferiawhefFJtkNSW0qZJEqMEb+qBt/77B/jGeeek+F0uOeN05CDa6HXbbIgtVX4w==}
+    engines: {node: '>= 0.4'}
+    hasBin: true
+
   resolve@1.22.8:
     resolution: {integrity: sha512-oKWePCxqpd6FlLvGV1VU0x7bkPmmCNolxzjMf4NczoDnQcIWrAF+cPtZn5i6n+RfD2d9i0tzpKnG6Yk168yIyw==}
     hasBin: true
@@ -26387,6 +26407,11 @@ packages:
 
   semver@7.6.3:
     resolution: {integrity: sha512-oVekP1cKtI+CTDvHWYFUcMtsK/00wmAEfyqKfNdARm8u1wNVhSgaX7A8d4UuIlUI5e84iEwOhs7ZPYRmzU9U6A==}
+    engines: {node: '>=10'}
+    hasBin: true
+
+  semver@7.7.1:
+    resolution: {integrity: sha512-hlq8tAfn0m/61p4BVRcPzIGr6LKiMwo4VM6dGi6pt4qcRkmNzTcWq6eCEjEh+qXjkMDvPlOFFSGwQjoEa6gyMA==}
     engines: {node: '>=10'}
     hasBin: true
 
@@ -28427,6 +28452,10 @@ snapshots:
     dependencies:
       regenerator-runtime: 0.14.1
 
+  '@babel/runtime@7.26.9':
+    dependencies:
+      regenerator-runtime: 0.14.1
+
   '@babel/template@7.25.9':
     dependencies:
       '@babel/code-frame': 7.26.2
@@ -28509,7 +28538,7 @@ snapshots:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@changesets/assemble-release-plan@6.0.5':
     dependencies:
@@ -28518,7 +28547,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.1
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@changesets/changelog-git@0.2.0':
     dependencies:
@@ -28574,7 +28603,7 @@ snapshots:
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
       picocolors: 1.1.1
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@changesets/get-release-plan@4.0.5':
     dependencies:
@@ -30963,9 +30992,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -33051,11 +33080,11 @@ snapshots:
   '@npmcli/fs@2.1.2':
     dependencies:
       '@gar/promisify': 1.1.3
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@npmcli/fs@3.1.1':
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   '@npmcli/git@4.1.0':
     dependencies:
@@ -33065,7 +33094,7 @@ snapshots:
       proc-log: 3.0.0
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.6.3
+      semver: 7.7.1
       which: 3.0.1
     transitivePeerDependencies:
       - bluebird
@@ -33651,7 +33680,7 @@ snapshots:
       extract-zip: 2.0.1
       progress: 2.0.3
       proxy-agent: 6.5.0
-      semver: 7.6.3
+      semver: 7.7.1
       tar-fs: 3.0.6
       unbzip2-stream: 1.4.3
       yargs: 17.7.2
@@ -34644,7 +34673,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.1
       tsutils: 3.21.0(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
@@ -34658,7 +34687,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.1
       tsutils: 3.21.0(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
@@ -34673,7 +34702,7 @@ snapshots:
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.3
-      semver: 7.6.3
+      semver: 7.7.1
       ts-api-utils: 1.4.3(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
@@ -34687,7 +34716,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.1
       ts-api-utils: 1.4.3(typescript@5.4.5)
     optionalDependencies:
       typescript: 5.4.5
@@ -34704,7 +34733,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.4.5)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -34719,7 +34748,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.62.0(typescript@5.4.5)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -34733,7 +34762,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.4.5)
       eslint: 8.55.0
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -35335,9 +35364,9 @@ snapshots:
 
   babel-plugin-macros@3.1.0:
     dependencies:
-      '@babel/runtime': 7.26.0
+      '@babel/runtime': 7.26.9
       cosmiconfig: 7.1.0
-      resolve: 1.22.8
+      resolve: 1.22.10
 
   babel-preset-current-node-syntax@1.1.0(@babel/core@7.26.0):
     dependencies:
@@ -36128,7 +36157,7 @@ snapshots:
   cosmiconfig@7.1.0:
     dependencies:
       '@types/parse-json': 4.0.2
-      import-fresh: 3.3.0
+      import-fresh: 3.3.1
       parse-json: 5.2.0
       path-type: 4.0.0
       yaml: 1.10.2
@@ -36167,7 +36196,7 @@ snapshots:
 
   create-esm-loader@0.2.5:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   create-jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)):
     dependencies:
@@ -37027,38 +37056,38 @@ snapshots:
   eslint-import-resolver-node@0.3.9:
     dependencies:
       debug: 3.2.7
-      is-core-module: 2.15.1
-      resolve: 1.22.8
+      is-core-module: 2.16.1
+      resolve: 1.22.10
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.8.1
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -37072,17 +37101,17 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
-      get-tsconfig: 4.8.1
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      get-tsconfig: 4.10.0
       is-glob: 4.0.3
       minimatch: 3.1.2
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-typescript
@@ -37841,6 +37870,10 @@ snapshots:
       es-errors: 1.3.0
       get-intrinsic: 1.2.5
 
+  get-tsconfig@4.10.0:
+    dependencies:
+      resolve-pkg-maps: 1.0.0
+
   get-tsconfig@4.8.1:
     dependencies:
       resolve-pkg-maps: 1.0.0
@@ -38411,6 +38444,11 @@ snapshots:
       parent-module: 1.0.1
       resolve-from: 4.0.0
 
+  import-fresh@3.3.1:
+    dependencies:
+      parent-module: 1.0.1
+      resolve-from: 4.0.0
+
   import-from@3.0.0:
     dependencies:
       resolve-from: 5.0.0
@@ -38514,7 +38552,7 @@ snapshots:
       fengari: 0.1.4
       fengari-interop: 0.1.3(fengari@0.1.4)
       ioredis: 5.4.1
-      semver: 7.6.3
+      semver: 7.7.1
 
   ioredis@5.4.1:
     dependencies:
@@ -38585,7 +38623,7 @@ snapshots:
 
   is-bun-module@1.3.0:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   is-callable@1.2.7: {}
 
@@ -38594,6 +38632,10 @@ snapshots:
       ci-info: 3.9.0
 
   is-core-module@2.15.1:
+    dependencies:
+      hasown: 2.0.2
+
+  is-core-module@2.16.1:
     dependencies:
       hasown: 2.0.2
 
@@ -38815,7 +38857,7 @@ snapshots:
       '@babel/parser': 7.26.3
       '@istanbuljs/schema': 0.1.3
       istanbul-lib-coverage: 3.2.2
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
 
@@ -39176,7 +39218,7 @@ snapshots:
       jest-pnp-resolver: 1.2.3(jest-resolve@29.7.0)
       jest-util: 29.7.0
       jest-validate: 29.7.0
-      resolve: 1.22.8
+      resolve: 1.22.10
       resolve.exports: 2.0.3
       slash: 3.0.0
 
@@ -39254,7 +39296,7 @@ snapshots:
       jest-util: 29.7.0
       natural-compare: 1.4.0
       pretty-format: 29.7.0
-      semver: 7.6.3
+      semver: 7.7.1
     transitivePeerDependencies:
       - supports-color
 
@@ -39514,7 +39556,7 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.6.3
+      semver: 7.7.1
 
   jsrsasign@11.1.0: {}
 
@@ -39855,7 +39897,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   make-error@1.3.6: {}
 
@@ -40764,7 +40806,7 @@ snapshots:
 
   node-abi@3.71.0:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   node-addon-api@4.3.0: {}
 
@@ -40807,7 +40849,7 @@ snapshots:
       nopt: 6.0.0
       npmlog: 6.0.2
       rimraf: 3.0.2
-      semver: 7.6.3
+      semver: 7.7.1
       tar: 6.2.1
       which: 2.0.2
     transitivePeerDependencies:
@@ -40830,21 +40872,21 @@ snapshots:
   normalize-package-data@2.5.0:
     dependencies:
       hosted-git-info: 2.8.9
-      resolve: 1.22.8
+      resolve: 1.22.10
       semver: 5.7.2
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@5.0.0:
     dependencies:
       hosted-git-info: 6.1.3
-      is-core-module: 2.15.1
-      semver: 7.6.3
+      is-core-module: 2.16.1
+      semver: 7.7.1
       validate-npm-package-license: 3.0.4
 
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.6.3
+      semver: 7.7.1
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
@@ -40911,7 +40953,7 @@ snapshots:
 
   npm-install-checks@6.3.0:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   npm-normalize-package-bin@3.0.1: {}
 
@@ -40919,7 +40961,7 @@ snapshots:
     dependencies:
       hosted-git-info: 6.1.3
       proc-log: 3.0.0
-      semver: 7.6.3
+      semver: 7.7.1
       validate-npm-package-name: 5.0.1
 
   npm-packlist@7.0.4:
@@ -40931,7 +40973,7 @@ snapshots:
       npm-install-checks: 6.3.0
       npm-normalize-package-bin: 3.0.1
       npm-package-arg: 10.1.0
-      semver: 7.6.3
+      semver: 7.7.1
 
   npm-registry-fetch@14.0.5:
     dependencies:
@@ -41255,14 +41297,14 @@ snapshots:
       ky: 1.7.3
       registry-auth-token: 5.0.3
       registry-url: 6.0.1
-      semver: 7.6.3
+      semver: 7.7.1
 
   package-json@8.1.1:
     dependencies:
       got: 12.6.1
       registry-auth-token: 5.0.3
       registry-url: 6.0.1
-      semver: 7.6.3
+      semver: 7.7.1
 
   package-manager-detector@0.2.7: {}
 
@@ -41591,7 +41633,7 @@ snapshots:
       postcss: 8.4.49
       postcss-value-parser: 4.2.0
       read-cache: 1.0.0
-      resolve: 1.22.8
+      resolve: 1.22.10
 
   postcss-js@4.0.1(postcss@8.4.49):
     dependencies:
@@ -42400,7 +42442,7 @@ snapshots:
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       module-details-from-path: 1.0.3
-      resolve: 1.22.8
+      resolve: 1.22.10
     transitivePeerDependencies:
       - supports-color
 
@@ -42429,8 +42471,14 @@ snapshots:
 
   resolve@1.19.0:
     dependencies:
-      is-core-module: 2.15.1
+      is-core-module: 2.16.1
       path-parse: 1.0.7
+
+  resolve@1.22.10:
+    dependencies:
+      is-core-module: 2.16.1
+      path-parse: 1.0.7
+      supports-preserve-symlinks-flag: 1.0.0
 
   resolve@1.22.8:
     dependencies:
@@ -42440,7 +42488,7 @@ snapshots:
 
   resolve@2.0.0-next.5:
     dependencies:
-      is-core-module: 2.15.1
+      is-core-module: 2.16.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
@@ -42632,11 +42680,11 @@ snapshots:
 
   semver-diff@4.0.0:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   semver-try-require@6.2.3:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.1
 
   semver-utils@1.1.4: {}
 
@@ -42653,6 +42701,8 @@ snapshots:
       lru-cache: 6.0.0
 
   semver@7.6.3: {}
+
+  semver@7.7.1: {}
 
   send@0.19.0:
     dependencies:
@@ -42982,7 +43032,7 @@ snapshots:
       get-stdin: 9.0.0
       git-hooks-list: 3.1.0
       is-plain-obj: 4.1.0
-      semver: 7.6.3
+      semver: 7.7.1
       sort-object-keys: 1.1.3
       tinyglobby: 0.2.10
 
@@ -44082,7 +44132,7 @@ snapshots:
       is-yarn-global: 0.4.1
       latest-version: 7.0.0
       pupa: 3.1.0
-      semver: 7.6.3
+      semver: 7.7.1
       semver-diff: 4.0.0
       xdg-basedir: 5.1.0
 

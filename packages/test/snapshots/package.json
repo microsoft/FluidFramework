@@ -84,7 +84,7 @@
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^5.0.0",
 		"@fluidframework/test-utils": "workspace:~",
-		"mocha": "^10.2.0"
+		"mocha": "^10.8.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
@@ -99,7 +99,7 @@
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
-		"mocha": "^10.2.0",
+		"mocha": "^10.8.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
 		"prettier": "~3.0.3",
