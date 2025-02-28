@@ -650,7 +650,9 @@ export function configureWebSocketServices(
 					return;
 				}
 				Lumberjack.error(
-					`Error for client ${clientId}, document ${documentId}: ${errorType}`,
+					"Client disconnected due to error",
+					{ clientId, documentId, errorType },
+					new Error(errorType),
 				);
 			},
 		);
