@@ -60,8 +60,8 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	readonly factory: IFluidDataStoreFactory;
 } {
 	class SchemaAwareTreeDataObject extends ReactTreeDataObject<TSchema> {
-		public readonly config = treeConfiguration;
-		protected readonly createInitialTree = createInitialTree;
+		public override readonly config = treeConfiguration;
+		protected override readonly createInitialTree = createInitialTree;
 
 		public static readonly factory = new TreeDataObjectFactory<
 			TSchema,
