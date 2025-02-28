@@ -16,7 +16,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
