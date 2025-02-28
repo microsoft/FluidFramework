@@ -95,6 +95,7 @@ import {
 	removeRemovalInfo,
 	toMoveInfo,
 	toRemovalInfo,
+	wasMovedOnInsert,
 	type IInsertionInfo,
 	type IMoveInfo,
 	type IRemovalInfo,
@@ -1611,6 +1612,8 @@ export class MergeTree {
 			let normalizedNewestSeq: number = 0;
 			const movedClientIds: number[] = [];
 			const movedSeqs: number[] = [];
+			let newestAcked: ObliterateInfo | undefined;
+			let oldestUnacked: ObliterateInfo | undefined;
 			for (const ob of this.obliterates.findOverlapping(newSegment)) {
 				// compute a normalized seq that takes into account local seqs
 				// but is still comparable to remote seqs to keep the checks below easy
@@ -1641,6 +1644,23 @@ export class MergeTree {
 						normalizedNewestSeq = normalizedObSeq;
 						newest = ob;
 					}
+
+					if (
+						ob.seq !== UnassignedSequenceNumber &&
+						(newestAcked === undefined || newestAcked.seq < ob.seq)
+					) {
+						newestAcked = ob;
+					}
+
+					if (
+						ob.seq === UnassignedSequenceNumber &&
+						(oldestUnacked === undefined || oldestUnacked.localSeq! > ob.localSeq!)
+					) {
+						// There can be one local obliterate surrounding a segment if a client repeatedly obliterates
+						// a region (ex: in the text ABCDEFG, obliterate D, then obliterate CE, then BF). In this case,
+						// the first one that's applied will be the one that actually removes the segment.
+						oldestUnacked = ob;
+					}
 				}
 			}
 
@@ -1649,23 +1669,39 @@ export class MergeTree {
 			// by the same client that's inserting this segment, we let them insert into this range and therefore don't
 			// mark it obliterated.
 			if (oldest && newest?.clientId !== clientId) {
-				const moveInfo: IMoveInfo = {
-					movedClientIds,
-					movedSeq: oldest.seq,
-					movedSeqs,
-					localMovedSeq: oldest.localSeq,
-					wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
-				};
+				let moveInfo: IMoveInfo;
+				if (newestAcked === newest || newestAcked?.clientId !== clientId) {
+					moveInfo = {
+						movedClientIds,
+						movedSeq: oldest.seq,
+						movedSeqs,
+						localMovedSeq: oldestUnacked?.localSeq,
+					};
+				} else {
+					assert(
+						oldestUnacked !== undefined,
+						"Expected local obliterate to be defined if newestAcked is not equal to newest",
+					);
+					// There's a pending local obliterate for this range, so it will be marked as obliterated by us. However,
+					// all other clients are under the impression that the most recent acked obliterate won the right to insert
+					// in this range.
+					moveInfo = {
+						movedClientIds: [oldestUnacked.clientId],
+						movedSeq: oldestUnacked.seq,
+						movedSeqs: [oldestUnacked.seq],
+						localMovedSeq: oldestUnacked.localSeq,
+					};
+				}
 
 				overwriteInfo(newSegment, moveInfo);
 
 				if (moveInfo.localMovedSeq !== undefined) {
 					assert(
-						oldest.segmentGroup !== undefined,
+						oldestUnacked?.segmentGroup !== undefined,
 						0x86c /* expected segment group to exist */,
 					);
 
-					this.addToPendingList(newSegment, oldest.segmentGroup);
+					this.addToPendingList(newSegment, oldestUnacked?.segmentGroup);
 				}
 
 				if (newSegment.parent) {
@@ -2104,8 +2140,6 @@ export class MergeTree {
 					movedSeq: seq,
 					localMovedSeq: localSeq,
 					movedSeqs: [seq],
-					wasMovedOnInsert:
-						segment.seq === UnassignedSequenceNumber && seq !== UnassignedSequenceNumber,
 				});
 
 				const existingRemoval = toRemovalInfo(movedSeg);
@@ -2121,16 +2155,15 @@ export class MergeTree {
 				}
 			} else {
 				if (existingMoveInfo.movedSeq === UnassignedSequenceNumber) {
-					// Should not need explicit set here, but this should be implied:
 					assert(
-						!existingMoveInfo.wasMovedOnInsert,
+						!wasMovedOnInsert(segment),
 						0xab4 /* Local obliterate cannot have removed a segment as soon as it was inserted */,
 					);
 					assert(
 						seq !== UnassignedSequenceNumber,
 						0xab5 /* Cannot obliterate the same segment locally twice */,
 					);
-					existingMoveInfo.wasMovedOnInsert = segment.seq === UnassignedSequenceNumber;
+
 					// we moved this locally, but someone else moved it first
 					// so put them at the head of the list
 					// The list isn't ordered, but we keep the first move at the head
