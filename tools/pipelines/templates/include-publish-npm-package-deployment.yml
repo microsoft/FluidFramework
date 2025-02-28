@@ -41,28 +41,15 @@ parameters:
   type: string
   default: $(Pipeline.Workspace)/.pnpm-store
 
+resources:
+  # pipeline listed as a resource have their artifacts automatically downloeded in a deployment job.
+  pipelines:
+    - pipeline: buildTools-resource
+      project: internal
+      source: Build - build-tools
+      branch: main
+
 jobs:
-
-  # This job is necessary to be compliant with 1ES.
-  # 1ES does not allow checking out a code repo within a deployment job so instead we use this pattern
-  # of checking out the repo in separate job and uploading it as a pipeline artifact.
-# - job: checkoutAndUploadThisRepoAsArtifact
-#   steps:
-#   # Checkout the repository
-#   - checkout: self
-#     persistCredentials: true # Necessary for creation of git tags to work
-#   # Copy required files to the artifact staging directory
-#   - task: CopyFiles@2
-#     inputs:
-#       SourceFolder: $(System.DefaultWorkingDirectory)
-#       Contents: '**/*'
-#       TargetFolder: $(Build.ArtifactStagingDirectory)
-#   # Publish the artifact containing the required files from the repository
-#   - task: 1ES.PublishPipelineArtifact@1
-#     inputs:
-#       targetPath: $(Build.ArtifactStagingDirectory)
-#       artifactName: fluidFrameworkRepo
-
 - deployment: publish_${{ replace(parameters.environment, '-', '_') }}
   # Depend on the build job
   # dependsOn: checkoutAndUploadThisRepoAsArtifact
@@ -74,18 +61,8 @@ jobs:
   templateContext:
     type: releaseJob
     isProduction: true
-    # This section downloads initial required artifacts/data for this job.
+    # Inputs here are automatically downloaded at the beginning of the job.
     inputs:
-      # - input: pipelineArtifact
-      #   artifactName: fluidFrameworkRepo
-      #   targetPath: ${{ parameters.buildDirectory }}
-
-      - input: pipelineArtifact
-        pipeline: 'Build - build-tools'
-        branchName: main
-        artifactName: pack
-        targetPath: ${{ parameters.buildDirectory }}
-
       - input: pipelineArtifact
         artifactName: pack
         buildType: current
@@ -101,34 +78,16 @@ jobs:
           steps:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
           - task: Bash@3
-            displayName: List Files in Directory
-            inputs:
-              targetType: inline
-              workingDirectory: '${{ parameters.buildDirectory }}'
-              script: |
-                echo "Listing files in directory: $(pwd)"
-                ls -la
-                cd ./buildTools-resource
-                ls -la
-
-          - task: Bash@3
             name: InstallBuildToolsFromTarball
-            displayName: Install Fluid Build Tools from artifact tarball
+            displayName: Install Fluid Build Tools from Artifact Tarball
             inputs:
               targetType: 'inline'
-              workingDirectory: '${{ parameters.buildDirectory }}/tarballs'
+              workingDirectory: '$(Pipeline.Workspace)/buildTools-resource/pack/tarballs'
               script: |
                 echo "Listing files in directory: $(pwd)"
                 ls -la
                 echo "attempting tarball install"
-                npm i -g fluid-tools-build-cli-*.tgz
-
-          # - template: /tools/pipelines/templates/include-install-build-tools.yml@self
-          #   parameters:
-          #     buildDirectory: ${{ parameters.buildDirectory }}
-          #     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-          #     pnpmStorePath: ${{ parameters.pnpmStorePath }}
-
+                npm i -g ./*.tgz
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
               artifactPath: tarballs
@@ -136,6 +95,14 @@ jobs:
               customEndPoint: ${{ parameters.customEndPoint }}
               feedKind: ${{ parameters.feedKind }}
               publishFlags: ${{ parameters.publishFlags }}
-          - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
-            parameters:
-              tagName: ${{ parameters.tagName }}
+
+- job: gitTagForBuild
+  displayName: Push Git Tag for Build
+  dependsOn: publish_${{ replace(parameters.environment, '-', '_') }}
+  steps:
+    - checkout: self
+      clean: true
+      persistCredentials: true # Necessary for creation of git tags to work
+    - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
+      parameters:
+        tagName: ${{ parameters.tagName }}

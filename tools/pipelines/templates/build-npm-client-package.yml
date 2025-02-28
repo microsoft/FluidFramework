@@ -198,39 +198,6 @@ extends:
         displayName: Build Stage
         dependsOn: [] # this stage doesn't depend on preceding stage
         jobs:
-          - deployment: testDeploymentJob
-            displayName: 'test deployment job'
-            environment: 'fluid-docs-env'
-            pool: Large-eastus2
-            strategy:
-              runOnce:
-                deploy:
-                  steps:
-                    # test step just to see if we can download the artifact as expected
-                    - task: Bash@3
-                      displayName: List Files in PIPELINE.WORKSPACE
-                      inputs:
-                        targetType: inline
-                        workingDirectory: '${{ parameters.buildDirectory }}'
-                        script: |
-                          echo "Listing files in directory: $(Pipeline.Workspace)"
-                          ls -la "$(Pipeline.Workspace)/"
-                          cd $(Pipeline.Workspace)/buildTools-resource
-                          echo "Listing files in directory: $(Pipeline.Workspace)/buildTools-resource"
-                          ls -la
-
-                    - task: Bash@3
-                      name: InstallBuildToolsFromTarball
-                      displayName: Install Fluid Build Tools from artifact tarball
-                      inputs:
-                        targetType: 'inline'
-                        workingDirectory: '$(Pipeline.Workspace)/buildTools-resource/pack/tarballs'
-                        script: |
-                          echo "Listing files in directory: $(pwd)"
-                          ls -la
-                          echo "attempting tarball install"
-                          npm i -g ./*.tgz
-
           # Job - Build
           - job: build
             displayName: Build
@@ -255,16 +222,6 @@ extends:
                 - name: targetBranchName
                   value: $(System.PullRequest.TargetBranch)
             steps:
-              # test step just to see if we can download the artifact as expected
-              - task: Bash@3
-                displayName: List Files in PIPELINE.WORKSPACE
-                inputs:
-                  targetType: inline
-                  workingDirectory: '${{ parameters.buildDirectory }}'
-                  script: |
-                    echo "Listing files in directory: $(Pipeline.Workspace)"
-                    ls -la "$(Pipeline.Workspace)/"
-
               # Setup
               - checkout: self
                 clean: true
