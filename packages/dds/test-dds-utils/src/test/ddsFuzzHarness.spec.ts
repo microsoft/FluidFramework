@@ -256,9 +256,9 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(
 					[...perPairCallCounts.entries()],
 					[
-						["summarizer vs A", 2],
-						["summarizer vs B", 2],
-						["summarizer vs C", 2],
+						["A vs summarizer", 2],
+						["B vs summarizer", 2],
+						["C vs summarizer", 2],
 					],
 				);
 			});
@@ -302,9 +302,9 @@ describe("DDS Fuzz Harness", () => {
 				assert.deepEqual(
 					[...perPairCallCounts.entries()],
 					[
-						["summarizer vs A", 1],
-						["summarizer vs B", 2],
-						["summarizer vs C", 2],
+						["A vs summarizer", 1],
+						["B vs summarizer", 2],
+						["C vs summarizer", 2],
 					],
 				);
 			});
