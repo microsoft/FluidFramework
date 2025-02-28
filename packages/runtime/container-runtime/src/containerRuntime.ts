@@ -546,7 +546,13 @@ export interface IProtocolOptions {
  * @alpha
  */
 export interface IContainerRuntimeOptions {
+	/**
+	 * TODO: TSDoc
+	 */
 	readonly protocolOptions?: IProtocolOptions;
+	/**
+	 * TODO: TSDoc
+	 */
 	readonly compatibilityMode?: CompatibilityMode;
 
 	readonly summaryOptions?: ISummaryRuntimeOptions;
