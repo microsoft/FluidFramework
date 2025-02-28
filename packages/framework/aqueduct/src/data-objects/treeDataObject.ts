@@ -21,6 +21,9 @@ import { PureDataObject } from "./pureDataObject.js";
  */
 const treeChannelId = "root";
 
+const uninitializedErrorString =
+	"The tree has not yet been initialized. The data object must be initialized before accessing.";
+
 /**
  * {@link @fluidframework/tree#SharedTree}-backed {@link PureDataObject | data object}.
  *
@@ -41,13 +44,10 @@ export abstract class TreeDataObject<
 	 * The only schema evolution that's currently possible is upgrading the schema to one that supports a superset of what the old schema allowed,
 	 * and collaborating between clients which have view schema that exactly correspond to that stored schema.
 	 * Future work on tree as well as these utilities should address this limitation.
+	 *
+	 * @virtual
 	 */
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
-
-	/**
-	 * The underlying tree.
-	 */
-	#tree: ITree | undefined;
 
 	/**
 	 * View of the underlying tree.
@@ -55,24 +55,12 @@ export abstract class TreeDataObject<
 	#treeView: TreeView<TSchema> | undefined;
 
 	/**
-	 * Gets the underlying {@link @fluidframework/tree#ITree}.
-	 * @throws If the tree has not yet been initialized, this will throw an error.
-	 */
-	private get initializedTree(): ITree {
-		if (!this.#tree) {
-			throw new UsageError(getUninitializedErrorString("root"));
-		}
-
-		return this.#tree;
-	}
-
-	/**
 	 * Gets the view of the underlying {@link @fluidframework/tree#ITree}.
 	 * @throws If the tree has not yet been initialized, this will throw an error.
 	 */
 	public get tree(): TreeView<TSchema> {
 		if (this.#treeView === undefined) {
-			throw new UsageError(getUninitializedErrorString("tree"));
+			throw new UsageError(uninitializedErrorString);
 		}
 		return this.#treeView;
 	}
@@ -81,36 +69,24 @@ export abstract class TreeDataObject<
 		if (existing) {
 			// data store has a root tree so we just need to set it before calling initializingFromExisting
 			const channel = await this.runtime.getChannel(treeChannelId);
-			if (SharedTree.is(channel)) {
-				this.#tree = channel;
-			} else {
+			if (!SharedTree.is(channel)) {
 				throw new Error(
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
 			}
+			const sharedTree = channel as ITree;
+			this.#treeView = sharedTree.viewWith(this.config);
 		} else {
-			this.#tree = SharedTree.create(this.runtime, treeChannelId);
-			(this.#tree as unknown as ISharedObject).bindToContext();
+			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
+			(sharedTree as unknown as ISharedObject).bindToContext();
+
+			this.#treeView = sharedTree.viewWith(this.config);
+
+			// Initialize the tree content and schema.
+			this.#treeView.initialize(this.createInitialTree());
 		}
 
 		await super.initializeInternal(existing);
-	}
-
-	protected override async initializingFirstTime(): Promise<void> {
-		this.#treeView = this.initializedTree.viewWith(this.config);
-
-		// Initialize the tree content and schema.
-		this.#treeView.initialize(this.createInitialTree());
-	}
-
-	protected override async initializingFromExisting(): Promise<void> {
-		this.#treeView = this.initializedTree.viewWith(this.config);
-	}
-
-	protected override async hasInitialized(): Promise<void> {
-		if (this.#treeView === undefined) {
-			throw new Error(getUninitializedErrorString("tree"));
-		}
 	}
 
 	/**
@@ -118,12 +94,4 @@ export abstract class TreeDataObject<
 	 * @virtual
 	 */
 	protected abstract createInitialTree(): InsertableTreeFieldFromImplicitField<TSchema>;
-}
-
-/**
- * Generates an error string indicating an item is uninitialized.
- * @param item - The name of the item that was uninitialized.
- */
-function getUninitializedErrorString(item: string): string {
-	return `${item} must be initialized before being accessed.`;
 }
