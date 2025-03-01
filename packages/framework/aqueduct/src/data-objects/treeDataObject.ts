@@ -7,7 +7,6 @@ import type { ISharedObject } from "@fluidframework/shared-object-base/internal"
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ImplicitFieldSchema,
-	type InsertableTreeFieldFromImplicitField,
 	type ITree,
 	SharedTree,
 	type TreeView,
@@ -82,16 +81,10 @@ export abstract class TreeDataObject<
 
 			this.#treeView = sharedTree.viewWith(this.config);
 
-			// Initialize the tree content and schema.
-			this.#treeView.initialize(this.createInitialTree());
+			// Note, the implementer is responsible for initializing the tree with initial data.
+			// Generally, this can be done via `initializingFirstTime`.
 		}
 
 		await super.initializeInternal(existing);
 	}
-
-	/**
-	 * Create initial tree content for the data object when it initializes for the first time.
-	 * @virtual
-	 */
-	protected abstract createInitialTree(): InsertableTreeFieldFromImplicitField<TSchema>;
 }

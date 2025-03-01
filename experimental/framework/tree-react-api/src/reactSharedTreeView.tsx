@@ -61,12 +61,16 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 } {
 	class SchemaAwareTreeDataObject extends ReactTreeDataObject<TSchema> {
 		public override readonly config = treeConfiguration;
-		protected override readonly createInitialTree = createInitialTree;
 
 		public static readonly factory = new TreeDataObjectFactory<
 			TSchema,
 			ReactTreeDataObject<TSchema>
 		>(`TreeDataObject`, SchemaAwareTreeDataObject, [SharedTree.getFactory()], {});
+
+		// Populate tree with initial data on document create
+		protected override async initializingFirstTime(): Promise<void> {
+			this.tree.initialize(createInitialTree());
+		}
 	}
 	return createDataObjectKind(SchemaAwareTreeDataObject);
 }
