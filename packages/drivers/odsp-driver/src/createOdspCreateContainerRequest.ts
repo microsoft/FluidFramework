@@ -13,6 +13,36 @@ import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/intern
 import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtils.js";
 
 /**
+ * Original version of createOdspCreateContainerRequest
+ * @legacy
+ * @alpha
+ */
+export function createOdspCreateContainerRequest(
+	siteUrl: string,
+	driveId: string,
+	filePath: string,
+	fileName: string,
+	createShareLinkType?: ISharingLinkKind,
+): IRequest;
+
+/**
+ * Overloaded version of createOdspCreateContainerRequest that takes in containerPackageInfo
+ * @legacy
+ * @alpha
+ * @deprecated - To be removed in 2.40
+ * Add containerPackageInfo to the OdspDriverUrlResolverForShareLink constructor instead; see https://github.com/microsoft/FluidFramework/issues/23882 for more details.
+ * Deprecating overloaded function to remove containerPackageInfo
+ */
+export function createOdspCreateContainerRequest(
+	siteUrl: string,
+	driveId: string,
+	filePath: string,
+	fileName: string,
+	createShareLinkType?: ISharingLinkKind,
+	containerPackageInfo?: IContainerPackageInfo | undefined,
+): IRequest;
+
+/**
  * Create the request object with url and headers for creating a new file on OneDrive Sharepoint
  * @param siteUrl - Base url for OneDrive
  * @param driveId - drive identifier
