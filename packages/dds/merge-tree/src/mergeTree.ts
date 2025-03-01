@@ -1689,7 +1689,7 @@ export class MergeTree {
 				} else {
 					assert(
 						oldestUnacked !== undefined,
-						"Expected local obliterate to be defined if newestAcked is not equal to newest",
+						0xb55 /* Expected local obliterate to be defined if newestAcked is not equal to newest */,
 					);
 					// There's a pending local obliterate for this range, so it will be marked as obliterated by us. However,
 					// all other clients are under the impression that the most recent acked obliterate won the right to insert
