@@ -82,12 +82,9 @@ export function makeField(
 
 	const makeFlexTreeField = (): FlexTreeField => {
 		usedAnchor = true;
-		const field = new (kindToClass.get(schema) ?? fail("missing field implementation"))(
-			context,
-			schema,
-			cursor,
-			fieldAnchor,
-		);
+		const field = new (
+			kindToClass.get(schema) ?? fail(0xb0f /* missing field implementation */)
+		)(context, schema, cursor, fieldAnchor);
 		return field;
 	};
 
@@ -97,7 +94,8 @@ export function makeField(
 
 	// For the common case (all but roots), cache field associated with its node's anchor and field key.
 	const anchorNode =
-		context.checkout.forest.anchors.locate(fieldAnchor.parent) ?? fail("missing anchor");
+		context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
+		fail(0xb10 /* missing anchor */);
 
 	// Since anchor-set could be reused across a flex tree context getting disposed, key off the flex tree node not the anchor.
 	const cacheKey = anchorNode.slots.get(flexTreeSlot);
@@ -150,7 +148,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		if (fieldAnchor.parent !== undefined) {
 			const anchorNode =
 				context.checkout.forest.anchors.locate(fieldAnchor.parent) ??
-				fail("parent anchor node should always exist since field is under a node");
+				fail(0xb11 /* parent anchor node should always exist since field is under a node */);
 			this.offAfterDestroy = anchorNode.events.on("afterDestroy", () => {
 				this[disposeSymbol]();
 			});

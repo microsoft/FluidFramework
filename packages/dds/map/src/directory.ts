@@ -687,7 +687,7 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const message = content as IDirectoryOperation;
 		const handler = this.messageHandlers.get(message.type);
 		assert(handler !== undefined, 0x00d /* Missing message handler for message type */);
@@ -784,8 +784,8 @@ export class SharedDirectory
 					const localValue = this.makeLocal(
 						key,
 						currentSubDir.absolutePath,
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-						parseHandles(serializable, this.serializer),
+						// eslint-disable-next-line import/no-deprecated
+						parseHandles(serializable, this.serializer) as ISerializableValue,
 					);
 					currentSubDir.populateStorage(key, localValue);
 				}
@@ -805,7 +805,10 @@ export class SharedDirectory
 		if (message.type === MessageType.Operation) {
 			const op: IDirectoryOperation = message.contents as IDirectoryOperation;
 			const handler = this.messageHandlers.get(op.type);
-			assert(handler !== undefined, 0x00e /* Missing message handler for message type */);
+			assert(
+				handler !== undefined,
+				0x00e /* "Missing message handler for message type: op may be from a newer version */,
+			);
 			handler.process(message, op, local, localOpMetadata);
 		}
 	}
@@ -813,7 +816,7 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
-	protected rollback(content: unknown, localOpMetadata: unknown): void {
+	protected override rollback(content: unknown, localOpMetadata: unknown): void {
 		const op: IDirectoryOperation = content as IDirectoryOperation;
 		const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 		if (subdir) {
@@ -864,18 +867,15 @@ export class SharedDirectory
 			return false;
 		}
 		let currentParent = this.root;
-		const nodeList = absolutePath.split(posix.sep);
-		let start = 1;
-		while (start < nodeList.length) {
-			const subDirName = nodeList[start];
-			if (currentParent.isSubDirectoryDeletePending(subDirName)) {
+		const pathParts = absolutePath.split(posix.sep).slice(1);
+		for (const dirName of pathParts) {
+			if (currentParent.isSubDirectoryDeletePending(dirName)) {
 				return true;
 			}
-			currentParent = currentParent.getSubDirectory(subDirName) as SubDirectory;
+			currentParent = currentParent.getSubDirectory(dirName) as SubDirectory;
 			if (currentParent === undefined) {
 				return true;
 			}
-			start += 1;
 		}
 		return false;
 	}
@@ -1492,7 +1492,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			dirs: this._subdirectories,
 			next(): IteratorResult<[string, IDirectory]> {
 				if (this.index < subdirNames.length) {
-					const subdirName = subdirNames[this.index++];
+					// Bounds check above guarantees non-null (at least at compile time, assuming all types are respected)
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					const subdirName = subdirNames[this.index++]!;
 					const subdir = this.dirs.get(subdirName);
 					assert(subdir !== undefined, 0x8ac /* Could not find expected sub-directory. */);
 					return { value: [subdirName, subdir], done: false };
@@ -1607,7 +1609,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				const nextVal = localEntriesIterator.next();
 				return nextVal.done
 					? { value: undefined, done: true }
-					: { value: [nextVal.value[0], nextVal.value[1]?.value], done: false };
+					: { value: [nextVal.value[0], nextVal.value[1].value], done: false };
 			},
 			[Symbol.iterator](): IterableIterator<[string, unknown]> {
 				return this;
@@ -2181,21 +2183,27 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		local: boolean,
 		localOpMetadata: unknown,
 	): boolean {
-		if (this.pendingClearMessageIds.length > 0) {
+		const firstPendingClearMessageId = this.pendingClearMessageIds[0];
+		if (firstPendingClearMessageId !== undefined) {
 			if (local) {
 				assert(
 					localOpMetadata !== undefined &&
 						isKeyEditLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
+						localOpMetadata.pendingMessageId < firstPendingClearMessageId,
 					0x010 /* "Received out of order storage op when there is an unackd clear message" */,
 				);
 				// Remove all pendingMessageIds lower than first pendingClearMessageId.
-				const lowestPendingClearMessageId = this.pendingClearMessageIds[0];
+				const lowestPendingClearMessageId = firstPendingClearMessageId;
 				const pendingKeyMessageIdArray = this.pendingKeys.get(op.key);
 				if (pendingKeyMessageIdArray !== undefined) {
 					let index = 0;
-					while (pendingKeyMessageIdArray[index] < lowestPendingClearMessageId) {
+					let pendingKeyMessageId = pendingKeyMessageIdArray[index];
+					while (
+						pendingKeyMessageId !== undefined &&
+						pendingKeyMessageId < lowestPendingClearMessageId
+					) {
 						index += 1;
+						pendingKeyMessageId = pendingKeyMessageIdArray[index];
 					}
 					const newPendingKeyMessageId = pendingKeyMessageIdArray.splice(index);
 					if (newPendingKeyMessageId.length === 0) {

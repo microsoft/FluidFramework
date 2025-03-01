@@ -112,8 +112,10 @@ function createClearLocalOpMetadata(
 	const localMetadata: IMapClearLocalOpMetadata = {
 		type: "clear",
 		pendingMessageId: pendingClearMessageId,
-		previousMap,
 	};
+	if (previousMap !== undefined) {
+		localMetadata.previousMap = previousMap;
+	}
 	return localMetadata;
 }
 
@@ -216,7 +218,7 @@ export class AttributableMapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-						{ value: [nextVal.value[0], nextVal.value[1]?.value], done: false };
+						{ value: [nextVal.value[0], nextVal.value[1].value], done: false };
 			},
 			[Symbol.iterator](): IterableIterator<[string, unknown]> {
 				return this;
@@ -508,7 +510,14 @@ export class AttributableMapKernel {
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
-	 * @returns True if the operation was processed, false otherwise.
+	 * @returns True if the operation was recognized and thus processed, false otherwise.
+	 *
+	 * @remarks
+	 * When this returns false and the caller doesn't handle the op itself, then the op could be from a different version of this code.
+	 * In such a case, not applying the op would result in this client becoming out of sync with clients that do handle the op
+	 * and could result in data corruption or data loss as well.
+	 * Therefore, in such cases the caller should typically throw an error, ensuring that this client treats the situation as data corruption
+	 * (since its data no longer matches what other clients think the data should be) and will avoid overriding document content or misleading the users into thinking their current state is accurate.
 	 */
 	public tryProcessMessage(
 		message: ISequencedDocumentMessage,
@@ -668,12 +677,13 @@ export class AttributableMapKernel {
 		localOpMetadata: MapLocalOpMetadata,
 	): boolean {
 		const op = message.contents as IMapKeyOperation;
-		if (this.pendingClearMessageIds.length > 0) {
+		const firstPendingClearMessageId = this.pendingClearMessageIds[0];
+		if (firstPendingClearMessageId !== undefined) {
 			if (local) {
 				assert(
 					localOpMetadata !== undefined &&
 						isMapKeyLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
+						localOpMetadata.pendingMessageId < firstPendingClearMessageId,
 					0x5ed /* Received out of order op when there is an unackd clear message */,
 				);
 			}

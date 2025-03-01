@@ -7,7 +7,6 @@ import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
-	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -114,16 +113,6 @@ export class ForestSummarizer implements Summarizable {
 		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
 	}
 
-	public getGCData(fullGC?: boolean): IGarbageCollectionData {
-		// TODO: Properly implement garbage collection. Right now, garbage collection is performed automatically
-		// by the code in SharedObject (from which SharedTreeCore extends). The `runtime.uploadBlob` API delegates
-		// to the `BlobManager`, which automatically populates the summary with ISummaryAttachment entries for each
-		// blob.
-		return {
-			gcNodes: {},
-		};
-	}
-
 	public async load(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
@@ -150,12 +139,7 @@ export class ForestSummarizer implements Summarizable {
 					id: buildId,
 					trees: nodeCursors,
 				});
-				fieldChanges.push([
-					fieldKey,
-					{
-						local: [{ count: nodeCursors.length, attach: buildId }],
-					},
-				]);
+				fieldChanges.push([fieldKey, [{ count: nodeCursors.length, attach: buildId }]]);
 			}
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

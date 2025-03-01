@@ -747,7 +747,7 @@ export function splitMark<TMark extends Mark>(mark: TMark, length: number): [TMa
 	const markLength = mark.count;
 	const remainder = markLength - length;
 	if (length < 1 || remainder < 1) {
-		fail("Unable to split mark due to lengths");
+		fail(0xb2d /* Unable to split mark due to lengths */);
 	}
 
 	const [effect1, effect2] = splitMarkEffect(mark, length);
@@ -942,13 +942,45 @@ function getCrossFieldKeysForMarkEffect(
 			// An insert behaves like a move where the source and destination are at the same location.
 			// An insert can become a move when after rebasing.
 			return [
-				[CrossFieldTarget.Source, effect.revision, effect.id, count],
-				[CrossFieldTarget.Destination, effect.revision, effect.id, count],
+				{
+					key: {
+						target: CrossFieldTarget.Source,
+						revision: effect.revision,
+						localId: effect.id,
+					},
+					count,
+				},
+				{
+					key: {
+						target: CrossFieldTarget.Destination,
+						revision: effect.revision,
+						localId: effect.id,
+					},
+					count,
+				},
 			];
 		case "MoveOut":
-			return [[CrossFieldTarget.Source, effect.revision, effect.id, count]];
+			return [
+				{
+					key: {
+						target: CrossFieldTarget.Source,
+						revision: effect.revision,
+						localId: effect.id,
+					},
+					count,
+				},
+			];
 		case "MoveIn":
-			return [[CrossFieldTarget.Destination, effect.revision, effect.id, count]];
+			return [
+				{
+					key: {
+						target: CrossFieldTarget.Destination,
+						revision: effect.revision,
+						localId: effect.id,
+					},
+					count,
+				},
+			];
 		case "AttachAndDetach":
 			return [
 				...getCrossFieldKeysForMarkEffect(effect.attach, count),

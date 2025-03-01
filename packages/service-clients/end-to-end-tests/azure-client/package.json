@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-end-to-end-tests",
-	"version": "2.20.0",
+	"version": "2.23.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -76,6 +76,7 @@
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/map-legacy": "npm:@fluidframework/map@^1.4.0",
 		"@fluidframework/matrix": "workspace:~",
+		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
@@ -95,9 +96,9 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.51.0",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
 		"@types/node": "^18.19.0",

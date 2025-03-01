@@ -100,8 +100,15 @@ export function getOdspCredentials(
 		const tenants: LoginTenants = JSON.parse(loginTenants);
 		const tenantNames = Object.keys(tenants);
 		const tenant = tenantNames[tenantIndex % tenantNames.length];
+		if (tenant === undefined) {
+			throw new Error("tenant should not be undefined when getting odsp credentials");
+		}
+		const tenantInfo = tenants[tenant];
+		if (tenantInfo === undefined) {
+			throw new Error("tenantInfo should not be undefined when getting odsp credentials");
+		}
 		// Translate all the user from that user to the full user principle name by appending the tenant domain
-		const range = tenants[tenant]?.range;
+		const range = tenantInfo.range;
 
 		// Return the set of account to choose from a single tenant
 		for (let i = 0; i < range.count; i++) {
@@ -131,8 +138,16 @@ export function getOdspCredentials(
 
 		// Need to choose one out of the set as these account might be from different tenant
 		const username = requestedUserName ?? Object.keys(passwords)[0];
-		assert(passwords[username], `No password for username: ${username}`);
-		creds.push({ username, password: passwords[username] });
+		if (username === undefined) {
+			throw new Error("username should not be undefined when getting odsp credentials");
+		}
+		const userPass = passwords[username];
+		if (userPass === undefined) {
+			throw new Error(
+				"password for username should not be undefined when getting odsp credentials",
+			);
+		}
+		creds.push({ username, password: userPass });
 	}
 	return creds;
 }
@@ -190,7 +205,9 @@ export class OdspTestDriver implements ITestDriver {
 				? Math.random()
 				: OdspTestDriver.legacyDriverUserRandomIndex;
 		const userIndex = Math.floor(randomUserIndex * creds.length);
-		const { username, password } = creds[userIndex];
+		// Bounds check above guarantees non-null (at least at compile time, assuming all types are respected)
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		const { username, password } = creds[userIndex]!;
 
 		const emailServer = username.substr(username.indexOf("@") + 1);
 

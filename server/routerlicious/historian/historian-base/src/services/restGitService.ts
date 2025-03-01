@@ -27,6 +27,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { Constants, getRequestErrorTranslator } from "../utils";
 import { ICache } from "./definitions";
+import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 // We include the historian version in the user-agent string
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -122,6 +123,8 @@ export class RestGitService {
 				getGlobalTelemetryContext().getProperties().correlationId ??
 				uuid() /* getCorrelationId */,
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
+			undefined /* refreshTokenIfNeeded */,
+			logHttpMetrics,
 		);
 	}
 

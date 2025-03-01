@@ -41,6 +41,7 @@ import {
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
 	type GraphCommit,
+	isAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -59,7 +60,13 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import { Breakable, disposeSymbol, fail, getOrCreate } from "../util/index.js";
+import {
+	Breakable,
+	disposeSymbol,
+	fail,
+	getOrCreate,
+	type WithBreakable,
+} from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -181,7 +188,7 @@ export interface TreeBranchFork extends BranchableTree, IDisposable {
  * API for interacting with a {@link SharedTreeBranch}.
  * Implementations of this interface must implement the {@link branchKey} property.
  */
-export interface ITreeCheckout extends AnchorLocator, ViewableTree {
+export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakable {
 	/**
 	 * Read and Write access for schema stored in the document.
 	 *
@@ -390,7 +397,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		),
 		/** Optional logger for telemetry. */
 		private readonly logger?: ITelemetryLoggerExt,
-		private readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
 		private readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = new SquashingTransactionStack(
@@ -517,7 +524,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					// original (reinstated) schema.
 					this.storedSchema.apply(change.innerChange.schema.new);
 				} else {
-					fail("Unknown Shared Tree change type.");
+					fail(0xad1 /* Unknown Shared Tree change type. */);
 				}
 			}
 		}
@@ -548,15 +555,13 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	private withCombinedVisitor(fn: (visitor: DeltaVisitor) => void): void {
 		const anchorVisitor = this.forest.anchors.acquireVisitor();
-		const combinedVisitor = combineVisitors(
-			[this.forest.acquireVisitor(), anchorVisitor],
-			[anchorVisitor],
-		);
+		const combinedVisitor = combineVisitors([this.forest.acquireVisitor(), anchorVisitor]);
 		fn(combinedVisitor);
 		combinedVisitor.free();
 	}
 
 	private checkNotDisposed(usageError?: string): void {
+		this.breaker.use();
 		if (this.disposed) {
 			if (usageError !== undefined) {
 				throw new UsageError(usageError);
@@ -605,21 +610,27 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					revertible.dispose();
 				}
 			},
-			clone: (forkedBranch: TreeBranch) => {
-				if (forkedBranch === undefined) {
-					return this.createRevertible(revision, kind, checkout, onRevertibleDisposed);
+			clone: (targetBranch: TreeBranch) => {
+				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
+				const targetCheckout = getCheckout(targetBranch);
+
+				const revertibleBranch = this.revertibleCommitBranches.get(revision);
+				if (revertibleBranch === undefined) {
+					throw new UsageError("Unable to clone a revertible that has been disposed.");
 				}
 
-				// TODO:#23442: When a revertible is cloned for a forked branch, optimize to create a fork of a revertible branch once per revision NOT once per revision per checkout.
-				const forkedCheckout = getCheckout(forkedBranch);
-				const revertibleBranch = this.revertibleCommitBranches.get(revision);
-				assert(
-					revertibleBranch !== undefined,
-					0xa82 /* change to revert does not exist on the given forked branch */,
-				);
-				forkedCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+				const commitToRevert = revertibleBranch.getHead();
+				const activeBranchHead = targetCheckout.#transaction.activeBranch.getHead();
 
-				return this.createRevertible(revision, kind, forkedCheckout, onRevertibleDisposed);
+				if (isAncestor(commitToRevert, activeBranchHead, true) === false) {
+					throw new UsageError(
+						"Cannot clone revertible for a commit that is not present on the given branch.",
+					);
+				}
+
+				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
+
+				return this.createRevertible(revision, kind, targetCheckout, onRevertibleDisposed);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -652,7 +663,6 @@ export class TreeCheckout implements ITreeCheckoutFork {
 			this,
 			config,
 			createNodeKeyManager(this.idCompressor),
-			this.breaker,
 			() => {
 				this.views.delete(view);
 			},

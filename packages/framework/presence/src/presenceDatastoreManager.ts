@@ -9,7 +9,7 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
-import type { IEphemeralRuntime } from "./internalTypes.js";
+import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type { ClientSessionId, ISessionClient } from "./presence.js";
 import type {
@@ -115,11 +115,11 @@ function mergeGeneralDatastoreMessageContent(
 		const mergedData = queueDatastore[workspaceName] ?? {};
 
 		// Iterate over each value manager and its data, merging it as needed.
-		for (const valueManagerKey of Object.keys(workspaceData)) {
-			for (const [clientSessionId, value] of objectEntries(workspaceData[valueManagerKey])) {
-				mergedData[valueManagerKey] ??= {};
-				const oldData = mergedData[valueManagerKey][clientSessionId];
-				mergedData[valueManagerKey][clientSessionId] = mergeValueDirectory(
+		for (const [valueManagerKey, valueManagerValue] of objectEntries(workspaceData)) {
+			for (const [clientSessionId, value] of objectEntries(valueManagerValue)) {
+				const mergeObject = (mergedData[valueManagerKey] ??= {});
+				const oldData = mergeObject[clientSessionId];
+				mergeObject[clientSessionId] = mergeValueDirectory(
 					oldData,
 					value,
 					0, // local values do not need a time shift
@@ -383,16 +383,18 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				this.refreshBroadcastRequested = false;
 			}
 		}
-
+		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [workspaceAddress, remoteDatastore] of Object.entries(message.content.data)) {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
-				workspace.internal.processUpdate(
-					received,
-					timeModifier,
-					remoteDatastore,
-					message.clientId,
+				postUpdateActions.push(
+					...workspace.internal.processUpdate(
+						received,
+						timeModifier,
+						remoteDatastore,
+						message.clientId,
+					),
 				);
 			} else {
 				// All broadcast state is kept even if not currently registered, unless a value
@@ -408,6 +410,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 					mergeUntrackedDatastore(key, remoteAllKnownState, workspaceDatastore, timeModifier);
 				}
 			}
+		}
+		for (const action of postUpdateActions) {
+			action();
 		}
 	}
 
