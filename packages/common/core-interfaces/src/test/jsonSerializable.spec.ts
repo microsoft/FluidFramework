@@ -816,7 +816,7 @@ describe("JsonSerializable", () => {
 				});
 				it("`bigint | string`", () => {
 					const { filteredIn } = passThru(
-						// @ts-expect-error `bigint | symbol` is not assignable to `string`
+						// @ts-expect-error `string | bigint` is not assignable to `string`
 						bigintOrString,
 					);
 					assertIdenticalTypes(filteredIn, string);
