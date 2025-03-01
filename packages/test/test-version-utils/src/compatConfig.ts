@@ -257,6 +257,25 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
 
+/**
+ * Returns true if the given compat config is compliant with ODSP's version requirements.
+ * ! If a summarizer's version is too old, ODSP will nack the summaries with "Upgrade to a newer version of the Fluid client packages to summarize".
+ */
+export function isOdspCompatCompliant(config: CompatConfig): boolean {
+	for (const ltsVersion of defaultCompatVersions.ltsVersions) {
+		if (
+			(typeof config.compatVersion === "string" &&
+				semver.compare(config.compatVersion, ltsVersion) <= 0) ||
+			(config.createVersion !== undefined &&
+				semver.compare(config.createVersion, ltsVersion) <= 0) ||
+			(config.loadVersion !== undefined && semver.compare(config.loadVersion, ltsVersion) <= 0)
+		) {
+			return false;
+		}
+	}
+	return true;
+}
+
 // Helper function for genCrossVersionCompatConfig().
 function genCompatConfig(createVersion: string, loadVersion: string): CompatConfig {
 	return {
