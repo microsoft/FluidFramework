@@ -6,10 +6,10 @@ settings:
 
 overrides:
   '@types/node@<18': ^18.19.39
-  oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
-  oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   qs: ^6.11.0
   socket.io-parser: ^4.2.4
+  oclif>@aws-sdk/client-cloudfront: npm:empty-npm-package@1.0.0
+  oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
 
 patchedDependencies:
   '@microsoft/api-extractor@7.45.1':
@@ -91,7 +91,7 @@ importers:
         version: 2.8.5
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.4.0(supports-color@8.1.1)
       express:
         specifier: ^4.21.2
         version: 4.21.2
@@ -146,7 +146,7 @@ importers:
         version: 2.4.4
       async:
         specifier: ^3.2.2
-        version: 3.2.5
+        version: 3.2.6
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -206,7 +206,7 @@ importers:
         version: 0.3.2
       axios:
         specifier: ^1.7.7
-        version: 1.7.7(debug@4.3.4)
+        version: 1.7.7(debug@4.4.0)
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3
@@ -218,7 +218,7 @@ importers:
         version: 2.8.5
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.4.0(supports-color@8.1.1)
       express:
         specifier: ^4.21.2
         version: 4.21.2
@@ -306,7 +306,7 @@ importers:
         version: 2.4.4
       async:
         specifier: ^3.2.2
-        version: 3.2.5
+        version: 3.2.6
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -363,7 +363,7 @@ importers:
         version: 2.8.5
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.4.0(supports-color@8.1.1)
       express:
         specifier: ^4.21.2
         version: 4.21.2
@@ -412,7 +412,7 @@ importers:
         version: 3.4.13
       async:
         specifier: ^3.2.2
-        version: 3.2.5
+        version: 3.2.6
       concurrently:
         specifier: ^8.2.1
         version: 8.2.1
@@ -472,7 +472,7 @@ importers:
         version: 8.2.5
       axios:
         specifier: ^1.7.7
-        version: 1.7.7(debug@4.3.4)
+        version: 1.7.7(debug@4.4.0)
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3
@@ -484,7 +484,7 @@ importers:
         version: 2.8.5
       debug:
         specifier: ^4.3.4
-        version: 4.3.4(supports-color@8.1.1)
+        version: 4.4.0(supports-color@8.1.1)
       express:
         specifier: ^4.21.2
         version: 4.21.2
@@ -554,10 +554,10 @@ importers:
         version: 3.4.13
       async:
         specifier: ^3.2.2
-        version: 3.2.5
+        version: 3.2.6
       axios-mock-adapter:
         specifier: ^1.19.0
-        version: 1.21.5(axios@1.7.7(debug@4.3.4))
+        version: 1.21.5(axios@1.7.7(debug@4.4.0))
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -757,7 +757,7 @@ importers:
         version: 5.2.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-lambdas-previous':
         specifier: npm:@fluidframework/server-lambdas@5.0.0
-        version: '@fluidframework/server-lambdas@5.0.0(debug@4.3.4)'
+        version: '@fluidframework/server-lambdas@5.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -4503,9 +4503,6 @@ packages:
 
   async@3.2.4:
     resolution: {integrity: sha512-iAB+JbDEGXhyIUavoDl9WP/Jj106Kz9DEn1DPgYw5ruDn0e3Wgi3sKFm55sASdGBNOQB8F59d9qQ7deqrHA8wQ==}
-
-  async@3.2.5:
-    resolution: {integrity: sha512-baNZyqaaLhyLVKm/DlvdW051MSgO6b8eVfIezl9E5PqWxFgzLm/wQntEW4zOytVburDEr0JlALEpdOFwvErLsg==}
 
   async@3.2.6:
     resolution: {integrity: sha512-htCUDlxyyCLMgaM3xXg0C0LW2xqfuQ6p05pCEIsXuyQ+a1koYKTuBMzRNwmybfLgvJDMd0r1LTn4+E0Ti6C2AA==}
@@ -10085,10 +10082,10 @@ snapshots:
   '@eslint/eslintrc@2.1.4':
     dependencies:
       ajv: 6.12.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       espree: 9.6.1
       globals: 13.20.0
-      ignore: 5.3.0
+      ignore: 5.3.2
       import-fresh: 3.3.0
       js-yaml: 4.1.0
       minimatch: 3.1.2
@@ -10574,7 +10571,7 @@ snapshots:
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
       assert: 2.1.0
-      async: 3.2.5
+      async: 3.2.6
       events: 3.3.0
       lodash: 4.17.21
       nconf: 0.12.1
@@ -10582,7 +10579,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-lambdas@5.0.0(debug@4.3.4)':
+  '@fluidframework/server-lambdas@5.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 5.0.0
@@ -10594,8 +10591,35 @@ snapshots:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@types/semver': 7.5.6
       assert: 2.1.0
-      async: 3.2.5
+      async: 3.2.6
       axios: 1.7.7(debug@4.3.4)
+      buffer: 6.0.3
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      json-stringify-safe: 5.0.1
+      lodash: 4.17.21
+      nconf: 0.12.1
+      semver: 7.6.0
+      sha.js: 2.4.11
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  '@fluidframework/server-lambdas@5.0.0(debug@4.4.0)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas-driver': 5.0.0
+      '@fluidframework/server-services-client': 5.0.0
+      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-telemetry': 5.0.0
+      '@types/semver': 7.5.6
+      assert: 2.1.0
+      async: 3.2.6
+      axios: 1.7.7(debug@4.4.0)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -10613,13 +10637,13 @@ snapshots:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.4)
+      '@fluidframework/server-lambdas': 5.0.0(debug@4.4.0)
       '@fluidframework/server-memory-orderer': 5.0.0
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
       '@fluidframework/server-test-utils': 5.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       events_pkg: events@3.3.0
       jsrsasign: 11.0.0
       uuid: 9.0.1
@@ -10633,7 +10657,7 @@ snapshots:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.4)
+      '@fluidframework/server-lambdas': 5.0.0(debug@4.4.0)
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
@@ -10643,7 +10667,7 @@ snapshots:
       '@types/node': 18.19.39
       '@types/ws': 6.0.4
       assert: 2.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
@@ -10661,7 +10685,7 @@ snapshots:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-kafka-orderer': 5.0.0
-      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.4)
+      '@fluidframework/server-lambdas': 5.0.0
       '@fluidframework/server-lambdas-driver': 5.0.0
       '@fluidframework/server-memory-orderer': 5.0.0
       '@fluidframework/server-services': 5.0.0
@@ -10703,7 +10727,7 @@ snapshots:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-kafka-orderer': 5.0.0
-      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.4)
+      '@fluidframework/server-lambdas': 5.0.0
       '@fluidframework/server-lambdas-driver': 5.0.0
       '@fluidframework/server-memory-orderer': 5.0.0
       '@fluidframework/server-routerlicious-base': 5.0.0
@@ -10731,9 +10755,9 @@ snapshots:
       '@fluidframework/gitresources': 5.0.0
       '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.7.7(debug@4.3.4)
+      axios: 1.7.7(debug@4.4.0)
       crc-32: 1.2.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       jsrsasign: 11.0.0
       jwt-decode: 4.0.0
@@ -10751,7 +10775,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@types/nconf': 0.10.6
       '@types/node': 18.19.39
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       events: 3.3.0
       nconf: 0.12.1
     transitivePeerDependencies:
@@ -10803,7 +10827,7 @@ snapshots:
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.5)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       events: 3.3.0
       fast-redact: 3.3.0
       ioredis: 5.3.2
@@ -10835,7 +10859,7 @@ snapshots:
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
       '@fluidframework/server-services-telemetry': 5.0.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       express: 4.21.2
       ioredis: 5.3.2
       json-stringify-safe: 5.0.1
@@ -10865,8 +10889,8 @@ snapshots:
       '@socket.io/redis-emitter': 4.1.1
       '@types/lodash': 4.14.202
       amqplib: 0.10.3
-      axios: 1.7.7(debug@4.3.4)
-      debug: 4.3.4(supports-color@8.1.1)
+      axios: 1.7.7(debug@4.4.0)
+      debug: 4.4.0(supports-color@8.1.1)
       events: 3.3.0
       ioredis: 5.3.2
       lodash: 4.17.21
@@ -10894,7 +10918,7 @@ snapshots:
       '@fluidframework/server-services-telemetry': 5.0.0
       '@types/ioredis-mock': 8.2.5
       assert: 2.1.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       events: 3.3.0
       ioredis: 5.3.2
       ioredis-mock: 8.9.0(@types/ioredis-mock@8.2.5)(ioredis@5.3.2)
@@ -10923,7 +10947,7 @@ snapshots:
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
       '@humanwhocodes/object-schema': 2.0.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       minimatch: 3.1.2
     transitivePeerDependencies:
       - supports-color
@@ -12588,10 +12612,10 @@ snapshots:
       '@typescript-eslint/type-utils': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/utils': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       eslint: 8.55.0
       graphemer: 1.4.0
-      ignore: 5.3.0
+      ignore: 5.3.2
       natural-compare: 1.4.0
       semver: 7.6.0
       ts-api-utils: 1.0.3(typescript@5.1.6)
@@ -12614,7 +12638,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.1.6)
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       eslint: 8.55.0
     optionalDependencies:
       typescript: 5.1.6
@@ -12668,7 +12692,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.0
+      semver: 7.6.3
       ts-api-utils: 1.0.3(typescript@5.1.6)
     optionalDependencies:
       typescript: 5.1.6
@@ -12699,7 +12723,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.1.6)
       eslint: 8.55.0
-      semver: 7.6.0
+      semver: 7.6.3
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -12932,7 +12956,7 @@ snapshots:
 
   agentkeepalive@4.3.0:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       depd: 2.0.0
       humanize-ms: 1.2.1
     transitivePeerDependencies:
@@ -13151,8 +13175,6 @@ snapshots:
 
   async@3.2.4: {}
 
-  async@3.2.5: {}
-
   async@3.2.6: {}
 
   asynciterator.prototype@1.0.0:
@@ -13173,9 +13195,23 @@ snapshots:
       fast-deep-equal: 3.1.3
       is-buffer: 2.0.5
 
+  axios-mock-adapter@1.21.5(axios@1.7.7(debug@4.4.0)):
+    dependencies:
+      axios: 1.7.7(debug@4.4.0)
+      fast-deep-equal: 3.1.3
+      is-buffer: 2.0.5
+
   axios@1.7.7(debug@4.3.4):
     dependencies:
       follow-redirects: 1.15.6(debug@4.3.4)
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.7.7(debug@4.4.0):
+    dependencies:
+      follow-redirects: 1.15.6(debug@4.4.0)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -14001,7 +14037,7 @@ snapshots:
   detect-port@1.5.1:
     dependencies:
       address: 1.2.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -14255,7 +14291,7 @@ snapshots:
 
   eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0)
@@ -14285,7 +14321,7 @@ snapshots:
     dependencies:
       escape-string-regexp: 1.0.5
       eslint: 8.55.0
-      ignore: 5.3.0
+      ignore: 5.3.2
 
   eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.1)(eslint@8.55.0):
     dependencies:
@@ -14309,7 +14345,7 @@ snapshots:
       '@es-joy/jsdoccomment': 0.40.1
       are-docs-informative: 0.0.2
       comment-parser: 1.4.0
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       escape-string-regexp: 4.0.0
       eslint: 8.55.0
       esquery: 1.5.0
@@ -14405,7 +14441,7 @@ snapshots:
       ajv: 6.12.6
       chalk: 4.1.2
       cross-spawn: 7.0.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       escape-string-regexp: 4.0.0
       eslint-scope: 7.2.2
@@ -14676,6 +14712,10 @@ snapshots:
     optionalDependencies:
       debug: 4.3.4(supports-color@8.1.1)
 
+  follow-redirects@1.15.6(debug@4.4.0):
+    optionalDependencies:
+      debug: 4.4.0(supports-color@8.1.1)
+
   for-each@0.3.3:
     dependencies:
       is-callable: 1.2.7
@@ -14854,7 +14894,7 @@ snapshots:
 
   gitlog@4.0.8:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
@@ -14873,7 +14913,7 @@ snapshots:
     dependencies:
       foreground-child: 3.1.1
       jackspeak: 2.3.6
-      minimatch: 9.0.4
+      minimatch: 9.0.5
       minipass: 6.0.2
       path-scurry: 1.11.1
 
@@ -15224,7 +15264,7 @@ snapshots:
     dependencies:
       '@ioredis/commands': 1.2.0
       cluster-key-slot: 1.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       denque: 2.1.0
       lodash.defaults: 4.2.0
       lodash.isarguments: 3.1.0
@@ -15605,7 +15645,7 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.6.0
+      semver: 7.6.3
 
   jsrsasign@11.0.0: {}
 
@@ -15874,7 +15914,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.6.0
+      semver: 7.6.3
 
   make-error@1.3.6: {}
 
@@ -16353,7 +16393,7 @@ snapshots:
 
   mocha-multi-reporters@1.5.1(mocha@10.2.0):
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       lodash: 4.17.21
       mocha: 10.2.0
     transitivePeerDependencies:
@@ -16468,7 +16508,7 @@ snapshots:
 
   nconf@0.12.0:
     dependencies:
-      async: 3.2.5
+      async: 3.2.6
       ini: 2.0.0
       secure-keys: 1.0.0
       yargs: 16.2.0
@@ -16515,7 +16555,7 @@ snapshots:
 
   nock@13.3.3:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       propagate: 2.0.1
@@ -16626,7 +16666,7 @@ snapshots:
       jsonlines: 0.1.1
       lodash: 4.17.21
       make-fetch-happen: 11.1.1
-      minimatch: 9.0.5
+      minimatch: 9.0.4
       p-map: 4.0.0
       pacote: 15.2.0
       parse-github-url: 1.0.2
@@ -17093,7 +17133,7 @@ snapshots:
 
   pm2-axon-rpc@0.7.1:
     dependencies:
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -17101,7 +17141,7 @@ snapshots:
     dependencies:
       amp: 0.3.1
       amp-message: 0.1.2
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       escape-string-regexp: 4.0.0
     transitivePeerDependencies:
       - supports-color
@@ -17118,7 +17158,7 @@ snapshots:
   pm2-sysmonit@1.2.8:
     dependencies:
       async: 3.2.6
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       pidusage: 2.0.21
       systeminformation: 5.21.24
       tx2: 1.0.5
@@ -17132,7 +17172,7 @@ snapshots:
       '@pm2/io': 6.0.1
       '@pm2/js-api': 0.8.0
       '@pm2/pm2-version-check': 1.0.4
-      async: 3.2.5
+      async: 3.2.6
       blessed: 0.1.81
       chalk: 3.0.0
       chokidar: 3.5.3
@@ -17140,7 +17180,7 @@ snapshots:
       commander: 2.15.1
       croner: 4.1.97
       dayjs: 1.11.10
-      debug: 4.3.4(supports-color@8.1.1)
+      debug: 4.4.0(supports-color@8.1.1)
       enquirer: 2.3.6
       eventemitter2: 5.0.1
       fclone: 1.0.11
@@ -18945,15 +18985,15 @@ snapshots:
     dependencies:
       '@colors/colors': 1.5.0
       '@dabh/diagnostics': 2.0.3
-      async: 3.2.5
+      async: 3.2.6
       is-stream: 2.0.1
-      logform: 2.6.0
+      logform: 2.5.1
       one-time: 1.0.0
       readable-stream: 3.6.2
       safe-stable-stringify: 2.4.3
       stack-trace: 0.0.10
-      triple-beam: 1.4.1
-      winston-transport: 4.6.0
+      triple-beam: 1.3.0
+      winston-transport: 4.5.0
 
   wordwrap@1.0.0: {}
 
@@ -19075,7 +19115,7 @@ snapshots:
 
   zookeeper@5.6.0:
     dependencies:
-      async: 3.2.5
+      async: 3.2.6
       decompress: 4.2.1
       decompress-targz: 4.1.1
       nan: 2.17.0
