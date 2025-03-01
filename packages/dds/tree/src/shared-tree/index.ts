@@ -21,6 +21,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	SharedTreeKernel,
 } from "./sharedTree.js";
 
 export {

@@ -72,7 +72,9 @@ describe("Garbage Collection", () => {
 		private readonly tree2: ISharedTree;
 
 		public constructor() {
-			this.containerRuntimeFactory = new MockContainerRuntimeFactory();
+			this.containerRuntimeFactory = new MockContainerRuntimeFactory({
+				useProcessMessages: true,
+			});
 			this.tree1 = createConnectedTree("tree1", this.containerRuntimeFactory);
 			this.tree2 = createConnectedTree("tree2", this.containerRuntimeFactory);
 			this.view1 = this.tree1.viewWith(new TreeViewConfiguration({ schema: SomeType }));
