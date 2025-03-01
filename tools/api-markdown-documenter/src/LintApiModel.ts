@@ -41,9 +41,10 @@ export interface LintApiModelConfiguration extends LoggingConfiguration {
 /**
  * {@link LintApiModelConfiguration} defaults.
  */
-const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration, "apiModel">> = {
-	logger: defaultConsoleLogger,
-};
+const defaultLintApiModelConfiguration: Required<Omit<LintApiModelConfiguration, "apiModel">> =
+	{
+		logger: defaultConsoleLogger,
+	};
 
 // TODO: common TsdocError base (associatedItem, packageName)
 
@@ -134,7 +135,7 @@ export async function lintApiModel(
 	return anyErrors
 		? {
 				referenceErrors: errors.referenceErrors,
-		  }
+			}
 		: undefined;
 }
 

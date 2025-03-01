@@ -57,7 +57,8 @@ export interface DocumentationHierarchyConfigurationBase {
  * @sealed
  * @public
  */
-export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+export interface SectionHierarchyConfiguration
+	extends DocumentationHierarchyConfigurationBase {
 	/**
 	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
 	 */
@@ -70,7 +71,8 @@ export interface SectionHierarchyConfiguration extends DocumentationHierarchyCon
  * @sealed
  * @public
  */
-export interface DocumentHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
+export interface DocumentHierarchyConfiguration
+	extends DocumentationHierarchyConfigurationBase {
 	/**
 	 * {@inheritDoc DocumentationHierarchyConfigurationBase.kind}
 	 */
@@ -179,7 +181,9 @@ export type HierarchyConfiguration = {
 	 * TODO: Allow all hierarchy configurations for packages.
 	 * There isn't a real reason to restrict this, except the way the code is currently structured.
 	 */
-	readonly [ApiItemKind.Package]: DocumentHierarchyConfiguration | FolderHierarchyConfiguration;
+	readonly [ApiItemKind.Package]:
+		| DocumentHierarchyConfiguration
+		| FolderHierarchyConfiguration;
 
 	/**
 	 * Hierarchy configuration for the `EntryPoint` API item kind.

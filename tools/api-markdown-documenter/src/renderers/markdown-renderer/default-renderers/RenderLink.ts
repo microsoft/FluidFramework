@@ -15,7 +15,11 @@ import type { RenderContext } from "../RenderContext.js";
  * @param writer - Writer context object into which the document contents will be written.
  * @param context - See {@link RenderContext}.
  */
-export function renderLink(node: LinkNode, writer: DocumentWriter, context: RenderContext): void {
+export function renderLink(
+	node: LinkNode,
+	writer: DocumentWriter,
+	context: RenderContext,
+): void {
 	writer.write("[");
 	renderNodes(node.children, writer, context);
 	writer.write(`](${node.target})`);
