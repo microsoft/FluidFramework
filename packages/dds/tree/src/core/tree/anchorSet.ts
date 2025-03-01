@@ -13,6 +13,7 @@ import {
 	type Brand,
 	type BrandedKey,
 	type BrandedMapSubset,
+	type Mutable,
 	type Opaque,
 	ReferenceCountedBase,
 	brand,
@@ -24,9 +25,16 @@ import {
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import type { PlaceIndex, Range, UpPath } from "./pathTree.js";
+import {
+	isDetachedUpPath,
+	type DetachedUpPath,
+	type PlaceIndex,
+	type Range,
+	type UpPath,
+} from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
+import { offsetDetachId } from "./deltaUtil.js";
 
 /**
  * A way to refer to a particular tree location within an {@link AnchorSet}.
@@ -569,6 +577,15 @@ export class AnchorSet implements AnchorLocator {
 			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = destinationPath;
 			node.parentField = destination.parentField;
+			// If the destination is a DetachedUpPath, propagate its detachedNodeId
+			if (isDetachedUpPath(destination)) {
+				(node as unknown as Mutable<DetachedUpPath>).detachedNodeId = offsetDetachId(
+					destination.detachedNodeId,
+					node.parentIndex - destination.parentIndex,
+				);
+			} else {
+				(node as unknown as Partial<Mutable<DetachedUpPath>>).detachedNodeId = undefined;
+			}
 		}
 
 		// Update new parent to add children
@@ -821,25 +838,34 @@ export class AnchorSet implements AnchorLocator {
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
-			detach(source: Range, destination: FieldKey): void {
+			detach(
+				source: Range,
+				destination: FieldKey,
+				detachedNodeId: Delta.DetachedNodeId,
+			): void {
 				this.notifyChildrenChanging();
-				this.detachEdit(source, destination);
+				this.detachEdit(source, destination, detachedNodeId);
 				this.notifyChildrenChanged();
 			},
-			detachEdit(source: Range, destination: FieldKey): void {
+			detachEdit(
+				source: Range,
+				destination: FieldKey,
+				detachedNodeId: Delta.DetachedNodeId,
+			): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a5 /* Must be in a field in order to detach */,
 				);
-				const sourcePath = {
+				const sourcePath: UpPath = {
 					parent: this.parent,
 					parentField: this.parentField,
 					parentIndex: source.start,
 				};
-				const destinationPath = {
+				const destinationPath: DetachedUpPath = {
 					parent: this.anchorSet.root,
 					parentField: destination,
 					parentIndex: 0,
+					detachedNodeId,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
@@ -848,9 +874,10 @@ export class AnchorSet implements AnchorLocator {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
+				destinationDetachedNodeId: Delta.DetachedNodeId,
 			): void {
 				this.notifyChildrenChanging();
-				this.detachEdit(range, oldContentDestination);
+				this.detachEdit(range, oldContentDestination, destinationDetachedNodeId);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 				this.notifyChildrenChanged();
 			},
