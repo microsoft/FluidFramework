@@ -238,6 +238,8 @@ export interface IBasicRestWrapperMetricProps {
     // (undocumented)
     axiosError: AxiosError<any>;
     // (undocumented)
+    baseUrl: string;
+    // (undocumented)
     correlationId: string;
     // (undocumented)
     durationInMs: number;

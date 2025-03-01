@@ -342,7 +342,7 @@ describe("SharedTree benchmarks", () => {
 						// TODO: specify a schema for these trees.
 						const [tree] = provider.trees;
 						for (let i = 0; i < size; i++) {
-							insert(tree.checkout, i, "test");
+							insert(tree.kernel.checkout, i, "test");
 						}
 
 						// Measure
@@ -391,7 +391,7 @@ describe("SharedTree benchmarks", () => {
 							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -400,7 +400,7 @@ describe("SharedTree benchmarks", () => {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									provider.processMessages(opsPerCommit);
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -416,7 +416,7 @@ describe("SharedTree benchmarks", () => {
 									timeSum += state.timer.toSeconds(before, after);
 									// We still generate commits because it affects local branch rebasing
 									const peer = provider.trees[iPeer];
-									insert(peer.checkout, 0, `p${iPeer}c${iCommit}`);
+									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
 							}
 
@@ -481,11 +481,11 @@ describe("SharedTree benchmarks", () => {
 							// Add commits to the receiver's local branch but prevent them from being sent in order to ensure they remain on the local branch
 							receiver.setConnected(false);
 							for (let iCommit = 0; iCommit < localBranchSize; iCommit++) {
-								insert(receiver.checkout, 0, `r${iCommit}`);
+								insert(receiver.kernel.checkout, 0, `r${iCommit}`);
 							}
 							// These are the commits that should be bunched together
 							for (let iCommit = 0; iCommit < bunchSize; iCommit++) {
-								insert(sender.checkout, 0, `s${iCommit}`);
+								insert(sender.kernel.checkout, 0, `s${iCommit}`);
 							}
 							// Ensure the sender has sent the ops
 							provider.processMessages();

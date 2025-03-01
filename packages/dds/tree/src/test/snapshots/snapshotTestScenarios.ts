@@ -208,7 +208,7 @@ export function generateTestTrees(options: SharedTreeOptions) {
 				const sf = new SchemaFactory("concurrent-inserts");
 				const provider = new TestTreeProviderLite(1, factory, true);
 				const tree1 = provider.trees[0];
-				const view1 = tree1.viewWith(
+				const view1 = tree1.kernel.viewWith(
 					new TreeViewConfiguration({
 						schema: [sf.array(sf.string)],
 						enableSchemaValidation,

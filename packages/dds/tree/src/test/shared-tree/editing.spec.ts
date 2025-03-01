@@ -29,7 +29,8 @@ import {
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
 import { SchemaFactory, stringSchema, toStoredSchema } from "../../simple-tree/index.js";
-import { JsonUnion, singleJsonCursor } from "../json/index.js";
+import { singleJsonCursor } from "../json/index.js";
+import { JsonAsTree } from "../../jsonDomainSchema.js";
 
 const rootField: FieldUpPath = {
 	parent: undefined,
@@ -49,7 +50,7 @@ const rootNode2: UpPath = {
 };
 
 const emptyJsonContent: TreeStoredContent = {
-	schema: toStoredSchema(SchemaFactory.optional(JsonUnion)),
+	schema: toStoredSchema(SchemaFactory.optional(JsonAsTree.Tree)),
 	initialTree: undefined,
 };
 
