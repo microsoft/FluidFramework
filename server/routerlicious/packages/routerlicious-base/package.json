@@ -152,6 +152,9 @@
 			},
 			"Interface_ITenantDocument": {
 				"backCompat": false
+			},
+			"VariableDeclaration_Constants": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"
