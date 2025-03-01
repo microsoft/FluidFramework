@@ -3,6 +3,12 @@
  * Licensed under the MIT License.
  */
 
+// Usage: Access these types via /internal/exposedUtilityTypes import spec when
+// system level but externally exposed version of utilities are needed.
+// Import via /internal when use is not exposed externally.
+// Should a customer need access to these types, export should be relocated to
+// index.ts and retagged export from internal.ts may be removed.
+
 export type { JsonDeserialized, JsonDeserializedOptions } from "./jsonDeserialized.js";
 export type { JsonSerializable, JsonSerializableOptions } from "./jsonSerializable.js";
 export type {
@@ -11,5 +17,4 @@ export type {
 } from "./jsonSerializationErrors.js";
 export type { JsonTypeWith, NonNullJsonObjectWith } from "./jsonType.js";
 
-// eslint-disable-next-line no-restricted-syntax
-export type * from "./exposedUtilityTypes.js";
+export type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";

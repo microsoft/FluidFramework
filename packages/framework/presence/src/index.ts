@@ -11,13 +11,6 @@
  * @packageDocumentation
  */
 
-// If desired these are the "required" types from core-interfaces.
-// export type {
-// 	InternalUtilityTypes,
-// 	JsonDeserialized,
-// 	JsonSerializable,
-// } from "@fluidframework/presence/internal/core-interfaces";
-
 export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {

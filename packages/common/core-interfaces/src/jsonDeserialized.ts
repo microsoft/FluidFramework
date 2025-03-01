@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
+import type { InternalUtilityTypes } from "./exposedInternalUtilityTypes.js";
 
 /**
  * Options for {@link JsonDeserialized}.
  *
- * @alpha
+ * @beta
  */
 export interface JsonDeserializedOptions {
 	/**
@@ -104,7 +104,7 @@ export interface JsonDeserializedOptions {
  * function foo<T>(): JsonDeserialized<T> { ... }
  * ```
  *
- * @alpha
+ * @beta
  */
 export type JsonDeserialized<
 	T,

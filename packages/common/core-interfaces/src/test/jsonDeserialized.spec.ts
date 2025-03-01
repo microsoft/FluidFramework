@@ -7,14 +7,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
-import type {
-	JsonDeserialized,
-	JsonTypeWith,
-	NonNullJsonObjectWith,
-} from "../../core-interfaces/index.js";
-
 import {
 	assertIdenticalTypes,
 	createInstanceOf,
@@ -128,6 +120,13 @@ import {
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 } from "./testValues.js";
+
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	JsonDeserialized,
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Defined using `JsonDeserialized` type filter tests `JsonDeserialized` at call site.
