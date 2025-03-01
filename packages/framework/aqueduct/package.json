@@ -70,7 +70,6 @@
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
 		"ci:build:api-reports:legacy": "api-extractor run --config api-extractor/api-extractor.legacy.json",
@@ -80,7 +79,6 @@
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
@@ -151,7 +149,6 @@
 		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.21.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},

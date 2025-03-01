@@ -4,6 +4,12 @@ The scripts in this folder can be used to switch a project between prettier and 
 
 **THESE SCRIPTS DO NOT RUN ON WINDOWS.**
 
+## Status as of 2025-02-21
+
+The client release group has been converted to Biome and all prettier dependencies and scripts have been removed.
+However, the scripts in this folder remain because other parts of the repo do not yet use biome (for example, server), and these scripts will
+be useful if/when we convert those projects.
+
 ## Required dependencies
 
 The scripts require the `npe` package be installed globally. To do that run `pnpm add -g npe`.

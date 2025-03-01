@@ -66,7 +66,6 @@
 		"check:exports:esm:legacy": "api-extractor run --config api-extractor/api-extractor-lint-legacy.esm.json",
 		"check:exports:esm:public": "api-extractor run --config api-extractor/api-extractor-lint-public.esm.json",
 		"check:format": "npm run check:biome",
-		"check:prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"ci:build": "npm run build:compile",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
 		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor.current.json",
@@ -79,7 +78,6 @@
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"format:prettier": "prettier --write . --cache --ignore-path ../../../.prettierignore",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"place:cjs:package-stub": "copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
@@ -103,7 +101,6 @@
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"eslint": "~8.55.0",
-		"prettier": "~3.0.3",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
 	},
