@@ -47,7 +47,7 @@ export async function seqFromTree(
  * @returns A string - representation of an input
  * @internal
  */
-export function encodeCompactIdToString(idArg: number | string, prefix = "") {
+export function encodeCompactIdToString(idArg: number | string, prefix = ""): string {
 	if (typeof idArg === "string") {
 		return idArg;
 	}
@@ -75,7 +75,7 @@ export function encodeCompactIdToString(idArg: number | string, prefix = "") {
 		// 100000 -> 'XZf'
 		const encode = num % 64;
 		const base = encode < 27 ? 65 : encode < 54 ? 97 - 27 : 48 - 54;
-		id = String.fromCharCode(base + encode) + id;
+		id = String.fromCodePoint(base + encode) + id;
 		num = Math.floor(num / 64) - 1;
 	} while (num !== -1);
 	return prefix + id;
