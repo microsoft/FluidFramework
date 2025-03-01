@@ -55,6 +55,7 @@ import {
 	arrayOfObjectAndFunctions,
 	arrayOfBigintAndObjects,
 	arrayOfSymbolsAndObjects,
+	readonlyArrayOfNumbers,
 	object,
 	emptyObject,
 	objectWithBoolean,
@@ -387,6 +388,13 @@ describe("JsonDeserialized", () => {
 			it("array of `number | bigint | symbol` becomes (number|null)[]", () => {
 				const resultRead = passThru([numberOrBigintOrSymbol], [7]);
 				assertIdenticalTypes(resultRead, createInstanceOf<(number | null)[]>());
+			});
+			it("readonly array of supported types (numbers) are preserved", () => {
+				const resultRead = passThru(readonlyArrayOfNumbers);
+				assertIdenticalTypes(resultRead, readonlyArrayOfNumbers);
+				// @ts-expect-error readonly array does not appear to support `push`, but works at runtime.
+				resultRead.push(0);
+				assert.deepStrictEqual(resultRead, [...readonlyArrayOfNumbers, 0]);
 			});
 		});
 

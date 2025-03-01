@@ -84,6 +84,8 @@ export const arrayOfBigintAndObjects: (bigint | { property: string })[] = [
 ];
 export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
 
+export const readonlyArrayOfNumbers: readonly number[] = arrayOfNumbers;
+
 // #endregion
 
 // #region Object (record) types

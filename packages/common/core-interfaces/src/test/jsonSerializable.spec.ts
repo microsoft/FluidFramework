@@ -56,6 +56,7 @@ import {
 	arrayOfObjectAndFunctions,
 	arrayOfBigintAndObjects,
 	arrayOfSymbolsAndObjects,
+	readonlyArrayOfNumbers,
 	object,
 	emptyObject,
 	objectWithBoolean,
@@ -378,6 +379,10 @@ describe("JsonSerializable", () => {
 			it("array of `number`s", () => {
 				const { filteredIn } = passThru(arrayOfNumbers);
 				assertIdenticalTypes(filteredIn, arrayOfNumbers);
+			});
+			it("readonly array of `number`s", () => {
+				const { filteredIn } = passThru(readonlyArrayOfNumbers);
+				assertIdenticalTypes(filteredIn, readonlyArrayOfNumbers);
 			});
 		});
 
