@@ -13,7 +13,6 @@ import {
 	type Brand,
 	type BrandedKey,
 	type BrandedMapSubset,
-	type Mutable,
 	type Opaque,
 	ReferenceCountedBase,
 	brand,
@@ -23,13 +22,7 @@ import {
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type * as Delta from "./delta.js";
-import {
-	isDetachedUpPath,
-	type DetachedUpPath,
-	type PlaceIndex,
-	type Range,
-	type UpPath,
-} from "./pathTree.js";
+import { isDetachedUpPath, type PlaceIndex, type Range, type UpPath } from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
 import { offsetDetachId } from "./deltaUtil.js";
@@ -575,15 +568,13 @@ export class AnchorSet implements AnchorLocator {
 			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = destinationPath;
 			node.parentField = destination.parentField;
-			// If the destination is a DetachedUpPath, propagate its detachedNodeId
-			if (isDetachedUpPath(destination)) {
-				(node as unknown as Mutable<DetachedUpPath>).detachedNodeId = offsetDetachId(
-					destination.detachedNodeId,
-					node.parentIndex - destination.parentIndex,
-				);
-			} else {
-				(node as unknown as Partial<Mutable<DetachedUpPath>>).detachedNodeId = undefined;
-			}
+			// If the destination is a detached UpPath, propagate its detachedNodeId, otherwise remove any existing one
+			node.detachedNodeId = isDetachedUpPath(destination)
+				? offsetDetachId(
+						destination.detachedNodeId,
+						node.parentIndex - destination.parentIndex,
+					)
+				: undefined;
 		}
 
 		// Update new parent to add children
@@ -861,7 +852,7 @@ export class AnchorSet implements AnchorLocator {
 					parentField: this.parentField,
 					parentIndex: source.start,
 				};
-				const destinationPath: DetachedUpPath = {
+				const destinationPath: UpPath = {
 					parent: this.anchorSet.root,
 					parentField: destination,
 					parentIndex: 0,
@@ -1018,6 +1009,11 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	// See note on BrandedKey.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
+
+	/**
+	 * {@inheritdoc UpPath.detachedNodeId}
+	 */
+	public detachedNodeId?: Delta.DetachedNodeId;
 
 	/**
 	 * Construct a PathNode with refcount 1.

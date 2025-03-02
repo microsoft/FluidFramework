@@ -21,7 +21,6 @@ import {
 	anchorSlot,
 	clonePath,
 	getDetachedFieldContainingPath,
-	getDetachedUpPath,
 	isDetachedUpPath,
 	keyAsDetachedField,
 	makeDetachedFieldIndex,
@@ -648,7 +647,7 @@ function checkRemoved(
 	assert.equal(getDetachedFieldContainingPath(path!), expected);
 	assert.deepEqual(
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		getDetachedUpPath(path!)?.detachedNodeId,
+		path!.detachedNodeId,
 		expectedDetachedNodeId,
 	);
 }

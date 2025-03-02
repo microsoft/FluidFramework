@@ -40,6 +40,10 @@ export interface UpPath<TParent = UpPathDefault> {
 	 * The index within `parentField` this path is pointing to.
 	 */
 	readonly parentIndex: NodeIndex;
+	/**
+	 * The ID associated with this node if it is a detached root.
+	 */
+	readonly detachedNodeId?: DetachedNodeId;
 }
 
 /**
@@ -61,27 +65,10 @@ export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
 }
 
 /**
- * An UpPath at the root of a detached tree.
+ * Given an {@link UpPath}, checks if it is a path to a detached root.
  */
-export interface DetachedUpPath extends UpPath {
-	/**
-	 * The ID associated with this detached root node.
-	 */
-	readonly detachedNodeId: DetachedNodeId;
-}
-
-/**
- * Given an {@link UpPath}, checks if it is detached.
- */
-export function isDetachedUpPath(path: UpPath): path is DetachedUpPath {
-	return (path as DetachedUpPath).detachedNodeId !== undefined;
-}
-
-/**
- * Given an {@link UpPath}, checks if it is detached and if so, returns it as a {@link DetachedUpPath}.
- */
-export function getDetachedUpPath(path: UpPath): DetachedUpPath | undefined {
-	return isDetachedUpPath(path) ? path : undefined;
+export function isDetachedUpPath(path: UpPath): boolean {
+	return path.detachedNodeId !== undefined;
 }
 
 /**
