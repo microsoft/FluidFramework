@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import {
 	type Anchor,
 	AnchorSet,
+	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
 	type DeltaMark,
@@ -35,8 +36,6 @@ import {
 	testRevisionTagCodec,
 } from "../utils.js";
 import { stringSchema } from "../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { DetachedNodeId } from "../../core/tree/delta.js";
 
 const fieldFoo: FieldKey = brand("foo");
 const fieldBar: FieldKey = brand("bar");
@@ -641,7 +640,7 @@ function checkEquality(actual: UpPath | undefined, expected: UpPath | undefined)
 
 function checkRemoved(
 	path: UpPath | undefined,
-	expectedDetachedNodeId: DetachedNodeId | undefined,
+	expectedDetachedNodeId: DeltaDetachedNodeId | undefined,
 	expected: FieldKey = brand("Temp-0"),
 ): void {
 	assert.notEqual(path, undefined);
