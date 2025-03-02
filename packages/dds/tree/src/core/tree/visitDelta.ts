@@ -301,7 +301,7 @@ export interface DeltaVisitor {
 	 * @param newContentSource - The detached field to transfer the new nodes from.
 	 * @param range - The bounds of the range of nodes to replace.
 	 * @param oldContentDestination - The key for a new detached field to transfer the old nodes to.
-	 * @param destinationDetachedNodeId - The first detached node id for the replaced nodes.
+	 * @param oldContentId - The ID assigned to the first replaced as a result of the replace. The other nodes in the replaced range are assigned subsequent IDs.
 	 */
 	replace(
 		newContentSource: FieldKey,
