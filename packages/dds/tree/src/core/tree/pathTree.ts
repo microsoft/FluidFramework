@@ -65,7 +65,7 @@ export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
  */
 export interface DetachedUpPath extends UpPath {
 	/**
-	 * The DetachedNodeId of this path.
+	 * The ID associated with this detached root node.
 	 */
 	readonly detachedNodeId: DetachedNodeId;
 }
