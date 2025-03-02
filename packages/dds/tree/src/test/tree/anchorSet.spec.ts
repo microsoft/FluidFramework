@@ -367,7 +367,12 @@ describe("AnchorSet", () => {
 		});
 
 		assert(isDetachedUpPath(anchors.locate(bAnchor) as UpPath) === false);
-		assert(isDetachedUpPath(anchors.locate(eAnchor) as UpPath) === true);
+		const bPathLookup = anchors.locate(bAnchor);
+		const ePathLookup = anchors.locate(eAnchor);
+		assert(bPathLookup !== undefined);
+		assert(ePathLookup !== undefined);
+		assert(isDetachedUpPath(bPathLookup) === false);
+		assert(isDetachedUpPath(ePathLookup) === true);
 	});
 
 	describe("internalize path", () => {
