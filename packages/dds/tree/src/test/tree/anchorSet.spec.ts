@@ -175,13 +175,14 @@ describe("AnchorSet", () => {
 
 	it("can rebase over detach of parent node", () => {
 		const [anchors, anchor1, anchor2, anchor3, anchor4] = setup();
-		const detachMark = {
+		const detachId1 = { minor: 1 };
+		const detachMark1 = {
 			count: 1,
-			detach: detachId,
+			detach: detachId1,
 		};
 
-		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 5])), anchors);
-		checkRemoved(anchors.locate(anchor4), detachId);
+		applyTestDelta(makeDelta(detachMark1, makePath([fieldFoo, 5])), anchors);
+		checkRemoved(anchors.locate(anchor4), detachId1);
 		checkRemoved(anchors.locate(anchor1), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor4));
 		assert.doesNotThrow(() => anchors.forget(anchor1));
@@ -190,16 +191,26 @@ describe("AnchorSet", () => {
 		assert.throws(() => anchors.locate(anchor4));
 		assert.throws(() => anchors.locate(anchor1));
 
+		const detachId2 = { minor: 2 };
+		const detachMark2 = {
+			count: 1,
+			detach: detachId2,
+		};
 		checkEquality(anchors.locate(anchor2), path2);
-		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors);
+		applyTestDelta(makeDelta(detachMark2, makePath([fieldFoo, 3])), anchors);
 		checkRemoved(anchors.locate(anchor2), undefined);
 		assert.doesNotThrow(() => anchors.forget(anchor2));
 		assert.throws(() => anchors.locate(anchor2));
 
+		const detachId3 = { minor: 3 };
+		const detachMark3 = {
+			count: 1,
+			detach: detachId3,
+		};
 		// The index of anchor3 has changed from 4 to 3 because of the deletion of the node at index 3.
 		checkEquality(anchors.locate(anchor3), makePath([fieldFoo, 3]));
-		applyTestDelta(makeDelta(detachMark, makePath([fieldFoo, 3])), anchors);
-		checkRemoved(anchors.locate(anchor3), detachId);
+		applyTestDelta(makeDelta(detachMark3, makePath([fieldFoo, 3])), anchors);
+		checkRemoved(anchors.locate(anchor3), detachId3);
 		assert.doesNotThrow(() => anchors.forget(anchor3));
 		assert.throws(() => anchors.locate(anchor3));
 	});
