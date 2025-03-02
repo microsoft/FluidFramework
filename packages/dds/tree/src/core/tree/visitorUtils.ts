@@ -163,7 +163,11 @@ export function createAnnouncedVisitor(visitorFunctions: {
 	afterAttach?: (source: FieldKey, destination: Range) => void;
 	beforeDetach?: (source: Range, destination: FieldKey) => void;
 	afterDetach?: (source: PlaceIndex, count: number, destination: FieldKey) => void;
-	detach?: (source: Range, destination: FieldKey) => void;
+	detach?: (
+		source: Range,
+		destination: FieldKey,
+		destinationDetachedNodeId: DetachedNodeId,
+	) => void;
 	beforeReplace?: (
 		newContent: FieldKey,
 		oldContent: Range,
