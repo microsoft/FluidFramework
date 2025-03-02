@@ -20,7 +20,6 @@ import type {
 	ISequencedProposal,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
-	IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -356,13 +355,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * loaded.
 	 */
 	getLoadedCodeDetails(): IFluidCodeDetails | undefined;
-
-	/**
-	 * Get the package info for the code details that were used to load the container.
-	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined if
-	 * the container package doesn't have a name.
-	 */
-	getContainerPackageInfo?(): IContainerPackageInfo | undefined;
 
 	/**
 	 * Returns true if the container has been closed and/or disposed, otherwise false.
