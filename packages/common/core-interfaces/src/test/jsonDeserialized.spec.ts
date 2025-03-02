@@ -118,6 +118,10 @@ import {
 	ClassWithPrivateSetter,
 	ClassWithPublicData,
 	ClassWithPublicMethod,
+	mapOfStringsToNumbers,
+	readonlyMapOfStringsToNumbers,
+	setOfNumbers,
+	readonlySetOfNumbers,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 } from "./testValues.js";
@@ -963,6 +967,81 @@ describe("JsonDeserialized", () => {
 								  };
 						}>(),
 					);
+				});
+
+				describe("for common class instance of", () => {
+					it("Map", () => {
+						const instanceRead = passThru(mapOfStringsToNumbers, {});
+						assertIdenticalTypes(instanceRead, {
+							size: number,
+						} as const);
+						// @ts-expect-error methods are missing, but required
+						instanceRead satisfies typeof mapOfStringsToNumbers;
+						// @ts-expect-error methods are missing, but required
+						assertIdenticalTypes(instanceRead, mapOfStringsToNumbers);
+						assert.ok(
+							mapOfStringsToNumbers instanceof Map,
+							"mapOfStringsToNumbers is an instance of Map",
+						);
+						assert.ok(
+							!(instanceRead instanceof Map),
+							"instanceRead is not an instance of Map",
+						);
+					});
+					it("ReadonlyMap", () => {
+						const instanceRead = passThru(readonlyMapOfStringsToNumbers, {});
+						assertIdenticalTypes(instanceRead, {
+							size: number,
+						} as const);
+						// @ts-expect-error methods are missing, but required
+						instanceRead satisfies typeof readonlyMapOfStringsToNumbers;
+						// @ts-expect-error methods are missing, but required
+						assertIdenticalTypes(instanceRead, readonlyMapOfStringsToNumbers);
+						assert.ok(
+							mapOfStringsToNumbers instanceof Map,
+							"mapOfStringsToNumbers is an instance of Map",
+						);
+						assert.ok(
+							!(instanceRead instanceof Map),
+							"instanceRead is not an instance of Map",
+						);
+					});
+					it("Set", () => {
+						const instanceRead = passThru(setOfNumbers, {});
+						assertIdenticalTypes(instanceRead, {
+							size: number,
+						} as const);
+						// @ts-expect-error methods are missing, but required
+						instanceRead satisfies typeof setOfNumbers;
+						// @ts-expect-error methods are missing, but required
+						assertIdenticalTypes(instanceRead, setOfNumbers);
+						assert.ok(
+							setOfNumbers instanceof Set,
+							"mapOfStringsToNumbers is an instance of Set",
+						);
+						assert.ok(
+							!(instanceRead instanceof Set),
+							"instanceRead is not an instance of Set",
+						);
+					});
+					it("ReadonlySet", () => {
+						const instanceRead = passThru(readonlySetOfNumbers, {});
+						assertIdenticalTypes(instanceRead, {
+							size: number,
+						} as const);
+						// @ts-expect-error methods are missing, but required
+						instanceRead satisfies typeof readonlySetOfNumbers;
+						// @ts-expect-error methods are missing, but required
+						assertIdenticalTypes(instanceRead, readonlySetOfNumbers);
+						assert.ok(
+							setOfNumbers instanceof Set,
+							"mapOfStringsToNumbers is an instance of Set",
+						);
+						assert.ok(
+							!(instanceRead instanceof Set),
+							"instanceRead is not an instance of Set",
+						);
+					});
 				});
 			});
 

@@ -114,6 +114,10 @@ import {
 	functionObjectWithPublicData,
 	classInstanceWithPrivateDataAndIsFunction,
 	classInstanceWithPublicDataAndIsFunction,
+	mapOfStringsToNumbers,
+	readonlyMapOfStringsToNumbers,
+	setOfNumbers,
+	readonlySetOfNumbers,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 	objectWithFluidHandleOrRecursion,
@@ -1232,6 +1236,95 @@ describe("JsonSerializable", () => {
 							}>(),
 						);
 					});
+				});
+			});
+
+			describe("common class instances", () => {
+				it("Map", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error methods not assignable to never
+						mapOfStringsToNumbers,
+						{},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							clear: never;
+							delete: never;
+							forEach: never;
+							get: never;
+							has: never;
+							set: never;
+							readonly size: number;
+							entries: never;
+							keys: never;
+							values: never;
+							[Symbol.iterator]: never;
+							[Symbol.toStringTag]: never;
+						}>(),
+					);
+				});
+				it("ReadonlyMap", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error methods not assignable to never
+						readonlyMapOfStringsToNumbers,
+						{},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							forEach: never;
+							get: never;
+							has: never;
+							readonly size: number;
+							entries: never;
+							keys: never;
+							values: never;
+							[Symbol.iterator]: never;
+						}>(),
+					);
+				});
+				it("Set", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error methods not assignable to never
+						setOfNumbers,
+						{},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							add: never;
+							clear: never;
+							delete: never;
+							forEach: never;
+							has: never;
+							readonly size: number;
+							entries: never;
+							keys: never;
+							values: never;
+							[Symbol.iterator]: never;
+							[Symbol.toStringTag]: never;
+						}>(),
+					);
+				});
+				it("ReadonlySet", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error methods not assignable to never
+						readonlySetOfNumbers,
+						{},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							forEach: never;
+							has: never;
+							readonly size: number;
+							entries: never;
+							keys: never;
+							values: never;
+							[Symbol.iterator]: never;
+						}>(),
+					);
 				});
 			});
 		});

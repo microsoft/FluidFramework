@@ -404,6 +404,16 @@ export const classInstanceWithPublicDataAndIsFunction = Object.assign(
 	() => 26,
 );
 
+// #region Common Class types
+
+export const mapOfStringsToNumbers = new Map<string, number>();
+export const readonlyMapOfStringsToNumbers: ReadonlyMap<string, number> =
+	mapOfStringsToNumbers;
+export const setOfNumbers = new Set<number>();
+export const readonlySetOfNumbers: ReadonlySet<number> = setOfNumbers;
+
+// #endregion
+
 // #endregion
 
 // #region Union types
