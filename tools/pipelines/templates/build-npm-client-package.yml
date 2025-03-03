@@ -608,7 +608,7 @@ extends:
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                condition: eq(variables['startTest'], 'true')
                 inputs:
                   command: custom
                   workingDir: '${{ parameters.buildDirectory }}'
