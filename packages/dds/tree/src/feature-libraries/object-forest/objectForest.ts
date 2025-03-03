@@ -12,6 +12,7 @@ import {
 	AnchorSet,
 	type AnnouncedVisitor,
 	type CursorLocationType,
+	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
 	type FieldAnchor,
@@ -172,7 +173,11 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
-			public detach(source: Range, destination: FieldKey): void {
+			public detach(
+				source: Range,
+				destination: FieldKey,
+				destinationDetachedNodeId: DeltaDetachedNodeId,
+			): void {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
@@ -235,6 +240,7 @@ export class ObjectForest implements IEditableForest {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
+				destinationDetachedNodeId: DeltaDetachedNodeId,
 			): void {
 				preEdit();
 				assert(

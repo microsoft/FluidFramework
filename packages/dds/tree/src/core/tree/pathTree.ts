@@ -4,6 +4,7 @@
  */
 
 import type { FieldKey } from "../schema-stored/index.js";
+import type { DetachedNodeId } from "./delta.js";
 
 import { type DetachedField, keyAsDetachedField } from "./types.js";
 
@@ -39,6 +40,10 @@ export interface UpPath<TParent = UpPathDefault> {
 	 * The index within `parentField` this path is pointing to.
 	 */
 	readonly parentIndex: NodeIndex;
+	/**
+	 * The ID associated with this node if it is a detached root.
+	 */
+	readonly detachedNodeId?: DetachedNodeId;
 }
 
 /**
@@ -57,6 +62,13 @@ export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
 	 * Note that if `parent` returns `undefined`, this key  corresponds to a detached sequence.
 	 */
 	readonly field: FieldKey; // TODO: Type information, including when in DetachedField.
+}
+
+/**
+ * Given an {@link UpPath}, checks if it is a path to a detached root.
+ */
+export function isDetachedUpPath(path: UpPath): boolean {
+	return path.detachedNodeId !== undefined;
 }
 
 /**
