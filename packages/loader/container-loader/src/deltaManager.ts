@@ -8,6 +8,7 @@ import {
 	IDeltaManagerEvents,
 	IDeltaManagerFull,
 	IDeltaQueue,
+	isRuntimeMessage,
 	type IDeltaSender,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
@@ -30,7 +31,7 @@ import {
 	type IClientDetails,
 	type IClientConfiguration,
 } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
