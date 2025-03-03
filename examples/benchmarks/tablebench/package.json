@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/tablebench",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"private": true,
 	"description": "Table focused benchmarks",
 	"homepage": "https://fluidframework.com",
