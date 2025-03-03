@@ -1097,7 +1097,7 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 						generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
 							asyncGeneratorFromArray(operations as TOperation[]),
 					};
-					runTest(replayModel, options, seed, undefined);
+					runTest(replayModel, { ...options, skipMinimization: true }, seed, undefined);
 				}
 			});
 		}
