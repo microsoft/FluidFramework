@@ -461,7 +461,7 @@ export class Repository implements GitContext {
 		const currentSha = await this.getShaForBranch(branch);
 		const remoteSha = await this.getShaForBranch(branch, remote);
 		return remoteSha === currentSha;
-			}
+	}
 
 	/**
 	 * Fetch branch
