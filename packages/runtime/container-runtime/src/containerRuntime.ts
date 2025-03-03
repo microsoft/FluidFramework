@@ -100,6 +100,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessagesContent,
 	type ISummarizerNodeWithGC,
+	type StagingModeHandle,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -3484,18 +3485,18 @@ export class ContainerRuntime
 	public get inStagingMode(): boolean {
 		return this.stagingModeHandle !== undefined;
 	}
-	enterStagingMode = (): ErasedType<"StagingModeHandle"> => {
+	enterStagingMode = (): StagingModeHandle => {
 		if (this.stagingModeHandle !== undefined) {
 			throw new Error("Already in staging mode");
 		}
 		this.stagingModeHandle = {
 			checkpoint: this.outbox.getBatchCheckpoints(true),
 		};
-		return this.stagingModeHandle as unknown as ErasedType<"StagingModeHandle">;
+		return this.stagingModeHandle as unknown as StagingModeHandle;
 	};
 
 	exitStagingMode = (
-		handle: ErasedType<"StagingModeHandle">,
+		handle: StagingModeHandle,
 		arg: { type: "accept" } | { type: "reject" },
 	): void => {
 		if (this.stagingModeHandle === undefined) {
