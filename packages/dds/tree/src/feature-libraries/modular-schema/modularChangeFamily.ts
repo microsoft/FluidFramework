@@ -234,14 +234,8 @@ export class ModularChangeFamily
 		revInfos: RevisionInfo[],
 		idState: IdAllocationState,
 	): ModularChangeset {
-		const {
-			fieldChanges,
-			nodeChanges,
-			nodeToParent,
-			nodeAliases,
-			crossFieldKeys,
-			rootNodes: nodeRenames,
-		} = this.composeAllFields(change1, change2, revInfos, idState);
+		const { fieldChanges, nodeChanges, nodeToParent, nodeAliases, crossFieldKeys, rootNodes } =
+			this.composeAllFields(change1, change2, revInfos, idState);
 
 		const { allBuilds, allDestroys, allRefreshers } = composeBuildsDestroysAndRefreshers(
 			change1,
@@ -256,7 +250,7 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: idState.maxId,
 			revisions: revInfos,
-			rootNodes: nodeRenames,
+			rootNodes,
 			builds: allBuilds,
 			destroys: allDestroys,
 			refreshers: allRefreshers,
@@ -311,13 +305,13 @@ export class ModularChangeFamily
 			affectedBaseFields: newTupleBTree(),
 		};
 
-		const composedNodeRenames = composeRootTables(change1, change2, pendingCompositions);
+		const composedRoots = composeRootTables(change1, change2, pendingCompositions);
 
 		const crossFieldTable = newComposeTable(
 			change1,
 			change2,
 			composedNodeToParent,
-			composedNodeRenames,
+			composedRoots,
 			pendingCompositions,
 		);
 
@@ -355,7 +349,7 @@ export class ModularChangeFamily
 			nodeToParent: composedNodeToParent,
 			nodeAliases: composedNodeAliases,
 			crossFieldKeys: composedCrossFieldKeys,
-			rootNodes: composedNodeRenames,
+			rootNodes: composedRoots,
 		};
 	}
 
@@ -388,7 +382,7 @@ export class ModularChangeFamily
 			fieldChange2,
 			composeNodes,
 			genId,
-			new ComposeNodeManagerI(crossFieldTable, fieldId, false),
+			new ComposeNodeManagerI(crossFieldTable, false),
 			revisionMetadata,
 		);
 		composedChange.change = brand(amendedChange);
@@ -606,7 +600,7 @@ export class ModularChangeFamily
 			change2: change2Normalized,
 		} = this.normalizeFieldChanges(change1, change2, idAllocator, revisionMetadata);
 
-		const manager = new ComposeNodeManagerI(crossFieldTable, fieldId);
+		const manager = new ComposeNodeManagerI(crossFieldTable);
 
 		const composedChange = changeHandler.rebaser.compose(
 			change1Normalized,
@@ -765,7 +759,7 @@ export class ModularChangeFamily
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
-			invertedNodeRenames: invertedRenameTable(change.change.rootNodes),
+			invertedRoots: invertedRenameTable(change.change.rootNodes),
 		};
 		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 		const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
@@ -816,7 +810,7 @@ export class ModularChangeFamily
 					isRollback,
 					genId,
 					revisionForInvert,
-					new InvertNodeManagerI(crossFieldTable, fieldId),
+					new InvertNodeManagerI(crossFieldTable),
 					revisionMetadata,
 				);
 				invertedField.change = brand(amendedChange);
@@ -829,7 +823,7 @@ export class ModularChangeFamily
 			fieldChanges: invertedFields,
 			nodeChanges: invertedNodes,
 			nodeToParent: crossFieldTable.invertedNodeToParent,
-			rootNodes: crossFieldTable.invertedNodeRenames,
+			rootNodes: crossFieldTable.invertedRoots,
 			nodeAliases: change.change.nodeAliases,
 			crossFieldKeys,
 			maxId: genId.getMaxId(),
@@ -853,7 +847,7 @@ export class ModularChangeFamily
 
 		for (const [field, fieldChange] of changes) {
 			const fieldId = { nodeId: parentId, field };
-			const manager = new InvertNodeManagerI(crossFieldTable, fieldId);
+			const manager = new InvertNodeManagerI(crossFieldTable);
 			const invertedChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
@@ -940,7 +934,7 @@ export class ModularChangeFamily
 			newChange: change,
 			baseChange: over.change,
 			baseFieldToContext: new Map(),
-			baseNodeRenames: over.change.rootNodes,
+			baseRoots: over.change.rootNodes,
 			rebasedRootNodes: cloneRootTable(change.rootNodes),
 			baseToRebasedNodeId: newTupleBTree(),
 			rebasedFields: new Set(),
@@ -1107,7 +1101,7 @@ export class ModularChangeFamily
 				baseFieldChange.change,
 				rebaseChild,
 				genId,
-				new RebaseNodeManagerI(crossFieldTable, fieldId),
+				new RebaseNodeManagerI(crossFieldTable),
 				metadata,
 			);
 
@@ -1225,7 +1219,7 @@ export class ModularChangeFamily
 				baseChangeset,
 				rebaseChild,
 				genId,
-				new RebaseNodeManagerI(crossFieldTable, context.fieldId, allowInval),
+				new RebaseNodeManagerI(crossFieldTable, allowInval),
 				rebaseMetadata,
 			),
 		);
@@ -1318,7 +1312,7 @@ export class ModularChangeFamily
 					? baseNodeId
 					: undefined,
 			idAllocator,
-			new RebaseNodeManagerI(table, rebasedFieldId),
+			new RebaseNodeManagerI(table),
 			metadata,
 		);
 
@@ -1378,7 +1372,7 @@ export class ModularChangeFamily
 				change2: baseChangeset,
 			} = this.normalizeFieldChanges(fieldChange, baseChange, genId, revisionMetadata);
 
-			const manager = new RebaseNodeManagerI(crossFieldTable, fieldId);
+			const manager = new RebaseNodeManagerI(crossFieldTable);
 
 			const rebasedField = changeHandler.rebaser.rebase(
 				fieldChangeset,
@@ -2195,7 +2189,7 @@ interface InvertTable extends CrossFieldTable<FieldChange> {
 	// Entries are keyed on attach ID
 	entries: CrossFieldMap<DetachedNodeEntry>;
 	originalFieldToContext: Map<FieldChange, InvertContext>;
-	invertedNodeRenames: RootNodeTable;
+	invertedRoots: RootNodeTable;
 	invertedNodeToParent: ChangeAtomIdBTree<FieldId>;
 	invertRevision: RevisionTag;
 }
@@ -2216,7 +2210,7 @@ interface RebaseTable extends CrossFieldTable<FieldChange> {
 	 * to the context for the field.
 	 */
 	readonly baseFieldToContext: Map<FieldChange, RebaseFieldContext>;
-	readonly baseNodeRenames: RootNodeTable;
+	readonly baseRoots: RootNodeTable;
 	readonly baseToRebasedNodeId: ChangeAtomIdBTree<NodeId>;
 	readonly rebasedFields: Set<FieldChange>;
 	readonly rebasedNodeToParent: ChangeAtomIdBTree<FieldId>;
@@ -2334,10 +2328,7 @@ function newConstraintState(violationCount: number): ConstraintState {
 }
 
 class InvertNodeManagerI implements InvertNodeManager {
-	public constructor(
-		private readonly table: InvertTable,
-		private readonly fieldId: FieldId,
-	) {}
+	public constructor(private readonly table: InvertTable) {}
 
 	public invertDetach(
 		detachId: ChangeAtomId,
@@ -2368,7 +2359,6 @@ class InvertNodeManagerI implements InvertNodeManager {
 class RebaseNodeManagerI implements RebaseNodeManager {
 	public constructor(
 		private readonly table: RebaseTable,
-		private readonly fieldId: FieldId,
 		private readonly allowInval: boolean = true,
 	) {}
 
@@ -2394,7 +2384,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		fieldData: unknown,
 	): void {
 		const { value: baseAttachId, length } = firstAttachIdFromDetachId(
-			this.table.baseNodeRenames,
+			this.table.baseRoots,
 			baseDetachId,
 			count,
 		);
@@ -2467,7 +2457,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 class ComposeNodeManagerI implements ComposeNodeManager {
 	public constructor(
 		private readonly table: ComposeTable,
-		private readonly fieldId: FieldId,
 		private readonly allowInval: boolean = true,
 	) {}
 
@@ -2481,13 +2470,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		);
 
 		if (detachedNodeId !== undefined) {
-			// XXX: Should this function be renamed since it can have a side effect?
 			// XXX: Do we need to dealias whenever pulling node IDs out of the root node table?
-			this.table.composedRootNodes.nodeChanges.delete([
-				baseDetachId.revision,
-				baseDetachId.localId,
-			]);
-
 			return { start: baseDetachId, value: detachedNodeId, length: 1 };
 		}
 
@@ -3179,20 +3162,20 @@ function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 }
 
 function firstAttachIdFromDetachId(
-	renames: RootNodeTable,
+	roots: RootNodeTable,
 	detachId: ChangeAtomId,
 	count: number,
 ): RangeQueryEntry<ChangeAtomId, ChangeAtomId> {
-	const result = renames.oldToNewId.getFirst(detachId, count);
+	const result = roots.oldToNewId.getFirst(detachId, count);
 	return { ...result, value: result.value ?? detachId };
 }
 
 function firstDetachIdFromAttachId(
-	renames: RootNodeTable,
+	roots: RootNodeTable,
 	attachId: ChangeAtomId,
 	count: number,
 ): RangeQueryEntry<ChangeAtomId, ChangeAtomId> {
-	const result = renames.newToOldId.getFirst(attachId, count);
+	const result = roots.newToOldId.getFirst(attachId, count);
 	return { ...result, value: result.value ?? attachId };
 }
 
@@ -3318,9 +3301,9 @@ function renameNodes(
 /**
  * Deletes any renames from or to `id`.
  */
-function deleteNodeRename(renames: RootNodeTable, id: ChangeAtomId, count: number): void {
-	for (const entry of renames.oldToNewId.getAll(id, count)) {
-		deleteNodeRenameEntry(renames, entry.start, entry.value, entry.length);
+function deleteNodeRename(roots: RootNodeTable, id: ChangeAtomId, count: number): void {
+	for (const entry of roots.oldToNewId.getAll(id, count)) {
+		deleteNodeRenameEntry(roots, entry.start, entry.value, entry.length);
 	}
 }
 
@@ -3329,23 +3312,23 @@ function deleteNodeRename(renames: RootNodeTable, id: ChangeAtomId, count: numbe
  * This function assumes that such an entry exists.
  */
 function deleteNodeRenameEntry(
-	renames: RootNodeTable,
+	roots: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
 	count: number,
 ): void {
-	renames.oldToNewId.delete(oldId, count);
-	renames.newToOldId.delete(newId, count);
+	roots.oldToNewId.delete(oldId, count);
+	roots.newToOldId.delete(newId, count);
 }
 
 function setNodeRenameEntry(
-	renames: RootNodeTable,
+	roots: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
 	count: number,
 ): void {
-	renames.oldToNewId.set(oldId, count, newId);
-	renames.newToOldId.set(newId, count, oldId);
+	roots.oldToNewId.set(oldId, count, newId);
+	roots.newToOldId.set(newId, count, oldId);
 }
 
 function replaceRootTableRevision(
