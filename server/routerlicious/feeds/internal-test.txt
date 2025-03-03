@@ -18,3 +18,7 @@ tinylicious
 @fluidframework/server-lambdas
 @fluidframework/server-kafka-orderer
 @fluidframework/gitresources
+@fluid-internal/historian-base
+@fluid-internal/historian
+@fluid-internal/gitrest-base
+@fluid-internal/gitrest
