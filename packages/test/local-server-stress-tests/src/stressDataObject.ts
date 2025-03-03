@@ -20,11 +20,11 @@ import type {
 	IFluidHandle,
 	FluidObject,
 	IFluidLoadable,
-	ErasedType,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+import type { StagingModeHandle } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -271,9 +271,9 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	private stageControls: ErasedType<"StagingModeHandle"> | undefined;
+	private stagingModeHandle: StagingModeHandle | undefined;
 	public enterStagingMode() {
-		this.stageControls = this.context.containerRuntime.enterStagingMode();
+		this.stagingModeHandle = this.context.containerRuntime.enterStagingMode();
 	}
 
 	public inStagingMode(): boolean {
@@ -281,9 +281,9 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	public exitStagingMode(accept: boolean) {
+		assert(this.stagingModeHandle !== undefined, "must have staging mode handle");
 		this.context.containerRuntime.exitStagingMode(
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.stageControls!,
+			this.stagingModeHandle,
 			accept ? { type: "accept" } : { type: "reject" },
 		);
 	}

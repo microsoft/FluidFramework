@@ -2,22 +2,6 @@
 	{
 		"type": "DDSModelOp",
 		"op": {
-			"type": "set",
-			"key": "prop3",
-			"path": "/",
-			"value": {
-				"tag": "root",
-				"absolutePath": "/49eec2ce-5703-43d8-892e-f04cd2eb87f8/root",
-				"isAttached": true
-			}
-		},
-		"clientTag": "client-1",
-		"datastoreTag": "datastore-0",
-		"channelTag": "root"
-	},
-	{
-		"type": "DDSModelOp",
-		"op": {
 			"type": "createSubDirectory",
 			"name": "dir2",
 			"path": "/"

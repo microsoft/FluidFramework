@@ -2744,7 +2744,22 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
+	private lastStagingSetConnectionState: { connected: boolean; clientId?: string } | undefined;
 	public setConnectionState(connected: boolean, clientId?: string): void {
+		// hack: defer connecting if we are in staging mode. This prevents a bug where
+		// we reconnect with outstanding ops that were generated before we entered staging mode
+		// and the ops end up ahead of the ops we created within staging mode in the outbox.
+		// ideally we could solve this in a way that still lets the old ops be resubmitted.
+		if (this.inStagingMode) {
+			if (connected) {
+				this.lastStagingSetConnectionState = { connected, clientId };
+				return;
+			}
+			this.lastStagingSetConnectionState = undefined;
+			if (connected === this.connected) {
+				return;
+			}
+		}
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -3488,6 +3503,8 @@ export class ContainerRuntime
 		if (this.stagingModeHandle !== undefined) {
 			throw new Error("Already in staging mode");
 		}
+		this.outbox.flush();
+		this.ensureNoDataModelChangesCalls++;
 		this.stagingModeHandle = {
 			checkpoint: this.outbox.getBatchCheckpoints(true),
 		};
@@ -3506,12 +3523,13 @@ export class ContainerRuntime
 		}
 		const { checkpoint } = this.stagingModeHandle;
 		this.stagingModeHandle = undefined;
+		this.ensureNoDataModelChangesCalls--;
 		const { type } = arg;
 		switch (type) {
 			case "accept": {
 				checkpoint.unblockFlush();
 				this.outbox.flush();
-				return;
+				break;
 			}
 			case "reject": {
 				assert(
@@ -3520,11 +3538,18 @@ export class ContainerRuntime
 				);
 				checkpoint.mainBatch.rollback();
 				checkpoint.unblockFlush();
-				return;
+				break;
 			}
 			default: {
 				unreachableCase(type);
 			}
+		}
+		if (this.lastStagingSetConnectionState) {
+			this.setConnectionState(
+				this.lastStagingSetConnectionState.connected,
+				this.lastStagingSetConnectionState.clientId,
+			);
+			this.lastStagingSetConnectionState = undefined;
 		}
 	};
 
