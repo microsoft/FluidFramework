@@ -596,10 +596,8 @@ extends:
               # Set variable startTest if everything is good so far and we'll start running tests,
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
               - script: |
-                  echo "##vso[task.setvariable variable=startTestCoverage;isOutput=true]true"
-                name: setStartTestCoverage
+                  echo "##vso[task.setvariable variable=startTestCoverage]true"
                 displayName: Start Test
-                condition: succeeded()
 
               - ${{ each test in parameters.coverageTests }}:
                 - template: /tools/pipelines/templates/include-test-task.yml@self
@@ -610,7 +608,7 @@ extends:
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
-                condition: and(succeededOrFailed(), eq(variables['SetStartTestCoverage.startTest'], 'true'))
+                condition: and(succeededOrFailed(), eq(variables['startTestCoverage'], 'true'))
                 inputs:
                   command: custom
                   workingDir: '${{ parameters.buildDirectory }}'
@@ -622,7 +620,7 @@ extends:
               # A quick fix to patch the file with sed. (See https://github.com/bcoe/c8/issues/302)
               - task: Bash@3
                 displayName: Check for nyc/report directory
-                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+                condition: and(succeededOrFailed(), eq(variables['startTestCoverage'], 'true'))
                 inputs:
                   targetType: 'inline'
                   workingDirectory: '${{ parameters.buildDirectory }}'
@@ -752,10 +750,8 @@ extends:
                 # Set variable startTest if everything is good so far and we'll start running tests,
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
                 - script: |
-                    echo "##vso[task.setvariable variable=startTest;isOutput=true]true"
-                  name: setStartTest
+                    echo "##vso[task.setvariable variable=startTest]true"
                   displayName: Start Test
-                  condition: succeeded()
 
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
@@ -765,7 +761,7 @@ extends:
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'
-                  condition: and(succeededOrFailed(), eq(variables['SetStartTest.startTest'], 'true'))
+                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                   inputs:
                     command: custom
                     workingDir: '${{ parameters.buildDirectory }}'
