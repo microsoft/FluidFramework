@@ -572,7 +572,10 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 				if (client.container.closed || client.container.disposed === true) {
 					throw new Error(`Client ${client.tag} is closed`);
 				}
-				return client.container.connectionState !== ConnectionState.Disconnected;
+				return (
+					client.container.connectionState !== ConnectionState.Disconnected &&
+					!client.entryPoint.inStagingMode()
+				);
 			});
 
 			if (connectedClients.length > 0) {
@@ -897,6 +900,9 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			const { clients, validationClient } = state;
 			for (const client of clients) {
 				client.container.connect();
+				if (client.entryPoint.inStagingMode()) {
+					client.entryPoint.exitStagingMode(true);
+				}
 			}
 			await synchronizeClients([validationClient, ...clients]);
 			for (const client of clients) {

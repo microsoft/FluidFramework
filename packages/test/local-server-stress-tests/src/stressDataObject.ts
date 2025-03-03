@@ -20,6 +20,7 @@ import type {
 	IFluidHandle,
 	FluidObject,
 	IFluidLoadable,
+	ErasedType,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -45,7 +46,20 @@ export interface CreateChannel {
 	tag: `channel-${number}`;
 }
 
-export type StressDataObjectOperations = UploadBlob | CreateDataStore | CreateChannel;
+export interface EnterStagingMode {
+	type: "enterStagingMode";
+}
+export interface ExitStagingMode {
+	type: "exitStagingMode";
+	accept: boolean;
+}
+
+export type StressDataObjectOperations =
+	| UploadBlob
+	| CreateDataStore
+	| CreateChannel
+	| EnterStagingMode
+	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
 	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory(
@@ -255,6 +269,23 @@ export class DefaultStressDataObject extends StressDataObject {
 			}
 		}
 		this._locallyCreatedObjects.push(obj);
+	}
+
+	private stageControls: ErasedType<"StagingModeHandle"> | undefined;
+	public enterStagingMode() {
+		this.stageControls = this.context.containerRuntime.enterStagingMode();
+	}
+
+	public inStagingMode(): boolean {
+		return this.context.containerRuntime.inStagingMode;
+	}
+
+	public exitStagingMode(accept: boolean) {
+		this.context.containerRuntime.exitStagingMode(
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			this.stageControls!,
+			accept ? { type: "accept" } : { type: "reject" },
+		);
 	}
 }
 
