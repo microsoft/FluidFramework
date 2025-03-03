@@ -360,7 +360,7 @@ extends:
                               parameters.testCoverage,
                               ne(variables['Build.Reason'], 'PullRequest')
                             )}}
-                          startTest: eq($[variables['setStartTest.startTest']], 'true')
+                          startTest: $[eq(variables['setStartTest.startTest'], 'true')]
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     - task: Bash@3

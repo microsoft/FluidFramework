@@ -607,7 +607,7 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: '${{ parameters.testCoverage }}'
-                    startTest: eq($[variables['setStartTestCoverage.startTest']], 'true')
+                    startTest: $[eq(variables['setStartTestCoverage.startTest'], 'true')]
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
@@ -763,7 +763,7 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: 'false'
-                    startTest: eq($[variables['setStartTest.startTest']], 'true')
+                    startTest: $[eq(variables['setStartTest.startTest'], 'true')]
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'

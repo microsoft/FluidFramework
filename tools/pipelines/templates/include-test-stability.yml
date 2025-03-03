@@ -118,7 +118,7 @@ jobs:
             taskTestStep: ${{ taskTestStep }}
             buildDirectory: ${{ parameters.buildDirectory }}
             testCoverage: ${{ eq(variables['testCoverage'], true) }}
-            startTest: eq($[variables['setStartTest.startTest']], 'true')
+            startTest: $[eq(variables['setStartTest.startTest'], 'true')]
 
         # Verify if the tinylicious log exists
         - task: Bash@3
