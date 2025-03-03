@@ -5,7 +5,10 @@
 "section": feature
 ---
 
-Events added for local value changes
+Local value changes in presence now raise events
+
+The [presence value managers](https://fluidframework.com/docs/build/presence#value-managers) now raise events for local
+value changes. The new events are as follows:
 
 - LatestValueManager
   - `localUpdated` raised when `local` is assigned
