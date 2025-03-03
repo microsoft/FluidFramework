@@ -341,17 +341,6 @@ describe("JsonSerializable", () => {
 			it("object with literals", () => {
 				const { filteredIn } = passThru(objectWithLiterals);
 				assertIdenticalTypes(filteredIn, objectWithLiterals);
-				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
-				// we can check assignability.
-				filteredIn satisfies typeof objectWithLiterals;
-				assert.ok(
-					objectWithLiterals instanceof Object,
-					"objectWithLiterals is at least a plain Object",
-				);
-				assert.ok(
-					filteredIn instanceof objectWithLiterals.constructor,
-					"objectRead is same type as objectWithLiterals (plain Object)",
-				);
 			});
 			it("array of literals", () => {
 				const { filteredIn } = passThru(arrayOfLiterals);
@@ -456,17 +445,11 @@ describe("JsonSerializable", () => {
 			it("object with `readonly`", () => {
 				const { filteredIn } = passThru(objectWithReadonly);
 				assertIdenticalTypes(filteredIn, objectWithReadonly);
-				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
-				// we can check assignability.
-				filteredIn satisfies typeof objectWithReadonly;
 			});
 
 			it("object with getter implemented via value", () => {
 				const { filteredIn } = passThru(objectWithGetterViaValue);
 				assertIdenticalTypes(filteredIn, objectWithGetterViaValue);
-				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
-				// we can check assignability.
-				filteredIn satisfies typeof objectWithGetterViaValue;
 			});
 			it("object with setter implemented via value", () => {
 				const { filteredIn } = passThru(objectWithSetterViaValue);

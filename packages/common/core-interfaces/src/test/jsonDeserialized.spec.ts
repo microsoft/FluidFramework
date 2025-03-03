@@ -300,17 +300,6 @@ describe("JsonDeserialized", () => {
 			it("object with literals", () => {
 				const resultRead = passThru(objectWithLiterals);
 				assertIdenticalTypes(resultRead, objectWithLiterals);
-				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
-				// we can check assignability.
-				resultRead satisfies typeof objectWithLiterals;
-				assert.ok(
-					objectWithLiterals instanceof Object,
-					"objectWithLiterals is at least a plain Object",
-				);
-				assert.ok(
-					resultRead instanceof objectWithLiterals.constructor,
-					"objectRead is same type as objectWithLiterals (plain Object)",
-				);
 			});
 			it("array of literals", () => {
 				const resultRead = passThru(arrayOfLiterals);
