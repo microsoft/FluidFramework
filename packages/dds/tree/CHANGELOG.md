@@ -9,14 +9,14 @@
     SharedTree sometimes composes several sequential changes into a single change.
     It does so whenever a transaction is created and when processing inbound changes.
 
-    Version 2.3.0 makes this composition process asymptotically faster.
+    Version 2.23.0 makes this composition process asymptotically faster.
     For example, creating a transaction that performs 1000 edits on a single array now takes 170ms instead of 1.5s (an 89% improvement).
 
     See [Change #23902](https://github.com/microsoft/FluidFramework/pull/23902) for more details.
 
 -   Faster processing of events for large transactions ([#23939](https://github.com/microsoft/FluidFramework/pull/23939)) [2a1e7e0617f](https://github.com/microsoft/FluidFramework/commit/2a1e7e0617f618f82134c0bba269119ed980aadc)
 
-    In versions prior to 2.3.0, event processing time could scale quadratically (`O(N^2)`) with the change count when
+    In versions prior to 2.23.0, event processing time could scale quadratically (`O(N^2)`) with the change count when
     processing a batch of changes.
 
     This performance characteristic has been corrected. See change
