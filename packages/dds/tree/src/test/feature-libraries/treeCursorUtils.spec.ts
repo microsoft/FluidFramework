@@ -12,7 +12,6 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type UpPath,
 	compareFieldUpPaths,
-	compareUpPaths,
 } from "../../core/index.js";
 import {
 	PrefixedPath,
@@ -53,86 +52,70 @@ describe("treeCursorUtils", () => {
 		});
 
 		it("wrapped root", () => {
-			assert(
-				compareUpPaths(prefixPath({ indexOffset: 1 }, root), {
-					parent: undefined,
-					parentField: brand("x"),
-					parentIndex: 6,
-				}),
-			);
-			assert(
-				compareUpPaths(prefixPath({ rootFieldOverride: brand("y") }, root), {
-					parent: undefined,
+			expectEqualPaths(prefixPath({ indexOffset: 1 }, root), {
+				parent: undefined,
+				parentField: brand("x"),
+				parentIndex: 6,
+			});
+			expectEqualPaths(prefixPath({ rootFieldOverride: brand("y") }, root), {
+				parent: undefined,
+				parentField: brand("y"),
+				parentIndex: 5,
+			});
+			expectEqualPaths(prefixPath({ parent: root }, root), {
+				parent: root,
+				parentField: brand("x"),
+				parentIndex: 5,
+			});
+			expectEqualPaths(
+				prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, root),
+				{
+					parent: child,
 					parentField: brand("y"),
-					parentIndex: 5,
-				}),
-			);
-			assert(
-				compareUpPaths(prefixPath({ parent: root }, root), {
-					parent: root,
-					parentField: brand("x"),
-					parentIndex: 5,
-				}),
-			);
-			assert(
-				compareUpPaths(
-					prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, root),
-					{
-						parent: child,
-						parentField: brand("y"),
-						parentIndex: 7,
-					},
-				),
+					parentIndex: 7,
+				},
 			);
 		});
 
 		it("wrapped child", () => {
-			assert(
-				compareUpPaths(prefixPath({ indexOffset: 1 }, child), {
+			expectEqualPaths(prefixPath({ indexOffset: 1 }, child), {
+				parent: {
+					parent: undefined,
+					parentField: brand("x"),
+					parentIndex: 6,
+				},
+				parentField: brand("z"),
+				parentIndex: 10,
+			});
+			expectEqualPaths(prefixPath({ rootFieldOverride: brand("y") }, child), {
+				parent: {
+					parent: undefined,
+					parentField: brand("y"),
+					parentIndex: 5,
+				},
+				parentField: brand("z"),
+				parentIndex: 10,
+			});
+			expectEqualPaths(prefixPath({ parent: root }, child), {
+				parent: {
+					parent: root,
+					parentField: brand("x"),
+					parentIndex: 5,
+				},
+				parentField: brand("z"),
+				parentIndex: 10,
+			});
+			expectEqualPaths(
+				prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, child),
+				{
 					parent: {
-						parent: undefined,
-						parentField: brand("x"),
-						parentIndex: 6,
-					},
-					parentField: brand("z"),
-					parentIndex: 10,
-				}),
-			);
-			assert(
-				compareUpPaths(prefixPath({ rootFieldOverride: brand("y") }, child), {
-					parent: {
-						parent: undefined,
+						parent: child,
 						parentField: brand("y"),
-						parentIndex: 5,
+						parentIndex: 7,
 					},
 					parentField: brand("z"),
 					parentIndex: 10,
-				}),
-			);
-			assert(
-				compareUpPaths(prefixPath({ parent: root }, child), {
-					parent: {
-						parent: root,
-						parentField: brand("x"),
-						parentIndex: 5,
-					},
-					parentField: brand("z"),
-					parentIndex: 10,
-				}),
-			);
-			assert(
-				compareUpPaths(
-					prefixPath({ indexOffset: 2, rootFieldOverride: brand("y"), parent: child }, child),
-					{
-						parent: {
-							parent: child,
-							parentField: brand("y"),
-							parentIndex: 7,
-						},
-						parentField: brand("z"),
-						parentIndex: 10,
-					},
-				),
+				},
 			);
 		});
 
@@ -141,20 +124,16 @@ describe("treeCursorUtils", () => {
 			const prefixedAgain = prefixPath({ indexOffset: 2 }, prefixed);
 
 			// Check result is correct
-			assert(
-				compareUpPaths(prefixed, {
-					parent: undefined,
-					parentField: brand("x"),
-					parentIndex: 6,
-				}),
-			);
-			assert(
-				compareUpPaths(prefixedAgain, {
-					parent: undefined,
-					parentField: brand("x"),
-					parentIndex: 8,
-				}),
-			);
+			expectEqualPaths(prefixed, {
+				parent: undefined,
+				parentField: brand("x"),
+				parentIndex: 6,
+			});
+			expectEqualPaths(prefixedAgain, {
+				parent: undefined,
+				parentField: brand("x"),
+				parentIndex: 8,
+			});
 
 			assert(prefixed instanceof PrefixedPath);
 			assert(prefixedAgain instanceof PrefixedPath);
@@ -167,28 +146,24 @@ describe("treeCursorUtils", () => {
 			const prefixedAgain = prefixPath({ indexOffset: 2 }, prefixed);
 
 			// Check result is correct
-			assert(
-				compareUpPaths(prefixed, {
-					parent: {
-						parent: undefined,
-						parentField: brand("c"),
-						parentIndex: 6,
-					},
-					parentField: brand("z"),
-					parentIndex: 10,
-				}),
-			);
-			assert(
-				compareUpPaths(prefixedAgain, {
-					parent: {
-						parent: undefined,
-						parentField: brand("c"),
-						parentIndex: 8,
-					},
-					parentField: brand("z"),
-					parentIndex: 10,
-				}),
-			);
+			expectEqualPaths(prefixed, {
+				parent: {
+					parent: undefined,
+					parentField: brand("c"),
+					parentIndex: 6,
+				},
+				parentField: brand("z"),
+				parentIndex: 10,
+			});
+			expectEqualPaths(prefixedAgain, {
+				parent: {
+					parent: undefined,
+					parentField: brand("c"),
+					parentIndex: 8,
+				},
+				parentField: brand("z"),
+				parentIndex: 10,
+			});
 
 			assert(prefixed instanceof PrefixedPath);
 			assert(prefixedAgain instanceof PrefixedPath);
@@ -207,24 +182,20 @@ describe("treeCursorUtils", () => {
 			);
 
 			// Check result is correct
-			assert(
-				compareUpPaths(prefixed, {
+			expectEqualPaths(prefixed, {
+				parent: root,
+				parentField: brand("b"),
+				parentIndex: 6,
+			});
+			expectEqualPaths(prefixedAgain, {
+				parent: {
 					parent: root,
-					parentField: brand("b"),
-					parentIndex: 6,
-				}),
-			);
-			assert(
-				compareUpPaths(prefixedAgain, {
-					parent: {
-						parent: root,
-						parentField: brand("a"),
-						parentIndex: 7,
-					},
-					parentField: brand("b"),
-					parentIndex: 6,
-				}),
-			);
+					parentField: brand("a"),
+					parentIndex: 7,
+				},
+				parentField: brand("b"),
+				parentIndex: 6,
+			});
 
 			assert(prefixed instanceof PrefixedPath);
 			assert(prefixedAgain instanceof PrefixedPath);
