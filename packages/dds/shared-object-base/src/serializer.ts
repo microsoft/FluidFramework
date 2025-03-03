@@ -9,6 +9,7 @@ import {
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import {
 	generateHandleContextPath,
 	isSerializedHandle,
@@ -63,8 +64,8 @@ export interface IFluidSerializer {
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
 
-	public constructor(private readonly context: IFluidHandleContext) {
-		this.root = this.context;
+	public constructor(private readonly runtime: IFluidDataStoreRuntime) {
+		this.root = this.runtime.channelsRoutingContext;
 		while (this.root.routeContext !== undefined) {
 			this.root = this.root.routeContext;
 		}
@@ -140,7 +141,7 @@ export class FluidSerializer implements IFluidSerializer {
 			// paths. This will ensure that future summaries will have absolute paths for these handles.
 			const absolutePath = value.url.startsWith("/")
 				? value.url
-				: generateHandleContextPath(value.url, this.context);
+				: generateHandleContextPath(value.url, this.runtime.channelsRoutingContext);
 
 			return new RemoteFluidObjectHandle(absolutePath, this.root);
 		} else {
@@ -199,7 +200,17 @@ export class FluidSerializer implements IFluidSerializer {
 		handle: IFluidHandleInternal,
 		bind: IFluidHandleInternal,
 	): ISerializedHandle {
-		bind.bind(handle);
+		// this passes some basic testing which makes sense. By skipping bind, we basically skip the whole attach flow that a happens at serialization.
+		// this is similar to what happens when a handle in stored in a detach dss, as in the case the handle isn't serialized, it's just in the memory
+		// of the detached dds. at some point the detached dds is attached. and it produces a summary, which is serialized, and only at that point are
+		// all the internal handles to that summary serialized and bound.
+		// in staging mode we will see ops that have handles, but since all ops in staging mode could rollback, we don't want to bind those handles, as
+		// not binding them prevent attach ops from being created, so rollback is a no-op. On acceptance of the staging mode changes we do a re-submit/rebase
+		// of all changes, and at that point we are out of staging mode, so the bing happens then, which basically defers attach op creation until all
+		// changes are accepted.
+		if (this.runtime.inStagingMode === false) {
+			bind.bind(handle);
+		}
 		return {
 			type: "__fluid_handle__",
 			url: handle.absolutePath,
