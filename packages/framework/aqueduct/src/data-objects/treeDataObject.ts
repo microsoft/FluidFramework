@@ -26,6 +26,18 @@ const uninitializedErrorString =
 /**
  * {@link @fluidframework/tree#SharedTree}-backed {@link PureDataObject | data object}.
  *
+ * @remarks
+ *
+ * Note: to initialize the tree's data for initial creation, implementers of this class will need to override {@link PureDataObject.initializingFirstTime} and set the data in {@link TreeDataObject.tree}.
+ *
+ * @example Implementing `initializingFirstTime`
+ *
+ * ```typescript
+ * protected override async initializingFirstTime(): Promise<void> {
+ * 	this.tree.initialize(...);
+ * }
+ * ```
+ *
  * @internal
  */
 export abstract class TreeDataObject<
