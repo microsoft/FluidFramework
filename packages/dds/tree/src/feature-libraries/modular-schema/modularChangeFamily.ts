@@ -361,7 +361,7 @@ export class ModularChangeFamily
 	): void {
 		const context = crossFieldTable.fieldToContext.get(fieldChange);
 		assert(context !== undefined, 0x8cc /* Should have context for every invalidated field */);
-		const { fieldId, change1: fieldChange1, change2: fieldChange2, composedChange } = context;
+		const { change1: fieldChange1, change2: fieldChange2, composedChange } = context;
 
 		const rebaser = getChangeHandler(this.fieldKinds, composedChange.fieldKind).rebaser;
 		const composeNodes = (child1: NodeId | undefined, child2: NodeId | undefined): NodeId => {
@@ -755,11 +755,12 @@ export class ModularChangeFamily
 
 		const crossFieldTable: InvertTable = {
 			...newCrossFieldTable<FieldChange>(),
+			change: change.change,
 			entries: newChangeAtomIdRangeMap(), // XXX: Handle splitting entries
 			originalFieldToContext: new Map(),
 			invertRevision: revisionForInvert,
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
-			invertedRoots: invertedRenameTable(change.change.rootNodes),
+			invertedRoots: invertRootTable(change.change),
 		};
 		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 		const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
@@ -956,7 +957,7 @@ export class ModularChangeFamily
 
 		const rebasedNodes: ChangeAtomIdBTree<NodeChangeset> = brand(change.nodeChanges.clone());
 
-		// XXX: Need to rebase detached node changes
+		// XXX: Need to rebase detached node changes over attaches or changes to the same detached nodes
 		const rebasedFields = this.rebaseIntersectingFields(
 			crossFieldTable,
 			rebasedNodes,
@@ -2186,6 +2187,8 @@ interface CrossFieldTable<TFieldData> {
 }
 
 interface InvertTable extends CrossFieldTable<FieldChange> {
+	change: ModularChangeset;
+
 	// Entries are keyed on attach ID
 	entries: CrossFieldMap<DetachedNodeEntry>;
 	originalFieldToContext: Map<FieldChange, InvertContext>;
@@ -2352,6 +2355,12 @@ class InvertNodeManagerI implements InvertNodeManager {
 		attachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+		// XXX: This needs to look at all IDs in the range, not just the first.
+		const nodeId = getFromChangeAtomIdMap(this.table.change.rootNodes.nodeChanges, attachId);
+		if (nodeId !== undefined) {
+			return { start: attachId, value: { nodeChange: nodeId }, length: 1 };
+		}
+
 		return this.table.entries.getFirst(attachId, count);
 	}
 }
@@ -2464,6 +2473,7 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		count: number,
 	): RangeQueryResult<ChangeAtomId, NodeId> {
+		// XXX: This needs to look at all IDs in the range, not just the first.
 		const detachedNodeId = getFromChangeAtomIdMap(
 			this.table.newChange.rootNodes.nodeChanges,
 			baseDetachId,
@@ -3207,7 +3217,7 @@ function composeRootTables(
 
 	for (const [[revision2, id2], nodeId2] of change2.rootNodes.nodeChanges.entries()) {
 		const detachId2 = { revision: revision2, localId: id2 };
-		const detachId1 = change1.rootNodes.newToOldId.getFirst(detachId2, 1).value ?? detachId2;
+		const detachId1 = firstDetachIdFromAttachId(change1.rootNodes, detachId2, 1).value;
 		const nodeId1 = getFromChangeAtomIdMap(change1.rootNodes.nodeChanges, detachId1);
 
 		if (nodeId1 !== undefined) {
@@ -3243,13 +3253,26 @@ function cloneRootTable(table: RootNodeTable): RootNodeTable {
 	};
 }
 
-function invertedRenameTable(table: RootNodeTable): RootNodeTable {
-	return {
-		oldToNewId: table.newToOldId.clone(),
-		newToOldId: table.oldToNewId.clone(),
+function invertRootTable(change: ModularChangeset): RootNodeTable {
+	const invertedNodeChanges: ChangeAtomIdBTree<NodeId> = newTupleBTree();
+	for (const [[revision, localId], nodeId] of change.rootNodes.nodeChanges.entries()) {
+		const detachId: ChangeAtomId = { revision, localId };
+		const renamedId = firstAttachIdFromDetachId(change.rootNodes, detachId, 1).value;
 
-		// XXX: Invert the keys and the changes
-		nodeChanges: brand(table.nodeChanges.clone()),
+		// This checks whether `change` attaches this node.
+		// If it does, the node is not detached in the input context of the inverse, and so should not be included in the root table.
+		if (
+			change.crossFieldKeys.getAll({ ...renamedId, target: CrossFieldTarget.Destination }, 1)
+				.length === 0
+		) {
+			setInChangeAtomIdMap(invertedNodeChanges, renamedId, nodeId);
+		}
+	}
+
+	return {
+		oldToNewId: change.rootNodes.newToOldId.clone(),
+		newToOldId: change.rootNodes.oldToNewId.clone(),
+		nodeChanges: invertedNodeChanges,
 	};
 }
 

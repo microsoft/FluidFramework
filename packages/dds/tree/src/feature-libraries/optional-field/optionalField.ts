@@ -18,19 +18,21 @@ import {
 } from "../../core/index.js";
 import { type IdAllocator, type Mutable, SizedNestedMap } from "../../util/index.js";
 import { nodeIdFromChangeAtom } from "../deltaUtils.js";
-import type {
-	FieldChangeHandler,
-	FieldChangeRebaser,
-	FieldEditor,
-	NodeChangeComposer,
-	NodeChangePruner,
-	NodeChangeRebaser,
-	NodeId,
-	ToDelta,
-	NestedChangesIndices,
-	RebaseNodeManager,
-	ComposeNodeManager,
-	InvertNodeManager,
+import {
+	type FieldChangeHandler,
+	type FieldChangeRebaser,
+	type FieldEditor,
+	type NodeChangeComposer,
+	type NodeChangePruner,
+	type NodeChangeRebaser,
+	type NodeId,
+	type ToDelta,
+	type NestedChangesIndices,
+	type RebaseNodeManager,
+	type ComposeNodeManager,
+	type InvertNodeManager,
+	type CrossFieldKeyRange,
+	CrossFieldTarget,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, RegisterId, Replace } from "./optionalFieldChangeTypes.js";
@@ -527,8 +529,27 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getNestedChanges,
 
 	createEmpty: () => ({}),
-	getCrossFieldKeys: (_change) => [],
+	getCrossFieldKeys,
 };
+
+function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
+	const keys: CrossFieldKeyRange[] = [];
+	if (change.valueReplace !== undefined) {
+		keys.push({
+			key: { ...change.valueReplace.dst, target: CrossFieldTarget.Source },
+			count: 1,
+		});
+
+		if (change.valueReplace.src !== undefined && change.valueReplace.src !== "self") {
+			keys.push({
+				key: { ...change.valueReplace.src, target: CrossFieldTarget.Destination },
+				count: 1,
+			});
+		}
+	}
+
+	return keys;
+}
 
 function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
 	if (change.childChange === undefined) {

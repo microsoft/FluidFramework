@@ -92,6 +92,7 @@ export class RangeMap<K, V> {
 		return entries;
 	}
 
+	// XXX
 	public getAll2(start: K, length: number): RangeQueryResult<K, V>[] {
 		let nextKey = start;
 		let lengthRemaining = length;
