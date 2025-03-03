@@ -599,6 +599,7 @@ extends:
                   echo "##vso[task.setvariable variable=startTest;isOutput=true]true"
                 name: SetStartTestCoverage
                 displayName: Start Test
+                condition: succeeded()
 
               - ${{ each test in parameters.coverageTests }}:
                 - template: /tools/pipelines/templates/include-test-task.yml@self
@@ -606,6 +607,7 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: '${{ parameters.testCoverage }}'
+                    startTest: $[variables['SetStartTestCoverage.startTest']]
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
@@ -754,12 +756,14 @@ extends:
                     echo "##vso[task.setvariable variable=startTest;isOutput=true]true"
                   name: SetStartTest
                   displayName: Start Test
+                  condition: succeeded()
 
                 - template: /tools/pipelines/templates/include-test-task.yml@self
                   parameters:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: 'false'
+                    startTest: $[variables['SetStartTest.startTest']]
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'

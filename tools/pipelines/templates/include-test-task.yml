@@ -14,6 +14,10 @@ parameters:
   type: boolean
   default: false
 
+- name: startTest
+  type: boolean
+  default: false
+
 steps:
 # Test - With coverage
 - ${{ if and(parameters.testCoverage, startsWith(parameters.taskTestStep, 'ci:test')) }}:
@@ -23,7 +27,7 @@ steps:
       command: 'custom'
       workingDir: ${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskTestStep }}:coverage'
-    condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+    condition: and(succeededOrFailed(), eq(${{ parameters.startTest }}, 'true'))
     env:
       # Tests can use this environment variable to behave differently when running from a test branch
       ${{ if contains(parameters.taskTestStep, 'tinylicious') }}:
@@ -39,7 +43,7 @@ steps:
       command: 'custom'
       workingDir: ${{ parameters.buildDirectory }}
       customCommand: 'run ${{ parameters.taskTestStep }}'
-    condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
+    condition: and(succeededOrFailed(), eq(${{ parameters.startTest }}, 'true'))
     env:
       # Tests can use this environment variable to behave differently when running from a test branch
       ${{ if contains(parameters.taskTestStep, 'tinylicious') }}:

@@ -347,6 +347,8 @@ extends:
                   - script: |
                       echo "##vso[task.setvariable variable=startTest]true"
                     displayName: Start Test
+                    name: setStartTest
+                    condition: succeeded()
 
                   - ${{ each taskTestStep in parameters.taskTest }}:
                       - template: /tools/pipelines/templates/include-test-task.yml@self
@@ -358,6 +360,7 @@ extends:
                               parameters.testCoverage,
                               ne(variables['Build.Reason'], 'PullRequest')
                             )}}
+                          startTest: $[variables['setStartTest.startTest']]
 
                   - ${{ if contains(convertToJson(parameters.taskTest), 'tinylicious') }}:
                     - task: Bash@3

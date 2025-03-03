@@ -109,6 +109,8 @@ jobs:
       - script: |
           echo "##vso[task.setvariable variable=startTest]true"
         displayName: Start Test
+        name: setStartTest
+        condition: succeeded()
 
       - ${{ each taskTestStep in parameters.taskTest }}:
         - template: /tools/pipelines/templates/include-test-task.yml@self
@@ -116,6 +118,7 @@ jobs:
             taskTestStep: ${{ taskTestStep }}
             buildDirectory: ${{ parameters.buildDirectory }}
             testCoverage: ${{ eq(variables['testCoverage'], true) }}
+            startTest: $[variables['setStartTest.startTest']]
 
         # Verify if the tinylicious log exists
         - task: Bash@3
