@@ -596,7 +596,8 @@ extends:
               # Set variable startTest if everything is good so far and we'll start running tests,
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
               - script: |
-                  echo "##vso[task.setvariable variable=startTest]true"
+                  echo "##vso[task.setvariable variable=startTest;isOutput=true]true"
+                name: SetStartTestCoverage
                 displayName: Start Test
 
               - ${{ each test in parameters.coverageTests }}:
@@ -608,7 +609,7 @@ extends:
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
-                condition: eq(variables['startTest'], 'true')
+                condition: and(succeededOrFailed(), eq(variables['SetStartTestCoverage.startTest'], 'true'))
                 inputs:
                   command: custom
                   workingDir: '${{ parameters.buildDirectory }}'
@@ -750,7 +751,8 @@ extends:
                 # Set variable startTest if everything is good so far and we'll start running tests,
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
                 - script: |
-                    echo "##vso[task.setvariable variable=startTest]true"
+                    echo "##vso[task.setvariable variable=startTest;isOutput=true]true"
+                  name: SetStartTest
                   displayName: Start Test
 
                 - template: /tools/pipelines/templates/include-test-task.yml@self
@@ -761,6 +763,7 @@ extends:
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'
+                  condition: and(succeededOrFailed(), eq(variables['SetStartTest.startTest'], 'true'))
                   inputs:
                     command: custom
                     workingDir: '${{ parameters.buildDirectory }}'
