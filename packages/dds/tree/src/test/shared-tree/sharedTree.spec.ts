@@ -370,7 +370,9 @@ describe("SharedTree", () => {
 	describe("schema index summarization", () => {
 		describe("incrementally reuses previous blobs", () => {
 			it("on a client which never uploaded a blob", async () => {
-				const containerRuntimeFactory = new MockContainerRuntimeFactory();
+				const containerRuntimeFactory = new MockContainerRuntimeFactory({
+					useProcessMessages: true,
+				});
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 					idCompressor: createIdCompressor(),
 				});
@@ -600,7 +602,7 @@ describe("SharedTree", () => {
 			attachState: AttachState.Detached,
 		});
 		const tree = sharedTreeFactory.create(runtime, "tree");
-		const runtimeFactory = new MockContainerRuntimeFactory();
+		const runtimeFactory = new MockContainerRuntimeFactory({ useProcessMessages: true });
 		runtimeFactory.createContainerRuntime(runtime);
 
 		const view = tree.viewWith(
@@ -2158,7 +2160,7 @@ describe("SharedTree", () => {
 		const sharedTreeFactory = new TreeFactory({});
 		const runtime = new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() });
 		const tree = sharedTreeFactory.create(runtime, "tree");
-		const runtimeFactory = new MockContainerRuntimeFactory();
+		const runtimeFactory = new MockContainerRuntimeFactory({ useProcessMessages: true });
 		runtimeFactory.createContainerRuntime(runtime);
 		const view = tree.viewWith(new TreeViewConfiguration({ schema: StringArray }));
 		view.initialize([]);

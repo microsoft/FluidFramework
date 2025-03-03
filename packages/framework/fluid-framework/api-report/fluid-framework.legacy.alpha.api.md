@@ -729,7 +729,11 @@ export interface ISharedIntervalCollection<TInterval extends ISerializableInterv
 }
 
 // @alpha @sealed
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, ISharedMapCore {
+}
+
+// @alpha @sealed
+export interface ISharedMapCore extends Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
 }

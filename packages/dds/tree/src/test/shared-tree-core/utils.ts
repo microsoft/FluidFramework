@@ -51,6 +51,7 @@ import type {
 	ISummaryTreeWithStats,
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	createIdCompressor,
@@ -61,7 +62,7 @@ import type {
 	IFluidLoadable,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { Breakable } from "../../util/index.js";
+import { Breakable, fail } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 
 const codecOptions: ICodecOptions = {
@@ -273,9 +274,12 @@ export class TestSharedTreeCore extends SharedObject {
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
-		this.kernel.processCore(message, local, localOpMetadata);
+		fail("processCore should not be called on SharedTree");
 	}
 
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		this.kernel.processMessagesCore(messagesCollection);
+	}
 	protected onDisconnect(): void {}
 
 	protected override async loadCore(services: IChannelStorageService): Promise<void> {

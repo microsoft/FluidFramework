@@ -16,6 +16,7 @@ export interface IInternalMockRuntimeMessage {
 export interface IMockContainerRuntimeOptions {
     readonly enableGroupedBatching?: boolean;
     readonly flushMode?: FlushMode;
+    readonly useProcessMessages?: boolean;
 }
 
 // @alpha (undocumented)

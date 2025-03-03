@@ -24,6 +24,7 @@ export type {
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
+	ISharedMapCore,
 } from "./interfaces.js";
 export { MapFactory, SharedMap } from "./mapFactory.js";
 export { DirectoryFactory, SharedDirectory } from "./directoryFactory.js";
@@ -33,3 +34,9 @@ export type {
 	IDirectoryDataObject,
 } from "./directory.js";
 export type { ISerializableValue } from "./internalInterfaces.js";
+export { type IMapOperation, type IMapKeyOperation, mapKernelFactory } from "./mapKernel.js";
+export type {
+	IMapClearOperation,
+	IMapDeleteOperation,
+	IMapSetOperation,
+} from "./internalInterfaces.js";

@@ -1,0 +1,10 @@
+nyc
+*.log
+**/*.tsbuildinfo
+src/test
+dist/test
+lib/test
+**/_api-extractor-temp/**
+
+# These are large test files that we don't need to distribute.
+**/*.test-files.tar
