@@ -136,6 +136,7 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
+	generateSchemaFromSimpleSchema,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,
