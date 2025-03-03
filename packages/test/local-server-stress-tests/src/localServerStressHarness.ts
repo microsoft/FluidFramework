@@ -899,11 +899,11 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 		if (operation.type === finalSynchronization.type) {
 			const { clients, validationClient } = state;
 			for (const client of clients) {
-				if (client.container.connectionState === ConnectionState.Disconnected) {
-					client.container.connect();
-				}
 				if (client.entryPoint.inStagingMode()) {
 					client.entryPoint.exitStagingMode(true);
+				}
+				if (client.container.connectionState === ConnectionState.Disconnected) {
+					client.container.connect();
 				}
 			}
 			await synchronizeClients([validationClient, ...clients]);
