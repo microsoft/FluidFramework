@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-driver",
-	"version": "2.23.0",
+	"version": "2.24.0",
 	"description": "Driver for tinylicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
