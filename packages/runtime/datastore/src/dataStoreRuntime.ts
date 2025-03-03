@@ -135,6 +135,10 @@ export class FluidDataStoreRuntime
 		return this.dataStoreContext.connected;
 	}
 
+	get inStagingMode(): boolean {
+		return this.dataStoreContext.containerRuntime.inStagingMode;
+	}
+
 	public get clientId(): string | undefined {
 		return this.dataStoreContext.clientId;
 	}

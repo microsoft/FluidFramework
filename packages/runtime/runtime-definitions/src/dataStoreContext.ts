@@ -16,6 +16,7 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type {
+	ErasedType,
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 } from "@fluidframework/core-interfaces/internal";
@@ -193,10 +194,7 @@ export interface IDataStore {
  * @alpha
  * @sealed
  */
-export interface StageControls {
-	readonly commitChanges: () => void;
-	readonly discardChanges: () => void;
-}
+export type StagingModeHandle = ErasedType<"StagingModeHandle">;
 
 /**
  * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
@@ -218,7 +216,13 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 */
 	orderSequentially(callback: () => void): void;
 
-	readonly enterStagingMode: () => StageControls;
+	get inStagingMode(): boolean;
+	readonly enterStagingMode: () => StagingModeHandle;
+
+	readonly exitStagingMode: (
+		handle: StagingModeHandle,
+		arg: { type: "accept" } | { type: "reject" },
+	) => void;
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.
