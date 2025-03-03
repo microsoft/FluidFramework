@@ -24,7 +24,7 @@ import type {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import type { StagingModeHandle } from "@fluidframework/runtime-definitions/internal";
+import type { StageControls } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
@@ -271,9 +271,9 @@ export class DefaultStressDataObject extends StressDataObject {
 		this._locallyCreatedObjects.push(obj);
 	}
 
-	private stagingModeHandle: StagingModeHandle | undefined;
+	private stageControls: StageControls | undefined;
 	public enterStagingMode() {
-		this.stagingModeHandle = this.context.containerRuntime.enterStagingMode();
+		this.stageControls = this.context.containerRuntime.enterStagingMode();
 	}
 
 	public inStagingMode(): boolean {
@@ -281,11 +281,13 @@ export class DefaultStressDataObject extends StressDataObject {
 	}
 
 	public exitStagingMode(accept: boolean) {
-		assert(this.stagingModeHandle !== undefined, "must have staging mode handle");
-		this.context.containerRuntime.exitStagingMode(
-			this.stagingModeHandle,
-			accept ? { type: "accept" } : { type: "reject" },
-		);
+		assert(this.stageControls !== undefined, "must have staging mode handle");
+		if (accept) {
+			this.stageControls.commitChanges();
+		} else {
+			this.stageControls.discardChanges();
+		}
+		this.stageControls = undefined;
 	}
 }
 

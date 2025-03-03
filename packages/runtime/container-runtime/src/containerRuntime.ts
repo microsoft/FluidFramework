@@ -37,7 +37,6 @@ import {
 	IResponse,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { ErasedType } from "@fluidframework/core-interfaces";
 import {
 	type IErrorBase,
 	IFluidHandleContext,
@@ -51,7 +50,6 @@ import {
 	LazyPromise,
 	PromiseCache,
 	delay,
-	unreachableCase,
 } from "@fluidframework/core-utils/internal";
 import {
 	IClientDetails,
@@ -100,6 +98,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessagesContent,
 	type ISummarizerNodeWithGC,
+	type StageControls,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -3495,62 +3494,52 @@ export class ContainerRuntime
 		return result;
 	}
 
-	private stagingModeHandle?: { checkpoint: ReturnType<Outbox["getBatchCheckpoints"]> };
-	public get inStagingMode(): boolean {
-		return this.stagingModeHandle !== undefined;
+	private stageControls: StageControls | undefined;
+	get inStagingMode(): boolean {
+		return this.stageControls !== undefined;
 	}
-	enterStagingMode = (): ErasedType<"StagingModeHandle"> => {
-		if (this.stagingModeHandle !== undefined) {
-			throw new Error("Already in staging mode");
+
+	enterStagingMode = (): StageControls => {
+		if (this.stageControls !== undefined) {
+			throw new Error("already in staging mode");
 		}
 		this.outbox.flush();
 		this.ensureNoDataModelChangesCalls++;
-		this.stagingModeHandle = {
-			checkpoint: this.outbox.getBatchCheckpoints(true),
-		};
-		return this.stagingModeHandle as unknown as ErasedType<"StagingModeHandle">;
-	};
 
-	exitStagingMode = (
-		handle: ErasedType<"StagingModeHandle">,
-		arg: { type: "accept" } | { type: "reject" },
-	): void => {
-		if (this.stagingModeHandle === undefined) {
-			throw new Error("Must be in staging mode");
-		}
-		if ((this.stagingModeHandle as unknown) !== handle) {
-			throw new Error("Invalid StagingModeHandle");
-		}
-		const { checkpoint } = this.stagingModeHandle;
-		this.stagingModeHandle = undefined;
-		this.ensureNoDataModelChangesCalls--;
-		const { type } = arg;
-		switch (type) {
-			case "accept": {
-				checkpoint.unblockFlush();
-				this.outbox.flush();
-				break;
+		const exitStagingMode = (act: () => void) => (): void => {
+			this.ensureNoDataModelChangesCalls--;
+			this.stageControls = undefined;
+
+			act();
+
+			if (this.lastStagingSetConnectionState) {
+				this.setConnectionState(
+					this.lastStagingSetConnectionState.connected,
+					this.lastStagingSetConnectionState.clientId,
+				);
+				this.lastStagingSetConnectionState = undefined;
 			}
-			case "reject": {
+		};
+
+		const checkpoint = this.outbox.getBatchCheckpoints(true);
+		const stageControls = {
+			discardChanges: exitStagingMode(() => {
 				assert(
 					checkpoint.blobAttachBatch.isEmpty() && checkpoint.idAllocationBatch.isEmpty(),
 					"other batches must be empty",
 				);
+
 				checkpoint.mainBatch.rollback();
 				checkpoint.unblockFlush();
-				break;
-			}
-			default: {
-				unreachableCase(type);
-			}
-		}
-		if (this.lastStagingSetConnectionState) {
-			this.setConnectionState(
-				this.lastStagingSetConnectionState.connected,
-				this.lastStagingSetConnectionState.clientId,
-			);
-			this.lastStagingSetConnectionState = undefined;
-		}
+			}),
+			commitChanges: exitStagingMode(() => {
+				this.stageControls = undefined;
+				checkpoint.unblockFlush();
+				this.outbox.flush();
+			}),
+		};
+
+		return (this.stageControls = stageControls);
 	};
 
 	/**

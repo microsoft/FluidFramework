@@ -16,7 +16,6 @@ import {
 } from "@fluidframework/container-loader/internal";
 import { loadContainerRuntime } from "@fluidframework/container-runtime/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces/internal";
-import type { StagingModeHandle } from "@fluidframework/runtime-definitions/internal";
 import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
@@ -53,12 +52,6 @@ class RootDataObject extends DataObject {
 
 	public enterStagingMode() {
 		return this.context.containerRuntime.enterStagingMode();
-	}
-	public exitStagingMode(handle: StagingModeHandle, accept: boolean) {
-		return this.context.containerRuntime.exitStagingMode(
-			handle,
-			accept ? { type: "accept" } : { type: "reject" },
-		);
 	}
 }
 
@@ -182,7 +175,7 @@ describe("Scenario Test", () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const stagingModeHandle = clients.original.dataObject.enterStagingMode();
+		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
 			clients.original.dataObject.state,
 			clients.loaded.dataObject.state,
@@ -217,7 +210,7 @@ describe("Scenario Test", () => {
 			"Expected mainline change to reach branch",
 		);
 
-		clients.original.dataObject.exitStagingMode(stagingModeHandle, true);
+		branchData.commitChanges();
 
 		await waitForSave(clients);
 
@@ -232,7 +225,7 @@ describe("Scenario Test", () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const clients = await createClients(deltaConnectionServer);
 
-		const stagingModeHandle = clients.original.dataObject.enterStagingMode();
+		const branchData = clients.original.dataObject.enterStagingMode();
 		assert.deepStrictEqual(
 			clients.original.dataObject.state,
 			clients.loaded.dataObject.state,
@@ -267,7 +260,7 @@ describe("Scenario Test", () => {
 			"states should match after save",
 		);
 
-		clients.original.dataObject.exitStagingMode(stagingModeHandle, false);
+		branchData.discardChanges();
 
 		await waitForSave(clients);
 
