@@ -46,7 +46,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"@types/react": "^18.3.11",
 		"copyfiles": "^2.4.1",
