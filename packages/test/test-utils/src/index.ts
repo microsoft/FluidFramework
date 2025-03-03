@@ -65,3 +65,5 @@ export {
 	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 } from "./testContainerRuntimeFactoryWithDefaultDataStore.js";
+
+export { TestFluidObjectInternal } from "./testFluidObjectInternal.js";
