@@ -597,7 +597,7 @@ extends:
               # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
               - script: |
                   echo "##vso[task.setvariable variable=startTest;isOutput=true]true"
-                name: SetStartTestCoverage
+                name: setStartTestCoverage
                 displayName: Start Test
                 condition: succeeded()
 
@@ -607,7 +607,7 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: '${{ parameters.testCoverage }}'
-                    startTest: $[variables['SetStartTestCoverage.startTest']]
+                    startTest: eq($[variables['setStartTestCoverage.startTest']], 'true')
 
               - task: Npm@1
                 displayName: 'npm run test:copyresults'
@@ -754,7 +754,7 @@ extends:
                 # so that the steps to process/upload test coverage results only run if we got to the point of actually running tests.
                 - script: |
                     echo "##vso[task.setvariable variable=startTest;isOutput=true]true"
-                  name: SetStartTest
+                  name: setStartTest
                   displayName: Start Test
                   condition: succeeded()
 
@@ -763,7 +763,7 @@ extends:
                     taskTestStep: '${{ test.name }}'
                     buildDirectory: '${{ parameters.buildDirectory }}'
                     testCoverage: 'false'
-                    startTest: $[variables['SetStartTest.startTest']]
+                    startTest: eq($[variables['setStartTest.startTest']], 'true')
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'
