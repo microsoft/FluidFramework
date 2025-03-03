@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@fluidframework/gitresources";
 import {
 	IStorageNameRetriever,
 	IThrottler,
@@ -15,9 +14,14 @@ import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
-import * as utils from "../utils";
-import { Constants } from "../../utils";
+import {
+	ICache,
+	IDenyList,
+	ITenantService,
+	ISimplifiedCustomDataRetriever,
+} from "../../../services";
+import * as utils from "../../utils";
+import { Constants } from "../../../utils";
 
 export function create(
 	config: nconf.Provider,
@@ -42,31 +46,12 @@ export function create(
 		Constants.generalRestCallThrottleIdPrefix,
 	);
 
-	async function createTag(
+	async function getContent(
 		tenantId: string,
 		authorization: string | undefined,
-		params: git.ICreateTagParams,
-	): Promise<git.ITag> {
-		const service = await utils.createGitService({
-			config,
-			tenantId,
-			authorization,
-			tenantService,
-			storageNameRetriever,
-			documentManager,
-			cache,
-			denyList,
-			ephemeralDocumentTTLSec,
-			simplifiedCustomDataRetriever,
-		});
-		return service.createTag(params);
-	}
-
-	async function getTag(
-		tenantId: string,
-		authorization: string | undefined,
-		tag: string,
-	): Promise<git.ITag> {
+		path: string,
+		ref: string | undefined,
+	): Promise<any> {
 		const service = await utils.createGitService({
 			config,
 			tenantId,
@@ -78,36 +63,22 @@ export function create(
 			denyList,
 			ephemeralDocumentTTLSec,
 		});
-		return service.getTag(tag);
+		return service.getContent(path, ref);
 	}
-
-	router.post(
-		"/repos/:ignored?/:tenantId/git/tags",
-		validateRequestParams("tenantId"),
-		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
-		(request, response, next) => {
-			const tagP = createTag(
-				request.params.tenantId,
-				request.get("Authorization"),
-				request.body,
-			);
-			utils.handleResponse(tagP, response, false, undefined, 201);
-		},
-	);
 
 	router.get(
-		"/repos/:ignored?/:tenantId/git/tags/*",
+		"/repos/:ignored?/:tenantId/contents/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
 		(request, response, next) => {
-			const tagP = getTag(
+			const contentP = getContent(
 				request.params.tenantId,
 				request.get("Authorization"),
 				request.params[0],
+				utils.queryParamToString(request.query.ref),
 			);
-			utils.handleResponse(tagP, response, false);
+			utils.handleResponse(contentP, response, false);
 		},
 	);
 

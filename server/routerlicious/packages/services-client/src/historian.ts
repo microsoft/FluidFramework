@@ -77,12 +77,17 @@ export class Historian implements IHistorian {
 		private readonly historianApi: boolean,
 		disableCache: boolean,
 		restWrapper?: RestWrapper,
+		historianApiVersion?: string,
 	) {
 		if (disableCache && this.historianApi) {
 			this.defaultQueryString.disableCache = disableCache;
 			this.cacheBust = false;
 		} else {
 			this.cacheBust = disableCache;
+		}
+
+		if (historianApiVersion) {
+			this.defaultQueryString["api-version"] = historianApiVersion;
 		}
 
 		this.restWrapper = restWrapper ?? new BasicRestWrapper(this.endpoint);

@@ -5,7 +5,14 @@
 
 export { IHistorianResourcesCustomizations } from "./customizations";
 export { configureHistorianLogging } from "./logger";
-export { create, IRoutes } from "./routes";
+export {
+	createV1,
+	createV1 as create,
+	IV1Routes as IRoutes,
+	IV1Routes,
+	createV2,
+	IV2Routes,
+} from "./routes";
 export { HistorianRunner } from "./runner";
 export {
 	HistorianResources,
