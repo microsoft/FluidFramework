@@ -54,20 +54,6 @@
 		"channelTag": "root"
 	},
 	{
-		"type": "changeConnectionState",
-		"connected": true,
-		"clientTag": "client-3",
-		"datastoreTag": "datastore-0",
-		"channelTag": "root"
-	},
-	{
-		"type": "changeConnectionState",
-		"connected": false,
-		"clientTag": "client-3",
-		"datastoreTag": "datastore-0",
-		"channelTag": "root"
-	},
-	{
 		"type": "DDSModelOp",
 		"op": {
 			"type": "set",
