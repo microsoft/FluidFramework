@@ -98,6 +98,7 @@ import {
 	IInboundSignalMessage,
 	type IRuntimeMessagesContent,
 	type ISummarizerNodeWithGC,
+	type StageControls,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -1983,6 +1984,21 @@ export class ContainerRuntime
 			reSubmit: this.reSubmit.bind(this),
 			opReentrancy: () => this.ensureNoDataModelChangesCalls > 0,
 			closeContainer: this.closeFn,
+			rollback: (msg) => {
+				// Need to parse from string for back-compat
+				const { type, contents } = this.parseLocalOpContent(msg.contents);
+				switch (type) {
+					case ContainerMessageType.FluidDataStoreOp: {
+						// For operations, call rollbackDataStoreOp which will find the right store
+						// and trigger rollback on it.
+						this.channelCollection.rollback(type, contents, msg.localOpMetadata);
+						break;
+					}
+					default: {
+						throw new Error(`Can't rollback ${type}`);
+					}
+				}
+			},
 		});
 
 		this._quorum = quorum;
@@ -3401,7 +3417,7 @@ export class ContainerRuntime
 		);
 
 		this.outbox.flush(resubmittingBatchId);
-		assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
+		// assert(this.outbox.isEmpty, 0x3cf /* reentrancy */);
 	}
 
 	/**
@@ -3423,9 +3439,7 @@ export class ContainerRuntime
 			if (checkpoint) {
 				// This will throw and close the container if rollback fails
 				try {
-					checkpoint.rollback((message: BatchMessage) =>
-						this.rollback(message.contents, message.localOpMetadata),
-					);
+					checkpoint.rollback();
 				} catch (error_) {
 					const error2 = wrapError(error_, (message) => {
 						return DataProcessingError.create(
@@ -3464,6 +3478,27 @@ export class ContainerRuntime
 		}
 		return result;
 	}
+
+	enterStagingMode = (): StageControls => {
+		const checkpoint = this.outbox.getBatchCheckpoints(true);
+		const branchInfo = {
+			discardChanges: () => {
+				assert(
+					checkpoint.blobAttachBatch.isEmpty() && checkpoint.idAllocationBatch.isEmpty(),
+					"other batches must be empty",
+				);
+
+				checkpoint.mainBatch.rollback();
+				checkpoint.unblockFlush();
+			},
+			commitChanges: () => {
+				checkpoint.unblockFlush();
+				this.outbox.flush();
+			},
+		};
+
+		return branchInfo;
+	};
 
 	/**
 	 * Returns the aliased data store's entryPoint, given the alias.
@@ -4777,22 +4812,6 @@ export class ContainerRuntime
 				const error = getUnknownMessageTypeError(message.type, "reSubmitCore" /* codePath */);
 				this.closeFn(error);
 				throw error;
-			}
-		}
-	}
-
-	private rollback(content: string | undefined, localOpMetadata: unknown): void {
-		// Need to parse from string for back-compat
-		const { type, contents } = this.parseLocalOpContent(content);
-		switch (type) {
-			case ContainerMessageType.FluidDataStoreOp: {
-				// For operations, call rollbackDataStoreOp which will find the right store
-				// and trigger rollback on it.
-				this.channelCollection.rollback(type, contents, localOpMetadata);
-				break;
-			}
-			default: {
-				throw new Error(`Can't rollback ${type}`);
 			}
 		}
 	}
