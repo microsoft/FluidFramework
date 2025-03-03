@@ -280,7 +280,7 @@ export interface LocalServerStressOptions {
 	 * TODO: Improving workflows around fuzz test minimization, regression test generation for a particular seed,
 	 * or more flexibility around replay of test files would be a nice value add to this harness.
 	 */
-	replay?: number;
+	replay?: number | Iterable<number>;
 
 	/**
 	 * Runs only the provided seeds.
@@ -1052,6 +1052,7 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 
 	const only = new Set(options.only);
 	const skip = new Set(options.skip);
+	const replay = options.replay;
 	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 
@@ -1077,25 +1078,27 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 			runTest(model, options, seed, getSaveInfo(model, options, seed));
 		}
 
-		if (options.replay !== undefined) {
-			const seed = options.replay;
+		if (replay !== undefined) {
 			describe.only(`replay from file`, () => {
-				const saveInfo = getSaveInfo(model, options, seed);
-				assert(
-					saveInfo.saveOnFailure !== false,
-					"Cannot replay a file without a directory to save files in!",
-				);
-				const operations = options.parseOperations(
-					readFileSync(saveInfo.saveOnFailure.path).toString(),
-				);
+				const replaySeeds = typeof replay === "number" ? [replay] : replay;
+				for (const seed of replaySeeds) {
+					const saveInfo = getSaveInfo(model, options, seed);
+					assert(
+						saveInfo.saveOnFailure !== false,
+						"Cannot replay a file without a directory to save files in!",
+					);
+					const operations = options.parseOperations(
+						readFileSync(saveInfo.saveOnFailure.path).toString(),
+					);
 
-				const replayModel = {
-					...model,
-					// We lose some type safety here because the options interface isn't generic
-					generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
-						asyncGeneratorFromArray(operations as TOperation[]),
-				};
-				runTest(replayModel, options, seed, undefined);
+					const replayModel = {
+						...model,
+						// We lose some type safety here because the options interface isn't generic
+						generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
+							asyncGeneratorFromArray(operations as TOperation[]),
+					};
+					runTest(replayModel, options, seed, undefined);
+				}
 			});
 		}
 	});

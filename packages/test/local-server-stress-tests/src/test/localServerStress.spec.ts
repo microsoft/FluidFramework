@@ -116,10 +116,9 @@ describe("Local Server Stress", () => {
 		defaultTestCount: 100,
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 93,
+		replay: [0, 13, 28, 30, 36, 37, 44, 45, 54, 55, 56, 76, 90, 96, 99],
 		// only: [28],
 		saveFailures,
 		// saveSuccesses,
-		skip: [28],
 	});
 });
