@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/shared-tree-demo",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"private": true,
 	"description": "A shared tree demo using react and odsp client",
 	"homepage": "https://fluidframework.com",

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/devtools-test-app",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"private": true,
 	"description": "An example application demonstrating how Fluid's devtools can be integrated into an application",
 	"homepage": "https://fluidframework.com",

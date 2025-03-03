@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-utils",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"description": "Not intended for use outside the Fluid client repo.",
 	"homepage": "https://fluidframework.com",
 	"repository": {

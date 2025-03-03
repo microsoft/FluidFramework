@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluidframework/odsp-driver";
-export const pkgVersion = "2.24.0";
+export const pkgVersion = "2.30.0";
