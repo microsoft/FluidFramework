@@ -48,6 +48,7 @@ const compressionSuite = (getProvider, apis?) => {
 
 		beforeEach("createLocalAndRemoteMaps", async () => {
 			provider = await getProvider();
+			// If the runtime version for the loader or the container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
 				compatOldCreateVersion = apis.containerRuntime.version === "1.4.0";
 				compatOldLoaderVersion = apis.containerRuntimeForLoading.version === "1.4.0";
@@ -119,6 +120,7 @@ const compressionSuite = (getProvider, apis?) => {
 			{ compression: true, grouping: true, chunking: false },
 		].forEach((option) => {
 			it(`Correctly processes messages: compression [${option.compression}] chunking [${option.chunking}] grouping [${option.grouping}]`, async function () {
+				// Only skip for the loader. It can still process the messages if it was created with the old version.
 				if (compatOldLoaderVersion) {
 					this.skip();
 				}
