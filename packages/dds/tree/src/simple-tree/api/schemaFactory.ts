@@ -316,6 +316,26 @@ export const schemaStatics = {
  */
 export const schemaStaticsAlpha = {
 	/**
+	 * Make a field explicitly required.
+	 *
+	 * @param t - The types allowed under the field.
+	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @remarks
+	 * Fields are required by default, but this API can be used to make the required nature explicit in the schema,
+	 * and allows associating custom {@link FieldProps | properties} with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
+	 */
+	required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		t: T,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Required, T, TCustomMetadata> => {
+		return createFieldSchema(FieldKind.Required, t, props);
+	},
+
+	/**
 	 * Make a field optional instead of the default, which is required.
 	 *
 	 * @param t - The types allowed under the field.

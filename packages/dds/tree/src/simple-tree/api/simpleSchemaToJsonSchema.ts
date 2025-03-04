@@ -19,7 +19,7 @@ import type {
 	JsonTreeSchema,
 	JsonLeafSchemaType,
 } from "./jsonSchema.js";
-import { FieldKind } from "../schemaTypes.js";
+import { FieldKind, type FieldSchemaMetadataAlpha } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
@@ -142,6 +142,10 @@ function convertObjectNodeSchema(schema: SimpleObjectNodeSchema): JsonObjectNode
 	const properties: Record<string, JsonFieldSchema> = {};
 	const required: string[] = [];
 	for (const [key, fieldSchema] of Object.entries(schema.fields)) {
+		if ((fieldSchema.metadata as FieldSchemaMetadataAlpha)?.omitFromJson === true) {
+			continue;
+		}
+
 		const allowedTypes: JsonSchemaRef[] = [];
 		for (const allowedType of fieldSchema.allowedTypes) {
 			allowedTypes.push(createSchemaRef(allowedType));

@@ -205,6 +205,7 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 // @alpha @sealed
 export interface FieldSchemaMetadataAlpha<TCustomMetadata = unknown, T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FieldSchemaMetadata<TCustomMetadata> {
     readonly llmDefault?: () => TreeNodeFromImplicitAllowedTypes<T>;
+    readonly omitFromJson?: boolean | undefined;
 }
 
 // @public
@@ -1083,6 +1084,7 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     object<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: SchemaFactoryObjectOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNode<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecord<T>, true, T, never, TCustomMetadata>;
     objectRecursive<const Name extends TName, const T extends Unenforced<RestrictiveStringRecord<ImplicitFieldSchema>>, const TCustomMetadata = unknown>(name: Name, t: T, options?: SchemaFactoryObjectOptions<TCustomMetadata>): TreeNodeSchemaClass<ScopedSchemaName<TScope, Name>, NodeKind.Object, TreeObjectNodeUnsafe<T, ScopedSchemaName<TScope, Name>>, object & InsertableObjectFromSchemaRecordUnsafe<T>, false, T, never, TCustomMetadata>;
     readonly optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema_2<FieldKind_2.Optional, T, TCustomMetadata>;
+    readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchema_2<FieldKind_2.Required, T, TCustomMetadata>;
 }
 
 // @alpha
@@ -1106,7 +1108,8 @@ export const schemaStatics: {
 
 // @alpha @sealed
 export const schemaStaticsAlpha: {
-    optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">) => FieldSchema<FieldKind.Optional, T, TCustomMetadata>;
+    required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
+    optional: <const T_1 extends ImplicitAllowedTypes, const TCustomMetadata_1 = unknown>(t: T_1, props?: Omit<FieldPropsAlpha<TCustomMetadata_1>, "defaultProvider"> | undefined) => FieldSchema<FieldKind.Optional, T_1, TCustomMetadata_1>;
 };
 
 // @alpha

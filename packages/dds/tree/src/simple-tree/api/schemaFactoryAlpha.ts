@@ -256,4 +256,9 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc schemaStaticsAlpha.optional}
 	 */
 	public override readonly optional = schemaStaticsAlpha.optional;
+
+	/**
+	 * {@inheritDoc schemaStaticsAlpha.required}
+	 */
+	public override readonly required = schemaStaticsAlpha.required;
 }
