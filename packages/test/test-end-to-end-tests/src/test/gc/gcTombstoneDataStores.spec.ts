@@ -581,7 +581,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				const serializer = new FluidSerializer(dataObject._runtime);
 				const handle: IFluidHandle = parseHandles(
-					{ type: "__fluid_handle__", url: unreferencedId },
+					{ type: "__fluid_handle__", url: `/${unreferencedId}` },
 					serializer,
 				) as IFluidHandle;
 
