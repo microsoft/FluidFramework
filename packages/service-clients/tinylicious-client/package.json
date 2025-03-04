@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-client",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Tinylicious service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -103,10 +103,10 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
-		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluid-tools/build-cli": "^0.54.0",
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.7.3",

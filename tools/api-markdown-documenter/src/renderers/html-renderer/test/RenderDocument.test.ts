@@ -29,9 +29,7 @@ describe("Document HTML rendering tests", () => {
 							[
 								new ParagraphNode([
 									new PlainTextNode("This is text inside of a paragraph. "),
-									new PlainTextNode(
-										"It is also inside of a hierarchical section node. ",
-									),
+									new PlainTextNode("It is also inside of a hierarchical section node. "),
 									SpanNode.createFromPlainText("That's real neat-o.", {
 										italic: true,
 									}),
