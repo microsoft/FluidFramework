@@ -2732,7 +2732,7 @@ describe("Runtime", () => {
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
 		});
 
-		describe.only("Signal Telemetry", () => {
+		describe("Signal Telemetry", () => {
 			let containerRuntime: ContainerRuntime;
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelopeWithClientIds[];
@@ -3539,6 +3539,7 @@ describe("Runtime", () => {
 					);
 				});
 			});
+
 			describe("processSignalForTelemetry", () => {
 				let signalTracking: IPerfSignalReport;
 				let mockLogger: IMockLoggerExt;
@@ -3571,7 +3572,7 @@ describe("Runtime", () => {
 						address: undefined,
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3579,11 +3580,9 @@ describe("Runtime", () => {
 					);
 
 					assert.strictEqual(mockLogger.events().length, 0, "Logger should not be called");
-					assert.strictEqual(
-						signalTracking.signalsLost,
-						0,
-						"signalsLost should remain unchanged",
-					);
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(result, undefined, "no changes to signal tracking should occur");
 				});
 
 				it("should do nothing when trackingSignalSequenceNumber is undefined", () => {
@@ -3593,7 +3592,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 101,
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3601,11 +3600,9 @@ describe("Runtime", () => {
 					);
 
 					assert.strictEqual(mockLogger.events().length, 0, "Logger should not be called");
-					assert.strictEqual(
-						signalTracking.signalsLost,
-						0,
-						"signalsLost should remain unchanged",
-					);
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(result, undefined, "no changes to signal tracking should occur");
 				});
 
 				it("should do nothing when minimumTrackingSignalSequenceNumber is undefined", () => {
@@ -3616,7 +3613,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 101,
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3624,11 +3621,9 @@ describe("Runtime", () => {
 					);
 
 					assert.strictEqual(mockLogger.events().length, 0, "Logger should not be called");
-					assert.strictEqual(
-						signalTracking.signalsLost,
-						0,
-						"signalsLost should remain unchanged",
-					);
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(result, undefined, "no changes to signal tracking should occur");
 				});
 
 				it("should update tracking signal number when receiving expected signal", () => {
@@ -3640,7 +3635,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 101,
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3652,15 +3647,12 @@ describe("Runtime", () => {
 						0,
 						"Logger should not be called for expected signal",
 					);
-					assert.strictEqual(
-						signalTracking.trackingSignalSequenceNumber,
-						102,
-						"trackingSignalSequenceNumber should be incremented",
-					);
-					assert.strictEqual(
-						signalTracking.signalsLost,
-						0,
-						"signalsLost should remain unchanged",
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(
+						result,
+						{ ...signalTracking, trackingSignalSequenceNumber: 102 },
+						"trackingSignalSequenceNumber should be updated",
 					);
 				});
 
@@ -3673,7 +3665,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 105, // Skipped signals 101-104
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3690,11 +3682,12 @@ describe("Runtime", () => {
 					const actualSignalsLost = JSON.parse(mockLogger.events()[0].details as string)
 						.signalsLost as number;
 					assert.strictEqual(actualSignalsLost, 4, "Should report 4 lost signals");
-					assert.strictEqual(signalTracking.signalsLost, 4, "signalsLost should be updated");
-					assert.strictEqual(
-						signalTracking.trackingSignalSequenceNumber,
-						106,
-						"trackingSignalSequenceNumber should be updated",
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(
+						result,
+						{ ...signalTracking, signalsLost: 4, trackingSignalSequenceNumber: 106 },
+						"signalsLost and trackingSignalSequenceNumber should be updated",
 					);
 				});
 
@@ -3707,7 +3700,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 102, // Out of order signal
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3720,11 +3713,6 @@ describe("Runtime", () => {
 						"SignalOutOfOrder",
 						"Should log out of order event",
 					);
-					assert.strictEqual(
-						signalTracking.signalsOutOfOrder,
-						1,
-						"signalsOutOfOrder should be incremented",
-					);
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					const actualContentsType = JSON.parse(mockLogger.events()[0].details as string)
 						.contentsType as number;
@@ -3732,6 +3720,13 @@ describe("Runtime", () => {
 						actualContentsType,
 						"test",
 						"Should include contents type for container signals",
+					);
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(
+						result,
+						{ ...signalTracking, signalsOutOfOrder: 1 },
+						"signalsOutOfOrder should be updated",
 					);
 				});
 
@@ -3744,7 +3739,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 102, // Out of order signal
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3758,14 +3753,16 @@ describe("Runtime", () => {
 						"Should log out of order event",
 					);
 					assert.strictEqual(
-						signalTracking.signalsOutOfOrder,
-						1,
-						"signalsOutOfOrder should be incremented",
-					);
-					assert.strictEqual(
 						(mockLogger.events()[0].details as EventDetailsHelperType).contentsType,
 						undefined,
 						"Should not include contents type for non-container signals",
+					);
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(
+						result,
+						{ ...signalTracking, signalsOutOfOrder: 1 },
+						"signalsOutOfOrder should be updated",
 					);
 				});
 
@@ -3778,7 +3775,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 99, // Before minimum tracking number
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3786,11 +3783,9 @@ describe("Runtime", () => {
 					);
 
 					assert.strictEqual(mockLogger.events().length, 0, "Logger should not be called");
-					assert.strictEqual(
-						signalTracking.signalsOutOfOrder,
-						0,
-						"signalsOutOfOrder should not be incremented",
-					);
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(result, signalTracking, "no changes to signal tracking should occur");
 				});
 
 				it("should report signal latency when roundtrip signal is received", () => {
@@ -3805,7 +3800,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 101, // Matches roundTrip sequence number
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3844,27 +3839,18 @@ describe("Runtime", () => {
 					assert.strictEqual(actualOutOfOrder, 0, "Should report out of order signals");
 					assert.strictEqual(actualReconnectCount, 3, "Should report reconnect count");
 
-					// Validate the properties of the signalTracking object are reset
-					assert.strictEqual(signalTracking.signalsLost, 0, "signalsLost should be reset");
-					assert.strictEqual(
-						signalTracking.signalsOutOfOrder,
-						0,
-						"signalsOutOfOrder should be reset",
-					);
-					assert.strictEqual(
-						signalTracking.totalSignalsSentInLatencyWindow,
-						0,
-						"totalSignalsSentInLatencyWindow should be reset",
-					);
-					assert.strictEqual(
-						signalTracking.signalTimestamp,
-						0,
-						"signalTimestamp should be reset",
-					);
-					assert.strictEqual(
-						signalTracking.roundTripSignalSequenceNumber,
-						undefined,
-						"roundTripSignalSequenceNumber should be reset",
+					// Validate signal tracking updates are correct
+					assert.deepEqual(
+						result,
+						{
+							...signalTracking,
+							signalsLost: 0,
+							signalsOutOfOrder: 0,
+							totalSignalsSentInLatencyWindow: 0,
+							signalTimestamp: 0,
+							roundTripSignalSequenceNumber: undefined,
+						},
+						"signal tracking properties should be updated",
 					);
 				});
 
@@ -3878,7 +3864,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 103, // Higher than roundTripSignalSequenceNumber
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3890,10 +3876,12 @@ describe("Runtime", () => {
 						0,
 						"Logger should not be called for higher sequence",
 					);
-					assert.strictEqual(
-						signalTracking.roundTripSignalSequenceNumber,
-						undefined,
-						"roundTripSignalSequenceNumber should be cleared",
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(
+						result,
+						{ ...signalTracking, roundTripSignalSequenceNumber: undefined },
+						"roundTripSignalSequenceNumber should be updated",
 					);
 				});
 
@@ -3907,7 +3895,7 @@ describe("Runtime", () => {
 						clientBroadcastSignalSequenceNumber: 108, // Matches roundTrip and is higher than expected
 					};
 
-					processSignalForTelemetry(
+					const result = processSignalForTelemetry(
 						envelope,
 						signalTracking,
 						mockLogger,
@@ -3936,15 +3924,18 @@ describe("Runtime", () => {
 						"SignalLatency",
 						"Should log latency event",
 					);
-					assert.strictEqual(
-						signalTracking.trackingSignalSequenceNumber,
-						109,
-						"trackingSignalSequenceNumber should be updated",
-					);
-					assert.strictEqual(
-						signalTracking.roundTripSignalSequenceNumber,
-						undefined,
-						"roundTripSignalSequenceNumber should be reset",
+
+					// Validate signal tracking updates are correct
+					assert.deepEqual(
+						result,
+						{
+							...signalTracking,
+							signalTimestamp: 0,
+							trackingSignalSequenceNumber: 109,
+							roundTripSignalSequenceNumber: undefined,
+							totalSignalsSentInLatencyWindow: 0,
+						},
+						"properties should be updated",
 					);
 				});
 			});

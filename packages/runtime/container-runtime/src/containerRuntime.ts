@@ -3266,12 +3266,20 @@ export class ContainerRuntime
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
-			processSignalForTelemetry(
+			const signalTrackingUpdate = processSignalForTelemetry(
 				envelope,
 				this._signalTracking,
 				this.mc.logger,
 				this.consecutiveReconnects,
 			);
+
+			if (signalTrackingUpdate !== undefined) {
+				// Update signal tracking object based on the results of processing the signal
+				for (const [key, value] of Object.entries(signalTrackingUpdate)) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- signalTrackingUpdate has the same type as this._signalTracking
+					this._signalTracking[key] = value;
+				}
+			}
 		}
 
 		if (envelope.address === undefined) {
@@ -4969,36 +4977,45 @@ export class ContainerRuntime
 }
 
 /**
- * Updates signal telemetry including emitting telemetry events.
+ * Processes incoming signals for telemetry tracking.
+ * @remarks
+ * Instead of modifying the input signalTracking object, it returns an object with updates to be applied,
+ * or undefined if no changes are needed.
  */
 export function processSignalForTelemetry(
 	envelope: ISignalEnvelope,
 	signalTracking: IPerfSignalReport,
 	logger: ITelemetryLoggerExt,
 	consecutiveReconnects: number,
-): void {
+): IPerfSignalReport | undefined {
 	const {
 		clientBroadcastSignalSequenceNumber,
 		contents: envelopeContents,
 		address: envelopeAddress,
 	} = envelope;
+
 	if (clientBroadcastSignalSequenceNumber === undefined) {
-		return;
+		return undefined;
 	}
 
 	if (
 		signalTracking.trackingSignalSequenceNumber === undefined ||
 		signalTracking.minimumTrackingSignalSequenceNumber === undefined
 	) {
-		return;
+		return undefined;
 	}
+
+	// Initialize the result with the received values
+	const result: IPerfSignalReport = {
+		...signalTracking,
+	};
 
 	if (clientBroadcastSignalSequenceNumber >= signalTracking.trackingSignalSequenceNumber) {
 		// Calculate the number of signals lost and log the event.
 		const signalsLost =
 			clientBroadcastSignalSequenceNumber - signalTracking.trackingSignalSequenceNumber;
 		if (signalsLost > 0) {
-			signalTracking.signalsLost += signalsLost;
+			result.signalsLost = signalTracking.signalsLost + signalsLost;
 			logger.sendErrorEvent({
 				eventName: "SignalLost",
 				details: {
@@ -5009,12 +5026,12 @@ export function processSignalForTelemetry(
 			});
 		}
 		// Update the tracking signal sequence number to the next expected signal in the sequence.
-		signalTracking.trackingSignalSequenceNumber = clientBroadcastSignalSequenceNumber + 1;
+		result.trackingSignalSequenceNumber = clientBroadcastSignalSequenceNumber + 1;
 	} else if (
 		// Check if this is a signal in range of interest.
 		clientBroadcastSignalSequenceNumber >= signalTracking.minimumTrackingSignalSequenceNumber
 	) {
-		signalTracking.signalsOutOfOrder++;
+		result.signalsOutOfOrder = signalTracking.signalsOutOfOrder + 1;
 		const details: TelemetryEventPropertyTypeExt = {
 			expectedSequenceNumber: signalTracking.trackingSignalSequenceNumber, // The next expected signal sequence number.
 			clientBroadcastSignalSequenceNumber, // Sequence number of the out of order signal.
@@ -5043,17 +5060,18 @@ export function processSignalForTelemetry(
 				eventName: "SignalLatency",
 				details: {
 					duration, // Roundtrip duration of the tracked signal in milliseconds.
-					sent: signalTracking.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
-					lost: signalTracking.signalsLost, // Signals lost since the last logged SignalLatency event.
-					outOfOrder: signalTracking.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
+					sent: result.totalSignalsSentInLatencyWindow, // Signals sent since the last logged SignalLatency event.
+					lost: result.signalsLost, // Signals lost since the last logged SignalLatency event.
+					outOfOrder: result.signalsOutOfOrder, // Out of order signals since the last logged SignalLatency event.
 					reconnectCount: consecutiveReconnects, // Container reconnect count.
 				},
 			});
-			signalTracking.signalsLost = 0;
-			signalTracking.signalsOutOfOrder = 0;
-			signalTracking.signalTimestamp = 0;
-			signalTracking.totalSignalsSentInLatencyWindow = 0;
+			result.signalsLost = 0;
+			result.signalsOutOfOrder = 0;
+			result.signalTimestamp = 0;
+			result.totalSignalsSentInLatencyWindow = 0;
 		}
-		signalTracking.roundTripSignalSequenceNumber = undefined;
+		result.roundTripSignalSequenceNumber = undefined;
 	}
+	return result;
 }
