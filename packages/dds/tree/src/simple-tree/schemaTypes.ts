@@ -499,7 +499,10 @@ function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T {
  * @remarks
  * Helper for invoking {@link TreeNodeValid.markMostDerived} for any {@link TreeNodeSchema} if it needed.
  */
-export function markSchemaMostDerived(schema: TreeNodeSchema): void {
+export function markSchemaMostDerived(
+	schema: TreeNodeSchema,
+	oneTimeInitialize = false,
+): void {
 	if (schema instanceof LeafNodeSchema) {
 		return;
 	}
@@ -513,7 +516,12 @@ export function markSchemaMostDerived(schema: TreeNodeSchema): void {
 		);
 	}
 
-	(schema as typeof TreeNodeValid & TreeNodeSchema).oneTimeInitialize();
+	const schemaValid = schema as typeof TreeNodeValid & TreeNodeSchema;
+	if (oneTimeInitialize) {
+		schemaValid.oneTimeInitialize();
+	} else {
+		schemaValid.markMostDerived();
+	}
 }
 
 /**

@@ -34,7 +34,7 @@ import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
-import { fail, getOrCreate, isReadonlyArray } from "../../util/index.js";
+import { fail, getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { VerboseTree } from "./verboseTree.js";
@@ -280,15 +280,10 @@ export class TreeViewConfiguration<
 			// This ensures if multiple schema extending the same schema factory generated class are present (or have been constructed, or get constructed in the future),
 			// an error is reported.
 
-			node: markSchemaMostDerived,
+			node: (schema) => markSchemaMostDerived(schema, true),
 			allowedTypes(types): void {
 				if (config.preventAmbiguity) {
 					checkUnion(types, ambiguityErrors);
-				}
-				if (isReadonlyArray(types)) {
-					// Ensure late additions to unions error.
-					// TODO: it would be better to do this as part of oneTimeInitialize so more cases trigger it, but this is better than nothing, and really easy to do:
-					Object.freeze(types);
 				}
 			},
 		});
