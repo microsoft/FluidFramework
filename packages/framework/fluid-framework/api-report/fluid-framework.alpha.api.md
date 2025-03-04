@@ -62,9 +62,6 @@ export interface BranchableTree extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
-// @alpha
-export function cacheLazyItem<T>(f: () => T): () => T;
-
 // @public
 export enum CommitKind {
     Default = 0,
@@ -214,6 +211,9 @@ export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
     protected abstract brand(dummy: never): Name;
 }
+
+// @alpha
+export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
 
 // @public
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;

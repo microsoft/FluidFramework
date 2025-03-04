@@ -16,7 +16,7 @@ import {
 } from "../simple-tree/index.js";
 import { Tree } from "../shared-tree/index.js";
 import { validateUsageError } from "./utils.js";
-import { customizeSchemaTyping } from "../simple-tree/index.js";
+import { customizeSchemaTyping, evaluateLazySchema } from "../simple-tree/index.js";
 
 const sf = new SchemaFactory("test");
 
@@ -303,21 +303,36 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				allComponents: readonly ComponentSchemaCollection<TConfig, TItem>[],
 				lazyConfiguration: () => TConfig,
 			): (() => TItem)[] {
-				const uncachedItemTypes = allComponents.flatMap(
+				const itemTypes = allComponents.flatMap(
 					(component): LazyArray<TItem> => component(lazyConfiguration),
 				);
-				return uncachedItemTypes; // uncachedItemTypes.map(cacheLazyItem);
+				return itemTypes;
 			}
 
 			// App specific //
+
+			/**
+			 * Subset of `MyAppConfig` which is available while composing components.
+			 */
+			interface MyAppConfigPartial {
+				/**
+				 * {@link AllowedTypes} containing all ItemSchema contributed by components.
+				 */
+				readonly allowedItemTypes: LazyArray<ItemSchema>;
+			}
 
 			/**
 			 * Example configuration type for an application.
 			 *
 			 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
 			 */
-			interface MyAppConfig {
-				readonly ItemTypes: LazyArray<ItemSchema>;
+			interface MyAppConfig extends MyAppConfigPartial {
+				/**
+				 * Set of all ItemSchema contributed by components.
+				 * @remarks
+				 * Same content as {@link MyAppConfig.allowedItemTypes}, but normalized into a Set.
+				 */
+				readonly items: ReadonlySet<ItemSchema>;
 			}
 
 			/**
@@ -329,7 +344,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			 * This makes it possible to implement the "open polymorphism" pattern, including handling recursive cases.
 			 */
 			interface MyAppComponent {
-				readonly itemTypes: ComponentSchemaCollection<MyAppConfig, ItemSchema>;
+				readonly itemTypes: ComponentSchemaCollection<MyAppConfigPartial, ItemSchema>;
 			}
 
 			/**
@@ -343,8 +358,11 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 					allComponents.map((c) => c.itemTypes),
 					lazyConfig,
 				);
-				const config: MyAppConfig = { ItemTypes };
-				return config;
+				const config: MyAppConfigPartial = {
+					allowedItemTypes: ItemTypes,
+				};
+				const items = new Set(ItemTypes.map(evaluateLazySchema));
+				return { ...config, items };
 			}
 
 			// An example simple component
@@ -354,12 +372,12 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 			// An example component which references schema from the configuration and can be recursive through it.
 			const containerComponent: MyAppComponent = {
-				itemTypes: (lazyConfig: () => MyAppConfig): LazyArray<ItemSchema> => [
+				itemTypes: (lazyConfig: () => MyAppConfigPartial): LazyArray<ItemSchema> => [
 					() => createContainer(lazyConfig()),
 				],
 			};
-			function createContainer(config: MyAppConfig): ItemSchema {
-				class Container extends sf.array("Container", config.ItemTypes) {}
+			function createContainer(config: MyAppConfigPartial): ItemSchema {
+				class Container extends sf.array("Container", config.allowedItemTypes) {}
 				class ContainerItem extends sf.object("ContainerItem", {
 					...itemFields,
 					container: Container,
@@ -378,7 +396,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			const appConfig = composeComponents([containerComponent, textComponent]);
 
 			const treeConfig = new TreeViewConfiguration({
-				schema: appConfig.ItemTypes,
+				schema: appConfig.allowedItemTypes,
 				enableSchemaValidation: true,
 				preventAmbiguity: true,
 			});

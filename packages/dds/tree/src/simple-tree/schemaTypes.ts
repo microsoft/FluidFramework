@@ -479,7 +479,13 @@ function areMetadataEqual(
 
 const cachedLazyItem = new WeakMap<() => unknown, unknown>();
 
-function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T {
+/**
+ * Returns the schema referenced by the {@link LazyItem}.
+ * @remarks
+ * Caches results to handle {@link LazyItem} which compute their resulting schema.
+ * @alpha
+ */
+export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T {
 	const evaluatedSchema = isLazy(value)
 		? (getOrCreate(cachedLazyItem, value, value) as T)
 		: value;
