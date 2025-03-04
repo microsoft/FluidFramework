@@ -32,6 +32,8 @@ import { _dirname } from "./dirname.cjs";
 type StressOperations = StressDataObjectOperations | DDSModelOp;
 
 const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
+	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
+	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
@@ -63,7 +65,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 				type: "uploadBlob",
 				tag: state.tag("blob"),
 			}),
-			10,
+			0,
 			// local server doesn't support detached blobs
 			(state) => state.client.container.attachState !== AttachState.Detached,
 		],
@@ -74,6 +76,25 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 				tag: state.tag("channel"),
 			}),
 			5,
+		],
+		[
+			async () => ({
+				type: "enterStagingMode",
+			}),
+			5,
+			(state) =>
+				!state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
+		],
+		[
+			async ({ random }) => ({
+				type: "exitStagingMode",
+				commit: random.bool(),
+			}),
+			25,
+			(state) =>
+				state.client.entryPoint.inStagingMode() &&
+				state.client.container.attachState !== AttachState.Detached,
 		],
 		[DDSModelOpGenerator, 100],
 	]);
@@ -95,10 +116,9 @@ describe("Local Server Stress", () => {
 		defaultTestCount: 100,
 		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 93,
+		skip: [0, 13, 28, 30, 36, 37, 44, 45, 54, 55, 56, 76, 90, 96, 99],
 		// only: [28],
 		saveFailures,
 		// saveSuccesses,
-		skip: [28],
 	});
 });

@@ -218,7 +218,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 */
 	orderSequentially(callback: () => void): void;
 
+	get inStagingMode(): boolean;
 	readonly enterStagingMode: () => StageControls;
+
 	/**
 	 * Submits a container runtime level signal to be sent to other clients.
 	 * @param type - Type of the signal.

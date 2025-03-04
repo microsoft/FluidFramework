@@ -442,6 +442,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
+    readonly inStagingMode = false;
+    // (undocumented)
     get isAttached(): boolean;
     // (undocumented)
     readonly loader: ILoader;

@@ -3479,10 +3479,20 @@ export class ContainerRuntime
 		return result;
 	}
 
+	private stageControls: StageControls | undefined;
+	public get inStagingMode(): boolean {
+		return this.stageControls !== undefined;
+	}
+
 	enterStagingMode = (): StageControls => {
+		if (this.stageControls !== undefined) {
+			throw new Error("already in staging mode");
+		}
 		const checkpoint = this.outbox.getBatchCheckpoints(true);
-		const branchInfo = {
+		const stageControls = {
 			discardChanges: () => {
+				this.stageControls = undefined;
+
 				assert(
 					checkpoint.blobAttachBatch.isEmpty() && checkpoint.idAllocationBatch.isEmpty(),
 					"other batches must be empty",
@@ -3492,12 +3502,13 @@ export class ContainerRuntime
 				checkpoint.unblockFlush();
 			},
 			commitChanges: () => {
+				this.stageControls = undefined;
 				checkpoint.unblockFlush();
 				this.outbox.flush();
 			},
 		};
 
-		return branchInfo;
+		return (this.stageControls = stageControls);
 	};
 
 	/**
