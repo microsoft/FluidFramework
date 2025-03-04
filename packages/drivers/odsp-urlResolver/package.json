@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-urlresolver",
-	"version": "2.23.0",
+	"version": "2.30.0",
 	"description": "Url Resolver for odsp urls.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
