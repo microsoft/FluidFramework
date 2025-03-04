@@ -59,6 +59,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 					redisConfig,
 					redisConfig.enableClustering,
 					redisConfig.slotsRefreshTimeout,
+					undefined /* retryDelays */,
+					redisConfig.enableVerboseErrorLogging,
 			  );
 		redisClientConnectionManagers.push(redisClientConnectionManager);
 
@@ -100,6 +102,8 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 						redisConfigForThrottling,
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig.enableVerboseErrorLogging,
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 

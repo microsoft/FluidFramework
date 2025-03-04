@@ -37,6 +37,7 @@ import type { ObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
 import {
 	SchemaFactory,
 	schemaFromValue,
+	schemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
 import type {
@@ -936,12 +937,19 @@ describe("schemaFactory", () => {
 	});
 
 	it("schemaFromValue", () => {
+		assert.equal(schemaFromValue(1), SchemaFactory.number);
+		assert.equal(schemaFromValue(""), SchemaFactory.string);
+		assert.equal(schemaFromValue(null), SchemaFactory.null);
+		assert.equal(schemaFromValue(new MockHandle("x")), SchemaFactory.handle);
+		assert.equal(schemaFromValue(false), SchemaFactory.boolean);
+	});
+
+	it("statics", () => {
 		const f = new SchemaFactory("");
-		assert.equal(schemaFromValue(1), f.number);
-		assert.equal(schemaFromValue(""), f.string);
-		assert.equal(schemaFromValue(null), f.null);
-		assert.equal(schemaFromValue(new MockHandle("x")), f.handle);
-		assert.equal(schemaFromValue(false), f.boolean);
+		for (const [key, value] of Object.entries(schemaStatics)) {
+			assert.equal((SchemaFactory as unknown as Record<string, unknown>)[key], value);
+			assert.equal((f as unknown as Record<string, unknown>)[key], value);
+		}
 	});
 
 	it("extra fields in object constructor", () => {

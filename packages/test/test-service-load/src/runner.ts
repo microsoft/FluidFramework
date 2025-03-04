@@ -244,7 +244,9 @@ async function runnerProcess(
 
 			// Construct the loader
 			runConfig.loaderConfig = loaderOptions[runConfig.runId % loaderOptions.length];
-			const testConfiguration = configurations[runConfig.runId % configurations.length];
+			// non-null guaranteed by bounds check
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const testConfiguration = configurations[runConfig.runId % configurations.length]!;
 			runConfig.logger.sendTelemetryEvent({
 				eventName: "RunConfigOptions",
 				details: JSON.stringify({
@@ -564,8 +566,9 @@ async function setupOpsMetrics(
 	const getUserName = (userContainer: IContainer) => {
 		const clientId = userContainer.clientId;
 		if (clientId !== undefined && clientId.length > 0) {
-			if (clientIdUserNameMap[clientId]) {
-				return clientIdUserNameMap[clientId];
+			const maybeUserName = clientIdUserNameMap[clientId];
+			if (maybeUserName !== undefined) {
+				return maybeUserName;
 			}
 
 			const userName: string | undefined = userContainer.getQuorum().getMember(clientId)

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/changelog-generator-wrapper",
-	"version": "2.21.0",
+	"version": "2.23.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -22,12 +22,15 @@
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc",
 		"build:compile": "npm run build:commonjs",
+		"check:biome": "biome check .",
+		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"eslint": "eslint --format stylish src",
 		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
-		"format": "npm run prettier:fix",
-		"lint": "npm run prettier && npm run eslint",
-		"lint:fix": "npm run prettier:fix && npm run eslint:fix",
+		"format": "npm run format:biome",
+		"format:biome": "biome check . --write",
+		"lint": "npm run eslint",
+		"lint:fix": "npm run format && npm run eslint:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../.prettierignore",
 		"tsc": "echo \"No build required.\""
@@ -39,8 +42,9 @@
 		"typescript": "~5.4.5"
 	},
 	"devDependencies": {
+		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.6.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.3",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
 		"prettier": "~3.0.3",

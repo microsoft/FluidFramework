@@ -13,7 +13,10 @@ import {
 
 import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
 
-import { doesItemRequireOwnDocument, shouldItemBeIncluded } from "./ApiItemTransformUtilities.js";
+import {
+	doesItemRequireOwnDocument,
+	shouldItemBeIncluded,
+} from "./ApiItemTransformUtilities.js";
 import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 import { checkForDuplicateDocumentPaths, createDocument } from "./Utilities.js";
 import {
@@ -21,7 +24,11 @@ import {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
-import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "./helpers/index.js";
+import {
+	createBreadcrumbParagraph,
+	createEntryPointList,
+	wrapInSection,
+} from "./helpers/index.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link DocumentNode}s.
@@ -30,7 +37,7 @@ import { createBreadcrumbParagraph, createEntryPointList, wrapInSection } from "
  */
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[] {
 	const config = getApiItemTransformationConfigurationWithDefaults(options);
-	const { apiModel, logger, skipPackage } = config;
+	const { apiModel, logger, exclude: excludeItem } = config;
 
 	logger.verbose(`Generating documentation for API Model...`);
 
@@ -50,7 +57,7 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 	}
 
 	// Filter out packages not wanted per user config
-	const filteredPackages = apiModel.packages.filter((apiPackage) => !skipPackage(apiPackage));
+	const filteredPackages = apiModel.packages.filter((apiPackage) => !excludeItem(apiPackage));
 
 	if (filteredPackages.length === 0) {
 		logger.warning("No packages found after filtering per `skipPackages` configuration.");
@@ -126,7 +133,10 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
  * @param apiItem - The API item in question.
  * @param config - See {@link ApiItemTransformationConfiguration}
  */
-function getDocumentItems(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ApiItem[] {
+function getDocumentItems(
+	apiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): ApiItem[] {
 	const { hierarchy } = config;
 
 	const result: ApiItem[] = [];

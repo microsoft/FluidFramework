@@ -1,5 +1,51 @@
 # @fluidframework/container-runtime
 
+## 2.23.0
+
+Dependency updates only.
+
+## 2.22.0
+
+Dependency updates only.
+
+## 2.21.0
+
+### Minor Changes
+
+-   Many unnecessary exports have been deprecated in the container-runtime package ([#23607](https://github.com/microsoft/FluidFramework/pull/23607)) [3da5b427ef](https://github.com/microsoft/FluidFramework/commit/3da5b427ef406799abade04196e43bb6d66d898d)
+
+    The following types in the `@fluidframework/container-runtime` package are now deprecated. These types are unnecessary for external users of this package.
+
+    -   currentDocumentVersionSchema
+    -   DeletedResponseHeaderKey
+    -   DocumentSchemaValueType
+    -   DocumentsSchemaController
+    -   GCFeatureMatrix
+    -   GCNodeType
+    -   GCVersion
+    -   IBlobManagerLoadInfo
+    -   ICancellableSummarizerController
+    -   ICancellationToken
+    -   IConnectableRuntime
+    -   IContainerRuntimeMetadata
+    -   ICreateContainerMetadata
+    -   IDocumentSchema
+    -   IDocumentSchemaChangeMessage
+    -   IDocumentSchemaCurrent
+    -   IDocumentSchemaFeatures
+    -   IGCMetadata
+    -   IGCStats
+    -   IMarkPhaseStats
+    -   IRefreshSummaryAckOptions
+    -   ISerializedElection
+    -   ISubmitSummaryOptions
+    -   ISummarizerInternalsProvider
+    -   ISummarizerRuntime
+    -   ISummaryCancellationToken
+    -   ISummaryMetadataMessage
+    -   ISweepPhaseStats
+    -   Summarizer
+
 ## 2.20.0
 
 ### Minor Changes
