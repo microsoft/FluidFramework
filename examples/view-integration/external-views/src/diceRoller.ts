@@ -29,13 +29,16 @@ const diceValueKey = "dice-value";
 /**
  * The DiceRoller is our data object that implements the IDiceRoller interface.
  */
-class DiceRoller implements IDiceRoller {
+class RiskyDiceRoller implements IDiceRoller {
 	private readonly _events = new TypedEventEmitter<IDiceRollerEvents>();
 	public get events(): IEventProvider<IDiceRollerEvents> {
 		return this._events;
 	}
 
-	public constructor(private readonly map: ISharedMap) {
+	public constructor(
+		private readonly map: ISharedMap,
+		private readonly disposeRuntime: () => void,
+	) {
 		this.map.on("valueChanged", (changed: IValueChanged) => {
 			if (changed.key === diceValueKey) {
 				this._events.emit("diceRolled");
@@ -51,7 +54,12 @@ class DiceRoller implements IDiceRoller {
 
 	public readonly roll = () => {
 		const rollValue = Math.floor(Math.random() * 6) + 1;
-		this.map.set(diceValueKey, rollValue);
+		if (rollValue === 1) {
+			console.log("Snake eyes!");
+			this.disposeRuntime();
+		} else {
+			this.map.set(diceValueKey, rollValue);
+		}
 	};
 }
 
@@ -64,6 +72,8 @@ export class DiceRollerFactory implements IFluidDataStoreFactory {
 		return this;
 	}
 
+	public constructor(private readonly disposeRuntime: () => void) {}
+
 	public async instantiateDataStore(
 		context: IFluidDataStoreContext,
 		existing: boolean,
@@ -75,13 +85,13 @@ export class DiceRollerFactory implements IFluidDataStoreFactory {
 			existing,
 			async () => {
 				map ??= (await runtime.getChannel(mapId)) as ISharedMap;
-				return new DiceRoller(map);
+				return new RiskyDiceRoller(map, this.disposeRuntime);
 			},
 		);
 
 		if (!existing) {
 			map = runtime.createChannel(mapId, mapFactory.type) as ISharedMap;
-			map.set(diceValueKey, 1);
+			map.set(diceValueKey, 6);
 			map.bindToContext();
 		}
 
