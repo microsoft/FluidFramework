@@ -45,7 +45,6 @@
 		"cosmiconfig": "^8.3.6",
 		"date-fns": "^2.30.0",
 		"debug": "^4.3.7",
-		"depcheck": "^1.4.7",
 		"detect-indent": "^6.1.0",
 		"find-up": "^7.0.0",
 		"fs-extra": "^11.2.0",
