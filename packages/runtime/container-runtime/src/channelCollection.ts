@@ -406,7 +406,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 			const attachMessage = contents as InboundAttachMessage;
 			// We need to process the GC Data for both local and remote attach messages
 			const foundGCData = processAttachMessageGCData(
-				attachMessage.snapshot,
+				attachMessage.snapshot ?? undefined,
 				(nodeId, toPath) => {
 					// nodeId is the relative path under the node being attached. Always starts with "/", but no trailing "/" after an id
 					const fromPath = `/${attachMessage.id}${nodeId === "/" ? "" : nodeId}`;

@@ -35,7 +35,7 @@ describe("LocalChannelStorageService", () => {
 					path: "foo",
 					type: TreeEntry.Blob,
 					value: {
-						encoding: "utf-8",
+						encoding: "utf8",
 						contents: "bar",
 					},
 				},
@@ -63,7 +63,7 @@ describe("LocalChannelStorageService", () => {
 								path: "foo",
 								type: TreeEntry.Blob,
 								value: {
-									encoding: "utf-8",
+									encoding: "utf8",
 									contents: "bar",
 								},
 							},
