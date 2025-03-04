@@ -206,7 +206,7 @@ export class FluidSerializer implements IFluidSerializer {
 		// all the internal handles to that summary serialized and bound.
 		// in staging mode we will see ops that have handles, but since all ops in staging mode could rollback, we don't want to bind those handles, as
 		// not binding them prevent attach ops from being created, so rollback is a no-op. On acceptance of the staging mode changes we do a re-submit/rebase
-		// of all changes, and at that point we are out of staging mode, so the bing happens then, which basically defers attach op creation until all
+		// of all changes, and at that point we are out of staging mode, so the bind happens then, which basically defers attach op creation until all
 		// changes are accepted.
 		if (this.runtime.inStagingMode === false) {
 			bind.bind(handle);
