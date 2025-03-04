@@ -51,7 +51,7 @@ export interface EnterStagingMode {
 }
 export interface ExitStagingMode {
 	type: "exitStagingMode";
-	accept: boolean;
+	commit: boolean;
 }
 
 export type StressDataObjectOperations =
