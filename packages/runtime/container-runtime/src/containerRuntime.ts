@@ -3512,7 +3512,7 @@ export class ContainerRuntime
 
 			act();
 
-			if (this.lastStagingSetConnectionState) {
+			if (this.lastStagingSetConnectionState !== undefined) {
 				this.setConnectionState(
 					this.lastStagingSetConnectionState.connected,
 					this.lastStagingSetConnectionState.clientId,

@@ -206,14 +206,14 @@ export class FluidSerializer implements IFluidSerializer {
 		bind: IFluidHandleInternal,
 	): ISerializedHandle {
 		// this passes some basic testing which makes sense. By skipping bind, we basically skip the whole attach flow that a happens at serialization.
-		// this is similar to what happens when a handle in stored in a detach dss, as in the case the handle isn't serialized, it's just in the memory
+		// this is similar to what happens when a handle is stored in a detached dds, as in that case the handle isn't serialized, it's just in the memory
 		// of the detached dds. at some point the detached dds is attached. and it produces a summary, which is serialized, and only at that point are
 		// all the internal handles to that summary serialized and bound.
 		// in staging mode we will see ops that have handles, but since all ops in staging mode could rollback, we don't want to bind those handles, as
 		// not binding them prevent attach ops from being created, so rollback is a no-op. On acceptance of the staging mode changes we do a re-submit/rebase
-		// of all changes, and at that point we are out of staging mode, so the bing happens then, which basically defers attach op creation until all
+		// of all changes, and at that point we are out of staging mode, so the bind happens then, which basically defers attach op creation until all
 		// changes are accepted.
-		if (this.runtime.inStagingMode === false) {
+		if (!this.runtime.inStagingMode) {
 			bind.bind(handle);
 		}
 		return {
