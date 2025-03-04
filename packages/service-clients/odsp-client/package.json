@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-client",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the ODSP service",
 	"homepage": "https://fluidframework.com",
 	"repository": {

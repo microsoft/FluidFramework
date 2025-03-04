@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/dds-interceptions",
-	"version": "2.24.0",
+	"version": "2.30.0",
 	"description": "Distributed Data Structures that support an interception callback",
 	"homepage": "https://fluidframework.com",
 	"repository": {
