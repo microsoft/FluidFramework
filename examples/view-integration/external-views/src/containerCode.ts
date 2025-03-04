@@ -17,7 +17,6 @@ import { DiceRollerFactory } from "./diceRoller.js";
 
 const diceRollerId = "dice-roller";
 const diceRollerRegistryKey = "dice-roller";
-const diceRollerFactory = new DiceRollerFactory();
 
 export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 	public get IRuntimeFactory(): IRuntimeFactory {
@@ -31,6 +30,8 @@ export class DiceRollerContainerRuntimeFactory implements IRuntimeFactory {
 		const provideEntryPoint = async (
 			containerRuntime: IContainerRuntime,
 		): Promise<FluidObject> => getDataStoreEntryPoint(containerRuntime, diceRollerId);
+
+		const diceRollerFactory = new DiceRollerFactory(() => runtime.dispose());
 
 		const runtime = await loadContainerRuntime({
 			context,
