@@ -30,7 +30,7 @@ import {
 
 import { pkgVersion } from "../packageVersion.js";
 
-const compressionSuite = (getProvider) => {
+const compressionSuite = (getProvider, apis?) => {
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -43,8 +43,15 @@ const compressionSuite = (getProvider) => {
 			},
 		};
 
+		let compatOldCreateVersion: boolean = false;
+		let compatOldLoaderVersion: boolean = false;
+
 		beforeEach("createLocalAndRemoteMaps", async () => {
 			provider = await getProvider();
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				compatOldCreateVersion = apis.containerRuntime.version === "1.4.0";
+				compatOldLoaderVersion = apis.containerRuntimeForLoading.version === "1.4.0";
+			}
 		});
 
 		async function setupContainers(
@@ -71,8 +78,7 @@ const compressionSuite = (getProvider) => {
 		});
 
 		it("Can compress and process compressed op", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			if (compatOldCreateVersion || compatOldLoaderVersion) {
 				this.skip();
 			}
 			await setupContainers();
@@ -94,8 +100,7 @@ const compressionSuite = (getProvider) => {
 		});
 
 		it("Processes ops that weren't worth compressing", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			if (compatOldCreateVersion || compatOldLoaderVersion) {
 				this.skip();
 			}
 			await setupContainers();
@@ -114,8 +119,7 @@ const compressionSuite = (getProvider) => {
 			{ compression: true, grouping: true, chunking: false },
 		].forEach((option) => {
 			it(`Correctly processes messages: compression [${option.compression}] chunking [${option.chunking}] grouping [${option.grouping}]`, async function () {
-				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
-				if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				if (compatOldLoaderVersion) {
 					this.skip();
 				}
 				// This test has unreproducible flakiness against r11s (non-FRS).
@@ -155,8 +159,8 @@ const compressionSuite = (getProvider) => {
 	});
 };
 
-describeCompat("Op Compression", "FullCompat", (getTestObjectProvider) =>
-	compressionSuite(async () => getTestObjectProvider()),
+describeCompat("Op Compression", "FullCompat", (getTestObjectProvider, apis) =>
+	compressionSuite(async () => getTestObjectProvider(), apis),
 );
 
 const loaderWithoutCompressionField = "2.0.0-internal.1.4.6";
