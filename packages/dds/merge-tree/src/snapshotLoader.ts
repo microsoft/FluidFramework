@@ -28,7 +28,7 @@ import { IJSONSegment } from "./ops.js";
 import {
 	IRemovalInfo,
 	overwriteInfo,
-	type IInsertionInfo,
+	type IHasInsertionInfo,
 	type IMoveInfo,
 	type SegmentWithInfo,
 } from "./segmentInfos.js";
@@ -100,16 +100,19 @@ export class SnapshotLoader {
 		return [];
 	}
 
+	// TODO: This method should translate existing wire format to new in-memory stuff
 	private readonly specToSegment = (
 		spec: IJSONSegment | IJSONSegmentWithMergeInfo,
-	): SegmentWithInfo<IInsertionInfo> => {
+	): SegmentWithInfo<IHasInsertionInfo> => {
 		if (hasMergeInfo(spec)) {
-			const seg = overwriteInfo<IInsertionInfo>(this.client.specToSegment(spec.json), {
-				clientId:
-					spec.client === undefined
-						? NonCollabClient
-						: this.client.getOrAddShortClientId(spec.client),
-				seq: spec.seq ?? UniversalSequenceNumber,
+			const seg = overwriteInfo<IHasInsertionInfo>(this.client.specToSegment(spec.json), {
+				insert: {
+					seq: spec.seq ?? UniversalSequenceNumber,
+					clientId:
+						spec.client === undefined
+							? NonCollabClient
+							: this.client.getOrAddShortClientId(spec.client),
+				},
 			});
 
 			if (spec.removedSeq !== undefined) {
@@ -146,8 +149,10 @@ export class SnapshotLoader {
 			return seg;
 		}
 		return overwriteInfo(this.client.specToSegment(spec), {
-			seq: UniversalSequenceNumber,
-			clientId: NonCollabClient,
+			insert: {
+				seq: UniversalSequenceNumber,
+				clientId: NonCollabClient,
+			},
 		});
 	};
 
@@ -206,7 +211,7 @@ export class SnapshotLoader {
 		}
 
 		let chunksWithAttribution = chunk1.attribution === undefined ? 0 : 1;
-		const segs: SegmentWithInfo<IInsertionInfo>[] = [];
+		const segs: SegmentWithInfo<IHasInsertionInfo>[] = [];
 		let lengthSofar = chunk1.length;
 		for (
 			let chunkIndex = 1;
@@ -255,7 +260,7 @@ export class SnapshotLoader {
 		};
 
 		// Helpers to batch-insert segments that are below the min seq
-		const batch: SegmentWithInfo<IInsertionInfo>[] = [];
+		const batch: SegmentWithInfo<IHasInsertionInfo>[] = [];
 		const flushBatch = (): void => {
 			if (batch.length > 0) {
 				append(batch, NonCollabClient, UniversalSequenceNumber);
@@ -263,7 +268,7 @@ export class SnapshotLoader {
 		};
 
 		for (const seg of segs) {
-			const { clientId, seq } = seg;
+			const { clientId, seq } = seg.insert;
 			// If the segment can be batch inserted, add it to the 'batch' array.  Otherwise, flush
 			// any batched segments and then insert the current segment individually.
 			if (clientId === NonCollabClient && seq === UniversalSequenceNumber) {

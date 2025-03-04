@@ -6,7 +6,12 @@
 import { assert, isObject } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber } from "./constants.js";
-import { ISegmentInternal, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
+import {
+	ISegmentInternal,
+	ISegmentPrivate,
+	MergeBlock,
+	type OperationTimestamp,
+} from "./mergeTreeNodes.js";
 import type { ReferencePosition } from "./referencePositions.js";
 
 export interface StringToType {
@@ -46,25 +51,26 @@ export function propInstanceOf<P extends string, T>(
 /**
  * Contains insertion information associated to an {@link ISegment}.
  */
-export interface IInsertionInfo {
-	/**
-	 * Short clientId for the client that inserted this segment.
-	 */
-	clientId: number;
-	/**
-	 * Local seq at which this segment was inserted.
-	 * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
-	 * Once the segment is acked, this field is cleared.
-	 *
-	 * @privateRemarks
-	 * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
-	 */
-	localSeq?: number;
-	/**
-	 * Seq at which this segment was inserted.
-	 * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
-	 */
-	seq: number;
+export interface IHasInsertionInfo {
+	insert: OperationTimestamp;
+	// /**
+	//  * Short clientId for the client that inserted this segment.
+	//  */
+	// clientId: number;
+	// /**
+	//  * Local seq at which this segment was inserted.
+	//  * This is defined if and only if the insertion of the segment is pending ack, i.e. `seq` is UnassignedSequenceNumber.
+	//  * Once the segment is acked, this field is cleared.
+	//  *
+	//  * @privateRemarks
+	//  * See {@link CollaborationWindow.localSeq} for more information on the semantics of localSeq.
+	//  */
+	// localSeq?: number;
+	// /**
+	//  * Seq at which this segment was inserted.
+	//  * If undefined, it is assumed the segment was inserted prior to the collab window's minimum sequence number.
+	//  */
+	// seq: number;
 }
 
 /**
@@ -73,10 +79,15 @@ export interface IInsertionInfo {
  * @param segmentLike - The segment-like object to convert.
  * @returns The insertion info object if the conversion is possible, otherwise undefined.
  */
-export const toInsertionInfo = (segmentLike: unknown): IInsertionInfo | undefined =>
-	hasProp(segmentLike, "clientId", "number") && hasProp(segmentLike, "seq", "number")
-		? segmentLike
+export const toInsertionInfo = (segmentLike: unknown): IHasInsertionInfo | undefined => {
+	const insert = (segmentLike as any)?.insert;
+
+	return insert !== undefined &&
+		hasProp(insert, "clientId", "number") &&
+		hasProp(insert, "seq", "number")
+		? (segmentLike as IHasInsertionInfo)
 		: undefined;
+};
 
 /**
  * A type-guard which determines if the segment has insertion info, and
@@ -85,7 +96,7 @@ export const toInsertionInfo = (segmentLike: unknown): IInsertionInfo | undefine
  * @param segmentLike - The segment-like object to check.
  * @returns True if the segment has insertion info, otherwise false.
  */
-export const isInserted = (segmentLike: unknown): segmentLike is IInsertionInfo =>
+export const isInserted = (segmentLike: unknown): segmentLike is IHasInsertionInfo =>
 	toInsertionInfo(segmentLike) !== undefined;
 
 /**
@@ -94,9 +105,9 @@ export const isInserted = (segmentLike: unknown): segmentLike is IInsertionInfo 
  * @param segmentLike - The segment-like object to check.
  * @throws Will throw an error if the segment does not have insertion info.
  */
-export const assertInserted: <T extends Partial<IInsertionInfo> | undefined>(
-	segmentLike: ISegmentInternal | Partial<IInsertionInfo> | T,
-) => asserts segmentLike is IInsertionInfo | Exclude<T, Partial<IInsertionInfo>> = (
+export const assertInserted: <T extends Partial<IHasInsertionInfo> | undefined>(
+	segmentLike: ISegmentInternal | Partial<IHasInsertionInfo> | T,
+) => asserts segmentLike is IHasInsertionInfo | Exclude<T, Partial<IHasInsertionInfo>> = (
 	segmentLike,
 ) =>
 	assert(
@@ -325,14 +336,14 @@ export const isMoved = (segmentLike: unknown): segmentLike is IMoveInfo =>
  * When this happens, the segment is only ever visible to the client that inserted the segment
  * (and only until that client has seen the obliterate which removed their segment).
  */
-export function wasMovedOnInsert(segment: IInsertionInfo & ISegmentPrivate): boolean {
+export function wasMovedOnInsert(segment: IHasInsertionInfo & ISegmentPrivate): boolean {
 	const moveInfo = toMoveInfo(segment);
 	const movedSeq = moveInfo?.movedSeq;
 	if (movedSeq === undefined || movedSeq === UnassignedSequenceNumber) {
 		return false;
 	}
 
-	const insertSeq = segment.seq;
+	const insertSeq = segment.insert.seq;
 	return insertSeq === UnassignedSequenceNumber || insertSeq > movedSeq;
 }
 
@@ -350,7 +361,7 @@ export const assertMoved: <T extends Partial<IMoveInfo> | undefined>(
 /**
  * A union type representing any segment info.
  */
-export type SegmentInfo = IMergeNodeInfo | IInsertionInfo | IMoveInfo | IRemovalInfo;
+export type SegmentInfo = IMergeNodeInfo | IHasInsertionInfo | IMoveInfo | IRemovalInfo;
 
 /**
  * A type representing a segment with additional info.

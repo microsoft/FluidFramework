@@ -360,7 +360,7 @@ export class TestClientLogger {
 						parent = node.parent;
 					}
 					const text = TextSegment.is(node) ? node.text : Marker.is(node) ? "¶" : undefined;
-					const insertionSeq = toInsertionInfo(node)?.seq;
+					const insertionSeq = toInsertionInfo(node)?.insert.seq;
 					if (text !== undefined) {
 						const removedNode = toMoveOrRemove(node);
 						if (removedNode === undefined) {

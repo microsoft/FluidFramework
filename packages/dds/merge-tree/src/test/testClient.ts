@@ -36,6 +36,8 @@ import {
 	MaxNodesInBlock,
 	type SegmentGroup,
 	assertSegmentLeaf,
+	type OperationTimestamp,
+	timestampUtils,
 } from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
@@ -81,6 +83,12 @@ export function specToSegment(spec: IJSONSegment): ISegmentPrivate {
 }
 
 const random = makeRandom(0xdeadbeef, 0xfeedbed);
+
+function opTimestampToString(timestamp: OperationTimestamp): string {
+	return timestamp.seq === UnassignedSequenceNumber
+		? `L${timestamp.localSeq}`
+		: `${timestamp.seq}`;
+}
 
 export class TestClient extends Client {
 	public static searchChunkSize = 256;
@@ -364,9 +372,7 @@ export class TestClient extends Client {
 		walkAllChildSegments(tree.root, (segment: ISegmentPrivate) => {
 			const prefixes: (string | undefined | number)[] = [];
 			assertInserted(segment);
-			prefixes.push(
-				segment.seq === UnassignedSequenceNumber ? `L${segment.localSeq}` : segment.seq,
-			);
+			prefixes.push(opTimestampToString(segment.insert));
 			if (isRemoved(segment)) {
 				prefixes.push(
 					segment.removedSeq === UnassignedSequenceNumber
@@ -391,8 +397,20 @@ export class TestClient extends Client {
 		let offset = pos;
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
 			isInserted(seg) &&
-			((seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) ||
-				(seg.localSeq !== undefined && seg.localSeq <= localSeq));
+			// ((seg.seq !== UnassignedSequenceNumber && seg.seq <= seqNumberFrom) ||
+			// (seg.localSeq !== undefined && seg.localSeq <= localSeq));
+			// Equivalent logic above. TODO: All of this function is really semantically doing perspective checks,
+			// which should probably not be handled via operation timestamps.
+			(timestampUtils.lte(seg.insert, {
+				seq: seqNumberFrom,
+				clientId: this.getCollabWindow().clientId,
+			}) ||
+				(timestampUtils.isLocal(seg.insert) &&
+					timestampUtils.lte(seg.insert, {
+						seq: UnassignedSequenceNumber,
+						clientId: this.getCollabWindow().clientId,
+						localSeq,
+					})));
 
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
 			isRemoved(s) &&
@@ -426,9 +444,14 @@ export class TestClient extends Client {
 	public findReconnectionPosition(segment: ISegmentPrivate, localSeq: number): number {
 		const fasterComputedPosition = super.findReconnectionPosition(segment, localSeq);
 
+		const perspectiveStamp: OperationTimestamp = {
+			seq: UnassignedSequenceNumber,
+			clientId: this.getCollabWindow().clientId,
+			localSeq,
+		};
 		let segmentPosition = 0;
 		const isInsertedInView = (seg: ISegmentPrivate): boolean =>
-			isInserted(seg) && (seg.localSeq === undefined || seg.localSeq <= localSeq);
+			isInserted(seg) && timestampUtils.lte(seg.insert, perspectiveStamp);
 		const isRemovedFromView = (s: ISegmentPrivate): boolean =>
 			isRemoved(s) &&
 			(s.removedSeq !== UnassignedSequenceNumber ||

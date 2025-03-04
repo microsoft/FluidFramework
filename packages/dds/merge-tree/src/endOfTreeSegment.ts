@@ -52,6 +52,8 @@ abstract class BaseEndpointSegment implements IMergeNodeInfo {
 	clientId = LocalClientId;
 	cachedLength = 1;
 
+	insert = { seq: 0, clientId: LocalClientId };
+
 	isLeaf(): this is ISegment {
 		return true;
 	}

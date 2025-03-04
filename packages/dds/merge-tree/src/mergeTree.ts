@@ -56,11 +56,13 @@ import {
 	isSegmentLeaf,
 	reservedMarkerIdKey,
 	seqLTE,
+	timestampUtils,
 	type IMergeNodeBuilder,
 	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ISegmentPrivate,
 	type ObliterateInfo,
+	type OperationTimestamp,
 } from "./mergeTreeNodes.js";
 import type { TrackingGroup } from "./mergeTreeTracking.js";
 import {
@@ -96,7 +98,7 @@ import {
 	toMoveInfo,
 	toRemovalInfo,
 	wasMovedOnInsert,
-	type IInsertionInfo,
+	type IHasInsertionInfo,
 	type IMoveInfo,
 	type IRemovalInfo,
 	type SegmentWithInfo,
@@ -165,11 +167,13 @@ function ackSegment(
 
 		case MergeTreeDeltaType.INSERT: {
 			assert(
-				segment.seq === UnassignedSequenceNumber,
+				timestampUtils.isLocal(segment.insert),
 				0x045 /* "On insert, seq number already assigned!" */,
 			);
-			segment.seq = sequenceNumber;
-			segment.localSeq = undefined;
+			segment.insert = {
+				seq: sequenceNumber,
+				clientId: segment.insert.clientId,
+			};
 			return true;
 		}
 
@@ -409,7 +413,7 @@ function getSlideToSegment(
 	const result: { seg?: ISegmentLeaf } = {};
 	cache?.set(segment, result);
 	const goFurtherToFindSlideToSegment = (seg: ISegmentLeaf): boolean => {
-		if (seg.seq !== UnassignedSequenceNumber && !isRemovedAndAckedOrMovedAndAcked(seg)) {
+		if (timestampUtils.isAcked(seg.insert) && !isRemovedAndAckedOrMovedAndAcked(seg)) {
 			result.seg = seg;
 			return false;
 		}
@@ -655,18 +659,25 @@ export class MergeTree {
 			refSeq !== undefined,
 			0x398 /* localSeq provided for local length without refSeq */,
 		);
-		assert(segment.seq !== undefined, 0x399 /* segment with no seq in mergeTree */);
-		const { seq } = segment;
+
+		assert(segment.insert.seq !== undefined, 0x399 /* segment with no seq in mergeTree */);
+
+		const { seq } = segment.insert;
 		const { removedSeq, localRemovedSeq } = removalInfo ?? {};
 		const { movedSeq, localMovedSeq } = moveInfo ?? {};
 		if (seq === UnassignedSequenceNumber) {
+			const timestamp: OperationTimestamp = {
+				clientId: this.collabWindow.clientId,
+				seq: UnassignedSequenceNumber,
+				localSeq,
+			};
 			assert(
-				segment.localSeq !== undefined,
+				segment.insert.localSeq !== undefined,
 				0x39a /* unacked segment with undefined localSeq */,
 			);
 			// inserted locally, still un-acked
 			if (
-				segment.localSeq > localSeq ||
+				timestampUtils.greaterThan(segment.insert, timestamp) ||
 				(localRemovedSeq !== undefined && localRemovedSeq <= localSeq) ||
 				(localMovedSeq !== undefined && localMovedSeq <= localSeq)
 			) {
@@ -706,7 +717,7 @@ export class MergeTree {
 		return index;
 	}
 
-	public reloadFromSegments(segments: SegmentWithInfo<IInsertionInfo>[]): void {
+	public reloadFromSegments(segments: SegmentWithInfo<IHasInsertionInfo>[]): void {
 		// This code assumes that a later call to `startCollaboration()` will initialize partial lengths.
 		assert(
 			!this.collabWindow.collaborating,
@@ -1141,9 +1152,20 @@ export class MergeTree {
 					}
 				}
 
-				return seqLTE(node.seq ?? 0, refSeq) || segment.clientId === clientId
+				const perspectiveTimestamp: OperationTimestamp = {
+					seq: refSeq,
+					clientId,
+					localSeq,
+				};
+
+				return timestampUtils.lte(node.insert, perspectiveTimestamp) ||
+					node.insert.clientId === clientId
 					? segment.cachedLength
 					: 0;
+				// TODO: Why is there a ?? 0 here?
+				// return seqLTE(node.seq ?? 0, refSeq) || segment.insert.clientId === clientId
+				// 	? segment.cachedLength
+				// 	: 0;
 			} else {
 				const partialLen = node.partialLengths!.getPartialLength(refSeq, clientId);
 
@@ -1193,7 +1215,7 @@ export class MergeTree {
 		localSeq: number | undefined = this.collabWindow.localSeq,
 	): number {
 		const seg = refPos.getSegment();
-		if (!isSegmentLeaf(seg)) {
+		if (seg === undefined || !isSegmentLeaf(seg)) {
 			// We have no idea where this reference is, because it refers to a segment which is not in the tree.
 			return DetachedReferencePosition;
 		}
@@ -1539,7 +1561,7 @@ export class MergeTree {
 			// Save segment so we can assign sequence number when acked by server
 			if (this.collabWindow.collaborating) {
 				if (
-					locSegment.seq === UnassignedSequenceNumber &&
+					timestampUtils.isLocal(locSegment.insert) &&
 					clientId === this.collabWindow.clientId
 				) {
 					segmentGroup = this.addToPendingList(locSegment, segmentGroup, localSeq);
@@ -1548,10 +1570,10 @@ export class MergeTree {
 				// In all other cases this has to be true (checked by addToLRUSet):
 				// locSegment.seq > this.collabWindow.currentSeq
 				else if (
-					locSegment.seq > this.collabWindow.minSeq &&
-					MergeTree.options.zamboniSegments
+					MergeTree.options.zamboniSegments &&
+					timestampUtils.greaterThan(locSegment.insert, this.collabWindow.minSeqTime)
 				) {
-					this.addToLRUSet(locSegment, locSegment.seq);
+					this.addToLRUSet(locSegment, locSegment.insert.seq);
 				}
 			}
 		};
@@ -1573,7 +1595,7 @@ export class MergeTree {
 			return segmentChanges;
 		};
 
-		const insertInfo: IInsertionInfo = {
+		const timestamp: OperationTimestamp = {
 			clientId,
 			seq,
 			localSeq,
@@ -1582,7 +1604,7 @@ export class MergeTree {
 		let insertPos = pos;
 		for (const newSegment of newSegments
 			.filter((s) => s.cachedLength > 0)
-			.map((s) => overwriteInfo(s, insertInfo))) {
+			.map((s) => overwriteInfo(s, { insert: { ...timestamp } }))) {
 			if (Marker.is(newSegment)) {
 				const markerId = newSegment.getId();
 				if (markerId) {
@@ -1590,7 +1612,7 @@ export class MergeTree {
 				}
 			}
 
-			const splitNode = this.insertingWalk(this.root, insertPos, refSeq, clientId, seq, {
+			const splitNode = this.insertingWalk(this.root, insertPos, refSeq, timestamp, {
 				leaf: onLeaf,
 				candidateSegment: newSegment,
 				continuePredicate: continueFrom,
@@ -1602,7 +1624,7 @@ export class MergeTree {
 				throw new errorConstructor("MergeTree insert failed", {
 					currentSeq: this.collabWindow.currentSeq,
 					minSeq: this.collabWindow.minSeq,
-					segSeq: insertInfo.seq,
+					segSeq: timestamp.seq,
 				});
 			}
 
@@ -1772,35 +1794,33 @@ export class MergeTree {
 			this.root,
 			pos,
 			refSeq,
-			clientId,
-			TreeMaintenanceSequenceNumber,
+			{ seq: TreeMaintenanceSequenceNumber, clientId },
 			{ leaf: this.splitLeafSegment },
 		);
 		this.updateRoot(splitNode);
 	}
 
 	// Assume called only when pos == len
-	private breakTie(pos: number, node: IMergeNode, seq: number): boolean {
+	private breakTie(
+		pos: number,
+		node: IMergeNode,
+		insertTimestamp: OperationTimestamp,
+	): boolean {
 		if (node.isLeaf()) {
 			if (pos !== 0) {
 				return false;
 			}
 
-			// normalize the seq numbers
-			// if the new seg is local (UnassignedSequenceNumber) give it the highest possible
-			// seq for comparison, as it will get a seq higher than any other seq once sequences
-			// if the current seg is local (UnassignedSequenceNumber) give it the second highest
-			// possible seq, as the highest is reserved for the previous.
-			const newSeq = seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER : seq;
-			const segSeq =
-				node.seq === UnassignedSequenceNumber ? Number.MAX_SAFE_INTEGER - 1 : (node.seq ?? 0);
-
 			return (
-				newSeq > segSeq ||
-				(isMoved(node) && node.movedSeq !== UnassignedSequenceNumber && node.movedSeq > seq) ||
+				timestampUtils.greaterThan(insertTimestamp, node.insert) ||
+				// newSeq > segSeq ||
+				// TODO: conditions here may be subtly different if localseq stuff matters
+				(isMoved(node) &&
+					node.movedSeq !== UnassignedSequenceNumber &&
+					node.movedSeq > insertTimestamp.seq) ||
 				(isRemoved(node) &&
 					node.removedSeq !== UnassignedSequenceNumber &&
-					node.removedSeq > seq)
+					node.removedSeq > insertTimestamp.seq)
 			);
 		} else {
 			return true;
@@ -1811,8 +1831,7 @@ export class MergeTree {
 		block: MergeBlock,
 		pos: number,
 		refSeq: number,
-		clientId: number,
-		seq: number,
+		timestamp: OperationTimestamp,
 		context: InsertContext,
 		isLastChildBlock: boolean = true,
 	): MergeBlock | undefined {
@@ -1829,7 +1848,8 @@ export class MergeTree {
 			const isLastNonLeafBlock =
 				isLastChildBlock && !child.isLeaf() && childIndex === block.childCount - 1;
 			const len =
-				this.nodeLength(child, refSeq, clientId) ?? (isLastChildBlock ? 0 : undefined);
+				this.nodeLength(child, refSeq, timestamp.clientId) ??
+				(isLastChildBlock ? 0 : undefined);
 
 			if (len === undefined) {
 				// if the seg len is undefined, the segment
@@ -1839,7 +1859,8 @@ export class MergeTree {
 
 			assert(len >= 0, 0x4bc /* Length should not be negative */);
 
-			if (_pos < len || (_pos === len && this.breakTie(_pos, child, seq))) {
+			// TODO: OK to omit localSeq here?
+			if (_pos < len || (_pos === len && this.breakTie(_pos, child, timestamp))) {
 				// Found entry containing pos
 				if (child.isLeaf()) {
 					const segment = child;
@@ -1862,13 +1883,12 @@ export class MergeTree {
 						childBlock,
 						_pos,
 						refSeq,
-						clientId,
-						seq,
+						timestamp,
 						context,
 						isLastNonLeafBlock,
 					);
 					if (splitNode === undefined) {
-						this.blockUpdateLength(block, seq, clientId);
+						this.blockUpdateLength(block, timestamp.seq, timestamp.clientId);
 						return undefined;
 					} else if (splitNode === MergeTree.theUnfinishedNode) {
 						_pos -= len; // Act as if shifted segment
@@ -1905,18 +1925,23 @@ export class MergeTree {
 				if (fromSplit) {
 					this.nodeUpdateOrdinals(fromSplit);
 				}
-				this.blockUpdateLength(block, seq, clientId);
+				this.blockUpdateLength(block, timestamp.seq, timestamp.clientId);
 				return undefined;
 			} else {
 				// Don't update ordinals because higher block will do it
 				const newNodeFromSplit = this.split(block);
 
-				PartialSequenceLengths.options.verifyExpected?.(this, block, refSeq, clientId);
+				PartialSequenceLengths.options.verifyExpected?.(
+					this,
+					block,
+					refSeq,
+					timestamp.clientId,
+				);
 				PartialSequenceLengths.options.verifyExpected?.(
 					this,
 					newNodeFromSplit,
 					refSeq,
-					clientId,
+					timestamp.clientId,
 				);
 
 				return newNodeFromSplit;
@@ -2117,7 +2142,8 @@ export class MergeTree {
 				(end.side === Side.Before &&
 					endPos === pos &&
 					// TODO:AB#29765: The clientId check here should be handled by isSegmentPresent and/or PerspectiveImpl
-					(segment.clientId === clientId || isSegmentPresent(segment, { refSeq, localSeq }))) // exclusive end segment
+					(segment.insert.clientId === clientId ||
+						isSegmentPresent(segment, { refSeq, localSeq }))) // exclusive end segment
 			) {
 				// We walk these segments because we want to also walk any concurrently inserted segments between here and the obliterated segments.
 				// These segments are outside of the obliteration range though, so return true to keep walking.
@@ -2130,7 +2156,7 @@ export class MergeTree {
 			// Specifically, we want to avoid marking a local-only segment as obliterated when we know one of our own local obliterates
 			// will win against the obliterate we're processing, hence the early exit.
 			if (
-				segment.seq === UnassignedSequenceNumber &&
+				timestampUtils.isLocal(segment.insert) &&
 				segment.obliteratePrecedingInsertion?.seq === UnassignedSequenceNumber &&
 				seq !== UnassignedSequenceNumber
 			) {
@@ -2466,8 +2492,10 @@ export class MergeTree {
 
 				const start = this.findRollbackPosition(segment);
 				if (op.type === MergeTreeDeltaType.INSERT) {
-					segment.seq = UniversalSequenceNumber;
-					segment.localSeq = undefined;
+					segment.insert = {
+						seq: UniversalSequenceNumber,
+						clientId: this.collabWindow.clientId,
+					};
 					const removeOp = createRemoveRangeOp(start, start + segment.cachedLength);
 					this.markRangeRemoved(
 						start,
@@ -2626,8 +2654,12 @@ export class MergeTree {
 				while (
 					scan !== undefined &&
 					!isRemovedAndAcked(scan.data) &&
-					scan.data.localSeq !== undefined &&
-					scan.data.localSeq > segmentToSlide.data.localRemovedSeq
+					scan.data.insert.localSeq !== undefined &&
+					// TODO: semantically want earliest removal here (as in it should probably include obliterate)
+					// timestampUtils.greaterThan(scan.data.insert, segmentToSlide.data.removal)
+					// Also double-check that the conditions here are actually equivalent
+					scan.data.insert.localSeq !== undefined &&
+					scan.data.insert.localSeq > segmentToSlide.data.localRemovedSeq
 				) {
 					cur = scan;
 					scan = scan.next;
@@ -2720,11 +2752,11 @@ export class MergeTree {
 			}
 		};
 		walkAllChildSegments(this.root, (seg) => {
-			if (isRemoved(seg) || seg.seq === UnassignedSequenceNumber) {
+			if (isRemoved(seg) || timestampUtils.isLocal(seg.insert)) {
 				if (isRemovedAndAcked(seg)) {
 					rangeContainsRemoteRemovedSegs = true;
 				}
-				if (seg.seq === UnassignedSequenceNumber) {
+				if (timestampUtils.isLocal(seg.insert)) {
 					rangeContainsLocalSegs = true;
 				}
 				currentRangeToNormalize.push(seg);
@@ -2917,8 +2949,7 @@ export class MergeTree {
 						: this.nodeLength(node, refSeq, clientId, localSeq)) ?? 0;
 
 				const isUnackedAndInObliterate =
-					visibilitySeq !== refSeq &&
-					(!node.isLeaf() || node.seq === UnassignedSequenceNumber);
+					visibilitySeq !== refSeq && (!node.isLeaf() || timestampUtils.isLocal(node.insert));
 
 				if (
 					(len === undefined && lenAtRefSeq === 0) ||

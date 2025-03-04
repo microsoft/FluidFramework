@@ -16,6 +16,7 @@ import {
 	Marker,
 	MaxNodesInBlock,
 	seqLTE,
+	timestampUtils,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import { toRemovalInfo, toMoveInfo, removeMergeNodeInfo } from "./segmentInfos.js";
@@ -174,7 +175,7 @@ function scourNode(node: MergeBlock, holdNodes: IMergeNode[], mergeTree: MergeTr
 
 			prevSegment = undefined;
 		} else {
-			if (segment.seq <= mergeTree.collabWindow.minSeq) {
+			if (timestampUtils.lte(segment.insert, mergeTree.collabWindow.minSeqTime)) {
 				const segmentHasPositiveLength = (mergeTree.localNetLength(segment) ?? 0) > 0;
 				const canAppend =
 					prevSegment?.canAppend(segment) &&

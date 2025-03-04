@@ -11,7 +11,7 @@ import {
 	isInserted,
 	isMoved,
 	isRemoved,
-	type IInsertionInfo,
+	type IHasInsertionInfo,
 	type IMoveInfo,
 	type IRemovalInfo,
 	type SegmentWithInfo,
@@ -90,7 +90,7 @@ export class PerspectiveImpl implements Perspective {
  * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasRemovedBefore(
-	seg: SegmentWithInfo<IInsertionInfo & IRemovalInfo>,
+	seg: SegmentWithInfo<IHasInsertionInfo & IRemovalInfo>,
 	{ refSeq, localSeq }: SeqTime,
 ): boolean {
 	if (
@@ -113,7 +113,7 @@ export function wasRemovedBefore(
  * TODO:AB#29765: This function does not support non-local-client perspectives, but should.
  */
 export function wasMovedBefore(
-	seg: SegmentWithInfo<IInsertionInfo & IMoveInfo>,
+	seg: SegmentWithInfo<IHasInsertionInfo & IMoveInfo>,
 	{ refSeq, localSeq }: SeqTime,
 ): boolean {
 	if (
@@ -153,15 +153,26 @@ export function isSegmentPresent(seg: ISegmentLeaf, seqTime: SeqTime): boolean {
 	// If seg.seq is undefined, then this segment has existed since minSeq.
 	// It may have been moved or removed since.
 	if (isInserted(seg)) {
-		if (seg.seq !== UnassignedSequenceNumber) {
-			if (!seqLTE(seg.seq, refSeq)) {
+		// TODO: This function should be replaceable with things in the spirit of the following:
+		// if (
+		// 	timestampUtils.greaterThan(seg.insert, {
+		// 		seq: refSeq,
+		// 		clientId: NonCollabClient,
+		// 		localSeq,
+		// 	})
+		// ) {
+		// 	return false;
+		// }
+		// However, it may need some special casing for the local client + unassigned seqs similar to what we have in localNetLength...
+		if (seg.insert.seq !== UnassignedSequenceNumber) {
+			if (!seqLTE(seg.insert.seq, refSeq)) {
 				return false;
 			}
 		} else if (
-			seg.localSeq !== undefined && // seg.seq === UnassignedSequenceNumber
+			seg.insert.localSeq !== undefined && // seg.seq === UnassignedSequenceNumber
 			// If the current perspective does not include local sequence numbers,
 			// then this segment does not exist yet.
-			(localSeq === undefined || seg.localSeq > localSeq)
+			(localSeq === undefined || seg.insert.localSeq > localSeq)
 		) {
 			return false;
 		}

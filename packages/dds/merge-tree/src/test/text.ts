@@ -8,12 +8,18 @@ import { MergeTree } from "../mergeTree.js";
 import { Marker } from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import { reservedTileLabelsKey } from "../referencePositions.js";
-import { overwriteInfo, type IInsertionInfo, type SegmentWithInfo } from "../segmentInfos.js";
+import {
+	overwriteInfo,
+	type IHasInsertionInfo,
+	type SegmentWithInfo,
+} from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
-const defaultInsertionInfo: IInsertionInfo = {
-	clientId: NonCollabClient,
-	seq: UniversalSequenceNumber,
+const defaultInsertionInfo: IHasInsertionInfo = {
+	insert: {
+		clientId: NonCollabClient,
+		seq: UniversalSequenceNumber,
+	},
 };
 
 export function loadSegments(
@@ -21,7 +27,7 @@ export function loadSegments(
 	segLimit: number,
 	markers: boolean = false,
 	withProps: boolean = true,
-): SegmentWithInfo<IInsertionInfo>[] {
+): SegmentWithInfo<IHasInsertionInfo>[] {
 	const BOMFreeContent = content.replace(/^\uFEFF/, "");
 
 	const paragraphs = BOMFreeContent.split(/\r?\n/);
@@ -35,7 +41,7 @@ export function loadSegments(
 		}
 	}
 
-	const segments: SegmentWithInfo<IInsertionInfo>[] = [];
+	const segments: SegmentWithInfo<IHasInsertionInfo>[] = [];
 	for (const paragraph of paragraphs) {
 		let pgMarker: Marker | undefined;
 		if (markers) {

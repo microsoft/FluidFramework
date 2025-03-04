@@ -23,7 +23,7 @@ import {
 	isMoved,
 	isRemoved,
 	overwriteInfo,
-	type IInsertionInfo,
+	type IHasInsertionInfo,
 	type IMergeNodeInfo,
 	type IMoveInfo,
 	type IRemovalInfo,
@@ -91,7 +91,7 @@ export interface ISegmentPrivate extends ISegmentInternal {
 	obliteratePrecedingInsertion?: ObliterateInfo;
 }
 /**
- * Segment leafs are segments that have both IMergeNodeInfo and IInsertionInfo. This means they
+ * Segment leafs are segments that have both IMergeNodeInfo and IHasInsertionInfo. This means they
  * are inserted at a position, and bound via their parent MergeBlock to the merge tree. MergeBlocks'
  * children are either a segment leaf, or another merge block for interior nodes of the tree. When working
  * within the tree it is generally unnecessary to use type coercions methods common to the infos, and segment
@@ -99,7 +99,7 @@ export interface ISegmentPrivate extends ISegmentInternal {
  * merge tree, like via client's public methods, it becomes necessary to use the type coercions methods
  * to ensure the passed in segment objects are correctly bound to the merge tree.
  */
-export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IInsertionInfo>;
+export type ISegmentLeaf = SegmentWithInfo<IMergeNodeInfo & IHasInsertionInfo>;
 /**
  * A type-guard which determines if the segment has segment leaf, and
  * returns true if it does, along with applying strong typing.
@@ -130,7 +130,7 @@ export const assertSegmentLeaf: (segmentLike: unknown) => asserts segmentLike is
  * type as segments may not yet be bound to the tree, so lack merge node info which is required for
  * segment leafs.
  */
-export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IInsertionInfo>;
+export type IMergeNodeBuilder = MergeBlock | SegmentWithInfo<IHasInsertionInfo>;
 
 /**
  * This type is used by MergeBlocks to define their children, which are either segments or other
@@ -211,12 +211,12 @@ export interface ISegmentAction<TClientData> {
 	): boolean;
 }
 export interface ISegmentChanges {
-	next?: SegmentWithInfo<IInsertionInfo>;
-	replaceCurrent?: SegmentWithInfo<IInsertionInfo>;
+	next?: SegmentWithInfo<IHasInsertionInfo>;
+	replaceCurrent?: SegmentWithInfo<IHasInsertionInfo>;
 }
 
 export interface InsertContext {
-	candidateSegment?: SegmentWithInfo<IInsertionInfo>;
+	candidateSegment?: SegmentWithInfo<IHasInsertionInfo>;
 	leaf: (segment: ISegmentLeaf | undefined, pos: number, ic: InsertContext) => ISegmentChanges;
 	continuePredicate?: (continueFromBlock: MergeBlock) => boolean;
 }
@@ -229,6 +229,55 @@ export interface ObliterateInfo {
 	seq: number;
 	localSeq: number | undefined;
 	segmentGroup: SegmentGroup | undefined;
+}
+
+// TODO: Think through how these interact with causal following terminology
+// I think you probably want to use Operation timestamps to signify events that are linearized as
+// [remote seq 1, remote seq 2, ... , remote seq N, local seq 1, local seq 2, ... , local seq M]
+// but then use some other interface for comparisons about reasoning around what other clients were thinking of
+// when they applied some edit.
+export interface OperationTimestamp {
+	seq: number;
+	clientId: number;
+	localSeq?: number;
+}
+
+export const timestampUtils = {
+	lessThan,
+	greaterThan,
+	equal,
+	lte: (a: OperationTimestamp, b: OperationTimestamp) => !greaterThan(a, b),
+	gte: (a: OperationTimestamp, b: OperationTimestamp) => !lessThan(a, b),
+	isLocal: (a: OperationTimestamp) => a.seq === UnassignedSequenceNumber,
+	isAcked: (a: OperationTimestamp) => a.seq !== UnassignedSequenceNumber,
+};
+
+function lessThan(a: OperationTimestamp, b: OperationTimestamp): boolean {
+	if (a.seq === UnassignedSequenceNumber) {
+		return b.seq === UnassignedSequenceNumber && a.localSeq! < b.localSeq!;
+	}
+
+	if (b.seq === UnassignedSequenceNumber) {
+		return true;
+	}
+
+	return a.seq < b.seq;
+}
+
+function greaterThan(a: OperationTimestamp, b: OperationTimestamp): boolean {
+	if (a.seq === UnassignedSequenceNumber) {
+		return b.seq !== UnassignedSequenceNumber || a.localSeq! > b.localSeq!;
+	}
+
+	if (b.seq === UnassignedSequenceNumber) {
+		return false;
+	}
+
+	return a.seq > b.seq;
+}
+
+function equal(a: OperationTimestamp, b: OperationTimestamp): boolean {
+	return a.seq === b.seq && a.clientId === b.clientId && a.localSeq === b.localSeq;
 }
 
 export interface SegmentGroup {
@@ -358,9 +407,9 @@ export abstract class BaseSegment implements ISegment {
 	protected cloneInto(b: ISegment): void {
 		const seg: ISegmentPrivate = b;
 		if (isInserted(this)) {
-			overwriteInfo<IInsertionInfo>(seg, {
-				clientId: this.clientId,
-				seq: this.seq,
+			const insert = { ...this.insert };
+			overwriteInfo<IHasInsertionInfo>(seg, {
+				insert,
 			});
 		}
 		// TODO: deep clone properties
@@ -421,11 +470,8 @@ export abstract class BaseSegment implements ISegment {
 		}
 
 		if (isInserted(this)) {
-			overwriteInfo<IInsertionInfo>(leafSegment, {
-				seq: this.seq,
-				localSeq: this.localSeq,
-				clientId: this.clientId,
-			});
+			const insert = { ...this.insert };
+			overwriteInfo<IHasInsertionInfo>(leafSegment, { insert });
 		}
 		if (isRemoved(this)) {
 			overwriteInfo<IRemovalInfo>(leafSegment, {
@@ -601,6 +647,11 @@ export class CollaborationWindow {
 	 * Highest-numbered segment in window and current reference sequence number for this client.
 	 */
 	currentSeq = 0;
+
+	public get minSeqTime(): OperationTimestamp {
+		// TODO: Audit usages that care about the timestamp of this. Such things seem wrong, but it's also weird that we force one here.
+		return { seq: this.minSeq, clientId: this.clientId };
+	}
 
 	/**
 	 * Highest-numbered localSeq used for a pending segment.

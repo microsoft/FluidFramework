@@ -12,6 +12,7 @@ import {
 	IMergeNode,
 	ISegmentPrivate,
 	seqLTE,
+	timestampUtils,
 	type MergeBlock,
 } from "./mergeTreeNodes.js";
 import {
@@ -526,8 +527,9 @@ export class PartialSequenceLengths {
 			return;
 		}
 
-		const isLocal = segment.seq === UnassignedSequenceNumber;
-		const clientId = segment.clientId;
+		const { insert } = segment;
+		const isLocal = timestampUtils.isLocal(insert);
+		const clientId = insert.clientId;
 
 		const partials = isLocal
 			? combinedPartialLengths.unsequencedRecords?.partialLengths
@@ -542,7 +544,7 @@ export class PartialSequenceLengths {
 			// For refSeqs preceding that movedSeq and localSeqs following the localSeq, it will be visible.
 			// For the rest, it will not be visible.
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const localSeq = segment.localSeq!;
+			const localSeq = insert.localSeq!;
 			partials.addOrUpdate({
 				seq: localSeq,
 				len: 0,
@@ -587,16 +589,19 @@ export class PartialSequenceLengths {
 		collabWindow: CollaborationWindow,
 	): void {
 		assertInserted(segment);
-		if (segment.seq !== undefined && seqLTE(segment.seq, collabWindow.minSeq)) {
+		// TODO: why was there an undefined check for segment.seq in the old code?
+		if (timestampUtils.lte(segment.insert, collabWindow.minSeqTime)) {
 			combinedPartialLengths.minLength += segment.cachedLength;
 			return;
 		}
 
-		const isLocal = segment.seq === UnassignedSequenceNumber;
+		const { insert } = segment;
+
+		const isLocal = timestampUtils.isLocal(insert);
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const seqOrLocalSeq = isLocal ? segment.localSeq! : segment.seq;
+		const seqOrLocalSeq = isLocal ? insert.localSeq! : insert.seq;
 		const segmentLen = segment.cachedLength;
-		const clientId = segment.clientId;
+		const clientId = insert.clientId;
 
 		const partials = isLocal
 			? combinedPartialLengths.unsequencedRecords?.partialLengths
@@ -653,13 +658,13 @@ export class PartialSequenceLengths {
 		const removalIsLocal =
 			!!removalInfo && removalInfo.removedSeq === UnassignedSequenceNumber;
 		const moveIsLocal = !!moveInfo && moveInfo.movedSeq === UnassignedSequenceNumber;
-		const isLocalInsertion = segment.seq === UnassignedSequenceNumber;
+		const isLocalInsertion = timestampUtils.isLocal(segment.insert);
 		const isOnlyLocalRemoval = removalIsLocal && (!moveInfo || moveIsLocal);
 		const isOnlyLocalMove = moveIsLocal && (!removalInfo || removalIsLocal);
 		const isLocal = isLocalInsertion || isOnlyLocalRemoval || isOnlyLocalMove;
 
 		if (
-			segment.seq === UnassignedSequenceNumber &&
+			isLocalInsertion &&
 			!(removalIsLocal && (!moveInfo || moveIsLocal)) &&
 			!(moveIsLocal && (!removalInfo || removalIsLocal))
 		) {
@@ -780,8 +785,15 @@ export class PartialSequenceLengths {
 					// respect to a refSeq which this entry would affect), but it's simpler to just add it here.
 					// We already add this entry as part of the accountForInsertion codepath for the client that
 					// actually did insert the segment, hence not doing so [again] here.
-					if (segment.seq > collabWindow.minSeq && id !== segment.clientId) {
-						combinedPartialLengths.addClientAdjustment(id, segment.seq, segment.cachedLength);
+					if (
+						timestampUtils.greaterThan(segment.insert, collabWindow.minSeqTime) &&
+						id !== segment.insert.clientId
+					) {
+						combinedPartialLengths.addClientAdjustment(
+							id,
+							segment.insert.seq,
+							segment.cachedLength,
+						);
 					}
 				}
 			}
@@ -843,13 +855,14 @@ export class PartialSequenceLengths {
 				const segment = child;
 				const removalInfo = toRemovalInfo(segment);
 				const moveInfo = toMoveInfo(segment);
-				if (seq === segment.seq) {
+				if (seq === segment.insert.seq) {
 					// if this segment was moved on insert, its length should
 					// only be visible to the inserting client
 					if (
-						segment.seq !== undefined &&
+						// TODO: These checks look redundant with wasMovedOnInsert. Can we remove them?
+						segment.insert.seq !== undefined &&
 						moveInfo &&
-						moveInfo.movedSeq < segment.seq &&
+						moveInfo.movedSeq < segment.insert.seq &&
 						wasMovedOnInsert(segment)
 					) {
 						this.addClientAdjustment(clientId, moveInfo.movedSeq, segment.cachedLength);
@@ -864,12 +877,15 @@ export class PartialSequenceLengths {
 					removalInfo?.removedSeq ?? Number.MAX_VALUE,
 					moveInfo?.movedSeq ?? Number.MAX_VALUE,
 				);
-				if (segment.seq !== UnassignedSequenceNumber && seq === earlierDeletion) {
+				if (timestampUtils.isAcked(segment.insert) && seq === earlierDeletion) {
 					seqSeglen -= segment.cachedLength;
 					if (clientId !== collabWindow.clientId) {
 						this.addClientAdjustment(clientId, seq, -segment.cachedLength);
-						if (segment.seq > collabWindow.minSeq && segment.clientId !== clientId) {
-							this.addClientAdjustment(clientId, segment.seq, segment.cachedLength);
+						if (
+							timestampUtils.greaterThan(segment.insert, collabWindow.minSeqTime) &&
+							segment.insert.clientId !== clientId
+						) {
+							this.addClientAdjustment(clientId, segment.insert.seq, segment.cachedLength);
 							failIncrementalPropagation = true;
 						}
 					}

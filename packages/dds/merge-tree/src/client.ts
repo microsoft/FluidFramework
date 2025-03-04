@@ -54,6 +54,7 @@ import {
 	SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
+	timestampUtils,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -92,7 +93,7 @@ import {
 	isRemoved,
 	overwriteInfo,
 	toMoveInfo,
-	type IInsertionInfo,
+	type IHasInsertionInfo,
 } from "./segmentInfos.js";
 import { Side, type InteriorSequencePlace } from "./sequencePlace.js";
 import { SnapshotLoader } from "./snapshotLoader.js";
@@ -402,7 +403,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		let localInserts = 0;
 		let localRemoves = 0;
 		walkAllChildSegments(this._mergeTree.root, (seg: ISegmentPrivate) => {
-			if (isInserted(seg) && seg.seq === UnassignedSequenceNumber) {
+			if (isInserted(seg) && timestampUtils.isLocal(seg.insert)) {
 				localInserts++;
 			}
 			if (isRemoved(seg) && seg.removedSeq === UnassignedSequenceNumber) {
@@ -968,7 +969,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 				case MergeTreeDeltaType.INSERT: {
 					assert(
-						isInserted(segment) && segment.seq === UnassignedSequenceNumber,
+						isInserted(segment) && timestampUtils.isLocal(segment.insert),
 						0x037 /* "Segment already has assigned sequence number" */,
 					);
 					const moveInfo = toMoveInfo(segment);
@@ -983,10 +984,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 							// we set the seq to the universal seq and remove the local seq,
 							// so its length is not considered for subsequent local changes
 							// this allows us to not send the op as even the local client will ignore the segment
-							overwriteInfo<IInsertionInfo>(segment, {
-								seq: UniversalSequenceNumber,
-								localSeq: undefined,
-								clientId: NonCollabClient,
+							overwriteInfo<IHasInsertionInfo>(segment, {
+								insert: {
+									seq: UniversalSequenceNumber,
+									localSeq: undefined,
+									clientId: NonCollabClient,
+								},
 							});
 							break;
 						}

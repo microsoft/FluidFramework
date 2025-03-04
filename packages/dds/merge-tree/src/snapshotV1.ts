@@ -19,10 +19,10 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollection } from "./attributionCollection.js";
-import { UnassignedSequenceNumber } from "./constants.js";
+import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import { ISegmentPrivate } from "./mergeTreeNodes.js";
+import { ISegmentPrivate, timestampUtils, type OperationTimestamp } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PropertySet, matchProperties } from "./properties.js";
 import { assertInserted, isMoved, isRemoved } from "./segmentInfos.js";
@@ -190,6 +190,7 @@ export class SnapshotV1 {
 	extractSync(): JsonSegmentSpecs[] {
 		const mergeTree = this.mergeTree;
 		const minSeq = this.header.minSequenceNumber;
+		const minSeqTimestamp: OperationTimestamp = { seq: minSeq, clientId: NonCollabClient };
 
 		let originalSegments = 0;
 		let segmentsAfterCombine = 0;
@@ -232,11 +233,11 @@ export class SnapshotV1 {
 			//   b) The segment was removed at or below the MSN.  Pending ops can no longer reference this
 			//      segment, and therefore we can discard it.
 			if (
-				segment.seq === UnassignedSequenceNumber ||
+				timestampUtils.isLocal(segment.insert) ||
 				(isRemoved(segment) && segment.removedSeq <= minSeq) ||
 				(isMoved(segment) && segment.movedSeq <= minSeq)
 			) {
-				if (segment.seq !== UnassignedSequenceNumber) {
+				if (timestampUtils.isAcked(segment.insert)) {
 					originalSegments += 1;
 				}
 				return true;
@@ -248,7 +249,7 @@ export class SnapshotV1 {
 			// (seq, client, etc.)  This information is only needed if the segment is above the MSN (and doesn't
 			// have a pending remove.)
 			if (
-				segment.seq <= minSeq && // Segment is below the MSN, and...
+				timestampUtils.lte(segment.insert, minSeqTimestamp) && // Segment is below the MSN, and...
 				(!isRemoved(segment) || // .. Segment has not been removed, or...
 					segment.removedSeq === UnassignedSequenceNumber) && // .. Removal op to be delivered on reconnect
 				(!isMoved(segment) || segment.movedSeq === UnassignedSequenceNumber)
@@ -285,9 +286,9 @@ export class SnapshotV1 {
 					json: segment.toJSONObject() as IJSONSegment,
 				};
 				// If the segment insertion is above the MSN, record the insertion merge info.
-				if (segment.seq > minSeq) {
-					raw.seq = segment.seq;
-					raw.client = this.getLongClientId(segment.clientId);
+				if (timestampUtils.greaterThan(segment.insert, minSeqTimestamp)) {
+					raw.seq = segment.insert.seq;
+					raw.client = this.getLongClientId(segment.insert.clientId);
 				}
 				// We have already dispensed with removed segments below the MSN and removed segments with unassigned
 				// sequence numbers.  Any remaining removal info should be preserved.

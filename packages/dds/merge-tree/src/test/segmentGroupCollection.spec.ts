@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { assignChild, MergeBlock, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { SegmentGroupCollection } from "../segmentGroupCollection.js";
-import { IInsertionInfo, overwriteInfo } from "../segmentInfos.js";
+import { IHasInsertionInfo, overwriteInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
 
 describe("segmentGroupCollection", () => {
@@ -16,9 +16,11 @@ describe("segmentGroupCollection", () => {
 	let segmentGroups: SegmentGroupCollection;
 	beforeEach(() => {
 		parent = new MergeBlock(1);
-		const newSeg = (segment = overwriteInfo<IInsertionInfo>(TextSegment.make("abc"), {
-			clientId: 0,
-			seq: 1,
+		const newSeg = (segment = overwriteInfo<IHasInsertionInfo>(TextSegment.make("abc"), {
+			insert: {
+				clientId: 0,
+				seq: 1,
+			},
 		}));
 		assignChild(parent, newSeg, 0);
 
@@ -64,9 +66,11 @@ describe("segmentGroupCollection", () => {
 			segmentGroups.enqueue({ segments: [], localSeq: 1, refSeq: 0 });
 		}
 
-		const segmentCopy = overwriteInfo<IInsertionInfo>(TextSegment.make(""), {
-			clientId: 0,
-			seq: 1,
+		const segmentCopy = overwriteInfo<IHasInsertionInfo>(TextSegment.make(""), {
+			insert: {
+				clientId: 0,
+				seq: 1,
+			},
 		});
 		assignChild(parent, segmentCopy, parent.childCount++);
 

@@ -105,7 +105,11 @@ describe("client.applyMsg", () => {
 					case 1:
 					case 4: {
 						assertInserted(seg);
-						assert.equal(seg.seq, msg.sequenceNumber, "inserted segment has unexpected id");
+						assert.equal(
+							seg.insert.seq,
+							msg.sequenceNumber,
+							"inserted segment has unexpected id",
+						);
 						break;
 					}
 
@@ -118,7 +122,7 @@ describe("client.applyMsg", () => {
 			const segmentInfo = client.getContainingSegment<ISegmentPrivate>(i);
 
 			assert.notEqual(
-				toInsertionInfo(segmentInfo.segment)?.seq,
+				toInsertionInfo(segmentInfo.segment)?.insert.seq,
 				UnassignedSequenceNumber,
 				"all segments should be acked",
 			);
@@ -134,11 +138,11 @@ describe("client.applyMsg", () => {
 
 		const segmentInfo = client.getContainingSegment<ISegmentPrivate>(0);
 
-		assert.equal(toInsertionInfo(segmentInfo.segment)?.seq, UnassignedSequenceNumber);
+		assert.equal(toInsertionInfo(segmentInfo.segment)?.insert.seq, UnassignedSequenceNumber);
 
 		client.applyMsg(client.makeOpMessage(op, 17));
 
-		assert.equal(toInsertionInfo(segmentInfo.segment)?.seq, 17);
+		assert.equal(toInsertionInfo(segmentInfo.segment)?.insert.seq, 17);
 	});
 
 	it("removeRangeLocal", () => {

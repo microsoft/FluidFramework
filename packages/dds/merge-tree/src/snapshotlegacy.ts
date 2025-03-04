@@ -18,7 +18,7 @@ import {
 
 import { NonCollabClient, UnassignedSequenceNumber } from "./constants.js";
 import { MergeTree } from "./mergeTree.js";
-import { type ISegmentPrivate } from "./mergeTreeNodes.js";
+import { timestampUtils, type ISegmentPrivate } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import { isInserted, isRemoved } from "./segmentInfos.js";
 import {
@@ -210,8 +210,7 @@ export class SnapshotLegacy {
 		const extractSegment = (segment: ISegmentPrivate): boolean => {
 			if (
 				isInserted(segment) &&
-				segment.seq !== UnassignedSequenceNumber &&
-				segment.seq <= seq &&
+				timestampUtils.lte(segment.insert, collabWindow.minSeqTime) &&
 				(!isRemoved(segment) ||
 					segment.removedSeq === UnassignedSequenceNumber ||
 					segment.removedSeq > seq)

@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { UnassignedSequenceNumber } from "../constants.js";
+import { NonCollabClient, UnassignedSequenceNumber } from "../constants.js";
 import { LocalReferenceCollection } from "../localReference.js";
 import { MergeTree } from "../mergeTree.js";
 import {
@@ -15,7 +15,13 @@ import {
 	type IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, ISegmentPrivate, Marker } from "../mergeTreeNodes.js";
+import {
+	MergeBlock,
+	ISegmentPrivate,
+	Marker,
+	type OperationTimestamp,
+	timestampUtils,
+} from "../mergeTreeNodes.js";
 import { ReferenceType } from "../ops.js";
 import {
 	PartialSequenceLengths,
@@ -235,13 +241,17 @@ function getPartialLengths(
 
 	let actualLen = 0;
 
+	// TODO: The new and old codepath for this function never cares about the case where a client expects another client to see
+	// their own prior operations. Looks like most test code that uses this indirectly via validatePartialLengths doesn't exercise
+	// places where it matters, but we should probably fix this.
+	const perspectiveStamp: OperationTimestamp = {
+		seq,
+		clientId: NonCollabClient,
+		localSeq,
+	};
+
 	const isInserted = (segment: ISegmentPrivate): boolean =>
-		info.isInserted(segment) &&
-		((segment.seq !== UnassignedSequenceNumber && segment.seq <= seq) ||
-			(localSeq !== undefined &&
-				segment.seq === UnassignedSequenceNumber &&
-				segment.localSeq !== undefined &&
-				segment.localSeq <= localSeq));
+		info.isInserted(segment) && timestampUtils.lte(segment.insert, perspectiveStamp);
 
 	const isRemoved = (segment: ISegmentPrivate): boolean =>
 		info.isRemoved(segment) &&
