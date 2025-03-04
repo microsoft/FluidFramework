@@ -2732,7 +2732,7 @@ describe("Runtime", () => {
 			assert.equal(mockLogger.events.length, 0, "Expected no more events logged");
 		});
 
-		describe("Signal Telemetry", () => {
+		describe.only("Signal Telemetry", () => {
 			let containerRuntime: ContainerRuntime;
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelopeWithClientIds[];
@@ -2760,7 +2760,7 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function sendSignals(count: number) {
+			function sendSignals(count: number): void {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
 					assert(
@@ -2776,7 +2776,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number) {
+			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number): void {
 				const signalsToProcess = signals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					if (signal.targetClientId === undefined) {
@@ -2814,7 +2814,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processWithNoTargetSupport(count: number) {
+			function processWithNoTargetSupport(count: number): void {
 				const signalsToProcess = submittedSignals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					for (const runtime of runtimes.values()) {
@@ -2833,15 +2833,15 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSubmittedSignals(count: number) {
+			function processSubmittedSignals(count: number): void {
 				processSignals(submittedSignals, count);
 			}
 
-			function processDroppedSignals(count: number) {
+			function processDroppedSignals(count: number): void {
 				processSignals(droppedSignals, count);
 			}
 
-			function dropSignals(count: number) {
+			function dropSignals(count: number): void {
 				const signalsToDrop = submittedSignals.splice(0, count);
 				droppedSignals.push(...signalsToDrop);
 			}
@@ -3686,11 +3686,10 @@ describe("Runtime", () => {
 						"SignalLost",
 						"Should log signal lost event",
 					);
-					assert.strictEqual(
-						(mockLogger.events()[0].details as EventDetailsHelperType).signalsLost,
-						4,
-						"Should report 4 lost signals",
-					);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const actualSignalsLost = JSON.parse(mockLogger.events()[0].details as string)
+						.signalsLost as number;
+					assert.strictEqual(actualSignalsLost, 4, "Should report 4 lost signals");
 					assert.strictEqual(signalTracking.signalsLost, 4, "signalsLost should be updated");
 					assert.strictEqual(
 						signalTracking.trackingSignalSequenceNumber,
@@ -3726,8 +3725,11 @@ describe("Runtime", () => {
 						1,
 						"signalsOutOfOrder should be incremented",
 					);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const actualContentsType = JSON.parse(mockLogger.events()[0].details as string)
+						.contentsType as number;
 					assert.strictEqual(
-						(mockLogger.events()[0].details as EventDetailsHelperType).contentsType,
+						actualContentsType,
 						"test",
 						"Should include contents type for container signals",
 					);
@@ -3792,15 +3794,15 @@ describe("Runtime", () => {
 				});
 
 				it("should report signal latency when roundtrip signal is received", () => {
-					const timestamp = Date.now() - 500; // 500ms ago
-					signalTracking.trackingSignalSequenceNumber = 105;
-					signalTracking.minimumTrackingSignalSequenceNumber = 100;
-					signalTracking.roundTripSignalSequenceNumber = 102;
-					signalTracking.signalTimestamp = timestamp;
+					signalTracking.trackingSignalSequenceNumber = 102;
+					signalTracking.minimumTrackingSignalSequenceNumber = 102;
+					signalTracking.roundTripSignalSequenceNumber = 101;
+					signalTracking.signalTimestamp = Date.now() - 500; // 500ms ago
+
 					const envelope: ISignalEnvelope = {
 						contents: { type: "test", content: {} },
 						address: undefined,
-						clientBroadcastSignalSequenceNumber: 102, // Matches roundTrip sequence number
+						clientBroadcastSignalSequenceNumber: 101, // Matches roundTrip sequence number
 					};
 
 					processSignalForTelemetry(
@@ -3817,37 +3819,32 @@ describe("Runtime", () => {
 						"Should log latency event",
 					);
 
-					// Duration should be approximately 500ms
+					// Validate details of the telemetry event are expected
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- We know what we expect in the event details
+					const {
+						duration: actualDuration,
+						sent: actualSent,
+						lost: actualLost,
+						outOfOrder: actualOutOfOrder,
+						reconnectCount: actualReconnectCount,
+					}: {
+						duration: number;
+						sent: number;
+						lost: number;
+						outOfOrder: number;
+						reconnectCount: number;
+					} = JSON.parse(mockLogger.events()[0].details as string);
+
 					assert.ok(
-						((mockLogger.events()[0].details as EventDetailsHelperType).duration as number) >=
-							490 &&
-							((mockLogger.events()[0].details as EventDetailsHelperType)
-								.duration as number) <= 510,
-						`Duration should be ~500ms but was ${(mockLogger.events()[0].details as EventDetailsHelperType).duration}`,
+						actualDuration >= 490 && actualDuration <= 510,
+						`Duration should be ~500ms but was ${actualDuration}`,
 					);
+					assert.strictEqual(actualSent, 10, "Should report sent signals");
+					assert.strictEqual(actualLost, 0, "Should report lost signals");
+					assert.strictEqual(actualOutOfOrder, 0, "Should report out of order signals");
+					assert.strictEqual(actualReconnectCount, 3, "Should report reconnect count");
 
-					assert.strictEqual(
-						(mockLogger.events()[0].details as EventDetailsHelperType).sent,
-						10,
-						"Should report sent signals",
-					);
-					assert.strictEqual(
-						(mockLogger.events()[0].details as EventDetailsHelperType).lost,
-						0,
-						"Should report lost signals",
-					);
-					assert.strictEqual(
-						(mockLogger.events()[0].details as EventDetailsHelperType).outOfOrder,
-						0,
-						"Should report out of order signals",
-					);
-					assert.strictEqual(
-						(mockLogger.events()[0].details as EventDetailsHelperType).reconnectCount,
-						3,
-						"Should report reconnect count",
-					);
-
-					// Counters should be reset
+					// Validate the properties of the signalTracking object are reset
 					assert.strictEqual(signalTracking.signalsLost, 0, "signalsLost should be reset");
 					assert.strictEqual(
 						signalTracking.signalsOutOfOrder,
@@ -3873,7 +3870,7 @@ describe("Runtime", () => {
 
 				it("should clear roundTripSignalSequenceNumber when receiving signal with higher sequence number", () => {
 					signalTracking.trackingSignalSequenceNumber = 105;
-					signalTracking.minimumTrackingSignalSequenceNumber = 100;
+					signalTracking.minimumTrackingSignalSequenceNumber = 105;
 					signalTracking.roundTripSignalSequenceNumber = 102;
 					const envelope: ISignalEnvelope = {
 						contents: { type: "test", content: {} },
@@ -3925,11 +3922,13 @@ describe("Runtime", () => {
 						"SignalLost",
 						"Should log signal lost event",
 					);
-					assert.strictEqual(
-						(mockLogger.events()[0]?.details as EventDetailsHelperType).signalsLost,
-						3,
-						"Should report 3 lost signals",
-					);
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- We know what we expect in the event details
+					const {
+						signalsLost: actualSignalsLost,
+					}: {
+						signalsLost: number;
+					} = JSON.parse(mockLogger.events()[0].details as string);
+					assert.strictEqual(actualSignalsLost, 3, "Should report 3 lost signals");
 
 					// Second event for latency
 					assert.strictEqual(

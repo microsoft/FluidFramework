@@ -5028,6 +5028,7 @@ export function processSignalForTelemetry(
 			details,
 		});
 	}
+
 	if (
 		signalTracking.roundTripSignalSequenceNumber !== undefined &&
 		clientBroadcastSignalSequenceNumber >= signalTracking.roundTripSignalSequenceNumber
