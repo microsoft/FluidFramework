@@ -9,16 +9,13 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
-<<<<<<< HEAD
 import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
 import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
-=======
 import depcheck from "depcheck";
->>>>>>> f88bc4f267 (cleanup)
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
 import replace from "replace-in-file";
@@ -1987,7 +1984,7 @@ export const handlers: Handler[] = [
 				try {
 					options = require(depcheckConfigFilePath) as depcheck.Options;
 				} catch (error) {
-					console.log(`Error reading ${depcheckConfigFileName} file:`, error);
+					console.log(`Error reading ${depcheckConfigFileName} file for ${packageDir}`, error);
 					return;
 				}
 			}
@@ -2008,6 +2005,63 @@ export const handlers: Handler[] = [
 			} catch (error) {
 				return `Error running depcheck for ${packageDir}: ${error}`;
 			}
+		},
+		resolver: (
+			packageJsonFilePath: string,
+			rootDirectoryPath: string,
+		): { resolved: boolean; message?: string } => {
+			const result: { resolved: boolean; message?: string } = { resolved: true };
+			// ---------- TODO ------------
+			// updatePackageJsonFile(path.dirname(packageJsonFilePath), (packageJson) => {
+				
+			// 	const requirements =
+			// 		getFlubConfig(rootDirectoryPath).policy?.publicPackageRequirements;
+			// 	if (requirements === undefined) {
+			// 		// If no requirements have been specified, we have nothing to validate.
+			// 		return;
+			// 	}
+
+			// 	/**
+			// 	 * Updates the package.json contents to ensure the requirements of the specified script are met.
+			// 	 */
+			// 	function applyScriptCorrection(script: ScriptRequirement): void {
+			// 		// If the script is missing, or if it exists but its body doesn't satisfy the requirement,
+			// 		// apply the correct script configuration.
+			// 		if (
+			// 			packageJson.scripts[script.name] === undefined ||
+			// 			script.bodyMustMatch === true
+			// 		) {
+			// 			packageJson.scripts[script.name] = script.body;
+			// 		}
+			// 	}
+
+			// 	if (requirements.requiredScripts !== undefined) {
+			// 		// Ensure scripts body exists
+			// 		if (packageJson.scripts === undefined) {
+			// 			packageJson.scripts = {};
+			// 		}
+
+			// 		// Applies script corrections as needed for all script requirements
+			// 		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
+			// 		requirements.requiredScripts.forEach(applyScriptCorrection);
+			// 	}
+
+			// 	// If there are any missing required dev dependencies, report that the issues were not resolved (and
+			// 	// the dependencies need to be added manually).
+			// 	// TODO: In the future, we could consider having this code actually run the pnpm commands to install
+			// 	// the missing deps.
+			// 	if (requirements.requiredDevDependencies !== undefined) {
+			// 		const devDependencies = Object.keys(packageJson.devDependencies ?? {});
+			// 		for (const requiredDevDependency of requirements.requiredDevDependencies) {
+			// 			if (!devDependencies.includes(requiredDevDependency)) {
+			// 				result.resolved = false;
+			// 				break;
+			// 			}
+			// 		}
+			// 	}
+			// });
+
+			return result;
 		},
 	},
 ];
