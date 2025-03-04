@@ -199,6 +199,19 @@ export interface FieldProps<TCustomMetadata = unknown> {
 }
 
 /**
+ * Additional information to provide to a {@link FieldSchema}.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
+ * @alpha
+ */
+export interface FieldPropsAlpha<TCustomMetadata = unknown>
+	extends FieldProps<TCustomMetadata> {
+	readonly metadata?: FieldSchemaMetadataAlpha<TCustomMetadata>;
+}
+
+/**
  * A {@link FieldProvider} which requires additional context in order to produce its content
  */
 export type ContextualFieldProvider = (
@@ -261,6 +274,30 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	 * used as the `description` field.
 	 */
 	readonly description?: string | undefined;
+}
+
+/**
+ * Metadata associated with a {@link FieldSchema}.
+ *
+ * @remarks Specified via {@link FieldProps.metadata}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface FieldSchemaMetadataAlpha<
+	TCustomMetadata = unknown,
+	T extends ImplicitAllowedTypes = ImplicitAllowedTypes,
+> extends FieldSchemaMetadata<TCustomMetadata> {
+	/**
+	 * Optional default value generator for the field.
+	 * Can be used when interop-ing with external systems generating input data.
+	 * The JSON Schema generated to be provided to those systems will omit the associated field.
+	 * This default provider can be invoked to fill in the missing field before inserting the data.
+	 *
+	 * NOTE: This is a hacky workaround for lacking proper field default value providers.
+	 * Once we support those, this should be unneeded.
+	 */
+	readonly llmDefault?: () => TreeNodeFromImplicitAllowedTypes<T>;
 }
 
 /**
@@ -456,17 +493,23 @@ function areFieldPropsEqual(a: FieldProps | undefined, b: FieldProps | undefined
  * @remarks FieldSchemaMetadata are considered equivalent if their custom data and descriptions are (respectively) reference equal.
  */
 function areMetadataEqual(
-	a: FieldSchemaMetadata | undefined,
-	b: FieldSchemaMetadata | undefined,
+	a: FieldSchemaMetadataAlpha | undefined,
+	b: FieldSchemaMetadataAlpha | undefined,
 ): boolean {
 	// If any new fields are added to FieldSchemaMetadata, this check will stop compiling as a reminder that this function needs to be updated.
-	type _keys = requireTrue<areOnlyKeys<FieldSchemaMetadata, "custom" | "description">>;
+	type _keys = requireTrue<
+		areOnlyKeys<FieldSchemaMetadataAlpha, "custom" | "description" | "llmDefault">
+	>;
 
 	if (a === b) {
 		return true;
 	}
 
-	return a?.custom === b?.custom && a?.description === b?.description;
+	return (
+		a?.custom === b?.custom &&
+		a?.description === b?.description &&
+		a?.llmDefault === b?.llmDefault
+	);
 }
 
 function evaluateLazySchema(value: LazyItem<TreeNodeSchema>): TreeNodeSchema {
