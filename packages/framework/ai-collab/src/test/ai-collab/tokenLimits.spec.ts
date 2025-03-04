@@ -61,7 +61,7 @@ describe.skip("Token limits work as expected", () => {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
 				}),
-				modelName: "gpt-4o",
+				options: { model: "gpt-4o" },
 			},
 			treeNode: view.root,
 			prompt: {
@@ -108,7 +108,7 @@ describe.skip("Token limits work as expected", () => {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
 				}),
-				modelName: "gpt-4o",
+				options: { model: "gpt-4o" },
 			},
 			treeNode: view.root,
 			prompt: {

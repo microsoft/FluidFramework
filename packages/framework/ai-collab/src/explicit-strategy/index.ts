@@ -14,6 +14,7 @@ import {
 import { zodResponseFormat } from "openai/helpers/zod";
 import type {
 	ChatCompletionCreateParams,
+	ChatCompletionCreateParamsNonStreaming,
 	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
 import { v4 as uuidv4 } from "uuid";
@@ -493,10 +494,10 @@ async function getStructuredOutputFromLlm<T>(
 		description,
 	});
 
-	const body: ChatCompletionCreateParams = {
+	const body: ChatCompletionCreateParamsNonStreaming = {
 		messages: [{ role: "system", content: prompt }],
-		model: openAi.modelName ?? "gpt-4o",
 		response_format,
+		...openAi.options,
 	};
 
 	const result = await openAi.client.beta.chat.completions.parse(body);

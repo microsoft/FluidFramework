@@ -183,7 +183,7 @@ describe.skip("Ai Planner App", () => {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
 				}),
-				modelName: "gpt-4o",
+				options: { model: "gpt-4o" },
 			},
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			treeNode: view.root.taskGroups[0]!,
@@ -216,7 +216,7 @@ describe.skip("Ai Planner App", () => {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
 				}),
-				modelName: "gpt-4o",
+				options: { model: "gpt-4o" },
 			},
 			treeNode: view.root,
 			prompt: {
@@ -260,7 +260,7 @@ describe.skip("Ai Planner App", () => {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
 					}),
-					modelName: "gpt-4o",
+					options: { model: "gpt-4o" },
 				},
 				treeNode: view.root,
 				prompt: {
@@ -305,7 +305,7 @@ describe.skip("Ai Planner App", () => {
 					client: new OpenAI({
 						apiKey: OPENAI_API_KEY,
 					}),
-					modelName: "gpt-4o",
+					options: { model: "gpt-4o" },
 				},
 				treeNode: view.root,
 				prompt: {
@@ -346,7 +346,7 @@ describe.skip("Ai Planner App", () => {
 				client: new OpenAI({
 					apiKey: OPENAI_API_KEY,
 				}),
-				modelName: "gpt-4o",
+				options: { model: "gpt-4o" },
 			},
 			treeNode: view.root,
 			prompt: {

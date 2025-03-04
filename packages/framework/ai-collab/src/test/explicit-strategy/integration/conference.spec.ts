@@ -164,7 +164,7 @@ describe.skip("Agent Editing Integration", () => {
 		const openAIClient = initializeOpenAIClient("openai");
 		const abortController = new AbortController();
 		await generateTreeEdits({
-			openAI: { client: openAIClient, modelName: TEST_MODEL_NAME },
+			openAI: { client: openAIClient, options: { model: TEST_MODEL_NAME } },
 			treeNode: view.root,
 			prompt: {
 				userAsk: "Please alphabetize the sessions.",

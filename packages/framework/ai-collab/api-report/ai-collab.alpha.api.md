@@ -251,7 +251,10 @@ export type ObjectPath = (string | number)[];
 // @alpha
 export interface OpenAiClientOptions {
     client: OpenAI;
+    // (undocumented)
     modelName?: string;
+    // (undocumented)
+    options: Omit<OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming, "messages" | "response_format">;
 }
 
 // @alpha

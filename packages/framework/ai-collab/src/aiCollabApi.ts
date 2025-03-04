@@ -66,9 +66,10 @@ export interface OpenAiClientOptions {
 	 * The OpenAI client to use for the AI collaboration.
 	 */
 	client: OpenAI;
-	/**
-	 * The name of the target OpenAI model to use for the AI collaboration.
-	 */
+	options: Omit<
+		OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming,
+		"messages" | "response_format"
+	>;
 	modelName?: string;
 }
 

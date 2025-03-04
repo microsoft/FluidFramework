@@ -217,7 +217,7 @@ export function TaskGroup(props: {
 			const response: AiCollabSuccessResponse | AiCollabErrorResponse = await aiCollab({
 				openAI: {
 					client: getOpenAiClient(),
-					modelName: "gpt-4o",
+					options: { model: "gpt-4o" },
 				},
 				treeNode: newBranchTaskGroup,
 				prompt: {
