@@ -208,7 +208,7 @@ export class FluidSerializer implements IFluidSerializer {
 		// not binding them prevent attach ops from being created, so rollback is a no-op. On acceptance of the staging mode changes we do a re-submit/rebase
 		// of all changes, and at that point we are out of staging mode, so the bind happens then, which basically defers attach op creation until all
 		// changes are accepted.
-		if (this.runtime.inStagingMode === false) {
+		if (!this.runtime.inStagingMode) {
 			bind.bind(handle);
 		}
 		return {
