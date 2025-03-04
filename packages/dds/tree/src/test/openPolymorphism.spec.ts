@@ -236,17 +236,10 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
 				const lazyConfig = () => config;
-				const uncachedItemTypes: LazyItems = allComponents.flatMap(
+				const ItemTypes = allComponents.flatMap(
 					(component): LazyItems => component.itemTypes(lazyConfig),
 				);
 
-				const ItemTypes = uncachedItemTypes.map((uncached) => {
-					let cache: ItemSchema | undefined;
-					return () => {
-						cache ??= uncached();
-						return cache;
-					};
-				});
 				const config: MyAppConfig = { ItemTypes };
 
 				return config;
@@ -301,28 +294,19 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			 * This allows the schema to reference items from the configuration, which could include themselves recursively.
 			 */
 			type ComponentSchemaCollection<TConfig, TSchema> = (
-				lazyConfig: () => TConfig,
+				lazyConfiguration: () => TConfig,
 			) => LazyArray<TSchema>;
 
 			type LazyArray<T> = readonly (() => T)[];
 
 			function composeComponentSchema<TConfig, TItem>(
 				allComponents: readonly ComponentSchemaCollection<TConfig, TItem>[],
-				lazyConfig: () => TConfig,
+				lazyConfiguration: () => TConfig,
 			): (() => TItem)[] {
-				const uncashedItemTypes: LazyArray<TItem> = allComponents.flatMap(
-					(component): LazyArray<TItem> => component(lazyConfig),
+				const uncachedItemTypes = allComponents.flatMap(
+					(component): LazyArray<TItem> => component(lazyConfiguration),
 				);
-
-				const ItemTypes = uncashedItemTypes.map((uncached) => {
-					let cache: TItem | undefined;
-					return () => {
-						cache ??= uncached();
-						return cache;
-					};
-				});
-
-				return ItemTypes;
+				return uncachedItemTypes; // uncachedItemTypes.map(cacheLazyItem);
 			}
 
 			// App specific //

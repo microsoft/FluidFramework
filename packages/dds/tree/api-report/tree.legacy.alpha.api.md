@@ -508,6 +508,26 @@ export const SharedTreeAttributes: IChannelAttributes;
 // @alpha
 export const SharedTreeFactoryType = "https://graph.microsoft.com/types/tree";
 
+// @public @sealed
+export interface StrictTypes<TSchema extends ImplicitAllowedTypes, TInput = DefaultInsertableTreeNodeFromImplicitAllowedTypes<TSchema>, TOutput extends TreeNode | TreeLeafValue = DefaultTreeNodeFromImplicitAllowedTypes<TSchema>> {
+    // (undocumented)
+    input: TInput;
+    // (undocumented)
+    output: TOutput;
+    // (undocumented)
+    readWrite: TInput extends never ? never : TOutput;
+}
+
+// @public
+export interface StrictTypesUnsafe<TSchema extends Unenforced<ImplicitAllowedTypes>, TInput = DefaultInsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>, TOutput = DefaultTreeNodeFromImplicitAllowedTypesUnsafe<TSchema>> {
+    // (undocumented)
+    input: TInput;
+    // (undocumented)
+    output: TOutput;
+    // (undocumented)
+    readWrite: TOutput;
+}
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
 

@@ -62,6 +62,9 @@ export interface BranchableTree extends ViewableTree {
     rebase(branch: TreeBranchFork): void;
 }
 
+// @alpha
+export function cacheLazyItem<T>(f: () => T): () => T;
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -1184,6 +1187,11 @@ export const schemaStatics: {
     readonly optionalRecursive: <const T_2 extends unknown>(t: T_2, props?: Omit<FieldProps, "defaultProvider">) => FieldSchemaUnsafe<FieldKind.Optional, T_2>;
     readonly requiredRecursive: <const T_3 extends unknown>(t: T_3, props?: Omit<FieldProps, "defaultProvider">) => FieldSchemaUnsafe<FieldKind.Required, T_3>;
 };
+
+// @public
+export type SchemaUnionToIntersection<T> = [T] extends [
+CustomizedSchemaTyping<unknown, CustomTypes>
+] ? T : UnionToIntersection<T>;
 
 // @alpha
 export interface SchemaValidationFunction<Schema extends TSchema> {

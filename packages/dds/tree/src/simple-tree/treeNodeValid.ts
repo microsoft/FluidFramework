@@ -64,6 +64,8 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	/**
 	 * Schema classes can override to provide a callback that is called once when the first node is constructed.
 	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
+	 * @remarks
+	 * It is valid to dereference LazyItem schema references in this function (or anything that runs after it).
 	 */
 	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): Context {
 		fail(0xae5 /* Missing oneTimeSetup */);
@@ -146,7 +148,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	}
 
 	/**
-	 * @see {@link TreeNodeSchemaCore.createFromInsertable}.
+	 * See {@link TreeNodeSchemaCore.createFromInsertable}.
 	 */
 	public static createFromInsertable<TInput, TOut, TThis extends new (args: TInput) => TOut>(
 		this: TThis,
@@ -155,13 +157,22 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		return new this(input);
 	}
 
+	/**
+	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
+	 */
+	public static oneTimeInitialize(
+		this: typeof TreeNodeValid & TreeNodeSchema,
+	): Required<MostDerivedData> {
+		const cache = this.markMostDerived();
+		cache.oneTimeInitialized ??= this.oneTimeSetup();
+		// Typescript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
+		return cache as MostDerivedData & { oneTimeInitialized: Context };
+	}
+
 	public constructor(input: TInput | InternalTreeNode) {
 		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
-		const cache = schema.markMostDerived();
-		if (cache.oneTimeInitialized === undefined) {
-			cache.oneTimeInitialized = schema.oneTimeSetup();
-		}
+		const cache = schema.oneTimeInitialize();
 
 		if (isTreeNode(input)) {
 			// TODO: update this once we have better support for deep-copying and move operations.

@@ -27,14 +27,14 @@ import {
 	type TreeFieldFromImplicitField,
 	type UnsafeUnknownSchema,
 	FieldKind,
+	markSchemaMostDerived,
 } from "../schemaTypes.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import { assert } from "@fluidframework/core-utils/internal";
 import { isObjectNodeSchema, type ObjectNodeSchema } from "../objectNodeTypes.js";
-import { markSchemaMostDerived } from "./schemaFactory.js";
-import { fail, getOrCreate } from "../../util/index.js";
+import { fail, getOrCreate, isReadonlyArray } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import type { VerboseTree } from "./verboseTree.js";
@@ -284,6 +284,11 @@ export class TreeViewConfiguration<
 			allowedTypes(types): void {
 				if (config.preventAmbiguity) {
 					checkUnion(types, ambiguityErrors);
+				}
+				if (isReadonlyArray(types)) {
+					// Ensure late additions to unions error.
+					// TODO: it would be better to do this as part of oneTimeInitialize so more cases trigger it, but this is better than nothing, and really easy to do:
+					Object.freeze(types);
 				}
 			},
 		});

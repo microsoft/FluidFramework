@@ -821,8 +821,11 @@ describe("SchemaFactory Recursive methods", () => {
 
 			// @ts-expect-error Readonly.
 			obj.req = 1;
-			// @ts-expect-error required.
-			obj.req = undefined;
+
+			assert.throws(() => {
+				// @ts-expect-error required.
+				obj.req = undefined;
+			});
 		});
 	});
 });
