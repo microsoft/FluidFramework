@@ -368,6 +368,11 @@ export interface IMockLoggerExt extends ITelemetryLoggerExt {
 	 * Gets the events that have been logged so far.
 	 */
 	events(): readonly ITelemetryEventExt[];
+	/**
+	 * The underlying {@link MockLogger} instance.
+	 * @remarks Useful to call its validation methods directly.
+	 */
+	internalMockLogger: MockLogger;
 }
 
 /**
@@ -381,6 +386,8 @@ export function createMockLoggerExt(minLogLevel?: LogLevel): IMockLoggerExt {
 	Object.assign(childLogger, {
 		events: (): readonly ITelemetryEventExt[] =>
 			mockLogger.events.map((e) => e as ITelemetryEventExt),
+		internalMockLogger: mockLogger,
 	});
+	// We assign the extra properties above with Object.assign() but still need the childLogger object to be what's returned
 	return childLogger as IMockLoggerExt;
 }
