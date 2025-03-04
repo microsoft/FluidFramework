@@ -23,6 +23,7 @@ export {
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
 	type schemaStatics,
+	type schemaStaticsAlpha,
 } from "./schemaFactory.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {

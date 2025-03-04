@@ -4,6 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldSchemaMetadataAlpha } from "@fluidframework/tree/alpha";
 import {
 	FieldKind,
 	getSimpleSchema,
@@ -324,6 +326,10 @@ function getOrCreateTypeForField(
 	modifyTypeSet: Set<string>,
 	fieldSchema: SimpleFieldSchema,
 ): Zod.ZodTypeAny | undefined {
+	if ((fieldSchema.metadata as FieldSchemaMetadataAlpha)?.llmDefault !== undefined) {
+		return undefined;
+	}
+
 	switch (fieldSchema.kind) {
 		case FieldKind.Required: {
 			return getTypeForAllowedTypes(

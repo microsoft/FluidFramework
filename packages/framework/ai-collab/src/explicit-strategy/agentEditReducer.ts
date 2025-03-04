@@ -6,6 +6,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
+import type { FieldSchemaMetadataAlpha } from "@fluidframework/tree/alpha";
 import {
 	Tree,
 	NodeKind,
@@ -20,6 +22,7 @@ import {
 	type ImplicitFieldSchema,
 	type IterableTreeArrayContent,
 	SchemaFactory,
+	type TreeLeafValue,
 } from "@fluidframework/tree/internal";
 
 import {
@@ -57,6 +60,20 @@ function populateDefaults(
 			);
 			const nodeSchema = definitionMap.get(json[typeField]);
 			assert(nodeSchema?.kind === NodeKind.Object, 0xa74 /* Expected object schema */);
+
+			for (const [key, fieldSchema] of Object.entries(nodeSchema.fields)) {
+				const defaulter = (fieldSchema?.metadata as FieldSchemaMetadataAlpha)?.llmDefault as
+					| (() => TreeNode | TreeLeafValue)
+					| undefined;
+
+				if (defaulter !== undefined) {
+					(json as Record<string, TreeNode | TreeLeafValue>)[key] = defaulter();
+				}
+			}
+
+			for (const value of Object.values(json)) {
+				populateDefaults(value, definitionMap);
+			}
 		}
 	}
 }

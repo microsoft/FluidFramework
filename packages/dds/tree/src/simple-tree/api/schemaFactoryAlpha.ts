@@ -12,6 +12,7 @@ import type {
 import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
+	schemaStaticsAlpha,
 	type SchemaFactoryObjectOptions,
 } from "./schemaFactory.js";
 import type {
@@ -250,4 +251,9 @@ export class SchemaFactoryAlpha<
 			TCustomMetadata
 		>;
 	}
+
+	/**
+	 * {@inheritDoc schemaStaticsAlpha.optional}
+	 */
+	public override readonly optional = schemaStaticsAlpha.optional;
 }

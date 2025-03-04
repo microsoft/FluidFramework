@@ -41,6 +41,7 @@ import {
 	type DefaultProvider,
 	getDefaultProvider,
 	type NodeSchemaOptions,
+	type FieldPropsAlpha,
 } from "../schemaTypes.js";
 import { inPrototypeChain } from "../core/index.js";
 import type {
@@ -305,6 +306,37 @@ export const schemaStatics = {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	},
 } as const;
+
+/**
+ * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.
+ * @privateRemarks
+ * We have no way to make linkable members which exist both as statics and instance properties since API-Extractor does not support this.
+ * As a workaround, we have this type as a third place which can be linked.
+ * @system @sealed @alpha
+ */
+export const schemaStaticsAlpha = {
+	/**
+	 * Make a field optional instead of the default, which is required.
+	 *
+	 * @param t - The types allowed under the field.
+	 * @param props - Optional properties to associate with the field.
+	 *
+	 * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+	 * See {@link FieldSchemaMetadata.custom}.
+	 */
+	optional: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
+		t: T,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
+	): FieldSchema<FieldKind.Optional, T, TCustomMetadata> => {
+		const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
+			return undefined;
+		});
+		return createFieldSchema(FieldKind.Optional, t, {
+			defaultProvider: defaultOptionalProvider,
+			...props,
+		});
+	},
+};
 
 // TODO:
 // SchemaFactory.array references should link to the correct overloads, however the syntax for this does not seems to work currently for methods unless the they are not qualified with the class.
