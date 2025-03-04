@@ -236,11 +236,11 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 
 			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
 				const lazyConfig = () => config;
-				const uncashedItemTypes: LazyItems = allComponents.flatMap(
+				const uncachedItemTypes: LazyItems = allComponents.flatMap(
 					(component): LazyItems => component.itemTypes(lazyConfig),
 				);
 
-				const ItemTypes = uncashedItemTypes.map((uncached) => {
+				const ItemTypes = uncachedItemTypes.map((uncached) => {
 					let cache: ItemSchema | undefined;
 					return () => {
 						cache ??= uncached();
