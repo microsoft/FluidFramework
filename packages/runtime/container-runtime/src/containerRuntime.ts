@@ -3273,10 +3273,10 @@ export class ContainerRuntime
 				this.consecutiveReconnects,
 			);
 
+			// If necessary, update signal tracking object based on the results of processing the signal
 			if (signalTrackingUpdate !== undefined) {
-				// Update signal tracking object based on the results of processing the signal
 				for (const [key, value] of Object.entries(signalTrackingUpdate)) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- signalTrackingUpdate has the same type as this._signalTracking
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- signalTrackingUpdate has the same type as this._signalTracking, the properties match
 					this._signalTracking[key] = value;
 				}
 			}
