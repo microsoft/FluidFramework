@@ -51,7 +51,7 @@ export interface EnterStagingMode {
 }
 export interface ExitStagingMode {
 	type: "exitStagingMode";
-	accept: boolean;
+	commit: boolean;
 }
 
 export type StressDataObjectOperations =
@@ -280,9 +280,9 @@ export class DefaultStressDataObject extends StressDataObject {
 		return this.context.containerRuntime.inStagingMode;
 	}
 
-	public exitStagingMode(accept: boolean) {
+	public exitStagingMode(commit: boolean) {
 		assert(this.stageControls !== undefined, "must have staging mode handle");
-		if (accept) {
+		if (commit) {
 			this.stageControls.commitChanges();
 		} else {
 			this.stageControls.discardChanges();
