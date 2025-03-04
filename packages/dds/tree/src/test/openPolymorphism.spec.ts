@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import {
 	SchemaFactory,
+	TreeViewConfiguration,
 	type NodeKind,
 	type ObjectFromSchemaRecord,
 	type TreeNode,
@@ -220,6 +221,77 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				},
 				validateUsageError(/incompatible with all of the types allowed by the schema/),
 			);
+		});
+
+		// Example component design pattern which avoids the mutable static registry and instead composes declarative components.
+		it("components", () => {
+			/**
+			 * Example application component interface.
+			 */
+			interface MyAppComponent {
+				itemTypes(lazyConfig: () => MyAppConfig): LazyItems;
+			}
+
+			type LazyItems = readonly (() => ItemSchema)[];
+
+			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
+				const lazyConfig = () => config;
+				const uncashedItemTypes: LazyItems = allComponents.flatMap(
+					(component): LazyItems => component.itemTypes(lazyConfig),
+				);
+
+				const ItemTypes = uncashedItemTypes.map((uncached) => {
+					let cache: ItemSchema | undefined;
+					return () => {
+						cache ??= uncached();
+						return cache;
+					};
+				});
+				const config: MyAppConfig = { ItemTypes };
+
+				return config;
+			}
+
+			interface MyAppConfig {
+				readonly ItemTypes: LazyItems;
+			}
+
+			function createContainer(config: MyAppConfig): ItemSchema {
+				class Container extends sf.array("Container", config.ItemTypes) {}
+				class ContainerItem extends sf.object("ContainerItem", {
+					...itemFields,
+					container: Container,
+				}) {
+					public static readonly description = "Text";
+					public static default(): TextItem {
+						return new TextItem({ text: "", location: { x: 0, y: 0 } });
+					}
+
+					public foo(): void {}
+				}
+
+				return ContainerItem;
+			}
+
+			const containerComponent: MyAppComponent = {
+				itemTypes(lazyConfig: () => MyAppConfig): LazyItems {
+					return [() => createContainer(lazyConfig())];
+				},
+			};
+
+			const textComponent: MyAppComponent = {
+				itemTypes(): LazyItems {
+					return [() => TextItem];
+				},
+			};
+
+			const appConfig = composeComponents([containerComponent, textComponent]);
+
+			const treeConfig = new TreeViewConfiguration({
+				schema: appConfig.ItemTypes,
+				enableSchemaValidation: true,
+				preventAmbiguity: true,
+			});
 		});
 	});
 });
