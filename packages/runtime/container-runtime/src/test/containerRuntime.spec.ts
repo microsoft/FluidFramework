@@ -2756,7 +2756,7 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function sendSignals(count: number): void {
+			function sendSignals(count: number) {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
 					assert(
@@ -2772,7 +2772,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number): void {
+			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number) {
 				const signalsToProcess = signals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					if (signal.targetClientId === undefined) {
@@ -2810,7 +2810,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processWithNoTargetSupport(count: number): void {
+			function processWithNoTargetSupport(count: number) {
 				const signalsToProcess = submittedSignals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					for (const runtime of runtimes.values()) {
@@ -2829,15 +2829,15 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSubmittedSignals(count: number): void {
+			function processSubmittedSignals(count: number) {
 				processSignals(submittedSignals, count);
 			}
 
-			function processDroppedSignals(count: number): void {
+			function processDroppedSignals(count: number) {
 				processSignals(droppedSignals, count);
 			}
 
-			function dropSignals(count: number): void {
+			function dropSignals(count: number) {
 				const signalsToDrop = submittedSignals.splice(0, count);
 				droppedSignals.push(...signalsToDrop);
 			}
