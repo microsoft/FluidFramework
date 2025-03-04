@@ -105,7 +105,12 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IFileSnapshot": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "internal"
 	}
 }
