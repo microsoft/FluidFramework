@@ -43,7 +43,9 @@ export class SignalManager {
 	 * Resets the signal tracking state in the {@link SignalManager}.
 	 * @param signalTracking - ONLY FOR TESTING. Allows setting the signal tracking state in the {@link SignalManager} to specific values.
 	 */
-	public resetTracking(signalTracking?: IPerfSignalReport): void {
+	public resetTracking(
+		signalTracking?: Omit<IPerfSignalReport, "broadcastSignalSequenceNumber">,
+	): void {
 		if (signalTracking === undefined) {
 			this.signalTracking.signalsLost = 0;
 			this.signalTracking.signalsOutOfOrder = 0;
@@ -55,8 +57,6 @@ export class SignalManager {
 			this.signalTracking.minimumTrackingSignalSequenceNumber = undefined;
 		} else {
 			for (const [key, value] of Object.entries(signalTracking)) {
-				// Object.entries() "forgets" the typing but we know we're working on an object of the same type
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				this.signalTracking[key] = value;
 			}
 		}

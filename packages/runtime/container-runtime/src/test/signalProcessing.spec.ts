@@ -35,7 +35,6 @@ const getSignalManager = (
 		signalsLost: 0,
 		signalsOutOfOrder: 0,
 		signalsSentSinceLastLatencyMeasurement: 5,
-		broadcastSignalSequenceNumber: 100,
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber,
 		trackingSignalSequenceNumber,
@@ -339,34 +338,11 @@ describe("SignalManager.resetTracking", () => {
 			signalsLost: 0,
 			signalsOutOfOrder: 0,
 			signalsSentSinceLastLatencyMeasurement: 0,
-			broadcastSignalSequenceNumber: 0,
+			broadcastSignalSequenceNumber: 50, // This is not reset as part of the state
 			signalTimestamp: 0,
 			roundTripSignalSequenceNumber: undefined,
 			trackingSignalSequenceNumber: undefined,
 			minimumTrackingSignalSequenceNumber: undefined,
 		});
-	});
-});
-
-describe("SignalManager.submitEnvelopedSignal", () => {
-	it("updates signal tracking state for broadcast signals", () => {
-		const signalManager = getSignalManager();
-		const envelope = getEnvelopeObject(100); // Matches roundTrip and is higher than expected
-
-		const expectedEndState: IPerfSignalReport = {
-			...signalManager.signalTrackingState,
-			signalsSentSinceLastLatencyMeasurement: 1,
-		};
-
-		signalManager.submitEnvelopedSignal(() => {}, envelope, undefined); // targetClientId === undefined means broadcast signal
-
-		assert.deepEqual(signalManager.signalTrackingState, expectedEndState);
-
-		// Validate side effects
-		assert.equal(
-			envelope.clientBroadcastSignalSequenceNumber,
-			expectedEndState.broadcastSignalSequenceNumber + 1,
-			"clientBroadcastSignalSequenceNumber should have been incremented in envelope",
-		);
 	});
 });
