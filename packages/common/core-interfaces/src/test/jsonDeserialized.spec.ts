@@ -386,6 +386,7 @@ describe("JsonDeserialized", () => {
 				const resultRead = passThru(readonlyArrayOfNumbers);
 				assertIdenticalTypes(resultRead, readonlyArrayOfNumbers);
 				// @ts-expect-error readonly array does not appear to support `push`, but works at runtime.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				resultRead.push(0);
 				assert.deepStrictEqual(resultRead, [...readonlyArrayOfNumbers, 0]);
 			});
