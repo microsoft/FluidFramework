@@ -107,7 +107,6 @@
 		"eslint-plugin-chai-friendly": "^0.7.2",
 		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",
-		"moment": "^2.29.4",
 		"prettier": "~3.0.3",
 		"rimraf": "^5.0.0",
 		"typescript": "~5.1.6"
