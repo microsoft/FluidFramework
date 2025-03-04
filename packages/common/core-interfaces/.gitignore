@@ -2,6 +2,9 @@
 dist
 lib
 
+# specialized Node10 support
+!internal.d.ts
+
 # Babel
 public/scripts/es5
 

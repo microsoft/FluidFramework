@@ -27,10 +27,6 @@
 			"import": "./lib/container-definitions/index.js",
 			"require": "./dist/container-definitions/index.js"
 		},
-		"./internal/core-interfaces": {
-			"import": "./lib/core-interfaces/index.js",
-			"require": "./dist/core-interfaces/index.js"
-		},
 		"./internal/exposedInternalTypes": {
 			"import": "./lib/exposedInternalTypes.js",
 			"require": "./dist/exposedInternalTypes.js"
@@ -57,10 +53,9 @@
 		"build:esnext": "npm run build:esnext:main && npm run build:esnext:experimental",
 		"build:esnext:experimental": "tsc --project ./tsconfig.json",
 		"build:esnext:main": "tsc --project ./tsconfig.main.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:esm:core-interfaces-no-exactOptionalPropertyTypes",
+		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"build:test:esm:core-interfaces-no-exactOptionalPropertyTypes": "tsc --project ./src/test/core-interfaces/tsconfig.no-exactOptionalPropertyTypes.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -161,9 +156,6 @@
 			"build:esnext:main": [
 				"^api",
 				"^build:esnext"
-			],
-			"build:test:esm:core-interfaces-no-exactOptionalPropertyTypes": [
-				"build:esnext"
 			],
 			"check:exports:bundle-release-tags": [
 				"build:esnext"

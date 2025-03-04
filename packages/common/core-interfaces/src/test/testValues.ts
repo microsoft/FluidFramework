@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { assertIdenticalTypes } from "./testUtils.js";
+
 import type { IFluidHandle, IFluidHandleErased } from "@fluidframework/core-interfaces";
 import { fluidHandleSymbol } from "@fluidframework/core-interfaces";
-
-import type { JsonTypeWith } from "../../core-interfaces/index.js";
-
-import { assertIdenticalTypes } from "./testUtils.js";
+import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /* eslint-disable jsdoc/require-jsdoc */
 /* eslint-disable unicorn/no-null */
@@ -84,6 +83,8 @@ export const arrayOfBigintAndObjects: (bigint | { property: string })[] = [
 	bigint,
 ];
 export const arrayOfSymbolsAndObjects: (symbol | { property: string })[] = [Symbol("symbol")];
+
+export const readonlyArrayOfNumbers: readonly number[] = arrayOfNumbers;
 
 // #endregion
 
@@ -402,6 +403,16 @@ export const classInstanceWithPublicDataAndIsFunction = Object.assign(
 	new ClassWithPublicData(),
 	() => 26,
 );
+
+// #region Common Class types
+
+export const mapOfStringsToNumbers = new Map<string, number>();
+export const readonlyMapOfStringsToNumbers: ReadonlyMap<string, number> =
+	mapOfStringsToNumbers;
+export const setOfNumbers = new Set<number>();
+export const readonlySetOfNumbers: ReadonlySet<number> = setOfNumbers;
+
+// #endregion
 
 // #endregion
 

@@ -7,7 +7,7 @@ import type {
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/presence/internal/core-interfaces";
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Collection of utility types that are not intended to be used/imported

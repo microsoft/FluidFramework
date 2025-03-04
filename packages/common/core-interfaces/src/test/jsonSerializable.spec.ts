@@ -7,18 +7,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-
-import type {
-	JsonDeserialized,
-	JsonSerializable,
-	JsonSerializableOptions,
-	JsonTypeWith,
-	NonNullJsonObjectWith,
-	SerializationErrorPerNonPublicProperties,
-	SerializationErrorPerUndefinedArrayElement,
-} from "../../core-interfaces/index.js";
-
 import {
 	assertIdenticalTypes,
 	createInstanceOf,
@@ -68,6 +56,7 @@ import {
 	arrayOfObjectAndFunctions,
 	arrayOfBigintAndObjects,
 	arrayOfSymbolsAndObjects,
+	readonlyArrayOfNumbers,
 	object,
 	emptyObject,
 	objectWithBoolean,
@@ -125,10 +114,25 @@ import {
 	functionObjectWithPublicData,
 	classInstanceWithPrivateDataAndIsFunction,
 	classInstanceWithPublicDataAndIsFunction,
+	mapOfStringsToNumbers,
+	readonlyMapOfStringsToNumbers,
+	setOfNumbers,
+	readonlySetOfNumbers,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 	objectWithFluidHandleOrRecursion,
 } from "./testValues.js";
+
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	JsonDeserialized,
+	JsonSerializable,
+	JsonSerializableOptions,
+	JsonTypeWith,
+	NonNullJsonObjectWith,
+	SerializationErrorPerNonPublicProperties,
+	SerializationErrorPerUndefinedArrayElement,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Defined using `JsonSerializable` type filter tests `JsonSerializable` at call site.
@@ -337,17 +341,6 @@ describe("JsonSerializable", () => {
 			it("object with literals", () => {
 				const { filteredIn } = passThru(objectWithLiterals);
 				assertIdenticalTypes(filteredIn, objectWithLiterals);
-				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
-				// we can check assignability.
-				filteredIn satisfies typeof objectWithLiterals;
-				assert.ok(
-					objectWithLiterals instanceof Object,
-					"objectWithLiterals is at least a plain Object",
-				);
-				assert.ok(
-					filteredIn instanceof objectWithLiterals.constructor,
-					"objectRead is same type as objectWithLiterals (plain Object)",
-				);
 			});
 			it("array of literals", () => {
 				const { filteredIn } = passThru(arrayOfLiterals);
@@ -379,6 +372,10 @@ describe("JsonSerializable", () => {
 			it("array of `number`s", () => {
 				const { filteredIn } = passThru(arrayOfNumbers);
 				assertIdenticalTypes(filteredIn, arrayOfNumbers);
+			});
+			it("readonly array of `number`s", () => {
+				const { filteredIn } = passThru(readonlyArrayOfNumbers);
+				assertIdenticalTypes(filteredIn, readonlyArrayOfNumbers);
 			});
 		});
 
@@ -448,17 +445,11 @@ describe("JsonSerializable", () => {
 			it("object with `readonly`", () => {
 				const { filteredIn } = passThru(objectWithReadonly);
 				assertIdenticalTypes(filteredIn, objectWithReadonly);
-				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
-				// we can check assignability.
-				filteredIn satisfies typeof objectWithReadonly;
 			});
 
 			it("object with getter implemented via value", () => {
 				const { filteredIn } = passThru(objectWithGetterViaValue);
 				assertIdenticalTypes(filteredIn, objectWithGetterViaValue);
-				// In the meantime, until https://github.com/microsoft/TypeScript/pull/58296,
-				// we can check assignability.
-				filteredIn satisfies typeof objectWithGetterViaValue;
 			});
 			it("object with setter implemented via value", () => {
 				const { filteredIn } = passThru(objectWithSetterViaValue);
@@ -817,7 +808,7 @@ describe("JsonSerializable", () => {
 				});
 				it("`bigint | string`", () => {
 					const { filteredIn } = passThru(
-						// @ts-expect-error `bigint | symbol` is not assignable to `string`
+						// @ts-expect-error `string | bigint` is not assignable to `string`
 						bigintOrString,
 					);
 					assertIdenticalTypes(filteredIn, string);
@@ -1228,6 +1219,95 @@ describe("JsonSerializable", () => {
 							}>(),
 						);
 					});
+				});
+			});
+
+			describe("common class instances", () => {
+				it("Map", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error methods not assignable to never
+						mapOfStringsToNumbers,
+						{},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							clear: never;
+							delete: never;
+							forEach: never;
+							get: never;
+							has: never;
+							set: never;
+							readonly size: number;
+							entries: never;
+							keys: never;
+							values: never;
+							[Symbol.iterator]: never;
+							[Symbol.toStringTag]: never;
+						}>(),
+					);
+				});
+				it("ReadonlyMap", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error methods not assignable to never
+						readonlyMapOfStringsToNumbers,
+						{},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							forEach: never;
+							get: never;
+							has: never;
+							readonly size: number;
+							entries: never;
+							keys: never;
+							values: never;
+							[Symbol.iterator]: never;
+						}>(),
+					);
+				});
+				it("Set", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error methods not assignable to never
+						setOfNumbers,
+						{},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							add: never;
+							clear: never;
+							delete: never;
+							forEach: never;
+							has: never;
+							readonly size: number;
+							entries: never;
+							keys: never;
+							values: never;
+							[Symbol.iterator]: never;
+							[Symbol.toStringTag]: never;
+						}>(),
+					);
+				});
+				it("ReadonlySet", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error methods not assignable to never
+						readonlySetOfNumbers,
+						{},
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						createInstanceOf<{
+							forEach: never;
+							has: never;
+							readonly size: number;
+							entries: never;
+							keys: never;
+							values: never;
+							[Symbol.iterator]: never;
+						}>(),
+					);
 				});
 			});
 		});
