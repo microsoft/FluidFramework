@@ -64,7 +64,12 @@ export interface IFluidSerializer {
 export class FluidSerializer implements IFluidSerializer {
 	private readonly root: IFluidHandleContext;
 
-	public constructor(private readonly runtime: IFluidDataStoreRuntime) {
+	public constructor(
+		private readonly runtime: Pick<
+			IFluidDataStoreRuntime,
+			"inStagingMode" | "channelsRoutingContext"
+		>,
+	) {
 		this.root = this.runtime.channelsRoutingContext;
 		while (this.root.routeContext !== undefined) {
 			this.root = this.root.routeContext;

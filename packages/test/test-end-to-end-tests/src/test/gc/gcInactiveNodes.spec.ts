@@ -518,7 +518,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 			// Load A in container2 and ensure InactiveObject_Loaded is logged
 			const handleA_2 = manufactureHandle<ITestDataObject>(
-				defaultDataObject2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+				defaultDataObject2._runtime, // yields the ContaineRuntime's handleContext
 				idA,
 			);
 			await handleA_2.get();
@@ -625,7 +625,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Load A in container2 and ensure InactiveObject_Loaded is logged
 					const handleA_2 = manufactureHandle<ITestDataObject>(
-						defaultDataObject2._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+						defaultDataObject2._runtime, // yields the ContaineRuntime's handleContext
 						idA,
 					);
 					await handleA_2.get();
@@ -642,7 +642,7 @@ describeCompat("GC inactive nodes tests", "NoCompat", (getTestObjectProvider, ap
 
 					// Reference A again in container3 via DataStore attach op. Should be properly revived in container3 itself
 					const manufacturedHandleA_3 = manufactureHandle<ITestDataObject>(
-						defaultDataObject3._context.IFluidHandleContext, // yields the ContaineRuntime's handleContext
+						defaultDataObject3._runtime, // yields the ContaineRuntime's handleContext
 						idA,
 					);
 					const [newDirectory_3, handleToAttach_3] = await newDirectoryFn(defaultDataObject3);

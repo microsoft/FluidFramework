@@ -967,7 +967,7 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 					const defaultDataStoreContainer2 =
 						(await container2.getEntryPoint()) as ITestDataObject;
 					const handle = manufactureHandle<ITestDataObject>(
-						defaultDataStoreContainer2._context.IFluidHandleContext,
+						defaultDataStoreContainer2._runtime,
 						sweepReadyDataStoreNodePath,
 					);
 					await assert.rejects(
