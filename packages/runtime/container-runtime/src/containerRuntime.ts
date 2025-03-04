@@ -3480,7 +3480,7 @@ export class ContainerRuntime
 	}
 
 	private stageControls: StageControls | undefined;
-	get inStagingMode(): boolean {
+	public get inStagingMode(): boolean {
 		return this.stageControls !== undefined;
 	}
 
