@@ -41,9 +41,7 @@
 		"format": "npm run format:biome",
 		"format-and-build": "npm run format && npm run build",
 		"format:biome": "biome check . --write",
-		"good-fences": "gf",
-		"lint": "npm run good-fences && npm run eslint",
-		"lint:fences": "npm run good-fences",
+		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
 		"rebuild": "npm run clean && npm run build",
 		"test": "npm run test:mocha",
@@ -87,10 +85,10 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.7.3",
-		"@fluid-internal/mocha-test-setup": "~2.0.0-rc.3.0.3",
+		"@fluid-internal/mocha-test-setup": "~2.23.0",
 		"@fluid-tools/markdown-magic": "file:../markdown-magic",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.44.0",
+		"@fluidframework/build-tools": "^0.54.0",
 		"@fluidframework/eslint-config-fluid": "^5.5.1",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/chai": "^4.3.4",
@@ -107,7 +105,6 @@
 		"eslint": "~8.55.0",
 		"eslint-plugin-chai-expect": "^3.0.0",
 		"eslint-plugin-chai-friendly": "^0.7.2",
-		"good-fences": "^1.2.0",
 		"mocha": "^10.2.0",
 		"mocha-multi-reporters": "^1.5.1",
 		"moment": "^2.29.4",
@@ -122,14 +119,6 @@
 				"^build:esnext",
 				"^tsc"
 			]
-		}
-	},
-	"pnpm": {
-		"comments": [
-			"nodegit is replaced with an empty package here because it's currently only used by good-fences for features we do not need, and has issues building when changing node versions. See https://github.com/smikula/good-fences/issues/105 for details."
-		],
-		"overrides": {
-			"nodegit": "npm:empty-npm-package@1.0.0"
 		}
 	}
 }
