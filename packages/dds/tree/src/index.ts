@@ -234,6 +234,7 @@ export {
 	type TransactionResultFailed,
 	rollback,
 	evaluateLazySchema,
+	Component,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

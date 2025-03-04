@@ -141,6 +141,7 @@ export {
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,
+	Component,
 } from "./api/index.js";
 export {
 	type NodeFromSchema,

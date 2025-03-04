@@ -72,6 +72,13 @@ export interface CommitMetadata {
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions, canInitialize: boolean): SchemaCompatibilityStatus;
 
 // @alpha
+export namespace Component {
+    export type ComponentSchemaCollection<TConfig, TSchema> = (lazyConfiguration: () => TConfig) => LazyArray<TSchema>;
+    export function composeComponentSchema<TConfig, TItem>(allComponents: readonly ComponentSchemaCollection<TConfig, TItem>[], lazyConfiguration: () => TConfig): (() => TItem)[];
+    export type LazyArray<T> = readonly (() => T)[];
+}
+
+// @alpha
 export type ConciseTree<THandle = IFluidHandle> = Exclude<TreeLeafValue, IFluidHandle> | THandle | ConciseTree<THandle>[] | {
     [key: string]: ConciseTree<THandle>;
 };
