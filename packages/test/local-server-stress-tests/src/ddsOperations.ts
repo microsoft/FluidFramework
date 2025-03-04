@@ -153,6 +153,13 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 		assert(aChannel.attributes.type === bChannel?.attributes.type, "channel types must match");
 		const model = ddsModelMap.get(aChannel.attributes.type);
 		assert(model !== undefined, "model must exist");
-		await model.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
+		try {
+			await model.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
+		} catch (error) {
+			if (error instanceof Error) {
+				error.message = `comparing ${clientA.tag} and ${clientB.tag}: ${error.message}`;
+			}
+			throw error;
+		}
 	}
 };

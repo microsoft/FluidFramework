@@ -2743,7 +2743,22 @@ export class ContainerRuntime
 		return this._loadIdCompressor;
 	}
 
+	private lastStagingSetConnectionState: { connected: boolean; clientId?: string } | undefined;
 	public setConnectionState(connected: boolean, clientId?: string): void {
+		// hack: defer connecting if we are in staging mode. This prevents a bug where
+		// we reconnect with outstanding ops that were generated before we entered staging mode
+		// and the ops end up ahead of the ops we created within staging mode in the outbox.
+		// ideally we could solve this in a way that still lets the old ops be resubmitted.
+		if (this.inStagingMode) {
+			if (connected) {
+				this.lastStagingSetConnectionState = { connected, clientId };
+				return;
+			}
+			this.lastStagingSetConnectionState = undefined;
+			if (connected === this.connected) {
+				return;
+			}
+		}
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -3488,11 +3503,27 @@ export class ContainerRuntime
 		if (this.stageControls !== undefined) {
 			throw new Error("already in staging mode");
 		}
+		this.outbox.flush();
+		this.ensureNoDataModelChangesCalls++;
+
+		const exitStagingMode = (act: () => void) => (): void => {
+			this.ensureNoDataModelChangesCalls--;
+			this.stageControls = undefined;
+
+			act();
+
+			if (this.lastStagingSetConnectionState !== undefined) {
+				this.setConnectionState(
+					this.lastStagingSetConnectionState.connected,
+					this.lastStagingSetConnectionState.clientId,
+				);
+				this.lastStagingSetConnectionState = undefined;
+			}
+		};
+
 		const checkpoint = this.outbox.getBatchCheckpoints(true);
 		const stageControls = {
-			discardChanges: () => {
-				this.stageControls = undefined;
-
+			discardChanges: exitStagingMode(() => {
 				assert(
 					checkpoint.blobAttachBatch.isEmpty() && checkpoint.idAllocationBatch.isEmpty(),
 					"other batches must be empty",
@@ -3500,12 +3531,12 @@ export class ContainerRuntime
 
 				checkpoint.mainBatch.rollback();
 				checkpoint.unblockFlush();
-			},
-			commitChanges: () => {
+			}),
+			commitChanges: exitStagingMode(() => {
 				this.stageControls = undefined;
 				checkpoint.unblockFlush();
 				this.outbox.flush();
-			},
+			}),
 		};
 
 		return (this.stageControls = stageControls);
