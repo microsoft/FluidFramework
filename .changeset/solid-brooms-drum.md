@@ -7,7 +7,7 @@
 
 Removal of unnecessary exports in container-runtime package
 
-The following types in the @fluidframework/container-runtime are new removed. These types are unnecessary for external users of this package.
+The following types in the @fluidframework/container-runtime are now removed. These types are unnecessary for external users of this package.
 
 - currentDocumentVersionSchema
 - DeletedResponseHeaderKey
