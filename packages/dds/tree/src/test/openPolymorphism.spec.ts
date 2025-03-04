@@ -293,5 +293,111 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				preventAmbiguity: true,
 			});
 		});
+
+		it("generic components system", () => {
+			/**
+			 * Function which takes in a lazy configuration and returns a collection of schema types.
+			 * @remarks
+			 * This allows the schema to reference items from the configuration, which could include themselves recursively.
+			 */
+			type ComponentSchemaCollection<TConfig, TSchema> = (
+				lazyConfig: () => TConfig,
+			) => LazyArray<TSchema>;
+
+			type LazyArray<T> = readonly (() => T)[];
+
+			function composeComponentSchema<TConfig, TItem>(
+				allComponents: readonly ComponentSchemaCollection<TConfig, TItem>[],
+				lazyConfig: () => TConfig,
+			): (() => TItem)[] {
+				const uncashedItemTypes: LazyArray<TItem> = allComponents.flatMap(
+					(component): LazyArray<TItem> => component(lazyConfig),
+				);
+
+				const ItemTypes = uncashedItemTypes.map((uncached) => {
+					let cache: TItem | undefined;
+					return () => {
+						cache ??= uncached();
+						return cache;
+					};
+				});
+
+				return ItemTypes;
+			}
+
+			// App specific //
+
+			/**
+			 * Example configuration type for an application.
+			 *
+			 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
+			 */
+			interface MyAppConfig {
+				readonly ItemTypes: LazyArray<ItemSchema>;
+			}
+
+			/**
+			 * Example component type for an application.
+			 *
+			 * Represents functionality provided by a code library to power a component withing the application.
+			 *
+			 * This example uses ComponentSchemaCollection to allow the component to define schema which reference collections of schema from the application configuration.
+			 * This makes it possible to implement the "open polymorphism" pattern, including handling recursive cases.
+			 */
+			interface MyAppComponent {
+				readonly itemTypes: ComponentSchemaCollection<MyAppConfig, ItemSchema>;
+			}
+
+			/**
+			 * The application specific compose logic.
+			 *
+			 * Information from the components can be aggregated into the configuration.
+			 */
+			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
+				const lazyConfig = () => config;
+				const ItemTypes = composeComponentSchema(
+					allComponents.map((c) => c.itemTypes),
+					lazyConfig,
+				);
+				const config: MyAppConfig = { ItemTypes };
+				return config;
+			}
+
+			// An example simple component
+			const textComponent: MyAppComponent = {
+				itemTypes: (): LazyArray<ItemSchema> => [() => TextItem],
+			};
+
+			// An example component which references schema from the configuration and can be recursive through it.
+			const containerComponent: MyAppComponent = {
+				itemTypes: (lazyConfig: () => MyAppConfig): LazyArray<ItemSchema> => [
+					() => createContainer(lazyConfig()),
+				],
+			};
+			function createContainer(config: MyAppConfig): ItemSchema {
+				class Container extends sf.array("Container", config.ItemTypes) {}
+				class ContainerItem extends sf.object("ContainerItem", {
+					...itemFields,
+					container: Container,
+				}) {
+					public static readonly description = "Text";
+					public static default(): TextItem {
+						return new TextItem({ text: "", location: { x: 0, y: 0 } });
+					}
+
+					public foo(): void {}
+				}
+
+				return ContainerItem;
+			}
+
+			const appConfig = composeComponents([containerComponent, textComponent]);
+
+			const treeConfig = new TreeViewConfiguration({
+				schema: appConfig.ItemTypes,
+				enableSchemaValidation: true,
+				preventAmbiguity: true,
+			});
+		});
 	});
 });
