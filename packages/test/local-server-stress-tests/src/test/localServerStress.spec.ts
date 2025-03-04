@@ -33,7 +33,7 @@ type StressOperations = StressDataObjectOperations | DDSModelOp;
 
 const reducer = combineReducersAsync<StressOperations, LocalServerStressState>({
 	enterStagingMode: async (state, op) => state.client.entryPoint.enterStagingMode(),
-	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.accept),
+	exitStagingMode: async (state, op) => state.client.entryPoint.exitStagingMode(op.commit),
 	createDataStore: async (state, op) => state.datastore.createDataStore(op.tag, op.asChild),
 	createChannel: async (state, op) => {
 		state.datastore.createChannel(op.tag, op.channelType);
@@ -89,7 +89,7 @@ function makeGenerator(): AsyncGenerator<StressOperations, LocalServerStressStat
 		[
 			async ({ random }) => ({
 				type: "exitStagingMode",
-				accept: random.bool(),
+				commit: random.bool(),
 			}),
 			25,
 			(state) =>

@@ -282,7 +282,7 @@ export class DefaultStressDataObject extends StressDataObject {
 
 	public exitStagingMode(commit: boolean) {
 		assert(this.stageControls !== undefined, "must have staging mode handle");
-		if (accept) {
+		if (commit) {
 			this.stageControls.commitChanges();
 		} else {
 			this.stageControls.discardChanges();
