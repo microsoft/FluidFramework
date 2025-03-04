@@ -76,7 +76,13 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     // (undocumented)
     readonly disposed: boolean;
     // (undocumented)
-    readonly enterStagingMode: () => StageControls;
+    readonly enterStagingMode: () => StagingModeHandle;
+    // (undocumented)
+    readonly exitStagingMode: (handle: StagingModeHandle, arg: {
+        type: "accept";
+    } | {
+        type: "reject";
+    }) => void;
     generateDocumentUniqueId(): number | string;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
@@ -86,6 +92,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
+    // (undocumented)
+    get inStagingMode(): boolean;
     orderSequentially(callback: () => void): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
@@ -397,12 +405,7 @@ export interface OpAttributionKey {
 }
 
 // @alpha @sealed (undocumented)
-export interface StageControls {
-    // (undocumented)
-    readonly commitChanges: () => void;
-    // (undocumented)
-    readonly discardChanges: () => void;
-}
+export type StagingModeHandle = ErasedType<"StagingModeHandle">;
 
 // @alpha (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
